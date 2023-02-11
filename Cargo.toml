@@ -1,0 +1,53 @@
+[workspace]
+members = [
+    ".",
+]
+
+[package]
+name = "kraken"
+version = "0.1.0"
+edition = "2021"
+authors = ["Niklas Pfister <git@omikron.dev>"]
+license = "MPL-2.0"
+repository = "https://github.com/myOmikron/kraken"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# Webframework
+actix-web = { version = "~4" }
+# Extensions for actix-web
+actix-toolbox = { version = "~0.8", features = ["ws", "logging", "session"] }
+
+# Hashing
+argon2 = { version = "~0.4" }
+
+# Cli parser
+clap = { version = "~4", features = ["derive"] }
+# Read passwords from cli
+rpassword = { version = "~7" }
+
+# Logging facade
+log = { version = "~0.4" }
+
+# Serialization
+serde = { version = "~1", features = ["derive"] }
+toml = { version = "~0.7" }
+serde_json = { version = "~1" }
+# Time library
+chrono = { version = "~0.4", features = ["serde"] }
+# Bytes abstractions for network usage
+bytes = { version = "~1" }
+# Base64 decoder and encoder
+base64 = { version = "~0.21" }
+
+# Async runtime
+tokio = { version = "1", features = ["rt-multi-thread", "sync", "macros"] }
+# Async abstractions
+futures = { version = "~0.3" }
+
+# ORM
+rorm = { version = "~0.4", features = ["tokio-rustls"] }
+
+[features]
+rorm = []
