@@ -3,7 +3,7 @@ use std::fmt::{Display, Formatter};
 use actix_toolbox::tb_middleware::actix_session;
 use actix_web::body::BoxBody;
 use actix_web::HttpResponse;
-use log::{error, trace};
+use log::{debug, error, trace};
 use serde::Serialize;
 use serde_repr::Serialize_repr;
 
@@ -18,6 +18,9 @@ pub(crate) type ApiResult<T> = Result<T, ApiError>;
 enum ApiStatusCode {
     LoginFailed = 1000,
     NotFound = 1001,
+    InvalidContentType = 1002,
+    InvalidJson = 1003,
+    PayloadOverflow = 1004,
     InternalServerError = 2000,
     DatabaseError = 2001,
     SessionError = 2002,
@@ -42,6 +45,10 @@ impl ApiErrorResponse {
 pub(crate) enum ApiError {
     LoginFailed,
     NotFound,
+    InvalidContentType,
+    InvalidJson(serde_json::Error),
+    PayloadOverflow(String),
+    InternalServerError,
     Database(rorm::Error),
     InvalidHash(argon2::password_hash::Error),
     SessionInsert(actix_session::SessionInsertError),
@@ -53,11 +60,16 @@ impl Display for ApiError {
         match self {
             ApiError::LoginFailed => write!(f, "Login failed"),
             ApiError::Database(_) => write!(f, "Database error occurred"),
-            ApiError::InvalidHash(_) => write!(f, "Internal server error"),
+            ApiError::InvalidHash(_) | ApiError::InternalServerError => {
+                write!(f, "Internal server error")
+            }
             ApiError::SessionInsert(_) | ApiError::SessionGet(_) => {
                 write!(f, "Session error occurred")
             }
             ApiError::NotFound => write!(f, "Not found"),
+            ApiError::InvalidContentType => write!(f, "Content type error"),
+            ApiError::InvalidJson(err) => write!(f, "Json error: {err}"),
+            ApiError::PayloadOverflow(err) => write!(f, "{err}"),
         }
     }
 }
@@ -105,10 +117,33 @@ impl actix_web::ResponseError for ApiError {
                     self.to_string(),
                 ))
             }
-            ApiError::NotFound => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+            ApiError::NotFound => HttpResponse::NotFound().json(ApiErrorResponse::new(
                 ApiStatusCode::NotFound,
                 self.to_string(),
             )),
+            ApiError::InvalidContentType => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::InvalidContentType,
+                self.to_string(),
+            )),
+            ApiError::InvalidJson(err) => {
+                debug!("Received invalid json: {err}");
+
+                HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                    ApiStatusCode::InvalidJson,
+                    self.to_string(),
+                ))
+            }
+            ApiError::InternalServerError => HttpResponse::InternalServerError().json(
+                ApiErrorResponse::new(ApiStatusCode::InternalServerError, self.to_string()),
+            ),
+            ApiError::PayloadOverflow(err) => {
+                debug!("Payload overflow: {err}");
+
+                HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                    ApiStatusCode::PayloadOverflow,
+                    self.to_string(),
+                ))
+            }
         }
     }
 }
