@@ -7,7 +7,7 @@ use actix_toolbox::tb_middleware::{
 use actix_web::cookie::time::Duration;
 use actix_web::cookie::{Key, KeyError};
 use actix_web::middleware::Compress;
-use actix_web::web::{Data, JsonConfig, PayloadConfig};
+use actix_web::web::{post, Data, JsonConfig, PayloadConfig};
 use actix_web::{App, HttpServer};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
@@ -15,6 +15,7 @@ use rorm::Database;
 use webauthn_rs::prelude::{Url, WebauthnError};
 use webauthn_rs::WebauthnBuilder;
 
+use crate::api::handler;
 use crate::config::Config;
 
 const ORIGIN_NAME: &str = "Kraken";
@@ -55,6 +56,7 @@ pub(crate) async fn start_server(db: Database, config: &Config) -> Result<(), St
                     .build(),
             )
             .wrap(Compress::default())
+            .route("api/v1/login", post().to(handler::login))
     })
     .bind((
         config.server.api_listen_address.as_str(),

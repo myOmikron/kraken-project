@@ -29,6 +29,7 @@ use crate::config::Config;
 
 mod api;
 pub mod config;
+pub mod models;
 
 #[derive(Subcommand)]
 enum Command {

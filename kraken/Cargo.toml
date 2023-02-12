@@ -30,6 +30,7 @@ log = { version = "~0.4" }
 
 # Serialization
 serde = { version = "~1", features = ["derive"] }
+serde_repr = { version = "~0.1" }
 toml = { version = "~0.7" }
 serde_json = { version = "~1" }
 # Time library
