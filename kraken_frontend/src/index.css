@@ -1,0 +1,15 @@
+:root {
+    --level-0: #000;
+    --level-1: #44444440;
+    --text: #bbb;
+    --primary: #0cf;
+    --primary-op: #00ccff40;
+    --secondary: #00ffb3;
+}
+
+html {
+    overflow: hidden;
+    width: 100%;
+
+    background-color: var(--level-0);
+}
