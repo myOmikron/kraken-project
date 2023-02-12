@@ -17,9 +17,9 @@ pub(crate) type ApiResult<T> = Result<T, ApiError>;
 #[repr(u16)]
 enum ApiStatusCode {
     LoginFailed = 1000,
-    InternalServerError = 1001,
-    DatabaseError = 1002,
-    SessionError = 1003,
+    InternalServerError = 2000,
+    DatabaseError = 2001,
+    SessionError = 2002,
 }
 
 #[derive(Serialize)]
