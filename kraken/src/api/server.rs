@@ -8,7 +8,7 @@ use actix_web::cookie::time::Duration;
 use actix_web::cookie::{Key, KeyError};
 use actix_web::http::StatusCode;
 use actix_web::middleware::{Compress, ErrorHandlers};
-use actix_web::web::{post, Data, JsonConfig, PayloadConfig};
+use actix_web::web::{get, post, scope, Data, JsonConfig, PayloadConfig};
 use actix_web::{App, HttpServer};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
@@ -17,7 +17,9 @@ use webauthn_rs::prelude::{Url, WebauthnError};
 use webauthn_rs::WebauthnBuilder;
 
 use crate::api::handler;
-use crate::api::middleware::{handle_not_found, json_extractor_error};
+use crate::api::middleware::{
+    handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
+};
 use crate::config::Config;
 
 const ORIGIN_NAME: &str = "Kraken";
@@ -59,7 +61,13 @@ pub(crate) async fn start_server(db: Database, config: &Config) -> Result<(), St
             )
             .wrap(Compress::default())
             .wrap(ErrorHandlers::new().handler(StatusCode::NOT_FOUND, handle_not_found))
-            .route("api/v1/login", post().to(handler::login))
+            .service(scope("api/v1/auth").route("login", post().to(handler::login)))
+            .service(scope("api/v1/admin").wrap(AdminRequired))
+            .service(
+                scope("api/v1")
+                    .wrap(AuthenticationRequired)
+                    .route("test", get().to(handler::test)),
+            )
     })
     .bind((
         config.server.api_listen_address.as_str(),

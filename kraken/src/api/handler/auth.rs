@@ -10,6 +10,10 @@ use serde::Deserialize;
 use crate::api::handler::{ApiError, ApiResult};
 use crate::models::User;
 
+pub(crate) async fn test() -> HttpResponse {
+    HttpResponse::Ok().finish()
+}
+
 #[derive(Deserialize)]
 pub(crate) struct LoginRequest {
     username: String,
