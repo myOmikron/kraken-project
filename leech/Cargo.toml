@@ -3,8 +3,9 @@ name = "leech"
 version = "0.1.0"
 edition = "2021"
 authors = ["Niklas Pfister <git@omikron.dev>"]
-repository = "https://github.com/myOmikron/kraken-project"
 license = "MPL-2.0"
+repository = "https://github.com/myOmikron/kraken-project"
+description = "The worker component of kraken-project"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
