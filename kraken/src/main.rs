@@ -22,9 +22,12 @@ use actix_web::cookie::Key;
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use clap::{Parser, Subcommand};
+use rorm::{Database, DatabaseConfiguration, DatabaseDriver};
 
+use crate::api::server;
 use crate::config::Config;
 
+mod api;
 pub mod config;
 
 #[derive(Subcommand)]
@@ -57,7 +60,11 @@ async fn main() -> Result<(), String> {
     setup_logging(&config.logging)?;
 
     match cli.command {
-        Command::Start => {}
+        Command::Start => {
+            let db = get_db(&config).await?;
+
+            server::start_server(db, &config).await?;
+        }
         Command::Keygen => {
             let key = Key::generate();
             println!("{}", BASE64_STANDARD.encode(key.master()));
@@ -65,4 +72,20 @@ async fn main() -> Result<(), String> {
     }
 
     Ok(())
+}
+
+/// Opens a connection to the database using the provided config
+///
+/// **Parameter**:
+/// - `config`: Reference to [Config]
+async fn get_db(config: &Config) -> Result<Database, String> {
+    Database::connect(DatabaseConfiguration::new(DatabaseDriver::Postgres {
+        host: config.database.host.clone(),
+        port: config.database.port,
+        user: config.database.user.clone(),
+        password: config.database.password.clone(),
+        name: config.database.name.clone(),
+    }))
+    .await
+    .map_err(|e| format!("Error connecting to the database: {e}"))
 }
