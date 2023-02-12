@@ -51,4 +51,6 @@ pub struct Config {
     pub server: ServerConfig,
     /// Logging configuration
     pub logging: LoggingConfig,
+    /// Database configuration
+    pub database: DBConfig,
 }
