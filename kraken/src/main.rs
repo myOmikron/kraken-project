@@ -80,13 +80,22 @@ async fn main() -> Result<(), String> {
 /// **Parameter**:
 /// - `config`: Reference to [Config]
 async fn get_db(config: &Config) -> Result<Database, String> {
-    Database::connect(DatabaseConfiguration::new(DatabaseDriver::Postgres {
-        host: config.database.host.clone(),
-        port: config.database.port,
-        user: config.database.user.clone(),
-        password: config.database.password.clone(),
-        name: config.database.name.clone(),
-    }))
-    .await
-    .map_err(|e| format!("Error connecting to the database: {e}"))
+    let db_config = DatabaseConfiguration {
+        driver: DatabaseDriver::Postgres {
+            host: config.database.host.clone(),
+            port: config.database.port,
+            user: config.database.user.clone(),
+            password: config.database.password.clone(),
+            name: config.database.name.clone(),
+        },
+        min_connections: 2,
+        max_connections: 20,
+        disable_logging: Some(true),
+        statement_log_level: None,
+        slow_statement_log_level: None,
+    };
+
+    Database::connect(db_config)
+        .await
+        .map_err(|e| format!("Error connecting to the database: {e}"))
 }
