@@ -1,0 +1,36 @@
+[package]
+name = "leech"
+version = "0.1.0"
+edition = "2021"
+authors = ["Niklas Pfister <git@omikron.dev>"]
+repository = "https://github.com/myOmikron/kraken-project"
+license = "MPL-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# Cli parser
+clap = { version = "~4", features = ["derive"] }
+
+# Logging facade
+log = { version = "~0.4" }
+
+# Async runtime
+tokio = { version = "~1", features = ["macros", "sync", "rt-multi-thread"] }
+
+# gRPC implementation
+tonic = { version = "~0.8", features = ["transport", "tls"] }
+# codegenerator
+prost = { version = "~0.11" }
+
+# ORM
+rorm = { version = "~0.4", features = ["tokio-rustls"] }
+
+# DNS resolver
+trust-dns-resolver = { version = "~0.22", features = ["dns-over-https-rustls", "tokio-rustls", "tokio"] }
+
+[build-dependencies]
+tonic-build = { version = "~0.8" }
+
+[features]
+rorm-main = []

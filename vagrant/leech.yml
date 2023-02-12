@@ -5,3 +5,98 @@
     - ansible_become: yes
   vars_files:
     - vars.yml
+  tasks:
+    - name: Install dependencies
+      apt:
+        update_cache: yes
+        name:
+          - postgresql
+          - gnupg2
+          - libssl-dev
+          - nginx
+          - protobuf-compiler
+          # Required for ansible
+          - acl
+          - python3-psycopg2
+
+    - name: Check for rustup
+      ansible.builtin.stat:
+        path: "/tmp/rustup.sh"
+      register: rustup_file
+    - name: Download rustup
+      become_user: vagrant
+      ansible.builtin.shell:
+        cmd: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rustup.sh"
+      when: not rustup_file.stat.exists
+    - name: Execute installer
+      become_user: vagrant
+      ansible.builtin.shell:
+        cmd: "sh /tmp/rustup.sh -y"
+      when: not rustup_file.stat.exists
+
+    - name: Start postgres
+      ansible.builtin.systemd:
+        name: postgresql
+        state: started
+    - name: Create leech db user
+      become_user: postgres
+      community.postgresql.postgresql_user:
+        name: "{{ leech_db_user }}"
+        password: "{{ leech_db_password }}"
+    - name: Create leech database
+      become_user: postgres
+      community.postgresql.postgresql_db:
+        name: "{{ leech_db_name }}"
+        encoding: UTF-8
+        owner: "{{ leech_db_user }}"
+
+    - name: Create leech group
+      ansible.builtin.group:
+        name: leech
+    - name: Create leech user
+      ansible.builtin.user:
+        name: leech
+        system: yes
+        group: leech
+
+    - name: Compile leech
+      become_user: vagrant
+      ansible.builtin.command:
+        chdir: /vagrant
+        cmd: "/home/vagrant/.cargo/bin/cargo build -r -p leech"
+    - name: Copy to /usr/local/bin
+      copy:
+        remote_src: yes
+        src: /vagrant/target/release/leech
+        dest: /usr/local/bin/leech
+        mode: 0755
+        owner: root
+
+    - name: Stop leech.service
+      systemd:
+        name: leech.service
+        state: stopped
+      ignore_errors: yes
+
+    - name: Install systemd service
+      copy:
+        src: leech/leech.service
+        dest: /etc/systemd/system/leech.service
+        owner: root
+    - name: Restart leech
+      systemd:
+        enabled: yes
+        name: leech.service
+        state: restarted
+    - name: Apply leech config.toml
+      template:
+        src: leech/config.toml.jinja2
+        dest: /etc/leech/config.toml
+        owner: root
+        group: leech
+        mode: 0640
+
+    - name: Restart leech
+      systemd:
+        name: leech.service
+        state: restarted

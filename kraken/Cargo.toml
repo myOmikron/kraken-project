@@ -58,4 +58,4 @@ rorm = { version = "~0.4", features = ["tokio-rustls"] }
 tonic-build = { version = "~0.8" }
 
 [features]
-rorm = []
+rorm-main = []

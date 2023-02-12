@@ -1,0 +1,27 @@
+[Server]
+RpcListenAddress = "127.0.0.1"
+RpcListenPort = 31337
+Token = "{{ leech_token }}"
+
+[Database]
+# Only used by rorm-cli
+Driver = "Postgres"
+Host = "127.0.0.1"
+Port = 5432
+User = "{{ leech_db_user }}"
+Password = "{{ leech_db_password }}"
+Name = "{{ leech_db_name }}"
+
+[Logging]
+LogLevel = "debug"
+Path = "/var/log/leech/main.log"
+RotationFileSize = "10 MB"
+MaxRotationCount = 10
+
+[[Logging.AdditionalFileLoggers]]
+Name = "requests"
+AddToMainLogger = true
+Path = "/var/log/leech/requests.log"
+RotationFileSize = "10 MB"
+MaxRotationCount = 5
+AlternativePattern = "{h([{d(%Y-%m-%d %H:%M:%S)} | {({l}):5.5}])} {m}{n}"

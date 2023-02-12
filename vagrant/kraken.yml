@@ -5,3 +5,150 @@
     - ansible_become: yes
   vars_files:
     - vars.yml
+  tasks:
+    - name: Install dependencies
+      apt:
+        update_cache: yes
+        name:
+          - nginx
+          - postgresql
+          - protobuf-compiler
+          - libprotobuf-dev
+          - gnupg2
+          - libssl-dev
+          # Required for ansible
+          - acl
+          - python3-psycopg2
+
+    - name: Install key
+      ansible.builtin.apt_key:
+        state: present
+        url: "https://deb.nodesource.com/gpgkey/nodesource.gpg.key"
+    - name: node repository
+      ansible.builtin.apt_repository:
+        repo: "deb https://deb.nodesource.com/node_18.x bullseye main"
+    - name: Install node
+      ansible.builtin.apt:
+        state: latest
+        name: nodejs
+    - name: Install yarn
+      ansible.builtin.command:
+        cmd: "npm install -g yarn"
+
+    - name: Check for rustup
+      ansible.builtin.stat:
+        path: "/tmp/rustup.sh"
+      register: rustup_file
+    - name: Download rustup
+      become_user: vagrant
+      ansible.builtin.shell:
+        cmd: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rustup.sh"
+      when: not rustup_file.stat.exists
+    - name: Execute installer
+      become_user: vagrant
+      ansible.builtin.shell:
+        cmd: "sh /tmp/rustup.sh -y"
+      when: not rustup_file.stat.exists
+    - name: Install rorm-cli
+      become_user: vagrant
+      ansible.builtin.command:
+        cmd: "/home/vagrant/.cargo/bin/cargo install rorm-cli"
+
+    - name: Start postgres
+      ansible.builtin.systemd:
+        name: postgresql
+        state: started
+    - name: Create kraken db user
+      become_user: postgres
+      community.postgresql.postgresql_user:
+        name: "{{ kraken_db_user }}"
+        password: "{{ kraken_db_password }}"
+    - name: Create kraken database
+      become_user: postgres
+      community.postgresql.postgresql_db:
+        name: "{{ kraken_db_name }}"
+        encoding: UTF-8
+        owner: "{{ kraken_db_user }}"
+
+    - name: Create kraken group
+      ansible.builtin.group:
+        name: kraken
+    - name: Create kraken user
+      ansible.builtin.user:
+        name: kraken
+        system: yes
+        group: kraken
+
+    - name: Compile kraken
+      become_user: vagrant
+      ansible.builtin.command:
+        chdir: /vagrant
+        cmd: "/home/vagrant/.cargo/bin/cargo build -r -p kraken"
+    - name: Copy to /usr/local/bin
+      copy:
+        remote_src: yes
+        src: /vagrant/target/release/kraken
+        dest: /usr/local/bin/kraken
+        mode: 0755
+        owner: root
+
+    - name: Stop kraken.service
+      systemd:
+        name: kraken.service
+        state: stopped
+      ignore_errors: yes
+
+    - name: Install systemd service
+      copy:
+        src: kraken/kraken.service
+        dest: /etc/systemd/system/kraken.service
+        owner: root
+    - name: Restart kraken
+      systemd:
+        enabled: yes
+        name: kraken.service
+        state: restarted
+    - name: Apply kraken config.toml
+      template:
+        src: kraken/config.toml.jinja2
+        dest: /etc/kraken/config.toml
+        owner: root
+        group: kraken
+        mode: 0640
+
+    - name: Install packages
+      become_user: vagrant
+      ansible.builtin.command:
+        chdir: /vagrant/kraken_frontend
+        cmd: "yarn install"
+    - name: Build frontend
+      become_user: vagrant
+      ansible.builtin.command:
+        chdir: /vagrant/kraken_frontend
+        cmd: "yarn build"
+    - name: Copy frontend to static dir
+      ansible.builtin.copy:
+        remote_src: yes
+        src: /vagrant/kraken_frontend/dist/
+        dest: /var/www/kraken
+
+    - name: Apply nginx template
+      template:
+        src: kraken/kraken.nginx.jinja2
+        dest: /etc/nginx/sites-available/kraken.conf
+    - name: Link to enabled
+      file:
+        state: link
+        owner: root
+        group: root
+        src: /etc/nginx/sites-available/kraken.conf
+        dest: /etc/nginx/sites-enabled/kraken.conf
+    - name: Reload nginx
+      systemd:
+        name: nginx
+        state: reloaded
+
+    - name: Restart kraken
+      systemd:
+        name: kraken.service
+        state: restarted
