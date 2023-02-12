@@ -1,0 +1,7 @@
+---
+- name: Provision kraken
+  hosts: kraken
+  vars:
+    - ansible_become: yes
+  vars_files:
+    - vars.yml

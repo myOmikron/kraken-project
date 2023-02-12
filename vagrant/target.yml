@@ -1,0 +1,7 @@
+---
+- name: Provision target
+  hosts: target
+  vars:
+    - ansible_become: yes
+  vars_files:
+    - vars.yml
