@@ -19,6 +19,9 @@ pub struct User {
     #[rorm(max_length = 1024)]
     pub password_hash: String,
 
+    /// Flag whether the user is has administrative privileges
+    pub admin: bool,
+
     /// Last time the user has logged in
     pub last_login: Option<chrono::NaiveDateTime>,
 
@@ -36,6 +39,7 @@ pub(crate) struct UserInsert {
     pub(crate) username: String,
     pub(crate) display_name: String,
     pub(crate) password_hash: String,
+    pub(crate) admin: bool,
     pub(crate) last_login: Option<chrono::NaiveDateTime>,
 }
 
