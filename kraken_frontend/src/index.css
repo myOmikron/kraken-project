@@ -13,3 +13,22 @@ html {
 
     background-color: var(--level-0);
 }
+
+body {
+    margin: 0;
+    font-family: sans-serif;
+    background-color: var(--level-0);
+    color: var(--text);
+    height: 100%;
+    width: 100%;
+    position: fixed;
+    overflow: clip;
+}
+
+.background {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+}
