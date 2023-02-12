@@ -1,0 +1,51 @@
+:root {
+    --toast-success: #0f83;
+    --toast-info: #0cf3;
+    --toast-warning: rgba(255, 167, 0, 0.2);
+    --toast-error: rgba(255, 0, 0, 0.2);
+}
+
+.toast-pane {
+    box-shadow: 0 0 25em var(--primary-op), inset 0 0 5em var(--toast-hint-color), inset 0 0 0.5em #0ff2 !important;
+    backdrop-filter: blur(0.1em) !important;
+    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFUlEQVQIW2P8//+/FCMj4zNGBigAADqJBAO/UCEeAAAAAElFTkSuQmCC),
+    linear-gradient(0deg,#010b22,var(--level-1)) !important;
+    image-rendering: pixelated;
+}
+
+.toast-pane > div > div > svg,
+.toast-neon {
+    filter: brightness(0) invert() drop-shadow(0 0 4px #0cf);
+}
+
+.toast-progress {
+    height: 2px !important;
+}
+
+.toast-pane:before {
+    position: absolute;
+    display: block;
+    content: "";
+    left: 0;
+    top: 0;
+    width: 160px;
+    height: 100%;
+    z-index: -1;
+    background: radial-gradient(100% 130% at left center, var(--toast-hint-color), transparent);
+}
+
+.Toastify__toast--success {
+    --toast-hint-color: var(--toast-success);
+}
+
+.Toastify__toast--info {
+    --toast-hint-color: var(--toast-info);
+}
+
+.Toastify__toast--warning {
+    --toast-hint-color: var(--toast-warning);
+}
+
+.Toastify__toast--error {
+    --toast-hint-color: var(--toast-error);
+}
