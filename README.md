@@ -1,4 +1,4 @@
-# The kraken-project
+# :octopus: The kraken-project :octopus:
 
 [![LICENSE](https://img.shields.io/github/license/myOmikron/kraken-project?color=blue)](LICENSE)
 
