@@ -3,12 +3,14 @@ import ReactDOM from "react-dom/client";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import "./toastify.css";
+import "./styling/toastify.css";
+import "./styling/components.css";
 
 import "./index.css";
 import Home from "./views/home";
 import Background from "./views/background";
 import Login from "./views/login";
+import { Api } from "./api/api";
 
 type RouterProps = {};
 type RouterState = {
@@ -22,6 +24,12 @@ class Router extends React.Component<RouterProps, RouterState> {
         this.state = {
             path: [],
         };
+
+        Api.auth.test().then((v) => {
+            if (v === "logged out") {
+                document.location.hash = "/login";
+            }
+        });
     }
 
     componentDidMount() {
@@ -88,6 +96,7 @@ class Router extends React.Component<RouterProps, RouterState> {
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <>
+        <Background />
         <Router />
         <ToastContainer
             autoClose={3500}
@@ -95,6 +104,5 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             toastClassName="toast-pane"
             progressClassName="toast-neon toast-progress"
         />
-        <Background />
     </>
 );
