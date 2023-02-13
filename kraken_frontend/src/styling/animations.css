@@ -1,0 +1,26 @@
+@keyframes yourAnimation{
+    0% {
+        opacity: 0;
+    }
+    8% {
+        opacity: 0.5;
+    }
+    12% {
+        opacity: 0;
+    }
+    15% {
+        opacity: 1;
+    }
+    27% {
+        opacity: 0.1;
+    }
+    34% {
+        opacity: 1;
+    }
+    40% {
+        opacity: 0.2;
+    }
+    49% {
+        opacity: 1;
+    }
+}

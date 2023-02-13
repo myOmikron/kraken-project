@@ -10,8 +10,6 @@
 html {
     overflow: hidden;
     width: 100%;
-
-    background-color: var(--level-0);
 }
 
 body {
@@ -25,10 +23,23 @@ body {
     overflow: clip;
 }
 
-.background {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: -1;
+.pane {
+    display: flex;
+    padding: 2em;
+    flex-direction: column;
+    border-radius: 0.5em;
+    animation: pulse 4s ease-in alternate infinite;
+    box-shadow: 0 0 25em var(--primary-op), inset 0 0 10em #0cf3, inset 0 0 0.5em #0ff2;
+    backdrop-filter: blur(0.1em);
+    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFUlEQVQIW2P8//+/FCMj4zNGBigAADqJBAO/UCEeAAAAAElFTkSuQmCC),
+    linear-gradient(0deg,#010b22,var(--level-1));
+    image-rendering: pixelated;
+}
+
+.pane > * {
+    image-rendering: unset;
+}
+
+.heading {
+    font-weight: normal;
 }
