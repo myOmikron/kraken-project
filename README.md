@@ -11,3 +11,10 @@ for some attacks / reconnaissance work.
 
 Please note that this project is under heavy development. 
 Expect breaking changes every once in a while.
+
+## Contact
+
+You want to discuss something? Get in touch with us in our [matrix
+room](https://matrix.to/#/#kraken:matrix.hopfenspace.org).
+
+
