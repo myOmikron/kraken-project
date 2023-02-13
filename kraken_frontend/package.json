@@ -15,6 +15,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "js-base64": "^3.7.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-select": "^5.7.0",
