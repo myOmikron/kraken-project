@@ -1,5 +1,7 @@
 import React from "react";
 
+import "../styling/background.css";
+
 export default class Background extends React.Component<any, any> {
     canvas: HTMLCanvasElement | null | undefined;
     ctx: CanvasRenderingContext2D | null | undefined;
