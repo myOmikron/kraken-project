@@ -1,4 +1,4 @@
-use rorm::{BackRef, ForeignModel, Model};
+use rorm::{BackRef, ForeignModel, Model, Patch};
 
 /// The definition of a user
 #[derive(Model, Debug)]
@@ -34,6 +34,8 @@ pub struct User {
     pub user_keys: BackRef<UserKey>,
 }
 
+#[derive(Patch)]
+#[rorm(model = "User")]
 pub(crate) struct UserInsert {
     pub(crate) uuid: Vec<u8>,
     pub(crate) username: String,
@@ -58,6 +60,8 @@ pub struct UserKey {
     pub key: Vec<u8>,
 }
 
+#[derive(Patch)]
+#[rorm(model = "UserKey")]
 pub(crate) struct UserKeyInsert {
     pub(crate) name: String,
     pub(crate) user: ForeignModel<User>,

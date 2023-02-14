@@ -3,9 +3,10 @@ use std::fmt::{Display, Formatter};
 use actix_toolbox::tb_middleware::actix_session;
 use actix_web::body::BoxBody;
 use actix_web::HttpResponse;
-use log::{debug, error, trace, warn};
+use log::{debug, error, info, trace, warn};
 use serde::Serialize;
 use serde_repr::Serialize_repr;
+use webauthn_rs::prelude::WebauthnError;
 
 pub(crate) use crate::api::handler::auth::*;
 
@@ -24,9 +25,11 @@ enum ApiStatusCode {
     Unauthenticated = 1005,
     Missing2fa = 1006,
     MissingPrivileges = 1007,
+    NoSecurityKeyAvailable = 1008,
     InternalServerError = 2000,
     DatabaseError = 2001,
     SessionError = 2002,
+    WebauthnError = 2003,
 }
 
 #[derive(Serialize)]
@@ -60,6 +63,8 @@ pub(crate) enum ApiError {
     Missing2FA,
     SessionCorrupt,
     MissingPrivileges,
+    NoSecurityKeyAvailable,
+    Webauthn(WebauthnError),
 }
 
 impl Display for ApiError {
@@ -81,6 +86,8 @@ impl Display for ApiError {
             ApiError::Missing2FA => write!(f, "2FA is missing"),
             ApiError::SessionCorrupt => write!(f, "Corrupt session"),
             ApiError::MissingPrivileges => write!(f, "You are missing privileges"),
+            ApiError::NoSecurityKeyAvailable => write!(f, "No security key available"),
+            ApiError::Webauthn(_) => write!(f, "Webauthn error"),
         }
     }
 }
@@ -187,6 +194,22 @@ impl actix_web::ResponseError for ApiError {
                     self.to_string(),
                 ))
             }
+            ApiError::NoSecurityKeyAvailable => {
+                debug!("Missing security key");
+
+                HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                    ApiStatusCode::NoSecurityKeyAvailable,
+                    self.to_string(),
+                ))
+            }
+            ApiError::Webauthn(err) => {
+                info!("Webauthn error: {err}");
+
+                HttpResponse::InternalServerError().json(ApiErrorResponse::new(
+                    ApiStatusCode::WebauthnError,
+                    self.to_string(),
+                ))
+            }
         }
     }
 }
@@ -212,5 +235,11 @@ impl From<actix_session::SessionInsertError> for ApiError {
 impl From<actix_session::SessionGetError> for ApiError {
     fn from(value: actix_session::SessionGetError) -> Self {
         Self::SessionGet(value)
+    }
+}
+
+impl From<WebauthnError> for ApiError {
+    fn from(value: WebauthnError) -> Self {
+        Self::Webauthn(value)
     }
 }

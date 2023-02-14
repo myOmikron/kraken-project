@@ -64,7 +64,11 @@ pub(crate) async fn start_server(db: Database, config: &Config) -> Result<(), St
             .service(
                 scope("api/v1/auth")
                     .route("login", post().to(handler::login))
-                    .route("logout", get().to(handler::logout)),
+                    .route("logout", get().to(handler::logout))
+                    .route("start_auth", post().to(handler::start_auth))
+                    .route("finish_auth", post().to(handler::finish_auth))
+                    .route("start_register", post().to(handler::start_register))
+                    .route("finish_register", post().to(handler::finish_register)),
             )
             .service(scope("api/v1/admin").wrap(AdminRequired))
             .service(
