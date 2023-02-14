@@ -61,7 +61,11 @@ pub(crate) async fn start_server(db: Database, config: &Config) -> Result<(), St
             )
             .wrap(Compress::default())
             .wrap(ErrorHandlers::new().handler(StatusCode::NOT_FOUND, handle_not_found))
-            .service(scope("api/v1/auth").route("login", post().to(handler::login)))
+            .service(
+                scope("api/v1/auth")
+                    .route("login", post().to(handler::login))
+                    .route("logout", get().to(handler::logout)),
+            )
             .service(scope("api/v1/admin").wrap(AdminRequired))
             .service(
                 scope("api/v1")

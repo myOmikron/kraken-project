@@ -57,3 +57,9 @@ pub(crate) async fn login(
 
     Ok(HttpResponse::Ok().finish())
 }
+
+pub(crate) async fn logout(session: Session) -> HttpResponse {
+    session.purge();
+
+    HttpResponse::Ok().finish()
+}
