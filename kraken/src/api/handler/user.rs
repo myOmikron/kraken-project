@@ -3,7 +3,7 @@ use rorm::Database;
 use serde::{Deserialize, Serialize};
 
 use crate::api::handler::ApiResult;
-use crate::modules::user;
+use crate::modules::user::create::create_user_transaction;
 
 #[derive(Deserialize)]
 pub(crate) struct CreateUserRequest {
@@ -20,7 +20,7 @@ pub(crate) async fn create_user(
     req: Json<CreateUserRequest>,
     db: Data<Database>,
 ) -> ApiResult<Json<CreateUserResponse>> {
-    user::create_user_transaction(
+    create_user_transaction(
         req.username.clone(),
         req.display_name.clone(),
         req.password.clone(),

@@ -10,7 +10,7 @@ use webauthn_rs::prelude::WebauthnError;
 
 pub(crate) use crate::api::handler::auth::*;
 pub(crate) use crate::api::handler::user::*;
-use crate::modules::user::CreateUserError;
+use crate::modules::user::create::CreateUserError;
 
 mod auth;
 mod user;

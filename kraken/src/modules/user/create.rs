@@ -1,4 +1,4 @@
-//! This module holds functions for the user management.
+//! The user creation lives here
 
 use std::fmt::{Display, Formatter};
 
@@ -22,7 +22,7 @@ Returns the [Uuid] of the user.
 - `password`: Password of the user
 - `admin`: Flag if the user has administrative privileges
 - `db`: Reference of a [Database] instance
-*/
+ */
 pub async fn create_user_transaction(
     username: String,
     display_name: String,
