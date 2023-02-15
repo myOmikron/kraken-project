@@ -81,7 +81,8 @@ pub(crate) async fn start_server(db: Database, config: &Config) -> Result<(), St
             .service(
                 scope("api/v1")
                     .wrap(AuthenticationRequired)
-                    .route("test", get().to(handler::test)),
+                    .route("test", get().to(handler::test))
+                    .route("user/me", get().to(handler::get_me)),
             )
     })
     .bind((

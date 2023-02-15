@@ -1,10 +1,11 @@
+use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path};
 use actix_web::HttpResponse;
 use rorm::{query, Database, Model};
 use serde::{Deserialize, Serialize};
 use webauthn_rs::prelude::Uuid;
 
-use crate::api::handler::ApiResult;
+use crate::api::handler::{ApiError, ApiResult};
 use crate::models::User;
 use crate::modules::user::create::create_user_transaction;
 use crate::modules::user::delete::delete_user_transaction;
@@ -99,5 +100,24 @@ pub(crate) async fn get_user(
                 last_login: u.last_login,
             })
             .collect(),
+    }))
+}
+
+pub(crate) async fn get_me(session: Session, db: Data<Database>) -> ApiResult<Json<GetUser>> {
+    let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+
+    let user = query!(&db, User)
+        .condition(User::F.uuid.equals(&uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::SessionCorrupt)?;
+
+    Ok(Json(GetUser {
+        uuid: Uuid::from_slice(&user.uuid).unwrap().to_string(),
+        username: user.username,
+        display_name: user.display_name,
+        admin: user.admin,
+        created_at: user.created_at,
+        last_login: user.last_login,
     }))
 }
