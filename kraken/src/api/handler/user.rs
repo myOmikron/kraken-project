@@ -1,9 +1,11 @@
 use actix_web::web::{Data, Json, Path};
 use actix_web::HttpResponse;
-use rorm::Database;
+use rorm::{query, Database, Model};
 use serde::{Deserialize, Serialize};
+use webauthn_rs::prelude::Uuid;
 
 use crate::api::handler::ApiResult;
+use crate::models::User;
 use crate::modules::user::create::create_user_transaction;
 use crate::modules::user::delete::delete_user_transaction;
 
@@ -50,4 +52,52 @@ pub(crate) async fn delete_user(
     delete_user_transaction(req.username.clone(), &db).await?;
 
     Ok(HttpResponse::Ok().finish())
+}
+
+#[derive(Deserialize)]
+pub(crate) struct GetUserRequest {
+    pub(crate) username: Option<String>,
+}
+
+#[derive(Serialize)]
+pub(crate) struct GetUser {
+    pub(crate) uuid: String,
+    pub(crate) username: String,
+    pub(crate) display_name: String,
+    pub(crate) admin: bool,
+    pub(crate) created_at: chrono::NaiveDateTime,
+    pub(crate) last_login: Option<chrono::NaiveDateTime>,
+}
+
+#[derive(Serialize)]
+pub(crate) struct GetUserResponse {
+    pub(crate) users: Vec<GetUser>,
+}
+
+pub(crate) async fn get_user(
+    req: Path<GetUserRequest>,
+    db: Data<Database>,
+) -> ApiResult<Json<GetUserResponse>> {
+    let users = if let Some(username) = &req.username {
+        query!(&db, User)
+            .condition(User::F.username.equals(username))
+            .all()
+            .await?
+    } else {
+        query!(&db, User).all().await?
+    };
+
+    Ok(Json(GetUserResponse {
+        users: users
+            .into_iter()
+            .map(|u| GetUser {
+                uuid: Uuid::from_slice(u.uuid.as_slice()).unwrap().to_string(),
+                username: u.username,
+                display_name: u.display_name,
+                admin: u.admin,
+                created_at: u.created_at,
+                last_login: u.last_login,
+            })
+            .collect(),
+    }))
 }

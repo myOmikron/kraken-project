@@ -73,6 +73,8 @@ pub(crate) async fn start_server(db: Database, config: &Config) -> Result<(), St
             .service(
                 scope("api/v1/admin")
                     .wrap(AdminRequired)
+                    .route("user", get().to(handler::get_user))
+                    .route("user/{username}", get().to(handler::get_user))
                     .route("user", post().to(handler::create_user))
                     .route("user/{username}", delete().to(handler::delete_user)),
             )
