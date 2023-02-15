@@ -30,6 +30,7 @@ use crate::config::Config;
 mod api;
 pub mod config;
 pub mod models;
+pub mod modules;
 
 #[derive(Subcommand)]
 enum Command {

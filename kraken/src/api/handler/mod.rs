@@ -9,8 +9,11 @@ use serde_repr::Serialize_repr;
 use webauthn_rs::prelude::WebauthnError;
 
 pub(crate) use crate::api::handler::auth::*;
+pub(crate) use crate::api::handler::user::*;
+use crate::modules::user::CreateUserError;
 
 mod auth;
+mod user;
 
 pub(crate) type ApiResult<T> = Result<T, ApiError>;
 
@@ -26,6 +29,7 @@ enum ApiStatusCode {
     Missing2fa = 1006,
     MissingPrivileges = 1007,
     NoSecurityKeyAvailable = 1008,
+    UserAlreadyExists = 1009,
     InternalServerError = 2000,
     DatabaseError = 2001,
     SessionError = 2002,
@@ -65,6 +69,7 @@ pub(crate) enum ApiError {
     MissingPrivileges,
     NoSecurityKeyAvailable,
     Webauthn(WebauthnError),
+    UserAlreadyExists,
 }
 
 impl Display for ApiError {
@@ -88,6 +93,7 @@ impl Display for ApiError {
             ApiError::MissingPrivileges => write!(f, "You are missing privileges"),
             ApiError::NoSecurityKeyAvailable => write!(f, "No security key available"),
             ApiError::Webauthn(_) => write!(f, "Webauthn error"),
+            ApiError::UserAlreadyExists => write!(f, "User does already exist"),
         }
     }
 }
@@ -210,6 +216,10 @@ impl actix_web::ResponseError for ApiError {
                     self.to_string(),
                 ))
             }
+            ApiError::UserAlreadyExists => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::UserAlreadyExists,
+                self.to_string(),
+            )),
         }
     }
 }
@@ -241,5 +251,15 @@ impl From<actix_session::SessionGetError> for ApiError {
 impl From<WebauthnError> for ApiError {
     fn from(value: WebauthnError) -> Self {
         Self::Webauthn(value)
+    }
+}
+
+impl From<CreateUserError> for ApiError {
+    fn from(value: CreateUserError) -> Self {
+        match value {
+            CreateUserError::DatabaseError(err) => Self::DatabaseError(err),
+            CreateUserError::UsernameAlreadyExists => Self::UserAlreadyExists,
+            CreateUserError::HashError(err) => Self::InvalidHash(err),
+        }
     }
 }
