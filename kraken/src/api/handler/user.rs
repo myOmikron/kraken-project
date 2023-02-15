@@ -1,9 +1,11 @@
-use actix_web::web::{Data, Json};
+use actix_web::web::{Data, Json, Path};
+use actix_web::HttpResponse;
 use rorm::Database;
 use serde::{Deserialize, Serialize};
 
 use crate::api::handler::ApiResult;
 use crate::modules::user::create::create_user_transaction;
+use crate::modules::user::delete::delete_user_transaction;
 
 #[derive(Deserialize)]
 pub(crate) struct CreateUserRequest {
@@ -34,4 +36,18 @@ pub(crate) async fn create_user(
     Ok(Json(CreateUserResponse {
         uuid: uuid.to_string(),
     }))
+}
+
+#[derive(Deserialize)]
+pub(crate) struct DeleteUserRequest {
+    pub(crate) username: String,
+}
+
+pub(crate) async fn delete_user(
+    req: Path<DeleteUserRequest>,
+    db: Data<Database>,
+) -> ApiResult<HttpResponse> {
+    delete_user_transaction(req.username.clone(), &db).await?;
+
+    Ok(HttpResponse::Ok().finish())
 }

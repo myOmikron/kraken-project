@@ -8,7 +8,7 @@ use actix_web::cookie::time::Duration;
 use actix_web::cookie::{Key, KeyError};
 use actix_web::http::StatusCode;
 use actix_web::middleware::{Compress, ErrorHandlers};
-use actix_web::web::{get, post, scope, Data, JsonConfig, PayloadConfig};
+use actix_web::web::{delete, get, post, scope, Data, JsonConfig, PayloadConfig};
 use actix_web::{App, HttpServer};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
@@ -73,7 +73,8 @@ pub(crate) async fn start_server(db: Database, config: &Config) -> Result<(), St
             .service(
                 scope("api/v1/admin")
                     .wrap(AdminRequired)
-                    .route("user", post().to(handler::create_user)),
+                    .route("user", post().to(handler::create_user))
+                    .route("user/{username}", delete().to(handler::delete_user)),
             )
             .service(
                 scope("api/v1")
