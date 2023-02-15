@@ -14,13 +14,15 @@ pub(crate) struct CreateUserRequest {
 }
 
 #[derive(Serialize)]
-pub(crate) struct CreateUserResponse {}
+pub(crate) struct CreateUserResponse {
+    pub(crate) uuid: String,
+}
 
 pub(crate) async fn create_user(
     req: Json<CreateUserRequest>,
     db: Data<Database>,
 ) -> ApiResult<Json<CreateUserResponse>> {
-    create_user_transaction(
+    let uuid = create_user_transaction(
         req.username.clone(),
         req.display_name.clone(),
         req.password.clone(),
@@ -29,5 +31,7 @@ pub(crate) async fn create_user(
     )
     .await?;
 
-    Ok(Json(CreateUserResponse {}))
+    Ok(Json(CreateUserResponse {
+        uuid: uuid.to_string(),
+    }))
 }

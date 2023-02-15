@@ -29,7 +29,7 @@ pub async fn create_user_transaction(
     password: String,
     admin: bool,
     db: &Database,
-) -> Result<Vec<u8>, CreateUserError> {
+) -> Result<Uuid, CreateUserError> {
     let mut tx = db.start_transaction().await?;
 
     let uuid = create_user(username, display_name, password, admin, db, &mut tx).await?;
@@ -59,7 +59,7 @@ pub async fn create_user<'db>(
     admin: bool,
     db: &'db Database,
     tx: &mut Transaction<'db>,
-) -> Result<Vec<u8>, CreateUserError> {
+) -> Result<Uuid, CreateUserError> {
     query!(db, (User::F.uuid,))
         .transaction(tx)
         .optional()
@@ -71,10 +71,12 @@ pub async fn create_user<'db>(
         .hash_password(password.as_bytes(), &salt)?
         .to_string();
 
-    let uuid = insert!(db, UserInsert)
+    let uuid = Uuid::new_v4();
+
+    insert!(db, UserInsert)
         .transaction(tx)
         .single(&UserInsert {
-            uuid: Uuid::new_v4().as_bytes().to_vec(),
+            uuid: uuid.as_bytes().to_vec(),
             username,
             display_name,
             password_hash,
