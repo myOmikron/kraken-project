@@ -9,12 +9,12 @@ use serde_repr::Serialize_repr;
 use webauthn_rs::prelude::WebauthnError;
 
 pub(crate) use crate::api::handler::auth::*;
-pub(crate) use crate::api::handler::user::*;
+pub(crate) use crate::api::handler::users::*;
 use crate::modules::user::create::CreateUserError;
 use crate::modules::user::delete::DeleteUserError;
 
 mod auth;
-mod user;
+mod users;
 
 pub(crate) type ApiResult<T> = Result<T, ApiError>;
 
