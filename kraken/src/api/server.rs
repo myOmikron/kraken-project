@@ -80,13 +80,19 @@ pub(crate) async fn start_server(db: Database, config: &Config) -> Result<(), St
                     .route("leeches", get().to(handler::get_leech))
                     .route("leeches/{id}", get().to(handler::get_leech))
                     .route("leeches", post().to(handler::create_leech))
-                    .route("leeches/{id}", delete().to(handler::delete_leech)),
+                    .route("leeches/{id}", delete().to(handler::delete_leech))
+                    .route("workspaces", get().to(handler::get_workspaces_admin))
+                    .route("workspaces/{id}", get().to(handler::get_workspaces_admin)),
             )
             .service(
                 scope("api/v1")
                     .wrap(AuthenticationRequired)
                     .route("test", get().to(handler::test))
-                    .route("users/me", get().to(handler::get_me)),
+                    .route("users/me", get().to(handler::get_me))
+                    .route("workspaces", get().to(handler::get_workspaces))
+                    .route("workspaces/{id}", get().to(handler::get_workspaces))
+                    .route("workspaces", post().to(handler::create_workspace))
+                    .route("workspaces/{id}", delete().to(handler::delete_workspace)),
             )
     })
     .bind((
