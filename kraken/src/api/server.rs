@@ -73,10 +73,10 @@ pub(crate) async fn start_server(db: Database, config: &Config) -> Result<(), St
             .service(
                 scope("api/v1/admin")
                     .wrap(AdminRequired)
-                    .route("user", get().to(handler::get_user))
-                    .route("user/{username}", get().to(handler::get_user))
-                    .route("user", post().to(handler::create_user))
-                    .route("user/{username}", delete().to(handler::delete_user))
+                    .route("users", get().to(handler::get_user))
+                    .route("users/{username}", get().to(handler::get_user))
+                    .route("users", post().to(handler::create_user))
+                    .route("users/{username}", delete().to(handler::delete_user))
                     .route("leeches", post().to(handler::create_leech))
                     .route("leeches/{id}", delete().to(handler::delete_leech)),
             )
@@ -84,7 +84,7 @@ pub(crate) async fn start_server(db: Database, config: &Config) -> Result<(), St
                 scope("api/v1")
                     .wrap(AuthenticationRequired)
                     .route("test", get().to(handler::test))
-                    .route("user/me", get().to(handler::get_me)),
+                    .route("users/me", get().to(handler::get_me)),
             )
     })
     .bind((
