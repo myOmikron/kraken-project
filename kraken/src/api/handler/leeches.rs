@@ -90,3 +90,51 @@ pub(crate) async fn delete_leech(
 
     Ok(HttpResponse::Ok().finish())
 }
+
+#[derive(Deserialize)]
+pub(crate) struct GetLeechRequest {
+    id: Option<u32>,
+}
+
+#[derive(Serialize)]
+pub(crate) struct GetLeech {
+    id: i64,
+    name: String,
+    address: String,
+}
+
+#[derive(Serialize)]
+pub(crate) struct GetLeechResponse {
+    leeches: Vec<GetLeech>,
+}
+
+pub(crate) async fn get_leech(
+    req: Path<GetLeechRequest>,
+    db: Data<Database>,
+) -> ApiResult<Json<GetLeechResponse>> {
+    let leeches = if let Some(id) = req.id {
+        let leech = query!(&db, Leech)
+            .condition(Leech::F.id.equals(id as i64))
+            .all()
+            .await?;
+
+        if leech.is_empty() {
+            return Err(ApiError::InvalidId);
+        }
+
+        leech
+    } else {
+        query!(&db, Leech).all().await?
+    };
+
+    Ok(Json(GetLeechResponse {
+        leeches: leeches
+            .into_iter()
+            .map(|l| GetLeech {
+                id: l.id,
+                name: l.name,
+                address: l.address,
+            })
+            .collect(),
+    }))
+}
