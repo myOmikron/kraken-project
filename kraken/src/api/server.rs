@@ -77,7 +77,8 @@ pub(crate) async fn start_server(db: Database, config: &Config) -> Result<(), St
                     .route("user/{username}", get().to(handler::get_user))
                     .route("user", post().to(handler::create_user))
                     .route("user/{username}", delete().to(handler::delete_user))
-                    .route("leeches", post().to(handler::create_leech)),
+                    .route("leeches", post().to(handler::create_leech))
+                    .route("leeches/{id}", delete().to(handler::delete_leech)),
             )
             .service(
                 scope("api/v1")

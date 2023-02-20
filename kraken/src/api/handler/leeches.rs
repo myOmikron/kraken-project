@@ -1,11 +1,12 @@
 use std::str::FromStr;
 
 use actix_web::http::Uri;
-use actix_web::web::{Data, Json};
-use rorm::{insert, query, Database, Model};
+use actix_web::web::{Data, Json, Path};
+use actix_web::HttpResponse;
+use rorm::{delete, insert, query, Database, Model};
 use serde::{Deserialize, Serialize};
 
-use crate::api::handler::{ApiError, ApiResult};
+use crate::api::handler::{ApiError, ApiResult, PathId};
 use crate::models::{Leech, LeechInsert};
 
 #[derive(Deserialize)]
@@ -65,4 +66,27 @@ pub(crate) async fn create_leech(
     tx.commit().await?;
 
     Ok(Json(CreateLeechResponse { id }))
+}
+
+pub(crate) async fn delete_leech(
+    path: Path<PathId>,
+    db: Data<Database>,
+) -> ApiResult<HttpResponse> {
+    let mut tx = db.start_transaction().await?;
+
+    query!(&db, (Leech::F.id,))
+        .transaction(&mut tx)
+        .condition(Leech::F.id.equals(path.id as i64))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidId)?;
+
+    delete!(&db, Leech)
+        .transaction(&mut tx)
+        .condition(Leech::F.id.equals(path.id as i64))
+        .await?;
+
+    tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
 }

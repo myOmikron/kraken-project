@@ -4,7 +4,7 @@ use actix_toolbox::tb_middleware::actix_session;
 use actix_web::body::BoxBody;
 use actix_web::HttpResponse;
 use log::{debug, error, info, trace, warn};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_repr::Serialize_repr;
 use webauthn_rs::prelude::WebauthnError;
 
@@ -17,6 +17,11 @@ use crate::modules::user::delete::DeleteUserError;
 mod auth;
 mod leeches;
 mod users;
+
+#[derive(Deserialize)]
+pub(crate) struct PathId {
+    pub(crate) id: u32,
+}
 
 pub(crate) type ApiResult<T> = Result<T, ApiError>;
 
@@ -37,6 +42,7 @@ enum ApiStatusCode {
     InvalidAddress = 1011,
     AddressAlreadyExists = 1012,
     NameAlreadyExists = 1013,
+    InvalidId = 1014,
     InternalServerError = 2000,
     DatabaseError = 2001,
     SessionError = 2002,
@@ -81,6 +87,7 @@ pub(crate) enum ApiError {
     InvalidAddress,
     AddressAlreadyExists,
     NameAlreadyExists,
+    InvalidId,
 }
 
 impl Display for ApiError {
@@ -109,6 +116,7 @@ impl Display for ApiError {
             ApiError::InvalidAddress => write!(f, "Invalid address"),
             ApiError::AddressAlreadyExists => write!(f, "Address already exists"),
             ApiError::NameAlreadyExists => write!(f, "Name already exists"),
+            ApiError::InvalidId => write!(f, "Invalid ID"),
         }
     }
 }
@@ -248,6 +256,10 @@ impl actix_web::ResponseError for ApiError {
             ),
             ApiError::NameAlreadyExists => HttpResponse::BadRequest().json(ApiErrorResponse::new(
                 ApiStatusCode::NameAlreadyExists,
+                self.to_string(),
+            )),
+            ApiError::InvalidId => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::InvalidId,
                 self.to_string(),
             )),
         }
