@@ -3,7 +3,7 @@ name = "kraken"
 version = "0.1.0"
 edition = "2021"
 authors = ["Niklas Pfister <git@omikron.dev>"]
-license = "MPL-2.0"
+license = "AGPL-3.0"
 repository = "https://github.com/myOmikron/kraken-project"
 description = "The core component of kraken-project"
 
