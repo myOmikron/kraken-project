@@ -4,7 +4,7 @@ use actix_toolbox::tb_middleware::actix_session;
 use actix_web::body::BoxBody;
 use actix_web::HttpResponse;
 use log::{debug, error, info, trace, warn};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_repr::Serialize_repr;
 use webauthn_rs::prelude::WebauthnError;
 
@@ -332,4 +332,25 @@ impl From<DeleteUserError> for ApiError {
             DeleteUserError::InvalidUsername => Self::InvalidUsername,
         }
     }
+}
+
+/// Custom serializer to enable the distinction of missing keys vs null values in JSON requests
+///
+/// # Example
+/// ```rust
+/// #[derive(Deserialize)]
+///  pub(crate) struct UpdateRequest {
+///     name: Option<String>,
+///
+///     #[serde(default)]
+///     #[serde(deserialize_with = "crate::api::handler::de_optional")]
+///     description: Option<Option<String>>,
+/// }
+/// ```
+pub(crate) fn de_optional<'de, D, T>(d: D) -> Result<Option<Option<T>>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    Ok(Some(Option::deserialize(d)?))
 }

@@ -138,6 +138,8 @@ pub(crate) async fn get_leech(
 pub(crate) struct UpdateLeechRequest {
     name: Option<String>,
     address: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "crate::api::handler::de_optional")]
     description: Option<Option<String>>,
 }
 
