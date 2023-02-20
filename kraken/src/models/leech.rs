@@ -14,11 +14,16 @@ pub struct Leech {
     /// Address of the leech
     #[rorm(max_length = 255, unique)]
     pub address: String,
+
+    /// Optional description of a leech
+    #[rorm(max_length = 65535)]
+    pub description: Option<String>,
 }
 
 #[derive(Patch)]
 #[rorm(model = "Leech")]
 pub(crate) struct LeechInsert {
-    pub name: String,
-    pub address: String,
+    pub(crate) name: String,
+    pub(crate) address: String,
+    pub(crate) description: Option<String>,
 }

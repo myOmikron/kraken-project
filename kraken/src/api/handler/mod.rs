@@ -46,6 +46,7 @@ enum ApiStatusCode {
     NameAlreadyExists = 1013,
     InvalidId = 1014,
     WorkspaceNotDeletable = 1015,
+    EmptyJson = 1016,
     InternalServerError = 2000,
     DatabaseError = 2001,
     SessionError = 2002,
@@ -92,6 +93,7 @@ pub(crate) enum ApiError {
     NameAlreadyExists,
     InvalidId,
     WorkspaceNotDeletable,
+    EmptyJson,
 }
 
 impl Display for ApiError {
@@ -122,6 +124,7 @@ impl Display for ApiError {
             ApiError::NameAlreadyExists => write!(f, "Name already exists"),
             ApiError::InvalidId => write!(f, "Invalid ID"),
             ApiError::WorkspaceNotDeletable => write!(f, "Workspace is not deletable"),
+            ApiError::EmptyJson => write!(f, "Received an empty json request"),
         }
     }
 }
@@ -270,6 +273,14 @@ impl actix_web::ResponseError for ApiError {
             ApiError::WorkspaceNotDeletable => HttpResponse::BadRequest().json(
                 ApiErrorResponse::new(ApiStatusCode::WorkspaceNotDeletable, self.to_string()),
             ),
+            ApiError::EmptyJson => {
+                trace!("Received an empty json");
+
+                HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                    ApiStatusCode::EmptyJson,
+                    self.to_string(),
+                ))
+            }
         }
     }
 }

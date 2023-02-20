@@ -8,7 +8,7 @@ use actix_web::cookie::time::Duration;
 use actix_web::cookie::{Key, KeyError};
 use actix_web::http::StatusCode;
 use actix_web::middleware::{Compress, ErrorHandlers};
-use actix_web::web::{delete, get, post, scope, Data, JsonConfig, PayloadConfig};
+use actix_web::web::{delete, get, post, put, scope, Data, JsonConfig, PayloadConfig};
 use actix_web::{App, HttpServer};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
@@ -81,6 +81,7 @@ pub(crate) async fn start_server(db: Database, config: &Config) -> Result<(), St
                     .route("leeches/{id}", get().to(handler::get_leech))
                     .route("leeches", post().to(handler::create_leech))
                     .route("leeches/{id}", delete().to(handler::delete_leech))
+                    .route("leeches/{id}", put().to(handler::update_leech))
                     .route("workspaces", get().to(handler::get_workspaces_admin))
                     .route("workspaces/{id}", get().to(handler::get_workspaces_admin)),
             )

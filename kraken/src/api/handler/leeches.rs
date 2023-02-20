@@ -1,18 +1,17 @@
-use std::str::FromStr;
-
-use actix_web::http::Uri;
 use actix_web::web::{Data, Json, Path};
 use actix_web::HttpResponse;
-use rorm::{delete, insert, query, Database, Model};
+use rorm::{delete, insert, query, update, Database, Model};
 use serde::{Deserialize, Serialize};
 
 use crate::api::handler::{ApiError, ApiResult, PathId};
 use crate::models::{Leech, LeechInsert};
+use crate::modules::uri::check_leech_address;
 
 #[derive(Deserialize)]
 pub(crate) struct CreateLeechRequest {
     pub(crate) name: String,
     pub(crate) address: String,
+    pub(crate) description: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -26,18 +25,13 @@ pub(crate) async fn create_leech(
 ) -> ApiResult<Json<CreateLeechResponse>> {
     let mut tx = db.start_transaction().await?;
 
-    let address = Uri::from_str(req.address.as_str()).map_err(|_| ApiError::InvalidAddress)?;
-    if let Some(scheme) = address.scheme_str() {
-        if scheme != "https" && scheme != "http" {
-            return Err(ApiError::InvalidAddress);
-        }
-    } else {
+    if !check_leech_address(&req.address) {
         return Err(ApiError::InvalidAddress);
     }
 
     if query!(&db, Leech)
         .transaction(&mut tx)
-        .condition(Leech::F.address.equals(&address.to_string()))
+        .condition(Leech::F.address.equals(&req.address))
         .optional()
         .await?
         .is_some()
@@ -59,7 +53,8 @@ pub(crate) async fn create_leech(
         .transaction(&mut tx)
         .single(&LeechInsert {
             name: req.name.clone(),
-            address: address.to_string(),
+            address: req.address.clone(),
+            description: req.description.clone(),
         })
         .await?;
 
@@ -137,4 +132,53 @@ pub(crate) async fn get_leech(
             })
             .collect(),
     }))
+}
+
+#[derive(Deserialize)]
+pub(crate) struct UpdateLeechRequest {
+    name: Option<String>,
+    address: Option<String>,
+    description: Option<Option<String>>,
+}
+
+pub(crate) async fn update_leech(
+    path: Path<PathId>,
+    req: Json<UpdateLeechRequest>,
+    db: Data<Database>,
+) -> ApiResult<HttpResponse> {
+    let mut tx = db.start_transaction().await?;
+
+    query!(&db, (Leech::F.id,))
+        .transaction(&mut tx)
+        .condition(Leech::F.id.equals(path.id as i64))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidId)?;
+
+    let mut ub = update!(&db, Leech).begin_dyn_set();
+
+    if let Some(name) = &req.name {
+        ub = ub.set(Leech::F.name, name);
+    }
+
+    if let Some(address) = &req.address {
+        if !check_leech_address(address) {
+            return Err(ApiError::InvalidAddress);
+        }
+        ub = ub.set(Leech::F.address, address);
+    }
+
+    if let Some(description) = &req.description {
+        ub = ub.set(Leech::F.description, description.as_ref());
+    }
+
+    ub.transaction(&mut tx)
+        .finish_dyn_set()
+        .map_err(|_| ApiError::EmptyJson)?
+        .exec()
+        .await?;
+
+    tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
 }
