@@ -23,7 +23,7 @@ jobs:
         working-directory: kraken_frontend
         run: |
           npm install
-          npx vite build
+          npm run build
   build_rs:
     name: Build & Tests on linux
     runs-on: ubuntu-latest
