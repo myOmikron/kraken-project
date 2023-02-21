@@ -6,7 +6,25 @@ on:
     pull_request:
 
 jobs:
-  dependencies:
+  build_ts:
+    name: Build typescript
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x, 16.x, 18.x]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Build
+        working-directory: kraken_frontend
+        run: |
+          npm install
+          npx vite build
+  build_rs:
     name: Build & Tests on linux
     runs-on: ubuntu-latest
     permissions:
