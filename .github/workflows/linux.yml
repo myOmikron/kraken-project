@@ -21,8 +21,6 @@ jobs:
           rustup toolchain install stable --profile minimal
 
       - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "1"
 
       - name: Install dependencies
         run: |
