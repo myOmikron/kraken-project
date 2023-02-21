@@ -35,7 +35,9 @@ pub mod modules;
 
 #[derive(Subcommand)]
 enum Command {
+    /// Start the server
     Start,
+    /// Generate a secret key
     Keygen,
 }
 
