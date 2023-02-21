@@ -28,6 +28,7 @@ jobs:
           cargo install clippy-sarif sarif-fmt
 
   build-linux:
+    needs: dependencies
     name: Build
     runs-on: ubuntu-latest
     env:
