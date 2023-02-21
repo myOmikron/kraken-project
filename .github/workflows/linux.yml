@@ -1,0 +1,25 @@
+name: Build & Tests on linux
+on:
+  push:
+    paths-ignore:
+      - "*.md"
+    pull_request:
+
+jobs:
+  workspaces:
+    runs-on: ubuntu-latest
+
+    env:
+      CARGO_TERM_COLOR: always
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # When rustup is updated, it tries to replace its binary, which on Windows is somehow locked.
+      # This can result in the CI failure, see: https://github.com/rust-lang/rustup/issues/3029
+      - run: |
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo check
+        working-directory: tests
