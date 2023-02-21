@@ -76,7 +76,6 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: "false"
           shared-key: "1"
 
       - name: Run rust-clippy
