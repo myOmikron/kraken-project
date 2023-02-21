@@ -40,6 +40,7 @@ enum Command {
 }
 
 #[derive(Parser)]
+#[clap(version, about = "The kraken core")]
 struct Cli {
     #[clap(long = "config-path")]
     #[clap(help = "Specify an alternative path to the config file")]
