@@ -21,6 +21,8 @@ jobs:
           rustup toolchain install stable --profile minimal
 
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "1"
 
       - name: Install dependencies
         run: |
@@ -43,6 +45,8 @@ jobs:
           rustup toolchain install stable --profile minimal
 
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "1"
 
       - name: Build kraken
         run: cargo build -p kraken
@@ -73,6 +77,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           save-if: "false"
+          shared-key: "1"
 
       - name: Run rust-clippy
         run: cargo clippy --workspace --message-format=json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
