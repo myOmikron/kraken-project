@@ -28,6 +28,7 @@ use crate::api::server;
 use crate::config::Config;
 
 mod api;
+pub(crate) mod chan;
 pub mod config;
 pub mod models;
 pub mod modules;
@@ -65,7 +66,9 @@ async fn main() -> Result<(), String> {
         Command::Start => {
             let db = get_db(&config).await?;
 
-            server::start_server(db, &config).await?;
+            let ws_manager_chan = chan::start_ws_manager().await?;
+
+            server::start_server(db, &config, ws_manager_chan).await?;
         }
         Command::Keygen => {
             let key = Key::generate();

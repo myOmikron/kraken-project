@@ -11,6 +11,7 @@ use webauthn_rs::prelude::WebauthnError;
 pub(crate) use crate::api::handler::auth::*;
 pub(crate) use crate::api::handler::leeches::*;
 pub(crate) use crate::api::handler::users::*;
+pub(crate) use crate::api::handler::websocket::*;
 pub(crate) use crate::api::handler::workspaces::*;
 use crate::modules::user::create::CreateUserError;
 use crate::modules::user::delete::DeleteUserError;
@@ -18,6 +19,7 @@ use crate::modules::user::delete::DeleteUserError;
 mod auth;
 mod leeches;
 mod users;
+mod websocket;
 mod workspaces;
 
 #[derive(Deserialize)]

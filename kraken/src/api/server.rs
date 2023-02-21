@@ -20,11 +20,16 @@ use crate::api::handler;
 use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
 };
+use crate::chan::WsManagerChan;
 use crate::config::Config;
 
 const ORIGIN_NAME: &str = "Kraken";
 
-pub(crate) async fn start_server(db: Database, config: &Config) -> Result<(), StartServerError> {
+pub(crate) async fn start_server(
+    db: Database,
+    config: &Config,
+    ws_manager_chan: WsManagerChan,
+) -> Result<(), StartServerError> {
     let key = Key::try_from(
         BASE64_STANDARD
             .decode(&config.server.secret_key)?
@@ -50,6 +55,7 @@ pub(crate) async fn start_server(db: Database, config: &Config) -> Result<(), St
             .app_data(JsonConfig::default().error_handler(json_extractor_error))
             .app_data(PayloadConfig::default())
             .app_data(webauthn.clone())
+            .app_data(Data::new(ws_manager_chan.clone()))
             .wrap(setup_logging_mw(LoggingMiddlewareConfig::default()))
             .wrap(
                 SessionMiddleware::builder(DBSessionStore::new(db.clone()), key.clone())
@@ -89,6 +95,7 @@ pub(crate) async fn start_server(db: Database, config: &Config) -> Result<(), St
                 scope("api/v1")
                     .wrap(AuthenticationRequired)
                     .route("test", get().to(handler::test))
+                    .route("ws", get().to(handler::websocket))
                     .route("users/me", get().to(handler::get_me))
                     .route("workspaces", get().to(handler::get_workspaces))
                     .route("workspaces/{id}", get().to(handler::get_workspaces))

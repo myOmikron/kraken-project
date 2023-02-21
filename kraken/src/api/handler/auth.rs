@@ -4,7 +4,7 @@ use actix_web::HttpResponse;
 use argon2::password_hash::Error;
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use chrono::Utc;
-use log::debug;
+use log::{debug, error};
 use rorm::internal::field::foreign_model::ForeignModelByField;
 use rorm::{insert, query, update, Database, Model};
 use serde::Deserialize;
@@ -15,6 +15,7 @@ use webauthn_rs::prelude::{
 use webauthn_rs::Webauthn;
 
 use crate::api::handler::{ApiError, ApiResult};
+use crate::chan::{WsManagerChan, WsManagerMessage};
 use crate::models::{User, UserKey, UserKeyInsert};
 
 pub(crate) async fn test() -> HttpResponse {
@@ -65,10 +66,22 @@ pub(crate) async fn login(
     Ok(HttpResponse::Ok().finish())
 }
 
-pub(crate) async fn logout(session: Session) -> HttpResponse {
+pub(crate) async fn logout(
+    session: Session,
+    ws_manager_chan: Data<WsManagerChan>,
+) -> ApiResult<HttpResponse> {
+    let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
     session.purge();
 
-    HttpResponse::Ok().finish()
+    if let Err(err) = ws_manager_chan
+        .send(WsManagerMessage::CloseSocket(uuid))
+        .await
+    {
+        error!("Error sending to websocket manager: {err}");
+        return Err(ApiError::InternalServerError);
+    }
+
+    Ok(HttpResponse::Ok().finish())
 }
 
 pub(crate) async fn start_auth(
