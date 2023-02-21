@@ -49,10 +49,7 @@ jobs:
           shared-key: "1"
 
       - name: Build kraken
-        run: cargo build -p kraken
-
-      - name: Build leech
-        run: cargo build -p leech
+        run: cargo build -p kraken -p leech
 
   clippy-analyze-linux:
     needs: dependencies
