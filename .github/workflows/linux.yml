@@ -22,4 +22,4 @@ jobs:
           rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
       - run: cargo check
-        working-directory: tests
+        working-directory: kraken
