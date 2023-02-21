@@ -29,51 +29,8 @@ jobs:
           rustup component add clippy
           cargo install clippy-sarif sarif-fmt
 
-  build-linux:
-    needs: dependencies
-    name: Build
-    runs-on: ubuntu-latest
-    env:
-      CARGO_TERM_COLOR: always
-    steps:
-      - uses: actions/checkout@v3
-
-      # When rustup is updated, it tries to replace its binary, which on Windows is somehow locked.
-      # This can result in the CI failure, see: https://github.com/rust-lang/rustup/issues/3029
-      - run: |
-          rustup set auto-self-update disable
-          rustup toolchain install stable --profile minimal
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "1"
-
       - name: Build kraken
         run: cargo build -p kraken -p leech
-
-  clippy-analyze-linux:
-    needs: dependencies
-    name: Clippy Analyze
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-      actions: read
-    env:
-      CARGO_TERM_COLOR: always
-
-    steps:
-      - uses: actions/checkout@v3
-
-      # When rustup is updated, it tries to replace its binary, which on Windows is somehow locked.
-      # This can result in the CI failure, see: https://github.com/rust-lang/rustup/issues/3029
-      - run: |
-          rustup set auto-self-update disable
-          rustup toolchain install stable --profile minimal
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "1"
 
       - name: Run rust-clippy
         run: cargo clippy --workspace --message-format=json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
