@@ -28,7 +28,7 @@ jobs:
           path-to-signatures: 'signatures/version1/cla.json'
           path-to-document: 'https://github.com/myOmikron/kraken-project/blob/master/CLA.md'
           # branch should not be protected
-          branch: 'main'
+          branch: 'signatures'
           allowlist: myOmikron,bot*
 
           # the followings are the optional inputs - If the optional inputs are not given, then default values will be taken
