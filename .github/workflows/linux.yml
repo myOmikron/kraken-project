@@ -6,9 +6,13 @@ on:
     pull_request:
 
 jobs:
-  workspaces:
+  clippy-analyze-linux:
+    name: Clippy Analyze
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
     env:
       CARGO_TERM_COLOR: always
 
@@ -19,7 +23,18 @@ jobs:
       # This can result in the CI failure, see: https://github.com/rust-lang/rustup/issues/3029
       - run: |
           rustup set auto-self-update disable
-          rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
+          rustup toolchain install stable --profile minimal
+          rustup component add clippy
+          cargo install clippy-sarif sarif-fmt
+
       - uses: Swatinem/rust-cache@v2
-      - run: cargo check
-        working-directory: kraken
+
+      - name: Run rust-clippy
+        run: cargo clippy --workspace --message-format=json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
+        continue-on-error: true
+
+      - name: Upload clippy analysis results to GitHub
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: rust-clippy-results.sarif
+          wait-for-processing: true
