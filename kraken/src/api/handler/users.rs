@@ -1,11 +1,16 @@
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path};
 use actix_web::HttpResponse;
-use rorm::{query, Database, Model};
+use argon2::password_hash::SaltString;
+use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
+use log::error;
+use rand::thread_rng;
+use rorm::{query, update, Database, Model};
 use serde::{Deserialize, Serialize};
 use webauthn_rs::prelude::Uuid;
 
 use crate::api::handler::{ApiError, ApiResult};
+use crate::chan::{WsManagerChan, WsManagerMessage};
 use crate::models::User;
 use crate::modules::user::create::create_user_transaction;
 use crate::modules::user::delete::delete_user_transaction;
@@ -120,4 +125,63 @@ pub(crate) async fn get_me(session: Session, db: Data<Database>) -> ApiResult<Js
         created_at: user.created_at,
         last_login: user.last_login,
     }))
+}
+
+#[derive(Deserialize)]
+pub(crate) struct SetPasswordRequest {
+    current_password: String,
+    new_password: String,
+}
+
+pub(crate) async fn set_password(
+    req: Json<SetPasswordRequest>,
+    session: Session,
+    db: Data<Database>,
+    ws_manager_chan: Data<WsManagerChan>,
+) -> ApiResult<HttpResponse> {
+    let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+
+    let mut tx = db.start_transaction().await?;
+
+    let user = query!(&db, User)
+        .transaction(&mut tx)
+        .condition(User::F.uuid.equals(&uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::SessionCorrupt)?;
+
+    if Argon2::default()
+        .verify_password(
+            req.current_password.as_bytes(),
+            &PasswordHash::try_from(user.password_hash.as_str())?,
+        )
+        .is_err()
+    {
+        return Err(ApiError::InvalidPassword);
+    }
+
+    let salt = SaltString::generate(&mut thread_rng());
+    let password_hash = Argon2::default()
+        .hash_password(req.new_password.as_bytes(), &salt)?
+        .to_string();
+
+    update!(&db, User)
+        .transaction(&mut tx)
+        .set(User::F.password_hash, &password_hash)
+        .exec()
+        .await?;
+
+    tx.commit().await?;
+
+    session.purge();
+
+    if let Err(err) = ws_manager_chan
+        .send(WsManagerMessage::CloseSocket(uuid))
+        .await
+    {
+        error!("Error sending to websocket manager: {err}");
+        return Err(ApiError::InternalServerError);
+    }
+
+    Ok(HttpResponse::Ok().finish())
 }

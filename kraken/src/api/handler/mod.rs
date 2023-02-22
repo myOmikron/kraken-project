@@ -49,6 +49,7 @@ enum ApiStatusCode {
     InvalidId = 1014,
     WorkspaceNotDeletable = 1015,
     EmptyJson = 1016,
+    InvalidPassword = 1017,
     InternalServerError = 2000,
     DatabaseError = 2001,
     SessionError = 2002,
@@ -96,6 +97,7 @@ pub(crate) enum ApiError {
     InvalidId,
     WorkspaceNotDeletable,
     EmptyJson,
+    InvalidPassword,
 }
 
 impl Display for ApiError {
@@ -127,6 +129,7 @@ impl Display for ApiError {
             ApiError::InvalidId => write!(f, "Invalid ID"),
             ApiError::WorkspaceNotDeletable => write!(f, "Workspace is not deletable"),
             ApiError::EmptyJson => write!(f, "Received an empty json request"),
+            ApiError::InvalidPassword => write!(f, "Invalid password supplied"),
         }
     }
 }
@@ -280,6 +283,14 @@ impl actix_web::ResponseError for ApiError {
 
                 HttpResponse::BadRequest().json(ApiErrorResponse::new(
                     ApiStatusCode::EmptyJson,
+                    self.to_string(),
+                ))
+            }
+            ApiError::InvalidPassword => {
+                debug!("Invalid password supplied");
+
+                HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                    ApiStatusCode::InvalidPassword,
                     self.to_string(),
                 ))
             }

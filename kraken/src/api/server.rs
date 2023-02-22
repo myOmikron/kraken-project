@@ -97,6 +97,7 @@ pub(crate) async fn start_server(
                     .route("test", get().to(handler::test))
                     .route("ws", get().to(handler::websocket))
                     .route("users/me", get().to(handler::get_me))
+                    .route("users/setPassword", post().to(handler::set_password))
                     .route("workspaces", get().to(handler::get_workspaces))
                     .route("workspaces/{id}", get().to(handler::get_workspaces))
                     .route("workspaces", post().to(handler::create_workspace))
