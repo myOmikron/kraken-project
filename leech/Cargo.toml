@@ -17,7 +17,7 @@ clap = { version = "~4", features = ["derive"] }
 log = { version = "~0.4" }
 
 # Async runtime
-tokio = { version = "~1", features = ["macros", "sync", "rt-multi-thread"] }
+tokio = { version = ">=1.23.1", features = ["macros", "sync", "rt-multi-thread"] }
 
 # gRPC implementation
 tonic = { version = "~0.8", features = ["transport", "tls"] }

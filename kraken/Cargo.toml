@@ -41,7 +41,7 @@ bytes = { version = "~1" }
 base64 = { version = "~0.21" }
 
 # Async runtime
-tokio = { version = "1", features = ["rt-multi-thread", "sync", "macros"] }
+tokio = { version = ">=1.23.1", features = ["rt-multi-thread", "sync", "macros"] }
 # Async abstractions
 futures = { version = "~0.3" }
 
