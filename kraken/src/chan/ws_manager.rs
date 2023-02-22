@@ -70,8 +70,10 @@ pub(crate) async fn start_ws_manager() -> Result<WsManagerChan, String> {
                     // Trigger close for all websockets associated with uuid
                     if let Some(sockets) = lookup.get(&uuid) {
                         for s in sockets {
-                            if let Err(err) = s.send(WsMessage::ServerQuitSocket).await {
-                                error!("Couldn't send close to ws sender: {err}");
+                            if !s.is_closed() {
+                                if let Err(err) = s.send(WsMessage::ServerQuitSocket).await {
+                                    error!("Couldn't send close to ws sender: {err}");
+                                }
                             }
                         }
                     }
