@@ -4,7 +4,9 @@
 
 # :octopus: The kraken-project :octopus:
 
-[![LICENSE](https://img.shields.io/github/license/myOmikron/kraken-project?color=blue)](LICENSE)
+[![LICENSE](https://img.shields.io/github/license/myOmikron/kraken-project?color=blue)](LICENSE) 
+[![dependency status](https://deps.rs/repo/github/myOmikron/kraken-project/status.svg)](https://deps.rs/repo/github/myOmikron/kraken-project)
+[![ci status](https://img.shields.io/github/actions/workflow/status/myOmikron/kraken-project/linux.yml?label=CI)](https://github.com/myOmikron/kraken-project/actions/workflows/linux.yml)
 
 The aim of this project is to create a fast, scalable pentesting platform.
 
