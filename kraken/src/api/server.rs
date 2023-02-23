@@ -13,6 +13,8 @@ use actix_web::{App, HttpServer};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use rorm::Database;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 use webauthn_rs::prelude::{Url, WebauthnError};
 use webauthn_rs::WebauthnBuilder;
 
@@ -20,6 +22,7 @@ use crate::api::handler;
 use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
 };
+use crate::api::swagger::ApiDoc;
 use crate::chan::WsManagerChan;
 use crate::config::Config;
 
@@ -67,6 +70,7 @@ pub(crate) async fn start_server(
             )
             .wrap(Compress::default())
             .wrap(ErrorHandlers::new().handler(StatusCode::NOT_FOUND, handle_not_found))
+            .service(SwaggerUi::new("/docs/{_:.*}").url("/api-doc/openapi.json", ApiDoc::openapi()))
             .service(
                 scope("api/v1/auth")
                     .route("login", post().to(handler::login))
@@ -79,17 +83,17 @@ pub(crate) async fn start_server(
             .service(
                 scope("api/v1/admin")
                     .wrap(AdminRequired)
-                    .route("users", get().to(handler::get_user))
+                    .route("users", get().to(handler::get_all_users))
                     .route("users/{username}", get().to(handler::get_user))
                     .route("users", post().to(handler::create_user))
                     .route("users/{username}", delete().to(handler::delete_user))
-                    .route("leeches", get().to(handler::get_leech))
+                    .route("leeches", get().to(handler::get_all_leeches))
                     .route("leeches/{id}", get().to(handler::get_leech))
                     .route("leeches", post().to(handler::create_leech))
                     .route("leeches/{id}", delete().to(handler::delete_leech))
                     .route("leeches/{id}", put().to(handler::update_leech))
-                    .route("workspaces", get().to(handler::get_workspaces_admin))
-                    .route("workspaces/{id}", get().to(handler::get_workspaces_admin)),
+                    .route("workspaces", get().to(handler::get_all_workspaces_admin))
+                    .route("workspaces/{id}", get().to(handler::get_workspace_admin)),
             )
             .service(
                 scope("api/v1")
@@ -98,8 +102,8 @@ pub(crate) async fn start_server(
                     .route("ws", get().to(handler::websocket))
                     .route("users/me", get().to(handler::get_me))
                     .route("users/setPassword", post().to(handler::set_password))
-                    .route("workspaces", get().to(handler::get_workspaces))
-                    .route("workspaces/{id}", get().to(handler::get_workspaces))
+                    .route("workspaces", get().to(handler::get_all_workspaces))
+                    .route("workspaces/{id}", get().to(handler::get_workspace))
                     .route("workspaces", post().to(handler::create_workspace))
                     .route("workspaces/{id}", delete().to(handler::delete_workspace)),
             )

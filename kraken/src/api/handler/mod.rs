@@ -6,6 +6,7 @@ use actix_web::HttpResponse;
 use log::{debug, error, info, trace, warn};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_repr::Serialize_repr;
+use utoipa::{IntoParams, ToSchema};
 use webauthn_rs::prelude::WebauthnError;
 
 pub(crate) use crate::api::handler::auth::*;
@@ -22,16 +23,17 @@ mod users;
 mod websocket;
 mod workspaces;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, IntoParams)]
 pub(crate) struct PathId {
     pub(crate) id: u32,
 }
 
 pub(crate) type ApiResult<T> = Result<T, ApiError>;
 
-#[derive(Serialize_repr)]
+#[derive(Serialize_repr, ToSchema)]
 #[repr(u16)]
-enum ApiStatusCode {
+#[schema(default = 1000, example = 1000)]
+pub(crate) enum ApiStatusCode {
     LoginFailed = 1000,
     NotFound = 1001,
     InvalidContentType = 1002,
@@ -56,8 +58,8 @@ enum ApiStatusCode {
     WebauthnError = 2003,
 }
 
-#[derive(Serialize)]
-struct ApiErrorResponse {
+#[derive(Serialize, ToSchema)]
+pub(crate) struct ApiErrorResponse {
     status_code: ApiStatusCode,
     message: String,
 }

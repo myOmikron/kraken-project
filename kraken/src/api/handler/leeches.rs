@@ -2,23 +2,37 @@ use actix_web::web::{Data, Json, Path};
 use actix_web::HttpResponse;
 use rorm::{delete, insert, query, update, Database, Model};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 use crate::api::handler::{ApiError, ApiResult, PathId};
 use crate::models::{Leech, LeechInsert};
 use crate::modules::uri::check_leech_address;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub(crate) struct CreateLeechRequest {
     pub(crate) name: String,
     pub(crate) address: String,
     pub(crate) description: Option<String>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub(crate) struct CreateLeechResponse {
     pub(crate) id: i64,
 }
 
+#[utoipa::path(
+    post,
+    context_path = "/api/v1",
+    path = "/admin/leeches",
+    tag = "Leech management",
+    responses(
+        (status = 200, description = "Leech got created successfully", body = CreateLeechResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = CreateLeechRequest,
+    security(("api_key" = []))
+)]
 pub(crate) async fn create_leech(
     req: Json<CreateLeechRequest>,
     db: Data<Database>,
@@ -63,6 +77,19 @@ pub(crate) async fn create_leech(
     Ok(Json(CreateLeechResponse { id }))
 }
 
+#[utoipa::path(
+    delete,
+    context_path = "/api/v1",
+    path = "/admin/leeches",
+    tag = "Leech management",
+    responses(
+        (status = 200, description = "Leech got deleted"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    params(PathId),
+    security(("api_key" = []))
+)]
 pub(crate) async fn delete_leech(
     path: Path<PathId>,
     db: Data<Database>,
@@ -86,41 +113,59 @@ pub(crate) async fn delete_leech(
     Ok(HttpResponse::Ok().finish())
 }
 
-#[derive(Deserialize)]
-pub(crate) struct GetLeechRequest {
-    id: Option<u32>,
-}
-
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub(crate) struct GetLeech {
     id: i64,
     name: String,
     address: String,
 }
 
-#[derive(Serialize)]
+#[utoipa::path(
+    get,
+    context_path = "/api/v1",
+    path = "/admin/leeches/{id}",
+    tag = "Leech management",
+    responses(
+        (status = 200, description = "Matched leeches", body = GetLeech),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    params(PathId),
+    security(("api_key" = []))
+)]
+pub(crate) async fn get_leech(req: Path<PathId>, db: Data<Database>) -> ApiResult<Json<GetLeech>> {
+    let leech = query!(&db, Leech)
+        .condition(Leech::F.id.equals(req.id as i64))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidId)?;
+
+    Ok(Json(GetLeech {
+        id: leech.id,
+        name: leech.name,
+        address: leech.address,
+    }))
+}
+
+#[derive(Serialize, ToSchema)]
 pub(crate) struct GetLeechResponse {
     leeches: Vec<GetLeech>,
 }
 
-pub(crate) async fn get_leech(
-    req: Path<GetLeechRequest>,
-    db: Data<Database>,
-) -> ApiResult<Json<GetLeechResponse>> {
-    let leeches = if let Some(id) = req.id {
-        let leech = query!(&db, Leech)
-            .condition(Leech::F.id.equals(id as i64))
-            .all()
-            .await?;
-
-        if leech.is_empty() {
-            return Err(ApiError::InvalidId);
-        }
-
-        leech
-    } else {
-        query!(&db, Leech).all().await?
-    };
+#[utoipa::path(
+    get,
+    context_path = "/api/v1",
+    path = "/admin/leeches",
+    tag = "Leech management",
+    responses(
+        (status = 200, description = "Matched leeches", body = GetLeechResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    security(("api_key" = []))
+)]
+pub(crate) async fn get_all_leeches(db: Data<Database>) -> ApiResult<Json<GetLeechResponse>> {
+    let leeches = query!(&db, Leech).all().await?;
 
     Ok(Json(GetLeechResponse {
         leeches: leeches
@@ -134,7 +179,7 @@ pub(crate) async fn get_leech(
     }))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub(crate) struct UpdateLeechRequest {
     name: Option<String>,
     address: Option<String>,
@@ -143,6 +188,20 @@ pub(crate) struct UpdateLeechRequest {
     description: Option<Option<String>>,
 }
 
+#[utoipa::path(
+    put,
+    context_path = "/api/v1",
+    path = "/admin/leeches/{id}",
+    tag = "Leech management",
+    responses(
+        (status = 200, description = "Leech got updated"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    params(PathId),
+    request_body = UpdateLeechRequest,
+    security(("api_key" = []))
+)]
 pub(crate) async fn update_leech(
     path: Path<PathId>,
     req: Json<UpdateLeechRequest>,

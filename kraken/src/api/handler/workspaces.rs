@@ -5,21 +5,35 @@ use log::debug;
 use rorm::internal::field::foreign_model::ForeignModelByField;
 use rorm::{delete, insert, query, Database, ForeignModel, Model};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
-use crate::api::handler::{ApiError, ApiResult};
+use crate::api::handler::{ApiError, ApiResult, PathId};
 use crate::models::{User, Workspace, WorkspaceInsert};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub(crate) struct CreateWorkspaceRequest {
     pub(crate) name: String,
     pub(crate) description: Option<String>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub(crate) struct CreateWorkspaceResponse {
     pub(crate) id: i64,
 }
 
+#[utoipa::path(
+    post,
+    context_path = "/api/v1",
+    path = "/workspaces",
+    tag = "Workspaces",
+    responses(
+        (status = 200, description = "Workspace was created", body = CreateWorkspaceResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    request_body = CreateWorkspaceRequest,
+    security(("api_key" = []))
+)]
 pub(crate) async fn create_workspace(
     req: Json<CreateWorkspaceRequest>,
     db: Data<Database>,
@@ -39,13 +53,21 @@ pub(crate) async fn create_workspace(
     Ok(Json(CreateWorkspaceResponse { id }))
 }
 
-#[derive(Deserialize)]
-pub(crate) struct DeleteWorkspaceRequest {
-    pub(crate) id: u32,
-}
-
+#[utoipa::path(
+    delete,
+    context_path = "/api/v1",
+    path = "/workspaces/{id}",
+    tag = "Workspaces",
+    responses(
+        (status = 200, description = "Workspace was deleted"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathId),
+    security(("api_key" = []))
+)]
 pub(crate) async fn delete_workspace(
-    req: Path<DeleteWorkspaceRequest>,
+    req: Path<PathId>,
     session: Session,
     db: Data<Database>,
 ) -> ApiResult<HttpResponse> {
@@ -101,61 +123,86 @@ pub(crate) async fn delete_workspace(
     Ok(HttpResponse::Ok().finish())
 }
 
-#[derive(Deserialize)]
-pub(crate) struct GetWorkspaceRequest {
-    pub(crate) id: Option<u32>,
-}
-
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub(crate) struct GetWorkspace {
     pub(crate) id: i64,
     pub(crate) name: String,
     pub(crate) description: Option<String>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub(crate) struct GetWorkspaceResponse {
     pub(crate) workspaces: Vec<GetWorkspace>,
 }
 
-pub(crate) async fn get_workspaces(
-    req: Path<GetWorkspaceRequest>,
+#[utoipa::path(
+    get,
+    context_path = "/api/v1",
+    path = "/workspaces/{id}",
+    tag = "Workspaces",
+    responses(
+        (status = 200, description = "Returns the workspace", body = GetWorkspace),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathId),
+    security(("api_key" = []))
+)]
+pub(crate) async fn get_workspace(
+    req: Path<PathId>,
+    db: Data<Database>,
+    session: Session,
+) -> ApiResult<Json<GetWorkspace>> {
+    let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+
+    let w = query!(&db, Workspace)
+        .condition(Workspace::F.id.equals(req.id as i64))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidId)?;
+
+    match &w.owner {
+        ForeignModel::Key(k) => {
+            if *k != uuid {
+                return Err(ApiError::MissingPrivileges);
+            }
+        }
+        ForeignModel::Instance(u) => {
+            if u.uuid != uuid {
+                return Err(ApiError::MissingPrivileges);
+            }
+        }
+    };
+
+    Ok(Json(GetWorkspace {
+        id: w.id,
+        name: w.name,
+        description: w.description,
+    }))
+}
+
+#[utoipa::path(
+    get,
+    context_path = "/api/v1",
+    path = "/workspaces",
+    tag = "Workspaces",
+    responses(
+        (status = 200, description = "Returns all workspaces owned by the executing user", body = GetWorkspaceResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    security(("api_key" = []))
+)]
+pub(crate) async fn get_all_workspaces(
     db: Data<Database>,
     session: Session,
 ) -> ApiResult<Json<GetWorkspaceResponse>> {
     let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
-    let mut tx = db.start_transaction().await?;
-
-    let workspaces = if let Some(id) = req.id {
-        let w = query!(&db, Workspace)
-            .transaction(&mut tx)
-            .condition(Workspace::F.id.equals(id as i64))
-            .optional()
-            .await?
-            .ok_or(ApiError::InvalidId)?;
-        match &w.owner {
-            ForeignModel::Key(k) => {
-                if *k != uuid {
-                    return Err(ApiError::MissingPrivileges);
-                }
-            }
-            ForeignModel::Instance(u) => {
-                if u.uuid != uuid {
-                    return Err(ApiError::MissingPrivileges);
-                }
-            }
-        }
-        vec![w]
-    } else {
-        query!(&db, Workspace)
-            .transaction(&mut tx)
-            .condition(Workspace::F.owner.equals(&uuid))
-            .all()
-            .await?
-    };
-
-    tx.commit().await?;
+    let workspaces = query!(&db, Workspace)
+        .condition(Workspace::F.owner.equals(&uuid))
+        .all()
+        .await?;
 
     Ok(Json(GetWorkspaceResponse {
         workspaces: workspaces
@@ -169,25 +216,52 @@ pub(crate) async fn get_workspaces(
     }))
 }
 
-pub(crate) async fn get_workspaces_admin(
-    req: Path<GetWorkspaceRequest>,
+#[utoipa::path(
+    get,
+    context_path = "/api/v1",
+    path = "/admin/workspaces/{id}",
+    tag = "Admin Workspaces",
+    responses(
+        (status = 200, description = "Returns the workspace with the given id", body = GetWorkspace),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathId),
+    security(("api_key" = []))
+)]
+pub(crate) async fn get_workspace_admin(
+    req: Path<PathId>,
+    db: Data<Database>,
+) -> ApiResult<Json<GetWorkspace>> {
+    let w = query!(&db, Workspace)
+        .condition(Workspace::F.id.equals(req.id as i64))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidId)?;
+
+    Ok(Json(GetWorkspace {
+        id: w.id,
+        name: w.name,
+        description: w.description,
+    }))
+}
+
+#[utoipa::path(
+    get,
+    context_path = "/api/v1",
+    path = "/admin/workspaces",
+    tag = "Admin Workspaces",
+    responses(
+        (status = 200, description = "Returns the workspace with the given id", body = GetWorkspaceResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    security(("api_key" = []))
+)]
+pub(crate) async fn get_all_workspaces_admin(
     db: Data<Database>,
 ) -> ApiResult<Json<GetWorkspaceResponse>> {
-    let mut tx = db.start_transaction().await?;
-
-    let workspaces = if let Some(id) = req.id {
-        let w = query!(&db, Workspace)
-            .transaction(&mut tx)
-            .condition(Workspace::F.id.equals(id as i64))
-            .optional()
-            .await?
-            .ok_or(ApiError::InvalidId)?;
-        vec![w]
-    } else {
-        query!(&db, Workspace).transaction(&mut tx).all().await?
-    };
-
-    tx.commit().await?;
+    let workspaces = query!(&db, Workspace).all().await?;
 
     Ok(Json(GetWorkspaceResponse {
         workspaces: workspaces

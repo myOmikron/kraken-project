@@ -15,6 +15,18 @@ use crate::chan::{WsManagerChan, WsManagerMessage, WsMessage};
 
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
 
+#[utoipa::path(
+    get,
+    context_path = "/api/v1",
+    path = "/ws",
+    tag = "Websocket",
+    responses(
+        (status = 101, description = "Websocket connection established"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    security(("api_key" = []))
+)]
 pub(crate) async fn websocket(
     request: HttpRequest,
     payload: Payload,
