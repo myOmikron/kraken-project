@@ -5,20 +5,18 @@ use actix_toolbox::tb_middleware::Session;
 use actix_toolbox::ws;
 use actix_toolbox::ws::{MailboxError, Message};
 use actix_web::web::{Data, Payload};
-use actix_web::{HttpRequest, HttpResponse};
+use actix_web::{get, HttpRequest, HttpResponse};
 use bytes::Bytes;
 use log::{debug, error};
 use tokio::sync::Mutex;
 
 use crate::api::handler::ApiError;
+use crate::api::middleware::AuthenticationRequired;
 use crate::chan::{WsManagerChan, WsManagerMessage, WsMessage};
 
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[utoipa::path(
-    get,
-    context_path = "/api/v1",
-    path = "/ws",
     tag = "Websocket",
     responses(
         (status = 101, description = "Websocket connection established"),
@@ -27,6 +25,7 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
     ),
     security(("api_key" = []))
 )]
+#[get("/api/v1/ws", wrap = "AuthenticationRequired")]
 pub(crate) async fn websocket(
     request: HttpRequest,
     payload: Payload,

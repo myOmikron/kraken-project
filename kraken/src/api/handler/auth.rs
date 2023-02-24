@@ -1,6 +1,6 @@
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json};
-use actix_web::HttpResponse;
+use actix_web::{get, post, HttpResponse};
 use argon2::password_hash::Error;
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use chrono::Utc;
@@ -16,13 +16,11 @@ use webauthn_rs::prelude::{
 use webauthn_rs::Webauthn;
 
 use crate::api::handler::{ApiError, ApiResult};
+use crate::api::middleware::AuthenticationRequired;
 use crate::chan::{WsManagerChan, WsManagerMessage};
 use crate::models::{User, UserKey, UserKeyInsert};
 
 #[utoipa::path(
-    get,
-    context_path = "/api/v1",
-    path = "/test",
     tag = "Authentication",
     responses(
         (status = 200, description = "Logged in"),
@@ -30,6 +28,7 @@ use crate::models::{User, UserKey, UserKeyInsert};
         (status = 500, description = "Server error", body = ApiErrorResponse)
     )
 )]
+#[get("/api/v1/test", wrap = "AuthenticationRequired")]
 pub(crate) async fn test() -> HttpResponse {
     HttpResponse::Ok().finish()
 }
@@ -41,9 +40,6 @@ pub(crate) struct LoginRequest {
 }
 
 #[utoipa::path(
-    post,
-    context_path = "/api/v1",
-    path = "/auth/login",
     tag = "Authentication",
     responses(
         (status = 200, description = "Login successful"),
@@ -52,6 +48,7 @@ pub(crate) struct LoginRequest {
     ),
     request_body = LoginRequest,
 )]
+#[post("/api/v1/auth/login")]
 pub(crate) async fn login(
     req: Json<LoginRequest>,
     db: Data<Database>,
@@ -91,9 +88,6 @@ pub(crate) async fn login(
 }
 
 #[utoipa::path(
-    get,
-    context_path = "/api/v1",
-    path = "/auth/logout",
     tag = "Authentication",
     responses(
         (status = 200, description = "Logout successful"),
@@ -101,6 +95,7 @@ pub(crate) async fn login(
         (status = 500, description = "Server error", body = ApiErrorResponse)
     ),
 )]
+#[get("/api/v1/auth/logout")]
 pub(crate) async fn logout(
     session: Session,
     ws_manager_chan: Data<WsManagerChan>,
@@ -120,9 +115,6 @@ pub(crate) async fn logout(
 }
 
 #[utoipa::path(
-    post,
-    context_path = "/api/v1",
-    path = "/auth/start_auth",
     tag = "Authentication",
     responses(
         (status = 200, description = "2FA Authentication started", body = inline(Object)),
@@ -130,6 +122,7 @@ pub(crate) async fn logout(
         (status = 500, description = "Server error", body = ApiErrorResponse)
     ),
 )]
+#[post("/api/v1/auth/startAuth")]
 pub(crate) async fn start_auth(
     db: Data<Database>,
     session: Session,
@@ -165,9 +158,6 @@ pub(crate) async fn start_auth(
 }
 
 #[utoipa::path(
-    post,
-    context_path = "/api/v1",
-    path = "/auth/finish_auth",
     tag = "Authentication",
     responses(
         (status = 200, description = "2FA Authentication finished"),
@@ -176,6 +166,7 @@ pub(crate) async fn start_auth(
     ),
     request_body = inline(Object)
 )]
+#[post("/api/v1/auth/finishAuth")]
 pub(crate) async fn finish_auth(
     auth: Json<PublicKeyCredential>,
     db: Data<Database>,
@@ -208,9 +199,6 @@ pub(crate) async fn finish_auth(
 }
 
 #[utoipa::path(
-    post,
-    context_path = "/api/v1",
-    path = "/auth/start_register",
     tag = "Authentication",
     responses(
         (status = 200, description = "2FA Key registration started", body = inline(Object)),
@@ -218,6 +206,7 @@ pub(crate) async fn finish_auth(
         (status = 500, description = "Server error", body = ApiErrorResponse)
     ),
 )]
+#[post("/api/v1/auth/startRegister")]
 pub(crate) async fn start_register(
     db: Data<Database>,
     session: Session,
@@ -280,9 +269,6 @@ pub(crate) struct FinishRegisterRequest {
 }
 
 #[utoipa::path(
-    post,
-    context_path = "/api/v1",
-    path = "/auth/finish_register",
     tag = "Authentication",
     responses(
         (status = 200, description = "2FA Key registration finished"),
@@ -291,6 +277,7 @@ pub(crate) struct FinishRegisterRequest {
     ),
     request_body = FinishRegisterRequest
 )]
+#[post("/api/v1/auth/finishRegister")]
 pub(crate) async fn finish_register(
     req: Json<FinishRegisterRequest>,
     db: Data<Database>,

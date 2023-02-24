@@ -8,7 +8,7 @@ use actix_web::cookie::time::Duration;
 use actix_web::cookie::{Key, KeyError};
 use actix_web::http::StatusCode;
 use actix_web::middleware::{Compress, ErrorHandlers};
-use actix_web::web::{delete, get, post, put, scope, Data, JsonConfig, PayloadConfig};
+use actix_web::web::{Data, JsonConfig, PayloadConfig};
 use actix_web::{App, HttpServer};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
@@ -18,10 +18,7 @@ use utoipa_swagger_ui::SwaggerUi;
 use webauthn_rs::prelude::{Url, WebauthnError};
 use webauthn_rs::WebauthnBuilder;
 
-use crate::api::handler;
-use crate::api::middleware::{
-    handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
-};
+use crate::api::middleware::{handle_not_found, json_extractor_error};
 use crate::api::swagger::ApiDoc;
 use crate::chan::WsManagerChan;
 use crate::config::Config;
@@ -71,42 +68,6 @@ pub(crate) async fn start_server(
             .wrap(Compress::default())
             .wrap(ErrorHandlers::new().handler(StatusCode::NOT_FOUND, handle_not_found))
             .service(SwaggerUi::new("/docs/{_:.*}").url("/api-doc/openapi.json", ApiDoc::openapi()))
-            .service(
-                scope("api/v1/auth")
-                    .route("login", post().to(handler::login))
-                    .route("logout", get().to(handler::logout))
-                    .route("start_auth", post().to(handler::start_auth))
-                    .route("finish_auth", post().to(handler::finish_auth))
-                    .route("start_register", post().to(handler::start_register))
-                    .route("finish_register", post().to(handler::finish_register)),
-            )
-            .service(
-                scope("api/v1/admin")
-                    .wrap(AdminRequired)
-                    .route("users", get().to(handler::get_all_users))
-                    .route("users/{username}", get().to(handler::get_user))
-                    .route("users", post().to(handler::create_user))
-                    .route("users/{username}", delete().to(handler::delete_user))
-                    .route("leeches", get().to(handler::get_all_leeches))
-                    .route("leeches/{id}", get().to(handler::get_leech))
-                    .route("leeches", post().to(handler::create_leech))
-                    .route("leeches/{id}", delete().to(handler::delete_leech))
-                    .route("leeches/{id}", put().to(handler::update_leech))
-                    .route("workspaces", get().to(handler::get_all_workspaces_admin))
-                    .route("workspaces/{id}", get().to(handler::get_workspace_admin)),
-            )
-            .service(
-                scope("api/v1")
-                    .wrap(AuthenticationRequired)
-                    .route("test", get().to(handler::test))
-                    .route("ws", get().to(handler::websocket))
-                    .route("users/me", get().to(handler::get_me))
-                    .route("users/setPassword", post().to(handler::set_password))
-                    .route("workspaces", get().to(handler::get_all_workspaces))
-                    .route("workspaces/{id}", get().to(handler::get_workspace))
-                    .route("workspaces", post().to(handler::create_workspace))
-                    .route("workspaces/{id}", delete().to(handler::delete_workspace)),
-            )
     })
     .bind((
         config.server.api_listen_address.as_str(),
