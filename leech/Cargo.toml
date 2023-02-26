@@ -12,23 +12,50 @@ description = "The worker component of kraken-project"
 [dependencies]
 # Cli parser
 clap = { version = "~4", features = ["derive"] }
+# regex library
+regex = { version = "~1" }
 
 # Logging facade
 log = { version = "~0.4" }
+# Logging framework
+log4rs = { version = "~1" }
 
 # Async runtime
-tokio = { version = ">=1.23.1", features = ["macros", "sync", "rt-multi-thread"] }
+tokio = { version = ">=1.23.1", features = ["macros", "sync", "rt-multi-thread", "net", "time"] }
+# Abstractions for async programming
+futures = { version = "~0.3" }
+
+# Expansion of the Iterator trait
+itertools = { version = "~0.10" }
 
 # gRPC implementation
 tonic = { version = "~0.8", features = ["transport", "tls"] }
 # codegenerator
 prost = { version = "~0.11" }
 
+# Serialization library
+serde = { version = "~1", features = ["derive"] }
+toml = { version = "~0.7" }
+ipnet = { version = "~2" }
+
+# Lazy initialization
+once_cell = { version = "~1" }
+
+# RNG library
+rand = { version = "~0.8" }
+
 # ORM
 rorm = { version = "~0.4", features = ["tokio-rustls"] }
 
+# Needed because of modules
+
 # DNS resolver
 trust-dns-resolver = { version = "~0.22", features = ["dns-over-https-rustls", "tokio-rustls", "tokio"] }
+
+# icmp library
+surge-ping = { version = "~0.7" }
+# increase resource limit
+rlimit = { version = "~0.9" }
 
 [build-dependencies]
 tonic-build = { version = "~0.8" }

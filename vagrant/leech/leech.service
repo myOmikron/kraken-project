@@ -45,7 +45,7 @@ ProtectControlGroups=yes
 SystemCallArchitectures=native
 
 WorkingDirectory=/var/lib/leech/
-ExecStart=/usr/local/bin/leech start
+ExecStart=/usr/local/bin/leech server
 
 Restart=always
 RestartSec=3
