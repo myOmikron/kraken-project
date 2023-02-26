@@ -13,7 +13,7 @@ description = "The worker component of kraken-project"
 # Cli parser
 clap = { version = "~4", features = ["derive"] }
 # regex library
-regex = { version = "~1" }
+regex = { version = ">=1.5.5" }
 
 # Logging facade
 log = { version = "~0.4" }
