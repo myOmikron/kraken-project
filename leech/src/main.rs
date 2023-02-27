@@ -23,8 +23,10 @@ use ipnet::IpNet;
 use itertools::Itertools;
 use once_cell::sync::Lazy;
 use regex::Regex;
+use trust_dns_resolver::Name;
 
 use crate::config::get_config;
+use crate::modules::bruteforce_subdomains::{bruteforce_subdomains, BruteforceSubdomainsSettings};
 use crate::modules::port_scanner::{start_tcp_con_port_scan, TcpPortScannerSettings};
 
 pub mod config;
@@ -40,6 +42,15 @@ static RE: Lazy<Regexes> = Lazy::new(|| Regexes {
 
 #[derive(Subcommand)]
 enum RunCommand {
+    BruteforceSubdomains {
+        /// Valid domain name
+        target: Name,
+        /// Path to a wordlist that can be used for subdomain enumeration.
+        ///
+        /// The entries in the wordlist are assumed to be line seperated.
+        #[clap(short = 'w', long = "wordlist")]
+        wordlist_path: PathBuf,
+    },
     PortScanner {
         /// Valid IPv4 or IPv6 addresses or networks in CIDR notation
         #[clap(required(true))]
@@ -111,6 +122,16 @@ async fn main() -> Result<(), String> {
             let _config = get_config(&cli.config_path).map_err(|e| e.to_string())?;
         }
         Command::Execute { command } => match command {
+            RunCommand::BruteforceSubdomains {
+                target,
+                wordlist_path,
+            } => {
+                bruteforce_subdomains(BruteforceSubdomainsSettings {
+                    domain: target.to_string(),
+                    wordlist_path,
+                })
+                .await?
+            }
             RunCommand::PortScanner {
                 targets,
                 exclude,
