@@ -151,6 +151,11 @@ async fn main() -> Result<(), String> {
                     .collect();
 
                 let mut parsed_ports = vec![];
+
+                if ports.is_empty() {
+                    parsed_ports.extend(1..=u16::MAX);
+                }
+
                 for port in ports {
                     let port_parts = port.split(',');
                     for part in port_parts {
