@@ -36,7 +36,10 @@ prost = { version = "~0.11" }
 # Serialization library
 serde = { version = "~1", features = ["derive"] }
 toml = { version = "~0.7" }
+serde_json = { version = "~1" }
 ipnet = { version = "~2" }
+# Time library
+chrono = { version = ">=0.4.20", features = ["serde"] }
 
 # Lazy initialization
 once_cell = { version = "~1" }
@@ -56,6 +59,11 @@ trust-dns-resolver = { version = "~0.22", features = ["dns-over-https-rustls", "
 surge-ping = { version = "~0.7" }
 # increase resource limit
 rlimit = { version = "~0.9" }
+
+# http request library
+reqwest = { version = "~0.11", features = ["json", "trust-dns", "rustls-tls-native-roots"] }
+# URL parsing lib
+url = { version = "~2" }
 
 [build-dependencies]
 tonic-build = { version = "~0.8" }

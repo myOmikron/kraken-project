@@ -28,6 +28,9 @@ use trust_dns_resolver::Name;
 
 use crate::config::get_config;
 use crate::modules::bruteforce_subdomains::{bruteforce_subdomains, BruteforceSubdomainsSettings};
+use crate::modules::certificate_transparency::{
+    query_ct_api, query_ct_db, CertificateTransparencySettings,
+};
 use crate::modules::port_scanner::{start_tcp_con_port_scan, TcpPortScannerSettings};
 
 pub mod config;
@@ -51,6 +54,18 @@ enum RunCommand {
         /// The entries in the wordlist are assumed to be line seperated.
         #[clap(short = 'w', long = "wordlist")]
         wordlist_path: PathBuf,
+    },
+    CertificateTransparency {
+        /// Valid domain name
+        target: String,
+        /// Whether expired certificates should be included
+        #[clap(long)]
+        #[clap(default_value_t = false)]
+        include_expired: bool,
+        /// Use the database instead of the API
+        #[clap(long)]
+        #[clap(default_value_t = false)]
+        db: bool,
     },
     PortScanner {
         /// Valid IPv4 or IPv6 addresses or networks in CIDR notation
@@ -132,6 +147,21 @@ async fn main() -> Result<(), String> {
                     wordlist_path,
                 })
                 .await?
+            }
+            RunCommand::CertificateTransparency {
+                target,
+                include_expired,
+                db,
+            } => {
+                let ct = CertificateTransparencySettings {
+                    target,
+                    include_expired,
+                };
+                if db {
+                    query_ct_db(ct).await;
+                } else {
+                    query_ct_api(ct).await;
+                }
             }
             RunCommand::PortScanner {
                 targets,

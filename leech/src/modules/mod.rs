@@ -2,4 +2,5 @@
 //! modules of the leech.
 
 pub mod bruteforce_subdomains;
+pub mod certificate_transparency;
 pub mod port_scanner;
