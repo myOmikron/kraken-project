@@ -106,10 +106,10 @@ struct Cli {
 async fn main() -> Result<(), String> {
     let cli = Cli::parse();
 
-    let _config = get_config(&cli.config_path).map_err(|e| e.to_string())?;
-
     match cli.commands {
-        Command::Server => {}
+        Command::Server => {
+            let _config = get_config(&cli.config_path).map_err(|e| e.to_string())?;
+        }
         Command::Execute { command } => match command {
             RunCommand::PortScanner {
                 targets,
