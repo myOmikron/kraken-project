@@ -44,9 +44,9 @@ static RE: Lazy<Regexes> = Lazy::new(|| Regexes {
     ports: Regex::new(r#"^(?P<range>\d*-\d*)$|^(?P<single>\d+)$|^$"#).unwrap(),
 });
 
-#[deny(missing_docs)]
+/// The execution commands
 #[derive(Subcommand)]
-enum RunCommand {
+pub enum RunCommand {
     /// Bruteforce subdomains via DNS
     BruteforceSubdomains {
         /// Valid domain name
@@ -112,22 +112,28 @@ enum RunCommand {
     },
 }
 
+/// All available subcommands
 #[derive(Subcommand)]
-enum Command {
+pub enum Command {
+    /// Start the leech as a server
     Server,
+    /// Execute a command via CLI
     Execute {
+        /// the subcommand to execute
         #[clap(subcommand)]
         command: RunCommand,
     },
 }
 
+/// The main CLI parser
 #[derive(Parser)]
-struct Cli {
+pub struct Cli {
+    /// Specify an alternative path to the config file
     #[clap(long = "config-path")]
-    #[clap(help = "Specify an alternative path to the config file")]
     #[clap(default_value_t = String::from("/etc/leech/config.toml"))]
     config_path: String,
 
+    /// Subcommands
     #[clap(subcommand)]
     commands: Command,
 }
