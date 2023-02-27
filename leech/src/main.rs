@@ -44,8 +44,10 @@ static RE: Lazy<Regexes> = Lazy::new(|| Regexes {
     ports: Regex::new(r#"^(?P<range>\d*-\d*)$|^(?P<single>\d+)$|^$"#).unwrap(),
 });
 
+#[deny(missing_docs)]
 #[derive(Subcommand)]
 enum RunCommand {
+    /// Bruteforce subdomains via DNS
     BruteforceSubdomains {
         /// Valid domain name
         target: Name,
@@ -55,6 +57,7 @@ enum RunCommand {
         #[clap(short = 'w', long = "wordlist")]
         wordlist_path: PathBuf,
     },
+    /// Retrieve domains through certificate transparency
     CertificateTransparency {
         /// Valid domain name
         target: String,
@@ -67,6 +70,7 @@ enum RunCommand {
         #[clap(default_value_t = false)]
         db: bool,
     },
+    /// A simple port scanning utility
     PortScanner {
         /// Valid IPv4 or IPv6 addresses or networks in CIDR notation
         #[clap(required(true))]
