@@ -1,18 +1,23 @@
 //! This module holds a port scanning utility.
 
 use std::net::{IpAddr, SocketAddr};
+use std::sync::Arc;
 use std::time::Duration;
 
 use futures::{stream, StreamExt};
 use itertools::iproduct;
-use log::debug;
+use log::{debug, error, info, trace, warn};
 use rand::random;
-use surge_ping::{Client, PingIdentifier, PingSequence, ICMP};
+use surge_ping::{Client, PingIdentifier, PingSequence, SurgeError, ICMP};
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
-use tokio::sync::mpsc;
-use tokio::task::JoinSet;
+use tokio::sync::mpsc::Sender;
+use tokio::sync::Mutex;
 use tokio::time::{sleep, timeout};
+
+use crate::modules::port_scanner::error::TcpPortScanError;
+
+pub mod error;
 
 /// The settings of a tcp connection port scan
 #[derive(Clone, Debug)]
@@ -31,87 +36,76 @@ pub struct TcpPortScannerSettings {
     ///
     /// 0 means, that there should be no limit.
     pub concurrent_limit: usize,
-    /// If set to true, there won't be an initial ping check.
+    /// If set to true, there won't be an initial icmp check.
     ///
     /// All hosts are assumed to be reachable.
-    pub skip_ping_check: bool,
+    pub skip_icmp_check: bool,
 }
 
 /// Start a TCP port scan with this function
 ///
 /// **Parameter**:
 /// - settings: [TcpPortScannerSettings]
-pub async fn start_tcp_con_port_scan(settings: TcpPortScannerSettings) {
-    let icmp_config_v4 = surge_ping::Config::default();
-    let icmp_config_v6 = surge_ping::Config::builder().kind(ICMP::V6).build();
+/// - `tx`: [Sender] of [SocketAddr]
+pub async fn start_tcp_con_port_scan(
+    settings: TcpPortScannerSettings,
+    tx: Sender<SocketAddr>,
+) -> Result<(), TcpPortScanError> {
+    let addresses = Arc::new(Mutex::new(vec![]));
 
-    let icmp_v4_client = match Client::new(&icmp_config_v4) {
-        Ok(client) => client,
-        Err(err) => {
-            println!("Error creating ping client: {err}");
-            return;
-        }
-    };
+    if settings.skip_icmp_check {
+        info!("Skipping icmp check");
+        addresses.lock().await.extend(settings.addresses);
+    } else {
+        info!("Starting icmp check");
 
-    let icmp_v6_client = match Client::new(&icmp_config_v6) {
-        Ok(client) => client,
-        Err(err) => {
-            println!("Error creating ping client: {err}");
-            return;
-        }
-    };
+        let conf_v4 = surge_ping::Config::default();
+        let conf_v6 = surge_ping::Config::builder().kind(ICMP::V6).build();
 
-    let mut icmp_handles = JoinSet::new();
+        let icmp_v4_client = Client::new(&conf_v4).map_err(TcpPortScanError::CreateIcmpClient)?;
+        let icmp_v6_client = Client::new(&conf_v6).map_err(TcpPortScanError::CreateIcmpClient)?;
 
-    for addr in settings.addresses {
-        let icmp_client = if addr.is_ipv4() {
-            icmp_v4_client.clone()
-        } else {
-            icmp_v6_client.clone()
-        };
-        icmp_handles.spawn(async move {
-            const PAYLOAD: [u8; 56] = [0; 56];
-            let mut pinger = icmp_client
-                .pinger(addr, PingIdentifier::from(random::<u16>()))
-                .await;
+        stream::iter(settings.addresses)
+            .for_each_concurrent(10, |addr| {
+                let icmp_client = if addr.is_ipv4() {
+                    icmp_v4_client.clone()
+                } else {
+                    icmp_v6_client.clone()
+                };
 
-            let mut reachable = false;
-            for seq in 0..3 {
-                if pinger.ping(PingSequence(seq), &PAYLOAD).await.is_ok() {
-                    reachable = true;
-                    break;
+                let addresses = addresses.clone();
+
+                async move {
+                    const PAYLOAD: &[u8] = &[];
+                    let mut pinger = icmp_client
+                        .pinger(addr, PingIdentifier::from(random::<u16>()))
+                        .await;
+
+                    if let Err(err) = pinger
+                        .timeout(Duration::from_millis(1000))
+                        .ping(PingSequence(0), PAYLOAD)
+                        .await
+                    {
+                        match err {
+                            SurgeError::Timeout { .. } => trace!("Host timeout: {addr}"),
+                            _ => error!("ICMP error: {err}"),
+                        }
+                    } else {
+                        debug!("Host is up: {addr}");
+                        addresses.lock().await.push(addr);
+                    }
                 }
-            }
+            })
+            .await;
 
-            match reachable {
-                true => Some(addr),
-                false => None,
-            }
-        });
+        info!("Finished icmp check");
     }
 
-    let mut reachable_hosts = vec![];
-
-    while let Some(Ok(Some(addr))) = icmp_handles.join_next().await {
-        reachable_hosts.push(addr);
-    }
-
-    let product_it = iproduct!(settings.port_range, reachable_hosts);
-
-    let (tx, mut rx) = mpsc::channel(1000);
-
-    tokio::spawn(async move {
-        while let Some(res) = rx.recv().await {
-            if let Some(s_addr) = res {
-                println!("{s_addr}");
-            }
-        }
-    });
+    let product_it = iproduct!(settings.port_range, addresses.lock().await.clone());
 
     // Increase the NO_FILE limit if necessary
     if let Err(err) = rlimit::increase_nofile_limit(settings.concurrent_limit as u64 + 100) {
-        println!("Could not increase nofile limit: {err}");
-        return;
+        return Err(TcpPortScanError::RiseNoFileLimit(err));
     }
 
     stream::iter(product_it)
@@ -125,26 +119,33 @@ pub async fn start_tcp_con_port_scan(settings: TcpPortScannerSettings) {
                     if let Ok(res) = timeout(settings.timeout, TcpStream::connect(s_addr)).await {
                         match res {
                             Ok(mut stream) => {
-                                stream.shutdown().await.unwrap();
-                                tx.send(Some(s_addr)).await.unwrap();
+                                if let Err(err) = stream.shutdown().await {
+                                    debug!("Couldn't shut down tcp stream: {err}");
+                                }
+
+                                if let Err(err) = tx.send(s_addr).await {
+                                    warn!("Could not send result to tx: {err}");
+                                }
+
                                 break;
                             }
                             Err(err) => {
                                 let err_str = err.to_string();
                                 if err_str.contains("refused") {
-                                    tx.send(None).await.unwrap();
+                                    trace!("Connection refused on {s_addr}: {err}");
                                 } else {
-                                    println!("{err}");
+                                    warn!("Unknown error: {err}");
                                 }
                             }
                         }
                     } else {
-                        debug!("Timeout reached");
-                        tx.send(None).await.unwrap();
+                        trace!("Timeout reached");
                     }
                     sleep(settings.retry_interval).await;
                 }
             }
         })
         .await;
+
+    Ok(())
 }

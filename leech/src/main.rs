@@ -13,8 +13,9 @@
     allow(dead_code, unused_variables, unused_imports)
 )]
 
+use std::env;
 use std::net::IpAddr;
-use std::num::{NonZeroU16, NonZeroUsize};
+use std::num::NonZeroUsize;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::Duration;
@@ -22,8 +23,9 @@ use std::time::Duration;
 use clap::{Parser, Subcommand};
 use ipnet::IpNet;
 use itertools::Itertools;
-use once_cell::sync::Lazy;
-use regex::Regex;
+use log::{error, info};
+use tokio::sync::mpsc;
+use tokio::task;
 use trust_dns_resolver::Name;
 
 use crate::config::get_config;
@@ -35,14 +37,7 @@ use crate::modules::port_scanner::{start_tcp_con_port_scan, TcpPortScannerSettin
 
 pub mod config;
 pub mod modules;
-
-pub(crate) struct Regexes {
-    pub(crate) ports: Regex,
-}
-
-static RE: Lazy<Regexes> = Lazy::new(|| Regexes {
-    ports: Regex::new(r#"^(?P<range>\d*-\d*)$|^(?P<single>\d+)$|^$"#).unwrap(),
-});
+pub mod utils;
 
 /// The execution commands
 #[derive(Subcommand)]
@@ -103,12 +98,12 @@ pub enum RunCommand {
         #[clap(long)]
         #[clap(default_value_t = 100)]
         retry_interval: u16,
-        /// Skips the initial ping check.
+        /// Skips the initial icmp check.
         ///
         /// All hosts are assumed to be reachable.
         #[clap(long)]
         #[clap(default_value_t = false)]
-        skip_ping_check: bool,
+        skip_icmp_check: bool,
     },
 }
 
@@ -141,6 +136,12 @@ pub struct Cli {
 #[rorm::rorm_main]
 #[tokio::main]
 async fn main() -> Result<(), String> {
+    if env::var("RUST_LOG").is_err() {
+        env::set_var("RUST_LOG", "leech=info");
+    }
+
+    env_logger::init();
+
     let cli = Cli::parse();
 
     match cli.commands {
@@ -181,7 +182,7 @@ async fn main() -> Result<(), String> {
                 concurrent_limit,
                 max_retries,
                 retry_interval,
-                skip_ping_check,
+                skip_icmp_check,
             } => {
                 let mut addresses = vec![];
                 for target in targets {
@@ -212,82 +213,35 @@ async fn main() -> Result<(), String> {
                     .dedup()
                     .collect();
 
-                let mut parsed_ports = vec![];
+                let mut port_range = vec![];
 
                 if ports.is_empty() {
-                    parsed_ports.extend(1..=u16::MAX);
+                    port_range.extend(1..=u16::MAX);
+                } else {
+                    utils::parse_ports(&ports, &mut port_range)?;
                 }
 
-                for port in ports {
-                    let port_parts = port.split(',');
-                    for part in port_parts {
-                        if let Some(captures) = RE.ports.captures(part) {
-                            if let Some(c) = captures.get(0) {
-                                if c.as_str().is_empty() {
-                                    continue;
-                                }
-                            }
-                            if let Some(m) = captures.name("range") {
-                                let mut start = 1;
-                                let mut end = u16::MAX;
-                                for (idx, content) in m.as_str().split('-').into_iter().enumerate()
-                                {
-                                    match idx {
-                                        0 => {
-                                            if content.is_empty() {
-                                                start = 1;
-                                            } else if let Ok(v) = NonZeroU16::from_str(content) {
-                                                start = u16::from(v);
-                                            } else {
-                                                return Err(format!("Invalid port: {content}"));
-                                            }
-                                        }
-                                        1 => {
-                                            if content.is_empty() {
-                                                end = u16::MAX;
-                                            } else if let Ok(v) = NonZeroU16::from_str(content) {
-                                                end = u16::from(v);
-                                            } else {
-                                                return Err(format!("Invalid port: {content}"));
-                                            }
-                                        }
-                                        _ => unreachable!(""),
-                                    }
-                                }
-
-                                if end < start {
-                                    return Err(format!("Invalid port range: {end} < {start}"));
-                                }
-
-                                for port in start..=end {
-                                    parsed_ports.push(port);
-                                }
-                            } else if let Some(m) = captures.name("single") {
-                                if let Ok(v) = NonZeroU16::from_str(m.as_str()) {
-                                    parsed_ports.push(u16::from(v));
-                                } else {
-                                    return Err(format!("Invalid port: {}", m.as_str()));
-                                }
-                            }
-                        } else {
-                            return Err(format!("Invalid port declaration found: {part}"));
-                        }
-                    }
-                }
-
-                parsed_ports.sort();
-                parsed_ports.dedup();
-
-                start_tcp_con_port_scan(TcpPortScannerSettings {
+                let settings = TcpPortScannerSettings {
                     addresses,
-                    port_range: parsed_ports,
+                    port_range,
                     timeout: Duration::from_millis(timeout as u64),
-                    skip_ping_check,
+                    skip_icmp_check,
                     max_retries,
                     retry_interval: Duration::from_millis(retry_interval as u64),
                     concurrent_limit: usize::from(concurrent_limit),
-                })
-                .await;
+                };
+
+                let (tx, mut rx) = mpsc::channel(128);
+
+                task::spawn(async move {
+                    while let Some(addr) = rx.recv().await {
+                        info!("Open port found: {addr}");
+                    }
+                });
+
+                if let Err(err) = start_tcp_con_port_scan(settings, tx).await {
+                    error!("{err}");
+                }
             }
         },
     }
