@@ -18,6 +18,12 @@ for some attacks / reconnaissance work.
 Please note that this project is under heavy development.
 Expect breaking changes every once in a while.
 
+## Single user
+
+If you don't want to have the whole platform deployed, you can just execute `leech` on its own.
+
+With the subcommand `execute`, you can start and configure the modules as they were normal cli utilities.
+
 ## Contact
 
 You want to discuss something? Get in touch with us in our [matrix
