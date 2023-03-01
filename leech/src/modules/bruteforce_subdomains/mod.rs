@@ -3,16 +3,17 @@
 //! It requests A and AAAA records of the constructed domain of a DNS server.
 
 use std::fs;
+use std::net::{Ipv4Addr, Ipv6Addr};
 use std::path::PathBuf;
-use std::time::Duration;
 
 use futures::{stream, StreamExt};
-use log::{debug, error};
+use log::{debug, error, info, trace, warn};
 use rand::distributions::{Alphanumeric, DistString};
 use rand::thread_rng;
+use tokio::sync::mpsc::Sender;
 use trust_dns_resolver::config::{LookupIpStrategy, ResolverConfig, ResolverOpts};
 use trust_dns_resolver::error::ResolveErrorKind;
-use trust_dns_resolver::proto::rr::RecordType;
+use trust_dns_resolver::proto::rr::{RData, RecordType};
 use trust_dns_resolver::TokioAsyncResolver;
 
 /// The settings to configure a subdomain bruteforce
@@ -24,15 +25,50 @@ pub struct BruteforceSubdomainsSettings {
     ///
     /// The entries in the wordlist are assumed to be line seperated.
     pub wordlist_path: PathBuf,
+    /// Maximum of concurrent tasks that should be spawned
+    ///
+    /// 0 means, that there should be no limit.
+    pub concurrent_limit: usize,
+}
+
+/// Result of a subdomain
+#[derive(Debug)]
+pub enum BruteforceSubdomainResult {
+    /// A record
+    A {
+        /// Source domain
+        source: String,
+        /// Target address
+        target: Ipv4Addr,
+    },
+    /// AAAA record
+    Aaaa {
+        /// Source domain
+        source: String,
+        /// Target address
+        target: Ipv6Addr,
+    },
+    /// CNAME record
+    Cname {
+        /// Source domain
+        source: String,
+        /// Target domain
+        target: String,
+    },
 }
 
 /// Enumerates subdomains by brute forcing dns records with a wordlist.
 ///
 /// **Parameter**:
 /// - `settings`: [BruteforceSubdomainsSettings]
-pub async fn bruteforce_subdomains(settings: BruteforceSubdomainsSettings) -> Result<(), String> {
+/// - `tx`: [Sender] of [BruteforceSubdomainResult]
+pub async fn bruteforce_subdomains(
+    settings: BruteforceSubdomainsSettings,
+    tx: Sender<BruteforceSubdomainResult>,
+) -> Result<(), String> {
+    info!("Started subdomain enumeration for {}", settings.domain);
+
     let mut opts = ResolverOpts::default();
-    opts.timeout = Duration::from_secs(30);
     opts.ip_strategy = LookupIpStrategy::Ipv4AndIpv6;
     opts.preserve_intermediates = true;
     let resolver = TokioAsyncResolver::tokio(ResolverConfig::cloudflare_https(), opts).unwrap();
@@ -44,36 +80,50 @@ pub async fn bruteforce_subdomains(settings: BruteforceSubdomainsSettings) -> Re
     let mut wildcard_cname = None;
 
     let r = Alphanumeric.sample_string(&mut thread_rng(), 32);
-    println!("{}", settings.domain);
     let search = format!("{r}.{}.", settings.domain);
     match resolver.lookup_ip(&search).await {
         Ok(res) => {
             for record in res.as_lookup().records() {
-                let target;
                 let record = record.clone();
                 match record.record_type() {
                     RecordType::CNAME => {
                         let r = record.into_data().unwrap().into_cname().unwrap();
                         wildcard_cname = Some(r.clone());
-                        target = r.to_string().strip_suffix('.').unwrap().to_owned();
+                        let target = r.to_string().strip_suffix('.').unwrap().to_owned();
+                        let res = BruteforceSubdomainResult::Cname {
+                            source: search.clone(),
+                            target,
+                        };
+                        if let Err(err) = tx.send(res).await {
+                            warn!("Could not send result to tx: {err}");
+                        }
                     }
                     RecordType::A => {
                         let r = record.into_data().unwrap().into_a().unwrap();
                         wildcard_v4 = Some(r);
-                        target = r.to_string();
+                        let res = BruteforceSubdomainResult::A {
+                            source: search.clone(),
+                            target: r,
+                        };
+                        if let Err(err) = tx.send(res).await {
+                            warn!("Could not send result to tx: {err}");
+                        }
                     }
                     RecordType::AAAA => {
                         let r = record.into_data().unwrap().into_aaaa().unwrap();
                         wildcard_v6 = Some(r);
-                        target = r.to_string();
+                        let res = BruteforceSubdomainResult::Aaaa {
+                            source: search.clone(),
+                            target: r,
+                        };
+                        if let Err(err) = tx.send(res).await {
+                            warn!("Could not send result to tx: {err}");
+                        }
                     }
                     _ => {
                         error!("Got unexpected record type");
-                        unreachable!("got unexpected record type");
                     }
                 };
-
-                println!("Found record for *.{}: {}", &settings.domain, target);
             }
         }
         Err(err) => match err.kind() {
@@ -88,19 +138,19 @@ pub async fn bruteforce_subdomains(settings: BruteforceSubdomainsSettings) -> Re
         },
     }
 
-    let concurrent_limit = 30;
     stream::iter(wordlist.lines())
-        .chunks((wordlist.len() as f32 / concurrent_limit as f32).ceil() as usize)
-        .for_each_concurrent(concurrent_limit, move |chunk| {
-            let c = chunk.clone();
+        .chunks((wordlist.len() as f32 / settings.concurrent_limit as f32).ceil() as usize)
+        .for_each_concurrent(settings.concurrent_limit, move |chunk| {
+            let c = chunk;
             let resolver = resolver.clone();
             let domain = settings.domain.clone();
             let wildcard_cname = wildcard_cname.clone();
+            let tx = tx.clone();
 
             async move {
-                for subdomain in c {
-                    let search = format!("{subdomain}.{}.", &domain);
-                    match resolver.lookup_ip(search).await {
+                for entry in c {
+                    let search = format!("{entry}.{}.", &domain);
+                    match resolver.lookup_ip(&search).await {
                         Ok(answer) => {
                             for record in answer.as_lookup().records() {
                                 let domain = record
@@ -119,7 +169,13 @@ pub async fn bruteforce_subdomains(settings: BruteforceSubdomainsSettings) -> Re
                                         }
 
                                         let target = target.strip_suffix('.').unwrap().to_string();
-                                        println!("Found CNAME record for {}: {}", &domain, &target);
+                                        let res = BruteforceSubdomainResult::Cname {
+                                            source: domain,
+                                            target,
+                                        };
+                                        if let Err(err) = tx.send(res).await {
+                                            warn!("Could not send result to tx: {err}");
+                                        }
                                     }
                                     RecordType::A => {
                                         if let Some(wildcard) = wildcard_v4 {
@@ -127,8 +183,15 @@ pub async fn bruteforce_subdomains(settings: BruteforceSubdomainsSettings) -> Re
                                                 continue;
                                             }
                                         }
-
-                                        println!("Found A record for {}: {}", &domain, &target);
+                                        if let Some(RData::A(target)) = record.data() {
+                                            let res = BruteforceSubdomainResult::A {
+                                                source: domain,
+                                                target: *target,
+                                            };
+                                            if let Err(err) = tx.send(res).await {
+                                                warn!("Could not send result to tx: {err}");
+                                            }
+                                        }
                                     }
                                     RecordType::AAAA => {
                                         if let Some(wildcard) = wildcard_v6 {
@@ -136,8 +199,15 @@ pub async fn bruteforce_subdomains(settings: BruteforceSubdomainsSettings) -> Re
                                                 continue;
                                             }
                                         }
-
-                                        println!("Found AAAA record for {}: {}", &domain, &target);
+                                        if let Some(RData::AAAA(target)) = record.data() {
+                                            let res = BruteforceSubdomainResult::Aaaa {
+                                                source: domain,
+                                                target: *target,
+                                            };
+                                            if let Err(err) = tx.send(res).await {
+                                                warn!("Could not send result to tx: {err}");
+                                            }
+                                        }
                                     }
                                     _ => {
                                         error!("Got unexpected record type")
@@ -155,7 +225,7 @@ pub async fn bruteforce_subdomains(settings: BruteforceSubdomainsSettings) -> Re
                             ResolveErrorKind::Proto(err) => error!("Proto error {err}"),
                             ResolveErrorKind::Timeout => error!("Timeout while query"),
                             ResolveErrorKind::NoRecordsFound { .. } => {
-                                debug!("Wildcard test: no wildcard")
+                                trace!("No record found: {search}");
                             }
                             _ => error!("Unknown error"),
                         },
@@ -165,7 +235,7 @@ pub async fn bruteforce_subdomains(settings: BruteforceSubdomainsSettings) -> Re
         })
         .await;
 
-    println!("Finished subdomain enumeration");
+    info!("Finished subdomain enumeration");
 
     Ok(())
 }
