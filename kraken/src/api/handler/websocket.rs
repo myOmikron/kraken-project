@@ -11,13 +11,13 @@ use log::{debug, error};
 use tokio::sync::Mutex;
 
 use crate::api::handler::ApiError;
-use crate::api::middleware::AuthenticationRequired;
 use crate::chan::{WsManagerChan, WsManagerMessage, WsMessage};
 
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[utoipa::path(
     tag = "Websocket",
+    context_path = "/api/v1",
     responses(
         (status = 101, description = "Websocket connection established"),
         (status = 400, description = "Client error", body = ApiErrorResponse),
@@ -25,7 +25,7 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
     ),
     security(("api_key" = []))
 )]
-#[get("/api/v1/ws", wrap = "AuthenticationRequired")]
+#[get("/ws")]
 pub(crate) async fn websocket(
     request: HttpRequest,
     payload: Payload,

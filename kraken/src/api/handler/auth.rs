@@ -22,13 +22,14 @@ use crate::models::{User, UserKey, UserKeyInsert};
 
 #[utoipa::path(
     tag = "Authentication",
+    context_path = "/api/v1/auth",
     responses(
         (status = 200, description = "Logged in"),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse)
     )
 )]
-#[get("/api/v1/test", wrap = "AuthenticationRequired")]
+#[get("/test", wrap = "AuthenticationRequired")]
 pub(crate) async fn test() -> HttpResponse {
     HttpResponse::Ok().finish()
 }
@@ -41,6 +42,7 @@ pub(crate) struct LoginRequest {
 
 #[utoipa::path(
     tag = "Authentication",
+    context_path = "/api/v1/auth",
     responses(
         (status = 200, description = "Login successful"),
         (status = 400, description = "Client error", body = ApiErrorResponse),
@@ -48,7 +50,7 @@ pub(crate) struct LoginRequest {
     ),
     request_body = LoginRequest,
 )]
-#[post("/api/v1/auth/login")]
+#[post("/login")]
 pub(crate) async fn login(
     req: Json<LoginRequest>,
     db: Data<Database>,
@@ -89,13 +91,14 @@ pub(crate) async fn login(
 
 #[utoipa::path(
     tag = "Authentication",
+    context_path = "/api/v1/auth",
     responses(
         (status = 200, description = "Logout successful"),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse)
     ),
 )]
-#[get("/api/v1/auth/logout")]
+#[get("/logout")]
 pub(crate) async fn logout(
     session: Session,
     ws_manager_chan: Data<WsManagerChan>,
@@ -116,13 +119,14 @@ pub(crate) async fn logout(
 
 #[utoipa::path(
     tag = "Authentication",
+    context_path = "/api/v1/auth",
     responses(
         (status = 200, description = "2FA Authentication started", body = inline(Object)),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse)
     ),
 )]
-#[post("/api/v1/auth/startAuth")]
+#[post("/startAuth")]
 pub(crate) async fn start_auth(
     db: Data<Database>,
     session: Session,
@@ -159,6 +163,7 @@ pub(crate) async fn start_auth(
 
 #[utoipa::path(
     tag = "Authentication",
+    context_path = "/api/v1/auth",
     responses(
         (status = 200, description = "2FA Authentication finished"),
         (status = 400, description = "Client error", body = ApiErrorResponse),
@@ -166,7 +171,7 @@ pub(crate) async fn start_auth(
     ),
     request_body = inline(Object)
 )]
-#[post("/api/v1/auth/finishAuth")]
+#[post("/finishAuth")]
 pub(crate) async fn finish_auth(
     auth: Json<PublicKeyCredential>,
     db: Data<Database>,
@@ -200,13 +205,14 @@ pub(crate) async fn finish_auth(
 
 #[utoipa::path(
     tag = "Authentication",
+    context_path = "/api/v1/auth",
     responses(
         (status = 200, description = "2FA Key registration started", body = inline(Object)),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse)
     ),
 )]
-#[post("/api/v1/auth/startRegister")]
+#[post("/startRegister")]
 pub(crate) async fn start_register(
     db: Data<Database>,
     session: Session,
@@ -270,6 +276,7 @@ pub(crate) struct FinishRegisterRequest {
 
 #[utoipa::path(
     tag = "Authentication",
+    context_path = "/api/v1/auth",
     responses(
         (status = 200, description = "2FA Key registration finished"),
         (status = 400, description = "Client error", body = ApiErrorResponse),
@@ -277,7 +284,7 @@ pub(crate) struct FinishRegisterRequest {
     ),
     request_body = FinishRegisterRequest
 )]
-#[post("/api/v1/auth/finishRegister")]
+#[post("/finishRegister")]
 pub(crate) async fn finish_register(
     req: Json<FinishRegisterRequest>,
     db: Data<Database>,
