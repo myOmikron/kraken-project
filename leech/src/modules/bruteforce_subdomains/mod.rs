@@ -16,6 +16,10 @@ use trust_dns_resolver::error::ResolveErrorKind;
 use trust_dns_resolver::proto::rr::{RData, RecordType};
 use trust_dns_resolver::TokioAsyncResolver;
 
+use crate::modules::bruteforce_subdomains::error::BruteforceSubdomainError;
+
+pub mod error;
+
 /// The settings to configure a subdomain bruteforce
 #[derive(Debug)]
 pub struct BruteforceSubdomainsSettings {
@@ -65,15 +69,17 @@ pub enum BruteforceSubdomainResult {
 pub async fn bruteforce_subdomains(
     settings: BruteforceSubdomainsSettings,
     tx: Sender<BruteforceSubdomainResult>,
-) -> Result<(), String> {
+) -> Result<(), BruteforceSubdomainError> {
     info!("Started subdomain enumeration for {}", settings.domain);
 
     let mut opts = ResolverOpts::default();
     opts.ip_strategy = LookupIpStrategy::Ipv4AndIpv6;
     opts.preserve_intermediates = true;
-    let resolver = TokioAsyncResolver::tokio(ResolverConfig::cloudflare_https(), opts).unwrap();
+    let resolver = TokioAsyncResolver::tokio(ResolverConfig::cloudflare_https(), opts)
+        .map_err(BruteforceSubdomainError::ResolveStart)?;
 
-    let wordlist = fs::read_to_string(&settings.wordlist_path).map_err(|e| e.to_string())?;
+    let wordlist = fs::read_to_string(&settings.wordlist_path)
+        .map_err(BruteforceSubdomainError::WordlistRead)?;
 
     let mut wildcard_v4 = None;
     let mut wildcard_v6 = None;

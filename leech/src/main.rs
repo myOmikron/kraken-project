@@ -191,7 +191,9 @@ async fn main() -> Result<(), String> {
                         wordlist_path,
                         concurrent_limit: usize::from(concurrent_limit),
                     };
-                    bruteforce_subdomains(settings, tx).await?
+                    if let Err(err) = bruteforce_subdomains(settings, tx).await {
+                        error!("{err}");
+                    }
                 }
                 RunCommand::CertificateTransparency {
                     target,
