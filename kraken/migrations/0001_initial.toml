@@ -1,0 +1,279 @@
+[Migration]
+Hash = '6300548413568820413'
+Initial = true
+Replaces = []
+
+[[Migration.Operations]]
+Type = 'CreateModel'
+Name = 'leech'
+
+[[Migration.Operations.Fields]]
+Name = 'id'
+Type = 'int64'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'auto_increment'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'primary_key'
+
+[[Migration.Operations.Fields]]
+Name = 'name'
+Type = 'varchar'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'max_length'
+Value = 255
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'unique'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'not_null'
+
+[[Migration.Operations.Fields]]
+Name = 'address'
+Type = 'varchar'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'max_length'
+Value = 255
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'unique'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'not_null'
+
+[[Migration.Operations.Fields]]
+Name = 'description'
+Type = 'varchar'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'max_length'
+Value = 65535
+
+[[Migration.Operations]]
+Type = 'CreateModel'
+Name = 'user'
+
+[[Migration.Operations.Fields]]
+Name = 'uuid'
+Type = 'varbinary'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'primary_key'
+
+[[Migration.Operations.Fields]]
+Name = 'username'
+Type = 'varchar'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'max_length'
+Value = 255
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'unique'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'not_null'
+
+[[Migration.Operations.Fields]]
+Name = 'display_name'
+Type = 'varchar'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'max_length'
+Value = 255
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'not_null'
+
+[[Migration.Operations.Fields]]
+Name = 'password_hash'
+Type = 'varchar'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'max_length'
+Value = 1024
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'not_null'
+
+[[Migration.Operations.Fields]]
+Name = 'admin'
+Type = 'boolean'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'not_null'
+
+[[Migration.Operations.Fields]]
+Name = 'last_login'
+Type = 'datetime'
+Annotations = []
+
+[[Migration.Operations.Fields]]
+Name = 'created_at'
+Type = 'datetime'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'auto_create_time'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'not_null'
+
+[[Migration.Operations]]
+Type = 'CreateModel'
+Name = 'userkey'
+
+[[Migration.Operations.Fields]]
+Name = 'id'
+Type = 'int64'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'auto_increment'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'primary_key'
+
+[[Migration.Operations.Fields]]
+Name = 'name'
+Type = 'varchar'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'max_length'
+Value = 255
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'not_null'
+
+[[Migration.Operations.Fields]]
+Name = 'key'
+Type = 'varbinary'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'not_null'
+
+[[Migration.Operations]]
+Type = 'CreateModel'
+Name = 'workspace'
+
+[[Migration.Operations.Fields]]
+Name = 'id'
+Type = 'int64'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'auto_increment'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'primary_key'
+
+[[Migration.Operations.Fields]]
+Name = 'name'
+Type = 'varchar'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'max_length'
+Value = 255
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'not_null'
+
+[[Migration.Operations.Fields]]
+Name = 'description'
+Type = 'varchar'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'max_length'
+Value = 65535
+
+[[Migration.Operations.Fields]]
+Name = 'deletable'
+Type = 'boolean'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'default_value'
+Value = true
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'not_null'
+
+[[Migration.Operations.Fields]]
+Name = 'created_at'
+Type = 'datetime'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'auto_create_time'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'not_null'
+
+[[Migration.Operations]]
+Type = 'CreateModel'
+Name = 'dbsession'
+
+[[Migration.Operations.Fields]]
+Name = 'session_key'
+Type = 'varchar'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'max_length'
+Value = 4096
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'primary_key'
+
+[[Migration.Operations.Fields]]
+Name = 'session_state'
+Type = 'varchar'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'max_length'
+Value = 1048576
+
+[[Migration.Operations.Fields]]
+Name = 'expired_after'
+Type = 'datetime'
+
+[[Migration.Operations.Fields.Annotations]]
+Type = 'not_null'
+
+[[Migration.Operations]]
+Type = 'CreateField'
+Model = 'userkey'
+
+[Migration.Operations.Field]
+Name = 'user'
+Type = 'varbinary'
+
+[[Migration.Operations.Field.Annotations]]
+Type = 'not_null'
+
+[[Migration.Operations.Field.Annotations]]
+Type = 'foreign_key'
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = 'user'
+ColumnName = 'uuid'
+OnDelete = 'Restrict'
+OnUpdate = 'Restrict'
+
+[[Migration.Operations]]
+Type = 'CreateField'
+Model = 'workspace'
+
+[Migration.Operations.Field]
+Name = 'owner'
+Type = 'varbinary'
+
+[[Migration.Operations.Field.Annotations]]
+Type = 'not_null'
+
+[[Migration.Operations.Field.Annotations]]
+Type = 'foreign_key'
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = 'user'
+ColumnName = 'uuid'
+OnDelete = 'Restrict'
+OnUpdate = 'Restrict'
