@@ -24,7 +24,7 @@ async function parseError(response: Response): Promise<ApiError> {
 }
 
 export async function test(): Promise<"logged out" | "logged in" | "verified"> {
-    const res = await fetch("/api/v1/test");
+    const res = await fetch("/api/v1/auth/test");
     if (res.status === 200) {
         return "verified";
     } else {
