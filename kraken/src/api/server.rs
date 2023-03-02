@@ -28,7 +28,7 @@ use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
 };
 use crate::api::swagger::ApiDoc;
-use crate::chan::WsManagerChan;
+use crate::chan::{RpcClients, RpcManagerChannel, WsManagerChan};
 use crate::config::Config;
 
 const ORIGIN_NAME: &str = "Kraken";
@@ -36,6 +36,8 @@ const ORIGIN_NAME: &str = "Kraken";
 pub(crate) async fn start_server(
     db: Database,
     config: &Config,
+    rpc_manager_chan: RpcManagerChannel,
+    rpc_clients: RpcClients,
     ws_manager_chan: WsManagerChan,
 ) -> Result<(), StartServerError> {
     let key = Key::try_from(
@@ -64,6 +66,8 @@ pub(crate) async fn start_server(
             .app_data(PayloadConfig::default())
             .app_data(webauthn.clone())
             .app_data(Data::new(ws_manager_chan.clone()))
+            .app_data(Data::new(rpc_manager_chan.clone()))
+            .app_data(rpc_clients.clone())
             .wrap(setup_logging_mw(LoggingMiddlewareConfig::default()))
             .wrap(
                 SessionMiddleware::builder(DBSessionStore::new(db.clone()), key.clone())
