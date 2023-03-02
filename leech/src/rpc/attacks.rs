@@ -54,7 +54,7 @@ impl ReqAttackService for Attacks {
             concurrent_limit: req.concurrent_limit,
         };
         if let Err(err) = bruteforce_subdomains(settings, tx).await {
-            warn!("{err}");
+            warn!("Attack {} returned error: {err}", req.attack_id);
             // TODO: Send error to grpc client
         }
 
@@ -95,7 +95,7 @@ impl ReqAttackService for Attacks {
         };
 
         if let Err(err) = start_tcp_con_port_scan(settings, tx).await {
-            warn!("{err}");
+            warn!("Attack {} returned error: {err}", req.attack_id);
             // TODO: Send error to grpc client
         }
 
