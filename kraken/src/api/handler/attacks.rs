@@ -37,7 +37,7 @@ pub(crate) struct BruteforceSubdomainsRequest {
     pub(crate) concurrent_limit: u32,
 }
 
-/// Bruteforce subdomains through a DNS wordlist attack.
+/// Bruteforce subdomains through a DNS wordlist attack
 ///
 /// Enumerate possible subdomains by querying a DNS server with constructed domains.
 /// See [OWASP](https://owasp.org/www-community/attacks/Brute_force_attack) for further information.
@@ -232,7 +232,7 @@ pub(crate) struct ScanTcpPortsRequest {
     pub(crate) skip_icmp_check: bool,
 }
 
-/// Start a tcp port scan.
+/// Start a tcp port scan
 ///
 /// Use this method to start a tcp port scan.
 ///

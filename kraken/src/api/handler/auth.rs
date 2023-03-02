@@ -20,6 +20,11 @@ use crate::api::middleware::AuthenticationRequired;
 use crate::chan::{WsManagerChan, WsManagerMessage};
 use crate::models::{User, UserKey, UserKeyInsert};
 
+/// Test the current login state
+///
+/// You can use this endpoint to test the current login state of your client.
+///
+/// If logged in, a 200 without a body is returned.
 #[utoipa::path(
     tag = "Authentication",
     context_path = "/api/v1/auth",
@@ -36,10 +41,15 @@ pub(crate) async fn test() -> HttpResponse {
 
 #[derive(ToSchema, Deserialize)]
 pub(crate) struct LoginRequest {
+    #[schema(example = "user123")]
     username: String,
+    #[schema(example = "super-secure-password")]
     password: String,
 }
 
+/// Login to kraken
+///
+/// Login using your username and password.
 #[utoipa::path(
     tag = "Authentication",
     context_path = "/api/v1/auth",
@@ -89,6 +99,9 @@ pub(crate) async fn login(
     Ok(HttpResponse::Ok().finish())
 }
 
+/// Log out of this session
+///
+/// Logs a logged-in user out of his session.
 #[utoipa::path(
     tag = "Authentication",
     context_path = "/api/v1/auth",
@@ -117,6 +130,12 @@ pub(crate) async fn logout(
     Ok(HttpResponse::Ok().finish())
 }
 
+/// Starts the authentication with a security key
+///
+/// Starts the authentication with a security key.
+/// Use the `login` endpoint before calling this one.
+///
+/// Proceed with `finishAuth`.
 #[utoipa::path(
     tag = "Authentication",
     context_path = "/api/v1/auth",
@@ -161,6 +180,10 @@ pub(crate) async fn start_auth(
     Ok(Json(rcr))
 }
 
+/// Finishes the authentication with a security key
+///
+/// Finishes the authentication request.
+/// Use `startAuth` to retrieve the challenge response data.  
 #[utoipa::path(
     tag = "Authentication",
     context_path = "/api/v1/auth",
@@ -203,6 +226,10 @@ pub(crate) async fn finish_auth(
     Ok(HttpResponse::Ok().finish())
 }
 
+/// Start the registration of a security key
+///
+/// Start the registration of a security key.
+/// Proceed to the `finishRegister` endpoint.
 #[utoipa::path(
     tag = "Authentication",
     context_path = "/api/v1/auth",
@@ -268,12 +295,18 @@ pub(crate) async fn start_register(
 
 #[derive(Deserialize, ToSchema)]
 pub(crate) struct FinishRegisterRequest {
-    #[schema(value_type = Object)]
+    // TODO: provide a example json for this request
     #[serde(flatten)]
+    #[schema(example = json!({}), value_type = Object)]
     register_pk_credential: RegisterPublicKeyCredential,
+    #[schema(example = "my-security-key-01")]
     name: String,
 }
 
+/// Finish the registration of a security key
+///
+/// Finishes the authentication request.
+/// Use `startRegister` to retrieve the challenge response data.
 #[utoipa::path(
     tag = "Authentication",
     context_path = "/api/v1/auth",
