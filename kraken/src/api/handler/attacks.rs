@@ -21,17 +21,26 @@ use crate::rpc::rpc_attacks::shared::dns_record::Record;
 
 #[derive(Serialize, ToSchema)]
 pub(crate) struct AttackResponse {
+    #[schema(example = 1337)]
     pub(crate) attack_id: i64,
 }
 
 #[derive(Deserialize, ToSchema)]
 pub(crate) struct BruteforceSubdomainsRequest {
+    #[schema(example = 1)]
     pub(crate) leech_id: u32,
+    #[schema(example = "example.com")]
     pub(crate) domain: String,
+    #[schema(example = "/opt/wordlists/Discovery/DNS/subdomains-top1million-5000.txt")]
     pub(crate) wordlist_path: String,
+    #[schema(example = 20)]
     pub(crate) concurrent_limit: u32,
 }
 
+/// Bruteforce subdomains through a DNS wordlist attack.
+///
+/// Enumerate possible subdomains by querying a DNS server with constructed domains.
+/// See [OWASP](https://owasp.org/www-community/attacks/Brute_force_attack) for further information.
 #[utoipa::path(
     tag = "Attacks",
     context_path = "/api/v1",
