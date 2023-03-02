@@ -193,10 +193,28 @@ pub(crate) async fn bruteforce_subdomains(
 }
 
 #[derive(Deserialize, ToSchema)]
+#[schema(example = json!({
+    "leech_id": 1,
+    "targets": [
+        "10.13.37.1",
+        "10.13.37.2",
+        "10.13.37.50"
+    ],
+    "exclude": ["10.13.37.252/30"],
+    "ports": [80, 443, 3306, 5432],
+    "retry_interval": 100,
+    "max_retries": 2,
+    "timeout": 3000,
+    "concurrent_limit": 5000,
+    "skip_icmp_check": false
+}))]
 pub(crate) struct ScanTcpPortsRequest {
     pub(crate) leech_id: u32,
+    #[schema(value_type = Vec<String>)]
     pub(crate) targets: Vec<IpAddr>,
+    #[schema(value_type = Vec<String>)]
     pub(crate) exclude: Vec<IpNet>,
+    #[schema(value_type = Vec<u16>)]
     pub(crate) ports: Vec<NonZeroU16>,
     pub(crate) retry_interval: u64,
     pub(crate) max_retries: u32,
@@ -205,6 +223,15 @@ pub(crate) struct ScanTcpPortsRequest {
     pub(crate) skip_icmp_check: bool,
 }
 
+/// Start a tcp port scan.
+///
+/// Use this method to start a tcp port scan.
+///
+/// `exclude` accepts a list of ip networks in CIDR notation.
+///
+/// All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.
+///
+/// Set `max_retries` to 0 if you don't want to try a port more than 1 time.
 #[utoipa::path(
     tag = "Attacks",
     context_path = "/api/v1",
