@@ -9,6 +9,7 @@ use serde_repr::Serialize_repr;
 use utoipa::{IntoParams, ToSchema};
 use webauthn_rs::prelude::WebauthnError;
 
+pub(crate) use crate::api::handler::attacks::*;
 pub(crate) use crate::api::handler::auth::*;
 pub(crate) use crate::api::handler::leeches::*;
 pub(crate) use crate::api::handler::users::*;
@@ -17,6 +18,7 @@ pub(crate) use crate::api::handler::workspaces::*;
 use crate::modules::user::create::CreateUserError;
 use crate::modules::user::delete::DeleteUserError;
 
+mod attacks;
 mod auth;
 mod leeches;
 mod users;
@@ -52,6 +54,7 @@ pub(crate) enum ApiStatusCode {
     WorkspaceNotDeletable = 1015,
     EmptyJson = 1016,
     InvalidPassword = 1017,
+    InvalidLeech = 1018,
     InternalServerError = 2000,
     DatabaseError = 2001,
     SessionError = 2002,
@@ -100,6 +103,7 @@ pub(crate) enum ApiError {
     WorkspaceNotDeletable,
     EmptyJson,
     InvalidPassword,
+    InvalidLeech,
 }
 
 impl Display for ApiError {
@@ -132,6 +136,7 @@ impl Display for ApiError {
             ApiError::WorkspaceNotDeletable => write!(f, "Workspace is not deletable"),
             ApiError::EmptyJson => write!(f, "Received an empty json request"),
             ApiError::InvalidPassword => write!(f, "Invalid password supplied"),
+            ApiError::InvalidLeech => write!(f, "Invalid leech"),
         }
     }
 }
@@ -293,6 +298,14 @@ impl actix_web::ResponseError for ApiError {
 
                 HttpResponse::BadRequest().json(ApiErrorResponse::new(
                     ApiStatusCode::InvalidPassword,
+                    self.to_string(),
+                ))
+            }
+            ApiError::InvalidLeech => {
+                debug!("Invalid leech id");
+
+                HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                    ApiStatusCode::InvalidLeech,
                     self.to_string(),
                 ))
             }

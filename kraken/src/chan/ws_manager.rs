@@ -44,6 +44,15 @@ pub(crate) enum WsMessage {
     #[serde(skip)]
     ServerQuitSocket,
     InvalidMessage,
+    SubdomainEnumerationResult {
+        attack_id: i64,
+        source: String,
+        to: String,
+    },
+    AttackFinished {
+        attack_id: i64,
+        finished_successful: bool,
+    },
 }
 
 pub(crate) type WsManagerChan = Sender<WsManagerMessage>;
