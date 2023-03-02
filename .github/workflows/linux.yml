@@ -48,7 +48,7 @@ jobs:
         run: |
           rustup component add clippy
           cargo install clippy-sarif sarif-fmt
-          apt-get install protobuf-compiler
+          sudo apt-get install protobuf-compiler
 
       - name: Build kraken
         run: cargo build -p kraken -p leech
