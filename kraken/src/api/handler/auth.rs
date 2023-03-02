@@ -48,8 +48,6 @@ pub(crate) struct LoginRequest {
 }
 
 /// Login to kraken
-///
-/// Login using your username and password.
 #[utoipa::path(
     tag = "Authentication",
     context_path = "/api/v1/auth",
@@ -132,7 +130,6 @@ pub(crate) async fn logout(
 
 /// Starts the authentication with a security key
 ///
-/// Starts the authentication with a security key.
 /// Use the `login` endpoint before calling this one.
 ///
 /// Proceed with `finishAuth`.
@@ -182,7 +179,6 @@ pub(crate) async fn start_auth(
 
 /// Finishes the authentication with a security key
 ///
-/// Finishes the authentication request.
 /// Use `startAuth` to retrieve the challenge response data.  
 #[utoipa::path(
     tag = "Authentication",
@@ -228,7 +224,6 @@ pub(crate) async fn finish_auth(
 
 /// Start the registration of a security key
 ///
-/// Start the registration of a security key.
 /// Proceed to the `finishRegister` endpoint.
 #[utoipa::path(
     tag = "Authentication",
@@ -305,7 +300,6 @@ pub(crate) struct FinishRegisterRequest {
 
 /// Finish the registration of a security key
 ///
-/// Finishes the authentication request.
 /// Use `startRegister` to retrieve the challenge response data.
 #[utoipa::path(
     tag = "Authentication",

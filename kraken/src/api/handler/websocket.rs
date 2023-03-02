@@ -15,6 +15,11 @@ use crate::chan::{WsManagerChan, WsManagerMessage, WsMessage};
 
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
 
+/// Start a websocket connection
+///
+/// A heartbeat PING packet is sent constantly (every 10s).
+/// If no response is retrieved within 30s of the last transmission, the socket
+/// will be closed.
 #[utoipa::path(
     tag = "Websocket",
     context_path = "/api/v1",

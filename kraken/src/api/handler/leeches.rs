@@ -12,16 +12,26 @@ use crate::modules::uri::check_leech_address;
 
 #[derive(Deserialize, ToSchema)]
 pub(crate) struct CreateLeechRequest {
+    #[schema(example = "leech-01")]
     pub(crate) name: String,
+    #[schema(example = "https://10.13.37:8081")]
     pub(crate) address: String,
+    #[schema(example = "The first leech in a private net")]
     pub(crate) description: Option<String>,
 }
 
 #[derive(Serialize, ToSchema)]
 pub(crate) struct CreateLeechResponse {
+    #[schema(example = 1)]
     pub(crate) id: i64,
 }
 
+/// Create a leech
+///
+/// The `name` parameter must be unique.
+///
+/// `address` must be a valid address including a scheme and port.
+/// Currently only https and http are supported as scheme.
 #[utoipa::path(
     tag = "Leech management",
     context_path = "/api/v1/admin",
@@ -84,6 +94,7 @@ pub(crate) async fn create_leech(
     Ok(Json(CreateLeechResponse { id }))
 }
 
+/// Delete a leech by its id
 #[utoipa::path(
     tag = "Leech management",
     context_path = "/api/v1/admin",
@@ -130,11 +141,15 @@ pub(crate) async fn delete_leech(
 
 #[derive(Serialize, ToSchema)]
 pub(crate) struct GetLeech {
+    #[schema(example = 1)]
     id: i64,
+    #[schema(example = "leech-01")]
     name: String,
+    #[schema(example = "https://10.13.37.1:8081")]
     address: String,
 }
 
+/// Retrieve a leech by its id
 #[utoipa::path(
     tag = "Leech management",
     context_path = "/api/v1/admin",
@@ -166,6 +181,7 @@ pub(crate) struct GetLeechResponse {
     leeches: Vec<GetLeech>,
 }
 
+/// Retrieve all leeches
 #[utoipa::path(
     tag = "Leech management",
     context_path = "/api/v1/admin",
@@ -194,13 +210,22 @@ pub(crate) async fn get_all_leeches(db: Data<Database>) -> ApiResult<Json<GetLee
 
 #[derive(Deserialize, ToSchema)]
 pub(crate) struct UpdateLeechRequest {
+    #[schema(example = "leech-01")]
     name: Option<String>,
+    #[schema(example = "https://10.13.37.1:8081")]
     address: Option<String>,
+    #[schema(example = "First leech in a private network")]
     #[serde(default)]
     #[serde(deserialize_with = "crate::api::handler::de_optional")]
     description: Option<Option<String>>,
 }
 
+/// Update a leech by its id
+///
+/// All parameter are optional, but at least one of them must be specified.
+///
+/// `address` must be a valid address including a scheme and port.
+/// Currently only https and http are supported as scheme.
 #[utoipa::path(
     tag = "Leech management",
     context_path = "/api/v1/admin",

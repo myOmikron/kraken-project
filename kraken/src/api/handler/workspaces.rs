@@ -12,15 +12,19 @@ use crate::models::{User, Workspace, WorkspaceInsert};
 
 #[derive(Deserialize, ToSchema)]
 pub(crate) struct CreateWorkspaceRequest {
+    #[schema(example = "secure-workspace")]
     pub(crate) name: String,
+    #[schema(example = "This workspace is super secure and should not be looked at!!")]
     pub(crate) description: Option<String>,
 }
 
 #[derive(Serialize, ToSchema)]
 pub(crate) struct CreateWorkspaceResponse {
+    #[schema(example = 1)]
     pub(crate) id: i64,
 }
 
+/// Create a new workspace
 #[utoipa::path(
     tag = "Workspaces",
     context_path = "/api/v1",
@@ -52,6 +56,7 @@ pub(crate) async fn create_workspace(
     Ok(Json(CreateWorkspaceResponse { id }))
 }
 
+/// Delete a workspace by its id
 #[utoipa::path(
     tag = "Workspaces",
     context_path = "/api/v1",
@@ -123,8 +128,11 @@ pub(crate) async fn delete_workspace(
 
 #[derive(Serialize, ToSchema)]
 pub(crate) struct GetWorkspace {
+    #[schema(example = 1337)]
     pub(crate) id: i64,
+    #[schema(example = "ultra-secure-workspace")]
     pub(crate) name: String,
+    #[schema(example = "This workspace is ultra secure and should not be looked at!!")]
     pub(crate) description: Option<String>,
 }
 
@@ -133,6 +141,7 @@ pub(crate) struct GetWorkspaceResponse {
     pub(crate) workspaces: Vec<GetWorkspace>,
 }
 
+/// Retrieve a workspace by id
 #[utoipa::path(
     tag = "Workspaces",
     context_path = "/api/v1",
@@ -178,6 +187,9 @@ pub(crate) async fn get_workspace(
     }))
 }
 
+/// Retrieve all workspaces owned by executing user
+///
+/// For administration access, look at the `/admin/workspaces` endpoint.
 #[utoipa::path(
     tag = "Workspaces",
     context_path = "/api/v1",
@@ -212,6 +224,7 @@ pub(crate) async fn get_all_workspaces(
     }))
 }
 
+/// Retrieve a workspace by id
 #[utoipa::path(
     tag = "Admin Workspaces",
     context_path = "/api/v1/admin",
@@ -241,6 +254,7 @@ pub(crate) async fn get_workspace_admin(
     }))
 }
 
+/// Retrieve all workspaces
 #[utoipa::path(
     tag = "Admin Workspaces",
     context_path = "/api/v1/admin",

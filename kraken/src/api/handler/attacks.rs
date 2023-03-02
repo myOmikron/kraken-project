@@ -234,8 +234,6 @@ pub(crate) struct ScanTcpPortsRequest {
 
 /// Start a tcp port scan
 ///
-/// Use this method to start a tcp port scan.
-///
 /// `exclude` accepts a list of ip networks in CIDR notation.
 ///
 /// All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.

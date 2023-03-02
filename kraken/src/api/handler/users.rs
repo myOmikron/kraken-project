@@ -19,9 +19,13 @@ use crate::modules::user::delete::delete_user_transaction;
 
 #[derive(Deserialize, ToSchema)]
 pub(crate) struct CreateUserRequest {
+    #[schema(example = "user123")]
     pub(crate) username: String,
+    #[schema(example = "Anon")]
     pub(crate) display_name: String,
+    #[schema(example = "super-secure-password")]
     pub(crate) password: String,
+    #[schema(example = true)]
     pub(crate) admin: bool,
 }
 
@@ -63,9 +67,11 @@ pub(crate) async fn create_user(
 
 #[derive(Deserialize, IntoParams)]
 pub(crate) struct DeleteUserRequest {
+    #[param(example = "user123")]
     pub(crate) username: String,
 }
 
+/// Delete a user by its username
 #[utoipa::path(
     tag = "User Admin Management",
     context_path = "/api/v1/admin",
@@ -89,14 +95,18 @@ pub(crate) async fn delete_user(
 
 #[derive(Deserialize, IntoParams)]
 pub(crate) struct GetUserRequest {
+    #[param(example = "user123")]
     pub(crate) username: String,
 }
 
 #[derive(Serialize, ToSchema)]
 pub(crate) struct GetUser {
     pub(crate) uuid: Uuid,
+    #[schema(example = "user123")]
     pub(crate) username: String,
+    #[schema(example = "Anon")]
     pub(crate) display_name: String,
+    #[schema(example = true)]
     pub(crate) admin: bool,
     pub(crate) created_at: DateTime<Utc>,
     pub(crate) last_login: Option<DateTime<Utc>>,
@@ -107,6 +117,7 @@ pub(crate) struct GetUserResponse {
     pub(crate) users: Vec<GetUser>,
 }
 
+/// Retrieve a user by its username
 #[utoipa::path(
     tag = "User Admin Management",
     context_path = "/api/v1/admin",
@@ -139,6 +150,7 @@ pub(crate) async fn get_user(
     }))
 }
 
+/// Retrieve all users
 #[utoipa::path(
     tag = "User Admin Management",
     context_path = "/api/v1/admin",
@@ -168,6 +180,7 @@ pub(crate) async fn get_all_users(db: Data<Database>) -> ApiResult<Json<GetUserR
     }))
 }
 
+/// Retrieve the own user
 #[utoipa::path(
     tag = "User Management",
     context_path = "/api/v1",
@@ -200,10 +213,13 @@ pub(crate) async fn get_me(session: Session, db: Data<Database>) -> ApiResult<Js
 
 #[derive(Deserialize, ToSchema)]
 pub(crate) struct SetPasswordRequest {
+    #[schema(example = "super-secure-password")]
     current_password: String,
+    #[schema(example = "ultra-secure-password!1!1!")]
     new_password: String,
 }
 
+/// Set a new password
 #[utoipa::path(
     tag = "User Management",
     context_path = "/api/v1",
