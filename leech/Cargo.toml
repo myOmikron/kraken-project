@@ -24,6 +24,8 @@ env_logger = { version = "~0.10" }
 tokio = { version = ">=1.23.1", features = ["macros", "sync", "rt-multi-thread", "net", "time"] }
 # Abstractions for async programming
 futures = { version = "~0.3" }
+# Tokio streams
+tokio-stream = { version = "~0.1" }
 
 # Expansion of the Iterator trait
 itertools = { version = "~0.10" }
@@ -32,6 +34,7 @@ itertools = { version = "~0.10" }
 tonic = { version = "~0.8", features = ["transport", "tls"] }
 # codegenerator
 prost = { version = "~0.11" }
+prost-types = { version = "~0.11" }
 
 # Serialization library
 serde = { version = "~1", features = ["derive"] }

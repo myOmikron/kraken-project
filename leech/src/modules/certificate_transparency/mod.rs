@@ -6,6 +6,7 @@ use std::str::FromStr;
 use std::time::Duration;
 
 use itertools::Itertools;
+use log::{debug, info};
 use rorm::{Database, DatabaseConfiguration, DatabaseDriver};
 use tokio::time::sleep;
 use url::Url;
@@ -40,7 +41,7 @@ pub async fn query_ct_api(settings: CertificateTransparencySettings) {
     };
     uri.set_query(Some(&query));
 
-    println!("Requesting information about: {}", &settings.target);
+    info!("Requesting information about: {}", &settings.target);
 
     let mut res = None;
     for _ in 0..3 {
@@ -52,7 +53,7 @@ pub async fn query_ct_api(settings: CertificateTransparencySettings) {
                 }
             }
             Err(err) => {
-                println!("Error requesting {CT_URI}: {err}");
+                debug!("Error requesting {CT_URI}: {err}");
                 sleep(Duration::from_millis(500)).await;
             }
         };

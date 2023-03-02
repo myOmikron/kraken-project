@@ -85,6 +85,12 @@ impl From<toml::de::Error> for GetConfigError {
     }
 }
 
+impl From<GetConfigError> for String {
+    fn from(value: GetConfigError) -> Self {
+        value.to_string()
+    }
+}
+
 /// Retrieve an instance of [Config] from the specified path.
 ///
 /// The file is parsed with a TOML parser.

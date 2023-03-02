@@ -32,7 +32,7 @@ pub struct BruteforceSubdomainsSettings {
     /// Maximum of concurrent tasks that should be spawned
     ///
     /// 0 means, that there should be no limit.
-    pub concurrent_limit: usize,
+    pub concurrent_limit: u32,
 }
 
 /// Result of a subdomain
@@ -146,7 +146,7 @@ pub async fn bruteforce_subdomains(
 
     stream::iter(wordlist.lines())
         .chunks((wordlist.len() as f32 / settings.concurrent_limit as f32).ceil() as usize)
-        .for_each_concurrent(settings.concurrent_limit, move |chunk| {
+        .for_each_concurrent(settings.concurrent_limit as usize, move |chunk| {
             let c = chunk;
             let resolver = resolver.clone();
             let domain = settings.domain.clone();

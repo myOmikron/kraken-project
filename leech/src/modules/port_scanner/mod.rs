@@ -35,7 +35,7 @@ pub struct TcpPortScannerSettings {
     /// Maximum of concurrent tasks that should be spawned
     ///
     /// 0 means, that there should be no limit.
-    pub concurrent_limit: usize,
+    pub concurrent_limit: u32,
     /// If set to true, there won't be an initial icmp check.
     ///
     /// All hosts are assumed to be reachable.
@@ -109,7 +109,7 @@ pub async fn start_tcp_con_port_scan(
     }
 
     stream::iter(product_it)
-        .for_each_concurrent(settings.concurrent_limit, move |(port, addr)| {
+        .for_each_concurrent(settings.concurrent_limit as usize, move |(port, addr)| {
             let tx = tx.clone();
 
             async move {

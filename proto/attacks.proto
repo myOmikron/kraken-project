@@ -1,0 +1,69 @@
+syntax = "proto3";
+package attacks;
+
+import "attacks.shared.proto";
+import "google/protobuf/duration.proto";
+
+/*
+-- BruteforceSubdomain
+ */
+message BruteforceSubdomainRequest {
+  /// The domain to use as base name. It shouldn't end in a . like DNS names.
+  string domain = 1;
+  /// Path to a wordlist that can be used for subdomain enumeration.
+  ///
+  /// The entries in the wordlist are assumed to be line seperated.
+  string wordlist_path = 2;
+  /// Maximum of concurrent tasks that should be spawned
+  ///
+  /// 0 means, that there should be no limit.
+  uint32 concurrent_limit = 3;
+}
+
+message BruteforceSubdomainResponse {
+  // Found record
+  shared.DNSRecord record = 1;
+}
+
+/*
+-- TcpPortScan
+ */
+
+message TcpPortScanRequest {
+  /// Valid IPv4 or IPv6 addresses
+  repeated shared.Address targets = 1;
+  /// A single port, multiple, comma seperated ports or (inclusive) port ranges
+  ///
+  /// If no values are supplied, 1-65535 is used as default
+  repeated uint32 ports = 2;
+  /// Valid IPv4 or IPv6 addresses or networks in CIDR notation
+  repeated string exclude = 3;
+  /// The time to wait until a connection is considered failed.
+  ///
+  /// The timeout is specified in milliseconds.
+  uint64 timeout = 4;
+  /// The concurrent task limit
+  uint32 concurrent_limit = 5;
+  /// The number of times the connection should be retried if it failed.
+  uint32 max_retries = 6;
+  /// The interval that should be wait between retries on a port.
+  ///
+  /// The interval is specified in milliseconds.
+  uint64 retry_interval = 7;
+  /// Skips the initial icmp check.
+  ///
+  /// All hosts are assumed to be reachable
+  bool skip_icmp_check = 8;
+}
+
+message TcpPortScanResponse {
+  /// Address
+  attacks.shared.Address address = 1;
+  /// Port value
+  uint32 port = 2;
+}
+
+service ReqAttackService {
+  rpc BruteforceSubdomains(BruteforceSubdomainRequest) returns (stream BruteforceSubdomainResponse);
+  rpc RunTcpPortScan(TcpPortScanRequest) returns (stream TcpPortScanResponse);
+}

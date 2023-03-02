@@ -1,0 +1,48 @@
+syntax = "proto3";
+package attacks.shared;
+
+// Representation of an ipv4 address
+message Ipv4 {
+  sfixed32 address = 1;
+}
+
+// Representation of an ipv6 address
+message Ipv6 {
+  sfixed64 part0 = 1;
+  sfixed64 part1 = 2;
+}
+
+// Enum of addresses
+message Address {
+  oneof address {
+    Ipv4 ipv4 = 1;
+    Ipv6 ipv6 = 2;
+  }
+}
+
+// A record representation
+message A {
+  string source = 1;
+  Ipv4 to = 2;
+}
+
+// AAAA record representation
+message AAAA {
+  string source = 1;
+  Ipv6 to = 2;
+}
+
+// CNAME record representation
+message CNAME {
+  string source = 1;
+  string to = 2;
+}
+
+// Generic DNS record representation
+message DNSRecord {
+  oneof record {
+    A a = 1;
+    AAAA aaaa = 2;
+    CNAME cname = 3;
+  }
+}

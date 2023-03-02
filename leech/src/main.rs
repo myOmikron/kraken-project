@@ -15,7 +15,7 @@
 
 use std::env;
 use std::net::IpAddr;
-use std::num::NonZeroUsize;
+use std::num::NonZeroU32;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::Duration;
@@ -36,9 +36,11 @@ use crate::modules::certificate_transparency::{
     query_ct_api, query_ct_db, CertificateTransparencySettings,
 };
 use crate::modules::port_scanner::{start_tcp_con_port_scan, TcpPortScannerSettings};
+use crate::rpc::start_rpc_server;
 
 pub mod config;
 pub mod modules;
+pub mod rpc;
 pub mod utils;
 
 /// The execution commands
@@ -55,8 +57,8 @@ pub enum RunCommand {
         wordlist_path: PathBuf,
         /// The concurrent task limit
         #[clap(long)]
-        #[clap(default_value_t = NonZeroUsize::new(50).unwrap())]
-        concurrent_limit: NonZeroUsize,
+        #[clap(default_value_t = NonZeroU32::new(50).unwrap())]
+        concurrent_limit: NonZeroU32,
     },
     /// Retrieve domains through certificate transparency
     CertificateTransparency {
@@ -92,8 +94,8 @@ pub enum RunCommand {
         timeout: u16,
         /// The concurrent task limit
         #[clap(long)]
-        #[clap(default_value_t = NonZeroUsize::new(1000).unwrap())]
-        concurrent_limit: NonZeroUsize,
+        #[clap(default_value_t = NonZeroU32::new(1000).unwrap())]
+        concurrent_limit: NonZeroU32,
         /// The number of times the connection should be retried if it failed.
         #[clap(long)]
         #[clap(default_value_t = 6)]
@@ -150,7 +152,8 @@ async fn main() -> Result<(), String> {
 
     match cli.commands {
         Command::Server => {
-            let _config = get_config(&cli.config_path).map_err(|e| e.to_string())?;
+            let config = get_config(&cli.config_path)?;
+            start_rpc_server(&config).await?;
         }
         Command::Execute { command, verbosity } => {
             if env::var("RUST_LOG").is_err() {
@@ -189,7 +192,7 @@ async fn main() -> Result<(), String> {
                     let settings = BruteforceSubdomainsSettings {
                         domain: target.to_string(),
                         wordlist_path,
-                        concurrent_limit: usize::from(concurrent_limit),
+                        concurrent_limit: u32::from(concurrent_limit),
                     };
                     if let Err(err) = bruteforce_subdomains(settings, tx).await {
                         error!("{err}");
@@ -264,7 +267,7 @@ async fn main() -> Result<(), String> {
                         skip_icmp_check,
                         max_retries,
                         retry_interval: Duration::from_millis(retry_interval as u64),
-                        concurrent_limit: usize::from(concurrent_limit),
+                        concurrent_limit: u32::from(concurrent_limit),
                     };
 
                     let (tx, mut rx) = mpsc::channel(128);
