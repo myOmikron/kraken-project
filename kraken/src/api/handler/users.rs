@@ -3,6 +3,7 @@ use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, HttpResponse};
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
+use chrono::{DateTime, Utc};
 use log::error;
 use rand::thread_rng;
 use rorm::{query, update, Database, Model};
@@ -97,8 +98,8 @@ pub(crate) struct GetUser {
     pub(crate) username: String,
     pub(crate) display_name: String,
     pub(crate) admin: bool,
-    pub(crate) created_at: chrono::NaiveDateTime,
-    pub(crate) last_login: Option<chrono::NaiveDateTime>,
+    pub(crate) created_at: DateTime<Utc>,
+    pub(crate) last_login: Option<DateTime<Utc>>,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -133,8 +134,8 @@ pub(crate) async fn get_user(
         username: user.username,
         display_name: user.display_name,
         admin: user.admin,
-        created_at: user.created_at,
-        last_login: user.last_login,
+        created_at: DateTime::from_utc(user.created_at, Utc),
+        last_login: user.last_login.map(|dt| DateTime::from_utc(dt, Utc)),
     }))
 }
 
@@ -160,8 +161,8 @@ pub(crate) async fn get_all_users(db: Data<Database>) -> ApiResult<Json<GetUserR
                 username: u.username,
                 display_name: u.display_name,
                 admin: u.admin,
-                created_at: u.created_at,
-                last_login: u.last_login,
+                created_at: DateTime::from_utc(u.created_at, Utc),
+                last_login: u.last_login.map(|dt| DateTime::from_utc(dt, Utc)),
             })
             .collect(),
     }))
@@ -192,8 +193,8 @@ pub(crate) async fn get_me(session: Session, db: Data<Database>) -> ApiResult<Js
         username: user.username,
         display_name: user.display_name,
         admin: user.admin,
-        created_at: user.created_at,
-        last_login: user.last_login,
+        created_at: DateTime::from_utc(user.created_at, Utc),
+        last_login: user.last_login.map(|dt| DateTime::from_utc(dt, Utc)),
     }))
 }
 
