@@ -44,6 +44,8 @@ chrono = { version = ">=0.4.20", features = ["serde"] }
 bytes = { version = "~1" }
 # Base64 decoder and encoder
 base64 = { version = "~0.21" }
+# ip networks
+ipnet = { version = "~2", features = ["serde"] }
 
 # Async runtime
 tokio = { version = ">=1.23.1", features = ["rt-multi-thread", "sync", "macros"] }

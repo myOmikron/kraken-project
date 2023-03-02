@@ -44,14 +44,19 @@ pub(crate) enum WsMessage {
     #[serde(skip)]
     ServerQuitSocket,
     InvalidMessage,
-    SubdomainEnumerationResult {
+    AttackFinished {
+        attack_id: i64,
+        finished_successful: bool,
+    },
+    BruteforceSubdomainsResult {
         attack_id: i64,
         source: String,
         to: String,
     },
-    AttackFinished {
+    ScanTcpPortsResult {
         attack_id: i64,
-        finished_successful: bool,
+        address: String,
+        port: u16,
     },
 }
 

@@ -48,6 +48,8 @@ impl Modify for SecurityAddon {
         handler::get_all_workspaces,
         handler::get_workspace_admin,
         handler::get_all_workspaces_admin,
+        handler::bruteforce_subdomains,
+        handler::scan_tcp_ports,
     ),
     components(schemas(
         handler::ApiErrorResponse,
@@ -68,6 +70,9 @@ impl Modify for SecurityAddon {
         handler::CreateWorkspaceResponse,
         handler::GetWorkspace,
         handler::GetWorkspaceResponse,
+        handler::AttackResponse,
+        handler::BruteforceSubdomainsRequest,
+        handler::ScanTcpPortsRequest,
     )),
     modifiers(&SecurityAddon),
 )]
