@@ -245,7 +245,7 @@ pub(crate) async fn get_workspace_admin(
     tag = "Admin Workspaces",
     context_path = "/api/v1/admin",
     responses(
-        (status = 200, description = "Returns the workspace with the given id", body = GetWorkspaceResponse),
+        (status = 200, description = "Returns all workspaces", body = GetWorkspaceResponse),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
