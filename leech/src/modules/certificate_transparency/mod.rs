@@ -6,16 +6,18 @@ use std::str::FromStr;
 use std::time::Duration;
 
 use itertools::Itertools;
-use log::{debug, info};
+use log::{error, info};
 use rorm::{Database, DatabaseConfiguration, DatabaseDriver};
 use tokio::time::sleep;
 use url::Url;
 
 use crate::modules::certificate_transparency::crt_sh_db::get_query;
-use crate::modules::certificate_transparency::crt_sh_types::Entry;
+use crate::modules::certificate_transparency::crt_sh_types::CertLogEntry;
+use crate::modules::certificate_transparency::error::CertificateTransparencyError;
 
 pub mod crt_sh_db;
 pub mod crt_sh_types;
+pub mod error;
 
 const CT_URI: &str = "https://crt.sh";
 
@@ -25,13 +27,19 @@ pub struct CertificateTransparencySettings {
     pub target: String,
     /// Also include already expired certificates
     pub include_expired: bool,
+    /// The number of times the connection should be retried if it failed.
+    pub max_retries: u32,
+    /// The interval to wait in between the retries
+    pub retry_interval: Duration,
 }
 
 /// Query the crt.sh certificate transparency api.
 ///
 /// **Parameters**:
 /// - `settings`: [CertificateTransparencySettings]
-pub async fn query_ct_api(settings: CertificateTransparencySettings) {
+pub async fn query_ct_api(
+    settings: CertificateTransparencySettings,
+) -> Result<Vec<CertLogEntry>, CertificateTransparencyError> {
     let mut uri = Url::from_str(CT_URI).unwrap();
 
     let query = if settings.include_expired {
@@ -43,59 +51,31 @@ pub async fn query_ct_api(settings: CertificateTransparencySettings) {
 
     info!("Requesting information about: {}", &settings.target);
 
-    let mut res = None;
-    for _ in 0..3 {
+    for idx in 0..=settings.max_retries {
         match reqwest::get(uri.clone()).await {
             Ok(r) => {
                 if r.status() == 200 {
-                    res = Some(r);
-                    break;
+                    let results = r.text().await?;
+
+                    let entries = serde_json::from_str(&results)
+                        .map_err(CertificateTransparencyError::DeserializeError)?;
+
+                    return Ok(entries);
                 }
             }
             Err(err) => {
-                debug!("Error requesting {CT_URI}: {err}");
-                sleep(Duration::from_millis(500)).await;
+                if idx != settings.max_retries {
+                    error!("Error requesting {CT_URI}: {err}, retrying in 500ms");
+                    sleep(settings.retry_interval).await;
+                    return Err(CertificateTransparencyError::CouldntFetchData);
+                } else {
+                    error!("Error requesting {CT_URI}: {err}");
+                }
             }
         };
     }
 
-    let Some(res) = res else {
-        return;
-    };
-
-    let results = match res.text().await {
-        Ok(res) => res,
-        Err(err) => {
-            println!("{err}");
-            return;
-        }
-    };
-
-    let parsed: Vec<Entry> = match serde_json::from_str(&results) {
-        Err(err) => {
-            println!("{err}");
-            println!("Received: {results}");
-            return;
-        }
-        Ok(v) => v,
-    };
-
-    let mut v = vec![];
-    for x in parsed {
-        v.push(x.common_name);
-        v.extend(
-            x.name_value
-                .split('\n')
-                .map(|s| s.to_owned())
-                .collect::<Vec<_>>(),
-        )
-    }
-    v.sort();
-    v.dedup();
-
-    for x in v {
-        println!("{x}");
-    }
+    unreachable!("Loop exits")
 }
 
 /// Query the crt.sh certificate transparency api.

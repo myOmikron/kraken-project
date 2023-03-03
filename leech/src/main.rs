@@ -32,9 +32,7 @@ use crate::config::get_config;
 use crate::modules::bruteforce_subdomains::{
     bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
 };
-use crate::modules::certificate_transparency::{
-    query_ct_api, query_ct_db, CertificateTransparencySettings,
-};
+use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
 use crate::modules::port_scanner::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::rpc::start_rpc_server;
 
@@ -68,10 +66,16 @@ pub enum RunCommand {
         #[clap(long)]
         #[clap(default_value_t = false)]
         include_expired: bool,
-        /// Use the database instead of the API
+        /// The number of times the connection should be retried if it failed.
         #[clap(long)]
-        #[clap(default_value_t = false)]
-        db: bool,
+        #[clap(default_value_t = 6)]
+        max_retries: u32,
+        /// The interval that should be wait between retries on a port.
+        ///
+        /// The interval is specified in milliseconds.
+        #[clap(long)]
+        #[clap(default_value_t = 100)]
+        retry_interval: u16,
     },
     /// A simple port scanning utility
     PortScanner {
@@ -99,7 +103,7 @@ pub enum RunCommand {
         /// The number of times the connection should be retried if it failed.
         #[clap(long)]
         #[clap(default_value_t = 6)]
-        max_retries: u8,
+        max_retries: u32,
         /// The interval that should be wait between retries on a port.
         ///
         /// The interval is specified in milliseconds.
@@ -201,16 +205,19 @@ async fn main() -> Result<(), String> {
                 RunCommand::CertificateTransparency {
                     target,
                     include_expired,
-                    db,
+                    max_retries,
+                    retry_interval,
                 } => {
                     let ct = CertificateTransparencySettings {
                         target,
                         include_expired,
+                        max_retries,
+                        retry_interval: Duration::from_millis(retry_interval as u64),
                     };
-                    if db {
-                        query_ct_db(ct).await;
-                    } else {
-                        query_ct_api(ct).await;
+
+                    let entries = query_ct_api(ct).await?;
+                    for entry in entries {
+                        info!("{:#?}", entry);
                     }
                 }
                 RunCommand::PortScanner {

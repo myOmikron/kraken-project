@@ -88,7 +88,7 @@ impl ReqAttackService for Attacks {
             addresses: req.targets.into_iter().map(|addr| addr.into()).collect(),
             port_range: req.ports.into_iter().map(|p| p as u16).collect(),
             timeout: Duration::from_millis(req.timeout),
-            max_retries: req.max_retries as u8,
+            max_retries: req.max_retries,
             retry_interval: Duration::from_millis(req.retry_interval),
             concurrent_limit: req.concurrent_limit,
             skip_icmp_check: req.skip_icmp_check,

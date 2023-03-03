@@ -29,7 +29,7 @@ pub struct TcpPortScannerSettings {
     /// The duration to wait for a response
     pub timeout: Duration,
     /// Defines how many times a connection should be retried if it failed the last time
-    pub max_retries: u8,
+    pub max_retries: u32,
     /// The interval to wait in between the retries
     pub retry_interval: Duration,
     /// Maximum of concurrent tasks that should be spawned
