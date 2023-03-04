@@ -17,6 +17,11 @@
     src: url('/fonts/Roboto-Thin.ttf');
 }
 
+@font-face {
+    font-family: "Roboto-Regular";
+    src: url('/fonts/Roboto-Regular.ttf');
+}
+
 html {
     overflow: hidden;
     width: 100%;
@@ -24,7 +29,7 @@ html {
 
 body {
     margin: 0;
-    font-family: sans-serif;
+    font-family: Roboto-Regular, sans-serif;
     background-color: var(--level-0);
     color: var(--text);
     height: 100%;
