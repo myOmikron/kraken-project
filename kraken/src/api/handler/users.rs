@@ -43,7 +43,7 @@ pub(crate) struct CreateUserResponse {
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    request_body = inline(CreateUserRequest),
+    request_body = CreateUserRequest,
     security(("api_key" = []))
 )]
 #[post("/users")]
