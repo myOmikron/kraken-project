@@ -401,10 +401,15 @@ pub(crate) async fn scan_tcp_ports(
 
 #[derive(Deserialize, ToSchema)]
 pub(crate) struct QueryCertificateTransparencyRequest {
+    #[schema(example = 1)]
     pub(crate) leech_id: u32,
+    #[schema(example = "example.com")]
     pub(crate) target: String,
+    #[schema(example = true)]
     pub(crate) include_expired: bool,
+    #[schema(example = 3)]
     pub(crate) max_retries: u32,
+    #[schema(example = 500)]
     pub(crate) retry_interval: u64,
 }
 
@@ -413,6 +418,8 @@ pub(crate) struct QueryCertificateTransparencyRequest {
 /// For further information, see [the explanation](https://certificate.transparency.dev/).
 ///
 /// Certificate transparency can be used to find subdomains or related domains.
+///
+/// `retry_interval` is specified in milliseconds.
 #[utoipa::path(
     tag = "Attacks",
     context_path = "/api/v1",
@@ -421,7 +428,7 @@ pub(crate) struct QueryCertificateTransparencyRequest {
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse)
     ),
-    request_body = ScanTcpPortsRequest,
+    request_body = QueryCertificateTransparencyRequest,
     security(("api_key" = []))
 )]
 #[post("/attacks/queryCertificateTransparency")]
