@@ -22,8 +22,6 @@ pub struct CertLogEntry {
     /// The values of the certificate
     #[serde(deserialize_with = "deserialize_name_value")]
     pub name_value: Vec<String>,
-    /// The timestamp this record was created
-    pub entry_timestamp: Option<chrono::NaiveDateTime>,
     /// The start date of the certificate
     pub not_before: Option<chrono::NaiveDateTime>,
     /// The end date of the certificate

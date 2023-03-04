@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use actix_toolbox::ws;
 use actix_toolbox::ws::Message;
+use chrono::{DateTime, Utc};
 use log::error;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
@@ -37,6 +38,17 @@ pub(crate) async fn start_ws_sender(tx: ws::Sender, mut rx: mpsc::Receiver<WsMes
     }
 }
 
+/// Entry of certificate transparency results
+#[derive(Deserialize, Serialize, Clone)]
+pub(crate) struct CertificateTransparencyEntry {
+    pub(crate) serial_number: String,
+    pub(crate) issuer_name: String,
+    pub(crate) common_name: String,
+    pub(crate) value_names: Vec<String>,
+    pub(crate) not_before: Option<DateTime<Utc>>,
+    pub(crate) not_after: Option<DateTime<Utc>>,
+}
+
 /// Message that is sent via websocket
 #[derive(Deserialize, Serialize, Clone)]
 #[serde(tag = "type")]
@@ -57,6 +69,10 @@ pub(crate) enum WsMessage {
         attack_id: i64,
         address: String,
         port: u16,
+    },
+    CertificateTransparencyResult {
+        attack_id: i64,
+        entries: Vec<CertificateTransparencyEntry>,
     },
 }
 

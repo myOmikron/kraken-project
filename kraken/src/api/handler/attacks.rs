@@ -4,7 +4,7 @@ use std::num::NonZeroU16;
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json};
 use actix_web::{post, HttpResponse};
-use chrono::Utc;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use futures::StreamExt;
 use ipnet::IpNet;
 use log::{error, warn};
@@ -14,10 +14,13 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::api::handler::{ApiError, ApiResult};
-use crate::chan::{RpcClients, WsManagerChan, WsManagerMessage, WsMessage};
+use crate::chan::{
+    CertificateTransparencyEntry, RpcClients, WsManagerChan, WsManagerMessage, WsMessage,
+};
 use crate::models::{Attack, AttackInsert, AttackType};
 use crate::rpc::rpc_attacks;
 use crate::rpc::rpc_attacks::shared::dns_record::Record;
+use crate::rpc::rpc_attacks::CertificateTransparencyRequest;
 
 #[derive(Serialize, ToSchema)]
 pub(crate) struct AttackResponse {
@@ -368,6 +371,158 @@ pub(crate) async fn scan_tcp_ports(
                 return;
             }
         };
+
+        let now = Utc::now();
+        if let Err(err) = update!(&db, Attack)
+            .condition(Attack::F.id.equals(id))
+            .set(Attack::F.finished_at, Some(now.naive_utc()))
+            .exec()
+            .await
+        {
+            error!("Database error: {err}");
+        }
+
+        if let Err(err) = ws_manager_chan
+            .send(WsManagerMessage::Message(
+                uuid.clone(),
+                WsMessage::AttackFinished {
+                    attack_id: id,
+                    finished_successful: true,
+                },
+            ))
+            .await
+        {
+            error!("Couldn't send attack finished to ws manager: {err}");
+        }
+    });
+
+    Ok(HttpResponse::Accepted().json(AttackResponse { attack_id: id }))
+}
+
+#[derive(Deserialize, ToSchema)]
+pub(crate) struct QueryCertificateTransparencyRequest {
+    pub(crate) leech_id: u32,
+    pub(crate) target: String,
+    pub(crate) include_expired: bool,
+    pub(crate) max_retries: u32,
+    pub(crate) retry_interval: u64,
+}
+
+/// Query a certificate transparency log collector.
+///
+/// For further information, see [the explanation](https://certificate.transparency.dev/).
+///
+/// Certificate transparency can be used to find subdomains or related domains.
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 202, description = "Attack scheduled", body = AttackResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = ScanTcpPortsRequest,
+    security(("api_key" = []))
+)]
+#[post("/attacks/queryCertificateTransparency")]
+pub(crate) async fn query_certificate_transparency(
+    req: Json<QueryCertificateTransparencyRequest>,
+    db: Data<Database>,
+    session: Session,
+    rpc_clients: Data<RpcClients>,
+    ws_manager_chan: Data<WsManagerChan>,
+) -> ApiResult<HttpResponse> {
+    let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+
+    let mut client = rpc_clients
+        .get_ref()
+        .read()
+        .await
+        .get(&(req.leech_id as i64))
+        .ok_or(ApiError::InvalidLeech)?
+        .clone();
+
+    let id = insert!(&db, AttackInsert)
+        .single(&AttackInsert {
+            attack_type: AttackType::QueryCertificateTransparency.into(),
+            started_from: ForeignModelByField::Key(uuid.clone()),
+            finished_at: None,
+        })
+        .await?;
+
+    tokio::spawn(async move {
+        let req = CertificateTransparencyRequest {
+            target: req.target.clone(),
+            max_retries: req.max_retries,
+            retry_interval: req.retry_interval,
+            include_expired: req.include_expired,
+        };
+
+        match client.query_certificate_transparency(req).await {
+            Ok(res) => {
+                let res = res.into_inner();
+
+                if let Err(err) = ws_manager_chan
+                    .send(WsManagerMessage::Message(
+                        uuid.clone(),
+                        WsMessage::CertificateTransparencyResult {
+                            attack_id: id,
+                            entries: res
+                                .entries
+                                .into_iter()
+                                .map(|e| CertificateTransparencyEntry {
+                                    serial_number: e.serial_number,
+                                    issuer_name: e.issuer_name,
+                                    common_name: e.common_name,
+                                    value_names: e.value_names,
+                                    not_before: e.not_before.map(|ts| {
+                                        DateTime::from_utc(
+                                            NaiveDateTime::from_timestamp_opt(
+                                                ts.seconds,
+                                                ts.nanos as u32,
+                                            )
+                                            .unwrap(),
+                                            Utc,
+                                        )
+                                    }),
+                                    not_after: e.not_after.map(|ts| {
+                                        DateTime::from_utc(
+                                            NaiveDateTime::from_timestamp_opt(
+                                                ts.seconds,
+                                                ts.nanos as u32,
+                                            )
+                                            .unwrap(),
+                                            Utc,
+                                        )
+                                    }),
+                                })
+                                .collect(),
+                        },
+                    ))
+                    .await
+                {
+                    error!(
+                        "Couldn't send query certificate transparency result to ws manager: {err}"
+                    );
+                }
+            }
+            Err(err) => {
+                error!("Error while reading from stream: {err}");
+                if let Err(err) = ws_manager_chan
+                    .send(WsManagerMessage::Message(
+                        uuid.clone(),
+                        WsMessage::AttackFinished {
+                            attack_id: id,
+                            finished_successful: false,
+                        },
+                    ))
+                    .await
+                {
+                    error!("Couldn't send attack finished to ws manager: {err}");
+                }
+                return;
+            }
+        }
 
         let now = Utc::now();
         if let Err(err) = update!(&db, Attack)

@@ -4,19 +4,23 @@ use std::net::SocketAddr;
 use std::pin::Pin;
 use std::time::Duration;
 
+use chrono::{Datelike, Timelike};
 use futures::Stream;
 use log::warn;
+use prost_types::Timestamp;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
-use tonic::{Request, Response, Status};
+use tonic::{Code, Request, Response, Status};
 
 use crate::modules::bruteforce_subdomains::{
     bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
 };
+use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
 use crate::modules::port_scanner::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::rpc::rpc_attacks::req_attack_service_server::ReqAttackService;
 use crate::rpc::rpc_attacks::{
-    BruteforceSubdomainRequest, BruteforceSubdomainResponse, TcpPortScanRequest,
+    BruteforceSubdomainRequest, BruteforceSubdomainResponse, CertEntry,
+    CertificateTransparencyRequest, CertificateTransparencyResponse, TcpPortScanRequest,
     TcpPortScanResponse,
 };
 
@@ -103,5 +107,59 @@ impl ReqAttackService for Attacks {
         Ok(Response::new(
             Box::pin(output_stream) as Self::RunTcpPortScanStream
         ))
+    }
+
+    async fn query_certificate_transparency(
+        &self,
+        request: Request<CertificateTransparencyRequest>,
+    ) -> Result<Response<CertificateTransparencyResponse>, Status> {
+        let req = request.into_inner();
+
+        let settings = CertificateTransparencySettings {
+            target: req.target,
+            include_expired: req.include_expired,
+            max_retries: req.max_retries,
+            retry_interval: Duration::from_millis(req.retry_interval),
+        };
+
+        let ct_res = CertificateTransparencyResponse {
+            entries: query_ct_api(settings)
+                .await
+                .map_err(|err| Status::new(Code::Unknown, err.to_string()))?
+                .into_iter()
+                .map(|cert_entry| CertEntry {
+                    issuer_name: cert_entry.issuer_name,
+                    common_name: cert_entry.common_name,
+                    value_names: cert_entry.name_value,
+                    not_before: cert_entry.not_before.map(|nb| {
+                        Timestamp::date_time_nanos(
+                            nb.year() as i64,
+                            nb.month() as u8,
+                            nb.day() as u8,
+                            nb.hour() as u8,
+                            nb.minute() as u8,
+                            nb.second() as u8,
+                            nb.nanosecond(),
+                        )
+                        .unwrap()
+                    }),
+                    not_after: cert_entry.not_after.map(|na| {
+                        Timestamp::date_time_nanos(
+                            na.year() as i64,
+                            na.month() as u8,
+                            na.day() as u8,
+                            na.hour() as u8,
+                            na.minute() as u8,
+                            na.second() as u8,
+                            na.nanosecond(),
+                        )
+                        .unwrap()
+                    }),
+                    serial_number: cert_entry.serial_number,
+                })
+                .collect(),
+        };
+
+        Ok(Response::new(ct_res))
     }
 }

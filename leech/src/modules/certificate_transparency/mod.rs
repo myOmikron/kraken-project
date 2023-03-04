@@ -67,9 +67,9 @@ pub async fn query_ct_api(
                 if idx != settings.max_retries {
                     error!("Error requesting {CT_URI}: {err}, retrying in 500ms");
                     sleep(settings.retry_interval).await;
-                    return Err(CertificateTransparencyError::CouldntFetchData);
                 } else {
                     error!("Error requesting {CT_URI}: {err}");
+                    return Err(CertificateTransparencyError::CouldntFetchData);
                 }
             }
         };

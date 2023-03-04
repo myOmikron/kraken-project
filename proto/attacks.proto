@@ -2,6 +2,7 @@ syntax = "proto3";
 package attacks;
 
 import "attacks.shared.proto";
+import "google/protobuf/timestamp.proto";
 
 /*
 -- BruteforceSubdomain
@@ -33,40 +34,77 @@ message BruteforceSubdomainResponse {
 message TcpPortScanRequest {
   // A unique id that identifier the attack
   uint64 attack_id = 1;
-  /// Valid IPv4 or IPv6 addresses
+  // Valid IPv4 or IPv6 addresses
   repeated shared.Address targets = 2;
-  /// A single port, multiple, comma seperated ports or (inclusive) port ranges
-  ///
-  /// If no values are supplied, 1-65535 is used as default
+  // A single port, multiple, comma seperated ports or (inclusive) port ranges
+  //
+  // If no values are supplied, 1-65535 is used as default
   repeated uint32 ports = 3;
-  /// Valid IPv4 or IPv6 addresses or networks in CIDR notation
+  // Valid IPv4 or IPv6 addresses or networks in CIDR notation
   repeated string exclude = 4;
-  /// The time to wait until a connection is considered failed.
-  ///
-  /// The timeout is specified in milliseconds.
+  // The time to wait until a connection is considered failed.
+  //
+  // The timeout is specified in milliseconds.
   uint64 timeout = 5;
-  /// The concurrent task limit
+  // The concurrent task limit
   uint32 concurrent_limit = 6;
-  /// The number of times the connection should be retried if it failed.
+  // The number of times the connection should be retried if it failed.
   uint32 max_retries = 7;
-  /// The interval that should be wait between retries on a port.
-  ///
-  /// The interval is specified in milliseconds.
+  // The interval that should be wait between retries on a port.
+  //
+  // The interval is specified in milliseconds.
   uint64 retry_interval = 8;
-  /// Skips the initial icmp check.
-  ///
-  /// All hosts are assumed to be reachable
+  // Skips the initial icmp check.
+  //
+  // All hosts are assumed to be reachable
   bool skip_icmp_check = 9;
 }
 
+// Response of a tcp port scan request
 message TcpPortScanResponse {
-  /// Address
+  // Address
   attacks.shared.Address address = 1;
-  /// Port value
+  // Port value
   uint32 port = 2;
+}
+
+// Certificate transparency request
+message CertificateTransparencyRequest {
+  // The target domain to query
+  string target = 1;
+  // Also include already expired certificates
+  bool include_expired = 2;
+  // The number of times the connection should be retried if it failed.
+  uint32 max_retries = 3;
+  // The interval to wait in between the retries
+  // Specified in milliseconds.
+  uint64 retry_interval = 4;
+}
+
+// Entry of a certificate transparency response
+message CertEntry {
+  // The name of the issuer
+  string issuer_name = 1;
+  // The common name of the certificate
+  string common_name = 2;
+  // The values of the certificate
+  repeated string value_names = 3;
+  // The start date of the certificate
+  google.protobuf.Timestamp not_before = 4;
+  // The end date of the certificate
+  google.protobuf.Timestamp not_after = 5;
+  // The serial number of the certificate
+  string serial_number = 6;
+}
+
+// Response to a certificate transparency request
+message CertificateTransparencyResponse {
+  // List of cert entries
+  repeated CertEntry entries = 1;
 }
 
 service ReqAttackService {
   rpc BruteforceSubdomains(BruteforceSubdomainRequest) returns (stream BruteforceSubdomainResponse);
   rpc RunTcpPortScan(TcpPortScanRequest) returns (stream TcpPortScanResponse);
+  rpc QueryCertificateTransparency(CertificateTransparencyRequest) returns (CertificateTransparencyResponse);
 }

@@ -13,6 +13,8 @@ pub enum AttackType {
     BruteforceSubdomains,
     /// Scan tcp ports
     TcpPortScan,
+    /// Query certificate transparency
+    QueryCertificateTransparency,
 }
 
 impl From<AttackType> for i64 {
@@ -21,6 +23,7 @@ impl From<AttackType> for i64 {
             AttackType::Undefined => 0,
             AttackType::BruteforceSubdomains => 1,
             AttackType::TcpPortScan => 2,
+            AttackType::QueryCertificateTransparency => 3,
         }
     }
 }

@@ -22,8 +22,8 @@ use crate::api::handler::{
     bruteforce_subdomains, create_leech, create_user, create_workspace, delete_leech, delete_user,
     delete_workspace, finish_auth, finish_register, get_all_leeches, get_all_users,
     get_all_workspaces, get_all_workspaces_admin, get_leech, get_me, get_user, get_workspace,
-    get_workspace_admin, login, logout, scan_tcp_ports, set_password, start_auth, start_register,
-    test, update_leech, websocket,
+    get_workspace_admin, login, logout, query_certificate_transparency, scan_tcp_ports,
+    set_password, start_auth, start_register, test, update_leech, websocket,
 };
 use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
@@ -117,7 +117,8 @@ pub(crate) async fn start_server(
                     .service(create_workspace)
                     .service(delete_workspace)
                     .service(bruteforce_subdomains)
-                    .service(scan_tcp_ports),
+                    .service(scan_tcp_ports)
+                    .service(query_certificate_transparency),
             )
     })
     .bind((
