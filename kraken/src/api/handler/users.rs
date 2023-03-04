@@ -1,6 +1,6 @@
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path};
-use actix_web::{delete, get, post, HttpResponse};
+use actix_web::{delete, get, post, put, HttpResponse};
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use chrono::{DateTime, Utc};
@@ -281,6 +281,70 @@ pub(crate) async fn set_password(
         error!("Error sending to websocket manager: {err}");
         return Err(ApiError::InternalServerError);
     }
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+#[derive(Deserialize, ToSchema)]
+pub(crate) struct UpdateMeRequest {
+    #[schema(example = "cyber-user-123")]
+    username: Option<String>,
+    #[schema(example = "Cyberhacker")]
+    display_name: Option<String>,
+}
+
+/// Updates the own user
+///
+/// All parameters are optional, but at least one of them must be supplied.
+#[utoipa::path(
+    tag = "User Management",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Changes were applied"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    request_body = UpdateMeRequest,
+    security(("api_key" = []))
+)]
+#[put("/users/me")]
+pub(crate) async fn update_me(
+    req: Json<UpdateMeRequest>,
+    db: Data<Database>,
+    session: Session,
+) -> ApiResult<HttpResponse> {
+    let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+
+    let mut tx = db.start_transaction().await?;
+
+    let mut ub = update!(&db, User)
+        .condition(User::F.uuid.equals(&uuid))
+        .begin_dyn_set();
+
+    if let Some(username) = &req.username {
+        if query!(&db, (User::F.uuid,))
+            .transaction(&mut tx)
+            .condition(User::F.username.equals(username))
+            .optional()
+            .await?
+            .is_some()
+        {
+            return Err(ApiError::UsernameAlreadyOccupied);
+        }
+
+        ub = ub.set(User::F.username, username);
+    }
+
+    if let Some(display_name) = &req.display_name {
+        ub = ub.set(User::F.display_name, display_name);
+    }
+
+    ub.finish_dyn_set()
+        .map_err(|_| ApiError::EmptyJson)?
+        .transaction(&mut tx)
+        .await?;
+
+    tx.commit().await?;
 
     Ok(HttpResponse::Ok().finish())
 }
