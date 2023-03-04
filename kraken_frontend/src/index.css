@@ -7,6 +7,16 @@
     --secondary: #00ffb3;
 }
 
+@font-face {
+    font-family: "Roboto-Light";
+    src: url('/fonts/Roboto-Light.ttf');
+}
+
+@font-face {
+    font-family: "Roboto-Thin";
+    src: url('/fonts/Roboto-Thin.ttf');
+}
+
 html {
     overflow: hidden;
     width: 100%;
@@ -41,5 +51,12 @@ body {
 }
 
 .heading {
+    font-family: Roboto-Light, sans-serif;
     font-weight: normal;
+    color: white;
+    filter: drop-shadow(0 0 4px var(--primary));
+}
+
+.neon {
+    filter: brightness(0) invert() drop-shadow(0 0 4px var(--primary));
 }
