@@ -20,7 +20,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::Duration;
 
-use clap::{ArgAction, Parser, Subcommand};
+use clap::{ArgAction, Parser, Subcommand, ValueEnum};
 use ipnet::IpNet;
 use itertools::Itertools;
 use log::{error, info};
@@ -33,13 +33,23 @@ use crate::modules::bruteforce_subdomains::{
     bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
 };
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
-use crate::modules::port_scanner::{start_tcp_con_port_scan, TcpPortScannerSettings};
+use crate::modules::port_scanner::icmp_scan::{start_icmp_scan, IcmpScanSettings};
+use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::rpc::start_rpc_server;
 
 pub mod config;
 pub mod modules;
 pub mod rpc;
 pub mod utils;
+
+/// The technique to use for the port scan
+#[derive(Debug, ValueEnum, Copy, Clone)]
+pub enum PortScanTechnique {
+    /// A tcp connect scan
+    TcpCon,
+    /// A icmp scan
+    Icmp,
+}
 
 /// The execution commands
 #[derive(Subcommand)]
@@ -90,6 +100,10 @@ pub enum RunCommand {
         /// Valid IPv4 or IPv6 addresses or networks in CIDR notation
         #[clap(long)]
         exclude: Vec<String>,
+        /// The technique to use for port scans
+        #[clap(short = 't', long)]
+        #[clap(default_value = "tcp-con")]
+        technique: PortScanTechnique,
         /// The time to wait until a connection is considered failed.
         ///
         /// The timeout is specified in milliseconds.
@@ -223,6 +237,7 @@ async fn main() -> Result<(), String> {
                 RunCommand::PortScanner {
                     targets,
                     exclude,
+                    technique,
                     ports,
                     timeout,
                     concurrent_limit,
@@ -267,26 +282,47 @@ async fn main() -> Result<(), String> {
                         utils::parse_ports(&ports, &mut port_range)?;
                     }
 
-                    let settings = TcpPortScannerSettings {
-                        addresses,
-                        port_range,
-                        timeout: Duration::from_millis(timeout as u64),
-                        skip_icmp_check,
-                        max_retries,
-                        retry_interval: Duration::from_millis(retry_interval as u64),
-                        concurrent_limit: u32::from(concurrent_limit),
-                    };
+                    match technique {
+                        PortScanTechnique::TcpCon => {
+                            let settings = TcpPortScannerSettings {
+                                addresses,
+                                port_range,
+                                timeout: Duration::from_millis(timeout as u64),
+                                skip_icmp_check,
+                                max_retries,
+                                retry_interval: Duration::from_millis(retry_interval as u64),
+                                concurrent_limit: u32::from(concurrent_limit),
+                            };
 
-                    let (tx, mut rx) = mpsc::channel(128);
+                            let (tx, mut rx) = mpsc::channel(1);
 
-                    task::spawn(async move {
-                        while let Some(addr) = rx.recv().await {
-                            info!("Open port found: {addr}");
+                            task::spawn(async move {
+                                while let Some(addr) = rx.recv().await {
+                                    info!("Open port found: {addr}");
+                                }
+                            });
+
+                            if let Err(err) = start_tcp_con_port_scan(settings, tx).await {
+                                error!("{err}");
+                            }
                         }
-                    });
+                        PortScanTechnique::Icmp => {
+                            let settings = IcmpScanSettings {
+                                addresses,
+                                timeout: Duration::from_millis(timeout as u64),
+                            };
+                            let (tx, mut rx) = mpsc::channel(1);
 
-                    if let Err(err) = start_tcp_con_port_scan(settings, tx).await {
-                        error!("{err}");
+                            task::spawn(async move {
+                                while let Some(addr) = rx.recv().await {
+                                    info!("Host up: {addr}");
+                                }
+                            });
+
+                            if let Err(err) = start_icmp_scan(settings, tx).await {
+                                error!("{err}");
+                            }
+                        }
                     }
                 }
             }

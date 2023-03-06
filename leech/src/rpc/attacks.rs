@@ -16,7 +16,7 @@ use crate::modules::bruteforce_subdomains::{
     bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
 };
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
-use crate::modules::port_scanner::{start_tcp_con_port_scan, TcpPortScannerSettings};
+use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::rpc::rpc_attacks::req_attack_service_server::ReqAttackService;
 use crate::rpc::rpc_attacks::{
     BruteforceSubdomainRequest, BruteforceSubdomainResponse, CertEntry,
