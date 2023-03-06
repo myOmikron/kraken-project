@@ -23,7 +23,7 @@ utoipa = { version = "~3", features = ["actix_extras", "repr", "chrono", "uuid",
 utoipa-swagger-ui = { version = "3", features = ["actix-web"] }
 
 # Hashing
-argon2 = { version = "~0.4" }
+argon2 = { version = "~0.5" }
 
 # Cli parser
 clap = { version = "~4", features = ["derive"] }
