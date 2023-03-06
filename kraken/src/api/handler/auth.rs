@@ -92,6 +92,7 @@ pub(crate) async fn login(
 
     tx.commit().await?;
 
+    session.insert("uuid", user.uuid)?;
     session.insert("logged_in", true)?;
 
     Ok(HttpResponse::Ok().finish())
