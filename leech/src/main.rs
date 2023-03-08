@@ -24,6 +24,8 @@ use clap::{ArgAction, Parser, Subcommand, ValueEnum};
 use ipnet::IpNet;
 use itertools::Itertools;
 use log::{error, info};
+use rorm::config::DatabaseConfig;
+use rorm::DatabaseDriver;
 use tokio::sync::mpsc;
 use tokio::task;
 use trust_dns_resolver::Name;
@@ -148,6 +150,12 @@ pub enum Command {
         #[clap(subcommand)]
         command: RunCommand,
     },
+    /// Apply migrations to the database
+    Migrate {
+        /// The directory where the migration files are located
+        #[clap(long)]
+        migration_dir: String,
+    },
 }
 
 /// The main CLI parser
@@ -169,6 +177,26 @@ async fn main() -> Result<(), String> {
     let cli = Cli::parse();
 
     match cli.commands {
+        Command::Migrate { migration_dir } => {
+            let config = get_config(&cli.config_path)?;
+            rorm_cli::migrate::run_migrate_custom(
+                DatabaseConfig {
+                    last_migration_table_name: None,
+                    driver: DatabaseDriver::Postgres {
+                        host: config.database.host,
+                        port: config.database.port,
+                        name: config.database.name,
+                        user: config.database.user,
+                        password: config.database.password,
+                    },
+                },
+                migration_dir,
+                false,
+                None,
+            )
+            .await
+            .map_err(|e| e.to_string())?
+        }
         Command::Server => {
             let config = get_config(&cli.config_path)?;
             start_rpc_server(&config).await?;

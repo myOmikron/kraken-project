@@ -28,6 +28,7 @@ use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use clap::{Parser, Subcommand};
 use rand::thread_rng;
+use rorm::config::DatabaseConfig;
 use rorm::{insert, query, Database, DatabaseConfiguration, DatabaseDriver, Model};
 use webauthn_rs::prelude::Uuid;
 
@@ -50,6 +51,12 @@ enum Command {
     Keygen,
     /// Creates a new user with administrative privileges
     CreateAdminUser,
+    /// Apply the migrations to the database
+    Migrate {
+        /// The directory the migrations live in
+        #[clap(long)]
+        migration_dir: String,
+    },
 }
 
 #[derive(Parser)]
@@ -77,6 +84,23 @@ async fn main() -> Result<(), String> {
     setup_logging(&config.logging)?;
 
     match cli.command {
+        Command::Migrate { migration_dir } => rorm_cli::migrate::run_migrate_custom(
+            DatabaseConfig {
+                last_migration_table_name: None,
+                driver: DatabaseDriver::Postgres {
+                    host: config.database.host,
+                    port: config.database.port,
+                    name: config.database.name,
+                    user: config.database.user,
+                    password: config.database.password,
+                },
+            },
+            migration_dir,
+            false,
+            None,
+        )
+        .await
+        .map_err(|e| e.to_string())?,
         Command::Start => {
             let db = get_db(&config).await?;
 

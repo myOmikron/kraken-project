@@ -52,6 +52,7 @@ rand = { version = "~0.8" }
 
 # ORM
 rorm = { version = "~0.4", features = ["tokio-rustls"] }
+rorm-cli = { version = "~0.7" }
 
 # Needed because of modules
 
