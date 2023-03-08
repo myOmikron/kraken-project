@@ -1,4 +1,3 @@
-.openapi-generator-ignore
 apis/AdminWorkspacesApi.ts
 apis/AttacksApi.ts
 apis/AuthenticationApi.ts
@@ -8,7 +7,6 @@ apis/UserManagementApi.ts
 apis/WebsocketApi.ts
 apis/WorkspacesApi.ts
 apis/index.ts
-index.ts
 models/ApiErrorResponse.ts
 models/ApiStatusCode.ts
 models/AttackResponse.ts
