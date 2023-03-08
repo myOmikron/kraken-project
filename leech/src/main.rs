@@ -258,8 +258,16 @@ async fn main() -> Result<(), String> {
                     };
 
                     let entries = query_ct_api(ct).await?;
-                    for entry in entries {
-                        info!("{:#?}", entry);
+                    for x in entries
+                        .into_iter()
+                        .flat_map(|mut e| {
+                            e.name_value.push(e.common_name);
+                            e.name_value
+                        })
+                        .sorted()
+                        .dedup()
+                    {
+                        info!("{x}");
                     }
                 }
                 RunCommand::PortScanner {
