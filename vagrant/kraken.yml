@@ -75,6 +75,21 @@
         system: yes
         group: kraken
 
+    - name: Create /etc/kraken
+      ansible.builtin.file:
+        name: /etc/kraken
+        state: directory
+        mode: 0750
+        owner: root
+        group: kraken
+    - name: Apply kraken config.toml
+      template:
+        src: kraken/config.toml.jinja2
+        dest: /etc/kraken/config.toml
+        owner: root
+        group: kraken
+        mode: 0640
+
     - name: Compile kraken
       become_user: vagrant
       ansible.builtin.command:
@@ -108,13 +123,6 @@
         enabled: yes
         name: kraken.service
         state: restarted
-    - name: Apply kraken config.toml
-      template:
-        src: kraken/config.toml.jinja2
-        dest: /etc/kraken/config.toml
-        owner: root
-        group: kraken
-        mode: 0640
 
     - name: Install packages
       become_user: vagrant

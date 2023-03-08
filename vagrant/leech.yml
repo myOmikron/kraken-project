@@ -59,6 +59,21 @@
         system: yes
         group: leech
 
+    - name: Create /etc/leech
+      ansible.builtin.file:
+        name: /etc/leech
+        state: directory
+        mode: 0750
+        owner: root
+        group: leech
+    - name: Apply leech config.toml
+      template:
+        src: leech/config.toml.jinja2
+        dest: /etc/leech/config.toml
+        owner: root
+        group: leech
+        mode: 0640
+
     - name: Compile leech
       become_user: vagrant
       ansible.builtin.command:
@@ -92,13 +107,6 @@
         enabled: yes
         name: leech.service
         state: restarted
-    - name: Apply leech config.toml
-      template:
-        src: leech/config.toml.jinja2
-        dest: /etc/leech/config.toml
-        owner: root
-        group: leech
-        mode: 0640
 
     - name: Restart leech
       systemd:
