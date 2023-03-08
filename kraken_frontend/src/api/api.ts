@@ -47,14 +47,15 @@ export const Api = {
             all: () => handleError(adminWorkspaces.getAllWorkspacesAdmin()),
             get: (id: ID) => handleError(adminWorkspaces.getWorkspaceAdmin({ id })),
         },
-    },
-    leeches: {
-        all: () => handleError(leechManagement.getAllLeeches()),
-        create: (leech: CreateLeechRequest) => handleError(leechManagement.createLeech({ createLeechRequest: leech })),
-        get: (id: ID) => handleError(leechManagement.getLeech({ id })),
-        update: (id: ID, leech: UpdateLeechRequest) =>
-            handleError(leechManagement.updateLeech({ id, updateLeechRequest: leech })),
-        delete: (id: ID) => handleError(leechManagement.deleteLeech({ id })),
+        leeches: {
+            all: () => handleError(leechManagement.getAllLeeches()),
+            create: (leech: CreateLeechRequest) =>
+                handleError(leechManagement.createLeech({ createLeechRequest: leech })),
+            get: (id: ID) => handleError(leechManagement.getLeech({ id })),
+            update: (id: ID, leech: UpdateLeechRequest) =>
+                handleError(leechManagement.updateLeech({ id, updateLeechRequest: leech })),
+            delete: (id: ID) => handleError(leechManagement.deleteLeech({ id })),
+        },
     },
     attacks: {
         bruteforceSubdomains: (attack: BruteforceSubdomainsRequest) =>
