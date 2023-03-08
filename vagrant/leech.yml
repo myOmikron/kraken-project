@@ -77,6 +77,10 @@
         name: leech.service
         state: stopped
       ignore_errors: yes
+    - name: Apply migrations
+      command:
+        chdir: /vagrant/leech
+        cmd: leech migrate --migration-dir migrations/
 
     - name: Install systemd service
       copy:

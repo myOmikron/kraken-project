@@ -49,10 +49,6 @@
       ansible.builtin.shell:
         cmd: "sh /tmp/rustup.sh -y"
       when: not rustup_file.stat.exists
-    - name: Install rorm-cli
-      become_user: vagrant
-      ansible.builtin.command:
-        cmd: "/home/vagrant/.cargo/bin/cargo install rorm-cli"
 
     - name: Start postgres
       ansible.builtin.systemd:
@@ -97,6 +93,10 @@
         name: kraken.service
         state: stopped
       ignore_errors: yes
+    - name: Apply migrations
+      command:
+        chdir: /vagrant/kraken
+        cmd: kraken migrate --migration-dir migrations/
 
     - name: Install systemd service
       copy:
