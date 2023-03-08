@@ -56,6 +56,8 @@ pub(crate) enum ApiStatusCode {
     InvalidPassword = 1017,
     InvalidLeech = 1018,
     UsernameAlreadyOccupied = 1019,
+    InvalidName,
+
     InternalServerError = 2000,
     DatabaseError = 2001,
     SessionError = 2002,
@@ -106,6 +108,7 @@ pub(crate) enum ApiError {
     InvalidPassword,
     InvalidLeech,
     UsernameAlreadyOccupied,
+    InvalidName,
 }
 
 impl Display for ApiError {
@@ -140,6 +143,7 @@ impl Display for ApiError {
             ApiError::InvalidPassword => write!(f, "Invalid password supplied"),
             ApiError::InvalidLeech => write!(f, "Invalid leech"),
             ApiError::UsernameAlreadyOccupied => write!(f, "Username is already occupied"),
+            ApiError::InvalidName => write!(f, "Invalid name specified"),
         }
     }
 }
@@ -320,6 +324,10 @@ impl actix_web::ResponseError for ApiError {
                     self.to_string(),
                 ))
             }
+            ApiError::InvalidName => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::InvalidName,
+                self.to_string(),
+            )),
         }
     }
 }

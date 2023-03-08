@@ -1,13 +1,13 @@
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path};
-use actix_web::{delete, get, post, HttpResponse};
+use actix_web::{delete, get, post, put, HttpResponse};
 use log::debug;
 use rorm::internal::field::foreign_model::ForeignModelByField;
-use rorm::{insert, query, Database, ForeignModel, Model};
+use rorm::{insert, query, update, Database, ForeignModel, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::api::handler::{ApiError, ApiResult, PathId};
+use crate::api::handler::{de_optional, ApiError, ApiResult, PathId};
 use crate::models::{User, Workspace, WorkspaceInsert};
 
 #[derive(Deserialize, ToSchema)]
@@ -222,6 +222,96 @@ pub(crate) async fn get_all_workspaces(
             })
             .collect(),
     }))
+}
+
+/// The request type to update a workspace
+///
+/// All parameter are optional, but at least one of them must be specified
+#[derive(Deserialize, ToSchema)]
+pub(crate) struct UpdateWorkspaceRequest {
+    #[schema(example = "Workspace for work")]
+    name: Option<String>,
+    #[schema(example = "This workspace is for work and for work only!")]
+    #[serde(deserialize_with = "de_optional")]
+    description: Option<Option<String>>,
+}
+
+/// Updates a workspace by its id
+///
+/// All parameter are optional, but at least one of them must be specified.
+///
+/// `name` must not be empty.
+///
+/// You can set `description` to null to remove the description from the database.
+/// If you leave the parameter out, the description will remain unchanged.
+#[utoipa::path(
+    tag = "Workspaces",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Workspace got updated"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathId),
+    request_body = UpdateWorkspaceRequest,
+    security(("api_key" = []))
+)]
+#[put("/workspaces/{id}")]
+pub(crate) async fn update_workspace(
+    path: Path<PathId>,
+    req: Json<UpdateWorkspaceRequest>,
+    db: Data<Database>,
+    session: Session,
+) -> ApiResult<HttpResponse> {
+    let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+
+    let mut tx = db.start_transaction().await?;
+
+    let w = query!(&db, Workspace)
+        .transaction(&mut tx)
+        .condition(Workspace::F.id.equals(path.id as i64))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidId)?;
+
+    match &w.owner {
+        ForeignModel::Key(k) => {
+            if *k != uuid {
+                return Err(ApiError::MissingPrivileges);
+            }
+        }
+        ForeignModel::Instance(u) => {
+            if u.uuid != uuid {
+                return Err(ApiError::MissingPrivileges);
+            }
+        }
+    };
+
+    let mut ub = update!(&db, Workspace)
+        .condition(Workspace::F.id.equals(w.id))
+        .begin_dyn_set();
+
+    if let Some(name) = &req.name {
+        if name.is_empty() {
+            return Err(ApiError::InvalidName);
+        }
+
+        ub = ub.set(Workspace::F.name, name);
+    }
+
+    if let Some(description) = &req.description {
+        ub = ub.set(Workspace::F.description, description.as_ref());
+    }
+
+    ub.transaction(&mut tx)
+        .finish_dyn_set()
+        .map_err(|_| ApiError::EmptyJson)?
+        .exec()
+        .await?;
+
+    tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
 }
 
 /// Retrieve a workspace by id
