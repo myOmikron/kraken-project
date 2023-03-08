@@ -27,11 +27,16 @@ mod workspaces;
 
 #[derive(Deserialize, IntoParams)]
 pub(crate) struct PathId {
+    #[param(example = 1337)]
     pub(crate) id: u32,
 }
 
 pub(crate) type ApiResult<T> = Result<T, ApiError>;
 
+/// This type holds all possible error types that can be returned by the API.
+///
+/// Numbers between 1000 and 1999 (inclusive) are client errors that can be handled by the client.
+/// Numbers between 2000 and 2999 (inclusive) are server errors.
 #[derive(Serialize_repr, ToSchema)]
 #[repr(u16)]
 #[schema(default = 1000, example = 1000)]
@@ -64,9 +69,13 @@ pub(crate) enum ApiStatusCode {
     WebauthnError = 2003,
 }
 
+/// Representation of an error response
+///
+/// `status_code` holds the error code, `message` a human readable description of the error
 #[derive(Serialize, ToSchema)]
 pub(crate) struct ApiErrorResponse {
     status_code: ApiStatusCode,
+    #[schema(example = "Error message will be here")]
     message: String,
 }
 
