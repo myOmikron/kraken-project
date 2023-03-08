@@ -26,6 +26,7 @@ pub struct Workspace {
     pub description: Option<String>,
 
     /// The user that owns this workspace
+    #[rorm(index)]
     pub owner: ForeignModel<User>,
 
     /// States, if the workspace can be deleted

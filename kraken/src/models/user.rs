@@ -8,7 +8,7 @@ pub struct User {
     pub uuid: Vec<u8>,
 
     /// The username is used for login
-    #[rorm(max_length = 255, unique)]
+    #[rorm(max_length = 255, unique, index)]
     pub username: String,
 
     /// This name is displayed to other users
