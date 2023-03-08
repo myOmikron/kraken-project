@@ -6,11 +6,38 @@ use rorm::{ForeignModel, Model, Patch};
 
 use crate::models::User;
 
-/**
-Representation of a set of connected data.
+/// A workspace member has the privileges to access and modify a workspace of another user
+///
+/// The owner of the workspace can add and remove members at any time
+#[derive(Model)]
+pub struct WorkspaceMember {
+    /// Unique identifier of the workspace member
+    #[rorm(id)]
+    pub id: i64,
 
-Workspaces are owned by a user and can be shared with others.
- */
+    /// The user to grant access
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub member: ForeignModel<User>,
+
+    /// The workspace to grant access to
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub workspace: ForeignModel<Workspace>,
+
+    /// The point in time the member was granted access to the workspace
+    #[rorm(auto_create_time)]
+    pub created_at: chrono::NaiveDateTime,
+}
+
+#[derive(Patch)]
+#[rorm(model = "WorkspaceMember")]
+pub(crate) struct WorkspaceMemberInsert {
+    pub member: ForeignModel<User>,
+    pub workspace: ForeignModel<Workspace>,
+}
+
+/// Representation of a set of connected data.
+///
+/// Workspaces are owned by a user and can be shared with others.
 #[derive(Model)]
 pub struct Workspace {
     /// Unique identifier of the workspace
