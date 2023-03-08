@@ -17,6 +17,19 @@ use crate::models::User;
 use crate::modules::user::create::create_user_transaction;
 use crate::modules::user::delete::delete_user_transaction;
 
+/// This struct holds the user information.
+///
+/// Note that `username` is unique, but as it is changeable,
+/// identify the user by its `uuid`
+#[derive(Serialize, ToSchema)]
+pub(crate) struct UserResponse {
+    pub(crate) uuid: Uuid,
+    #[schema(example = "user123")]
+    pub(crate) username: String,
+    #[schema(example = "Anon")]
+    pub(crate) display_name: String,
+}
+
 #[derive(Deserialize, ToSchema)]
 pub(crate) struct CreateUserRequest {
     #[schema(example = "user123")]
@@ -169,7 +182,7 @@ pub(crate) async fn get_all_users(db: Data<Database>) -> ApiResult<Json<GetUserR
         users: users
             .into_iter()
             .map(|u| GetUser {
-                uuid: Uuid::from_slice(u.uuid.as_slice()).unwrap(),
+                uuid: Uuid::from_slice(&u.uuid).unwrap(),
                 username: u.username,
                 display_name: u.display_name,
                 admin: u.admin,

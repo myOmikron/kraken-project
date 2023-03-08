@@ -68,6 +68,7 @@ impl Modify for SecurityAddon {
         handler::CreateUserResponse,
         handler::GetUser,
         handler::GetUserResponse,
+        handler::UserResponse,
         handler::UpdateMeRequest,
         handler::SetPasswordRequest,
         handler::CreateWorkspaceRequest,

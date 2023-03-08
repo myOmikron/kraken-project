@@ -3,12 +3,13 @@ use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use log::debug;
 use rorm::internal::field::foreign_model::ForeignModelByField;
-use rorm::{insert, query, update, Database, ForeignModel, Model};
+use rorm::{and, insert, query, update, Database, ForeignModel, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use webauthn_rs::prelude::Uuid;
 
-use crate::api::handler::{de_optional, ApiError, ApiResult, PathId};
-use crate::models::{User, Workspace, WorkspaceInsert};
+use crate::api::handler::{de_optional, ApiError, ApiResult, PathId, UserResponse};
+use crate::models::{User, Workspace, WorkspaceInsert, WorkspaceMember};
 
 #[derive(Deserialize, ToSchema)]
 pub(crate) struct CreateWorkspaceRequest {
@@ -134,6 +135,7 @@ pub(crate) struct GetWorkspace {
     pub(crate) name: String,
     #[schema(example = "This workspace is ultra secure and should not be looked at!!")]
     pub(crate) description: Option<String>,
+    pub(crate) owner: UserResponse,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -161,29 +163,62 @@ pub(crate) async fn get_workspace(
 ) -> ApiResult<Json<GetWorkspace>> {
     let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
+    let mut tx = db.start_transaction().await?;
+
+    let is_member = query!(&db, (WorkspaceMember::F.id,))
+        .transaction(&mut tx)
+        .condition(and!(
+            WorkspaceMember::F.member.equals(&uuid),
+            WorkspaceMember::F.workspace.equals(req.id as i64)
+        ))
+        .optional()
+        .await?
+        .is_some();
+
     let w = query!(&db, Workspace)
+        .transaction(&mut tx)
         .condition(Workspace::F.id.equals(req.id as i64))
         .optional()
         .await?
         .ok_or(ApiError::InvalidId)?;
 
-    match &w.owner {
-        ForeignModel::Key(k) => {
-            if *k != uuid {
-                return Err(ApiError::MissingPrivileges);
+    // User is no member of workspace, if it doesn't is the owner, return
+    if !is_member {
+        match &w.owner {
+            ForeignModel::Key(k) => {
+                if *k != uuid {
+                    return Err(ApiError::MissingPrivileges);
+                }
             }
-        }
-        ForeignModel::Instance(u) => {
-            if u.uuid != uuid {
-                return Err(ApiError::MissingPrivileges);
+            ForeignModel::Instance(u) => {
+                if u.uuid != uuid {
+                    return Err(ApiError::MissingPrivileges);
+                }
             }
-        }
-    };
+        };
+    }
+
+    let owner = query!(&db, User)
+        .transaction(&mut tx)
+        .condition(User::F.uuid.equals(&match w.owner {
+            ForeignModelByField::Key(k) => k,
+            ForeignModelByField::Instance(v) => v.uuid,
+        }))
+        .optional()
+        .await?
+        .ok_or(ApiError::InternalServerError)?;
+
+    tx.commit().await?;
 
     Ok(Json(GetWorkspace {
         id: w.id,
         name: w.name,
         description: w.description,
+        owner: UserResponse {
+            uuid: Uuid::from_slice(&owner.uuid).unwrap(),
+            username: owner.username,
+            display_name: owner.display_name,
+        },
     }))
 }
 
@@ -207,10 +242,21 @@ pub(crate) async fn get_all_workspaces(
 ) -> ApiResult<Json<GetWorkspaceResponse>> {
     let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
+    let mut tx = db.start_transaction().await?;
+
     let workspaces = query!(&db, Workspace)
+        .transaction(&mut tx)
         .condition(Workspace::F.owner.equals(&uuid))
         .all()
         .await?;
+
+    let owner = query!(&db, User)
+        .transaction(&mut tx)
+        .condition(User::F.uuid.equals(&uuid))
+        .one()
+        .await?;
+
+    tx.commit().await?;
 
     Ok(Json(GetWorkspaceResponse {
         workspaces: workspaces
@@ -219,6 +265,11 @@ pub(crate) async fn get_all_workspaces(
                 id: w.id,
                 name: w.name,
                 description: w.description,
+                owner: UserResponse {
+                    uuid: Uuid::from_slice(&owner.uuid).unwrap(),
+                    username: owner.username.clone(),
+                    display_name: owner.display_name.clone(),
+                },
             })
             .collect(),
     }))
@@ -331,16 +382,35 @@ pub(crate) async fn get_workspace_admin(
     req: Path<PathId>,
     db: Data<Database>,
 ) -> ApiResult<Json<GetWorkspace>> {
+    let mut tx = db.start_transaction().await?;
+
     let w = query!(&db, Workspace)
+        .transaction(&mut tx)
         .condition(Workspace::F.id.equals(req.id as i64))
         .optional()
         .await?
         .ok_or(ApiError::InvalidId)?;
 
+    let owner = query!(&db, User)
+        .transaction(&mut tx)
+        .condition(User::F.uuid.equals(&match w.owner {
+            ForeignModelByField::Key(k) => k,
+            ForeignModelByField::Instance(x) => x.uuid,
+        }))
+        .one()
+        .await?;
+
+    tx.commit().await?;
+
     Ok(Json(GetWorkspace {
         id: w.id,
         name: w.name,
         description: w.description,
+        owner: UserResponse {
+            uuid: Uuid::from_slice(&owner.uuid).unwrap(),
+            username: owner.username,
+            display_name: owner.display_name,
+        },
     }))
 }
 
@@ -359,16 +429,40 @@ pub(crate) async fn get_workspace_admin(
 pub(crate) async fn get_all_workspaces_admin(
     db: Data<Database>,
 ) -> ApiResult<Json<GetWorkspaceResponse>> {
-    let workspaces = query!(&db, Workspace).all().await?;
+    let mut tx = db.start_transaction().await?;
+
+    let workspaces = query!(
+        &db,
+        (
+            Workspace::F.id,
+            Workspace::F.name,
+            Workspace::F.description,
+            Workspace::F.owner.f().uuid,
+            Workspace::F.owner.f().username,
+            Workspace::F.owner.f().display_name
+        )
+    )
+    .transaction(&mut tx)
+    .all()
+    .await?;
+
+    tx.commit().await?;
 
     Ok(Json(GetWorkspaceResponse {
         workspaces: workspaces
             .into_iter()
-            .map(|w| GetWorkspace {
-                id: w.id,
-                name: w.name,
-                description: w.description,
-            })
+            .map(
+                |(id, name, description, uuid, username, display_name)| GetWorkspace {
+                    id,
+                    name,
+                    description,
+                    owner: UserResponse {
+                        uuid: Uuid::from_slice(&uuid).unwrap(),
+                        username,
+                        display_name,
+                    },
+                },
+            )
             .collect(),
     }))
 }
