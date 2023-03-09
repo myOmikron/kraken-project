@@ -4,24 +4,12 @@ import { toast } from "react-toastify";
 
 import { Err, Ok, Result } from "../utils/result";
 import { headers } from "./helper";
-import { ApiError, StatusCode } from "./responses";
+import { ApiError, StatusCode, parseError } from "./error";
 
 type BrowserError = {
     success: false;
     message: string;
 };
-
-async function parseError(response: Response): Promise<ApiError> {
-    try {
-        return await response.json();
-    } catch {
-        console.error("Got invalid json", response.body);
-        return {
-            status_code: StatusCode.InternalServerError,
-            message: "The server's response was invalid json",
-        };
-    }
-}
 
 export async function test(): Promise<"logged out" | "logged in" | "verified"> {
     const res = await fetch("/api/v1/auth/test");
