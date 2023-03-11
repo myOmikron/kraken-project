@@ -2,7 +2,8 @@
 //! This module holds all database related definitions of workspace related structs
 //!
 
-use rorm::{ForeignModel, Model, Patch};
+use rorm::fields::ForeignModel;
+use rorm::{Model, Patch};
 
 use crate::models::User;
 

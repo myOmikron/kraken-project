@@ -8,10 +8,11 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use futures::StreamExt;
 use ipnet::IpNet;
 use log::{error, warn};
-use rorm::internal::field::foreign_model::ForeignModelByField;
+use rorm::fields::ForeignModelByField;
 use rorm::{insert, update, Database, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 use crate::api::handler::{ApiError, ApiResult};
 use crate::chan::{
@@ -63,7 +64,7 @@ pub(crate) async fn bruteforce_subdomains(
     rpc_clients: RpcClients,
     ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
-    let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let mut client = rpc_clients
         .get_ref()
@@ -73,10 +74,11 @@ pub(crate) async fn bruteforce_subdomains(
         .ok_or(ApiError::InvalidLeech)?
         .clone();
 
-    let id = insert!(&db, AttackInsert)
+    let id = insert!(db.as_ref(), AttackInsert)
+        .return_primary_key()
         .single(&AttackInsert {
-            attack_type: AttackType::BruteforceSubdomains.into(),
-            started_from: ForeignModelByField::Key(uuid.clone()),
+            attack_type: AttackType::BruteforceSubdomains,
+            started_from: ForeignModelByField::Key(uuid),
             finished_at: None,
         })
         .await?;
@@ -128,7 +130,7 @@ pub(crate) async fn bruteforce_subdomains(
 
                             if let Err(err) = ws_manager_chan
                                 .send(WsManagerMessage::Message(
-                                    uuid.clone(),
+                                    uuid,
                                     WsMessage::BruteforceSubdomainsResult {
                                         attack_id: id,
                                         source,
@@ -144,7 +146,7 @@ pub(crate) async fn bruteforce_subdomains(
                             error!("Error while reading from stream: {err}");
                             if let Err(err) = ws_manager_chan
                                 .send(WsManagerMessage::Message(
-                                    uuid.clone(),
+                                    uuid,
                                     WsMessage::AttackFinished {
                                         attack_id: id,
                                         finished_successful: false,
@@ -163,7 +165,7 @@ pub(crate) async fn bruteforce_subdomains(
                 error!("Error while reading from stream: {err}");
                 if let Err(err) = ws_manager_chan
                     .send(WsManagerMessage::Message(
-                        uuid.clone(),
+                        uuid,
                         WsMessage::AttackFinished {
                             attack_id: id,
                             finished_successful: false,
@@ -178,7 +180,7 @@ pub(crate) async fn bruteforce_subdomains(
         };
 
         let now = Utc::now();
-        if let Err(err) = update!(&db, Attack)
+        if let Err(err) = update!(db.as_ref(), Attack)
             .condition(Attack::F.id.equals(id))
             .set(Attack::F.finished_at, Some(now.naive_utc()))
             .exec()
@@ -189,7 +191,7 @@ pub(crate) async fn bruteforce_subdomains(
 
         if let Err(err) = ws_manager_chan
             .send(WsManagerMessage::Message(
-                uuid.clone(),
+                uuid,
                 WsMessage::AttackFinished {
                     attack_id: id,
                     finished_successful: true,
@@ -261,7 +263,7 @@ pub(crate) async fn scan_tcp_ports(
     rpc_clients: RpcClients,
     ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
-    let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let mut client = rpc_clients
         .get_ref()
@@ -271,10 +273,11 @@ pub(crate) async fn scan_tcp_ports(
         .ok_or(ApiError::InvalidLeech)?
         .clone();
 
-    let id = insert!(&db, AttackInsert)
+    let id = insert!(db.as_ref(), AttackInsert)
+        .return_primary_key()
         .single(&AttackInsert {
-            attack_type: AttackType::TcpPortScan.into(),
-            started_from: ForeignModelByField::Key(uuid.clone()),
+            attack_type: AttackType::TcpPortScan,
+            started_from: ForeignModelByField::Key(uuid),
             finished_at: None,
         })
         .await?;
@@ -323,7 +326,7 @@ pub(crate) async fn scan_tcp_ports(
 
                             if let Err(err) = ws_manager_chan
                                 .send(WsManagerMessage::Message(
-                                    uuid.clone(),
+                                    uuid,
                                     WsMessage::ScanTcpPortsResult {
                                         attack_id: id,
                                         address,
@@ -339,7 +342,7 @@ pub(crate) async fn scan_tcp_ports(
                             error!("Error while reading from stream: {err}");
                             if let Err(err) = ws_manager_chan
                                 .send(WsManagerMessage::Message(
-                                    uuid.clone(),
+                                    uuid,
                                     WsMessage::AttackFinished {
                                         attack_id: id,
                                         finished_successful: false,
@@ -358,7 +361,7 @@ pub(crate) async fn scan_tcp_ports(
                 error!("Error while reading from stream: {err}");
                 if let Err(err) = ws_manager_chan
                     .send(WsManagerMessage::Message(
-                        uuid.clone(),
+                        uuid,
                         WsMessage::AttackFinished {
                             attack_id: id,
                             finished_successful: false,
@@ -373,7 +376,7 @@ pub(crate) async fn scan_tcp_ports(
         };
 
         let now = Utc::now();
-        if let Err(err) = update!(&db, Attack)
+        if let Err(err) = update!(db.as_ref(), Attack)
             .condition(Attack::F.id.equals(id))
             .set(Attack::F.finished_at, Some(now.naive_utc()))
             .exec()
@@ -384,7 +387,7 @@ pub(crate) async fn scan_tcp_ports(
 
         if let Err(err) = ws_manager_chan
             .send(WsManagerMessage::Message(
-                uuid.clone(),
+                uuid,
                 WsMessage::AttackFinished {
                     attack_id: id,
                     finished_successful: true,
@@ -439,7 +442,7 @@ pub(crate) async fn query_certificate_transparency(
     rpc_clients: Data<RpcClients>,
     ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
-    let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let mut client = rpc_clients
         .get_ref()
@@ -449,10 +452,11 @@ pub(crate) async fn query_certificate_transparency(
         .ok_or(ApiError::InvalidLeech)?
         .clone();
 
-    let id = insert!(&db, AttackInsert)
+    let id = insert!(db.as_ref(), AttackInsert)
+        .return_primary_key()
         .single(&AttackInsert {
-            attack_type: AttackType::QueryCertificateTransparency.into(),
-            started_from: ForeignModelByField::Key(uuid.clone()),
+            attack_type: AttackType::QueryCertificateTransparency,
+            started_from: ForeignModelByField::Key(uuid),
             finished_at: None,
         })
         .await?;
@@ -471,7 +475,7 @@ pub(crate) async fn query_certificate_transparency(
 
                 if let Err(err) = ws_manager_chan
                     .send(WsManagerMessage::Message(
-                        uuid.clone(),
+                        uuid,
                         WsMessage::CertificateTransparencyResult {
                             attack_id: id,
                             entries: res
@@ -517,7 +521,7 @@ pub(crate) async fn query_certificate_transparency(
                 error!("Error while reading from stream: {err}");
                 if let Err(err) = ws_manager_chan
                     .send(WsManagerMessage::Message(
-                        uuid.clone(),
+                        uuid,
                         WsMessage::AttackFinished {
                             attack_id: id,
                             finished_successful: false,
@@ -532,7 +536,7 @@ pub(crate) async fn query_certificate_transparency(
         }
 
         let now = Utc::now();
-        if let Err(err) = update!(&db, Attack)
+        if let Err(err) = update!(db.as_ref(), Attack)
             .condition(Attack::F.id.equals(id))
             .set(Attack::F.finished_at, Some(now.naive_utc()))
             .exec()
@@ -543,7 +547,7 @@ pub(crate) async fn query_certificate_transparency(
 
         if let Err(err) = ws_manager_chan
             .send(WsManagerMessage::Message(
-                uuid.clone(),
+                uuid,
                 WsMessage::AttackFinished {
                     attack_id: id,
                     finished_successful: true,

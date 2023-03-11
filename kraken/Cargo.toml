@@ -13,7 +13,7 @@ description = "The core component of kraken-project"
 # Webframework
 actix-web = { version = "~4" }
 # Extensions for actix-web
-actix-toolbox = { version = "~0.9", features = ["ws", "logging", "session"] }
+actix-toolbox = { version = "~0.9", features = ["ws", "logging", "session"], git = "https://github.com/gammelalf/actix-toolbox", branch = "rorm-update" }
 # Webauthn library
 webauthn-rs = { version = "~0.4", features = ["danger-allow-state-serialisation"] }
 
@@ -46,6 +46,8 @@ bytes = { version = "~1" }
 base64 = { version = "~0.21" }
 # ip networks
 ipnet = { version = "~2", features = ["serde"] }
+# Uuid v4 generation
+uuid = { version = "~1", features = ["serde", "v4"] }
 
 # Async runtime
 tokio = { version = ">=1.23.1", features = ["rt-multi-thread", "sync", "macros"] }
@@ -62,8 +64,7 @@ prost = { version = "~0.11" }
 prost-types = { version = "~0.11" }
 
 # ORM
-rorm = { version = "~0.4", features = ["tokio-rustls"] }
-rorm-cli = { version = "~0.7" }
+rorm = { version = "~0.4", features = ["tokio-rustls", "cli", "uuid"], git = "https://github.com/rorm-orm/rorm" }
 
 [build-dependencies]
 tonic-build = { version = "~0.8" }

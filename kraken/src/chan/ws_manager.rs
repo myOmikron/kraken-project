@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
 use tokio::task;
+use webauthn_rs::prelude::Uuid;
 
 pub(crate) async fn start_ws_sender(tx: ws::Sender, mut rx: mpsc::Receiver<WsMessage>) {
     while let Some(msg) = rx.recv().await {
@@ -81,15 +82,15 @@ pub(crate) type WsManagerChan = Sender<WsManagerMessage>;
 /// Messages to control the websocket manager
 pub(crate) enum WsManagerMessage {
     /// Close the socket from the server side
-    CloseSocket(Vec<u8>),
+    CloseSocket(Uuid),
     /// Client with given uuid initialized a websocket
-    OpenedSocket(Vec<u8>, ws::Sender),
+    OpenedSocket(Uuid, ws::Sender),
     /// Send a message to given uuid
-    Message(Vec<u8>, WsMessage),
+    Message(Uuid, WsMessage),
 }
 
 pub(crate) async fn start_ws_manager() -> Result<WsManagerChan, String> {
-    let mut lookup: HashMap<Vec<u8>, Vec<Sender<WsMessage>>> = HashMap::new();
+    let mut lookup: HashMap<Uuid, Vec<Sender<WsMessage>>> = HashMap::new();
 
     let (tx, mut rx) = mpsc::channel(16);
 

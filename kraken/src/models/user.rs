@@ -1,11 +1,13 @@
-use rorm::{BackRef, ForeignModel, Model, Patch};
+use rorm::fields::{BackRef, ForeignModel};
+use rorm::{field, Model, Patch};
+use uuid::Uuid;
 
 /// The definition of a user
-#[derive(Model, Debug)]
+#[derive(Model)]
 pub struct User {
     /// Primary key of the user, a uuid v4
     #[rorm(primary_key)]
-    pub uuid: Vec<u8>,
+    pub uuid: Uuid,
 
     /// The username is used for login
     #[rorm(max_length = 255, unique, index)]
@@ -30,14 +32,13 @@ pub struct User {
     pub created_at: chrono::NaiveDateTime,
 
     /// Backreference to the security keys of a user
-    #[rorm(field = "UserKey::F.user")]
-    pub user_keys: BackRef<UserKey>,
+    pub user_keys: BackRef<field!(UserKey::F.user)>,
 }
 
 #[derive(Patch)]
 #[rorm(model = "User")]
 pub(crate) struct UserInsert {
-    pub(crate) uuid: Vec<u8>,
+    pub(crate) uuid: Uuid,
     pub(crate) username: String,
     pub(crate) display_name: String,
     pub(crate) password_hash: String,
@@ -46,7 +47,7 @@ pub(crate) struct UserInsert {
 }
 
 /// A security key (yubikey, e.g.) of a user
-#[derive(Model, Debug)]
+#[derive(Model)]
 pub struct UserKey {
     /// ID of the key
     #[rorm(id)]
