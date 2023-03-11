@@ -20,7 +20,7 @@ pub async fn delete_user_transaction(
 ) -> Result<(), DeleteUserError> {
     let mut tx = db.start_transaction().await?;
 
-    delete_user(username, db, &mut tx).await?;
+    delete_user(username, &mut tx).await?;
 
     tx.commit().await?;
 
@@ -32,23 +32,16 @@ Deletes a user
 
 **Parameter**:
 - `username`: Username of the user
-- `db`: Reference of a [Database] instance
 - `tx`: A mutable reference to a [Transaction]
  */
-pub async fn delete_user<'db>(
-    username: String,
-    db: &'db Database,
-    tx: &mut Transaction<'db>,
-) -> Result<(), DeleteUserError> {
-    query!(db, (User::F.uuid,))
-        .transaction(tx)
+pub async fn delete_user(username: String, tx: &mut Transaction) -> Result<(), DeleteUserError> {
+    query!(&mut *tx, (User::F.uuid,))
         .condition(User::F.username.equals(&username))
         .optional()
         .await?
         .ok_or(DeleteUserError::InvalidUsername)?;
 
-    delete!(db, User)
-        .transaction(tx)
+    delete!(&mut *tx, User)
         .condition(User::F.username.equals(&username))
         .await?;
 

@@ -32,7 +32,7 @@ pub async fn create_user_transaction(
 ) -> Result<Uuid, CreateUserError> {
     let mut tx = db.start_transaction().await?;
 
-    let uuid = create_user(username, display_name, password, admin, db, &mut tx).await?;
+    let uuid = create_user(username, display_name, password, admin, &mut tx).await?;
 
     tx.commit().await?;
 
@@ -49,19 +49,16 @@ Returns the [Uuid] of the user.
 - `display_name`: The name that will be used for displaying purposes.
 - `password`: Password of the user
 - `admin`: Flag if the user has administrative privileges
-- `db`: Reference of a [Database] instance
 - `tx`: A mutable reference to a [Transaction]
  */
-pub async fn create_user<'db>(
+pub async fn create_user(
     username: String,
     display_name: String,
     password: String,
     admin: bool,
-    db: &'db Database,
-    tx: &mut Transaction<'db>,
+    tx: &mut Transaction,
 ) -> Result<Uuid, CreateUserError> {
-    query!(db, (User::F.uuid,))
-        .transaction(tx)
+    query!(&mut *tx, (User::F.uuid,))
         .optional()
         .await?
         .ok_or(CreateUserError::UsernameAlreadyExists)?;
@@ -73,10 +70,9 @@ pub async fn create_user<'db>(
 
     let uuid = Uuid::new_v4();
 
-    insert!(db, UserInsert)
-        .transaction(tx)
+    insert!(&mut *tx, UserInsert)
         .single(&UserInsert {
-            uuid: uuid.as_bytes().to_vec(),
+            uuid,
             username,
             display_name,
             password_hash,

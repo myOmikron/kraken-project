@@ -9,6 +9,7 @@ use actix_web::{get, HttpRequest, HttpResponse};
 use bytes::Bytes;
 use log::{debug, error};
 use tokio::sync::Mutex;
+use uuid::Uuid;
 
 use crate::api::handler::ApiError;
 use crate::chan::{WsManagerChan, WsManagerMessage, WsMessage};
@@ -37,7 +38,7 @@ pub(crate) async fn websocket(
     session: Session,
     ws_manager_chan: Data<WsManagerChan>,
 ) -> Result<HttpResponse, actix_web::Error> {
-    let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let (tx, mut rx, response) = ws::start(&request, payload)?;
     debug!("Initializing websocket connection");

@@ -28,8 +28,7 @@ use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use clap::{Parser, Subcommand};
 use rand::thread_rng;
-use rorm::config::DatabaseConfig;
-use rorm::{insert, query, Database, DatabaseConfiguration, DatabaseDriver, Model};
+use rorm::{cli, insert, query, Database, DatabaseConfiguration, DatabaseDriver, Model};
 use webauthn_rs::prelude::Uuid;
 
 use crate::api::server;
@@ -84,10 +83,10 @@ async fn main() -> Result<(), String> {
     setup_logging(&config.logging)?;
 
     match cli.command {
-        Command::Migrate { migration_dir } => rorm_cli::migrate::run_migrate_custom(
-            DatabaseConfig {
+        Command::Migrate { migration_dir } => cli::migrate::run_migrate_custom(
+            cli::config::DatabaseConfig {
                 last_migration_table_name: None,
-                driver: DatabaseDriver::Postgres {
+                driver: cli::config::DatabaseDriver::Postgres {
                     host: config.database.host,
                     port: config.database.port,
                     name: config.database.name,
@@ -170,7 +169,7 @@ async fn create_user(db: Database) -> Result<(), String> {
             password_hash: hashed_password,
             admin: true,
             last_login: None,
-            uuid: Uuid::new_v4().into_bytes().to_vec(),
+            uuid: Uuid::new_v4(),
         })
         .await
         .map_err(|e| format!("Failed to create user: {e}"))?;

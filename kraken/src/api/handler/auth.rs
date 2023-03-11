@@ -5,13 +5,14 @@ use argon2::password_hash::Error;
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use chrono::Utc;
 use log::{debug, error};
-use rorm::internal::field::foreign_model::ForeignModelByField;
+use rorm::fields::ForeignModelByField;
 use rorm::{insert, query, update, Database, Model};
 use serde::Deserialize;
 use utoipa::ToSchema;
+use uuid::Uuid;
 use webauthn_rs::prelude::{
     CreationChallengeResponse, CredentialID, Passkey, PasskeyAuthentication, PasskeyRegistration,
-    PublicKeyCredential, RegisterPublicKeyCredential, RequestChallengeResponse, Uuid,
+    PublicKeyCredential, RegisterPublicKeyCredential, RequestChallengeResponse,
 };
 use webauthn_rs::Webauthn;
 
@@ -66,8 +67,7 @@ pub(crate) async fn login(
 ) -> ApiResult<HttpResponse> {
     let mut tx = db.start_transaction().await?;
 
-    let user = query!(&db, User)
-        .transaction(&mut tx)
+    let user = query!(&mut tx, User)
         .condition(User::F.username.equals(&req.username))
         .optional()
         .await?
@@ -83,9 +83,8 @@ pub(crate) async fn login(
             _ => ApiError::InvalidHash(e),
         })?;
 
-    update!(&db, User)
-        .transaction(&mut tx)
-        .condition(User::F.uuid.equals(&user.uuid))
+    update!(&mut tx, User)
+        .condition(User::F.uuid.equals(user.uuid.as_ref()))
         .set(User::F.last_login, Some(Utc::now().naive_utc()))
         .exec()
         .await?;
@@ -115,7 +114,7 @@ pub(crate) async fn logout(
     session: Session,
     ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
-    let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
     session.purge();
 
     if let Err(err) = ws_manager_chan
@@ -153,12 +152,12 @@ pub(crate) async fn start_auth(
         return Err(ApiError::Unauthenticated);
     }
 
-    let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     session.remove("auth_state");
 
-    let keys = query!(&db, UserKey)
-        .condition(UserKey::F.user.equals(&uuid))
+    let keys = query!(db.as_ref(), UserKey)
+        .condition(UserKey::F.user.equals(uuid.as_ref()))
         .all()
         .await?;
 
@@ -202,7 +201,7 @@ pub(crate) async fn finish_auth(
         return Err(ApiError::Unauthenticated);
     }
 
-    let (uuid, auth_state): (Vec<u8>, PasskeyAuthentication) = session
+    let (uuid, auth_state): (Uuid, PasskeyAuthentication) = session
         .get("auth_state")?
         .ok_or(ApiError::Unauthenticated)?;
 
@@ -210,8 +209,8 @@ pub(crate) async fn finish_auth(
 
     webauthn.finish_passkey_authentication(&auth, &auth_state)?;
 
-    update!(&db, User)
-        .condition(User::F.uuid.equals(&uuid))
+    update!(db.as_ref(), User)
+        .condition(User::F.uuid.equals(uuid.as_ref()))
         .set(User::F.last_login, Utc::now().naive_utc())
         .exec()
         .await?;
@@ -244,15 +243,17 @@ pub(crate) async fn start_register(
     if !session.get("logged_in")?.ok_or(ApiError::Unauthenticated)? {
         return Err(ApiError::Unauthenticated);
     }
-    let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
-    let mut user = query!(&db, User)
-        .condition(User::F.uuid.equals(&uuid))
+    let mut tx = db.start_transaction().await?;
+
+    let mut user = query!(&mut tx, User)
+        .condition(User::F.uuid.equals(uuid.as_ref()))
         .optional()
         .await?
         .ok_or(ApiError::SessionCorrupt)?;
 
-    User::F.user_keys.populate(&db, &mut user).await?;
+    User::F.user_keys.populate(&mut tx, &mut user).await?;
 
     if !user.user_keys.cached.unwrap().is_empty()
         && !session.get("2fa")?.ok_or(ApiError::Missing2FA)?
@@ -262,8 +263,8 @@ pub(crate) async fn start_register(
 
     session.remove("reg_state");
 
-    let excluded_keys: Vec<CredentialID> = query!(&db, UserKey)
-        .condition(UserKey::F.user.equals(&uuid))
+    let excluded_keys: Vec<CredentialID> = query!(&mut tx, UserKey)
+        .condition(UserKey::F.user.equals(uuid.as_ref()))
         .all()
         .await?
         .into_iter()
@@ -276,7 +277,7 @@ pub(crate) async fn start_register(
         .collect();
 
     let (ccr, reg_state) = webauthn.start_passkey_registration(
-        Uuid::from_slice(&uuid).unwrap(),
+        uuid,
         &user.username,
         &user.display_name,
         Some(excluded_keys),
@@ -323,14 +324,14 @@ pub(crate) async fn finish_register(
         return Err(ApiError::Unauthenticated);
     }
 
-    let (uuid, reg_state): (Vec<u8>, PasskeyRegistration) =
+    let (uuid, reg_state): (Uuid, PasskeyRegistration) =
         session.get("reg_state")?.ok_or(ApiError::SessionCorrupt)?;
 
     session.remove("reg_state");
 
     let passkey = webauthn.finish_passkey_registration(&req.register_pk_credential, &reg_state)?;
 
-    insert!(&db, UserKeyInsert)
+    insert!(db.as_ref(), UserKeyInsert)
         .single(&UserKeyInsert {
             user: ForeignModelByField::Key(uuid),
             key: serde_json::to_vec(&passkey).unwrap(),

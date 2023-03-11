@@ -9,7 +9,7 @@ use rand::thread_rng;
 use rorm::{query, update, Database, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
-use webauthn_rs::prelude::Uuid;
+use uuid::Uuid;
 
 use crate::api::handler::{ApiError, ApiResult};
 use crate::chan::{WsManagerChan, WsManagerMessage};
@@ -147,14 +147,14 @@ pub(crate) async fn get_user(
     req: Path<GetUserRequest>,
     db: Data<Database>,
 ) -> ApiResult<Json<GetUser>> {
-    let user = query!(&db, User)
+    let user = query!(db.as_ref(), User)
         .condition(User::F.username.equals(&req.username))
         .optional()
         .await?
         .ok_or(ApiError::InvalidUsername)?;
 
     Ok(Json(GetUser {
-        uuid: Uuid::from_slice(user.uuid.as_slice()).unwrap(),
+        uuid: user.uuid,
         username: user.username,
         display_name: user.display_name,
         admin: user.admin,
@@ -176,13 +176,13 @@ pub(crate) async fn get_user(
 )]
 #[get("/users")]
 pub(crate) async fn get_all_users(db: Data<Database>) -> ApiResult<Json<GetUserResponse>> {
-    let users = query!(&db, User).all().await?;
+    let users = query!(db.as_ref(), User).all().await?;
 
     Ok(Json(GetUserResponse {
         users: users
             .into_iter()
             .map(|u| GetUser {
-                uuid: Uuid::from_slice(&u.uuid).unwrap(),
+                uuid: u.uuid,
                 username: u.username,
                 display_name: u.display_name,
                 admin: u.admin,
@@ -206,16 +206,16 @@ pub(crate) async fn get_all_users(db: Data<Database>) -> ApiResult<Json<GetUserR
 )]
 #[get("/users/me")]
 pub(crate) async fn get_me(session: Session, db: Data<Database>) -> ApiResult<Json<GetUser>> {
-    let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
-    let user = query!(&db, User)
-        .condition(User::F.uuid.equals(&uuid))
+    let user = query!(db.as_ref(), User)
+        .condition(User::F.uuid.equals(uuid.as_ref()))
         .optional()
         .await?
         .ok_or(ApiError::SessionCorrupt)?;
 
     Ok(Json(GetUser {
-        uuid: Uuid::from_slice(&user.uuid).unwrap(),
+        uuid: user.uuid,
         username: user.username,
         display_name: user.display_name,
         admin: user.admin,
@@ -251,13 +251,12 @@ pub(crate) async fn set_password(
     db: Data<Database>,
     ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
-    let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let mut tx = db.start_transaction().await?;
 
-    let user = query!(&db, User)
-        .transaction(&mut tx)
-        .condition(User::F.uuid.equals(&uuid))
+    let user = query!(&mut tx, User)
+        .condition(User::F.uuid.equals(uuid.as_ref()))
         .optional()
         .await?
         .ok_or(ApiError::SessionCorrupt)?;
@@ -277,8 +276,7 @@ pub(crate) async fn set_password(
         .hash_password(req.new_password.as_bytes(), &salt)?
         .to_string();
 
-    update!(&db, User)
-        .transaction(&mut tx)
+    update!(&mut tx, User)
         .set(User::F.password_hash, &password_hash)
         .exec()
         .await?;
@@ -326,17 +324,12 @@ pub(crate) async fn update_me(
     db: Data<Database>,
     session: Session,
 ) -> ApiResult<HttpResponse> {
-    let uuid: Vec<u8> = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let mut tx = db.start_transaction().await?;
 
-    let mut ub = update!(&db, User)
-        .condition(User::F.uuid.equals(&uuid))
-        .begin_dyn_set();
-
     if let Some(username) = &req.username {
-        if query!(&db, (User::F.uuid,))
-            .transaction(&mut tx)
+        if query!(&mut tx, (User::F.uuid,))
             .condition(User::F.username.equals(username))
             .optional()
             .await?
@@ -344,17 +337,15 @@ pub(crate) async fn update_me(
         {
             return Err(ApiError::UsernameAlreadyOccupied);
         }
-
-        ub = ub.set(User::F.username, username);
     }
 
-    if let Some(display_name) = &req.display_name {
-        ub = ub.set(User::F.display_name, display_name);
-    }
-
-    ub.finish_dyn_set()
+    update!(&mut tx, User)
+        .condition(User::F.uuid.equals(uuid.as_ref()))
+        .begin_dyn_set()
+        .set_if(User::F.username, req.username.as_ref())
+        .set_if(User::F.display_name, req.display_name.as_ref())
+        .finish_dyn_set()
         .map_err(|_| ApiError::EmptyJson)?
-        .transaction(&mut tx)
         .await?;
 
     tx.commit().await?;
