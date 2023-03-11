@@ -185,7 +185,7 @@ dependencies = [
  "log4rs",
  "pin-project",
  "rand",
- "rorm 0.4.2",
+ "rorm",
  "serde",
  "serde_json",
  "tokio",
@@ -1745,7 +1745,7 @@ dependencies = [
  "prost",
  "prost-types",
  "rand",
- "rorm 0.4.2",
+ "rorm",
  "rpassword",
  "serde",
  "serde_json",
@@ -1793,8 +1793,7 @@ dependencies = [
  "regex",
  "reqwest",
  "rlimit",
- "rorm 0.4.3",
- "rorm-cli",
+ "rorm",
  "serde",
  "serde_json",
  "surge-ping",
@@ -2727,29 +2726,12 @@ dependencies = [
  "ouroboros",
  "pin-project",
  "rorm-cli",
- "rorm-db 0.7.0",
+ "rorm-db",
  "rorm-declaration 0.3.0 (git+https://github.com/rorm-orm/rorm)",
- "rorm-macro 0.5.0 (git+https://github.com/rorm-orm/rorm)",
+ "rorm-macro",
  "serde",
  "serde_json",
  "uuid",
-]
-
-[[package]]
-name = "rorm"
-version = "0.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "278f96464e047f7fe4b56370042b11de87d85cfc99957d599fdaa59d33c54426"
-dependencies = [
- "chrono",
- "futures",
- "linkme",
- "ouroboros",
- "pin-project",
- "rorm-db 0.6.0",
- "rorm-declaration 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rorm-macro 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_json",
 ]
 
 [[package]]
@@ -2771,24 +2753,6 @@ dependencies = [
  "strum",
  "tokio",
  "toml",
-]
-
-[[package]]
-name = "rorm-db"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4d5f0bdc2eb55968bb0e717bdaa303236396e72fe4117e65eb08b7952931684"
-dependencies = [
- "aliasable",
- "futures",
- "log",
- "ouroboros",
- "pin-project",
- "rorm-declaration 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rorm-sql 0.5.4",
- "serde",
- "sqlx",
- "thiserror",
 ]
 
 [[package]]
@@ -2831,36 +2795,12 @@ dependencies = [
 [[package]]
 name = "rorm-macro"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fb4725c4788ea50516c6570f3977865979d99187722f11ebece93dc5045f852"
-dependencies = [
- "darling",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "rorm-macro"
-version = "0.5.0"
 source = "git+https://github.com/rorm-orm/rorm#792f5f1cf79084760190bbbf1510d3bfe55937be"
 dependencies = [
  "darling",
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "rorm-sql"
-version = "0.5.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30b66e9a069cbe10327419d59651c69f19caee8a7aae54ec39264bce84e716fc"
-dependencies = [
- "chrono",
- "libsqlite3-sys",
- "rorm-declaration 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "thiserror",
 ]
 
 [[package]]

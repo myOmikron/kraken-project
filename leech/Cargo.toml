@@ -51,8 +51,7 @@ once_cell = { version = "~1" }
 rand = { version = "~0.8" }
 
 # ORM
-rorm = { version = "~0.4", features = ["tokio-rustls"] }
-rorm-cli = { version = "~0.7" }
+rorm = { version = "~0.4", features = ["tokio-rustls", "cli", "uuid"], git = "https://github.com/rorm-orm/rorm" }
 
 # Needed because of modules
 
