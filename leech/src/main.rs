@@ -24,8 +24,7 @@ use clap::{ArgAction, Parser, Subcommand, ValueEnum};
 use ipnet::IpNet;
 use itertools::Itertools;
 use log::{error, info};
-use rorm::config::DatabaseConfig;
-use rorm::DatabaseDriver;
+use rorm::cli;
 use tokio::sync::mpsc;
 use tokio::task;
 use trust_dns_resolver::Name;
@@ -179,10 +178,10 @@ async fn main() -> Result<(), String> {
     match cli.commands {
         Command::Migrate { migration_dir } => {
             let config = get_config(&cli.config_path)?;
-            rorm_cli::migrate::run_migrate_custom(
-                DatabaseConfig {
+            cli::migrate::run_migrate_custom(
+                cli::config::DatabaseConfig {
                     last_migration_table_name: None,
-                    driver: DatabaseDriver::Postgres {
+                    driver: cli::config::DatabaseDriver::Postgres {
                         host: config.database.host,
                         port: config.database.port,
                         name: config.database.name,
