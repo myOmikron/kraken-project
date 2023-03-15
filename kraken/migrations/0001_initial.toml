@@ -1,5 +1,5 @@
 [Migration]
-Hash = "8314498590472621313"
+Hash = "8359723395399345319"
 Initial = true
 Replaces = []
 
@@ -52,6 +52,51 @@ Type = "varchar"
 [[Migration.Operations.Fields.Annotations]]
 Type = "max_length"
 Value = 65535
+
+[[Migration.Operations]]
+Type = "CreateModel"
+Name = "attack"
+
+[[Migration.Operations.Fields]]
+Name = "id"
+Type = "int64"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "auto_increment"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "primary_key"
+
+[[Migration.Operations.Fields]]
+Name = "attack_type"
+Type = "choices"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "choices"
+Value = [
+    "Undefined",
+    "BruteforceSubdomains",
+    "TcpPortScan",
+    "QueryCertificateTransparency",
+]
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations.Fields]]
+Name = "finished_at"
+Type = "datetime"
+Annotations = []
+
+[[Migration.Operations.Fields]]
+Name = "created_at"
+Type = "datetime"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "auto_create_time"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateModel"
@@ -237,51 +282,6 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateModel"
-Name = "attack"
-
-[[Migration.Operations.Fields]]
-Name = "id"
-Type = "int64"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "auto_increment"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "primary_key"
-
-[[Migration.Operations.Fields]]
-Name = "attack_type"
-Type = "choices"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "choices"
-Value = [
-    "Undefined",
-    "BruteforceSubdomains",
-    "TcpPortScan",
-    "QueryCertificateTransparency",
-]
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations.Fields]]
-Name = "finished_at"
-Type = "datetime"
-Annotations = []
-
-[[Migration.Operations.Fields]]
-Name = "created_at"
-Type = "datetime"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "auto_create_time"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateModel"
 Name = "dbsession"
 
 [[Migration.Operations.Fields]]
@@ -308,26 +308,6 @@ Name = "expired_after"
 Type = "datetime"
 
 [[Migration.Operations.Fields.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "userkey"
-
-[Migration.Operations.Field]
-Name = "user"
-Type = "varbinary"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "user"
-ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
-
-[[Migration.Operations.Field.Annotations]]
 Type = "not_null"
 
 [[Migration.Operations]]
@@ -389,6 +369,26 @@ TableName = "workspace"
 ColumnName = "id"
 OnDelete = "Cascade"
 OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "userkey"
+
+[Migration.Operations.Field]
+Name = "user"
+Type = "varbinary"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "user"
+ColumnName = "uuid"
+OnDelete = "Restrict"
+OnUpdate = "Restrict"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"
