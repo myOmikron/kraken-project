@@ -53,7 +53,6 @@ enum Command {
     /// Apply the migrations to the database
     Migrate {
         /// The directory the migrations live in
-        #[clap(long)]
         migration_dir: String,
     },
 }
