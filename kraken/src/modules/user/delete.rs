@@ -11,7 +11,7 @@ use crate::models::User;
 Deletes a user in a transaction.
 
 **Parameter**:
-- `username`: Username of the user
+- `uuid`: Username of the user
 - `db`: Reference of a [Database] instance
  */
 pub async fn delete_user_transaction(
