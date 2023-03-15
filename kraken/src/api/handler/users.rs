@@ -15,7 +15,6 @@ use crate::api::handler::{ApiError, ApiResult};
 use crate::chan::{WsManagerChan, WsManagerMessage};
 use crate::models::User;
 use crate::modules::user::create::create_user_transaction;
-use crate::modules::user::delete::delete_user_transaction;
 
 /// This struct holds the user information.
 ///
@@ -79,12 +78,11 @@ pub(crate) async fn create_user(
 }
 
 #[derive(Deserialize, IntoParams)]
-pub(crate) struct DeleteUserRequest {
-    #[param(example = "user123")]
-    pub(crate) username: String,
+pub(crate) struct PathUuid {
+    pub(crate) uuid: Uuid,
 }
 
-/// Delete a user by its username
+/// Delete a user by its uuid
 #[utoipa::path(
     tag = "User Admin Management",
     context_path = "/api/v1/admin",
@@ -93,23 +91,19 @@ pub(crate) struct DeleteUserRequest {
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    params(DeleteUserRequest),
+    params(PathUuid),
     security(("api_key" = []))
 )]
-#[delete("/users/{username}")]
+#[delete("/users/{uuid}")]
 pub(crate) async fn delete_user(
-    req: Path<DeleteUserRequest>,
+    req: Path<PathUuid>,
     db: Data<Database>,
 ) -> ApiResult<HttpResponse> {
-    delete_user_transaction(req.username.clone(), &db).await?;
+    rorm::delete!(db.as_ref(), User)
+        .condition(User::F.uuid.equals(req.uuid.as_ref()))
+        .await?;
 
     Ok(HttpResponse::Ok().finish())
-}
-
-#[derive(Deserialize, IntoParams)]
-pub(crate) struct GetUserRequest {
-    #[param(example = "user123")]
-    pub(crate) username: String,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -130,7 +124,7 @@ pub(crate) struct GetUserResponse {
     pub(crate) users: Vec<GetUser>,
 }
 
-/// Retrieve a user by its username
+/// Retrieve a user by its uuid
 #[utoipa::path(
     tag = "User Admin Management",
     context_path = "/api/v1/admin",
@@ -139,16 +133,13 @@ pub(crate) struct GetUserResponse {
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    params(GetUserRequest),
+    params(PathUuid),
     security(("api_key" = []))
 )]
-#[get("/users/{username}")]
-pub(crate) async fn get_user(
-    req: Path<GetUserRequest>,
-    db: Data<Database>,
-) -> ApiResult<Json<GetUser>> {
+#[get("/users/{uuid}")]
+pub(crate) async fn get_user(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<Json<GetUser>> {
     let user = query!(db.as_ref(), User)
-        .condition(User::F.username.equals(&req.username))
+        .condition(User::F.uuid.equals(req.uuid.as_ref()))
         .optional()
         .await?
         .ok_or(ApiError::InvalidUsername)?;
