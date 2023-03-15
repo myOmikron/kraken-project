@@ -5,6 +5,7 @@ use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Tr
 use actix_web::web::Data;
 use futures::future::LocalBoxFuture;
 use rorm::{query, Database, Model};
+use uuid::Uuid;
 
 use crate::api::handler::ApiError;
 use crate::models::{User, UserKey};
@@ -69,12 +70,12 @@ where
                 return Err(ApiError::Unauthenticated.into());
             }
 
-            let uuid: Vec<u8> = uuid
+            let uuid: Uuid = uuid
                 .map_err(ApiError::SessionGet)?
                 .ok_or(ApiError::SessionCorrupt)?;
 
             let second_factor_required = query!(&db, (UserKey::F.id,))
-                .condition(UserKey::F.user.equals(&uuid))
+                .condition(UserKey::F.user.equals(uuid.as_ref()))
                 .optional()
                 .await
                 .map_err(ApiError::DatabaseError)?;
@@ -84,7 +85,7 @@ where
             }
 
             let (is_admin,) = query!(&db, (User::F.admin,))
-                .condition(User::F.uuid.equals(&uuid))
+                .condition(User::F.uuid.equals(uuid.as_ref()))
                 .optional()
                 .await
                 .map_err(ApiError::DatabaseError)?
