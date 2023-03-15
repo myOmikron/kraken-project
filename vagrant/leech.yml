@@ -95,7 +95,7 @@
     - name: Apply migrations
       command:
         chdir: /vagrant/leech
-        cmd: /usr/local/bin/leech migrate --migration-dir migrations/
+        cmd: /usr/local/bin/leech migrate migrations/
 
     - name: Install systemd service
       copy:
