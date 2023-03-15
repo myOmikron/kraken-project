@@ -61,7 +61,7 @@ pub(crate) enum ApiStatusCode {
     InvalidPassword = 1017,
     InvalidLeech = 1018,
     UsernameAlreadyOccupied = 1019,
-    InvalidName,
+    InvalidName = 1020,
 
     InternalServerError = 2000,
     DatabaseError = 2001,
