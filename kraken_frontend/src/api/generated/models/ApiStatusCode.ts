@@ -13,7 +13,10 @@
  */
 
 /**
+ * This type holds all possible error types that can be returned by the API.
  * 
+ * Numbers between 1000 and 1999 (inclusive) are client errors that can be handled by the client.
+ * Numbers between 2000 and 2999 (inclusive) are server errors.
  * @export
  * @enum {string}
  */
@@ -38,6 +41,7 @@ export enum ApiStatusCode {
     NUMBER_1017 = 1017,
     NUMBER_1018 = 1018,
     NUMBER_1019 = 1019,
+    NUMBER_1020 = 1020,
     NUMBER_2000 = 2000,
     NUMBER_2001 = 2001,
     NUMBER_2002 = 2002,

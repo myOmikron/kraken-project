@@ -37,11 +37,11 @@ export interface CreateUserOperationRequest {
 }
 
 export interface DeleteUserRequest {
-    username: string;
+    uuid: string;
 }
 
 export interface GetUserRequest {
-    username: string;
+    uuid: string;
 }
 
 /**
@@ -85,12 +85,12 @@ export class UserAdminManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete a user by its username
-     * Delete a user by its username
+     * Delete a user by its uuid
+     * Delete a user by its uuid
      */
     async deleteUserRaw(requestParameters: DeleteUserRequest): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.username === null || requestParameters.username === undefined) {
-            throw new runtime.RequiredError('username','Required parameter requestParameters.username was null or undefined when calling deleteUser.');
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling deleteUser.');
         }
 
         const queryParameters: any = {};
@@ -98,7 +98,7 @@ export class UserAdminManagementApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/api/v1/admin/users/{username}`.replace(`{${"username"}}`, encodeURIComponent(String(requestParameters.username))),
+            path: `/api/v1/admin/users/{uuid}`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
@@ -108,8 +108,8 @@ export class UserAdminManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete a user by its username
-     * Delete a user by its username
+     * Delete a user by its uuid
+     * Delete a user by its uuid
      */
     async deleteUser(requestParameters: DeleteUserRequest): Promise<void> {
         await this.deleteUserRaw(requestParameters);
@@ -144,12 +144,12 @@ export class UserAdminManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a user by its username
-     * Retrieve a user by its username
+     * Retrieve a user by its uuid
+     * Retrieve a user by its uuid
      */
     async getUserRaw(requestParameters: GetUserRequest): Promise<runtime.ApiResponse<GetUser>> {
-        if (requestParameters.username === null || requestParameters.username === undefined) {
-            throw new runtime.RequiredError('username','Required parameter requestParameters.username was null or undefined when calling getUser.');
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getUser.');
         }
 
         const queryParameters: any = {};
@@ -157,7 +157,7 @@ export class UserAdminManagementApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/api/v1/admin/users/{username}`.replace(`{${"username"}}`, encodeURIComponent(String(requestParameters.username))),
+            path: `/api/v1/admin/users/{uuid}`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -167,8 +167,8 @@ export class UserAdminManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a user by its username
-     * Retrieve a user by its username
+     * Retrieve a user by its uuid
+     * Retrieve a user by its uuid
      */
     async getUser(requestParameters: GetUserRequest): Promise<GetUser> {
         const response = await this.getUserRaw(requestParameters);

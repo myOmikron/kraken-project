@@ -24,13 +24,13 @@ export interface LoginRequest {
      * @type {string}
      * @memberof LoginRequest
      */
-    username: string;
+    password: string;
     /**
      * 
      * @type {string}
      * @memberof LoginRequest
      */
-    password: string;
+    username: string;
 }
 
 export function LoginRequestFromJSON(json: any): LoginRequest {
@@ -43,8 +43,8 @@ export function LoginRequestFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'username': json['username'],
         'password': json['password'],
+        'username': json['username'],
     };
 }
 
@@ -57,8 +57,8 @@ export function LoginRequestToJSON(value?: LoginRequest | null): any {
     }
     return {
         
-        'username': value.username,
         'password': value.password,
+        'username': value.username,
     };
 }
 

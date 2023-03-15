@@ -24,19 +24,25 @@ export interface ScanTcpPortsRequest {
      * @type {number}
      * @memberof ScanTcpPortsRequest
      */
-    leechId: number;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof ScanTcpPortsRequest
-     */
-    targets: Array<string>;
+    concurrentLimit: number;
     /**
      * 
      * @type {Array<string>}
      * @memberof ScanTcpPortsRequest
      */
     exclude: Array<string>;
+    /**
+     * 
+     * @type {number}
+     * @memberof ScanTcpPortsRequest
+     */
+    leechId: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ScanTcpPortsRequest
+     */
+    maxRetries: number;
     /**
      * 
      * @type {Array<number>}
@@ -51,28 +57,22 @@ export interface ScanTcpPortsRequest {
     retryInterval: number;
     /**
      * 
-     * @type {number}
+     * @type {boolean}
      * @memberof ScanTcpPortsRequest
      */
-    maxRetries: number;
+    skipIcmpCheck: boolean;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof ScanTcpPortsRequest
+     */
+    targets: Array<string>;
     /**
      * 
      * @type {number}
      * @memberof ScanTcpPortsRequest
      */
     timeout: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof ScanTcpPortsRequest
-     */
-    concurrentLimit: number;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof ScanTcpPortsRequest
-     */
-    skipIcmpCheck: boolean;
 }
 
 export function ScanTcpPortsRequestFromJSON(json: any): ScanTcpPortsRequest {
@@ -85,15 +85,15 @@ export function ScanTcpPortsRequestFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'leechId': json['leech_id'],
-        'targets': json['targets'],
+        'concurrentLimit': json['concurrent_limit'],
         'exclude': json['exclude'],
+        'leechId': json['leech_id'],
+        'maxRetries': json['max_retries'],
         'ports': json['ports'],
         'retryInterval': json['retry_interval'],
-        'maxRetries': json['max_retries'],
-        'timeout': json['timeout'],
-        'concurrentLimit': json['concurrent_limit'],
         'skipIcmpCheck': json['skip_icmp_check'],
+        'targets': json['targets'],
+        'timeout': json['timeout'],
     };
 }
 
@@ -106,15 +106,15 @@ export function ScanTcpPortsRequestToJSON(value?: ScanTcpPortsRequest | null): a
     }
     return {
         
-        'leech_id': value.leechId,
-        'targets': value.targets,
+        'concurrent_limit': value.concurrentLimit,
         'exclude': value.exclude,
+        'leech_id': value.leechId,
+        'max_retries': value.maxRetries,
         'ports': value.ports,
         'retry_interval': value.retryInterval,
-        'max_retries': value.maxRetries,
-        'timeout': value.timeout,
-        'concurrent_limit': value.concurrentLimit,
         'skip_icmp_check': value.skipIcmpCheck,
+        'targets': value.targets,
+        'timeout': value.timeout,
     };
 }
 

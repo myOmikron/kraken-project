@@ -22,3 +22,5 @@ export * from './ScanTcpPortsRequest';
 export * from './SetPasswordRequest';
 export * from './UpdateLeechRequest';
 export * from './UpdateMeRequest';
+export * from './UpdateWorkspaceRequest';
+export * from './UserResponse';

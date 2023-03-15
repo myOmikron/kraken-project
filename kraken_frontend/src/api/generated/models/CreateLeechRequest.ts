@@ -24,19 +24,19 @@ export interface CreateLeechRequest {
      * @type {string}
      * @memberof CreateLeechRequest
      */
-    name: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateLeechRequest
-     */
     address: string;
     /**
      * 
      * @type {string}
      * @memberof CreateLeechRequest
      */
-    description?: string;
+    description: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateLeechRequest
+     */
+    name: string;
 }
 
 export function CreateLeechRequestFromJSON(json: any): CreateLeechRequest {
@@ -49,9 +49,9 @@ export function CreateLeechRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'name': json['name'],
         'address': json['address'],
-        'description': !exists(json, 'description') ? undefined : json['description'],
+        'description': json['description'],
+        'name': json['name'],
     };
 }
 
@@ -64,9 +64,9 @@ export function CreateLeechRequestToJSON(value?: CreateLeechRequest | null): any
     }
     return {
         
-        'name': value.name,
         'address': value.address,
         'description': value.description,
+        'name': value.name,
     };
 }
 

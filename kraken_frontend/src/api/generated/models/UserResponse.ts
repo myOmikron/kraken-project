@@ -14,69 +14,51 @@
 
 import { exists, mapValues } from '../runtime';
 /**
+ * This struct holds the user information.
  * 
+ * Note that `username` is unique, but as it is changeable,
+ * identify the user by its `uuid`
  * @export
- * @interface GetUser
+ * @interface UserResponse
  */
-export interface GetUser {
-    /**
-     * 
-     * @type {boolean}
-     * @memberof GetUser
-     */
-    admin: boolean;
-    /**
-     * 
-     * @type {Date}
-     * @memberof GetUser
-     */
-    createdAt: Date;
+export interface UserResponse {
     /**
      * 
      * @type {string}
-     * @memberof GetUser
+     * @memberof UserResponse
      */
     displayName: string;
     /**
      * 
-     * @type {Date}
-     * @memberof GetUser
-     */
-    lastLogin: Date | null;
-    /**
-     * 
      * @type {string}
-     * @memberof GetUser
+     * @memberof UserResponse
      */
     username: string;
     /**
      * 
      * @type {string}
-     * @memberof GetUser
+     * @memberof UserResponse
      */
     uuid: string;
 }
 
-export function GetUserFromJSON(json: any): GetUser {
-    return GetUserFromJSONTyped(json, false);
+export function UserResponseFromJSON(json: any): UserResponse {
+    return UserResponseFromJSONTyped(json, false);
 }
 
-export function GetUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetUser {
+export function UserResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): UserResponse {
     if ((json === undefined) || (json === null)) {
         return json;
     }
     return {
         
-        'admin': json['admin'],
-        'createdAt': (new Date(json['created_at'])),
         'displayName': json['display_name'],
-        'lastLogin': (json['last_login'] === null ? null : new Date(json['last_login'])),
         'username': json['username'],
         'uuid': json['uuid'],
     };
 }
 
-export function GetUserToJSON(value?: GetUser | null): any {
+export function UserResponseToJSON(value?: UserResponse | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -85,10 +67,7 @@ export function GetUserToJSON(value?: GetUser | null): any {
     }
     return {
         
-        'admin': value.admin,
-        'created_at': (value.createdAt.toISOString()),
         'display_name': value.displayName,
-        'last_login': (value.lastLogin === null ? null : value.lastLogin.toISOString()),
         'username': value.username,
         'uuid': value.uuid,
     };
