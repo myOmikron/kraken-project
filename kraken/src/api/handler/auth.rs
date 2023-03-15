@@ -165,10 +165,7 @@ pub(crate) async fn start_auth(
         return Err(ApiError::NoSecurityKeyAvailable);
     }
 
-    let allowed_keys: Vec<Passkey> = keys
-        .into_iter()
-        .map(|k| serde_json::from_slice(&k.key).unwrap())
-        .collect();
+    let allowed_keys: Vec<Passkey> = keys.into_iter().map(|k| k.key.0).collect();
 
     let (rcr, auth_state) = webauthn.start_passkey_authentication(&allowed_keys)?;
 
@@ -268,12 +265,7 @@ pub(crate) async fn start_register(
         .all()
         .await?
         .into_iter()
-        .map(|k| {
-            serde_json::from_slice::<Passkey>(&k.key)
-                .unwrap()
-                .cred_id()
-                .clone()
-        })
+        .map(|k| k.key.cred_id().clone())
         .collect();
 
     let (ccr, reg_state) = webauthn.start_passkey_registration(
@@ -334,7 +326,7 @@ pub(crate) async fn finish_register(
     insert!(db.as_ref(), UserKeyInsert)
         .single(&UserKeyInsert {
             user: ForeignModelByField::Key(uuid),
-            key: serde_json::to_vec(&passkey).unwrap(),
+            key: rorm::fields::Json(passkey),
             name: req.name.clone(),
         })
         .await?;
