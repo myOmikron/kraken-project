@@ -23,3 +23,5 @@
 #!docs/README.md
 
 index.ts
+README.md
+config.json
