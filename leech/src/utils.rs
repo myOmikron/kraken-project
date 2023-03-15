@@ -45,7 +45,7 @@ pub fn parse_ports(ports: &[String], parsed_ports: &mut Vec<u16>) -> Result<(), 
                 if let Some(m) = captures.name("range") {
                     let mut start = 1;
                     let mut end = u16::MAX;
-                    for (idx, content) in m.as_str().split('-').into_iter().enumerate() {
+                    for (idx, content) in m.as_str().split('-').enumerate() {
                         match idx {
                             0 => {
                                 if content.is_empty() {
