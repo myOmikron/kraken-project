@@ -2711,9 +2711,9 @@ dependencies = [
 
 [[package]]
 name = "rorm"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4f16d75070e30cdff2ba2c3bb5b13a804fb5b6959e60589e818c28c62a78e44"
+checksum = "029faca1447a051da518a8d3840f112329780ac17708e14d258f6e869b06420c"
 dependencies = [
  "chrono",
  "futures",
@@ -2752,9 +2752,9 @@ dependencies = [
 
 [[package]]
 name = "rorm-db"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1764eba46f71546ed17e5e2afce845c3f9304b414849559f090b6ee83b1e9bf0"
+checksum = "3946457d1326a637d22d88f14635b4c0b69061f21161e55a114d4b574ce1eb80"
 dependencies = [
  "aliasable",
  "futures",
@@ -2792,9 +2792,9 @@ dependencies = [
 
 [[package]]
 name = "rorm-sql"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33fc02b79d31d3532e3a1ad123e93ea870331fc56f142967006355024a9247f1"
+checksum = "5b2a9cf133dc9d9a77f5e8adab56ca2a772f050693e34896b6b81f4e0a6a5d05"
 dependencies = [
  "chrono",
  "libsqlite3-sys",

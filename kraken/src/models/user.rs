@@ -1,6 +1,7 @@
-use rorm::fields::{BackRef, ForeignModel};
+use rorm::fields::{BackRef, ForeignModel, Json};
 use rorm::{field, Model, Patch};
 use uuid::Uuid;
+use webauthn_rs::prelude::Passkey;
 
 /// The definition of a user
 #[derive(Model)]
@@ -58,7 +59,7 @@ pub struct UserKey {
     /// Owner of the key
     pub user: ForeignModel<User>,
     /// Key data
-    pub key: Vec<u8>,
+    pub key: Json<Passkey>,
 }
 
 #[derive(Patch)]
@@ -66,5 +67,5 @@ pub struct UserKey {
 pub(crate) struct UserKeyInsert {
     pub(crate) name: String,
     pub(crate) user: ForeignModel<User>,
-    pub(crate) key: Vec<u8>,
+    pub(crate) key: Json<Passkey>,
 }
