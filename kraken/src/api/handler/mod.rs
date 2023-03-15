@@ -16,7 +16,6 @@ pub(crate) use crate::api::handler::users::*;
 pub(crate) use crate::api::handler::websocket::*;
 pub(crate) use crate::api::handler::workspaces::*;
 use crate::modules::user::create::CreateUserError;
-use crate::modules::user::delete::DeleteUserError;
 
 mod attacks;
 mod auth;
@@ -377,15 +376,6 @@ impl From<CreateUserError> for ApiError {
             CreateUserError::DatabaseError(err) => Self::DatabaseError(err),
             CreateUserError::UsernameAlreadyExists => Self::UserAlreadyExists,
             CreateUserError::HashError(err) => Self::InvalidHash(err),
-        }
-    }
-}
-
-impl From<DeleteUserError> for ApiError {
-    fn from(value: DeleteUserError) -> Self {
-        match value {
-            DeleteUserError::DatabaseError(err) => Self::DatabaseError(err),
-            DeleteUserError::InvalidUsername => Self::InvalidUsername,
         }
     }
 }
