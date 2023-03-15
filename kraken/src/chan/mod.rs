@@ -1,6 +1,8 @@
-pub(crate) use rpc_manager::*;
-pub(crate) use ws_manager::*;
+//! All channels that are used throughout kraken
+
+pub use rpc_manager::*;
+pub use ws_manager::*;
 
 pub(crate) mod health_manager;
-pub(crate) mod rpc_manager;
-pub(crate) mod ws_manager;
+mod rpc_manager;
+mod ws_manager;

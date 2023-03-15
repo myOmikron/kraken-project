@@ -36,7 +36,7 @@ use crate::config::Config;
 use crate::models::{User, UserInsert};
 
 mod api;
-pub(crate) mod chan;
+pub mod chan;
 pub mod config;
 pub mod models;
 pub mod modules;

@@ -41,46 +41,73 @@ pub(crate) async fn start_ws_sender(tx: ws::Sender, mut rx: mpsc::Receiver<WsMes
 
 /// Entry of certificate transparency results
 #[derive(Deserialize, Serialize, Clone)]
-pub(crate) struct CertificateTransparencyEntry {
-    pub(crate) serial_number: String,
-    pub(crate) issuer_name: String,
-    pub(crate) common_name: String,
-    pub(crate) value_names: Vec<String>,
-    pub(crate) not_before: Option<DateTime<Utc>>,
-    pub(crate) not_after: Option<DateTime<Utc>>,
+pub struct CertificateTransparencyEntry {
+    /// The serial number of the certificate
+    pub serial_number: String,
+    /// The name of the issuer for the certificate
+    pub issuer_name: String,
+    /// The common name of the certificate
+    pub common_name: String,
+    /// The value names of the certificate
+    pub value_names: Vec<String>,
+    /// The point in time after the certificate is valid
+    pub not_before: Option<DateTime<Utc>>,
+    /// The point in time before the certificate is valid
+    pub not_after: Option<DateTime<Utc>>,
 }
 
 /// Message that is sent via websocket
 #[derive(Deserialize, Serialize, Clone)]
 #[serde(tag = "type")]
-pub(crate) enum WsMessage {
+pub enum WsMessage {
+    /// The message for the websocket worker to stop and quit.
+    ///
+    /// This message is not sent to the client.
     #[serde(skip)]
     ServerQuitSocket,
+    /// An invalid message was received.
+    ///
+    /// This message type is sent to the client.
     InvalidMessage,
+    /// A notification about a finished attack
     AttackFinished {
+        /// The corresponding id of the attack
         attack_id: i64,
+        /// Whether the attack was finished successful
         finished_successful: bool,
     },
+    /// A result for a subdomain enumeration using bruteforce DNS requests
     BruteforceSubdomainsResult {
+        /// The corresponding id of the attack
         attack_id: i64,
+        /// The source address that was queried
         source: String,
+        /// The to address that was returned
         to: String,
     },
+    /// A result for a tcp scan
     ScanTcpPortsResult {
+        /// The corresponding id of the attack
         attack_id: i64,
+        /// The address of the result
         address: String,
+        /// The port of the result
         port: u16,
     },
+    /// A result to a certificate transparency request
     CertificateTransparencyResult {
+        /// The corresponding id of the attack
         attack_id: i64,
+        /// The entries of the result
         entries: Vec<CertificateTransparencyEntry>,
     },
 }
 
-pub(crate) type WsManagerChan = Sender<WsManagerMessage>;
+/// A channel to send [WsManagerMessage] to the ws manager
+pub type WsManagerChan = Sender<WsManagerMessage>;
 
 /// Messages to control the websocket manager
-pub(crate) enum WsManagerMessage {
+pub enum WsManagerMessage {
     /// Close the socket from the server side
     CloseSocket(Uuid),
     /// Client with given uuid initialized a websocket

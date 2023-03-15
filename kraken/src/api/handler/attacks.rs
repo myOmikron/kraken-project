@@ -23,16 +23,18 @@ use crate::rpc::rpc_attacks;
 use crate::rpc::rpc_attacks::shared::dns_record::Record;
 use crate::rpc::rpc_attacks::CertificateTransparencyRequest;
 
+/// The response of an attack
 #[derive(Serialize, ToSchema)]
-pub(crate) struct AttackResponse {
+pub struct AttackResponse {
     #[schema(example = 1337)]
     pub(crate) attack_id: i64,
 }
 
+/// The settings of a subdomain bruteforce request
 #[derive(Deserialize, ToSchema)]
-pub(crate) struct BruteforceSubdomainsRequest {
+pub struct BruteforceSubdomainsRequest {
     #[schema(example = 1)]
-    pub(crate) leech_id: u32,
+    pub(crate) leech_id: u64,
     #[schema(example = "example.com")]
     pub(crate) domain: String,
     #[schema(example = "/opt/wordlists/Discovery/DNS/subdomains-top1million-5000.txt")]
@@ -57,7 +59,7 @@ pub(crate) struct BruteforceSubdomainsRequest {
     security(("api_key" = []))
 )]
 #[post("/attacks/bruteforceSubdomains")]
-pub(crate) async fn bruteforce_subdomains(
+pub async fn bruteforce_subdomains(
     req: Json<BruteforceSubdomainsRequest>,
     db: Data<Database>,
     session: Session,
@@ -110,7 +112,7 @@ pub(crate) async fn bruteforce_subdomains(
 
                             let (source, to) = match record {
                                 Record::A(a_rec) => {
-                                    let Some(to) = a_rec.to else  {
+                                    let Some(to) = a_rec.to else {
                                         warn!("Missing field record.record.a.to in grpc response of bruteforce subdomains");
                                         continue;
                                     };
@@ -118,7 +120,7 @@ pub(crate) async fn bruteforce_subdomains(
                                     (a_rec.source, Ipv4Addr::from(to).to_string())
                                 }
                                 Record::Aaaa(aaaa_rec) => {
-                                    let Some(to) = aaaa_rec.to else  {
+                                    let Some(to) = aaaa_rec.to else {
                                         warn!("Missing field record.record.aaaa.to in grpc response of bruteforce subdomains");
                                         continue;
                                     };
@@ -206,6 +208,7 @@ pub(crate) async fn bruteforce_subdomains(
     Ok(HttpResponse::Accepted().json(AttackResponse { attack_id: id }))
 }
 
+/// The settings to configure a tcp port scan
 #[derive(Deserialize, ToSchema)]
 #[schema(example = json!({
     "leech_id": 1,
@@ -222,8 +225,8 @@ pub(crate) async fn bruteforce_subdomains(
     "concurrent_limit": 5000,
     "skip_icmp_check": false
 }))]
-pub(crate) struct ScanTcpPortsRequest {
-    pub(crate) leech_id: u32,
+pub struct ScanTcpPortsRequest {
+    pub(crate) leech_id: u64,
     #[schema(value_type = Vec<String>)]
     pub(crate) targets: Vec<IpAddr>,
     #[schema(value_type = Vec<String>)]
@@ -256,7 +259,7 @@ pub(crate) struct ScanTcpPortsRequest {
     security(("api_key" = []))
 )]
 #[post("/attacks/scanTcpPorts")]
-pub(crate) async fn scan_tcp_ports(
+pub async fn scan_tcp_ports(
     req: Json<ScanTcpPortsRequest>,
     db: Data<Database>,
     session: Session,
@@ -402,10 +405,11 @@ pub(crate) async fn scan_tcp_ports(
     Ok(HttpResponse::Accepted().json(AttackResponse { attack_id: id }))
 }
 
+/// The settings to configure a certificate transparency request
 #[derive(Deserialize, ToSchema)]
-pub(crate) struct QueryCertificateTransparencyRequest {
+pub struct QueryCertificateTransparencyRequest {
     #[schema(example = 1)]
-    pub(crate) leech_id: u32,
+    pub(crate) leech_id: u64,
     #[schema(example = "example.com")]
     pub(crate) target: String,
     #[schema(example = true)]
@@ -435,7 +439,7 @@ pub(crate) struct QueryCertificateTransparencyRequest {
     security(("api_key" = []))
 )]
 #[post("/attacks/queryCertificateTransparency")]
-pub(crate) async fn query_certificate_transparency(
+pub async fn query_certificate_transparency(
     req: Json<QueryCertificateTransparencyRequest>,
     db: Data<Database>,
     session: Session,
