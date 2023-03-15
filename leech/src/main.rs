@@ -152,7 +152,6 @@ pub enum Command {
     /// Apply migrations to the database
     Migrate {
         /// The directory where the migration files are located
-        #[clap(long)]
         migration_dir: String,
     },
 }
