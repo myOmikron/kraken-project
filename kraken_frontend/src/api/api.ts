@@ -9,6 +9,7 @@ import {
     ScanTcpPortsRequest,
     UpdateLeechRequest,
     UpdateMeRequest,
+    UpdateWorkspaceRequest,
 } from "./generated/models";
 import { Configuration } from "./generated/runtime";
 import {
@@ -19,6 +20,7 @@ import {
     UserManagementApi,
     WorkspacesApi,
 } from "./generated/apis";
+import { UUID } from "./schemas";
 
 /** Database id i.e. and u32 */
 export type ID = number;
@@ -40,8 +42,8 @@ export const Api = {
             all: () => handleError(userAdminManagement.getAllUsers()),
             create: (user: CreateUserRequest) =>
                 handleError(userAdminManagement.createUser({ createUserRequest: user })),
-            get: (username: string) => handleError(userAdminManagement.getUser({ username })),
-            delete: (username: string) => handleError(userAdminManagement.deleteUser({ username })),
+            get: (uuid: UUID) => handleError(userAdminManagement.getUser({ uuid })),
+            delete: (uuid: UUID) => handleError(userAdminManagement.deleteUser({ uuid })),
         },
         workspaces: {
             all: () => handleError(adminWorkspaces.getAllWorkspacesAdmin()),
@@ -83,6 +85,8 @@ export const Api = {
         create: (workspace: CreateWorkspaceRequest) =>
             handleError(workspaces.createWorkspace({ createWorkspaceRequest: workspace })),
         get: (id: ID) => handleError(workspaces.getWorkspace({ id })),
+        update: (id: ID, workspace: UpdateWorkspaceRequest) =>
+            handleError(workspaces.updateWorkspace({ id, updateWorkspaceRequest: workspace })),
         delete: (id: ID) => handleError(workspaces.deleteWorkspace({ id })),
     },
 };

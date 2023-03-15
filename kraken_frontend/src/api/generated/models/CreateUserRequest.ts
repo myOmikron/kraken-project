@@ -21,10 +21,10 @@ import { exists, mapValues } from '../runtime';
 export interface CreateUserRequest {
     /**
      * 
-     * @type {string}
+     * @type {boolean}
      * @memberof CreateUserRequest
      */
-    username: string;
+    admin: boolean;
     /**
      * 
      * @type {string}
@@ -39,10 +39,10 @@ export interface CreateUserRequest {
     password: string;
     /**
      * 
-     * @type {boolean}
+     * @type {string}
      * @memberof CreateUserRequest
      */
-    admin: boolean;
+    username: string;
 }
 
 export function CreateUserRequestFromJSON(json: any): CreateUserRequest {
@@ -55,10 +55,10 @@ export function CreateUserRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'username': json['username'],
+        'admin': json['admin'],
         'displayName': json['display_name'],
         'password': json['password'],
-        'admin': json['admin'],
+        'username': json['username'],
     };
 }
 
@@ -71,10 +71,10 @@ export function CreateUserRequestToJSON(value?: CreateUserRequest | null): any {
     }
     return {
         
-        'username': value.username,
+        'admin': value.admin,
         'display_name': value.displayName,
         'password': value.password,
-        'admin': value.admin,
+        'username': value.username,
     };
 }
 

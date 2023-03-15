@@ -24,7 +24,7 @@ export interface BruteforceSubdomainsRequest {
      * @type {number}
      * @memberof BruteforceSubdomainsRequest
      */
-    leechId: number;
+    concurrentLimit: number;
     /**
      * 
      * @type {string}
@@ -33,16 +33,16 @@ export interface BruteforceSubdomainsRequest {
     domain: string;
     /**
      * 
+     * @type {number}
+     * @memberof BruteforceSubdomainsRequest
+     */
+    leechId: number;
+    /**
+     * 
      * @type {string}
      * @memberof BruteforceSubdomainsRequest
      */
     wordlistPath: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof BruteforceSubdomainsRequest
-     */
-    concurrentLimit: number;
 }
 
 export function BruteforceSubdomainsRequestFromJSON(json: any): BruteforceSubdomainsRequest {
@@ -55,10 +55,10 @@ export function BruteforceSubdomainsRequestFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'leechId': json['leech_id'],
-        'domain': json['domain'],
-        'wordlistPath': json['wordlist_path'],
         'concurrentLimit': json['concurrent_limit'],
+        'domain': json['domain'],
+        'leechId': json['leech_id'],
+        'wordlistPath': json['wordlist_path'],
     };
 }
 
@@ -71,10 +71,10 @@ export function BruteforceSubdomainsRequestToJSON(value?: BruteforceSubdomainsRe
     }
     return {
         
-        'leech_id': value.leechId,
-        'domain': value.domain,
-        'wordlist_path': value.wordlistPath,
         'concurrent_limit': value.concurrentLimit,
+        'domain': value.domain,
+        'leech_id': value.leechId,
+        'wordlist_path': value.wordlistPath,
     };
 }
 

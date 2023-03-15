@@ -22,6 +22,5 @@
 # Then explicitly reverse the ignore rule for a single file:
 #!docs/README.md
 
-index.ts
 README.md
 config.json

@@ -7,6 +7,7 @@ apis/UserManagementApi.ts
 apis/WebsocketApi.ts
 apis/WorkspacesApi.ts
 apis/index.ts
+index.ts
 models/ApiErrorResponse.ts
 models/ApiStatusCode.ts
 models/AttackResponse.ts
@@ -31,5 +32,7 @@ models/ScanTcpPortsRequest.ts
 models/SetPasswordRequest.ts
 models/UpdateLeechRequest.ts
 models/UpdateMeRequest.ts
+models/UpdateWorkspaceRequest.ts
+models/UserResponse.ts
 models/index.ts
 runtime.ts

@@ -13,12 +13,25 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import {
+    UserResponse,
+    UserResponseFromJSON,
+    UserResponseFromJSONTyped,
+    UserResponseToJSON,
+} from './';
+
 /**
  * 
  * @export
  * @interface GetWorkspace
  */
 export interface GetWorkspace {
+    /**
+     * 
+     * @type {string}
+     * @memberof GetWorkspace
+     */
+    description: string | null;
     /**
      * 
      * @type {number}
@@ -33,10 +46,10 @@ export interface GetWorkspace {
     name: string;
     /**
      * 
-     * @type {string}
+     * @type {UserResponse}
      * @memberof GetWorkspace
      */
-    description?: string;
+    owner: UserResponse;
 }
 
 export function GetWorkspaceFromJSON(json: any): GetWorkspace {
@@ -49,9 +62,10 @@ export function GetWorkspaceFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
+        'description': json['description'],
         'id': json['id'],
         'name': json['name'],
-        'description': !exists(json, 'description') ? undefined : json['description'],
+        'owner': UserResponseFromJSON(json['owner']),
     };
 }
 
@@ -64,9 +78,10 @@ export function GetWorkspaceToJSON(value?: GetWorkspace | null): any {
     }
     return {
         
+        'description': value.description,
         'id': value.id,
         'name': value.name,
-        'description': value.description,
+        'owner': UserResponseToJSON(value.owner),
     };
 }
 

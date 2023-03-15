@@ -30,6 +30,9 @@ import {
     GetWorkspaceResponse,
     GetWorkspaceResponseFromJSON,
     GetWorkspaceResponseToJSON,
+    UpdateWorkspaceRequest,
+    UpdateWorkspaceRequestFromJSON,
+    UpdateWorkspaceRequestToJSON,
 } from '../models';
 
 export interface CreateWorkspaceOperationRequest {
@@ -42,6 +45,11 @@ export interface DeleteWorkspaceRequest {
 
 export interface GetWorkspaceRequest {
     id: number;
+}
+
+export interface UpdateWorkspaceOperationRequest {
+    id: number;
+    updateWorkspaceRequest: UpdateWorkspaceRequest;
 }
 
 /**
@@ -173,6 +181,44 @@ export class WorkspacesApi extends runtime.BaseAPI {
     async getWorkspace(requestParameters: GetWorkspaceRequest): Promise<GetWorkspace> {
         const response = await this.getWorkspaceRaw(requestParameters);
         return await response.value();
+    }
+
+    /**
+     * Updates a workspace by its id  All parameter are optional, but at least one of them must be specified.  `name` must not be empty.  You can set `description` to null to remove the description from the database. If you leave the parameter out, the description will remain unchanged.
+     * Updates a workspace by its id
+     */
+    async updateWorkspaceRaw(requestParameters: UpdateWorkspaceOperationRequest): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.id === null || requestParameters.id === undefined) {
+            throw new runtime.RequiredError('id','Required parameter requestParameters.id was null or undefined when calling updateWorkspace.');
+        }
+
+        if (requestParameters.updateWorkspaceRequest === null || requestParameters.updateWorkspaceRequest === undefined) {
+            throw new runtime.RequiredError('updateWorkspaceRequest','Required parameter requestParameters.updateWorkspaceRequest was null or undefined when calling updateWorkspace.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters.id))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateWorkspaceRequestToJSON(requestParameters.updateWorkspaceRequest),
+        });
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Updates a workspace by its id  All parameter are optional, but at least one of them must be specified.  `name` must not be empty.  You can set `description` to null to remove the description from the database. If you leave the parameter out, the description will remain unchanged.
+     * Updates a workspace by its id
+     */
+    async updateWorkspace(requestParameters: UpdateWorkspaceOperationRequest): Promise<void> {
+        await this.updateWorkspaceRaw(requestParameters);
     }
 
 }

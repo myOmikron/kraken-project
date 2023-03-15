@@ -14,30 +14,32 @@
 
 import { exists, mapValues } from '../runtime';
 /**
+ * The request type to update a workspace
  * 
+ * All parameter are optional, but at least one of them must be specified
  * @export
- * @interface CreateWorkspaceRequest
+ * @interface UpdateWorkspaceRequest
  */
-export interface CreateWorkspaceRequest {
+export interface UpdateWorkspaceRequest {
     /**
      * 
      * @type {string}
-     * @memberof CreateWorkspaceRequest
+     * @memberof UpdateWorkspaceRequest
      */
     description: string | null;
     /**
      * 
      * @type {string}
-     * @memberof CreateWorkspaceRequest
+     * @memberof UpdateWorkspaceRequest
      */
-    name: string;
+    name: string | null;
 }
 
-export function CreateWorkspaceRequestFromJSON(json: any): CreateWorkspaceRequest {
-    return CreateWorkspaceRequestFromJSONTyped(json, false);
+export function UpdateWorkspaceRequestFromJSON(json: any): UpdateWorkspaceRequest {
+    return UpdateWorkspaceRequestFromJSONTyped(json, false);
 }
 
-export function CreateWorkspaceRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean): CreateWorkspaceRequest {
+export function UpdateWorkspaceRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateWorkspaceRequest {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -48,7 +50,7 @@ export function CreateWorkspaceRequestFromJSONTyped(json: any, ignoreDiscriminat
     };
 }
 
-export function CreateWorkspaceRequestToJSON(value?: CreateWorkspaceRequest | null): any {
+export function UpdateWorkspaceRequestToJSON(value?: UpdateWorkspaceRequest | null): any {
     if (value === undefined) {
         return undefined;
     }

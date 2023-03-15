@@ -24,19 +24,19 @@ export interface UpdateLeechRequest {
      * @type {string}
      * @memberof UpdateLeechRequest
      */
-    name?: string;
+    address: string | null;
     /**
      * 
      * @type {string}
      * @memberof UpdateLeechRequest
      */
-    address?: string;
+    description?: string | null;
     /**
      * 
      * @type {string}
      * @memberof UpdateLeechRequest
      */
-    description?: string;
+    name: string | null;
 }
 
 export function UpdateLeechRequestFromJSON(json: any): UpdateLeechRequest {
@@ -49,9 +49,9 @@ export function UpdateLeechRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'name': !exists(json, 'name') ? undefined : json['name'],
-        'address': !exists(json, 'address') ? undefined : json['address'],
+        'address': json['address'],
         'description': !exists(json, 'description') ? undefined : json['description'],
+        'name': json['name'],
     };
 }
 
@@ -64,9 +64,9 @@ export function UpdateLeechRequestToJSON(value?: UpdateLeechRequest | null): any
     }
     return {
         
-        'name': value.name,
         'address': value.address,
         'description': value.description,
+        'name': value.name,
     };
 }
 
