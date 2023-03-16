@@ -7,14 +7,14 @@ import "./styling/toastify.css";
 import "./styling/components.css";
 
 import "./index.css";
-import Home from "./views/home";
 import Background from "./views/background";
 import Login from "./views/login";
 import { Api } from "./api/api";
+import { ROUTES } from "./utils/router";
 
 type RouterProps = {};
 type RouterState = {
-    path: Array<String>;
+    path: Array<string>;
 };
 
 class Router extends React.Component<RouterProps, RouterState> {
@@ -67,20 +67,14 @@ class Router extends React.Component<RouterProps, RouterState> {
             return <Login />;
         }
 
-        let content = (function () {
-            switch (path[0]) {
-                // To "check" if the path doesn't continue and a certain depth use
-                // ```
-                // case undefined: // end of array
-                // case "":        // trailing slash
-                // ```
-                case "":
-                case undefined:
-                    return <Home />;
-                default:
-                    break;
+        let content = undefined;
+        for (const route of Object.values(ROUTES)) {
+            const params = route.match(path);
+            if (params !== undefined) {
+                content = route.config.render(params);
+                break;
             }
-        })();
+        }
 
         if (content === undefined) {
             content = <div>Unknown route</div>;
