@@ -24,13 +24,15 @@ mod users;
 mod websocket;
 mod workspaces;
 
+/// A path with an ID
 #[derive(Deserialize, IntoParams)]
-pub(crate) struct PathId {
+pub struct PathId {
     #[param(example = 1337)]
     pub(crate) id: u32,
 }
 
-pub(crate) type ApiResult<T> = Result<T, ApiError>;
+/// The result type of kraken.
+pub type ApiResult<T> = Result<T, ApiError>;
 
 /// This type holds all possible error types that can be returned by the API.
 ///
@@ -39,7 +41,7 @@ pub(crate) type ApiResult<T> = Result<T, ApiError>;
 #[derive(Serialize_repr, ToSchema)]
 #[repr(u16)]
 #[schema(default = 1000, example = 1000)]
-pub(crate) enum ApiStatusCode {
+pub enum ApiStatusCode {
     LoginFailed = 1000,
     NotFound = 1001,
     InvalidContentType = 1002,
@@ -87,8 +89,9 @@ impl ApiErrorResponse {
     }
 }
 
+/// All available errors that can occur while using the API.
 #[derive(Debug)]
-pub(crate) enum ApiError {
+pub enum ApiError {
     LoginFailed,
     NotFound,
     InvalidContentType,

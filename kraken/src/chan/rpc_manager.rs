@@ -26,7 +26,7 @@ Starts the rpc connection to a leech.
 - `leech`: [Leech]: Instance of a leech
 - `rpc_clients`: [RpcClients]
  */
-pub(crate) async fn rpc_client_loop(leech: Leech, rpc_clients: RpcClients) {
+pub async fn rpc_client_loop(leech: Leech, rpc_clients: RpcClients) {
     let endpoint = match Endpoint::from_str(&leech.address) {
         Ok(v) => v,
         Err(err) => {
@@ -70,7 +70,7 @@ Events for the RpcManager.
 Make sure to commit any pending database state regarding the event
 as the RpcManager must be able to retrieve the new state.
  */
-pub(crate) enum RpcManagerEvent {
+pub enum RpcManagerEvent {
     /// Leech got deleted.
     Deleted(i64),
     /// Leech got created.
@@ -87,9 +87,7 @@ Returns an channel to push events to.
 **Parameter**:
 - `db`: [Database]: Instance of the database
  */
-pub(crate) async fn start_rpc_manager(
-    db: Database,
-) -> Result<(RpcManagerChannel, RpcClients), String> {
+pub async fn start_rpc_manager(db: Database) -> Result<(RpcManagerChannel, RpcClients), String> {
     let (tx, mut rx) = mpsc::channel(16);
 
     let leeches = query!(&db, Leech)
