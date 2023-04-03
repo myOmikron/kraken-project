@@ -47,11 +47,14 @@ jobs:
       - name: Install dependencies
         run: |
           rustup component add clippy
-          cargo install clippy-sarif sarif-fmt
+          cargo install clippy-sarif sarif-fmt cargo-deny
           sudo apt-get install protobuf-compiler
 
       - name: Build kraken
         run: cargo build -p kraken -p leech
+
+      - name: Run cargo-deny
+        run: cargo deny check --hide-inclusion-graph
 
       - name: Run rust-clippy
         run: cargo clippy --workspace --message-format=json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
