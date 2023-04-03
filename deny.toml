@@ -1,0 +1,36 @@
+[advisories]
+db-path = "~/.cargo/advisory-db"
+db-urls = ["https://github.com/rustsec/advisory-db"]
+vulnerability = "deny"
+unmaintained = "deny"
+yanked = "deny"
+notice = "warn"
+ignore = [
+    # Only postgres is used
+    "RUSTSEC-2022-0090",
+]
+
+[licenses]
+unlicensed = "deny"
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "MPL-2.0",
+    "ISC",
+    "Unicode-DFS-2016",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "LicenseRef-ring",
+]
+
+deny = [
+
+]
+
+# Exception for rings license
+[[licenses.clarify]]
+name = "ring"
+expression = "LicenseRef-ring"
+license-files = [
+    { path = "LICENSE", hash = 0xbd0eed23 },
+]

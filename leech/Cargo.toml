@@ -31,7 +31,7 @@ tokio-stream = { version = "~0.1" }
 itertools = { version = "~0.10" }
 
 # gRPC implementation
-tonic = { version = "~0.8", features = ["transport", "tls"] }
+tonic = { version = "~0.9", features = ["transport", "tls"] }
 # codegenerator
 prost = { version = "~0.11" }
 prost-types = { version = "~0.11" }
@@ -42,7 +42,7 @@ toml = { version = "~0.7" }
 serde_json = { version = "~1" }
 ipnet = { version = "~2" }
 # Time library
-chrono = { version = ">=0.4.20", features = ["serde"] }
+chrono = { version = ">=0.4.20", default-features = false, features = ["serde"] }
 
 # Lazy initialization
 once_cell = { version = "~1" }
@@ -59,7 +59,7 @@ rorm = { version = "~0.5", features = ["tokio-rustls", "cli", "uuid"] }
 trust-dns-resolver = { version = "~0.22", features = ["dns-over-https-rustls", "tokio-rustls", "tokio"] }
 
 # icmp library
-surge-ping = { version = "~0.7" }
+surge-ping = { version = "~0.8" }
 # increase resource limit
 rlimit = { version = "~0.9" }
 
@@ -69,7 +69,7 @@ reqwest = { version = "~0.11", features = ["json", "trust-dns", "rustls-tls-nati
 url = { version = "~2" }
 
 [build-dependencies]
-tonic-build = { version = "~0.8" }
+tonic-build = { version = "~0.9" }
 
 [features]
 rorm-main = []

@@ -58,7 +58,7 @@ futures = { version = "~0.3" }
 rand = { version = "~0.8" }
 
 # gRPC implementation
-tonic = { version = "~0.8", features = ["transport", "tls"] }
+tonic = { version = "~0.9", features = ["transport", "tls"] }
 # codegenerator
 prost = { version = "~0.11" }
 prost-types = { version = "~0.11" }
@@ -67,7 +67,7 @@ prost-types = { version = "~0.11" }
 rorm = { version = "~0.5", features = ["tokio-rustls", "cli", "uuid"] }
 
 [build-dependencies]
-tonic-build = { version = "~0.8" }
+tonic-build = { version = "~0.9" }
 
 [features]
 rorm-main = []
