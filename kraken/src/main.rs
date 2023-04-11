@@ -85,7 +85,7 @@ async fn main() -> Result<(), String> {
         Command::Migrate { migration_dir } => cli::migrate::run_migrate_custom(
             cli::config::DatabaseConfig {
                 last_migration_table_name: None,
-                driver: cli::config::DatabaseDriver::Postgres {
+                driver: DatabaseDriver::Postgres {
                     host: config.database.host,
                     port: config.database.port,
                     name: config.database.name,
