@@ -10,7 +10,7 @@ import "./index.css";
 import Background from "./views/background";
 import Login from "./views/login";
 import { Api } from "./api/api";
-import { ROUTES } from "./utils/router";
+import { ROUTER } from "./routes";
 
 type RouterProps = {};
 type RouterState = {
@@ -67,24 +67,7 @@ class Router extends React.Component<RouterProps, RouterState> {
             return <Login />;
         }
 
-        let content = undefined;
-        for (const route of Object.values(ROUTES)) {
-            const params = route.match(path);
-            if (params !== undefined) {
-                content = route.config.render(params);
-                break;
-            }
-        }
-
-        if (content === undefined) {
-            content = <div>Unknown route</div>;
-        }
-
-        return (
-            <>
-                <div className="content-container">{content}</div>
-            </>
-        );
+        return <div className="content-container">{ROUTER.matchAndRender(path) || <div>Unknown route</div>}</div>;
     }
 }
 

@@ -1,12 +1,6 @@
 import React from "react";
-import Home from "../views/home";
 
 /** Configuration for defining {@link Route routes} */
-/**
- * @member url
- * @member parser
- * @member render
- */
 export interface RouteConfig<Params extends {}> {
     /**
      * The route's url as string
@@ -35,7 +29,7 @@ export interface RouteConfig<Params extends {}> {
     render: (params: Params) => React.ReactNode;
 }
 
-/** Regex for a bind parameter in {@link RouteConfig.url} */
+/** Regex for a bind parameter in {@link RouteConfig.url `url`} */
 const BIND_REGEX = /^\{(.*)}$/;
 
 class Route<Params extends {}> {
@@ -48,7 +42,11 @@ class Route<Params extends {}> {
     /** List of errors the constructor found in the config */
     readonly errors: Array<string>;
 
-    constructor(config: RouteConfig<Params>) {
+    /** Router this route is registered in */
+    readonly router: Router;
+
+    constructor(router: Router, config: RouteConfig<Params>) {
+        this.router = router;
         this.config = config;
         if (config.url.length === 0) this.pattern = [];
         else
@@ -113,6 +111,7 @@ class Route<Params extends {}> {
      * Build an url to this route using concrete parameters
      *
      * @param params parameters to use
+     * @return the constructed url
      */
     build(params: { [Param in keyof Params]: any }): string {
         return this.pattern
@@ -122,16 +121,81 @@ class Route<Params extends {}> {
             })
             .join("/");
     }
+
+    /**
+     * Open this route in the current tab
+     *
+     * @param params parameters to {@link build `build`} the url with
+     */
+    visit(params: { [Param in keyof Params]: any }) {
+        const url = this.build(params);
+        window.location.hash = url;
+    }
+
+    /**
+     * Open this route in a new tab
+     *
+     * @param params parameters to {@link build `build`} the url with
+     */
+    open(params: { [Param in keyof Params]: any }) {
+        const url = this.build(params);
+        window.open(`/#${url}`);
+    }
 }
 
-/** Set of all routes in kraken frontend */
-export const ROUTES = {
-    HOME: new Route({ url: "", parser: {}, render: () => <Home /> }),
-};
+export class Router {
+    routes: Array<Route<{}>> = [];
 
-// Log any errors from the route creation process
-for (const route of Object.values(ROUTES)) {
-    if (route.errors.length > 0) {
-        console.error(`Errors in route "${route.config.url}":`, ...route.errors);
+    /**
+     * Create a new route and add it to this router
+     *
+     * @param config the route's config
+     * @return the new route
+     */
+    add<Params extends {}>(config: RouteConfig<Params>): Route<Params> {
+        const route = new Route(this, config);
+        this.routes.push(route as unknown as Route<{}>);
+        return route;
+    }
+
+    /**
+     * Finalize all routes and log any potential errors
+     *
+     * TODO this method could post process the list of all route and produce some kind of tree to speed up the url matching process
+     */
+    finish() {
+        for (const route of this.routes) {
+            if (route.errors.length > 0) {
+                console.error(`Errors in route "${route.config.url}":`, ...route.errors);
+            }
+        }
+    }
+
+    /**
+     * Match a given pre-split url
+     *
+     * @param url url already split at "/"
+     * @return the matched route and its parameters, if any
+     */
+    match(url: Array<string>): [{}, Route<{}>] | undefined {
+        // TODO this naive iter and check step by step could be improved by processing the list in `finish()`
+        for (const route of this.routes) {
+            const params = route.match(url);
+            if (params !== undefined) return [params, route];
+        }
+        return undefined;
+    }
+
+    /**
+     * Match a given pre-split url and render the routes element
+     *
+     * @param url url already split at "/"
+     * @return the matched route's {@link RouteConfig.render `render`} result, if any
+     */
+    matchAndRender(url: Array<string>): React.ReactNode | undefined {
+        const match = this.match(url);
+        if (match === undefined) return undefined;
+        const [params, route] = match;
+        return route.config.render(params);
     }
 }
