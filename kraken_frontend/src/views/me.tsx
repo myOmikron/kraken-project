@@ -5,6 +5,8 @@ import { toast } from "react-toastify";
 import "../styling/me.css";
 import Input from "../components/input";
 import { ROUTES } from "../routes";
+import { check } from "../utils/helper";
+import Loading from "../components/loading";
 
 type MeProps = {};
 type MeState = {
@@ -38,7 +40,8 @@ export default class Me extends React.Component<MeProps, MeState> {
 
     render() {
         const user = this.state.user;
-        if (user === undefined) return "Loading";
+        if (user === undefined) return <Loading />;
+
         return (
             <div className="pane me">
                 <h1 className="heading neon">{user.displayName}</h1>
@@ -86,20 +89,4 @@ export default class Me extends React.Component<MeProps, MeState> {
             )
         );
     }
-}
-
-/**
- * Take a list of checks and return true if all checks are true
- *
- * For any false check, toast the provided error message.
- */
-function check(checks: Array<[boolean, string]>): boolean {
-    let ok = true;
-    for (const [check, error] of checks) {
-        if (!check) {
-            toast.error(error);
-            ok = false;
-        }
-    }
-    return ok;
 }
