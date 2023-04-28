@@ -8,8 +8,6 @@ import "./styling/components.css";
 
 import "./index.css";
 import Background from "./views/background";
-import Login from "./views/login";
-import { Api } from "./api/api";
 import { ROUTER } from "./routes";
 import Menu from "./views/menu";
 import { UserProvider } from "./context/user";
@@ -53,15 +51,11 @@ class Router extends React.Component<RouterProps, RouterState> {
     }
 
     render() {
-        const { path } = this.state;
-
-        if (path[0] && path[0] === "login") {
-            return <Login />;
-        }
-
         return (
             <UserProvider>
-                <div className="content-container">{ROUTER.matchAndRender(path) || <div>Unknown route</div>}</div>
+                <div className="content-container">
+                    {ROUTER.matchAndRender(this.state.path) || <div>Unknown route</div>}
+                </div>
                 <Menu />
             </UserProvider>
         );

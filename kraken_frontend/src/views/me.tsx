@@ -4,7 +4,6 @@ import { Api } from "../api/api";
 import { toast } from "react-toastify";
 import "../styling/me.css";
 import Input from "../components/input";
-import { ROUTES } from "../routes";
 import { check } from "../utils/helper";
 import { USER_CONTEXT } from "../context/user";
 
@@ -74,7 +73,7 @@ export default class Me extends React.Component<MeProps, MeState> {
             result.match(
                 () => {
                     toast.success("Changed password successfully");
-                    ROUTES.LOGIN.visit({});
+                    this.context.resetUser();
                 },
                 (err) => toast.error(err.message)
             )
