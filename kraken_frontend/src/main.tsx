@@ -12,6 +12,7 @@ import Login from "./views/login";
 import { Api } from "./api/api";
 import { ROUTER } from "./routes";
 import Menu from "./views/menu";
+import { UserProvider } from "./context/user";
 
 type RouterProps = {};
 type RouterState = {
@@ -19,19 +20,9 @@ type RouterState = {
 };
 
 class Router extends React.Component<RouterProps, RouterState> {
-    constructor(props: RouterProps) {
-        super(props);
-
-        this.state = {
-            path: [],
-        };
-
-        Api.auth.test().then((v) => {
-            if (v === "logged out") {
-                document.location.hash = "/login";
-            }
-        });
-    }
+    state: RouterState = {
+        path: [],
+    };
 
     componentDidMount() {
         // Update state to match url
@@ -69,10 +60,10 @@ class Router extends React.Component<RouterProps, RouterState> {
         }
 
         return (
-            <>
+            <UserProvider>
                 <div className="content-container">{ROUTER.matchAndRender(path) || <div>Unknown route</div>}</div>
                 <Menu />
-            </>
+            </UserProvider>
         );
     }
 }
