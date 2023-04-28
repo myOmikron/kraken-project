@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 
 import "../styling/login.css";
 import Input from "../components/input";
+import { ROUTES } from "../routes";
 
 type LoginProps = {};
 type LoginState = {
@@ -27,7 +28,10 @@ export default class Login extends React.Component<LoginProps, LoginState> {
         e.preventDefault();
 
         (await Api.auth.login(this.state.username, this.state.password)).match(
-            async (_) => toast.success("Authenticated successfully"),
+            async (_) => {
+                toast.success("Authenticated successfully");
+                ROUTES.HOME.visit({});
+            },
             (err) => toast.error(err.message)
         );
     }
