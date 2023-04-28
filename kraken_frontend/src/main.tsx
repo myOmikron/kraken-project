@@ -11,6 +11,7 @@ import Background from "./views/background";
 import Login from "./views/login";
 import { Api } from "./api/api";
 import { ROUTER } from "./routes";
+import Menu from "./views/menu";
 
 type RouterProps = {};
 type RouterState = {
@@ -67,7 +68,12 @@ class Router extends React.Component<RouterProps, RouterState> {
             return <Login />;
         }
 
-        return <div className="content-container">{ROUTER.matchAndRender(path) || <div>Unknown route</div>}</div>;
+        return (
+            <>
+                <div className="content-container">{ROUTER.matchAndRender(path) || <div>Unknown route</div>}</div>
+                <Menu />
+            </>
+        );
     }
 }
 

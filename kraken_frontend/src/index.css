@@ -65,3 +65,20 @@ body {
 .neon {
     filter: brightness(0) invert() drop-shadow(0 0 4px var(--primary));
 }
+
+.menu {
+    position: absolute;
+    padding: 1em;
+    top: 1em;
+    left: 1em;
+    width: 5em;
+    height: calc(100vh - 4em);
+    animation: yourAnimation 0.9s step-End 0.4s 1 normal backwards;
+}
+
+.content-container {
+    margin-top: 1em;
+    margin-left: 9em;
+    width: calc(100% - 10em);
+    height: calc(100vh - 2em);
+}

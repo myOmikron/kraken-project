@@ -153,6 +153,20 @@ class Route<UrlParams extends {}, HiddenParams extends {}> {
         const url = this.build(urlParams);
         window.open(`${window.location.origin}/#/${url}`);
     }
+
+    /**
+     * Return a set of react click handler to make an element behave like a link
+     *
+     * i.e. left click to open in this tab, middle click to open in new tab
+     *
+     * @param urlParams parameters to {@link build `build`} the url with
+     */
+    clickHandler(urlParams: { [Param in keyof UrlParams]: any }) {
+        return {
+            onClick: () => this.visit(urlParams),
+            onAuxClick: () => this.open(urlParams),
+        };
+    }
 }
 
 export class Router {
