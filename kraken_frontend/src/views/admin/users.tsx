@@ -7,8 +7,8 @@ import Popup from "reactjs-popup";
 import Input from "../../components/input";
 import { check } from "../../utils/helper";
 
-type UserManagementProps = {};
-type UserManagementState = {
+type AdminUsersProps = {};
+type AdminUsersState = {
     /** Store a user to ask for confirmation before deleting him */
     confirmDelete: GetUser | null;
 
@@ -29,8 +29,9 @@ type UserManagementState = {
     newAdmin: boolean;
 };
 
-export default class UserManagement extends React.Component<UserManagementProps, UserManagementState> {
-    state: UserManagementState = {
+/** View to expose the `/api/v1/admin/users` endpoints */
+export default class AdminUsers extends React.Component<AdminUsersProps, AdminUsersState> {
+    state: AdminUsersState = {
         confirmDelete: null,
         createNew: false,
         newDisplay: "",

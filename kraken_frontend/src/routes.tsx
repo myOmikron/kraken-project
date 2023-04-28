@@ -4,7 +4,8 @@ import { Router } from "./utils/router";
 import KrakenNetwork from "./views/kraken-network";
 import Me from "./views/me";
 import Login from "./views/login";
-import UserManagement from "./views/admin/user-management";
+import AdminUsers from "./views/admin/users";
+import AdminWorkspaces from "./views/admin/workspaces";
 
 export const ROUTER = new Router();
 
@@ -14,7 +15,8 @@ export const ROUTES = {
     ME: ROUTER.add({ url: "me", parser: {}, render: () => <Me /> }),
     KRAKEN_NETWORK: ROUTER.add({ url: "kraken-network", parser: {}, render: () => <KrakenNetwork /> }),
 
-    ADMIN_USER_MANAGEMENT: ROUTER.add({ url: "admin/users", parser: {}, render: () => <UserManagement /> }),
+    ADMIN_USER_MANAGEMENT: ROUTER.add({ url: "admin/users", parser: {}, render: () => <AdminUsers /> }),
+    ADMIN_WORKSPACE_MANAGEMENT: ROUTER.add({ url: "admin/workspaces", parser: {}, render: () => <AdminWorkspaces /> }),
 };
 
 ROUTER.finish();
