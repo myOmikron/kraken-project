@@ -20,6 +20,9 @@ export default class Menu extends React.Component<MenuProps, MenuState> {
                 <div className="menu-item pane" {...ROUTES.ME.clickHandler({})}>
                     Me
                 </div>
+                <div className="menu-item pane" {...ROUTES.WORKSPACES.clickHandler({})}>
+                    My Workspaces
+                </div>
             </div>
         );
     }
