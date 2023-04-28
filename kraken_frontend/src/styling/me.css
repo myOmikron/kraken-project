@@ -1,0 +1,12 @@
+.me {
+    align-items: center;
+}
+
+.me > hr {
+    width: 100%;
+}
+
+.me > .change-pwd {
+    display: flex;
+    flex-direction: column;
+}
