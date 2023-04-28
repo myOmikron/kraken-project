@@ -31,7 +31,7 @@ export interface GetWorkspace {
      * @type {string}
      * @memberof GetWorkspace
      */
-    description: string | null;
+    description?: string | null;
     /**
      * 
      * @type {number}
@@ -62,7 +62,7 @@ export function GetWorkspaceFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'description': json['description'],
+        'description': !exists(json, 'description') ? undefined : json['description'],
         'id': json['id'],
         'name': json['name'],
         'owner': UserResponseFromJSON(json['owner']),

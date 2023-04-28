@@ -24,13 +24,13 @@ export interface UpdateMeRequest {
      * @type {string}
      * @memberof UpdateMeRequest
      */
-    displayName: string | null;
+    displayName?: string | null;
     /**
      * 
      * @type {string}
      * @memberof UpdateMeRequest
      */
-    username: string | null;
+    username?: string | null;
 }
 
 export function UpdateMeRequestFromJSON(json: any): UpdateMeRequest {
@@ -43,8 +43,8 @@ export function UpdateMeRequestFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'displayName': json['display_name'],
-        'username': json['username'],
+        'displayName': !exists(json, 'display_name') ? undefined : json['display_name'],
+        'username': !exists(json, 'username') ? undefined : json['username'],
     };
 }
 

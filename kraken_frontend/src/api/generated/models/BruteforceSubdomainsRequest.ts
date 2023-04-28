@@ -14,7 +14,7 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * 
+ * The settings of a subdomain bruteforce request
  * @export
  * @interface BruteforceSubdomainsRequest
  */

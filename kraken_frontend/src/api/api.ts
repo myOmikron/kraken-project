@@ -20,10 +20,12 @@ import {
     UserManagementApi,
     WorkspacesApi,
 } from "./generated/apis";
-import { UUID } from "./schemas";
 
 /** Database id i.e. and u32 */
 export type ID = number;
+
+/** Hyphen separated uuid */
+export type UUID = string;
 
 const configuration = new Configuration({
     basePath: window.location.origin,

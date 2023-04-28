@@ -24,7 +24,7 @@ export interface UpdateLeechRequest {
      * @type {string}
      * @memberof UpdateLeechRequest
      */
-    address: string | null;
+    address?: string | null;
     /**
      * 
      * @type {string}
@@ -36,7 +36,7 @@ export interface UpdateLeechRequest {
      * @type {string}
      * @memberof UpdateLeechRequest
      */
-    name: string | null;
+    name?: string | null;
 }
 
 export function UpdateLeechRequestFromJSON(json: any): UpdateLeechRequest {
@@ -49,9 +49,9 @@ export function UpdateLeechRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'address': json['address'],
+        'address': !exists(json, 'address') ? undefined : json['address'],
         'description': !exists(json, 'description') ? undefined : json['description'],
-        'name': json['name'],
+        'name': !exists(json, 'name') ? undefined : json['name'],
     };
 }
 

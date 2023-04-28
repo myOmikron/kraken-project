@@ -24,7 +24,7 @@ export interface CreateWorkspaceRequest {
      * @type {string}
      * @memberof CreateWorkspaceRequest
      */
-    description: string | null;
+    description?: string | null;
     /**
      * 
      * @type {string}
@@ -43,7 +43,7 @@ export function CreateWorkspaceRequestFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'description': json['description'],
+        'description': !exists(json, 'description') ? undefined : json['description'],
         'name': json['name'],
     };
 }

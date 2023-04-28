@@ -42,7 +42,7 @@ export interface GetUser {
      * @type {Date}
      * @memberof GetUser
      */
-    lastLogin: Date | null;
+    lastLogin?: Date | null;
     /**
      * 
      * @type {string}
@@ -70,7 +70,7 @@ export function GetUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): G
         'admin': json['admin'],
         'createdAt': (new Date(json['created_at'])),
         'displayName': json['display_name'],
-        'lastLogin': (json['last_login'] === null ? null : new Date(json['last_login'])),
+        'lastLogin': !exists(json, 'last_login') ? undefined : (json['last_login'] === null ? null : new Date(json['last_login'])),
         'username': json['username'],
         'uuid': json['uuid'],
     };
@@ -88,7 +88,7 @@ export function GetUserToJSON(value?: GetUser | null): any {
         'admin': value.admin,
         'created_at': (value.createdAt.toISOString()),
         'display_name': value.displayName,
-        'last_login': (value.lastLogin === null ? null : value.lastLogin.toISOString()),
+        'last_login': value.lastLogin === undefined ? undefined : (value.lastLogin === null ? null : value.lastLogin.toISOString()),
         'username': value.username,
         'uuid': value.uuid,
     };

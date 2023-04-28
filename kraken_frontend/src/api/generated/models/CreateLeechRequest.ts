@@ -30,7 +30,7 @@ export interface CreateLeechRequest {
      * @type {string}
      * @memberof CreateLeechRequest
      */
-    description: string | null;
+    description?: string | null;
     /**
      * 
      * @type {string}
@@ -50,7 +50,7 @@ export function CreateLeechRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'address': json['address'],
-        'description': json['description'],
+        'description': !exists(json, 'description') ? undefined : json['description'],
         'name': json['name'],
     };
 }

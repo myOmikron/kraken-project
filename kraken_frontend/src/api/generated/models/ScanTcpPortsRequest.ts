@@ -14,7 +14,7 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * 
+ * The settings to configure a tcp port scan
  * @export
  * @interface ScanTcpPortsRequest
  */

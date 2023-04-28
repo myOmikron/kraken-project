@@ -14,7 +14,7 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * 
+ * The settings to configure a certificate transparency request
  * @export
  * @interface QueryCertificateTransparencyRequest
  */
