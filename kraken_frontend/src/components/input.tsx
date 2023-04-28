@@ -4,10 +4,10 @@ export type InputProps = {
     value: string;
     onChange: (newValue: string) => any;
     autoFocus?: boolean;
-} & any;
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "autoFocus">;
 
 export default function Input(props: InputProps) {
-    const { value, onChange, autoFocus, onEnter, ...otherProps } = props;
+    const { value, onChange, autoFocus, ...passThrough } = props;
 
     const callback = React.useCallback((element: HTMLInputElement) => {
         if (element && autoFocus) {
@@ -25,7 +25,7 @@ export default function Input(props: InputProps) {
                 onChange(e.target.value);
             }}
             ref={callback}
-            {...otherProps}
+            {...passThrough}
         />
     );
 }
