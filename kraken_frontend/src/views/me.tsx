@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import "../styling/me.css";
 import Input from "../components/input";
 import { check } from "../utils/helper";
-import { USER_CONTEXT } from "../context/user";
+import USER_CONTEXT, { resetUser } from "../context/user";
 
 type MeProps = {};
 type MeState = {
@@ -73,7 +73,7 @@ export default class Me extends React.Component<MeProps, MeState> {
             result.match(
                 () => {
                     toast.success("Changed password successfully");
-                    this.context.resetUser();
+                    resetUser();
                 },
                 (err) => toast.error(err.message)
             )

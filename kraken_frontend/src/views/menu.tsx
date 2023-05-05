@@ -1,6 +1,6 @@
 import React from "react";
 import { ROUTES } from "../routes";
-import { USER_CONTEXT } from "../context/user";
+import USER_CONTEXT from "../context/user";
 
 type MenuProps = {};
 type MenuState = {};

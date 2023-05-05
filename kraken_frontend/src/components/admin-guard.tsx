@@ -1,5 +1,5 @@
 import React from "react";
-import { USER_CONTEXT } from "../context/user";
+import USER_CONTEXT from "../context/user";
 import { ROUTES } from "../routes";
 import { toast } from "react-toastify";
 
