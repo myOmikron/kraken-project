@@ -8,8 +8,8 @@ import { inspectError } from "../context/user";
  *
  * @param timeout Sleep time in milliseconds
  */
-export async function sleep(timeout: number): Promise<null> {
-    return await new Promise((resolve) => setTimeout(resolve, timeout));
+export function sleep(timeout: number): Promise<null> {
+    return new Promise((resolve) => setTimeout(resolve, timeout));
 }
 
 /**
