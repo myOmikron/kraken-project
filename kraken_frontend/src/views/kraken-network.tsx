@@ -1,7 +1,7 @@
 import React from "react";
 import { Api } from "../api/api";
 import { toast } from "react-toastify";
-import { sleep } from "../utils/helper";
+import { handleApiError, sleep } from "../utils/helper";
 import Input from "../components/input";
 import Popup from "reactjs-popup";
 import { GetLeech } from "../api/generated/models";
@@ -49,36 +49,30 @@ export default class KrakenNetwork extends React.Component<KrakenNetworkProps, K
         });
     }
 
-    async componentDidMount() {
-        await this.retrieveLeeches();
+    componentDidMount() {
+        this.retrieveLeeches();
     }
 
-    async retrieveLeeches() {
-        (await Api.admin.leeches.all()).match(
-            async ({ leeches }) => {
+    retrieveLeeches() {
+        Api.admin.leeches.all().then(
+            handleApiError(async ({ leeches }) => {
                 this.setState({ leeches });
                 await sleep(10);
                 this.setState({});
-            },
-            (err) => {
-                toast.error(err.message);
-            }
+            })
         );
     }
 
-    async createLeech(e: React.FormEvent<HTMLFormElement>) {
+    createLeech(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         const { name, address } = this.state;
 
-        (await Api.admin.leeches.create({ name, address })).match(
-            async (_) => {
+        Api.admin.leeches.create({ name, address }).then(
+            handleApiError(() => {
                 toast.success("Created leech");
                 this.setState({ showPopup: false, address: "", name: "" });
-                await this.retrieveLeeches();
-            },
-            (err) => {
-                toast.error(err.message);
-            }
+                this.retrieveLeeches();
+            })
         );
     }
 

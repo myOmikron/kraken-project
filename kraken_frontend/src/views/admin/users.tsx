@@ -5,7 +5,7 @@ import { GetUser } from "../../api/generated/models";
 import Loading from "../../components/loading";
 import Popup from "reactjs-popup";
 import Input from "../../components/input";
-import { check } from "../../utils/helper";
+import { check, handleApiError } from "../../utils/helper";
 
 type AdminUsersProps = {};
 type AdminUsersState = {
@@ -45,10 +45,11 @@ export default class AdminUsers extends React.Component<AdminUsersProps, AdminUs
     }
 
     fetchState() {
-        Api.admin.users.all().then((result) =>
-            result.match(
-                ({ users }) => this.setState({ users }),
-                (err) => toast.error(err.message)
+        Api.admin.users.all().then(
+            handleApiError(({ users }) =>
+                this.setState({
+                    users,
+                })
             )
         );
     }
@@ -153,15 +154,12 @@ export default class AdminUsers extends React.Component<AdminUsersProps, AdminUs
         const { confirmDelete } = this.state;
         if (confirmDelete === null) return;
 
-        Api.admin.users.delete(confirmDelete.uuid).then((result) =>
-            result.match(
-                () => {
-                    toast.success("Deleted user");
-                    this.setState({ confirmDelete: null });
-                    this.fetchState();
-                },
-                (err) => toast.error(err.message)
-            )
+        Api.admin.users.delete(confirmDelete.uuid).then(
+            handleApiError(() => {
+                toast.success("Deleted user");
+                this.setState({ confirmDelete: null });
+                this.fetchState();
+            })
         );
     }
 
@@ -177,17 +175,12 @@ export default class AdminUsers extends React.Component<AdminUsersProps, AdminUs
         )
             return;
 
-        Api.admin.users
-            .create({ username: newName, displayName: newDisplay, password: newPwd, admin: newAdmin })
-            .then((result) =>
-                result.match(
-                    () => {
-                        toast.success("Created user");
-                        this.setState({ createNew: false, newName: "", newDisplay: "", newPwd: "" });
-                        this.fetchState();
-                    },
-                    (err) => toast.error(err.message)
-                )
-            );
+        Api.admin.users.create({ username: newName, displayName: newDisplay, password: newPwd, admin: newAdmin }).then(
+            handleApiError(() => {
+                toast.success("Created user");
+                this.setState({ createNew: false, newName: "", newDisplay: "", newPwd: "" });
+                this.fetchState();
+            })
+        );
     }
 }

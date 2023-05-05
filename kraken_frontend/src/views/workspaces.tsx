@@ -1,6 +1,6 @@
 import React from "react";
 import { Api } from "../api/api";
-import { check, okOrToast } from "../utils/helper";
+import { check, handleApiError } from "../utils/helper";
 import { GetWorkspace } from "../api/generated/models";
 import Loading from "../components/loading";
 import Popup from "reactjs-popup";
@@ -41,7 +41,7 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
 
     fetchState() {
         Api.workspaces.all().then(
-            okOrToast(({ workspaces }) =>
+            handleApiError(({ workspaces }) =>
                 this.setState({
                     workspaces,
                 })
@@ -129,7 +129,7 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
         if (confirmDelete === null) return;
 
         Api.workspaces.delete(confirmDelete.id).then(
-            okOrToast(() => {
+            handleApiError(() => {
                 toast.success("Deleted workspace");
                 this.setState({ confirmDelete: null });
                 this.fetchState();
@@ -142,7 +142,7 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
         if (!check([[newName.length > 0, "Empty name"]])) return;
 
         Api.workspaces.create({ name: newName, description: newDesc.length > 0 ? newDesc : null }).then(
-            okOrToast(() => {
+            handleApiError(() => {
                 toast.success("Created new workspace");
                 this.setState({ newName: "", newDesc: "", createNew: false });
                 this.fetchState();

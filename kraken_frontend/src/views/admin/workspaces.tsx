@@ -3,6 +3,7 @@ import { Api } from "../../api/api";
 import { toast } from "react-toastify";
 import { GetWorkspace } from "../../api/generated/models";
 import Loading from "../../components/loading";
+import { handleApiError } from "../../utils/helper";
 
 type AdminWorkspacesProps = {};
 type AdminWorkspacesState = {
@@ -19,10 +20,11 @@ export default class AdminWorkspaces extends React.Component<AdminWorkspacesProp
     }
 
     fetchState() {
-        Api.admin.workspaces.all().then((result) =>
-            result.match(
-                ({ workspaces }) => this.setState({ workspaces }),
-                (err) => toast.error(err.message)
+        Api.admin.workspaces.all().then(
+            handleApiError(({ workspaces }) =>
+                this.setState({
+                    workspaces,
+                })
             )
         );
     }

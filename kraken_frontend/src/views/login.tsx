@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 
 import "../styling/login.css";
 import Input from "../components/input";
-import { okOrToast } from "../utils/helper";
+import { handleApiError } from "../utils/helper";
 
 type LoginProps = {
     onLogin(): void;
@@ -22,7 +22,7 @@ export default class Login extends React.Component<LoginProps, LoginState> {
 
     performLogin() {
         Api.auth.login(this.state.username, this.state.password).then(
-            okOrToast(() => {
+            handleApiError(() => {
                 toast.success("Authenticated successfully");
                 this.props.onLogin();
             })
