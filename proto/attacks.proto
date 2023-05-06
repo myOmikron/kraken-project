@@ -36,10 +36,10 @@ message TcpPortScanRequest {
   uint64 attack_id = 1;
   // Valid IPv4 or IPv6 addresses
   repeated shared.Address targets = 2;
-  // A single port, multiple, comma seperated ports or (inclusive) port ranges
+  // List of single ports and port ranges
   //
   // If no values are supplied, 1-65535 is used as default
-  repeated uint32 ports = 3;
+  repeated PortOrRange ports = 3;
   // Valid IPv4 or IPv6 addresses or networks in CIDR notation
   repeated string exclude = 4;
   // The time to wait until a connection is considered failed.
@@ -58,6 +58,22 @@ message TcpPortScanRequest {
   //
   // All hosts are assumed to be reachable
   bool skip_icmp_check = 9;
+}
+
+// An (inclusive) range of ports
+message PortRange {
+  // The first port number in this range
+  uint32 start = 1;
+  // The last port number in this range
+  uint32 end = 2;
+}
+
+// Either a single port or a range of them
+message PortOrRange {
+  oneof port_or_range {
+    uint32 single = 1;
+    PortRange range = 2;
+  }
 }
 
 // Response of a tcp port scan request

@@ -1,10 +1,9 @@
 //! This module holds all the information regarding attacks
 
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::net::IpAddr;
 
 use rorm::fields::{ForeignModel, Json};
 use rorm::{DbEnum, Model, Patch};
-use serde::{Deserialize, Serialize};
 
 use crate::models::{User, Workspace};
 

@@ -17,6 +17,7 @@ use crate::modules::bruteforce_subdomains::{
 };
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
+use crate::rpc::rpc_attacks::port_or_range::PortOrRange;
 use crate::rpc::rpc_attacks::req_attack_service_server::ReqAttackService;
 use crate::rpc::rpc_attacks::{
     BruteforceSubdomainRequest, BruteforceSubdomainResponse, CertEntry,
@@ -88,9 +89,20 @@ impl ReqAttackService for Attacks {
         });
 
         let req = request.into_inner();
+        let mut port_range = Vec::new();
+        for port_or_range in req.ports {
+            if let Some(port_or_range) = port_or_range.port_or_range {
+                match port_or_range {
+                    PortOrRange::Single(port) => port_range.push(port as u16),
+                    PortOrRange::Range(range) => {
+                        port_range.extend((range.start as u16)..=(range.end as u16))
+                    }
+                }
+            }
+        }
         let settings = TcpPortScannerSettings {
             addresses: req.targets.into_iter().map(|addr| addr.into()).collect(),
-            port_range: req.ports.into_iter().map(|p| p as u16).collect(),
+            port_range,
             timeout: Duration::from_millis(req.timeout),
             max_retries: req.max_retries,
             retry_interval: Duration::from_millis(req.retry_interval),
