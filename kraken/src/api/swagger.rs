@@ -53,6 +53,7 @@ impl Modify for SecurityAddon {
         handler::bruteforce_subdomains,
         handler::scan_tcp_ports,
         handler::query_certificate_transparency,
+        handler::report_workspace_results,
     ),
     components(schemas(
         handler::ApiErrorResponse,
@@ -80,6 +81,10 @@ impl Modify for SecurityAddon {
         handler::BruteforceSubdomainsRequest,
         handler::ScanTcpPortsRequest,
         handler::QueryCertificateTransparencyRequest,
+        handler::ReportingWorkspaceResults,
+        handler::ReportingTcpPortScanAttack,
+        handler::ReportingUser,
+        handler::ReportingIpPort,
         handler::PortOrRange,
     )),
     modifiers(&SecurityAddon),
