@@ -1,9 +1,12 @@
 //! This module holds all the information regarding attacks
 
-use rorm::fields::ForeignModel;
-use rorm::{DbEnum, Model, Patch};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
-use crate::models::User;
+use rorm::fields::{ForeignModel, Json};
+use rorm::{DbEnum, Model, Patch};
+use serde::{Deserialize, Serialize};
+
+use crate::models::{User, Workspace};
 
 /// The type of an attack
 #[derive(Copy, Clone, DbEnum)]
@@ -35,6 +38,9 @@ pub struct Attack {
     /// The user that started this attack
     pub started_from: ForeignModel<User>,
 
+    /// The workspace this attack was started from
+    pub workspace: ForeignModel<Workspace>,
+
     /// The point in time, this attack has finished
     pub finished_at: Option<chrono::NaiveDateTime>,
 
@@ -48,5 +54,37 @@ pub struct Attack {
 pub(crate) struct AttackInsert {
     pub(crate) attack_type: AttackType,
     pub(crate) started_from: ForeignModel<User>,
+    pub(crate) workspace: ForeignModel<Workspace>,
     pub(crate) finished_at: Option<chrono::NaiveDateTime>,
+}
+
+/// Representation of a [tcp port scan](AttackType::TcpPortScan) attack's result
+#[derive(Model)]
+pub struct TcpPortScanResult {
+    /// The primary key
+    #[rorm(id)]
+    pub id: i64,
+
+    /// The attack which produced this result
+    pub attack: ForeignModel<Attack>,
+
+    /// The point in time, this result was produced
+    #[rorm(auto_create_time)]
+    pub created_at: chrono::NaiveDateTime,
+
+    /// The ip address a port was found on
+    pub address: Json<IpAddr>,
+
+    /// The found port
+    ///
+    /// Stored in db as `i32` but ports are actually just an `u16`
+    pub port: i32,
+}
+
+#[derive(Patch)]
+#[rorm(model = "TcpPortScanResult")]
+pub(crate) struct TcpPortScanResultInsert {
+    pub(crate) attack: ForeignModel<Attack>,
+    pub(crate) address: Json<IpAddr>,
+    pub(crate) port: i32,
 }

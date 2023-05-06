@@ -18,7 +18,7 @@ use crate::api::handler::{ApiError, ApiResult};
 use crate::chan::{
     CertificateTransparencyEntry, RpcClients, WsManagerChan, WsManagerMessage, WsMessage,
 };
-use crate::models::{Attack, AttackInsert, AttackType};
+use crate::models::{Attack, AttackInsert, AttackType, TcpPortScanResult, TcpPortScanResultInsert};
 use crate::rpc::rpc_attacks;
 use crate::rpc::rpc_attacks::shared::dns_record::Record;
 use crate::rpc::rpc_attacks::CertificateTransparencyRequest;
@@ -41,6 +41,8 @@ pub struct BruteforceSubdomainsRequest {
     pub(crate) wordlist_path: String,
     #[schema(example = 20)]
     pub(crate) concurrent_limit: u32,
+    #[schema(example = 1337)]
+    pub(crate) workspace_id: u32,
 }
 
 /// Bruteforce subdomains through a DNS wordlist attack
@@ -81,6 +83,7 @@ pub async fn bruteforce_subdomains(
         .single(&AttackInsert {
             attack_type: AttackType::BruteforceSubdomains,
             started_from: ForeignModelByField::Key(uuid),
+            workspace: ForeignModelByField::Key(req.workspace_id as i64),
             finished_at: None,
         })
         .await?;
@@ -223,7 +226,8 @@ pub async fn bruteforce_subdomains(
     "max_retries": 2,
     "timeout": 3000,
     "concurrent_limit": 5000,
-    "skip_icmp_check": false
+    "skip_icmp_check": false,
+    "workspace_id": 1337
 }))]
 pub struct ScanTcpPortsRequest {
     pub(crate) leech_id: u64,
@@ -238,6 +242,7 @@ pub struct ScanTcpPortsRequest {
     pub(crate) timeout: u64,
     pub(crate) concurrent_limit: u32,
     pub(crate) skip_icmp_check: bool,
+    pub(crate) workspace_id: u32,
 }
 
 /// Start a tcp port scan
@@ -281,6 +286,7 @@ pub async fn scan_tcp_ports(
         .single(&AttackInsert {
             attack_type: AttackType::TcpPortScan,
             started_from: ForeignModelByField::Key(uuid),
+            workspace: ForeignModelByField::Key(req.workspace_id as i64),
             finished_at: None,
         })
         .await?;
@@ -318,21 +324,32 @@ pub async fn scan_tcp_ports(
 
                             let address = match addr {
                                 rpc_attacks::shared::address::Address::Ipv4(addr) => {
-                                    let a: Ipv4Addr = addr.into();
-                                    a.to_string()
+                                    IpAddr::V4(addr.into())
                                 }
+
                                 rpc_attacks::shared::address::Address::Ipv6(addr) => {
-                                    let a: Ipv6Addr = addr.into();
-                                    a.to_string()
+                                    IpAddr::V6(addr.into())
                                 }
                             };
+
+                            if let Err(err) = insert!(db.as_ref(), TcpPortScanResult)
+                                .return_nothing()
+                                .single(&TcpPortScanResultInsert {
+                                    attack: ForeignModelByField::Key(id),
+                                    address: rorm::fields::Json(address),
+                                    port: v.port as i32,
+                                })
+                                .await
+                            {
+                                error!("Database error: {err}");
+                            }
 
                             if let Err(err) = ws_manager_chan
                                 .send(WsManagerMessage::Message(
                                     uuid,
                                     WsMessage::ScanTcpPortsResult {
                                         attack_id: id,
-                                        address,
+                                        address: address.to_string(),
                                         port: v.port as u16,
                                     },
                                 ))
@@ -418,6 +435,8 @@ pub struct QueryCertificateTransparencyRequest {
     pub(crate) max_retries: u32,
     #[schema(example = 500)]
     pub(crate) retry_interval: u64,
+    #[schema(example = 1337)]
+    pub(crate) workspace_id: u32,
 }
 
 /// Query a certificate transparency log collector.
@@ -461,6 +480,7 @@ pub async fn query_certificate_transparency(
         .single(&AttackInsert {
             attack_type: AttackType::QueryCertificateTransparency,
             started_from: ForeignModelByField::Key(uuid),
+            workspace: ForeignModelByField::Key(req.workspace_id as i64),
             finished_at: None,
         })
         .await?;
