@@ -17,8 +17,12 @@ regex = { version = ">=1.5.5" }
 
 # Logging facade
 log = { version = "~0.4" }
-# Logging framework
+# Logging framework for `execute` command
 env_logger = { version = "~0.10" }
+# Logging framework for `server` command
+log4rs = { version = "~1", features = ["gzip"] }
+uuid = { version = "~1", features = ["v4"] }
+byte-unit = { version = "~4", features = ["serde"] }
 
 # Async runtime
 tokio = { version = ">=1.23.1", features = ["macros", "sync", "rt-multi-thread", "net", "time"] }

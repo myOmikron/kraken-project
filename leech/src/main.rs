@@ -39,6 +39,7 @@ use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScan
 use crate::rpc::start_rpc_server;
 
 pub mod config;
+pub mod logging;
 pub mod modules;
 pub mod rpc;
 pub mod utils;
@@ -197,6 +198,7 @@ async fn main() -> Result<(), String> {
         }
         Command::Server => {
             let config = get_config(&cli.config_path)?;
+            logging::setup_logging(&config.logging)?;
             start_rpc_server(&config).await?;
         }
         Command::Execute { command, verbosity } => {

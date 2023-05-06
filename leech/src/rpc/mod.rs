@@ -8,6 +8,7 @@
 
 use std::net::SocketAddr;
 
+use log::info;
 use tonic::transport::Server;
 
 use crate::config::Config;
@@ -122,10 +123,9 @@ pub mod rpc_attacks {
 /// **Parameter**:
 /// - `config`: Reference to [Config]
 pub async fn start_rpc_server(config: &Config) -> Result<(), String> {
-    let attacks = Attacks {};
-
+    info!("Starting Server");
     Server::builder()
-        .add_service(ReqAttackServiceServer::new(attacks))
+        .add_service(ReqAttackServiceServer::new(Attacks))
         .serve(SocketAddr::new(
             config.server.listen_address.parse().unwrap(),
             config.server.listen_port,
