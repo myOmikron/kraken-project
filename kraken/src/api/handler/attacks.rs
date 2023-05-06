@@ -1,4 +1,5 @@
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::ops::RangeInclusive;
 
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json};
@@ -212,79 +213,74 @@ pub async fn bruteforce_subdomains(
 
 /// The settings to configure a tcp port scan
 #[derive(Deserialize, ToSchema)]
-#[schema(example = json!({
-    "leech_id": 1,
-    "targets": [
-        "10.13.37.1",
-        "10.13.37.2",
-        "10.13.37.50"
-    ],
-    "exclude": ["10.13.37.252/30"],
-    "ports": [80, 443, 3306, 5432],
-    "retry_interval": 100,
-    "max_retries": 2,
-    "timeout": 3000,
-    "concurrent_limit": 5000,
-    "skip_icmp_check": false,
-    "workspace_id": 1337
-}))]
 pub struct ScanTcpPortsRequest {
+    #[schema(example = 1)]
     pub(crate) leech_id: u64,
-    #[schema(value_type = Vec<String>)]
+
+    #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.2", "10.13.37.50"]))]
     pub(crate) targets: Vec<IpAddr>,
-    #[schema(value_type = Vec<String>)]
+
+    #[schema(value_type = Vec<String>, example = json!(["10.13.37.252/30"]))]
     pub(crate) exclude: Vec<IpNet>,
-    #[schema(value_type = Vec<u16>)]
+
     pub(crate) ports: Vec<PortOrRange>,
+
+    #[schema(example = 100)]
     pub(crate) retry_interval: u64,
+
+    #[schema(example = 2)]
     pub(crate) max_retries: u32,
+
+    #[schema(example = 3000)]
     pub(crate) timeout: u64,
+
+    #[schema(example = 5000)]
     pub(crate) concurrent_limit: u32,
+
+    #[schema(example = false)]
     pub(crate) skip_icmp_check: bool,
+
+    #[schema(example = 1)]
     pub(crate) workspace_id: u32,
 }
 
 #[derive(Deserialize, ToSchema)]
 #[serde(untagged)]
 pub enum PortOrRange {
+    #[schema(value_type = u32, example = 8000)]
     Port(u16),
-    Range(String),
+    #[schema(value_type = String, example = "1-1024")]
+    Range(#[serde(deserialize_with = "deserialize_port_range")] RangeInclusive<u16>),
 }
 
-impl TryFrom<&PortOrRange> for rpc_attacks::PortOrRange {
-    type Error = ApiError;
+fn deserialize_port_range<'de, D>(deserializer: D) -> Result<RangeInclusive<u16>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = String::deserialize(deserializer)?;
+    value
+        .split_once('-')
+        .and_then(|(start, end)| Some((start.parse::<u16>().ok()?)..=(end.parse::<u16>().ok()?)))
+        .ok_or_else(|| {
+            <D::Error as serde::de::Error>::invalid_value(serde::de::Unexpected::Str(&value), &"")
+        })
+}
 
-    fn try_from(value: &PortOrRange) -> Result<Self, Self::Error> {
-        // nice little helper to mimic deserialization errors
-        fn gen_error(got: &str, expected: &'static str) -> ApiError {
-            ApiError::InvalidJson(serde::de::Error::invalid_value(
-                serde::de::Unexpected::Str(got),
-                &expected,
-            ))
-        }
-
-        Ok(rpc_attacks::PortOrRange {
+impl From<&PortOrRange> for rpc_attacks::PortOrRange {
+    fn from(value: &PortOrRange) -> Self {
+        rpc_attacks::PortOrRange {
             port_or_range: Some(match value {
                 PortOrRange::Port(port) => {
                     rpc_attacks::port_or_range::PortOrRange::Single(*port as u32)
                 }
                 PortOrRange::Range(range) => {
-                    let Some((start, end)) = range.split_once('-') else {
-                        return Err(gen_error(range, "start-end"));
-                    };
                     rpc_attacks::port_or_range::PortOrRange::Range(rpc_attacks::PortRange {
-                        start: start
-                            .parse::<u16>()
-                            .map_err(|_| gen_error(start, "a port number"))?
-                            as u32,
-                        end: end
-                            .parse::<u16>()
-                            .map_err(|_| gen_error(end, "a port number"))?
-                            as u32,
+                        start: *range.start() as u32,
+                        end: *range.end() as u32,
                     })
                 }
             }),
-        })
+        }
     }
 }
 
@@ -314,13 +310,6 @@ pub async fn scan_tcp_ports(
     rpc_clients: RpcClients,
     ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
-    // Parse ports arg to report invalid args early
-    let ports = req
-        .ports
-        .iter()
-        .map(TryInto::try_into)
-        .collect::<Result<Vec<_>, ApiError>>()?;
-
     let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let mut client = rpc_clients
@@ -347,7 +336,7 @@ pub async fn scan_tcp_ports(
             attack_id: id as u64,
             targets: req.targets.iter().map(|addr| (*addr).into()).collect(),
             exclude: req.exclude.iter().map(|addr| addr.to_string()).collect(),
-            ports,
+            ports: req.ports.iter().map(From::from).collect(),
             retry_interval: req.retry_interval,
             max_retries: req.max_retries,
             timeout: req.timeout,

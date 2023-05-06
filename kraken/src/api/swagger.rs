@@ -80,6 +80,7 @@ impl Modify for SecurityAddon {
         handler::BruteforceSubdomainsRequest,
         handler::ScanTcpPortsRequest,
         handler::QueryCertificateTransparencyRequest,
+        handler::PortOrRange,
     )),
     modifiers(&SecurityAddon),
 )]
