@@ -2,7 +2,7 @@
 //!
 //! They got created with [utoipa].
 
-use utoipa::openapi::security::{ApiKey, ApiKeyValue, SecurityScheme};
+use utoipa::openapi::security::{ApiKey, ApiKeyValue, Http, HttpAuthScheme, SecurityScheme};
 use utoipa::{Modify, OpenApi};
 
 use crate::api::handler;
@@ -15,6 +15,19 @@ impl Modify for SecurityAddon {
             components.add_security_scheme(
                 "api_key",
                 SecurityScheme::ApiKey(ApiKey::Cookie(ApiKeyValue::new("id"))),
+            )
+        }
+    }
+}
+
+struct SecurityAddon2;
+
+impl Modify for SecurityAddon2 {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        if let Some(components) = openapi.components.as_mut() {
+            components.add_security_scheme(
+                "bearer_token",
+                SecurityScheme::Http(Http::new(HttpAuthScheme::Bearer)),
             )
         }
     }
@@ -87,6 +100,6 @@ impl Modify for SecurityAddon {
         handler::ReportingIpPort,
         handler::PortOrRange,
     )),
-    modifiers(&SecurityAddon),
+    modifiers(&SecurityAddon, &SecurityAddon2),
 )]
 pub(crate) struct ApiDoc;

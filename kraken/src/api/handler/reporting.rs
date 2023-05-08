@@ -73,7 +73,7 @@ pub(crate) struct ReportingIpPort {
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
     params(PathId),
-    security(("api_key" = []))
+    security(("bearer_token" = []))
 )]
 #[get("/reporting/{id}")]
 pub(crate) async fn report_workspace_results(

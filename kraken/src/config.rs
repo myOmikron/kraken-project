@@ -17,6 +17,8 @@ pub struct ServerConfig {
     pub rpc_listen_port: u16,
     /// The secret key is used for sessions signing / encryption.
     pub secret_key: String,
+    /// The bearer token that is used to validate calls to reporting endpoints
+    pub reporting_key: String,
     /// The URI this server is reachable by.
     ///
     /// Scheme and port must be included as well
