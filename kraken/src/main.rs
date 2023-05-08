@@ -42,8 +42,9 @@ pub mod models;
 pub mod modules;
 pub(crate) mod rpc;
 
+/// The subcommands of kraken
 #[derive(Subcommand)]
-enum Command {
+pub enum Command {
     /// Start the server
     Start,
     /// Generate a secret key
@@ -57,11 +58,12 @@ enum Command {
     },
 }
 
+/// The cli for kraken
 #[derive(Parser)]
 #[clap(version, about = "The kraken core")]
-struct Cli {
+pub struct Cli {
+    /// Specify an alternative path to the config file
     #[clap(long = "config-path")]
-    #[clap(help = "Specify an alternative path to the config file")]
     #[clap(default_value_t = String::from("/etc/kraken/config.toml"))]
     config_path: String,
 
