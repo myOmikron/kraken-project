@@ -32,8 +32,8 @@ pub struct WorkspaceMember {
 #[derive(Patch)]
 #[rorm(model = "WorkspaceMember")]
 pub(crate) struct WorkspaceMemberInsert {
-    pub member: ForeignModel<User>,
-    pub workspace: ForeignModel<Workspace>,
+    pub(crate) member: ForeignModel<User>,
+    pub(crate) workspace: ForeignModel<Workspace>,
 }
 
 /// Representation of a set of connected data.
