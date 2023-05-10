@@ -362,8 +362,8 @@ Type = "foreign_key"
 [Migration.Operations.Field.Annotations.Value]
 TableName = "attack"
 ColumnName = "id"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"
@@ -462,8 +462,8 @@ Type = "foreign_key"
 [Migration.Operations.Field.Annotations.Value]
 TableName = "workspace"
 ColumnName = "id"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"

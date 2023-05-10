@@ -38,6 +38,7 @@ pub struct Attack {
     pub started_from: ForeignModel<User>,
 
     /// The workspace this attack was started from
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub workspace: ForeignModel<Workspace>,
 
     /// The point in time, this attack has finished
@@ -65,6 +66,7 @@ pub struct TcpPortScanResult {
     pub id: i64,
 
     /// The attack which produced this result
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub attack: ForeignModel<Attack>,
 
     /// The point in time, this result was produced
