@@ -15,6 +15,7 @@ RuntimeDirectory=kraken
 LogsDirectory=kraken
 StateDirectory=kraken
 ConfigurationDirectory=kraken
+ConfigurationDirectoryMode=0750
 
 MemoryDenyWriteExecute=yes
 RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX

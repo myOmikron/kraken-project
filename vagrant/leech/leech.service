@@ -15,7 +15,7 @@ RuntimeDirectory=leech
 LogsDirectory=leech
 StateDirectory=leech
 ConfigurationDirectory=leech
-ConfigurationDirectoryMode=750
+ConfigurationDirectoryMode=0750
 
 MemoryDenyWriteExecute=yes
 RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
