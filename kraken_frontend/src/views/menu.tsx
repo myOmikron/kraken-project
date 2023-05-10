@@ -20,6 +20,9 @@ export default class Menu extends React.Component<MenuProps, MenuState> {
                 <div className="menu-item pane" {...ROUTES.WORKSPACES.clickHandler({})}>
                     My Workspaces
                 </div>
+                <div className="menu-item pane" {...ROUTES.ATTACKS.clickHandler({})}>
+                    Start attacks
+                </div>
                 {this.context.user.admin ? (
                     <>
                         <div className="menu-item pane" {...ROUTES.KRAKEN_NETWORK.clickHandler({})}>

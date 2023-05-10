@@ -1,0 +1,11 @@
+.attack-form {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 0.5em;
+}
+.attack-form > label {
+    display: contents;
+}
+.attack-form > button:last-child {
+    grid-column: 1 / 3;
+}

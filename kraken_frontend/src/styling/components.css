@@ -38,3 +38,15 @@
     border-radius: 0.5em;
     box-shadow: inset 0 -3px 2em -3px var(--primary-op), 0 0 10em #0cf3, 0 0 .5em #0ff2;
 }
+
+.editable-list {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 0.5em;
+}
+.editable-list > div:not(:first-child) {
+    display: contents;
+}
+.editable-list > div:first-child {
+    grid-column: 1 / 3;
+}

@@ -32,6 +32,7 @@ export interface RouteConfig<UrlParams extends {}, HiddenParams extends {}> {
     render: (urlParams: UrlParams, hiddenParams: HiddenParams | undefined) => React.ReactNode;
 }
 
+// @ts-ignore: stupid IDE
 /** Regex for a bind parameter in {@link RouteConfig.url `url`} */
 const BIND_REGEX = /^\{(.*)}$/;
 
