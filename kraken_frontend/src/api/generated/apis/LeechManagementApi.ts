@@ -14,23 +14,25 @@
 
 
 import * as runtime from '../runtime';
+import type {
+  ApiErrorResponse,
+  CreateLeechRequest,
+  CreateLeechResponse,
+  GetLeech,
+  GetLeechResponse,
+  UpdateLeechRequest,
+} from '../models';
 import {
-    ApiErrorResponse,
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
-    CreateLeechRequest,
     CreateLeechRequestFromJSON,
     CreateLeechRequestToJSON,
-    CreateLeechResponse,
     CreateLeechResponseFromJSON,
     CreateLeechResponseToJSON,
-    GetLeech,
     GetLeechFromJSON,
     GetLeechToJSON,
-    GetLeechResponse,
     GetLeechResponseFromJSON,
     GetLeechResponseToJSON,
-    UpdateLeechRequest,
     UpdateLeechRequestFromJSON,
     UpdateLeechRequestToJSON,
 } from '../models';
@@ -61,7 +63,7 @@ export class LeechManagementApi extends runtime.BaseAPI {
      * Create a leech  The `name` parameter must be unique.  `address` must be a valid address including a scheme and port. Currently only https and http are supported as scheme.
      * Create a leech
      */
-    async createLeechRaw(requestParameters: CreateLeechOperationRequest): Promise<runtime.ApiResponse<CreateLeechResponse>> {
+    async createLeechRaw(requestParameters: CreateLeechOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CreateLeechResponse>> {
         if (requestParameters.createLeechRequest === null || requestParameters.createLeechRequest === undefined) {
             throw new runtime.RequiredError('createLeechRequest','Required parameter requestParameters.createLeechRequest was null or undefined when calling createLeech.');
         }
@@ -78,7 +80,7 @@ export class LeechManagementApi extends runtime.BaseAPI {
             headers: headerParameters,
             query: queryParameters,
             body: CreateLeechRequestToJSON(requestParameters.createLeechRequest),
-        });
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => CreateLeechResponseFromJSON(jsonValue));
     }
@@ -87,8 +89,8 @@ export class LeechManagementApi extends runtime.BaseAPI {
      * Create a leech  The `name` parameter must be unique.  `address` must be a valid address including a scheme and port. Currently only https and http are supported as scheme.
      * Create a leech
      */
-    async createLeech(requestParameters: CreateLeechOperationRequest): Promise<CreateLeechResponse> {
-        const response = await this.createLeechRaw(requestParameters);
+    async createLeech(requestParameters: CreateLeechOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CreateLeechResponse> {
+        const response = await this.createLeechRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -96,7 +98,7 @@ export class LeechManagementApi extends runtime.BaseAPI {
      * Delete a leech by its id
      * Delete a leech by its id
      */
-    async deleteLeechRaw(requestParameters: DeleteLeechRequest): Promise<runtime.ApiResponse<void>> {
+    async deleteLeechRaw(requestParameters: DeleteLeechRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.id === null || requestParameters.id === undefined) {
             throw new runtime.RequiredError('id','Required parameter requestParameters.id was null or undefined when calling deleteLeech.');
         }
@@ -110,7 +112,7 @@ export class LeechManagementApi extends runtime.BaseAPI {
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        });
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -119,15 +121,15 @@ export class LeechManagementApi extends runtime.BaseAPI {
      * Delete a leech by its id
      * Delete a leech by its id
      */
-    async deleteLeech(requestParameters: DeleteLeechRequest): Promise<void> {
-        await this.deleteLeechRaw(requestParameters);
+    async deleteLeech(requestParameters: DeleteLeechRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteLeechRaw(requestParameters, initOverrides);
     }
 
     /**
      * Retrieve all leeches
      * Retrieve all leeches
      */
-    async getAllLeechesRaw(): Promise<runtime.ApiResponse<GetLeechResponse>> {
+    async getAllLeechesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetLeechResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -137,7 +139,7 @@ export class LeechManagementApi extends runtime.BaseAPI {
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        });
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => GetLeechResponseFromJSON(jsonValue));
     }
@@ -146,8 +148,8 @@ export class LeechManagementApi extends runtime.BaseAPI {
      * Retrieve all leeches
      * Retrieve all leeches
      */
-    async getAllLeeches(): Promise<GetLeechResponse> {
-        const response = await this.getAllLeechesRaw();
+    async getAllLeeches(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetLeechResponse> {
+        const response = await this.getAllLeechesRaw(initOverrides);
         return await response.value();
     }
 
@@ -155,7 +157,7 @@ export class LeechManagementApi extends runtime.BaseAPI {
      * Retrieve a leech by its id
      * Retrieve a leech by its id
      */
-    async getLeechRaw(requestParameters: GetLeechRequest): Promise<runtime.ApiResponse<GetLeech>> {
+    async getLeechRaw(requestParameters: GetLeechRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetLeech>> {
         if (requestParameters.id === null || requestParameters.id === undefined) {
             throw new runtime.RequiredError('id','Required parameter requestParameters.id was null or undefined when calling getLeech.');
         }
@@ -169,7 +171,7 @@ export class LeechManagementApi extends runtime.BaseAPI {
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        });
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => GetLeechFromJSON(jsonValue));
     }
@@ -178,8 +180,8 @@ export class LeechManagementApi extends runtime.BaseAPI {
      * Retrieve a leech by its id
      * Retrieve a leech by its id
      */
-    async getLeech(requestParameters: GetLeechRequest): Promise<GetLeech> {
-        const response = await this.getLeechRaw(requestParameters);
+    async getLeech(requestParameters: GetLeechRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetLeech> {
+        const response = await this.getLeechRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -187,7 +189,7 @@ export class LeechManagementApi extends runtime.BaseAPI {
      * Update a leech by its id  All parameter are optional, but at least one of them must be specified.  `address` must be a valid address including a scheme and port. Currently only https and http are supported as scheme.
      * Update a leech by its id
      */
-    async updateLeechRaw(requestParameters: UpdateLeechOperationRequest): Promise<runtime.ApiResponse<void>> {
+    async updateLeechRaw(requestParameters: UpdateLeechOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.id === null || requestParameters.id === undefined) {
             throw new runtime.RequiredError('id','Required parameter requestParameters.id was null or undefined when calling updateLeech.');
         }
@@ -208,7 +210,7 @@ export class LeechManagementApi extends runtime.BaseAPI {
             headers: headerParameters,
             query: queryParameters,
             body: UpdateLeechRequestToJSON(requestParameters.updateLeechRequest),
-        });
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -217,8 +219,8 @@ export class LeechManagementApi extends runtime.BaseAPI {
      * Update a leech by its id  All parameter are optional, but at least one of them must be specified.  `address` must be a valid address including a scheme and port. Currently only https and http are supported as scheme.
      * Update a leech by its id
      */
-    async updateLeech(requestParameters: UpdateLeechOperationRequest): Promise<void> {
-        await this.updateLeechRaw(requestParameters);
+    async updateLeech(requestParameters: UpdateLeechOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.updateLeechRaw(requestParameters, initOverrides);
     }
 
 }

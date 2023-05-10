@@ -21,16 +21,22 @@ import { exists, mapValues } from '../runtime';
 export interface QueryCertificateTransparencyRequest {
     /**
      * 
-     * @type {boolean}
-     * @memberof QueryCertificateTransparencyRequest
-     */
-    includeExpired: boolean;
-    /**
-     * 
      * @type {number}
      * @memberof QueryCertificateTransparencyRequest
      */
     leechId: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof QueryCertificateTransparencyRequest
+     */
+    target: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof QueryCertificateTransparencyRequest
+     */
+    includeExpired: boolean;
     /**
      * 
      * @type {number}
@@ -45,10 +51,25 @@ export interface QueryCertificateTransparencyRequest {
     retryInterval: number;
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof QueryCertificateTransparencyRequest
      */
-    target: string;
+    workspaceId: number;
+}
+
+/**
+ * Check if a given object implements the QueryCertificateTransparencyRequest interface.
+ */
+export function instanceOfQueryCertificateTransparencyRequest(value: object): boolean {
+    let isInstance = true;
+    isInstance = isInstance && "leechId" in value;
+    isInstance = isInstance && "target" in value;
+    isInstance = isInstance && "includeExpired" in value;
+    isInstance = isInstance && "maxRetries" in value;
+    isInstance = isInstance && "retryInterval" in value;
+    isInstance = isInstance && "workspaceId" in value;
+
+    return isInstance;
 }
 
 export function QueryCertificateTransparencyRequestFromJSON(json: any): QueryCertificateTransparencyRequest {
@@ -61,11 +82,12 @@ export function QueryCertificateTransparencyRequestFromJSONTyped(json: any, igno
     }
     return {
         
-        'includeExpired': json['include_expired'],
         'leechId': json['leech_id'],
+        'target': json['target'],
+        'includeExpired': json['include_expired'],
         'maxRetries': json['max_retries'],
         'retryInterval': json['retry_interval'],
-        'target': json['target'],
+        'workspaceId': json['workspace_id'],
     };
 }
 
@@ -78,12 +100,12 @@ export function QueryCertificateTransparencyRequestToJSON(value?: QueryCertifica
     }
     return {
         
-        'include_expired': value.includeExpired,
         'leech_id': value.leechId,
+        'target': value.target,
+        'include_expired': value.includeExpired,
         'max_retries': value.maxRetries,
         'retry_interval': value.retryInterval,
-        'target': value.target,
+        'workspace_id': value.workspaceId,
     };
 }
-
 

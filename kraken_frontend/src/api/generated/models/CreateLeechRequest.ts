@@ -24,6 +24,12 @@ export interface CreateLeechRequest {
      * @type {string}
      * @memberof CreateLeechRequest
      */
+    name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateLeechRequest
+     */
     address: string;
     /**
      * 
@@ -31,12 +37,17 @@ export interface CreateLeechRequest {
      * @memberof CreateLeechRequest
      */
     description?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateLeechRequest
-     */
-    name: string;
+}
+
+/**
+ * Check if a given object implements the CreateLeechRequest interface.
+ */
+export function instanceOfCreateLeechRequest(value: object): boolean {
+    let isInstance = true;
+    isInstance = isInstance && "name" in value;
+    isInstance = isInstance && "address" in value;
+
+    return isInstance;
 }
 
 export function CreateLeechRequestFromJSON(json: any): CreateLeechRequest {
@@ -49,9 +60,9 @@ export function CreateLeechRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
+        'name': json['name'],
         'address': json['address'],
         'description': !exists(json, 'description') ? undefined : json['description'],
-        'name': json['name'],
     };
 }
 
@@ -64,10 +75,9 @@ export function CreateLeechRequestToJSON(value?: CreateLeechRequest | null): any
     }
     return {
         
+        'name': value.name,
         'address': value.address,
         'description': value.description,
-        'name': value.name,
     };
 }
-
 

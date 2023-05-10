@@ -21,12 +21,6 @@ import { exists, mapValues } from '../runtime';
 export interface GetLeech {
     /**
      * 
-     * @type {string}
-     * @memberof GetLeech
-     */
-    address: string;
-    /**
-     * 
      * @type {number}
      * @memberof GetLeech
      */
@@ -37,6 +31,24 @@ export interface GetLeech {
      * @memberof GetLeech
      */
     name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof GetLeech
+     */
+    address: string;
+}
+
+/**
+ * Check if a given object implements the GetLeech interface.
+ */
+export function instanceOfGetLeech(value: object): boolean {
+    let isInstance = true;
+    isInstance = isInstance && "id" in value;
+    isInstance = isInstance && "name" in value;
+    isInstance = isInstance && "address" in value;
+
+    return isInstance;
 }
 
 export function GetLeechFromJSON(json: any): GetLeech {
@@ -49,9 +61,9 @@ export function GetLeechFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     }
     return {
         
-        'address': json['address'],
         'id': json['id'],
         'name': json['name'],
+        'address': json['address'],
     };
 }
 
@@ -64,10 +76,9 @@ export function GetLeechToJSON(value?: GetLeech | null): any {
     }
     return {
         
-        'address': value.address,
         'id': value.id,
         'name': value.name,
+        'address': value.address,
     };
 }
-
 

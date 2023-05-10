@@ -14,8 +14,10 @@
 
 
 import * as runtime from '../runtime';
+import type {
+  ApiErrorResponse,
+} from '../models';
 import {
-    ApiErrorResponse,
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
 } from '../models';
@@ -29,7 +31,7 @@ export class WebsocketApi extends runtime.BaseAPI {
      * Start a websocket connection  A heartbeat PING packet is sent constantly (every 10s). If no response is retrieved within 30s of the last transmission, the socket will be closed.
      * Start a websocket connection
      */
-    async websocketRaw(): Promise<runtime.ApiResponse<void>> {
+    async websocketRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -39,7 +41,7 @@ export class WebsocketApi extends runtime.BaseAPI {
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        });
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -48,8 +50,8 @@ export class WebsocketApi extends runtime.BaseAPI {
      * Start a websocket connection  A heartbeat PING packet is sent constantly (every 10s). If no response is retrieved within 30s of the last transmission, the socket will be closed.
      * Start a websocket connection
      */
-    async websocket(): Promise<void> {
-        await this.websocketRaw();
+    async websocket(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.websocketRaw(initOverrides);
     }
 
 }

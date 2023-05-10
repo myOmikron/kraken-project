@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { GetUser } from './GetUser';
 import {
-    GetUser,
     GetUserFromJSON,
     GetUserFromJSONTyped,
     GetUserToJSON,
-} from './';
+} from './GetUser';
 
 /**
  * 
@@ -32,6 +32,16 @@ export interface GetUserResponse {
      * @memberof GetUserResponse
      */
     users: Array<GetUser>;
+}
+
+/**
+ * Check if a given object implements the GetUserResponse interface.
+ */
+export function instanceOfGetUserResponse(value: object): boolean {
+    let isInstance = true;
+    isInstance = isInstance && "users" in value;
+
+    return isInstance;
 }
 
 export function GetUserResponseFromJSON(json: any): GetUserResponse {
@@ -60,5 +70,4 @@ export function GetUserResponseToJSON(value?: GetUserResponse | null): any {
         'users': ((value.users as Array<any>).map(GetUserToJSON)),
     };
 }
-
 

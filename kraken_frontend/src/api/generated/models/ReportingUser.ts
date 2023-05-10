@@ -14,38 +14,35 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * This struct holds the user information.
  * 
- * Note that `username` is unique, but as it is changeable,
- * identify the user by its `uuid`
  * @export
- * @interface UserResponse
+ * @interface ReportingUser
  */
-export interface UserResponse {
+export interface ReportingUser {
     /**
-     * 
+     * The user's id
      * @type {string}
-     * @memberof UserResponse
+     * @memberof ReportingUser
      */
     uuid: string;
     /**
-     * 
+     * The user's login name
      * @type {string}
-     * @memberof UserResponse
+     * @memberof ReportingUser
      */
     username: string;
     /**
-     * 
+     * The user's legal name
      * @type {string}
-     * @memberof UserResponse
+     * @memberof ReportingUser
      */
     displayName: string;
 }
 
 /**
- * Check if a given object implements the UserResponse interface.
+ * Check if a given object implements the ReportingUser interface.
  */
-export function instanceOfUserResponse(value: object): boolean {
+export function instanceOfReportingUser(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "username" in value;
@@ -54,11 +51,11 @@ export function instanceOfUserResponse(value: object): boolean {
     return isInstance;
 }
 
-export function UserResponseFromJSON(json: any): UserResponse {
-    return UserResponseFromJSONTyped(json, false);
+export function ReportingUserFromJSON(json: any): ReportingUser {
+    return ReportingUserFromJSONTyped(json, false);
 }
 
-export function UserResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): UserResponse {
+export function ReportingUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): ReportingUser {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -70,7 +67,7 @@ export function UserResponseFromJSONTyped(json: any, ignoreDiscriminator: boolea
     };
 }
 
-export function UserResponseToJSON(value?: UserResponse | null): any {
+export function ReportingUserToJSON(value?: ReportingUser | null): any {
     if (value === undefined) {
         return undefined;
     }

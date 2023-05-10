@@ -27,6 +27,16 @@ export interface AttackResponse {
     attackId: number;
 }
 
+/**
+ * Check if a given object implements the AttackResponse interface.
+ */
+export function instanceOfAttackResponse(value: object): boolean {
+    let isInstance = true;
+    isInstance = isInstance && "attackId" in value;
+
+    return isInstance;
+}
+
 export function AttackResponseFromJSON(json: any): AttackResponse {
     return AttackResponseFromJSONTyped(json, false);
 }
@@ -53,5 +63,4 @@ export function AttackResponseToJSON(value?: AttackResponse | null): any {
         'attack_id': value.attackId,
     };
 }
-
 

@@ -24,13 +24,23 @@ export interface CreateWorkspaceRequest {
      * @type {string}
      * @memberof CreateWorkspaceRequest
      */
-    description?: string | null;
+    name: string;
     /**
      * 
      * @type {string}
      * @memberof CreateWorkspaceRequest
      */
-    name: string;
+    description?: string | null;
+}
+
+/**
+ * Check if a given object implements the CreateWorkspaceRequest interface.
+ */
+export function instanceOfCreateWorkspaceRequest(value: object): boolean {
+    let isInstance = true;
+    isInstance = isInstance && "name" in value;
+
+    return isInstance;
 }
 
 export function CreateWorkspaceRequestFromJSON(json: any): CreateWorkspaceRequest {
@@ -43,8 +53,8 @@ export function CreateWorkspaceRequestFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'description': !exists(json, 'description') ? undefined : json['description'],
         'name': json['name'],
+        'description': !exists(json, 'description') ? undefined : json['description'],
     };
 }
 
@@ -57,9 +67,8 @@ export function CreateWorkspaceRequestToJSON(value?: CreateWorkspaceRequest | nu
     }
     return {
         
-        'description': value.description,
         'name': value.name,
+        'description': value.description,
     };
 }
-
 

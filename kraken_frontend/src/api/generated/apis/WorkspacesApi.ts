@@ -14,23 +14,25 @@
 
 
 import * as runtime from '../runtime';
+import type {
+  ApiErrorResponse,
+  CreateWorkspaceRequest,
+  CreateWorkspaceResponse,
+  GetWorkspace,
+  GetWorkspaceResponse,
+  UpdateWorkspaceRequest,
+} from '../models';
 import {
-    ApiErrorResponse,
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
-    CreateWorkspaceRequest,
     CreateWorkspaceRequestFromJSON,
     CreateWorkspaceRequestToJSON,
-    CreateWorkspaceResponse,
     CreateWorkspaceResponseFromJSON,
     CreateWorkspaceResponseToJSON,
-    GetWorkspace,
     GetWorkspaceFromJSON,
     GetWorkspaceToJSON,
-    GetWorkspaceResponse,
     GetWorkspaceResponseFromJSON,
     GetWorkspaceResponseToJSON,
-    UpdateWorkspaceRequest,
     UpdateWorkspaceRequestFromJSON,
     UpdateWorkspaceRequestToJSON,
 } from '../models';
@@ -61,7 +63,7 @@ export class WorkspacesApi extends runtime.BaseAPI {
      * Create a new workspace
      * Create a new workspace
      */
-    async createWorkspaceRaw(requestParameters: CreateWorkspaceOperationRequest): Promise<runtime.ApiResponse<CreateWorkspaceResponse>> {
+    async createWorkspaceRaw(requestParameters: CreateWorkspaceOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CreateWorkspaceResponse>> {
         if (requestParameters.createWorkspaceRequest === null || requestParameters.createWorkspaceRequest === undefined) {
             throw new runtime.RequiredError('createWorkspaceRequest','Required parameter requestParameters.createWorkspaceRequest was null or undefined when calling createWorkspace.');
         }
@@ -78,7 +80,7 @@ export class WorkspacesApi extends runtime.BaseAPI {
             headers: headerParameters,
             query: queryParameters,
             body: CreateWorkspaceRequestToJSON(requestParameters.createWorkspaceRequest),
-        });
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => CreateWorkspaceResponseFromJSON(jsonValue));
     }
@@ -87,8 +89,8 @@ export class WorkspacesApi extends runtime.BaseAPI {
      * Create a new workspace
      * Create a new workspace
      */
-    async createWorkspace(requestParameters: CreateWorkspaceOperationRequest): Promise<CreateWorkspaceResponse> {
-        const response = await this.createWorkspaceRaw(requestParameters);
+    async createWorkspace(requestParameters: CreateWorkspaceOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CreateWorkspaceResponse> {
+        const response = await this.createWorkspaceRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -96,7 +98,7 @@ export class WorkspacesApi extends runtime.BaseAPI {
      * Delete a workspace by its id
      * Delete a workspace by its id
      */
-    async deleteWorkspaceRaw(requestParameters: DeleteWorkspaceRequest): Promise<runtime.ApiResponse<void>> {
+    async deleteWorkspaceRaw(requestParameters: DeleteWorkspaceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.id === null || requestParameters.id === undefined) {
             throw new runtime.RequiredError('id','Required parameter requestParameters.id was null or undefined when calling deleteWorkspace.');
         }
@@ -110,7 +112,7 @@ export class WorkspacesApi extends runtime.BaseAPI {
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        });
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -119,15 +121,15 @@ export class WorkspacesApi extends runtime.BaseAPI {
      * Delete a workspace by its id
      * Delete a workspace by its id
      */
-    async deleteWorkspace(requestParameters: DeleteWorkspaceRequest): Promise<void> {
-        await this.deleteWorkspaceRaw(requestParameters);
+    async deleteWorkspace(requestParameters: DeleteWorkspaceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteWorkspaceRaw(requestParameters, initOverrides);
     }
 
     /**
      * Retrieve all workspaces owned by executing user  For administration access, look at the `/admin/workspaces` endpoint.
      * Retrieve all workspaces owned by executing user
      */
-    async getAllWorkspacesRaw(): Promise<runtime.ApiResponse<GetWorkspaceResponse>> {
+    async getAllWorkspacesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetWorkspaceResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -137,7 +139,7 @@ export class WorkspacesApi extends runtime.BaseAPI {
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        });
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => GetWorkspaceResponseFromJSON(jsonValue));
     }
@@ -146,8 +148,8 @@ export class WorkspacesApi extends runtime.BaseAPI {
      * Retrieve all workspaces owned by executing user  For administration access, look at the `/admin/workspaces` endpoint.
      * Retrieve all workspaces owned by executing user
      */
-    async getAllWorkspaces(): Promise<GetWorkspaceResponse> {
-        const response = await this.getAllWorkspacesRaw();
+    async getAllWorkspaces(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetWorkspaceResponse> {
+        const response = await this.getAllWorkspacesRaw(initOverrides);
         return await response.value();
     }
 
@@ -155,7 +157,7 @@ export class WorkspacesApi extends runtime.BaseAPI {
      * Retrieve a workspace by id
      * Retrieve a workspace by id
      */
-    async getWorkspaceRaw(requestParameters: GetWorkspaceRequest): Promise<runtime.ApiResponse<GetWorkspace>> {
+    async getWorkspaceRaw(requestParameters: GetWorkspaceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetWorkspace>> {
         if (requestParameters.id === null || requestParameters.id === undefined) {
             throw new runtime.RequiredError('id','Required parameter requestParameters.id was null or undefined when calling getWorkspace.');
         }
@@ -169,7 +171,7 @@ export class WorkspacesApi extends runtime.BaseAPI {
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        });
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => GetWorkspaceFromJSON(jsonValue));
     }
@@ -178,8 +180,8 @@ export class WorkspacesApi extends runtime.BaseAPI {
      * Retrieve a workspace by id
      * Retrieve a workspace by id
      */
-    async getWorkspace(requestParameters: GetWorkspaceRequest): Promise<GetWorkspace> {
-        const response = await this.getWorkspaceRaw(requestParameters);
+    async getWorkspace(requestParameters: GetWorkspaceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetWorkspace> {
+        const response = await this.getWorkspaceRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -187,7 +189,7 @@ export class WorkspacesApi extends runtime.BaseAPI {
      * Updates a workspace by its id  All parameter are optional, but at least one of them must be specified.  `name` must not be empty.  You can set `description` to null to remove the description from the database. If you leave the parameter out, the description will remain unchanged.
      * Updates a workspace by its id
      */
-    async updateWorkspaceRaw(requestParameters: UpdateWorkspaceOperationRequest): Promise<runtime.ApiResponse<void>> {
+    async updateWorkspaceRaw(requestParameters: UpdateWorkspaceOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.id === null || requestParameters.id === undefined) {
             throw new runtime.RequiredError('id','Required parameter requestParameters.id was null or undefined when calling updateWorkspace.');
         }
@@ -208,7 +210,7 @@ export class WorkspacesApi extends runtime.BaseAPI {
             headers: headerParameters,
             query: queryParameters,
             body: UpdateWorkspaceRequestToJSON(requestParameters.updateWorkspaceRequest),
-        });
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -217,8 +219,8 @@ export class WorkspacesApi extends runtime.BaseAPI {
      * Updates a workspace by its id  All parameter are optional, but at least one of them must be specified.  `name` must not be empty.  You can set `description` to null to remove the description from the database. If you leave the parameter out, the description will remain unchanged.
      * Updates a workspace by its id
      */
-    async updateWorkspace(requestParameters: UpdateWorkspaceOperationRequest): Promise<void> {
-        await this.updateWorkspaceRaw(requestParameters);
+    async updateWorkspace(requestParameters: UpdateWorkspaceOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.updateWorkspaceRaw(requestParameters, initOverrides);
     }
 
 }

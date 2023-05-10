@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { GetWorkspace } from './GetWorkspace';
 import {
-    GetWorkspace,
     GetWorkspaceFromJSON,
     GetWorkspaceFromJSONTyped,
     GetWorkspaceToJSON,
-} from './';
+} from './GetWorkspace';
 
 /**
  * 
@@ -32,6 +32,16 @@ export interface GetWorkspaceResponse {
      * @memberof GetWorkspaceResponse
      */
     workspaces: Array<GetWorkspace>;
+}
+
+/**
+ * Check if a given object implements the GetWorkspaceResponse interface.
+ */
+export function instanceOfGetWorkspaceResponse(value: object): boolean {
+    let isInstance = true;
+    isInstance = isInstance && "workspaces" in value;
+
+    return isInstance;
 }
 
 export function GetWorkspaceResponseFromJSON(json: any): GetWorkspaceResponse {
@@ -60,5 +70,4 @@ export function GetWorkspaceResponseToJSON(value?: GetWorkspaceResponse | null):
         'workspaces': ((value.workspaces as Array<any>).map(GetWorkspaceToJSON)),
     };
 }
-
 

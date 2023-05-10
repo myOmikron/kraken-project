@@ -14,20 +14,22 @@
 
 
 import * as runtime from '../runtime';
+import type {
+  ApiErrorResponse,
+  AttackResponse,
+  BruteforceSubdomainsRequest,
+  QueryCertificateTransparencyRequest,
+  ScanTcpPortsRequest,
+} from '../models';
 import {
-    ApiErrorResponse,
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
-    AttackResponse,
     AttackResponseFromJSON,
     AttackResponseToJSON,
-    BruteforceSubdomainsRequest,
     BruteforceSubdomainsRequestFromJSON,
     BruteforceSubdomainsRequestToJSON,
-    QueryCertificateTransparencyRequest,
     QueryCertificateTransparencyRequestFromJSON,
     QueryCertificateTransparencyRequestToJSON,
-    ScanTcpPortsRequest,
     ScanTcpPortsRequestFromJSON,
     ScanTcpPortsRequestToJSON,
 } from '../models';
@@ -53,7 +55,7 @@ export class AttacksApi extends runtime.BaseAPI {
      * Bruteforce subdomains through a DNS wordlist attack  Enumerate possible subdomains by querying a DNS server with constructed domains. See [OWASP](https://owasp.org/www-community/attacks/Brute_force_attack) for further information.
      * Bruteforce subdomains through a DNS wordlist attack
      */
-    async bruteforceSubdomainsRaw(requestParameters: BruteforceSubdomainsOperationRequest): Promise<runtime.ApiResponse<AttackResponse>> {
+    async bruteforceSubdomainsRaw(requestParameters: BruteforceSubdomainsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AttackResponse>> {
         if (requestParameters.bruteforceSubdomainsRequest === null || requestParameters.bruteforceSubdomainsRequest === undefined) {
             throw new runtime.RequiredError('bruteforceSubdomainsRequest','Required parameter requestParameters.bruteforceSubdomainsRequest was null or undefined when calling bruteforceSubdomains.');
         }
@@ -70,7 +72,7 @@ export class AttacksApi extends runtime.BaseAPI {
             headers: headerParameters,
             query: queryParameters,
             body: BruteforceSubdomainsRequestToJSON(requestParameters.bruteforceSubdomainsRequest),
-        });
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => AttackResponseFromJSON(jsonValue));
     }
@@ -79,8 +81,8 @@ export class AttacksApi extends runtime.BaseAPI {
      * Bruteforce subdomains through a DNS wordlist attack  Enumerate possible subdomains by querying a DNS server with constructed domains. See [OWASP](https://owasp.org/www-community/attacks/Brute_force_attack) for further information.
      * Bruteforce subdomains through a DNS wordlist attack
      */
-    async bruteforceSubdomains(requestParameters: BruteforceSubdomainsOperationRequest): Promise<AttackResponse> {
-        const response = await this.bruteforceSubdomainsRaw(requestParameters);
+    async bruteforceSubdomains(requestParameters: BruteforceSubdomainsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AttackResponse> {
+        const response = await this.bruteforceSubdomainsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -88,7 +90,7 @@ export class AttacksApi extends runtime.BaseAPI {
      * Query a certificate transparency log collector.  For further information, see [the explanation](https://certificate.transparency.dev/).  Certificate transparency can be used to find subdomains or related domains.  `retry_interval` is specified in milliseconds.
      * Query a certificate transparency log collector.
      */
-    async queryCertificateTransparencyRaw(requestParameters: QueryCertificateTransparencyOperationRequest): Promise<runtime.ApiResponse<AttackResponse>> {
+    async queryCertificateTransparencyRaw(requestParameters: QueryCertificateTransparencyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AttackResponse>> {
         if (requestParameters.queryCertificateTransparencyRequest === null || requestParameters.queryCertificateTransparencyRequest === undefined) {
             throw new runtime.RequiredError('queryCertificateTransparencyRequest','Required parameter requestParameters.queryCertificateTransparencyRequest was null or undefined when calling queryCertificateTransparency.');
         }
@@ -105,7 +107,7 @@ export class AttacksApi extends runtime.BaseAPI {
             headers: headerParameters,
             query: queryParameters,
             body: QueryCertificateTransparencyRequestToJSON(requestParameters.queryCertificateTransparencyRequest),
-        });
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => AttackResponseFromJSON(jsonValue));
     }
@@ -114,8 +116,8 @@ export class AttacksApi extends runtime.BaseAPI {
      * Query a certificate transparency log collector.  For further information, see [the explanation](https://certificate.transparency.dev/).  Certificate transparency can be used to find subdomains or related domains.  `retry_interval` is specified in milliseconds.
      * Query a certificate transparency log collector.
      */
-    async queryCertificateTransparency(requestParameters: QueryCertificateTransparencyOperationRequest): Promise<AttackResponse> {
-        const response = await this.queryCertificateTransparencyRaw(requestParameters);
+    async queryCertificateTransparency(requestParameters: QueryCertificateTransparencyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AttackResponse> {
+        const response = await this.queryCertificateTransparencyRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -123,7 +125,7 @@ export class AttacksApi extends runtime.BaseAPI {
      * Start a tcp port scan  `exclude` accepts a list of ip networks in CIDR notation.  All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.  Set `max_retries` to 0 if you don\'t want to try a port more than 1 time.
      * Start a tcp port scan
      */
-    async scanTcpPortsRaw(requestParameters: ScanTcpPortsOperationRequest): Promise<runtime.ApiResponse<AttackResponse>> {
+    async scanTcpPortsRaw(requestParameters: ScanTcpPortsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AttackResponse>> {
         if (requestParameters.scanTcpPortsRequest === null || requestParameters.scanTcpPortsRequest === undefined) {
             throw new runtime.RequiredError('scanTcpPortsRequest','Required parameter requestParameters.scanTcpPortsRequest was null or undefined when calling scanTcpPorts.');
         }
@@ -140,7 +142,7 @@ export class AttacksApi extends runtime.BaseAPI {
             headers: headerParameters,
             query: queryParameters,
             body: ScanTcpPortsRequestToJSON(requestParameters.scanTcpPortsRequest),
-        });
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => AttackResponseFromJSON(jsonValue));
     }
@@ -149,8 +151,8 @@ export class AttacksApi extends runtime.BaseAPI {
      * Start a tcp port scan  `exclude` accepts a list of ip networks in CIDR notation.  All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.  Set `max_retries` to 0 if you don\'t want to try a port more than 1 time.
      * Start a tcp port scan
      */
-    async scanTcpPorts(requestParameters: ScanTcpPortsOperationRequest): Promise<AttackResponse> {
-        const response = await this.scanTcpPortsRaw(requestParameters);
+    async scanTcpPorts(requestParameters: ScanTcpPortsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AttackResponse> {
+        const response = await this.scanTcpPortsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

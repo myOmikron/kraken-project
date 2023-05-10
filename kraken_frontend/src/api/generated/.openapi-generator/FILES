@@ -2,6 +2,7 @@ apis/AdminWorkspacesApi.ts
 apis/AttacksApi.ts
 apis/AuthenticationApi.ts
 apis/LeechManagementApi.ts
+apis/ReportingDataExportApi.ts
 apis/UserAdminManagementApi.ts
 apis/UserManagementApi.ts
 apis/WebsocketApi.ts
@@ -27,7 +28,12 @@ models/GetUserResponse.ts
 models/GetWorkspace.ts
 models/GetWorkspaceResponse.ts
 models/LoginRequest.ts
+models/PortOrRange.ts
 models/QueryCertificateTransparencyRequest.ts
+models/ReportingIpPort.ts
+models/ReportingTcpPortScanAttack.ts
+models/ReportingUser.ts
+models/ReportingWorkspaceResults.ts
 models/ScanTcpPortsRequest.ts
 models/SetPasswordRequest.ts
 models/UpdateLeechRequest.ts

@@ -21,10 +21,10 @@ import { exists, mapValues } from '../runtime';
 export interface CreateUserRequest {
     /**
      * 
-     * @type {boolean}
+     * @type {string}
      * @memberof CreateUserRequest
      */
-    admin: boolean;
+    username: string;
     /**
      * 
      * @type {string}
@@ -39,10 +39,23 @@ export interface CreateUserRequest {
     password: string;
     /**
      * 
-     * @type {string}
+     * @type {boolean}
      * @memberof CreateUserRequest
      */
-    username: string;
+    admin: boolean;
+}
+
+/**
+ * Check if a given object implements the CreateUserRequest interface.
+ */
+export function instanceOfCreateUserRequest(value: object): boolean {
+    let isInstance = true;
+    isInstance = isInstance && "username" in value;
+    isInstance = isInstance && "displayName" in value;
+    isInstance = isInstance && "password" in value;
+    isInstance = isInstance && "admin" in value;
+
+    return isInstance;
 }
 
 export function CreateUserRequestFromJSON(json: any): CreateUserRequest {
@@ -55,10 +68,10 @@ export function CreateUserRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'admin': json['admin'],
+        'username': json['username'],
         'displayName': json['display_name'],
         'password': json['password'],
-        'username': json['username'],
+        'admin': json['admin'],
     };
 }
 
@@ -71,11 +84,10 @@ export function CreateUserRequestToJSON(value?: CreateUserRequest | null): any {
     }
     return {
         
-        'admin': value.admin,
+        'username': value.username,
         'display_name': value.displayName,
         'password': value.password,
-        'username': value.username,
+        'admin': value.admin,
     };
 }
-
 

@@ -33,6 +33,17 @@ export interface SetPasswordRequest {
     newPassword: string;
 }
 
+/**
+ * Check if a given object implements the SetPasswordRequest interface.
+ */
+export function instanceOfSetPasswordRequest(value: object): boolean {
+    let isInstance = true;
+    isInstance = isInstance && "currentPassword" in value;
+    isInstance = isInstance && "newPassword" in value;
+
+    return isInstance;
+}
+
 export function SetPasswordRequestFromJSON(json: any): SetPasswordRequest {
     return SetPasswordRequestFromJSONTyped(json, false);
 }
@@ -61,5 +72,4 @@ export function SetPasswordRequestToJSON(value?: SetPasswordRequest | null): any
         'new_password': value.newPassword,
     };
 }
-
 

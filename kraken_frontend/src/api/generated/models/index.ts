@@ -1,3 +1,5 @@
+/* tslint:disable */
+/* eslint-disable */
 export * from './ApiErrorResponse';
 export * from './ApiStatusCode';
 export * from './AttackResponse';
@@ -17,7 +19,12 @@ export * from './GetUserResponse';
 export * from './GetWorkspace';
 export * from './GetWorkspaceResponse';
 export * from './LoginRequest';
+export * from './PortOrRange';
 export * from './QueryCertificateTransparencyRequest';
+export * from './ReportingIpPort';
+export * from './ReportingTcpPortScanAttack';
+export * from './ReportingUser';
+export * from './ReportingWorkspaceResults';
 export * from './ScanTcpPortsRequest';
 export * from './SetPasswordRequest';
 export * from './UpdateLeechRequest';

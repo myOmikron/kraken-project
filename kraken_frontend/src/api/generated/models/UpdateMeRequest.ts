@@ -24,13 +24,22 @@ export interface UpdateMeRequest {
      * @type {string}
      * @memberof UpdateMeRequest
      */
-    displayName?: string | null;
+    username?: string | null;
     /**
      * 
      * @type {string}
      * @memberof UpdateMeRequest
      */
-    username?: string | null;
+    displayName?: string | null;
+}
+
+/**
+ * Check if a given object implements the UpdateMeRequest interface.
+ */
+export function instanceOfUpdateMeRequest(value: object): boolean {
+    let isInstance = true;
+
+    return isInstance;
 }
 
 export function UpdateMeRequestFromJSON(json: any): UpdateMeRequest {
@@ -43,8 +52,8 @@ export function UpdateMeRequestFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'displayName': !exists(json, 'display_name') ? undefined : json['display_name'],
         'username': !exists(json, 'username') ? undefined : json['username'],
+        'displayName': !exists(json, 'display_name') ? undefined : json['display_name'],
     };
 }
 
@@ -57,9 +66,8 @@ export function UpdateMeRequestToJSON(value?: UpdateMeRequest | null): any {
     }
     return {
         
-        'display_name': value.displayName,
         'username': value.username,
+        'display_name': value.displayName,
     };
 }
-
 

@@ -27,6 +27,16 @@ export interface CreateUserResponse {
     uuid: string;
 }
 
+/**
+ * Check if a given object implements the CreateUserResponse interface.
+ */
+export function instanceOfCreateUserResponse(value: object): boolean {
+    let isInstance = true;
+    isInstance = isInstance && "uuid" in value;
+
+    return isInstance;
+}
+
 export function CreateUserResponseFromJSON(json: any): CreateUserResponse {
     return CreateUserResponseFromJSONTyped(json, false);
 }
@@ -53,5 +63,4 @@ export function CreateUserResponseToJSON(value?: CreateUserResponse | null): any
         'uuid': value.uuid,
     };
 }
-
 

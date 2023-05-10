@@ -21,6 +21,24 @@ import { exists, mapValues } from '../runtime';
 export interface GetUser {
     /**
      * 
+     * @type {string}
+     * @memberof GetUser
+     */
+    uuid: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof GetUser
+     */
+    username: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof GetUser
+     */
+    displayName: string;
+    /**
+     * 
      * @type {boolean}
      * @memberof GetUser
      */
@@ -33,28 +51,24 @@ export interface GetUser {
     createdAt: Date;
     /**
      * 
-     * @type {string}
-     * @memberof GetUser
-     */
-    displayName: string;
-    /**
-     * 
      * @type {Date}
      * @memberof GetUser
      */
     lastLogin?: Date | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof GetUser
-     */
-    username: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GetUser
-     */
-    uuid: string;
+}
+
+/**
+ * Check if a given object implements the GetUser interface.
+ */
+export function instanceOfGetUser(value: object): boolean {
+    let isInstance = true;
+    isInstance = isInstance && "uuid" in value;
+    isInstance = isInstance && "username" in value;
+    isInstance = isInstance && "displayName" in value;
+    isInstance = isInstance && "admin" in value;
+    isInstance = isInstance && "createdAt" in value;
+
+    return isInstance;
 }
 
 export function GetUserFromJSON(json: any): GetUser {
@@ -67,12 +81,12 @@ export function GetUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): G
     }
     return {
         
+        'uuid': json['uuid'],
+        'username': json['username'],
+        'displayName': json['display_name'],
         'admin': json['admin'],
         'createdAt': (new Date(json['created_at'])),
-        'displayName': json['display_name'],
         'lastLogin': !exists(json, 'last_login') ? undefined : (json['last_login'] === null ? null : new Date(json['last_login'])),
-        'username': json['username'],
-        'uuid': json['uuid'],
     };
 }
 
@@ -85,13 +99,12 @@ export function GetUserToJSON(value?: GetUser | null): any {
     }
     return {
         
+        'uuid': value.uuid,
+        'username': value.username,
+        'display_name': value.displayName,
         'admin': value.admin,
         'created_at': (value.createdAt.toISOString()),
-        'display_name': value.displayName,
         'last_login': value.lastLogin === undefined ? undefined : (value.lastLogin === null ? null : value.lastLogin.toISOString()),
-        'username': value.username,
-        'uuid': value.uuid,
     };
 }
-
 
