@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
+
 import os
 import pathlib
 
-script_file = pathlib.Path(__file__)
-project_root = script_file.parent.parent
-spec = project_root / "openapi.json"
-generated = project_root / "src" / "api" / "generated"
-config = generated / "config.json"
 
-command = f"npx @openapitools/openapi-generator-cli generate -g typescript-fetch -i {spec} -o {generated} -c {config}"
-print(command)
-os.system(command)
+def main():
+    script_file = pathlib.Path(__file__)
+    project_root = script_file.parent.parent
+    spec = project_root / "openapi.json"
+    generated = project_root / "src" / "api" / "generated"
+    config = generated / "config.json"
 
-print("Patch PortOrRange.ts")
-with open(generated / "models" / "PortOrRange.ts", "w") as f:
-    f.write("""
+    command = f"npx @openapitools/openapi-generator-cli generate -g typescript-fetch -i {spec} -o {generated} -c {config}"
+    print(command)
+    os.system(command)
+
+    print("Patch PortOrRange.ts")
+
+    with open(generated / "models" / "PortOrRange.ts", "w") as f:
+        f.write("""
 export type PortOrRange = number | string;
 
 export function PortOrRangeFromJSON(json: any): PortOrRange {
@@ -33,3 +37,7 @@ export function PortOrRangeToJSON(value?: PortOrRange | null): any {
     return value;
 }
 """)
+
+
+if __name__ == '__main__':
+    main()
