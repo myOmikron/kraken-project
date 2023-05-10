@@ -12,7 +12,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen-api": "scripts/gen-api.py"
   },
   "dependencies": {
     "js-base64": "^3.7.5",
@@ -23,6 +24,7 @@
     "reactjs-popup": "^2.0.5"
   },
   "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.6.0",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
     "@vitejs/plugin-react-swc": "^3.0.0",

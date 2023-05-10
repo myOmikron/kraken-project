@@ -1,6 +1,3 @@
 node_modules/
 dist/
 .idea/
-
-# It is "contained" in the rust code
-openapi.json
