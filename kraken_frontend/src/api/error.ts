@@ -1,4 +1,5 @@
 import { Err, Ok, Result } from "../utils/result";
+import { RequiredError, ResponseError } from "./generated";
 
 export enum StatusCode {
     ArbitraryJSError = -2,
@@ -29,12 +30,18 @@ export async function handleError<T>(promise: Promise<T>): Promise<Result<T, Api
     try {
         return Ok(await promise);
     } catch (e) {
-        if (e instanceof Response) {
-            return Err(await parseError(e));
+        if (e instanceof ResponseError) {
+            return Err(await parseError(e.response));
+        } else if (e instanceof RequiredError) {
+            return Err({
+                status_code: StatusCode.JsonDecodeError,
+                message: "The server's response didn't match the spec",
+            });
         } else {
+            console.error("Unknown error occurred:", e);
             return Err({
                 status_code: StatusCode.ArbitraryJSError,
-                message: "The server's response was invalid json",
+                message: "Unknown error occurred",
             });
         }
     }
