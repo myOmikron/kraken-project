@@ -68,6 +68,10 @@ export const Api = {
             handleError(attacks.queryCertificateTransparency({ queryCertificateTransparencyRequest: attack })),
         scanTcpPorts: (attack: ScanTcpPortsRequest) =>
             handleError(attacks.scanTcpPorts({ scanTcpPortsRequest: attack })),
+        getTcpPortScanResults: (id: ID, offset: number, limit: number) =>
+            handleError(attacks.getTcpPortScanResults({ id, limit, offset })),
+        get: (id: ID) => handleError(attacks.getAttack({ id })),
+        delete: (id: ID) => handleError(attacks.deleteAttack({ id })),
     },
     auth: {
         login,

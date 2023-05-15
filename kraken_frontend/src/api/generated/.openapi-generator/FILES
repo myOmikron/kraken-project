@@ -12,6 +12,7 @@ index.ts
 models/ApiErrorResponse.ts
 models/ApiStatusCode.ts
 models/AttackResponse.ts
+models/AttackTypeSchema.ts
 models/BruteforceSubdomainsRequest.ts
 models/CreateLeechRequest.ts
 models/CreateLeechResponse.ts
@@ -21,13 +22,14 @@ models/CreateWorkspaceRequest.ts
 models/CreateWorkspaceResponse.ts
 models/FinishRegisterRequest.ts
 models/FinishRegisterRequestAllOf.ts
+models/FullWorkspace.ts
 models/GetLeech.ts
 models/GetLeechResponse.ts
 models/GetUser.ts
 models/GetUserResponse.ts
-models/GetWorkspace.ts
 models/GetWorkspaceResponse.ts
 models/LoginRequest.ts
+models/PageParams.ts
 models/PortOrRange.ts
 models/QueryCertificateTransparencyRequest.ts
 models/ReportingIpPort.ts
@@ -36,6 +38,10 @@ models/ReportingUser.ts
 models/ReportingWorkspaceResults.ts
 models/ScanTcpPortsRequest.ts
 models/SetPasswordRequest.ts
+models/SimpleAttack.ts
+models/SimpleTcpPortScanResult.ts
+models/SimpleWorkspace.ts
+models/TcpPortScanResultsPage.ts
 models/UpdateLeechRequest.ts
 models/UpdateMeRequest.ts
 models/UpdateWorkspaceRequest.ts

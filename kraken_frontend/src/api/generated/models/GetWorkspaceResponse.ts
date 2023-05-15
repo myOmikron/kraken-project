@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { GetWorkspace } from './GetWorkspace';
+import type { SimpleWorkspace } from './SimpleWorkspace';
 import {
-    GetWorkspaceFromJSON,
-    GetWorkspaceFromJSONTyped,
-    GetWorkspaceToJSON,
-} from './GetWorkspace';
+    SimpleWorkspaceFromJSON,
+    SimpleWorkspaceFromJSONTyped,
+    SimpleWorkspaceToJSON,
+} from './SimpleWorkspace';
 
 /**
  * 
@@ -28,10 +28,10 @@ import {
 export interface GetWorkspaceResponse {
     /**
      * 
-     * @type {Array<GetWorkspace>}
+     * @type {Array<SimpleWorkspace>}
      * @memberof GetWorkspaceResponse
      */
-    workspaces: Array<GetWorkspace>;
+    workspaces: Array<SimpleWorkspace>;
 }
 
 /**
@@ -54,7 +54,7 @@ export function GetWorkspaceResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'workspaces': ((json['workspaces'] as Array<any>).map(GetWorkspaceFromJSON)),
+        'workspaces': ((json['workspaces'] as Array<any>).map(SimpleWorkspaceFromJSON)),
     };
 }
 
@@ -67,7 +67,7 @@ export function GetWorkspaceResponseToJSON(value?: GetWorkspaceResponse | null):
     }
     return {
         
-        'workspaces': ((value.workspaces as Array<any>).map(GetWorkspaceToJSON)),
+        'workspaces': ((value.workspaces as Array<any>).map(SimpleWorkspaceToJSON)),
     };
 }
 
