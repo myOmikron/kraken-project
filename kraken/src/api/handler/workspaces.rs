@@ -1,15 +1,19 @@
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
+use chrono::TimeZone;
 use log::debug;
 use rorm::fields::ForeignModelByField;
+use rorm::transaction::Transaction;
 use rorm::{and, insert, query, update, Database, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::{de_optional, ApiError, ApiResult, PathId, UserResponse};
-use crate::models::{User, Workspace, WorkspaceInsert, WorkspaceMember};
+use crate::api::handler::{
+    de_optional, query_user, ApiError, ApiResult, PathId, SimpleAttack, UserResponse,
+};
+use crate::models::{Attack, User, Workspace, WorkspaceInsert, WorkspaceMember};
 
 #[derive(Deserialize, ToSchema)]
 pub(crate) struct CreateWorkspaceRequest {
@@ -76,15 +80,9 @@ pub(crate) async fn delete_workspace(
     session: Session,
     db: Data<Database>,
 ) -> ApiResult<HttpResponse> {
-    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
-
     let mut tx = db.start_transaction().await?;
 
-    let executing_user = query!(&mut tx, User)
-        .condition(User::F.uuid.equals(uuid.as_ref()))
-        .optional()
-        .await?
-        .ok_or(ApiError::SessionCorrupt)?;
+    let executing_user = query_user(&mut tx, &session).await?;
 
     let workspace = query!(&mut tx, Workspace)
         .condition(Workspace::F.id.equals(req.id as i64))
@@ -119,8 +117,9 @@ pub(crate) async fn delete_workspace(
     Ok(HttpResponse::Ok().finish())
 }
 
+/// A simple version of a workspace
 #[derive(Serialize, ToSchema)]
-pub(crate) struct GetWorkspace {
+pub(crate) struct SimpleWorkspace {
     #[schema(example = 1337)]
     pub(crate) id: i64,
     #[schema(example = "ultra-secure-workspace")]
@@ -130,9 +129,23 @@ pub(crate) struct GetWorkspace {
     pub(crate) owner: UserResponse,
 }
 
+/// A full version of a workspace
+#[derive(Serialize, ToSchema)]
+pub(crate) struct FullWorkspace {
+    #[schema(example = 1337)]
+    pub(crate) id: i64,
+    #[schema(example = "ultra-secure-workspace")]
+    pub(crate) name: String,
+    #[schema(example = "This workspace is ultra secure and should not be looked at!!")]
+    pub(crate) description: Option<String>,
+    pub(crate) owner: UserResponse,
+    pub(crate) attacks: Vec<SimpleAttack>,
+    pub(crate) members: Vec<UserResponse>,
+}
+
 #[derive(Serialize, ToSchema)]
 pub(crate) struct GetWorkspaceResponse {
-    pub(crate) workspaces: Vec<GetWorkspace>,
+    pub(crate) workspaces: Vec<SimpleWorkspace>,
 }
 
 /// Retrieve a workspace by id
@@ -140,7 +153,7 @@ pub(crate) struct GetWorkspaceResponse {
     tag = "Workspaces",
     context_path = "/api/v1",
     responses(
-        (status = 200, description = "Returns the workspace", body = GetWorkspace),
+        (status = 200, description = "Returns the workspace", body = FullWorkspace),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
@@ -152,7 +165,7 @@ pub(crate) async fn get_workspace(
     req: Path<PathId>,
     db: Data<Database>,
     session: Session,
-) -> ApiResult<Json<GetWorkspace>> {
+) -> ApiResult<Json<FullWorkspace>> {
     let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let mut tx = db.start_transaction().await?;
@@ -166,35 +179,24 @@ pub(crate) async fn get_workspace(
         .await?
         .is_some();
 
-    let w = query!(&mut tx, Workspace)
-        .condition(Workspace::F.id.equals(req.id as i64))
+    let is_owner = query!(&mut tx, (Workspace::F.id,))
+        .condition(and!(
+            Workspace::F.id.equals(req.id as i64),
+            Workspace::F.owner.equals(uuid.as_ref())
+        ))
         .optional()
         .await?
-        .ok_or(ApiError::InvalidId)?;
+        .is_some();
 
-    // User is no member of workspace, if it doesn't is the owner, return
-    if !is_member && *w.owner.key() != uuid {
-        return Err(ApiError::MissingPrivileges);
-    }
-
-    let owner = query!(&mut tx, User)
-        .condition(User::F.uuid.equals(w.owner.key().as_ref()))
-        .optional()
-        .await?
-        .ok_or(ApiError::InternalServerError)?;
+    let workspace = if is_owner || is_member {
+        get_workspace_unchecked(req.id as i64, &mut tx).await
+    } else {
+        Err(ApiError::MissingPrivileges)
+    };
 
     tx.commit().await?;
 
-    Ok(Json(GetWorkspace {
-        id: w.id,
-        name: w.name,
-        description: w.description,
-        owner: UserResponse {
-            uuid: owner.uuid,
-            username: owner.username,
-            display_name: owner.display_name,
-        },
-    }))
+    Ok(Json(workspace?))
 }
 
 /// Retrieve all workspaces owned by executing user
@@ -215,18 +217,13 @@ pub(crate) async fn get_all_workspaces(
     db: Data<Database>,
     session: Session,
 ) -> ApiResult<Json<GetWorkspaceResponse>> {
-    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
-
     let mut tx = db.start_transaction().await?;
 
-    let workspaces = query!(&mut tx, Workspace)
-        .condition(Workspace::F.owner.equals(uuid.as_ref()))
-        .all()
-        .await?;
+    let owner = query_user(&mut tx, &session).await?;
 
-    let owner = query!(&mut tx, User)
-        .condition(User::F.uuid.equals(uuid.as_ref()))
-        .one()
+    let workspaces = query!(&mut tx, Workspace)
+        .condition(Workspace::F.owner.equals(owner.uuid.as_ref()))
+        .all()
         .await?;
 
     tx.commit().await?;
@@ -234,7 +231,7 @@ pub(crate) async fn get_all_workspaces(
     Ok(Json(GetWorkspaceResponse {
         workspaces: workspaces
             .into_iter()
-            .map(|w| GetWorkspace {
+            .map(|w| SimpleWorkspace {
                 id: w.id,
                 name: w.name,
                 description: w.description,
@@ -329,7 +326,7 @@ pub(crate) async fn update_workspace(
     tag = "Admin Workspaces",
     context_path = "/api/v1/admin",
     responses(
-        (status = 200, description = "Returns the workspace with the given id", body = GetWorkspace),
+        (status = 200, description = "Returns the workspace with the given id", body = FullWorkspace),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
@@ -340,32 +337,14 @@ pub(crate) async fn update_workspace(
 pub(crate) async fn get_workspace_admin(
     req: Path<PathId>,
     db: Data<Database>,
-) -> ApiResult<Json<GetWorkspace>> {
+) -> ApiResult<Json<FullWorkspace>> {
     let mut tx = db.start_transaction().await?;
 
-    let w = query!(&mut tx, Workspace)
-        .condition(Workspace::F.id.equals(req.id as i64))
-        .optional()
-        .await?
-        .ok_or(ApiError::InvalidId)?;
-
-    let owner = query!(&mut tx, User)
-        .condition(User::F.uuid.equals(w.owner.key().as_ref()))
-        .one()
-        .await?;
+    let workspace = get_workspace_unchecked(req.id as i64, &mut tx).await;
 
     tx.commit().await?;
 
-    Ok(Json(GetWorkspace {
-        id: w.id,
-        name: w.name,
-        description: w.description,
-        owner: UserResponse {
-            uuid: owner.uuid,
-            username: owner.username,
-            display_name: owner.display_name,
-        },
-    }))
+    Ok(Json(workspace?))
 }
 
 /// Retrieve all workspaces
@@ -405,7 +384,7 @@ pub(crate) async fn get_all_workspaces_admin(
         workspaces: workspaces
             .into_iter()
             .map(
-                |(id, name, description, uuid, username, display_name)| GetWorkspace {
+                |(id, name, description, uuid, username, display_name)| SimpleWorkspace {
                     id,
                     name,
                     description,
@@ -418,4 +397,85 @@ pub(crate) async fn get_all_workspaces_admin(
             )
             .collect(),
     }))
+}
+
+/// Get a [`FullWorkspace`] by its id without permission checks
+async fn get_workspace_unchecked(id: i64, tx: &mut Transaction) -> ApiResult<FullWorkspace> {
+    let workspace = query!(&mut *tx, Workspace)
+        .condition(Workspace::F.id.equals(id))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidId)?;
+
+    let owner = query!(&mut *tx, User)
+        .condition(User::F.uuid.equals(workspace.owner.key().as_ref()))
+        .one()
+        .await?;
+
+    let attacks = query!(
+        &mut *tx,
+        (
+            Attack::F.id,
+            Attack::F.attack_type,
+            Attack::F.finished_at,
+            Attack::F.created_at,
+            Attack::F.started_from.uuid,
+            Attack::F.started_from.username,
+            Attack::F.started_from.display_name,
+        )
+    )
+    .condition(Attack::F.workspace.equals(id))
+    .all()
+    .await?
+    .into_iter()
+    .map(
+        |(attack_id, attack_type, finished_at, created_at, uuid, username, display_name)| {
+            SimpleAttack {
+                id: attack_id,
+                workspace_id: id,
+                attack_type,
+                started_from: UserResponse {
+                    uuid,
+                    username,
+                    display_name,
+                },
+                finished_at: finished_at
+                    .map(|finished_at| chrono::Utc.from_utc_datetime(&finished_at)),
+                created_at: chrono::Utc.from_utc_datetime(&created_at),
+            }
+        },
+    )
+    .collect();
+
+    let members = query!(
+        &mut *tx,
+        (
+            WorkspaceMember::F.member.uuid,
+            WorkspaceMember::F.member.username,
+            WorkspaceMember::F.member.display_name
+        )
+    )
+    .condition(WorkspaceMember::F.workspace.equals(id))
+    .all()
+    .await?
+    .into_iter()
+    .map(|(uuid, username, display_name)| UserResponse {
+        uuid,
+        username,
+        display_name,
+    })
+    .collect();
+
+    Ok(FullWorkspace {
+        id: workspace.id,
+        name: workspace.name,
+        description: workspace.description,
+        owner: UserResponse {
+            uuid: owner.uuid,
+            username: owner.username,
+            display_name: owner.display_name,
+        },
+        attacks,
+        members,
+    })
 }

@@ -15,12 +15,12 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::api::handler::{ApiError, ApiResult, PathId, UserResponse};
+use crate::api::handler::{query_user, ApiError, ApiResult, PathId, UserResponse};
 use crate::chan::{
     CertificateTransparencyEntry, RpcClients, WsManagerChan, WsManagerMessage, WsMessage,
 };
 use crate::models::{
-    Attack, AttackInsert, AttackType, TcpPortScanResult, TcpPortScanResultInsert, User, Workspace,
+    Attack, AttackInsert, AttackType, TcpPortScanResult, TcpPortScanResultInsert, Workspace,
     WorkspaceMember,
 };
 use crate::rpc::rpc_attacks;
@@ -822,7 +822,7 @@ pub(crate) async fn delete_attack(
 ) -> ApiResult<HttpResponse> {
     let mut tx = db.start_transaction().await?;
 
-    let user = get_user(&mut tx, &session).await?;
+    let user = query_user(&mut tx, &session).await?;
 
     let attack = query!(&mut tx, Attack)
         .condition(Attack::F.id.equals(req.id as i64))
@@ -846,16 +846,6 @@ pub(crate) async fn delete_attack(
     tx.commit().await?;
 
     Ok(HttpResponse::Ok().finish())
-}
-
-/// Query the user model
-async fn get_user(tx: &mut Transaction, session: &Session) -> ApiResult<User> {
-    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
-    query!(tx, User)
-        .condition(User::F.uuid.equals(uuid.as_ref()))
-        .optional()
-        .await?
-        .ok_or(ApiError::SessionCorrupt)
 }
 
 /// Does the user have access to the attack's workspace?

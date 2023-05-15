@@ -1,12 +1,15 @@
 use std::fmt::{Display, Formatter};
 
-use actix_toolbox::tb_middleware::actix_session;
+use actix_toolbox::tb_middleware::{actix_session, Session};
 use actix_web::body::BoxBody;
 use actix_web::HttpResponse;
 use log::{debug, error, info, trace, warn};
+use rorm::executor::Executor;
+use rorm::{query, Model};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_repr::Serialize_repr;
 use utoipa::{IntoParams, ToSchema};
+use uuid::Uuid;
 use webauthn_rs::prelude::WebauthnError;
 
 pub(crate) use crate::api::handler::attacks::*;
@@ -16,6 +19,7 @@ pub(crate) use crate::api::handler::reporting::*;
 pub(crate) use crate::api::handler::users::*;
 pub(crate) use crate::api::handler::websocket::*;
 pub(crate) use crate::api::handler::workspaces::*;
+use crate::models::User;
 use crate::modules::user::create::CreateUserError;
 
 mod attacks;
@@ -25,6 +29,16 @@ mod reporting;
 mod users;
 mod websocket;
 mod workspaces;
+
+/// Query the current user's model
+pub(crate) async fn query_user(db: impl Executor<'_>, session: &Session) -> ApiResult<User> {
+    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    query!(db, User)
+        .condition(User::F.uuid.equals(uuid.as_ref()))
+        .optional()
+        .await?
+        .ok_or(ApiError::SessionCorrupt)
+}
 
 /// A path with an ID
 #[derive(Deserialize, IntoParams)]
