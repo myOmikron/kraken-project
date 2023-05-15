@@ -4,11 +4,12 @@ use std::net::IpAddr;
 
 use rorm::fields::{ForeignModel, Json};
 use rorm::{DbEnum, Model, Patch};
+use serde::Serialize;
 
 use crate::models::{User, Workspace};
 
 /// The type of an attack
-#[derive(Copy, Clone, DbEnum)]
+#[derive(Copy, Clone, DbEnum, Serialize)]
 pub enum AttackType {
     /// First variant to be mapped for 0
     Undefined,

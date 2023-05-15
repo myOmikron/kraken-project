@@ -67,6 +67,9 @@ impl Modify for SecurityAddon2 {
         handler::scan_tcp_ports,
         handler::query_certificate_transparency,
         handler::report_workspace_results,
+        handler::delete_attack,
+        handler::get_attack,
+        handler::get_tcp_port_scan_results,
     ),
     components(schemas(
         handler::ApiErrorResponse,
@@ -88,6 +91,7 @@ impl Modify for SecurityAddon2 {
         handler::CreateWorkspaceRequest,
         handler::CreateWorkspaceResponse,
         handler::GetWorkspace,
+        handler::SimpleAttack,
         handler::GetWorkspaceResponse,
         handler::UpdateWorkspaceRequest,
         handler::AttackResponse,
@@ -99,6 +103,9 @@ impl Modify for SecurityAddon2 {
         handler::ReportingUser,
         handler::ReportingIpPort,
         handler::PortOrRange,
+        handler::PageParams,
+        handler::TcpPortScanResultsPage,
+        handler::SimpleTcpPortScanResult,
     )),
     modifiers(&SecurityAddon, &SecurityAddon2),
 )]

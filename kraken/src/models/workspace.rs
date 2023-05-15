@@ -2,10 +2,10 @@
 //! This module holds all database related definitions of workspace related structs
 //!
 
-use rorm::fields::ForeignModel;
-use rorm::{Model, Patch};
+use rorm::fields::{BackRef, ForeignModel};
+use rorm::{field, Model, Patch};
 
-use crate::models::User;
+use crate::models::{Attack, User};
 
 /// A workspace member has the privileges to access and modify a workspace of another user
 ///
@@ -64,6 +64,12 @@ pub struct Workspace {
     /// Timestamp when the workspace was created
     #[rorm(auto_create_time)]
     pub created_at: chrono::NaiveDateTime,
+
+    /// The workspace's members
+    pub members: BackRef<field!(WorkspaceMember::F.workspace)>,
+
+    /// All attacks started in this workspace
+    pub attacks: BackRef<field!(Attack::F.workspace)>,
 }
 
 #[derive(Patch)]

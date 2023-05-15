@@ -2,23 +2,27 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::ops::RangeInclusive;
 
 use actix_toolbox::tb_middleware::Session;
-use actix_web::web::{Data, Json};
-use actix_web::{post, HttpResponse};
-use chrono::{DateTime, NaiveDateTime, Utc};
+use actix_web::web::{Data, Json, Path, Query};
+use actix_web::{delete, get, post, HttpResponse};
+use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use futures::StreamExt;
 use ipnet::IpNet;
-use log::{error, warn};
+use log::{debug, error, warn};
 use rorm::fields::ForeignModelByField;
-use rorm::{insert, update, Database, Model};
+use rorm::transaction::Transaction;
+use rorm::{and, insert, query, update, Database, Model};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::api::handler::{ApiError, ApiResult};
+use crate::api::handler::{ApiError, ApiResult, PathId, UserResponse};
 use crate::chan::{
     CertificateTransparencyEntry, RpcClients, WsManagerChan, WsManagerMessage, WsMessage,
 };
-use crate::models::{Attack, AttackInsert, AttackType, TcpPortScanResult, TcpPortScanResultInsert};
+use crate::models::{
+    Attack, AttackInsert, AttackType, TcpPortScanResult, TcpPortScanResultInsert, User, Workspace,
+    WorkspaceMember,
+};
 use crate::rpc::rpc_attacks;
 use crate::rpc::rpc_attacks::shared::dns_record::Record;
 use crate::rpc::rpc_attacks::CertificateTransparencyRequest;
@@ -623,4 +627,256 @@ pub async fn query_certificate_transparency(
     });
 
     Ok(HttpResponse::Accepted().json(AttackResponse { attack_id: id }))
+}
+
+/// A simple version of an attack
+#[derive(Serialize, ToSchema)]
+pub(crate) struct SimpleAttack {
+    #[schema(example = 1337)]
+    pub(crate) id: i64,
+    pub(crate) workspace_id: i64,
+    pub(crate) attack_type: AttackType,
+    pub(crate) started_from: UserResponse,
+    pub(crate) finished_at: Option<DateTime<Utc>>,
+    pub(crate) created_at: DateTime<Utc>,
+}
+
+/// Retrieve an attack by id
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Returns the attack", body = SimpleAttack),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathId),
+    security(("api_key" = []))
+)]
+#[get("/attacks/{id}")]
+pub(crate) async fn get_attack(
+    req: Path<PathId>,
+    db: Data<Database>,
+    session: Session,
+) -> ApiResult<Json<SimpleAttack>> {
+    let mut tx = db.start_transaction().await?;
+
+    let attack = query!(
+        &mut tx,
+        (
+            Attack::F.id,
+            Attack::F.workspace,
+            Attack::F.attack_type,
+            Attack::F.finished_at,
+            Attack::F.created_at,
+            Attack::F.started_from.uuid,
+            Attack::F.started_from.username,
+            Attack::F.started_from.display_name,
+        )
+    )
+    .condition(Attack::F.id.equals(req.id as i64))
+    .optional()
+    .await?
+    .ok_or(ApiError::InvalidId)?;
+
+    let attack = if has_access(&mut tx, req.id as i64, &session).await? {
+        let (id, workspace, attack_type, finished_at, created_at, uuid, username, display_name) =
+            attack;
+        Ok(SimpleAttack {
+            id,
+            workspace_id: *workspace.key(),
+            attack_type,
+            started_from: UserResponse {
+                uuid,
+                username,
+                display_name,
+            },
+            finished_at: finished_at.map(|finished_at| Utc.from_utc_datetime(&finished_at)),
+            created_at: Utc.from_utc_datetime(&created_at),
+        })
+    } else {
+        Err(ApiError::MissingPrivileges)
+    };
+
+    tx.commit().await?;
+
+    Ok(Json(attack?))
+}
+
+#[derive(Deserialize, ToSchema, IntoParams)]
+pub(crate) struct PageParams {
+    /// Number of items to retrieve
+    #[schema(example = 50)]
+    limit: u64,
+
+    /// Position in the whole list to start retrieving from
+    #[schema(example = 0)]
+    offset: u64,
+}
+
+#[derive(Serialize, ToSchema)]
+#[aliases(TcpPortScanResultsPage = Page<SimpleTcpPortScanResult>)]
+pub(crate) struct Page<T> {
+    /// The page's items
+    pub(crate) items: Vec<T>,
+
+    /// The limit this page was retrieved with
+    #[schema(example = 50)]
+    pub(crate) limit: u64,
+
+    /// The offset this page was retrieved with
+    #[schema(example = 0)]
+    pub(crate) offset: u64,
+
+    /// The total number of items this page is a subset of
+    pub(crate) total: u64,
+}
+
+#[derive(Serialize, ToSchema)]
+pub(crate) struct SimpleTcpPortScanResult {
+    pub id: i64,
+    pub attack: i64,
+    pub created_at: DateTime<Utc>,
+    #[schema(value_type = String)]
+    pub address: IpAddr,
+    pub port: u16,
+}
+
+/// Retrieve a tcp port scan's results by the attack's id
+#[utoipa::path(
+tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Returns attack's results", body = TcpPortScanResultsPage),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathId, PageParams),
+    security(("api_key" = []))
+)]
+#[get("/attacks/{id}/tcpPortScanResults")]
+pub(crate) async fn get_tcp_port_scan_results(
+    path: Path<PathId>,
+    query: Query<PageParams>,
+    session: Session,
+    db: Data<Database>,
+) -> ApiResult<Json<TcpPortScanResultsPage>> {
+    let mut tx = db.start_transaction().await?;
+
+    let id = path.id as i64;
+    let PageParams { limit, offset } = query.into_inner();
+
+    let page = if !has_access(&mut tx, id, &session).await? {
+        Err(ApiError::MissingPrivileges)
+    } else {
+        let (total,) = query!(&mut tx, (TcpPortScanResult::F.id.count(),))
+            .condition(TcpPortScanResult::F.attack.equals(id))
+            .one()
+            .await?;
+        let results = query!(&mut tx, TcpPortScanResult)
+            .condition(TcpPortScanResult::F.attack.equals(id))
+            .order_asc(TcpPortScanResult::F.id)
+            .limit(limit)
+            .offset(offset)
+            .all()
+            .await?
+            .into_iter()
+            .map(|result| SimpleTcpPortScanResult {
+                id: result.id,
+                attack: *result.attack.key(),
+                created_at: Utc.from_utc_datetime(&result.created_at),
+                address: result.address.into_inner(),
+                port: result.port as u16,
+            })
+            .collect();
+        Ok(Page {
+            items: results,
+            limit,
+            offset,
+            total: total as u64,
+        })
+    };
+
+    tx.commit().await?;
+
+    Ok(Json(page?))
+}
+
+/// Delete an attack and its results
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Attack was deleted"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    params(PathId),
+    security(("api_key" = []))
+)]
+#[delete("/attacks/{id}")]
+pub(crate) async fn delete_attack(
+    req: Path<PathId>,
+    session: Session,
+    db: Data<Database>,
+) -> ApiResult<HttpResponse> {
+    let mut tx = db.start_transaction().await?;
+
+    let user = get_user(&mut tx, &session).await?;
+
+    let attack = query!(&mut tx, Attack)
+        .condition(Attack::F.id.equals(req.id as i64))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidId)?;
+
+    if user.admin || *attack.started_from.key() == user.uuid {
+        debug!("Attack {} got deleted by {}", attack.id, user.username);
+
+        rorm::delete!(&mut tx, Attack).single(&attack).await?;
+    } else {
+        debug!(
+            "User {} does not has the privileges to delete the attack {}",
+            user.username, attack.id
+        );
+
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+/// Query the user model
+async fn get_user(tx: &mut Transaction, session: &Session) -> ApiResult<User> {
+    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    query!(tx, User)
+        .condition(User::F.uuid.equals(uuid.as_ref()))
+        .optional()
+        .await?
+        .ok_or(ApiError::SessionCorrupt)
+}
+
+/// Does the user have access to the attack's workspace?
+/// I.e. is owner or member?
+async fn has_access(tx: &mut Transaction, attack_id: i64, session: &Session) -> ApiResult<bool> {
+    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+
+    let (workspace, owner) = query!(&mut *tx, (Workspace::F.id, Workspace::F.owner))
+        .condition(Workspace::F.attacks.id.equals(attack_id))
+        .one()
+        .await?;
+    if *owner.key() == uuid {
+        return Ok(true);
+    }
+
+    Ok(query!(&mut *tx, (WorkspaceMember::F.id,))
+        .condition(and!(
+            WorkspaceMember::F.workspace.equals(workspace),
+            WorkspaceMember::F.member.equals(uuid.as_ref()),
+        ))
+        .optional()
+        .await?
+        .is_some())
 }
