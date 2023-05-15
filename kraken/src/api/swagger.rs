@@ -107,6 +107,7 @@ impl Modify for SecurityAddon2 {
         handler::PageParams,
         handler::TcpPortScanResultsPage,
         handler::SimpleTcpPortScanResult,
+        handler::AttackTypeSchema,
     )),
     modifiers(&SecurityAddon, &SecurityAddon2),
 )]

@@ -635,10 +635,35 @@ pub(crate) struct SimpleAttack {
     #[schema(example = 1337)]
     pub(crate) id: i64,
     pub(crate) workspace_id: i64,
-    pub(crate) attack_type: AttackType,
+    pub(crate) attack_type: AttackTypeSchema,
     pub(crate) started_from: UserResponse,
     pub(crate) finished_at: Option<DateTime<Utc>>,
     pub(crate) created_at: DateTime<Utc>,
+}
+
+/// [Schema](ToSchema) version of [`AttackType`]
+#[derive(Copy, Clone, Serialize, ToSchema)]
+pub enum AttackTypeSchema {
+    /// First variant to be mapped for 0
+    Undefined,
+    /// Bruteforce subdomains via DNS requests
+    BruteforceSubdomains,
+    /// Scan tcp ports
+    TcpPortScan,
+    /// Query certificate transparency
+    QueryCertificateTransparency,
+}
+impl From<AttackType> for AttackTypeSchema {
+    fn from(value: AttackType) -> Self {
+        match value {
+            AttackType::Undefined => AttackTypeSchema::Undefined,
+            AttackType::TcpPortScan => AttackTypeSchema::TcpPortScan,
+            AttackType::BruteforceSubdomains => AttackTypeSchema::BruteforceSubdomains,
+            AttackType::QueryCertificateTransparency => {
+                AttackTypeSchema::QueryCertificateTransparency
+            }
+        }
+    }
 }
 
 /// Retrieve an attack by id
@@ -685,7 +710,7 @@ pub(crate) async fn get_attack(
         Ok(SimpleAttack {
             id,
             workspace_id: *workspace.key(),
-            attack_type,
+            attack_type: attack_type.into(),
             started_from: UserResponse {
                 uuid,
                 username,

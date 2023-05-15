@@ -433,7 +433,7 @@ async fn get_workspace_unchecked(id: i64, tx: &mut Transaction) -> ApiResult<Ful
             SimpleAttack {
                 id: attack_id,
                 workspace_id: id,
-                attack_type,
+                attack_type: attack_type.into(),
                 started_from: UserResponse {
                     uuid,
                     username,
