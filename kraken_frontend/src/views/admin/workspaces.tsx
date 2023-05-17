@@ -1,14 +1,14 @@
 import React from "react";
 import { Api } from "../../api/api";
 import { toast } from "react-toastify";
-import { GetWorkspace } from "../../api/generated/models";
+import { SimpleWorkspace } from "../../api/generated/models";
 import Loading from "../../components/loading";
 import { handleApiError } from "../../utils/helper";
 
 type AdminWorkspacesProps = {};
 type AdminWorkspacesState = {
     // queried data
-    workspaces?: Array<GetWorkspace>;
+    workspaces?: Array<SimpleWorkspace>;
 };
 
 /** View to expose the `/api/v1/admin/workspaces` endpoints */

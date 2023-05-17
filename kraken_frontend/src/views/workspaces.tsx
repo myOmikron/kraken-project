@@ -1,7 +1,7 @@
 import React from "react";
 import { Api } from "../api/api";
 import { check, handleApiError } from "../utils/helper";
-import { GetWorkspace } from "../api/generated/models";
+import { SimpleWorkspace } from "../api/generated/models";
 import Loading from "../components/loading";
 import Popup from "reactjs-popup";
 import Input from "../components/input";
@@ -14,10 +14,10 @@ type WorkspacesState = {
     createNew: boolean;
 
     /** Store a workspace to ask for confirmation before deleting it */
-    confirmDelete: GetWorkspace | null;
+    confirmDelete: SimpleWorkspace | null;
 
     // queried data
-    workspaces?: Array<GetWorkspace>;
+    workspaces?: Array<SimpleWorkspace>;
 
     // controlled state
     /** New workspace's name */

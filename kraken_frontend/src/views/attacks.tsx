@@ -8,7 +8,7 @@ import Checkbox from "../components/checkbox";
 import EditableList from "../components/editable-list";
 import Select from "react-select";
 import USER_CONTEXT from "../context/user";
-import { GetLeech, GetWorkspace } from "../api/generated";
+import { GetLeech, SimpleWorkspace } from "../api/generated";
 
 type AttacksProps = {};
 type AttacksState = {};
@@ -178,9 +178,9 @@ function TcpPortScanForm(props: TcpPortScanFormProps) {
     );
 }
 
-function useWorkspaces(): Array<GetWorkspace> | null;
-function useWorkspaces<T>(map: (workspace: GetWorkspace) => T): Array<T> | null;
-function useWorkspaces<T>(map?: (workspace: GetWorkspace) => T): Array<T> | null {
+function useWorkspaces(): Array<SimpleWorkspace> | null;
+function useWorkspaces<T>(map: (workspace: SimpleWorkspace) => T): Array<T> | null;
+function useWorkspaces<T>(map?: (workspace: SimpleWorkspace) => T): Array<T> | null {
     const [value, setValue] = React.useState<Array<T> | null>(null);
     React.useEffect(() => {
         Api.workspaces
