@@ -9,6 +9,7 @@ import EditableList from "../components/editable-list";
 import Select from "react-select";
 import USER_CONTEXT from "../context/user";
 import { GetLeech, SimpleWorkspace } from "../api/generated";
+import { ROUTES } from "../routes";
 
 type AttacksProps = {};
 type AttacksState = {};
@@ -58,7 +59,12 @@ export default class Attacks extends React.Component<AttacksProps, AttacksState>
                 skipIcmpCheck,
                 workspaceId: 1,
             })
-            .then(handleApiError(() => toast.success("The attack has began...")));
+            .then(
+                handleApiError(({ attackId }) => {
+                    toast.success("The attack has began...");
+                    ROUTES.ATTACK_RESULTS.visit({ id: attackId });
+                })
+            );
     }
 
     render() {
