@@ -22,6 +22,7 @@ export const ROUTES = {
         parser: { id: Number },
         render: ({ id }) => <AttackResults attackId={id} />,
     }),
+    KNOWLEDGE_BASE: ROUTER.add({ url: "knowledge", parser: {}, render: () => undefined }),
 
     KRAKEN_NETWORK: ROUTER.add({
         url: "kraken-network",

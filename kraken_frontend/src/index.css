@@ -76,6 +76,55 @@ body {
     animation: yourAnimation 0.9s step-End 0.4s 1 normal backwards;
 }
 
+.menu-item {
+    position: relative;
+    gap: 0.5em;
+    align-items: center;
+    cursor: pointer;
+    padding: 1em;
+}
+
+.menu-item.active {
+    width: calc(100% + 0.5em);
+}
+
+.menu-item.active::before {
+    content: "";
+    position: absolute;
+    left: -0.3em;
+    top: calc(50% - 0.25em);
+    border-radius: 50%;
+    border: 0.25em solid white;
+    background-color: white;
+    filter: brightness(0) invert() drop-shadow(0 0 4px var(--primary));
+}
+
+.menu-item:hover > .icon svg {
+    filter: brightness(0) invert() drop-shadow(0 0 8px var(--primary));
+}
+
+.menu-item:hover > .icon {
+    animation: bounceLR 1s infinite;
+    transform-origin: center left;
+}
+
+.menu-item-container {
+    display: flex;
+    justify-content: center;
+}
+
+.icon {
+    display: flex;
+    justify-self: center;
+    align-self: center;
+}
+
+.icon > svg {
+    transition: all 200ms;
+    width: 100%;
+    height: fit-content;
+}
+
 .content-container {
     margin-top: 1em;
     margin-left: 9em;

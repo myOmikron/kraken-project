@@ -5,6 +5,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./styling/toastify.css";
 import "./styling/components.css";
+import "./styling/animations.css";
 
 import "./index.css";
 import Background from "./views/background";
