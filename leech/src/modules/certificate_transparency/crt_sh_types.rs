@@ -1,5 +1,6 @@
 //! The types for deserializing responses from crt.sh
 
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Deserializer, Serialize};
 
 fn deserialize_name_value<'de, D>(de: D) -> Result<Vec<String>, D::Error>
@@ -23,9 +24,9 @@ pub struct CertLogEntry {
     #[serde(deserialize_with = "deserialize_name_value")]
     pub name_value: Vec<String>,
     /// The start date of the certificate
-    pub not_before: Option<chrono::NaiveDateTime>,
+    pub not_before: Option<NaiveDateTime>,
     /// The end date of the certificate
-    pub not_after: Option<chrono::NaiveDateTime>,
+    pub not_after: Option<NaiveDateTime>,
     /// The serial number of the certificate
     pub serial_number: String,
 }
