@@ -78,10 +78,8 @@ body {
 
 .menu-item {
     position: relative;
-    gap: 0.5em;
-    align-items: center;
     cursor: pointer;
-    padding: 1em;
+    padding: 0.5em;
 }
 
 .menu-item.active {
@@ -108,20 +106,51 @@ body {
     transform-origin: center left;
 }
 
+.menu-item:hover > .menu-hint {
+    color: white;
+    filter: drop-shadow(0 0 8px var(--primary));
+}
+
 .menu-item-container {
     display: flex;
     justify-content: center;
 }
 
+.menu-hint {
+    width: 100%;
+    text-align: center;
+    margin-top: 0.5em;
+    font-size: 0.7em;
+    color: var(--text);
+    transition: all 200ms;
+}
+
+.menu-seperator {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    filter: brightness(0) invert() drop-shadow(0 0 8px var(--primary));
+}
+
+.menu-seperator::before, .menu-seperator::after {
+    content: "";
+    height: 1px;
+    width: 80%;
+    background-color: white;
+    filter: brightness(0) invert() drop-shadow(0 0 8px var(--primary));
+    margin: 0.25em;
+}
+
 .icon {
     display: flex;
-    justify-self: center;
-    align-self: center;
+    justify-content: center;
+    align-items: center;
 }
 
 .icon > svg {
     transition: all 200ms;
-    width: 100%;
+    width: 80%;
     height: fit-content;
 }
 
