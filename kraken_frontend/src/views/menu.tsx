@@ -7,6 +7,7 @@ import KnowledgeIcon from "../svg/knowledge";
 import WorkspaceIcon from "../svg/workspace";
 import UsersIcon from "../svg/users";
 import UserSettingsIcon from "../svg/user_settings";
+import "../styling/menu.css";
 
 type MenuItem = "me" | "workspaces" | "attack" | "kraken" | "users_admin" | "workspaces_admin" | "knowledge";
 
@@ -25,125 +26,133 @@ export default class Menu extends React.Component<MenuProps, MenuState> {
 
     render() {
         return (
-            <div className="menu pane">
-                <div className={"menu-item-container"}>
-                    <div
-                        className={this.state.active === "workspaces" ? "menu-item active" : "menu-item"}
-                        onClick={() => {
-                            this.setState({ active: "workspaces" });
-                            ROUTES.WORKSPACES.visit({});
-                        }}
-                        onAuxClick={() => {
-                            this.setState({ active: "workspaces" });
-                            ROUTES.WORKSPACES.open({});
-                        }}
-                    >
-                        <WorkspaceIcon />
-                        <div className={"menu-hint"}>Workspaces</div>
-                    </div>
-                </div>
-                <div className={"menu-item-container"}>
-                    <div
-                        className={this.state.active === "attack" ? "menu-item active" : "menu-item"}
-                        onClick={() => {
-                            this.setState({ active: "attack" });
-                            ROUTES.ATTACKS.visit({});
-                        }}
-                        onAuxClick={() => {
-                            this.setState({ active: "attack" });
-                            ROUTES.ATTACKS.open({});
-                        }}
-                    >
-                        <AttackIcon />
-                        <div className={"menu-hint"}>Attacks</div>
-                    </div>
-                </div>
-                <div className={"menu-item-container"}>
-                    <div
-                        className={this.state.active === "knowledge" ? "menu-item active" : "menu-item"}
-                        onClick={() => {
-                            this.setState({ active: "knowledge" });
-                            ROUTES.KNOWLEDGE_BASE.visit({});
-                        }}
-                        onAuxClick={() => {
-                            this.setState({ active: "knowledge" });
-                            ROUTES.KNOWLEDGE_BASE.open({});
-                        }}
-                    >
-                        <KnowledgeIcon />
-                        <div className={"menu-hint"}>Knowledge Base</div>
-                    </div>
-                </div>
-                <div className={"menu-item-container"}>
-                    <div
-                        className={this.state.active === "me" ? "menu-item active" : "menu-item"}
-                        onClick={() => {
-                            this.setState({ active: "me" });
-                            ROUTES.ME.visit({});
-                        }}
-                        onAuxClick={() => {
-                            this.setState({ active: "me" });
-                            ROUTES.ME.open({});
-                        }}
-                    >
-                        <UserSettingsIcon />
-                        <div className={"menu-hint"}>User Settings</div>
-                    </div>
-                </div>
-                {this.context.user.admin ? (
-                    <>
-                        <div className={"menu-seperator"}>Admin</div>
-                        <div className={"menu-item-container"}>
-                            <div
-                                className={this.state.active === "kraken" ? "menu-item active" : "menu-item"}
-                                onClick={() => {
-                                    this.setState({ active: "kraken" });
-                                    ROUTES.KRAKEN_NETWORK.visit({});
-                                }}
-                                onAuxClick={() => {
-                                    this.setState({ active: "kraken" });
-                                    ROUTES.KRAKEN_NETWORK.open({});
-                                }}
-                            >
-                                <KrakenIcon />
-                                <div className={"menu-hint"}>Kraken Network</div>
-                            </div>
+            <>
+                <div className="menu pane">
+                    <div className={"menu-item-container"}>
+                        <div
+                            className={this.state.active === "workspaces" ? "menu-item active" : "menu-item"}
+                            onClick={() => {
+                                this.setState({ active: "workspaces" });
+                                ROUTES.WORKSPACES.visit({});
+                            }}
+                            onAuxClick={() => {
+                                this.setState({ active: "workspaces" });
+                                ROUTES.WORKSPACES.open({});
+                            }}
+                        >
+                            <WorkspaceIcon />
+                            <div className={"menu-hint"}>Workspaces</div>
                         </div>
-                        <div className={"menu-item-container"}>
-                            <div
-                                className={this.state.active === "users_admin" ? "menu-item active" : "menu-item"}
-                                onClick={() => {
-                                    this.setState({ active: "users_admin" });
-                                    ROUTES.ADMIN_USER_MANAGEMENT.visit({});
-                                }}
-                                onAuxClick={() => {
-                                    this.setState({ active: "users_admin" });
-                                    ROUTES.ADMIN_USER_MANAGEMENT.open({});
-                                }}
-                            >
-                                <UsersIcon />
-                                <div className={"menu-hint"}>User Controls</div>
-                            </div>
+                    </div>
+                    <div className={"menu-item-container"}>
+                        <div
+                            className={this.state.active === "attack" ? "menu-item active" : "menu-item"}
+                            onClick={() => {
+                                this.setState({ active: "attack" });
+                                ROUTES.ATTACKS.visit({});
+                            }}
+                            onAuxClick={() => {
+                                this.setState({ active: "attack" });
+                                ROUTES.ATTACKS.open({});
+                            }}
+                        >
+                            <AttackIcon />
+                            <div className={"menu-hint"}>Attacks</div>
                         </div>
-                        <div className={"menu-item-container"}>
-                            <div
-                                className={this.state.active === "workspaces_admin" ? "menu-item active" : "menu-item"}
-                                onClick={() => {
-                                    this.setState({ active: "workspaces_admin" });
-                                    ROUTES.ADMIN_WORKSPACE_MANAGEMENT.visit({});
-                                }}
-                                onAuxClick={() => {
-                                    this.setState({ active: "workspaces_admin" });
-                                    ROUTES.ADMIN_WORKSPACE_MANAGEMENT.open({});
-                                }}
-                            >
-                                <WorkspaceIcon />
-                                <div className={"menu-hint"}>Workspace Controls</div>
-                            </div>
+                    </div>
+                    <div className={"menu-item-container"}>
+                        <div
+                            className={this.state.active === "knowledge" ? "menu-item active" : "menu-item"}
+                            onClick={() => {
+                                this.setState({ active: "knowledge" });
+                                ROUTES.KNOWLEDGE_BASE.visit({});
+                            }}
+                            onAuxClick={() => {
+                                this.setState({ active: "knowledge" });
+                                ROUTES.KNOWLEDGE_BASE.open({});
+                            }}
+                        >
+                            <KnowledgeIcon />
+                            <div className={"menu-hint"}>Knowledge Base</div>
                         </div>
-                    </>
-                ) : null}
-            </div>
+                    </div>
+                    <div className={"menu-item-container"}>
+                        <div
+                            className={this.state.active === "me" ? "menu-item active" : "menu-item"}
+                            onClick={() => {
+                                this.setState({ active: "me" });
+                                ROUTES.ME.visit({});
+                            }}
+                            onAuxClick={() => {
+                                this.setState({ active: "me" });
+                                ROUTES.ME.open({});
+                            }}
+                        >
+                            <UserSettingsIcon />
+                            <div className={"menu-hint"}>User Settings</div>
+                        </div>
+                    </div>
+                    {this.context.user.admin ? (
+                        <>
+                            <div className={"menu-seperator"}>Admin</div>
+                            <div className={"menu-item-container"}>
+                                <div
+                                    className={this.state.active === "kraken" ? "menu-item active" : "menu-item"}
+                                    onClick={() => {
+                                        this.setState({ active: "kraken" });
+                                        ROUTES.KRAKEN_NETWORK.visit({});
+                                    }}
+                                    onAuxClick={() => {
+                                        this.setState({ active: "kraken" });
+                                        ROUTES.KRAKEN_NETWORK.open({});
+                                    }}
+                                >
+                                    <KrakenIcon />
+                                    <div className={"menu-hint"}>Kraken Network</div>
+                                </div>
+                            </div>
+                            <div className={"menu-item-container"}>
+                                <div
+                                    className={this.state.active === "users_admin" ? "menu-item active" : "menu-item"}
+                                    onClick={() => {
+                                        this.setState({ active: "users_admin" });
+                                        ROUTES.ADMIN_USER_MANAGEMENT.visit({});
+                                    }}
+                                    onAuxClick={() => {
+                                        this.setState({ active: "users_admin" });
+                                        ROUTES.ADMIN_USER_MANAGEMENT.open({});
+                                    }}
+                                >
+                                    <UsersIcon />
+                                    <div className={"menu-hint"}>User Controls</div>
+                                </div>
+                            </div>
+                            <div className={"menu-item-container"}>
+                                <div
+                                    className={
+                                        this.state.active === "workspaces_admin" ? "menu-item active" : "menu-item"
+                                    }
+                                    onClick={() => {
+                                        this.setState({ active: "workspaces_admin" });
+                                        ROUTES.ADMIN_WORKSPACE_MANAGEMENT.visit({});
+                                    }}
+                                    onAuxClick={() => {
+                                        this.setState({ active: "workspaces_admin" });
+                                        ROUTES.ADMIN_WORKSPACE_MANAGEMENT.open({});
+                                    }}
+                                >
+                                    <WorkspaceIcon />
+                                    <div className={"menu-hint"}>Workspace Controls</div>
+                                </div>
+                            </div>
+                        </>
+                    ) : null}
+                </div>
+
+                <div className={"workspace-selector-container pane"}>
+                    <WorkspaceIcon />
+                </div>
+            </>
         );
     }
 }
