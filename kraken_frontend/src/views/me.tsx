@@ -6,6 +6,8 @@ import "../styling/me.css";
 import Input from "../components/input";
 import { check, handleApiError } from "../utils/helper";
 import USER_CONTEXT, { resetUser } from "../context/user";
+import UserSettingsIcon from "../svg/user_settings";
+import { GetUser } from "../api/generated";
 
 type MeProps = {};
 type MeState = {
@@ -16,6 +18,9 @@ type MeState = {
     newPwd: string;
     /** Repeated new password */
     repPwd: string;
+    username: string;
+    displayName: string;
+    user: GetUser;
 };
 
 export default class Me extends React.Component<MeProps, MeState> {
@@ -23,39 +28,58 @@ export default class Me extends React.Component<MeProps, MeState> {
         oldPwd: "",
         newPwd: "",
         repPwd: "",
+        username: "",
+        displayName: "",
+        user: {
+            displayName: "",
+            username: "",
+            admin: false,
+            uuid: "",
+            createdAt: new Date(),
+            lastLogin: null,
+        },
     };
 
     static contextType = USER_CONTEXT;
     declare context: React.ContextType<typeof USER_CONTEXT>;
 
-    render() {
+    componentDidMount() {
         const { user } = this.context;
+        this.setState({ username: user.username, displayName: user.displayName, user });
+    }
 
-        return (
-            <div className="pane me">
-                <h1 className="heading neon">{user.displayName}</h1>
-                <h2 className="heading neon">{user.username}</h2>
-                {user.admin ? <h3 className="heading neon">{"<Admin>"}</h3> : null}
-                <hr />
-                <form
-                    className="change-pwd"
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        this.changePwd();
-                    }}
-                >
-                    <h2 className="heading neon">Change Password</h2>
-                    <label>Current Password:</label>
-                    <Input type="password" value={this.state.oldPwd} onChange={(oldPwd) => this.setState({ oldPwd })} />
-                    <label>New Password:</label>
-                    <Input type="password" value={this.state.newPwd} onChange={(newPwd) => this.setState({ newPwd })} />
-                    <label>Confirm Password:</label>
-                    <Input type="password" value={this.state.repPwd} onChange={(repPwd) => this.setState({ repPwd })} />
-                    <button type="submit" className="button">
-                        Change
-                    </button>
-                </form>
-            </div>
+    async updateAccount() {
+        const { username, displayName, user } = this.state;
+        if (username.length === 0) {
+            toast.error("Username must not be empty");
+            return;
+        }
+
+        if (displayName.length === 0) {
+            toast.error("Display name must not be empty");
+            return;
+        }
+
+        if (username === user.username && displayName === user.displayName) {
+            toast.error("No changes detected");
+            return;
+        }
+
+        let changes = {
+            username: username !== user.username ? username : null,
+            displayName: displayName !== user.displayName ? displayName : null,
+        };
+
+        (await Api.user.update(changes)).match(
+            (_) => {
+                user.displayName = displayName;
+                user.username = username;
+                this.setState({ user });
+                toast.success("Account data updated");
+            },
+            (err) => {
+                toast.error(err.message);
+            }
         );
     }
 
@@ -74,6 +98,71 @@ export default class Me extends React.Component<MeProps, MeState> {
                 toast.success("Changed password successfully");
                 resetUser();
             })
+        );
+    }
+
+    render() {
+        return (
+            <div className="pane me">
+                <UserSettingsIcon />
+                <form
+                    method="post"
+                    onSubmit={async (e) => {
+                        e.preventDefault();
+                        await this.updateAccount();
+                    }}
+                >
+                    <h1 className={"heading"}>User settings</h1>
+                    <div className={"me-settings"}>
+                        <div>Username</div>
+                        <Input
+                            value={this.state.displayName}
+                            onChange={(v) => {
+                                this.setState({ displayName: v });
+                            }}
+                        />
+                        <div>Displayname</div>
+                        <Input
+                            value={this.state.username}
+                            onChange={(v) => {
+                                this.setState({ username: v });
+                            }}
+                        />
+                        <button className={"button"}>Save</button>
+                    </div>
+                    <hr />
+                    <form
+                        className="change-pwd"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            this.changePwd();
+                        }}
+                    >
+                        <h2 className="heading neon">Change Password</h2>
+                        <label>Current Password:</label>
+                        <Input
+                            type="password"
+                            value={this.state.oldPwd}
+                            onChange={(oldPwd) => this.setState({ oldPwd })}
+                        />
+                        <label>New Password:</label>
+                        <Input
+                            type="password"
+                            value={this.state.newPwd}
+                            onChange={(newPwd) => this.setState({ newPwd })}
+                        />
+                        <label>Confirm Password:</label>
+                        <Input
+                            type="password"
+                            value={this.state.repPwd}
+                            onChange={(repPwd) => this.setState({ repPwd })}
+                        />
+                        <button type="submit" className="button">
+                            Change
+                        </button>
+                    </form>
+                </form>
+            </div>
         );
     }
 }

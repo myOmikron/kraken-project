@@ -1,12 +1,17 @@
 .me {
-    align-items: center;
+    display: grid;
+    grid-template-columns: 1fr 3fr;
+    gap: 3em;
 }
 
-.me > hr {
-    width: 100%;
+.me-settings {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1em;
 }
 
-.me > .change-pwd {
+.change-pwd {
     display: flex;
     flex-direction: column;
+    width: 20em;
 }
