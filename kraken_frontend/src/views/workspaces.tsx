@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import "../styling/workspaces.css";
 import WorkspaceIcon from "../svg/workspace";
 import Checkbox from "../components/checkbox";
+import USER_CONTEXT from "../context/user";
 
 type Sorting = "none" | "name" | "createdAt" | "lastModified";
 
@@ -46,6 +47,8 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
         onlyMember: false,
         sorting: "none",
     };
+
+    static contextType = USER_CONTEXT;
 
     componentDidMount() {
         this.fetchState();
@@ -176,9 +179,24 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
                     <div className={"workspace-container"}>
                         {workspaces
                             .filter((e) => {
-                                if (this.state.search === "") return true;
+                                let include = true;
 
-                                return e.name.includes(this.state.search);
+                                if (this.state.search === "") include = true;
+                                else include = e.name.includes(this.state.search);
+
+                                if (!include) {
+                                    return false;
+                                }
+
+                                if (this.state.onlyOwner) {
+                                    // @ts-ignore
+                                    include = e.owner.uuid === this.context.user.uuid;
+                                } else if (this.state.onlyMember) {
+                                    // @ts-ignore
+                                    include = e.owner.uuid !== this.context.user.uuid;
+                                }
+
+                                return include;
                             })
                             .map((w) => {
                                 return (
