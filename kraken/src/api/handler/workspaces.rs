@@ -1,7 +1,7 @@
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
-use chrono::TimeZone;
+use chrono::{DateTime, TimeZone, Utc};
 use log::debug;
 use rorm::fields::ForeignModelByField;
 use rorm::transaction::Transaction;
@@ -127,6 +127,7 @@ pub(crate) struct SimpleWorkspace {
     #[schema(example = "This workspace is ultra secure and should not be looked at!!")]
     pub(crate) description: Option<String>,
     pub(crate) owner: UserResponse,
+    pub(crate) created_at: DateTime<Utc>,
 }
 
 /// A full version of a workspace
@@ -141,6 +142,7 @@ pub(crate) struct FullWorkspace {
     pub(crate) owner: UserResponse,
     pub(crate) attacks: Vec<SimpleAttack>,
     pub(crate) members: Vec<UserResponse>,
+    pub(crate) created_at: DateTime<Utc>,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -240,6 +242,7 @@ pub(crate) async fn get_all_workspaces(
                     username: owner.username.clone(),
                     display_name: owner.display_name.clone(),
                 },
+                created_at: w.created_at.and_utc(),
             })
             .collect(),
     }))
@@ -370,6 +373,7 @@ pub(crate) async fn get_all_workspaces_admin(
             Workspace::F.id,
             Workspace::F.name,
             Workspace::F.description,
+            Workspace::F.created_at,
             Workspace::F.owner.uuid,
             Workspace::F.owner.username,
             Workspace::F.owner.display_name
@@ -384,15 +388,18 @@ pub(crate) async fn get_all_workspaces_admin(
         workspaces: workspaces
             .into_iter()
             .map(
-                |(id, name, description, uuid, username, display_name)| SimpleWorkspace {
-                    id,
-                    name,
-                    description,
-                    owner: UserResponse {
-                        uuid,
-                        username,
-                        display_name,
-                    },
+                |(id, name, description, created_at, uuid, username, display_name)| {
+                    SimpleWorkspace {
+                        id,
+                        name,
+                        description,
+                        owner: UserResponse {
+                            uuid,
+                            username,
+                            display_name,
+                        },
+                        created_at: created_at.and_utc(),
+                    }
                 },
             )
             .collect(),
@@ -439,9 +446,8 @@ async fn get_workspace_unchecked(id: i64, tx: &mut Transaction) -> ApiResult<Ful
                     username,
                     display_name,
                 },
-                finished_at: finished_at
-                    .map(|finished_at| chrono::Utc.from_utc_datetime(&finished_at)),
-                created_at: chrono::Utc.from_utc_datetime(&created_at),
+                finished_at: finished_at.map(|finished_at| Utc.from_utc_datetime(&finished_at)),
+                created_at: Utc.from_utc_datetime(&created_at),
             }
         },
     )
@@ -477,5 +483,6 @@ async fn get_workspace_unchecked(id: i64, tx: &mut Transaction) -> ApiResult<Ful
         },
         attacks,
         members,
+        created_at: workspace.created_at.and_utc(),
     })
 }

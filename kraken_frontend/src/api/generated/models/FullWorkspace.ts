@@ -68,6 +68,12 @@ export interface FullWorkspace {
      * @memberof FullWorkspace
      */
     members: Array<UserResponse>;
+    /**
+     * 
+     * @type {Date}
+     * @memberof FullWorkspace
+     */
+    createdAt: Date;
 }
 
 /**
@@ -80,6 +86,7 @@ export function instanceOfFullWorkspace(value: object): boolean {
     isInstance = isInstance && "owner" in value;
     isInstance = isInstance && "attacks" in value;
     isInstance = isInstance && "members" in value;
+    isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
 }
@@ -100,6 +107,7 @@ export function FullWorkspaceFromJSONTyped(json: any, ignoreDiscriminator: boole
         'owner': UserResponseFromJSON(json['owner']),
         'attacks': ((json['attacks'] as Array<any>).map(SimpleAttackFromJSON)),
         'members': ((json['members'] as Array<any>).map(UserResponseFromJSON)),
+        'createdAt': (new Date(json['created_at'])),
     };
 }
 
@@ -118,6 +126,7 @@ export function FullWorkspaceToJSON(value?: FullWorkspace | null): any {
         'owner': UserResponseToJSON(value.owner),
         'attacks': ((value.attacks as Array<any>).map(SimpleAttackToJSON)),
         'members': ((value.members as Array<any>).map(UserResponseToJSON)),
+        'created_at': (value.createdAt.toISOString()),
     };
 }
 

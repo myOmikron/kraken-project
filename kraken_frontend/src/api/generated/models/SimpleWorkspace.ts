@@ -50,6 +50,12 @@ export interface SimpleWorkspace {
      * @memberof SimpleWorkspace
      */
     owner: UserResponse;
+    /**
+     * 
+     * @type {Date}
+     * @memberof SimpleWorkspace
+     */
+    createdAt: Date;
 }
 
 /**
@@ -60,6 +66,7 @@ export function instanceOfSimpleWorkspace(value: object): boolean {
     isInstance = isInstance && "id" in value;
     isInstance = isInstance && "name" in value;
     isInstance = isInstance && "owner" in value;
+    isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
 }
@@ -78,6 +85,7 @@ export function SimpleWorkspaceFromJSONTyped(json: any, ignoreDiscriminator: boo
         'name': json['name'],
         'description': !exists(json, 'description') ? undefined : json['description'],
         'owner': UserResponseFromJSON(json['owner']),
+        'createdAt': (new Date(json['created_at'])),
     };
 }
 
@@ -94,6 +102,7 @@ export function SimpleWorkspaceToJSON(value?: SimpleWorkspace | null): any {
         'name': value.name,
         'description': value.description,
         'owner': UserResponseToJSON(value.owner),
+        'created_at': (value.createdAt.toISOString()),
     };
 }
 

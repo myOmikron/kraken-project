@@ -189,6 +189,8 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
                                             <span>{w.owner.displayName}</span>
                                             <span>Description:</span>
                                             <span>{w.description}</span>
+                                            <span>Created at:</span>
+                                            <span>{w.createdAt.toLocaleString()}</span>
                                         </div>
                                     </div>
                                 );
