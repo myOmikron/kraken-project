@@ -3,7 +3,6 @@ import { Api } from "../api/api";
 import { check, handleApiError } from "../utils/helper";
 import { SimpleWorkspace } from "../api/generated";
 import Loading from "../components/loading";
-import Popup from "reactjs-popup";
 import Input from "../components/input";
 import Textarea from "../components/textarea";
 import { toast } from "react-toastify";
@@ -17,9 +16,6 @@ type WorkspacesProps = {};
 type WorkspacesState = {
     /** Toggle modal to create a new workspace */
     createNew: boolean;
-
-    /** Store a workspace to ask for confirmation before deleting it */
-    confirmDelete: SimpleWorkspace | null;
 
     // queried data
     workspaces?: Array<SimpleWorkspace>;
@@ -42,7 +38,6 @@ type WorkspacesState = {
 /** View to expose the `/api/v1/workspaces` endpoints */
 export default class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
     state: WorkspacesState = {
-        confirmDelete: null,
         createNew: false,
         newDesc: "",
         newName: "",
@@ -63,19 +58,6 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
                     workspaces,
                 })
             )
-        );
-    }
-
-    deleteWorkspace() {
-        const { confirmDelete } = this.state;
-        if (confirmDelete === null) return;
-
-        Api.workspaces.delete(confirmDelete.id).then(
-            handleApiError(() => {
-                toast.success("Deleted workspace");
-                this.setState({ confirmDelete: null });
-                this.fetchState();
-            })
         );
     }
 
@@ -141,7 +123,7 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
                             }}
                         />
                         <div className={"workspace-filter-ownership"}>
-                            <h3 className={"heading"}>Ownership</h3>
+                            <h3 className={"heading"}>Filter</h3>
                             <div className={"workspace-filter-ownership-table"}>
                                 <span>Owner</span>
                                 <Checkbox
@@ -213,24 +195,6 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
                             })}
                     </div>
                 </div>
-                <Popup
-                    modal
-                    nested
-                    open={this.state.confirmDelete !== null}
-                    onClose={() => this.setState({ confirmDelete: null })}
-                >
-                    <div className="popup-content pane">
-                        <h1 className="heading neon">
-                            Are you sure you want to delete {this.state.confirmDelete?.name || ""}?
-                        </h1>
-                        <button className="button" type="button" onClick={() => this.deleteWorkspace()}>
-                            Delete
-                        </button>
-                        <button className="button" type="button" onClick={() => this.setState({ confirmDelete: null })}>
-                            Chancel
-                        </button>
-                    </div>
-                </Popup>
             </>
         );
     }
