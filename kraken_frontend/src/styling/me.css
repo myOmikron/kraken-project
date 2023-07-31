@@ -2,6 +2,7 @@
     display: grid;
     grid-template-columns: 15em 3fr;
     gap: 3em;
+    animation: yourAnimation 0.3s step-End 0.4s 1 normal backwards;
 }
 
 .me-settings {
