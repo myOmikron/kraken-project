@@ -6,7 +6,7 @@ import Loading from "../components/loading";
 import Input from "../components/input";
 import Textarea from "../components/textarea";
 import { toast } from "react-toastify";
-import "../styling/workspaces.css";
+import "../styling/workspace-overview.css";
 import WorkspaceIcon from "../svg/workspace";
 import Checkbox from "../components/checkbox";
 import USER_CONTEXT from "../context/user";
@@ -37,7 +37,7 @@ type WorkspacesState = {
 };
 
 /** View to expose the `/api/v1/workspaces` endpoints */
-export default class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
+export default class WorkspaceOverview extends React.Component<WorkspacesProps, WorkspacesState> {
     state: WorkspacesState = {
         createNew: false,
         newDesc: "",

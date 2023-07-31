@@ -5,17 +5,17 @@ import KrakenNetwork from "./views/kraken-network";
 import Me from "./views/me";
 import AdminUsers from "./views/admin/users";
 import AdminWorkspaces from "./views/admin/workspaces";
-import Workspaces from "./views/workspaces";
 import AdminGuard from "./components/admin-guard";
 import Attacks from "./views/attacks";
 import AttackResults from "./views/attack-results";
+import WorkspaceOverview from "./views/workspace-overview";
 
 export const ROUTER = new Router();
 
 export const ROUTES = {
     HOME: ROUTER.add({ url: "", parser: {}, render: () => <Home /> }),
     ME: ROUTER.add({ url: "me", parser: {}, render: () => <Me /> }),
-    WORKSPACES: ROUTER.add({ url: "workspaces", parser: {}, render: () => <Workspaces /> }),
+    WORKSPACES: ROUTER.add({ url: "workspaces", parser: {}, render: () => <WorkspaceOverview /> }),
     ATTACKS: ROUTER.add({ url: "attacks", parser: {}, render: () => <Attacks /> }),
     ATTACK_RESULTS: ROUTER.add({
         url: "attacks/{id}",
