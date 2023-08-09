@@ -46,7 +46,7 @@ toml = { version = "~0.7" }
 serde_json = { version = "~1" }
 ipnet = { version = "~2" }
 # Time library
-chrono = { version = "~0.4", default-features = false, features = ["serde"] }
+chrono = { version = ">=0.4.20", default-features = false, features = ["serde"] }
 
 # Lazy initialization
 once_cell = { version = "~1" }
