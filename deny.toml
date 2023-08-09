@@ -8,6 +8,8 @@ notice = "warn"
 ignore = [
     # Only postgres is used
     "RUSTSEC-2022-0090",
+    # Vulnerable code is not used
+    "RUSTSEC-2020-0071",
 ]
 
 [licenses]
