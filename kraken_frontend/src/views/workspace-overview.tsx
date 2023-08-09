@@ -10,6 +10,7 @@ import "../styling/workspace-overview.css";
 import WorkspaceIcon from "../svg/workspace";
 import Checkbox from "../components/checkbox";
 import USER_CONTEXT from "../context/user";
+import { ROUTES } from "../routes";
 
 type Sorting = "none" | "name" | "createdAt" | "lastModified";
 
@@ -86,11 +87,11 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
 
         return (
             <>
-                <div className={"workspace-outer-container"}>
-                    <div className={"workspace-creation pane"}>
+                <div className={"workspace-list-outer-container"}>
+                    <div className={"workspace-list-creation pane"}>
                         <WorkspaceIcon />
                         <form
-                            className={"workspace-creation-form"}
+                            className={"workspace-list-creation-form"}
                             method={"post"}
                             onSubmit={async (e) => {
                                 e.preventDefault();
@@ -98,7 +99,7 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                             }}
                         >
                             <h2 className={"heading"}>Create a new workspace</h2>
-                            <div className={"workspace-creation-table"}>
+                            <div className={"workspace-list-creation-table"}>
                                 <span>Name</span>
                                 <Input
                                     value={this.state.newName}
@@ -125,9 +126,9 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                                 this.setState({ search: v });
                             }}
                         />
-                        <div className={"workspace-filter-ownership"}>
+                        <div className={"workspace-list-filter-ownership"}>
                             <h3 className={"heading"}>Filter</h3>
-                            <div className={"workspace-filter-ownership-table"}>
+                            <div className={"workspace-list-filter-ownership-table"}>
                                 <span>Owner</span>
                                 <Checkbox
                                     value={this.state.onlyOwner}
@@ -144,9 +145,9 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                                 />
                             </div>
                         </div>
-                        <div className={"workspace-sorting"}>
+                        <div className={"workspace-list-sorting"}>
                             <h3 className={"heading"}>Sorting</h3>
-                            <div className={"workspace-sorting-table"}>
+                            <div className={"workspace-list-sorting-table"}>
                                 <span>Name</span>
                                 <Checkbox
                                     value={this.state.sorting === "name"}
@@ -176,7 +177,7 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                             </div>
                         </div>
                     </div>
-                    <div className={"workspace-container"}>
+                    <div className={"workspace-list-container"}>
                         {workspaces
                             .filter((e) => {
                                 let include = true;
@@ -200,9 +201,14 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                             })
                             .map((w) => {
                                 return (
-                                    <div className={"pane workspace"}>
+                                    <div
+                                        className={"pane workspace-list-item"}
+                                        onClick={() => {
+                                            ROUTES.WORKSPACE.visit({ id: w.id });
+                                        }}
+                                    >
                                         <h3 className={"heading"}>{w.name}</h3>
-                                        <div className={"workspace-table"}>
+                                        <div className={"workspace-list-table"}>
                                             <span>Owner:</span>
                                             <span>{w.owner.displayName}</span>
                                             <span>Description:</span>

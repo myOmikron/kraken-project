@@ -1,0 +1,35 @@
+.workspace-outer-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    animation: yourAnimation 0.3s step-End 0.4s 1 normal backwards;
+}
+
+.workspace-heading > h2 {
+    margin: 0;
+}
+
+.workspace-section-selector {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 1em;
+}
+
+.workspace-section-selector > .pane {
+    padding: 1em 2em;
+    cursor: pointer;
+    transition: all 200ms;
+}
+
+.workspace-section-selector > .pane:hover {
+    box-shadow: 0 0 25em var(--primary-op), inset 0 0 10em #0cf3, inset 0 0 0.5em #0ff2, 0 0 1em var(--primary-op);
+}
+
+.workspace-section-selector h3 {
+    margin: 0;
+}
+
+.workspace-selected-tab {
+    filter: drop-shadow(0 0 0 var(--primary));
+}

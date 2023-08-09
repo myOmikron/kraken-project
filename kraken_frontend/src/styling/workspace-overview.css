@@ -1,39 +1,39 @@
-.workspace-outer-container {
+.workspace-list-outer-container {
     display: grid;
     grid-gap: 1em;
     animation: yourAnimation 0.3s step-End 0.4s 1 normal backwards;
 }
 
-.workspace-creation {
+.workspace-list-creation {
     display: flex;
     flex-direction: row;
     gap: 2em;
 }
 
-.workspace-creation > .icon {
+.workspace-list-creation > .icon {
     width: 10em;
     padding: 0 2em;
 }
 
-.workspace-creation-form {
+.workspace-list-creation-form {
     display: flex;
     flex-direction: column;
     width: 100%;
     align-items: flex-start;
 }
 
-.workspace-creation-table {
+.workspace-list-creation-table {
     display: grid;
     gap: 0.5em;
     grid-template-columns: 8em 20em;
 }
 
-.workspace-creation-table > .button:last-of-type {
+.workspace-list-creation-table > .button:last-of-type {
     margin-top: 1em;
     grid-column: 1 / span 2;
 }
 
-.workspace-creation-table > textarea {
+.workspace-list-creation-table > textarea {
     height: 5em;
     resize: none;
 }
@@ -46,60 +46,60 @@
     padding: 1em 2em;
 }
 
-.workspace-filter-ownership {
+.workspace-list-filter-ownership {
     display: flex;
     gap: 2em;
     align-items: center;
 }
 
-.workspace-filter-ownership > .heading {
+.workspace-list-filter-ownership > .heading {
     margin: 0;
 }
 
-.workspace-filter-ownership-table {
+.workspace-list-filter-ownership-table {
     display: grid;
     grid-template-columns: 1fr 1fr;
     justify-content: center;
     align-items: center;
 }
 
-.workspace-sorting {
+.workspace-list-sorting {
     display: flex;
     gap: 2em;
     align-items: center;
 }
 
-.workspace-sorting > .heading {
+.workspace-list-sorting > .heading {
     margin: 0;
 }
 
-.workspace-sorting-table {
+.workspace-list-sorting-table {
     display: grid;
     grid-template-columns: 3fr 1fr 1em 3fr 1fr;
     align-items: center;
 }
 
-.workspace-container {
+.workspace-list-container {
     display: flex;
     flex-wrap: wrap;
     gap: 1em;
 }
 
-.workspace {
+.workspace-list-item {
     cursor: pointer;
     width: 20em;
     transition: all 200ms;
 }
 
-.workspace:hover {
+.workspace-list-item:hover {
     box-shadow: 0 0 25em var(--primary-op), inset 0 0 10em #0cf3, inset 0 0 0.5em #0ff2, 0 0 1em var(--primary-op);
 }
 
-.workspace > .heading {
+.workspace-list-item > .heading {
     margin: 0 0 1em 0;
 }
 
-.workspace-table {
+.workspace-list-table {
     display: grid;
     gap: 0.25em;
     grid-template-columns: 1fr 2fr;
