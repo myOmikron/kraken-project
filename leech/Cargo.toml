@@ -65,7 +65,7 @@ trust-dns-resolver = { version = "~0.22", features = ["dns-over-https-rustls", "
 # icmp library
 surge-ping = { version = "~0.8" }
 # increase resource limit
-rlimit = { version = "~0.9" }
+rlimit = { version = "~0.10" }
 
 # http request library
 reqwest = { version = "~0.11", features = ["json", "trust-dns", "rustls-tls-native-roots"] }
