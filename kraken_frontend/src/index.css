@@ -65,3 +65,9 @@ body {
 .neon {
     filter: brightness(0) invert() drop-shadow(0 0 4px var(--primary));
 }
+
+@media screen and (max-width: 2000px) {
+    body {
+        font-size: 0.9em;
+    }
+}
