@@ -21,16 +21,16 @@ import { exists, mapValues } from '../runtime';
 export interface SimpleTcpPortScanResult {
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof SimpleTcpPortScanResult
      */
-    id: number;
+    uuid: string;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof SimpleTcpPortScanResult
      */
-    attack: number;
+    attack: string;
     /**
      * 
      * @type {Date}
@@ -56,7 +56,7 @@ export interface SimpleTcpPortScanResult {
  */
 export function instanceOfSimpleTcpPortScanResult(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "id" in value;
+    isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "attack" in value;
     isInstance = isInstance && "createdAt" in value;
     isInstance = isInstance && "address" in value;
@@ -75,7 +75,7 @@ export function SimpleTcpPortScanResultFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'id': json['id'],
+        'uuid': json['uuid'],
         'attack': json['attack'],
         'createdAt': (new Date(json['created_at'])),
         'address': json['address'],
@@ -92,7 +92,7 @@ export function SimpleTcpPortScanResultToJSON(value?: SimpleTcpPortScanResult | 
     }
     return {
         
-        'id': value.id,
+        'uuid': value.uuid,
         'attack': value.attack,
         'created_at': (value.createdAt.toISOString()),
         'address': value.address,

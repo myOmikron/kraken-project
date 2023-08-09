@@ -4,6 +4,7 @@
 
 use rorm::fields::{BackRef, ForeignModel};
 use rorm::{field, Model, Patch};
+use uuid::Uuid;
 
 use crate::models::{Attack, User};
 
@@ -42,8 +43,8 @@ pub(crate) struct WorkspaceMemberInsert {
 #[derive(Model)]
 pub struct Workspace {
     /// Unique identifier of the workspace
-    #[rorm(id)]
-    pub id: i64,
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
 
     /// Name of the workspace
     #[rorm(max_length = 255)]
@@ -75,6 +76,7 @@ pub struct Workspace {
 #[derive(Patch)]
 #[rorm(model = "Workspace")]
 pub(crate) struct WorkspaceInsert {
+    pub(crate) uuid: Uuid,
     pub(crate) name: String,
     pub(crate) description: Option<String>,
     pub(crate) owner: ForeignModel<User>,

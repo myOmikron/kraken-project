@@ -204,7 +204,7 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                                     <div
                                         className={"pane workspace-list-item"}
                                         onClick={() => {
-                                            ROUTES.WORKSPACE.visit({ id: w.id });
+                                            ROUTES.WORKSPACE.visit({ uuid: w.uuid });
                                         }}
                                     >
                                         <h3 className={"heading"}>{w.name}</h3>

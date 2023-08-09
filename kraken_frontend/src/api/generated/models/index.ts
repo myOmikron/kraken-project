@@ -2,15 +2,12 @@
 /* eslint-disable */
 export * from './ApiErrorResponse';
 export * from './ApiStatusCode';
-export * from './AttackResponse';
 export * from './AttackTypeSchema';
 export * from './BruteforceSubdomainsRequest';
 export * from './CreateLeechRequest';
-export * from './CreateLeechResponse';
 export * from './CreateUserRequest';
 export * from './CreateUserResponse';
 export * from './CreateWorkspaceRequest';
-export * from './CreateWorkspaceResponse';
 export * from './FinishRegisterRequest';
 export * from './FinishRegisterRequestAllOf';
 export * from './FullWorkspace';
@@ -37,3 +34,4 @@ export * from './UpdateLeechRequest';
 export * from './UpdateMeRequest';
 export * from './UpdateWorkspaceRequest';
 export * from './UserResponse';
+export * from './UuidResponse';

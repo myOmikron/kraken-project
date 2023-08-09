@@ -4,8 +4,10 @@ use log::error;
 use rorm::{insert, query, update, Database, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use uuid::Uuid;
 
-use crate::api::handler::{ApiError, ApiResult, PathId};
+use crate::api::handler::users::PathUuid;
+use crate::api::handler::{ApiError, ApiResult, UuidResponse};
 use crate::chan::{RpcManagerChannel, RpcManagerEvent};
 use crate::models::{Leech, LeechInsert};
 use crate::modules::uri::check_leech_address;
@@ -20,12 +22,6 @@ pub(crate) struct CreateLeechRequest {
     pub(crate) description: Option<String>,
 }
 
-#[derive(Serialize, ToSchema)]
-pub(crate) struct CreateLeechResponse {
-    #[schema(example = 1)]
-    pub(crate) id: i64,
-}
-
 /// Create a leech
 ///
 /// The `name` parameter must be unique.
@@ -36,7 +32,7 @@ pub(crate) struct CreateLeechResponse {
     tag = "Leech management",
     context_path = "/api/v1/admin",
     responses(
-        (status = 200, description = "Leech got created successfully", body = CreateLeechResponse),
+        (status = 200, description = "Leech got created successfully", body = UuidResponse),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse)
     ),
@@ -48,7 +44,7 @@ pub(crate) async fn create_leech(
     req: Json<CreateLeechRequest>,
     db: Data<Database>,
     rpc_manager_channel: Data<RpcManagerChannel>,
-) -> ApiResult<Json<CreateLeechResponse>> {
+) -> ApiResult<Json<UuidResponse>> {
     let mut tx = db.start_transaction().await?;
 
     if !check_leech_address(&req.address) {
@@ -73,9 +69,10 @@ pub(crate) async fn create_leech(
         return Err(ApiError::NameAlreadyExists);
     }
 
-    let id = insert!(&mut tx, LeechInsert)
+    let uuid = insert!(&mut tx, LeechInsert)
         .return_primary_key()
         .single(&LeechInsert {
+            uuid: Uuid::new_v4(),
             name: req.name.clone(),
             address: req.address.clone(),
             description: req.description.clone(),
@@ -85,14 +82,17 @@ pub(crate) async fn create_leech(
     tx.commit().await?;
 
     // Notify rpc manager about new leech
-    if let Err(err) = rpc_manager_channel.send(RpcManagerEvent::Created(id)).await {
+    if let Err(err) = rpc_manager_channel
+        .send(RpcManagerEvent::Created(uuid))
+        .await
+    {
         error!("Error sending to rpc manager: {err}");
     }
 
-    Ok(Json(CreateLeechResponse { id }))
+    Ok(Json(UuidResponse { uuid }))
 }
 
-/// Delete a leech by its id
+/// Delete a leech by its uuid
 #[utoipa::path(
     tag = "Leech management",
     context_path = "/api/v1/admin",
@@ -101,32 +101,32 @@ pub(crate) async fn create_leech(
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse)
     ),
-    params(PathId),
+    params(PathUuid),
     security(("api_key" = []))
 )]
-#[delete("/leeches/{id}")]
+#[delete("/leeches/{uuid}")]
 pub(crate) async fn delete_leech(
-    path: Path<PathId>,
+    path: Path<PathUuid>,
     db: Data<Database>,
     rpc_manager_channel: Data<RpcManagerChannel>,
 ) -> ApiResult<HttpResponse> {
     let mut tx = db.start_transaction().await?;
 
-    query!(&mut tx, (Leech::F.id,))
-        .condition(Leech::F.id.equals(path.id as i64))
+    query!(&mut tx, (Leech::F.uuid,))
+        .condition(Leech::F.uuid.equals(path.uuid.as_ref()))
         .optional()
         .await?
-        .ok_or(ApiError::InvalidId)?;
+        .ok_or(ApiError::InvalidUuid)?;
 
     rorm::delete!(&mut tx, Leech)
-        .condition(Leech::F.id.equals(path.id as i64))
+        .condition(Leech::F.uuid.equals(path.uuid.as_ref()))
         .await?;
 
     tx.commit().await?;
 
     // Notify rpc manager about deleted leech
     if let Err(err) = rpc_manager_channel
-        .send(RpcManagerEvent::Deleted(path.id as i64))
+        .send(RpcManagerEvent::Deleted(path.uuid))
         .await
     {
         error!("Error sending to rpc manager: {err}");
@@ -137,8 +137,7 @@ pub(crate) async fn delete_leech(
 
 #[derive(Serialize, ToSchema)]
 pub(crate) struct GetLeech {
-    #[schema(example = 1)]
-    id: i64,
+    uuid: Uuid,
     #[schema(example = "leech-01")]
     name: String,
     #[schema(example = "https://10.13.37.1:8081")]
@@ -154,19 +153,22 @@ pub(crate) struct GetLeech {
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse)
     ),
-    params(PathId),
+    params(PathUuid),
     security(("api_key" = []))
 )]
-#[get("/leeches/{id}")]
-pub(crate) async fn get_leech(req: Path<PathId>, db: Data<Database>) -> ApiResult<Json<GetLeech>> {
+#[get("/leeches/{uuid}")]
+pub(crate) async fn get_leech(
+    req: Path<PathUuid>,
+    db: Data<Database>,
+) -> ApiResult<Json<GetLeech>> {
     let leech = query!(db.as_ref(), Leech)
-        .condition(Leech::F.id.equals(req.id as i64))
+        .condition(Leech::F.uuid.equals(req.uuid.as_ref()))
         .optional()
         .await?
-        .ok_or(ApiError::InvalidId)?;
+        .ok_or(ApiError::InvalidUuid)?;
 
     Ok(Json(GetLeech {
-        id: leech.id,
+        uuid: leech.uuid,
         name: leech.name,
         address: leech.address,
     }))
@@ -196,7 +198,7 @@ pub(crate) async fn get_all_leeches(db: Data<Database>) -> ApiResult<Json<GetLee
         leeches: leeches
             .into_iter()
             .map(|l| GetLeech {
-                id: l.id,
+                uuid: l.uuid,
                 name: l.name,
                 address: l.address,
             })
@@ -230,13 +232,13 @@ pub(crate) struct UpdateLeechRequest {
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse)
     ),
-    params(PathId),
+    params(PathUuid),
     request_body = UpdateLeechRequest,
     security(("api_key" = []))
 )]
-#[put("/leeches/{id}")]
+#[put("/leeches/{uuid}")]
 pub(crate) async fn update_leech(
-    path: Path<PathId>,
+    path: Path<PathUuid>,
     req: Json<UpdateLeechRequest>,
     db: Data<Database>,
     rpc_manager_channel: Data<RpcManagerChannel>,
@@ -245,11 +247,11 @@ pub(crate) async fn update_leech(
 
     let req = req.into_inner();
 
-    query!(&mut tx, (Leech::F.id,))
-        .condition(Leech::F.id.equals(path.id as i64))
+    query!(&mut tx, (Leech::F.uuid,))
+        .condition(Leech::F.uuid.equals(path.uuid.as_ref()))
         .optional()
         .await?
-        .ok_or(ApiError::InvalidId)?;
+        .ok_or(ApiError::InvalidUuid)?;
 
     if let Some(address) = &req.address {
         if !check_leech_address(address) {
@@ -271,7 +273,7 @@ pub(crate) async fn update_leech(
 
     // Notify rpc manager about updated leech
     if let Err(err) = rpc_manager_channel
-        .send(RpcManagerEvent::Updated(path.id as i64))
+        .send(RpcManagerEvent::Updated(path.uuid))
         .await
     {
         error!("Error sending to rpc manager: {err}");

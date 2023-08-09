@@ -27,11 +27,11 @@ import {
  */
 export interface ReportingTcpPortScanAttack {
     /**
-     * The attacks database id
-     * @type {number}
+     * The attacks database uuid
+     * @type {string}
      * @memberof ReportingTcpPortScanAttack
      */
-    id: number;
+    uuid: string;
     /**
      * When the attack was created i.e. started
      * @type {Date}
@@ -57,7 +57,7 @@ export interface ReportingTcpPortScanAttack {
  */
 export function instanceOfReportingTcpPortScanAttack(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "id" in value;
+    isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "createdAt" in value;
     isInstance = isInstance && "finishedAt" in value;
     isInstance = isInstance && "results" in value;
@@ -75,7 +75,7 @@ export function ReportingTcpPortScanAttackFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'id': json['id'],
+        'uuid': json['uuid'],
         'createdAt': (new Date(json['created_at'])),
         'finishedAt': (new Date(json['finished_at'])),
         'results': ((json['results'] as Array<any>).map(ReportingIpPortFromJSON)),
@@ -91,7 +91,7 @@ export function ReportingTcpPortScanAttackToJSON(value?: ReportingTcpPortScanAtt
     }
     return {
         
-        'id': value.id,
+        'uuid': value.uuid,
         'created_at': (value.createdAt.toISOString()),
         'finished_at': (value.finishedAt.toISOString()),
         'results': ((value.results as Array<any>).map(ReportingIpPortToJSON)),

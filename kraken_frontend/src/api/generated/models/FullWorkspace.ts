@@ -34,10 +34,10 @@ import {
 export interface FullWorkspace {
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof FullWorkspace
      */
-    id: number;
+    uuid: string;
     /**
      * 
      * @type {string}
@@ -81,7 +81,7 @@ export interface FullWorkspace {
  */
 export function instanceOfFullWorkspace(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "id" in value;
+    isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "name" in value;
     isInstance = isInstance && "owner" in value;
     isInstance = isInstance && "attacks" in value;
@@ -101,7 +101,7 @@ export function FullWorkspaceFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
-        'id': json['id'],
+        'uuid': json['uuid'],
         'name': json['name'],
         'description': !exists(json, 'description') ? undefined : json['description'],
         'owner': UserResponseFromJSON(json['owner']),
@@ -120,7 +120,7 @@ export function FullWorkspaceToJSON(value?: FullWorkspace | null): any {
     }
     return {
         
-        'id': value.id,
+        'uuid': value.uuid,
         'name': value.name,
         'description': value.description,
         'owner': UserResponseToJSON(value.owner),

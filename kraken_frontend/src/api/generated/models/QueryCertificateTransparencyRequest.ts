@@ -21,10 +21,10 @@ import { exists, mapValues } from '../runtime';
 export interface QueryCertificateTransparencyRequest {
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof QueryCertificateTransparencyRequest
      */
-    leechId: number;
+    leechUuid: string;
     /**
      * 
      * @type {string}
@@ -51,10 +51,10 @@ export interface QueryCertificateTransparencyRequest {
     retryInterval: number;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof QueryCertificateTransparencyRequest
      */
-    workspaceId: number;
+    workspaceUuid: string;
 }
 
 /**
@@ -62,12 +62,12 @@ export interface QueryCertificateTransparencyRequest {
  */
 export function instanceOfQueryCertificateTransparencyRequest(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "leechId" in value;
+    isInstance = isInstance && "leechUuid" in value;
     isInstance = isInstance && "target" in value;
     isInstance = isInstance && "includeExpired" in value;
     isInstance = isInstance && "maxRetries" in value;
     isInstance = isInstance && "retryInterval" in value;
-    isInstance = isInstance && "workspaceId" in value;
+    isInstance = isInstance && "workspaceUuid" in value;
 
     return isInstance;
 }
@@ -82,12 +82,12 @@ export function QueryCertificateTransparencyRequestFromJSONTyped(json: any, igno
     }
     return {
         
-        'leechId': json['leech_id'],
+        'leechUuid': json['leech_uuid'],
         'target': json['target'],
         'includeExpired': json['include_expired'],
         'maxRetries': json['max_retries'],
         'retryInterval': json['retry_interval'],
-        'workspaceId': json['workspace_id'],
+        'workspaceUuid': json['workspace_uuid'],
     };
 }
 
@@ -100,12 +100,12 @@ export function QueryCertificateTransparencyRequestToJSON(value?: QueryCertifica
     }
     return {
         
-        'leech_id': value.leechId,
+        'leech_uuid': value.leechUuid,
         'target': value.target,
         'include_expired': value.includeExpired,
         'max_retries': value.maxRetries,
         'retry_interval': value.retryInterval,
-        'workspace_id': value.workspaceId,
+        'workspace_uuid': value.workspaceUuid,
     };
 }
 

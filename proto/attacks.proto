@@ -9,7 +9,7 @@ import "google/protobuf/timestamp.proto";
  */
 message BruteforceSubdomainRequest {
   // A unique id that identifier the attack
-  uint64 attack_id = 1;
+  string attack_uuid = 1;
   // The domain to use as base name. It shouldn't end in a . like DNS names.
   string domain = 2;
   // Path to a wordlist that can be used for subdomain enumeration.
@@ -33,7 +33,7 @@ message BruteforceSubdomainResponse {
 
 message TcpPortScanRequest {
   // A unique id that identifier the attack
-  uint64 attack_id = 1;
+  string attack_uuid = 1;
   // Valid IPv4 or IPv6 addresses
   repeated shared.Address targets = 2;
   // List of single ports and port ranges

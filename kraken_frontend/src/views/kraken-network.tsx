@@ -94,7 +94,7 @@ export default class KrakenNetwork extends React.Component<KrakenNetworkProps, K
                             }
                         }}
                     >
-                        <th>{l.id}</th>
+                        <th>{l.uuid}</th>
                         <th>{l.name}</th>
                         <th>{l.address}</th>
                         <th>

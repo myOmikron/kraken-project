@@ -10,8 +10,8 @@ import {
     UpdateLeechRequest,
     UpdateMeRequest,
     UpdateWorkspaceRequest,
-} from "./generated/models";
-import { Configuration } from "./generated/runtime";
+} from "./generated";
+import { Configuration } from "./generated";
 import {
     AdminWorkspacesApi,
     AttacksApi,
@@ -19,7 +19,7 @@ import {
     UserAdminManagementApi,
     UserManagementApi,
     WorkspacesApi,
-} from "./generated/apis";
+} from "./generated";
 
 /** Database id i.e. and u32 */
 export type ID = number;
@@ -49,16 +49,16 @@ export const Api = {
         },
         workspaces: {
             all: () => handleError(adminWorkspaces.getAllWorkspacesAdmin()),
-            get: (id: ID) => handleError(adminWorkspaces.getWorkspaceAdmin({ id })),
+            get: (uuid: UUID) => handleError(adminWorkspaces.getWorkspaceAdmin({ uuid })),
         },
         leeches: {
             all: () => handleError(leechManagement.getAllLeeches()),
             create: (leech: CreateLeechRequest) =>
                 handleError(leechManagement.createLeech({ createLeechRequest: leech })),
-            get: (id: ID) => handleError(leechManagement.getLeech({ id })),
-            update: (id: ID, leech: UpdateLeechRequest) =>
-                handleError(leechManagement.updateLeech({ id, updateLeechRequest: leech })),
-            delete: (id: ID) => handleError(leechManagement.deleteLeech({ id })),
+            get: (uuid: UUID) => handleError(leechManagement.getLeech({ uuid })),
+            update: (uuid: UUID, leech: UpdateLeechRequest) =>
+                handleError(leechManagement.updateLeech({ uuid, updateLeechRequest: leech })),
+            delete: (uuid: UUID) => handleError(leechManagement.deleteLeech({ uuid })),
         },
     },
     attacks: {
@@ -68,10 +68,10 @@ export const Api = {
             handleError(attacks.queryCertificateTransparency({ queryCertificateTransparencyRequest: attack })),
         scanTcpPorts: (attack: ScanTcpPortsRequest) =>
             handleError(attacks.scanTcpPorts({ scanTcpPortsRequest: attack })),
-        getTcpPortScanResults: (id: ID, offset: number, limit: number) =>
-            handleError(attacks.getTcpPortScanResults({ id, limit, offset })),
-        get: (id: ID) => handleError(attacks.getAttack({ id })),
-        delete: (id: ID) => handleError(attacks.deleteAttack({ id })),
+        getTcpPortScanResults: (uuid: UUID, offset: number, limit: number) =>
+            handleError(attacks.getTcpPortScanResults({ uuid, limit, offset })),
+        get: (uuid: UUID) => handleError(attacks.getAttack({ uuid })),
+        delete: (uuid: UUID) => handleError(attacks.deleteAttack({ uuid })),
     },
     auth: {
         login,
@@ -90,9 +90,9 @@ export const Api = {
         all: () => handleError(workspaces.getAllWorkspaces()),
         create: (workspace: CreateWorkspaceRequest) =>
             handleError(workspaces.createWorkspace({ createWorkspaceRequest: workspace })),
-        get: (id: ID) => handleError(workspaces.getWorkspace({ id })),
-        update: (id: ID, workspace: UpdateWorkspaceRequest) =>
-            handleError(workspaces.updateWorkspace({ id, updateWorkspaceRequest: workspace })),
-        delete: (id: ID) => handleError(workspaces.deleteWorkspace({ id })),
+        get: (uuid: UUID) => handleError(workspaces.getWorkspace({ uuid })),
+        update: (uuid: UUID, workspace: UpdateWorkspaceRequest) =>
+            handleError(workspaces.updateWorkspace({ uuid, updateWorkspaceRequest: workspace })),
+        delete: (uuid: UUID) => handleError(workspaces.deleteWorkspace({ uuid })),
     },
 };

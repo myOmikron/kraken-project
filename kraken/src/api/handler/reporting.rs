@@ -10,7 +10,7 @@ use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::{ApiError, ApiResult, PathId};
+use crate::api::handler::{ApiError, ApiResult, PathUuid};
 use crate::models::{Attack, TcpPortScanResult, Workspace};
 
 #[derive(Serialize, ToSchema)]
@@ -24,9 +24,8 @@ pub(crate) struct ReportingWorkspaceResults {
 
 #[derive(Serialize, ToSchema)]
 pub(crate) struct ReportingTcpPortScanAttack {
-    /// The attacks database id
-    #[schema(example = 1337)]
-    id: i64,
+    /// The attacks database uuid
+    uuid: Uuid,
 
     /// When the attack was created i.e. started
     created_at: DateTime<Utc>,
@@ -72,28 +71,28 @@ pub(crate) struct ReportingIpPort {
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    params(PathId),
+    params(PathUuid),
     security(("bearer_token" = []))
 )]
-#[get("/reporting/{id}")]
+#[get("/reporting/{uuid}")]
 pub(crate) async fn report_workspace_results(
-    req: Path<PathId>,
+    req: Path<PathUuid>,
     db: Data<Database>,
 ) -> ApiResult<Json<ReportingWorkspaceResults>> {
-    let id = req.into_inner().id as i64;
+    let uuid = req.into_inner().uuid;
     let mut tx = db.start_transaction().await?;
 
     let mut attackers: HashMap<Uuid, ReportingUser> = HashMap::new();
 
     // Check workspace to exist
-    let (_,) = query!(&mut tx, (Workspace::F.id,))
-        .condition(Workspace::F.id.equals(id))
+    let (_,) = query!(&mut tx, (Workspace::F.uuid,))
+        .condition(Workspace::F.uuid.equals(uuid.as_ref()))
         .optional()
         .await?
-        .ok_or(ApiError::InvalidId)?;
+        .ok_or(ApiError::InvalidUuid)?;
 
     // Query all tcp port scan results
-    let mut tcp_port_scan_results: HashMap<i64, Vec<ReportingIpPort>> = HashMap::new();
+    let mut tcp_port_scan_results: HashMap<Uuid, Vec<ReportingIpPort>> = HashMap::new();
     let mut stream = query!(
         &mut tx,
         (
@@ -102,7 +101,7 @@ pub(crate) async fn report_workspace_results(
             TcpPortScanResult::F.port
         )
     )
-    .condition(TcpPortScanResult::F.attack.workspace.equals(id))
+    .condition(TcpPortScanResult::F.attack.workspace.equals(uuid.as_ref()))
     .stream();
     while let Some(result) = stream.next().await {
         let (attack, address, port) = result?;
@@ -121,21 +120,21 @@ pub(crate) async fn report_workspace_results(
     let mut stream = query!(
         &mut tx,
         (
-            Attack::F.id,
+            Attack::F.uuid,
             Attack::F.created_at,
             Attack::F.finished_at,
-            Attack::F.started_from.uuid,
-            Attack::F.started_from.username,
-            Attack::F.started_from.display_name
+            Attack::F.started_by.uuid,
+            Attack::F.started_by.username,
+            Attack::F.started_by.display_name
         )
     )
-    .condition(Attack::F.workspace.equals(id))
+    .condition(Attack::F.workspace.equals(uuid.as_ref()))
     .stream();
     while let Some(result) = stream.next().await {
         let (attack, created_at, finished_at, uuid, username, display_name) = result?;
         if let Some(finished_at) = finished_at {
             tcp_port_scan_attacks.push(ReportingTcpPortScanAttack {
-                id: attack,
+                uuid: attack,
                 created_at: Utc.from_utc_datetime(&created_at),
                 finished_at: Utc.from_utc_datetime(&finished_at),
                 results: tcp_port_scan_results.remove(&attack).unwrap_or_default(),

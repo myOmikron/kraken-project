@@ -11,15 +11,12 @@ apis/index.ts
 index.ts
 models/ApiErrorResponse.ts
 models/ApiStatusCode.ts
-models/AttackResponse.ts
 models/AttackTypeSchema.ts
 models/BruteforceSubdomainsRequest.ts
 models/CreateLeechRequest.ts
-models/CreateLeechResponse.ts
 models/CreateUserRequest.ts
 models/CreateUserResponse.ts
 models/CreateWorkspaceRequest.ts
-models/CreateWorkspaceResponse.ts
 models/FinishRegisterRequest.ts
 models/FinishRegisterRequestAllOf.ts
 models/FullWorkspace.ts
@@ -46,5 +43,6 @@ models/UpdateLeechRequest.ts
 models/UpdateMeRequest.ts
 models/UpdateWorkspaceRequest.ts
 models/UserResponse.ts
+models/UuidResponse.ts
 models/index.ts
 runtime.ts

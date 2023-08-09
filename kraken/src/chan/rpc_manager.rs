@@ -10,12 +10,13 @@ use tokio::sync::{mpsc, RwLock};
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
 use tonic::transport::{Channel, Endpoint};
+use uuid::Uuid;
 
 use crate::models::Leech;
 use crate::rpc::rpc_attacks::req_attack_service_client::ReqAttackServiceClient;
 
 pub(crate) type RpcManagerChannel = Sender<RpcManagerEvent>;
-pub(crate) type RpcClients = Data<RwLock<HashMap<i64, ReqAttackServiceClient<Channel>>>>;
+pub(crate) type RpcClients = Data<RwLock<HashMap<Uuid, ReqAttackServiceClient<Channel>>>>;
 
 const CLIENT_RETRY_INTERVAL: Duration = Duration::from_secs(10);
 
@@ -32,7 +33,7 @@ pub async fn rpc_client_loop(leech: Leech, rpc_clients: RpcClients) {
         Err(err) => {
             warn!(
                 "Invalid leech address for leech {}: {}: {err}",
-                leech.id, leech.address
+                leech.uuid, leech.address
             );
 
             return;
@@ -49,7 +50,7 @@ pub async fn rpc_client_loop(leech: Leech, rpc_clients: RpcClients) {
             Err(err) => {
                 warn!(
                     "Couldn't connect to leech {}: {err}. Retrying in {} seconds.",
-                    leech.id,
+                    leech.uuid,
                     CLIENT_RETRY_INTERVAL.as_secs()
                 );
             }
@@ -61,7 +62,7 @@ pub async fn rpc_client_loop(leech: Leech, rpc_clients: RpcClients) {
     let client = ReqAttackServiceClient::new(chan);
 
     let mut write = rpc_clients.write().await;
-    write.insert(leech.id, client);
+    write.insert(leech.uuid, client);
 }
 
 /**
@@ -72,11 +73,11 @@ as the RpcManager must be able to retrieve the new state.
  */
 pub enum RpcManagerEvent {
     /// Leech got deleted.
-    Deleted(i64),
+    Deleted(Uuid),
     /// Leech got created.
-    Created(i64),
+    Created(Uuid),
     /// Leech got updated.
-    Updated(i64),
+    Updated(Uuid),
 }
 
 /**
@@ -99,13 +100,13 @@ pub async fn start_rpc_manager(db: Database) -> Result<(RpcManagerChannel, RpcCl
 
     let clients = rpc_clients.clone();
     tokio::spawn(async move {
-        let mut client_join_handles: HashMap<i64, JoinHandle<()>> = HashMap::new();
+        let mut client_join_handles: HashMap<Uuid, JoinHandle<()>> = HashMap::new();
 
         for leech in leeches {
-            let leech_id = leech.id;
-            debug!("Spawning rpc client loop for {leech_id}");
+            let leech_uuid = leech.uuid;
+            debug!("Spawning rpc client loop for {leech_uuid}");
             let join_handle = tokio::spawn(rpc_client_loop(leech, clients.clone()));
-            client_join_handles.insert(leech_id, join_handle);
+            client_join_handles.insert(leech_uuid, join_handle);
         }
 
         while let Some(event) = rx.recv().await {
@@ -117,29 +118,29 @@ pub async fn start_rpc_manager(db: Database) -> Result<(RpcManagerChannel, RpcCl
                         join_handle.abort();
                     }
                 }
-                RpcManagerEvent::Created(id) => {
+                RpcManagerEvent::Created(uuid) => {
                     if let Ok(Some(leech)) = query!(&db, Leech)
-                        .condition(Leech::F.id.equals(id))
+                        .condition(Leech::F.uuid.equals(uuid.as_ref()))
                         .optional()
                         .await
                     {
-                        debug!("Starting rpc client loop for {id}");
+                        debug!("Starting rpc client loop for {uuid}");
                         let join_handle = tokio::spawn(rpc_client_loop(leech, clients.clone()));
-                        client_join_handles.insert(id, join_handle);
+                        client_join_handles.insert(uuid, join_handle);
                     }
                 }
-                RpcManagerEvent::Updated(id) => {
-                    if let Some(join_handle) = client_join_handles.get_mut(&id) {
+                RpcManagerEvent::Updated(uuid) => {
+                    if let Some(join_handle) = client_join_handles.get_mut(&uuid) {
                         // TODO: Graceful shutdown instead of killing
-                        debug!("Stopping rpc client loop for {id}");
+                        debug!("Stopping rpc client loop for {uuid}");
                         join_handle.abort();
 
                         if let Ok(Some(leech)) = query!(&db, Leech)
-                            .condition(Leech::F.id.equals(id))
+                            .condition(Leech::F.uuid.equals(uuid.as_ref()))
                             .optional()
                             .await
                         {
-                            debug!("Starting rpc client loop for {id}");
+                            debug!("Starting rpc client loop for {uuid}");
                             *join_handle = tokio::spawn(rpc_client_loop(leech, clients.clone()));
                         }
                     }

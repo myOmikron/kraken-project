@@ -29,7 +29,7 @@ import {
 } from '../models';
 
 export interface GetWorkspaceAdminRequest {
-    id: number;
+    uuid: string;
 }
 
 /**
@@ -70,8 +70,8 @@ export class AdminWorkspacesApi extends runtime.BaseAPI {
      * Retrieve a workspace by id
      */
     async getWorkspaceAdminRaw(requestParameters: GetWorkspaceAdminRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FullWorkspace>> {
-        if (requestParameters.id === null || requestParameters.id === undefined) {
-            throw new runtime.RequiredError('id','Required parameter requestParameters.id was null or undefined when calling getWorkspaceAdmin.');
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getWorkspaceAdmin.');
         }
 
         const queryParameters: any = {};
@@ -79,7 +79,7 @@ export class AdminWorkspacesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/api/v1/admin/workspaces/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters.id))),
+            path: `/api/v1/admin/workspaces/{uuid}`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,

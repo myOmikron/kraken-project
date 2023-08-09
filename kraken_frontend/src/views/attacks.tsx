@@ -29,12 +29,12 @@ export default class Attacks extends React.Component<AttacksProps, AttacksState>
             else return port;
         });
         const leech = form.leech?.value || null;
-        const workspace = form.workspace?.value || NaN;
+        const workspace = form.workspace?.value || "";
 
         if (
             !check([
                 [leech !== null, "Not implemented"], // TODO
-                [!isNaN(workspace), "Missing workspace"],
+                [workspace === "", "Missing workspace"],
                 [true, "Targets must be valid ips"], // TODO checks
                 [true, "Exclude must be valid ips"],
                 [true, "Ports must be valid port numbers or ranges"],
@@ -48,7 +48,7 @@ export default class Attacks extends React.Component<AttacksProps, AttacksState>
 
         Api.attacks
             .scanTcpPorts({
-                leechId: leech || 0, // TODO
+                leechUuid: leech || "", // TODO
                 targets,
                 exclude,
                 ports,
@@ -57,12 +57,12 @@ export default class Attacks extends React.Component<AttacksProps, AttacksState>
                 timeout,
                 concurrentLimit,
                 skipIcmpCheck,
-                workspaceId: 1,
+                workspaceUuid: workspace,
             })
             .then(
-                handleApiError(({ attackId }) => {
+                handleApiError(({ uuid }) => {
                     toast.success("The attack has began...");
-                    ROUTES.ATTACK_RESULTS.visit({ id: attackId });
+                    ROUTES.ATTACK_RESULTS.visit({ uuid });
                 })
             );
     }
@@ -77,8 +77,8 @@ export default class Attacks extends React.Component<AttacksProps, AttacksState>
 }
 
 type TcpPortScanFormValues = {
-    leech: { value: number; label: string } | null;
-    workspace: { value: number; label: string } | null;
+    leech: { value: string; label: string } | null;
+    workspace: { value: string; label: string } | null;
     targets: Array<string>;
     exclude: Array<string>;
     ports: Array<string>;
@@ -94,8 +94,8 @@ type TcpPortScanFormProps = {
 function TcpPortScanForm(props: TcpPortScanFormProps) {
     const { onSubmit } = props;
 
-    const [leech, setLeech] = React.useState<{ value: number; label: string } | null>(null);
-    const [workspace, setWorkspace] = React.useState<{ value: number; label: string } | null>(null);
+    const [leech, setLeech] = React.useState<{ value: string; label: string } | null>(null);
+    const [workspace, setWorkspace] = React.useState<{ value: string; label: string } | null>(null);
     const [targets, setTargets] = React.useState<Array<string>>([]);
     const [exclude, setExclude] = React.useState<Array<string>>([]);
     const [ports, setPorts] = React.useState<Array<string>>([]);
@@ -108,8 +108,8 @@ function TcpPortScanForm(props: TcpPortScanFormProps) {
     const {
         user: { admin },
     } = React.useContext(USER_CONTEXT);
-    const workspaces = useWorkspaces(({ id, name }) => ({ value: id, label: name }));
-    const leeches = useLeeches(admin, ({ id, name }) => ({ value: id, label: name }));
+    const workspaces = useWorkspaces(({ uuid, name }) => ({ value: uuid, label: name }));
+    const leeches = useLeeches(admin, ({ uuid, name }) => ({ value: uuid, label: name }));
 
     return (
         <form

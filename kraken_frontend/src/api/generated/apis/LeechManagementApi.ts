@@ -17,24 +17,24 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   CreateLeechRequest,
-  CreateLeechResponse,
   GetLeech,
   GetLeechResponse,
   UpdateLeechRequest,
+  UuidResponse,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
     CreateLeechRequestFromJSON,
     CreateLeechRequestToJSON,
-    CreateLeechResponseFromJSON,
-    CreateLeechResponseToJSON,
     GetLeechFromJSON,
     GetLeechToJSON,
     GetLeechResponseFromJSON,
     GetLeechResponseToJSON,
     UpdateLeechRequestFromJSON,
     UpdateLeechRequestToJSON,
+    UuidResponseFromJSON,
+    UuidResponseToJSON,
 } from '../models';
 
 export interface CreateLeechOperationRequest {
@@ -42,15 +42,15 @@ export interface CreateLeechOperationRequest {
 }
 
 export interface DeleteLeechRequest {
-    id: number;
+    uuid: string;
 }
 
 export interface GetLeechRequest {
-    id: number;
+    uuid: string;
 }
 
 export interface UpdateLeechOperationRequest {
-    id: number;
+    uuid: string;
     updateLeechRequest: UpdateLeechRequest;
 }
 
@@ -63,7 +63,7 @@ export class LeechManagementApi extends runtime.BaseAPI {
      * Create a leech  The `name` parameter must be unique.  `address` must be a valid address including a scheme and port. Currently only https and http are supported as scheme.
      * Create a leech
      */
-    async createLeechRaw(requestParameters: CreateLeechOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CreateLeechResponse>> {
+    async createLeechRaw(requestParameters: CreateLeechOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
         if (requestParameters.createLeechRequest === null || requestParameters.createLeechRequest === undefined) {
             throw new runtime.RequiredError('createLeechRequest','Required parameter requestParameters.createLeechRequest was null or undefined when calling createLeech.');
         }
@@ -82,25 +82,25 @@ export class LeechManagementApi extends runtime.BaseAPI {
             body: CreateLeechRequestToJSON(requestParameters.createLeechRequest),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => CreateLeechResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
     }
 
     /**
      * Create a leech  The `name` parameter must be unique.  `address` must be a valid address including a scheme and port. Currently only https and http are supported as scheme.
      * Create a leech
      */
-    async createLeech(requestParameters: CreateLeechOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CreateLeechResponse> {
+    async createLeech(requestParameters: CreateLeechOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
         const response = await this.createLeechRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Delete a leech by its id
-     * Delete a leech by its id
+     * Delete a leech by its uuid
+     * Delete a leech by its uuid
      */
     async deleteLeechRaw(requestParameters: DeleteLeechRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.id === null || requestParameters.id === undefined) {
-            throw new runtime.RequiredError('id','Required parameter requestParameters.id was null or undefined when calling deleteLeech.');
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling deleteLeech.');
         }
 
         const queryParameters: any = {};
@@ -108,7 +108,7 @@ export class LeechManagementApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/api/v1/admin/leeches/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters.id))),
+            path: `/api/v1/admin/leeches/{uuid}`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
@@ -118,8 +118,8 @@ export class LeechManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete a leech by its id
-     * Delete a leech by its id
+     * Delete a leech by its uuid
+     * Delete a leech by its uuid
      */
     async deleteLeech(requestParameters: DeleteLeechRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteLeechRaw(requestParameters, initOverrides);
@@ -158,8 +158,8 @@ export class LeechManagementApi extends runtime.BaseAPI {
      * Retrieve a leech by its id
      */
     async getLeechRaw(requestParameters: GetLeechRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetLeech>> {
-        if (requestParameters.id === null || requestParameters.id === undefined) {
-            throw new runtime.RequiredError('id','Required parameter requestParameters.id was null or undefined when calling getLeech.');
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getLeech.');
         }
 
         const queryParameters: any = {};
@@ -167,7 +167,7 @@ export class LeechManagementApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/api/v1/admin/leeches/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters.id))),
+            path: `/api/v1/admin/leeches/{uuid}`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -190,8 +190,8 @@ export class LeechManagementApi extends runtime.BaseAPI {
      * Update a leech by its id
      */
     async updateLeechRaw(requestParameters: UpdateLeechOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.id === null || requestParameters.id === undefined) {
-            throw new runtime.RequiredError('id','Required parameter requestParameters.id was null or undefined when calling updateLeech.');
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling updateLeech.');
         }
 
         if (requestParameters.updateLeechRequest === null || requestParameters.updateLeechRequest === undefined) {
@@ -205,7 +205,7 @@ export class LeechManagementApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
-            path: `/api/v1/admin/leeches/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters.id))),
+            path: `/api/v1/admin/leeches/{uuid}`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,

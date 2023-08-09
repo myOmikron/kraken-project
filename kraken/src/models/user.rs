@@ -50,9 +50,9 @@ pub(crate) struct UserInsert {
 /// A security key (yubikey, e.g.) of a user
 #[derive(Model)]
 pub struct UserKey {
-    /// ID of the key
-    #[rorm(id)]
-    pub id: i64,
+    /// Uuid of the key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
     /// Name of the key
     #[rorm(max_length = 255)]
     pub name: String,
@@ -65,6 +65,7 @@ pub struct UserKey {
 #[derive(Patch)]
 #[rorm(model = "UserKey")]
 pub(crate) struct UserKeyInsert {
+    pub(crate) uuid: Uuid,
     pub(crate) name: String,
     pub(crate) user: ForeignModel<User>,
     pub(crate) key: Json<Passkey>,

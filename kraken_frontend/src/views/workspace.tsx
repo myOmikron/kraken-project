@@ -1,11 +1,11 @@
 import React from "react";
 import "../styling/workspace.css";
 import { FullWorkspace } from "../api/generated";
-import { Api } from "../api/api";
+import { Api, UUID } from "../api/api";
 import { toast } from "react-toastify";
 
 type WorkspaceProps = {
-    id: number;
+    uuid: UUID;
 };
 type WorkspaceState = {
     workspace: FullWorkspace | null;
@@ -20,7 +20,7 @@ export default class Workspace extends React.Component<WorkspaceProps, Workspace
     }
 
     componentDidMount() {
-        Api.workspaces.get(this.props.id).then((res) =>
+        Api.workspaces.get(this.props.uuid).then((res) =>
             res.match(
                 (workspace) => this.setState({ workspace }),
                 (err) => toast.error(err.message)

@@ -11,7 +11,8 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::{
-    de_optional, query_user, ApiError, ApiResult, PathId, SimpleAttack, UserResponse,
+    de_optional, query_user, ApiError, ApiResult, PathUuid, SimpleAttack, UserResponse,
+    UuidResponse,
 };
 use crate::models::{Attack, User, Workspace, WorkspaceInsert, WorkspaceMember};
 
@@ -23,18 +24,12 @@ pub(crate) struct CreateWorkspaceRequest {
     pub(crate) description: Option<String>,
 }
 
-#[derive(Serialize, ToSchema)]
-pub(crate) struct CreateWorkspaceResponse {
-    #[schema(example = 1)]
-    pub(crate) id: i64,
-}
-
 /// Create a new workspace
 #[utoipa::path(
     tag = "Workspaces",
     context_path = "/api/v1",
     responses(
-        (status = 200, description = "Workspace was created", body = CreateWorkspaceResponse),
+        (status = 200, description = "Workspace was created", body = UuidResponse),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
@@ -46,20 +41,21 @@ pub(crate) async fn create_workspace(
     req: Json<CreateWorkspaceRequest>,
     db: Data<Database>,
     session: Session,
-) -> ApiResult<Json<CreateWorkspaceResponse>> {
-    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+) -> ApiResult<Json<UuidResponse>> {
+    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
-    let id = insert!(db.as_ref(), WorkspaceInsert)
+    let uuid = insert!(db.as_ref(), WorkspaceInsert)
         .return_primary_key()
         .single(&WorkspaceInsert {
+            uuid: Uuid::new_v4(),
             name: req.name.clone(),
             description: req.description.clone(),
-            owner: ForeignModelByField::Key(uuid),
+            owner: ForeignModelByField::Key(user_uuid),
             deletable: true,
         })
         .await?;
 
-    Ok(Json(CreateWorkspaceResponse { id }))
+    Ok(Json(UuidResponse { uuid }))
 }
 
 /// Delete a workspace by its id
@@ -71,12 +67,12 @@ pub(crate) async fn create_workspace(
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    params(PathId),
+    params(PathUuid),
     security(("api_key" = []))
 )]
-#[delete("/workspaces/{id}")]
+#[delete("/workspaces/{uuid}")]
 pub(crate) async fn delete_workspace(
-    req: Path<PathId>,
+    req: Path<PathUuid>,
     session: Session,
     db: Data<Database>,
 ) -> ApiResult<HttpResponse> {
@@ -85,13 +81,13 @@ pub(crate) async fn delete_workspace(
     let executing_user = query_user(&mut tx, &session).await?;
 
     let workspace = query!(&mut tx, Workspace)
-        .condition(Workspace::F.id.equals(req.id as i64))
+        .condition(Workspace::F.uuid.equals(req.uuid.as_ref()))
         .optional()
         .await?
-        .ok_or(ApiError::InvalidId)?;
+        .ok_or(ApiError::InvalidUuid)?;
 
     if !workspace.deletable {
-        debug!("Workspace {} is not deletable", workspace.id);
+        debug!("Workspace {} is not deletable", workspace.uuid);
 
         return Err(ApiError::WorkspaceNotDeletable);
     }
@@ -99,14 +95,14 @@ pub(crate) async fn delete_workspace(
     if executing_user.admin || *workspace.owner.key() == executing_user.uuid {
         debug!(
             "Workspace {} got deleted by {}",
-            workspace.id, executing_user.username
+            workspace.uuid, executing_user.username
         );
 
         rorm::delete!(&mut tx, Workspace).single(&workspace).await?;
     } else {
         debug!(
             "User {} does not has the privileges to delete the workspace {}",
-            executing_user.username, workspace.id
+            executing_user.username, workspace.uuid
         );
 
         return Err(ApiError::MissingPrivileges);
@@ -120,8 +116,7 @@ pub(crate) async fn delete_workspace(
 /// A simple version of a workspace
 #[derive(Serialize, ToSchema)]
 pub(crate) struct SimpleWorkspace {
-    #[schema(example = 1337)]
-    pub(crate) id: i64,
+    pub(crate) uuid: Uuid,
     #[schema(example = "ultra-secure-workspace")]
     pub(crate) name: String,
     #[schema(example = "This workspace is ultra secure and should not be looked at!!")]
@@ -133,8 +128,7 @@ pub(crate) struct SimpleWorkspace {
 /// A full version of a workspace
 #[derive(Serialize, ToSchema)]
 pub(crate) struct FullWorkspace {
-    #[schema(example = 1337)]
-    pub(crate) id: i64,
+    pub(crate) uuid: Uuid,
     #[schema(example = "ultra-secure-workspace")]
     pub(crate) name: String,
     #[schema(example = "This workspace is ultra secure and should not be looked at!!")]
@@ -159,39 +153,39 @@ pub(crate) struct GetWorkspaceResponse {
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    params(PathId),
+    params(PathUuid),
     security(("api_key" = []))
 )]
-#[get("/workspaces/{id}")]
+#[get("/workspaces/{uuid}")]
 pub(crate) async fn get_workspace(
-    req: Path<PathId>,
+    req: Path<PathUuid>,
     db: Data<Database>,
     session: Session,
 ) -> ApiResult<Json<FullWorkspace>> {
-    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let mut tx = db.start_transaction().await?;
 
     let is_member = query!(&mut tx, (WorkspaceMember::F.id,))
         .condition(and!(
-            WorkspaceMember::F.member.equals(uuid.as_ref()),
-            WorkspaceMember::F.workspace.equals(req.id as i64)
+            WorkspaceMember::F.member.equals(user_uuid.as_ref()),
+            WorkspaceMember::F.workspace.equals(req.uuid.as_ref())
         ))
         .optional()
         .await?
         .is_some();
 
-    let is_owner = query!(&mut tx, (Workspace::F.id,))
+    let is_owner = query!(&mut tx, (Workspace::F.uuid,))
         .condition(and!(
-            Workspace::F.id.equals(req.id as i64),
-            Workspace::F.owner.equals(uuid.as_ref())
+            Workspace::F.uuid.equals(req.uuid.as_ref()),
+            Workspace::F.owner.equals(user_uuid.as_ref())
         ))
         .optional()
         .await?
         .is_some();
 
     let workspace = if is_owner || is_member {
-        get_workspace_unchecked(req.id as i64, &mut tx).await
+        get_workspace_unchecked(req.uuid, &mut tx).await
     } else {
         Err(ApiError::MissingPrivileges)
     };
@@ -234,7 +228,7 @@ pub(crate) async fn get_all_workspaces(
         workspaces: workspaces
             .into_iter()
             .map(|w| SimpleWorkspace {
-                id: w.id,
+                uuid: w.uuid,
                 name: w.name,
                 description: w.description,
                 owner: UserResponse {
@@ -276,13 +270,13 @@ pub(crate) struct UpdateWorkspaceRequest {
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    params(PathId),
+    params(PathUuid),
     request_body = UpdateWorkspaceRequest,
     security(("api_key" = []))
 )]
-#[put("/workspaces/{id}")]
+#[put("/workspaces/{uuid}")]
 pub(crate) async fn update_workspace(
-    path: Path<PathId>,
+    path: Path<PathUuid>,
     req: Json<UpdateWorkspaceRequest>,
     db: Data<Database>,
     session: Session,
@@ -294,10 +288,10 @@ pub(crate) async fn update_workspace(
     let mut tx = db.start_transaction().await?;
 
     let w = query!(&mut tx, Workspace)
-        .condition(Workspace::F.id.equals(path.id as i64))
+        .condition(Workspace::F.uuid.equals(path.uuid.as_ref()))
         .optional()
         .await?
-        .ok_or(ApiError::InvalidId)?;
+        .ok_or(ApiError::InvalidUuid)?;
 
     if *w.owner.key() != uuid {
         return Err(ApiError::MissingPrivileges);
@@ -310,7 +304,7 @@ pub(crate) async fn update_workspace(
     }
 
     update!(&mut tx, Workspace)
-        .condition(Workspace::F.id.equals(w.id))
+        .condition(Workspace::F.uuid.equals(w.uuid.as_ref()))
         .begin_dyn_set()
         .set_if(Workspace::F.name, req.name)
         .set_if(Workspace::F.description, req.description)
@@ -333,17 +327,17 @@ pub(crate) async fn update_workspace(
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    params(PathId),
+    params(PathUuid),
     security(("api_key" = []))
 )]
-#[get("/workspaces/{id}")]
+#[get("/workspaces/{uuid}")]
 pub(crate) async fn get_workspace_admin(
-    req: Path<PathId>,
+    req: Path<PathUuid>,
     db: Data<Database>,
 ) -> ApiResult<Json<FullWorkspace>> {
     let mut tx = db.start_transaction().await?;
 
-    let workspace = get_workspace_unchecked(req.id as i64, &mut tx).await;
+    let workspace = get_workspace_unchecked(req.uuid, &mut tx).await;
 
     tx.commit().await?;
 
@@ -370,7 +364,7 @@ pub(crate) async fn get_all_workspaces_admin(
     let workspaces = query!(
         &mut tx,
         (
-            Workspace::F.id,
+            Workspace::F.uuid,
             Workspace::F.name,
             Workspace::F.description,
             Workspace::F.created_at,
@@ -388,13 +382,13 @@ pub(crate) async fn get_all_workspaces_admin(
         workspaces: workspaces
             .into_iter()
             .map(
-                |(id, name, description, created_at, uuid, username, display_name)| {
+                |(uuid, name, description, created_at, by_uuid, username, display_name)| {
                     SimpleWorkspace {
-                        id,
+                        uuid,
                         name,
                         description,
                         owner: UserResponse {
-                            uuid,
+                            uuid: by_uuid,
                             username,
                             display_name,
                         },
@@ -406,13 +400,13 @@ pub(crate) async fn get_all_workspaces_admin(
     }))
 }
 
-/// Get a [`FullWorkspace`] by its id without permission checks
-async fn get_workspace_unchecked(id: i64, tx: &mut Transaction) -> ApiResult<FullWorkspace> {
+/// Get a [`FullWorkspace`] by its uuid without permission checks
+async fn get_workspace_unchecked(uuid: Uuid, tx: &mut Transaction) -> ApiResult<FullWorkspace> {
     let workspace = query!(&mut *tx, Workspace)
-        .condition(Workspace::F.id.equals(id))
+        .condition(Workspace::F.uuid.equals(uuid.as_ref()))
         .optional()
         .await?
-        .ok_or(ApiError::InvalidId)?;
+        .ok_or(ApiError::InvalidUuid)?;
 
     let owner = query!(&mut *tx, User)
         .condition(User::F.uuid.equals(workspace.owner.key().as_ref()))
@@ -422,27 +416,27 @@ async fn get_workspace_unchecked(id: i64, tx: &mut Transaction) -> ApiResult<Ful
     let attacks = query!(
         &mut *tx,
         (
-            Attack::F.id,
+            Attack::F.uuid,
             Attack::F.attack_type,
             Attack::F.finished_at,
             Attack::F.created_at,
-            Attack::F.started_from.uuid,
-            Attack::F.started_from.username,
-            Attack::F.started_from.display_name,
+            Attack::F.started_by.uuid,
+            Attack::F.started_by.username,
+            Attack::F.started_by.display_name,
         )
     )
-    .condition(Attack::F.workspace.equals(id))
+    .condition(Attack::F.workspace.equals(uuid.as_ref()))
     .all()
     .await?
     .into_iter()
     .map(
-        |(attack_id, attack_type, finished_at, created_at, uuid, username, display_name)| {
+        |(attack_uuid, attack_type, finished_at, created_at, by_uuid, username, display_name)| {
             SimpleAttack {
-                id: attack_id,
-                workspace_id: id,
+                uuid: attack_uuid,
+                workspace_uuid: uuid,
                 attack_type: attack_type.into(),
                 started_from: UserResponse {
-                    uuid,
+                    uuid: by_uuid,
                     username,
                     display_name,
                 },
@@ -461,7 +455,7 @@ async fn get_workspace_unchecked(id: i64, tx: &mut Transaction) -> ApiResult<Ful
             WorkspaceMember::F.member.display_name
         )
     )
-    .condition(WorkspaceMember::F.workspace.equals(id))
+    .condition(WorkspaceMember::F.workspace.equals(uuid.as_ref()))
     .all()
     .await?
     .into_iter()
@@ -473,7 +467,7 @@ async fn get_workspace_unchecked(id: i64, tx: &mut Transaction) -> ApiResult<Ful
     .collect();
 
     Ok(FullWorkspace {
-        id: workspace.id,
+        uuid: workspace.uuid,
         name: workspace.name,
         description: workspace.description,
         owner: UserResponse {

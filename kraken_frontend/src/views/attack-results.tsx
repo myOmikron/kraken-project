@@ -1,17 +1,17 @@
 import React from "react";
-import { Api } from "../api/api";
+import { Api, UUID } from "../api/api";
 import { handleApiError } from "../utils/helper";
 import { SimpleAttack, SimpleTcpPortScanResult } from "../api/generated";
 import Loading from "../components/loading";
 
-type AttackResultsProps = { attackId: number };
+type AttackResultsProps = { attackUuid: UUID };
 
 export default function AttackResults(props: AttackResultsProps) {
-    const { attackId } = props;
+    const { attackUuid } = props;
     const [attack, setAttack] = React.useState<SimpleAttack | null>(null);
     React.useEffect(() => {
-        Api.attacks.get(attackId).then(handleApiError(setAttack));
-    }, [setAttack, attackId]);
+        Api.attacks.get(attackUuid).then(handleApiError(setAttack));
+    }, [setAttack, attackUuid]);
 
     if (attack === null) return <Loading />;
     else
@@ -28,7 +28,7 @@ export default function AttackResults(props: AttackResultsProps) {
                 {(() => {
                     switch (attack.attackType) {
                         case "TcpPortScan":
-                            return <TcpPortScanResults attackId={attackId} />;
+                            return <TcpPortScanResults attackUuid={attackUuid} />;
                         default:
                             return null;
                     }
@@ -38,18 +38,18 @@ export default function AttackResults(props: AttackResultsProps) {
 }
 
 const PAGE_SIZE = 50;
-type TcpPortScanResultsProps = { attackId: number };
+type TcpPortScanResultsProps = { attackUuid: string };
 function TcpPortScanResults(props: TcpPortScanResultsProps) {
-    const { attackId } = props;
+    const { attackUuid } = props;
     const [page, setPage] = React.useState(0);
     const [results, setResults] = React.useState<Array<SimpleTcpPortScanResult> | null>(null);
     React.useEffect(() => {
-        Api.attacks.getTcpPortScanResults(attackId, page * PAGE_SIZE, PAGE_SIZE).then(
+        Api.attacks.getTcpPortScanResults(attackUuid, page * PAGE_SIZE, PAGE_SIZE).then(
             handleApiError((results) => {
                 setResults(results.items);
             })
         );
-    }, [setResults, attackId, page]);
+    }, [setResults, attackUuid, page]);
     if (results === null) return <Loading />;
     else
         return (

@@ -26,7 +26,7 @@ import {
 } from '../models';
 
 export interface ReportWorkspaceResultsRequest {
-    id: number;
+    uuid: string;
 }
 
 /**
@@ -39,8 +39,8 @@ export class ReportingDataExportApi extends runtime.BaseAPI {
      * Retrieve a workspace\'s attack results
      */
     async reportWorkspaceResultsRaw(requestParameters: ReportWorkspaceResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReportingWorkspaceResults>> {
-        if (requestParameters.id === null || requestParameters.id === undefined) {
-            throw new runtime.RequiredError('id','Required parameter requestParameters.id was null or undefined when calling reportWorkspaceResults.');
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling reportWorkspaceResults.');
         }
 
         const queryParameters: any = {};
@@ -56,7 +56,7 @@ export class ReportingDataExportApi extends runtime.BaseAPI {
             }
         }
         const response = await this.request({
-            path: `/api/v1/reporting/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters.id))),
+            path: `/api/v1/reporting/{uuid}`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,

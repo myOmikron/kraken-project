@@ -18,15 +18,15 @@ export const ROUTES = {
     ME: ROUTER.add({ url: "me", parser: {}, render: () => <Me /> }),
     WORKSPACES: ROUTER.add({ url: "workspaces", parser: {}, render: () => <WorkspaceOverview /> }),
     WORKSPACE: ROUTER.add({
-        url: "workspaces/{id}",
-        parser: { id: Number },
-        render: ({ id }) => <Workspace id={id} />,
+        url: "workspaces/{uuid}",
+        parser: { uuid: String },
+        render: ({ uuid }) => <Workspace uuid={uuid} />,
     }),
     ATTACKS: ROUTER.add({ url: "attacks", parser: {}, render: () => <Attacks /> }),
     ATTACK_RESULTS: ROUTER.add({
-        url: "attacks/{id}",
-        parser: { id: Number },
-        render: ({ id }) => <AttackResults attackId={id} />,
+        url: "attacks/{uuid}",
+        parser: { uuid: String },
+        render: ({ uuid }) => <AttackResults attackUuid={uuid} />,
     }),
     KNOWLEDGE_BASE: ROUTER.add({ url: "knowledge", parser: {}, render: () => undefined }),
 

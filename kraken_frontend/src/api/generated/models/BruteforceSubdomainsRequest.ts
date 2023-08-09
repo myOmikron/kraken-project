@@ -21,10 +21,10 @@ import { exists, mapValues } from '../runtime';
 export interface BruteforceSubdomainsRequest {
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof BruteforceSubdomainsRequest
      */
-    leechId: number;
+    leechUuid: string;
     /**
      * 
      * @type {string}
@@ -45,10 +45,10 @@ export interface BruteforceSubdomainsRequest {
     concurrentLimit: number;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof BruteforceSubdomainsRequest
      */
-    workspaceId: number;
+    workspaceUuid: string;
 }
 
 /**
@@ -56,11 +56,11 @@ export interface BruteforceSubdomainsRequest {
  */
 export function instanceOfBruteforceSubdomainsRequest(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "leechId" in value;
+    isInstance = isInstance && "leechUuid" in value;
     isInstance = isInstance && "domain" in value;
     isInstance = isInstance && "wordlistPath" in value;
     isInstance = isInstance && "concurrentLimit" in value;
-    isInstance = isInstance && "workspaceId" in value;
+    isInstance = isInstance && "workspaceUuid" in value;
 
     return isInstance;
 }
@@ -75,11 +75,11 @@ export function BruteforceSubdomainsRequestFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'leechId': json['leech_id'],
+        'leechUuid': json['leech_uuid'],
         'domain': json['domain'],
         'wordlistPath': json['wordlist_path'],
         'concurrentLimit': json['concurrent_limit'],
-        'workspaceId': json['workspace_id'],
+        'workspaceUuid': json['workspace_uuid'],
     };
 }
 
@@ -92,11 +92,11 @@ export function BruteforceSubdomainsRequestToJSON(value?: BruteforceSubdomainsRe
     }
     return {
         
-        'leech_id': value.leechId,
+        'leech_uuid': value.leechUuid,
         'domain': value.domain,
         'wordlist_path': value.wordlistPath,
         'concurrent_limit': value.concurrentLimit,
-        'workspace_id': value.workspaceId,
+        'workspace_uuid': value.workspaceUuid,
     };
 }
 

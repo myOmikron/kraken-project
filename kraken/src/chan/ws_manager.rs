@@ -72,14 +72,14 @@ pub enum WsMessage {
     /// A notification about a finished attack
     AttackFinished {
         /// The corresponding id of the attack
-        attack_id: i64,
+        attack_uuid: Uuid,
         /// Whether the attack was finished successful
         finished_successful: bool,
     },
     /// A result for a subdomain enumeration using bruteforce DNS requests
     BruteforceSubdomainsResult {
         /// The corresponding id of the attack
-        attack_id: i64,
+        attack_uuid: Uuid,
         /// The source address that was queried
         source: String,
         /// The to address that was returned
@@ -88,7 +88,7 @@ pub enum WsMessage {
     /// A result for a tcp scan
     ScanTcpPortsResult {
         /// The corresponding id of the attack
-        attack_id: i64,
+        attack_uuid: Uuid,
         /// The address of the result
         address: String,
         /// The port of the result
@@ -97,7 +97,7 @@ pub enum WsMessage {
     /// A result to a certificate transparency request
     CertificateTransparencyResult {
         /// The corresponding id of the attack
-        attack_id: i64,
+        attack_uuid: Uuid,
         /// The entries of the result
         entries: Vec<CertificateTransparencyEntry>,
     },

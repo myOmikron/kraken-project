@@ -1,7 +1,7 @@
 import React from "react";
 import { Api } from "../../api/api";
 import { toast } from "react-toastify";
-import { SimpleWorkspace } from "../../api/generated/models";
+import { SimpleWorkspace } from "../../api/generated";
 import Loading from "../../components/loading";
 import { handleApiError } from "../../utils/helper";
 
@@ -46,8 +46,8 @@ export default class AdminWorkspaces extends React.Component<AdminWorkspacesProp
                     </thead>
                     <tbody>
                         {workspaces.map((workspace) => (
-                            <tr key={workspace.id}>
-                                <td>{workspace.id}</td>
+                            <tr key={workspace.uuid}>
+                                <td>{workspace.uuid}</td>
                                 <td>{workspace.name}</td>
                                 <td>{workspace.description || ""}</td>
                                 <td>{workspace.owner.displayName}</td>

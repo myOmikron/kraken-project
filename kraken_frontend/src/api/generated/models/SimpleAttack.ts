@@ -34,16 +34,16 @@ import {
 export interface SimpleAttack {
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof SimpleAttack
      */
-    id: number;
+    uuid: string;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof SimpleAttack
      */
-    workspaceId: number;
+    workspaceUuid: string;
     /**
      * 
      * @type {AttackTypeSchema}
@@ -75,8 +75,8 @@ export interface SimpleAttack {
  */
 export function instanceOfSimpleAttack(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "id" in value;
-    isInstance = isInstance && "workspaceId" in value;
+    isInstance = isInstance && "uuid" in value;
+    isInstance = isInstance && "workspaceUuid" in value;
     isInstance = isInstance && "attackType" in value;
     isInstance = isInstance && "startedFrom" in value;
     isInstance = isInstance && "createdAt" in value;
@@ -94,8 +94,8 @@ export function SimpleAttackFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'id': json['id'],
-        'workspaceId': json['workspace_id'],
+        'uuid': json['uuid'],
+        'workspaceUuid': json['workspace_uuid'],
         'attackType': AttackTypeSchemaFromJSON(json['attack_type']),
         'startedFrom': UserResponseFromJSON(json['started_from']),
         'finishedAt': !exists(json, 'finished_at') ? undefined : (json['finished_at'] === null ? null : new Date(json['finished_at'])),
@@ -112,8 +112,8 @@ export function SimpleAttackToJSON(value?: SimpleAttack | null): any {
     }
     return {
         
-        'id': value.id,
-        'workspace_id': value.workspaceId,
+        'uuid': value.uuid,
+        'workspace_uuid': value.workspaceUuid,
         'attack_type': AttackTypeSchemaToJSON(value.attackType),
         'started_from': UserResponseToJSON(value.startedFrom),
         'finished_at': value.finishedAt === undefined ? undefined : (value.finishedAt === null ? null : value.finishedAt.toISOString()),

@@ -16,18 +16,16 @@
 import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
-  AttackResponse,
   BruteforceSubdomainsRequest,
   QueryCertificateTransparencyRequest,
   ScanTcpPortsRequest,
   SimpleAttack,
   TcpPortScanResultsPage,
+  UuidResponse,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
-    AttackResponseFromJSON,
-    AttackResponseToJSON,
     BruteforceSubdomainsRequestFromJSON,
     BruteforceSubdomainsRequestToJSON,
     QueryCertificateTransparencyRequestFromJSON,
@@ -38,6 +36,8 @@ import {
     SimpleAttackToJSON,
     TcpPortScanResultsPageFromJSON,
     TcpPortScanResultsPageToJSON,
+    UuidResponseFromJSON,
+    UuidResponseToJSON,
 } from '../models';
 
 export interface BruteforceSubdomainsOperationRequest {
@@ -45,15 +45,15 @@ export interface BruteforceSubdomainsOperationRequest {
 }
 
 export interface DeleteAttackRequest {
-    id: number;
+    uuid: string;
 }
 
 export interface GetAttackRequest {
-    id: number;
+    uuid: string;
 }
 
 export interface GetTcpPortScanResultsRequest {
-    id: number;
+    uuid: string;
     limit: number;
     offset: number;
 }
@@ -75,7 +75,7 @@ export class AttacksApi extends runtime.BaseAPI {
      * Bruteforce subdomains through a DNS wordlist attack  Enumerate possible subdomains by querying a DNS server with constructed domains. See [OWASP](https://owasp.org/www-community/attacks/Brute_force_attack) for further information.
      * Bruteforce subdomains through a DNS wordlist attack
      */
-    async bruteforceSubdomainsRaw(requestParameters: BruteforceSubdomainsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AttackResponse>> {
+    async bruteforceSubdomainsRaw(requestParameters: BruteforceSubdomainsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
         if (requestParameters.bruteforceSubdomainsRequest === null || requestParameters.bruteforceSubdomainsRequest === undefined) {
             throw new runtime.RequiredError('bruteforceSubdomainsRequest','Required parameter requestParameters.bruteforceSubdomainsRequest was null or undefined when calling bruteforceSubdomains.');
         }
@@ -94,14 +94,14 @@ export class AttacksApi extends runtime.BaseAPI {
             body: BruteforceSubdomainsRequestToJSON(requestParameters.bruteforceSubdomainsRequest),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => AttackResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
     }
 
     /**
      * Bruteforce subdomains through a DNS wordlist attack  Enumerate possible subdomains by querying a DNS server with constructed domains. See [OWASP](https://owasp.org/www-community/attacks/Brute_force_attack) for further information.
      * Bruteforce subdomains through a DNS wordlist attack
      */
-    async bruteforceSubdomains(requestParameters: BruteforceSubdomainsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AttackResponse> {
+    async bruteforceSubdomains(requestParameters: BruteforceSubdomainsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
         const response = await this.bruteforceSubdomainsRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -111,8 +111,8 @@ export class AttacksApi extends runtime.BaseAPI {
      * Delete an attack and its results
      */
     async deleteAttackRaw(requestParameters: DeleteAttackRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.id === null || requestParameters.id === undefined) {
-            throw new runtime.RequiredError('id','Required parameter requestParameters.id was null or undefined when calling deleteAttack.');
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling deleteAttack.');
         }
 
         const queryParameters: any = {};
@@ -120,7 +120,7 @@ export class AttacksApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/api/v1/attacks/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters.id))),
+            path: `/api/v1/attacks/{uuid}`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
@@ -142,8 +142,8 @@ export class AttacksApi extends runtime.BaseAPI {
      * Retrieve an attack by id
      */
     async getAttackRaw(requestParameters: GetAttackRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SimpleAttack>> {
-        if (requestParameters.id === null || requestParameters.id === undefined) {
-            throw new runtime.RequiredError('id','Required parameter requestParameters.id was null or undefined when calling getAttack.');
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getAttack.');
         }
 
         const queryParameters: any = {};
@@ -151,7 +151,7 @@ export class AttacksApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/api/v1/attacks/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters.id))),
+            path: `/api/v1/attacks/{uuid}`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -174,8 +174,8 @@ export class AttacksApi extends runtime.BaseAPI {
      * Retrieve a tcp port scan\'s results by the attack\'s id
      */
     async getTcpPortScanResultsRaw(requestParameters: GetTcpPortScanResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TcpPortScanResultsPage>> {
-        if (requestParameters.id === null || requestParameters.id === undefined) {
-            throw new runtime.RequiredError('id','Required parameter requestParameters.id was null or undefined when calling getTcpPortScanResults.');
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getTcpPortScanResults.');
         }
 
         if (requestParameters.limit === null || requestParameters.limit === undefined) {
@@ -199,7 +199,7 @@ export class AttacksApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/api/v1/attacks/{id}/tcpPortScanResults`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters.id))),
+            path: `/api/v1/attacks/{uuid}/tcpPortScanResults`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -221,7 +221,7 @@ export class AttacksApi extends runtime.BaseAPI {
      * Query a certificate transparency log collector.  For further information, see [the explanation](https://certificate.transparency.dev/).  Certificate transparency can be used to find subdomains or related domains.  `retry_interval` is specified in milliseconds.
      * Query a certificate transparency log collector.
      */
-    async queryCertificateTransparencyRaw(requestParameters: QueryCertificateTransparencyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AttackResponse>> {
+    async queryCertificateTransparencyRaw(requestParameters: QueryCertificateTransparencyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
         if (requestParameters.queryCertificateTransparencyRequest === null || requestParameters.queryCertificateTransparencyRequest === undefined) {
             throw new runtime.RequiredError('queryCertificateTransparencyRequest','Required parameter requestParameters.queryCertificateTransparencyRequest was null or undefined when calling queryCertificateTransparency.');
         }
@@ -240,14 +240,14 @@ export class AttacksApi extends runtime.BaseAPI {
             body: QueryCertificateTransparencyRequestToJSON(requestParameters.queryCertificateTransparencyRequest),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => AttackResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
     }
 
     /**
      * Query a certificate transparency log collector.  For further information, see [the explanation](https://certificate.transparency.dev/).  Certificate transparency can be used to find subdomains or related domains.  `retry_interval` is specified in milliseconds.
      * Query a certificate transparency log collector.
      */
-    async queryCertificateTransparency(requestParameters: QueryCertificateTransparencyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AttackResponse> {
+    async queryCertificateTransparency(requestParameters: QueryCertificateTransparencyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
         const response = await this.queryCertificateTransparencyRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -256,7 +256,7 @@ export class AttacksApi extends runtime.BaseAPI {
      * Start a tcp port scan  `exclude` accepts a list of ip networks in CIDR notation.  All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.  Set `max_retries` to 0 if you don\'t want to try a port more than 1 time.
      * Start a tcp port scan
      */
-    async scanTcpPortsRaw(requestParameters: ScanTcpPortsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AttackResponse>> {
+    async scanTcpPortsRaw(requestParameters: ScanTcpPortsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
         if (requestParameters.scanTcpPortsRequest === null || requestParameters.scanTcpPortsRequest === undefined) {
             throw new runtime.RequiredError('scanTcpPortsRequest','Required parameter requestParameters.scanTcpPortsRequest was null or undefined when calling scanTcpPorts.');
         }
@@ -275,14 +275,14 @@ export class AttacksApi extends runtime.BaseAPI {
             body: ScanTcpPortsRequestToJSON(requestParameters.scanTcpPortsRequest),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => AttackResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
     }
 
     /**
      * Start a tcp port scan  `exclude` accepts a list of ip networks in CIDR notation.  All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.  Set `max_retries` to 0 if you don\'t want to try a port more than 1 time.
      * Start a tcp port scan
      */
-    async scanTcpPorts(requestParameters: ScanTcpPortsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AttackResponse> {
+    async scanTcpPorts(requestParameters: ScanTcpPortsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
         const response = await this.scanTcpPortsRaw(requestParameters, initOverrides);
         return await response.value();
     }

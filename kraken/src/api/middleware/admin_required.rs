@@ -74,7 +74,7 @@ where
                 .map_err(ApiError::SessionGet)?
                 .ok_or(ApiError::SessionCorrupt)?;
 
-            let second_factor_required = query!(&db, (UserKey::F.id,))
+            let second_factor_required = query!(&db, (UserKey::F.uuid,))
                 .condition(UserKey::F.user.equals(uuid.as_ref()))
                 .optional()
                 .await

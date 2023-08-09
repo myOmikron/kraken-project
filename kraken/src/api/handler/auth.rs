@@ -325,6 +325,7 @@ pub(crate) async fn finish_register(
 
     insert!(db.as_ref(), UserKeyInsert)
         .single(&UserKeyInsert {
+            uuid: Uuid::new_v4(),
             user: ForeignModelByField::Key(uuid),
             key: rorm::fields::Json(passkey),
             name: req.name.clone(),

@@ -40,11 +40,16 @@ pub(crate) async fn query_user(db: impl Executor<'_>, session: &Session) -> ApiR
         .ok_or(ApiError::SessionCorrupt)
 }
 
-/// A path with an ID
+/// A common response that contains a single uuid
+#[derive(Serialize, ToSchema)]
+pub struct UuidResponse {
+    pub(crate) uuid: Uuid,
+}
+
+/// A path with an UUID
 #[derive(Deserialize, IntoParams)]
-pub struct PathId {
-    #[param(example = 1337)]
-    pub(crate) id: u32,
+pub struct PathUuid {
+    pub(crate) uuid: Uuid,
 }
 
 /// The result type of kraken.
@@ -72,7 +77,7 @@ pub enum ApiStatusCode {
     InvalidAddress = 1011,
     AddressAlreadyExists = 1012,
     NameAlreadyExists = 1013,
-    InvalidId = 1014,
+    InvalidUuid = 1014,
     WorkspaceNotDeletable = 1015,
     EmptyJson = 1016,
     InvalidPassword = 1017,
@@ -129,7 +134,7 @@ pub enum ApiError {
     InvalidAddress,
     AddressAlreadyExists,
     NameAlreadyExists,
-    InvalidId,
+    InvalidUuid,
     WorkspaceNotDeletable,
     EmptyJson,
     InvalidPassword,
@@ -164,7 +169,7 @@ impl Display for ApiError {
             ApiError::InvalidAddress => write!(f, "Invalid address"),
             ApiError::AddressAlreadyExists => write!(f, "Address already exists"),
             ApiError::NameAlreadyExists => write!(f, "Name already exists"),
-            ApiError::InvalidId => write!(f, "Invalid ID"),
+            ApiError::InvalidUuid => write!(f, "Invalid UUID"),
             ApiError::WorkspaceNotDeletable => write!(f, "Workspace is not deletable"),
             ApiError::EmptyJson => write!(f, "Received an empty json request"),
             ApiError::InvalidPassword => write!(f, "Invalid password supplied"),
@@ -312,8 +317,8 @@ impl actix_web::ResponseError for ApiError {
                 ApiStatusCode::NameAlreadyExists,
                 self.to_string(),
             )),
-            ApiError::InvalidId => HttpResponse::BadRequest().json(ApiErrorResponse::new(
-                ApiStatusCode::InvalidId,
+            ApiError::InvalidUuid => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::InvalidUuid,
                 self.to_string(),
             )),
             ApiError::WorkspaceNotDeletable => HttpResponse::BadRequest().json(

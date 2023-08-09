@@ -14,60 +14,44 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * 
+ * A common response that contains a single uuid
  * @export
- * @interface GetLeech
+ * @interface UuidResponse
  */
-export interface GetLeech {
+export interface UuidResponse {
     /**
      * 
      * @type {string}
-     * @memberof GetLeech
+     * @memberof UuidResponse
      */
     uuid: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GetLeech
-     */
-    name: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GetLeech
-     */
-    address: string;
 }
 
 /**
- * Check if a given object implements the GetLeech interface.
+ * Check if a given object implements the UuidResponse interface.
  */
-export function instanceOfGetLeech(value: object): boolean {
+export function instanceOfUuidResponse(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "uuid" in value;
-    isInstance = isInstance && "name" in value;
-    isInstance = isInstance && "address" in value;
 
     return isInstance;
 }
 
-export function GetLeechFromJSON(json: any): GetLeech {
-    return GetLeechFromJSONTyped(json, false);
+export function UuidResponseFromJSON(json: any): UuidResponse {
+    return UuidResponseFromJSONTyped(json, false);
 }
 
-export function GetLeechFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetLeech {
+export function UuidResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): UuidResponse {
     if ((json === undefined) || (json === null)) {
         return json;
     }
     return {
         
         'uuid': json['uuid'],
-        'name': json['name'],
-        'address': json['address'],
     };
 }
 
-export function GetLeechToJSON(value?: GetLeech | null): any {
+export function UuidResponseToJSON(value?: UuidResponse | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -77,8 +61,6 @@ export function GetLeechToJSON(value?: GetLeech | null): any {
     return {
         
         'uuid': value.uuid,
-        'name': value.name,
-        'address': value.address,
     };
 }
 

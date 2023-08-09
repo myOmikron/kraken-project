@@ -1,11 +1,12 @@
 use rorm::{Model, Patch};
+use uuid::Uuid;
 
 /// The data collectors of kraken
 #[derive(Model)]
 pub struct Leech {
     /// Primary key of the leech
-    #[rorm(id)]
-    pub id: i64,
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
 
     /// Name of the leech
     #[rorm(max_length = 255, unique)]
@@ -23,6 +24,7 @@ pub struct Leech {
 #[derive(Patch)]
 #[rorm(model = "Leech")]
 pub(crate) struct LeechInsert {
+    pub(crate) uuid: Uuid,
     pub(crate) name: String,
     pub(crate) address: String,
     pub(crate) description: Option<String>,

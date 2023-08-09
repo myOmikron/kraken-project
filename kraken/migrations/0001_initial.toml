@@ -1,5 +1,5 @@
 [Migration]
-Hash = "14558246415633766394"
+Hash = "17971917235879015907"
 Initial = true
 Replaces = []
 
@@ -8,11 +8,8 @@ Type = "CreateModel"
 Name = "attack"
 
 [[Migration.Operations.Fields]]
-Name = "id"
-Type = "int64"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "auto_increment"
+Name = "uuid"
+Type = "varbinary"
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "primary_key"
@@ -53,11 +50,8 @@ Type = "CreateModel"
 Name = "tcpportscanresult"
 
 [[Migration.Operations.Fields]]
-Name = "id"
-Type = "int64"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "auto_increment"
+Name = "uuid"
+Type = "varbinary"
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "primary_key"
@@ -163,11 +157,8 @@ Type = "CreateModel"
 Name = "userkey"
 
 [[Migration.Operations.Fields]]
-Name = "id"
-Type = "int64"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "auto_increment"
+Name = "uuid"
+Type = "varbinary"
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "primary_key"
@@ -189,6 +180,53 @@ Type = "varbinary"
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateModel"
+Name = "leech"
+
+[[Migration.Operations.Fields]]
+Name = "uuid"
+Type = "varbinary"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "primary_key"
+
+[[Migration.Operations.Fields]]
+Name = "name"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "unique"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations.Fields]]
+Name = "address"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "unique"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations.Fields]]
+Name = "description"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 65535
 
 [[Migration.Operations]]
 Type = "CreateModel"
@@ -219,11 +257,8 @@ Type = "CreateModel"
 Name = "workspace"
 
 [[Migration.Operations.Fields]]
-Name = "id"
-Type = "int64"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "auto_increment"
+Name = "uuid"
+Type = "varbinary"
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "primary_key"
@@ -270,56 +305,6 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateModel"
-Name = "leech"
-
-[[Migration.Operations.Fields]]
-Name = "id"
-Type = "int64"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "auto_increment"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "primary_key"
-
-[[Migration.Operations.Fields]]
-Name = "name"
-Type = "varchar"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "max_length"
-Value = 255
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "unique"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations.Fields]]
-Name = "address"
-Type = "varchar"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "max_length"
-Value = 255
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "unique"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations.Fields]]
-Name = "description"
-Type = "varchar"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "max_length"
-Value = 65535
-
-[[Migration.Operations]]
-Type = "CreateModel"
 Name = "dbsession"
 
 [[Migration.Operations.Fields]]
@@ -354,14 +339,14 @@ Model = "tcpportscanresult"
 
 [Migration.Operations.Field]
 Name = "attack"
-Type = "int64"
+Type = "varbinary"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "foreign_key"
 
 [Migration.Operations.Field.Annotations.Value]
 TableName = "attack"
-ColumnName = "id"
+ColumnName = "uuid"
 OnDelete = "Cascade"
 OnUpdate = "Cascade"
 
@@ -370,11 +355,14 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "userkey"
+Model = "workspace"
 
 [Migration.Operations.Field]
-Name = "user"
+Name = "owner"
 Type = "varbinary"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "index"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "foreign_key"
@@ -414,16 +402,36 @@ Model = "workspacemember"
 
 [Migration.Operations.Field]
 Name = "workspace"
-Type = "int64"
+Type = "varbinary"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "foreign_key"
 
 [Migration.Operations.Field.Annotations.Value]
 TableName = "workspace"
-ColumnName = "id"
+ColumnName = "uuid"
 OnDelete = "Cascade"
 OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "userkey"
+
+[Migration.Operations.Field]
+Name = "user"
+Type = "varbinary"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "user"
+ColumnName = "uuid"
+OnDelete = "Restrict"
+OnUpdate = "Restrict"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"
@@ -433,7 +441,7 @@ Type = "CreateField"
 Model = "attack"
 
 [Migration.Operations.Field]
-Name = "started_from"
+Name = "started_by"
 Type = "varbinary"
 
 [[Migration.Operations.Field.Annotations]]
@@ -454,39 +462,16 @@ Model = "attack"
 
 [Migration.Operations.Field]
 Name = "workspace"
-Type = "int64"
+Type = "varbinary"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "foreign_key"
 
 [Migration.Operations.Field.Annotations.Value]
 TableName = "workspace"
-ColumnName = "id"
+ColumnName = "uuid"
 OnDelete = "Cascade"
 OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "workspace"
-
-[Migration.Operations.Field]
-Name = "owner"
-Type = "varbinary"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "index"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "user"
-ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"

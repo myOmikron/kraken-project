@@ -28,10 +28,10 @@ import {
 export interface ScanTcpPortsRequest {
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof ScanTcpPortsRequest
      */
-    leechId: number;
+    leechUuid: string;
     /**
      * 
      * @type {Array<string>}
@@ -82,10 +82,10 @@ export interface ScanTcpPortsRequest {
     skipIcmpCheck: boolean;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof ScanTcpPortsRequest
      */
-    workspaceId: number;
+    workspaceUuid: string;
 }
 
 /**
@@ -93,7 +93,7 @@ export interface ScanTcpPortsRequest {
  */
 export function instanceOfScanTcpPortsRequest(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "leechId" in value;
+    isInstance = isInstance && "leechUuid" in value;
     isInstance = isInstance && "targets" in value;
     isInstance = isInstance && "exclude" in value;
     isInstance = isInstance && "ports" in value;
@@ -102,7 +102,7 @@ export function instanceOfScanTcpPortsRequest(value: object): boolean {
     isInstance = isInstance && "timeout" in value;
     isInstance = isInstance && "concurrentLimit" in value;
     isInstance = isInstance && "skipIcmpCheck" in value;
-    isInstance = isInstance && "workspaceId" in value;
+    isInstance = isInstance && "workspaceUuid" in value;
 
     return isInstance;
 }
@@ -117,7 +117,7 @@ export function ScanTcpPortsRequestFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'leechId': json['leech_id'],
+        'leechUuid': json['leech_uuid'],
         'targets': json['targets'],
         'exclude': json['exclude'],
         'ports': ((json['ports'] as Array<any>).map(PortOrRangeFromJSON)),
@@ -126,7 +126,7 @@ export function ScanTcpPortsRequestFromJSONTyped(json: any, ignoreDiscriminator:
         'timeout': json['timeout'],
         'concurrentLimit': json['concurrent_limit'],
         'skipIcmpCheck': json['skip_icmp_check'],
-        'workspaceId': json['workspace_id'],
+        'workspaceUuid': json['workspace_uuid'],
     };
 }
 
@@ -139,7 +139,7 @@ export function ScanTcpPortsRequestToJSON(value?: ScanTcpPortsRequest | null): a
     }
     return {
         
-        'leech_id': value.leechId,
+        'leech_uuid': value.leechUuid,
         'targets': value.targets,
         'exclude': value.exclude,
         'ports': ((value.ports as Array<any>).map(PortOrRangeToJSON)),
@@ -148,7 +148,7 @@ export function ScanTcpPortsRequestToJSON(value?: ScanTcpPortsRequest | null): a
         'timeout': value.timeout,
         'concurrent_limit': value.concurrentLimit,
         'skip_icmp_check': value.skipIcmpCheck,
-        'workspace_id': value.workspaceId,
+        'workspace_uuid': value.workspaceUuid,
     };
 }
 

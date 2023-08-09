@@ -4,6 +4,7 @@ use std::net::IpAddr;
 
 use rorm::fields::{ForeignModel, Json};
 use rorm::{DbEnum, Model, Patch};
+use uuid::Uuid;
 
 use crate::models::{User, Workspace};
 
@@ -24,8 +25,8 @@ pub enum AttackType {
 #[derive(Model)]
 pub struct Attack {
     /// The primary key
-    #[rorm(id)]
-    pub id: i64,
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
 
     /// The type of the attack.
     ///
@@ -35,7 +36,7 @@ pub struct Attack {
     pub attack_type: AttackType,
 
     /// The user that started this attack
-    pub started_from: ForeignModel<User>,
+    pub started_by: ForeignModel<User>,
 
     /// The workspace this attack was started from
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
@@ -52,8 +53,9 @@ pub struct Attack {
 #[derive(Patch)]
 #[rorm(model = "Attack")]
 pub(crate) struct AttackInsert {
+    pub(crate) uuid: Uuid,
     pub(crate) attack_type: AttackType,
-    pub(crate) started_from: ForeignModel<User>,
+    pub(crate) started_by: ForeignModel<User>,
     pub(crate) workspace: ForeignModel<Workspace>,
     pub(crate) finished_at: Option<chrono::NaiveDateTime>,
 }
@@ -62,8 +64,8 @@ pub(crate) struct AttackInsert {
 #[derive(Model)]
 pub struct TcpPortScanResult {
     /// The primary key
-    #[rorm(id)]
-    pub id: i64,
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
 
     /// The attack which produced this result
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
@@ -85,6 +87,7 @@ pub struct TcpPortScanResult {
 #[derive(Patch)]
 #[rorm(model = "TcpPortScanResult")]
 pub(crate) struct TcpPortScanResultInsert {
+    pub(crate) uuid: Uuid,
     pub(crate) attack: ForeignModel<Attack>,
     pub(crate) address: Json<IpAddr>,
     pub(crate) port: i32,
