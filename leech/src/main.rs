@@ -21,6 +21,7 @@ use std::str::FromStr;
 use std::time::Duration;
 
 use clap::{ArgAction, Parser, Subcommand, ValueEnum};
+use dehashed_rs::SearchType;
 use ipnet::IpNet;
 use itertools::Itertools;
 use log::{error, info};
@@ -34,6 +35,7 @@ use crate::modules::bruteforce_subdomains::{
     bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
 };
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
+use crate::modules::dehashed;
 use crate::modules::port_scanner::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::rpc::start_rpc_server;
@@ -132,6 +134,11 @@ pub enum RunCommand {
         #[clap(long)]
         #[clap(default_value_t = false)]
         skip_icmp_check: bool,
+    },
+    /// Query the dehashed API
+    Dehashed {
+        /// The query for the api
+        query: String,
     },
 }
 
@@ -358,6 +365,37 @@ async fn main() -> Result<(), String> {
                             if let Err(err) = start_icmp_scan(settings, tx).await {
                                 error!("{err}");
                             }
+                        }
+                    }
+                }
+                RunCommand::Dehashed { query } => {
+                    let email = match env::var("DEHASHED_EMAIL") {
+                        Ok(x) => x,
+                        Err(_) => {
+                            error!("Missing environment variable DEHASHED_EMAIL");
+                            return Err("Missing environment variable DEHASHED_EMAIL".to_string());
+                        }
+                    };
+                    let api_key = match env::var("DEHASHED_API_KEY") {
+                        Ok(x) => x,
+                        Err(_) => {
+                            error!("Missing environment variable DEHASHED_API_KEY");
+                            return Err("Missing environment variable DEHASHED_API_KEY".to_string());
+                        }
+                    };
+
+                    match dehashed::query(
+                        email,
+                        api_key,
+                        dehashed_rs::Query::Domain(SearchType::Simple(query)),
+                    )
+                    .await
+                    {
+                        Ok(x) => {
+                            info!("{x:?}")
+                        }
+                        Err(err) => {
+                            error!("{err}");
                         }
                     }
                 }

@@ -18,6 +18,16 @@ pub struct ServerConfig {
     pub listen_port: u16,
 }
 
+/// The configuration of the dehashed API
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct DehashedConfig {
+    /// The email that is used for login
+    pub email: String,
+    /// The api key that is used for login
+    pub api_key: String,
+}
+
 /// The configuration of the database related settings
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "PascalCase")]
@@ -48,6 +58,8 @@ pub struct Config {
     ///
     /// Only used in the [`server`](crate::Command::Server) command
     pub logging: LoggingConfig,
+    /// Dehashed configuration
+    pub dehashed: Option<DehashedConfig>,
 }
 
 /// Errors that can occur while

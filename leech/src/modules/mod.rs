@@ -3,4 +3,5 @@
 
 pub mod bruteforce_subdomains;
 pub mod certificate_transparency;
+pub mod dehashed;
 pub mod port_scanner;
