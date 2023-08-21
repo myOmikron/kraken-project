@@ -84,6 +84,10 @@ message TcpPortScanResponse {
   uint32 port = 2;
 }
 
+/*
+--- Certificate Transparency
+ */
+
 // Certificate transparency request
 message CertificateTransparencyRequest {
   // The target domain to query
