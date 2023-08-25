@@ -1,4 +1,5 @@
 use std::fmt::{Display, Formatter};
+use std::sync::TryLockError;
 
 use actix_toolbox::tb_middleware::{actix_session, Session};
 use actix_web::body::BoxBody;
@@ -89,6 +90,7 @@ pub enum ApiStatusCode {
     DatabaseError = 2001,
     SessionError = 2002,
     WebauthnError = 2003,
+    DehashedNotAvailable = 2004,
 }
 
 /// Representation of an error response
@@ -141,6 +143,7 @@ pub enum ApiError {
     InvalidLeech,
     UsernameAlreadyOccupied,
     InvalidName,
+    DehashedNotAvailable,
 }
 
 impl Display for ApiError {
@@ -176,6 +179,7 @@ impl Display for ApiError {
             ApiError::InvalidLeech => write!(f, "Invalid leech"),
             ApiError::UsernameAlreadyOccupied => write!(f, "Username is already occupied"),
             ApiError::InvalidName => write!(f, "Invalid name specified"),
+            ApiError::DehashedNotAvailable => write!(f, "Dehashed is not available"),
         }
     }
 }
@@ -360,6 +364,9 @@ impl actix_web::ResponseError for ApiError {
                 ApiStatusCode::InvalidName,
                 self.to_string(),
             )),
+            ApiError::DehashedNotAvailable => HttpResponse::InternalServerError().json(
+                ApiErrorResponse::new(ApiStatusCode::DehashedNotAvailable, self.to_string()),
+            ),
         }
     }
 }
@@ -401,6 +408,12 @@ impl From<CreateUserError> for ApiError {
             CreateUserError::UsernameAlreadyExists => Self::UserAlreadyExists,
             CreateUserError::HashError(err) => Self::InvalidHash(err),
         }
+    }
+}
+
+impl<T> From<TryLockError<T>> for ApiError {
+    fn from(_: TryLockError<T>) -> Self {
+        Self::InternalServerError
     }
 }
 

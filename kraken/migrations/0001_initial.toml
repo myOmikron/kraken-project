@@ -1,7 +1,44 @@
 [Migration]
-Hash = "17971917235879015907"
+Hash = "12278384933680793871"
 Initial = true
 Replaces = []
+
+[[Migration.Operations]]
+Type = "CreateModel"
+Name = "settings"
+
+[[Migration.Operations.Fields]]
+Name = "uuid"
+Type = "varbinary"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "primary_key"
+
+[[Migration.Operations.Fields]]
+Name = "dehashed_email"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 1024
+
+[[Migration.Operations.Fields]]
+Name = "dehashed_api_key"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 1024
+
+[[Migration.Operations.Fields]]
+Name = "created_at"
+Type = "datetime"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "auto_create_time"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateModel"
@@ -25,6 +62,7 @@ Value = [
     "BruteforceSubdomains",
     "TcpPortScan",
     "QueryCertificateTransparency",
+    "QueryUnhashed",
 ]
 
 [[Migration.Operations.Fields.Annotations]]
@@ -79,6 +117,117 @@ Type = "int32"
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateModel"
+Name = "dehashedqueryresult"
+
+[[Migration.Operations.Fields]]
+Name = "uuid"
+Type = "varbinary"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "primary_key"
+
+[[Migration.Operations.Fields]]
+Name = "created_at"
+Type = "datetime"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "auto_create_time"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations.Fields]]
+Name = "dehashed_id"
+Type = "int64"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations.Fields]]
+Name = "email"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Fields]]
+Name = "username"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Fields]]
+Name = "password"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Fields]]
+Name = "hashed_password"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 8192
+
+[[Migration.Operations.Fields]]
+Name = "ip_address"
+Type = "varbinary"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations.Fields]]
+Name = "name"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Fields]]
+Name = "vin"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Fields]]
+Name = "address"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Fields]]
+Name = "phone"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Fields]]
+Name = "database_name"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 255
 
 [[Migration.Operations]]
 Type = "CreateModel"
@@ -335,17 +484,37 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "tcpportscanresult"
+Model = "attack"
 
 [Migration.Operations.Field]
-Name = "attack"
+Name = "started_by"
 Type = "varbinary"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "foreign_key"
 
 [Migration.Operations.Field.Annotations.Value]
-TableName = "attack"
+TableName = "user"
+ColumnName = "uuid"
+OnDelete = "Restrict"
+OnUpdate = "Restrict"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "attack"
+
+[Migration.Operations.Field]
+Name = "workspace"
+Type = "varbinary"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "workspace"
 ColumnName = "uuid"
 OnDelete = "Cascade"
 OnUpdate = "Cascade"
@@ -355,14 +524,11 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "workspace"
+Model = "userkey"
 
 [Migration.Operations.Field]
-Name = "owner"
+Name = "user"
 Type = "varbinary"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "index"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "foreign_key"
@@ -418,60 +584,63 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "userkey"
+Model = "tcpportscanresult"
 
 [Migration.Operations.Field]
-Name = "user"
+Name = "attack"
 Type = "varbinary"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "foreign_key"
 
 [Migration.Operations.Field.Annotations.Value]
-TableName = "user"
-ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "attack"
-
-[Migration.Operations.Field]
-Name = "started_by"
-Type = "varbinary"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "user"
-ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "attack"
-
-[Migration.Operations.Field]
-Name = "workspace"
-Type = "varbinary"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "workspace"
+TableName = "attack"
 ColumnName = "uuid"
 OnDelete = "Cascade"
 OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "dehashedqueryresult"
+
+[Migration.Operations.Field]
+Name = "attack"
+Type = "varbinary"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "attack"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "workspace"
+
+[Migration.Operations.Field]
+Name = "owner"
+Type = "varbinary"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "index"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "user"
+ColumnName = "uuid"
+OnDelete = "Restrict"
+OnUpdate = "Restrict"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"

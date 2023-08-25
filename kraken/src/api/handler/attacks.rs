@@ -5,6 +5,7 @@ use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path, Query};
 use actix_web::{delete, get, post, HttpResponse};
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use dehashed_rs::{DehashedError, ScheduledRequest, SearchResult};
 use futures::StreamExt;
 use ipnet::IpNet;
 use log::{debug, error, warn};
@@ -12,16 +13,18 @@ use rorm::fields::ForeignModelByField;
 use rorm::transaction::Transaction;
 use rorm::{and, insert, query, update, Database, Model};
 use serde::{Deserialize, Serialize};
+use tokio::sync::oneshot;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::handler::{query_user, ApiError, ApiResult, PathUuid, UserResponse, UuidResponse};
+use crate::api::server::DehashedScheduler;
 use crate::chan::{
     CertificateTransparencyEntry, RpcClients, WsManagerChan, WsManagerMessage, WsMessage,
 };
 use crate::models::{
-    Attack, AttackInsert, AttackType, TcpPortScanResult, TcpPortScanResultInsert, Workspace,
-    WorkspaceMember,
+    Attack, AttackInsert, AttackType, DehashedQueryResultInsert, TcpPortScanResult,
+    TcpPortScanResultInsert, Workspace, WorkspaceMember,
 };
 use crate::rpc::rpc_attacks;
 use crate::rpc::rpc_attacks::shared::dns_record::Record;
@@ -620,40 +623,132 @@ pub async fn query_certificate_transparency(
     Ok(HttpResponse::Accepted().json(UuidResponse { uuid }))
 }
 
+/// The request to query the dehashed API
+#[derive(ToSchema, Deserialize)]
+pub struct QueryDehashedRequest {
+    query: dehashed_rs::Query,
+    workspace_uuid: Uuid,
+}
+
+/// Query the [dehashed](https://dehashed.com/) API.
+/// It provides email, password, credit cards and other types of information from leak-databases.
+///
+/// Note that you are only able to query the API if you have bought access and have a running
+/// subscription saved in kraken.
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 202, description = "Attack scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = QueryDehashedRequest,
+    security(("api_key" = []))
+)]
+#[post("/attacks/queryDehashed")]
+pub async fn query_dehashed(
+    req: Json<QueryDehashedRequest>,
+    ws_manager_chan: Data<WsManagerChan>,
+    session: Session,
+    dehashed_scheduler: DehashedScheduler,
+    db: Data<Database>,
+) -> ApiResult<HttpResponse> {
+    let req = req.into_inner();
+    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+
+    let sender = {
+        match dehashed_scheduler.try_read()?.as_ref() {
+            None => return Err(ApiError::DehashedNotAvailable),
+            Some(scheduler) => scheduler.retrieve_sender(),
+        }
+    };
+
+    let (tx, rx) = oneshot::channel::<Result<SearchResult, DehashedError>>();
+
+    let attack_uuid = insert!(db.as_ref(), AttackInsert)
+        .return_primary_key()
+        .single(&AttackInsert {
+            uuid: Uuid::new_v4(),
+            attack_type: AttackType::QueryUnhashed,
+            started_by: ForeignModelByField::Key(user_uuid),
+            workspace: ForeignModelByField::Key(req.workspace_uuid),
+            finished_at: None,
+        })
+        .await?;
+
+    tokio::spawn(async move {
+        if let Err(err) = sender.send(ScheduledRequest::new(req.query, tx)).await {
+            error!("Couldn't send to dehashed scheduler: {err}");
+            return;
+        }
+
+        let res = match rx.await {
+            Err(err) => {
+                error!("Error waiting for result: {err}");
+                return;
+            }
+            Ok(Err(err)) => {
+                error!("Error while using dehashed: {err}");
+                return;
+            }
+            Ok(Ok(res)) => res,
+        };
+
+        let entries: Vec<_> = res
+            .entries
+            .into_iter()
+            .map(|x| DehashedQueryResultInsert {
+                uuid: Uuid::new_v4(),
+                dehashed_id: x.id as i64,
+                username: x.username,
+                name: x.name,
+                email: x.email,
+                password: x.password,
+                hashed_password: x.hashed_password,
+                database_name: x.database_name,
+                address: x.address,
+                phone: x.phone,
+                vin: x.vin,
+                ip_address: rorm::fields::Json(x.ip_address),
+                attack: ForeignModelByField::Key(attack_uuid),
+            })
+            .collect();
+
+        if let Err(err) = insert!(db.as_ref(), DehashedQueryResultInsert)
+            .bulk(&entries)
+            .await
+        {
+            error!("Database error: {err}");
+            return;
+        }
+
+        if let Err(err) = ws_manager_chan
+            .send(WsManagerMessage::Message(
+                user_uuid,
+                WsMessage::AttackFinished {
+                    attack_uuid,
+                    finished_successful: true,
+                },
+            ))
+            .await
+        {
+            error!("Couldn't send attack finished to ws manager: {err}");
+        };
+    });
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
+}
+
 /// A simple version of an attack
 #[derive(Serialize, ToSchema)]
 pub(crate) struct SimpleAttack {
     pub(crate) uuid: Uuid,
     pub(crate) workspace_uuid: Uuid,
-    pub(crate) attack_type: AttackTypeSchema,
+    pub(crate) attack_type: AttackType,
     pub(crate) started_from: UserResponse,
     pub(crate) finished_at: Option<DateTime<Utc>>,
     pub(crate) created_at: DateTime<Utc>,
-}
-
-/// [Schema](ToSchema) version of [`AttackType`]
-#[derive(Copy, Clone, Serialize, ToSchema)]
-pub enum AttackTypeSchema {
-    /// First variant to be mapped for 0
-    Undefined,
-    /// Bruteforce subdomains via DNS requests
-    BruteforceSubdomains,
-    /// Scan tcp ports
-    TcpPortScan,
-    /// Query certificate transparency
-    QueryCertificateTransparency,
-}
-impl From<AttackType> for AttackTypeSchema {
-    fn from(value: AttackType) -> Self {
-        match value {
-            AttackType::Undefined => AttackTypeSchema::Undefined,
-            AttackType::TcpPortScan => AttackTypeSchema::TcpPortScan,
-            AttackType::BruteforceSubdomains => AttackTypeSchema::BruteforceSubdomains,
-            AttackType::QueryCertificateTransparency => {
-                AttackTypeSchema::QueryCertificateTransparency
-            }
-        }
-    }
 }
 
 /// Retrieve an attack by id
@@ -708,7 +803,7 @@ pub(crate) async fn get_attack(
         Ok(SimpleAttack {
             uuid,
             workspace_uuid: *workspace.key(),
-            attack_type: attack_type.into(),
+            attack_type,
             started_from: UserResponse {
                 uuid: by_uuid,
                 username,

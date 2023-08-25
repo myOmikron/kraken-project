@@ -19,6 +19,7 @@ use std::fs::read_to_string;
 use std::io;
 use std::io::Write;
 use std::process::exit;
+use std::sync::Arc;
 
 use actix_toolbox::logging::setup_logging;
 use actix_web::cookie::Key;
@@ -104,11 +105,27 @@ async fn main() -> Result<(), String> {
         Command::Start => {
             let db = get_db(&config).await?;
 
+            let settings_manager_chan = Arc::new(
+                chan::start_settings_manager(&db)
+                    .await
+                    .map_err(|e| e.to_string())?,
+            );
+
             let (rpc_manager_chan, rpc_clients) = chan::start_rpc_manager(db.clone()).await?;
             let ws_manager_chan = chan::start_ws_manager().await?;
+            let dehashed_scheduler =
+                chan::start_dehashed_manager(settings_manager_chan.clone()).await?;
 
-            server::start_server(db, &config, rpc_manager_chan, rpc_clients, ws_manager_chan)
-                .await?;
+            server::start_server(
+                db,
+                &config,
+                rpc_manager_chan,
+                rpc_clients,
+                ws_manager_chan,
+                settings_manager_chan,
+                dehashed_scheduler,
+            )
+            .await?;
         }
         Command::Keygen => {
             let key = Key::generate();

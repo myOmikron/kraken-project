@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 use std::io;
+use std::sync::{Arc, RwLock};
 
 use actix_toolbox::tb_middleware::{
     setup_logging_mw, DBSessionStore, LoggingMiddlewareConfig, PersistentSession, SessionMiddleware,
@@ -12,6 +13,7 @@ use actix_web::web::{scope, Data, JsonConfig, PayloadConfig};
 use actix_web::{App, HttpServer};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
+use dehashed_rs::Scheduler;
 use rorm::Database;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -30,10 +32,16 @@ use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired, TokenRequired,
 };
 use crate::api::swagger::ApiDoc;
-use crate::chan::{RpcClients, RpcManagerChannel, WsManagerChan};
+use crate::chan::{RpcClients, RpcManagerChannel, SettingsManagerChan, WsManagerChan};
 use crate::config::Config;
 
 const ORIGIN_NAME: &str = "Kraken";
+
+/// A type alias for the scheduler of the dehashed api
+///
+/// It consists of an rwlock with an option that is either None, if no scheduler is
+/// available (due to missing credentials) or the scheduler.
+pub type DehashedScheduler = Data<RwLock<Option<Scheduler>>>;
 
 pub(crate) async fn start_server(
     db: Database,
@@ -41,6 +49,8 @@ pub(crate) async fn start_server(
     rpc_manager_chan: RpcManagerChannel,
     rpc_clients: RpcClients,
     ws_manager_chan: WsManagerChan,
+    setting_manager_chan: Arc<SettingsManagerChan>,
+    dehashed_scheduler: Option<Scheduler>,
 ) -> Result<(), StartServerError> {
     let key = Key::try_from(
         BASE64_STANDARD
@@ -62,6 +72,8 @@ pub(crate) async fn start_server(
     );
 
     let reporting_key = config.server.reporting_key.clone();
+    let dehashed = Data::new(RwLock::new(dehashed_scheduler));
+
     HttpServer::new(move || {
         App::new()
             .app_data(Data::new(db.clone()))
@@ -71,6 +83,8 @@ pub(crate) async fn start_server(
             .app_data(Data::new(ws_manager_chan.clone()))
             .app_data(Data::new(rpc_manager_chan.clone()))
             .app_data(rpc_clients.clone())
+            .app_data(Data::new(setting_manager_chan.clone()))
+            .app_data(dehashed.clone())
             .wrap(setup_logging_mw(LoggingMiddlewareConfig::default()))
             .wrap(
                 SessionMiddleware::builder(DBSessionStore::new(db.clone()), key.clone())
