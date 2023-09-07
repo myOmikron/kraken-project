@@ -70,7 +70,7 @@ thiserror = { version = "~1" }
 rorm = { version = "~0.5", features = ["tokio-rustls", "cli", "uuid"] }
 
 # API for dehashed
-dehashed-rs = { version = "0.3", features = ["tokio", "utoipa"] }
+dehashed-rs = { version = "~0.3", features = ["tokio", "utoipa"] }
 
 [build-dependencies]
 tonic-build = { version = "~0.9" }

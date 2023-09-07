@@ -58,10 +58,6 @@ pub struct Workspace {
     #[rorm(index)]
     pub owner: ForeignModel<User>,
 
-    /// States, if the workspace can be deleted
-    #[rorm(default = true)]
-    pub deletable: bool,
-
     /// Timestamp when the workspace was created
     #[rorm(auto_create_time)]
     pub created_at: chrono::NaiveDateTime,
@@ -80,5 +76,4 @@ pub(crate) struct WorkspaceInsert {
     pub(crate) name: String,
     pub(crate) description: Option<String>,
     pub(crate) owner: ForeignModel<User>,
-    pub(crate) deletable: bool,
 }

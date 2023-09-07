@@ -137,7 +137,6 @@ pub enum ApiError {
     AddressAlreadyExists,
     NameAlreadyExists,
     InvalidUuid,
-    WorkspaceNotDeletable,
     EmptyJson,
     InvalidPassword,
     InvalidLeech,
@@ -173,7 +172,6 @@ impl Display for ApiError {
             ApiError::AddressAlreadyExists => write!(f, "Address already exists"),
             ApiError::NameAlreadyExists => write!(f, "Name already exists"),
             ApiError::InvalidUuid => write!(f, "Invalid UUID"),
-            ApiError::WorkspaceNotDeletable => write!(f, "Workspace is not deletable"),
             ApiError::EmptyJson => write!(f, "Received an empty json request"),
             ApiError::InvalidPassword => write!(f, "Invalid password supplied"),
             ApiError::InvalidLeech => write!(f, "Invalid leech"),
@@ -325,9 +323,6 @@ impl actix_web::ResponseError for ApiError {
                 ApiStatusCode::InvalidUuid,
                 self.to_string(),
             )),
-            ApiError::WorkspaceNotDeletable => HttpResponse::BadRequest().json(
-                ApiErrorResponse::new(ApiStatusCode::WorkspaceNotDeletable, self.to_string()),
-            ),
             ApiError::EmptyJson => {
                 trace!("Received an empty json");
 

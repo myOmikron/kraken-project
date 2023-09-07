@@ -548,7 +548,7 @@ pub async fn query_certificate_transparency(
                                     common_name: e.common_name,
                                     value_names: e.value_names,
                                     not_before: e.not_before.map(|ts| {
-                                        DateTime::from_utc(
+                                        DateTime::from_naive_utc_and_offset(
                                             NaiveDateTime::from_timestamp_opt(
                                                 ts.seconds,
                                                 ts.nanos as u32,
@@ -558,7 +558,7 @@ pub async fn query_certificate_transparency(
                                         )
                                     }),
                                     not_after: e.not_after.map(|ts| {
-                                        DateTime::from_utc(
+                                        DateTime::from_naive_utc_and_offset(
                                             NaiveDateTime::from_timestamp_opt(
                                                 ts.seconds,
                                                 ts.nanos as u32,
