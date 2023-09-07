@@ -1,4 +1,3 @@
-
 .input {
     background-color: var(--level-0);
     color: var(--text);
@@ -49,4 +48,25 @@
 }
 .editable-list > div:first-child {
     grid-column: 1 / 3;
+}
+
+.bubble-list {
+    display: flex;
+    gap: 0.5em;
+}
+
+.bubble {
+    padding: 0.25em 1em;
+    border-radius: 0.75em;
+    border: 1px solid var(--primary-op);
+    transition: all ease 200ms;
+    cursor: pointer;
+}
+
+.bubble:hover {
+    box-shadow: inset 0 -3px 2em -3px var(--primary-op), 0 0 10em #0cf3, 0 0 .5em #0ff2;
+}
+
+.red {
+    background-color: var(--toast-error);
 }

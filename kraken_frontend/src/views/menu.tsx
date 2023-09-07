@@ -28,6 +28,10 @@ export default class Menu extends React.Component<MenuProps, MenuState> {
         return (
             <>
                 <div className="menu pane">
+                    <div className={"menu-header"}>
+                        <KrakenIcon />
+                    </div>
+                    <div className={"menu-seperator"}>Workspaces</div>
                     <div className={"menu-item-container"}>
                         <div
                             className={this.state.active === "workspaces" ? "menu-item active" : "menu-item"}
@@ -59,7 +63,8 @@ export default class Menu extends React.Component<MenuProps, MenuState> {
                             <AttackIcon />
                             <div className={"menu-hint"}>Attacks</div>
                         </div>
-                    </div>
+                    </div>{" "}
+                    <div className={"menu-seperator"}>General</div>
                     <div className={"menu-item-container"}>
                         <div
                             className={this.state.active === "knowledge" ? "menu-item active" : "menu-item"}
@@ -148,7 +153,6 @@ export default class Menu extends React.Component<MenuProps, MenuState> {
                         </>
                     ) : null}
                 </div>
-
                 <div className={"workspace-selector-container pane"}>
                     <WorkspaceIcon />
                 </div>

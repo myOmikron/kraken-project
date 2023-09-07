@@ -1,8 +1,15 @@
 .workspace-outer-container {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 2fr 1fr 7em;
+    grid-template-rows: max-content max-content 1fr;
     gap: 1em;
     animation: yourAnimation 0.3s step-End 0.4s 1 normal backwards;
+    height: calc(100% - 6em);
+}
+
+.workspace-heading {
+    grid-area: 1 / 1 / 1 / span 3;
+    height: fit-content;
 }
 
 .workspace-heading > h2 {
@@ -10,9 +17,10 @@
 }
 
 .workspace-section-selector {
+    grid-area: 2 / 1 / span 1 / span 2;
     display: grid;
     width: 100%;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
     gap: 1em;
 }
 
@@ -32,4 +40,31 @@
 
 .workspace-selected-tab {
     filter: drop-shadow(0 0 0 var(--primary));
+}
+
+.workspace-menu {
+    grid-area: 2 / 3 / span 2 / span 1;
+    display: flex;
+    padding: 1.5em;
+    gap: 1.5em;
+    flex-direction: column;
+}
+
+.workspace-content-details {
+    display: flex;
+    flex-direction: column;
+    justify-items: center;
+}
+
+.workspace-content-details > h2 {
+    margin: 0;
+    text-align: center;
+}
+
+.workspace-content-table {
+    border-collapse: collapse;
+}
+
+.workspace-content-row {
+    text-align: left;
 }

@@ -9,6 +9,10 @@
     animation: yourAnimation 0.9s step-End 0.4s 1 normal backwards;
 }
 
+.menu-header {
+    margin-bottom: 1em;
+}
+
 .menu-item {
     position: relative;
     cursor: pointer;
