@@ -35,10 +35,10 @@ tokio-stream = { version = "~0.1" }
 itertools = { version = "~0.11" }
 
 # gRPC implementation
-tonic = { version = "~0.9", features = ["transport", "tls"] }
+tonic = { version = "~0.10", features = ["transport", "tls"] }
 # codegenerator
-prost = { version = "~0.11" }
-prost-types = { version = "~0.11" }
+prost = { version = "~0.12" }
+prost-types = { version = "~0.12" }
 
 # Serialization library
 serde = { version = "~1", features = ["derive"] }
@@ -76,7 +76,7 @@ url = { version = "~2" }
 dehashed-rs = { version = "~0.3", features = ["tokio"] }
 
 [build-dependencies]
-tonic-build = { version = "~0.9" }
+tonic-build = { version = "~0.10" }
 
 [features]
 rorm-main = []
