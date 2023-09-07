@@ -392,7 +392,9 @@ async fn main() -> Result<(), String> {
                     .await
                     {
                         Ok(x) => {
-                            info!("{x:?}")
+                            for entry in x.entries {
+                                info!("{entry:?}");
+                            }
                         }
                         Err(err) => {
                             error!("{err}");
