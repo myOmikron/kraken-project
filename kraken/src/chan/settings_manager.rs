@@ -57,15 +57,13 @@ pub async fn start_settings_manager(
     {
         Some(x) => x,
         None => {
-            let settings = insert!(db, SettingsInsert)
+            insert!(db, SettingsInsert)
                 .single(&SettingsInsert {
                     uuid: Uuid::new_v4(),
                     dehashed_api_key: None,
                     dehashed_email: None,
                 })
-                .await?;
-
-            settings
+                .await?
         }
     };
 

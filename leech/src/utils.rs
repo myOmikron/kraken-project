@@ -11,7 +11,7 @@ pub(crate) struct Regexes {
 }
 
 static RE: Lazy<Regexes> = Lazy::new(|| Regexes {
-    ports: Regex::new(r#"^(?P<range>\d*-\d*)$|^(?P<single>\d+)$|^$"#).unwrap(),
+    ports: Regex::new(r"^(?P<range>\d*-\d*)$|^(?P<single>\d+)$|^$").unwrap(),
 });
 
 /// Error while parsing ports
