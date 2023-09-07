@@ -1884,6 +1884,7 @@ dependencies = [
  "serde",
  "serde_json",
  "surge-ping",
+ "thiserror",
  "tokio",
  "tokio-stream",
  "toml",

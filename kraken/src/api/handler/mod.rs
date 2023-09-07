@@ -1,4 +1,3 @@
-use std::fmt::{Display, Formatter};
 use std::sync::TryLockError;
 
 use actix_toolbox::tb_middleware::{actix_session, Session};
@@ -9,6 +8,7 @@ use rorm::executor::Executor;
 use rorm::{query, Model};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_repr::Serialize_repr;
+use thiserror::Error;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 use webauthn_rs::prelude::WebauthnError;
@@ -69,6 +69,7 @@ pub enum ApiStatusCode {
     InvalidContentType = 1002,
     InvalidJson = 1003,
     PayloadOverflow = 1004,
+
     Unauthenticated = 1005,
     Missing2fa = 1006,
     MissingPrivileges = 1007,
@@ -113,73 +114,64 @@ impl ApiErrorResponse {
 }
 
 /// All available errors that can occur while using the API.
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum ApiError {
+    #[error("Login failed")]
     LoginFailed,
+    #[error("Not found")]
     NotFound,
+    #[error("Content type error")]
     InvalidContentType,
-    InvalidJson(serde_json::Error),
+    #[error("Json error: {0}")]
+    InvalidJson(#[from] serde_json::Error),
+    #[error("Payload overflow: {0}")]
     PayloadOverflow(String),
+    #[error("Internal server error")]
     InternalServerError,
-    DatabaseError(rorm::Error),
+    #[error("Database error occurred")]
+    DatabaseError(#[from] rorm::Error),
+    #[error("Internal server error")]
     InvalidHash(argon2::password_hash::Error),
-    SessionInsert(actix_session::SessionInsertError),
-    SessionGet(actix_session::SessionGetError),
+    #[error("Session error occurred")]
+    SessionInsert(#[from] actix_session::SessionInsertError),
+    #[error("Session error occurred")]
+    SessionGet(#[from] actix_session::SessionGetError),
+    #[error("Unauthenticated")]
     Unauthenticated,
+    #[error("2FA is missing")]
     Missing2FA,
+    #[error("Corrupt session")]
     SessionCorrupt,
+    #[error("You are missing privileges")]
     MissingPrivileges,
+    #[error("No security key is available")]
     NoSecurityKeyAvailable,
-    Webauthn(WebauthnError),
+    #[error("Webauthn error")]
+    Webauthn(#[from] WebauthnError),
+    #[error("User already exists")]
     UserAlreadyExists,
+    #[error("Invalid username")]
     InvalidUsername,
+    #[error("Invalid address")]
     InvalidAddress,
+    #[error("Address already exists")]
     AddressAlreadyExists,
+    #[error("Name already exists")]
     NameAlreadyExists,
+    #[error("Invalid uuid")]
     InvalidUuid,
+    #[error("Received an empty json request")]
     EmptyJson,
+    #[error("Invalid password supplied")]
     InvalidPassword,
+    #[error("Invalid leech")]
     InvalidLeech,
+    #[error("Username is already occupied")]
     UsernameAlreadyOccupied,
+    #[error("Invalid name specified")]
     InvalidName,
+    #[error("Dehashed is not available")]
     DehashedNotAvailable,
-}
-
-impl Display for ApiError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ApiError::LoginFailed => write!(f, "Login failed"),
-            ApiError::DatabaseError(_) => write!(f, "Database error occurred"),
-            ApiError::InvalidHash(_) | ApiError::InternalServerError => {
-                write!(f, "Internal server error")
-            }
-            ApiError::SessionInsert(_) | ApiError::SessionGet(_) => {
-                write!(f, "Session error occurred")
-            }
-            ApiError::NotFound => write!(f, "Not found"),
-            ApiError::InvalidContentType => write!(f, "Content type error"),
-            ApiError::InvalidJson(err) => write!(f, "Json error: {err}"),
-            ApiError::PayloadOverflow(err) => write!(f, "{err}"),
-            ApiError::Unauthenticated => write!(f, "Unauthenticated"),
-            ApiError::Missing2FA => write!(f, "2FA is missing"),
-            ApiError::SessionCorrupt => write!(f, "Corrupt session"),
-            ApiError::MissingPrivileges => write!(f, "You are missing privileges"),
-            ApiError::NoSecurityKeyAvailable => write!(f, "No security key available"),
-            ApiError::Webauthn(_) => write!(f, "Webauthn error"),
-            ApiError::UserAlreadyExists => write!(f, "User does already exist"),
-            ApiError::InvalidUsername => write!(f, "Invalid username"),
-            ApiError::InvalidAddress => write!(f, "Invalid address"),
-            ApiError::AddressAlreadyExists => write!(f, "Address already exists"),
-            ApiError::NameAlreadyExists => write!(f, "Name already exists"),
-            ApiError::InvalidUuid => write!(f, "Invalid UUID"),
-            ApiError::EmptyJson => write!(f, "Received an empty json request"),
-            ApiError::InvalidPassword => write!(f, "Invalid password supplied"),
-            ApiError::InvalidLeech => write!(f, "Invalid leech"),
-            ApiError::UsernameAlreadyOccupied => write!(f, "Username is already occupied"),
-            ApiError::InvalidName => write!(f, "Invalid name specified"),
-            ApiError::DehashedNotAvailable => write!(f, "Dehashed is not available"),
-        }
-    }
 }
 
 impl actix_web::ResponseError for ApiError {
@@ -366,33 +358,9 @@ impl actix_web::ResponseError for ApiError {
     }
 }
 
-impl From<rorm::Error> for ApiError {
-    fn from(value: rorm::Error) -> Self {
-        Self::DatabaseError(value)
-    }
-}
-
 impl From<argon2::password_hash::Error> for ApiError {
     fn from(value: argon2::password_hash::Error) -> Self {
-        Self::InvalidHash(value)
-    }
-}
-
-impl From<actix_session::SessionInsertError> for ApiError {
-    fn from(value: actix_session::SessionInsertError) -> Self {
-        Self::SessionInsert(value)
-    }
-}
-
-impl From<actix_session::SessionGetError> for ApiError {
-    fn from(value: actix_session::SessionGetError) -> Self {
-        Self::SessionGet(value)
-    }
-}
-
-impl From<WebauthnError> for ApiError {
-    fn from(value: WebauthnError) -> Self {
-        Self::Webauthn(value)
+        ApiError::InvalidHash(value)
     }
 }
 
