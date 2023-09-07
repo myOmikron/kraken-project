@@ -17,14 +17,18 @@ pub async fn query(
     let api = DehashedApi::new(email, api_key)?;
     let scheduler = api.start_scheduler();
     let s_tx = scheduler.retrieve_sender();
-    let (tx, mut rx) = oneshot::channel();
+    let (tx, rx) = oneshot::channel();
     if let Err(err) = s_tx.send(ScheduledRequest::new(query, tx)).await {
         error!("Couldn't send to dehashed scheduler: {err}");
         return Err(DehashedError::DehashedSchedulerUnreachable);
     }
 
-    match rx.try_recv() {
+    match rx.await {
         Ok(x) => Ok(x?),
-        Err(_) => Err(DehashedError::DehashedSchedulerUnreachable),
+        Err(x) => {
+            error!("{x}");
+
+            Err(DehashedError::DehashedSchedulerUnreachable)
+        }
     }
 }
