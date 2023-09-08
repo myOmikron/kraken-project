@@ -50,6 +50,26 @@
     flex-direction: column;
 }
 
+.workspace-menu-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25em;
+    text-align: center;
+    transition: all ease 200ms;
+    cursor: pointer;
+    transform-origin: center left;
+}
+
+.workspace-menu-item:hover {
+    color: white;
+    filter: drop-shadow(0 0 8px var(--primary-op));
+    animation: bounceRL 1s infinite;
+}
+
+.workspace-menu-hint {
+    font-size: small;
+}
+
 .workspace-content-details {
     display: flex;
     flex-direction: column;

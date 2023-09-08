@@ -40,14 +40,23 @@ export default class Workspace extends React.Component<WorkspaceProps, Workspace
                     <h2 className={"heading"}>{this.state.workspace?.name}</h2>
                 </div>
                 <div className={"workspace-menu pane"}>
-                    <div className={"icon"}>
-                        <AttackIcon />
+                    <div className={"workspace-menu-item"}>
+                        <div className={"icon"}>
+                            <AttackIcon />
+                        </div>
+                        <div className={"workspace-menu-hint"}>Attacks</div>
                     </div>
-                    <div className={"icon"}>
-                        <DataIcon />
+                    <div className={"workspace-menu-item icon"}>
+                        <div className={"icon"}>
+                            <DataIcon />
+                        </div>
+                        <div className={"workspace-menu-hint"}>Data</div>
                     </div>
-                    <div className={"icon"}>
-                        <SettingsIcon />
+                    <div className={"workspace-menu-item icon"}>
+                        <div className={"icon"}>
+                            <SettingsIcon />
+                        </div>
+                        <div className={"workspace-menu-hint"}>Workspace Settings</div>
                     </div>
                 </div>
                 <div className={"workspace-section-selector"}>
