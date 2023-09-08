@@ -5,12 +5,7 @@ vulnerability = "deny"
 unmaintained = "deny"
 yanked = "deny"
 notice = "warn"
-ignore = [
-    # Only postgres is used
-    "RUSTSEC-2022-0090",
-    # Vulnerable code is not used
-    "RUSTSEC-2020-0071",
-]
+ignore = []
 
 [licenses]
 unlicensed = "deny"
@@ -20,9 +15,9 @@ allow = [
     "MPL-2.0",
     "ISC",
     "Unicode-DFS-2016",
-    "BSD-2-Clause",
     "BSD-3-Clause",
     "LicenseRef-ring",
+    "AGPL-3.0"
 ]
 
 deny = [

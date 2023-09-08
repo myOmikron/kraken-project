@@ -47,6 +47,8 @@ serde_json = { version = "~1" }
 ipnet = { version = "~2" }
 # Time library
 chrono = { version = ">=0.4.20", default-features = false, features = ["serde"] }
+# URL parsing lib
+url = { version = "~2", features = ["serde"] }
 
 # Lazy initialization
 once_cell = { version = "~1" }
@@ -54,8 +56,11 @@ once_cell = { version = "~1" }
 # RNG library
 rand = { version = "~0.8" }
 
+# Error handling
+thiserror = { version = "~1" }
+
 # ORM
-rorm = { version = "~0.5", features = ["tokio-rustls", "cli", "uuid"] }
+rorm = { version = "~0.6", features = ["tokio", "rustls", "cli", "uuid"] }
 
 # Needed because of modules
 
@@ -69,8 +74,6 @@ rlimit = { version = "~0.10" }
 
 # http request library
 reqwest = { version = "~0.11", features = ["json", "trust-dns", "rustls-tls-native-roots"] }
-# URL parsing lib
-url = { version = "~2" }
 
 # dehashed api
 dehashed-rs = { version = "~0.3", features = ["tokio"] }
