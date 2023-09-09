@@ -1,10 +1,11 @@
 //! The configuration definitions of a leech
 
-use std::fmt::{Display, Formatter};
 use std::path::Path;
 use std::{fs, io};
 
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
+use url::Url;
 
 use crate::logging::LoggingConfig;
 
@@ -16,6 +17,14 @@ pub struct ServerConfig {
     pub listen_address: String,
     /// Port of the gRPC server
     pub listen_port: u16,
+}
+
+/// The configuration of the connection to kraken
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct KrakenConfig {
+    /// The url to reach kraken's grpc server
+    pub kraken_uri: Url,
 }
 
 /// The configuration of the dehashed API
@@ -60,47 +69,25 @@ pub struct Config {
     pub logging: LoggingConfig,
     /// Dehashed configuration
     pub dehashed: Option<DehashedConfig>,
+    /// The configuration for all kraken related stuff
+    pub kraken: KrakenConfig,
 }
 
-/// Errors that can occur while
+/// Errors that can occur while retrieving the config file
+#[derive(Error, Debug)]
 pub enum GetConfigError {
     /// No file exists at the specified path
+    #[error("The config file does not exist at the specified path")]
     PathDoesNotExist,
     /// A directory exists at the specified path
+    #[error("The config file is a directory")]
     PathIsDirectory,
     /// An io error occurred.
-    IO(io::Error),
+    #[error("io error while reading the config file: {0}")]
+    IO(#[from] io::Error),
     /// Invalid toml format found within the file
-    InvalidToml(toml::de::Error),
-}
-
-impl Display for GetConfigError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            GetConfigError::PathDoesNotExist => {
-                write!(f, "The config file does not exist at the specified path")
-            }
-            GetConfigError::PathIsDirectory => {
-                write!(f, "The config file is a directory")
-            }
-            GetConfigError::IO(err) => write!(f, "io error while reading the config file: {err}"),
-            GetConfigError::InvalidToml(err) => {
-                write!(f, "The config file contains invalid TOML: {err}")
-            }
-        }
-    }
-}
-
-impl From<io::Error> for GetConfigError {
-    fn from(value: io::Error) -> Self {
-        Self::IO(value)
-    }
-}
-
-impl From<toml::de::Error> for GetConfigError {
-    fn from(value: toml::de::Error) -> Self {
-        Self::InvalidToml(value)
-    }
+    #[error("The config file contains invalid TOML: {0}")]
+    InvalidToml(#[from] toml::de::Error),
 }
 
 impl From<GetConfigError> for String {

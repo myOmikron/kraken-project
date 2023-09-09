@@ -2,8 +2,8 @@
 //! This module holds all database related definitions of workspace related structs
 //!
 
-use rorm::fields::{BackRef, ForeignModel};
-use rorm::{field, Model, Patch};
+use chrono::{DateTime, Utc};
+use rorm::prelude::*;
 use uuid::Uuid;
 
 use crate::models::{Attack, User};
@@ -27,7 +27,7 @@ pub struct WorkspaceMember {
 
     /// The point in time the member was granted access to the workspace
     #[rorm(auto_create_time)]
-    pub created_at: chrono::NaiveDateTime,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Patch)]
@@ -60,7 +60,7 @@ pub struct Workspace {
 
     /// Timestamp when the workspace was created
     #[rorm(auto_create_time)]
-    pub created_at: chrono::NaiveDateTime,
+    pub created_at: DateTime<Utc>,
 
     /// The workspace's members
     pub members: BackRef<field!(WorkspaceMember::F.workspace)>,

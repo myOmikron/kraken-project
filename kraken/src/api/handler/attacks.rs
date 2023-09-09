@@ -8,10 +8,11 @@ use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use dehashed_rs::{DehashedError, ScheduledRequest, SearchResult};
 use futures::StreamExt;
 use ipnet::IpNet;
+use ipnetwork::IpNetwork;
 use log::{debug, error, warn};
-use rorm::fields::ForeignModelByField;
-use rorm::transaction::Transaction;
-use rorm::{and, insert, query, update, Database, Model};
+use rorm::db::transaction::Transaction;
+use rorm::prelude::ForeignModelByField;
+use rorm::{and, insert, query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use tokio::sync::oneshot;
 use utoipa::{IntoParams, ToSchema};
@@ -26,9 +27,9 @@ use crate::models::{
     Attack, AttackInsert, AttackType, DehashedQueryResultInsert, TcpPortScanResult,
     TcpPortScanResultInsert, Workspace, WorkspaceMember,
 };
-use crate::rpc::rpc_attacks;
-use crate::rpc::rpc_attacks::shared::dns_record::Record;
-use crate::rpc::rpc_attacks::CertificateTransparencyRequest;
+use crate::rpc::rpc_definitions;
+use crate::rpc::rpc_definitions::shared::dns_record::Record;
+use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
 
 /// The settings of a subdomain bruteforce request
 #[derive(Deserialize, ToSchema)]
@@ -89,7 +90,7 @@ pub async fn bruteforce_subdomains(
 
     // start attack
     tokio::spawn(async move {
-        let req = rpc_attacks::BruteforceSubdomainRequest {
+        let req = rpc_definitions::BruteforceSubdomainRequest {
             attack_uuid: uuid.to_string(),
             domain: req.domain.clone(),
             wordlist_path: req.wordlist_path.clone(),
@@ -185,7 +186,7 @@ pub async fn bruteforce_subdomains(
 
         let now = Utc::now();
         if let Err(err) = update!(db.as_ref(), Attack)
-            .condition(Attack::F.uuid.equals(uuid.as_ref()))
+            .condition(Attack::F.uuid.equals(uuid))
             .set(Attack::F.finished_at, Some(now.naive_utc()))
             .exec()
             .await
@@ -263,15 +264,15 @@ where
         })
 }
 
-impl From<&PortOrRange> for rpc_attacks::PortOrRange {
+impl From<&PortOrRange> for rpc_definitions::PortOrRange {
     fn from(value: &PortOrRange) -> Self {
-        rpc_attacks::PortOrRange {
+        rpc_definitions::PortOrRange {
             port_or_range: Some(match value {
                 PortOrRange::Port(port) => {
-                    rpc_attacks::port_or_range::PortOrRange::Single(*port as u32)
+                    rpc_definitions::port_or_range::PortOrRange::Single(*port as u32)
                 }
                 PortOrRange::Range(range) => {
-                    rpc_attacks::port_or_range::PortOrRange::Range(rpc_attacks::PortRange {
+                    rpc_definitions::port_or_range::PortOrRange::Range(rpc_definitions::PortRange {
                         start: *range.start() as u32,
                         end: *range.end() as u32,
                     })
@@ -330,7 +331,7 @@ pub async fn scan_tcp_ports(
 
     // start attack
     tokio::spawn(async move {
-        let req = rpc_attacks::TcpPortScanRequest {
+        let req = rpc_definitions::TcpPortScanRequest {
             attack_uuid: uuid.to_string(),
             targets: req.targets.iter().map(|addr| (*addr).into()).collect(),
             exclude: req.exclude.iter().map(|addr| addr.to_string()).collect(),
@@ -360,11 +361,11 @@ pub async fn scan_tcp_ports(
                             };
 
                             let address = match addr {
-                                rpc_attacks::shared::address::Address::Ipv4(addr) => {
+                                rpc_definitions::shared::address::Address::Ipv4(addr) => {
                                     IpAddr::V4(addr.into())
                                 }
 
-                                rpc_attacks::shared::address::Address::Ipv6(addr) => {
+                                rpc_definitions::shared::address::Address::Ipv6(addr) => {
                                     IpAddr::V6(addr.into())
                                 }
                             };
@@ -374,7 +375,7 @@ pub async fn scan_tcp_ports(
                                 .single(&TcpPortScanResultInsert {
                                     uuid: Uuid::new_v4(),
                                     attack: ForeignModelByField::Key(uuid),
-                                    address: rorm::fields::Json(address),
+                                    address: IpNetwork::from(address),
                                     port: v.port as i32,
                                 })
                                 .await
@@ -435,7 +436,7 @@ pub async fn scan_tcp_ports(
 
         let now = Utc::now();
         if let Err(err) = update!(db.as_ref(), Attack)
-            .condition(Attack::F.uuid.equals(uuid.as_ref()))
+            .condition(Attack::F.uuid.equals(uuid))
             .set(Attack::F.finished_at, Some(now.naive_utc()))
             .exec()
             .await
@@ -598,7 +599,7 @@ pub async fn query_certificate_transparency(
 
         let now = Utc::now();
         if let Err(err) = update!(db.as_ref(), Attack)
-            .condition(Attack::F.uuid.equals(uuid.as_ref()))
+            .condition(Attack::F.uuid.equals(uuid))
             .set(Attack::F.finished_at, Some(now.naive_utc()))
             .exec()
             .await
@@ -710,7 +711,7 @@ pub async fn query_dehashed(
                 address: x.address,
                 phone: x.phone,
                 vin: x.vin,
-                ip_address: rorm::fields::Json(x.ip_address),
+                ip_address: x.ip_address.map(|x| IpNetwork::from(x)),
                 attack: ForeignModelByField::Key(attack_uuid),
             })
             .collect();
@@ -784,7 +785,7 @@ pub(crate) async fn get_attack(
             Attack::F.started_by.display_name,
         )
     )
-    .condition(Attack::F.uuid.equals(req.uuid.as_ref()))
+    .condition(Attack::F.uuid.equals(req.uuid))
     .optional()
     .await?
     .ok_or(ApiError::InvalidUuid)?;
@@ -856,7 +857,7 @@ pub(crate) struct SimpleTcpPortScanResult {
     pub attack: Uuid,
     pub created_at: DateTime<Utc>,
     #[schema(value_type = String)]
-    pub address: IpAddr,
+    pub address: IpNetwork,
     pub port: u16,
 }
 
@@ -888,11 +889,11 @@ pub(crate) async fn get_tcp_port_scan_results(
         Err(ApiError::MissingPrivileges)
     } else {
         let (total,) = query!(&mut tx, (TcpPortScanResult::F.uuid.count(),))
-            .condition(TcpPortScanResult::F.attack.equals(uuid.as_ref()))
+            .condition(TcpPortScanResult::F.attack.equals(uuid))
             .one()
             .await?;
         let results = query!(&mut tx, TcpPortScanResult)
-            .condition(TcpPortScanResult::F.attack.equals(uuid.as_ref()))
+            .condition(TcpPortScanResult::F.attack.equals(uuid))
             .order_asc(TcpPortScanResult::F.uuid)
             .limit(limit)
             .offset(offset)
@@ -902,8 +903,8 @@ pub(crate) async fn get_tcp_port_scan_results(
             .map(|result| SimpleTcpPortScanResult {
                 uuid: result.uuid,
                 attack: *result.attack.key(),
-                created_at: Utc.from_utc_datetime(&result.created_at),
-                address: result.address.into_inner(),
+                created_at: result.created_at,
+                address: result.address,
                 port: result.port as u16,
             })
             .collect();
@@ -943,7 +944,7 @@ pub(crate) async fn delete_attack(
     let user = query_user(&mut tx, &session).await?;
 
     let attack = query!(&mut tx, Attack)
-        .condition(Attack::F.uuid.equals(req.uuid.as_ref()))
+        .condition(Attack::F.uuid.equals(req.uuid))
         .optional()
         .await?
         .ok_or(ApiError::InvalidUuid)?;
@@ -972,7 +973,7 @@ async fn has_access(tx: &mut Transaction, attack_uuid: Uuid, session: &Session) 
     let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let (workspace, owner) = query!(&mut *tx, (Workspace::F.uuid, Workspace::F.owner))
-        .condition(Workspace::F.attacks.uuid.equals(attack_uuid.as_ref()))
+        .condition(Workspace::F.attacks.uuid.equals(attack_uuid))
         .one()
         .await?;
     if *owner.key() == uuid {
@@ -981,8 +982,8 @@ async fn has_access(tx: &mut Transaction, attack_uuid: Uuid, session: &Session) 
 
     Ok(query!(&mut *tx, (WorkspaceMember::F.id,))
         .condition(and!(
-            WorkspaceMember::F.workspace.equals(workspace.as_ref()),
-            WorkspaceMember::F.member.equals(uuid.as_ref()),
+            WorkspaceMember::F.workspace.equals(workspace),
+            WorkspaceMember::F.member.equals(uuid),
         ))
         .optional()
         .await?

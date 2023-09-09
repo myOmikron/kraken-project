@@ -29,12 +29,15 @@ use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use clap::{Parser, Subcommand};
 use rand::thread_rng;
-use rorm::{cli, insert, query, Database, DatabaseConfiguration, DatabaseDriver, Model};
+use rorm::{
+    cli, insert, query, Database, DatabaseConfiguration, DatabaseDriver, FieldAccess, Model,
+};
 use webauthn_rs::prelude::Uuid;
 
 use crate::api::server;
 use crate::config::Config;
 use crate::models::{User, UserInsert};
+use crate::rpc::server::start_rpc_server;
 
 mod api;
 pub mod chan;
@@ -115,6 +118,8 @@ async fn main() -> Result<(), String> {
             let ws_manager_chan = chan::start_ws_manager().await?;
             let dehashed_scheduler =
                 chan::start_dehashed_manager(settings_manager_chan.clone()).await?;
+
+            start_rpc_server(&config, db.clone())?;
 
             server::start_server(
                 db,

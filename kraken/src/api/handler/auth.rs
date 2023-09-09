@@ -5,8 +5,8 @@ use argon2::password_hash::Error;
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use chrono::Utc;
 use log::{debug, error};
-use rorm::fields::ForeignModelByField;
-use rorm::{insert, query, update, Database, Model};
+use rorm::prelude::ForeignModelByField;
+use rorm::{insert, query, update, Database, FieldAccess, Model};
 use serde::Deserialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -84,8 +84,8 @@ pub(crate) async fn login(
         })?;
 
     update!(&mut tx, User)
-        .condition(User::F.uuid.equals(user.uuid.as_ref()))
-        .set(User::F.last_login, Some(Utc::now().naive_utc()))
+        .condition(User::F.uuid.equals(user.uuid))
+        .set(User::F.last_login, Some(Utc::now()))
         .exec()
         .await?;
 
@@ -157,7 +157,7 @@ pub(crate) async fn start_auth(
     session.remove("auth_state");
 
     let keys = query!(db.as_ref(), UserKey)
-        .condition(UserKey::F.user.equals(uuid.as_ref()))
+        .condition(UserKey::F.user.equals(uuid))
         .all()
         .await?;
 
@@ -207,8 +207,8 @@ pub(crate) async fn finish_auth(
     webauthn.finish_passkey_authentication(&auth, &auth_state)?;
 
     update!(db.as_ref(), User)
-        .condition(User::F.uuid.equals(uuid.as_ref()))
-        .set(User::F.last_login, Utc::now().naive_utc())
+        .condition(User::F.uuid.equals(uuid))
+        .set(User::F.last_login, Some(Utc::now()))
         .exec()
         .await?;
 
@@ -245,7 +245,7 @@ pub(crate) async fn start_register(
     let mut tx = db.start_transaction().await?;
 
     let mut user = query!(&mut tx, User)
-        .condition(User::F.uuid.equals(uuid.as_ref()))
+        .condition(User::F.uuid.equals(uuid))
         .optional()
         .await?
         .ok_or(ApiError::SessionCorrupt)?;
@@ -261,7 +261,7 @@ pub(crate) async fn start_register(
     session.remove("reg_state");
 
     let excluded_keys: Vec<CredentialID> = query!(&mut tx, UserKey)
-        .condition(UserKey::F.user.equals(uuid.as_ref()))
+        .condition(UserKey::F.user.equals(uuid))
         .all()
         .await?
         .into_iter()
@@ -327,7 +327,7 @@ pub(crate) async fn finish_register(
         .single(&UserKeyInsert {
             uuid: Uuid::new_v4(),
             user: ForeignModelByField::Key(uuid),
-            key: rorm::fields::Json(passkey),
+            key: rorm::fields::types::Json(passkey),
             name: req.name.clone(),
         })
         .await?;

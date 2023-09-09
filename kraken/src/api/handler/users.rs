@@ -6,7 +6,7 @@ use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use chrono::{DateTime, Utc};
 use log::error;
 use rand::thread_rng;
-use rorm::{query, update, Database, Model};
+use rorm::{query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -100,7 +100,7 @@ pub(crate) async fn delete_user(
     db: Data<Database>,
 ) -> ApiResult<HttpResponse> {
     rorm::delete!(db.as_ref(), User)
-        .condition(User::F.uuid.equals(req.uuid.as_ref()))
+        .condition(User::F.uuid.equals(req.uuid))
         .await?;
 
     Ok(HttpResponse::Ok().finish())
@@ -139,7 +139,7 @@ pub(crate) struct GetUserResponse {
 #[get("/users/{uuid}")]
 pub(crate) async fn get_user(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<Json<GetUser>> {
     let user = query!(db.as_ref(), User)
-        .condition(User::F.uuid.equals(req.uuid.as_ref()))
+        .condition(User::F.uuid.equals(req.uuid))
         .optional()
         .await?
         .ok_or(ApiError::InvalidUsername)?;
@@ -149,10 +149,8 @@ pub(crate) async fn get_user(req: Path<PathUuid>, db: Data<Database>) -> ApiResu
         username: user.username,
         display_name: user.display_name,
         admin: user.admin,
-        created_at: DateTime::from_naive_utc_and_offset(user.created_at, Utc),
-        last_login: user
-            .last_login
-            .map(|dt| DateTime::from_naive_utc_and_offset(dt, Utc)),
+        created_at: user.created_at,
+        last_login: user.last_login,
     }))
 }
 
@@ -179,10 +177,8 @@ pub(crate) async fn get_all_users(db: Data<Database>) -> ApiResult<Json<GetUserR
                 username: u.username,
                 display_name: u.display_name,
                 admin: u.admin,
-                created_at: DateTime::from_naive_utc_and_offset(u.created_at, Utc),
-                last_login: u
-                    .last_login
-                    .map(|dt| DateTime::from_naive_utc_and_offset(dt, Utc)),
+                created_at: u.created_at,
+                last_login: u.last_login,
             })
             .collect(),
     }))
@@ -204,7 +200,7 @@ pub(crate) async fn get_me(session: Session, db: Data<Database>) -> ApiResult<Js
     let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let user = query!(db.as_ref(), User)
-        .condition(User::F.uuid.equals(uuid.as_ref()))
+        .condition(User::F.uuid.equals(uuid))
         .optional()
         .await?
         .ok_or(ApiError::SessionCorrupt)?;
@@ -214,10 +210,8 @@ pub(crate) async fn get_me(session: Session, db: Data<Database>) -> ApiResult<Js
         username: user.username,
         display_name: user.display_name,
         admin: user.admin,
-        created_at: DateTime::from_naive_utc_and_offset(user.created_at, Utc),
-        last_login: user
-            .last_login
-            .map(|dt| DateTime::from_naive_utc_and_offset(dt, Utc)),
+        created_at: user.created_at,
+        last_login: user.last_login,
     }))
 }
 
@@ -253,7 +247,7 @@ pub(crate) async fn set_password(
     let mut tx = db.start_transaction().await?;
 
     let user = query!(&mut tx, User)
-        .condition(User::F.uuid.equals(uuid.as_ref()))
+        .condition(User::F.uuid.equals(uuid))
         .optional()
         .await?
         .ok_or(ApiError::SessionCorrupt)?;
@@ -274,7 +268,7 @@ pub(crate) async fn set_password(
         .to_string();
 
     update!(&mut tx, User)
-        .set(User::F.password_hash, &password_hash)
+        .set(User::F.password_hash, password_hash)
         .exec()
         .await?;
 
@@ -322,6 +316,7 @@ pub(crate) async fn update_me(
     session: Session,
 ) -> ApiResult<HttpResponse> {
     let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let req = req.into_inner();
 
     let mut tx = db.start_transaction().await?;
 
@@ -337,10 +332,10 @@ pub(crate) async fn update_me(
     }
 
     update!(&mut tx, User)
-        .condition(User::F.uuid.equals(uuid.as_ref()))
+        .condition(User::F.uuid.equals(uuid))
         .begin_dyn_set()
-        .set_if(User::F.username, req.username.as_ref())
-        .set_if(User::F.display_name, req.display_name.as_ref())
+        .set_if(User::F.username, req.username)
+        .set_if(User::F.display_name, req.display_name)
         .finish_dyn_set()
         .map_err(|_| ApiError::EmptyJson)?
         .await?;

@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use rorm::{Model, Patch};
+use rorm::prelude::*;
 use uuid::Uuid;
 
 /// The settings of kraken

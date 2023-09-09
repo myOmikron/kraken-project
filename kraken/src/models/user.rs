@@ -1,5 +1,6 @@
-use rorm::fields::{BackRef, ForeignModel, Json};
-use rorm::{field, Model, Patch};
+use chrono::{DateTime, Utc};
+use rorm::fields::types::Json;
+use rorm::prelude::*;
 use uuid::Uuid;
 use webauthn_rs::prelude::Passkey;
 
@@ -26,11 +27,11 @@ pub struct User {
     pub admin: bool,
 
     /// Last time the user has logged in
-    pub last_login: Option<chrono::NaiveDateTime>,
+    pub last_login: Option<DateTime<Utc>>,
 
     /// Creation time of the user
     #[rorm(auto_create_time)]
-    pub created_at: chrono::NaiveDateTime,
+    pub created_at: DateTime<Utc>,
 
     /// Backreference to the security keys of a user
     pub user_keys: BackRef<field!(UserKey::F.user)>,
@@ -44,7 +45,7 @@ pub(crate) struct UserInsert {
     pub(crate) display_name: String,
     pub(crate) password_hash: String,
     pub(crate) admin: bool,
-    pub(crate) last_login: Option<chrono::NaiveDateTime>,
+    pub(crate) last_login: Option<DateTime<Utc>>,
 }
 
 /// A security key (yubikey, e.g.) of a user

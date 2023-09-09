@@ -60,7 +60,7 @@ rand = { version = "~0.8" }
 thiserror = { version = "~1" }
 
 # ORM
-rorm = { version = "~0.6", features = ["tokio", "rustls", "cli", "uuid"] }
+rorm = { version = "~0.6", default-features = false, features = ["tokio", "rustls", "cli", "uuid", "postgres-only", "chrono"] }
 
 # Needed because of modules
 

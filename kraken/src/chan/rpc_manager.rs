@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use actix_web::web::Data;
 use log::{debug, warn};
-use rorm::{query, Database, Model};
+use rorm::{query, Database, FieldAccess, Model};
 use tokio::sync::mpsc::Sender;
 use tokio::sync::{mpsc, RwLock};
 use tokio::task::JoinHandle;
@@ -13,7 +13,7 @@ use tonic::transport::{Channel, Endpoint};
 use uuid::Uuid;
 
 use crate::models::Leech;
-use crate::rpc::rpc_attacks::req_attack_service_client::ReqAttackServiceClient;
+use crate::rpc::rpc_definitions::req_attack_service_client::ReqAttackServiceClient;
 
 pub(crate) type RpcManagerChannel = Sender<RpcManagerEvent>;
 pub(crate) type RpcClients = Data<RwLock<HashMap<Uuid, ReqAttackServiceClient<Channel>>>>;
@@ -120,7 +120,7 @@ pub async fn start_rpc_manager(db: Database) -> Result<(RpcManagerChannel, RpcCl
                 }
                 RpcManagerEvent::Created(uuid) => {
                     if let Ok(Some(leech)) = query!(&db, Leech)
-                        .condition(Leech::F.uuid.equals(uuid.as_ref()))
+                        .condition(Leech::F.uuid.equals(uuid))
                         .optional()
                         .await
                     {
@@ -136,7 +136,7 @@ pub async fn start_rpc_manager(db: Database) -> Result<(RpcManagerChannel, RpcCl
                         join_handle.abort();
 
                         if let Ok(Some(leech)) = query!(&db, Leech)
-                            .condition(Leech::F.uuid.equals(uuid.as_ref()))
+                            .condition(Leech::F.uuid.equals(uuid))
                             .optional()
                             .await
                         {

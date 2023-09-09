@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use log::error;
-use rorm::{insert, query, update, Database, Model};
+use rorm::{insert, query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -113,13 +113,13 @@ pub(crate) async fn delete_leech(
     let mut tx = db.start_transaction().await?;
 
     query!(&mut tx, (Leech::F.uuid,))
-        .condition(Leech::F.uuid.equals(path.uuid.as_ref()))
+        .condition(Leech::F.uuid.equals(path.uuid))
         .optional()
         .await?
         .ok_or(ApiError::InvalidUuid)?;
 
     rorm::delete!(&mut tx, Leech)
-        .condition(Leech::F.uuid.equals(path.uuid.as_ref()))
+        .condition(Leech::F.uuid.equals(path.uuid))
         .await?;
 
     tx.commit().await?;
@@ -162,7 +162,7 @@ pub(crate) async fn get_leech(
     db: Data<Database>,
 ) -> ApiResult<Json<GetLeech>> {
     let leech = query!(db.as_ref(), Leech)
-        .condition(Leech::F.uuid.equals(req.uuid.as_ref()))
+        .condition(Leech::F.uuid.equals(req.uuid))
         .optional()
         .await?
         .ok_or(ApiError::InvalidUuid)?;
@@ -248,7 +248,7 @@ pub(crate) async fn update_leech(
     let req = req.into_inner();
 
     query!(&mut tx, (Leech::F.uuid,))
-        .condition(Leech::F.uuid.equals(path.uuid.as_ref()))
+        .condition(Leech::F.uuid.equals(path.uuid))
         .optional()
         .await?
         .ok_or(ApiError::InvalidUuid)?;

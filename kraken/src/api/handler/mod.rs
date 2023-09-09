@@ -4,8 +4,8 @@ use actix_toolbox::tb_middleware::{actix_session, Session};
 use actix_web::body::BoxBody;
 use actix_web::HttpResponse;
 use log::{debug, error, info, trace, warn};
-use rorm::executor::Executor;
-use rorm::{query, Model};
+use rorm::db::Executor;
+use rorm::{query, FieldAccess, Model};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_repr::Serialize_repr;
 use thiserror::Error;
@@ -35,7 +35,7 @@ mod workspaces;
 pub(crate) async fn query_user(db: impl Executor<'_>, session: &Session) -> ApiResult<User> {
     let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
     query!(db, User)
-        .condition(User::F.uuid.equals(uuid.as_ref()))
+        .condition(User::F.uuid.equals(uuid))
         .optional()
         .await?
         .ok_or(ApiError::SessionCorrupt)

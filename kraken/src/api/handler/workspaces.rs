@@ -3,9 +3,9 @@ use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use chrono::{DateTime, TimeZone, Utc};
 use log::debug;
-use rorm::fields::ForeignModelByField;
-use rorm::transaction::Transaction;
-use rorm::{and, insert, query, update, Database, Model};
+use rorm::db::transaction::Transaction;
+use rorm::fields::types::ForeignModelByField;
+use rorm::{and, insert, query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -80,7 +80,7 @@ pub(crate) async fn delete_workspace(
     let executing_user = query_user(&mut tx, &session).await?;
 
     let workspace = query!(&mut tx, Workspace)
-        .condition(Workspace::F.uuid.equals(req.uuid.as_ref()))
+        .condition(Workspace::F.uuid.equals(req.uuid))
         .optional()
         .await?
         .ok_or(ApiError::InvalidUuid)?;
@@ -161,8 +161,8 @@ pub(crate) async fn get_workspace(
 
     let is_member = query!(&mut tx, (WorkspaceMember::F.id,))
         .condition(and!(
-            WorkspaceMember::F.member.equals(user_uuid.as_ref()),
-            WorkspaceMember::F.workspace.equals(req.uuid.as_ref())
+            WorkspaceMember::F.member.equals(user_uuid),
+            WorkspaceMember::F.workspace.equals(req.uuid)
         ))
         .optional()
         .await?
@@ -170,8 +170,8 @@ pub(crate) async fn get_workspace(
 
     let is_owner = query!(&mut tx, (Workspace::F.uuid,))
         .condition(and!(
-            Workspace::F.uuid.equals(req.uuid.as_ref()),
-            Workspace::F.owner.equals(user_uuid.as_ref())
+            Workspace::F.uuid.equals(req.uuid),
+            Workspace::F.owner.equals(user_uuid)
         ))
         .optional()
         .await?
@@ -211,7 +211,7 @@ pub(crate) async fn get_all_workspaces(
     let owner = query_user(&mut tx, &session).await?;
 
     let workspaces = query!(&mut tx, Workspace)
-        .condition(Workspace::F.owner.equals(owner.uuid.as_ref()))
+        .condition(Workspace::F.owner.equals(owner.uuid))
         .all()
         .await?;
 
@@ -229,7 +229,7 @@ pub(crate) async fn get_all_workspaces(
                     username: owner.username.clone(),
                     display_name: owner.display_name.clone(),
                 },
-                created_at: w.created_at.and_utc(),
+                created_at: w.created_at,
             })
             .collect(),
     }))
@@ -281,7 +281,7 @@ pub(crate) async fn update_workspace(
     let mut tx = db.start_transaction().await?;
 
     let w = query!(&mut tx, Workspace)
-        .condition(Workspace::F.uuid.equals(path.uuid.as_ref()))
+        .condition(Workspace::F.uuid.equals(path.uuid))
         .optional()
         .await?
         .ok_or(ApiError::InvalidUuid)?;
@@ -297,7 +297,7 @@ pub(crate) async fn update_workspace(
     }
 
     update!(&mut tx, Workspace)
-        .condition(Workspace::F.uuid.equals(w.uuid.as_ref()))
+        .condition(Workspace::F.uuid.equals(w.uuid))
         .begin_dyn_set()
         .set_if(Workspace::F.name, req.name)
         .set_if(Workspace::F.description, req.description)
@@ -385,7 +385,7 @@ pub(crate) async fn get_all_workspaces_admin(
                             username,
                             display_name,
                         },
-                        created_at: created_at.and_utc(),
+                        created_at,
                     }
                 },
             )
@@ -396,13 +396,13 @@ pub(crate) async fn get_all_workspaces_admin(
 /// Get a [`FullWorkspace`] by its uuid without permission checks
 async fn get_workspace_unchecked(uuid: Uuid, tx: &mut Transaction) -> ApiResult<FullWorkspace> {
     let workspace = query!(&mut *tx, Workspace)
-        .condition(Workspace::F.uuid.equals(uuid.as_ref()))
+        .condition(Workspace::F.uuid.equals(uuid))
         .optional()
         .await?
         .ok_or(ApiError::InvalidUuid)?;
 
     let owner = query!(&mut *tx, User)
-        .condition(User::F.uuid.equals(workspace.owner.key().as_ref()))
+        .condition(User::F.uuid.equals(*workspace.owner.key()))
         .one()
         .await?;
 
@@ -418,7 +418,7 @@ async fn get_workspace_unchecked(uuid: Uuid, tx: &mut Transaction) -> ApiResult<
             Attack::F.started_by.display_name,
         )
     )
-    .condition(Attack::F.workspace.equals(uuid.as_ref()))
+    .condition(Attack::F.workspace.equals(uuid))
     .all()
     .await?
     .into_iter()
@@ -448,7 +448,7 @@ async fn get_workspace_unchecked(uuid: Uuid, tx: &mut Transaction) -> ApiResult<
             WorkspaceMember::F.member.display_name
         )
     )
-    .condition(WorkspaceMember::F.workspace.equals(uuid.as_ref()))
+    .condition(WorkspaceMember::F.workspace.equals(uuid))
     .all()
     .await?
     .into_iter()
@@ -470,6 +470,6 @@ async fn get_workspace_unchecked(uuid: Uuid, tx: &mut Transaction) -> ApiResult<
         },
         attacks,
         members,
-        created_at: workspace.created_at.and_utc(),
+        created_at: workspace.created_at,
     })
 }

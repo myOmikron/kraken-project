@@ -1,4 +1,4 @@
-use rorm::{Model, Patch};
+use rorm::prelude::*;
 use uuid::Uuid;
 
 /// The data collectors of kraken

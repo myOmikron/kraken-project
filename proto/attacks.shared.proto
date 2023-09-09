@@ -1,6 +1,8 @@
 syntax = "proto3";
 package attacks.shared;
 
+import "google/protobuf/timestamp.proto";
+
 // Representation of an ipv4 address
 message Ipv4 {
   sfixed32 address = 1;
@@ -45,4 +47,21 @@ message DNSRecord {
     AAAA aaaa = 2;
     CNAME cname = 3;
   }
+}
+
+
+// Entry of a certificate transparency response
+message CertEntry {
+  // The name of the issuer
+  string issuer_name = 1;
+  // The common name of the certificate
+  string common_name = 2;
+  // The values of the certificate
+  repeated string value_names = 3;
+  // The start date of the certificate
+  google.protobuf.Timestamp not_before = 4;
+  // The end date of the certificate
+  google.protobuf.Timestamp not_after = 5;
+  // The serial number of the certificate
+  string serial_number = 6;
 }

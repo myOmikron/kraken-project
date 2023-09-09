@@ -20,15 +20,19 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::Duration;
 
+use chrono::{Datelike, Timelike};
 use clap::{ArgAction, Parser, Subcommand, ValueEnum};
 use dehashed_rs::SearchType;
 use ipnet::IpNet;
 use itertools::Itertools;
-use log::{error, info};
+use log::{error, info, warn};
+use prost_types::Timestamp;
 use rorm::cli;
 use tokio::sync::mpsc;
 use tokio::task;
+use tonic::transport::Endpoint;
 use trust_dns_resolver::Name;
+use uuid::Uuid;
 
 use crate::config::get_config;
 use crate::modules::bruteforce_subdomains::{
@@ -38,6 +42,9 @@ use crate::modules::certificate_transparency::{query_ct_api, CertificateTranspar
 use crate::modules::dehashed;
 use crate::modules::port_scanner::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
+use crate::rpc::rpc_attacks::attack_results_service_client::AttackResultsServiceClient;
+use crate::rpc::rpc_attacks::shared::CertEntry;
+use crate::rpc::rpc_attacks::{CertificateTransparencyResult, MetaAttackInfo};
 use crate::rpc::start_rpc_server;
 
 pub mod config;
@@ -153,6 +160,10 @@ pub enum Command {
         #[clap(short = 'v', global = true, action = ArgAction::Count)]
         verbosity: u8,
 
+        /// Push the results to a workspace in kraken
+        #[clap(long)]
+        push: Option<Uuid>,
+
         /// the subcommand to execute
         #[clap(subcommand)]
         command: RunCommand,
@@ -183,32 +194,17 @@ async fn main() -> Result<(), String> {
     let cli = Cli::parse();
 
     match cli.commands {
-        Command::Migrate { migration_dir } => {
-            let config = get_config(&cli.config_path)?;
-            cli::migrate::run_migrate_custom(
-                cli::config::DatabaseConfig {
-                    last_migration_table_name: None,
-                    driver: cli::config::DatabaseDriver::Postgres {
-                        host: config.database.host,
-                        port: config.database.port,
-                        name: config.database.name,
-                        user: config.database.user,
-                        password: config.database.password,
-                    },
-                },
-                migration_dir,
-                false,
-                None,
-            )
-            .await
-            .map_err(|e| e.to_string())?
-        }
+        Command::Migrate { migration_dir } => migrate(&cli.config_path, migration_dir).await?,
         Command::Server => {
             let config = get_config(&cli.config_path)?;
             logging::setup_logging(&config.logging)?;
             start_rpc_server(&config).await?;
         }
-        Command::Execute { command, verbosity } => {
+        Command::Execute {
+            command,
+            verbosity,
+            push,
+        } => {
             if env::var("RUST_LOG").is_err() {
                 match verbosity {
                     0 => env::set_var("RUST_LOG", "leech=info"),
@@ -218,186 +214,280 @@ async fn main() -> Result<(), String> {
             }
             env_logger::init();
 
-            match command {
-                RunCommand::BruteforceSubdomains {
-                    target,
-                    wordlist_path,
-                    concurrent_limit,
-                } => {
-                    let (tx, mut rx) = mpsc::channel(128);
+            if let Some(workspace) = push {
+                let config = get_config(&cli.config_path).map_err(|e| {
+                    format!("Couldn't retrieve necessary config for pushing to kraken: {e}")
+                })?;
 
-                    task::spawn(async move {
-                        while let Some(res) = rx.recv().await {
-                            match res {
-                                BruteforceSubdomainResult::A { source, target } => {
-                                    info!("Found a record for {source}: {target}");
-                                }
-                                BruteforceSubdomainResult::Aaaa { source, target } => {
-                                    info!("Found aaaa record for {source}: {target}");
-                                }
-                                BruteforceSubdomainResult::Cname { source, target } => {
-                                    info!("Found cname record for {source}: {target}");
-                                }
-                            };
-                        }
-                    });
-
-                    let settings = BruteforceSubdomainsSettings {
-                        domain: target.to_string(),
-                        wordlist_path,
-                        concurrent_limit: u32::from(concurrent_limit),
-                    };
-                    if let Err(err) = bruteforce_subdomains(settings, tx).await {
-                        error!("{err}");
-                    }
-                }
-                RunCommand::CertificateTransparency {
-                    target,
-                    include_expired,
-                    max_retries,
-                    retry_interval,
-                } => {
-                    let ct = CertificateTransparencySettings {
+                match command {
+                    RunCommand::CertificateTransparency {
                         target,
                         include_expired,
                         max_retries,
-                        retry_interval: Duration::from_millis(retry_interval as u64),
-                    };
+                        retry_interval,
+                    } => {
+                        let ct = CertificateTransparencySettings {
+                            target,
+                            include_expired,
+                            max_retries,
+                            retry_interval: Duration::from_millis(retry_interval as u64),
+                        };
 
-                    let entries = query_ct_api(ct).await?;
-                    for x in entries
-                        .into_iter()
-                        .flat_map(|mut e| {
-                            e.name_value.push(e.common_name);
-                            e.name_value
-                        })
-                        .sorted()
-                        .dedup()
-                    {
-                        info!("{x}");
+                        let entries = query_ct_api(ct).await?;
+
+                        for x in entries
+                            .iter()
+                            .flat_map(|e| {
+                                let mut name_value = e.name_value.clone();
+
+                                name_value.push(e.common_name.clone());
+                                name_value
+                            })
+                            .sorted()
+                            .dedup()
+                        {
+                            info!("{x}");
+                        }
+
+                        info!("Sending results to kraken");
+
+                        let endpoint =
+                            Endpoint::from_str(&config.kraken.kraken_uri.to_string()).unwrap();
+                        let chan = endpoint.connect().await.unwrap();
+
+                        let mut client = AttackResultsServiceClient::new(chan);
+                        client
+                            .certificate_transparency(CertificateTransparencyResult {
+                                entries: entries
+                                    .into_iter()
+                                    .map(|x| CertEntry {
+                                        value_names: x.name_value,
+                                        common_name: x.common_name,
+                                        serial_number: x.serial_number,
+                                        not_after: x.not_after.map(|ts| {
+                                            Timestamp::date_time_nanos(
+                                                ts.year() as i64,
+                                                ts.month() as u8,
+                                                ts.day() as u8,
+                                                ts.hour() as u8,
+                                                ts.minute() as u8,
+                                                ts.second() as u8,
+                                                ts.nanosecond(),
+                                            )
+                                            .unwrap()
+                                        }),
+                                        not_before: x.not_before.map(|ts| {
+                                            Timestamp::date_time_nanos(
+                                                ts.year() as i64,
+                                                ts.month() as u8,
+                                                ts.day() as u8,
+                                                ts.hour() as u8,
+                                                ts.minute() as u8,
+                                                ts.second() as u8,
+                                                ts.nanosecond(),
+                                            )
+                                            .unwrap()
+                                        }),
+                                        issuer_name: x.issuer_name,
+                                    })
+                                    .collect(),
+                                attack_info: Some(MetaAttackInfo {
+                                    workspace_uuid: workspace.to_string(),
+                                }),
+                            })
+                            .await
+                            .unwrap();
+
+                        info!("Finished sending results to kraken")
                     }
+                    _ => todo!("Not supported right now for pushing to kraken"),
                 }
-                RunCommand::PortScanner {
-                    targets,
-                    exclude,
-                    technique,
-                    ports,
-                    timeout,
-                    concurrent_limit,
-                    max_retries,
-                    retry_interval,
-                    skip_icmp_check,
-                } => {
-                    let mut addresses = vec![];
-                    for target in targets {
-                        if let Ok(addr) = IpAddr::from_str(&target) {
-                            addresses.push(addr);
-                        } else if let Ok(net) = IpNet::from_str(&target) {
-                            addresses.extend(net.hosts());
-                        } else {
-                            return Err(format!("{target} isn't valid ip address or ip net"));
-                        }
-                    }
+            } else {
+                match command {
+                    RunCommand::BruteforceSubdomains {
+                        target,
+                        wordlist_path,
+                        concurrent_limit,
+                    } => {
+                        let (tx, mut rx) = mpsc::channel(128);
 
-                    let mut exclude_addresses = vec![];
-                    for ex in exclude {
-                        if let Ok(addr) = IpAddr::from_str(&ex) {
-                            exclude_addresses.push(addr);
-                        } else if let Ok(net) = IpNet::from_str(&ex) {
-                            exclude_addresses.extend(net.hosts());
-                        } else {
-                            return Err(format!("{ex} isn't valid ip address or ip net"));
-                        }
-                    }
-
-                    let addresses: Vec<IpAddr> = addresses
-                        .into_iter()
-                        .filter(|addr| !exclude_addresses.contains(addr))
-                        .sorted()
-                        .dedup()
-                        .collect();
-
-                    let mut port_range = vec![];
-
-                    if ports.is_empty() {
-                        port_range.extend(1..=u16::MAX);
-                    } else {
-                        utils::parse_ports(&ports, &mut port_range)?;
-                    }
-
-                    match technique {
-                        PortScanTechnique::TcpCon => {
-                            let settings = TcpPortScannerSettings {
-                                addresses,
-                                port_range,
-                                timeout: Duration::from_millis(timeout as u64),
-                                skip_icmp_check,
-                                max_retries,
-                                retry_interval: Duration::from_millis(retry_interval as u64),
-                                concurrent_limit: u32::from(concurrent_limit),
-                            };
-
-                            let (tx, mut rx) = mpsc::channel(1);
-
-                            task::spawn(async move {
-                                while let Some(addr) = rx.recv().await {
-                                    info!("Open port found: {addr}");
-                                }
-                            });
-
-                            if let Err(err) = start_tcp_con_port_scan(settings, tx).await {
-                                error!("{err}");
+                        task::spawn(async move {
+                            while let Some(res) = rx.recv().await {
+                                match res {
+                                    BruteforceSubdomainResult::A { source, target } => {
+                                        info!("Found a record for {source}: {target}");
+                                    }
+                                    BruteforceSubdomainResult::Aaaa { source, target } => {
+                                        info!("Found aaaa record for {source}: {target}");
+                                    }
+                                    BruteforceSubdomainResult::Cname { source, target } => {
+                                        info!("Found cname record for {source}: {target}");
+                                    }
+                                };
                             }
-                        }
-                        PortScanTechnique::Icmp => {
-                            let settings = IcmpScanSettings {
-                                addresses,
-                                timeout: Duration::from_millis(timeout as u64),
-                            };
-                            let (tx, mut rx) = mpsc::channel(1);
+                        });
 
-                            task::spawn(async move {
-                                while let Some(addr) = rx.recv().await {
-                                    info!("Host up: {addr}");
-                                }
-                            });
-
-                            if let Err(err) = start_icmp_scan(settings, tx).await {
-                                error!("{err}");
-                            }
-                        }
-                    }
-                }
-                RunCommand::Dehashed { query } => {
-                    let email = match env::var("DEHASHED_EMAIL") {
-                        Ok(x) => x,
-                        Err(_) => {
-                            error!("Missing environment variable DEHASHED_EMAIL");
-                            return Err("Missing environment variable DEHASHED_EMAIL".to_string());
-                        }
-                    };
-                    let api_key = match env::var("DEHASHED_API_KEY") {
-                        Ok(x) => x,
-                        Err(_) => {
-                            error!("Missing environment variable DEHASHED_API_KEY");
-                            return Err("Missing environment variable DEHASHED_API_KEY".to_string());
-                        }
-                    };
-
-                    match dehashed::query(
-                        email,
-                        api_key,
-                        dehashed_rs::Query::Domain(SearchType::Simple(query)),
-                    )
-                    .await
-                    {
-                        Ok(x) => {
-                            for entry in x.entries {
-                                info!("{entry:?}");
-                            }
-                        }
-                        Err(err) => {
+                        let settings = BruteforceSubdomainsSettings {
+                            domain: target.to_string(),
+                            wordlist_path,
+                            concurrent_limit: u32::from(concurrent_limit),
+                        };
+                        if let Err(err) = bruteforce_subdomains(settings, tx).await {
                             error!("{err}");
+                        }
+                    }
+                    RunCommand::CertificateTransparency {
+                        target,
+                        include_expired,
+                        max_retries,
+                        retry_interval,
+                    } => {
+                        let ct = CertificateTransparencySettings {
+                            target,
+                            include_expired,
+                            max_retries,
+                            retry_interval: Duration::from_millis(retry_interval as u64),
+                        };
+
+                        let entries = query_ct_api(ct).await?;
+                        for x in entries
+                            .into_iter()
+                            .flat_map(|mut e| {
+                                e.name_value.push(e.common_name);
+                                e.name_value
+                            })
+                            .sorted()
+                            .dedup()
+                        {
+                            info!("{x}");
+                        }
+                    }
+                    RunCommand::PortScanner {
+                        targets,
+                        exclude,
+                        technique,
+                        ports,
+                        timeout,
+                        concurrent_limit,
+                        max_retries,
+                        retry_interval,
+                        skip_icmp_check,
+                    } => {
+                        let mut addresses = vec![];
+                        for target in targets {
+                            if let Ok(addr) = IpAddr::from_str(&target) {
+                                addresses.push(addr);
+                            } else if let Ok(net) = IpNet::from_str(&target) {
+                                addresses.extend(net.hosts());
+                            } else {
+                                return Err(format!("{target} isn't valid ip address or ip net"));
+                            }
+                        }
+
+                        let mut exclude_addresses = vec![];
+                        for ex in exclude {
+                            if let Ok(addr) = IpAddr::from_str(&ex) {
+                                exclude_addresses.push(addr);
+                            } else if let Ok(net) = IpNet::from_str(&ex) {
+                                exclude_addresses.extend(net.hosts());
+                            } else {
+                                return Err(format!("{ex} isn't valid ip address or ip net"));
+                            }
+                        }
+
+                        let addresses: Vec<IpAddr> = addresses
+                            .into_iter()
+                            .filter(|addr| !exclude_addresses.contains(addr))
+                            .sorted()
+                            .dedup()
+                            .collect();
+
+                        let mut port_range = vec![];
+
+                        if ports.is_empty() {
+                            port_range.extend(1..=u16::MAX);
+                        } else {
+                            utils::parse_ports(&ports, &mut port_range)?;
+                        }
+
+                        match technique {
+                            PortScanTechnique::TcpCon => {
+                                let settings = TcpPortScannerSettings {
+                                    addresses,
+                                    port_range,
+                                    timeout: Duration::from_millis(timeout as u64),
+                                    skip_icmp_check,
+                                    max_retries,
+                                    retry_interval: Duration::from_millis(retry_interval as u64),
+                                    concurrent_limit: u32::from(concurrent_limit),
+                                };
+
+                                let (tx, mut rx) = mpsc::channel(1);
+
+                                task::spawn(async move {
+                                    while let Some(addr) = rx.recv().await {
+                                        info!("Open port found: {addr}");
+                                    }
+                                });
+
+                                if let Err(err) = start_tcp_con_port_scan(settings, tx).await {
+                                    error!("{err}");
+                                }
+                            }
+                            PortScanTechnique::Icmp => {
+                                let settings = IcmpScanSettings {
+                                    addresses,
+                                    timeout: Duration::from_millis(timeout as u64),
+                                };
+                                let (tx, mut rx) = mpsc::channel(1);
+
+                                task::spawn(async move {
+                                    while let Some(addr) = rx.recv().await {
+                                        info!("Host up: {addr}");
+                                    }
+                                });
+
+                                if let Err(err) = start_icmp_scan(settings, tx).await {
+                                    error!("{err}");
+                                }
+                            }
+                        }
+                    }
+                    RunCommand::Dehashed { query } => {
+                        let email = match env::var("DEHASHED_EMAIL") {
+                            Ok(x) => x,
+                            Err(_) => {
+                                error!("Missing environment variable DEHASHED_EMAIL");
+                                return Err(
+                                    "Missing environment variable DEHASHED_EMAIL".to_string()
+                                );
+                            }
+                        };
+                        let api_key = match env::var("DEHASHED_API_KEY") {
+                            Ok(x) => x,
+                            Err(_) => {
+                                error!("Missing environment variable DEHASHED_API_KEY");
+                                return Err(
+                                    "Missing environment variable DEHASHED_API_KEY".to_string()
+                                );
+                            }
+                        };
+
+                        match dehashed::query(
+                            email,
+                            api_key,
+                            dehashed_rs::Query::Domain(SearchType::Simple(query)),
+                        )
+                        .await
+                        {
+                            Ok(x) => {
+                                for entry in x.entries {
+                                    info!("{entry:?}");
+                                }
+                            }
+                            Err(err) => {
+                                error!("{err}");
+                            }
                         }
                     }
                 }
@@ -406,4 +496,25 @@ async fn main() -> Result<(), String> {
     }
 
     Ok(())
+}
+
+async fn migrate(config_path: &str, migration_dir: String) -> Result<(), String> {
+    let config = get_config(config_path)?;
+    cli::migrate::run_migrate_custom(
+        cli::config::DatabaseConfig {
+            last_migration_table_name: None,
+            driver: cli::config::DatabaseDriver::Postgres {
+                host: config.database.host,
+                port: config.database.port,
+                name: config.database.name,
+                user: config.database.user,
+                password: config.database.password,
+            },
+        },
+        migration_dir,
+        false,
+        None,
+    )
+    .await
+    .map_err(|e| e.to_string())
 }

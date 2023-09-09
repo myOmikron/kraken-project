@@ -1,11 +1,11 @@
 use std::collections::HashMap;
-use std::net::IpAddr;
 
 use actix_web::get;
 use actix_web::web::{Data, Json, Path};
 use chrono::{DateTime, TimeZone, Utc};
 use futures::StreamExt;
-use rorm::{query, Database, Model};
+use ipnetwork::IpNetwork;
+use rorm::{query, Database, FieldAccess, Model};
 use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -55,7 +55,7 @@ pub(crate) struct ReportingUser {
 pub(crate) struct ReportingIpPort {
     /// Ip address (v4 or v6)
     #[schema(value_type = String, example = "10.13.37.1")]
-    pub(crate) ip: IpAddr,
+    pub(crate) ip: IpNetwork,
 
     /// Port number
     #[schema(example = 80)]
@@ -86,7 +86,7 @@ pub(crate) async fn report_workspace_results(
 
     // Check workspace to exist
     let (_,) = query!(&mut tx, (Workspace::F.uuid,))
-        .condition(Workspace::F.uuid.equals(uuid.as_ref()))
+        .condition(Workspace::F.uuid.equals(uuid))
         .optional()
         .await?
         .ok_or(ApiError::InvalidUuid)?;
@@ -101,7 +101,7 @@ pub(crate) async fn report_workspace_results(
             TcpPortScanResult::F.port
         )
     )
-    .condition(TcpPortScanResult::F.attack.workspace.equals(uuid.as_ref()))
+    .condition(TcpPortScanResult::F.attack.workspace.equals(uuid))
     .stream();
     while let Some(result) = stream.next().await {
         let (attack, address, port) = result?;
@@ -109,7 +109,7 @@ pub(crate) async fn report_workspace_results(
             .entry(*attack.key())
             .or_default()
             .push(ReportingIpPort {
-                ip: address.into_inner(),
+                ip: address,
                 port: port as u16,
             });
     }
@@ -128,7 +128,7 @@ pub(crate) async fn report_workspace_results(
             Attack::F.started_by.display_name
         )
     )
-    .condition(Attack::F.workspace.equals(uuid.as_ref()))
+    .condition(Attack::F.workspace.equals(uuid))
     .stream();
     while let Some(result) = stream.next().await {
         let (attack, created_at, finished_at, uuid, username, display_name) = result?;

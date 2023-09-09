@@ -2,7 +2,6 @@ syntax = "proto3";
 package attacks;
 
 import "attacks.shared.proto";
-import "google/protobuf/timestamp.proto";
 
 /*
 -- BruteforceSubdomain
@@ -101,30 +100,52 @@ message CertificateTransparencyRequest {
   uint64 retry_interval = 4;
 }
 
-// Entry of a certificate transparency response
-message CertEntry {
-  // The name of the issuer
-  string issuer_name = 1;
-  // The common name of the certificate
-  string common_name = 2;
-  // The values of the certificate
-  repeated string value_names = 3;
-  // The start date of the certificate
-  google.protobuf.Timestamp not_before = 4;
-  // The end date of the certificate
-  google.protobuf.Timestamp not_after = 5;
-  // The serial number of the certificate
-  string serial_number = 6;
-}
 
 // Response to a certificate transparency request
 message CertificateTransparencyResponse {
   // List of cert entries
-  repeated CertEntry entries = 1;
+  repeated shared.CertEntry entries = 1;
 }
 
 service ReqAttackService {
   rpc BruteforceSubdomains(BruteforceSubdomainRequest) returns (stream BruteforceSubdomainResponse);
   rpc RunTcpPortScan(TcpPortScanRequest) returns (stream TcpPortScanResponse);
   rpc QueryCertificateTransparency(CertificateTransparencyRequest) returns (CertificateTransparencyResponse);
+}
+
+/*
+------------------------ Results -------------------------------
+ */
+
+// The response to submitting a result
+message ResultResponse {
+  // The attack uuid assigned by kraken
+  string uuid = 1;
+}
+
+// Metainfos about the attack
+message MetaAttackInfo {
+  // The uuid of a workspace
+  string workspace_uuid = 1;
+}
+
+// Result of a certificate transparency request
+message CertificateTransparencyResult {
+  // Information about the attack
+  MetaAttackInfo attack_info = 1;
+  // List of cert entries
+  repeated attacks.shared.CertEntry entries = 2;
+}
+
+// Result of a subdomain enumeration request
+message SubdomainEnumerationResult {
+  // Information about the attack
+  MetaAttackInfo attack_info = 1;
+  // Found record
+  shared.DNSRecord record = 2;
+}
+
+service AttackResultsService {
+  rpc CertificateTransparency(CertificateTransparencyResult) returns (ResultResponse);
+  rpc SubdomainEnumeration(stream SubdomainEnumerationResult) returns (ResultResponse);
 }

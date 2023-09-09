@@ -19,10 +19,10 @@ use crate::modules::certificate_transparency::{query_ct_api, CertificateTranspar
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::rpc::rpc_attacks::port_or_range::PortOrRange;
 use crate::rpc::rpc_attacks::req_attack_service_server::ReqAttackService;
+use crate::rpc::rpc_attacks::shared::CertEntry;
 use crate::rpc::rpc_attacks::{
-    BruteforceSubdomainRequest, BruteforceSubdomainResponse, CertEntry,
-    CertificateTransparencyRequest, CertificateTransparencyResponse, TcpPortScanRequest,
-    TcpPortScanResponse,
+    BruteforceSubdomainRequest, BruteforceSubdomainResponse, CertificateTransparencyRequest,
+    CertificateTransparencyResponse, TcpPortScanRequest, TcpPortScanResponse,
 };
 
 /// The Attack service

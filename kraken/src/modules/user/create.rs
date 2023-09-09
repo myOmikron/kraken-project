@@ -5,7 +5,7 @@ use std::fmt::{Display, Formatter};
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHasher};
 use rand::thread_rng;
-use rorm::transaction::Transaction;
+use rorm::db::transaction::Transaction;
 use rorm::{insert, query, Database, Model};
 use webauthn_rs::prelude::Uuid;
 

@@ -19,10 +19,7 @@ allow = [
     "LicenseRef-ring",
     "AGPL-3.0"
 ]
-
-deny = [
-
-]
+deny = []
 
 # Exception for rings license
 [[licenses.clarify]]

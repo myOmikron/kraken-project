@@ -1,10 +1,8 @@
 //! This module holds all the information regarding attacks
 
-use std::net::IpAddr;
-
 use chrono::{DateTime, Utc};
-use rorm::fields::{ForeignModel, Json};
-use rorm::{DbEnum, Model, Patch};
+use ipnetwork::IpNetwork;
+use rorm::prelude::*;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -78,10 +76,10 @@ pub struct TcpPortScanResult {
 
     /// The point in time, this result was produced
     #[rorm(auto_create_time)]
-    pub created_at: chrono::NaiveDateTime,
+    pub created_at: DateTime<Utc>,
 
     /// The ip address a port was found on
-    pub address: Json<IpAddr>,
+    pub address: IpNetwork,
 
     /// The found port
     ///
@@ -94,7 +92,7 @@ pub struct TcpPortScanResult {
 pub(crate) struct TcpPortScanResultInsert {
     pub(crate) uuid: Uuid,
     pub(crate) attack: ForeignModel<Attack>,
-    pub(crate) address: Json<IpAddr>,
+    pub(crate) address: IpNetwork,
     pub(crate) port: i32,
 }
 
@@ -129,7 +127,7 @@ pub struct DehashedQueryResult {
     pub hashed_password: Option<String>,
     /// An ip address, may be [None] if the result didn't include this field
     #[rorm(max_length = 255)]
-    pub ip_address: Json<Option<IpAddr>>,
+    pub ip_address: Option<IpNetwork>,
     /// A name, may be [None] if the result didn't include this field
     #[rorm(max_length = 255)]
     pub name: Option<String>,
@@ -157,10 +155,79 @@ pub(crate) struct DehashedQueryResultInsert {
     pub(crate) username: Option<String>,
     pub(crate) password: Option<String>,
     pub(crate) hashed_password: Option<String>,
-    pub(crate) ip_address: Json<Option<IpAddr>>,
+    pub(crate) ip_address: Option<IpNetwork>,
     pub(crate) name: Option<String>,
     pub(crate) vin: Option<String>,
     pub(crate) address: Option<String>,
     pub(crate) phone: Option<String>,
     pub(crate) database_name: Option<String>,
+}
+
+/// A value name in a [AttackType::QueryCertificateTransparency] result
+#[derive(Model)]
+pub struct CertificateTransparencyValueName {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// a single value
+    #[rorm(max_length = 255)]
+    pub value_name: String,
+
+    /// The result this value is originating from
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub ct_result: ForeignModel<CertificateTransparencyResult>,
+}
+
+#[derive(Patch)]
+#[rorm(model = "CertificateTransparencyValueName")]
+pub(crate) struct CertificateTransparencyValueNameInsert {
+    pub(crate) uuid: Uuid,
+    pub(crate) value_name: String,
+    pub(crate) ct_result: ForeignModel<CertificateTransparencyResult>,
+}
+
+/// Representation of a [AttackType::QueryCertificateTransparency] result
+#[derive(Model)]
+pub struct CertificateTransparencyResult {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The attack which produced this result
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub attack: ForeignModel<Attack>,
+
+    /// The point in time, this result was produced
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
+
+    /// The name of the issuer
+    #[rorm(max_length = 255)]
+    pub issuer_name: String,
+    /// The common name of the certificate
+    #[rorm(max_length = 255)]
+    pub common_name: String,
+    /// The values of the certificate
+    pub value_names: BackRef<field!(CertificateTransparencyValueName::F.ct_result)>,
+    /// The start date of the certificate
+    pub not_before: Option<DateTime<Utc>>,
+    /// The end date of the certificate
+    pub not_after: Option<DateTime<Utc>>,
+    /// The serial number of the certificate
+    #[rorm(max_length = 255)]
+    pub serial_number: String,
+}
+
+#[derive(Patch)]
+#[rorm(model = "CertificateTransparencyResult")]
+pub(crate) struct CertificateTransparencyResultInsert {
+    pub(crate) uuid: Uuid,
+    pub(crate) attack: ForeignModel<Attack>,
+    pub(crate) created_at: DateTime<Utc>,
+    pub(crate) issuer_name: String,
+    pub(crate) common_name: String,
+    pub(crate) not_before: Option<DateTime<Utc>>,
+    pub(crate) not_after: Option<DateTime<Utc>>,
+    pub(crate) serial_number: String,
 }

@@ -4,7 +4,7 @@ use actix_toolbox::tb_middleware::actix_session::SessionExt;
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::web::Data;
 use futures::future::LocalBoxFuture;
-use rorm::{query, Database, Model};
+use rorm::{query, Database, FieldAccess, Model};
 use uuid::Uuid;
 
 use crate::api::handler::ApiError;
@@ -75,7 +75,7 @@ where
                 .ok_or(ApiError::SessionCorrupt)?;
 
             let second_factor_required = query!(&db, (UserKey::F.uuid,))
-                .condition(UserKey::F.user.equals(uuid.as_ref()))
+                .condition(UserKey::F.user.equals(uuid))
                 .optional()
                 .await
                 .map_err(ApiError::DatabaseError)?;
@@ -85,7 +85,7 @@ where
             }
 
             let (is_admin,) = query!(&db, (User::F.admin,))
-                .condition(User::F.uuid.equals(uuid.as_ref()))
+                .condition(User::F.uuid.equals(uuid))
                 .optional()
                 .await
                 .map_err(ApiError::DatabaseError)?
