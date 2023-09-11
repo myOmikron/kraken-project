@@ -1,13 +1,9 @@
 import React from "react";
-import "../styling/workspace.css";
-import { FullWorkspace } from "../api/generated";
-import { Api, UUID } from "../api/api";
+import "../../styling/workspace.css";
+import { FullWorkspace } from "../../api/generated";
+import { Api, UUID } from "../../api/api";
 import { toast } from "react-toastify";
-import DataIcon from "../svg/data";
-import UserSettingsIcon from "../svg/user_settings";
-import Attacks from "./attacks";
-import AttackIcon from "../svg/attack";
-import SettingsIcon from "../svg/settings";
+import WorkspaceMenu from "./workspace-menu";
 
 type WorkspaceProps = {
     uuid: UUID;
@@ -39,26 +35,7 @@ export default class Workspace extends React.Component<WorkspaceProps, Workspace
                 <div className={"pane workspace-heading"}>
                     <h2 className={"heading"}>{this.state.workspace?.name}</h2>
                 </div>
-                <div className={"workspace-menu pane"}>
-                    <div className={"workspace-menu-item"}>
-                        <div className={"icon"}>
-                            <AttackIcon />
-                        </div>
-                        <div className={"workspace-menu-hint"}>Attacks</div>
-                    </div>
-                    <div className={"workspace-menu-item icon"}>
-                        <div className={"icon"}>
-                            <DataIcon />
-                        </div>
-                        <div className={"workspace-menu-hint"}>Data</div>
-                    </div>
-                    <div className={"workspace-menu-item icon"}>
-                        <div className={"icon"}>
-                            <SettingsIcon />
-                        </div>
-                        <div className={"workspace-menu-hint"}>Workspace Settings</div>
-                    </div>
-                </div>
+                <WorkspaceMenu uuid={this.state.workspace !== null ? this.state.workspace.uuid : ""} />
                 <div className={"workspace-section-selector"}>
                     <div
                         className={this.state.selectedTab === "domains" ? "pane workspace-selected-tab" : "pane"}
