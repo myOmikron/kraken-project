@@ -1,2 +1,3 @@
-mod applications;
 pub use applications::*;
+
+mod applications;
