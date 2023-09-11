@@ -18,7 +18,7 @@ type MenuState = {
 
 export default class Menu extends React.Component<MenuProps, MenuState> {
     state: MenuState = {
-        active: "attack",
+        active: "workspaces",
     };
 
     static contextType = USER_CONTEXT;
@@ -63,7 +63,7 @@ export default class Menu extends React.Component<MenuProps, MenuState> {
                             <AttackIcon />
                             <div className={"menu-hint"}>Attacks</div>
                         </div>
-                    </div>{" "}
+                    </div>
                     <div className={"menu-seperator"}>General</div>
                     <div className={"menu-item-container"}>
                         <div
