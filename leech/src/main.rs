@@ -252,7 +252,7 @@ async fn main() -> Result<(), String> {
                         info!("Sending results to kraken");
 
                         let endpoint =
-                            Endpoint::from_str(&config.kraken.kraken_uri.to_string()).unwrap();
+                            Endpoint::from_str(config.kraken.kraken_uri.as_ref()).unwrap();
                         let chan = endpoint.connect().await.unwrap();
 
                         let mut client = AttackResultsServiceClient::new(chan);

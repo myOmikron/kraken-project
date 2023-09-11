@@ -711,7 +711,7 @@ pub async fn query_dehashed(
                 address: x.address,
                 phone: x.phone,
                 vin: x.vin,
-                ip_address: x.ip_address.map(|x| IpNetwork::from(x)),
+                ip_address: x.ip_address.map(IpNetwork::from),
                 attack: ForeignModelByField::Key(attack_uuid),
             })
             .collect();
