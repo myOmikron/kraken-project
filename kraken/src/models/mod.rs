@@ -4,9 +4,11 @@ pub use leech::*;
 pub use settings::*;
 pub use user::*;
 pub use workspace::*;
+pub use oauth::*;
 
 mod attack;
 mod leech;
 mod settings;
 mod user;
 mod workspace;
+mod oauth;

@@ -26,6 +26,7 @@ use crate::modules::user::create::CreateUserError;
 mod attacks;
 mod auth;
 mod leeches;
+pub mod oauth;
 mod reporting;
 mod users;
 mod websocket;
