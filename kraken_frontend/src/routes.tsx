@@ -46,9 +46,9 @@ export const ROUTES = {
         render: () => (
             <>
                 <div className="content-container">
-                    <Home />
+                    <WorkspaceOverview />
                 </div>
-                <WorkspaceOverview />
+                <Menu />
             </>
         ),
     }),
