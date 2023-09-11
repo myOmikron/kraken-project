@@ -52,14 +52,7 @@ class Router extends React.Component<RouterProps, RouterState> {
     }
 
     render() {
-        return (
-            <UserProvider>
-                <div className="content-container">
-                    {ROUTER.matchAndRender(this.state.path) || <div>Unknown route</div>}
-                </div>
-                <Menu />
-            </UserProvider>
-        );
+        return <UserProvider>{ROUTER.matchAndRender(this.state.path) || <div>Unknown route</div>}</UserProvider>;
     }
 }
 

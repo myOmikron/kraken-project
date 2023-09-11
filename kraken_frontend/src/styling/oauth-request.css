@@ -1,0 +1,21 @@
+.oauth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100%;
+}
+
+.oauth-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+}
+
+.oauth-buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    gap: 2em;
+}
+
