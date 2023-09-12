@@ -63,7 +63,7 @@ impl AttackResultsService for Results {
                 attack_type: AttackType::QueryCertificateTransparency,
                 started_by: ForeignModelByField::Key(user_uuid),
                 workspace: ForeignModelByField::Key(workspace_uuid),
-                finished_at: Some(Utc::now().naive_utc()),
+                finished_at: Some(Utc::now()),
             })
             .await
             .unwrap();

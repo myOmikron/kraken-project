@@ -46,11 +46,11 @@ pub struct Attack {
     pub workspace: ForeignModel<Workspace>,
 
     /// The point in time, this attack has finished
-    pub finished_at: Option<chrono::NaiveDateTime>,
+    pub finished_at: Option<DateTime<Utc>>,
 
     /// The point in time, this attack was created
     #[rorm(auto_create_time)]
-    pub created_at: chrono::NaiveDateTime,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Patch)]
@@ -60,7 +60,7 @@ pub(crate) struct AttackInsert {
     pub(crate) attack_type: AttackType,
     pub(crate) started_by: ForeignModel<User>,
     pub(crate) workspace: ForeignModel<Workspace>,
-    pub(crate) finished_at: Option<chrono::NaiveDateTime>,
+    pub(crate) finished_at: Option<DateTime<Utc>>,
 }
 
 /// Representation of a [tcp port scan](AttackType::TcpPortScan) attack's result

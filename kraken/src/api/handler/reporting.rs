@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use actix_web::get;
 use actix_web::web::{Data, Json, Path};
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use futures::StreamExt;
 use ipnetwork::IpNetwork;
 use rorm::{query, Database, FieldAccess, Model};
@@ -135,8 +135,8 @@ pub(crate) async fn report_workspace_results(
         if let Some(finished_at) = finished_at {
             tcp_port_scan_attacks.push(ReportingTcpPortScanAttack {
                 uuid: attack,
-                created_at: Utc.from_utc_datetime(&created_at),
-                finished_at: Utc.from_utc_datetime(&finished_at),
+                created_at,
+                finished_at,
                 results: tcp_port_scan_results.remove(&attack).unwrap_or_default(),
             });
         }

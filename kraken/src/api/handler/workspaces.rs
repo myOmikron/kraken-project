@@ -1,7 +1,7 @@
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use log::debug;
 use rorm::db::transaction::Transaction;
 use rorm::fields::types::ForeignModelByField;
@@ -433,8 +433,8 @@ async fn get_workspace_unchecked(uuid: Uuid, tx: &mut Transaction) -> ApiResult<
                     username,
                     display_name,
                 },
-                finished_at: finished_at.map(|finished_at| Utc.from_utc_datetime(&finished_at)),
-                created_at: Utc.from_utc_datetime(&created_at),
+                finished_at,
+                created_at,
             }
         },
     )

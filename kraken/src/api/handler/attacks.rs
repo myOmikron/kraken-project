@@ -4,7 +4,7 @@ use std::ops::RangeInclusive;
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path, Query};
 use actix_web::{delete, get, post, HttpResponse};
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use dehashed_rs::{DehashedError, ScheduledRequest, SearchResult};
 use futures::StreamExt;
 use ipnet::IpNet;
@@ -184,10 +184,9 @@ pub async fn bruteforce_subdomains(
             }
         };
 
-        let now = Utc::now();
         if let Err(err) = update!(db.as_ref(), Attack)
             .condition(Attack::F.uuid.equals(uuid))
-            .set(Attack::F.finished_at, Some(now.naive_utc()))
+            .set(Attack::F.finished_at, Some(Utc::now()))
             .exec()
             .await
         {
@@ -434,10 +433,9 @@ pub async fn scan_tcp_ports(
             }
         };
 
-        let now = Utc::now();
         if let Err(err) = update!(db.as_ref(), Attack)
             .condition(Attack::F.uuid.equals(uuid))
-            .set(Attack::F.finished_at, Some(now.naive_utc()))
+            .set(Attack::F.finished_at, Some(Utc::now()))
             .exec()
             .await
         {
@@ -597,10 +595,9 @@ pub async fn query_certificate_transparency(
             }
         }
 
-        let now = Utc::now();
         if let Err(err) = update!(db.as_ref(), Attack)
             .condition(Attack::F.uuid.equals(uuid))
-            .set(Attack::F.finished_at, Some(now.naive_utc()))
+            .set(Attack::F.finished_at, Some(Utc::now()))
             .exec()
             .await
         {
@@ -810,8 +807,8 @@ pub(crate) async fn get_attack(
                 username,
                 display_name,
             },
-            finished_at: finished_at.map(|finished_at| Utc.from_utc_datetime(&finished_at)),
-            created_at: Utc.from_utc_datetime(&created_at),
+            finished_at,
+            created_at,
         })
     } else {
         Err(ApiError::MissingPrivileges)
