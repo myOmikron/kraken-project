@@ -24,9 +24,10 @@ use crate::api::handler::{
     bruteforce_subdomains, create_leech, create_user, create_workspace, delete_attack,
     delete_leech, delete_user, delete_workspace, finish_auth, finish_register, get_all_leeches,
     get_all_users, get_all_workspaces, get_all_workspaces_admin, get_attack, get_leech, get_me,
-    get_tcp_port_scan_results, get_user, get_workspace, get_workspace_admin, login, logout, oauth,
-    query_certificate_transparency, report_workspace_results, scan_tcp_ports, set_password,
-    start_auth, start_register, test, update_leech, update_me, update_workspace, websocket,
+    get_settings, get_tcp_port_scan_results, get_user, get_workspace, get_workspace_admin, login,
+    logout, oauth, query_certificate_transparency, report_workspace_results, scan_tcp_ports,
+    set_password, start_auth, start_register, test, update_leech, update_me, update_workspace,
+    websocket,
 };
 use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired, TokenRequired,
@@ -130,7 +131,8 @@ pub(crate) async fn start_server(
                     .service(oauth::admin_get_apps)
                     .service(oauth::admin_get_app)
                     .service(oauth::admin_update_app)
-                    .service(oauth::admin_delete_app),
+                    .service(oauth::admin_delete_app)
+                    .service(get_settings),
             )
             .service(
                 scope("/api/v1")

@@ -77,6 +77,8 @@ impl Modify for SecurityAddon2 {
         oauth::admin_get_app,
         oauth::admin_update_app,
         oauth::admin_delete_app,
+        handler::get_settings,
+        handler::update_settings,
     ),
     components(schemas(
         handler::ApiErrorResponse,
@@ -118,6 +120,8 @@ impl Modify for SecurityAddon2 {
         oauth::FullOauthClient,
         oauth::GetAppsResponse,
         oauth::UpdateAppRequest,
+        handler::SettingsFull,
+        handler::UpdateSettingsRequest,
     )),
     modifiers(&SecurityAddon, &SecurityAddon2),
 )]
