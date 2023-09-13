@@ -4,11 +4,14 @@ import {
     BruteforceSubdomainsRequest,
     CreateLeechRequest,
     CreateUserRequest,
-    CreateWorkspaceRequest, OAuthApi,
+    CreateWorkspaceRequest,
+    OAuthApi,
     QueryCertificateTransparencyRequest,
     ScanTcpPortsRequest,
+    SettingsManagementApi,
     UpdateLeechRequest,
     UpdateMeRequest,
+    UpdateSettingsRequest,
     UpdateWorkspaceRequest,
 } from "./generated";
 import { Configuration } from "./generated";
@@ -38,6 +41,7 @@ const leechManagement = new LeechManagementApi(configuration);
 const userManagement = new UserManagementApi(configuration);
 const workspaces = new WorkspacesApi(configuration);
 const oauth = new OAuthApi(configuration);
+const settingsManagement = new SettingsManagementApi(configuration);
 
 export const Api = {
     admin: {
@@ -60,6 +64,11 @@ export const Api = {
             update: (uuid: UUID, leech: UpdateLeechRequest) =>
                 handleError(leechManagement.updateLeech({ uuid, updateLeechRequest: leech })),
             delete: (uuid: UUID) => handleError(leechManagement.deleteLeech({ uuid })),
+        },
+        settings: {
+            get: () => handleError(settingsManagement.getSettings()),
+            update: (settings: UpdateSettingsRequest) =>
+                handleError(settingsManagement.updateSettings({ updateSettingsRequest: settings })),
         },
     },
     attacks: {
@@ -97,6 +106,6 @@ export const Api = {
         delete: (uuid: UUID) => handleError(workspaces.deleteWorkspace({ uuid })),
     },
     oauth: {
-        info: (uuid: UUID) => handleError(oauth.info({uuid})),
-    }
+        info: (uuid: UUID) => handleError(oauth.info({ uuid })),
+    },
 };

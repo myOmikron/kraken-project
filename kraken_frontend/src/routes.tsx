@@ -12,6 +12,7 @@ import WorkspaceOverview from "./views/workspace-overview";
 import Workspace from "./views/workspace/workspace";
 import OauthRequest from "./views/oauth-request";
 import Menu from "./views/menu";
+import Settings from "./views/settings";
 
 export const ROUTER = new Router();
 
@@ -168,6 +169,20 @@ export const ROUTES = {
                 <div className="content-container">
                     <AdminGuard>
                         <AdminWorkspaces />
+                    </AdminGuard>
+                </div>
+                <Menu />
+            </>
+        ),
+    }),
+    ADMIN_SETTINGS: ROUTER.add({
+        url: "admin/settings",
+        parser: {},
+        render: () => (
+            <>
+                <div className={"content-container"}>
+                    <AdminGuard>
+                        <Settings />
                     </AdminGuard>
                 </div>
                 <Menu />

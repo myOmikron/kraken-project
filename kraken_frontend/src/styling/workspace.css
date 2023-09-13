@@ -39,7 +39,7 @@
 }
 
 .workspace-selected-tab {
-    filter: drop-shadow(0 0 0 var(--primary));
+    background-color: var(--primary);
 }
 
 .workspace-menu {

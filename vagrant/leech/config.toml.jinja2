@@ -1,7 +1,10 @@
 [Server]
-ListenAddress = "127.0.0.1"
+ListenAddress = "0.0.0.0"
 ListenPort = 31337
 Token = "{{ leech_token }}"
+
+[Kraken]
+KrakenUri = "http://10.13.37.10:31337"
 
 [Database]
 # Only used by rorm-cli

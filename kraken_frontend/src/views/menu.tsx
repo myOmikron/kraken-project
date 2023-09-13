@@ -8,8 +8,17 @@ import WorkspaceIcon from "../svg/workspace";
 import UsersIcon from "../svg/users";
 import UserSettingsIcon from "../svg/user_settings";
 import "../styling/menu.css";
+import SettingsIcon from "../svg/settings";
 
-type MenuItem = "me" | "workspaces" | "attack" | "kraken" | "users_admin" | "workspaces_admin" | "knowledge";
+type MenuItem =
+    | "me"
+    | "workspaces"
+    | "attack"
+    | "kraken"
+    | "users_admin"
+    | "workspaces_admin"
+    | "knowledge"
+    | "settings";
 
 type MenuProps = {};
 type MenuState = {
@@ -148,6 +157,22 @@ export default class Menu extends React.Component<MenuProps, MenuState> {
                                 >
                                     <WorkspaceIcon />
                                     <div className={"menu-hint"}>Workspace Controls</div>
+                                </div>
+                            </div>
+                            <div className={"menu-item-container"}>
+                                <div
+                                    className={this.state.active === "settings" ? "menu-item active" : "menu-item"}
+                                    onClick={() => {
+                                        this.setState({ active: "settings" });
+                                        ROUTES.ADMIN_SETTINGS.visit({});
+                                    }}
+                                    onAuxClick={() => {
+                                        this.setState({ active: "settings" });
+                                        ROUTES.ADMIN_SETTINGS.open({});
+                                    }}
+                                >
+                                    <SettingsIcon />
+                                    <div className={"menu-hint"}>Kraken Settings</div>
                                 </div>
                             </div>
                         </>
