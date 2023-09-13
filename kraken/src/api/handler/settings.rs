@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use actix_web::web::{Data, Json};
 use actix_web::{get, put, HttpResponse};
 use chrono::{DateTime, Utc};
@@ -43,7 +45,7 @@ impl From<Settings> for SettingsFull {
 )]
 #[get("/settings")]
 pub async fn get_settings(
-    settings_chan: Data<SettingsManagerChan>,
+    settings_chan: Data<Arc<SettingsManagerChan>>,
 ) -> ApiResult<Json<SettingsFull>> {
     let settings = settings_chan.get_settings();
     Ok(Json(settings.into()))
@@ -71,7 +73,7 @@ pub struct UpdateSettingsRequest {
 #[put("/settings")]
 pub async fn update_settings(
     req: Json<UpdateSettingsRequest>,
-    settings_chan: Data<SettingsManagerChan>,
+    settings_chan: Data<Arc<SettingsManagerChan>>,
 ) -> ApiResult<HttpResponse> {
     let mut req = req.into_inner();
 
