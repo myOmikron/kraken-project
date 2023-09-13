@@ -168,8 +168,14 @@ pub(crate) async fn info(
     manager: Data<OauthManager>,
     SessionUser(user_uuid): SessionUser,
 ) -> Result<Json<OpenRequestInfo>, ApiError> {
-    let inner = manager.0.lock().unwrap();
-    let request = inner.open.get(&path.uuid).ok_or(ApiError::InvalidUuid)?;
+    let request = {
+        let inner = manager.0.lock().unwrap();
+        inner
+            .open
+            .get(&path.uuid)
+            .ok_or(ApiError::InvalidUuid)?
+            .clone()
+    };
 
     if user_uuid != request.user {
         return Err(ApiError::MissingPrivileges);
@@ -222,18 +228,22 @@ pub(crate) async fn accept(
     manager: Data<OauthManager>,
     SessionUser(user_uuid): SessionUser,
 ) -> Result<Redirect, ApiError> {
-    let mut inner = manager.0.lock().unwrap();
+    let open_request;
+    let code;
+    {
+        let mut inner = manager.0.lock().unwrap();
 
-    // Check validity
-    let open_request = inner.open.remove(&path.uuid).ok_or(ApiError::InvalidUuid)?;
-    if open_request.user != user_uuid {
-        inner.open.insert(path.uuid, open_request);
-        return Err(ApiError::MissingPrivileges);
-    }
+        // Check validity
+        open_request = inner.open.remove(&path.uuid).ok_or(ApiError::InvalidUuid)?;
+        if open_request.user != user_uuid {
+            inner.open.insert(path.uuid, open_request);
+            return Err(ApiError::MissingPrivileges);
+        }
 
-    // Advance request
-    let code = Uuid::new_v4();
-    inner.accepted.insert(code, open_request.clone());
+        // Advance request
+        code = Uuid::new_v4();
+        inner.accepted.insert(code, open_request.clone());
+    };
 
     // Redirect
     let (redirect_uri,) = query!(db.as_ref(), (OauthClient::F.redirect_uri,))
@@ -263,14 +273,18 @@ pub(crate) async fn deny(
     path: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
 ) -> Result<Redirect, ApiError> {
-    let mut inner = manager.0.lock().unwrap();
+    let open_request = {
+        let mut inner = manager.0.lock().unwrap();
 
-    // Check validity
-    let open_request = inner.open.remove(&path.uuid).ok_or(ApiError::InvalidUuid)?;
-    if open_request.user != user_uuid {
-        inner.open.insert(path.uuid, open_request);
-        return Err(ApiError::MissingPrivileges);
-    }
+        // Check validity
+        let open_request = inner.open.remove(&path.uuid).ok_or(ApiError::InvalidUuid)?;
+        if open_request.user != user_uuid {
+            inner.open.insert(path.uuid, open_request);
+            return Err(ApiError::MissingPrivileges);
+        }
+
+        open_request
+    };
 
     // Redirect
     let (redirect_uri,) = query!(db.as_ref(), (OauthClient::F.redirect_uri,))
@@ -302,8 +316,14 @@ pub(crate) async fn token(
         client_secret,
     } = request.into_inner();
 
-    let inner = manager.0.lock().unwrap();
-    let accepted = inner.accepted.get(&code).ok_or(ApiError::InvalidUuid)?;
+    let accepted = {
+        let inner = manager.0.lock().unwrap();
+        inner
+            .accepted
+            .get(&code)
+            .ok_or(ApiError::InvalidUuid)?
+            .clone()
+    };
     let client = query!(db.as_ref(), OauthClient)
         .condition(OauthClient::F.uuid.equals(accepted.client_pk))
         .one()
