@@ -4,7 +4,7 @@ import {
     BruteforceSubdomainsRequest,
     CreateLeechRequest,
     CreateUserRequest,
-    CreateWorkspaceRequest,
+    CreateWorkspaceRequest, OAuthApi,
     QueryCertificateTransparencyRequest,
     ScanTcpPortsRequest,
     UpdateLeechRequest,
@@ -37,6 +37,7 @@ const attacks = new AttacksApi(configuration);
 const leechManagement = new LeechManagementApi(configuration);
 const userManagement = new UserManagementApi(configuration);
 const workspaces = new WorkspacesApi(configuration);
+const oauth = new OAuthApi(configuration);
 
 export const Api = {
     admin: {
@@ -95,4 +96,7 @@ export const Api = {
             handleError(workspaces.updateWorkspace({ uuid, updateWorkspaceRequest: workspace })),
         delete: (uuid: UUID) => handleError(workspaces.deleteWorkspace({ uuid })),
     },
+    oauth: {
+        info: (uuid: UUID) => handleError(oauth.info({uuid})),
+    }
 };

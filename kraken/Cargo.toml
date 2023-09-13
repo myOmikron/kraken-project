@@ -38,6 +38,7 @@ serde = { version = "~1", features = ["derive"] }
 serde_repr = { version = "~0.1" }
 toml = { version = "~0.7" }
 serde_json = { version = "~1" }
+serde_urlencoded = { version = "~0.7" } # required for oauth
 # Time library
 chrono = { version = ">=0.4.20", default-features = false, features = ["serde"] }
 # Bytes abstractions for network usage

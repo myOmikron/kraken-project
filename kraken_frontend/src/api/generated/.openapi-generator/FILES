@@ -31,6 +31,7 @@ models/GetUser.ts
 models/GetUserResponse.ts
 models/GetWorkspaceResponse.ts
 models/LoginRequest.ts
+models/OpenRequestInfo.ts
 models/PageParams.ts
 models/PortOrRange.ts
 models/QueryCertificateTransparencyRequest.ts

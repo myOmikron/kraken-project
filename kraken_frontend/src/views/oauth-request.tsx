@@ -1,14 +1,15 @@
 import React from "react";
-import { UUID } from "../api/api";
+import { Api, UUID } from "../api/api";
 import "../styling/oauth-request.css";
-import { SimpleWorkspace } from "../api/generated";
+import { SimpleOauthClient, SimpleWorkspace } from "../api/generated";
+import { handleApiError } from "../utils/helper";
 
 type OAuthRequestProps = {
     uuid: UUID;
 };
 type OAuthRequestState = {
     workspace: SimpleWorkspace | null;
-    oauthApplication: { uuid: UUID; name: string } | null;
+    oauthApplication: SimpleOauthClient | null;
 };
 
 export default class OauthRequest extends React.Component<OAuthRequestProps, OAuthRequestState> {
@@ -21,7 +22,11 @@ export default class OauthRequest extends React.Component<OAuthRequestProps, OAu
         };
     }
 
-    componentDidMount() {}
+    componentDidMount() {
+        Api.oauth
+            .info(this.props.uuid)
+            .then(handleApiError(({ workspace, oauthApplication }) => this.setState({ workspace, oauthApplication })));
+    }
 
     render() {
         return (
@@ -30,7 +35,7 @@ export default class OauthRequest extends React.Component<OAuthRequestProps, OAu
                     {this.state.workspace !== null && this.state.oauthApplication !== null ? (
                         <>
                             <h1 className={"heading"}>
-                                {this.state.oauthApplication.name} wants to request access to workspace
+                                {this.state.oauthApplication.name} wants to request access to workspace{" "}
                                 {this.state.workspace.name}.
                             </h1>
                             <p>

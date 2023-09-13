@@ -1,6 +1,5 @@
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
-use futures::TryStreamExt;
 use rand::distributions::{Alphanumeric, DistString};
 use rorm::prelude::*;
 use rorm::{insert, query, update, Database};
@@ -51,7 +50,8 @@ pub(crate) async fn admin_create_app(
 }
 
 /// A simple (secret-less) version of a workspace
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, ToSchema, Patch)]
+#[rorm(model = "OauthClient")]
 pub(crate) struct SimpleOauthClient {
     pub(crate) uuid: Uuid,
     #[schema(example = "Trustworthy application")]
@@ -78,22 +78,7 @@ pub(crate) struct GetAppsResponse {
 #[get("/applications")]
 pub(crate) async fn admin_get_apps(db: Data<Database>) -> ApiResult<Json<GetAppsResponse>> {
     Ok(Json(GetAppsResponse {
-        apps: query!(
-            db.as_ref(),
-            (
-                OauthClient::F.uuid,
-                OauthClient::F.name,
-                OauthClient::F.redirect_uri
-            )
-        )
-        .stream()
-        .map_ok(|(uuid, name, redirect_uri)| SimpleOauthClient {
-            uuid,
-            name,
-            redirect_uri,
-        })
-        .try_collect::<Vec<_>>()
-        .await?,
+        apps: query!(db.as_ref(), SimpleOauthClient).all().await?,
     }))
 }
 

@@ -72,6 +72,8 @@ pub(crate) async fn start_server(
         .build()?,
     );
 
+    let oauth = Data::new(oauth::OauthManager::default());
+
     let reporting_key = config.server.reporting_key.clone();
     let dehashed = Data::new(RwLock::new(dehashed_scheduler));
 
@@ -81,6 +83,7 @@ pub(crate) async fn start_server(
             .app_data(JsonConfig::default().error_handler(json_extractor_error))
             .app_data(PayloadConfig::default())
             .app_data(webauthn.clone())
+            .app_data(oauth.clone())
             .app_data(Data::new(ws_manager_chan.clone()))
             .app_data(Data::new(rpc_manager_chan.clone()))
             .app_data(rpc_clients.clone())
@@ -113,6 +116,14 @@ pub(crate) async fn start_server(
                     .service(start_auth)
                     .service(finish_auth),
             )
+            .service(
+                scope("/api/v1/oauth")
+                    .service(oauth::info)
+                    .service(oauth::auth)
+                    .service(oauth::accept)
+                    .service(oauth::deny),
+            )
+            .service(scope("/api/v1/oauth-server").service(oauth::token))
             .service(
                 scope("/api/v1/admin")
                     .wrap(AdminRequired)
