@@ -75,8 +75,7 @@ pub async fn bruteforce_subdomains(
     let mut opts = ResolverOpts::default();
     opts.ip_strategy = LookupIpStrategy::Ipv4AndIpv6;
     opts.preserve_intermediates = true;
-    let resolver = TokioAsyncResolver::tokio(ResolverConfig::cloudflare_https(), opts)
-        .map_err(BruteforceSubdomainError::ResolveStart)?;
+    let resolver = TokioAsyncResolver::tokio(ResolverConfig::cloudflare_https(), opts);
 
     let wordlist = fs::read_to_string(&settings.wordlist_path)
         .map_err(BruteforceSubdomainError::WordlistRead)?;
@@ -109,7 +108,7 @@ pub async fn bruteforce_subdomains(
                         wildcard_v4 = Some(r);
                         let res = BruteforceSubdomainResult::A {
                             source: search.clone(),
-                            target: r,
+                            target: *r,
                         };
                         if let Err(err) = tx.send(res).await {
                             warn!("Could not send result to tx: {err}");
@@ -120,7 +119,7 @@ pub async fn bruteforce_subdomains(
                         wildcard_v6 = Some(r);
                         let res = BruteforceSubdomainResult::Aaaa {
                             source: search.clone(),
-                            target: r,
+                            target: *r,
                         };
                         if let Err(err) = tx.send(res).await {
                             warn!("Could not send result to tx: {err}");
@@ -192,7 +191,7 @@ pub async fn bruteforce_subdomains(
                                         if let Some(RData::A(target)) = record.data() {
                                             let res = BruteforceSubdomainResult::A {
                                                 source: domain,
-                                                target: *target,
+                                                target: **target,
                                             };
                                             if let Err(err) = tx.send(res).await {
                                                 warn!("Could not send result to tx: {err}");
@@ -208,7 +207,7 @@ pub async fn bruteforce_subdomains(
                                         if let Some(RData::AAAA(target)) = record.data() {
                                             let res = BruteforceSubdomainResult::Aaaa {
                                                 source: domain,
-                                                target: *target,
+                                                target: **target,
                                             };
                                             if let Err(err) = tx.send(res).await {
                                                 warn!("Could not send result to tx: {err}");
