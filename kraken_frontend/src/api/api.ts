@@ -2,13 +2,16 @@ import { login, test, registerKey, authenticate, logout } from "./auth";
 import { handleError } from "./error";
 import {
     BruteforceSubdomainsRequest,
+    CreateAppRequest,
     CreateLeechRequest,
     CreateUserRequest,
     CreateWorkspaceRequest,
     OAuthApi,
+    OAuthApplicationApi,
     QueryCertificateTransparencyRequest,
     ScanTcpPortsRequest,
     SettingsManagementApi,
+    UpdateAppRequest,
     UpdateLeechRequest,
     UpdateMeRequest,
     UpdateSettingsRequest,
@@ -41,6 +44,7 @@ const leechManagement = new LeechManagementApi(configuration);
 const userManagement = new UserManagementApi(configuration);
 const workspaces = new WorkspacesApi(configuration);
 const oauth = new OAuthApi(configuration);
+const oauthApplications = new OAuthApplicationApi(configuration);
 const settingsManagement = new SettingsManagementApi(configuration);
 
 export const Api = {
@@ -69,6 +73,15 @@ export const Api = {
             get: () => handleError(settingsManagement.getSettings()),
             update: (settings: UpdateSettingsRequest) =>
                 handleError(settingsManagement.updateSettings({ updateSettingsRequest: settings })),
+        },
+        oauthApplications: {
+            all: () => handleError(oauthApplications.getAllOauthApps({})),
+            get: (uuid: UUID) => handleError(oauthApplications.getOauthApp({ uuid })),
+            create: (oauthApplication: CreateAppRequest) =>
+                handleError(oauthApplications.createOauthApp({ createAppRequest: oauthApplication })),
+            update: (uuid: UUID, updateAppRequest: UpdateAppRequest) =>
+                handleError(oauthApplications.updateOauthApp({ uuid, updateAppRequest })),
+            delete: (uuid: UUID) => handleError(oauthApplications.deleteOauthApp({ uuid })),
         },
     },
     attacks: {

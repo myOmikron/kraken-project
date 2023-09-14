@@ -21,7 +21,7 @@ pub(crate) struct CreateAppRequest {
 
 /// Create a new application
 #[utoipa::path(
-    tag = "OAuth",
+    tag = "OAuth Application",
     context_path = "/api/v1/admin",
     responses(
         (status = 200, description = "Application was created", body = UuidResponse),
@@ -32,7 +32,7 @@ pub(crate) struct CreateAppRequest {
     security(("api_key" = []))
 )]
 #[post("/applications")]
-pub(crate) async fn admin_create_app(
+pub(crate) async fn create_oauth_app(
     db: Data<Database>,
     request: Json<CreateAppRequest>,
 ) -> ApiResult<Json<UuidResponse>> {
@@ -62,11 +62,11 @@ pub(crate) struct SimpleOauthClient {
 
 #[derive(Serialize, ToSchema)]
 pub(crate) struct GetAppsResponse {
-    pub(crate) apps: Vec<SimpleOauthClient>,
+    pub(crate) apps: Vec<FullOauthClient>,
 }
 
 #[utoipa::path(
-    tag = "OAuth",
+    tag = "OAuth Application",
     context_path = "/api/v1/admin",
     responses(
         (status = 200, description = "Returns all oauth applications", body = GetAppsResponse),
@@ -76,14 +76,15 @@ pub(crate) struct GetAppsResponse {
     security(("api_key" = []))
 )]
 #[get("/applications")]
-pub(crate) async fn admin_get_apps(db: Data<Database>) -> ApiResult<Json<GetAppsResponse>> {
+pub(crate) async fn get_all_oauth_apps(db: Data<Database>) -> ApiResult<Json<GetAppsResponse>> {
     Ok(Json(GetAppsResponse {
-        apps: query!(db.as_ref(), SimpleOauthClient).all().await?,
+        apps: query!(db.as_ref(), FullOauthClient).all().await?,
     }))
 }
 
 /// A complete version of a workspace
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, ToSchema, Patch)]
+#[rorm(model = "OauthClient")]
 pub(crate) struct FullOauthClient {
     pub(crate) uuid: Uuid,
     #[schema(example = "Trustworthy application")]
@@ -95,7 +96,7 @@ pub(crate) struct FullOauthClient {
 }
 
 #[utoipa::path(
-    tag = "OAuth",
+    tag = "OAuth Application",
     context_path = "/api/v1/admin",
     responses(
         (status = 200, description = "Returns an oauth applications", body = FullOauthClient),
@@ -106,7 +107,7 @@ pub(crate) struct FullOauthClient {
     security(("api_key" = []))
 )]
 #[get("/applications/{uuid}")]
-pub(crate) async fn admin_get_app(
+pub(crate) async fn get_oauth_app(
     db: Data<Database>,
     path: Path<PathUuid>,
 ) -> ApiResult<Json<FullOauthClient>> {
@@ -139,7 +140,7 @@ pub(crate) struct UpdateAppRequest {
 
 /// Update an application
 #[utoipa::path(
-    tag = "OAuth",
+    tag = "OAuth Application",
     context_path = "/api/v1/admin",
     responses(
         (status = 200, description = "Application got updated"),
@@ -151,7 +152,7 @@ pub(crate) struct UpdateAppRequest {
     security(("api_key" = []))
 )]
 #[put("/applications/{uuid}")]
-pub(crate) async fn admin_update_app(
+pub(crate) async fn update_oauth_app(
     path: Path<PathUuid>,
     db: Data<Database>,
     request: Json<UpdateAppRequest>,
@@ -176,7 +177,7 @@ pub(crate) async fn admin_update_app(
 
 /// Delete an application
 #[utoipa::path(
-    tag = "OAuth",
+    tag = "OAuth Application",
     context_path = "/api/v1/admin",
     responses(
         (status = 200, description = "Application was deleted"),
@@ -187,7 +188,7 @@ pub(crate) async fn admin_update_app(
     security(("api_key" = []))
 )]
 #[delete("/applications/{uuid}")]
-pub(crate) async fn admin_delete_app(
+pub(crate) async fn delete_oauth_app(
     path: Path<PathUuid>,
     db: Data<Database>,
 ) -> ApiResult<HttpResponse> {

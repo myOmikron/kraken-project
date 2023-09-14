@@ -22,3 +22,40 @@
 .settings-dehashed > .heading {
     margin: 0 0 0.5em 0;
 }
+
+.settings-oauth {
+    grid-area: 2 / 3 / span 3 / span 1;
+}
+
+.settings-oauth > .heading {
+    margin: 0 0 0.5em 0;
+}
+
+.settings-oauth-app-creation {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+}
+
+.settings-oauth-applications {
+    display: flex;
+    gap: 0.5em;
+    flex-direction: column;
+}
+
+.settings-oauth-applications-row {
+    display: grid;
+    align-items: center;
+    grid-template-columns: 1fr 2fr 6em 6em;
+    gap: 1em;
+    border-radius: 0.5em;
+    border: 1px solid var(--text);
+    padding: 0.75em;
+    filter: drop-shadow(0 0 5px var(--primary));
+}
+
+.settings-oauth-applications-row > div {
+}
+
+
+

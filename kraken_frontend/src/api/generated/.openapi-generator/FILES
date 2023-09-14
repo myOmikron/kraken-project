@@ -3,6 +3,7 @@ apis/AttacksApi.ts
 apis/AuthenticationApi.ts
 apis/LeechManagementApi.ts
 apis/OAuthApi.ts
+apis/OAuthApplicationApi.ts
 apis/ReportingDataExportApi.ts
 apis/SettingsManagementApi.ts
 apis/UserAdminManagementApi.ts

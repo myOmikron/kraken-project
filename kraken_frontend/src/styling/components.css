@@ -70,3 +70,26 @@
 .red {
     background-color: var(--toast-error);
 }
+
+.icon-button {
+    background-color: transparent;
+    border-radius: 0.25em;
+
+}
+
+.icon-button {
+    width: 2.75em;
+    height: 2em;
+    cursor: pointer;
+    border: none;
+    transition: all ease 200ms;
+    background-color: transparent;
+}
+
+.icon-button:hover {
+    filter: drop-shadow(0 0 1em var(--primary));
+}
+
+.icon-button:active {
+    transform: translate(1px, 1px);
+}
