@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { FullOauthClient, SettingsFull } from "../api/generated";
 import CopyIcon from "../svg/copy";
 import CloseIcon from "../svg/close";
+import { copyToClipboard } from "../utils/helper";
 
 type SettingsProps = {};
 type SettingsState = {
@@ -168,10 +169,28 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
                                 <div key={x.uuid} className={"settings-oauth-applications-row"}>
                                     <div>{x.name}</div>
                                     <span>{x.redirectUri}</span>
-                                    <button className={"icon-button"}>
+                                    <button
+                                        className={"icon-button"}
+                                        onClick={async () => {
+                                            await copyToClipboard(x.secret);
+                                        }}
+                                    >
                                         <CopyIcon />
                                     </button>
-                                    <button className={"icon-button"}>
+                                    <button
+                                        className={"icon-button"}
+                                        onClick={async () => {
+                                            (await Api.admin.oauthApplications.delete(x.uuid)).match(
+                                                async (_) => {
+                                                    toast.success(`Deleted application ${x.name}`);
+                                                    await this.getOAuthApps();
+                                                },
+                                                (err) => {
+                                                    toast.error(err.message);
+                                                }
+                                            );
+                                        }}
+                                    >
                                         <CloseIcon />
                                     </button>
                                 </div>

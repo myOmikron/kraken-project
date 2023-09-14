@@ -77,3 +77,13 @@ function noop<T>(_ok: T) {}
 function noopHandler<T>(result: Result<T, ApiError>) {
     result.match(noop, handleError);
 }
+
+export async function copyToClipboard(text: string | null) {
+    if (window.isSecureContext && navigator.clipboard) {
+        if (typeof text === "string") {
+            await navigator.clipboard.writeText(text).then(() => {
+                toast.success("Copied to clipboard");
+            });
+        }
+    }
+}
