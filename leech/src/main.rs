@@ -39,9 +39,9 @@ use crate::modules::bruteforce_subdomains::{
     bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
 };
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
-use crate::modules::dehashed;
 use crate::modules::port_scanner::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
+use crate::modules::{dehashed, whois};
 use crate::rpc::rpc_attacks::attack_results_service_client::AttackResultsServiceClient;
 use crate::rpc::rpc_attacks::shared::CertEntry;
 use crate::rpc::rpc_attacks::{CertificateTransparencyResult, MetaAttackInfo};
@@ -146,6 +146,11 @@ pub enum RunCommand {
     Dehashed {
         /// The query for the api
         query: String,
+    },
+    /// Query whois entries
+    Whois {
+        /// The ip to query information for
+        query: IpAddr,
     },
 }
 
@@ -485,11 +490,15 @@ async fn main() -> Result<(), String> {
                                     info!("{entry:?}");
                                 }
                             }
-                            Err(err) => {
-                                error!("{err}");
-                            }
+                            Err(err) => error!("{err}"),
                         }
                     }
+                    RunCommand::Whois { query } => match whois::query_whois(query).await {
+                        Ok(x) => {
+                            info!("Found result\n{x:#?}");
+                        }
+                        Err(err) => error!("{err}"),
+                    },
                 }
             }
         }
