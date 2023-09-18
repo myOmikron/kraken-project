@@ -1,5 +1,3 @@
-// TODO eliminate non-500 api errors
-
 mod applications;
 mod schemas;
 
@@ -67,7 +65,7 @@ struct OpenRequest {
     client_pk: Uuid,
 
     /// State provided by client in `/auth`
-    state: Option<String>,
+    state: String,
 
     /// Scope requested by client
     scope: Scope,
@@ -75,7 +73,8 @@ struct OpenRequest {
     /// User which is being asked
     user: Uuid,
 
-    pkce: Option<Pkce>,
+    /// pkce's `code_challenge` with method `S256`
+    code_challenge: String,
 }
 
 #[derive(Debug, Clone)]
@@ -83,7 +82,10 @@ struct Scope {
     workspace: Uuid,
 }
 
-/// Initial endpoint an application redirects the user to
+/// Initial endpoint an application redirects the user to.
+///
+/// It requires both the `state` parameter against CSRF, as well as a pkce challenge.
+/// The only supported pkce `code_challenge_method` is `S256`.
 #[utoipa::path(
     tag = "OAuth",
     context_path = "/api/v1/oauth",
@@ -155,12 +157,47 @@ pub(crate) async fn auth(
         );
     };
 
+    let Some(state) = request.state else {
+        return build_redirect(
+            &client.redirect_uri,
+            AuthError {
+                error: AuthErrorType::InvalidRequest,
+                state: None,
+                error_description: Some("Missing state"),
+            },
+        );
+    };
+
+    let code_challenge = {
+        let Some(pkce) = request.pkce else {
+            return build_redirect(
+                &client.redirect_uri,
+                AuthError {
+                    error: AuthErrorType::InvalidRequest,
+                    state: None,
+                    error_description: Some("Missing code_challenge"),
+                },
+            );
+        };
+        if !matches!(pkce.code_challenge_method, CodeChallengeMethod::Sha256) {
+            return build_redirect(
+                &client.redirect_uri,
+                AuthError {
+                    error: AuthErrorType::InvalidRequest,
+                    state: None,
+                    error_description: Some("Unsupported code_challenge_method"),
+                },
+            );
+        }
+        pkce.code_challenge
+    };
+
     let request_uuid = manager.insert_open(OpenRequest {
         client_pk: request.client_id,
-        state: request.state,
+        state,
         scope: Scope { workspace },
         user: user_uuid,
-        pkce: request.pkce,
+        code_challenge,
     });
 
     Ok(Redirect::to(format!("/#/oauth-request/{request_uuid}")))
@@ -286,7 +323,7 @@ pub(crate) async fn accept(
     #[derive(Serialize, Debug)]
     struct AcceptRedirect {
         code: Uuid,
-        state: Option<String>,
+        state: String,
     }
 
     build_redirect(
@@ -339,7 +376,7 @@ pub(crate) async fn deny(
         &redirect_uri,
         AuthError {
             error: AuthErrorType::AccessDenied,
-            state: open_request.state,
+            state: Some(open_request.state),
             error_description: None,
         },
     )
@@ -385,27 +422,17 @@ pub(crate) async fn token(
         .one()
         .await?;
 
-    match (code_verifier, accepted.pkce) {
-        (None, None) => {}
-        (Some(verifier), Some(challenge)) => {
-            let computed = match challenge.code_challenge_method {
-                CodeChallengeMethod::Plain => verifier,
-                CodeChallengeMethod::Sha256 => {
-                    let mut hasher = Sha256::new();
-                    hasher.update(verifier.as_bytes());
-                    BASE64_URL_SAFE_NO_PAD.encode(hasher.finalize())
-                }
-            };
-            if challenge.code_challenge != computed {
-                debug!(
-                    "PKCE failed; computed: {computed}, should be: {challenge}",
-                    challenge = challenge.code_challenge
-                );
-                return Err(TokenError::InvalidPKCE);
-            }
-        }
-        (None, Some(_)) => return Err(TokenError::MissingPKCE),
-        (Some(_), None) => return Err(TokenError::UnexpectedPKCE),
+    let verifier = code_verifier.ok_or(TokenError::MissingPKCE)?;
+    let mut hasher = Sha256::new();
+    hasher.update(verifier.as_bytes());
+    let computed = BASE64_URL_SAFE_NO_PAD.encode(hasher.finalize());
+
+    if accepted.code_challenge != computed {
+        debug!(
+            "PKCE failed; computed: {computed}, should be: {challenge}",
+            challenge = accepted.code_challenge
+        );
+        return Err(TokenError::InvalidPKCE);
     }
 
     if client_id != client.uuid
@@ -460,10 +487,6 @@ pub enum TokenError {
     /// Missing PKCE code verifier
     #[error("Missing PKCE code verifier")]
     MissingPKCE,
-
-    /// Unexpected PKCE code verifier i.e. no challenge code has been given in `/auth`
-    #[error("Unexpected PKCE code verifier i.e. no challenge code has been given in `/auth`")]
-    UnexpectedPKCE,
 
     /// PKCE challenge and verifier don't match
     #[error("PKCE challenge and verifier don't match")]
