@@ -28,8 +28,32 @@ pub(crate) struct AuthRequest {
     /// to the client.  The parameter SHOULD be used for preventing
     /// cross-site request forgery as described in [Section 10.12](https://www.rfc-editor.org/rfc/rfc6749#section-10.12).
     pub state: Option<String>,
-    //code_challenge: String,
-    //code_challenge_method: CodeChallengeMethod
+
+    #[serde(flatten)]
+    pub pkce: Option<PKCE>,
+}
+
+/// The client sends the code challenge as part of the OAuth 2.0
+/// Authorization Request ([Section 4.1.1 of \[RFC6749\]](https://www.rfc-editor.org/rfc/rfc6749#section-4.1.1)) using the
+/// following additional parameters:
+#[derive(Deserialize, Debug, Clone)]
+pub(crate) struct PKCE {
+    /// Code challenge.
+    pub code_challenge: String,
+
+    /// Code verifier transformation method is "S256" or "plain".
+    /// It defaults to "plain" if not present in the request.
+    #[serde(default)]
+    pub code_challenge_method: CodeChallengeMethod,
+}
+
+#[derive(Deserialize, Default, Copy, Clone, Debug)]
+pub(crate) enum CodeChallengeMethod {
+    #[default]
+    #[serde(rename = "S256")]
+    Sha256,
+    #[serde(rename = "plain")]
+    Plain,
 }
 
 #[derive(Serialize, Debug)]
@@ -84,6 +108,8 @@ pub(crate) struct TokenRequest {
     pub redirect_uri: String,
     pub client_id: Uuid,
     pub client_secret: String,
+    /// Code verifier
+    pub code_verifier: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -94,10 +120,18 @@ pub(crate) enum GrantType {
 
 #[derive(Serialize)]
 pub(crate) struct TokenResponse {
+    pub token_type: TokenType,
+
     pub access_token: String,
 
     #[serde(serialize_with = "duration_seconds")]
     pub expires_in: Duration,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "snake_case")]
+pub(crate) enum TokenType {
+    AccessToken,
 }
 
 fn duration_seconds<S: serde::ser::Serializer>(

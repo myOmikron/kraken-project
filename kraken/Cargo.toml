@@ -24,6 +24,7 @@ utoipa-swagger-ui = { version = "~3", features = ["actix-web"] }
 
 # Hashing
 argon2 = { version = "~0.5" }
+sha2 = { version = "~0.10" } # Required in oauth for pkce
 
 # Cli parser
 clap = { version = "~4", features = ["derive"] }
