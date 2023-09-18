@@ -3,12 +3,13 @@
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
+use utoipa::IntoParams;
 use uuid::Uuid;
 
 /// The client constructs the request URI by adding the following
 /// parameters to the query component of the authorization endpoint URI
 /// using the "application/x-www-form-urlencoded" format
-#[derive(Deserialize)]
+#[derive(Deserialize, IntoParams)]
 pub(crate) struct AuthRequest {
     /// Value MUST be set to "code".
     pub response_type: String,
@@ -30,14 +31,14 @@ pub(crate) struct AuthRequest {
     pub state: Option<String>,
 
     #[serde(flatten)]
-    pub pkce: Option<PKCE>,
+    pub pkce: Option<Pkce>,
 }
 
 /// The client sends the code challenge as part of the OAuth 2.0
 /// Authorization Request ([Section 4.1.1 of \[RFC6749\]](https://www.rfc-editor.org/rfc/rfc6749#section-4.1.1)) using the
 /// following additional parameters:
 #[derive(Deserialize, Debug, Clone)]
-pub(crate) struct PKCE {
+pub(crate) struct Pkce {
     /// Code challenge.
     pub code_challenge: String,
 

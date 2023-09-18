@@ -13,9 +13,12 @@ use actix_web::body::BoxBody;
 use actix_web::web::{Data, Form, Json, Path, Query, Redirect};
 use actix_web::{get, post, HttpResponse, ResponseError};
 use base64::prelude::*;
+use chrono::Utc;
 use log::{debug, error};
+use rand::distributions::{Alphanumeric, DistString};
+use rand::thread_rng;
 use rorm::prelude::*;
-use rorm::{query, Database};
+use rorm::{insert, query, Database};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use thiserror::Error;
@@ -26,7 +29,7 @@ use webauthn_rs::prelude::Url;
 pub use self::applications::*;
 use self::schemas::*;
 use crate::api::handler::{ApiError, PathUuid, SessionUser, SimpleWorkspace, UserResponse};
-use crate::models::{OauthClient, User, Workspace};
+use crate::models::{OauthClient, User, Workspace, WorkspaceAccessTokenInsert};
 
 #[derive(Debug, Default)]
 pub(crate) struct OauthManager(Mutex<OauthManagerInner>);
@@ -71,7 +74,7 @@ struct OpenRequest {
     /// User which is being asked
     user: Uuid,
 
-    pkce: Option<PKCE>,
+    pkce: Option<Pkce>,
 }
 
 #[derive(Debug, Clone)]
@@ -80,6 +83,17 @@ struct Scope {
 }
 
 /// Initial endpoint an application redirects the user to
+#[utoipa::path(
+    tag = "OAuth",
+    context_path = "/api/v1/oauth",
+    responses(
+        (status = 302, description = "The user is redirected to the frontend"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(AuthRequest),
+    security(("api_key" = []))
+)]
 #[get("/auth")]
 pub(crate) async fn auth(
     db: Data<Database>,
@@ -228,6 +242,17 @@ pub(crate) async fn info(
 }
 
 /// Endpoint visited by user to grant a requesting application access
+#[utoipa::path(
+    tag = "OAuth",
+    context_path = "/api/v1/oauth",
+    responses(
+        (status = 302, description = "The user is redirected back to the requesting client"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid),
+    security(("api_key" = []))
+)]
 #[get("/accept/{uuid}")]
 pub(crate) async fn accept(
     db: Data<Database>,
@@ -273,6 +298,17 @@ pub(crate) async fn accept(
 }
 
 /// Endpoint visited by user to deny a requesting application access
+#[utoipa::path(
+    tag = "OAuth",
+    context_path = "/api/v1/oauth",
+    responses(
+        (status = 302, description = "The user is redirected back to the requesting client"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid),
+    security(("api_key" = []))
+)]
 #[get("/deny/{uuid}")]
 pub(crate) async fn deny(
     db: Data<Database>,
@@ -367,9 +403,16 @@ pub(crate) async fn token(
         return Err(TokenError::InvalidClient);
     }
 
-    // TODO: generate properly and store in db
-    let access_token = "Very secure".to_string();
+    let access_token = Alphanumeric.sample_string(&mut thread_rng(), 32);
     let expires_in = Duration::from_secs(60);
+    insert!(db.as_ref(), WorkspaceAccessTokenInsert)
+        .single(&WorkspaceAccessTokenInsert {
+            token: access_token.clone(),
+            user: ForeignModelByField::Key(accepted.user),
+            workspace: ForeignModelByField::Key(accepted.scope.workspace),
+            expires_at: Utc::now() + expires_in,
+        })
+        .await?;
 
     Ok(Json(TokenResponse {
         token_type: TokenType::AccessToken,

@@ -77,3 +77,35 @@ pub(crate) struct WorkspaceInsert {
     pub(crate) description: Option<String>,
     pub(crate) owner: ForeignModel<User>,
 }
+
+/// An oauth `access_token` for a workspace
+#[derive(Model)]
+pub struct WorkspaceAccessToken {
+    /// Primary key
+    #[rorm(id)]
+    pub id: i64,
+
+    /// The `access_token`
+    #[rorm(max_length = 255)]
+    pub token: String,
+
+    /// The user which granted the access
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub user: ForeignModel<User>,
+
+    /// The workspace to grant access on
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub workspace: ForeignModel<Workspace>,
+
+    /// Date after which the token is invalid
+    pub expires_at: DateTime<Utc>,
+}
+
+#[derive(Patch)]
+#[rorm(model = "WorkspaceAccessToken")]
+pub(crate) struct WorkspaceAccessTokenInsert {
+    pub token: String,
+    pub user: ForeignModel<User>,
+    pub workspace: ForeignModel<Workspace>,
+    pub expires_at: DateTime<Utc>,
+}
