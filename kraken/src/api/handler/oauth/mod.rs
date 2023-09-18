@@ -20,14 +20,15 @@ use rand::thread_rng;
 use rorm::prelude::*;
 use rorm::{insert, query, Database};
 use serde::Serialize;
+use serde_json::json;
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 use utoipa::ToSchema;
 use uuid::Uuid;
 use webauthn_rs::prelude::Url;
 
-pub use self::applications::*;
-use self::schemas::*;
+pub(crate) use self::applications::*;
+pub(crate) use self::schemas::*;
 use crate::api::handler::{ApiError, PathUuid, SessionUser, SimpleWorkspace, UserResponse};
 use crate::models::{OauthClient, User, Workspace, WorkspaceAccessTokenInsert};
 
@@ -345,6 +346,17 @@ pub(crate) async fn deny(
 }
 
 /// Endpoint an application calls itself after the user accepted and was redirected back to it.
+#[utoipa::path(
+    tag = "OAuth",
+    context_path = "/api/v1/oauth-server",
+    responses(
+        (status = 302, description = "Got token", body = TokenResponse),
+        (status = 400, description = "Client error", body = TokenErrorResponse),
+        (status = 500, description = "Server error", body = TokenErrorResponse),
+    ),
+    request_body = TokenRequest,
+    security(("api_key" = []))
+)]
 #[post("/token")]
 pub(crate) async fn token(
     db: Data<Database>,
@@ -442,27 +454,39 @@ fn build_redirect(
     Ok(Redirect::to(url.to_string()))
 }
 
+/// Error type returned by [`/token`](token)
 #[derive(Debug, Error)]
 pub enum TokenError {
+    /// Missing PKCE code verifier
     #[error("Missing PKCE code verifier")]
     MissingPKCE,
 
+    /// Unexpected PKCE code verifier i.e. no challenge code has been given in `/auth`
     #[error("Unexpected PKCE code verifier i.e. no challenge code has been given in `/auth`")]
     UnexpectedPKCE,
 
+    /// PKCE challenge and verifier don't match
     #[error("PKCE challenge and verifier don't match")]
     InvalidPKCE,
 
+    /// The authorization code was not found
     #[error("The authorization code was not found")]
     UnknownCode,
 
+    /// Internal server error i.e. database error
     #[error("Internal server error i.e. database error")]
     InternalError,
 
+    /// The `client_id`, `client_secret` or `redirect_uri` don't match the registered client.
     #[error(
         "The `client_id`, `client_secret` or `redirect_uri` don't match the registered client."
     )]
     InvalidClient,
+}
+
+#[derive(Serialize, ToSchema)]
+pub(crate) struct TokenErrorResponse {
+    pub(crate) error: String,
 }
 
 impl From<rorm::Error> for TokenError {
@@ -478,6 +502,8 @@ impl ResponseError for TokenError {
             Self::InternalError => HttpResponse::InternalServerError(),
             _ => HttpResponse::BadRequest(),
         })
-        .body(self.to_string())
+        .json(json!(TokenErrorResponse {
+            error: self.to_string()
+        }))
     }
 }

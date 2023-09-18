@@ -3,7 +3,7 @@
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
-use utoipa::IntoParams;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 /// The client constructs the request URI by adding the following
@@ -119,12 +119,16 @@ pub(crate) enum GrantType {
     AuthorizationCode,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub(crate) struct TokenResponse {
+    /// Always `"access_token"`
+    #[schema(example = "access_token")]
     pub token_type: TokenType,
 
     pub access_token: String,
 
+    /// Duration in seconds the token is valid for
+    #[schema(value_type = u64)]
     #[serde(serialize_with = "duration_seconds")]
     pub expires_in: Duration,
 }
