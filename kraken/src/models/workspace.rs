@@ -6,7 +6,7 @@ use chrono::{DateTime, Utc};
 use rorm::prelude::*;
 use uuid::Uuid;
 
-use crate::models::{Attack, User};
+use crate::models::{Attack, OauthClient, User};
 
 /// A workspace member has the privileges to access and modify a workspace of another user
 ///
@@ -97,6 +97,10 @@ pub struct WorkspaceAccessToken {
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub workspace: ForeignModel<Workspace>,
 
+    /// The oauth client which received this token
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub application: ForeignModel<OauthClient>,
+
     /// Date after which the token is invalid
     pub expires_at: DateTime<Utc>,
 }
@@ -108,4 +112,5 @@ pub(crate) struct WorkspaceAccessTokenInsert {
     pub user: ForeignModel<User>,
     pub workspace: ForeignModel<Workspace>,
     pub expires_at: DateTime<Utc>,
+    pub application: ForeignModel<OauthClient>,
 }

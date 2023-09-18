@@ -449,6 +449,7 @@ pub(crate) async fn token(
             token: access_token.clone(),
             user: ForeignModelByField::Key(accepted.user),
             workspace: ForeignModelByField::Key(accepted.scope.workspace),
+            application: ForeignModelByField::Key(client.uuid),
             expires_at: Utc::now() + expires_in,
         })
         .await?;

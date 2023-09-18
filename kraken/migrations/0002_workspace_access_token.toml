@@ -1,5 +1,5 @@
 [Migration]
-Hash = "9718138088458690030"
+Hash = "17280883106944155416"
 Initial = false
 Dependency = 1
 Replaces = []
@@ -69,6 +69,26 @@ Type = "foreign_key"
 
 [Migration.Operations.Field.Annotations.Value]
 TableName = "workspace"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "workspaceaccesstoken"
+
+[Migration.Operations.Field]
+Name = "application"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "oauthclient"
 ColumnName = "uuid"
 OnDelete = "Cascade"
 OnUpdate = "Cascade"
