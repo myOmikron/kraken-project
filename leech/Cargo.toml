@@ -42,7 +42,7 @@ prost-types = { version = "~0.12" }
 
 # Serialization library
 serde = { version = "~1", features = ["derive"] }
-toml = { version = "~0.7" }
+toml = { version = "~0.8" }
 serde_json = { version = "~1" }
 ipnet = { version = "~2" }
 # Time library

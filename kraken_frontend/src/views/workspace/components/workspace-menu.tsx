@@ -4,11 +4,13 @@ import AttackIcon from "../../svg/attack";
 import DataIcon from "../../svg/data";
 import SettingsIcon from "../../svg/settings";
 import { ROUTES } from "../../routes";
+import "../../styling/workspace-menu.css";
 
 type WorkspaceMenuItem = "search" | "attacks" | "data" | "workspace_settings";
 
 type WorkspaceMenuProps = {
     uuid: string;
+    additionalClassName?: string;
 };
 type WorkspaceMenuState = {
     active: WorkspaceMenuItem;
@@ -25,7 +27,13 @@ export default class WorkspaceMenu extends React.Component<WorkspaceMenuProps, W
 
     render() {
         return (
-            <div className={"workspace-menu pane"}>
+            <div
+                className={
+                    this.props.additionalClassName
+                        ? `workspace-menu pane ${this.props.additionalClassName}`
+                        : "workspace-menu pane"
+                }
+            >
                 <div
                     className={this.state.active === "search" ? "workspace-menu-item active" : "workspace-menu-item"}
                     onClick={() => {

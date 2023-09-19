@@ -1,26 +1,36 @@
 .workspace-outer-container {
     display: grid;
-    grid-template-columns: 2fr 1fr 7em;
-    grid-template-rows: max-content max-content 1fr;
+    grid-template-columns: 2fr 6fr 3fr 7em;
+    grid-template-rows: max-content 1fr max-content 2fr;
     gap: 1em;
     animation: yourAnimation 0.3s step-End 0.4s 1 normal backwards;
     height: calc(100% - 6em);
 }
 
 .workspace-heading {
-    grid-area: 1 / 1 / 1 / span 3;
+    grid-area: 1 / 1 / 1 / span 4;
     height: fit-content;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .workspace-heading > h2 {
     margin: 0;
 }
 
+.workspace-heading-uuid {
+    display: flex;
+    gap: 1em;
+    align-items: center;
+}
+
 .workspace-section-selector {
-    grid-area: 2 / 1 / span 1 / span 2;
+    grid-area: 3 / 2 / span 1 / span 1;
     display: grid;
     width: 100%;
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
     gap: 1em;
 }
 
@@ -43,7 +53,7 @@
 }
 
 .workspace-menu {
-    grid-area: 2 / 3 / span 2 / span 1;
+    grid-area: 2 / 4 / span 3 / span 1;
     display: flex;
     padding: 1em;
     gap: 1em;
@@ -87,6 +97,7 @@
 }
 
 .workspace-content-details {
+    grid-area: 2 / 3 / span 3 / span 1;
     display: flex;
     flex-direction: column;
     justify-items: center;
@@ -98,9 +109,33 @@
 }
 
 .workspace-content-table {
-    border-collapse: collapse;
+    grid-area: 4 / 2 / span 1 / span 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
 }
 
 .workspace-content-row {
-    text-align: left;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    align-items: center;
+    gap: 0.5em;
+    border: 1px solid var(--text);
+    border-radius: 0.5em;
+    padding: 0.75em;
+    color: white;
+    transition: all ease 200ms;
+}
+
+.workspace-content-row:hover:not(:first-of-type) {
+    box-shadow: 0 0 1em var(--primary);
+    cursor: pointer;
+}
+
+.workspace-host-container {
+    grid-area: 2 / 2 / span 1 / span 1;
+}
+
+.workspace-host-list {
+    grid-area: 2 / 1 / span 3 / span 1;
 }

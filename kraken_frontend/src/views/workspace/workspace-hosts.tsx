@@ -3,7 +3,14 @@ import "../../styling/workspace.css";
 import { FullWorkspace } from "../../api/generated";
 import { Api, UUID } from "../../api/api";
 import { toast } from "react-toastify";
-import WorkspaceMenu from "./workspace-menu";
+import CopyIcon from "../../svg/copy";
+import { copyToClipboard } from "../../utils/helper";
+import TuxIcon from "../../svg/tux";
+import WindowsIcon from "../../svg/windows";
+import FreeBSDIcon from "../../svg/freebsd";
+import AppleIcon from "../../svg/apple";
+import AnonymousIcon from "../../svg/anonymous";
+import WorkspaceMenu from "./components/workspace-menu";
 
 type WorkspaceProps = {
     uuid: UUID;
@@ -32,10 +39,19 @@ export default class Workspace extends React.Component<WorkspaceProps, Workspace
     render() {
         return (
             <div className={"workspace-outer-container"}>
-                <div className={"pane workspace-heading"}>
-                    <h2 className={"heading"}>{this.state.workspace?.name}</h2>
+                <div className={"pane workspace-host-list"}></div>
+                <div className={"pane workspace-host-container"}>
+                    <FreeBSDIcon />
+                    <div className={"workspace-host-details"}>
+                        <h2 className={"heading"}>Host 231.321.231.213</h2>
+                        <span>OS: Linux</span>
+                        <span>Online: Yes</span>
+                    </div>
                 </div>
-                <WorkspaceMenu uuid={this.state.workspace !== null ? this.state.workspace.uuid : ""} />
+                <WorkspaceMenu
+                    additionalClassName={"workspace-menu-ct"}
+                    uuid={this.state.workspace !== null ? this.state.workspace.uuid : ""}
+                />
                 <div className={"workspace-section-selector"}>
                     <div
                         className={this.state.selectedTab === "domains" ? "pane workspace-selected-tab" : "pane"}
@@ -44,14 +60,6 @@ export default class Workspace extends React.Component<WorkspaceProps, Workspace
                         }}
                     >
                         <h3 className={"heading"}>Domains</h3>
-                    </div>
-                    <div
-                        className={this.state.selectedTab === "ips" ? "pane workspace-selected-tab" : "pane"}
-                        onClick={() => {
-                            this.setState({ selectedTab: "ips" });
-                        }}
-                    >
-                        <h3 className={"heading"}>IPs</h3>
                     </div>
                     <div
                         className={this.state.selectedTab === "ports" ? "pane workspace-selected-tab" : "pane"}
@@ -78,31 +86,31 @@ export default class Workspace extends React.Component<WorkspaceProps, Workspace
                         <h3 className={"heading"}>Other</h3>
                     </div>
                 </div>
-                <div className={"pane"}>
-                    <table className={"workspace-content-table"}>
-                        <thead>
-                            <tr className={"workspace-content-row"}>
-                                <th>Domain</th>
-                                <th>DNS</th>
-                                <th>Tags</th>
-                                <th>Comment</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr className={"workspace-content-row"}>
-                                <td>trufflepig-forensics.com</td>
-                                <td className={"bubble-list"}>
-                                    <span className={"bubble"}>A</span>
-                                    <span className={"bubble"}>AAAA</span>
-                                    <span className={"bubble"}>MX</span>
-                                </td>
-                                <td>
-                                    <span className={"bubble red"}>critical</span>
-                                </td>
-                                <td>Netscaler</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div className={"pane workspace-content-table"}>
+                    <div className={"workspace-content-row"}>
+                        <span>Domain</span>
+                        <span>DNS</span>
+                        <span>Tags</span>
+                        <span>Attacks</span>
+                        <span>Comment</span>
+                    </div>
+                    <div className={"workspace-content-row"}>
+                        <span>trufflepig-forensics.com</span>
+                        <div className={"bubble-list"}>
+                            <div className={"bubble"}>A</div>
+                            <div className={"bubble"}>AAAA</div>
+                            <div className={"bubble"}>MX</div>
+                            <div className={"bubble"}>TXT</div>
+                        </div>
+                        <div className={"bubble-list"}>
+                            <div className={"bubble red"}>Critical</div>
+                        </div>
+                        <div className={"bubble-list"}>
+                            <div className={"bubble"}>CT 2</div>
+                            <div className={"bubble"}>BS 17</div>
+                        </div>
+                        <span>Netscaler</span>
+                    </div>
                 </div>
                 <div className={"workspace-content-details pane"}>
                     <h2 className={"heading"}>Details</h2>
