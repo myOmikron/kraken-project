@@ -5,6 +5,7 @@ use std::str::FromStr;
 
 use once_cell::sync::Lazy;
 use regex::Regex;
+use tokio::io::{self, stdin, AsyncBufReadExt, BufReader};
 
 pub(crate) struct Regexes {
     pub(crate) ports: Regex,
@@ -97,4 +98,9 @@ pub fn parse_ports(ports: &[String], parsed_ports: &mut Vec<u16>) -> Result<(), 
     parsed_ports.dedup();
 
     Ok(())
+}
+
+/// Read a line from stdin
+pub async fn input() -> io::Result<Option<String>> {
+    BufReader::new(stdin()).lines().next_line().await
 }

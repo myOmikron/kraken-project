@@ -14,6 +14,7 @@
 )]
 
 use std::env;
+use std::io::Write;
 use std::net::IpAddr;
 use std::num::NonZeroU32;
 use std::path::PathBuf;
@@ -46,6 +47,7 @@ use crate::rpc::rpc_attacks::attack_results_service_client::AttackResultsService
 use crate::rpc::rpc_attacks::shared::CertEntry;
 use crate::rpc::rpc_attacks::{CertificateTransparencyResult, MetaAttackInfo};
 use crate::rpc::start_rpc_server;
+use crate::utils::input;
 
 pub mod config;
 pub mod logging;
@@ -169,6 +171,10 @@ pub enum Command {
         #[clap(long)]
         push: Option<Uuid>,
 
+        /// Api key to authenticate when pushing
+        #[clap(long)]
+        apikey: Option<String>,
+
         /// the subcommand to execute
         #[clap(subcommand)]
         command: RunCommand,
@@ -209,6 +215,7 @@ async fn main() -> Result<(), String> {
             command,
             verbosity,
             push,
+            apikey,
         } => {
             if env::var("RUST_LOG").is_err() {
                 match verbosity {
@@ -223,6 +230,17 @@ async fn main() -> Result<(), String> {
                 let config = get_config(&cli.config_path).map_err(|e| {
                     format!("Couldn't retrieve necessary config for pushing to kraken: {e}")
                 })?;
+
+                let api_key = if let Some(apikey) = apikey {
+                    apikey
+                } else {
+                    print!("Please enter your api key: ");
+                    std::io::stdout().flush().unwrap();
+                    input()
+                        .await
+                        .map_err(|err| err.to_string())?
+                        .ok_or_else(|| "Can't push to kraken without api key".to_string())?
+                };
 
                 match command {
                     RunCommand::CertificateTransparency {
@@ -298,6 +316,7 @@ async fn main() -> Result<(), String> {
                                     .collect(),
                                 attack_info: Some(MetaAttackInfo {
                                     workspace_uuid: workspace.to_string(),
+                                    api_key,
                                 }),
                             })
                             .await

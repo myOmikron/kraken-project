@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use log::{error, info};
 use rorm::prelude::ForeignModelByField;
-use rorm::{insert, query, Database, FieldAccess, Model};
+use rorm::{and, insert, query, Database, FieldAccess, Model};
 use tonic::transport::Server;
 use tonic::{Code, Request, Response, Status, Streaming};
 use uuid::Uuid;
@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::config::Config;
 use crate::models::{
     AttackInsert, AttackType, CertificateTransparencyResultInsert,
-    CertificateTransparencyValueNameInsert, User, Workspace,
+    CertificateTransparencyValueNameInsert, LeechApiKey, Workspace, WorkspaceMember,
 };
 use crate::rpc::definitions::rpc_definitions::attack_results_service_server::AttackResultsService;
 use crate::rpc::rpc_definitions::attack_results_service_server::AttackResultsServiceServer;
@@ -31,30 +31,45 @@ impl AttackResultsService for Results {
         request: Request<CertificateTransparencyResult>,
     ) -> Result<Response<ResultResponse>, Status> {
         let req = request.into_inner();
-
-        let workspace_uuid = Uuid::try_parse(
-            &req.attack_info
-                .ok_or(Status::new(Code::Unknown, ""))?
-                .workspace_uuid,
-        )
-        .unwrap();
+        let attack_info = req
+            .attack_info
+            .ok_or(Status::new(Code::Unknown, "Missing attack_info"))?;
+        let workspace_uuid = Uuid::try_parse(&attack_info.workspace_uuid).unwrap();
 
         let mut tx = self.db.start_transaction().await.unwrap();
 
-        // TODO: Don't query a random user
-        let user_uuid = query!(&mut tx, (User::F.uuid,))
+        // Check api key and get user
+        let (user,) = query!(&mut tx, (LeechApiKey::F.user,))
+            .condition(LeechApiKey::F.key.equals(attack_info.api_key))
             .optional()
             .await
-            .unwrap()
-            .unwrap()
-            .0;
+            .map_err(status_from_database)?
+            .ok_or(Status::new(Code::Unauthenticated, "Invalid api key"))?;
+        let user_uuid = *user.key();
 
-        // TODO: User authentication
-        query!(&mut tx, (Workspace::F.uuid,))
+        // Check existence of workspace
+        let (owner,) = query!(&mut tx, (Workspace::F.owner,))
             .condition(Workspace::F.uuid.equals(workspace_uuid))
             .optional()
             .await
-            .unwrap();
+            .map_err(status_from_database)?
+            .ok_or(Status::new(Code::NotFound, "Unknown workspace"))?;
+
+        // Check if user is owner or member
+        if *owner.key() != *user.key() {
+            query!(&mut tx, (WorkspaceMember::F.id,))
+                .condition(and!(
+                    WorkspaceMember::F.member.equals(user_uuid),
+                    WorkspaceMember::F.workspace.equals(workspace_uuid)
+                ))
+                .optional()
+                .await
+                .map_err(status_from_database)?
+                .ok_or(Status::new(
+                    Code::PermissionDenied,
+                    "You're not part of this workspace",
+                ))?;
+        }
 
         let attack_uuid = insert!(&mut tx, AttackInsert)
             .return_primary_key()
@@ -66,7 +81,7 @@ impl AttackResultsService for Results {
                 finished_at: Some(Utc::now()),
             })
             .await
-            .unwrap();
+            .map_err(status_from_database)?;
 
         for cert_entry in req.entries {
             let entry_uuid = insert!(&mut tx, CertificateTransparencyResultInsert)
@@ -92,7 +107,7 @@ impl AttackResultsService for Results {
                     serial_number: cert_entry.serial_number,
                 })
                 .await
-                .unwrap();
+                .map_err(status_from_database)?;
 
             insert!(&mut tx, CertificateTransparencyValueNameInsert)
                 .bulk(
@@ -107,10 +122,10 @@ impl AttackResultsService for Results {
                         .collect::<Vec<_>>(),
                 )
                 .await
-                .unwrap();
+                .map_err(status_from_database)?;
         }
 
-        tx.commit().await.unwrap();
+        tx.commit().await.map_err(status_from_database)?;
 
         Ok(Response::new(ResultResponse {
             uuid: Uuid::new_v4().to_string(),
@@ -147,4 +162,10 @@ pub fn start_rpc_server(config: &Config, db: Database) -> Result<(), String> {
         }
     });
     Ok(())
+}
+
+/// Convert [`rorm::Error`] to [`tonic::Status`]
+fn status_from_database(err: rorm::Error) -> Status {
+    error!("Database error in rpc endpoint: {err}");
+    Status::new(Code::Internal, "Database error")
 }
