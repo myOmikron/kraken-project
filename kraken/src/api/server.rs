@@ -21,7 +21,7 @@ use webauthn_rs::prelude::{Url, WebauthnError};
 use webauthn_rs::WebauthnBuilder;
 
 use crate::api::handler::{
-    bruteforce_subdomains, create_leech, create_user, create_workspace, delete_attack,
+    apikeys, bruteforce_subdomains, create_leech, create_user, create_workspace, delete_attack,
     delete_leech, delete_user, delete_workspace, finish_auth, finish_register, get_all_leeches,
     get_all_users, get_all_workspaces, get_all_workspaces_admin, get_attack, get_leech, get_me,
     get_settings, get_tcp_port_scan_results, get_user, get_workspace, get_workspace_admin, login,
@@ -163,7 +163,11 @@ pub(crate) async fn start_server(
                     .service(query_certificate_transparency)
                     .service(delete_attack)
                     .service(get_tcp_port_scan_results)
-                    .service(get_attack),
+                    .service(get_attack)
+                    .service(apikeys::create_api_key)
+                    .service(apikeys::get_api_keys)
+                    .service(apikeys::update_leech)
+                    .service(apikeys::delete_api_key),
             )
     })
     .bind((

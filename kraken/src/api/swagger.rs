@@ -6,7 +6,7 @@ use utoipa::openapi::security::{ApiKey, ApiKeyValue, Http, HttpAuthScheme, Secur
 use utoipa::{Modify, OpenApi};
 
 use crate::api::handler;
-use crate::api::handler::oauth;
+use crate::api::handler::{apikeys, oauth};
 use crate::models;
 
 struct SecurityAddon;
@@ -84,6 +84,10 @@ impl Modify for SecurityAddon2 {
         oauth::token,
         handler::get_settings,
         handler::update_settings,
+        apikeys::create_api_key,
+        apikeys::delete_api_key,
+        apikeys::get_api_keys,
+        apikeys::update_leech,
     ),
     components(schemas(
         handler::ApiErrorResponse,
@@ -130,6 +134,10 @@ impl Modify for SecurityAddon2 {
         oauth::TokenErrorResponse,
         handler::SettingsFull,
         handler::UpdateSettingsRequest,
+        apikeys::SimpleApiKey,
+        apikeys::CreateApiKeyRequest,
+        apikeys::GetApiKeysResponse,
+        apikeys::UpdateApiKeyRequest,
     )),
     modifiers(&SecurityAddon, &SecurityAddon2),
 )]

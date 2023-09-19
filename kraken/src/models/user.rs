@@ -71,3 +71,23 @@ pub(crate) struct UserKeyInsert {
     pub(crate) user: ForeignModel<User>,
     pub(crate) key: Json<Passkey>,
 }
+
+/// Api key which grants a leech access when used as cli instead of a service
+#[derive(Model)]
+pub struct LeechApiKey {
+    /// Uuid of the key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// Owner of the api key
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub user: ForeignModel<User>,
+
+    /// The api key
+    #[rorm(max_length = 255)]
+    pub key: String,
+
+    /// A descriptive name helping the user to identify the key
+    #[rorm(max_length = 255)]
+    pub name: String,
+}

@@ -24,10 +24,11 @@ pub(crate) use crate::api::handler::workspaces::*;
 use crate::models::User;
 use crate::modules::user::create::CreateUserError;
 
+pub(crate) mod apikeys;
 mod attacks;
 mod auth;
 mod leeches;
-pub mod oauth;
+pub(crate) mod oauth;
 mod reporting;
 mod settings;
 mod users;
