@@ -173,7 +173,7 @@ pub enum Command {
 
         /// Api key to authenticate when pushing
         #[clap(long)]
-        apikey: Option<String>,
+        api_key: Option<String>,
 
         /// the subcommand to execute
         #[clap(subcommand)]
@@ -215,7 +215,7 @@ async fn main() -> Result<(), String> {
             command,
             verbosity,
             push,
-            apikey,
+            api_key,
         } => {
             if env::var("RUST_LOG").is_err() {
                 match verbosity {
@@ -231,8 +231,8 @@ async fn main() -> Result<(), String> {
                     format!("Couldn't retrieve necessary config for pushing to kraken: {e}")
                 })?;
 
-                let api_key = if let Some(apikey) = apikey {
-                    apikey
+                let api_key = if let Some(api_key) = api_key {
+                    api_key
                 } else {
                     print!("Please enter your api key: ");
                     std::io::stdout().flush().unwrap();

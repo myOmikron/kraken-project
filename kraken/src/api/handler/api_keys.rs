@@ -31,7 +31,7 @@ pub struct CreateApiKeyRequest {
     request_body = CreateApiKeyRequest,
     security(("api_key" = []))
 )]
-#[post("/api-keys")]
+#[post("/apiKeys")]
 pub async fn create_api_key(
     req: Json<CreateApiKeyRequest>,
     db: Data<Database>,
@@ -62,7 +62,7 @@ pub async fn create_api_key(
     params(PathUuid),
     security(("api_key" = []))
 )]
-#[delete("/api-keys/{uuid}")]
+#[delete("/apiKeys/{uuid}")]
 pub async fn delete_api_key(
     path: Path<PathUuid>,
     db: Data<Database>,
@@ -112,7 +112,7 @@ pub struct GetApiKeysResponse {
     ),
     security(("api_key" = []))
 )]
-#[get("/api-keys")]
+#[get("/apiKeys")]
 pub async fn get_api_keys(
     db: Data<Database>,
     SessionUser(user): SessionUser,
@@ -151,7 +151,7 @@ pub struct UpdateApiKeyRequest {
     request_body = UpdateApiKeyRequest,
     security(("api_key" = []))
 )]
-#[put("/api-keys/{uuid}")]
+#[put("/apiKeys/{uuid}")]
 pub async fn update_leech(
     path: Path<PathUuid>,
     req: Json<UpdateApiKeyRequest>,

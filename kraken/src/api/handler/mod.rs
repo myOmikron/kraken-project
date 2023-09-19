@@ -24,7 +24,7 @@ pub(crate) use crate::api::handler::workspaces::*;
 use crate::models::User;
 use crate::modules::user::create::CreateUserError;
 
-pub(crate) mod apikeys;
+pub(crate) mod api_keys;
 mod attacks;
 mod auth;
 mod leeches;
