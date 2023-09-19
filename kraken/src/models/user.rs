@@ -84,7 +84,7 @@ pub struct LeechApiKey {
     pub user: ForeignModel<User>,
 
     /// The api key
-    #[rorm(max_length = 255)]
+    #[rorm(max_length = 255, unique)]
     pub key: String,
 
     /// A descriptive name helping the user to identify the key
