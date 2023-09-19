@@ -266,6 +266,7 @@ pub(crate) async fn update_leech(
         .set_if(Leech::F.description, req.description)
         .finish_dyn_set()
         .map_err(|_| ApiError::EmptyJson)?
+        .condition(Leech::F.uuid.equals(path.uuid))
         .exec()
         .await?;
 
