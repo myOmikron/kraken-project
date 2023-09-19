@@ -37,7 +37,7 @@ pub(crate) struct AuthRequest {
 /// The client sends the code challenge as part of the OAuth 2.0
 /// Authorization Request ([Section 4.1.1 of \[RFC6749\]](https://www.rfc-editor.org/rfc/rfc6749#section-4.1.1)) using the
 /// following additional parameters:
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, ToSchema)]
 pub(crate) struct Pkce {
     /// Code challenge.
     pub code_challenge: String,
@@ -48,7 +48,7 @@ pub(crate) struct Pkce {
     pub code_challenge_method: CodeChallengeMethod,
 }
 
-#[derive(Deserialize, Default, Copy, Clone, Debug)]
+#[derive(Deserialize, Default, Copy, Clone, Debug, ToSchema)]
 pub(crate) enum CodeChallengeMethod {
     #[default]
     #[serde(rename = "S256")]
@@ -101,7 +101,7 @@ pub(crate) enum AuthErrorType {
     TemporarilyUnavailable,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub(crate) struct TokenRequest {
     /// Must be "authorization_code"
     pub grant_type: GrantType,
@@ -113,7 +113,7 @@ pub(crate) struct TokenRequest {
     pub code_verifier: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub(crate) enum GrantType {
     AuthorizationCode,
@@ -133,7 +133,7 @@ pub(crate) struct TokenResponse {
     pub expires_in: Duration,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub(crate) enum TokenType {
     AccessToken,
