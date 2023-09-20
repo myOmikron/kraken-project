@@ -3,9 +3,11 @@ import { handleError } from "./error";
 import {
     BruteforceSubdomainsRequest,
     CreateAppRequest,
+    CreateGlobalTagRequest,
     CreateLeechRequest,
     CreateUserRequest,
     CreateWorkspaceRequest,
+    GlobalTagsApi,
     HostsApi,
     OAuthApi,
     OAuthApplicationApi,
@@ -13,6 +15,7 @@ import {
     ScanTcpPortsRequest,
     SettingsManagementApi,
     UpdateAppRequest,
+    UpdateGlobalTag,
     UpdateLeechRequest,
     UpdateMeRequest,
     UpdateSettingsRequest,
@@ -48,6 +51,7 @@ const oauth = new OAuthApi(configuration);
 const oauthApplications = new OAuthApplicationApi(configuration);
 const settingsManagement = new SettingsManagementApi(configuration);
 const hosts = new HostsApi(configuration);
+const globalTags = new GlobalTagsApi(configuration);
 
 export const Api = {
     admin: {
@@ -84,6 +88,13 @@ export const Api = {
             update: (uuid: UUID, updateAppRequest: UpdateAppRequest) =>
                 handleError(oauthApplications.updateOauthApp({ uuid, updateAppRequest })),
             delete: (uuid: UUID) => handleError(oauthApplications.deleteOauthApp({ uuid })),
+        },
+        globalTags: {
+            create: (createGlobalTagRequest: CreateGlobalTagRequest) =>
+                handleError(globalTags.createGlobalTag({ createGlobalTagRequest })),
+            delete: (uuid: UUID) => handleError(globalTags.deleteGlobalTag({ uuid })),
+            update: (uuid: UUID, updateGlobalTag: UpdateGlobalTag) =>
+                handleError(globalTags.updateGlobalTag({ uuid, updateGlobalTag })),
         },
     },
     attacks: {
@@ -127,5 +138,8 @@ export const Api = {
     },
     oauth: {
         info: (uuid: UUID) => handleError(oauth.info({ uuid })),
+    },
+    globalTags: {
+        all: () => handleError(globalTags.getAllGlobalTags()),
     },
 };
