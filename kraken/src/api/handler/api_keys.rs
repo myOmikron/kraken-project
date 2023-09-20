@@ -152,7 +152,7 @@ pub struct UpdateApiKeyRequest {
     security(("api_key" = []))
 )]
 #[put("/apiKeys/{uuid}")]
-pub async fn update_leech(
+pub async fn update_api_key(
     path: Path<PathUuid>,
     req: Json<UpdateApiKeyRequest>,
     db: Data<Database>,

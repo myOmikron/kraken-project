@@ -24,8 +24,8 @@ use crate::api::handler::{
     api_keys, bruteforce_subdomains, create_leech, create_user, create_workspace, delete_attack,
     delete_leech, delete_user, delete_workspace, finish_auth, finish_register, get_all_leeches,
     get_all_users, get_all_workspaces, get_all_workspaces_admin, get_attack, get_leech, get_me,
-    get_settings, get_tcp_port_scan_results, get_user, get_workspace, get_workspace_admin, login,
-    logout, oauth, query_certificate_transparency, report_workspace_results, scan_tcp_ports,
+    get_settings, get_tcp_port_scan_results, get_user, get_workspace, get_workspace_admin, hosts,
+    login, logout, oauth, query_certificate_transparency, report_workspace_results, scan_tcp_ports,
     set_password, start_auth, start_register, test, update_leech, update_me, update_settings,
     update_workspace, websocket,
 };
@@ -166,8 +166,10 @@ pub(crate) async fn start_server(
                     .service(get_attack)
                     .service(api_keys::create_api_key)
                     .service(api_keys::get_api_keys)
-                    .service(api_keys::update_leech)
-                    .service(api_keys::delete_api_key),
+                    .service(api_keys::update_api_key)
+                    .service(api_keys::delete_api_key)
+                    .service(hosts::get_all_hosts)
+                    .service(hosts::get_host),
             )
     })
     .bind((

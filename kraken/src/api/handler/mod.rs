@@ -27,6 +27,8 @@ use crate::modules::user::create::CreateUserError;
 pub(crate) mod api_keys;
 mod attacks;
 mod auth;
+pub(crate) mod global_tags;
+pub(crate) mod hosts;
 mod leeches;
 pub(crate) mod oauth;
 mod reporting;
