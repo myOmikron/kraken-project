@@ -17,22 +17,176 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   OpenRequestInfo,
+  Pkce,
+  TokenErrorResponse,
+  TokenRequest,
+  TokenResponse,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
     OpenRequestInfoFromJSON,
     OpenRequestInfoToJSON,
+    PkceFromJSON,
+    PkceToJSON,
+    TokenErrorResponseFromJSON,
+    TokenErrorResponseToJSON,
+    TokenRequestFromJSON,
+    TokenRequestToJSON,
+    TokenResponseFromJSON,
+    TokenResponseToJSON,
 } from '../models';
+
+export interface AcceptRequest {
+    uuid: string;
+}
+
+export interface AuthRequest {
+    responseType: string;
+    clientId: string;
+    redirectUri?: string | null;
+    scope?: string | null;
+    state?: string | null;
+    pkce?: Pkce | null;
+}
+
+export interface DenyRequest {
+    uuid: string;
+}
 
 export interface InfoRequest {
     uuid: string;
+}
+
+export interface TokenOperationRequest {
+    tokenRequest: TokenRequest;
 }
 
 /**
  * 
  */
 export class OAuthApi extends runtime.BaseAPI {
+
+    /**
+     * Endpoint visited by user to grant a requesting application access
+     * Endpoint visited by user to grant a requesting application access
+     */
+    async acceptRaw(requestParameters: AcceptRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling accept.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/oauth/accept/{uuid}`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Endpoint visited by user to grant a requesting application access
+     * Endpoint visited by user to grant a requesting application access
+     */
+    async accept(requestParameters: AcceptRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.acceptRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Initial endpoint an application redirects the user to.  It requires both the `state` parameter against CSRF, as well as a pkce challenge. The only supported pkce `code_challenge_method` is `S256`.
+     * Initial endpoint an application redirects the user to.
+     */
+    async authRaw(requestParameters: AuthRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.responseType === null || requestParameters.responseType === undefined) {
+            throw new runtime.RequiredError('responseType','Required parameter requestParameters.responseType was null or undefined when calling auth.');
+        }
+
+        if (requestParameters.clientId === null || requestParameters.clientId === undefined) {
+            throw new runtime.RequiredError('clientId','Required parameter requestParameters.clientId was null or undefined when calling auth.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.responseType !== undefined) {
+            queryParameters['response_type'] = requestParameters.responseType;
+        }
+
+        if (requestParameters.clientId !== undefined) {
+            queryParameters['client_id'] = requestParameters.clientId;
+        }
+
+        if (requestParameters.redirectUri !== undefined) {
+            queryParameters['redirect_uri'] = requestParameters.redirectUri;
+        }
+
+        if (requestParameters.scope !== undefined) {
+            queryParameters['scope'] = requestParameters.scope;
+        }
+
+        if (requestParameters.state !== undefined) {
+            queryParameters['state'] = requestParameters.state;
+        }
+
+        if (requestParameters.pkce !== undefined) {
+            queryParameters['pkce'] = requestParameters.pkce;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/oauth/auth`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Initial endpoint an application redirects the user to.  It requires both the `state` parameter against CSRF, as well as a pkce challenge. The only supported pkce `code_challenge_method` is `S256`.
+     * Initial endpoint an application redirects the user to.
+     */
+    async auth(requestParameters: AuthRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.authRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Endpoint visited by user to deny a requesting application access
+     * Endpoint visited by user to deny a requesting application access
+     */
+    async denyRaw(requestParameters: DenyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling deny.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/oauth/deny/{uuid}`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Endpoint visited by user to deny a requesting application access
+     * Endpoint visited by user to deny a requesting application access
+     */
+    async deny(requestParameters: DenyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.denyRaw(requestParameters, initOverrides);
+    }
 
     /**
      * Queried by the frontend to display information about the oauth request to the user
@@ -64,6 +218,40 @@ export class OAuthApi extends runtime.BaseAPI {
     async info(requestParameters: InfoRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenRequestInfo> {
         const response = await this.infoRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Endpoint an application calls itself after the user accepted and was redirected back to it.
+     * Endpoint an application calls itself after the user accepted and was redirected back to it.
+     */
+    async tokenRaw(requestParameters: TokenOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.tokenRequest === null || requestParameters.tokenRequest === undefined) {
+            throw new runtime.RequiredError('tokenRequest','Required parameter requestParameters.tokenRequest was null or undefined when calling token.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/oauth-server/token`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TokenRequestToJSON(requestParameters.tokenRequest),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Endpoint an application calls itself after the user accepted and was redirected back to it.
+     * Endpoint an application calls itself after the user accepted and was redirected back to it.
+     */
+    async token(requestParameters: TokenOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.tokenRaw(requestParameters, initOverrides);
     }
 
 }

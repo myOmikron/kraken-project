@@ -1,8 +1,10 @@
 /* tslint:disable */
 /* eslint-disable */
 export * from './AdminWorkspacesApi';
+export * from './ApiKeysApi';
 export * from './AttacksApi';
 export * from './AuthenticationApi';
+export * from './HostsApi';
 export * from './LeechManagementApi';
 export * from './OAuthApi';
 export * from './OAuthApplicationApi';

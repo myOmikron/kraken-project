@@ -6,6 +6,7 @@ import {
     CreateLeechRequest,
     CreateUserRequest,
     CreateWorkspaceRequest,
+    HostsApi,
     OAuthApi,
     OAuthApplicationApi,
     QueryCertificateTransparencyRequest,
@@ -46,6 +47,7 @@ const workspaces = new WorkspacesApi(configuration);
 const oauth = new OAuthApi(configuration);
 const oauthApplications = new OAuthApplicationApi(configuration);
 const settingsManagement = new SettingsManagementApi(configuration);
+const hosts = new HostsApi(configuration);
 
 export const Api = {
     admin: {
@@ -117,6 +119,11 @@ export const Api = {
         update: (uuid: UUID, workspace: UpdateWorkspaceRequest) =>
             handleError(workspaces.updateWorkspace({ uuid, updateWorkspaceRequest: workspace })),
         delete: (uuid: UUID) => handleError(workspaces.deleteWorkspace({ uuid })),
+        hosts: {
+            all: (workspaceUuid: UUID) => handleError(hosts.getAllHosts({ uuid: workspaceUuid })),
+            get: (workspaceUuid: UUID, hostUuid: UUID) =>
+                handleError(hosts.getHost({ wUuid: workspaceUuid, hUuid: hostUuid })),
+        },
     },
     oauth: {
         info: (uuid: UUID) => handleError(oauth.info({ uuid })),
