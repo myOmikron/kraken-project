@@ -1,0 +1,15 @@
+.workspace-attacks-container {
+    display: grid;
+    grid-template-columns: 1fr 7em;
+    grid-template-rows: max-content 1fr;
+    gap: 1em;
+    height: calc(100% - 6em);
+}
+
+.workspace-attacks-menu-ct {
+    grid-area: 2 / 2 / span 1 / span 1;
+}
+
+.workspace-attacks-heading {
+    grid-area: 1 / 1 / span 1 / span 2;
+}

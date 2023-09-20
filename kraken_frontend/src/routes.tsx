@@ -9,10 +9,12 @@ import AdminGuard from "./components/admin-guard";
 import Attacks from "./views/attacks";
 import AttackResults from "./views/attack-results";
 import WorkspaceOverview from "./views/workspace-overview";
-import Workspace from "./views/workspace/workspace";
+import WorkspaceHost from "./views/workspace/workspace-host";
 import OauthRequest from "./views/oauth-request";
 import Menu from "./views/menu";
 import Settings from "./views/settings";
+import WorkspaceAttacks from "./views/workspace/workspace-attacks";
+import Workspace from "./views/workspace/workspace";
 
 export const ROUTER = new Router();
 
@@ -59,7 +61,7 @@ export const ROUTES = {
         render: ({ uuid }) => (
             <>
                 <div className={"content-container"}>
-                    <Workspace uuid={uuid} />
+                    <Workspace view={"settings"} uuid={uuid} />
                 </div>
                 <Menu />
             </>
@@ -71,7 +73,7 @@ export const ROUTES = {
         render: ({ uuid }) => (
             <>
                 <div className={"content-container"}>
-                    <Workspace uuid={uuid} />
+                    <Workspace view={"data"} uuid={uuid} />
                 </div>
                 <Menu />
             </>
@@ -83,7 +85,7 @@ export const ROUTES = {
         render: ({ uuid }) => (
             <>
                 <div className={"content-container"}>
-                    <Workspace uuid={uuid} />
+                    <Workspace view={"attacks"} uuid={uuid} />
                 </div>
                 <Menu />
             </>
@@ -95,31 +97,31 @@ export const ROUTES = {
         render: ({ uuid }) => (
             <>
                 <div className={"content-container"}>
-                    <Workspace uuid={uuid} />
+                    <Workspace view={"search"} uuid={uuid} />
                 </div>
                 <Menu />
             </>
         ),
     }),
-    ATTACKS: ROUTER.add({
-        url: "attacks",
-        parser: {},
-        render: () => (
-            <>
-                <div className={"content-container"}>
-                    <Attacks />
-                </div>
-                <Menu />
-            </>
-        ),
-    }),
-    ATTACK_RESULTS: ROUTER.add({
-        url: "attacks/{uuid}",
+    WORKSPACE_HOSTS: ROUTER.add({
+        url: "workspaces/{uuid}/hosts",
         parser: { uuid: String },
         render: ({ uuid }) => (
             <>
                 <div className={"content-container"}>
-                    <AttackResults attackUuid={uuid} />
+                    <Workspace view={"hosts"} uuid={uuid} />
+                </div>
+                <Menu />
+            </>
+        ),
+    }),
+    WORKSPACE_SINGLE_HOST: ROUTER.add({
+        url: "workspaces/{w_uuid}/hosts/{h_uuid}",
+        parser: { w_uuid: String, h_uuid: String },
+        render: ({ w_uuid, h_uuid }) => (
+            <>
+                <div className={"content-container"}>
+                    <Workspace view={"single_host"} uuid={w_uuid} host_uuid={h_uuid} />
                 </div>
                 <Menu />
             </>

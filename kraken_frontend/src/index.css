@@ -3,6 +3,7 @@
     --level-1: #44444440;
     --text: #bbb;
     --primary: #0cf;
+    --primary-light: #00ccffaa;
     --primary-op: #00ccff40;
     --secondary: #00ffb3;
 }
@@ -67,6 +68,7 @@ body {
     font-weight: normal;
     color: white;
     filter: drop-shadow(0 0 4px var(--primary));
+    margin: 0;
 }
 
 .neon {
@@ -75,6 +77,6 @@ body {
 
 @media screen and (max-width: 2000px) {
     body {
-        font-size: 0.9em;
+        font-size: 0.8em;
     }
 }

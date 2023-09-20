@@ -1,0 +1,117 @@
+.workspace-host-container {
+    grid-area: 2 / 1 / span 1 / span 1;
+    display: grid;
+    grid-template-columns: 2fr 8fr 3fr;
+    grid-template-rows: 1fr max-content 2fr;
+    gap: 1em;
+    animation: yourAnimation 0.3s step-End 0.4s 1 normal backwards;
+    height: 100%;
+}
+
+.workspace-host-section-selector {
+    grid-area: 2 / 2 / span 1 / span 1;
+    display: grid;
+    width: 100%;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 1em;
+}
+
+.workspace-host-section-selector > .pane {
+    padding: 1em 2em;
+    cursor: pointer;
+    transition: all 200ms;
+}
+
+.workspace-host-section-selector > .pane:hover {
+    box-shadow: 0 0 25em var(--primary-op), inset 0 0 10em #0cf3, inset 0 0 0.5em #0ff2, 0 0 1em var(--primary-op);
+}
+
+.workspace-host-section-selector h3 {
+    margin: 0;
+}
+
+.workspace-host-selected-tab {
+    background-color: var(--primary);
+}
+
+.workspace-host-content-details {
+    grid-area: 1 / 3 / span 3 / span 1;
+    display: flex;
+    flex-direction: column;
+    justify-items: center;
+}
+
+.workspace-host-content-details > h2 {
+    margin: 0;
+    text-align: center;
+}
+
+.workspace-host-content-table {
+    grid-area: 3 / 2 / span 1 / span 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+}
+
+.workspace-host-content-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1.5fr 1fr 1.5fr 1.5fr;
+    align-items: center;
+    gap: 0.5em;
+    border-radius: 0.5em;
+    padding: 0.75em 1em;
+    transition: all ease 200ms;
+}
+
+.workspace-host-content-row:first-of-type {
+    background-color: var(--primary-light);
+    color: white;
+}
+
+.workspace-host-content-row:hover:not(:first-of-type) {
+    background-color: var(--primary-light);
+    cursor: pointer;
+}
+
+.workspace-host-host-container {
+    grid-area: 1 / 2 / span 1 / span 1;
+    display: grid;
+    grid-template-columns: 1fr 4fr;
+}
+
+.workspace-host-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.workspace-host-hosts-list {
+    grid-area: 1 / 1 / span 3 / span 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    height: 100%;
+}
+
+.workspace-host-hosts-item {
+    display: grid;
+    grid-template-columns: 3em 5fr;
+    gap: 1em;
+    padding: 1em;
+    border: none;
+    cursor: pointer;
+    color: var(--text);
+    text-align: left;
+}
+
+.workspace-host-hosts-item:hover {
+    box-shadow: 0 0 25em var(--primary-op), inset 0 0 10em #0cf3, inset 0 0 0.5em #0ff2, 0 0 1em var(--primary-op);
+}
+
+
+.workspace-host-hosts-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25em;
+    font-size: small;
+    height: 4em;
+}

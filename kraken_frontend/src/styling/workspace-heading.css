@@ -1,0 +1,18 @@
+.workspace-heading {
+    grid-area: 1 / 1 / span 1 / span 1;
+    height: fit-content;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.workspace-heading > h2 {
+    margin: 0;
+}
+
+.workspace-heading-uuid {
+    display: flex;
+    gap: 1em;
+    align-items: center;
+}

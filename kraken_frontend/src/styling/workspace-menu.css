@@ -1,0 +1,43 @@
+.workspace-menu {
+    grid-area: 1 / 2 / span 2 / span 1;
+    display: flex;
+    padding: 1em;
+    gap: 0.25em;
+    flex-direction: column;
+}
+
+.workspace-menu-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25em;
+    text-align: center;
+    transition: all ease 200ms;
+    cursor: pointer;
+    transform-origin: center left;
+    padding: 0.5em;
+}
+
+.workspace-menu-item:hover {
+    color: white;
+    filter: drop-shadow(0 0 8px var(--primary-op));
+}
+
+.workspace-menu-item:hover > .icon {
+    animation: bounceRL 1s infinite;
+}
+
+.workspace-menu-item.active::after {
+    content: "";
+    position: absolute;
+    right: -0.3em;
+    top: calc(50% - 0.25em);
+    border-radius: 50%;
+    border: 0.25em solid white;
+    background-color: white;
+    filter: brightness(0) invert() drop-shadow(0 0 4px var(--primary));
+}
+
+.workspace-menu-hint {
+    font-size: small;
+}

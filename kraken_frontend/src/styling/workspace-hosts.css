@@ -1,0 +1,36 @@
+.workspace-hosts-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    gap: 1em;
+    height: fit-content;
+}
+
+.workspace-hosts-search-pane {
+    grid-area: 1 / 1 / span 1 / span 7;
+    padding: 1em;
+}
+
+.workspace-hosts-host {
+    display: flex;
+    flex-direction: row;
+    gap: 1em;
+    cursor: pointer;
+    justify-content: left;
+    transition: all ease 200ms;
+    padding: 1em;
+}
+
+.workspace-hosts-host:hover {
+    box-shadow: 0 0 25em var(--primary-op), inset 0 0 10em #0cf3, inset 0 0 0.5em #0ff2, 0 0 1em var(--primary-op);
+}
+
+.workspace-hosts-host > .icon {
+    width: 6em;
+}
+
+.workspace-hosts-host-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25em;
+    font-size: small;
+}

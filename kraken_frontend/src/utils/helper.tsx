@@ -2,6 +2,14 @@ import { toast } from "react-toastify";
 import { Result } from "./result";
 import { ApiError } from "../api/error";
 import { inspectError } from "../context/user";
+import { OsType } from "../api/generated";
+import AnonymousIcon from "../svg/anonymous";
+import TuxIcon from "../svg/tux";
+import AppleIcon from "../svg/apple";
+import WindowsIcon from "../svg/windows";
+import FreeBSDIcon from "../svg/freebsd";
+import AndroidIcon from "../svg/android";
+import React from "react";
 
 /**
  * Sleeps x milliseconds async
@@ -86,4 +94,22 @@ export async function copyToClipboard(text: string | null) {
             });
         }
     }
+}
+
+export function getOsIcon(os: OsType) {
+    return os === "Unknown" ? (
+        <AnonymousIcon />
+    ) : os === "Linux" ? (
+        <TuxIcon />
+    ) : os === "Apple" ? (
+        <AppleIcon />
+    ) : os === "Windows" ? (
+        <WindowsIcon />
+    ) : os === "FreeBSD" ? (
+        <FreeBSDIcon />
+    ) : os === "Android" ? (
+        <AndroidIcon />
+    ) : (
+        <AnonymousIcon />
+    );
 }

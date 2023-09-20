@@ -117,7 +117,7 @@
 
 @media screen and (max-width: 2000px) {
     .menu {
-        width: 4em;
+        width: 5em;
     }
 
     .workspace-selector-container {
@@ -127,7 +127,7 @@
 
     .content-container {
         margin-top: 6em;
-        margin-left: 8em;
-        width: calc(100% - 9em);
+        margin-left: 9em;
+        width: calc(100% - 10em);
     }
 }
