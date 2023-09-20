@@ -30,15 +30,6 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
     }
 
     render() {
-        return (
-            <div className={"workspace-attacks-container"}>
-                <WorkspaceHeading
-                    additionalClassName={"workspace-attacks-heading"}
-                    uuid={this.props.uuid}
-                    name={this.state.workspace !== null ? this.state.workspace?.name : ""}
-                />
-                <WorkspaceMenu additionalClassName={"workspace-attacks-menu-ct"} uuid={this.props.uuid} />
-            </div>
-        );
+        return <div className={"workspace-attacks-container"}></div>;
     }
 }

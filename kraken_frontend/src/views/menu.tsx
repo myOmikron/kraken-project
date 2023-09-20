@@ -57,22 +57,6 @@ export default class Menu extends React.Component<MenuProps, MenuState> {
                             <div className={"menu-hint"}>Workspaces</div>
                         </div>
                     </div>
-                    <div className={"menu-item-container"}>
-                        <div
-                            className={this.state.active === "attack" ? "menu-item active" : "menu-item"}
-                            onClick={() => {
-                                this.setState({ active: "attack" });
-                                ROUTES.ATTACKS.visit({});
-                            }}
-                            onAuxClick={() => {
-                                this.setState({ active: "attack" });
-                                ROUTES.ATTACKS.open({});
-                            }}
-                        >
-                            <AttackIcon />
-                            <div className={"menu-hint"}>Attacks</div>
-                        </div>
-                    </div>
                     <div className={"menu-seperator"}>General</div>
                     <div className={"menu-item-container"}>
                         <div

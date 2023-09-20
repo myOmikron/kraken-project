@@ -6,14 +6,10 @@ import Me from "./views/me";
 import AdminUsers from "./views/admin/users";
 import AdminWorkspaces from "./views/admin/workspaces";
 import AdminGuard from "./components/admin-guard";
-import Attacks from "./views/attacks";
-import AttackResults from "./views/attack-results";
 import WorkspaceOverview from "./views/workspace-overview";
-import WorkspaceHost from "./views/workspace/workspace-host";
 import OauthRequest from "./views/oauth-request";
 import Menu from "./views/menu";
 import Settings from "./views/settings";
-import WorkspaceAttacks from "./views/workspace/workspace-attacks";
 import Workspace from "./views/workspace/workspace";
 
 export const ROUTER = new Router();
@@ -61,7 +57,7 @@ export const ROUTES = {
         render: ({ uuid }) => (
             <>
                 <div className={"content-container"}>
-                    <Workspace view={"settings"} uuid={uuid} />
+                    <Workspace view={"workspace_settings"} uuid={uuid} />
                 </div>
                 <Menu />
             </>
