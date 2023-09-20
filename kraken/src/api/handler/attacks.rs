@@ -497,7 +497,7 @@ pub async fn query_certificate_transparency(
     req: Json<QueryCertificateTransparencyRequest>,
     db: Data<Database>,
     session: Session,
-    rpc_clients: Data<RpcClients>,
+    rpc_clients: RpcClients,
     ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
     let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
