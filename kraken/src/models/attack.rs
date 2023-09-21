@@ -31,11 +31,7 @@ pub struct Attack {
     #[rorm(primary_key)]
     pub uuid: Uuid,
 
-    /// The type of the attack.
-    ///
-    /// Currently only an integer as rorm currently hasn't support for this.
-    ///
-    /// Use [AttackType] for use in kraken.
+    /// The [type](AttackType) of the attack.
     pub attack_type: AttackType,
 
     /// The user that started this attack
