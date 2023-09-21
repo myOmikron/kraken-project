@@ -1,13 +1,12 @@
 use std::future::{ready, Ready};
 
+use actix_toolbox::tb_middleware::actix_session::SessionExt;
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
-use actix_web::http::header::HeaderValue;
 use futures::future::LocalBoxFuture;
-use log::debug;
 
 use crate::api::handler::ApiError;
 
-pub(crate) struct TokenRequired(pub(crate) String);
+pub(crate) struct TokenRequired;
 
 impl<S, B> Transform<S, ServiceRequest> for TokenRequired
 where
@@ -22,16 +21,12 @@ where
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        ready(Ok(TokenRequiredMiddleware {
-            service,
-            token: self.0.clone(),
-        }))
+        ready(Ok(TokenRequiredMiddleware { service }))
     }
 }
 
 pub(crate) struct TokenRequiredMiddleware<S> {
     service: S,
-    token: String,
 }
 
 impl<S, B> Service<ServiceRequest> for TokenRequiredMiddleware<S>
@@ -47,27 +42,26 @@ where
     forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        let mut authenticated = false;
+        let session = req.get_session();
+
+        let mut token = None;
 
         if let Some(auth) = req.headers().get("Authorization") {
-            if self.token.is_empty() {
-                authenticated = false
-            } else {
-                authenticated = match HeaderValue::try_from(&format!("Bearer {}", &self.token)) {
-                    Ok(v) => auth == v,
-                    Err(err) => {
-                        debug!("Invalid header value: {err}");
-                        false
-                    }
+            if let Ok(header) = auth.to_str() {
+                let parts: Vec<&str> = header.split(' ').collect();
+                if parts.len() == 2 && parts[0] == "Bearer" && !parts[1].is_empty() {
+                    token = Some(parts[1].to_owned());
                 }
             }
         }
 
         let next = self.service.call(req);
         Box::pin(async move {
-            if !authenticated {
+            let Some(token) = token else {
                 return Err(ApiError::Unauthenticated.into());
-            }
+            };
+
+            session.insert("token", token)?;
 
             next.await
         })

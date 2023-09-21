@@ -25,9 +25,9 @@ use crate::api::handler::{
     delete_leech, delete_user, delete_workspace, finish_auth, finish_register, get_all_leeches,
     get_all_users, get_all_workspaces, get_all_workspaces_admin, get_attack, get_leech, get_me,
     get_settings, get_tcp_port_scan_results, get_user, get_workspace, get_workspace_admin,
-    global_tags, hosts, login, logout, oauth, query_certificate_transparency,
-    report_workspace_results, scan_tcp_ports, set_password, start_auth, start_register, test,
-    update_leech, update_me, update_settings, update_workspace, websocket,
+    global_tags, hosts, login, logout, oauth, query_certificate_transparency, scan_tcp_ports,
+    set_password, start_auth, start_register, test, update_leech, update_me, update_settings,
+    update_workspace, websocket,
 };
 use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired, TokenRequired,
@@ -74,7 +74,6 @@ pub(crate) async fn start_server(
 
     let oauth = Data::new(oauth::OauthManager::default());
 
-    let reporting_key = config.server.reporting_key.clone();
     let dehashed = Data::new(RwLock::new(dehashed_scheduler));
 
     HttpServer::new(move || {
@@ -101,11 +100,6 @@ pub(crate) async fn start_server(
             .wrap(Compress::default())
             .wrap(ErrorHandlers::new().handler(StatusCode::NOT_FOUND, handle_not_found))
             .service(SwaggerUi::new("/docs/{_:.*}").url("/api-doc/openapi.json", ApiDoc::openapi()))
-            .service(
-                scope("/api/v1/reporting")
-                    .wrap(TokenRequired(reporting_key.clone()))
-                    .service(report_workspace_results),
-            )
             .service(
                 scope("/api/v1/auth")
                     .service(test)
