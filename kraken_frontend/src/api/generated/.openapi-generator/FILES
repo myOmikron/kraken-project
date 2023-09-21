@@ -7,11 +7,11 @@ apis/HostsApi.ts
 apis/LeechManagementApi.ts
 apis/OAuthApi.ts
 apis/OAuthApplicationApi.ts
-apis/ReportingDataExportApi.ts
 apis/SettingsManagementApi.ts
 apis/UserAdminManagementApi.ts
 apis/UserManagementApi.ts
 apis/WebsocketApi.ts
+apis/WorkspaceTagsApi.ts
 apis/WorkspacesApi.ts
 apis/index.ts
 index.ts
@@ -28,11 +28,13 @@ models/CreateLeechRequest.ts
 models/CreateUserRequest.ts
 models/CreateUserResponse.ts
 models/CreateWorkspaceRequest.ts
+models/CreateWorkspaceTagRequest.ts
 models/FinishRegisterRequest.ts
 models/FinishRegisterRequestAllOf.ts
 models/FullGlobalTag.ts
 models/FullOauthClient.ts
 models/FullWorkspace.ts
+models/FullWorkspaceTag.ts
 models/GetAllHostsResponse.ts
 models/GetApiKeysResponse.ts
 models/GetAppsResponse.ts
@@ -42,6 +44,7 @@ models/GetLeechResponse.ts
 models/GetUser.ts
 models/GetUserResponse.ts
 models/GetWorkspaceResponse.ts
+models/GetWorkspaceTagsResponse.ts
 models/GrantType.ts
 models/LoginRequest.ts
 models/OpenRequestInfo.ts
@@ -49,11 +52,8 @@ models/OsType.ts
 models/PageParams.ts
 models/Pkce.ts
 models/PortOrRange.ts
+models/PortProtocol.ts
 models/QueryCertificateTransparencyRequest.ts
-models/ReportingIpPort.ts
-models/ReportingTcpPortScanAttack.ts
-models/ReportingUser.ts
-models/ReportingWorkspaceResults.ts
 models/ScanTcpPortsRequest.ts
 models/SetPasswordRequest.ts
 models/SettingsFull.ts
@@ -75,6 +75,7 @@ models/UpdateLeechRequest.ts
 models/UpdateMeRequest.ts
 models/UpdateSettingsRequest.ts
 models/UpdateWorkspaceRequest.ts
+models/UpdateWorkspaceTag.ts
 models/UserResponse.ts
 models/UuidResponse.ts
 models/index.ts

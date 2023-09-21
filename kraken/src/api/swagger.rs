@@ -160,6 +160,7 @@ impl Modify for SecurityAddon2 {
         workspace_tags::FullWorkspaceTag,
         workspace_tags::GetWorkspaceTagsResponse,
         workspace_tags::UpdateWorkspaceTag,
+        workspace_tags::CreateWorkspaceTagRequest,
     )),
     modifiers(&SecurityAddon, &SecurityAddon2),
 )]

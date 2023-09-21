@@ -7,6 +7,7 @@ import {
     CreateLeechRequest,
     CreateUserRequest,
     CreateWorkspaceRequest,
+    CreateWorkspaceTagRequest,
     GlobalTagsApi,
     HostsApi,
     OAuthApi,
@@ -20,6 +21,8 @@ import {
     UpdateMeRequest,
     UpdateSettingsRequest,
     UpdateWorkspaceRequest,
+    UpdateWorkspaceTag,
+    WorkspaceTagsApi,
 } from "./generated";
 import { Configuration } from "./generated";
 import {
@@ -52,6 +55,7 @@ const oauthApplications = new OAuthApplicationApi(configuration);
 const settingsManagement = new SettingsManagementApi(configuration);
 const hosts = new HostsApi(configuration);
 const globalTags = new GlobalTagsApi(configuration);
+const workspaceTags = new WorkspaceTagsApi(configuration);
 
 export const Api = {
     admin: {
@@ -134,6 +138,17 @@ export const Api = {
             all: (workspaceUuid: UUID) => handleError(hosts.getAllHosts({ uuid: workspaceUuid })),
             get: (workspaceUuid: UUID, hostUuid: UUID) =>
                 handleError(hosts.getHost({ wUuid: workspaceUuid, hUuid: hostUuid })),
+        },
+        tags: {
+            all: (workspaceUuid: UUID) => handleError(workspaceTags.getAllWorkspaceTags({ uuid: workspaceUuid })),
+            create: (workspaceUuid: UUID, createWorkspaceTagRequest: CreateWorkspaceTagRequest) =>
+                handleError(workspaceTags.createWorkspaceTag({ uuid: workspaceUuid, createWorkspaceTagRequest })),
+            update: (workspaceUuid: UUID, tagUuid: UUID, updateWorkspaceTag: UpdateWorkspaceTag) =>
+                handleError(
+                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag })
+                ),
+            delete: (workspaceUuid: UUID, tagUuid: UUID) =>
+                workspaceTags.deleteWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid }),
         },
     },
     oauth: {

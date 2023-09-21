@@ -20,25 +20,25 @@ import { exists, mapValues } from '../runtime';
  */
 export interface Color {
     /**
-     * 
+     * Red value
      * @type {number}
      * @memberof Color
      */
     r: number;
     /**
-     * 
+     * Green value
      * @type {number}
      * @memberof Color
      */
     g: number;
     /**
-     * 
+     * Blue value
      * @type {number}
      * @memberof Color
      */
     b: number;
     /**
-     * 
+     * Alpha value
      * @type {number}
      * @memberof Color
      */
