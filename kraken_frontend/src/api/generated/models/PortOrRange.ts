@@ -1,4 +1,3 @@
-
 export type PortOrRange = number | string;
 
 export function PortOrRangeFromJSON(json: any): PortOrRange {
