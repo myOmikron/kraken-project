@@ -24,17 +24,18 @@ use crate::models::User;
 use crate::modules::user::create::CreateUserError;
 
 pub(crate) mod api_keys;
-mod attacks;
-mod auth;
+pub(crate) mod attacks;
+pub(crate) mod auth;
 pub(crate) mod global_tags;
 pub(crate) mod hosts;
-mod leeches;
+pub(crate) mod leeches;
 pub(crate) mod oauth;
 pub(crate) mod reporting;
-mod settings;
-mod users;
-mod websocket;
-mod workspaces;
+pub(crate) mod settings;
+pub(crate) mod users;
+pub(crate) mod websocket;
+pub(crate) mod workspace_tags;
+pub(crate) mod workspaces;
 
 /// Use in request handlers instead of `Session` if your only interested in the `"uuid"` field
 pub struct SessionUser(pub Uuid);
@@ -77,6 +78,32 @@ pub struct UuidResponse {
 #[derive(Deserialize, IntoParams)]
 pub struct PathUuid {
     pub(crate) uuid: Uuid,
+}
+
+/// Color value
+#[derive(Deserialize, Serialize, Debug, ToSchema)]
+pub struct Color {
+    /// Red value
+    pub r: u8,
+    /// Green value
+    pub g: u8,
+    /// Blue value
+    pub b: u8,
+    /// Alpha value
+    pub a: u8,
+}
+
+impl From<Color> for i32 {
+    fn from(value: Color) -> Self {
+        i32::from_le_bytes([value.r, value.g, value.b, value.a])
+    }
+}
+
+impl From<i32> for Color {
+    fn from(value: i32) -> Self {
+        let [r, g, b, a] = value.to_le_bytes();
+        Self { r, g, b, a }
+    }
 }
 
 /// The result type of kraken.

@@ -27,7 +27,7 @@ use crate::api::handler::{
     get_settings, get_tcp_port_scan_results, get_user, get_workspace, get_workspace_admin,
     global_tags, hosts, login, logout, oauth, query_certificate_transparency, scan_tcp_ports,
     set_password, start_auth, start_register, test, update_leech, update_me, update_settings,
-    update_workspace, websocket,
+    update_workspace, websocket, workspace_tags,
 };
 use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired, TokenRequired,
@@ -167,7 +167,11 @@ pub(crate) async fn start_server(
                     .service(api_keys::delete_api_key)
                     .service(hosts::get_all_hosts)
                     .service(hosts::get_host)
-                    .service(global_tags::get_all_global_tags),
+                    .service(global_tags::get_all_global_tags)
+                    .service(workspace_tags::create_workspace_tag)
+                    .service(workspace_tags::get_all_workspace_tags)
+                    .service(workspace_tags::update_workspace_tag)
+                    .service(workspace_tags::delete_workspace_tag),
             )
     })
     .bind((

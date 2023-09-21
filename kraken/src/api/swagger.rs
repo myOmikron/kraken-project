@@ -6,7 +6,7 @@ use utoipa::openapi::security::{ApiKey, ApiKeyValue, Http, HttpAuthScheme, Secur
 use utoipa::{Modify, OpenApi};
 
 use crate::api::handler;
-use crate::api::handler::{api_keys, global_tags, hosts, oauth};
+use crate::api::handler::{api_keys, global_tags, hosts, oauth, workspace_tags};
 use crate::models;
 
 struct SecurityAddon;
@@ -93,6 +93,10 @@ impl Modify for SecurityAddon2 {
         global_tags::get_all_global_tags,
         global_tags::update_global_tag,
         global_tags::delete_global_tag,
+        workspace_tags::create_workspace_tag,
+        workspace_tags::get_all_workspace_tags,
+        workspace_tags::update_workspace_tag,
+        workspace_tags::delete_workspace_tag,
     ),
     components(schemas(
         handler::ApiErrorResponse,
@@ -148,11 +152,14 @@ impl Modify for SecurityAddon2 {
         hosts::SimpleHost,
         models::OsType,
         global_tags::CreateGlobalTagRequest,
-        global_tags::Color,
+        handler::Color,
         global_tags::FullGlobalTag,
         global_tags::GetGlobalTagsResponse,
         global_tags::UpdateGlobalTag,
         models::PortProtocol,
+        workspace_tags::FullWorkspaceTag,
+        workspace_tags::GetWorkspaceTagsResponse,
+        workspace_tags::UpdateWorkspaceTag,
     )),
     modifiers(&SecurityAddon, &SecurityAddon2),
 )]

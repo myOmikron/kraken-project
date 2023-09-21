@@ -5,36 +5,15 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
+use crate::api::handler::{ApiError, ApiResult, Color, PathUuid, UuidResponse};
 use crate::models::{GlobalTag, GlobalTagInsert};
-
-/// Color value
-#[derive(Deserialize, Serialize, Debug, ToSchema)]
-pub struct Color {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
-    pub a: u8,
-}
-
-impl From<Color> for i32 {
-    fn from(value: Color) -> Self {
-        i32::from_le_bytes([value.r, value.g, value.b, value.a])
-    }
-}
-
-impl From<i32> for Color {
-    fn from(value: i32) -> Self {
-        let [r, g, b, a] = value.to_le_bytes();
-        Self { r, g, b, a }
-    }
-}
 
 /// The request to create a global tag
 #[derive(Deserialize, Debug, ToSchema)]
 pub struct CreateGlobalTagRequest {
     /// Name of the tag
     pub name: String,
+    /// Color of a tag
     pub color: Color,
 }
 

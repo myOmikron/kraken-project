@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::api::handler::{ApiError, ApiResult, PathUuid};
-use crate::models::{Host, OsType, Workspace, WorkspaceMember};
+use crate::api::handler::{workspaces, ApiError, ApiResult, PathUuid};
+use crate::models::{Host, OsType};
 
 /// The simple representation of a host
 #[derive(Serialize, Debug, ToSchema)]
@@ -59,25 +59,7 @@ pub async fn get_all_hosts(
 
     let mut tx = db.start_transaction().await?;
 
-    let is_member = query!(&mut tx, (WorkspaceMember::F.id,))
-        .condition(and!(
-            WorkspaceMember::F.member.equals(user_uuid),
-            WorkspaceMember::F.workspace.equals(path.uuid)
-        ))
-        .optional()
-        .await?
-        .is_some();
-
-    let is_owner = query!(&mut tx, (Workspace::F.uuid,))
-        .condition(and!(
-            Workspace::F.uuid.equals(path.uuid),
-            Workspace::F.owner.equals(user_uuid)
-        ))
-        .optional()
-        .await?
-        .is_some();
-
-    if is_owner || is_member {
+    if workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.uuid).await? {
         let hosts = query!(&mut tx, Host)
             .condition(Host::F.workspace.equals(path.uuid))
             .all()
@@ -132,25 +114,7 @@ pub async fn get_host(
 
     let mut tx = db.start_transaction().await?;
 
-    let is_member = query!(&mut tx, (WorkspaceMember::F.id,))
-        .condition(and!(
-            WorkspaceMember::F.member.equals(user_uuid),
-            WorkspaceMember::F.workspace.equals(path.w_uuid)
-        ))
-        .optional()
-        .await?
-        .is_some();
-
-    let is_owner = query!(&mut tx, (Workspace::F.uuid,))
-        .condition(and!(
-            Workspace::F.uuid.equals(path.w_uuid),
-            Workspace::F.owner.equals(user_uuid)
-        ))
-        .optional()
-        .await?
-        .is_some();
-
-    if is_owner || is_member {
+    if workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.w_uuid).await? {
         let host = query!(&mut tx, Host)
             .condition(and!(
                 Host::F.workspace.equals(path.w_uuid),
