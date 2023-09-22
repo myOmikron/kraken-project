@@ -108,6 +108,8 @@ impl Modify for SecurityAddon2 {
         handler::ApiErrorResponse,
         handler::ApiStatusCode,
         handler::UuidResponse,
+        handler::SimpleTag,
+        handler::TagType,
         auth::LoginRequest,
         auth::FinishRegisterRequest,
         leeches::CreateLeechRequest,

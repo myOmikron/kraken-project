@@ -1,14 +1,15 @@
 use actix_toolbox::tb_middleware::Session;
 use actix_web::get;
 use actix_web::web::{Data, Json, Path};
+use futures::TryStreamExt;
 use rorm::prelude::*;
 use rorm::{and, query, Database};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::api::handler::{workspaces, ApiError, ApiResult, PathUuid};
-use crate::models::{Host, OsType};
+use crate::api::handler::{workspaces, ApiError, ApiResult, PathUuid, SimpleTag, TagType};
+use crate::models::{GlobalTag, Host, HostGlobalTag, HostWorkspaceTag, OsType, WorkspaceTag};
 
 /// The simple representation of a host
 #[derive(Serialize, Debug, ToSchema)]
@@ -24,6 +25,24 @@ pub struct SimpleHost {
     pub comment: String,
     /// The workspace this host is in
     pub workspace: Uuid,
+}
+
+/// The full representation of a host
+#[derive(Serialize, Debug, ToSchema)]
+pub struct FullHost {
+    /// The primary key of the host
+    pub uuid: Uuid,
+    /// The ip address of the host
+    #[schema(example = "172.0.0.1")]
+    pub ip_addr: String,
+    /// The type of OS
+    pub os_type: OsType,
+    /// A comment
+    pub comment: String,
+    /// The workspace this host is in
+    pub workspace: Uuid,
+    /// The list of tags this host has attached to
+    pub tags: Vec<SimpleTag>,
 }
 
 /// The reseponse to a get all hosts reqeust
@@ -107,33 +126,63 @@ pub async fn get_host(
     path: Path<PathHost>,
     db: Data<Database>,
     session: Session,
-) -> ApiResult<Json<SimpleHost>> {
+) -> ApiResult<Json<FullHost>> {
     let path = path.into_inner();
 
     let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let mut tx = db.start_transaction().await?;
 
-    if workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.w_uuid).await? {
-        let host = query!(&mut tx, Host)
-            .condition(and!(
-                Host::F.workspace.equals(path.w_uuid),
-                Host::F.uuid.equals(path.h_uuid)
-            ))
-            .optional()
-            .await?
-            .ok_or(ApiError::InvalidUuid)?;
-
-        tx.commit().await?;
-
-        Ok(Json(SimpleHost {
-            uuid: host.uuid,
-            ip_addr: host.ip_addr.ip().to_string(),
-            workspace: *host.workspace.key(),
-            os_type: host.os_type,
-            comment: host.comment,
-        }))
-    } else {
-        Err(ApiError::MissingPrivileges)
+    if !workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.w_uuid).await? {
+        return Err(ApiError::MissingPrivileges)?;
     }
+
+    let host = query!(&mut tx, Host)
+        .condition(and!(
+            Host::F.workspace.equals(path.w_uuid),
+            Host::F.uuid.equals(path.h_uuid)
+        ))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    let mut tags: Vec<_> = query!(&mut tx, (HostGlobalTag::F.global_tag as GlobalTag,))
+        .condition(HostGlobalTag::F.host.equals(host.uuid))
+        .stream()
+        .map_ok(|(x,)| SimpleTag {
+            uuid: x.uuid,
+            name: x.name,
+            color: x.color.into(),
+            tag_type: TagType::Global,
+        })
+        .try_collect()
+        .await?;
+
+    let global_tags: Vec<_> = query!(
+        &mut tx,
+        (HostWorkspaceTag::F.workspace_tag as WorkspaceTag,)
+    )
+    .condition(HostWorkspaceTag::F.host.equals(host.uuid))
+    .stream()
+    .map_ok(|(x,)| SimpleTag {
+        uuid: x.uuid,
+        name: x.name,
+        color: x.color.into(),
+        tag_type: TagType::Workspace,
+    })
+    .try_collect()
+    .await?;
+
+    tags.extend(global_tags);
+
+    tx.commit().await?;
+
+    Ok(Json(FullHost {
+        uuid: host.uuid,
+        ip_addr: host.ip_addr.ip().to_string(),
+        workspace: *host.workspace.key(),
+        os_type: host.os_type,
+        comment: host.comment,
+        tags,
+    }))
 }

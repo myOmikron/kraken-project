@@ -83,7 +83,7 @@ pub struct HostGlobalTag {
 
     /// The host this entry links to
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
-    pub port: ForeignModel<Host>,
+    pub host: ForeignModel<Host>,
 }
 
 /// M2M relation between [WorkspaceTag] and [Host]
@@ -99,7 +99,7 @@ pub struct HostWorkspaceTag {
 
     /// The host this entry links to
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
-    pub domain: ForeignModel<Host>,
+    pub host: ForeignModel<Host>,
 }
 
 /// A detected service on a host
@@ -159,7 +159,7 @@ pub struct ServiceGlobalTag {
 
     /// The service this entry links to
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
-    pub port: ForeignModel<Service>,
+    pub service: ForeignModel<Service>,
 }
 
 /// M2M relation between [WorkspaceTag] and [Service]
@@ -175,7 +175,7 @@ pub struct ServiceWorkspaceTag {
 
     /// The service this entry links to
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
-    pub domain: ForeignModel<Service>,
+    pub service: ForeignModel<Service>,
 }
 
 /// A protocol of a port
@@ -259,7 +259,7 @@ pub struct PortWorkspaceTag {
 
     /// The port this entry links to
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
-    pub domain: ForeignModel<Port>,
+    pub port: ForeignModel<Port>,
 }
 
 /// A domain

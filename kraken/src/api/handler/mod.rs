@@ -19,6 +19,7 @@ use crate::modules::user::create::CreateUserError;
 pub(crate) mod api_keys;
 pub(crate) mod attacks;
 pub(crate) mod auth;
+pub(crate) mod domains;
 pub(crate) mod global_tags;
 pub(crate) mod hosts;
 pub(crate) mod leeches;
@@ -31,7 +32,6 @@ pub(crate) mod users;
 pub(crate) mod websocket;
 pub(crate) mod workspace_tags;
 pub(crate) mod workspaces;
-pub(crate) mod domains;
 
 /// Use in request handlers instead of `Session` if your only interested in the `"uuid"` field
 pub struct SessionUser(pub Uuid);
@@ -87,6 +87,24 @@ pub struct Color {
     pub b: u8,
     /// Alpha value
     pub a: u8,
+}
+
+/// The type of a tag
+#[derive(Serialize, Deserialize, Copy, Clone, ToSchema, Debug)]
+pub enum TagType {
+    /// Workspace tag
+    Workspace,
+    /// Global tag
+    Global,
+}
+
+/// A simple tag
+#[derive(Deserialize, Serialize, Debug, ToSchema)]
+pub struct SimpleTag {
+    pub(crate) uuid: Uuid,
+    pub(crate) name: String,
+    pub(crate) color: Color,
+    pub(crate) tag_type: TagType,
 }
 
 impl From<Color> for i32 {
