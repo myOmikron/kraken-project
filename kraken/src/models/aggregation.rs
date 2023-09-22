@@ -291,20 +291,34 @@ pub(crate) struct DomainInsert {
     pub(crate) workspace: ForeignModel<Workspace>,
 }
 
+/// The type of a relation
 #[derive(DbEnum)]
 pub enum RelationType {
+    /// Relation to an IPv4 address
     A,
+    /// Relation to an IPv6 address
     AAAA,
+    /// Relation to another domain
     CNAME,
+    /// Relation from an SPF record
     SPF,
+    /// Relation from an SRV record
     SRV,
+    /// Relation from an TXT record
     TXT,
+    /// Relation from an NS record
     NS,
+    /// Relation from an SOA record
     SOA,
+    /// Relation from an MX record
     MX,
+    /// Relation from an PTR record
     PTR,
+    /// Relation from an TLSA record
     TLSA,
+    /// Relation from an CAA record
     CAA,
+    /// Relation from an DMARC record
     DMARC,
 }
 
