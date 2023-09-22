@@ -15,7 +15,7 @@
 
 use std::env;
 use std::io::Write;
-use std::net::IpAddr;
+use std::net::{IpAddr, SocketAddr};
 use std::num::NonZeroU32;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -42,7 +42,7 @@ use crate::modules::bruteforce_subdomains::{
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
 use crate::modules::port_scanner::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
-use crate::modules::{dehashed, whois};
+use crate::modules::{dehashed, service_detection, whois};
 use crate::rpc::rpc_attacks::attack_results_service_client::AttackResultsServiceClient;
 use crate::rpc::rpc_attacks::shared::CertEntry;
 use crate::rpc::rpc_attacks::{CertificateTransparencyResult, MetaAttackInfo};
@@ -154,6 +154,8 @@ pub enum RunCommand {
         /// The ip to query information for
         query: IpAddr,
     },
+    /// Detect the service running behind a port
+    ServiceDetection { addr: IpAddr, port: u16 },
 }
 
 /// All available subcommands
@@ -518,6 +520,11 @@ async fn main() -> Result<(), String> {
                         }
                         Err(err) => error!("{err}"),
                     },
+                    RunCommand::ServiceDetection { addr, port } => {
+                        service_detection::detect_service(SocketAddr::new(addr, port))
+                            .await
+                            .unwrap();
+                    }
                 }
             }
         }

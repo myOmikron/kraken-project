@@ -78,8 +78,12 @@ reqwest = { version = "~0.11", features = ["json", "trust-dns", "rustls-tls-nati
 # dehashed api
 dehashed-rs = { version = "~0.3", features = ["tokio"] }
 
+native-tls = { version = "~0.2", features = ["alpn"] }
+tokio-native-tls = { version = "~0.3" }
+
 [build-dependencies]
 tonic-build = { version = "~0.10" }
+probe-config = { path = "probe-config" }
 
 [features]
 rorm-main = []

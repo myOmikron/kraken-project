@@ -1878,7 +1878,9 @@ dependencies = [
  "itertools",
  "log",
  "log4rs",
+ "native-tls",
  "once_cell",
+ "probe-config",
  "prost",
  "prost-types",
  "rand",
@@ -1891,6 +1893,7 @@ dependencies = [
  "surge-ping",
  "thiserror",
  "tokio",
+ "tokio-native-tls",
  "tokio-stream",
  "toml 0.8.0",
  "tonic",
@@ -2538,6 +2541,10 @@ dependencies = [
  "proc-macro2",
  "syn 2.0.37",
 ]
+
+[[package]]
+name = "probe-config"
+version = "0.1.0"
 
 [[package]]
 name = "proc-macro-error"

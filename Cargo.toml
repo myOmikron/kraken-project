@@ -3,4 +3,5 @@ resolver = "2"
 members = [
     "./kraken",
     "./leech",
+    "./leech/probe-config",
 ]

@@ -1,0 +1,8 @@
+service: mariadb
+prevalence: often
+probes:
+  - protocol: TCP
+    regex: MariaDB
+    sub_regex:
+      - ^.\x00\x00\x00\x0a(5\.[-_~.+:\w]+MariaDB-[-_~.+:\w]+)\x00
+      - ^E\x00\x00\x00(?s-u:.)(?s-u:.)\x04Host .* is not allowed to connect to this MariaDB server
