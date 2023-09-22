@@ -25,6 +25,7 @@ pub(crate) mod leeches;
 pub(crate) mod oauth;
 pub(crate) mod ports;
 pub(crate) mod reporting;
+pub(crate) mod services;
 pub(crate) mod settings;
 pub(crate) mod users;
 pub(crate) mod websocket;
