@@ -13,13 +13,6 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 use webauthn_rs::prelude::WebauthnError;
 
-pub(crate) use crate::api::handler::attacks::*;
-pub(crate) use crate::api::handler::auth::*;
-pub(crate) use crate::api::handler::leeches::*;
-pub(crate) use crate::api::handler::settings::*;
-pub(crate) use crate::api::handler::users::*;
-pub(crate) use crate::api::handler::websocket::*;
-pub(crate) use crate::api::handler::workspaces::*;
 use crate::models::User;
 use crate::modules::user::create::CreateUserError;
 

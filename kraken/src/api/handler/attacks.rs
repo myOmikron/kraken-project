@@ -18,7 +18,8 @@ use tokio::sync::oneshot;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::api::handler::{query_user, ApiError, ApiResult, PathUuid, UserResponse, UuidResponse};
+use crate::api::handler::users::UserResponse;
+use crate::api::handler::{query_user, ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::api::server::DehashedScheduler;
 use crate::chan::{
     CertificateTransparencyEntry, RpcClients, WsManagerChan, WsManagerMessage, WsMessage,

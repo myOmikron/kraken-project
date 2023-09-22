@@ -179,7 +179,7 @@ pub struct ServiceWorkspaceTag {
 }
 
 /// A protocol of a port
-#[derive(DbEnum, ToSchema, Debug, Copy, Clone)]
+#[derive(DbEnum, ToSchema, Debug, Copy, Clone, Serialize)]
 pub enum PortProtocol {
     /// Unknown protocol
     Unknown,

@@ -11,10 +11,9 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::{
-    de_optional, query_user, ApiError, ApiResult, PathUuid, SimpleAttack, UserResponse,
-    UuidResponse,
-};
+use crate::api::handler::attacks::SimpleAttack;
+use crate::api::handler::users::UserResponse;
+use crate::api::handler::{de_optional, query_user, ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::models::{Attack, User, Workspace, WorkspaceInsert, WorkspaceMember};
 
 #[derive(Deserialize, ToSchema)]

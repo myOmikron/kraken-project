@@ -141,7 +141,7 @@ pub(crate) async fn start_server(
             .service(
                 scope("/api/v1")
                     .wrap(AuthenticationRequired)
-                    .service(websocket)
+                    .service(websocket::websocket)
                     .service(users::get_me)
                     .service(users::update_me)
                     .service(users::set_password)
