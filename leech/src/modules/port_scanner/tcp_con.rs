@@ -47,6 +47,7 @@ pub async fn start_tcp_con_port_scan(
     settings: TcpPortScannerSettings,
     tx: Sender<SocketAddr>,
 ) -> Result<(), TcpPortScanError> {
+    info!("Starting tcp port Scan");
     // Increase the NO_FILE limit if necessary
     if let Err(err) = rlimit::increase_nofile_limit(settings.concurrent_limit as u64 + 100) {
         return Err(TcpPortScanError::RiseNoFileLimit(err));
@@ -126,6 +127,8 @@ pub async fn start_tcp_con_port_scan(
             }
         })
         .await;
+
+    info!("Finished tcp port scan");
 
     Ok(())
 }

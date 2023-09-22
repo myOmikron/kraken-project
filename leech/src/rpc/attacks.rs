@@ -12,6 +12,7 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{Request, Response, Status};
 
+use crate::backlog::Backlog;
 use crate::modules::bruteforce_subdomains::{
     bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
 };
@@ -28,8 +29,9 @@ use crate::rpc::rpc_attacks::{
 };
 
 /// The Attack service
-#[derive(Debug)]
-pub struct Attacks;
+pub struct Attacks {
+    pub(crate) backlog: Backlog,
+}
 
 #[tonic::async_trait]
 impl ReqAttackService for Attacks {
@@ -43,18 +45,23 @@ impl ReqAttackService for Attacks {
         let (rpc_tx, rpc_rx) = mpsc::channel(16);
         let (tx, mut rx) = mpsc::channel::<BruteforceSubdomainResult>(16);
 
+        let req = request.into_inner();
+        let req_clone = req.clone();
+        let backlog = self.backlog.clone();
+
         tokio::spawn(async move {
             while let Some(res) = rx.recv().await {
-                let rpc_res = res.into();
+                let rpc_res: BruteforceSubdomainResponse = res.into();
 
-                if let Err(err) = rpc_tx.send(Ok(rpc_res)).await {
+                if let Err(err) = rpc_tx.send(Ok(rpc_res.clone())).await {
                     warn!("Could not send to rpc_tx: {err}");
-                    // TODO: Save to backlog and use push api
+                    backlog
+                        .store_bruteforce_subdomains(&req_clone, rpc_res)
+                        .await;
                 }
             }
         });
 
-        let req = request.into_inner();
         let settings = BruteforceSubdomainsSettings {
             domain: req.domain,
             wordlist_path: req.wordlist_path.parse().unwrap(),
@@ -81,16 +88,19 @@ impl ReqAttackService for Attacks {
         let (rpc_tx, rpc_rx) = mpsc::channel(16);
         let (tx, mut rx) = mpsc::channel::<SocketAddr>(16);
 
+        let req = request.into_inner();
+        let req_clone = req.clone();
+        let backlog = self.backlog.clone();
+
         tokio::spawn(async move {
             while let Some(addr) = rx.recv().await {
                 if let Err(err) = rpc_tx.send(Ok(addr.into())).await {
                     warn!("Could not send to rpc_tx: {err}");
-                    // TODO: Save to backlog and use push api
+                    backlog.store_tcp_port_scans(&req_clone, addr).await;
                 }
             }
         });
 
-        let req = request.into_inner();
         let mut port_range = Vec::new();
         for port_or_range in req.ports {
             if let Some(port_or_range) = port_or_range.port_or_range {

@@ -11,6 +11,7 @@ use std::net::SocketAddr;
 use log::info;
 use tonic::transport::Server;
 
+use crate::backlog::Backlog;
 use crate::config::Config;
 use crate::rpc::attacks::Attacks;
 use crate::rpc::rpc_attacks::req_attack_service_server::ReqAttackServiceServer;
@@ -122,10 +123,10 @@ pub mod rpc_attacks {
 ///
 /// **Parameter**:
 /// - `config`: Reference to [Config]
-pub async fn start_rpc_server(config: &Config) -> Result<(), String> {
+pub async fn start_rpc_server(config: &Config, backlog: Backlog) -> Result<(), String> {
     info!("Starting Server");
     Server::builder()
-        .add_service(ReqAttackServiceServer::new(Attacks))
+        .add_service(ReqAttackServiceServer::new(Attacks { backlog }))
         .serve(SocketAddr::new(
             config.server.listen_address.parse().unwrap(),
             config.server.listen_port,

@@ -28,14 +28,15 @@ use ipnet::IpNet;
 use itertools::Itertools;
 use log::{error, info, warn};
 use prost_types::Timestamp;
-use rorm::cli;
+use rorm::{cli, Database, DatabaseConfiguration, DatabaseDriver};
 use tokio::sync::mpsc;
 use tokio::task;
 use tonic::transport::Endpoint;
 use trust_dns_resolver::Name;
 use uuid::Uuid;
 
-use crate::config::get_config;
+use crate::backlog::Backlog;
+use crate::config::{get_config, Config};
 use crate::modules::bruteforce_subdomains::{
     bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
 };
@@ -50,8 +51,10 @@ use crate::rpc::rpc_attacks::{CertificateTransparencyResult, MetaAttackInfo};
 use crate::rpc::start_rpc_server;
 use crate::utils::input;
 
+pub mod backlog;
 pub mod config;
 pub mod logging;
+pub mod models;
 pub mod modules;
 pub mod rpc;
 pub mod utils;
@@ -232,7 +235,12 @@ async fn main() -> Result<(), String> {
         Command::Server => {
             let config = get_config(&cli.config_path)?;
             logging::setup_logging(&config.logging)?;
-            start_rpc_server(&config).await?;
+
+            let backlog = Backlog {
+                db: get_db(&config).await?,
+            };
+
+            start_rpc_server(&config, backlog).await?;
         }
         Command::Execute {
             command,
@@ -582,4 +590,26 @@ async fn migrate(config_path: &str, migration_dir: String) -> Result<(), String>
     )
     .await
     .map_err(|e| e.to_string())
+}
+
+async fn get_db(config: &Config) -> Result<Database, String> {
+    // TODO: make driver configurable...?
+    let db_config = DatabaseConfiguration {
+        driver: DatabaseDriver::Postgres {
+            host: config.database.host.clone(),
+            port: config.database.port,
+            user: config.database.user.clone(),
+            password: config.database.password.clone(),
+            name: config.database.name.clone(),
+        },
+        min_connections: 2,
+        max_connections: 20,
+        disable_logging: Some(true),
+        statement_log_level: None,
+        slow_statement_log_level: None,
+    };
+
+    Database::connect(db_config)
+        .await
+        .map_err(|e| format!("Error connecting to the database: {e}"))
 }
