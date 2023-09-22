@@ -59,6 +59,53 @@ pub(crate) struct AttackInsert {
     pub(crate) finished_at: Option<DateTime<Utc>>,
 }
 
+/// The type of DNS Record
+#[derive(DbEnum)]
+pub enum DnsRecordType {
+    /// [A](crate::rpc::rpc_definitions::shared::A) record type
+    A,
+    /// [Aaaa](crate::rpc::rpc_definitions::shared::Aaaa) record type
+    Aaaa,
+    /// [Cname](crate::rpc::rpc_definitions::shared::Cname) record type
+    Cname,
+}
+
+/// Representation of a [Bruteforce Subdomain](AttackType::BruteforceSubdomains) attack's result
+#[derive(Model)]
+pub struct BruteforceSubdomainsResult {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The [attack](Attack) which produced this result
+    pub attack: ForeignModel<Attack>,
+
+    /// The source address
+    #[rorm(max_length = 255)]
+    pub source: String,
+
+    /// The destination address
+    #[rorm(max_length = 255)]
+    pub destination: String,
+
+    /// The type of [DNS record type](DnsRecordType)
+    pub dns_record_type: DnsRecordType,
+
+    /// The point in time, this result was produced
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Patch)]
+#[rorm(model = "BruteforceSubdomainsResult")]
+pub(crate) struct BruteforceSubdomainsResultInsert {
+    pub(crate) uuid: Uuid,
+    pub(crate) attack: ForeignModel<Attack>,
+    pub(crate) source: String,
+    pub(crate) destination: String,
+    pub(crate) dns_record_type: DnsRecordType,
+}
+
 /// Representation of a [tcp port scan](AttackType::TcpPortScan) attack's result
 #[derive(Model)]
 pub struct TcpPortScanResult {

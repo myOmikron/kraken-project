@@ -25,8 +25,9 @@ use crate::chan::{
     CertificateTransparencyEntry, RpcClients, WsManagerChan, WsManagerMessage, WsMessage,
 };
 use crate::models::{
-    Attack, AttackInsert, AttackType, DehashedQueryResultInsert, TcpPortScanResult,
-    TcpPortScanResultInsert, Workspace, WorkspaceMember,
+    Attack, AttackInsert, AttackType, BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert,
+    DehashedQueryResultInsert, DnsRecordType, TcpPortScanResult, TcpPortScanResultInsert,
+    Workspace, WorkspaceMember,
 };
 use crate::rpc::rpc_definitions;
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
@@ -78,7 +79,7 @@ pub async fn bruteforce_subdomains(
         .ok_or(ApiError::InvalidLeech)?
         .clone();
 
-    let uuid = insert!(db.as_ref(), AttackInsert)
+    let attack_uuid = insert!(db.as_ref(), AttackInsert)
         .return_primary_key()
         .single(&AttackInsert {
             uuid: Uuid::new_v4(),
@@ -92,7 +93,7 @@ pub async fn bruteforce_subdomains(
     // start attack
     tokio::spawn(async move {
         let req = rpc_definitions::BruteforceSubdomainRequest {
-            attack_uuid: uuid.to_string(),
+            attack_uuid: attack_uuid.to_string(),
             domain: req.domain.clone(),
             wordlist_path: req.wordlist_path.clone(),
             concurrent_limit: req.concurrent_limit,
@@ -114,14 +115,18 @@ pub async fn bruteforce_subdomains(
                                 continue;
                             };
 
-                            let (source, to) = match record {
+                            let (source, destination, dns_record_type) = match record {
                                 Record::A(a_rec) => {
                                     let Some(to) = a_rec.to else {
                                         warn!("Missing field record.record.a.to in grpc response of bruteforce subdomains");
                                         continue;
                                     };
 
-                                    (a_rec.source, Ipv4Addr::from(to).to_string())
+                                    (
+                                        a_rec.source,
+                                        Ipv4Addr::from(to).to_string(),
+                                        DnsRecordType::A,
+                                    )
                                 }
                                 Record::Aaaa(aaaa_rec) => {
                                     let Some(to) = aaaa_rec.to else {
@@ -129,18 +134,38 @@ pub async fn bruteforce_subdomains(
                                         continue;
                                     };
 
-                                    (aaaa_rec.source, Ipv6Addr::from(to).to_string())
+                                    (
+                                        aaaa_rec.source,
+                                        Ipv6Addr::from(to).to_string(),
+                                        DnsRecordType::Aaaa,
+                                    )
                                 }
-                                Record::Cname(cname_rec) => (cname_rec.source, cname_rec.to),
+                                Record::Cname(cname_rec) => {
+                                    (cname_rec.source, cname_rec.to, DnsRecordType::Cname)
+                                }
+                            };
+
+                            if let Err(err) = insert!(db.as_ref(), BruteforceSubdomainsResult)
+                                .single(&BruteforceSubdomainsResultInsert {
+                                    uuid: Uuid::new_v4(),
+                                    attack: ForeignModelByField::Key(attack_uuid),
+                                    dns_record_type,
+                                    source: source.clone(),
+                                    destination: destination.clone(),
+                                })
+                                .await
+                            {
+                                error!("Could not insert data in db: {err}");
+                                return;
                             };
 
                             if let Err(err) = ws_manager_chan
                                 .send(WsManagerMessage::Message(
                                     user_uuid,
                                     WsMessage::BruteforceSubdomainsResult {
-                                        attack_uuid: uuid,
+                                        attack_uuid,
                                         source,
-                                        to,
+                                        destination,
                                     },
                                 ))
                                 .await
@@ -154,7 +179,7 @@ pub async fn bruteforce_subdomains(
                                 .send(WsManagerMessage::Message(
                                     user_uuid,
                                     WsMessage::AttackFinished {
-                                        attack_uuid: uuid,
+                                        attack_uuid,
                                         finished_successful: false,
                                     },
                                 ))
@@ -173,7 +198,7 @@ pub async fn bruteforce_subdomains(
                     .send(WsManagerMessage::Message(
                         user_uuid,
                         WsMessage::AttackFinished {
-                            attack_uuid: uuid,
+                            attack_uuid,
                             finished_successful: false,
                         },
                     ))
@@ -186,7 +211,7 @@ pub async fn bruteforce_subdomains(
         };
 
         if let Err(err) = update!(db.as_ref(), Attack)
-            .condition(Attack::F.uuid.equals(uuid))
+            .condition(Attack::F.uuid.equals(attack_uuid))
             .set(Attack::F.finished_at, Some(Utc::now()))
             .exec()
             .await
@@ -198,7 +223,7 @@ pub async fn bruteforce_subdomains(
             .send(WsManagerMessage::Message(
                 user_uuid,
                 WsMessage::AttackFinished {
-                    attack_uuid: uuid,
+                    attack_uuid,
                     finished_successful: true,
                 },
             ))
@@ -208,7 +233,7 @@ pub async fn bruteforce_subdomains(
         }
     });
 
-    Ok(HttpResponse::Accepted().json(UuidResponse { uuid }))
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
 }
 
 /// The settings to configure a tcp port scan

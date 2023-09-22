@@ -82,8 +82,8 @@ pub enum WsMessage {
         attack_uuid: Uuid,
         /// The source address that was queried
         source: String,
-        /// The to address that was returned
-        to: String,
+        /// The destination address that was returned
+        destination: String,
     },
     /// A result for a tcp scan
     ScanTcpPortsResult {
