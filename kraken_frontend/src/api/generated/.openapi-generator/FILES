@@ -2,12 +2,14 @@ apis/AdminWorkspacesApi.ts
 apis/ApiKeysApi.ts
 apis/AttacksApi.ts
 apis/AuthenticationApi.ts
+apis/DomainsApi.ts
 apis/GlobalTagsApi.ts
 apis/HostsApi.ts
 apis/LeechManagementApi.ts
 apis/OAuthApi.ts
 apis/OAuthApplicationApi.ts
 apis/PortsApi.ts
+apis/ServicesApi.ts
 apis/SettingsManagementApi.ts
 apis/UserAdminManagementApi.ts
 apis/UserManagementApi.ts
@@ -36,8 +38,10 @@ models/FullGlobalTag.ts
 models/FullOauthClient.ts
 models/FullWorkspace.ts
 models/FullWorkspaceTag.ts
+models/GetAllDomainsResponse.ts
 models/GetAllHostsResponse.ts
 models/GetAllPortsResponse.ts
+models/GetAllServicesResponse.ts
 models/GetApiKeysResponse.ts
 models/GetAppsResponse.ts
 models/GetGlobalTagsResponse.ts
@@ -61,9 +65,11 @@ models/SetPasswordRequest.ts
 models/SettingsFull.ts
 models/SimpleApiKey.ts
 models/SimpleAttack.ts
+models/SimpleDomain.ts
 models/SimpleHost.ts
 models/SimpleOauthClient.ts
 models/SimplePort.ts
+models/SimpleService.ts
 models/SimpleTcpPortScanResult.ts
 models/SimpleWorkspace.ts
 models/TcpPortScanResultsPage.ts

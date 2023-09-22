@@ -31,6 +31,7 @@ pub(crate) mod users;
 pub(crate) mod websocket;
 pub(crate) mod workspace_tags;
 pub(crate) mod workspaces;
+pub(crate) mod domains;
 
 /// Use in request handlers instead of `Session` if your only interested in the `"uuid"` field
 pub struct SessionUser(pub Uuid);
