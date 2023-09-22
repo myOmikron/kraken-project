@@ -1,9 +1,10 @@
 use actix_toolbox::tb_middleware::Session;
-use actix_web::get;
 use actix_web::web::{Data, Json, Path};
+use actix_web::{get, put, HttpResponse};
 use futures::TryStreamExt;
+use rorm::conditions::DynamicCollection;
 use rorm::prelude::*;
-use rorm::{and, query, Database};
+use rorm::{and, insert, query, update, Database};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -110,6 +111,7 @@ pub struct PathHost {
     h_uuid: Uuid,
 }
 
+/// Retrieve all information about a single host
 #[utoipa::path(
     tag = "Hosts",
     context_path = "/api/v1",
@@ -185,4 +187,131 @@ pub async fn get_host(
         comment: host.comment,
         tags,
     }))
+}
+
+/// The request to update a host
+#[derive(Deserialize, ToSchema)]
+pub struct UpdateHostRequest {
+    comment: Option<String>,
+    global_tags: Option<Vec<Uuid>>,
+    workspace_tags: Option<Vec<Uuid>>,
+}
+
+/// Update a host
+///
+/// You must include at least on parameter
+#[utoipa::path(
+    tag = "Hosts",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Host was updated"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    request_body = UpdateHostRequest,
+    params(PathHost),
+    security(("api_key" = []))
+)]
+#[put("/workspaces/{w_uuid}/hosts/{h_uuid}")]
+pub async fn update_host(
+    req: Json<UpdateHostRequest>,
+    path: Path<PathHost>,
+    db: Data<Database>,
+    session: Session,
+) -> ApiResult<HttpResponse> {
+    let path = path.into_inner();
+    let req = req.into_inner();
+    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+
+    if req.workspace_tags.is_none() && req.global_tags.is_none() && req.comment.is_none() {
+        return Err(ApiError::EmptyJson);
+    }
+
+    let mut tx = db.start_transaction().await?;
+
+    if !workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.w_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    query!(&mut tx, (Host::F.uuid,))
+        .condition(Host::F.uuid.equals(path.h_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    if let Some(global_tags) = req.global_tags {
+        let cond = DynamicCollection::or(
+            global_tags
+                .iter()
+                .map(|x| GlobalTag::F.uuid.equals(*x))
+                .collect(),
+        );
+
+        let res = query!(&mut tx, GlobalTag).condition(cond).all().await?;
+        if res.len() != global_tags.len() {
+            return Err(ApiError::InvalidUuid);
+        }
+
+        rorm::delete!(&mut tx, HostGlobalTag)
+            .condition(HostGlobalTag::F.host.equals(path.h_uuid))
+            .await?;
+
+        insert!(&mut tx, HostGlobalTag)
+            .return_nothing()
+            .bulk(
+                &global_tags
+                    .into_iter()
+                    .map(|x| HostGlobalTag {
+                        uuid: Uuid::new_v4(),
+                        host: ForeignModelByField::Key(path.h_uuid),
+                        global_tag: ForeignModelByField::Key(x),
+                    })
+                    .collect::<Vec<_>>(),
+            )
+            .await?;
+    }
+
+    if let Some(workspace_tags) = req.workspace_tags {
+        let cond = DynamicCollection::or(
+            workspace_tags
+                .iter()
+                .map(|x| GlobalTag::F.uuid.equals(*x))
+                .collect(),
+        );
+
+        let res = query!(&mut tx, GlobalTag).condition(cond).all().await?;
+        if res.len() != workspace_tags.len() {
+            return Err(ApiError::InvalidUuid);
+        }
+
+        rorm::delete!(&mut tx, HostWorkspaceTag)
+            .condition(HostWorkspaceTag::F.host.equals(path.h_uuid))
+            .await?;
+
+        insert!(&mut tx, HostWorkspaceTag)
+            .return_nothing()
+            .bulk(
+                &workspace_tags
+                    .into_iter()
+                    .map(|x| HostWorkspaceTag {
+                        uuid: Uuid::new_v4(),
+                        host: ForeignModelByField::Key(path.h_uuid),
+                        workspace_tag: ForeignModelByField::Key(x),
+                    })
+                    .collect::<Vec<_>>(),
+            )
+            .await?;
+    }
+
+    if let Some(comment) = req.comment {
+        update!(&mut tx, Host)
+            .condition(Host::F.uuid.equals(path.h_uuid))
+            .set(Host::F.comment, comment)
+            .exec()
+            .await?;
+    }
+
+    tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
 }

@@ -162,6 +162,7 @@ pub(crate) async fn start_server(
                     .service(api_keys::delete_api_key)
                     .service(hosts::get_all_hosts)
                     .service(hosts::get_host)
+                    .service(hosts::update_host)
                     .service(global_tags::get_all_global_tags)
                     .service(workspace_tags::create_workspace_tag)
                     .service(workspace_tags::get_all_workspace_tags)

@@ -83,6 +83,7 @@ models/TokenType.ts
 models/UpdateApiKeyRequest.ts
 models/UpdateAppRequest.ts
 models/UpdateGlobalTag.ts
+models/UpdateHostRequest.ts
 models/UpdateLeechRequest.ts
 models/UpdateMeRequest.ts
 models/UpdateSettingsRequest.ts

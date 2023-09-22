@@ -18,6 +18,7 @@ import {
     SettingsManagementApi,
     UpdateAppRequest,
     UpdateGlobalTag,
+    UpdateHostRequest,
     UpdateLeechRequest,
     UpdateMeRequest,
     UpdateSettingsRequest,
@@ -140,6 +141,8 @@ export const Api = {
             all: (workspaceUuid: UUID) => handleError(hosts.getAllHosts({ uuid: workspaceUuid })),
             get: (workspaceUuid: UUID, hostUuid: UUID) =>
                 handleError(hosts.getHost({ wUuid: workspaceUuid, hUuid: hostUuid })),
+            update: (workspaceUuid: UUID, hostUuid: UUID, updateHostRequest: UpdateHostRequest) =>
+                handleError(hosts.updateHost({ wUuid: workspaceUuid, hUuid: hostUuid, updateHostRequest })),
         },
         tags: {
             all: (workspaceUuid: UUID) => handleError(workspaceTags.getAllWorkspaceTags({ uuid: workspaceUuid })),
