@@ -1,4 +1,6 @@
-mod generated;
+mod generated {
+    include!(concat!(env!("OUT_DIR"), "/generated_probes.rs"));
+}
 mod tls;
 
 use std::net::SocketAddr;

@@ -75,6 +75,66 @@ pub enum ParseError {
     InvalidPrevalence(usize),
 }
 
+impl std::fmt::Display for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ParseError::MissingService => {
+                write!(f, "The file should start with `service: <name>`")
+            }
+            ParseError::MissingPrevalence => {
+                write!(f, "The `service: <name>` line should be followed by `prevalence: <often|average|obscure>`")
+            }
+            ParseError::MissingProbes => {
+                write!(
+                    f,
+                    "Missing list of probes `probes:\\n  - <probe declaration>"
+                )
+            }
+            ParseError::DuplicateValue(value, line) => {
+                write!(f, "The value {value} in line {line} has already been set")
+            }
+            ParseError::MissingValue(value, probe) => {
+                write!(
+                    f,
+                    "The probe started in line {probe} is missing the value {value}"
+                )
+            }
+            ParseError::UnknownValue(line) => {
+                write!(f, "Unknown value in line {line}")
+            }
+            ParseError::ConflictingPayload { probe_line } => {
+                write!(
+                    f,
+                    "The probe started in line {probe_line} has two conflicting payloads"
+                )
+            }
+            ParseError::ValueAfterSubRegex(line) => {
+                write!(
+                    f,
+                    "There is a value after a `sub_regex` list in line {line}"
+                )
+            }
+            ParseError::UnexpectedSubRegex(line) => {
+                write!(f, "`sub_regex` item outside of list in line {line}")
+            }
+            ParseError::MissingSubRegex { probe_line } => {
+                write!(
+                    f,
+                    "The probe started in line {probe_line} has an empty `sub_regex` list \
+                    (If you don't want any, then remove the list completely)"
+                )
+            }
+            ParseError::InvalidProtocol(line) => {
+                write!(f, "Invalid protocol in line {line}")
+            }
+            ParseError::InvalidPrevalence(line) => {
+                write!(f, "Invalid prevalence in line {line}")
+            }
+        }
+    }
+}
+impl std::error::Error for ParseError {}
+
 fn parse_file(file: &str) -> Result<Service, ParseError> {
     // Iterator over lines with their numbers excluding empty lines and comment lines
     let mut lines = file
