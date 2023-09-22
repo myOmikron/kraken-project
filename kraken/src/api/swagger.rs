@@ -158,6 +158,7 @@ impl Modify for SecurityAddon2 {
         api_keys::UpdateApiKeyRequest,
         hosts::GetAllHostsResponse,
         hosts::SimpleHost,
+        hosts::FullHost,
         models::OsType,
         global_tags::CreateGlobalTagRequest,
         handler::Color,

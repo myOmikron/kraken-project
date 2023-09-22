@@ -114,7 +114,7 @@ pub struct PathHost {
     tag = "Hosts",
     context_path = "/api/v1",
     responses(
-        (status = 200, description = "Retrieved the selected host", body = SimpleHost),
+        (status = 200, description = "Retrieved the selected host", body = FullHost),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),

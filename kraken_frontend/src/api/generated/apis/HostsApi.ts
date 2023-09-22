@@ -16,16 +16,16 @@
 import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
+  FullHost,
   GetAllHostsResponse,
-  SimpleHost,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
+    FullHostFromJSON,
+    FullHostToJSON,
     GetAllHostsResponseFromJSON,
     GetAllHostsResponseToJSON,
-    SimpleHostFromJSON,
-    SimpleHostToJSON,
 } from '../models';
 
 export interface GetAllHostsRequest {
@@ -76,7 +76,7 @@ export class HostsApi extends runtime.BaseAPI {
 
     /**
      */
-    async getHostRaw(requestParameters: GetHostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SimpleHost>> {
+    async getHostRaw(requestParameters: GetHostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FullHost>> {
         if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
             throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling getHost.');
         }
@@ -96,12 +96,12 @@ export class HostsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => SimpleHostFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => FullHostFromJSON(jsonValue));
     }
 
     /**
      */
-    async getHost(requestParameters: GetHostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SimpleHost> {
+    async getHost(requestParameters: GetHostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullHost> {
         const response = await this.getHostRaw(requestParameters, initOverrides);
         return await response.value();
     }

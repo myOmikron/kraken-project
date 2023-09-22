@@ -35,6 +35,7 @@ models/CreateWorkspaceTagRequest.ts
 models/FinishRegisterRequest.ts
 models/FinishRegisterRequestAllOf.ts
 models/FullGlobalTag.ts
+models/FullHost.ts
 models/FullOauthClient.ts
 models/FullWorkspace.ts
 models/FullWorkspaceTag.ts
@@ -70,8 +71,10 @@ models/SimpleHost.ts
 models/SimpleOauthClient.ts
 models/SimplePort.ts
 models/SimpleService.ts
+models/SimpleTag.ts
 models/SimpleTcpPortScanResult.ts
 models/SimpleWorkspace.ts
+models/TagType.ts
 models/TcpPortScanResultsPage.ts
 models/TokenErrorResponse.ts
 models/TokenRequest.ts
