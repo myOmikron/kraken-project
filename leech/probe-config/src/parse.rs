@@ -16,6 +16,7 @@ impl Service {
 #[derive(Debug)]
 pub struct Probe {
     pub protocol: Protocol,
+    pub alpn: Option<String>,
     pub payload: Payload,
     pub regex: String,
     pub sub_regex: Option<Vec<String>>,
@@ -159,6 +160,7 @@ fn set_or_err<T>(
 struct ProbeBuilder {
     start_line: usize,
     protocol: Option<Protocol>,
+    alpn: Option<String>,
     payload_str: Option<String>,
     payload_b64: Option<String>,
     regex: Option<String>,
@@ -175,6 +177,13 @@ impl ProbeBuilder {
                 &mut self.protocol,
                 Protocol::from_str(value).map_err(|_| ParseError::InvalidProtocol(number)),
                 ParseError::DuplicateValue("protocol", number),
+            );
+        }
+        if let Some(value) = line.strip_prefix("alpn: ") {
+            return set_or_err(
+                &mut self.alpn,
+                Ok(value.to_string()),
+                ParseError::DuplicateValue("alpn", number),
             );
         }
         if let Some(value) = line.strip_prefix("payload_str: ") {
@@ -238,6 +247,7 @@ impl ProbeBuilder {
             protocol: self
                 .protocol
                 .ok_or(ParseError::MissingValue("protocol", self.start_line))?,
+            alpn: self.alpn,
             payload,
             regex: self
                 .regex

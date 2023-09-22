@@ -2,10 +2,12 @@ mod generated;
 mod tls;
 
 use std::net::SocketAddr;
+use std::time::Duration;
 
 use log::{debug, trace, warn};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
+use tokio::time::sleep;
 
 type DynResult<T> = Result<T, Box<dyn std::error::Error>>;
 
@@ -20,14 +22,14 @@ pub async fn detect_service(socket: SocketAddr) -> DynResult<()> {
 
         for probe in &generated::PROBES.payload_tcp_probes[prev] {
             let data = probe_tcp(socket, probe.payload).await?;
-            trace!(target: probe.service, "Got data: {:?}", DebuggableBytes(&data));
+            trace!(target: probe.service, "Got data over tcp: {:?}", DebuggableBytes(&data));
             if probe.is_match(&data) {
                 println!("Detected {}", probe.service);
             }
         }
     }
 
-    match tls::probe(socket, b"").await? {
+    match tls::probe(socket, b"", None).await? {
         Ok(tls_banner) => {
             println!("Detected tls");
 
@@ -39,9 +41,9 @@ pub async fn detect_service(socket: SocketAddr) -> DynResult<()> {
                 }
 
                 for probe in &generated::PROBES.payload_tls_probes[prev] {
-                    match tls::probe(socket, probe.payload).await? {
+                    match tls::probe(socket, probe.payload, probe.alpn).await? {
                         Ok(data) => {
-                            trace!(target: probe.service, "Got data: {:?}", DebuggableBytes(&data));
+                            trace!(target: probe.service, "Got data over tls: {:?}", DebuggableBytes(&data));
                             if probe.is_match(&data) {
                                 println!("Detected {}", probe.service);
                             }
@@ -64,6 +66,7 @@ pub async fn detect_service(socket: SocketAddr) -> DynResult<()> {
 async fn probe_tcp(socket: SocketAddr, payload: &[u8]) -> DynResult<Vec<u8>> {
     let mut tcp = TcpStream::connect(socket).await?;
     tcp.write_all(payload.as_ref()).await?;
+    sleep(Duration::from_secs(1)).await;
     tcp.shutdown().await?;
 
     let mut data = Vec::new();
@@ -87,9 +90,9 @@ impl<'a> std::fmt::Debug for DebuggableBytes<'a> {
 
 // ftp
 // http [DONE]
-// http over TLS
+// https [DONE]
 // http2 [DONE]
-// http2 over TLS
+// http2 over TLS [DONE]
 // all databases
 // - postgres [DONE]
 // - mysql

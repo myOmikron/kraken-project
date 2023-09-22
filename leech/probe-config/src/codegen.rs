@@ -1,6 +1,6 @@
 use std::{fmt, io};
 
-use crate::{Payload, Protocol, Service};
+use crate::parse::{Payload, Protocol, Service};
 
 pub fn generate_code(writer: &mut impl io::Write, services: &[Service]) -> io::Result<()> {
     writer.write_fmt(format_args!("{}", AllProbes::from(services)))
@@ -8,22 +8,25 @@ pub fn generate_code(writer: &mut impl io::Write, services: &[Service]) -> io::R
 
 #[derive(Default)]
 struct AllProbes<'a> {
-    empty_tcp_probes: [Vec<EmptyProbe<'a>>; 3],
+    empty_tcp_probes: [Vec<BaseProbe<'a>>; 3],
     payload_tcp_probes: [Vec<PayloadProbe<'a>>; 3],
-    empty_tls_probes: [Vec<EmptyProbe<'a>>; 3],
-    payload_tls_probes: [Vec<PayloadProbe<'a>>; 3],
+    empty_tls_probes: [Vec<BaseProbe<'a>>; 3],
+    payload_tls_probes: [Vec<TlsProbe<'a>>; 3],
     udp_probes: [Vec<PayloadProbe<'a>>; 3],
 }
-struct EmptyProbe<'a> {
+struct BaseProbe<'a> {
     service: &'a str,
     regex: &'a str,
     sub_regex: Option<&'a [String]>,
 }
 struct PayloadProbe<'a> {
-    service: &'a str,
-    regex: &'a str,
-    sub_regex: Option<&'a [String]>,
+    base: BaseProbe<'a>,
     payload: &'a Payload,
+}
+struct TlsProbe<'a> {
+    base: BaseProbe<'a>,
+    payload: &'a Payload,
+    alpn: Option<&'a String>,
 }
 
 impl<'a> Extend<&'a Service> for AllProbes<'a> {
@@ -37,32 +40,39 @@ impl<'a> Extend<&'a Service> for AllProbes<'a> {
 
             for probe in &service.probes {
                 match (&probe.protocol, &probe.payload) {
-                    (Protocol::Tcp, Payload::Empty) => empty_tcp_probes.push(EmptyProbe {
+                    (Protocol::Tcp, Payload::Empty) => empty_tcp_probes.push(BaseProbe {
                         service: &service.name,
                         regex: &probe.regex,
                         sub_regex: probe.sub_regex.as_deref(),
                     }),
                     (Protocol::Tcp, payload) => payload_tcp_probes.push(PayloadProbe {
-                        service: &service.name,
-                        regex: &probe.regex,
-                        sub_regex: probe.sub_regex.as_deref(),
+                        base: BaseProbe {
+                            service: &service.name,
+                            regex: &probe.regex,
+                            sub_regex: probe.sub_regex.as_deref(),
+                        },
                         payload,
                     }),
-                    (Protocol::Tls, Payload::Empty) => empty_tls_probes.push(EmptyProbe {
+                    (Protocol::Tls, Payload::Empty) => empty_tls_probes.push(BaseProbe {
                         service: &service.name,
                         regex: &probe.regex,
                         sub_regex: probe.sub_regex.as_deref(),
                     }),
-                    (Protocol::Tls, payload) => payload_tls_probes.push(PayloadProbe {
-                        service: &service.name,
-                        regex: &probe.regex,
-                        sub_regex: probe.sub_regex.as_deref(),
+                    (Protocol::Tls, payload) => payload_tls_probes.push(TlsProbe {
+                        base: BaseProbe {
+                            service: &service.name,
+                            regex: &probe.regex,
+                            sub_regex: probe.sub_regex.as_deref(),
+                        },
                         payload,
+                        alpn: probe.alpn.as_ref(),
                     }),
                     (Protocol::Udp, payload) => udp_probes.push(PayloadProbe {
-                        service: &service.name,
-                        regex: &probe.regex,
-                        sub_regex: probe.sub_regex.as_deref(),
+                        base: BaseProbe {
+                            service: &service.name,
+                            regex: &probe.regex,
+                            sub_regex: probe.sub_regex.as_deref(),
+                        },
                         payload,
                     }),
                 }
@@ -82,83 +92,8 @@ impl<'a> fmt::Display for AllProbes<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         const HEADER: &'static str = r#"
 use once_cell::sync::Lazy;
+use probe_config::generated::*;
 use regex::bytes::Regex;
-use log::debug;
-
-pub struct AllProbes {
-    pub empty_tcp_probes: [Vec<EmptyProbe>; 3],
-    pub payload_tcp_probes: [Vec<PayloadProbe>; 3],
-    pub empty_tls_probes: [Vec<EmptyProbe>; 3],
-    pub payload_tls_probes: [Vec<PayloadProbe>; 3],
-    pub udp_probes: [Vec<PayloadProbe>; 3],
-}
-
-/// A probe without payload
-pub struct EmptyProbe {
-    /// The name of the service detected by this probe
-    pub service: &'static str,
-    
-    /// The base regex this probe is tested against
-    pub regex: Regex,
-    
-    /// Secondary regexes to match against (if any)
-    pub sub_regex: Vec<Regex>,
-}
-
-impl EmptyProbe {
-    pub fn is_match(&self, data: &[u8]) -> bool {
-        if self.regex.is_match(data) {
-            if self.sub_regex.is_empty() {
-                true
-            } else {
-                debug!(target: "regex", "Initial regex matched for service: {}", self.service);
-                for sub in &self.sub_regex {
-                    if sub.is_match(data) {
-                        return true;
-                    }
-                }
-                false
-            }
-        } else {
-            false
-        }
-    }
-}
-
-/// A probe with payload
-pub struct PayloadProbe {
-    /// The name of the service detected by this probe
-    pub service: &'static str,
-    
-    /// The payload to send upon connection
-    pub payload: &'static [u8],
-    
-    /// The base regex this probe is tested against
-    pub regex: Regex,
-    
-    /// Secondary regexes to match against (if any)
-    pub sub_regex: Vec<Regex>,
-}
-
-impl PayloadProbe {
-    pub fn is_match(&self, data: &[u8]) -> bool {
-        if self.regex.is_match(data) {
-            if self.sub_regex.is_empty() {
-                true
-            } else {
-                debug!(target: "regex", "Initial regex matched for service: {}", self.service);
-                for sub in &self.sub_regex {
-                    if sub.is_match(data) {
-                        return true;
-                    }
-                }
-                false
-            }
-        } else {
-            false
-        }
-    }
-}
 
 /// Lists of all probes
 pub static PROBES: Lazy<AllProbes> = Lazy::new(|| AllProbes {"#;
@@ -209,14 +144,14 @@ impl<'a, T: fmt::Display> fmt::Display for ProbeGroup<'a, T> {
     }
 }
 
-impl<'a> fmt::Display for EmptyProbe<'a> {
+impl<'a> fmt::Display for BaseProbe<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Self {
             service,
             regex,
             sub_regex,
         } = self;
-        write!(f, "EmptyProbe {{ service: \"{service}\", regex: Regex::new(r\"{regex}\").unwrap(), sub_regex: vec![")?;
+        write!(f, "BaseProbe {{ service: \"{service}\", regex: Regex::new(r\"{regex}\").unwrap(), sub_regex: vec![")?;
         for sub in sub_regex.unwrap_or(&[]) {
             write!(f, "Regex::new(r\"{sub}\").unwrap(),")?;
         }
@@ -226,21 +161,34 @@ impl<'a> fmt::Display for EmptyProbe<'a> {
 
 impl<'a> fmt::Display for PayloadProbe<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let Self {
-            service,
-            regex,
-            sub_regex,
-            payload,
-        } = self;
-        write!(f, "PayloadProbe {{ service: \"{service}\", regex: Regex::new(r\"{regex}\").unwrap(), sub_regex: vec![")?;
-        for sub in sub_regex.unwrap_or(&[]) {
-            write!(f, "Regex::new(r\"{sub}\").unwrap(),")?;
-        }
-        write!(f, "], payload: ")?;
+        let Self { base, payload } = self;
+        write!(f, "PayloadProbe {{ base: {base}, payload: ")?;
         match payload {
             Payload::Empty => write!(f, "&[]")?,
             Payload::String(string) => write!(f, "b\"{string}\"")?,
             Payload::Base64(_) => write!(f, "compile_error!(\"TODO\")")?,
+        }
+        write!(f, " }}")
+    }
+}
+
+impl<'a> fmt::Display for TlsProbe<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let Self {
+            base,
+            payload,
+            alpn,
+        } = self;
+        write!(f, "TlsProbe {{ base: {base}, payload: ")?;
+        match payload {
+            Payload::Empty => write!(f, "&[]")?,
+            Payload::String(string) => write!(f, "b\"{string}\"")?,
+            Payload::Base64(_) => write!(f, "compile_error!(\"TODO\")")?,
+        }
+        write!(f, ", alpn: ")?;
+        match alpn {
+            None => write!(f, "None")?,
+            Some(alpn) => write!(f, "Some(\"{alpn}\")")?,
         }
         write!(f, " }}")
     }

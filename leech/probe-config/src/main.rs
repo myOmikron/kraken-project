@@ -1,7 +1,7 @@
 use std::env;
 use std::fs;
 
-use probe_config::{ParseError, Service};
+use probe_config::parse::{ParseError, Service};
 
 fn main() -> Result<(), ()> {
     let Some(file) = env::args().skip(1).next() else {

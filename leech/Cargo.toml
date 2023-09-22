@@ -80,6 +80,7 @@ dehashed-rs = { version = "~0.3", features = ["tokio"] }
 
 native-tls = { version = "~0.2", features = ["alpn"] }
 tokio-native-tls = { version = "~0.3" }
+probe-config = { path = "probe-config" }
 
 [build-dependencies]
 tonic-build = { version = "~0.10" }

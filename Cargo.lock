@@ -2545,6 +2545,10 @@ dependencies = [
 [[package]]
 name = "probe-config"
 version = "0.1.0"
+dependencies = [
+ "log",
+ "regex",
+]
 
 [[package]]
 name = "proc-macro-error"

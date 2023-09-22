@@ -1,10 +1,10 @@
 mod codegen;
-mod parse;
+pub mod generated;
+pub mod parse;
 
 use std::{fs, io};
 
 pub use codegen::generate_code;
-pub use parse::*;
 
 pub fn generate(in_dir: &str, out_file: &str) -> io::Result<()> {
     println!("cargo:rerun-if-changed={}", in_dir);
@@ -13,7 +13,7 @@ pub fn generate(in_dir: &str, out_file: &str) -> io::Result<()> {
 
     for file in fs::read_dir(&in_dir)? {
         let file = fs::read_to_string(&file.unwrap().path())?;
-        let service = Service::from_file(&file).expect("Failed to parse probes");
+        let service = parse::Service::from_file(&file).expect("Failed to parse probes");
         services.push(service);
     }
 
