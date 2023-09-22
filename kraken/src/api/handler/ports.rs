@@ -31,6 +31,18 @@ pub struct GetAllPortsResponse {
     ports: Vec<SimplePort>,
 }
 
+/// List the ports of a workspace
+#[utoipa::path(
+    tag = "Ports",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Retrieve all ports of a workspace", body = GetAllPortsResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid),
+    security(("api_key" = []))
+)]
 #[get("/workspaces/{uuid}/ports")]
 pub async fn get_all_ports(
     path: Path<PathUuid>,

@@ -7,7 +7,7 @@ use utoipa::{Modify, OpenApi};
 
 use crate::api::handler;
 use crate::api::handler::{
-    api_keys, attacks, auth, global_tags, hosts, leeches, oauth, settings, users, websocket,
+    api_keys, attacks, auth, global_tags, hosts, leeches, oauth, ports, settings, users, websocket,
     workspace_tags, workspaces,
 };
 use crate::models;
@@ -100,6 +100,7 @@ impl Modify for SecurityAddon2 {
         workspace_tags::get_all_workspace_tags,
         workspace_tags::update_workspace_tag,
         workspace_tags::delete_workspace_tag,
+        ports::get_all_ports,
     ),
     components(schemas(
         handler::ApiErrorResponse,
@@ -164,6 +165,8 @@ impl Modify for SecurityAddon2 {
         workspace_tags::GetWorkspaceTagsResponse,
         workspace_tags::UpdateWorkspaceTag,
         workspace_tags::CreateWorkspaceTagRequest,
+        ports::SimplePort,
+        ports::GetAllPortsResponse,
     )),
     modifiers(&SecurityAddon, &SecurityAddon2),
 )]

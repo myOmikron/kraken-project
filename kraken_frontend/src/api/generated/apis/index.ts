@@ -9,6 +9,7 @@ export * from './HostsApi';
 export * from './LeechManagementApi';
 export * from './OAuthApi';
 export * from './OAuthApplicationApi';
+export * from './PortsApi';
 export * from './SettingsManagementApi';
 export * from './UserAdminManagementApi';
 export * from './UserManagementApi';

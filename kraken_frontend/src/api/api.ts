@@ -12,6 +12,7 @@ import {
     HostsApi,
     OAuthApi,
     OAuthApplicationApi,
+    PortsApi,
     QueryCertificateTransparencyRequest,
     ScanTcpPortsRequest,
     SettingsManagementApi,
@@ -56,6 +57,7 @@ const settingsManagement = new SettingsManagementApi(configuration);
 const hosts = new HostsApi(configuration);
 const globalTags = new GlobalTagsApi(configuration);
 const workspaceTags = new WorkspaceTagsApi(configuration);
+const portTags = new PortsApi(configuration);
 
 export const Api = {
     admin: {
@@ -149,6 +151,9 @@ export const Api = {
                 ),
             delete: (workspaceUuid: UUID, tagUuid: UUID) =>
                 workspaceTags.deleteWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid }),
+        },
+        ports: {
+            all: (workspaceUuid: UUID) => handleError(portTags.getAllPorts({ uuid: workspaceUuid })),
         },
     },
     oauth: {
