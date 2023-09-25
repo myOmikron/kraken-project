@@ -42,6 +42,7 @@ use crate::modules::bruteforce_subdomains::{
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
 use crate::modules::port_scanner::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
+use crate::modules::service_detection::DetectServiceSettings;
 use crate::modules::{dehashed, service_detection, whois};
 use crate::rpc::rpc_attacks::attack_results_service_client::AttackResultsServiceClient;
 use crate::rpc::rpc_attacks::shared::CertEntry;
@@ -155,7 +156,27 @@ pub enum RunCommand {
         query: IpAddr,
     },
     /// Detect the service running behind a port
-    ServiceDetection { addr: IpAddr, port: u16 },
+    ServiceDetection {
+        /// The ip address to connect to
+        addr: IpAddr,
+
+        /// The port to connect to
+        port: u16,
+
+        /// The interval that should be waited for a response after connecting and sending an optional payload.
+        ///
+        /// The interval is specified in milliseconds.
+        #[clap(long)]
+        #[clap(default_value_t = 1000)]
+        wait_for_response: u64,
+
+        /// Flag for debugging
+        ///
+        /// Normally the service detection would stop after the first successful match.
+        /// When this flag is enabled it will always run all checks producing their logs before returning the first match.
+        #[clap(long)]
+        debug: bool,
+    },
 }
 
 /// All available subcommands
@@ -520,10 +541,19 @@ async fn main() -> Result<(), String> {
                         }
                         Err(err) => error!("{err}"),
                     },
-                    RunCommand::ServiceDetection { addr, port } => {
-                        service_detection::detect_service(SocketAddr::new(addr, port))
-                            .await
-                            .unwrap();
+                    RunCommand::ServiceDetection {
+                        addr,
+                        port,
+                        wait_for_response,
+                        debug,
+                    } => {
+                        service_detection::detect_service(DetectServiceSettings {
+                            socket: SocketAddr::new(addr, port),
+                            wait_for_response: Duration::from_millis(wait_for_response),
+                            always_run_everything: debug,
+                        })
+                        .await
+                        .unwrap();
                     }
                 }
             }

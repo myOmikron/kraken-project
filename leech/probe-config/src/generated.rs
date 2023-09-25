@@ -46,23 +46,30 @@ pub struct TlsProbe {
     pub alpn: Option<&'static str>,
 }
 
+/// Extended `bool` returned by [`BaseProbe::is_match`] to state if and how much the probe matched the input
+pub enum Match {
+    No,
+    Partial,
+    Exact,
+}
+
 impl BaseProbe {
     /// Match the probe's regex against the received data
-    pub fn is_match(&self, data: &[u8]) -> bool {
+    pub fn is_match(&self, data: &[u8]) -> Match {
         if self.regex.is_match(data) {
             if self.sub_regex.is_empty() {
-                true
+                Match::Exact
             } else {
                 debug!(target: "regex", "Initial regex matched for service: {}", self.service);
                 for sub in &self.sub_regex {
                     if sub.is_match(data) {
-                        return true;
+                        return Match::Exact;
                     }
                 }
-                false
+                Match::Partial
             }
         } else {
-            false
+            Match::No
         }
     }
 }
