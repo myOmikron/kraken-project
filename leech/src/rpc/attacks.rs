@@ -6,23 +6,25 @@ use std::time::Duration;
 
 use chrono::{Datelike, Timelike};
 use futures::Stream;
-use log::warn;
+use log::{error, warn};
 use prost_types::Timestamp;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
-use tonic::{Code, Request, Response, Status};
+use tonic::{Request, Response, Status};
 
 use crate::modules::bruteforce_subdomains::{
     bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
 };
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
+use crate::modules::service_detection::{detect_service, DetectServiceSettings, Service};
 use crate::rpc::rpc_attacks::port_or_range::PortOrRange;
 use crate::rpc::rpc_attacks::req_attack_service_server::ReqAttackService;
 use crate::rpc::rpc_attacks::shared::CertEntry;
 use crate::rpc::rpc_attacks::{
     BruteforceSubdomainRequest, BruteforceSubdomainResponse, CertificateTransparencyRequest,
-    CertificateTransparencyResponse, TcpPortScanRequest, TcpPortScanResponse,
+    CertificateTransparencyResponse, ServiceDetectionRequest, ServiceDetectionResponse,
+    ServiceDetectionResponseType, TcpPortScanRequest, TcpPortScanResponse,
 };
 
 /// The Attack service
@@ -137,7 +139,7 @@ impl ReqAttackService for Attacks {
         let ct_res = CertificateTransparencyResponse {
             entries: query_ct_api(settings)
                 .await
-                .map_err(|err| Status::new(Code::Unknown, err.to_string()))?
+                .map_err(|err| Status::unknown(err.to_string()))?
                 .into_iter()
                 .map(|cert_entry| CertEntry {
                     issuer_name: cert_entry.issuer_name,
@@ -173,5 +175,46 @@ impl ReqAttackService for Attacks {
         };
 
         Ok(Response::new(ct_res))
+    }
+
+    async fn service_detection(
+        &self,
+        request: Request<ServiceDetectionRequest>,
+    ) -> Result<Response<ServiceDetectionResponse>, Status> {
+        let request = request.into_inner();
+        let settings = DetectServiceSettings {
+            socket: SocketAddr::new(
+                request
+                    .address
+                    .ok_or(Status::invalid_argument("Missing address"))?
+                    .into(),
+                request
+                    .port
+                    .try_into()
+                    .map_err(|_| Status::invalid_argument("Port is out of range"))?,
+            ),
+            wait_for_response: Duration::from_millis(request.wait_for_response),
+            always_run_everything: false,
+        };
+
+        let service = detect_service(settings).await.map_err(|err| {
+            error!("Service detection failed: {err:?}");
+            Status::internal("Service detection failed. See logs")
+        })?;
+
+        Ok(Response::new(match service {
+            Service::Unknown => ServiceDetectionResponse {
+                r#type: ServiceDetectionResponseType::Unknown as _,
+                services: Vec::new(),
+            },
+            Service::Maybe(services) => ServiceDetectionResponse {
+                r#type: ServiceDetectionResponseType::Maybe as _,
+                services: services.iter().map(|s| s.to_string()).collect(),
+            },
+            Service::Definitely(service) => ServiceDetectionResponse {
+                r#type: ServiceDetectionResponseType::Definitely as _,
+                services: vec![service.to_string()],
+            },
+        }))
     }
 }

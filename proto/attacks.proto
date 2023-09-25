@@ -107,11 +107,42 @@ message CertificateTransparencyResponse {
   repeated shared.CertEntry entries = 1;
 }
 
+/*
+ * Service Detection
+ */
+
+// Service detection request
+message ServiceDetectionRequest {
+  // The ip address to connect to
+  attacks.shared.Address address = 1;
+  // The port to connect to
+  uint32 port = 2;
+  // The interval to wait for a response after connecting and sending an optional payload.
+  // Specified in milliseconds.
+  uint64 wait_for_response = 4;
+}
+
+// Response to a service detection request
+message ServiceDetectionResponse {
+  ServiceDetectionResponseType type = 1;
+  repeated string services = 2;
+}
+
+enum ServiceDetectionResponseType {
+  // The service is unknown
+  UNKNOWN = 0;
+  // The service might be one of the list
+  MAYBE = 1;
+  // The service has been identified
+  DEFINITELY = 2;
+}
+
 // Implemented by leech; allows kraken to request attack from a leech
 service ReqAttackService {
   rpc BruteforceSubdomains(BruteforceSubdomainRequest) returns (stream BruteforceSubdomainResponse);
   rpc RunTcpPortScan(TcpPortScanRequest) returns (stream TcpPortScanResponse);
   rpc QueryCertificateTransparency(CertificateTransparencyRequest) returns (CertificateTransparencyResponse);
+  rpc ServiceDetection(ServiceDetectionRequest) returns (ServiceDetectionResponse);
 }
 
 /*

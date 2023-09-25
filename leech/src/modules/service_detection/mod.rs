@@ -13,7 +13,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::time::sleep;
 
-type DynResult<T> = Result<T, Box<dyn std::error::Error>>;
+type DynResult<T> = Result<T, Box<dyn std::error::Error + Send + Sync + 'static>>;
 
 /// Settings for a service detection
 pub struct DetectServiceSettings {
