@@ -547,13 +547,13 @@ async fn main() -> Result<(), String> {
                         wait_for_response,
                         debug,
                     } => {
-                        service_detection::detect_service(DetectServiceSettings {
+                        let result = service_detection::detect_service(DetectServiceSettings {
                             socket: SocketAddr::new(addr, port),
                             wait_for_response: Duration::from_millis(wait_for_response),
                             always_run_everything: debug,
                         })
-                        .await
-                        .unwrap();
+                        .await;
+                        println!("{result:?}");
                     }
                 }
             }

@@ -1,9 +1,5 @@
 //! This module implements detecting a service behind a port
-
-mod generated {
-    include!(concat!(env!("OUT_DIR"), "/generated_probes.rs"));
-}
-
+//!
 use std::net::SocketAddr;
 use std::time::Duration;
 
@@ -12,6 +8,11 @@ use probe_config::generated::Match;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::time::sleep;
+
+mod generated {
+    include!(concat!(env!("OUT_DIR"), "/generated_probes.rs"));
+}
+mod postgres;
 
 type DynResult<T> = Result<T, Box<dyn std::error::Error + Send + Sync + 'static>>;
 
@@ -31,6 +32,7 @@ pub struct DetectServiceSettings {
 }
 
 /// The detected service or a list of possible candidates
+#[derive(Debug)]
 pub enum Service {
     /// The service is unknown
     Unknown,
@@ -59,7 +61,7 @@ pub async fn detect_service(settings: DetectServiceSettings) -> DynResult<Servic
                 }
                 Match::Exact => {
                     if settings.always_run_everything {
-                        exact_match = Some($probe.service);
+                        exact_match.get_or_insert($probe.service);
                     } else {
                         return Ok(Service::Definitely($probe.service));
                     }
@@ -104,6 +106,14 @@ pub async fn detect_service(settings: DetectServiceSettings) -> DynResult<Servic
             }
         }
         Err(err) => debug!(target: "tls", "TLS error: {err:?}"),
+    }
+
+    if postgres::probe(&settings).await? {
+        if settings.always_run_everything {
+            exact_match.get_or_insert("postgres");
+        } else {
+            return Ok(Service::Definitely("postgres"));
+        }
     }
 
     // TODO impl udp
