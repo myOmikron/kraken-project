@@ -27,7 +27,7 @@ use crate::api::handler::{
 use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
 };
-use crate::api::swagger::ApiDoc;
+use crate::api::swagger::{ExternalApi, FrontendApi};
 use crate::chan::{RpcClients, RpcManagerChannel, SettingsManagerChan, WsManagerChan};
 use crate::config::Config;
 
@@ -94,7 +94,16 @@ pub(crate) async fn start_server(
             )
             .wrap(Compress::default())
             .wrap(ErrorHandlers::new().handler(StatusCode::NOT_FOUND, handle_not_found))
-            .service(SwaggerUi::new("/docs/{_:.*}").url("/api-doc/openapi.json", ApiDoc::openapi()))
+            .service(SwaggerUi::new("/docs/{_:.*}").urls(vec![
+                (
+                    utoipa_swagger_ui::Url::new("frontend-api", "/api-doc/frontend-api.json"),
+                    FrontendApi::openapi(),
+                ),
+                (
+                    utoipa_swagger_ui::Url::new("external-api", "/api-doc/external-api.json"),
+                    ExternalApi::openapi(),
+                ),
+            ]))
             .service(
                 scope("/api/v1/auth")
                     .service(auth::test)
