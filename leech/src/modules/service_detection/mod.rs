@@ -82,7 +82,7 @@ pub async fn detect_service(settings: DetectServiceSettings) -> DynResult<Servic
         if let Some(tcp_banner) = tcp_banner.as_deref() {
             debug!("Scanning tcp banner #{prev}");
             for probe in &generated::PROBES.empty_tcp_probes[prev] {
-                check_match!(probe, &tcp_banner);
+                check_match!(probe, tcp_banner);
             }
         }
 
@@ -172,7 +172,7 @@ impl DetectServiceSettings {
                 .await
                 .context("TcpStream::write_all")?;
             tcp.flush().await.context("TcpStream::flush")?;
-            trace!(target: "tcp", "Send data: {:?}", DebuggableBytes(&payload));
+            trace!(target: "tcp", "Send data: {:?}", DebuggableBytes(payload));
         }
 
         // Wait

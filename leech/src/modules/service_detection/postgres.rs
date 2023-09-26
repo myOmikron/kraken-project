@@ -1,3 +1,4 @@
+#![allow(clippy::get_first)]
 //! Docs for the message formats:
 //! https://www.postgresql.org/docs/current/protocol-message-formats.html
 
