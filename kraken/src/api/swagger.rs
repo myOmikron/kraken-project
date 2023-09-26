@@ -178,7 +178,7 @@ pub(crate) struct FrontendApi;
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(oauth::auth, oauth::token),
+    paths(oauth::auth, oauth::token, data_export::export_workspace),
     components(schemas(
         handler::ApiErrorResponse,
         handler::ApiStatusCode,
@@ -189,6 +189,10 @@ pub(crate) struct FrontendApi;
         oauth::GrantType,
         oauth::Pkce,
         oauth::CodeChallengeMethod,
+        data_export::AggregatedWorkspace,
+        data_export::AggregatedHost,
+        data_export::AggregatedPort,
+        data_export::AggregatedService,
     ))
 )]
 pub(crate) struct ExternalApi;

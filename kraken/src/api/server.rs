@@ -21,8 +21,8 @@ use webauthn_rs::prelude::{Url, WebauthnError};
 use webauthn_rs::WebauthnBuilder;
 
 use crate::api::handler::{
-    api_keys, attacks, auth, domains, global_tags, hosts, leeches, oauth, ports, services,
-    settings, users, websocket, workspace_tags, workspaces,
+    api_keys, attacks, auth, data_export, domains, global_tags, hosts, leeches, oauth, ports,
+    services, settings, users, websocket, workspace_tags, workspaces,
 };
 use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
@@ -122,6 +122,7 @@ pub(crate) async fn start_server(
                     .service(oauth::deny),
             )
             .service(scope("/api/v1/oauth-server").service(oauth::token))
+            .service(scope("/api/v1/export").service(data_export::export_workspace))
             .service(
                 scope("/api/v1/admin")
                     .wrap(AdminRequired)
