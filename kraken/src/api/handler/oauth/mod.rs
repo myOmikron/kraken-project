@@ -25,9 +25,10 @@ use webauthn_rs::prelude::Url;
 
 pub(crate) use self::applications::*;
 pub(crate) use self::schemas::*;
+use crate::api::extractors::SessionUser;
 use crate::api::handler::users::UserResponse;
 use crate::api::handler::workspaces::SimpleWorkspace;
-use crate::api::handler::{ApiError, PathUuid, SessionUser};
+use crate::api::handler::{ApiError, PathUuid};
 use crate::models::{OauthClient, User, Workspace, WorkspaceAccessTokenInsert};
 
 #[derive(Debug, Default)]

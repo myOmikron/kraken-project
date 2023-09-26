@@ -33,27 +33,6 @@ pub(crate) mod websocket;
 pub(crate) mod workspace_tags;
 pub(crate) mod workspaces;
 
-/// Use in request handlers instead of `Session` if your only interested in the `"uuid"` field
-pub struct SessionUser(pub Uuid);
-impl actix_web::FromRequest for SessionUser {
-    type Error = actix_web::Error;
-    type Future = std::future::Ready<Result<Self, Self::Error>>;
-
-    fn from_request(
-        req: &actix_web::HttpRequest,
-        payload: &mut actix_web::dev::Payload,
-    ) -> Self::Future {
-        std::future::ready(match Session::from_request(req, payload).into_inner() {
-            Ok(session) => match session.get("uuid") {
-                Ok(Some(uuid)) => Ok(Self(uuid)),
-                Ok(None) => Err(Self::Error::from(ApiError::SessionCorrupt)),
-                Err(error) => Err(Self::Error::from(ApiError::from(error))),
-            },
-            Err(error) => Err(error),
-        })
-    }
-}
-
 /// Query the current user's model
 pub(crate) async fn query_user(db: impl Executor<'_>, session: &Session) -> ApiResult<User> {
     let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
