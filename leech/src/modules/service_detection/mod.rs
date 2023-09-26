@@ -1,9 +1,10 @@
 //! This module implements detecting a service behind a port
-//!
+
+use std::io;
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use log::{debug, trace, warn};
+use log::{debug, info, trace, warn};
 use probe_config::generated::Match;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
@@ -12,9 +13,13 @@ use tokio::time::sleep;
 mod generated {
     include!(concat!(env!("OUT_DIR"), "/generated_probes.rs"));
 }
+mod error;
 mod postgres;
 
-type DynResult<T> = Result<T, Box<dyn std::error::Error + Send + Sync + 'static>>;
+use self::error::{Extended, ResultExt};
+
+type DynError = Box<dyn std::error::Error + Send + Sync + 'static>;
+type DynResult<T> = Result<T, DynError>;
 
 /// Settings for a service detection
 pub struct DetectServiceSettings {
@@ -61,6 +66,7 @@ pub async fn detect_service(settings: DetectServiceSettings) -> DynResult<Servic
                 }
                 Match::Exact => {
                     if settings.always_run_everything {
+                        info!("Found exact match: {}", $probe.service);
                         exact_match.get_or_insert($probe.service);
                     } else {
                         return Ok(Service::Definitely($probe.service));
@@ -70,19 +76,25 @@ pub async fn detect_service(settings: DetectServiceSettings) -> DynResult<Servic
         };
     }
 
+    debug!("Retrieving tcp banner");
     let tcp_banner = settings.probe_tcp(b"").await?;
     for prev in 0..3 {
-        for probe in &generated::PROBES.empty_tcp_probes[prev] {
-            check_match!(probe, &tcp_banner);
+        if let Some(tcp_banner) = tcp_banner.as_deref() {
+            debug!("Scanning tcp banner #{prev}");
+            for probe in &generated::PROBES.empty_tcp_probes[prev] {
+                check_match!(probe, &tcp_banner);
+            }
         }
 
+        debug!("Starting tcp payload scans #{prev}");
         for probe in &generated::PROBES.payload_tcp_probes[prev] {
-            let data = settings.probe_tcp(probe.payload).await?;
-            trace!(target: probe.service, "Got data over tcp: {:?}", DebuggableBytes(&data));
-            check_match!(probe, &data);
+            if let Some(data) = settings.probe_tcp(probe.payload).await? {
+                check_match!(probe, &data);
+            }
         }
     }
 
+    debug!(target: "regex", "Starting tls banner scan");
     match settings.probe_tls(b"", None).await? {
         Ok(tls_banner) => {
             partial_matches.push("tls");
@@ -92,6 +104,7 @@ pub async fn detect_service(settings: DetectServiceSettings) -> DynResult<Servic
                     check_match!(probe, &tls_banner);
                 }
 
+                debug!(target: "regex", "Starting tls payload scans");
                 for probe in &generated::PROBES.payload_tls_probes[prev] {
                     match settings.probe_tls(probe.payload, probe.alpn).await? {
                         Ok(data) => {
@@ -128,27 +141,49 @@ pub async fn detect_service(settings: DetectServiceSettings) -> DynResult<Servic
 }
 
 impl DetectServiceSettings {
+    /// Send `payload` and receive answer over TCP
+    ///
+    /// Errors when an unrecoverable error occurred.
+    /// Returns `Ok(None)` when the service refused to respond to the payload.
+    async fn probe_tcp(&self, payload: &[u8]) -> DynResult<Option<Vec<u8>>> {
+        match self.raw_probe_tcp(payload).await {
+            Ok(data) => Ok(Some(data)),
+            Err(error) => match error.kind() {
+                io::ErrorKind::ConnectionReset | io::ErrorKind::ConnectionAborted => Ok(None),
+                io::ErrorKind::NotConnected if error.context == "TcpStream::shutdown" => Ok(None),
+                _ => Err(error.into()),
+            },
+        }
+    }
+
     /// 1. Connect to the socket using tcp
     /// 2. Send `payload`
     /// 3. Wait for the configured amount of time
     /// 4. Return everything which has been received
-    async fn probe_tcp(&self, payload: &[u8]) -> DynResult<Vec<u8>> {
+    async fn raw_probe_tcp(&self, payload: &[u8]) -> Result<Vec<u8>, Extended<io::Error>> {
         // Connect
-        let mut tcp = TcpStream::connect(self.socket).await?;
+        let mut tcp = TcpStream::connect(self.socket)
+            .await
+            .context("TcpStream::connect")?;
 
         // Send payload
         if !payload.is_empty() {
-            tcp.write_all(payload).await?;
-            tcp.flush().await?;
+            tcp.write_all(payload)
+                .await
+                .context("TcpStream::write_all")?;
+            tcp.flush().await.context("TcpStream::flush")?;
+            trace!(target: "tcp", "Send data: {:?}", DebuggableBytes(&payload));
         }
 
         // Wait
         sleep(self.wait_for_response).await;
 
         // Read
-        tcp.shutdown().await?;
+        tcp.shutdown().await.context("TcpStream::shutdown")?;
         let mut data = Vec::new();
-        tcp.read_to_end(&mut data).await?;
+        tcp.read_to_end(&mut data)
+            .await
+            .context("TcpStream::read_to_end")?;
 
         // Log and Return
         trace!(target: "tcp", "Received data: {:?}", DebuggableBytes(&data));
@@ -176,7 +211,9 @@ impl DetectServiceSettings {
         );
 
         // Connect
-        let tcp = TcpStream::connect(self.socket).await?;
+        let tcp = TcpStream::connect(self.socket)
+            .await
+            .context("TcpStream::connect")?;
         let mut tls = match connector.connect("<ignored>", tcp).await {
             Ok(tls) => tls,
             Err(err) => return Ok(Err(err)),
@@ -184,17 +221,21 @@ impl DetectServiceSettings {
 
         // Send payload
         if !payload.is_empty() {
-            tls.write_all(payload).await?;
-            tls.flush().await?;
+            tls.write_all(payload)
+                .await
+                .context("TlsStream::write_all")?;
+            tls.flush().await.context("TlsStream::flush")?;
         }
 
         // Wait
         sleep(self.wait_for_response).await;
 
         // Read and Close
-        tls.shutdown().await?;
+        tls.shutdown().await.context("TlsStream::shutdown")?;
         let mut data = Vec::new();
-        tls.read_to_end(&mut data).await?;
+        tls.read_to_end(&mut data)
+            .await
+            .context("TlsStream::read_to_end")?;
 
         // Log and Return
         trace!(target: "tls", "Received data: {:?}", DebuggableBytes(&data));
@@ -228,7 +269,7 @@ impl<'a> std::fmt::Debug for DebuggableBytes<'a> {
 // tls (StartTLS)
 // rdp
 // kerberos
-// netbios
+// netbios [DONE]
 // microsoft ds
 // snmp (trap)
 // ssh [DONE]

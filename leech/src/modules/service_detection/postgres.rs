@@ -12,7 +12,9 @@ use super::{DebuggableBytes, DetectServiceSettings, DynResult};
 // Therefore, no special treatment for ssl should be required.
 // https://www.postgresql.org/docs/current/protocol-flow.html#PROTOCOL-FLOW-SSL
 pub async fn probe(settings: &DetectServiceSettings) -> DynResult<bool> {
-    let data = settings.probe_tcp(&create_startup_message()).await?;
+    let Some(data) = settings.probe_tcp(&create_startup_message()).await? else {
+        return Ok(false);
+    };
     trace!(target: "postgres", "Got data: {data:x?}");
     Ok(parse_response(data).is_some())
 }
