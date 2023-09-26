@@ -28,7 +28,7 @@ pub struct DetectServiceSettings {
 
     /// Time to wait for a response after sending the payload
     /// (or after establishing a connection, if not payload is to be sent)
-    pub wait_for_response: Duration,
+    pub timeout: Duration,
 
     /// Always run all probes and test to completion instead of returning the first exact match.
     ///
@@ -176,7 +176,7 @@ impl DetectServiceSettings {
         }
 
         // Wait
-        sleep(self.wait_for_response).await;
+        sleep(self.timeout).await;
 
         // Read
         tcp.shutdown().await.context("TcpStream::shutdown")?;
@@ -228,7 +228,7 @@ impl DetectServiceSettings {
         }
 
         // Wait
-        sleep(self.wait_for_response).await;
+        sleep(self.timeout).await;
 
         // Read and Close
         tls.shutdown().await.context("TlsStream::shutdown")?;

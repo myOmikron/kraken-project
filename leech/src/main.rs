@@ -168,14 +168,14 @@ pub enum RunCommand {
         /// The interval is specified in milliseconds.
         #[clap(long)]
         #[clap(default_value_t = 1000)]
-        wait_for_response: u64,
+        timeout: u64,
 
         /// Flag for debugging
         ///
         /// Normally the service detection would stop after the first successful match.
         /// When this flag is enabled it will always run all checks producing their logs before returning the first match.
         #[clap(long)]
-        debug: bool,
+        dont_stop_on_match: bool,
     },
 }
 
@@ -544,12 +544,12 @@ async fn main() -> Result<(), String> {
                     RunCommand::ServiceDetection {
                         addr,
                         port,
-                        wait_for_response,
-                        debug,
+                        timeout: wait_for_response,
+                        dont_stop_on_match: debug,
                     } => {
                         let result = service_detection::detect_service(DetectServiceSettings {
                             socket: SocketAddr::new(addr, port),
-                            wait_for_response: Duration::from_millis(wait_for_response),
+                            timeout: Duration::from_millis(wait_for_response),
                             always_run_everything: debug,
                         })
                         .await;

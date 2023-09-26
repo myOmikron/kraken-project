@@ -119,7 +119,7 @@ message ServiceDetectionRequest {
   uint32 port = 2;
   // The interval to wait for a response after connecting and sending an optional payload.
   // Specified in milliseconds.
-  uint64 wait_for_response = 4;
+  uint64 timeout = 4;
 }
 
 // Response to a service detection request

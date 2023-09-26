@@ -193,7 +193,7 @@ impl ReqAttackService for Attacks {
                     .try_into()
                     .map_err(|_| Status::invalid_argument("Port is out of range"))?,
             ),
-            wait_for_response: Duration::from_millis(request.wait_for_response),
+            timeout: Duration::from_millis(request.timeout),
             always_run_everything: false,
         };
 
