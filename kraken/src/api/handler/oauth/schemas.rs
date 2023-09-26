@@ -139,6 +139,67 @@ pub(crate) enum TokenType {
     AccessToken,
 }
 
+/// Possible error response when requesting an access token.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct TokenError {
+    /// A single ASCII \[[USASCII](https://www.rfc-editor.org/rfc/rfc6749#ref-USASCII)\] error code
+    pub error: TokenErrorType,
+
+    /// Human-readable ASCII \[[USASCII](https://www.rfc-editor.org/rfc/rfc6749#ref-USASCII)\] text providing
+    /// understanding the error that occurred.
+    pub error_description: Option<&'static str>,
+}
+
+/// Possible error types of a [`TokenError`]
+#[allow(dead_code)]
+#[derive(Serialize, Debug, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum TokenErrorType {
+    /// The request is missing a required parameter, includes an
+    /// unsupported parameter value (other than grant type),
+    /// repeats a parameter, includes multiple credentials,
+    /// utilizes more than one mechanism for authenticating the
+    /// client, or is otherwise malformed.
+    InvalidRequest,
+
+    /// Client authentication failed (e.g., unknown client, no
+    /// client authentication included, or unsupported
+    /// authentication method).  The authorization server MAY
+    /// return an HTTP 401 (Unauthorized) status code to indicate
+    /// which HTTP authentication schemes are supported.  If the
+    /// client attempted to authenticate via the "Authorization"
+    /// request header field, the authorization server MUST
+    /// respond with an HTTP 401 (Unauthorized) status code and
+    /// include the "WWW-Authenticate" response header field
+    /// matching the authentication scheme used by the client.
+    InvalidClient,
+
+    /// The provided authorization grant (e.g., authorization
+    /// code, resource owner credentials) or refresh token is
+    /// invalid, expired, revoked, does not match the redirection
+    /// URI used in the authorization request, or was issued to
+    /// another client.
+    InvalidGrant,
+
+    /// The authenticated client is not authorized to use this
+    /// authorization grant type.
+    UnauthorizedClient,
+
+    /// The authorization grant type is not supported by the
+    /// authorization server.
+    UnsupportedGrantType,
+
+    /// The requested scope is invalid, unknown, malformed, or
+    /// exceeds the scope granted by the resource owner.
+    InvalidScope,
+
+    /// The authorization server encountered an unexpected
+    /// condition that prevented it from fulfilling the request.
+    ///
+    /// This type is not in the rfc
+    ServerError,
+}
+
 fn duration_seconds<S: serde::ser::Serializer>(
     duration: &Duration,
     serializer: S,
