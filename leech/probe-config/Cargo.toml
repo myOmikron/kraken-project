@@ -2,8 +2,8 @@
 name = "probe-config"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["gammelalf <gammelalf@hopfen.space>", "Niklas Pfister <git@omikron.dev>"]
+license = "AGPL-3.0"
 
 [dependencies]
 regex = { version = "~1" }
