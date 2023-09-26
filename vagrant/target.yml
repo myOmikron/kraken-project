@@ -5,3 +5,32 @@
     - ansible_become: yes
   vars_files:
     - vars.yml
+  tasks:
+    - name: Install applications
+      apt:
+        update_cache: yes
+        name:
+          - postgresql
+          - mariadb-server
+
+    - name: Postgres listen everywhere
+      ansible.builtin.lineinfile:
+        path: /etc/postgresql/13/main/postgresql.conf
+        line: "listen_addresses = '*'"
+        regex: "#? *listen_addresses"
+    - name: Restart/Enable postgres
+      ansible.builtin.systemd:
+        name: postgresql
+        state: restarted
+        enabled: true
+
+    - name: Mariadb listen 0.0.0.0
+      ansible.builtin.lineinfile:
+        path: /etc/mysql/mariadb.conf.d/50-server.cnf
+        line: "bind-address = 0.0.0.0"
+        regex: "#? *bind-address"
+    - name: Start/Enable mariadb
+      ansible.builtin.systemd:
+        name: mariadb
+        state: restarted
+        enabled: true
