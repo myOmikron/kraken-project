@@ -25,7 +25,7 @@ workspace = false
 
 [tasks.verify-code]
 command = "cargo"
-args = ["build", "--package", "kraken_sdk"]
+args = ["build", "--package", "kraken-sdk"]
 workspace = false
 
 [tasks.generate]

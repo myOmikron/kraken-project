@@ -1,5 +1,5 @@
 [package]
-name = "kraken_sdk"
+name = "kraken-sdk"
 version = "0.1.0"
 authors = ["git@omikron.dev"]
 description = "The core component of kraken-project"
