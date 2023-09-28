@@ -194,6 +194,7 @@ pub(crate) struct FrontendApi;
         data_export::AggregatedHost,
         data_export::AggregatedPort,
         data_export::AggregatedService,
-    ))
+    )),
+    modifiers(&SecurityAddon2)
 )]
 pub(crate) struct ExternalApi;

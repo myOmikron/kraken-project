@@ -109,6 +109,7 @@ pub struct AggregatedService {
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
     params(PathUuid),
+    security(("bearer_token" = []))
 )]
 #[get("/workspace/{uuid}")]
 pub(crate) async fn export_workspace(

@@ -403,7 +403,6 @@ pub(crate) async fn deny(
         (status = 500, description = "Server error", body = TokenError),
     ),
     request_body = TokenRequest,
-    security(("api_key" = []))
 )]
 #[post("/token")]
 pub(crate) async fn token(
