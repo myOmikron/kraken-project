@@ -14,7 +14,6 @@ docs/DataExportApi.md
 docs/GrantType.md
 docs/OAuthApi.md
 docs/OsType.md
-docs/Pkce.md
 docs/PortProtocol.md
 docs/TokenError.md
 docs/TokenErrorType.md
@@ -37,7 +36,6 @@ src/models/code_challenge_method.rs
 src/models/grant_type.rs
 src/models/mod.rs
 src/models/os_type.rs
-src/models/pkce.rs
 src/models/port_protocol.rs
 src/models/token_error.rs
 src/models/token_error_type.rs

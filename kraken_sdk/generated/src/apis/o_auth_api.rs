@@ -35,7 +35,7 @@ pub enum TokenError {
 
 
 /// Initial endpoint an application redirects the user to.  It requires both the `state` parameter against CSRF, as well as a pkce challenge. The only supported pkce `code_challenge_method` is `S256`.
-pub async fn auth(configuration: &configuration::Configuration, response_type: &str, client_id: &str, redirect_uri: Option<&str>, scope: Option<&str>, state: Option<&str>, pkce: Option<crate::models::Pkce>) -> Result<(), Error<AuthError>> {
+pub async fn auth(configuration: &configuration::Configuration, response_type: &str, client_id: &str, redirect_uri: Option<&str>, scope: Option<&str>, state: Option<&str>, code_challenge: Option<&str>, code_challenge_method: Option<CodeChallengeMethod>) -> Result<(), Error<AuthError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -54,8 +54,11 @@ pub async fn auth(configuration: &configuration::Configuration, response_type: &
     if let Some(ref local_var_str) = state {
         local_var_req_builder = local_var_req_builder.query(&[("state", &local_var_str.to_string())]);
     }
-    if let Some(ref local_var_str) = pkce {
-        local_var_req_builder = local_var_req_builder.query(&[("pkce", &local_var_str.to_string())]);
+    if let Some(ref local_var_str) = code_challenge {
+        local_var_req_builder = local_var_req_builder.query(&[("code_challenge", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_str) = code_challenge_method {
+        local_var_req_builder = local_var_req_builder.query(&[("code_challenge_method", &local_var_str.to_string())]);
     }
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());

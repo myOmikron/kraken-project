@@ -41,7 +41,6 @@ Class | Method | HTTP request | Description
  - [CodeChallengeMethod](docs/CodeChallengeMethod.md)
  - [GrantType](docs/GrantType.md)
  - [OsType](docs/OsType.md)
- - [Pkce](docs/Pkce.md)
  - [PortProtocol](docs/PortProtocol.md)
  - [TokenError](docs/TokenError.md)
  - [TokenErrorType](docs/TokenErrorType.md)

@@ -16,8 +16,6 @@ pub mod grant_type;
 pub use self::grant_type::GrantType;
 pub mod os_type;
 pub use self::os_type::OsType;
-pub mod pkce;
-pub use self::pkce::Pkce;
 pub mod port_protocol;
 pub use self::port_protocol::PortProtocol;
 pub mod token_error;

@@ -30,17 +30,8 @@ pub(crate) struct AuthRequest {
     /// cross-site request forgery as described in [Section 10.12](https://www.rfc-editor.org/rfc/rfc6749#section-10.12).
     pub state: Option<String>,
 
-    #[serde(flatten)]
-    pub pkce: Option<Pkce>,
-}
-
-/// The client sends the code challenge as part of the OAuth 2.0
-/// Authorization Request ([Section 4.1.1 of \[RFC6749\]](https://www.rfc-editor.org/rfc/rfc6749#section-4.1.1)) using the
-/// following additional parameters:
-#[derive(Deserialize, Debug, Clone, ToSchema)]
-pub(crate) struct Pkce {
-    /// Code challenge.
-    pub code_challenge: String,
+    /// Pkce Code challenge.
+    pub code_challenge: Option<String>,
 
     /// Code verifier transformation method is "S256" or "plain".
     /// It defaults to "plain" if not present in the request.

@@ -182,29 +182,26 @@ pub(crate) async fn auth(
         );
     };
 
-    let code_challenge = {
-        let Some(pkce) = request.pkce else {
-            return build_redirect(
-                &client.redirect_uri,
-                AuthError {
-                    error: AuthErrorType::InvalidRequest,
-                    state: None,
-                    error_description: Some("Missing code_challenge"),
-                },
-            );
-        };
-        if !matches!(pkce.code_challenge_method, CodeChallengeMethod::Sha256) {
-            return build_redirect(
-                &client.redirect_uri,
-                AuthError {
-                    error: AuthErrorType::InvalidRequest,
-                    state: None,
-                    error_description: Some("Unsupported code_challenge_method"),
-                },
-            );
-        }
-        pkce.code_challenge
+    let Some(code_challenge) = request.code_challenge else {
+        return build_redirect(
+            &client.redirect_uri,
+            AuthError {
+                error: AuthErrorType::InvalidRequest,
+                state: None,
+                error_description: Some("Missing code_challenge"),
+            },
+        );
     };
+    if !matches!(request.code_challenge_method, CodeChallengeMethod::Sha256) {
+        return build_redirect(
+            &client.redirect_uri,
+            AuthError {
+                error: AuthErrorType::InvalidRequest,
+                state: None,
+                error_description: Some("Unsupported code_challenge_method"),
+            },
+        );
+    }
 
     let request_uuid = manager.insert_open(OpenRequest {
         client_pk: request.client_id,
