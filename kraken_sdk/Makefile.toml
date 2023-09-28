@@ -1,0 +1,28 @@
+[tasks.install-generator]
+command = "npm"
+args = ["install"]
+workspace = false
+
+[tasks.clean-old]
+command = "rm"
+args = ["-r", "generated"]
+workspace = false
+
+[tasks.generate-new]
+command = "npx"
+args = [
+    "@openapitools/openapi-generator-cli", "generate",
+    "-g", "rust",
+    "-i", "openapi.json",
+    "-o", "generated",
+    "-c", "config.json"
+]
+
+[tasks.clean-docs]
+command = "rm"
+args = ["-r", "generated/docs"]
+workspace = false
+
+[tasks.generate]
+dependencies = ["install-generator", "clean-old", "generate-new", "clean-docs"]
+workspace = false

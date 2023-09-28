@@ -180,12 +180,15 @@ pub(crate) struct FrontendApi;
 #[openapi(
     paths(oauth::auth, oauth::token, data_export::export_workspace),
     components(schemas(
+        models::OsType,
+        models::PortProtocol,
         handler::ApiErrorResponse,
         handler::ApiStatusCode,
         oauth::TokenRequest,
         oauth::TokenResponse,
-        oauth::TokenError,
         oauth::TokenType,
+        oauth::TokenError,
+        oauth::TokenErrorType,
         oauth::GrantType,
         oauth::Pkce,
         oauth::CodeChallengeMethod,

@@ -37,6 +37,7 @@ pub struct AggregatedHost {
     /// The IP address of the host.
     ///
     /// If the host has multiple addresses, create a [Host] for each and link them.
+    #[schema(value_type = String)]
     pub ip_addr: IpNetwork,
 
     /// The type of OS of this host

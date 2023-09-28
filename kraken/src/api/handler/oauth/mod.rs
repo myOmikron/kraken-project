@@ -402,8 +402,8 @@ pub(crate) async fn deny(
     context_path = "/api/v1/oauth-server",
     responses(
         (status = 302, description = "Got token", body = TokenResponse),
-        (status = 400, description = "Client error", body = TokenErrorResponse),
-        (status = 500, description = "Server error", body = TokenErrorResponse),
+        (status = 400, description = "Client error", body = TokenError),
+        (status = 500, description = "Server error", body = TokenError),
     ),
     request_body = TokenRequest,
     security(("api_key" = []))
