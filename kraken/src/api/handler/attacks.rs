@@ -625,6 +625,7 @@ pub async fn query_certificate_transparency(
 /// The request to query the dehashed API
 #[derive(ToSchema, Deserialize)]
 pub struct QueryDehashedRequest {
+    #[schema(value_type = Query)]
     query: dehashed_rs::Query,
     workspace_uuid: Uuid,
 }

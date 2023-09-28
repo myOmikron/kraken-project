@@ -156,6 +156,7 @@ pub(crate) async fn start_server(
                     .service(attacks::delete_attack)
                     .service(attacks::get_tcp_port_scan_results)
                     .service(attacks::get_attack)
+                    .service(attacks::query_dehashed)
                     .service(api_keys::create_api_key)
                     .service(api_keys::get_api_keys)
                     .service(api_keys::update_api_key)
