@@ -21,13 +21,13 @@ use webauthn_rs::prelude::{Url, WebauthnError};
 use webauthn_rs::WebauthnBuilder;
 
 use crate::api::handler::{
-    api_keys, attacks, auth, domains, global_tags, hosts, leeches, oauth, ports, services,
-    settings, users, websocket, workspace_tags, workspaces,
+    api_keys, attacks, auth, data_export, domains, global_tags, hosts, leeches, oauth, ports,
+    services, settings, users, websocket, workspace_tags, workspaces,
 };
 use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
 };
-use crate::api::swagger::ApiDoc;
+use crate::api::swagger::{ExternalApi, FrontendApi};
 use crate::chan::{RpcClients, RpcManagerChannel, SettingsManagerChan, WsManagerChan};
 use crate::config::Config;
 
@@ -94,7 +94,16 @@ pub(crate) async fn start_server(
             )
             .wrap(Compress::default())
             .wrap(ErrorHandlers::new().handler(StatusCode::NOT_FOUND, handle_not_found))
-            .service(SwaggerUi::new("/docs/{_:.*}").url("/api-doc/openapi.json", ApiDoc::openapi()))
+            .service(SwaggerUi::new("/docs/{_:.*}").urls(vec![
+                (
+                    utoipa_swagger_ui::Url::new("frontend-api", "/api-doc/frontend-api.json"),
+                    FrontendApi::openapi(),
+                ),
+                (
+                    utoipa_swagger_ui::Url::new("external-api", "/api-doc/external-api.json"),
+                    ExternalApi::openapi(),
+                ),
+            ]))
             .service(
                 scope("/api/v1/auth")
                     .service(auth::test)
@@ -113,6 +122,7 @@ pub(crate) async fn start_server(
                     .service(oauth::deny),
             )
             .service(scope("/api/v1/oauth-server").service(oauth::token))
+            .service(scope("/api/v1/export").service(data_export::export_workspace))
             .service(
                 scope("/api/v1/admin")
                     .wrap(AdminRequired)

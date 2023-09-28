@@ -9,7 +9,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::{ApiError, ApiResult, PathUuid, SessionUser, UuidResponse};
+use crate::api::extractors::SessionUser;
+use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::models::LeechApiKey;
 
 #[derive(Deserialize, ToSchema)]

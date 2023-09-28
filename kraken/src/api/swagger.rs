@@ -7,13 +7,12 @@ use utoipa::{Modify, OpenApi};
 
 use crate::api::handler;
 use crate::api::handler::{
-    api_keys, attacks, auth, domains, global_tags, hosts, leeches, oauth, ports, services,
-    settings, users, websocket, workspace_tags, workspaces,
+    api_keys, attacks, auth, data_export, domains, global_tags, hosts, leeches, oauth, ports,
+    services, settings, users, websocket, workspace_tags, workspaces,
 };
 use crate::models;
 
 struct SecurityAddon;
-
 impl Modify for SecurityAddon {
     fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
         if let Some(components) = openapi.components.as_mut() {
@@ -26,7 +25,6 @@ impl Modify for SecurityAddon {
 }
 
 struct SecurityAddon2;
-
 impl Modify for SecurityAddon2 {
     fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
         if let Some(components) = openapi.components.as_mut() {
@@ -81,10 +79,8 @@ impl Modify for SecurityAddon2 {
         oauth::update_oauth_app,
         oauth::delete_oauth_app,
         oauth::info,
-        oauth::auth,
         oauth::accept,
         oauth::deny,
-        oauth::token,
         settings::get_settings,
         settings::update_settings,
         api_keys::create_api_key,
@@ -148,13 +144,6 @@ impl Modify for SecurityAddon2 {
         oauth::GetAppsResponse,
         oauth::UpdateAppRequest,
         oauth::OpenRequestInfo,
-        oauth::TokenResponse,
-        oauth::TokenErrorResponse,
-        oauth::Pkce,
-        oauth::TokenType,
-        oauth::GrantType,
-        oauth::TokenRequest,
-        oauth::CodeChallengeMethod,
         settings::SettingsFull,
         settings::UpdateSettingsRequest,
         api_keys::SimpleApiKey,
@@ -183,6 +172,29 @@ impl Modify for SecurityAddon2 {
         domains::SimpleDomain,
         domains::GetAllDomainsResponse,
     )),
-    modifiers(&SecurityAddon, &SecurityAddon2),
+    modifiers(&SecurityAddon, &SecurityAddon2)
 )]
-pub(crate) struct ApiDoc;
+pub(crate) struct FrontendApi;
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(oauth::auth, oauth::token, data_export::export_workspace),
+    components(schemas(
+        models::OsType,
+        models::PortProtocol,
+        handler::ApiErrorResponse,
+        handler::ApiStatusCode,
+        oauth::TokenRequest,
+        oauth::TokenResponse,
+        oauth::TokenType,
+        oauth::TokenError,
+        oauth::TokenErrorType,
+        oauth::GrantType,
+        data_export::AggregatedWorkspace,
+        data_export::AggregatedHost,
+        data_export::AggregatedPort,
+        data_export::AggregatedService,
+    )),
+    modifiers(&SecurityAddon2)
+)]
+pub(crate) struct ExternalApi;
