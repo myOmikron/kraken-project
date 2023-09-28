@@ -42,7 +42,7 @@ impl BearerToken {
     /// Access the contained bearer token
     pub fn as_str(&self) -> &str {
         // SAFETY: as checked in FromRequest the bytes only contain visible ascii characters
-        unsafe { std::str::from_utf8_unchecked(&self.0.as_bytes()[..Self::PREFIX.len()]) }
+        unsafe { std::str::from_utf8_unchecked(&self.0.as_bytes()[Self::PREFIX.len()..]) }
     }
 }
 impl Deref for BearerToken {
