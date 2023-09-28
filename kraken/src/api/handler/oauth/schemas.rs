@@ -21,6 +21,7 @@ pub(crate) struct AuthRequest {
     pub redirect_uri: Option<String>,
 
     /// The scope of the access request as described by [Section 3.3](https://www.rfc-editor.org/rfc/rfc6749#section-3.3).
+    #[param(value_type = String)]
     pub scope: Option<String>,
 
     /// An opaque value used by the client to maintain
@@ -28,14 +29,17 @@ pub(crate) struct AuthRequest {
     /// server includes this value when redirecting the user-agent back
     /// to the client.  The parameter SHOULD be used for preventing
     /// cross-site request forgery as described in [Section 10.12](https://www.rfc-editor.org/rfc/rfc6749#section-10.12).
+    #[param(value_type = String)]
     pub state: Option<String>,
 
     /// Pkce Code challenge.
+    #[param(value_type = String)]
     pub code_challenge: Option<String>,
 
     /// Code verifier transformation method is "S256" or "plain".
     /// It defaults to "plain" if not present in the request.
     #[serde(default)]
+    #[param(inline)]
     pub code_challenge_method: CodeChallengeMethod,
 }
 
@@ -101,6 +105,7 @@ pub(crate) struct TokenRequest {
     pub client_id: Uuid,
     pub client_secret: String,
     /// Code verifier
+    #[schema(value_type = String)]
     pub code_verifier: Option<String>,
 }
 

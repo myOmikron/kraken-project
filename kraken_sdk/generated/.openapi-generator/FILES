@@ -9,7 +9,6 @@ docs/AggregatedService.md
 docs/AggregatedWorkspace.md
 docs/ApiErrorResponse.md
 docs/ApiStatusCode.md
-docs/CodeChallengeMethod.md
 docs/DataExportApi.md
 docs/GrantType.md
 docs/OAuthApi.md
@@ -32,7 +31,6 @@ src/models/aggregated_service.rs
 src/models/aggregated_workspace.rs
 src/models/api_error_response.rs
 src/models/api_status_code.rs
-src/models/code_challenge_method.rs
 src/models/grant_type.rs
 src/models/mod.rs
 src/models/os_type.rs

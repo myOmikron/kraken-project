@@ -10,8 +10,6 @@ pub mod api_error_response;
 pub use self::api_error_response::ApiErrorResponse;
 pub mod api_status_code;
 pub use self::api_status_code::ApiStatusCode;
-pub mod code_challenge_method;
-pub use self::code_challenge_method::CodeChallengeMethod;
 pub mod grant_type;
 pub use self::grant_type::GrantType;
 pub mod os_type;

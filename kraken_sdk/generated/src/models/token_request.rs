@@ -24,19 +24,19 @@ pub struct TokenRequest {
     #[serde(rename = "client_secret")]
     pub client_secret: String,
     /// Code verifier
-    #[serde(rename = "code_verifier", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub code_verifier: Option<Option<String>>,
+    #[serde(rename = "code_verifier")]
+    pub code_verifier: String,
 }
 
 impl TokenRequest {
-    pub fn new(grant_type: crate::models::GrantType, code: uuid::Uuid, redirect_uri: String, client_id: uuid::Uuid, client_secret: String) -> TokenRequest {
+    pub fn new(grant_type: crate::models::GrantType, code: uuid::Uuid, redirect_uri: String, client_id: uuid::Uuid, client_secret: String, code_verifier: String) -> TokenRequest {
         TokenRequest {
             grant_type,
             code,
             redirect_uri,
             client_id,
             client_secret,
-            code_verifier: None,
+            code_verifier,
         }
     }
 }

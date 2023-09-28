@@ -38,7 +38,6 @@ Class | Method | HTTP request | Description
  - [AggregatedWorkspace](docs/AggregatedWorkspace.md)
  - [ApiErrorResponse](docs/ApiErrorResponse.md)
  - [ApiStatusCode](docs/ApiStatusCode.md)
- - [CodeChallengeMethod](docs/CodeChallengeMethod.md)
  - [GrantType](docs/GrantType.md)
  - [OsType](docs/OsType.md)
  - [PortProtocol](docs/PortProtocol.md)

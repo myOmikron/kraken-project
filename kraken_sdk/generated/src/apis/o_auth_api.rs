@@ -35,7 +35,7 @@ pub enum TokenError {
 
 
 /// Initial endpoint an application redirects the user to.  It requires both the `state` parameter against CSRF, as well as a pkce challenge. The only supported pkce `code_challenge_method` is `S256`.
-pub async fn auth(configuration: &configuration::Configuration, response_type: &str, client_id: &str, redirect_uri: Option<&str>, scope: Option<&str>, state: Option<&str>, code_challenge: Option<&str>, code_challenge_method: Option<CodeChallengeMethod>) -> Result<(), Error<AuthError>> {
+pub async fn auth(configuration: &configuration::Configuration, response_type: &str, client_id: &str, scope: &str, state: &str, code_challenge: &str, redirect_uri: Option<&str>, code_challenge_method: Option<&str>) -> Result<(), Error<AuthError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -48,15 +48,9 @@ pub async fn auth(configuration: &configuration::Configuration, response_type: &
     if let Some(ref local_var_str) = redirect_uri {
         local_var_req_builder = local_var_req_builder.query(&[("redirect_uri", &local_var_str.to_string())]);
     }
-    if let Some(ref local_var_str) = scope {
-        local_var_req_builder = local_var_req_builder.query(&[("scope", &local_var_str.to_string())]);
-    }
-    if let Some(ref local_var_str) = state {
-        local_var_req_builder = local_var_req_builder.query(&[("state", &local_var_str.to_string())]);
-    }
-    if let Some(ref local_var_str) = code_challenge {
-        local_var_req_builder = local_var_req_builder.query(&[("code_challenge", &local_var_str.to_string())]);
-    }
+    local_var_req_builder = local_var_req_builder.query(&[("scope", &scope.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("state", &state.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("code_challenge", &code_challenge.to_string())]);
     if let Some(ref local_var_str) = code_challenge_method {
         local_var_req_builder = local_var_req_builder.query(&[("code_challenge_method", &local_var_str.to_string())]);
     }

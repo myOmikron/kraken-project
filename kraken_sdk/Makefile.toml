@@ -23,6 +23,11 @@ command = "rm"
 args = ["-r", "generated/docs"]
 workspace = false
 
+[tasks.verify-code]
+command = "cargo"
+args = ["build", "--package", "kraken_sdk"]
+workspace = false
+
 [tasks.generate]
-dependencies = ["install-generator", "clean-old", "generate-new", "clean-docs"]
+dependencies = ["install-generator", "clean-old", "generate-new", "clean-docs", "verify-code"]
 workspace = false

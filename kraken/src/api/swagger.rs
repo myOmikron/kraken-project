@@ -190,7 +190,6 @@ pub(crate) struct FrontendApi;
         oauth::TokenError,
         oauth::TokenErrorType,
         oauth::GrantType,
-        oauth::CodeChallengeMethod,
         data_export::AggregatedWorkspace,
         data_export::AggregatedHost,
         data_export::AggregatedPort,
