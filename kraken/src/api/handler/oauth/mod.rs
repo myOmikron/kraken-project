@@ -107,11 +107,24 @@ pub(crate) async fn auth(
 ) -> Result<Redirect, ApiError> {
     let request = request.into_inner();
 
-    let client = query!(db.as_ref(), OauthClient)
+    let Some(client) = query!(db.as_ref(), OauthClient)
         .condition(OauthClient::F.uuid.equals(request.client_id))
         .optional()
         .await?
-        .ok_or(ApiError::InvalidUuid)?; // TODO redirect unauthorized_client
+    else {
+        return if let Some(redirect_uri) = request.redirect_uri.as_deref() {
+            build_redirect(
+                redirect_uri,
+                AuthError {
+                    error: AuthErrorType::UnauthorizedClient,
+                    state: request.state,
+                    error_description: Some("Unregistered client"),
+                },
+            )
+        } else {
+            Err(ApiError::InvalidUuid)
+        };
+    };
 
     if request.response_type != "code" {
         return build_redirect(
@@ -505,8 +518,8 @@ impl std::fmt::Display for TokenError {
 }
 
 impl From<rorm::Error> for TokenError {
-    fn from(_: rorm::Error) -> Self {
-        error!("Database error in `/token` endpoint");
+    fn from(err: rorm::Error) -> Self {
+        error!("Database error in `/token` endpoint: {err}");
         Self {
             error: TokenErrorType::ServerError,
             error_description: Some("An internal server error occured"),
