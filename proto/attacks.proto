@@ -185,3 +185,34 @@ service AttackResultsService {
   rpc CertificateTransparency(CertificateTransparencyResult) returns (ResultResponse);
   rpc SubdomainEnumeration(stream SubdomainEnumerationResult) returns (ResultResponse);
 }
+
+
+/*
+------------------------ Backlog -------------------------------
+ */
+
+message EmptyResponse {}
+
+message BacklogBruteforceSubdomainResult{
+  string attack_uuid = 1;
+  shared.DNSRecord record = 2;
+}
+
+message BacklogBruteforceSubdomainRequest {
+  repeated BacklogBruteforceSubdomainResult entries = 1;
+}
+
+message BacklogTcpPortScanResult {
+  string attack_uuid = 1;
+  attacks.shared.Address address = 2;
+  uint32 port = 3;
+}
+
+message BacklogTcpPortScanRequest {
+  repeated BacklogTcpPortScanResult entries = 1;
+}
+
+service BacklogService {
+  rpc BruteforceSubdomains(BacklogBruteforceSubdomainRequest) returns (EmptyResponse);
+  rpc TcpPortScan(BacklogTcpPortScanRequest) returns (EmptyResponse);
+}

@@ -35,7 +35,7 @@ use tonic::transport::Endpoint;
 use trust_dns_resolver::Name;
 use uuid::Uuid;
 
-use crate::backlog::Backlog;
+use crate::backlog::start_backlog;
 use crate::config::{get_config, Config};
 use crate::modules::bruteforce_subdomains::{
     bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
@@ -236,9 +236,8 @@ async fn main() -> Result<(), String> {
             let config = get_config(&cli.config_path)?;
             logging::setup_logging(&config.logging)?;
 
-            let backlog = Backlog {
-                db: get_db(&config).await?,
-            };
+            let db = get_db(&config).await?;
+            let backlog = start_backlog(db, &config.kraken).await?;
 
             start_rpc_server(&config, backlog).await?;
         }

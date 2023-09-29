@@ -22,7 +22,11 @@ pub mod attacks;
 #[allow(missing_docs)]
 pub mod rpc_attacks {
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
+    use std::str::FromStr;
 
+    use ipnetwork::IpNetwork;
+
+    use crate::models::{BruteforceSubdomainsResult, DnsRecordType, TcpPortScanResult};
     use crate::modules::bruteforce_subdomains::BruteforceSubdomainResult;
     use crate::rpc::rpc_attacks::shared::dns_record::Record;
     use crate::rpc::rpc_attacks::shared::{Aaaa, Address, Cname, DnsRecord, Ipv4, Ipv6, A};
@@ -115,6 +119,78 @@ pub mod rpc_attacks {
                 shared::address::Address::Ipv4(v) => IpAddr::from(Ipv4Addr::from(v)),
                 shared::address::Address::Ipv6(v) => IpAddr::from(Ipv6Addr::from(v)),
             }
+        }
+    }
+
+    impl From<BruteforceSubdomainsResult> for BacklogBruteforceSubdomainResult {
+        fn from(value: BruteforceSubdomainsResult) -> Self {
+            Self {
+                attack_uuid: value.attack.to_string(),
+                record: match value.dns_record_type {
+                    DnsRecordType::A => Some(DnsRecord {
+                        record: Some(Record::A(A {
+                            source: value.source,
+                            to: Some(Ipv4Addr::from_str(&value.destination).unwrap().into()),
+                        })),
+                    }),
+                    DnsRecordType::Aaaa => Some(DnsRecord {
+                        record: Some(Record::Aaaa(Aaaa {
+                            source: value.source,
+                            to: Some(Ipv6Addr::from_str(&value.destination).unwrap().into()),
+                        })),
+                    }),
+                    DnsRecordType::Cname => Some(DnsRecord {
+                        record: Some(Record::Cname(Cname {
+                            source: value.source,
+                            to: value.destination,
+                        })),
+                    }),
+                },
+            }
+        }
+    }
+
+    impl From<Vec<BruteforceSubdomainsResult>> for BacklogBruteforceSubdomainRequest {
+        fn from(value: Vec<BruteforceSubdomainsResult>) -> Self {
+            let mut entries: Vec<BacklogBruteforceSubdomainResult> = Vec::new();
+            entries.reserve(value.len());
+
+            for e in value {
+                entries.push(e.into());
+            }
+
+            Self { entries }
+        }
+    }
+
+    impl From<TcpPortScanResult> for BacklogTcpPortScanResult {
+        fn from(value: TcpPortScanResult) -> Self {
+            let address = match value.address {
+                IpNetwork::V4(v) => Address {
+                    address: Some(shared::address::Address::Ipv4((v.ip()).into())),
+                },
+                IpNetwork::V6(v) => Address {
+                    address: Some(shared::address::Address::Ipv6((v.ip()).into())),
+                },
+            };
+
+            Self {
+                attack_uuid: value.attack.to_string(),
+                address: Some(address),
+                port: value.port as u32, // TODO
+            }
+        }
+    }
+
+    impl From<Vec<TcpPortScanResult>> for BacklogTcpPortScanRequest {
+        fn from(value: Vec<TcpPortScanResult>) -> Self {
+            let mut entries: Vec<BacklogTcpPortScanResult> = Vec::new();
+            entries.reserve(value.len());
+
+            for e in value {
+                entries.push(e.into());
+            }
+            Self { entries }
         }
     }
 }

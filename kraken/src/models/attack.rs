@@ -60,7 +60,7 @@ pub(crate) struct AttackInsert {
 }
 
 /// The type of DNS Record
-#[derive(DbEnum)]
+#[derive(Clone, DbEnum)]
 pub enum DnsRecordType {
     /// [A](crate::rpc::rpc_definitions::shared::A) record type
     A,
