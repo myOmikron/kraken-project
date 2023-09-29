@@ -227,6 +227,7 @@ pub struct Port {
 pub(crate) struct PortInsert {
     pub(crate) uuid: Uuid,
     pub(crate) port: i16,
+    pub(crate) protocol: PortProtocol,
     pub(crate) host: ForeignModel<Host>,
     pub(crate) comment: String,
     pub(crate) workspace: ForeignModel<Workspace>,

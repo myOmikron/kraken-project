@@ -15,8 +15,8 @@ use log::{debug, error, warn};
 use rand::prelude::IteratorRandom;
 use rand::thread_rng;
 use rorm::db::transaction::Transaction;
-use rorm::prelude::ForeignModelByField;
-use rorm::{and, insert, query, update, Database, FieldAccess, Model};
+use rorm::prelude::*;
+use rorm::{and, insert, query, update, Database};
 use serde::{Deserialize, Serialize};
 use tokio::sync::oneshot;
 use utoipa::ToSchema;
@@ -34,8 +34,8 @@ use crate::chan::{
 use crate::models::{
     Attack, AttackInsert, AttackType, BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert,
     CertificateTransparencyResultInsert, CertificateTransparencyValueNameInsert,
-    DehashedQueryResultInsert, DnsRecordType, TcpPortScanResult, TcpPortScanResultInsert,
-    Workspace, WorkspaceMember,
+    DehashedQueryResultInsert, DnsRecordType, Host, HostInsert, OsType, Port, PortInsert,
+    PortProtocol, TcpPortScanResult, TcpPortScanResultInsert, Workspace, WorkspaceMember,
 };
 use crate::rpc::rpc_definitions;
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
@@ -461,6 +461,7 @@ pub async fn scan_tcp_ports(
     ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
     let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let workspace_uuid = req.workspace_uuid;
 
     let mut client = rpc_clients
         .get_ref()
@@ -470,7 +471,7 @@ pub async fn scan_tcp_ports(
         .ok_or(ApiError::InvalidLeech)?
         .clone();
 
-    let uuid = insert!(db.as_ref(), AttackInsert)
+    let attack_uuid = insert!(db.as_ref(), AttackInsert)
         .return_primary_key()
         .single(&AttackInsert {
             uuid: Uuid::new_v4(),
@@ -484,7 +485,7 @@ pub async fn scan_tcp_ports(
     // start attack
     tokio::spawn(async move {
         let req = rpc_definitions::TcpPortScanRequest {
-            attack_uuid: uuid.to_string(),
+            attack_uuid: attack_uuid.to_string(),
             targets: req.targets.iter().map(|addr| (*addr).into()).collect(),
             exclude: req.exclude.iter().map(|addr| addr.to_string()).collect(),
             ports: req.ports.iter().map(From::from).collect(),
@@ -494,6 +495,77 @@ pub async fn scan_tcp_ports(
             concurrent_limit: req.concurrent_limit,
             skip_icmp_check: req.skip_icmp_check,
         };
+
+        async fn insert_result(
+            db: &Database,
+            workspace_uuid: Uuid,
+            attack_uuid: Uuid,
+            ip_addr: IpNetwork,
+            port_num: u16,
+        ) -> Result<(), rorm::Error> {
+            insert!(db, TcpPortScanResult)
+                .return_nothing()
+                .single(&TcpPortScanResultInsert {
+                    uuid: Uuid::new_v4(),
+                    attack: ForeignModelByField::Key(attack_uuid),
+                    address: ip_addr,
+                    port: port_num as i32,
+                })
+                .await?;
+
+            let mut tx = db.start_transaction().await?;
+            let host = query!(&mut tx, (Host::F.uuid,))
+                .condition(and![
+                    Host::F.ip_addr.equals(ip_addr),
+                    Host::F.workspace.equals(workspace_uuid)
+                ])
+                .optional()
+                .await?;
+
+            let host_uuid = if let Some((uuid,)) = host {
+                uuid
+            } else {
+                insert!(&mut tx, HostInsert)
+                    .return_primary_key()
+                    .single(&HostInsert {
+                        uuid: Uuid::new_v4(),
+                        ip_addr,
+                        os_type: OsType::Unknown,
+                        response_time: None,
+                        comment: String::new(),
+                        workspace: ForeignModelByField::Key(workspace_uuid),
+                    })
+                    .await?
+            };
+
+            let port = query!(&mut tx, Port)
+                .condition(and![
+                    Port::F
+                        .port
+                        .equals(i16::from_ne_bytes(port_num.to_ne_bytes())),
+                    Port::F.protocol.equals(PortProtocol::Tcp),
+                    Port::F.host.equals(host_uuid),
+                    Port::F.workspace.equals(workspace_uuid),
+                ])
+                .optional()
+                .await?;
+            if port.is_none() {
+                insert!(&mut tx, PortInsert)
+                    .return_nothing()
+                    .single(&PortInsert {
+                        uuid: Uuid::new_v4(),
+                        port: i16::from_ne_bytes(port_num.to_ne_bytes()),
+                        protocol: PortProtocol::Tcp,
+                        host: ForeignModelByField::Key(host_uuid),
+                        comment: String::new(),
+                        workspace: ForeignModelByField::Key(workspace_uuid),
+                    })
+                    .await?;
+            }
+            tx.commit().await?;
+
+            Ok(())
+        }
 
         match client.run_tcp_port_scan(req).await {
             Ok(v) => {
@@ -522,15 +594,14 @@ pub async fn scan_tcp_ports(
                                 }
                             };
 
-                            if let Err(err) = insert!(db.as_ref(), TcpPortScanResult)
-                                .return_nothing()
-                                .single(&TcpPortScanResultInsert {
-                                    uuid: Uuid::new_v4(),
-                                    attack: ForeignModelByField::Key(uuid),
-                                    address: IpNetwork::from(address),
-                                    port: v.port as i32,
-                                })
-                                .await
+                            if let Err(err) = insert_result(
+                                &db,
+                                workspace_uuid,
+                                attack_uuid,
+                                IpNetwork::from(address),
+                                v.port as u16,
+                            )
+                            .await
                             {
                                 error!("Database error: {err}");
                             }
@@ -539,7 +610,7 @@ pub async fn scan_tcp_ports(
                                 .send(WsManagerMessage::Message(
                                     user_uuid,
                                     WsMessage::ScanTcpPortsResult {
-                                        attack_uuid: uuid,
+                                        attack_uuid,
                                         address: address.to_string(),
                                         port: v.port as u16,
                                     },
@@ -555,7 +626,7 @@ pub async fn scan_tcp_ports(
                                 .send(WsManagerMessage::Message(
                                     user_uuid,
                                     WsMessage::AttackFinished {
-                                        attack_uuid: uuid,
+                                        attack_uuid,
                                         finished_successful: false,
                                     },
                                 ))
@@ -574,7 +645,7 @@ pub async fn scan_tcp_ports(
                     .send(WsManagerMessage::Message(
                         user_uuid,
                         WsMessage::AttackFinished {
-                            attack_uuid: uuid,
+                            attack_uuid,
                             finished_successful: false,
                         },
                     ))
@@ -587,7 +658,7 @@ pub async fn scan_tcp_ports(
         };
 
         if let Err(err) = update!(db.as_ref(), Attack)
-            .condition(Attack::F.uuid.equals(uuid))
+            .condition(Attack::F.uuid.equals(attack_uuid))
             .set(Attack::F.finished_at, Some(Utc::now()))
             .exec()
             .await
@@ -599,7 +670,7 @@ pub async fn scan_tcp_ports(
             .send(WsManagerMessage::Message(
                 user_uuid,
                 WsMessage::AttackFinished {
-                    attack_uuid: uuid,
+                    attack_uuid,
                     finished_successful: true,
                 },
             ))

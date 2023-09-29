@@ -469,7 +469,7 @@ pub(crate) async fn token(
     }
 
     let access_token = Alphanumeric.sample_string(&mut thread_rng(), 32);
-    let expires_in = Duration::from_secs(60);
+    let expires_in = Duration::from_secs(120);
     insert!(db.as_ref(), WorkspaceAccessTokenInsert)
         .single(&WorkspaceAccessTokenInsert {
             token: access_token.clone(),
