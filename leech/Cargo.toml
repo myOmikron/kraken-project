@@ -15,14 +15,6 @@ clap = { version = "~4", features = ["derive"] }
 # regex library
 regex = { version = ">=1.5.5" }
 
-# openapi swagger
-utoipa = { version = "~3", features = ["actix_extras", "repr", "chrono", "uuid", "openapi_extensions", "preserve_order"] }
-# openapi swagger boilerplat generation
-utoipa-swagger-ui = { version = "~3", features = ["actix-web"] }
-
-# Webauthn library
-webauthn-rs = { version = "~0.4", features = ["danger-allow-state-serialisation"] }
-
 ipnetwork = { version = "~0.20" }
 
 # Logging facade

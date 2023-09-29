@@ -1952,10 +1952,7 @@ dependencies = [
  "tonic-build",
  "trust-dns-resolver 0.23.0",
  "url",
- "utoipa",
- "utoipa-swagger-ui",
  "uuid",
- "webauthn-rs",
 ]
 
 [[package]]
