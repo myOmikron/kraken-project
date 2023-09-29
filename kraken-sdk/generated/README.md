@@ -32,9 +32,11 @@ Class | Method | HTTP request | Description
 
 ## Documentation For Models
 
+ - [AggregatedDomain](docs/AggregatedDomain.md)
  - [AggregatedHost](docs/AggregatedHost.md)
  - [AggregatedPort](docs/AggregatedPort.md)
  - [AggregatedService](docs/AggregatedService.md)
+ - [AggregatedTags](docs/AggregatedTags.md)
  - [AggregatedWorkspace](docs/AggregatedWorkspace.md)
  - [ApiErrorResponse](docs/ApiErrorResponse.md)
  - [ApiStatusCode](docs/ApiStatusCode.md)

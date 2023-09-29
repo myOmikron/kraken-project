@@ -3,9 +3,11 @@
 .travis.yml
 Cargo.toml
 README.md
+docs/AggregatedDomain.md
 docs/AggregatedHost.md
 docs/AggregatedPort.md
 docs/AggregatedService.md
+docs/AggregatedTags.md
 docs/AggregatedWorkspace.md
 docs/ApiErrorResponse.md
 docs/ApiStatusCode.md
@@ -25,9 +27,11 @@ src/apis/data_export_api.rs
 src/apis/mod.rs
 src/apis/o_auth_api.rs
 src/lib.rs
+src/models/aggregated_domain.rs
 src/models/aggregated_host.rs
 src/models/aggregated_port.rs
 src/models/aggregated_service.rs
+src/models/aggregated_tags.rs
 src/models/aggregated_workspace.rs
 src/models/api_error_response.rs
 src/models/api_status_code.rs

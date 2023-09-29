@@ -14,6 +14,12 @@
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AggregatedPort {
+    /// Global tags
+    #[serde(rename = "global_tags")]
+    pub global_tags: Vec<String>,
+    /// Tags which are local to the workspace
+    #[serde(rename = "local_tags")]
+    pub local_tags: Vec<String>,
     /// The port's uuid
     #[serde(rename = "uuid")]
     pub uuid: uuid::Uuid,
@@ -35,8 +41,10 @@ pub struct AggregatedPort {
 
 impl AggregatedPort {
     /// An open port on a host
-    pub fn new(uuid: uuid::Uuid, port: i32, protocol: crate::models::PortProtocol, host: uuid::Uuid, services: Vec<uuid::Uuid>, comment: String) -> AggregatedPort {
+    pub fn new(global_tags: Vec<String>, local_tags: Vec<String>, uuid: uuid::Uuid, port: i32, protocol: crate::models::PortProtocol, host: uuid::Uuid, services: Vec<uuid::Uuid>, comment: String) -> AggregatedPort {
         AggregatedPort {
+            global_tags,
+            local_tags,
             uuid,
             port,
             protocol,

@@ -1,9 +1,13 @@
+pub mod aggregated_domain;
+pub use self::aggregated_domain::AggregatedDomain;
 pub mod aggregated_host;
 pub use self::aggregated_host::AggregatedHost;
 pub mod aggregated_port;
 pub use self::aggregated_port::AggregatedPort;
 pub mod aggregated_service;
 pub use self::aggregated_service::AggregatedService;
+pub mod aggregated_tags;
+pub use self::aggregated_tags::AggregatedTags;
 pub mod aggregated_workspace;
 pub use self::aggregated_workspace::AggregatedWorkspace;
 pub mod api_error_response;

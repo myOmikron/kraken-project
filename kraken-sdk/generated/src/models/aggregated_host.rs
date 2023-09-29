@@ -14,6 +14,12 @@
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AggregatedHost {
+    /// Global tags
+    #[serde(rename = "global_tags")]
+    pub global_tags: Vec<String>,
+    /// Tags which are local to the workspace
+    #[serde(rename = "local_tags")]
+    pub local_tags: Vec<String>,
     /// The host's uuid
     #[serde(rename = "uuid")]
     pub uuid: uuid::Uuid,
@@ -38,8 +44,10 @@ pub struct AggregatedHost {
 
 impl AggregatedHost {
     /// A representation of an host.
-    pub fn new(uuid: uuid::Uuid, ip_addr: String, os_type: crate::models::OsType, ports: Vec<uuid::Uuid>, services: Vec<uuid::Uuid>, comment: String) -> AggregatedHost {
+    pub fn new(global_tags: Vec<String>, local_tags: Vec<String>, uuid: uuid::Uuid, ip_addr: String, os_type: crate::models::OsType, ports: Vec<uuid::Uuid>, services: Vec<uuid::Uuid>, comment: String) -> AggregatedHost {
         AggregatedHost {
+            global_tags,
+            local_tags,
             uuid,
             ip_addr,
             os_type,

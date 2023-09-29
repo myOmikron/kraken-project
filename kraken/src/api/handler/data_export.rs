@@ -18,7 +18,11 @@ use uuid::Uuid;
 
 use crate::api::extractors::BearerToken;
 use crate::api::handler::{ApiError, ApiResult, PathUuid};
-use crate::models::{Host, OsType, Port, PortProtocol, Service, WorkspaceAccessToken};
+use crate::models::{
+    Domain, DomainGlobalTag, DomainWorkspaceTag, Host, HostGlobalTag, HostWorkspaceTag, OsType,
+    Port, PortGlobalTag, PortProtocol, PortWorkspaceTag, Service, ServiceGlobalTag,
+    ServiceWorkspaceTag, WorkspaceAccessToken,
+};
 
 /// The aggregated results of a workspace
 #[derive(Serialize, ToSchema)]
@@ -31,6 +35,9 @@ pub struct AggregatedWorkspace {
 
     /// The services found by this workspace
     pub services: HashMap<Uuid, AggregatedService>,
+
+    /// The domains found by this workspace
+    pub domains: HashMap<Uuid, AggregatedDomain>,
 }
 
 /// A representation of an host.
@@ -59,6 +66,10 @@ pub struct AggregatedHost {
 
     /// A comment to the host
     pub comment: String,
+
+    /// Set of global and local tags
+    #[serde(flatten)]
+    pub tags: AggregatedTags,
 }
 
 /// An open port on a host
@@ -81,6 +92,10 @@ pub struct AggregatedPort {
 
     /// A comment to the port
     pub comment: String,
+
+    /// Set of global and local tags
+    #[serde(flatten)]
+    pub tags: AggregatedTags,
 }
 
 /// A detected service on a host
@@ -103,6 +118,37 @@ pub struct AggregatedService {
 
     /// A comment to the service
     pub comment: String,
+
+    /// Set of global and local tags
+    #[serde(flatten)]
+    pub tags: AggregatedTags,
+}
+
+/// A domain
+#[derive(Serialize, ToSchema)]
+pub struct AggregatedDomain {
+    /// The domain's uuid
+    pub uuid: Uuid,
+
+    /// The domain that was found
+    pub domain: String,
+
+    /// A comment to the domain
+    pub comment: String,
+
+    /// Set of global and local tags
+    #[serde(flatten)]
+    pub tags: AggregatedTags,
+}
+
+/// Set of global and local tags
+#[derive(Serialize, ToSchema, Default)]
+pub struct AggregatedTags {
+    /// Global tags
+    global_tags: Vec<String>,
+
+    /// Tags which are local to the workspace
+    local_tags: Vec<String>,
 }
 
 #[utoipa::path(
@@ -148,10 +194,16 @@ pub(crate) async fn export_workspace(
         .map_ok(|port| (port.uuid, port.into()))
         .try_collect()
         .await?;
-    let services: HashMap<Uuid, AggregatedService> = query!(&mut tx, Service)
+    let mut services: HashMap<Uuid, AggregatedService> = query!(&mut tx, Service)
         .condition(Service::F.workspace.equals(path.uuid))
         .stream()
         .map_ok(|service| (service.uuid, service.into()))
+        .try_collect()
+        .await?;
+    let mut domains: HashMap<Uuid, AggregatedDomain> = query!(&mut tx, Domain)
+        .condition(Domain::F.workspace.equals(path.uuid))
+        .stream()
+        .map_ok(|domain| (domain.uuid, domain.into()))
         .try_collect()
         .await?;
 
@@ -172,11 +224,46 @@ pub(crate) async fn export_workspace(
         }
     }
 
+    // Query all tags
+    macro_rules! query_tags {
+        ($owner:ident, $owner_set:ident, $GlobalTag:ident, $WorkspaceTag:ident) => {
+            let mut stream = query!(
+                &mut tx,
+                ($GlobalTag::F.$owner.uuid, $GlobalTag::F.global_tag.name)
+            )
+            .condition($GlobalTag::F.$owner.workspace.equals(path.uuid))
+            .stream();
+            while let Some((owner_uuid, name)) = stream.try_next().await? {
+                if let Some(owner) = $owner_set.get_mut(&owner_uuid) {
+                    owner.tags.global_tags.push(name);
+                }
+            }
+            drop(stream);
+            let mut stream = query!(
+                &mut tx,
+                ($WorkspaceTag::F.$owner, $WorkspaceTag::F.workspace_tag.name)
+            )
+            .condition($WorkspaceTag::F.workspace_tag.workspace.equals(path.uuid))
+            .stream();
+            while let Some((owner_uuid, name)) = stream.try_next().await? {
+                if let Some(owner) = $owner_set.get_mut(owner_uuid.key()) {
+                    owner.tags.local_tags.push(name);
+                }
+            }
+            drop(stream);
+        };
+    }
+    query_tags!(host, hosts, HostGlobalTag, HostWorkspaceTag);
+    query_tags!(port, ports, PortGlobalTag, PortWorkspaceTag);
+    query_tags!(service, services, ServiceGlobalTag, ServiceWorkspaceTag);
+    query_tags!(domain, domains, DomainGlobalTag, DomainWorkspaceTag);
+
     tx.commit().await?;
     Ok(Json(AggregatedWorkspace {
         hosts,
         ports,
         services,
+        domains,
     }))
 }
 
@@ -200,6 +287,7 @@ impl From<Host> for AggregatedHost {
             ports: Vec::new(),
             services: Vec::new(),
             comment,
+            tags: Default::default(),
         }
     }
 }
@@ -221,6 +309,7 @@ impl From<Port> for AggregatedPort {
             host: *host.key(),
             services: Vec::new(),
             comment,
+            tags: Default::default(),
         }
     }
 }
@@ -242,6 +331,23 @@ impl From<Service> for AggregatedService {
             host: *host.key(),
             port: port.map(|port| *port.key()),
             comment,
+            tags: Default::default(),
+        }
+    }
+}
+impl From<Domain> for AggregatedDomain {
+    fn from(value: Domain) -> Self {
+        let Domain {
+            uuid,
+            domain,
+            comment,
+            workspace: _,
+        } = value;
+        Self {
+            uuid,
+            domain,
+            comment,
+            tags: Default::default(),
         }
     }
 }
