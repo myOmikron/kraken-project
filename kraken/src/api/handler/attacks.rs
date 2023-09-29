@@ -145,6 +145,24 @@ pub async fn bruteforce_subdomains(
                                 }
                             };
 
+                            let Ok(None) = query!(db.as_ref(), BruteforceSubdomainsResult)
+                                .condition(and!(
+                                    BruteforceSubdomainsResult::F.attack.equals(&attack_uuid),
+                                    BruteforceSubdomainsResult::F
+                                        .dns_record_type
+                                        .equals(dns_record_type.clone()),
+                                    BruteforceSubdomainsResult::F.source.equals(&source),
+                                    BruteforceSubdomainsResult::F
+                                        .destination
+                                        .equals(&destination)
+                                ))
+                                .optional()
+                                .await
+                            else {
+                                debug!("entry already exists");
+                                continue;
+                            };
+
                             if let Err(err) = insert!(db.as_ref(), BruteforceSubdomainsResult)
                                 .single(&BruteforceSubdomainsResultInsert {
                                     uuid: Uuid::new_v4(),
