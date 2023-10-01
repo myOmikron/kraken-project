@@ -187,6 +187,8 @@ pub enum PortProtocol {
     Tcp,
     /// udp
     Udp,
+    /// sctp
+    Sctp,
 }
 
 /// A port
