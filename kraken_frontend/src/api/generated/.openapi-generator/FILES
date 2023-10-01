@@ -22,7 +22,6 @@ models/ApiErrorResponse.ts
 models/ApiStatusCode.ts
 models/AttackType.ts
 models/BruteforceSubdomainsRequest.ts
-models/CodeChallengeMethod.ts
 models/Color.ts
 models/CreateApiKeyRequest.ts
 models/CreateAppRequest.ts
@@ -52,12 +51,10 @@ models/GetUser.ts
 models/GetUserResponse.ts
 models/GetWorkspaceResponse.ts
 models/GetWorkspaceTagsResponse.ts
-models/GrantType.ts
 models/LoginRequest.ts
 models/OpenRequestInfo.ts
 models/OsType.ts
 models/PageParams.ts
-models/Pkce.ts
 models/PortOrRange.ts
 models/PortProtocol.ts
 models/Query.ts
@@ -94,10 +91,6 @@ models/SimpleTcpPortScanResult.ts
 models/SimpleWorkspace.ts
 models/TagType.ts
 models/TcpPortScanResultsPage.ts
-models/TokenErrorResponse.ts
-models/TokenRequest.ts
-models/TokenResponse.ts
-models/TokenType.ts
 models/UpdateApiKeyRequest.ts
 models/UpdateAppRequest.ts
 models/UpdateGlobalTag.ts

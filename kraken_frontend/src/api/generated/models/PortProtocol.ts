@@ -20,7 +20,8 @@
 export const PortProtocol = {
     Unknown: 'Unknown',
     Tcp: 'Tcp',
-    Udp: 'Udp'
+    Udp: 'Udp',
+    Sctp: 'Sctp'
 } as const;
 export type PortProtocol = typeof PortProtocol[keyof typeof PortProtocol];
 

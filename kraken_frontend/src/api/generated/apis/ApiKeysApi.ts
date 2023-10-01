@@ -17,7 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   CreateApiKeyRequest,
-  GetLeechResponse,
+  GetApiKeysResponse,
   UpdateApiKeyRequest,
   UuidResponse,
 } from '../models';
@@ -26,8 +26,8 @@ import {
     ApiErrorResponseToJSON,
     CreateApiKeyRequestFromJSON,
     CreateApiKeyRequestToJSON,
-    GetLeechResponseFromJSON,
-    GetLeechResponseToJSON,
+    GetApiKeysResponseFromJSON,
+    GetApiKeysResponseToJSON,
     UpdateApiKeyRequestFromJSON,
     UpdateApiKeyRequestToJSON,
     UuidResponseFromJSON,
@@ -119,10 +119,10 @@ export class ApiKeysApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all leeches
-     * Retrieve all leeches
+     * Retrieve all api keys
+     * Retrieve all api keys
      */
-    async getApiKeysRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetLeechResponse>> {
+    async getApiKeysRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetApiKeysResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -134,14 +134,14 @@ export class ApiKeysApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetLeechResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetApiKeysResponseFromJSON(jsonValue));
     }
 
     /**
-     * Retrieve all leeches
-     * Retrieve all leeches
+     * Retrieve all api keys
+     * Retrieve all api keys
      */
-    async getApiKeys(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetLeechResponse> {
+    async getApiKeys(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetApiKeysResponse> {
         const response = await this.getApiKeysRaw(initOverrides);
         return await response.value();
     }
