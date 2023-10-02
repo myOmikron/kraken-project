@@ -20,8 +20,8 @@ use uuid::Uuid;
 
 use crate::api::handler::users::UserResponse;
 use crate::api::handler::{
-    query_user, ApiError, ApiResult, Page, PageParams, PathUuid, TcpPortScanResultsPage,
-    UuidResponse,
+    get_page_params, query_user, ApiError, ApiResult, Page, PageParams, PathUuid,
+    TcpPortScanResultsPage, UuidResponse,
 };
 use crate::api::server::DehashedScheduler;
 use crate::chan::{
@@ -899,7 +899,7 @@ pub(crate) async fn get_tcp_port_scan_results(
     let mut tx = db.start_transaction().await?;
 
     let uuid = path.uuid;
-    let PageParams { limit, offset } = query.into_inner();
+    let (limit, offset) = get_page_params(query).await?;
 
     let page = if !has_access(&mut tx, uuid, &session).await? {
         Err(ApiError::MissingPrivileges)

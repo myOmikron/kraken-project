@@ -2,13 +2,18 @@ use std::sync::TryLockError;
 
 use actix_toolbox::tb_middleware::{actix_session, Session};
 use actix_web::body::BoxBody;
+use actix_web::web::Query;
 use actix_web::HttpResponse;
 use attacks::SimpleTcpPortScanResult;
+use domains::SimpleDomain;
+use hosts::SimpleHost;
 use log::{debug, error, info, trace, warn};
+use ports::SimplePort;
 use rorm::db::Executor;
 use rorm::{query, FieldAccess, Model};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_repr::Serialize_repr;
+use services::SimpleService;
 use thiserror::Error;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -57,33 +62,53 @@ pub struct PathUuid {
     pub(crate) uuid: Uuid,
 }
 
+/// Query parameters for paginated data
 #[derive(Deserialize, ToSchema, IntoParams)]
 pub struct PageParams {
     /// Number of items to retrieve
     #[schema(example = 50)]
-    pub(crate) limit: u64,
+    pub limit: u64,
 
     /// Position in the whole list to start retrieving from
     #[schema(example = 0)]
-    pub(crate) offset: u64,
+    pub offset: u64,
 }
 
+/// Response containing paginated data
 #[derive(Serialize, ToSchema)]
-#[aliases(TcpPortScanResultsPage = Page<SimpleTcpPortScanResult>)]
-pub(crate) struct Page<T> {
+#[aliases(
+    TcpPortScanResultsPage = Page<SimpleTcpPortScanResult>,
+    DomainResultsPage = Page<SimpleDomain>,
+    HostResultsPage = Page<SimpleHost>,
+    ServiceResultsPage = Page<SimpleService>,
+    PortResultsPage = Page<SimplePort>
+)]
+pub struct Page<T> {
     /// The page's items
-    pub(crate) items: Vec<T>,
+    pub items: Vec<T>,
 
     /// The limit this page was retrieved with
     #[schema(example = 50)]
-    pub(crate) limit: u64,
+    pub limit: u64,
 
     /// The offset this page was retrieved with
     #[schema(example = 0)]
-    pub(crate) offset: u64,
+    pub offset: u64,
 
     /// The total number of items this page is a subset of
-    pub(crate) total: u64,
+    pub total: u64,
+}
+
+const QUERY_LIMIT_MAX: u64 = 1000;
+
+pub(crate) async fn get_page_params(query: Query<PageParams>) -> Result<(u64, u64), ApiError> {
+    let PageParams { limit, offset } = query.into_inner();
+
+    if limit > QUERY_LIMIT_MAX {
+        Err(ApiError::InvalidQueryLimit)
+    } else {
+        Ok((limit, offset))
+    }
 }
 
 /// Color value
@@ -169,6 +194,7 @@ pub enum ApiStatusCode {
     SessionError = 2002,
     WebauthnError = 2003,
     DehashedNotAvailable = 2004,
+    InvalidQueryLimit = 2005,
 }
 
 /// Representation of an error response
@@ -249,6 +275,8 @@ pub enum ApiError {
     InvalidName,
     #[error("Dehashed is not available")]
     DehashedNotAvailable,
+    #[error("Invalid limit query")]
+    InvalidQueryLimit,
 }
 
 impl actix_web::ResponseError for ApiError {
@@ -431,6 +459,10 @@ impl actix_web::ResponseError for ApiError {
             ApiError::DehashedNotAvailable => HttpResponse::InternalServerError().json(
                 ApiErrorResponse::new(ApiStatusCode::DehashedNotAvailable, self.to_string()),
             ),
+            ApiError::InvalidQueryLimit => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::InvalidQueryLimit,
+                self.to_string(),
+            )),
         }
     }
 }

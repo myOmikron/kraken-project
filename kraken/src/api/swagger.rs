@@ -150,7 +150,7 @@ impl Modify for SecurityAddon2 {
         api_keys::CreateApiKeyRequest,
         api_keys::GetApiKeysResponse,
         api_keys::UpdateApiKeyRequest,
-        hosts::GetAllHostsResponse,
+        handler::HostResultsPage,
         hosts::SimpleHost,
         hosts::FullHost,
         hosts::UpdateHostRequest,
@@ -166,11 +166,11 @@ impl Modify for SecurityAddon2 {
         workspace_tags::UpdateWorkspaceTag,
         workspace_tags::CreateWorkspaceTagRequest,
         ports::SimplePort,
-        ports::GetAllPortsResponse,
+        handler::PortResultsPage,
         services::SimpleService,
-        services::GetAllServicesResponse,
+        handler::ServiceResultsPage,
         domains::SimpleDomain,
-        domains::GetAllDomainsResponse,
+        handler::DomainResultsPage,
     )),
     modifiers(&SecurityAddon, &SecurityAddon2)
 )]
