@@ -1,0 +1,13 @@
+.workspace-attacks-dehashed-container {
+    display: grid;
+    grid-template-rows: 1fr max-content;
+    flex-direction: column;
+    gap: 1em;
+}
+
+.workspace-attacks-dehashed {
+    display: grid;
+    grid-template-columns: 2fr 5fr;
+    gap :1em;
+    height: max-content;
+}

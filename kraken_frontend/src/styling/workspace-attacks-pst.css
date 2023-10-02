@@ -1,0 +1,37 @@
+.workspace-attacks-pst-container {
+    display: grid;
+    grid-template-rows: 1fr max-content;
+    gap: 1em;
+    height: 100%;
+}
+
+.workspace-attacks-pst {
+    display: grid;
+    height: max-content;
+    gap: 1em;
+}
+
+.workspace-attacks-pst-advanced-button {
+    display: flex;
+    height: 2em;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+}
+
+.workspace-attacks-pst-advanced-button .icon {
+    width: 2em;
+}
+
+.workspace-attacks-pst-advanced {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1em;
+    height: max-content;
+    transition: all ease 750ms;
+    opacity: 0;
+}
+
+.workspace-attacks-pst-advanced-open {
+    opacity: 100%;
+}
