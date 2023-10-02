@@ -8,10 +8,10 @@ use log::error;
 use rand::thread_rng;
 use rorm::{query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::{ApiError, ApiResult};
+use crate::api::handler::{ApiError, ApiResult, PathUuid};
 use crate::chan::{WsManagerChan, WsManagerMessage};
 use crate::models::User;
 use crate::modules::user::create::create_user_transaction;
@@ -75,11 +75,6 @@ pub(crate) async fn create_user(
     Ok(Json(CreateUserResponse {
         uuid: uuid.to_string(),
     }))
-}
-
-#[derive(Deserialize, IntoParams)]
-pub(crate) struct PathUuid {
-    pub(crate) uuid: Uuid,
 }
 
 /// Delete a user by its uuid
