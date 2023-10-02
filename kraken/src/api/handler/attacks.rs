@@ -15,11 +15,11 @@ use rorm::prelude::ForeignModelByField;
 use rorm::{and, insert, query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use tokio::sync::oneshot;
-use utoipa::{IntoParams, ToSchema};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::users::UserResponse;
-use crate::api::handler::{query_user, ApiError, ApiResult, PathUuid, UuidResponse};
+use crate::api::handler::{query_user, ApiError, ApiResult, PageParams, PathUuid, UuidResponse};
 use crate::api::server::DehashedScheduler;
 use crate::chan::{
     CertificateTransparencyEntry, RpcClients, WsManagerChan, WsManagerMessage, WsMessage,
@@ -862,17 +862,6 @@ pub(crate) async fn get_attack(
     tx.commit().await?;
 
     Ok(Json(attack?))
-}
-
-#[derive(Deserialize, ToSchema, IntoParams)]
-pub(crate) struct PageParams {
-    /// Number of items to retrieve
-    #[schema(example = 50)]
-    limit: u64,
-
-    /// Position in the whole list to start retrieving from
-    #[schema(example = 0)]
-    offset: u64,
 }
 
 #[derive(Serialize, ToSchema)]

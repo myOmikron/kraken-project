@@ -56,6 +56,17 @@ pub struct PathUuid {
     pub(crate) uuid: Uuid,
 }
 
+#[derive(Deserialize, ToSchema, IntoParams)]
+pub struct PageParams {
+    /// Number of items to retrieve
+    #[schema(example = 50)]
+    pub(crate) limit: u64,
+
+    /// Position in the whole list to start retrieving from
+    #[schema(example = 0)]
+    pub(crate) offset: u64,
+}
+
 /// Color value
 #[derive(Deserialize, Serialize, Debug, ToSchema)]
 pub struct Color {
