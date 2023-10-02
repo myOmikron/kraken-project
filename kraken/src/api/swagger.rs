@@ -132,7 +132,7 @@ impl Modify for SecurityAddon2 {
         attacks::ScanTcpPortsRequest,
         attacks::QueryCertificateTransparencyRequest,
         attacks::PortOrRange,
-        attacks::TcpPortScanResultsPage,
+        handler::TcpPortScanResultsPage,
         attacks::SimpleTcpPortScanResult,
         dehashed_rs::Query,
         dehashed_rs::SearchType,

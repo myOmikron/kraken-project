@@ -3,6 +3,7 @@ use std::sync::TryLockError;
 use actix_toolbox::tb_middleware::{actix_session, Session};
 use actix_web::body::BoxBody;
 use actix_web::HttpResponse;
+use attacks::SimpleTcpPortScanResult;
 use log::{debug, error, info, trace, warn};
 use rorm::db::Executor;
 use rorm::{query, FieldAccess, Model};
@@ -65,6 +66,24 @@ pub struct PageParams {
     /// Position in the whole list to start retrieving from
     #[schema(example = 0)]
     pub(crate) offset: u64,
+}
+
+#[derive(Serialize, ToSchema)]
+#[aliases(TcpPortScanResultsPage = Page<SimpleTcpPortScanResult>)]
+pub(crate) struct Page<T> {
+    /// The page's items
+    pub(crate) items: Vec<T>,
+
+    /// The limit this page was retrieved with
+    #[schema(example = 50)]
+    pub(crate) limit: u64,
+
+    /// The offset this page was retrieved with
+    #[schema(example = 0)]
+    pub(crate) offset: u64,
+
+    /// The total number of items this page is a subset of
+    pub(crate) total: u64,
 }
 
 /// Color value

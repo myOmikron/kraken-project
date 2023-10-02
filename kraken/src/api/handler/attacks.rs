@@ -19,7 +19,10 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::users::UserResponse;
-use crate::api::handler::{query_user, ApiError, ApiResult, PageParams, PathUuid, UuidResponse};
+use crate::api::handler::{
+    query_user, ApiError, ApiResult, Page, PageParams, PathUuid, TcpPortScanResultsPage,
+    UuidResponse,
+};
 use crate::api::server::DehashedScheduler;
 use crate::chan::{
     CertificateTransparencyEntry, RpcClients, WsManagerChan, WsManagerMessage, WsMessage,
@@ -862,24 +865,6 @@ pub(crate) async fn get_attack(
     tx.commit().await?;
 
     Ok(Json(attack?))
-}
-
-#[derive(Serialize, ToSchema)]
-#[aliases(TcpPortScanResultsPage = Page<SimpleTcpPortScanResult>)]
-pub(crate) struct Page<T> {
-    /// The page's items
-    pub(crate) items: Vec<T>,
-
-    /// The limit this page was retrieved with
-    #[schema(example = 50)]
-    pub(crate) limit: u64,
-
-    /// The offset this page was retrieved with
-    #[schema(example = 0)]
-    pub(crate) offset: u64,
-
-    /// The total number of items this page is a subset of
-    pub(crate) total: u64,
 }
 
 #[derive(Serialize, ToSchema)]
