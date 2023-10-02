@@ -139,6 +139,7 @@ pub enum ApiStatusCode {
     SessionError = 2002,
     WebauthnError = 2003,
     DehashedNotAvailable = 2004,
+    NoLeechAvailable = 2005,
 }
 
 /// Representation of an error response
@@ -173,28 +174,15 @@ pub enum ApiError {
     InvalidJson(#[from] serde_json::Error),
     #[error("Payload overflow: {0}")]
     PayloadOverflow(String),
-    #[error("Internal server error")]
-    InternalServerError,
-    #[error("Database error occurred")]
-    DatabaseError(#[from] rorm::Error),
-    #[error("Internal server error")]
-    InvalidHash(argon2::password_hash::Error),
-    #[error("Session error occurred")]
-    SessionInsert(#[from] actix_session::SessionInsertError),
-    #[error("Session error occurred")]
-    SessionGet(#[from] actix_session::SessionGetError),
+
     #[error("Unauthenticated")]
     Unauthenticated,
     #[error("2FA is missing")]
     Missing2FA,
-    #[error("Corrupt session")]
-    SessionCorrupt,
     #[error("You are missing privileges")]
     MissingPrivileges,
     #[error("No security key is available")]
     NoSecurityKeyAvailable,
-    #[error("Webauthn error")]
-    Webauthn(#[from] WebauthnError),
     #[error("User already exists")]
     UserAlreadyExists,
     #[error("Invalid username")]
@@ -217,8 +205,25 @@ pub enum ApiError {
     UsernameAlreadyOccupied,
     #[error("Invalid name specified")]
     InvalidName,
+
+    #[error("Internal server error")]
+    InternalServerError,
+    #[error("Database error occurred")]
+    DatabaseError(#[from] rorm::Error),
+    #[error("Internal server error")]
+    InvalidHash(argon2::password_hash::Error),
+    #[error("Session error occurred")]
+    SessionInsert(#[from] actix_session::SessionInsertError),
+    #[error("Session error occurred")]
+    SessionGet(#[from] actix_session::SessionGetError),
+    #[error("Corrupt session")]
+    SessionCorrupt,
+    #[error("Webauthn error")]
+    Webauthn(#[from] WebauthnError),
     #[error("Dehashed is not available")]
     DehashedNotAvailable,
+    #[error("No leech available")]
+    NoLeechAvailable,
 }
 
 impl actix_web::ResponseError for ApiError {
@@ -400,6 +405,9 @@ impl actix_web::ResponseError for ApiError {
             )),
             ApiError::DehashedNotAvailable => HttpResponse::InternalServerError().json(
                 ApiErrorResponse::new(ApiStatusCode::DehashedNotAvailable, self.to_string()),
+            ),
+            ApiError::NoLeechAvailable => HttpResponse::InternalServerError().json(
+                ApiErrorResponse::new(ApiStatusCode::NoLeechAvailable, self.to_string()),
             ),
         }
     }

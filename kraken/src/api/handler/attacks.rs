@@ -10,6 +10,8 @@ use futures::StreamExt;
 use ipnet::IpNet;
 use ipnetwork::IpNetwork;
 use log::{debug, error, warn};
+use rand::prelude::IteratorRandom;
+use rand::thread_rng;
 use rorm::db::transaction::Transaction;
 use rorm::prelude::ForeignModelByField;
 use rorm::{and, insert, query, update, Database, FieldAccess, Model};
@@ -26,6 +28,7 @@ use crate::chan::{
 };
 use crate::models::{
     Attack, AttackInsert, AttackType, BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert,
+    CertificateTransparencyResultInsert, CertificateTransparencyValueNameInsert,
     DehashedQueryResultInsert, DnsRecordType, TcpPortScanResult, TcpPortScanResultInsert,
     Workspace, WorkspaceMember,
 };
@@ -506,7 +509,6 @@ pub async fn scan_tcp_ports(
 /// The settings to configure a certificate transparency request
 #[derive(Deserialize, ToSchema)]
 pub struct QueryCertificateTransparencyRequest {
-    pub(crate) leech_uuid: Uuid,
     #[schema(example = "example.com")]
     pub(crate) target: String,
     #[schema(example = true)]
@@ -550,8 +552,10 @@ pub async fn query_certificate_transparency(
         .get_ref()
         .read()
         .await
-        .get(&req.leech_uuid)
-        .ok_or(ApiError::InvalidLeech)?
+        .iter()
+        .choose(&mut thread_rng())
+        .ok_or(ApiError::NoLeechAvailable)?
+        .1
         .clone();
 
     let uuid = insert!(db.as_ref(), AttackInsert)
@@ -576,6 +580,54 @@ pub async fn query_certificate_transparency(
         match client.query_certificate_transparency(req).await {
             Ok(res) => {
                 let res = res.into_inner();
+
+                let mut tx = db.start_transaction().await.unwrap();
+
+                for cert_entry in &res.entries {
+                    let cert_uuid = insert!(&mut tx, CertificateTransparencyResultInsert)
+                        .return_primary_key()
+                        .single(&CertificateTransparencyResultInsert {
+                            uuid: Uuid::new_v4(),
+                            created_at: Utc::now(),
+                            attack: ForeignModelByField::Key(uuid),
+                            issuer_name: cert_entry.issuer_name.clone(),
+                            serial_number: cert_entry.serial_number.clone(),
+                            common_name: cert_entry.common_name.clone(),
+                            not_before: cert_entry.not_before.clone().map(|x| {
+                                DateTime::from_naive_utc_and_offset(
+                                    NaiveDateTime::from_timestamp_millis(x.seconds * 1000).unwrap(),
+                                    Utc,
+                                )
+                            }),
+                            not_after: cert_entry.not_after.clone().map(|x| {
+                                DateTime::from_naive_utc_and_offset(
+                                    NaiveDateTime::from_timestamp_millis(x.seconds * 1000).unwrap(),
+                                    Utc,
+                                )
+                            }),
+                        })
+                        .await
+                        .unwrap();
+
+                    let value_names: Vec<_> = cert_entry
+                        .value_names
+                        .clone()
+                        .into_iter()
+                        .map(|x| CertificateTransparencyValueNameInsert {
+                            uuid: Uuid::new_v4(),
+                            value_name: x,
+                            ct_result: ForeignModelByField::Key(cert_uuid),
+                        })
+                        .collect();
+
+                    insert!(&mut tx, CertificateTransparencyValueNameInsert)
+                        .return_nothing()
+                        .bulk(&value_names)
+                        .await
+                        .unwrap();
+                }
+
+                tx.commit().await.unwrap();
 
                 if let Err(err) = ws_manager_chan
                     .send(WsManagerMessage::Message(

@@ -46,7 +46,8 @@ export const ApiStatusCode = {
     NUMBER_2001: 2001,
     NUMBER_2002: 2002,
     NUMBER_2003: 2003,
-    NUMBER_2004: 2004
+    NUMBER_2004: 2004,
+    NUMBER_2005: 2005
 } as const;
 export type ApiStatusCode = typeof ApiStatusCode[keyof typeof ApiStatusCode];
 
