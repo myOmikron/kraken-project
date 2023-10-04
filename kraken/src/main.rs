@@ -39,7 +39,7 @@ use crate::config::Config;
 use crate::models::{User, UserInsert};
 use crate::rpc::server::start_rpc_server;
 
-mod api;
+pub mod api;
 pub mod chan;
 pub mod config;
 pub mod models;

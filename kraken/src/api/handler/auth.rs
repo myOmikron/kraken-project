@@ -1,3 +1,5 @@
+//! Everything regarding authentication, besides oauth
+
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json};
 use actix_web::{get, post, HttpResponse};
@@ -36,12 +38,13 @@ use crate::models::{User, UserKey, UserKeyInsert};
     )
 )]
 #[get("/test", wrap = "AuthenticationRequired")]
-pub(crate) async fn test() -> HttpResponse {
+pub async fn test() -> HttpResponse {
     HttpResponse::Ok().finish()
 }
 
+/// The request to login
 #[derive(ToSchema, Deserialize)]
-pub(crate) struct LoginRequest {
+pub struct LoginRequest {
     #[schema(example = "user123")]
     username: String,
     #[schema(example = "super-secure-password")]
@@ -60,7 +63,7 @@ pub(crate) struct LoginRequest {
     request_body = LoginRequest,
 )]
 #[post("/login")]
-pub(crate) async fn login(
+pub async fn login(
     req: Json<LoginRequest>,
     db: Data<Database>,
     session: Session,
@@ -110,7 +113,7 @@ pub(crate) async fn login(
     ),
 )]
 #[get("/logout")]
-pub(crate) async fn logout(
+pub async fn logout(
     session: Session,
     ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
@@ -143,7 +146,7 @@ pub(crate) async fn logout(
     ),
 )]
 #[post("/startAuth")]
-pub(crate) async fn start_auth(
+pub async fn start_auth(
     db: Data<Database>,
     session: Session,
     webauthn: Data<Webauthn>,
@@ -188,7 +191,7 @@ pub(crate) async fn start_auth(
     request_body = inline(Object)
 )]
 #[post("/finishAuth")]
-pub(crate) async fn finish_auth(
+pub async fn finish_auth(
     auth: Json<PublicKeyCredential>,
     db: Data<Database>,
     session: Session,
@@ -232,7 +235,7 @@ pub(crate) async fn finish_auth(
     ),
 )]
 #[post("/startRegister")]
-pub(crate) async fn start_register(
+pub async fn start_register(
     db: Data<Database>,
     session: Session,
     webauthn: Data<Webauthn>,
@@ -282,8 +285,9 @@ pub(crate) async fn start_register(
     Ok(Json(ccr))
 }
 
+/// The request to finish the registration of a security key
 #[derive(Deserialize, ToSchema)]
-pub(crate) struct FinishRegisterRequest {
+pub struct FinishRegisterRequest {
     // TODO: provide a example json for this request
     #[serde(flatten)]
     #[schema(example = json!({}), value_type = Object)]
@@ -306,7 +310,7 @@ pub(crate) struct FinishRegisterRequest {
     request_body = FinishRegisterRequest
 )]
 #[post("/finishRegister")]
-pub(crate) async fn finish_register(
+pub async fn finish_register(
     req: Json<FinishRegisterRequest>,
     db: Data<Database>,
     session: Session,

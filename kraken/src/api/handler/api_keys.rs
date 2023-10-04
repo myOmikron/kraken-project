@@ -1,3 +1,5 @@
+//!
+
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use futures::TryStreamExt;
@@ -13,6 +15,7 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::models::LeechApiKey;
 
+/// Request to create a new api key
 #[derive(Deserialize, ToSchema)]
 pub struct CreateApiKeyRequest {
     /// A descriptive name helping the user to identify the key
@@ -83,8 +86,9 @@ pub async fn delete_api_key(
     }
 }
 
+/// A representation of a full api key
 #[derive(Serialize, ToSchema)]
-pub struct SimpleApiKey {
+pub struct FullApiKey {
     /// The key's identifier
     pub uuid: Uuid,
 
@@ -97,9 +101,10 @@ pub struct SimpleApiKey {
     pub key: String,
 }
 
+/// The response that contains all api keys
 #[derive(Serialize, ToSchema)]
 pub struct GetApiKeysResponse {
-    keys: Vec<SimpleApiKey>,
+    keys: Vec<FullApiKey>,
 }
 
 /// Retrieve all api keys
@@ -124,17 +129,18 @@ pub async fn get_api_keys(
     )
     .condition(LeechApiKey::F.user.equals(user))
     .stream()
-    .map_ok(|(key, name, uuid)| SimpleApiKey { key, name, uuid })
+    .map_ok(|(key, name, uuid)| FullApiKey { key, name, uuid })
     .try_collect()
     .await?;
     Ok(Json(GetApiKeysResponse { keys }))
 }
 
+/// The request to update an api key
 #[derive(Deserialize, ToSchema)]
 pub struct UpdateApiKeyRequest {
     /// A descriptive name helping the user to identify the key
     #[schema(example = "Leech on my local machine")]
-    name: Option<String>,
+    name: String,
 }
 
 /// Update an api key by its id
@@ -160,11 +166,13 @@ pub async fn update_api_key(
     SessionUser(user): SessionUser,
 ) -> ApiResult<HttpResponse> {
     let req = req.into_inner();
+
+    if req.name.is_empty() {
+        return Err(ApiError::InvalidName);
+    }
+
     let updated = update!(db.as_ref(), LeechApiKey)
-        .begin_dyn_set()
-        .set_if(LeechApiKey::F.name, req.name)
-        .finish_dyn_set()
-        .map_err(|_| ApiError::EmptyJson)?
+        .set(LeechApiKey::F.name, req.name)
         .condition(and!(
             LeechApiKey::F.uuid.equals(path.uuid),
             LeechApiKey::F.user.equals(user)

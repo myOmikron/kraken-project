@@ -1,3 +1,5 @@
+//! The handlers for the aggregated data of domains are located here
+
 use actix_toolbox::tb_middleware::Session;
 use actix_web::get;
 use actix_web::web::{Data, Json, Path, Query};
@@ -36,7 +38,7 @@ pub struct SimpleDomain {
     security(("api_key" = []))
 )]
 #[get("/workspaces/{uuid}/domains")]
-pub(crate) async fn get_all_domains(
+pub async fn get_all_domains(
     path: Path<PathUuid>,
     query: Query<PageParams>,
     session: Session,

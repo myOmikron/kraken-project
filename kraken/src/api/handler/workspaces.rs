@@ -1,3 +1,5 @@
+//! Everything regarding workspace management is located in this module
+
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
@@ -16,8 +18,9 @@ use crate::api::handler::users::UserResponse;
 use crate::api::handler::{de_optional, query_user, ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::models::{Attack, User, Workspace, WorkspaceInsert, WorkspaceMember};
 
+/// The request to create a new workspace
 #[derive(Deserialize, ToSchema)]
-pub(crate) struct CreateWorkspaceRequest {
+pub struct CreateWorkspaceRequest {
     #[schema(example = "secure-workspace")]
     pub(crate) name: String,
     #[schema(example = "This workspace is super secure and should not be looked at!!")]
@@ -37,7 +40,7 @@ pub(crate) struct CreateWorkspaceRequest {
     security(("api_key" = []))
 )]
 #[post("/workspaces")]
-pub(crate) async fn create_workspace(
+pub async fn create_workspace(
     req: Json<CreateWorkspaceRequest>,
     db: Data<Database>,
     session: Session,
@@ -70,7 +73,7 @@ pub(crate) async fn create_workspace(
     security(("api_key" = []))
 )]
 #[delete("/workspaces/{uuid}")]
-pub(crate) async fn delete_workspace(
+pub async fn delete_workspace(
     req: Path<PathUuid>,
     session: Session,
     db: Data<Database>,
@@ -108,7 +111,7 @@ pub(crate) async fn delete_workspace(
 
 /// A simple version of a workspace
 #[derive(Serialize, ToSchema)]
-pub(crate) struct SimpleWorkspace {
+pub struct SimpleWorkspace {
     pub(crate) uuid: Uuid,
     #[schema(example = "ultra-secure-workspace")]
     pub(crate) name: String,
@@ -120,7 +123,7 @@ pub(crate) struct SimpleWorkspace {
 
 /// A full version of a workspace
 #[derive(Serialize, ToSchema)]
-pub(crate) struct FullWorkspace {
+pub struct FullWorkspace {
     pub(crate) uuid: Uuid,
     #[schema(example = "ultra-secure-workspace")]
     pub(crate) name: String,
@@ -130,11 +133,6 @@ pub(crate) struct FullWorkspace {
     pub(crate) attacks: Vec<SimpleAttack>,
     pub(crate) members: Vec<UserResponse>,
     pub(crate) created_at: DateTime<Utc>,
-}
-
-#[derive(Serialize, ToSchema)]
-pub(crate) struct GetWorkspaceResponse {
-    pub(crate) workspaces: Vec<SimpleWorkspace>,
 }
 
 /// Retrieve a workspace by id
@@ -150,7 +148,7 @@ pub(crate) struct GetWorkspaceResponse {
     security(("api_key" = []))
 )]
 #[get("/workspaces/{uuid}")]
-pub(crate) async fn get_workspace(
+pub async fn get_workspace(
     req: Path<PathUuid>,
     db: Data<Database>,
     session: Session,
@@ -170,6 +168,12 @@ pub(crate) async fn get_workspace(
     Ok(Json(workspace?))
 }
 
+/// The response to retrieve all workspaces
+#[derive(Serialize, ToSchema)]
+pub struct GetAllWorkspacesResponse {
+    pub(crate) workspaces: Vec<SimpleWorkspace>,
+}
+
 /// Retrieve all workspaces owned by executing user
 ///
 /// For administration access, look at the `/admin/workspaces` endpoint.
@@ -184,10 +188,10 @@ pub(crate) async fn get_workspace(
     security(("api_key" = []))
 )]
 #[get("/workspaces")]
-pub(crate) async fn get_all_workspaces(
+pub async fn get_all_workspaces(
     db: Data<Database>,
     session: Session,
-) -> ApiResult<Json<GetWorkspaceResponse>> {
+) -> ApiResult<Json<GetAllWorkspacesResponse>> {
     let mut tx = db.start_transaction().await?;
 
     let owner = query_user(&mut tx, &session).await?;
@@ -199,7 +203,7 @@ pub(crate) async fn get_all_workspaces(
 
     tx.commit().await?;
 
-    Ok(Json(GetWorkspaceResponse {
+    Ok(Json(GetAllWorkspacesResponse {
         workspaces: workspaces
             .into_iter()
             .map(|w| SimpleWorkspace {
@@ -221,7 +225,7 @@ pub(crate) async fn get_all_workspaces(
 ///
 /// All parameter are optional, but at least one of them must be specified
 #[derive(Deserialize, ToSchema)]
-pub(crate) struct UpdateWorkspaceRequest {
+pub struct UpdateWorkspaceRequest {
     #[schema(example = "Workspace for work")]
     name: Option<String>,
     #[schema(example = "This workspace is for work and for work only!")]
@@ -250,7 +254,7 @@ pub(crate) struct UpdateWorkspaceRequest {
     security(("api_key" = []))
 )]
 #[put("/workspaces/{uuid}")]
-pub(crate) async fn update_workspace(
+pub async fn update_workspace(
     path: Path<PathUuid>,
     req: Json<UpdateWorkspaceRequest>,
     db: Data<Database>,
@@ -306,7 +310,7 @@ pub(crate) async fn update_workspace(
     security(("api_key" = []))
 )]
 #[get("/workspaces/{uuid}")]
-pub(crate) async fn get_workspace_admin(
+pub async fn get_workspace_admin(
     req: Path<PathUuid>,
     db: Data<Database>,
 ) -> ApiResult<Json<FullWorkspace>> {
@@ -331,9 +335,9 @@ pub(crate) async fn get_workspace_admin(
     security(("api_key" = []))
 )]
 #[get("/workspaces")]
-pub(crate) async fn get_all_workspaces_admin(
+pub async fn get_all_workspaces_admin(
     db: Data<Database>,
-) -> ApiResult<Json<GetWorkspaceResponse>> {
+) -> ApiResult<Json<GetAllWorkspacesResponse>> {
     let mut tx = db.start_transaction().await?;
 
     let workspaces = query!(
@@ -353,7 +357,7 @@ pub(crate) async fn get_all_workspaces_admin(
 
     tx.commit().await?;
 
-    Ok(Json(GetWorkspaceResponse {
+    Ok(Json(GetAllWorkspacesResponse {
         workspaces: workspaces
             .into_iter()
             .map(

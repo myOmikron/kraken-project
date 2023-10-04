@@ -1,3 +1,5 @@
+//! The aggregated data of hosts
+
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path, Query};
 use actix_web::{get, put, HttpResponse};

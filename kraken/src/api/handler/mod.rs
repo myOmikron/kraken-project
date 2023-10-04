@@ -1,3 +1,8 @@
+//! All handler for the frontend API are defined here
+//!
+//! This module also contains common types, such as [ApiError], [PathUuid] and the complete
+//! error implementation
+
 use std::sync::TryLockError;
 
 use actix_toolbox::tb_middleware::{actix_session, Session};
@@ -22,23 +27,22 @@ use webauthn_rs::prelude::WebauthnError;
 use crate::models::User;
 use crate::modules::user::create::CreateUserError;
 
-pub(crate) mod api_keys;
-pub(crate) mod attacks;
-pub(crate) mod auth;
-pub(crate) mod data_export;
-pub(crate) mod domains;
-pub(crate) mod global_tags;
-pub(crate) mod hosts;
-pub(crate) mod leeches;
-pub(crate) mod oauth;
-pub(crate) mod ports;
-pub(crate) mod reporting;
-pub(crate) mod services;
-pub(crate) mod settings;
-pub(crate) mod users;
-pub(crate) mod websocket;
-pub(crate) mod workspace_tags;
-pub(crate) mod workspaces;
+pub mod api_keys;
+pub mod attacks;
+pub mod auth;
+pub mod data_export;
+pub mod domains;
+pub mod global_tags;
+pub mod hosts;
+pub mod leeches;
+pub mod oauth;
+pub mod ports;
+pub mod services;
+pub mod settings;
+pub mod users;
+pub mod websocket;
+pub mod workspace_tags;
+pub mod workspaces;
 
 /// Query the current user's model
 pub(crate) async fn query_user(db: impl Executor<'_>, session: &Session) -> ApiResult<User> {
@@ -166,35 +170,64 @@ pub type ApiResult<T> = Result<T, ApiError>;
 #[repr(u16)]
 #[schema(default = 1000, example = 1000)]
 pub enum ApiStatusCode {
+    /// Login failed
     LoginFailed = 1000,
+    /// Not found
     NotFound = 1001,
+    /// Invalid content type
     InvalidContentType = 1002,
+    /// Invalid json
     InvalidJson = 1003,
+    /// Payload overflow
     PayloadOverflow = 1004,
 
+    /// User is unauthenticated
     Unauthenticated = 1005,
+    /// User is missing a required second factor
     Missing2fa = 1006,
+    /// The user is missing privileges
     MissingPrivileges = 1007,
+    /// No security key is available, but it is required
     NoSecurityKeyAvailable = 1008,
+    /// User already exists
     UserAlreadyExists = 1009,
+    /// Invalid username
     InvalidUsername = 1010,
+    /// Invalid address
     InvalidAddress = 1011,
+    /// Address already exists
     AddressAlreadyExists = 1012,
+    /// Name already exists
     NameAlreadyExists = 1013,
+    /// Invalid uuid
     InvalidUuid = 1014,
-    WorkspaceNotDeletable = 1015,
+
+    /// Received an empty json request.
+    ///
+    /// Mostly happens in update endpoints without supplying an update
     EmptyJson = 1016,
+    /// Invalid password
     InvalidPassword = 1017,
+    /// Invalid leech
     InvalidLeech = 1018,
+    /// Username is already occupied
     UsernameAlreadyOccupied = 1019,
+    /// Invalid name specified
     InvalidName = 1020,
+    /// Invalid query limit
     InvalidQueryLimit = 1021,
 
+    /// Internal server error
     InternalServerError = 2000,
+    /// An database error occurred
     DatabaseError = 2001,
+    /// An error occurred while interacting with the user session
     SessionError = 2002,
+    /// Webauthn error
     WebauthnError = 2003,
+    /// Dehashed is not available due to missing credentials
     DehashedNotAvailable = 2004,
+    /// There's no leech available
     NoLeechAvailable = 2005,
 }
 
@@ -202,7 +235,7 @@ pub enum ApiStatusCode {
 ///
 /// `status_code` holds the error code, `message` a human readable description of the error
 #[derive(Serialize, ToSchema)]
-pub(crate) struct ApiErrorResponse {
+pub struct ApiErrorResponse {
     status_code: ApiStatusCode,
     #[schema(example = "Error message will be here")]
     message: String,
@@ -220,66 +253,98 @@ impl ApiErrorResponse {
 /// All available errors that can occur while using the API.
 #[derive(Debug, Error)]
 pub enum ApiError {
+    /// Login failed
     #[error("Login failed")]
     LoginFailed,
+    /// Not found
     #[error("Not found")]
     NotFound,
+    /// Content type error
     #[error("Content type error")]
     InvalidContentType,
+    /// serde raised an error
     #[error("Json error: {0}")]
     InvalidJson(#[from] serde_json::Error),
+    /// Payload overflow
     #[error("Payload overflow: {0}")]
     PayloadOverflow(String),
 
+    /// User is unauthenticated
     #[error("Unauthenticated")]
     Unauthenticated,
+    /// User is missing a required second factor
     #[error("2FA is missing")]
     Missing2FA,
+    /// The user is missing privileges
     #[error("You are missing privileges")]
     MissingPrivileges,
+    /// No security key is available, but it is required
     #[error("No security key is available")]
     NoSecurityKeyAvailable,
+    /// User already exists
     #[error("User already exists")]
     UserAlreadyExists,
+    /// Invalid username
     #[error("Invalid username")]
     InvalidUsername,
+    /// Invalid address
     #[error("Invalid address")]
     InvalidAddress,
+    /// Address already exists
     #[error("Address already exists")]
     AddressAlreadyExists,
+    /// Name already exists
     #[error("Name already exists")]
     NameAlreadyExists,
+    /// Invalid uuid
     #[error("Invalid uuid")]
     InvalidUuid,
+    /// Received an empty json request.
+    ///
+    /// Mostly happens in update endpoints without supplying an update
     #[error("Received an empty json request")]
     EmptyJson,
+    /// Invalid password
     #[error("Invalid password supplied")]
     InvalidPassword,
+    /// Invalid leech
     #[error("Invalid leech")]
     InvalidLeech,
+    /// Username is already occupied
     #[error("Username is already occupied")]
     UsernameAlreadyOccupied,
+    /// Invalid name specified
     #[error("Invalid name specified")]
     InvalidName,
+    /// Invalid query limit
     #[error("Invalid limit query")]
     InvalidQueryLimit,
 
+    /// An internal server error occurred
     #[error("Internal server error")]
     InternalServerError,
+    /// An database error occurred
     #[error("Database error occurred")]
     DatabaseError(#[from] rorm::Error),
+    /// An invalid hash was retrieved from the database
     #[error("Internal server error")]
     InvalidHash(argon2::password_hash::Error),
+    /// Could not insert into the session
     #[error("Session error occurred")]
     SessionInsert(#[from] actix_session::SessionInsertError),
+    /// Could not retrieve data from the session
     #[error("Session error occurred")]
     SessionGet(#[from] actix_session::SessionGetError),
+    /// Could not retrieve expected state from the session
     #[error("Corrupt session")]
     SessionCorrupt,
+    /// Webauthn error
     #[error("Webauthn error")]
     Webauthn(#[from] WebauthnError),
+    /// Dehashed credentials are not available
     #[error("Dehashed is not available")]
     DehashedNotAvailable,
+    /// There's no leech available
     #[error("No leech available")]
     NoLeechAvailable,
 }

@@ -1,5 +1,4 @@
-mod applications;
-mod schemas;
+//! OAuth related code lives here
 
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
@@ -30,6 +29,9 @@ use crate::api::handler::users::UserResponse;
 use crate::api::handler::workspaces::SimpleWorkspace;
 use crate::api::handler::{ApiError, PathUuid};
 use crate::models::{OauthClient, User, Workspace, WorkspaceAccessTokenInsert};
+
+mod applications;
+mod schemas;
 
 #[derive(Debug, Default)]
 pub(crate) struct OauthManager(Mutex<OauthManagerInner>);
@@ -214,11 +216,13 @@ pub(crate) async fn auth(
     Ok(Redirect::to(format!("/#/oauth-request/{request_uuid}")))
 }
 
+/// The information about an oauth request
 #[derive(Serialize, ToSchema)]
 pub struct OpenRequestInfo {
     pub(crate) workspace: SimpleWorkspace,
     pub(crate) oauth_application: SimpleOauthClient,
 }
+
 /// Queried by the frontend to display information about the oauth request to the user
 #[utoipa::path(
     tag = "OAuth",

@@ -1,3 +1,5 @@
+//! The handlers for global tags are defined in this module
+
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use rorm::{insert, query, update, Database, FieldAccess, Model};

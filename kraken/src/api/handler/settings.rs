@@ -1,3 +1,5 @@
+//! This module holds the handler to retrieve and update settings
+
 use std::sync::Arc;
 
 use actix_web::web::{Data, Json};

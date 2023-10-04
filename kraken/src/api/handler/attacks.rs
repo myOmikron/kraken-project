@@ -1,3 +1,5 @@
+//! This module holds all attack handlers and their request and response schemas
+
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::ops::RangeInclusive;
 
@@ -291,11 +293,14 @@ pub struct ScanTcpPortsRequest {
     pub(crate) workspace_uuid: Uuid,
 }
 
+/// Single port or a range of ports
 #[derive(Deserialize, ToSchema)]
 #[serde(untagged)]
 pub enum PortOrRange {
-    #[schema(value_type = u32, example = 8000)]
+    /// A single port
+    #[schema(example = 8000)]
     Port(u16),
+    /// In inclusive range of ports
     #[schema(value_type = String, example = "1-1024")]
     Range(#[serde(deserialize_with = "deserialize_port_range")] RangeInclusive<u16>),
 }
@@ -840,7 +845,7 @@ pub async fn query_dehashed(
 
 /// A simple version of an attack
 #[derive(Serialize, ToSchema)]
-pub(crate) struct SimpleAttack {
+pub struct SimpleAttack {
     pub(crate) uuid: Uuid,
     pub(crate) workspace_uuid: Uuid,
     pub(crate) attack_type: AttackType,
@@ -862,7 +867,7 @@ pub(crate) struct SimpleAttack {
     security(("api_key" = []))
 )]
 #[get("/attacks/{uuid}")]
-pub(crate) async fn get_attack(
+pub async fn get_attack(
     req: Path<PathUuid>,
     db: Data<Database>,
     session: Session,
@@ -922,12 +927,12 @@ pub(crate) async fn get_attack(
 /// A simple representation of a tcp port scan result
 #[derive(Serialize, ToSchema)]
 pub struct SimpleTcpPortScanResult {
-    pub uuid: Uuid,
-    pub attack: Uuid,
-    pub created_at: DateTime<Utc>,
+    uuid: Uuid,
+    attack: Uuid,
+    created_at: DateTime<Utc>,
     #[schema(value_type = String)]
-    pub address: IpNetwork,
-    pub port: u16,
+    address: IpNetwork,
+    port: u16,
 }
 
 /// Retrieve a tcp port scan's results by the attack's id
@@ -1003,7 +1008,7 @@ pub async fn get_tcp_port_scan_results(
     security(("api_key" = []))
 )]
 #[delete("/attacks/{uuid}")]
-pub(crate) async fn delete_attack(
+pub async fn delete_attack(
     req: Path<PathUuid>,
     session: Session,
     db: Data<Database>,

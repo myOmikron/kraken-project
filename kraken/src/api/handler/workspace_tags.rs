@@ -1,3 +1,5 @@
+//! The tags of a workspace are defined here
+
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};

@@ -1,3 +1,5 @@
+//! The management endpoints of the leech are located here
+
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use log::error;
@@ -11,8 +13,9 @@ use crate::chan::{RpcManagerChannel, RpcManagerEvent};
 use crate::models::{Leech, LeechInsert};
 use crate::modules::uri::check_leech_address;
 
+/// The request to create a new leech
 #[derive(Deserialize, ToSchema)]
-pub(crate) struct CreateLeechRequest {
+pub struct CreateLeechRequest {
     #[schema(example = "leech-01")]
     pub(crate) name: String,
     #[schema(example = "https://10.13.37:8081")]
@@ -39,7 +42,7 @@ pub(crate) struct CreateLeechRequest {
     security(("api_key" = []))
 )]
 #[post("/leeches")]
-pub(crate) async fn create_leech(
+pub async fn create_leech(
     req: Json<CreateLeechRequest>,
     db: Data<Database>,
     rpc_manager_channel: Data<RpcManagerChannel>,
@@ -104,7 +107,7 @@ pub(crate) async fn create_leech(
     security(("api_key" = []))
 )]
 #[delete("/leeches/{uuid}")]
-pub(crate) async fn delete_leech(
+pub async fn delete_leech(
     path: Path<PathUuid>,
     db: Data<Database>,
     rpc_manager_channel: Data<RpcManagerChannel>,
@@ -134,8 +137,9 @@ pub(crate) async fn delete_leech(
     Ok(HttpResponse::Ok().finish())
 }
 
+/// T
 #[derive(Serialize, ToSchema)]
-pub(crate) struct GetLeech {
+pub struct SimpleLeech {
     uuid: Uuid,
     #[schema(example = "leech-01")]
     name: String,
@@ -148,7 +152,7 @@ pub(crate) struct GetLeech {
     tag = "Leech management",
     context_path = "/api/v1/admin",
     responses(
-        (status = 200, description = "Matched leeches", body = GetLeech),
+        (status = 200, description = "Matched leeches", body = SimpleLeech),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse)
     ),
@@ -156,26 +160,24 @@ pub(crate) struct GetLeech {
     security(("api_key" = []))
 )]
 #[get("/leeches/{uuid}")]
-pub(crate) async fn get_leech(
-    req: Path<PathUuid>,
-    db: Data<Database>,
-) -> ApiResult<Json<GetLeech>> {
+pub async fn get_leech(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<Json<SimpleLeech>> {
     let leech = query!(db.as_ref(), Leech)
         .condition(Leech::F.uuid.equals(req.uuid))
         .optional()
         .await?
         .ok_or(ApiError::InvalidUuid)?;
 
-    Ok(Json(GetLeech {
+    Ok(Json(SimpleLeech {
         uuid: leech.uuid,
         name: leech.name,
         address: leech.address,
     }))
 }
 
+/// The response that hold all leeches
 #[derive(Serialize, ToSchema)]
-pub(crate) struct GetLeechResponse {
-    leeches: Vec<GetLeech>,
+pub struct GetAllLeechesResponse {
+    leeches: Vec<SimpleLeech>,
 }
 
 /// Retrieve all leeches
@@ -183,20 +185,20 @@ pub(crate) struct GetLeechResponse {
     tag = "Leech management",
     context_path = "/api/v1/admin",
     responses(
-        (status = 200, description = "Matched leeches", body = GetLeechResponse),
+        (status = 200, description = "Matched leeches", body = GetAllLeechesResponse),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse)
     ),
     security(("api_key" = []))
 )]
 #[get("/leeches")]
-pub(crate) async fn get_all_leeches(db: Data<Database>) -> ApiResult<Json<GetLeechResponse>> {
+pub async fn get_all_leeches(db: Data<Database>) -> ApiResult<Json<GetAllLeechesResponse>> {
     let leeches = query!(db.as_ref(), Leech).all().await?;
 
-    Ok(Json(GetLeechResponse {
+    Ok(Json(GetAllLeechesResponse {
         leeches: leeches
             .into_iter()
-            .map(|l| GetLeech {
+            .map(|l| SimpleLeech {
                 uuid: l.uuid,
                 name: l.name,
                 address: l.address,
@@ -205,8 +207,9 @@ pub(crate) async fn get_all_leeches(db: Data<Database>) -> ApiResult<Json<GetLee
     }))
 }
 
+/// The request to update a leech
 #[derive(Deserialize, ToSchema)]
-pub(crate) struct UpdateLeechRequest {
+pub struct UpdateLeechRequest {
     #[schema(example = "leech-01")]
     name: Option<String>,
     #[schema(example = "https://10.13.37.1:8081")]
@@ -236,7 +239,7 @@ pub(crate) struct UpdateLeechRequest {
     security(("api_key" = []))
 )]
 #[put("/leeches/{uuid}")]
-pub(crate) async fn update_leech(
+pub async fn update_leech(
     path: Path<PathUuid>,
     req: Json<UpdateLeechRequest>,
     db: Data<Database>,

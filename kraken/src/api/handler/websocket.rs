@@ -1,3 +1,5 @@
+//! The websocket to the frontend client is defined in this module
+
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -32,7 +34,7 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
     security(("api_key" = []))
 )]
 #[get("/ws")]
-pub(crate) async fn websocket(
+pub async fn websocket(
     request: HttpRequest,
     payload: Payload,
     session: Session,
