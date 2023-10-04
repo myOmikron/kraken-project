@@ -17,11 +17,14 @@ use rorm::prelude::ForeignModelByField;
 use rorm::{and, insert, query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use tokio::sync::oneshot;
-use utoipa::{IntoParams, ToSchema};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::users::UserResponse;
-use crate::api::handler::{query_user, ApiError, ApiResult, PathUuid, UuidResponse};
+use crate::api::handler::{
+    get_page_params, query_user, ApiError, ApiResult, Page, PageParams, PathUuid,
+    TcpPortScanResultsPage, UuidResponse,
+};
 use crate::api::server::DehashedScheduler;
 use crate::chan::{
     CertificateTransparencyEntry, RpcClients, WsManagerChan, WsManagerMessage, WsMessage,
@@ -916,37 +919,9 @@ pub(crate) async fn get_attack(
     Ok(Json(attack?))
 }
 
-#[derive(Deserialize, ToSchema, IntoParams)]
-pub(crate) struct PageParams {
-    /// Number of items to retrieve
-    #[schema(example = 50)]
-    limit: u64,
-
-    /// Position in the whole list to start retrieving from
-    #[schema(example = 0)]
-    offset: u64,
-}
-
+/// A simple representation of a tcp port scan result
 #[derive(Serialize, ToSchema)]
-#[aliases(TcpPortScanResultsPage = Page<SimpleTcpPortScanResult>)]
-pub(crate) struct Page<T> {
-    /// The page's items
-    pub(crate) items: Vec<T>,
-
-    /// The limit this page was retrieved with
-    #[schema(example = 50)]
-    pub(crate) limit: u64,
-
-    /// The offset this page was retrieved with
-    #[schema(example = 0)]
-    pub(crate) offset: u64,
-
-    /// The total number of items this page is a subset of
-    pub(crate) total: u64,
-}
-
-#[derive(Serialize, ToSchema)]
-pub(crate) struct SimpleTcpPortScanResult {
+pub struct SimpleTcpPortScanResult {
     pub uuid: Uuid,
     pub attack: Uuid,
     pub created_at: DateTime<Utc>,
@@ -968,7 +943,7 @@ tag = "Attacks",
     security(("api_key" = []))
 )]
 #[get("/attacks/{uuid}/tcpPortScanResults")]
-pub(crate) async fn get_tcp_port_scan_results(
+pub async fn get_tcp_port_scan_results(
     path: Path<PathUuid>,
     query: Query<PageParams>,
     session: Session,
@@ -977,7 +952,7 @@ pub(crate) async fn get_tcp_port_scan_results(
     let mut tx = db.start_transaction().await?;
 
     let uuid = path.uuid;
-    let PageParams { limit, offset } = query.into_inner();
+    let (limit, offset) = get_page_params(query).await?;
 
     let page = if !has_access(&mut tx, uuid, &session).await? {
         Err(ApiError::MissingPrivileges)

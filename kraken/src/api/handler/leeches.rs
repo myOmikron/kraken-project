@@ -6,8 +6,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::users::PathUuid;
-use crate::api::handler::{ApiError, ApiResult, UuidResponse};
+use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::chan::{RpcManagerChannel, RpcManagerEvent};
 use crate::models::{Leech, LeechInsert};
 use crate::modules::uri::check_leech_address;

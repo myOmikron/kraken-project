@@ -1,5 +1,5 @@
 use actix_toolbox::tb_middleware::Session;
-use actix_web::web::{Data, Json, Path};
+use actix_web::web::{Data, Json, Path, Query};
 use actix_web::{get, put, HttpResponse};
 use futures::TryStreamExt;
 use rorm::conditions::DynamicCollection;
@@ -9,7 +9,10 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::api::handler::{workspaces, ApiError, ApiResult, PathUuid, SimpleTag, TagType};
+use crate::api::handler::{
+    get_page_params, workspaces, ApiError, ApiResult, HostResultsPage, PageParams, PathUuid,
+    SimpleTag, TagType,
+};
 use crate::models::{GlobalTag, Host, HostGlobalTag, HostWorkspaceTag, OsType, WorkspaceTag};
 
 /// The simple representation of a host
@@ -46,12 +49,6 @@ pub struct FullHost {
     pub tags: Vec<SimpleTag>,
 }
 
-/// The reseponse to a get all hosts reqeust
-#[derive(Serialize, Debug, ToSchema)]
-pub struct GetAllHostsResponse {
-    pub(crate) hosts: Vec<SimpleHost>,
-}
-
 /// Retrieve all hosts.
 ///
 /// Hosts are created out of aggregating data or by user input.
@@ -60,48 +57,61 @@ pub struct GetAllHostsResponse {
     tag = "Hosts",
     context_path = "/api/v1",
     responses(
-        (status = 200, description = "All hosts in the workspace", body = GetAllHostsResponse),
+        (status = 200, description = "All hosts in the workspace", body = HostResultsPage),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    params(PathUuid),
+    params(PathUuid, PageParams),
     security(("api_key" = []))
 )]
 #[get("/workspaces/{uuid}/hosts")]
-pub async fn get_all_hosts(
+pub(crate) async fn get_all_hosts(
     path: Path<PathUuid>,
+    query: Query<PageParams>,
     session: Session,
     db: Data<Database>,
-) -> ApiResult<Json<GetAllHostsResponse>> {
+) -> ApiResult<Json<HostResultsPage>> {
     let path = path.into_inner();
 
     let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let mut tx = db.start_transaction().await?;
 
-    if workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.uuid).await? {
-        let hosts = query!(&mut tx, Host)
-            .condition(Host::F.workspace.equals(path.uuid))
-            .all()
-            .await?;
-
-        tx.commit().await?;
-
-        Ok(Json(GetAllHostsResponse {
-            hosts: hosts
-                .into_iter()
-                .map(|x| SimpleHost {
-                    uuid: x.uuid,
-                    ip_addr: x.ip_addr.ip().to_string(),
-                    comment: x.comment,
-                    os_type: x.os_type,
-                    workspace: *x.workspace.key(),
-                })
-                .collect(),
-        }))
-    } else {
-        Err(ApiError::MissingPrivileges)
+    if !workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.uuid).await? {
+        return Err(ApiError::MissingPrivileges);
     }
+
+    let (limit, offset) = get_page_params(query).await?;
+
+    let (total,) = query!(&mut tx, (Host::F.uuid.count()))
+        .condition(Host::F.workspace.equals(path.uuid))
+        .one()
+        .await?;
+
+    let hosts = query!(&mut tx, Host)
+        .condition(Host::F.workspace.equals(path.uuid))
+        .limit(limit)
+        .offset(offset)
+        .all()
+        .await?;
+
+    tx.commit().await?;
+
+    Ok(Json(HostResultsPage {
+        items: hosts
+            .into_iter()
+            .map(|x| SimpleHost {
+                uuid: x.uuid,
+                ip_addr: x.ip_addr.ip().to_string(),
+                comment: x.comment,
+                os_type: x.os_type,
+                workspace: *x.workspace.key(),
+            })
+            .collect(),
+        limit,
+        offset,
+        total: total as u64,
+    }))
 }
 
 /// The path parameter of a host

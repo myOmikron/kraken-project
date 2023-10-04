@@ -1,6 +1,6 @@
 use actix_toolbox::tb_middleware::Session;
 use actix_web::get;
-use actix_web::web::{Data, Json, Path};
+use actix_web::web::{Data, Json, Path, Query};
 use futures::TryStreamExt;
 use rorm::{query, Database, FieldAccess, Model};
 use serde::Serialize;
@@ -8,7 +8,9 @@ use tonic::codegen::tokio_stream::StreamExt;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::{workspaces, ApiError, ApiResult, PathUuid};
+use crate::api::handler::{
+    get_page_params, workspaces, ApiError, ApiResult, PageParams, PathUuid, PortResultsPage,
+};
 use crate::models::{Port, PortProtocol};
 
 /// The simple representation of a port
@@ -27,30 +29,25 @@ pub struct SimplePort {
     pub comment: String,
 }
 
-/// All ports of a workspace
-#[derive(Serialize, ToSchema)]
-pub struct GetAllPortsResponse {
-    ports: Vec<SimplePort>,
-}
-
 /// List the ports of a workspace
 #[utoipa::path(
     tag = "Ports",
     context_path = "/api/v1",
     responses(
-        (status = 200, description = "Retrieve all ports of a workspace", body = GetAllPortsResponse),
+        (status = 200, description = "Retrieve all ports of a workspace", body = PortResultsPage),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    params(PathUuid),
+    params(PathUuid, PageParams),
     security(("api_key" = []))
 )]
 #[get("/workspaces/{uuid}/ports")]
 pub async fn get_all_ports(
     path: Path<PathUuid>,
+    query: Query<PageParams>,
     db: Data<Database>,
     session: Session,
-) -> ApiResult<Json<GetAllPortsResponse>> {
+) -> ApiResult<Json<PortResultsPage>> {
     let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
     let path = path.into_inner();
 
@@ -60,8 +57,17 @@ pub async fn get_all_ports(
         return Err(ApiError::MissingPrivileges);
     }
 
+    let (limit, offset) = get_page_params(query).await?;
+
+    let (total,) = query!(&mut tx, (Port::F.uuid.count(),))
+        .condition(Port::F.workspace.equals(path.uuid))
+        .one()
+        .await?;
+
     let ports: Vec<_> = query!(&mut tx, Port)
         .condition(Port::F.workspace.equals(path.uuid))
+        .limit(limit)
+        .offset(offset)
         .stream()
         .map(|x| -> ApiResult<SimplePort> {
             let x = x?;
@@ -78,5 +84,10 @@ pub async fn get_all_ports(
 
     tx.commit().await?;
 
-    Ok(Json(GetAllPortsResponse { ports }))
+    Ok(Json(PortResultsPage {
+        items: ports,
+        limit,
+        offset,
+        total: total as u64,
+    }))
 }
