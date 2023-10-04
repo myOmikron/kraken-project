@@ -1,3 +1,34 @@
-.workspace-settings-container{
+.workspace-settings-layout{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    flex-direction: column;
+    gap: 1em;
+}
 
+.workspace-settings-container{
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    height: max-content;
+
+}
+
+.workspace-settings-table{
+    display: grid;
+    gap: 0.5em;
+    grid-template-columns: 1fr 3fr;
+}
+
+.workspace-settings-table > textarea{
+    height: 5em;
+    resize: none;
+}
+
+.workspace-settings-invite{
+    display: flex;
+}
+
+.workspace-settings-user-table-heading{
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr;
 }
