@@ -1,44 +1,37 @@
 //! This module holds all attack handlers and their request and response schemas
 
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::net::IpAddr;
 use std::ops::RangeInclusive;
 
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path, Query};
 use actix_web::{delete, get, post, HttpResponse};
-use chrono::{DateTime, NaiveDateTime, Utc};
-use dehashed_rs::{DehashedError, ScheduledRequest, SearchResult};
-use futures::StreamExt;
+use chrono::{DateTime, Utc};
 use ipnet::IpNet;
 use ipnetwork::IpNetwork;
-use log::{debug, error, warn};
+use log::debug;
 use rand::prelude::IteratorRandom;
 use rand::thread_rng;
 use rorm::db::transaction::Transaction;
 use rorm::prelude::*;
-use rorm::{and, insert, query, update, Database};
+use rorm::{and, insert, query, Database};
 use serde::{Deserialize, Serialize};
-use tokio::sync::oneshot;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use crate::api::extractors::SessionUser;
 use crate::api::handler::users::UserResponse;
 use crate::api::handler::{
     get_page_params, query_user, ApiError, ApiResult, Page, PageParams, PathUuid,
     TcpPortScanResultsPage, UuidResponse,
 };
 use crate::api::server::DehashedScheduler;
-use crate::chan::{
-    CertificateTransparencyEntry, RpcClients, WsManagerChan, WsManagerMessage, WsMessage,
-};
+use crate::chan::{RpcClients, WsManagerChan};
 use crate::models::{
-    Attack, AttackInsert, AttackType, BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert,
-    CertificateTransparencyResultInsert, CertificateTransparencyValueNameInsert,
-    DehashedQueryResultInsert, DnsRecordType, Host, HostInsert, OsType, Port, PortInsert,
-    PortProtocol, TcpPortScanResult, TcpPortScanResultInsert, Workspace, WorkspaceMember,
+    Attack, AttackInsert, AttackType, TcpPortScanResult, Workspace, WorkspaceMember,
 };
+use crate::modules::attacks::AttackContext;
 use crate::rpc::rpc_definitions;
-use crate::rpc::rpc_definitions::shared::dns_record::Record;
 use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
 
 /// The settings of a subdomain bruteforce request
@@ -73,17 +66,23 @@ pub struct BruteforceSubdomainsRequest {
 pub async fn bruteforce_subdomains(
     req: Json<BruteforceSubdomainsRequest>,
     db: Data<Database>,
-    session: Session,
     rpc_clients: RpcClients,
     ws_manager_chan: Data<WsManagerChan>,
+    SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
-    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let BruteforceSubdomainsRequest {
+        leech_uuid,
+        domain,
+        wordlist_path,
+        concurrent_limit,
+        workspace_uuid,
+    } = req.into_inner();
 
-    let mut client = rpc_clients
+    let client = rpc_clients
         .get_ref()
         .read()
         .await
-        .get(&req.leech_uuid)
+        .get(&leech_uuid)
         .ok_or(ApiError::InvalidLeech)?
         .clone();
 
@@ -93,171 +92,28 @@ pub async fn bruteforce_subdomains(
             uuid: Uuid::new_v4(),
             attack_type: AttackType::BruteforceSubdomains,
             started_by: ForeignModelByField::Key(user_uuid),
-            workspace: ForeignModelByField::Key(req.workspace_uuid),
+            workspace: ForeignModelByField::Key(workspace_uuid),
             finished_at: None,
         })
         .await?;
 
     // start attack
-    tokio::spawn(async move {
-        let req = rpc_definitions::BruteforceSubdomainRequest {
+    tokio::spawn(
+        AttackContext {
+            db: Database::clone(&db),
+            ws_manager: WsManagerChan::clone(&ws_manager_chan),
+            user_uuid,
+            workspace_uuid,
+            attack_uuid,
+        }
+        .leech(client)
+        .bruteforce_subdomains(rpc_definitions::BruteforceSubdomainRequest {
             attack_uuid: attack_uuid.to_string(),
-            domain: req.domain.clone(),
-            wordlist_path: req.wordlist_path.clone(),
-            concurrent_limit: req.concurrent_limit,
-        };
-
-        match client.bruteforce_subdomains(req).await {
-            Ok(v) => {
-                let mut stream = v.into_inner();
-
-                while let Some(res) = stream.next().await {
-                    match res {
-                        Ok(v) => {
-                            let Some(record) = v.record else {
-                                warn!("Missing field record in grpc response of bruteforce subdomains");
-                                continue;
-                            };
-                            let Some(record) = record.record else {
-                                warn!("Missing field record.record in grpc response of bruteforce subdomains");
-                                continue;
-                            };
-
-                            let (source, destination, dns_record_type) = match record {
-                                Record::A(a_rec) => {
-                                    let Some(to) = a_rec.to else {
-                                        warn!("Missing field record.record.a.to in grpc response of bruteforce subdomains");
-                                        continue;
-                                    };
-
-                                    (
-                                        a_rec.source,
-                                        Ipv4Addr::from(to).to_string(),
-                                        DnsRecordType::A,
-                                    )
-                                }
-                                Record::Aaaa(aaaa_rec) => {
-                                    let Some(to) = aaaa_rec.to else {
-                                        warn!("Missing field record.record.aaaa.to in grpc response of bruteforce subdomains");
-                                        continue;
-                                    };
-
-                                    (
-                                        aaaa_rec.source,
-                                        Ipv6Addr::from(to).to_string(),
-                                        DnsRecordType::Aaaa,
-                                    )
-                                }
-                                Record::Cname(cname_rec) => {
-                                    (cname_rec.source, cname_rec.to, DnsRecordType::Cname)
-                                }
-                            };
-
-                            let Ok(None) = query!(db.as_ref(), BruteforceSubdomainsResult)
-                                .condition(and!(
-                                    BruteforceSubdomainsResult::F.attack.equals(&attack_uuid),
-                                    BruteforceSubdomainsResult::F
-                                        .dns_record_type
-                                        .equals(dns_record_type.clone()),
-                                    BruteforceSubdomainsResult::F.source.equals(&source),
-                                    BruteforceSubdomainsResult::F
-                                        .destination
-                                        .equals(&destination)
-                                ))
-                                .optional()
-                                .await
-                            else {
-                                debug!("entry already exists");
-                                continue;
-                            };
-
-                            if let Err(err) = insert!(db.as_ref(), BruteforceSubdomainsResult)
-                                .single(&BruteforceSubdomainsResultInsert {
-                                    uuid: Uuid::new_v4(),
-                                    attack: ForeignModelByField::Key(attack_uuid),
-                                    dns_record_type,
-                                    source: source.clone(),
-                                    destination: destination.clone(),
-                                })
-                                .await
-                            {
-                                error!("Could not insert data in db: {err}");
-                                return;
-                            };
-
-                            if let Err(err) = ws_manager_chan
-                                .send(WsManagerMessage::Message(
-                                    user_uuid,
-                                    WsMessage::BruteforceSubdomainsResult {
-                                        attack_uuid,
-                                        source,
-                                        destination,
-                                    },
-                                ))
-                                .await
-                            {
-                                error!("Couldn't send subdomain enumeration result to ws manager: {err}");
-                            }
-                        }
-                        Err(err) => {
-                            error!("Error while reading from stream: {err}");
-                            if let Err(err) = ws_manager_chan
-                                .send(WsManagerMessage::Message(
-                                    user_uuid,
-                                    WsMessage::AttackFinished {
-                                        attack_uuid,
-                                        finished_successful: false,
-                                    },
-                                ))
-                                .await
-                            {
-                                error!("Couldn't send attack finished to ws manager: {err}");
-                            }
-                            return;
-                        }
-                    }
-                }
-            }
-            Err(err) => {
-                error!("Error while reading from stream: {err}");
-                if let Err(err) = ws_manager_chan
-                    .send(WsManagerMessage::Message(
-                        user_uuid,
-                        WsMessage::AttackFinished {
-                            attack_uuid,
-                            finished_successful: false,
-                        },
-                    ))
-                    .await
-                {
-                    error!("Couldn't send attack finished to ws manager: {err}");
-                }
-                return;
-            }
-        };
-
-        if let Err(err) = update!(db.as_ref(), Attack)
-            .condition(Attack::F.uuid.equals(attack_uuid))
-            .set(Attack::F.finished_at, Some(Utc::now()))
-            .exec()
-            .await
-        {
-            error!("Database error: {err}");
-        }
-
-        if let Err(err) = ws_manager_chan
-            .send(WsManagerMessage::Message(
-                user_uuid,
-                WsMessage::AttackFinished {
-                    attack_uuid,
-                    finished_successful: true,
-                },
-            ))
-            .await
-        {
-            error!("Couldn't send attack finished to ws manager: {err}");
-        }
-    });
+            domain: domain.to_string(),
+            wordlist_path,
+            concurrent_limit,
+        }),
+    );
 
     Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
 }
@@ -456,18 +312,28 @@ pub async fn hosts_alive_check(
 pub async fn scan_tcp_ports(
     req: Json<ScanTcpPortsRequest>,
     db: Data<Database>,
-    session: Session,
     rpc_clients: RpcClients,
     ws_manager_chan: Data<WsManagerChan>,
+    SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
-    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
-    let workspace_uuid = req.workspace_uuid;
+    let ScanTcpPortsRequest {
+        leech_uuid,
+        targets,
+        exclude,
+        ports,
+        retry_interval,
+        max_retries,
+        timeout,
+        concurrent_limit,
+        skip_icmp_check,
+        workspace_uuid,
+    } = req.into_inner();
 
-    let mut client = rpc_clients
+    let client = rpc_clients
         .get_ref()
         .read()
         .await
-        .get(&req.leech_uuid)
+        .get(&leech_uuid)
         .ok_or(ApiError::InvalidLeech)?
         .clone();
 
@@ -477,208 +343,33 @@ pub async fn scan_tcp_ports(
             uuid: Uuid::new_v4(),
             attack_type: AttackType::TcpPortScan,
             started_by: ForeignModelByField::Key(user_uuid),
-            workspace: ForeignModelByField::Key(req.workspace_uuid),
+            workspace: ForeignModelByField::Key(workspace_uuid),
             finished_at: None,
         })
         .await?;
 
     // start attack
-    tokio::spawn(async move {
-        let req = rpc_definitions::TcpPortScanRequest {
+    tokio::spawn(
+        AttackContext {
+            db: Database::clone(&db),
+            ws_manager: WsManagerChan::clone(&ws_manager_chan),
+            user_uuid,
+            workspace_uuid,
+            attack_uuid,
+        }
+        .leech(client)
+        .tcp_port_scan(rpc_definitions::TcpPortScanRequest {
             attack_uuid: attack_uuid.to_string(),
-            targets: req.targets.iter().map(|addr| (*addr).into()).collect(),
-            exclude: req.exclude.iter().map(|addr| addr.to_string()).collect(),
-            ports: req.ports.iter().map(From::from).collect(),
-            retry_interval: req.retry_interval,
-            max_retries: req.max_retries,
-            timeout: req.timeout,
-            concurrent_limit: req.concurrent_limit,
-            skip_icmp_check: req.skip_icmp_check,
-        };
-
-        async fn insert_result(
-            db: &Database,
-            workspace_uuid: Uuid,
-            attack_uuid: Uuid,
-            ip_addr: IpNetwork,
-            port_num: u16,
-        ) -> Result<(), rorm::Error> {
-            insert!(db, TcpPortScanResult)
-                .return_nothing()
-                .single(&TcpPortScanResultInsert {
-                    uuid: Uuid::new_v4(),
-                    attack: ForeignModelByField::Key(attack_uuid),
-                    address: ip_addr,
-                    port: port_num as i32,
-                })
-                .await?;
-
-            let mut tx = db.start_transaction().await?;
-            let host = query!(&mut tx, (Host::F.uuid,))
-                .condition(and![
-                    Host::F.ip_addr.equals(ip_addr),
-                    Host::F.workspace.equals(workspace_uuid)
-                ])
-                .optional()
-                .await?;
-
-            let host_uuid = if let Some((uuid,)) = host {
-                uuid
-            } else {
-                insert!(&mut tx, HostInsert)
-                    .return_primary_key()
-                    .single(&HostInsert {
-                        uuid: Uuid::new_v4(),
-                        ip_addr,
-                        os_type: OsType::Unknown,
-                        response_time: None,
-                        comment: String::new(),
-                        workspace: ForeignModelByField::Key(workspace_uuid),
-                    })
-                    .await?
-            };
-
-            let port = query!(&mut tx, Port)
-                .condition(and![
-                    Port::F
-                        .port
-                        .equals(i16::from_ne_bytes(port_num.to_ne_bytes())),
-                    Port::F.protocol.equals(PortProtocol::Tcp),
-                    Port::F.host.equals(host_uuid),
-                    Port::F.workspace.equals(workspace_uuid),
-                ])
-                .optional()
-                .await?;
-            if port.is_none() {
-                insert!(&mut tx, PortInsert)
-                    .return_nothing()
-                    .single(&PortInsert {
-                        uuid: Uuid::new_v4(),
-                        port: i16::from_ne_bytes(port_num.to_ne_bytes()),
-                        protocol: PortProtocol::Tcp,
-                        host: ForeignModelByField::Key(host_uuid),
-                        comment: String::new(),
-                        workspace: ForeignModelByField::Key(workspace_uuid),
-                    })
-                    .await?;
-            }
-            tx.commit().await?;
-
-            Ok(())
-        }
-
-        match client.run_tcp_port_scan(req).await {
-            Ok(v) => {
-                let mut stream = v.into_inner();
-
-                while let Some(res) = stream.next().await {
-                    match res {
-                        Ok(v) => {
-                            let Some(addr) = v.address else {
-                                warn!("Missing field address in grpc response of scan tcp ports");
-                                continue;
-                            };
-
-                            let Some(addr) = addr.address else {
-                                warn!("Missing field address.address in grpc response of scan tcp ports");
-                                continue;
-                            };
-
-                            let address = match addr {
-                                rpc_definitions::shared::address::Address::Ipv4(addr) => {
-                                    IpAddr::V4(addr.into())
-                                }
-
-                                rpc_definitions::shared::address::Address::Ipv6(addr) => {
-                                    IpAddr::V6(addr.into())
-                                }
-                            };
-
-                            if let Err(err) = insert_result(
-                                &db,
-                                workspace_uuid,
-                                attack_uuid,
-                                IpNetwork::from(address),
-                                v.port as u16,
-                            )
-                            .await
-                            {
-                                error!("Database error: {err}");
-                            }
-
-                            if let Err(err) = ws_manager_chan
-                                .send(WsManagerMessage::Message(
-                                    user_uuid,
-                                    WsMessage::ScanTcpPortsResult {
-                                        attack_uuid,
-                                        address: address.to_string(),
-                                        port: v.port as u16,
-                                    },
-                                ))
-                                .await
-                            {
-                                error!("Couldn't send scan tcp ports result to ws manager: {err}");
-                            }
-                        }
-                        Err(err) => {
-                            error!("Error while reading from stream: {err}");
-                            if let Err(err) = ws_manager_chan
-                                .send(WsManagerMessage::Message(
-                                    user_uuid,
-                                    WsMessage::AttackFinished {
-                                        attack_uuid,
-                                        finished_successful: false,
-                                    },
-                                ))
-                                .await
-                            {
-                                error!("Couldn't send attack finished to ws manager: {err}");
-                            }
-                            return;
-                        }
-                    }
-                }
-            }
-            Err(err) => {
-                error!("Error while reading from stream: {err}");
-                if let Err(err) = ws_manager_chan
-                    .send(WsManagerMessage::Message(
-                        user_uuid,
-                        WsMessage::AttackFinished {
-                            attack_uuid,
-                            finished_successful: false,
-                        },
-                    ))
-                    .await
-                {
-                    error!("Couldn't send attack finished to ws manager: {err}");
-                }
-                return;
-            }
-        };
-
-        if let Err(err) = update!(db.as_ref(), Attack)
-            .condition(Attack::F.uuid.equals(attack_uuid))
-            .set(Attack::F.finished_at, Some(Utc::now()))
-            .exec()
-            .await
-        {
-            error!("Database error: {err}");
-        }
-
-        if let Err(err) = ws_manager_chan
-            .send(WsManagerMessage::Message(
-                user_uuid,
-                WsMessage::AttackFinished {
-                    attack_uuid,
-                    finished_successful: true,
-                },
-            ))
-            .await
-        {
-            error!("Couldn't send attack finished to ws manager: {err}");
-        }
-    });
+            targets: targets.iter().map(|addr| (*addr).into()).collect(),
+            exclude: exclude.iter().map(|addr| addr.to_string()).collect(),
+            ports: ports.iter().map(From::from).collect(),
+            retry_interval,
+            max_retries,
+            timeout,
+            concurrent_limit,
+            skip_icmp_check,
+        }),
+    );
 
     Ok(HttpResponse::Accepted().json(UuidResponse { uuid: user_uuid }))
 }
@@ -719,13 +410,19 @@ pub struct QueryCertificateTransparencyRequest {
 pub async fn query_certificate_transparency(
     req: Json<QueryCertificateTransparencyRequest>,
     db: Data<Database>,
-    session: Session,
     rpc_clients: RpcClients,
     ws_manager_chan: Data<WsManagerChan>,
+    SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
-    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let QueryCertificateTransparencyRequest {
+        target,
+        include_expired,
+        max_retries,
+        retry_interval,
+        workspace_uuid,
+    } = req.into_inner();
 
-    let mut client = rpc_clients
+    let client = rpc_clients
         .get_ref()
         .read()
         .await
@@ -735,163 +432,35 @@ pub async fn query_certificate_transparency(
         .1
         .clone();
 
-    let uuid = insert!(db.as_ref(), AttackInsert)
+    let attack_uuid = insert!(db.as_ref(), AttackInsert)
         .return_primary_key()
         .single(&AttackInsert {
             uuid: Uuid::new_v4(),
             attack_type: AttackType::QueryCertificateTransparency,
             started_by: ForeignModelByField::Key(user_uuid),
-            workspace: ForeignModelByField::Key(req.workspace_uuid),
+            workspace: ForeignModelByField::Key(workspace_uuid),
             finished_at: None,
         })
         .await?;
 
-    tokio::spawn(async move {
-        let req = CertificateTransparencyRequest {
-            target: req.target.clone(),
-            max_retries: req.max_retries,
-            retry_interval: req.retry_interval,
-            include_expired: req.include_expired,
-        };
-
-        match client.query_certificate_transparency(req).await {
-            Ok(res) => {
-                let res = res.into_inner();
-
-                let mut tx = db.start_transaction().await.unwrap();
-
-                for cert_entry in &res.entries {
-                    let cert_uuid = insert!(&mut tx, CertificateTransparencyResultInsert)
-                        .return_primary_key()
-                        .single(&CertificateTransparencyResultInsert {
-                            uuid: Uuid::new_v4(),
-                            created_at: Utc::now(),
-                            attack: ForeignModelByField::Key(uuid),
-                            issuer_name: cert_entry.issuer_name.clone(),
-                            serial_number: cert_entry.serial_number.clone(),
-                            common_name: cert_entry.common_name.clone(),
-                            not_before: cert_entry.not_before.clone().map(|x| {
-                                DateTime::from_naive_utc_and_offset(
-                                    NaiveDateTime::from_timestamp_millis(x.seconds * 1000).unwrap(),
-                                    Utc,
-                                )
-                            }),
-                            not_after: cert_entry.not_after.clone().map(|x| {
-                                DateTime::from_naive_utc_and_offset(
-                                    NaiveDateTime::from_timestamp_millis(x.seconds * 1000).unwrap(),
-                                    Utc,
-                                )
-                            }),
-                        })
-                        .await
-                        .unwrap();
-
-                    let value_names: Vec<_> = cert_entry
-                        .value_names
-                        .clone()
-                        .into_iter()
-                        .map(|x| CertificateTransparencyValueNameInsert {
-                            uuid: Uuid::new_v4(),
-                            value_name: x,
-                            ct_result: ForeignModelByField::Key(cert_uuid),
-                        })
-                        .collect();
-
-                    insert!(&mut tx, CertificateTransparencyValueNameInsert)
-                        .return_nothing()
-                        .bulk(&value_names)
-                        .await
-                        .unwrap();
-                }
-
-                tx.commit().await.unwrap();
-
-                if let Err(err) = ws_manager_chan
-                    .send(WsManagerMessage::Message(
-                        user_uuid,
-                        WsMessage::CertificateTransparencyResult {
-                            attack_uuid: uuid,
-                            entries: res
-                                .entries
-                                .into_iter()
-                                .map(|e| CertificateTransparencyEntry {
-                                    serial_number: e.serial_number,
-                                    issuer_name: e.issuer_name,
-                                    common_name: e.common_name,
-                                    value_names: e.value_names,
-                                    not_before: e.not_before.map(|ts| {
-                                        DateTime::from_naive_utc_and_offset(
-                                            NaiveDateTime::from_timestamp_opt(
-                                                ts.seconds,
-                                                ts.nanos as u32,
-                                            )
-                                            .unwrap(),
-                                            Utc,
-                                        )
-                                    }),
-                                    not_after: e.not_after.map(|ts| {
-                                        DateTime::from_naive_utc_and_offset(
-                                            NaiveDateTime::from_timestamp_opt(
-                                                ts.seconds,
-                                                ts.nanos as u32,
-                                            )
-                                            .unwrap(),
-                                            Utc,
-                                        )
-                                    }),
-                                })
-                                .collect(),
-                        },
-                    ))
-                    .await
-                {
-                    error!(
-                        "Couldn't send query certificate transparency result to ws manager: {err}"
-                    );
-                }
-            }
-            Err(err) => {
-                error!("Error while reading from stream: {err}");
-                if let Err(err) = ws_manager_chan
-                    .send(WsManagerMessage::Message(
-                        user_uuid,
-                        WsMessage::AttackFinished {
-                            attack_uuid: uuid,
-                            finished_successful: false,
-                        },
-                    ))
-                    .await
-                {
-                    error!("Couldn't send attack finished to ws manager: {err}");
-                }
-                return;
-            }
+    tokio::spawn(
+        AttackContext {
+            db: Database::clone(&db),
+            ws_manager: WsManagerChan::clone(&ws_manager_chan),
+            user_uuid,
+            workspace_uuid,
+            attack_uuid,
         }
+        .leech(client)
+        .query_certificate_transparency(CertificateTransparencyRequest {
+            target,
+            include_expired,
+            max_retries,
+            retry_interval,
+        }),
+    );
 
-        if let Err(err) = update!(db.as_ref(), Attack)
-            .condition(Attack::F.uuid.equals(uuid))
-            .set(Attack::F.finished_at, Some(Utc::now()))
-            .exec()
-            .await
-        {
-            error!("Database error: {err}");
-        }
-
-        if let Err(err) = ws_manager_chan
-            .send(WsManagerMessage::Message(
-                user_uuid,
-                WsMessage::AttackFinished {
-                    attack_uuid: uuid,
-                    finished_successful: true,
-                },
-            ))
-            .await
-        {
-            error!("Couldn't send attack finished to ws manager: {err}");
-        }
-    });
-
-    Ok(HttpResponse::Accepted().json(UuidResponse { uuid }))
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
 }
 
 /// The request to query the dehashed API
@@ -922,12 +491,14 @@ pub struct QueryDehashedRequest {
 pub async fn query_dehashed(
     req: Json<QueryDehashedRequest>,
     ws_manager_chan: Data<WsManagerChan>,
-    session: Session,
+    SessionUser(user_uuid): SessionUser,
     dehashed_scheduler: DehashedScheduler,
     db: Data<Database>,
 ) -> ApiResult<HttpResponse> {
-    let req = req.into_inner();
-    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let QueryDehashedRequest {
+        query,
+        workspace_uuid,
+    } = req.into_inner();
 
     let sender = {
         match dehashed_scheduler.try_read()?.as_ref() {
@@ -936,78 +507,27 @@ pub async fn query_dehashed(
         }
     };
 
-    let (tx, rx) = oneshot::channel::<Result<SearchResult, DehashedError>>();
-
     let attack_uuid = insert!(db.as_ref(), AttackInsert)
         .return_primary_key()
         .single(&AttackInsert {
             uuid: Uuid::new_v4(),
             attack_type: AttackType::QueryUnhashed,
             started_by: ForeignModelByField::Key(user_uuid),
-            workspace: ForeignModelByField::Key(req.workspace_uuid),
+            workspace: ForeignModelByField::Key(workspace_uuid),
             finished_at: None,
         })
         .await?;
 
-    tokio::spawn(async move {
-        if let Err(err) = sender.send(ScheduledRequest::new(req.query, tx)).await {
-            error!("Couldn't send to dehashed scheduler: {err}");
-            return;
+    tokio::spawn(
+        AttackContext {
+            db: Database::clone(&db),
+            ws_manager: WsManagerChan::clone(&ws_manager_chan),
+            user_uuid,
+            workspace_uuid,
+            attack_uuid,
         }
-
-        let res = match rx.await {
-            Err(err) => {
-                error!("Error waiting for result: {err}");
-                return;
-            }
-            Ok(Err(err)) => {
-                error!("Error while using dehashed: {err}");
-                return;
-            }
-            Ok(Ok(res)) => res,
-        };
-
-        let entries: Vec<_> = res
-            .entries
-            .into_iter()
-            .map(|x| DehashedQueryResultInsert {
-                uuid: Uuid::new_v4(),
-                dehashed_id: x.id as i64,
-                username: x.username,
-                name: x.name,
-                email: x.email,
-                password: x.password,
-                hashed_password: x.hashed_password,
-                database_name: x.database_name,
-                address: x.address,
-                phone: x.phone,
-                vin: x.vin,
-                ip_address: x.ip_address.map(IpNetwork::from),
-                attack: ForeignModelByField::Key(attack_uuid),
-            })
-            .collect();
-
-        if let Err(err) = insert!(db.as_ref(), DehashedQueryResultInsert)
-            .bulk(&entries)
-            .await
-        {
-            error!("Database error: {err}");
-            return;
-        }
-
-        if let Err(err) = ws_manager_chan
-            .send(WsManagerMessage::Message(
-                user_uuid,
-                WsMessage::AttackFinished {
-                    attack_uuid,
-                    finished_successful: true,
-                },
-            ))
-            .await
-        {
-            error!("Couldn't send attack finished to ws manager: {err}");
-        };
-    });
+        .query_dehashed(sender, query),
+    );
 
     Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
 }
