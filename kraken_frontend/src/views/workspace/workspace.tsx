@@ -8,6 +8,7 @@ import { FullWorkspace } from "../../api/generated";
 import WorkspaceHost from "./workspace-host";
 import WorkspaceHosts from "./workspace-hosts";
 import WorkspaceAttacks from "./workspace-attacks";
+import WorkspaceSettings from "./workspace-settings";
 
 type WorkspaceProps = {
     uuid: UUID;
@@ -55,7 +56,7 @@ export default class Workspace extends React.Component<WorkspaceProps, Workspace
                 ) : this.props.view === "data" ? (
                     <></>
                 ) : this.props.view === "workspace_settings" ? (
-                    <></>
+                    <WorkspaceSettings workspace={this.state.workspace} />
                 ) : this.props.view === "attacks" ? (
                     <WorkspaceAttacks workspace={this.state.workspace} />
                 ) : this.props.view === "hosts" ? (
