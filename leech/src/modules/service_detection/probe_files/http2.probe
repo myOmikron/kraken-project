@@ -1,0 +1,8 @@
+service: http2
+prevalence: often
+probes:
+  - protocol: TCP
+    payload_str: PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n\x00\x00\x00\x04\x00\x00\x00\x00\x00
+    # `(?:\x00|\x80)` ignores the stream_id's most significant bit
+    # TODO check first 3 bytes encode length
+    regex: ^(?s-u:.)(?s-u:.)(?s-u:.)\x04(?s-u:.)(?:\x00|\x80)\x00\x00\x00

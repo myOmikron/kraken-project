@@ -2,61 +2,43 @@ use std::sync::TryLockError;
 
 use actix_toolbox::tb_middleware::{actix_session, Session};
 use actix_web::body::BoxBody;
+use actix_web::web::Query;
 use actix_web::HttpResponse;
+use attacks::SimpleTcpPortScanResult;
+use domains::SimpleDomain;
+use hosts::SimpleHost;
 use log::{debug, error, info, trace, warn};
+use ports::SimplePort;
 use rorm::db::Executor;
 use rorm::{query, FieldAccess, Model};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_repr::Serialize_repr;
+use services::SimpleService;
 use thiserror::Error;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 use webauthn_rs::prelude::WebauthnError;
 
-pub(crate) use crate::api::handler::attacks::*;
-pub(crate) use crate::api::handler::auth::*;
-pub(crate) use crate::api::handler::leeches::*;
-pub(crate) use crate::api::handler::reporting::*;
-pub(crate) use crate::api::handler::settings::*;
-pub(crate) use crate::api::handler::users::*;
-pub(crate) use crate::api::handler::websocket::*;
-pub(crate) use crate::api::handler::workspaces::*;
 use crate::models::User;
 use crate::modules::user::create::CreateUserError;
 
 pub(crate) mod api_keys;
-mod attacks;
-mod auth;
+pub(crate) mod attacks;
+pub(crate) mod auth;
+pub(crate) mod data_export;
+pub(crate) mod domains;
 pub(crate) mod global_tags;
 pub(crate) mod hosts;
-mod leeches;
+pub(crate) mod leeches;
 pub(crate) mod oauth;
-mod reporting;
-mod settings;
-mod users;
-mod websocket;
-mod workspaces;
-
-/// Use in request handlers instead of `Session` if your only interested in the `"uuid"` field
-pub struct SessionUser(pub Uuid);
-impl actix_web::FromRequest for SessionUser {
-    type Error = actix_web::Error;
-    type Future = std::future::Ready<Result<Self, Self::Error>>;
-
-    fn from_request(
-        req: &actix_web::HttpRequest,
-        payload: &mut actix_web::dev::Payload,
-    ) -> Self::Future {
-        std::future::ready(match Session::from_request(req, payload).into_inner() {
-            Ok(session) => match session.get("uuid") {
-                Ok(Some(uuid)) => Ok(Self(uuid)),
-                Ok(None) => Err(Self::Error::from(ApiError::SessionCorrupt)),
-                Err(error) => Err(Self::Error::from(ApiError::from(error))),
-            },
-            Err(error) => Err(error),
-        })
-    }
-}
+pub(crate) mod ports;
+pub(crate) mod reporting;
+pub(crate) mod services;
+pub(crate) mod settings;
+pub(crate) mod users;
+pub(crate) mod websocket;
+pub(crate) mod workspace_tags;
+pub(crate) mod workspaces;
 
 /// Query the current user's model
 pub(crate) async fn query_user(db: impl Executor<'_>, session: &Session) -> ApiResult<User> {
@@ -78,6 +60,99 @@ pub struct UuidResponse {
 #[derive(Deserialize, IntoParams)]
 pub struct PathUuid {
     pub(crate) uuid: Uuid,
+}
+
+/// Query parameters for paginated data
+#[derive(Deserialize, ToSchema, IntoParams)]
+pub struct PageParams {
+    /// Number of items to retrieve
+    #[schema(example = 50)]
+    pub limit: u64,
+
+    /// Position in the whole list to start retrieving from
+    #[schema(example = 0)]
+    pub offset: u64,
+}
+
+/// Response containing paginated data
+#[derive(Serialize, ToSchema)]
+#[aliases(
+    TcpPortScanResultsPage = Page<SimpleTcpPortScanResult>,
+    DomainResultsPage = Page<SimpleDomain>,
+    HostResultsPage = Page<SimpleHost>,
+    ServiceResultsPage = Page<SimpleService>,
+    PortResultsPage = Page<SimplePort>
+)]
+pub struct Page<T> {
+    /// The page's items
+    pub items: Vec<T>,
+
+    /// The limit this page was retrieved with
+    #[schema(example = 50)]
+    pub limit: u64,
+
+    /// The offset this page was retrieved with
+    #[schema(example = 0)]
+    pub offset: u64,
+
+    /// The total number of items this page is a subset of
+    pub total: u64,
+}
+
+const QUERY_LIMIT_MAX: u64 = 1000;
+
+pub(crate) async fn get_page_params(query: Query<PageParams>) -> Result<(u64, u64), ApiError> {
+    let PageParams { limit, offset } = query.into_inner();
+
+    if limit > QUERY_LIMIT_MAX {
+        Err(ApiError::InvalidQueryLimit)
+    } else {
+        Ok((limit, offset))
+    }
+}
+
+/// Color value
+#[derive(Deserialize, Serialize, Debug, ToSchema)]
+pub struct Color {
+    /// Red value
+    pub r: u8,
+    /// Green value
+    pub g: u8,
+    /// Blue value
+    pub b: u8,
+    /// Alpha value
+    pub a: u8,
+}
+
+/// The type of a tag
+#[derive(Serialize, Deserialize, Copy, Clone, ToSchema, Debug)]
+pub enum TagType {
+    /// Workspace tag
+    Workspace,
+    /// Global tag
+    Global,
+}
+
+/// A simple tag
+#[derive(Deserialize, Serialize, Debug, ToSchema)]
+pub struct SimpleTag {
+    pub(crate) uuid: Uuid,
+    pub(crate) name: String,
+    pub(crate) color: Color,
+    pub(crate) tag_type: TagType,
+}
+
+impl From<Color> for i32 {
+    fn from(value: Color) -> Self {
+        i32::from_le_bytes([value.r, value.g, value.b, value.a])
+    }
+}
+
+impl From<i32> for Color {
+    fn from(value: i32) -> Self {
+        let [r, g, b, a] = value.to_le_bytes();
+        Self { r, g, b, a }
+    }
 }
 
 /// The result type of kraken.
@@ -113,12 +188,14 @@ pub enum ApiStatusCode {
     InvalidLeech = 1018,
     UsernameAlreadyOccupied = 1019,
     InvalidName = 1020,
+    InvalidQueryLimit = 1021,
 
     InternalServerError = 2000,
     DatabaseError = 2001,
     SessionError = 2002,
     WebauthnError = 2003,
     DehashedNotAvailable = 2004,
+    NoLeechAvailable = 2005,
 }
 
 /// Representation of an error response
@@ -153,28 +230,15 @@ pub enum ApiError {
     InvalidJson(#[from] serde_json::Error),
     #[error("Payload overflow: {0}")]
     PayloadOverflow(String),
-    #[error("Internal server error")]
-    InternalServerError,
-    #[error("Database error occurred")]
-    DatabaseError(#[from] rorm::Error),
-    #[error("Internal server error")]
-    InvalidHash(argon2::password_hash::Error),
-    #[error("Session error occurred")]
-    SessionInsert(#[from] actix_session::SessionInsertError),
-    #[error("Session error occurred")]
-    SessionGet(#[from] actix_session::SessionGetError),
+
     #[error("Unauthenticated")]
     Unauthenticated,
     #[error("2FA is missing")]
     Missing2FA,
-    #[error("Corrupt session")]
-    SessionCorrupt,
     #[error("You are missing privileges")]
     MissingPrivileges,
     #[error("No security key is available")]
     NoSecurityKeyAvailable,
-    #[error("Webauthn error")]
-    Webauthn(#[from] WebauthnError),
     #[error("User already exists")]
     UserAlreadyExists,
     #[error("Invalid username")]
@@ -197,8 +261,27 @@ pub enum ApiError {
     UsernameAlreadyOccupied,
     #[error("Invalid name specified")]
     InvalidName,
+    #[error("Invalid limit query")]
+    InvalidQueryLimit,
+
+    #[error("Internal server error")]
+    InternalServerError,
+    #[error("Database error occurred")]
+    DatabaseError(#[from] rorm::Error),
+    #[error("Internal server error")]
+    InvalidHash(argon2::password_hash::Error),
+    #[error("Session error occurred")]
+    SessionInsert(#[from] actix_session::SessionInsertError),
+    #[error("Session error occurred")]
+    SessionGet(#[from] actix_session::SessionGetError),
+    #[error("Corrupt session")]
+    SessionCorrupt,
+    #[error("Webauthn error")]
+    Webauthn(#[from] WebauthnError),
     #[error("Dehashed is not available")]
     DehashedNotAvailable,
+    #[error("No leech available")]
+    NoLeechAvailable,
 }
 
 impl actix_web::ResponseError for ApiError {
@@ -381,6 +464,13 @@ impl actix_web::ResponseError for ApiError {
             ApiError::DehashedNotAvailable => HttpResponse::InternalServerError().json(
                 ApiErrorResponse::new(ApiStatusCode::DehashedNotAvailable, self.to_string()),
             ),
+            ApiError::NoLeechAvailable => HttpResponse::InternalServerError().json(
+                ApiErrorResponse::new(ApiStatusCode::NoLeechAvailable, self.to_string()),
+            ),
+            ApiError::InvalidQueryLimit => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::InvalidQueryLimit,
+                self.to_string(),
+            )),
         }
     }
 }

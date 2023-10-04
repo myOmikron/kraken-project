@@ -16,7 +16,7 @@ Vagrant.configure("2") do |config|
     kraken.vm.provision :ansible do |a|
       a.playbook = "vagrant/kraken.yml"
     end
-end
+  end
 
   config.vm.define "leech" do |leech|
     leech.vm.hostname = "leech"

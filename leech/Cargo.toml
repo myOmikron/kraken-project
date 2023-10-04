@@ -15,6 +15,8 @@ clap = { version = "~4", features = ["derive"] }
 # regex library
 regex = { version = ">=1.5.5" }
 
+ipnetwork = { version = "~0.20" }
+
 # Logging facade
 log = { version = "~0.4" }
 # Logging framework for `execute` command
@@ -78,8 +80,13 @@ reqwest = { version = "~0.11", features = ["json", "trust-dns", "rustls-tls-nati
 # dehashed api
 dehashed-rs = { version = "~0.3", features = ["tokio"] }
 
+native-tls = { version = "~0.2", features = ["alpn"] }
+tokio-native-tls = { version = "~0.3" }
+probe-config = { path = "probe-config" }
+
 [build-dependencies]
 tonic-build = { version = "~0.10" }
+probe-config = { path = "probe-config" }
 
 [features]
 rorm-main = []

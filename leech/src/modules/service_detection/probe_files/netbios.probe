@@ -1,0 +1,12 @@
+service: netbios
+prevalence: often
+probes:
+  - protocol: TCP
+    # This payload mimics a valid Session Request Packet but using fictitious names
+    payload_str: \x81\x00\x00\x11\x06CALLED\x00\x07CALLING\x00
+    # Negative Session Response Packet (https://datatracker.ietf.org/doc/html/rfc1002#section-4.3.4)
+    # \x83 - is the session packet type for negative response
+    # \x00 - are empty (as required) flags
+    # \x00\x01 - is the length of the following trailer
+    # the last byte are the possible error codes
+    regex: ^(?-u)\x83\x00\x00\x01[\x80\x81\x82\x83\x8f]$

@@ -18,6 +18,7 @@ import type {
   ApiErrorResponse,
   BruteforceSubdomainsRequest,
   QueryCertificateTransparencyRequest,
+  QueryDehashedRequest,
   ScanTcpPortsRequest,
   SimpleAttack,
   TcpPortScanResultsPage,
@@ -30,6 +31,8 @@ import {
     BruteforceSubdomainsRequestToJSON,
     QueryCertificateTransparencyRequestFromJSON,
     QueryCertificateTransparencyRequestToJSON,
+    QueryDehashedRequestFromJSON,
+    QueryDehashedRequestToJSON,
     ScanTcpPortsRequestFromJSON,
     ScanTcpPortsRequestToJSON,
     SimpleAttackFromJSON,
@@ -60,6 +63,10 @@ export interface GetTcpPortScanResultsRequest {
 
 export interface QueryCertificateTransparencyOperationRequest {
     queryCertificateTransparencyRequest: QueryCertificateTransparencyRequest;
+}
+
+export interface QueryDehashedOperationRequest {
+    queryDehashedRequest: QueryDehashedRequest;
 }
 
 export interface ScanTcpPortsOperationRequest {
@@ -249,6 +256,41 @@ export class AttacksApi extends runtime.BaseAPI {
      */
     async queryCertificateTransparency(requestParameters: QueryCertificateTransparencyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
         const response = await this.queryCertificateTransparencyRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Query the [dehashed](https://dehashed.com/) API. It provides email, password, credit cards and other types of information from leak-databases.  Note that you are only able to query the API if you have bought access and have a running subscription saved in kraken.
+     * Query the [dehashed](https://dehashed.com/) API.
+     */
+    async queryDehashedRaw(requestParameters: QueryDehashedOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
+        if (requestParameters.queryDehashedRequest === null || requestParameters.queryDehashedRequest === undefined) {
+            throw new runtime.RequiredError('queryDehashedRequest','Required parameter requestParameters.queryDehashedRequest was null or undefined when calling queryDehashed.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/attacks/queryDehashed`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: QueryDehashedRequestToJSON(requestParameters.queryDehashedRequest),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Query the [dehashed](https://dehashed.com/) API. It provides email, password, credit cards and other types of information from leak-databases.  Note that you are only able to query the API if you have bought access and have a running subscription saved in kraken.
+     * Query the [dehashed](https://dehashed.com/) API.
+     */
+    async queryDehashed(requestParameters: QueryDehashedOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
+        const response = await this.queryDehashedRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

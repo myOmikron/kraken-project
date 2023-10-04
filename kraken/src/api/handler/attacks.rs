@@ -10,22 +10,30 @@ use futures::StreamExt;
 use ipnet::IpNet;
 use ipnetwork::IpNetwork;
 use log::{debug, error, warn};
+use rand::prelude::IteratorRandom;
+use rand::thread_rng;
 use rorm::db::transaction::Transaction;
 use rorm::prelude::ForeignModelByField;
 use rorm::{and, insert, query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use tokio::sync::oneshot;
-use utoipa::{IntoParams, ToSchema};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::{query_user, ApiError, ApiResult, PathUuid, UserResponse, UuidResponse};
+use crate::api::handler::users::UserResponse;
+use crate::api::handler::{
+    get_page_params, query_user, ApiError, ApiResult, Page, PageParams, PathUuid,
+    TcpPortScanResultsPage, UuidResponse,
+};
 use crate::api::server::DehashedScheduler;
 use crate::chan::{
     CertificateTransparencyEntry, RpcClients, WsManagerChan, WsManagerMessage, WsMessage,
 };
 use crate::models::{
-    Attack, AttackInsert, AttackType, DehashedQueryResultInsert, TcpPortScanResult,
-    TcpPortScanResultInsert, Workspace, WorkspaceMember,
+    Attack, AttackInsert, AttackType, BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert,
+    CertificateTransparencyResultInsert, CertificateTransparencyValueNameInsert,
+    DehashedQueryResultInsert, DnsRecordType, TcpPortScanResult, TcpPortScanResultInsert,
+    Workspace, WorkspaceMember,
 };
 use crate::rpc::rpc_definitions;
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
@@ -77,7 +85,7 @@ pub async fn bruteforce_subdomains(
         .ok_or(ApiError::InvalidLeech)?
         .clone();
 
-    let uuid = insert!(db.as_ref(), AttackInsert)
+    let attack_uuid = insert!(db.as_ref(), AttackInsert)
         .return_primary_key()
         .single(&AttackInsert {
             uuid: Uuid::new_v4(),
@@ -91,7 +99,7 @@ pub async fn bruteforce_subdomains(
     // start attack
     tokio::spawn(async move {
         let req = rpc_definitions::BruteforceSubdomainRequest {
-            attack_uuid: uuid.to_string(),
+            attack_uuid: attack_uuid.to_string(),
             domain: req.domain.clone(),
             wordlist_path: req.wordlist_path.clone(),
             concurrent_limit: req.concurrent_limit,
@@ -113,14 +121,18 @@ pub async fn bruteforce_subdomains(
                                 continue;
                             };
 
-                            let (source, to) = match record {
+                            let (source, destination, dns_record_type) = match record {
                                 Record::A(a_rec) => {
                                     let Some(to) = a_rec.to else {
                                         warn!("Missing field record.record.a.to in grpc response of bruteforce subdomains");
                                         continue;
                                     };
 
-                                    (a_rec.source, Ipv4Addr::from(to).to_string())
+                                    (
+                                        a_rec.source,
+                                        Ipv4Addr::from(to).to_string(),
+                                        DnsRecordType::A,
+                                    )
                                 }
                                 Record::Aaaa(aaaa_rec) => {
                                     let Some(to) = aaaa_rec.to else {
@@ -128,18 +140,56 @@ pub async fn bruteforce_subdomains(
                                         continue;
                                     };
 
-                                    (aaaa_rec.source, Ipv6Addr::from(to).to_string())
+                                    (
+                                        aaaa_rec.source,
+                                        Ipv6Addr::from(to).to_string(),
+                                        DnsRecordType::Aaaa,
+                                    )
                                 }
-                                Record::Cname(cname_rec) => (cname_rec.source, cname_rec.to),
+                                Record::Cname(cname_rec) => {
+                                    (cname_rec.source, cname_rec.to, DnsRecordType::Cname)
+                                }
+                            };
+
+                            let Ok(None) = query!(db.as_ref(), BruteforceSubdomainsResult)
+                                .condition(and!(
+                                    BruteforceSubdomainsResult::F.attack.equals(&attack_uuid),
+                                    BruteforceSubdomainsResult::F
+                                        .dns_record_type
+                                        .equals(dns_record_type.clone()),
+                                    BruteforceSubdomainsResult::F.source.equals(&source),
+                                    BruteforceSubdomainsResult::F
+                                        .destination
+                                        .equals(&destination)
+                                ))
+                                .optional()
+                                .await
+                            else {
+                                debug!("entry already exists");
+                                continue;
+                            };
+
+                            if let Err(err) = insert!(db.as_ref(), BruteforceSubdomainsResult)
+                                .single(&BruteforceSubdomainsResultInsert {
+                                    uuid: Uuid::new_v4(),
+                                    attack: ForeignModelByField::Key(attack_uuid),
+                                    dns_record_type,
+                                    source: source.clone(),
+                                    destination: destination.clone(),
+                                })
+                                .await
+                            {
+                                error!("Could not insert data in db: {err}");
+                                return;
                             };
 
                             if let Err(err) = ws_manager_chan
                                 .send(WsManagerMessage::Message(
                                     user_uuid,
                                     WsMessage::BruteforceSubdomainsResult {
-                                        attack_uuid: uuid,
+                                        attack_uuid,
                                         source,
-                                        to,
+                                        destination,
                                     },
                                 ))
                                 .await
@@ -153,7 +203,7 @@ pub async fn bruteforce_subdomains(
                                 .send(WsManagerMessage::Message(
                                     user_uuid,
                                     WsMessage::AttackFinished {
-                                        attack_uuid: uuid,
+                                        attack_uuid,
                                         finished_successful: false,
                                     },
                                 ))
@@ -172,7 +222,7 @@ pub async fn bruteforce_subdomains(
                     .send(WsManagerMessage::Message(
                         user_uuid,
                         WsMessage::AttackFinished {
-                            attack_uuid: uuid,
+                            attack_uuid,
                             finished_successful: false,
                         },
                     ))
@@ -185,7 +235,7 @@ pub async fn bruteforce_subdomains(
         };
 
         if let Err(err) = update!(db.as_ref(), Attack)
-            .condition(Attack::F.uuid.equals(uuid))
+            .condition(Attack::F.uuid.equals(attack_uuid))
             .set(Attack::F.finished_at, Some(Utc::now()))
             .exec()
             .await
@@ -197,7 +247,7 @@ pub async fn bruteforce_subdomains(
             .send(WsManagerMessage::Message(
                 user_uuid,
                 WsMessage::AttackFinished {
-                    attack_uuid: uuid,
+                    attack_uuid,
                     finished_successful: true,
                 },
             ))
@@ -207,7 +257,7 @@ pub async fn bruteforce_subdomains(
         }
     });
 
-    Ok(HttpResponse::Accepted().json(UuidResponse { uuid }))
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
 }
 
 /// The settings to configure a tcp port scan
@@ -462,7 +512,6 @@ pub async fn scan_tcp_ports(
 /// The settings to configure a certificate transparency request
 #[derive(Deserialize, ToSchema)]
 pub struct QueryCertificateTransparencyRequest {
-    pub(crate) leech_uuid: Uuid,
     #[schema(example = "example.com")]
     pub(crate) target: String,
     #[schema(example = true)]
@@ -506,8 +555,10 @@ pub async fn query_certificate_transparency(
         .get_ref()
         .read()
         .await
-        .get(&req.leech_uuid)
-        .ok_or(ApiError::InvalidLeech)?
+        .iter()
+        .choose(&mut thread_rng())
+        .ok_or(ApiError::NoLeechAvailable)?
+        .1
         .clone();
 
     let uuid = insert!(db.as_ref(), AttackInsert)
@@ -532,6 +583,54 @@ pub async fn query_certificate_transparency(
         match client.query_certificate_transparency(req).await {
             Ok(res) => {
                 let res = res.into_inner();
+
+                let mut tx = db.start_transaction().await.unwrap();
+
+                for cert_entry in &res.entries {
+                    let cert_uuid = insert!(&mut tx, CertificateTransparencyResultInsert)
+                        .return_primary_key()
+                        .single(&CertificateTransparencyResultInsert {
+                            uuid: Uuid::new_v4(),
+                            created_at: Utc::now(),
+                            attack: ForeignModelByField::Key(uuid),
+                            issuer_name: cert_entry.issuer_name.clone(),
+                            serial_number: cert_entry.serial_number.clone(),
+                            common_name: cert_entry.common_name.clone(),
+                            not_before: cert_entry.not_before.clone().map(|x| {
+                                DateTime::from_naive_utc_and_offset(
+                                    NaiveDateTime::from_timestamp_millis(x.seconds * 1000).unwrap(),
+                                    Utc,
+                                )
+                            }),
+                            not_after: cert_entry.not_after.clone().map(|x| {
+                                DateTime::from_naive_utc_and_offset(
+                                    NaiveDateTime::from_timestamp_millis(x.seconds * 1000).unwrap(),
+                                    Utc,
+                                )
+                            }),
+                        })
+                        .await
+                        .unwrap();
+
+                    let value_names: Vec<_> = cert_entry
+                        .value_names
+                        .clone()
+                        .into_iter()
+                        .map(|x| CertificateTransparencyValueNameInsert {
+                            uuid: Uuid::new_v4(),
+                            value_name: x,
+                            ct_result: ForeignModelByField::Key(cert_uuid),
+                        })
+                        .collect();
+
+                    insert!(&mut tx, CertificateTransparencyValueNameInsert)
+                        .return_nothing()
+                        .bulk(&value_names)
+                        .await
+                        .unwrap();
+                }
+
+                tx.commit().await.unwrap();
 
                 if let Err(err) = ws_manager_chan
                     .send(WsManagerMessage::Message(
@@ -624,6 +723,7 @@ pub async fn query_certificate_transparency(
 /// The request to query the dehashed API
 #[derive(ToSchema, Deserialize)]
 pub struct QueryDehashedRequest {
+    #[schema(value_type = Query)]
     query: dehashed_rs::Query,
     workspace_uuid: Uuid,
 }
@@ -819,37 +919,9 @@ pub(crate) async fn get_attack(
     Ok(Json(attack?))
 }
 
-#[derive(Deserialize, ToSchema, IntoParams)]
-pub(crate) struct PageParams {
-    /// Number of items to retrieve
-    #[schema(example = 50)]
-    limit: u64,
-
-    /// Position in the whole list to start retrieving from
-    #[schema(example = 0)]
-    offset: u64,
-}
-
+/// A simple representation of a tcp port scan result
 #[derive(Serialize, ToSchema)]
-#[aliases(TcpPortScanResultsPage = Page<SimpleTcpPortScanResult>)]
-pub(crate) struct Page<T> {
-    /// The page's items
-    pub(crate) items: Vec<T>,
-
-    /// The limit this page was retrieved with
-    #[schema(example = 50)]
-    pub(crate) limit: u64,
-
-    /// The offset this page was retrieved with
-    #[schema(example = 0)]
-    pub(crate) offset: u64,
-
-    /// The total number of items this page is a subset of
-    pub(crate) total: u64,
-}
-
-#[derive(Serialize, ToSchema)]
-pub(crate) struct SimpleTcpPortScanResult {
+pub struct SimpleTcpPortScanResult {
     pub uuid: Uuid,
     pub attack: Uuid,
     pub created_at: DateTime<Utc>,
@@ -871,7 +943,7 @@ tag = "Attacks",
     security(("api_key" = []))
 )]
 #[get("/attacks/{uuid}/tcpPortScanResults")]
-pub(crate) async fn get_tcp_port_scan_results(
+pub async fn get_tcp_port_scan_results(
     path: Path<PathUuid>,
     query: Query<PageParams>,
     session: Session,
@@ -880,7 +952,7 @@ pub(crate) async fn get_tcp_port_scan_results(
     let mut tx = db.start_transaction().await?;
 
     let uuid = path.uuid;
-    let PageParams { limit, offset } = query.into_inner();
+    let (limit, offset) = get_page_params(query).await?;
 
     let page = if !has_access(&mut tx, uuid, &session).await? {
         Err(ApiError::MissingPrivileges)

@@ -18,16 +18,17 @@ use rand::thread_rng;
 use rorm::prelude::*;
 use rorm::{insert, query, Database};
 use serde::Serialize;
-use serde_json::json;
 use sha2::{Digest, Sha256};
-use thiserror::Error;
 use utoipa::ToSchema;
 use uuid::Uuid;
 use webauthn_rs::prelude::Url;
 
 pub(crate) use self::applications::*;
 pub(crate) use self::schemas::*;
-use crate::api::handler::{ApiError, PathUuid, SessionUser, SimpleWorkspace, UserResponse};
+use crate::api::extractors::SessionUser;
+use crate::api::handler::users::UserResponse;
+use crate::api::handler::workspaces::SimpleWorkspace;
+use crate::api::handler::{ApiError, PathUuid};
 use crate::models::{OauthClient, User, Workspace, WorkspaceAccessTokenInsert};
 
 #[derive(Debug, Default)]
@@ -106,11 +107,24 @@ pub(crate) async fn auth(
 ) -> Result<Redirect, ApiError> {
     let request = request.into_inner();
 
-    let client = query!(db.as_ref(), OauthClient)
+    let Some(client) = query!(db.as_ref(), OauthClient)
         .condition(OauthClient::F.uuid.equals(request.client_id))
         .optional()
         .await?
-        .ok_or(ApiError::InvalidUuid)?; // TODO redirect unauthorized_client
+    else {
+        return if let Some(redirect_uri) = request.redirect_uri.as_deref() {
+            build_redirect(
+                redirect_uri,
+                AuthError {
+                    error: AuthErrorType::UnauthorizedClient,
+                    state: request.state,
+                    error_description: Some("Unregistered client"),
+                },
+            )
+        } else {
+            Err(ApiError::InvalidUuid)
+        };
+    };
 
     if request.response_type != "code" {
         return build_redirect(
@@ -168,29 +182,26 @@ pub(crate) async fn auth(
         );
     };
 
-    let code_challenge = {
-        let Some(pkce) = request.pkce else {
-            return build_redirect(
-                &client.redirect_uri,
-                AuthError {
-                    error: AuthErrorType::InvalidRequest,
-                    state: None,
-                    error_description: Some("Missing code_challenge"),
-                },
-            );
-        };
-        if !matches!(pkce.code_challenge_method, CodeChallengeMethod::Sha256) {
-            return build_redirect(
-                &client.redirect_uri,
-                AuthError {
-                    error: AuthErrorType::InvalidRequest,
-                    state: None,
-                    error_description: Some("Unsupported code_challenge_method"),
-                },
-            );
-        }
-        pkce.code_challenge
+    let Some(code_challenge) = request.code_challenge else {
+        return build_redirect(
+            &client.redirect_uri,
+            AuthError {
+                error: AuthErrorType::InvalidRequest,
+                state: None,
+                error_description: Some("Missing code_challenge"),
+            },
+        );
     };
+    if !matches!(request.code_challenge_method, CodeChallengeMethod::Sha256) {
+        return build_redirect(
+            &client.redirect_uri,
+            AuthError {
+                error: AuthErrorType::InvalidRequest,
+                state: None,
+                error_description: Some("Unsupported code_challenge_method"),
+            },
+        );
+    }
 
     let request_uuid = manager.insert_open(OpenRequest {
         client_pk: request.client_id,
@@ -388,11 +399,10 @@ pub(crate) async fn deny(
     context_path = "/api/v1/oauth-server",
     responses(
         (status = 302, description = "Got token", body = TokenResponse),
-        (status = 400, description = "Client error", body = TokenErrorResponse),
-        (status = 500, description = "Server error", body = TokenErrorResponse),
+        (status = 400, description = "Client error", body = TokenError),
+        (status = 500, description = "Server error", body = TokenError),
     ),
     request_body = TokenRequest,
-    security(("api_key" = []))
 )]
 #[post("/token")]
 pub(crate) async fn token(
@@ -414,7 +424,10 @@ pub(crate) async fn token(
         inner
             .accepted
             .get(&code)
-            .ok_or(TokenError::UnknownCode)?
+            .ok_or(TokenError {
+                error: TokenErrorType::InvalidRequest,
+                error_description: Some("Invalid code"),
+            })?
             .clone()
     };
     let client = query!(db.as_ref(), OauthClient)
@@ -422,7 +435,10 @@ pub(crate) async fn token(
         .one()
         .await?;
 
-    let verifier = code_verifier.ok_or(TokenError::MissingPKCE)?;
+    let verifier = code_verifier.ok_or(TokenError {
+        error: TokenErrorType::InvalidRequest,
+        error_description: Some("Missing code_verifier"),
+    })?;
     let mut hasher = Sha256::new();
     hasher.update(verifier.as_bytes());
     let computed = BASE64_URL_SAFE_NO_PAD.encode(hasher.finalize());
@@ -432,14 +448,20 @@ pub(crate) async fn token(
             "PKCE failed; computed: {computed}, should be: {challenge}",
             challenge = accepted.code_challenge
         );
-        return Err(TokenError::InvalidPKCE);
+        return Err(TokenError {
+            error: TokenErrorType::InvalidRequest,
+            error_description: Some("Missing code_verifier doesn't match code_challenge"),
+        });
     }
 
     if client_id != client.uuid
         || client_secret != client.secret
         || redirect_uri != client.redirect_uri
     {
-        return Err(TokenError::InvalidClient);
+        return Err(TokenError {
+            error: TokenErrorType::InvalidClient,
+            error_description: Some("Invalid client_id, client_secret or redirect_uri"),
+        });
     }
 
     let access_token = Alphanumeric.sample_string(&mut thread_rng(), 32);
@@ -482,52 +504,32 @@ fn build_redirect(
     Ok(Redirect::to(url.to_string()))
 }
 
-/// Error type returned by [`/token`](token)
-#[derive(Debug, Error)]
-pub enum TokenError {
-    /// Missing PKCE code verifier
-    #[error("Missing PKCE code verifier")]
-    MissingPKCE,
-
-    /// PKCE challenge and verifier don't match
-    #[error("PKCE challenge and verifier don't match")]
-    InvalidPKCE,
-
-    /// The authorization code was not found
-    #[error("The authorization code was not found")]
-    UnknownCode,
-
-    /// Internal server error i.e. database error
-    #[error("Internal server error i.e. database error")]
-    InternalError,
-
-    /// The `client_id`, `client_secret` or `redirect_uri` don't match the registered client.
-    #[error(
-        "The `client_id`, `client_secret` or `redirect_uri` don't match the registered client."
-    )]
-    InvalidClient,
-}
-
-#[derive(Serialize, ToSchema)]
-pub(crate) struct TokenErrorResponse {
-    pub(crate) error: String,
+impl std::fmt::Display for TokenError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.error_description {
+            Some(desc) => write!(f, "{:?}: {desc}", self.error),
+            None => write!(f, "{:?}", self.error),
+        }
+    }
 }
 
 impl From<rorm::Error> for TokenError {
-    fn from(_: rorm::Error) -> Self {
-        error!("Database error in `/token` endpoint");
-        Self::InternalError
+    fn from(err: rorm::Error) -> Self {
+        error!("Database error in `/token` endpoint: {err}");
+        Self {
+            error: TokenErrorType::ServerError,
+            error_description: Some("An internal server error occured"),
+        }
     }
 }
 
 impl ResponseError for TokenError {
     fn error_response(&self) -> HttpResponse<BoxBody> {
-        (match self {
-            Self::InternalError => HttpResponse::InternalServerError(),
+        (match self.error {
+            TokenErrorType::ServerError => HttpResponse::InternalServerError(),
+            TokenErrorType::InvalidClient => HttpResponse::Unauthorized(),
             _ => HttpResponse::BadRequest(),
         })
-        .json(json!(TokenErrorResponse {
-            error: self.to_string()
-        }))
+        .json(self)
     }
 }

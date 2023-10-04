@@ -16,16 +16,19 @@
 import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
+  FullHost,
   GetAllHostsResponse,
-  SimpleHost,
+  UpdateHostRequest,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
+    FullHostFromJSON,
+    FullHostToJSON,
     GetAllHostsResponseFromJSON,
     GetAllHostsResponseToJSON,
-    SimpleHostFromJSON,
-    SimpleHostToJSON,
+    UpdateHostRequestFromJSON,
+    UpdateHostRequestToJSON,
 } from '../models';
 
 export interface GetAllHostsRequest {
@@ -35,6 +38,12 @@ export interface GetAllHostsRequest {
 export interface GetHostRequest {
     wUuid: string;
     hUuid: string;
+}
+
+export interface UpdateHostOperationRequest {
+    wUuid: string;
+    hUuid: string;
+    updateHostRequest: UpdateHostRequest;
 }
 
 /**
@@ -75,8 +84,10 @@ export class HostsApi extends runtime.BaseAPI {
     }
 
     /**
+     * Retrieve all information about a single host
+     * Retrieve all information about a single host
      */
-    async getHostRaw(requestParameters: GetHostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SimpleHost>> {
+    async getHostRaw(requestParameters: GetHostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FullHost>> {
         if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
             throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling getHost.');
         }
@@ -96,14 +107,58 @@ export class HostsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => SimpleHostFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => FullHostFromJSON(jsonValue));
     }
 
     /**
+     * Retrieve all information about a single host
+     * Retrieve all information about a single host
      */
-    async getHost(requestParameters: GetHostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SimpleHost> {
+    async getHost(requestParameters: GetHostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullHost> {
         const response = await this.getHostRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Update a host  You must include at least on parameter
+     * Update a host
+     */
+    async updateHostRaw(requestParameters: UpdateHostOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling updateHost.');
+        }
+
+        if (requestParameters.hUuid === null || requestParameters.hUuid === undefined) {
+            throw new runtime.RequiredError('hUuid','Required parameter requestParameters.hUuid was null or undefined when calling updateHost.');
+        }
+
+        if (requestParameters.updateHostRequest === null || requestParameters.updateHostRequest === undefined) {
+            throw new runtime.RequiredError('updateHostRequest','Required parameter requestParameters.updateHostRequest was null or undefined when calling updateHost.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/hosts/{h_uuid}`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"h_uuid"}}`, encodeURIComponent(String(requestParameters.hUuid))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateHostRequestToJSON(requestParameters.updateHostRequest),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Update a host  You must include at least on parameter
+     * Update a host
+     */
+    async updateHost(requestParameters: UpdateHostOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.updateHostRaw(requestParameters, initOverrides);
     }
 
 }

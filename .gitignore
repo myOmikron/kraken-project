@@ -5,3 +5,6 @@ vagrant/vars.yml
 .models.json
 
 /target
+
+kraken-sdk/package-lock.json
+kraken-sdk/node_modules/

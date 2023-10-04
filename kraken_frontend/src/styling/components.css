@@ -94,3 +94,42 @@
 .icon-button:active {
     transform: translate(1px, 1px);
 }
+
+
+
+.start-attack-container {
+    display: flex;
+    flex-direction: row;
+    gap: 2em;
+    justify-content: center;
+    align-items: center;
+}
+
+.start-attack-container svg {
+    width: 5em;
+    height: fit-content;
+}
+
+.start-attack {
+    cursor: pointer;
+}
+
+.start-attack path:last-of-type {
+    filter: brightness(0) invert() drop-shadow(0 0 4px var(--primary));
+}
+
+.start-attack-disabled path:first-of-type {
+    fill-opacity: 10% !important;
+    stroke: var(--text);
+    fill: var(--primary-op);
+}
+
+
+.start-attack-disabled path:last-of-type {
+    fill: var(--text);
+}
+
+.start-attack-container span {
+    color: white;
+    font-size: 1.5em;
+}

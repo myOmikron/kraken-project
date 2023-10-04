@@ -1,15 +1,96 @@
 .workspace-attacks-container {
     display: grid;
-    grid-template-columns: 1fr 7em;
+    grid-template-columns: 1.5fr 4fr 2fr;
+    gap: 1em;
+}
+
+.workspace-attacks {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.kraken-attacks-hex-selected {
+    fill: var(--primary) !important;
+    stroke-dasharray: 1em !important;
+    transition: all ease 200ms;
+    animation: rotate linear infinite 1s;
+    filter: brightness(0) invert() drop-shadow(0 0 4px var(--primary));
+}
+
+.kraken-attacks-hex-box-selected {
+    filter: brightness(0) invert() drop-shadow(0 0 4px var(--primary));
+}
+
+@keyframes rotate {
+    from {
+        stroke-dashoffset: 0;
+        fill-opacity: 20% !important;
+
+    }
+
+    to {
+        stroke-dashoffset: 6em;
+        fill-opacity: 60% !important;
+    }
+}
+
+.kraken-attacks-hex {
+    fill: var(--primary);
+    fill-opacity: 25%;
+    stroke: var(--primary);
+    stroke-width: 2;
+    stroke-linecap: butt;
+    stroke-linejoin: miter;
+    stroke-dasharray: none;
+    stroke-opacity:0.666667;
+    paint-order: markers stroke fill;
+    transition: all ease 400ms;
+}
+
+.kraken-attacks-clickable {
+    cursor: pointer;
+}
+
+.kraken-attacks-clickable:hover {
+    filter: brightness(0) invert() drop-shadow(0 0 4px var(--primary));
+}
+
+.kraken-attacks-hex-unavailable {
+    fill: var(--primary-op);
+}
+
+.workspace-attacks-details {
+    display: grid;
     grid-template-rows: max-content 1fr;
     gap: 1em;
-    height: calc(100% - 6em);
+    height: calc(100% - 4em);
 }
 
-.workspace-attacks-menu-ct {
-    grid-area: 2 / 2 / span 1 / span 1;
+.workspace-attacks-details-empty {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 20%;
 }
 
-.workspace-attacks-heading {
-    grid-area: 1 / 1 / span 1 / span 2;
+.workspace-attacks-info-empty {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 20%;
+}
+
+.kraken-attacks-hex-box-text {
+    font-family: "Roboto-Light", sans-serif;
+    fill: white;
+    font-size: 0.5em;
+    pointer-events: none;
+}
+
+.kraken-attacks-hex-text {
+    font-family: "Roboto-Thin", sans-serif;
+    fill: white;
+    font-size: 0.45em;
+    pointer-events: none;
 }

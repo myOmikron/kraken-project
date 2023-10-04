@@ -21,18 +21,13 @@ use webauthn_rs::prelude::{Url, WebauthnError};
 use webauthn_rs::WebauthnBuilder;
 
 use crate::api::handler::{
-    api_keys, bruteforce_subdomains, create_leech, create_user, create_workspace, delete_attack,
-    delete_leech, delete_user, delete_workspace, finish_auth, finish_register, get_all_leeches,
-    get_all_users, get_all_workspaces, get_all_workspaces_admin, get_attack, get_leech, get_me,
-    get_settings, get_tcp_port_scan_results, get_user, get_workspace, get_workspace_admin, hosts,
-    login, logout, oauth, query_certificate_transparency, report_workspace_results, scan_tcp_ports,
-    set_password, start_auth, start_register, test, update_leech, update_me, update_settings,
-    update_workspace, websocket,
+    api_keys, attacks, auth, data_export, domains, global_tags, hosts, leeches, oauth, ports,
+    services, settings, users, websocket, workspace_tags, workspaces,
 };
 use crate::api::middleware::{
-    handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired, TokenRequired,
+    handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
 };
-use crate::api::swagger::ApiDoc;
+use crate::api::swagger::{ExternalApi, FrontendApi};
 use crate::chan::{RpcClients, RpcManagerChannel, SettingsManagerChan, WsManagerChan};
 use crate::config::Config;
 
@@ -74,7 +69,6 @@ pub(crate) async fn start_server(
 
     let oauth = Data::new(oauth::OauthManager::default());
 
-    let reporting_key = config.server.reporting_key.clone();
     let dehashed = Data::new(RwLock::new(dehashed_scheduler));
 
     HttpServer::new(move || {
@@ -100,21 +94,25 @@ pub(crate) async fn start_server(
             )
             .wrap(Compress::default())
             .wrap(ErrorHandlers::new().handler(StatusCode::NOT_FOUND, handle_not_found))
-            .service(SwaggerUi::new("/docs/{_:.*}").url("/api-doc/openapi.json", ApiDoc::openapi()))
-            .service(
-                scope("/api/v1/reporting")
-                    .wrap(TokenRequired(reporting_key.clone()))
-                    .service(report_workspace_results),
-            )
+            .service(SwaggerUi::new("/docs/{_:.*}").urls(vec![
+                (
+                    utoipa_swagger_ui::Url::new("frontend-api", "/api-doc/frontend-api.json"),
+                    FrontendApi::openapi(),
+                ),
+                (
+                    utoipa_swagger_ui::Url::new("external-api", "/api-doc/external-api.json"),
+                    ExternalApi::openapi(),
+                ),
+            ]))
             .service(
                 scope("/api/v1/auth")
-                    .service(test)
-                    .service(login)
-                    .service(logout)
-                    .service(start_register)
-                    .service(finish_register)
-                    .service(start_auth)
-                    .service(finish_auth),
+                    .service(auth::test)
+                    .service(auth::login)
+                    .service(auth::logout)
+                    .service(auth::start_register)
+                    .service(auth::finish_register)
+                    .service(auth::start_auth)
+                    .service(auth::finish_auth),
             )
             .service(
                 scope("/api/v1/oauth")
@@ -124,52 +122,66 @@ pub(crate) async fn start_server(
                     .service(oauth::deny),
             )
             .service(scope("/api/v1/oauth-server").service(oauth::token))
+            .service(scope("/api/v1/export").service(data_export::export_workspace))
             .service(
                 scope("/api/v1/admin")
                     .wrap(AdminRequired)
-                    .service(get_leech)
-                    .service(get_all_leeches)
-                    .service(create_leech)
-                    .service(delete_leech)
-                    .service(update_leech)
-                    .service(create_user)
-                    .service(delete_user)
-                    .service(get_user)
-                    .service(get_all_users)
-                    .service(get_workspace_admin)
-                    .service(get_all_workspaces_admin)
+                    .service(leeches::get_leech)
+                    .service(leeches::get_all_leeches)
+                    .service(leeches::create_leech)
+                    .service(leeches::delete_leech)
+                    .service(leeches::update_leech)
+                    .service(users::create_user)
+                    .service(users::delete_user)
+                    .service(users::get_user)
+                    .service(users::get_all_users)
+                    .service(workspaces::get_workspace_admin)
+                    .service(workspaces::get_all_workspaces_admin)
                     .service(oauth::create_oauth_app)
                     .service(oauth::get_all_oauth_apps)
                     .service(oauth::get_oauth_app)
                     .service(oauth::update_oauth_app)
                     .service(oauth::delete_oauth_app)
-                    .service(get_settings)
-                    .service(update_settings),
+                    .service(settings::get_settings)
+                    .service(settings::update_settings)
+                    .service(global_tags::create_global_tag)
+                    .service(global_tags::update_global_tag)
+                    .service(global_tags::delete_global_tag),
             )
             .service(
                 scope("/api/v1")
                     .wrap(AuthenticationRequired)
-                    .service(websocket)
-                    .service(get_me)
-                    .service(update_me)
-                    .service(set_password)
-                    .service(get_workspace)
-                    .service(get_all_workspaces)
-                    .service(create_workspace)
-                    .service(delete_workspace)
-                    .service(update_workspace)
-                    .service(bruteforce_subdomains)
-                    .service(scan_tcp_ports)
-                    .service(query_certificate_transparency)
-                    .service(delete_attack)
-                    .service(get_tcp_port_scan_results)
-                    .service(get_attack)
+                    .service(websocket::websocket)
+                    .service(users::get_me)
+                    .service(users::update_me)
+                    .service(users::set_password)
+                    .service(workspaces::get_workspace)
+                    .service(workspaces::get_all_workspaces)
+                    .service(workspaces::create_workspace)
+                    .service(workspaces::delete_workspace)
+                    .service(workspaces::update_workspace)
+                    .service(attacks::bruteforce_subdomains)
+                    .service(attacks::scan_tcp_ports)
+                    .service(attacks::query_certificate_transparency)
+                    .service(attacks::delete_attack)
+                    .service(attacks::get_tcp_port_scan_results)
+                    .service(attacks::get_attack)
+                    .service(attacks::query_dehashed)
                     .service(api_keys::create_api_key)
                     .service(api_keys::get_api_keys)
                     .service(api_keys::update_api_key)
                     .service(api_keys::delete_api_key)
                     .service(hosts::get_all_hosts)
-                    .service(hosts::get_host),
+                    .service(hosts::get_host)
+                    .service(hosts::update_host)
+                    .service(global_tags::get_all_global_tags)
+                    .service(workspace_tags::create_workspace_tag)
+                    .service(workspace_tags::get_all_workspace_tags)
+                    .service(workspace_tags::update_workspace_tag)
+                    .service(workspace_tags::delete_workspace_tag)
+                    .service(ports::get_all_ports)
+                    .service(services::get_all_services)
+                    .service(domains::get_all_domains),
             )
     })
     .bind((

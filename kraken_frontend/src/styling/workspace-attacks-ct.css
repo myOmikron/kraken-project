@@ -1,0 +1,42 @@
+.workspace-attacks-ct-container {
+    display: grid;
+    gap: 1em;
+    grid-template-rows: 1fr max-content;
+}
+
+.workspace-attacks-ct {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    height: max-content;
+}
+
+.workspace-attacks-ct-include-expired {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.workspace-attacks-ct-advanced-button {
+    display: flex;
+    height: 2em;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+}
+
+.workspace-attacks-ct-advanced-button .icon {
+    width: 2em;
+}
+
+.workspace-attacks-ct-advanced {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1em;
+    height: max-content;
+    transition: all ease 750ms;
+    opacity: 0;
+}
+
+.workspace-attacks-ct-advanced-open {
+    opacity: 100%;
+}

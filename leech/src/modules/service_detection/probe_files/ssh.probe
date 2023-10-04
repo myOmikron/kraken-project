@@ -1,0 +1,6 @@
+service: ssh
+prevalence: often
+probes:
+  - protocol: TCP
+    # https://datatracker.ietf.org/doc/html/rfc4253#section-4.2
+    regex: ^SSH-[\d.]+-[^ -]+(?: [^\r\n])?\r?\n

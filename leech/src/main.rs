@@ -15,7 +15,7 @@
 
 use std::env;
 use std::io::Write;
-use std::net::IpAddr;
+use std::net::{IpAddr, SocketAddr};
 use std::num::NonZeroU32;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -28,29 +28,33 @@ use ipnet::IpNet;
 use itertools::Itertools;
 use log::{error, info, warn};
 use prost_types::Timestamp;
-use rorm::cli;
+use rorm::{cli, Database, DatabaseConfiguration, DatabaseDriver};
 use tokio::sync::mpsc;
 use tokio::task;
 use tonic::transport::Endpoint;
 use trust_dns_resolver::Name;
 use uuid::Uuid;
 
-use crate::config::get_config;
+use crate::backlog::start_backlog;
+use crate::config::{get_config, Config};
 use crate::modules::bruteforce_subdomains::{
     bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
 };
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
 use crate::modules::port_scanner::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
-use crate::modules::{dehashed, whois};
+use crate::modules::service_detection::DetectServiceSettings;
+use crate::modules::{dehashed, service_detection, whois};
 use crate::rpc::rpc_attacks::attack_results_service_client::AttackResultsServiceClient;
 use crate::rpc::rpc_attacks::shared::CertEntry;
 use crate::rpc::rpc_attacks::{CertificateTransparencyResult, MetaAttackInfo};
 use crate::rpc::start_rpc_server;
 use crate::utils::input;
 
+pub mod backlog;
 pub mod config;
 pub mod logging;
+pub mod models;
 pub mod modules;
 pub mod rpc;
 pub mod utils;
@@ -154,6 +158,28 @@ pub enum RunCommand {
         /// The ip to query information for
         query: IpAddr,
     },
+    /// Detect the service running behind a port
+    ServiceDetection {
+        /// The ip address to connect to
+        addr: IpAddr,
+
+        /// The port to connect to
+        port: u16,
+
+        /// The interval that should be waited for a response after connecting and sending an optional payload.
+        ///
+        /// The interval is specified in milliseconds.
+        #[clap(long)]
+        #[clap(default_value_t = 1000)]
+        timeout: u64,
+
+        /// Flag for debugging
+        ///
+        /// Normally the service detection would stop after the first successful match.
+        /// When this flag is enabled it will always run all checks producing their logs before returning the first match.
+        #[clap(long)]
+        dont_stop_on_match: bool,
+    },
 }
 
 /// All available subcommands
@@ -209,7 +235,11 @@ async fn main() -> Result<(), String> {
         Command::Server => {
             let config = get_config(&cli.config_path)?;
             logging::setup_logging(&config.logging)?;
-            start_rpc_server(&config).await?;
+
+            let db = get_db(&config).await?;
+            let backlog = start_backlog(db, &config.kraken).await?;
+
+            start_rpc_server(&config, backlog).await?;
         }
         Command::Execute {
             command,
@@ -518,6 +548,20 @@ async fn main() -> Result<(), String> {
                         }
                         Err(err) => error!("{err}"),
                     },
+                    RunCommand::ServiceDetection {
+                        addr,
+                        port,
+                        timeout: wait_for_response,
+                        dont_stop_on_match: debug,
+                    } => {
+                        let result = service_detection::detect_service(DetectServiceSettings {
+                            socket: SocketAddr::new(addr, port),
+                            timeout: Duration::from_millis(wait_for_response),
+                            always_run_everything: debug,
+                        })
+                        .await;
+                        println!("{result:?}");
+                    }
                 }
             }
         }
@@ -545,4 +589,26 @@ async fn migrate(config_path: &str, migration_dir: String) -> Result<(), String>
     )
     .await
     .map_err(|e| e.to_string())
+}
+
+async fn get_db(config: &Config) -> Result<Database, String> {
+    // TODO: make driver configurable...?
+    let db_config = DatabaseConfiguration {
+        driver: DatabaseDriver::Postgres {
+            host: config.database.host.clone(),
+            port: config.database.port,
+            user: config.database.user.clone(),
+            password: config.database.password.clone(),
+            name: config.database.name.clone(),
+        },
+        min_connections: 2,
+        max_connections: 20,
+        disable_logging: Some(true),
+        statement_log_level: None,
+        slow_statement_log_level: None,
+    };
+
+    Database::connect(db_config)
+        .await
+        .map_err(|e| format!("Error connecting to the database: {e}"))
 }

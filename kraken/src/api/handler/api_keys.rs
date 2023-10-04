@@ -9,7 +9,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::{ApiError, ApiResult, PathUuid, SessionUser, UuidResponse};
+use crate::api::extractors::SessionUser;
+use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::models::LeechApiKey;
 
 #[derive(Deserialize, ToSchema)]
@@ -101,12 +102,12 @@ pub struct GetApiKeysResponse {
     keys: Vec<SimpleApiKey>,
 }
 
-/// Retrieve all leeches
+/// Retrieve all api keys
 #[utoipa::path(
     tag = "Api Keys",
     context_path = "/api/v1",
     responses(
-        (status = 200, description = "The uses api keys", body = GetLeechResponse),
+        (status = 200, description = "The uses api keys", body = GetApiKeysResponse),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse)
     ),

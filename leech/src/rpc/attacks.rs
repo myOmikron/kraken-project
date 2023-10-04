@@ -6,28 +6,32 @@ use std::time::Duration;
 
 use chrono::{Datelike, Timelike};
 use futures::Stream;
-use log::warn;
+use log::{error, warn};
 use prost_types::Timestamp;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
-use tonic::{Code, Request, Response, Status};
+use tonic::{Request, Response, Status};
 
+use crate::backlog::Backlog;
 use crate::modules::bruteforce_subdomains::{
     bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
 };
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
+use crate::modules::service_detection::{detect_service, DetectServiceSettings, Service};
 use crate::rpc::rpc_attacks::port_or_range::PortOrRange;
 use crate::rpc::rpc_attacks::req_attack_service_server::ReqAttackService;
 use crate::rpc::rpc_attacks::shared::CertEntry;
 use crate::rpc::rpc_attacks::{
     BruteforceSubdomainRequest, BruteforceSubdomainResponse, CertificateTransparencyRequest,
-    CertificateTransparencyResponse, TcpPortScanRequest, TcpPortScanResponse,
+    CertificateTransparencyResponse, ServiceDetectionRequest, ServiceDetectionResponse,
+    ServiceDetectionResponseType, TcpPortScanRequest, TcpPortScanResponse,
 };
 
 /// The Attack service
-#[derive(Debug)]
-pub struct Attacks;
+pub struct Attacks {
+    pub(crate) backlog: Backlog,
+}
 
 #[tonic::async_trait]
 impl ReqAttackService for Attacks {
@@ -41,18 +45,23 @@ impl ReqAttackService for Attacks {
         let (rpc_tx, rpc_rx) = mpsc::channel(16);
         let (tx, mut rx) = mpsc::channel::<BruteforceSubdomainResult>(16);
 
+        let req = request.into_inner();
+        let req_clone = req.clone();
+        let backlog = self.backlog.clone();
+
         tokio::spawn(async move {
             while let Some(res) = rx.recv().await {
-                let rpc_res = res.into();
+                let rpc_res: BruteforceSubdomainResponse = res.into();
 
-                if let Err(err) = rpc_tx.send(Ok(rpc_res)).await {
+                if let Err(err) = rpc_tx.send(Ok(rpc_res.clone())).await {
                     warn!("Could not send to rpc_tx: {err}");
-                    // TODO: Save to backlog and use push api
+                    backlog
+                        .store_bruteforce_subdomains(&req_clone, rpc_res)
+                        .await;
                 }
             }
         });
 
-        let req = request.into_inner();
         let settings = BruteforceSubdomainsSettings {
             domain: req.domain,
             wordlist_path: req.wordlist_path.parse().unwrap(),
@@ -79,16 +88,19 @@ impl ReqAttackService for Attacks {
         let (rpc_tx, rpc_rx) = mpsc::channel(16);
         let (tx, mut rx) = mpsc::channel::<SocketAddr>(16);
 
+        let req = request.into_inner();
+        let req_clone = req.clone();
+        let backlog = self.backlog.clone();
+
         tokio::spawn(async move {
             while let Some(addr) = rx.recv().await {
                 if let Err(err) = rpc_tx.send(Ok(addr.into())).await {
                     warn!("Could not send to rpc_tx: {err}");
-                    // TODO: Save to backlog and use push api
+                    backlog.store_tcp_port_scans(&req_clone, addr).await;
                 }
             }
         });
 
-        let req = request.into_inner();
         let mut port_range = Vec::new();
         for port_or_range in req.ports {
             if let Some(port_or_range) = port_or_range.port_or_range {
@@ -137,7 +149,7 @@ impl ReqAttackService for Attacks {
         let ct_res = CertificateTransparencyResponse {
             entries: query_ct_api(settings)
                 .await
-                .map_err(|err| Status::new(Code::Unknown, err.to_string()))?
+                .map_err(|err| Status::unknown(err.to_string()))?
                 .into_iter()
                 .map(|cert_entry| CertEntry {
                     issuer_name: cert_entry.issuer_name,
@@ -173,5 +185,46 @@ impl ReqAttackService for Attacks {
         };
 
         Ok(Response::new(ct_res))
+    }
+
+    async fn service_detection(
+        &self,
+        request: Request<ServiceDetectionRequest>,
+    ) -> Result<Response<ServiceDetectionResponse>, Status> {
+        let request = request.into_inner();
+        let settings = DetectServiceSettings {
+            socket: SocketAddr::new(
+                request
+                    .address
+                    .ok_or(Status::invalid_argument("Missing address"))?
+                    .into(),
+                request
+                    .port
+                    .try_into()
+                    .map_err(|_| Status::invalid_argument("Port is out of range"))?,
+            ),
+            timeout: Duration::from_millis(request.timeout),
+            always_run_everything: false,
+        };
+
+        let service = detect_service(settings).await.map_err(|err| {
+            error!("Service detection failed: {err:?}");
+            Status::internal("Service detection failed. See logs")
+        })?;
+
+        Ok(Response::new(match service {
+            Service::Unknown => ServiceDetectionResponse {
+                r#type: ServiceDetectionResponseType::Unknown as _,
+                services: Vec::new(),
+            },
+            Service::Maybe(services) => ServiceDetectionResponse {
+                r#type: ServiceDetectionResponseType::Maybe as _,
+                services: services.iter().map(|s| s.to_string()).collect(),
+            },
+            Service::Definitely(service) => ServiceDetectionResponse {
+                r#type: ServiceDetectionResponseType::Definitely as _,
+                services: vec![service.to_string()],
+            },
+        }))
     }
 }

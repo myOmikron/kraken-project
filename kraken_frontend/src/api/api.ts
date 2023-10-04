@@ -3,20 +3,29 @@ import { handleError } from "./error";
 import {
     BruteforceSubdomainsRequest,
     CreateAppRequest,
+    CreateGlobalTagRequest,
     CreateLeechRequest,
     CreateUserRequest,
     CreateWorkspaceRequest,
+    CreateWorkspaceTagRequest,
+    GlobalTagsApi,
     HostsApi,
     OAuthApi,
     OAuthApplicationApi,
+    PortsApi,
+    Query,
     QueryCertificateTransparencyRequest,
     ScanTcpPortsRequest,
     SettingsManagementApi,
     UpdateAppRequest,
+    UpdateGlobalTag,
+    UpdateHostRequest,
     UpdateLeechRequest,
     UpdateMeRequest,
     UpdateSettingsRequest,
     UpdateWorkspaceRequest,
+    UpdateWorkspaceTag,
+    WorkspaceTagsApi,
 } from "./generated";
 import { Configuration } from "./generated";
 import {
@@ -48,6 +57,9 @@ const oauth = new OAuthApi(configuration);
 const oauthApplications = new OAuthApplicationApi(configuration);
 const settingsManagement = new SettingsManagementApi(configuration);
 const hosts = new HostsApi(configuration);
+const globalTags = new GlobalTagsApi(configuration);
+const workspaceTags = new WorkspaceTagsApi(configuration);
+const portTags = new PortsApi(configuration);
 
 export const Api = {
     admin: {
@@ -85,6 +97,13 @@ export const Api = {
                 handleError(oauthApplications.updateOauthApp({ uuid, updateAppRequest })),
             delete: (uuid: UUID) => handleError(oauthApplications.deleteOauthApp({ uuid })),
         },
+        globalTags: {
+            create: (createGlobalTagRequest: CreateGlobalTagRequest) =>
+                handleError(globalTags.createGlobalTag({ createGlobalTagRequest })),
+            delete: (uuid: UUID) => handleError(globalTags.deleteGlobalTag({ uuid })),
+            update: (uuid: UUID, updateGlobalTag: UpdateGlobalTag) =>
+                handleError(globalTags.updateGlobalTag({ uuid, updateGlobalTag })),
+        },
     },
     attacks: {
         bruteforceSubdomains: (attack: BruteforceSubdomainsRequest) =>
@@ -95,6 +114,8 @@ export const Api = {
             handleError(attacks.scanTcpPorts({ scanTcpPortsRequest: attack })),
         getTcpPortScanResults: (uuid: UUID, offset: number, limit: number) =>
             handleError(attacks.getTcpPortScanResults({ uuid, limit, offset })),
+        queryDehashed: (uuid: UUID, query: Query) =>
+            handleError(attacks.queryDehashed({ queryDehashedRequest: { workspaceUuid: uuid, query } })),
         get: (uuid: UUID) => handleError(attacks.getAttack({ uuid })),
         delete: (uuid: UUID) => handleError(attacks.deleteAttack({ uuid })),
     },
@@ -123,9 +144,28 @@ export const Api = {
             all: (workspaceUuid: UUID) => handleError(hosts.getAllHosts({ uuid: workspaceUuid })),
             get: (workspaceUuid: UUID, hostUuid: UUID) =>
                 handleError(hosts.getHost({ wUuid: workspaceUuid, hUuid: hostUuid })),
+            update: (workspaceUuid: UUID, hostUuid: UUID, updateHostRequest: UpdateHostRequest) =>
+                handleError(hosts.updateHost({ wUuid: workspaceUuid, hUuid: hostUuid, updateHostRequest })),
+        },
+        tags: {
+            all: (workspaceUuid: UUID) => handleError(workspaceTags.getAllWorkspaceTags({ uuid: workspaceUuid })),
+            create: (workspaceUuid: UUID, createWorkspaceTagRequest: CreateWorkspaceTagRequest) =>
+                handleError(workspaceTags.createWorkspaceTag({ uuid: workspaceUuid, createWorkspaceTagRequest })),
+            update: (workspaceUuid: UUID, tagUuid: UUID, updateWorkspaceTag: UpdateWorkspaceTag) =>
+                handleError(
+                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag })
+                ),
+            delete: (workspaceUuid: UUID, tagUuid: UUID) =>
+                workspaceTags.deleteWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid }),
+        },
+        ports: {
+            all: (workspaceUuid: UUID) => handleError(portTags.getAllPorts({ uuid: workspaceUuid })),
         },
     },
     oauth: {
         info: (uuid: UUID) => handleError(oauth.info({ uuid })),
+    },
+    globalTags: {
+        all: () => handleError(globalTags.getAllGlobalTags()),
     },
 };

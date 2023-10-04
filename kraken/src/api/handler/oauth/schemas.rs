@@ -21,6 +21,7 @@ pub(crate) struct AuthRequest {
     pub redirect_uri: Option<String>,
 
     /// The scope of the access request as described by [Section 3.3](https://www.rfc-editor.org/rfc/rfc6749#section-3.3).
+    #[param(value_type = String)]
     pub scope: Option<String>,
 
     /// An opaque value used by the client to maintain
@@ -28,23 +29,17 @@ pub(crate) struct AuthRequest {
     /// server includes this value when redirecting the user-agent back
     /// to the client.  The parameter SHOULD be used for preventing
     /// cross-site request forgery as described in [Section 10.12](https://www.rfc-editor.org/rfc/rfc6749#section-10.12).
+    #[param(value_type = String)]
     pub state: Option<String>,
 
-    #[serde(flatten)]
-    pub pkce: Option<Pkce>,
-}
-
-/// The client sends the code challenge as part of the OAuth 2.0
-/// Authorization Request ([Section 4.1.1 of \[RFC6749\]](https://www.rfc-editor.org/rfc/rfc6749#section-4.1.1)) using the
-/// following additional parameters:
-#[derive(Deserialize, Debug, Clone, ToSchema)]
-pub(crate) struct Pkce {
-    /// Code challenge.
-    pub code_challenge: String,
+    /// Pkce Code challenge.
+    #[param(value_type = String)]
+    pub code_challenge: Option<String>,
 
     /// Code verifier transformation method is "S256" or "plain".
     /// It defaults to "plain" if not present in the request.
     #[serde(default)]
+    #[param(inline)]
     pub code_challenge_method: CodeChallengeMethod,
 }
 
@@ -110,6 +105,7 @@ pub(crate) struct TokenRequest {
     pub client_id: Uuid,
     pub client_secret: String,
     /// Code verifier
+    #[schema(value_type = String)]
     pub code_verifier: Option<String>,
 }
 
@@ -137,6 +133,67 @@ pub(crate) struct TokenResponse {
 #[serde(rename_all = "snake_case")]
 pub(crate) enum TokenType {
     AccessToken,
+}
+
+/// Possible error response when requesting an access token.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct TokenError {
+    /// A single ASCII \[[USASCII](https://www.rfc-editor.org/rfc/rfc6749#ref-USASCII)\] error code
+    pub error: TokenErrorType,
+
+    /// Human-readable ASCII \[[USASCII](https://www.rfc-editor.org/rfc/rfc6749#ref-USASCII)\] text providing
+    /// understanding the error that occurred.
+    pub error_description: Option<&'static str>,
+}
+
+/// Possible error types of a [`TokenError`]
+#[allow(dead_code)]
+#[derive(Serialize, Debug, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum TokenErrorType {
+    /// The request is missing a required parameter, includes an
+    /// unsupported parameter value (other than grant type),
+    /// repeats a parameter, includes multiple credentials,
+    /// utilizes more than one mechanism for authenticating the
+    /// client, or is otherwise malformed.
+    InvalidRequest,
+
+    /// Client authentication failed (e.g., unknown client, no
+    /// client authentication included, or unsupported
+    /// authentication method).  The authorization server MAY
+    /// return an HTTP 401 (Unauthorized) status code to indicate
+    /// which HTTP authentication schemes are supported.  If the
+    /// client attempted to authenticate via the "Authorization"
+    /// request header field, the authorization server MUST
+    /// respond with an HTTP 401 (Unauthorized) status code and
+    /// include the "WWW-Authenticate" response header field
+    /// matching the authentication scheme used by the client.
+    InvalidClient,
+
+    /// The provided authorization grant (e.g., authorization
+    /// code, resource owner credentials) or refresh token is
+    /// invalid, expired, revoked, does not match the redirection
+    /// URI used in the authorization request, or was issued to
+    /// another client.
+    InvalidGrant,
+
+    /// The authenticated client is not authorized to use this
+    /// authorization grant type.
+    UnauthorizedClient,
+
+    /// The authorization grant type is not supported by the
+    /// authorization server.
+    UnsupportedGrantType,
+
+    /// The requested scope is invalid, unknown, malformed, or
+    /// exceeds the scope granted by the resource owner.
+    InvalidScope,
+
+    /// The authorization server encountered an unexpected
+    /// condition that prevented it from fulfilling the request.
+    ///
+    /// This type is not in the rfc
+    ServerError,
 }
 
 fn duration_seconds<S: serde::ser::Serializer>(
