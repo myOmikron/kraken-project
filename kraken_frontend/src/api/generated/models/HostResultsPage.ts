@@ -13,49 +13,49 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleTcpPortScanResult } from './SimpleTcpPortScanResult';
+import type { SimpleHost } from './SimpleHost';
 import {
-    SimpleTcpPortScanResultFromJSON,
-    SimpleTcpPortScanResultFromJSONTyped,
-    SimpleTcpPortScanResultToJSON,
-} from './SimpleTcpPortScanResult';
+    SimpleHostFromJSON,
+    SimpleHostFromJSONTyped,
+    SimpleHostToJSON,
+} from './SimpleHost';
 
 /**
  * Response containing paginated data
  * @export
- * @interface TcpPortScanResultsPage
+ * @interface HostResultsPage
  */
-export interface TcpPortScanResultsPage {
+export interface HostResultsPage {
     /**
      * The page's items
-     * @type {Array<SimpleTcpPortScanResult>}
-     * @memberof TcpPortScanResultsPage
+     * @type {Array<SimpleHost>}
+     * @memberof HostResultsPage
      */
-    items: Array<SimpleTcpPortScanResult>;
+    items: Array<SimpleHost>;
     /**
      * The limit this page was retrieved with
      * @type {number}
-     * @memberof TcpPortScanResultsPage
+     * @memberof HostResultsPage
      */
     limit: number;
     /**
      * The offset this page was retrieved with
      * @type {number}
-     * @memberof TcpPortScanResultsPage
+     * @memberof HostResultsPage
      */
     offset: number;
     /**
      * The total number of items this page is a subset of
      * @type {number}
-     * @memberof TcpPortScanResultsPage
+     * @memberof HostResultsPage
      */
     total: number;
 }
 
 /**
- * Check if a given object implements the TcpPortScanResultsPage interface.
+ * Check if a given object implements the HostResultsPage interface.
  */
-export function instanceOfTcpPortScanResultsPage(value: object): boolean {
+export function instanceOfHostResultsPage(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "items" in value;
     isInstance = isInstance && "limit" in value;
@@ -65,24 +65,24 @@ export function instanceOfTcpPortScanResultsPage(value: object): boolean {
     return isInstance;
 }
 
-export function TcpPortScanResultsPageFromJSON(json: any): TcpPortScanResultsPage {
-    return TcpPortScanResultsPageFromJSONTyped(json, false);
+export function HostResultsPageFromJSON(json: any): HostResultsPage {
+    return HostResultsPageFromJSONTyped(json, false);
 }
 
-export function TcpPortScanResultsPageFromJSONTyped(json: any, ignoreDiscriminator: boolean): TcpPortScanResultsPage {
+export function HostResultsPageFromJSONTyped(json: any, ignoreDiscriminator: boolean): HostResultsPage {
     if ((json === undefined) || (json === null)) {
         return json;
     }
     return {
         
-        'items': ((json['items'] as Array<any>).map(SimpleTcpPortScanResultFromJSON)),
+        'items': ((json['items'] as Array<any>).map(SimpleHostFromJSON)),
         'limit': json['limit'],
         'offset': json['offset'],
         'total': json['total'],
     };
 }
 
-export function TcpPortScanResultsPageToJSON(value?: TcpPortScanResultsPage | null): any {
+export function HostResultsPageToJSON(value?: HostResultsPage | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -91,7 +91,7 @@ export function TcpPortScanResultsPageToJSON(value?: TcpPortScanResultsPage | nu
     }
     return {
         
-        'items': ((value.items as Array<any>).map(SimpleTcpPortScanResultToJSON)),
+        'items': ((value.items as Array<any>).map(SimpleHostToJSON)),
         'limit': value.limit,
         'offset': value.offset,
         'total': value.total,

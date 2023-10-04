@@ -16,17 +16,19 @@
 import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
-  GetAllDomainsResponse,
+  DomainResultsPage,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
-    GetAllDomainsResponseFromJSON,
-    GetAllDomainsResponseToJSON,
+    DomainResultsPageFromJSON,
+    DomainResultsPageToJSON,
 } from '../models';
 
 export interface GetAllDomainsRequest {
     uuid: string;
+    limit: number;
+    offset: number;
 }
 
 /**
@@ -38,12 +40,28 @@ export class DomainsApi extends runtime.BaseAPI {
      * Retrieve all domains of a specific workspace
      * Retrieve all domains of a specific workspace
      */
-    async getAllDomainsRaw(requestParameters: GetAllDomainsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAllDomainsResponse>> {
+    async getAllDomainsRaw(requestParameters: GetAllDomainsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DomainResultsPage>> {
         if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
             throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getAllDomains.');
         }
 
+        if (requestParameters.limit === null || requestParameters.limit === undefined) {
+            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getAllDomains.');
+        }
+
+        if (requestParameters.offset === null || requestParameters.offset === undefined) {
+            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getAllDomains.');
+        }
+
         const queryParameters: any = {};
+
+        if (requestParameters.limit !== undefined) {
+            queryParameters['limit'] = requestParameters.limit;
+        }
+
+        if (requestParameters.offset !== undefined) {
+            queryParameters['offset'] = requestParameters.offset;
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -54,14 +72,14 @@ export class DomainsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetAllDomainsResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => DomainResultsPageFromJSON(jsonValue));
     }
 
     /**
      * Retrieve all domains of a specific workspace
      * Retrieve all domains of a specific workspace
      */
-    async getAllDomains(requestParameters: GetAllDomainsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAllDomainsResponse> {
+    async getAllDomains(requestParameters: GetAllDomainsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DomainResultsPage> {
         const response = await this.getAllDomainsRaw(requestParameters, initOverrides);
         return await response.value();
     }

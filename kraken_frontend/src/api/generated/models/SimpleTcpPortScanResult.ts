@@ -14,7 +14,7 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * 
+ * A simple representation of a tcp port scan result
  * @export
  * @interface SimpleTcpPortScanResult
  */

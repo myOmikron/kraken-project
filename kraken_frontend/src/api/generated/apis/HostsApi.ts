@@ -17,7 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   FullHost,
-  GetAllHostsResponse,
+  HostResultsPage,
   UpdateHostRequest,
 } from '../models';
 import {
@@ -25,14 +25,16 @@ import {
     ApiErrorResponseToJSON,
     FullHostFromJSON,
     FullHostToJSON,
-    GetAllHostsResponseFromJSON,
-    GetAllHostsResponseToJSON,
+    HostResultsPageFromJSON,
+    HostResultsPageToJSON,
     UpdateHostRequestFromJSON,
     UpdateHostRequestToJSON,
 } from '../models';
 
 export interface GetAllHostsRequest {
     uuid: string;
+    limit: number;
+    offset: number;
 }
 
 export interface GetHostRequest {
@@ -55,12 +57,28 @@ export class HostsApi extends runtime.BaseAPI {
      * Retrieve all hosts.  Hosts are created out of aggregating data or by user input. They represent a single host and can be created by providing an IP address
      * Retrieve all hosts.
      */
-    async getAllHostsRaw(requestParameters: GetAllHostsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAllHostsResponse>> {
+    async getAllHostsRaw(requestParameters: GetAllHostsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<HostResultsPage>> {
         if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
             throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getAllHosts.');
         }
 
+        if (requestParameters.limit === null || requestParameters.limit === undefined) {
+            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getAllHosts.');
+        }
+
+        if (requestParameters.offset === null || requestParameters.offset === undefined) {
+            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getAllHosts.');
+        }
+
         const queryParameters: any = {};
+
+        if (requestParameters.limit !== undefined) {
+            queryParameters['limit'] = requestParameters.limit;
+        }
+
+        if (requestParameters.offset !== undefined) {
+            queryParameters['offset'] = requestParameters.offset;
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -71,14 +89,14 @@ export class HostsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetAllHostsResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => HostResultsPageFromJSON(jsonValue));
     }
 
     /**
      * Retrieve all hosts.  Hosts are created out of aggregating data or by user input. They represent a single host and can be created by providing an IP address
      * Retrieve all hosts.
      */
-    async getAllHosts(requestParameters: GetAllHostsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAllHostsResponse> {
+    async getAllHosts(requestParameters: GetAllHostsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<HostResultsPage> {
         const response = await this.getAllHostsRaw(requestParameters, initOverrides);
         return await response.value();
     }
