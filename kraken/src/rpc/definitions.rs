@@ -49,4 +49,14 @@ pub mod rpc_definitions {
             }
         }
     }
+
+    impl From<shared::Address> for IpAddr {
+        fn from(value: shared::Address) -> Self {
+            let shared::Address { address } = value;
+            match address.unwrap() {
+                shared::address::Address::Ipv4(v) => IpAddr::from(Ipv4Addr::from(v)),
+                shared::address::Address::Ipv6(v) => IpAddr::from(Ipv6Addr::from(v)),
+            }
+        }
+    }
 }

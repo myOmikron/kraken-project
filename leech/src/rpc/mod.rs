@@ -122,6 +122,17 @@ pub mod rpc_attacks {
         }
     }
 
+    impl From<IpAddr> for Address {
+        fn from(value: IpAddr) -> Self {
+            Self {
+                address: Some(match value {
+                    IpAddr::V4(addr) => shared::address::Address::Ipv4(addr.into()),
+                    IpAddr::V6(addr) => shared::address::Address::Ipv6(addr.into()),
+                }),
+            }
+        }
+    }
+
     impl From<BruteforceSubdomainsResult> for BacklogBruteforceSubdomainResult {
         fn from(value: BruteforceSubdomainsResult) -> Self {
             Self {

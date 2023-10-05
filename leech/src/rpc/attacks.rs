@@ -1,12 +1,12 @@
 //! In this module is the definition of the gRPC services
 
-use std::net::SocketAddr;
+use std::net::{IpAddr, SocketAddr};
 use std::pin::Pin;
 use std::time::Duration;
 
 use chrono::{Datelike, Timelike};
 use futures::Stream;
-use log::{error, warn};
+use log::{error, info, warn};
 use prost_types::Timestamp;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
@@ -17,14 +17,15 @@ use crate::modules::bruteforce_subdomains::{
     bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
 };
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
+use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::modules::service_detection::{detect_service, DetectServiceSettings, Service};
 use crate::rpc::rpc_attacks::port_or_range::PortOrRange;
 use crate::rpc::rpc_attacks::req_attack_service_server::ReqAttackService;
-use crate::rpc::rpc_attacks::shared::CertEntry;
+use crate::rpc::rpc_attacks::shared::{Address, CertEntry};
 use crate::rpc::rpc_attacks::{
     BruteforceSubdomainRequest, BruteforceSubdomainResponse, CertificateTransparencyRequest,
-    CertificateTransparencyResponse, ServiceDetectionRequest, ServiceDetectionResponse,
+    CertificateTransparencyResponse, HostsAlive, ServiceDetectionRequest, ServiceDetectionResponse,
     ServiceDetectionResponseType, TcpPortScanRequest, TcpPortScanResponse,
 };
 
@@ -226,5 +227,51 @@ impl ReqAttackService for Attacks {
                 services: vec![service.to_string()],
             },
         }))
+    }
+
+    async fn hosts_alive_check(
+        &self,
+        request: Request<HostsAlive>,
+    ) -> Result<Response<HostsAlive>, Status> {
+        info!("start checking if hosts are reachable");
+        let hosts = request.into_inner().hosts;
+
+        if hosts.is_empty() {
+            return Err(Status::invalid_argument("no hosts to check"));
+        }
+
+        let req = IcmpScanSettings {
+            addresses: hosts.into_iter().map(|el| el.into()).collect(),
+            timeout: Default::default(),
+        };
+
+        let (tx, mut rx) = mpsc::channel::<IpAddr>(1);
+
+        let result_handle = tokio::spawn(async move {
+            let mut res: Vec<Address> = vec![];
+            while let Some(addr) = rx.recv().await {
+                res.push(addr.into())
+            }
+            if res.is_empty() {
+                warn!("all hosts are unreachable, check your targets");
+            }
+            res
+        });
+
+        if let Err(e) = start_icmp_scan(req, tx).await {
+            error!("error pinging hosts: {e}");
+            return Err(Status::internal("icmp check failed, see logs"));
+        }
+
+        return match result_handle.await {
+            Ok(hosts) => {
+                info!("finished checking if hosts are reachable");
+                Ok(Response::new(HostsAlive { hosts }))
+            }
+            Err(e) => {
+                error!("error pinging hosts: {e}");
+                Err(Status::internal("icmp check failed, see logs"))
+            }
+        };
     }
 }

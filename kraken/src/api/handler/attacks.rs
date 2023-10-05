@@ -39,7 +39,7 @@ use crate::models::{
 };
 use crate::rpc::rpc_definitions;
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
-use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
+use crate::rpc::rpc_definitions::{CertificateTransparencyRequest, HostsAlive};
 
 /// The settings of a subdomain bruteforce request
 #[derive(Deserialize, ToSchema)]
@@ -334,6 +334,97 @@ impl From<&PortOrRange> for rpc_definitions::PortOrRange {
             }),
         }
     }
+}
+
+/// Host Alive check request
+#[derive(Deserialize, ToSchema)]
+pub struct HostsAliveRequest {
+    #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.2", "10.13.37.50"]))]
+    pub(crate) targets: Vec<IpAddr>,
+}
+
+/// Check if hosts are reachable
+///
+/// Just an ICMP scan for now to see which targets respond.
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 202, description = "Attack scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = HostsAliveRequest,
+    security(("api_key" = []))
+)]
+#[post("/attacks/hostsAlive")]
+pub async fn hosts_alive_check(
+    req: Json<HostsAliveRequest>,
+    session: Session,
+    rpc_clients: RpcClients,
+    ws_manager_chan: Data<WsManagerChan>,
+) -> ApiResult<HttpResponse> {
+    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+
+    let attack_uuid = Uuid::new_v4();
+
+    let mut client = rpc_clients
+        .get_ref()
+        .read()
+        .await
+        .iter()
+        .choose(&mut thread_rng())
+        .ok_or(ApiError::NoLeechAvailable)?
+        .1
+        .clone();
+
+    tokio::spawn(async move {
+        let req = HostsAlive {
+            hosts: req
+                .into_inner()
+                .targets
+                .into_iter()
+                .map(|el| el.into())
+                .collect(),
+        };
+        match client.hosts_alive_check(req).await {
+            Ok(v) => {
+                if let Err(e) = ws_manager_chan
+                    .send(WsManagerMessage::Message(
+                        user_uuid,
+                        WsMessage::HostsAliveCheck {
+                            targets: v
+                                .into_inner()
+                                .hosts
+                                .into_iter()
+                                .map(|el| el.into())
+                                .collect(),
+                        },
+                    ))
+                    .await
+                {
+                    error!("Couldn't send hosts alive result to ws manager: {e}");
+                }
+            }
+            Err(e) => {
+                error!("Error while reading from stream: {e}");
+                if let Err(err) = ws_manager_chan
+                    .send(WsManagerMessage::Message(
+                        user_uuid,
+                        WsMessage::AttackFinished {
+                            attack_uuid,
+                            finished_successful: false,
+                        },
+                    ))
+                    .await
+                {
+                    error!("Couldn't send attack finished to ws manager: {err}");
+                }
+            }
+        }
+    });
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
 }
 
 /// Start a tcp port scan
