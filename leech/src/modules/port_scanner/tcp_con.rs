@@ -12,8 +12,8 @@ use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
 use tokio::time::{sleep, timeout};
 
+use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::error::TcpPortScanError;
-use crate::modules::port_scanner::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 
 /// The settings of a tcp connection port scan
 #[derive(Clone, Debug)]
@@ -75,7 +75,9 @@ pub async fn start_tcp_con_port_scan(
         let icmp_settings = IcmpScanSettings {
             addresses: settings.addresses,
             timeout: Duration::from_millis(1000),
+            concurrent_limit: settings.concurrent_limit,
         };
+
         start_icmp_scan(icmp_settings, tx).await?;
 
         match handle.await {

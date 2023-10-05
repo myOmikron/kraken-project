@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::net::IpAddr;
 
 use actix_toolbox::ws;
 use actix_toolbox::ws::Message;
@@ -84,6 +85,11 @@ pub enum WsMessage {
         source: String,
         /// The destination address that was returned
         destination: String,
+    },
+    /// A result for hosts alive check
+    HostsAliveCheck {
+        /// The hosts that could be reached
+        targets: Vec<IpAddr>,
     },
     /// A result for a tcp scan
     ScanTcpPortsResult {

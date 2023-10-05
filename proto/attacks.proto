@@ -137,12 +137,33 @@ enum ServiceDetectionResponseType {
   DEFINITELY = 2;
 }
 
+/*
+ * Hosts alive check
+ */
+
+// Request for checking if hosts are alive
+message HostsAliveRequest {
+  // The hosts that should be checked
+  repeated attacks.shared.Address targets = 1;
+  // The timeout, specified in milliseconds.
+  uint64 timeout = 2;
+  // The concurrent task limit
+  uint32 concurrent_limit = 3;
+}
+
+// Response for checking which hosts are alive
+message HostsAliveResponse {
+  // the hosts that responded
+  repeated attacks.shared.Address hosts = 1;
+}
+
 // Implemented by leech; allows kraken to request attack from a leech
 service ReqAttackService {
   rpc BruteforceSubdomains(BruteforceSubdomainRequest) returns (stream BruteforceSubdomainResponse);
   rpc RunTcpPortScan(TcpPortScanRequest) returns (stream TcpPortScanResponse);
   rpc QueryCertificateTransparency(CertificateTransparencyRequest) returns (CertificateTransparencyResponse);
   rpc ServiceDetection(ServiceDetectionRequest) returns (ServiceDetectionResponse);
+  rpc HostsAliveCheck(HostsAliveRequest) returns (HostsAliveResponse);
 }
 
 /*
