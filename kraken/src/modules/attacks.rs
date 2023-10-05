@@ -81,35 +81,31 @@ impl AttackContext {
             Ok(Ok(res)) => res,
         };
 
-        let entries: Vec<_> = res
-            .entries
-            .into_iter()
-            .map(|x| DehashedQueryResultInsert {
-                uuid: Uuid::new_v4(),
-                dehashed_id: x.id as i64,
-                username: x.username,
-                name: x.name,
-                email: x.email,
-                password: x.password,
-                hashed_password: x.hashed_password,
-                database_name: x.database_name,
-                address: x.address,
-                phone: x.phone,
-                vin: x.vin,
-                ip_address: x.ip_address.map(IpNetwork::from),
-                attack: ForeignModelByField::Key(self.attack_uuid),
-            })
-            .collect();
+        let entries = res.entries.into_iter().map(|x| DehashedQueryResultInsert {
+            uuid: Uuid::new_v4(),
+            dehashed_id: x.id as i64,
+            username: x.username,
+            name: x.name,
+            email: x.email,
+            password: x.password,
+            hashed_password: x.hashed_password,
+            database_name: x.database_name,
+            address: x.address,
+            phone: x.phone,
+            vin: x.vin,
+            ip_address: x.ip_address.map(IpNetwork::from),
+            attack: ForeignModelByField::Key(self.attack_uuid),
+        });
 
         if let Err(err) = insert!(&self.db, DehashedQueryResultInsert)
-            .bulk(&entries)
+            .bulk(entries)
             .await
         {
             error!("Database error: {err}");
             return;
         }
 
-        self.send_finished(true).await;
+        self.set_finished(true).await;
     }
 }
 
@@ -216,7 +212,7 @@ impl LeechAttackContext {
                         }
                         Err(err) => {
                             error!("Error while reading from stream: {err}");
-                            self.send_finished(false).await;
+                            self.set_finished(false).await;
                             return;
                         }
                     }
@@ -224,21 +220,12 @@ impl LeechAttackContext {
             }
             Err(err) => {
                 error!("Error while reading from stream: {err}");
-                self.send_finished(false).await;
+                self.set_finished(false).await;
                 return;
             }
         };
 
-        if let Err(err) = update!(&self.db, Attack)
-            .condition(Attack::F.uuid.equals(self.attack_uuid))
-            .set(Attack::F.finished_at, Some(Utc::now()))
-            .exec()
-            .await
-        {
-            error!("Database error: {err}");
-        }
-
-        self.send_finished(true).await;
+        self.set_finished(true).await;
     }
 
     /// Start a tcp port scan
@@ -364,7 +351,7 @@ impl LeechAttackContext {
                         }
                         Err(err) => {
                             error!("Error while reading from stream: {err}");
-                            self.send_finished(false).await;
+                            self.set_finished(false).await;
                             return;
                         }
                     }
@@ -372,21 +359,12 @@ impl LeechAttackContext {
             }
             Err(err) => {
                 error!("Error while reading from stream: {err}");
-                self.send_finished(false).await;
+                self.set_finished(false).await;
                 return;
             }
         };
 
-        if let Err(err) = update!(&self.db, Attack)
-            .condition(Attack::F.uuid.equals(self.attack_uuid))
-            .set(Attack::F.finished_at, Some(Utc::now()))
-            .exec()
-            .await
-        {
-            error!("Database error: {err}");
-        }
-
-        self.send_finished(true).await;
+        self.set_finished(true).await;
     }
 
     /// Query a certificate transparency log collector.
@@ -477,26 +455,18 @@ impl LeechAttackContext {
             }
             Err(err) => {
                 error!("Error while reading from stream: {err}");
-                self.send_finished(false).await;
+                self.set_finished(false).await;
                 return;
             }
         }
 
-        if let Err(err) = update!(&self.db, Attack)
-            .condition(Attack::F.uuid.equals(self.attack_uuid))
-            .set(Attack::F.finished_at, Some(Utc::now()))
-            .exec()
-            .await
-        {
-            error!("Database error: {err}");
-        }
-
-        self.send_finished(true).await;
+        self.set_finished(true).await;
     }
 }
 
 /* Some utility methods and impls */
 impl AttackContext {
+    /// Send a websocket message and log the error
     async fn send_ws(&self, message: WsMessage) {
         if self
             .ws_manager
@@ -508,12 +478,27 @@ impl AttackContext {
         }
     }
 
-    async fn send_finished(&self, finished_successful: bool) {
+    /// Send the user a notification and update the [`Attack`] model
+    async fn set_finished(&self, finished_successful: bool) {
         self.send_ws(WsMessage::AttackFinished {
             attack_uuid: self.attack_uuid,
             finished_successful,
         })
         .await;
+
+        if finished_successful {
+            if let Err(err) = update!(&self.db, Attack)
+                .condition(Attack::F.uuid.equals(self.attack_uuid))
+                .set(Attack::F.finished_at, Some(Utc::now()))
+                .exec()
+                .await
+            {
+                error!(
+                    "Failed to set the attack {attack_uuid} to finished: {err}",
+                    attack_uuid = self.attack_uuid
+                );
+            }
+        }
     }
 }
 impl std::ops::Deref for LeechAttackContext {
