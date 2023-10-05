@@ -4,6 +4,7 @@
 pub mod bruteforce_subdomains;
 pub mod certificate_transparency;
 pub mod dehashed;
+pub mod host_alive;
 pub mod port_scanner;
 pub mod service_detection;
 pub mod whois;

@@ -9,7 +9,7 @@ use rand::random;
 use surge_ping::{Client, PingIdentifier, PingSequence, SurgeError, ICMP};
 use tokio::sync::mpsc::Sender;
 
-use crate::modules::port_scanner::error::IcmpScanError;
+use crate::modules::host_alive::error::IcmpScanError;
 
 /// The settings of a icmp scan
 #[derive(Debug)]
