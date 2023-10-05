@@ -8,6 +8,8 @@ use std::io;
 pub enum IcmpScanError {
     /// Error while creating the icmp client
     CreateIcmpClient(io::Error),
+    /// Error while rising the NO_FILE limit
+    RiseNoFileLimit(io::Error),
 }
 
 impl Display for IcmpScanError {
@@ -15,6 +17,9 @@ impl Display for IcmpScanError {
         match self {
             IcmpScanError::CreateIcmpClient(err) => {
                 write!(f, "Could not create icmp client: {err}")
+            }
+            IcmpScanError::RiseNoFileLimit(err) => {
+                write!(f, "Could not increase NO_FILE limit: {err}")
             }
         }
     }

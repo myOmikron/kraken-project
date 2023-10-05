@@ -38,6 +38,7 @@ impl From<IcmpScanError> for TcpPortScanError {
     fn from(value: IcmpScanError) -> Self {
         match value {
             IcmpScanError::CreateIcmpClient(v) => Self::CreateIcmpClient(v),
+            IcmpScanError::RiseNoFileLimit(v) => Self::RiseNoFileLimit(v),
         }
     }
 }

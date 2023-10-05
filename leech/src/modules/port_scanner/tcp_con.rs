@@ -75,7 +75,9 @@ pub async fn start_tcp_con_port_scan(
         let icmp_settings = IcmpScanSettings {
             addresses: settings.addresses,
             timeout: Duration::from_millis(1000),
+            concurrent_limit: settings.concurrent_limit,
         };
+
         start_icmp_scan(icmp_settings, tx).await?;
 
         match handle.await {

@@ -25,8 +25,9 @@ use crate::rpc::rpc_attacks::req_attack_service_server::ReqAttackService;
 use crate::rpc::rpc_attacks::shared::{Address, CertEntry};
 use crate::rpc::rpc_attacks::{
     BruteforceSubdomainRequest, BruteforceSubdomainResponse, CertificateTransparencyRequest,
-    CertificateTransparencyResponse, HostsAlive, ServiceDetectionRequest, ServiceDetectionResponse,
-    ServiceDetectionResponseType, TcpPortScanRequest, TcpPortScanResponse,
+    CertificateTransparencyResponse, HostsAliveRequest, HostsAliveResponse,
+    ServiceDetectionRequest, ServiceDetectionResponse, ServiceDetectionResponseType,
+    TcpPortScanRequest, TcpPortScanResponse,
 };
 
 /// The Attack service
@@ -231,18 +232,19 @@ impl ReqAttackService for Attacks {
 
     async fn hosts_alive_check(
         &self,
-        request: Request<HostsAlive>,
-    ) -> Result<Response<HostsAlive>, Status> {
+        request: Request<HostsAliveRequest>,
+    ) -> Result<Response<HostsAliveResponse>, Status> {
         info!("start checking if hosts are reachable");
-        let hosts = request.into_inner().hosts;
+        let req = request.into_inner();
 
-        if hosts.is_empty() {
+        if req.targets.is_empty() {
             return Err(Status::invalid_argument("no hosts to check"));
         }
 
         let req = IcmpScanSettings {
-            addresses: hosts.into_iter().map(|el| el.into()).collect(),
-            timeout: Default::default(),
+            concurrent_limit: req.concurrent_limit,
+            timeout: Duration::from_millis(req.timeout),
+            addresses: req.targets.into_iter().map(|el| el.into()).collect(),
         };
 
         let (tx, mut rx) = mpsc::channel::<IpAddr>(1);
@@ -266,7 +268,7 @@ impl ReqAttackService for Attacks {
         return match result_handle.await {
             Ok(hosts) => {
                 info!("finished checking if hosts are reachable");
-                Ok(Response::new(HostsAlive { hosts }))
+                Ok(Response::new(HostsAliveResponse { hosts }))
             }
             Err(e) => {
                 error!("error pinging hosts: {e}");

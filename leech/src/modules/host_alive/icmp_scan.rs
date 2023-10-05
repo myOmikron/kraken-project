@@ -18,6 +18,10 @@ pub struct IcmpScanSettings {
     pub addresses: Vec<IpAddr>,
     /// The time wait for a pong
     pub timeout: Duration,
+    /// Maximum of concurrent tasks that should be spawned
+    ///
+    /// 0 means, that there should be no limit.
+    pub concurrent_limit: u32,
 }
 
 /// Start a ICMP scan.
@@ -31,6 +35,11 @@ pub async fn start_icmp_scan(
     settings: IcmpScanSettings,
     tx: Sender<IpAddr>,
 ) -> Result<(), IcmpScanError> {
+    // Increase the NO_FILE limit if necessary
+    if let Err(err) = rlimit::increase_nofile_limit(settings.concurrent_limit as u64 + 100) {
+        return Err(IcmpScanError::RiseNoFileLimit(err));
+    }
+
     let conf_v4 = surge_ping::Config::default();
     let conf_v6 = surge_ping::Config::builder().kind(ICMP::V6).build();
 
@@ -40,7 +49,7 @@ pub async fn start_icmp_scan(
     info!("Starting icmp check");
 
     stream::iter(settings.addresses)
-        .for_each_concurrent(20, |addr| {
+        .for_each_concurrent(settings.concurrent_limit as usize, |addr| {
             let icmp_client = if addr.is_ipv4() {
                 icmp_v4_client.clone()
             } else {

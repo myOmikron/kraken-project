@@ -492,6 +492,7 @@ async fn main() -> Result<(), String> {
                                 let settings = IcmpScanSettings {
                                     addresses,
                                     timeout: Duration::from_millis(timeout as u64),
+                                    concurrent_limit: u32::from(concurrent_limit),
                                 };
                                 let (tx, mut rx) = mpsc::channel(1);
 

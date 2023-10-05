@@ -39,7 +39,7 @@ use crate::models::{
 };
 use crate::rpc::rpc_definitions;
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
-use crate::rpc::rpc_definitions::{CertificateTransparencyRequest, HostsAlive};
+use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
 
 /// The settings of a subdomain bruteforce request
 #[derive(Deserialize, ToSchema)]
@@ -341,11 +341,19 @@ impl From<&PortOrRange> for rpc_definitions::PortOrRange {
 pub struct HostsAliveRequest {
     #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.2", "10.13.37.50"]))]
     pub(crate) targets: Vec<IpAddr>,
+
+    #[schema(example = 3000)]
+    pub(crate) timeout: u64,
+
+    #[schema(example = 30)]
+    pub(crate) concurrent_limit: u32,
 }
 
 /// Check if hosts are reachable
 ///
 /// Just an ICMP scan for now to see which targets respond.
+///
+/// All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.
 #[utoipa::path(
     tag = "Attacks",
     context_path = "/api/v1",
@@ -378,14 +386,13 @@ pub async fn hosts_alive_check(
         .1
         .clone();
 
+    let req = req.into_inner();
+
     tokio::spawn(async move {
-        let req = HostsAlive {
-            hosts: req
-                .into_inner()
-                .targets
-                .into_iter()
-                .map(|el| el.into())
-                .collect(),
+        let req = rpc_definitions::HostsAliveRequest {
+            targets: req.targets.iter().map(|el| (*el).into()).collect(),
+            timeout: req.timeout,
+            concurrent_limit: req.concurrent_limit,
         };
         match client.hosts_alive_check(req).await {
             Ok(v) => {
