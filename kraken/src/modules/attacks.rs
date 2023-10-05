@@ -10,6 +10,7 @@ use dehashed_rs::{DehashedError, Query, ScheduledRequest, SearchResult};
 use futures::StreamExt;
 use ipnetwork::IpNetwork;
 use log::{debug, error, warn};
+use rorm::db::transaction::Transaction;
 use rorm::prelude::*;
 use rorm::{and, insert, query, update, Database};
 use tokio::sync::mpsc;
@@ -23,8 +24,8 @@ use crate::chan::{CertificateTransparencyEntry, WsManagerChan, WsManagerMessage,
 use crate::models::{
     Attack, BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert,
     CertificateTransparencyResultInsert, CertificateTransparencyValueNameInsert,
-    DehashedQueryResultInsert, DnsRecordType, Host, HostInsert, OsType, Port, PortInsert,
-    PortProtocol, TcpPortScanResult, TcpPortScanResultInsert,
+    DehashedQueryResultInsert, DnsRecordType, Domain, DomainInsert, Host, HostInsert, OsType, Port,
+    PortInsert, PortProtocol, TcpPortScanResult, TcpPortScanResultInsert,
 };
 use crate::rpc::rpc_definitions;
 use crate::rpc::rpc_definitions::req_attack_service_client::ReqAttackServiceClient;
@@ -169,39 +170,17 @@ impl LeechAttackContext {
                                 }
                             };
 
-                            let Ok(None) = query!(&self.db, BruteforceSubdomainsResult)
-                                .condition(and!(
-                                    BruteforceSubdomainsResult::F
-                                        .attack
-                                        .equals(self.attack_uuid),
-                                    BruteforceSubdomainsResult::F
-                                        .dns_record_type
-                                        .equals(dns_record_type.clone()),
-                                    BruteforceSubdomainsResult::F.source.equals(&source),
-                                    BruteforceSubdomainsResult::F
-                                        .destination
-                                        .equals(&destination)
-                                ))
-                                .optional()
-                                .await
-                            else {
-                                debug!("entry already exists");
-                                continue;
-                            };
-
-                            if let Err(err) = insert!(&self.db, BruteforceSubdomainsResult)
-                                .single(&BruteforceSubdomainsResultInsert {
-                                    uuid: Uuid::new_v4(),
-                                    attack: ForeignModelByField::Key(self.attack_uuid),
+                            if let Err(err) = self
+                                .insert_bruteforce_subdomains_result(
+                                    source.clone(),
+                                    destination.clone(),
                                     dns_record_type,
-                                    source: source.clone(),
-                                    destination: destination.clone(),
-                                })
+                                )
                                 .await
                             {
                                 error!("Could not insert data in db: {err}");
                                 return;
-                            };
+                            }
 
                             self.send_ws(WsMessage::BruteforceSubdomainsResult {
                                 attack_uuid: self.attack_uuid,
@@ -228,81 +207,54 @@ impl LeechAttackContext {
         self.set_finished(true).await;
     }
 
+    /// Insert a tcp port scan's result and update the aggregation
+    async fn insert_bruteforce_subdomains_result(
+        &self,
+        source: String,
+        destination: String,
+        dns_record_type: DnsRecordType,
+    ) -> Result<(), rorm::Error> {
+        let mut tx = self.db.start_transaction().await?;
+
+        if query!(&mut tx, BruteforceSubdomainsResult)
+            .condition(and!(
+                BruteforceSubdomainsResult::F
+                    .attack
+                    .equals(self.attack_uuid),
+                BruteforceSubdomainsResult::F
+                    .dns_record_type
+                    .equals(dns_record_type.clone()),
+                BruteforceSubdomainsResult::F.source.equals(&source),
+                BruteforceSubdomainsResult::F
+                    .destination
+                    .equals(&destination)
+            ))
+            .optional()
+            .await?
+            .is_some()
+        {
+            debug!("entry already exists");
+        } else {
+            insert!(&mut tx, BruteforceSubdomainsResult)
+                .single(&BruteforceSubdomainsResultInsert {
+                    uuid: Uuid::new_v4(),
+                    attack: ForeignModelByField::Key(self.attack_uuid),
+                    dns_record_type,
+                    source: source.clone(),
+                    destination: destination.clone(),
+                })
+                .await?;
+
+            self.insert_missing_domain(&mut tx, &source).await?;
+        }
+
+        tx.commit().await
+    }
+
     /// Start a tcp port scan
     ///
     /// See [`handler::attacks::scan_tcp_ports`] for more information.
     pub async fn tcp_port_scan(mut self, req: rpc_definitions::TcpPortScanRequest) {
-        async fn insert_result(
-            db: &Database,
-            workspace_uuid: Uuid,
-            attack_uuid: Uuid,
-            ip_addr: IpNetwork,
-            port_num: u16,
-        ) -> Result<(), rorm::Error> {
-            insert!(db, TcpPortScanResult)
-                .return_nothing()
-                .single(&TcpPortScanResultInsert {
-                    uuid: Uuid::new_v4(),
-                    attack: ForeignModelByField::Key(attack_uuid),
-                    address: ip_addr,
-                    port: port_num as i32,
-                })
-                .await?;
-
-            let mut tx = db.start_transaction().await?;
-            let host = query!(&mut tx, (Host::F.uuid,))
-                .condition(and![
-                    Host::F.ip_addr.equals(ip_addr),
-                    Host::F.workspace.equals(workspace_uuid)
-                ])
-                .optional()
-                .await?;
-
-            let host_uuid = if let Some((uuid,)) = host {
-                uuid
-            } else {
-                insert!(&mut tx, HostInsert)
-                    .return_primary_key()
-                    .single(&HostInsert {
-                        uuid: Uuid::new_v4(),
-                        ip_addr,
-                        os_type: OsType::Unknown,
-                        response_time: None,
-                        comment: String::new(),
-                        workspace: ForeignModelByField::Key(workspace_uuid),
-                    })
-                    .await?
-            };
-
-            let port = query!(&mut tx, Port)
-                .condition(and![
-                    Port::F
-                        .port
-                        .equals(i16::from_ne_bytes(port_num.to_ne_bytes())),
-                    Port::F.protocol.equals(PortProtocol::Tcp),
-                    Port::F.host.equals(host_uuid),
-                    Port::F.workspace.equals(workspace_uuid),
-                ])
-                .optional()
-                .await?;
-            if port.is_none() {
-                insert!(&mut tx, PortInsert)
-                    .return_nothing()
-                    .single(&PortInsert {
-                        uuid: Uuid::new_v4(),
-                        port: i16::from_ne_bytes(port_num.to_ne_bytes()),
-                        protocol: PortProtocol::Tcp,
-                        host: ForeignModelByField::Key(host_uuid),
-                        comment: String::new(),
-                        workspace: ForeignModelByField::Key(workspace_uuid),
-                    })
-                    .await?;
-            }
-            tx.commit().await?;
-
-            Ok(())
-        }
-
         match self.leech.run_tcp_port_scan(req).await {
             Ok(v) => {
                 let mut stream = v.into_inner();
@@ -330,14 +282,12 @@ impl LeechAttackContext {
                                 }
                             };
 
-                            if let Err(err) = insert_result(
-                                &self.db,
-                                self.workspace_uuid,
-                                self.attack_uuid,
-                                IpNetwork::from(address),
-                                v.port as u16,
-                            )
-                            .await
+                            if let Err(err) = self
+                                .insert_tcp_port_scan_result(
+                                    IpNetwork::from(address),
+                                    v.port as u16,
+                                )
+                                .await
                             {
                                 error!("Database error: {err}");
                             }
@@ -367,6 +317,76 @@ impl LeechAttackContext {
         self.set_finished(true).await;
     }
 
+    /// Insert a tcp port scan's result and update the aggregation
+    async fn insert_tcp_port_scan_result(
+        &self,
+        ip_addr: IpNetwork,
+        port_num: u16,
+    ) -> Result<(), rorm::Error> {
+        insert!(&self.db, TcpPortScanResult)
+            .return_nothing()
+            .single(&TcpPortScanResultInsert {
+                uuid: Uuid::new_v4(),
+                attack: ForeignModelByField::Key(self.attack_uuid),
+                address: ip_addr,
+                port: port_num as i32,
+            })
+            .await?;
+
+        let mut tx = self.db.start_transaction().await?;
+        let host = query!(&mut tx, (Host::F.uuid,))
+            .condition(and![
+                Host::F.ip_addr.equals(ip_addr),
+                Host::F.workspace.equals(self.workspace_uuid)
+            ])
+            .optional()
+            .await?;
+
+        let host_uuid = if let Some((uuid,)) = host {
+            uuid
+        } else {
+            insert!(&mut tx, HostInsert)
+                .return_primary_key()
+                .single(&HostInsert {
+                    uuid: Uuid::new_v4(),
+                    ip_addr,
+                    os_type: OsType::Unknown,
+                    response_time: None,
+                    comment: String::new(),
+                    workspace: ForeignModelByField::Key(self.workspace_uuid),
+                })
+                .await?
+        };
+
+        let port = query!(&mut tx, Port)
+            .condition(and![
+                Port::F
+                    .port
+                    .equals(i16::from_ne_bytes(port_num.to_ne_bytes())),
+                Port::F.protocol.equals(PortProtocol::Tcp),
+                Port::F.host.equals(host_uuid),
+                Port::F.workspace.equals(self.workspace_uuid),
+            ])
+            .optional()
+            .await?;
+        if port.is_none() {
+            insert!(&mut tx, PortInsert)
+                .return_nothing()
+                .single(&PortInsert {
+                    uuid: Uuid::new_v4(),
+                    port: i16::from_ne_bytes(port_num.to_ne_bytes()),
+                    protocol: PortProtocol::Tcp,
+                    host: ForeignModelByField::Key(host_uuid),
+                    comment: String::new(),
+                    workspace: ForeignModelByField::Key(self.workspace_uuid),
+                })
+                .await?;
+        }
+        tx.commit().await?;
+
+        Ok(())
+    }
+
     /// Query a certificate transparency log collector.
     ///
     /// See [`handler::attacks::query_certificate_transparency`] for more information.
@@ -378,53 +398,12 @@ impl LeechAttackContext {
             Ok(res) => {
                 let res = res.into_inner();
 
-                let mut tx = self.db.start_transaction().await.unwrap();
-
-                for cert_entry in &res.entries {
-                    let cert_uuid = insert!(&mut tx, CertificateTransparencyResultInsert)
-                        .return_primary_key()
-                        .single(&CertificateTransparencyResultInsert {
-                            uuid: Uuid::new_v4(),
-                            created_at: Utc::now(),
-                            attack: ForeignModelByField::Key(self.attack_uuid),
-                            issuer_name: cert_entry.issuer_name.clone(),
-                            serial_number: cert_entry.serial_number.clone(),
-                            common_name: cert_entry.common_name.clone(),
-                            not_before: cert_entry.not_before.clone().map(|x| {
-                                Utc.from_utc_datetime(
-                                    &NaiveDateTime::from_timestamp_millis(x.seconds * 1000)
-                                        .unwrap(),
-                                )
-                            }),
-                            not_after: cert_entry.not_after.clone().map(|x| {
-                                Utc.from_utc_datetime(
-                                    &NaiveDateTime::from_timestamp_millis(x.seconds * 1000)
-                                        .unwrap(),
-                                )
-                            }),
-                        })
-                        .await
-                        .unwrap();
-
-                    let value_names: Vec<_> = cert_entry
-                        .value_names
-                        .clone()
-                        .into_iter()
-                        .map(|x| CertificateTransparencyValueNameInsert {
-                            uuid: Uuid::new_v4(),
-                            value_name: x,
-                            ct_result: ForeignModelByField::Key(cert_uuid),
-                        })
-                        .collect();
-
-                    insert!(&mut tx, CertificateTransparencyValueNameInsert)
-                        .return_nothing()
-                        .bulk(&value_names)
-                        .await
-                        .unwrap();
+                if let Err(err) = self
+                    .insert_query_certificate_transparency_result(&res)
+                    .await
+                {
+                    error!("Failed to insert query certificate transparency result: {err}");
                 }
-
-                tx.commit().await.unwrap();
 
                 self.send_ws(WsMessage::CertificateTransparencyResult {
                     attack_uuid: self.attack_uuid,
@@ -461,6 +440,94 @@ impl LeechAttackContext {
         }
 
         self.set_finished(true).await;
+    }
+
+    /// Insert a query certificate transparency's result and update the aggregation
+    async fn insert_query_certificate_transparency_result(
+        &self,
+        res: &rpc_definitions::CertificateTransparencyResponse,
+    ) -> Result<(), rorm::Error> {
+        let mut tx = self.db.start_transaction().await?;
+
+        for cert_entry in &res.entries {
+            let cert_uuid = insert!(&mut tx, CertificateTransparencyResultInsert)
+                .return_primary_key()
+                .single(&CertificateTransparencyResultInsert {
+                    uuid: Uuid::new_v4(),
+                    created_at: Utc::now(),
+                    attack: ForeignModelByField::Key(self.attack_uuid),
+                    issuer_name: cert_entry.issuer_name.clone(),
+                    serial_number: cert_entry.serial_number.clone(),
+                    common_name: cert_entry.common_name.clone(),
+                    not_before: cert_entry.not_before.clone().map(|x| {
+                        Utc.from_utc_datetime(
+                            &NaiveDateTime::from_timestamp_millis(x.seconds * 1000).unwrap(),
+                        )
+                    }),
+                    not_after: cert_entry.not_after.clone().map(|x| {
+                        Utc.from_utc_datetime(
+                            &NaiveDateTime::from_timestamp_millis(x.seconds * 1000).unwrap(),
+                        )
+                    }),
+                })
+                .await?;
+
+            let value_names = cert_entry.value_names.clone().into_iter().map(|x| {
+                CertificateTransparencyValueNameInsert {
+                    uuid: Uuid::new_v4(),
+                    value_name: x,
+                    ct_result: ForeignModelByField::Key(cert_uuid),
+                }
+            });
+
+            insert!(&mut tx, CertificateTransparencyValueNameInsert)
+                .return_nothing()
+                .bulk(value_names)
+                .await?;
+        }
+
+        for entry in &res.entries {
+            self.insert_missing_domain(&mut tx, &entry.common_name)
+                .await?;
+            for value in &entry.value_names {
+                self.insert_missing_domain(&mut tx, &value).await?;
+            }
+        }
+
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    /// Insert an aggregated domain if it doesn't exist yet.
+    ///
+    /// Returns whether the domain was inserted or not.
+    async fn insert_missing_domain(
+        &self,
+        tx: &mut Transaction,
+        domain: &str,
+    ) -> Result<bool, rorm::Error> {
+        if query!(&mut *tx, Domain)
+            .condition(and![
+                Domain::F.workspace.equals(self.workspace_uuid),
+                Domain::F.domain.equals(domain)
+            ])
+            .optional()
+            .await?
+            .is_none()
+        {
+            insert!(tx, Domain)
+                .single(&DomainInsert {
+                    uuid: Uuid::new_v4(),
+                    domain: domain.to_string(),
+                    comment: String::new(),
+                    workspace: ForeignModelByField::Key(self.workspace_uuid),
+                })
+                .await?;
+            Ok(true)
+        } else {
+            Ok(false)
+        }
     }
 }
 
