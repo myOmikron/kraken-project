@@ -16,17 +16,19 @@
 import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
-  GetAllPortsResponse,
+  PortResultsPage,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
-    GetAllPortsResponseFromJSON,
-    GetAllPortsResponseToJSON,
+    PortResultsPageFromJSON,
+    PortResultsPageToJSON,
 } from '../models';
 
 export interface GetAllPortsRequest {
     uuid: string;
+    limit: number;
+    offset: number;
 }
 
 /**
@@ -38,12 +40,28 @@ export class PortsApi extends runtime.BaseAPI {
      * List the ports of a workspace
      * List the ports of a workspace
      */
-    async getAllPortsRaw(requestParameters: GetAllPortsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAllPortsResponse>> {
+    async getAllPortsRaw(requestParameters: GetAllPortsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PortResultsPage>> {
         if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
             throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getAllPorts.');
         }
 
+        if (requestParameters.limit === null || requestParameters.limit === undefined) {
+            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getAllPorts.');
+        }
+
+        if (requestParameters.offset === null || requestParameters.offset === undefined) {
+            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getAllPorts.');
+        }
+
         const queryParameters: any = {};
+
+        if (requestParameters.limit !== undefined) {
+            queryParameters['limit'] = requestParameters.limit;
+        }
+
+        if (requestParameters.offset !== undefined) {
+            queryParameters['offset'] = requestParameters.offset;
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -54,14 +72,14 @@ export class PortsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetAllPortsResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => PortResultsPageFromJSON(jsonValue));
     }
 
     /**
      * List the ports of a workspace
      * List the ports of a workspace
      */
-    async getAllPorts(requestParameters: GetAllPortsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAllPortsResponse> {
+    async getAllPorts(requestParameters: GetAllPortsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PortResultsPage> {
         const response = await this.getAllPortsRaw(requestParameters, initOverrides);
         return await response.value();
     }

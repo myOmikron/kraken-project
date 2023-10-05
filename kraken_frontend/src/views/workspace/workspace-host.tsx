@@ -1,6 +1,6 @@
 import React from "react";
 import "../../styling/workspace-host.css";
-import { FullWorkspace, SimpleHost } from "../../api/generated";
+import { FullWorkspace, HostResultsPage, SimpleHost } from "../../api/generated";
 import FreeBSDIcon from "../../svg/freebsd";
 import { Api, UUID } from "../../api/api";
 import { toast } from "react-toastify";
@@ -25,18 +25,18 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
     }
 
     async getHostList() {
-        (await Api.workspaces.hosts.all(this.props.workspace.uuid)).match(
-            (hosts) => {
-                this.setState({ hostList: hosts.hosts.filter((x) => x.uuid !== this.props.host_uuid) });
+        (await Api.workspaces.hosts.all(this.props.workspace.uuid, 1000, 0)).match(
+            ({ items }) => {
+                this.setState({ hostList: items.filter(({ uuid }) => uuid !== this.props.host_uuid) });
             },
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 
     async getHost() {
         (await Api.workspaces.hosts.get(this.props.workspace.uuid, this.props.host_uuid)).match(
             (host) => this.setState({ host }),
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 

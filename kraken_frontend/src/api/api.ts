@@ -8,6 +8,7 @@ import {
     CreateUserRequest,
     CreateWorkspaceRequest,
     CreateWorkspaceTagRequest,
+    DomainsApi,
     GlobalTagsApi,
     HostsApi,
     OAuthApi,
@@ -16,6 +17,7 @@ import {
     Query,
     QueryCertificateTransparencyRequest,
     ScanTcpPortsRequest,
+    ServicesApi,
     SettingsManagementApi,
     UpdateAppRequest,
     UpdateGlobalTag,
@@ -56,10 +58,12 @@ const workspaces = new WorkspacesApi(configuration);
 const oauth = new OAuthApi(configuration);
 const oauthApplications = new OAuthApplicationApi(configuration);
 const settingsManagement = new SettingsManagementApi(configuration);
-const hosts = new HostsApi(configuration);
 const globalTags = new GlobalTagsApi(configuration);
 const workspaceTags = new WorkspaceTagsApi(configuration);
-const portTags = new PortsApi(configuration);
+const hosts = new HostsApi(configuration);
+const ports = new PortsApi(configuration);
+const domains = new DomainsApi(configuration);
+const services = new ServicesApi(configuration);
 
 export const Api = {
     admin: {
@@ -141,11 +145,24 @@ export const Api = {
             handleError(workspaces.updateWorkspace({ uuid, updateWorkspaceRequest: workspace })),
         delete: (uuid: UUID) => handleError(workspaces.deleteWorkspace({ uuid })),
         hosts: {
-            all: (workspaceUuid: UUID) => handleError(hosts.getAllHosts({ uuid: workspaceUuid })),
+            all: (workspaceUuid: UUID, limit: number, offset: number) =>
+                handleError(hosts.getAllHosts({ uuid: workspaceUuid, limit, offset })),
             get: (workspaceUuid: UUID, hostUuid: UUID) =>
                 handleError(hosts.getHost({ wUuid: workspaceUuid, hUuid: hostUuid })),
             update: (workspaceUuid: UUID, hostUuid: UUID, updateHostRequest: UpdateHostRequest) =>
                 handleError(hosts.updateHost({ wUuid: workspaceUuid, hUuid: hostUuid, updateHostRequest })),
+        },
+        ports: {
+            all: (workspaceUuid: UUID, limit: number, offset: number) =>
+                handleError(ports.getAllPorts({ uuid: workspaceUuid, limit, offset })),
+        },
+        domains: {
+            all: (workspaceUuid: UUID, limit: number, offset: number) =>
+                handleError(domains.getAllDomains({ uuid: workspaceUuid, limit, offset })),
+        },
+        services: {
+            all: (workspaceUuid: UUID, limit: number, offset: number) =>
+                handleError(services.getAllServices({ uuid: workspaceUuid, limit, offset })),
         },
         tags: {
             all: (workspaceUuid: UUID) => handleError(workspaceTags.getAllWorkspaceTags({ uuid: workspaceUuid })),
@@ -153,13 +170,10 @@ export const Api = {
                 handleError(workspaceTags.createWorkspaceTag({ uuid: workspaceUuid, createWorkspaceTagRequest })),
             update: (workspaceUuid: UUID, tagUuid: UUID, updateWorkspaceTag: UpdateWorkspaceTag) =>
                 handleError(
-                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag })
+                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag }),
                 ),
             delete: (workspaceUuid: UUID, tagUuid: UUID) =>
                 workspaceTags.deleteWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid }),
-        },
-        ports: {
-            all: (workspaceUuid: UUID) => handleError(portTags.getAllPorts({ uuid: workspaceUuid })),
         },
     },
     oauth: {

@@ -10,12 +10,31 @@ export enum StatusCode {
     InvalidContentType = 1002,
     InvalidJson = 1003,
     PayloadOverflow = 1004,
+
     Unauthenticated = 1005,
     Missing2fa = 1006,
     MissingPrivileges = 1007,
+    NoSecurityKeyAvailable = 1008,
+    UserAlreadyExists = 1009,
+    InvalidUsername = 1010,
+    InvalidAddress = 1011,
+    AddressAlreadyExists = 1012,
+    NameAlreadyExists = 1013,
+    InvalidUuid = 1014,
+
+    EmptyJson = 1016,
+    InvalidPassword = 1017,
+    InvalidLeech = 1018,
+    UsernameAlreadyOccupied = 1019,
+    InvalidName = 1020,
+    InvalidQueryLimit = 1021,
+
     InternalServerError = 2000,
     DatabaseError = 2001,
     SessionError = 2002,
+    WebauthnError = 2003,
+    DehashedNotAvailable = 2004,
+    NoLeechAvailable = 2005,
 }
 
 export type ApiError = {

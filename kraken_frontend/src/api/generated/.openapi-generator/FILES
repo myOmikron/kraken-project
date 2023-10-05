@@ -31,6 +31,7 @@ models/CreateUserRequest.ts
 models/CreateUserResponse.ts
 models/CreateWorkspaceRequest.ts
 models/CreateWorkspaceTagRequest.ts
+models/DomainResultsPage.ts
 models/FinishRegisterRequest.ts
 models/FinishRegisterRequestAllOf.ts
 models/FullGlobalTag.ts
@@ -38,10 +39,6 @@ models/FullHost.ts
 models/FullOauthClient.ts
 models/FullWorkspace.ts
 models/FullWorkspaceTag.ts
-models/GetAllDomainsResponse.ts
-models/GetAllHostsResponse.ts
-models/GetAllPortsResponse.ts
-models/GetAllServicesResponse.ts
 models/GetApiKeysResponse.ts
 models/GetAppsResponse.ts
 models/GetGlobalTagsResponse.ts
@@ -51,12 +48,14 @@ models/GetUser.ts
 models/GetUserResponse.ts
 models/GetWorkspaceResponse.ts
 models/GetWorkspaceTagsResponse.ts
+models/HostResultsPage.ts
 models/LoginRequest.ts
 models/OpenRequestInfo.ts
 models/OsType.ts
 models/PageParams.ts
 models/PortOrRange.ts
 models/PortProtocol.ts
+models/PortResultsPage.ts
 models/Query.ts
 models/QueryCertificateTransparencyRequest.ts
 models/QueryDehashedRequest.ts
@@ -77,6 +76,7 @@ models/SearchTypeOneOf1.ts
 models/SearchTypeOneOf2.ts
 models/SearchTypeOneOf3.ts
 models/SearchTypeOneOf4.ts
+models/ServiceResultsPage.ts
 models/SetPasswordRequest.ts
 models/SettingsFull.ts
 models/SimpleApiKey.ts

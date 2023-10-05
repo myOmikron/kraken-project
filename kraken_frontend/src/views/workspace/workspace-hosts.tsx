@@ -29,9 +29,9 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
     }
 
     async retrieveHosts() {
-        (await Api.workspaces.hosts.all(this.props.workspace.uuid)).match(
-            (hosts) => this.setState({ hosts: hosts.hosts }),
-            (err) => toast.error(err.message)
+        (await Api.workspaces.hosts.all(this.props.workspace.uuid, 1000, 0)).match(
+            ({ items }) => this.setState({ hosts: items }),
+            (err) => toast.error(err.message),
         );
     }
 
