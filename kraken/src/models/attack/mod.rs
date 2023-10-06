@@ -22,6 +22,8 @@ pub enum AttackType {
     QueryCertificateTransparency,
     /// Query the unhashed API
     QueryUnhashed,
+    /// Check if a host is reachable via icmp
+    HostAlive,
 }
 
 /// Representation of an attack

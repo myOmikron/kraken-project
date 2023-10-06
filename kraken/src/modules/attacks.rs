@@ -499,6 +499,30 @@ impl LeechAttackContext {
         Ok(())
     }
 
+    /// Check if hosts are reachable
+    ///
+    /// See [`handler::attacks::hosts_alive_check`] for more information.
+    pub async fn host_alive_check(mut self, req: rpc_definitions::HostsAliveRequest) {
+        match self.leech.hosts_alive_check(req).await {
+            Ok(v) => {
+                self.send_ws(WsMessage::HostsAliveCheck {
+                    targets: v
+                        .into_inner()
+                        .hosts
+                        .into_iter()
+                        .map(|el| el.into())
+                        .collect(),
+                })
+                .await;
+                self.set_finished(true).await;
+            }
+            Err(e) => {
+                error!("Error while reading from stream: {e}");
+                self.set_finished(false).await;
+            }
+        }
+    }
+
     /// Insert an aggregated domain if it doesn't exist yet.
     ///
     /// Returns whether the domain was inserted or not.

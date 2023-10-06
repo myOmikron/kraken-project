@@ -203,6 +203,8 @@ pub struct HostsAliveRequest {
 
     #[schema(example = 30)]
     pub(crate) concurrent_limit: u32,
+
+    pub(crate) workspace_uuid: Uuid,
 }
 
 /// Check if hosts are reachable
@@ -223,16 +225,31 @@ pub struct HostsAliveRequest {
 )]
 #[post("/attacks/hostsAlive")]
 pub async fn hosts_alive_check(
+    db: Data<Database>,
     req: Json<HostsAliveRequest>,
-    session: Session,
+    SessionUser(user_uuid): SessionUser,
     rpc_clients: RpcClients,
     ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
-    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let HostsAliveRequest {
+        targets,
+        timeout,
+        concurrent_limit,
+        workspace_uuid,
+    } = req.into_inner();
 
-    let attack_uuid = Uuid::new_v4();
+    let attack_uuid = insert!(db.as_ref(), AttackInsert)
+        .return_primary_key()
+        .single(&AttackInsert {
+            uuid: Uuid::new_v4(),
+            attack_type: AttackType::BruteforceSubdomains,
+            started_by: ForeignModelByField::Key(user_uuid),
+            workspace: ForeignModelByField::Key(workspace_uuid),
+            finished_at: None,
+        })
+        .await?;
 
-    let mut client = rpc_clients
+    let client = rpc_clients
         .get_ref()
         .read()
         .await
@@ -242,50 +259,21 @@ pub async fn hosts_alive_check(
         .1
         .clone();
 
-    let req = req.into_inner();
-
-    tokio::spawn(async move {
-        let req = rpc_definitions::HostsAliveRequest {
-            targets: req.targets.iter().map(|el| (*el).into()).collect(),
-            timeout: req.timeout,
-            concurrent_limit: req.concurrent_limit,
-        };
-        match client.hosts_alive_check(req).await {
-            Ok(v) => {
-                if let Err(e) = ws_manager_chan
-                    .send(WsManagerMessage::Message(
-                        user_uuid,
-                        WsMessage::HostsAliveCheck {
-                            targets: v
-                                .into_inner()
-                                .hosts
-                                .into_iter()
-                                .map(|el| el.into())
-                                .collect(),
-                        },
-                    ))
-                    .await
-                {
-                    error!("Couldn't send hosts alive result to ws manager: {e}");
-                }
-            }
-            Err(e) => {
-                error!("Error while reading from stream: {e}");
-                if let Err(err) = ws_manager_chan
-                    .send(WsManagerMessage::Message(
-                        user_uuid,
-                        WsMessage::AttackFinished {
-                            attack_uuid,
-                            finished_successful: false,
-                        },
-                    ))
-                    .await
-                {
-                    error!("Couldn't send attack finished to ws manager: {err}");
-                }
-            }
+    tokio::spawn(
+        AttackContext {
+            db: Database::clone(&db),
+            ws_manager: WsManagerChan::clone(&ws_manager_chan),
+            user_uuid,
+            workspace_uuid,
+            attack_uuid,
         }
-    });
+        .leech(client)
+        .host_alive_check(rpc_definitions::HostsAliveRequest {
+            targets: targets.into_iter().map(Into::into).collect(),
+            timeout,
+            concurrent_limit,
+        }),
+    );
 
     Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
 }
@@ -341,7 +329,7 @@ pub async fn scan_tcp_ports(
         .return_primary_key()
         .single(&AttackInsert {
             uuid: Uuid::new_v4(),
-            attack_type: AttackType::TcpPortScan,
+            attack_type: AttackType::HostAlive,
             started_by: ForeignModelByField::Key(user_uuid),
             workspace: ForeignModelByField::Key(workspace_uuid),
             finished_at: None,
