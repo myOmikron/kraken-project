@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   BruteforceSubdomainsRequest,
+  HostsAliveRequest,
   QueryCertificateTransparencyRequest,
   QueryDehashedRequest,
   ScanTcpPortsRequest,
@@ -29,6 +30,8 @@ import {
     ApiErrorResponseToJSON,
     BruteforceSubdomainsRequestFromJSON,
     BruteforceSubdomainsRequestToJSON,
+    HostsAliveRequestFromJSON,
+    HostsAliveRequestToJSON,
     QueryCertificateTransparencyRequestFromJSON,
     QueryCertificateTransparencyRequestToJSON,
     QueryDehashedRequestFromJSON,
@@ -59,6 +62,10 @@ export interface GetTcpPortScanResultsRequest {
     uuid: string;
     limit: number;
     offset: number;
+}
+
+export interface HostsAliveCheckRequest {
+    hostsAliveRequest: HostsAliveRequest;
 }
 
 export interface QueryCertificateTransparencyOperationRequest {
@@ -221,6 +228,41 @@ export class AttacksApi extends runtime.BaseAPI {
      */
     async getTcpPortScanResults(requestParameters: GetTcpPortScanResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TcpPortScanResultsPage> {
         const response = await this.getTcpPortScanResultsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Check if hosts are reachable  Just an ICMP scan for now to see which targets respond.  All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.
+     * Check if hosts are reachable
+     */
+    async hostsAliveCheckRaw(requestParameters: HostsAliveCheckRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
+        if (requestParameters.hostsAliveRequest === null || requestParameters.hostsAliveRequest === undefined) {
+            throw new runtime.RequiredError('hostsAliveRequest','Required parameter requestParameters.hostsAliveRequest was null or undefined when calling hostsAliveCheck.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/attacks/hostsAlive`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: HostsAliveRequestToJSON(requestParameters.hostsAliveRequest),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Check if hosts are reachable  Just an ICMP scan for now to see which targets respond.  All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.
+     * Check if hosts are reachable
+     */
+    async hostsAliveCheck(requestParameters: HostsAliveCheckRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
+        const response = await this.hostsAliveCheckRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

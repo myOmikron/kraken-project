@@ -17,15 +17,15 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   FullWorkspace,
-  GetWorkspaceResponse,
+  GetAllWorkspacesResponse,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
     FullWorkspaceFromJSON,
     FullWorkspaceToJSON,
-    GetWorkspaceResponseFromJSON,
-    GetWorkspaceResponseToJSON,
+    GetAllWorkspacesResponseFromJSON,
+    GetAllWorkspacesResponseToJSON,
 } from '../models';
 
 export interface GetWorkspaceAdminRequest {
@@ -41,7 +41,7 @@ export class AdminWorkspacesApi extends runtime.BaseAPI {
      * Retrieve all workspaces
      * Retrieve all workspaces
      */
-    async getAllWorkspacesAdminRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetWorkspaceResponse>> {
+    async getAllWorkspacesAdminRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAllWorkspacesResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -53,14 +53,14 @@ export class AdminWorkspacesApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetWorkspaceResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetAllWorkspacesResponseFromJSON(jsonValue));
     }
 
     /**
      * Retrieve all workspaces
      * Retrieve all workspaces
      */
-    async getAllWorkspacesAdmin(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetWorkspaceResponse> {
+    async getAllWorkspacesAdmin(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAllWorkspacesResponse> {
         const response = await this.getAllWorkspacesAdminRaw(initOverrides);
         return await response.value();
     }

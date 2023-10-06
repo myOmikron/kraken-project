@@ -14,7 +14,7 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * 
+ * The request to update a leech
  * @export
  * @interface UpdateLeechRequest
  */

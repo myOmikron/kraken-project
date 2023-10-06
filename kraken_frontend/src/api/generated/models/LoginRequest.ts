@@ -14,7 +14,7 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * 
+ * The request to login
  * @export
  * @interface LoginRequest
  */

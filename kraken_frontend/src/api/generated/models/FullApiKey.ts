@@ -14,48 +14,48 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * 
+ * A representation of a full api key
  * @export
- * @interface GetLeech
+ * @interface FullApiKey
  */
-export interface GetLeech {
+export interface FullApiKey {
     /**
-     * 
+     * The key's identifier
      * @type {string}
-     * @memberof GetLeech
+     * @memberof FullApiKey
      */
     uuid: string;
     /**
-     * 
+     * A descriptive name helping the user to identify the key
      * @type {string}
-     * @memberof GetLeech
+     * @memberof FullApiKey
      */
     name: string;
     /**
-     * 
+     * The actual key's value
      * @type {string}
-     * @memberof GetLeech
+     * @memberof FullApiKey
      */
-    address: string;
+    key: string;
 }
 
 /**
- * Check if a given object implements the GetLeech interface.
+ * Check if a given object implements the FullApiKey interface.
  */
-export function instanceOfGetLeech(value: object): boolean {
+export function instanceOfFullApiKey(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "name" in value;
-    isInstance = isInstance && "address" in value;
+    isInstance = isInstance && "key" in value;
 
     return isInstance;
 }
 
-export function GetLeechFromJSON(json: any): GetLeech {
-    return GetLeechFromJSONTyped(json, false);
+export function FullApiKeyFromJSON(json: any): FullApiKey {
+    return FullApiKeyFromJSONTyped(json, false);
 }
 
-export function GetLeechFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetLeech {
+export function FullApiKeyFromJSONTyped(json: any, ignoreDiscriminator: boolean): FullApiKey {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -63,11 +63,11 @@ export function GetLeechFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         
         'uuid': json['uuid'],
         'name': json['name'],
-        'address': json['address'],
+        'key': json['key'],
     };
 }
 
-export function GetLeechToJSON(value?: GetLeech | null): any {
+export function FullApiKeyToJSON(value?: FullApiKey | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -78,7 +78,7 @@ export function GetLeechToJSON(value?: GetLeech | null): any {
         
         'uuid': value.uuid,
         'name': value.name,
-        'address': value.address,
+        'key': value.key,
     };
 }
 

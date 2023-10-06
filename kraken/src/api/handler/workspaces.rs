@@ -173,7 +173,7 @@ pub struct GetAllWorkspacesResponse {
     tag = "Workspaces",
     context_path = "/api/v1",
     responses(
-        (status = 200, description = "Returns all workspaces owned by the executing user", body = GetWorkspaceResponse),
+        (status = 200, description = "Returns all workspaces owned by the executing user", body = GetAllWorkspacesResponse),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
@@ -320,7 +320,7 @@ pub async fn get_workspace_admin(
     tag = "Admin Workspaces",
     context_path = "/api/v1/admin",
     responses(
-        (status = 200, description = "Returns all workspaces", body = GetWorkspaceResponse),
+        (status = 200, description = "Returns all workspaces", body = GetAllWorkspacesResponse),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
