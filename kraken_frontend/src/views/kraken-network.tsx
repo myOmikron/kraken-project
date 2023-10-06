@@ -4,12 +4,12 @@ import { toast } from "react-toastify";
 import { handleApiError, sleep } from "../utils/helper";
 import Input from "../components/input";
 import Popup from "reactjs-popup";
-import { GetLeech } from "../api/generated/models";
+import { SimpleLeech } from "../api/generated/models";
 import "../styling/kraken-network.css";
 
 type KrakenNetworkProps = {};
 type KrakenNetworkState = {
-    leeches?: Array<GetLeech>;
+    leeches?: Array<SimpleLeech>;
     showPopup: boolean;
     name: string;
     address: string;
