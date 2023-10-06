@@ -13,10 +13,9 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::{ApiError, ApiResult, PathUuid};
+use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::chan::{WsManagerChan, WsManagerMessage};
 use crate::models::User;
-use crate::modules::user::create::create_user_transaction;
 
 /// This struct holds the user information.
 ///
@@ -44,18 +43,12 @@ pub struct CreateUserRequest {
     pub(crate) admin: bool,
 }
 
-/// The response
-#[derive(Serialize, ToSchema)]
-pub struct CreateUserResponse {
-    pub(crate) uuid: String,
-}
-
 /// Create a user
 #[utoipa::path(
     tag = "User Admin Management",
     context_path = "/api/v1/admin",
     responses(
-        (status = 200, description = "User got created", body = CreateUserResponse),
+        (status = 200, description = "User got created", body = UuidResponse),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
@@ -66,19 +59,19 @@ pub struct CreateUserResponse {
 pub(crate) async fn create_user(
     req: Json<CreateUserRequest>,
     db: Data<Database>,
-) -> ApiResult<Json<CreateUserResponse>> {
-    let uuid = create_user_transaction(
-        req.username.clone(),
-        req.display_name.clone(),
-        req.password.clone(),
+) -> ApiResult<Json<UuidResponse>> {
+    let req = req.into_inner();
+
+    let uuid = User::insert(
+        db.as_ref(),
+        req.username,
+        req.display_name,
+        req.password,
         req.admin,
-        &db,
     )
     .await?;
 
-    Ok(Json(CreateUserResponse {
-        uuid: uuid.to_string(),
-    }))
+    Ok(Json(UuidResponse { uuid }))
 }
 
 /// Delete a user by its uuid

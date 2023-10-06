@@ -29,7 +29,7 @@ pub struct SettingsManagerChan {
 
 impl SettingsManagerChan {
     /// Update the currently active settings
-    pub async fn update_settings(
+    pub(crate) async fn update_settings(
         &self,
         settings: &SettingsInsert,
     ) -> Result<(), SettingsManagerError> {

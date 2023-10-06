@@ -15,7 +15,7 @@ use log::{debug, error};
 use rand::distributions::{Alphanumeric, DistString};
 use rand::thread_rng;
 use rorm::prelude::*;
-use rorm::{insert, query, Database};
+use rorm::{query, Database};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use utoipa::ToSchema;
@@ -28,13 +28,14 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::users::UserResponse;
 use crate::api::handler::workspaces::SimpleWorkspace;
 use crate::api::handler::{ApiError, PathUuid};
-use crate::models::{OauthClient, User, Workspace, WorkspaceAccessTokenInsert};
+use crate::models::{OauthClient, User, Workspace, WorkspaceAccessToken};
 
 mod applications;
 mod schemas;
 
+/// Wrapper type for holding the open and accepted oauth requests
 #[derive(Debug, Default)]
-pub(crate) struct OauthManager(Mutex<OauthManagerInner>);
+pub struct OauthManager(Mutex<OauthManagerInner>);
 #[derive(Debug, Default)]
 struct OauthManagerInner {
     /// Waiting for user interaction i.e. `/accept` or `/deny`
@@ -101,7 +102,7 @@ struct Scope {
     security(("api_key" = []))
 )]
 #[get("/auth")]
-pub(crate) async fn auth(
+pub async fn auth(
     db: Data<Database>,
     manager: Data<OauthManager>,
     request: Query<AuthRequest>,
@@ -236,7 +237,7 @@ pub struct OpenRequestInfo {
     security(("api_key" = []))
 )]
 #[get("/info/{uuid}")]
-pub(crate) async fn info(
+pub async fn info(
     db: Data<Database>,
     path: Path<PathUuid>,
     manager: Data<OauthManager>,
@@ -307,7 +308,7 @@ pub(crate) async fn info(
     security(("api_key" = []))
 )]
 #[get("/accept/{uuid}")]
-pub(crate) async fn accept(
+pub async fn accept(
     db: Data<Database>,
     path: Path<PathUuid>,
     manager: Data<OauthManager>,
@@ -363,7 +364,7 @@ pub(crate) async fn accept(
     security(("api_key" = []))
 )]
 #[get("/deny/{uuid}")]
-pub(crate) async fn deny(
+pub async fn deny(
     db: Data<Database>,
     manager: Data<OauthManager>,
     path: Path<PathUuid>,
@@ -409,7 +410,7 @@ pub(crate) async fn deny(
     request_body = TokenRequest,
 )]
 #[post("/token")]
-pub(crate) async fn token(
+pub async fn token(
     db: Data<Database>,
     manager: Data<OauthManager>,
     request: Form<TokenRequest>,
@@ -470,15 +471,16 @@ pub(crate) async fn token(
 
     let access_token = Alphanumeric.sample_string(&mut thread_rng(), 32);
     let expires_in = Duration::from_secs(60);
-    insert!(db.as_ref(), WorkspaceAccessTokenInsert)
-        .single(&WorkspaceAccessTokenInsert {
-            token: access_token.clone(),
-            user: ForeignModelByField::Key(accepted.user),
-            workspace: ForeignModelByField::Key(accepted.scope.workspace),
-            application: ForeignModelByField::Key(client.uuid),
-            expires_at: Utc::now() + expires_in,
-        })
-        .await?;
+
+    WorkspaceAccessToken::insert(
+        db.as_ref(),
+        access_token.clone(),
+        Utc::now() + expires_in,
+        accepted.user,
+        accepted.scope.workspace,
+        client.uuid,
+    )
+    .await?;
 
     Ok(Json(TokenResponse {
         token_type: TokenType::AccessToken,

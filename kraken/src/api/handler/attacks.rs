@@ -32,7 +32,7 @@ use crate::chan::{
     CertificateTransparencyEntry, RpcClients, WsManagerChan, WsManagerMessage, WsMessage,
 };
 use crate::models::{
-    Attack, AttackInsert, AttackType, BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert,
+    Attack, AttackType, BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert,
     CertificateTransparencyResultInsert, CertificateTransparencyValueNameInsert,
     DehashedQueryResultInsert, DnsRecordType, TcpPortScanResult, TcpPortScanResultInsert,
     Workspace, WorkspaceMember,
@@ -87,16 +87,13 @@ pub async fn bruteforce_subdomains(
         .ok_or(ApiError::InvalidLeech)?
         .clone();
 
-    let attack_uuid = insert!(db.as_ref(), AttackInsert)
-        .return_primary_key()
-        .single(&AttackInsert {
-            uuid: Uuid::new_v4(),
-            attack_type: AttackType::BruteforceSubdomains,
-            started_by: ForeignModelByField::Key(user_uuid),
-            workspace: ForeignModelByField::Key(req.workspace_uuid),
-            finished_at: None,
-        })
-        .await?;
+    let attack_uuid = Attack::insert(
+        db.as_ref(),
+        AttackType::BruteforceSubdomains,
+        user_uuid,
+        req.workspace_uuid,
+    )
+    .await?;
 
     // start attack
     tokio::spawn(async move {
@@ -470,21 +467,18 @@ pub async fn scan_tcp_ports(
         .ok_or(ApiError::InvalidLeech)?
         .clone();
 
-    let uuid = insert!(db.as_ref(), AttackInsert)
-        .return_primary_key()
-        .single(&AttackInsert {
-            uuid: Uuid::new_v4(),
-            attack_type: AttackType::TcpPortScan,
-            started_by: ForeignModelByField::Key(user_uuid),
-            workspace: ForeignModelByField::Key(req.workspace_uuid),
-            finished_at: None,
-        })
-        .await?;
+    let attack_uuid = Attack::insert(
+        db.as_ref(),
+        AttackType::TcpPortScan,
+        user_uuid,
+        req.workspace_uuid,
+    )
+    .await?;
 
     // start attack
     tokio::spawn(async move {
         let req = rpc_definitions::TcpPortScanRequest {
-            attack_uuid: uuid.to_string(),
+            attack_uuid: attack_uuid.to_string(),
             targets: req.targets.iter().map(|addr| (*addr).into()).collect(),
             exclude: req.exclude.iter().map(|addr| addr.to_string()).collect(),
             ports: req.ports.iter().map(From::from).collect(),
@@ -526,7 +520,7 @@ pub async fn scan_tcp_ports(
                                 .return_nothing()
                                 .single(&TcpPortScanResultInsert {
                                     uuid: Uuid::new_v4(),
-                                    attack: ForeignModelByField::Key(uuid),
+                                    attack: ForeignModelByField::Key(attack_uuid),
                                     address: IpNetwork::from(address),
                                     port: v.port as i32,
                                 })
@@ -539,7 +533,7 @@ pub async fn scan_tcp_ports(
                                 .send(WsManagerMessage::Message(
                                     user_uuid,
                                     WsMessage::ScanTcpPortsResult {
-                                        attack_uuid: uuid,
+                                        attack_uuid,
                                         address: address.to_string(),
                                         port: v.port as u16,
                                     },
@@ -555,7 +549,7 @@ pub async fn scan_tcp_ports(
                                 .send(WsManagerMessage::Message(
                                     user_uuid,
                                     WsMessage::AttackFinished {
-                                        attack_uuid: uuid,
+                                        attack_uuid,
                                         finished_successful: false,
                                     },
                                 ))
@@ -574,7 +568,7 @@ pub async fn scan_tcp_ports(
                     .send(WsManagerMessage::Message(
                         user_uuid,
                         WsMessage::AttackFinished {
-                            attack_uuid: uuid,
+                            attack_uuid,
                             finished_successful: false,
                         },
                     ))
@@ -587,7 +581,7 @@ pub async fn scan_tcp_ports(
         };
 
         if let Err(err) = update!(db.as_ref(), Attack)
-            .condition(Attack::F.uuid.equals(uuid))
+            .condition(Attack::F.uuid.equals(attack_uuid))
             .set(Attack::F.finished_at, Some(Utc::now()))
             .exec()
             .await
@@ -599,7 +593,7 @@ pub async fn scan_tcp_ports(
             .send(WsManagerMessage::Message(
                 user_uuid,
                 WsMessage::AttackFinished {
-                    attack_uuid: uuid,
+                    attack_uuid,
                     finished_successful: true,
                 },
             ))
@@ -664,16 +658,13 @@ pub async fn query_certificate_transparency(
         .1
         .clone();
 
-    let uuid = insert!(db.as_ref(), AttackInsert)
-        .return_primary_key()
-        .single(&AttackInsert {
-            uuid: Uuid::new_v4(),
-            attack_type: AttackType::QueryCertificateTransparency,
-            started_by: ForeignModelByField::Key(user_uuid),
-            workspace: ForeignModelByField::Key(req.workspace_uuid),
-            finished_at: None,
-        })
-        .await?;
+    let attack_uuid = Attack::insert(
+        db.as_ref(),
+        AttackType::QueryCertificateTransparency,
+        user_uuid,
+        req.workspace_uuid,
+    )
+    .await?;
 
     tokio::spawn(async move {
         let req = CertificateTransparencyRequest {
@@ -695,7 +686,7 @@ pub async fn query_certificate_transparency(
                         .single(&CertificateTransparencyResultInsert {
                             uuid: Uuid::new_v4(),
                             created_at: Utc::now(),
-                            attack: ForeignModelByField::Key(uuid),
+                            attack: ForeignModelByField::Key(attack_uuid),
                             issuer_name: cert_entry.issuer_name.clone(),
                             serial_number: cert_entry.serial_number.clone(),
                             common_name: cert_entry.common_name.clone(),
@@ -739,7 +730,7 @@ pub async fn query_certificate_transparency(
                     .send(WsManagerMessage::Message(
                         user_uuid,
                         WsMessage::CertificateTransparencyResult {
-                            attack_uuid: uuid,
+                            attack_uuid,
                             entries: res
                                 .entries
                                 .into_iter()
@@ -785,7 +776,7 @@ pub async fn query_certificate_transparency(
                     .send(WsManagerMessage::Message(
                         user_uuid,
                         WsMessage::AttackFinished {
-                            attack_uuid: uuid,
+                            attack_uuid,
                             finished_successful: false,
                         },
                     ))
@@ -798,7 +789,7 @@ pub async fn query_certificate_transparency(
         }
 
         if let Err(err) = update!(db.as_ref(), Attack)
-            .condition(Attack::F.uuid.equals(uuid))
+            .condition(Attack::F.uuid.equals(attack_uuid))
             .set(Attack::F.finished_at, Some(Utc::now()))
             .exec()
             .await
@@ -810,7 +801,7 @@ pub async fn query_certificate_transparency(
             .send(WsManagerMessage::Message(
                 user_uuid,
                 WsMessage::AttackFinished {
-                    attack_uuid: uuid,
+                    attack_uuid,
                     finished_successful: true,
                 },
             ))
@@ -820,7 +811,7 @@ pub async fn query_certificate_transparency(
         }
     });
 
-    Ok(HttpResponse::Accepted().json(UuidResponse { uuid }))
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
 }
 
 /// The request to query the dehashed API
@@ -867,16 +858,13 @@ pub async fn query_dehashed(
 
     let (tx, rx) = oneshot::channel::<Result<SearchResult, DehashedError>>();
 
-    let attack_uuid = insert!(db.as_ref(), AttackInsert)
-        .return_primary_key()
-        .single(&AttackInsert {
-            uuid: Uuid::new_v4(),
-            attack_type: AttackType::QueryUnhashed,
-            started_by: ForeignModelByField::Key(user_uuid),
-            workspace: ForeignModelByField::Key(req.workspace_uuid),
-            finished_at: None,
-        })
-        .await?;
+    let attack_uuid = Attack::insert(
+        db.as_ref(),
+        AttackType::QueryUnhashed,
+        user_uuid,
+        req.workspace_uuid,
+    )
+    .await?;
 
     tokio::spawn(async move {
         if let Err(err) = sender.send(ScheduledRequest::new(req.query, tx)).await {

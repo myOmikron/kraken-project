@@ -7,16 +7,16 @@ use chrono::{DateTime, Utc};
 use log::debug;
 use rorm::db::transaction::Transaction;
 use rorm::db::Executor;
-use rorm::fields::types::ForeignModelByField;
-use rorm::{and, insert, query, update, Database, FieldAccess, Model};
+use rorm::{and, query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use crate::api::extractors::SessionUser;
 use crate::api::handler::attacks::SimpleAttack;
 use crate::api::handler::users::UserResponse;
 use crate::api::handler::{de_optional, query_user, ApiError, ApiResult, PathUuid, UuidResponse};
-use crate::models::{Attack, User, Workspace, WorkspaceInsert, WorkspaceMember};
+use crate::models::{Attack, User, Workspace, WorkspaceMember};
 
 /// The request to create a new workspace
 #[derive(Deserialize, ToSchema)]
@@ -43,19 +43,11 @@ pub struct CreateWorkspaceRequest {
 pub async fn create_workspace(
     req: Json<CreateWorkspaceRequest>,
     db: Data<Database>,
-    session: Session,
+    session: SessionUser,
 ) -> ApiResult<Json<UuidResponse>> {
-    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+    let req = req.into_inner();
 
-    let uuid = insert!(db.as_ref(), WorkspaceInsert)
-        .return_primary_key()
-        .single(&WorkspaceInsert {
-            uuid: Uuid::new_v4(),
-            name: req.name.clone(),
-            description: req.description.clone(),
-            owner: ForeignModelByField::Key(user_uuid),
-        })
-        .await?;
+    let uuid = Workspace::insert(db.as_ref(), req.name, req.description, session.0).await?;
 
     Ok(Json(UuidResponse { uuid }))
 }

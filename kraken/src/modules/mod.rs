@@ -2,4 +2,3 @@
 //! throughout the code
 
 pub mod uri;
-pub mod user;

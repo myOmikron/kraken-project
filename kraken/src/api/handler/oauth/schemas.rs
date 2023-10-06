@@ -10,7 +10,7 @@ use uuid::Uuid;
 /// parameters to the query component of the authorization endpoint URI
 /// using the "application/x-www-form-urlencoded" format
 #[derive(Deserialize, IntoParams)]
-pub(crate) struct AuthRequest {
+pub struct AuthRequest {
     /// Value MUST be set to "code".
     pub response_type: String,
 
@@ -43,11 +43,14 @@ pub(crate) struct AuthRequest {
     pub code_challenge_method: CodeChallengeMethod,
 }
 
+/// The method of the code challenge
 #[derive(Deserialize, Default, Copy, Clone, Debug, ToSchema)]
-pub(crate) enum CodeChallengeMethod {
+pub enum CodeChallengeMethod {
+    /// Sha256
     #[default]
     #[serde(rename = "S256")]
     Sha256,
+    /// Plaintext
     #[serde(rename = "plain")]
     Plain,
 }
@@ -97,7 +100,7 @@ pub(crate) enum AuthErrorType {
 }
 
 #[derive(Deserialize, ToSchema)]
-pub(crate) struct TokenRequest {
+pub struct TokenRequest {
     /// Must be "authorization_code"
     pub grant_type: GrantType,
     pub code: Uuid,
@@ -111,12 +114,12 @@ pub(crate) struct TokenRequest {
 
 #[derive(Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
-pub(crate) enum GrantType {
+pub enum GrantType {
     AuthorizationCode,
 }
 
 #[derive(Serialize, ToSchema)]
-pub(crate) struct TokenResponse {
+pub struct TokenResponse {
     /// Always `"access_token"`
     #[schema(example = "access_token")]
     pub token_type: TokenType,
@@ -131,7 +134,7 @@ pub(crate) struct TokenResponse {
 
 #[derive(Serialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
-pub(crate) enum TokenType {
+pub enum TokenType {
     AccessToken,
 }
 

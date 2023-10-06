@@ -2,13 +2,13 @@
 
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
-use rorm::{insert, query, update, Database, FieldAccess, Model};
+use rorm::{query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::{ApiError, ApiResult, Color, PathUuid, UuidResponse};
-use crate::models::{GlobalTag, GlobalTagInsert};
+use crate::models::GlobalTag;
 
 /// The request to create a global tag
 #[derive(Deserialize, Debug, ToSchema)]
@@ -40,32 +40,7 @@ pub async fn create_global_tag(
 ) -> ApiResult<Json<UuidResponse>> {
     let req = req.into_inner();
 
-    let mut tx = db.start_transaction().await?;
-
-    if req.name.is_empty() {
-        return Err(ApiError::InvalidName);
-    }
-
-    let global_tag = query!(&mut tx, (GlobalTag::F.uuid,))
-        .condition(GlobalTag::F.name.equals(&req.name))
-        .optional()
-        .await?
-        .is_some();
-
-    if global_tag {
-        return Err(ApiError::NameAlreadyExists);
-    }
-
-    let uuid = insert!(&mut tx, GlobalTagInsert)
-        .return_primary_key()
-        .single(&GlobalTagInsert {
-            uuid: Uuid::new_v4(),
-            name: req.name,
-            color: req.color.into(),
-        })
-        .await?;
-
-    tx.commit().await?;
+    let uuid = GlobalTag::insert(db.as_ref(), req.name, req.color).await?;
 
     Ok(Json(UuidResponse { uuid }))
 }

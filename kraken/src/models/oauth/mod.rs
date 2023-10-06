@@ -1,6 +1,8 @@
 use rorm::prelude::*;
 use uuid::Uuid;
 
+mod operations;
+
 /// An registered application which may perform oauth requests
 #[derive(Model)]
 pub struct OauthClient {

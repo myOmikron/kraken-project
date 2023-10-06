@@ -7,8 +7,7 @@ use argon2::password_hash::Error;
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use chrono::Utc;
 use log::{debug, error};
-use rorm::prelude::ForeignModelByField;
-use rorm::{insert, query, update, Database, FieldAccess, Model};
+use rorm::{query, update, Database, FieldAccess, Model};
 use serde::Deserialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -21,7 +20,7 @@ use webauthn_rs::Webauthn;
 use crate::api::handler::{ApiError, ApiResult};
 use crate::api::middleware::AuthenticationRequired;
 use crate::chan::{WsManagerChan, WsManagerMessage};
-use crate::models::{User, UserKey, UserKeyInsert};
+use crate::models::{User, UserKey};
 
 /// Test the current login state
 ///
@@ -320,6 +319,8 @@ pub async fn finish_register(
         return Err(ApiError::Unauthenticated);
     }
 
+    let req = req.into_inner();
+
     let (uuid, reg_state): (Uuid, PasskeyRegistration) =
         session.get("reg_state")?.ok_or(ApiError::SessionCorrupt)?;
 
@@ -327,14 +328,7 @@ pub async fn finish_register(
 
     let passkey = webauthn.finish_passkey_registration(&req.register_pk_credential, &reg_state)?;
 
-    insert!(db.as_ref(), UserKeyInsert)
-        .single(&UserKeyInsert {
-            uuid: Uuid::new_v4(),
-            user: ForeignModelByField::Key(uuid),
-            key: rorm::fields::types::Json(passkey),
-            name: req.name.clone(),
-        })
-        .await?;
+    UserKey::insert(db.as_ref(), uuid, req.name, passkey).await?;
 
     Ok(HttpResponse::Ok().finish())
 }

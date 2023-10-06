@@ -23,7 +23,7 @@ utoipa = { version = "~3", features = ["actix_extras", "repr", "chrono", "uuid",
 utoipa-swagger-ui = { version = "~3", features = ["actix-web"] }
 
 # Hashing
-argon2 = { version = "~0.5" }
+argon2 = { version = "~0.5", features = ["std"] }
 sha2 = { version = "~0.10" } # Required in oauth for pkce
 
 # Cli parser
