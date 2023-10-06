@@ -17,21 +17,21 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   CreateUserRequest,
-  CreateUserResponse,
   GetUser,
   GetUserResponse,
+  UuidResponse,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
     CreateUserRequestFromJSON,
     CreateUserRequestToJSON,
-    CreateUserResponseFromJSON,
-    CreateUserResponseToJSON,
     GetUserFromJSON,
     GetUserToJSON,
     GetUserResponseFromJSON,
     GetUserResponseToJSON,
+    UuidResponseFromJSON,
+    UuidResponseToJSON,
 } from '../models';
 
 export interface CreateUserOperationRequest {
@@ -55,7 +55,7 @@ export class UserAdminManagementApi extends runtime.BaseAPI {
      * Create a user
      * Create a user
      */
-    async createUserRaw(requestParameters: CreateUserOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CreateUserResponse>> {
+    async createUserRaw(requestParameters: CreateUserOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
         if (requestParameters.createUserRequest === null || requestParameters.createUserRequest === undefined) {
             throw new runtime.RequiredError('createUserRequest','Required parameter requestParameters.createUserRequest was null or undefined when calling createUser.');
         }
@@ -74,14 +74,14 @@ export class UserAdminManagementApi extends runtime.BaseAPI {
             body: CreateUserRequestToJSON(requestParameters.createUserRequest),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => CreateUserResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
     }
 
     /**
      * Create a user
      * Create a user
      */
-    async createUser(requestParameters: CreateUserOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CreateUserResponse> {
+    async createUser(requestParameters: CreateUserOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
         const response = await this.createUserRaw(requestParameters, initOverrides);
         return await response.value();
     }

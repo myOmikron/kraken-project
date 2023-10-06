@@ -9,23 +9,22 @@ use actix_toolbox::tb_middleware::{actix_session, Session};
 use actix_web::body::BoxBody;
 use actix_web::web::Query;
 use actix_web::HttpResponse;
-use attacks::SimpleTcpPortScanResult;
-use domains::SimpleDomain;
-use hosts::SimpleHost;
 use log::{debug, error, info, trace, warn};
-use ports::SimplePort;
 use rorm::db::Executor;
 use rorm::{query, FieldAccess, Model};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_repr::Serialize_repr;
-use services::SimpleService;
 use thiserror::Error;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 use webauthn_rs::prelude::WebauthnError;
 
-use crate::models::User;
-use crate::modules::user::create::CreateUserError;
+use crate::api::handler::attacks::SimpleTcpPortScanResult;
+use crate::api::handler::domains::SimpleDomain;
+use crate::api::handler::hosts::SimpleHost;
+use crate::api::handler::ports::SimplePort;
+use crate::api::handler::services::SimpleService;
+use crate::models::{Color, User};
 
 pub mod api_keys;
 pub mod attacks;
@@ -115,19 +114,6 @@ pub(crate) async fn get_page_params(query: Query<PageParams>) -> Result<(u64, u6
     }
 }
 
-/// Color value
-#[derive(Deserialize, Serialize, Debug, ToSchema)]
-pub struct Color {
-    /// Red value
-    pub r: u8,
-    /// Green value
-    pub g: u8,
-    /// Blue value
-    pub b: u8,
-    /// Alpha value
-    pub a: u8,
-}
-
 /// The type of a tag
 #[derive(Serialize, Deserialize, Copy, Clone, ToSchema, Debug)]
 pub enum TagType {
@@ -144,19 +130,6 @@ pub struct SimpleTag {
     pub(crate) name: String,
     pub(crate) color: Color,
     pub(crate) tag_type: TagType,
-}
-
-impl From<Color> for i32 {
-    fn from(value: Color) -> Self {
-        i32::from_le_bytes([value.r, value.g, value.b, value.a])
-    }
-}
-
-impl From<i32> for Color {
-    fn from(value: i32) -> Self {
-        let [r, g, b, a] = value.to_le_bytes();
-        Self { r, g, b, a }
-    }
 }
 
 /// The result type of kraken.
@@ -201,7 +174,8 @@ pub enum ApiStatusCode {
     NameAlreadyExists = 1013,
     /// Invalid uuid
     InvalidUuid = 1014,
-
+    /// The given workspace is not valid
+    InvalidWorkspace = 1015,
     /// Received an empty json request.
     ///
     /// Mostly happens in update endpoints without supplying an update
@@ -211,7 +185,7 @@ pub enum ApiStatusCode {
     /// Invalid leech
     InvalidLeech = 1018,
     /// Username is already occupied
-    UsernameAlreadyOccupied = 1019,
+    UsernameAlreadyExists = 1019,
     /// Invalid name specified
     InvalidName = 1020,
     /// Invalid query limit
@@ -299,6 +273,9 @@ pub enum ApiError {
     /// Invalid uuid
     #[error("Invalid uuid")]
     InvalidUuid,
+    /// Invalid workspace
+    #[error("Invalid workspace")]
+    InvalidWorkspace,
     /// Received an empty json request.
     ///
     /// Mostly happens in update endpoints without supplying an update
@@ -518,7 +495,7 @@ impl actix_web::ResponseError for ApiError {
                 debug!("Username already occupied");
 
                 HttpResponse::BadRequest().json(ApiErrorResponse::new(
-                    ApiStatusCode::UsernameAlreadyOccupied,
+                    ApiStatusCode::UsernameAlreadyExists,
                     self.to_string(),
                 ))
             }
@@ -536,6 +513,10 @@ impl actix_web::ResponseError for ApiError {
                 ApiStatusCode::InvalidQueryLimit,
                 self.to_string(),
             )),
+            ApiError::InvalidWorkspace => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::InvalidWorkspace,
+                self.to_string(),
+            )),
         }
     }
 }
@@ -543,16 +524,6 @@ impl actix_web::ResponseError for ApiError {
 impl From<argon2::password_hash::Error> for ApiError {
     fn from(value: argon2::password_hash::Error) -> Self {
         ApiError::InvalidHash(value)
-    }
-}
-
-impl From<CreateUserError> for ApiError {
-    fn from(value: CreateUserError) -> Self {
-        match value {
-            CreateUserError::DatabaseError(err) => Self::DatabaseError(err),
-            CreateUserError::UsernameAlreadyExists => Self::UserAlreadyExists,
-            CreateUserError::HashError(err) => Self::InvalidHash(err),
-        }
     }
 }
 

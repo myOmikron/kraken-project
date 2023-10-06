@@ -21,34 +21,34 @@ import {
 } from './SimpleWorkspace';
 
 /**
- * 
+ * The response to retrieve all workspaces
  * @export
- * @interface GetWorkspaceResponse
+ * @interface GetAllWorkspacesResponse
  */
-export interface GetWorkspaceResponse {
+export interface GetAllWorkspacesResponse {
     /**
      * 
      * @type {Array<SimpleWorkspace>}
-     * @memberof GetWorkspaceResponse
+     * @memberof GetAllWorkspacesResponse
      */
     workspaces: Array<SimpleWorkspace>;
 }
 
 /**
- * Check if a given object implements the GetWorkspaceResponse interface.
+ * Check if a given object implements the GetAllWorkspacesResponse interface.
  */
-export function instanceOfGetWorkspaceResponse(value: object): boolean {
+export function instanceOfGetAllWorkspacesResponse(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "workspaces" in value;
 
     return isInstance;
 }
 
-export function GetWorkspaceResponseFromJSON(json: any): GetWorkspaceResponse {
-    return GetWorkspaceResponseFromJSONTyped(json, false);
+export function GetAllWorkspacesResponseFromJSON(json: any): GetAllWorkspacesResponse {
+    return GetAllWorkspacesResponseFromJSONTyped(json, false);
 }
 
-export function GetWorkspaceResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetWorkspaceResponse {
+export function GetAllWorkspacesResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetAllWorkspacesResponse {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -58,7 +58,7 @@ export function GetWorkspaceResponseFromJSONTyped(json: any, ignoreDiscriminator
     };
 }
 
-export function GetWorkspaceResponseToJSON(value?: GetWorkspaceResponse | null): any {
+export function GetAllWorkspacesResponseToJSON(value?: GetAllWorkspacesResponse | null): any {
     if (value === undefined) {
         return undefined;
     }

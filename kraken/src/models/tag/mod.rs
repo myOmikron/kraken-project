@@ -1,8 +1,11 @@
 use rorm::prelude::ForeignModel;
-use rorm::{Model, Patch};
+use rorm::Model;
 use uuid::Uuid;
 
+pub use crate::models::tag::operations::Color;
 use crate::models::Workspace;
+
+mod operations;
 
 /// A global tag that can be applied to any aggregated data.
 ///
@@ -21,14 +24,6 @@ pub struct GlobalTag {
 
     /// The color of the tag, converted from hex
     pub color: i32,
-}
-
-#[derive(Patch)]
-#[rorm(model = "GlobalTag")]
-pub(crate) struct GlobalTagInsert {
-    pub(crate) uuid: Uuid,
-    pub(crate) name: String,
-    pub(crate) color: i32,
 }
 
 /// A tag that can be applied to any aggregated data.
@@ -50,13 +45,4 @@ pub struct WorkspaceTag {
     /// The workspace this tag is assigned to
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
     pub workspace: ForeignModel<Workspace>,
-}
-
-#[derive(Patch)]
-#[rorm(model = "WorkspaceTag")]
-pub(crate) struct WorkspaceTagInsert {
-    pub(crate) uuid: Uuid,
-    pub(crate) name: String,
-    pub(crate) color: i32,
-    pub(crate) workspace: ForeignModel<Workspace>,
 }

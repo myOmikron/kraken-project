@@ -3,4 +3,3 @@
 
 pub mod attacks;
 pub mod uri;
-pub mod user;

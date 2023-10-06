@@ -4,6 +4,8 @@ use rorm::prelude::*;
 use uuid::Uuid;
 use webauthn_rs::prelude::Passkey;
 
+mod operations;
+
 /// The definition of a user
 #[derive(Model)]
 pub struct User {
@@ -37,17 +39,6 @@ pub struct User {
     pub user_keys: BackRef<field!(UserKey::F.user)>,
 }
 
-#[derive(Patch)]
-#[rorm(model = "User")]
-pub(crate) struct UserInsert {
-    pub(crate) uuid: Uuid,
-    pub(crate) username: String,
-    pub(crate) display_name: String,
-    pub(crate) password_hash: String,
-    pub(crate) admin: bool,
-    pub(crate) last_login: Option<DateTime<Utc>>,
-}
-
 /// A security key (yubikey, e.g.) of a user
 #[derive(Model)]
 pub struct UserKey {
@@ -61,15 +52,6 @@ pub struct UserKey {
     pub user: ForeignModel<User>,
     /// Key data
     pub key: Json<Passkey>,
-}
-
-#[derive(Patch)]
-#[rorm(model = "UserKey")]
-pub(crate) struct UserKeyInsert {
-    pub(crate) uuid: Uuid,
-    pub(crate) name: String,
-    pub(crate) user: ForeignModel<User>,
-    pub(crate) key: Json<Passkey>,
 }
 
 /// Api key which grants a leech access when used as cli instead of a service

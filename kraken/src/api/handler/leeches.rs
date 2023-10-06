@@ -3,14 +3,14 @@
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use log::error;
-use rorm::{insert, query, update, Database, FieldAccess, Model};
+use rorm::{query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::chan::{RpcManagerChannel, RpcManagerEvent};
-use crate::models::{Leech, LeechInsert};
+use crate::models::Leech;
 use crate::modules::uri::check_leech_address;
 
 /// The request to create a new leech
@@ -47,41 +47,9 @@ pub async fn create_leech(
     db: Data<Database>,
     rpc_manager_channel: Data<RpcManagerChannel>,
 ) -> ApiResult<Json<UuidResponse>> {
-    let mut tx = db.start_transaction().await?;
+    let req = req.into_inner();
 
-    if !check_leech_address(&req.address) {
-        return Err(ApiError::InvalidAddress);
-    }
-
-    if query!(&mut tx, Leech)
-        .condition(Leech::F.address.equals(&req.address))
-        .optional()
-        .await?
-        .is_some()
-    {
-        return Err(ApiError::AddressAlreadyExists);
-    }
-
-    if query!(&mut tx, Leech)
-        .condition(Leech::F.name.equals(&req.name))
-        .optional()
-        .await?
-        .is_some()
-    {
-        return Err(ApiError::NameAlreadyExists);
-    }
-
-    let uuid = insert!(&mut tx, LeechInsert)
-        .return_primary_key()
-        .single(&LeechInsert {
-            uuid: Uuid::new_v4(),
-            name: req.name.clone(),
-            address: req.address.clone(),
-            description: req.description.clone(),
-        })
-        .await?;
-
-    tx.commit().await?;
+    let uuid = Leech::insert(db.as_ref(), req.name, req.address, req.description).await?;
 
     // Notify rpc manager about new leech
     if let Err(err) = rpc_manager_channel

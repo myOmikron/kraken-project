@@ -14,48 +14,48 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * 
+ * T
  * @export
- * @interface SimpleApiKey
+ * @interface SimpleLeech
  */
-export interface SimpleApiKey {
+export interface SimpleLeech {
     /**
-     * The key's identifier
+     * 
      * @type {string}
-     * @memberof SimpleApiKey
+     * @memberof SimpleLeech
      */
     uuid: string;
     /**
-     * A descriptive name helping the user to identify the key
+     * 
      * @type {string}
-     * @memberof SimpleApiKey
+     * @memberof SimpleLeech
      */
     name: string;
     /**
-     * The actual key's value
+     * 
      * @type {string}
-     * @memberof SimpleApiKey
+     * @memberof SimpleLeech
      */
-    key: string;
+    address: string;
 }
 
 /**
- * Check if a given object implements the SimpleApiKey interface.
+ * Check if a given object implements the SimpleLeech interface.
  */
-export function instanceOfSimpleApiKey(value: object): boolean {
+export function instanceOfSimpleLeech(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "name" in value;
-    isInstance = isInstance && "key" in value;
+    isInstance = isInstance && "address" in value;
 
     return isInstance;
 }
 
-export function SimpleApiKeyFromJSON(json: any): SimpleApiKey {
-    return SimpleApiKeyFromJSONTyped(json, false);
+export function SimpleLeechFromJSON(json: any): SimpleLeech {
+    return SimpleLeechFromJSONTyped(json, false);
 }
 
-export function SimpleApiKeyFromJSONTyped(json: any, ignoreDiscriminator: boolean): SimpleApiKey {
+export function SimpleLeechFromJSONTyped(json: any, ignoreDiscriminator: boolean): SimpleLeech {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -63,11 +63,11 @@ export function SimpleApiKeyFromJSONTyped(json: any, ignoreDiscriminator: boolea
         
         'uuid': json['uuid'],
         'name': json['name'],
-        'key': json['key'],
+        'address': json['address'],
     };
 }
 
-export function SimpleApiKeyToJSON(value?: SimpleApiKey | null): any {
+export function SimpleLeechToJSON(value?: SimpleLeech | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -78,7 +78,7 @@ export function SimpleApiKeyToJSON(value?: SimpleApiKey | null): any {
         
         'uuid': value.uuid,
         'name': value.name,
-        'key': value.key,
+        'address': value.address,
     };
 }
 

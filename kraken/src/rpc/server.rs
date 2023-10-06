@@ -12,9 +12,9 @@ use uuid::Uuid;
 
 use crate::config::Config;
 use crate::models::{
-    Attack, AttackInsert, AttackType, BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert,
+    Attack, AttackType, BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert,
     CertificateTransparencyResultInsert, CertificateTransparencyValueNameInsert, DnsRecordType,
-    LeechApiKey, TcpPortScanResult, TcpPortScanResultInsert, Workspace, WorkspaceMember,
+    InsertAttackError, LeechApiKey, TcpPortScanResult, TcpPortScanResultInsert, Workspace,
 };
 use crate::rpc::definitions::rpc_definitions::attack_results_service_server::AttackResultsService;
 use crate::rpc::rpc_definitions::attack_results_service_server::AttackResultsServiceServer;
@@ -54,41 +54,26 @@ impl AttackResultsService for Results {
             .ok_or(Status::new(Code::Unauthenticated, "Invalid api key"))?;
         let user_uuid = *user.key();
 
-        // Check existence of workspace
-        let (owner,) = query!(&mut tx, (Workspace::F.owner,))
-            .condition(Workspace::F.uuid.equals(workspace_uuid))
-            .optional()
+        if !Workspace::is_user_member_or_owner(&mut tx, workspace_uuid, user_uuid)
             .await
             .map_err(status_from_database)?
-            .ok_or(Status::new(Code::NotFound, "Unknown workspace"))?;
-
-        // Check if user is owner or member
-        if *owner.key() != *user.key() {
-            query!(&mut tx, (WorkspaceMember::F.id,))
-                .condition(and!(
-                    WorkspaceMember::F.member.equals(user_uuid),
-                    WorkspaceMember::F.workspace.equals(workspace_uuid)
-                ))
-                .optional()
-                .await
-                .map_err(status_from_database)?
-                .ok_or(Status::new(
-                    Code::PermissionDenied,
-                    "You're not part of this workspace",
-                ))?;
+        {
+            return Err(Status::permission_denied(
+                "You are not part of this workspace",
+            ));
         }
 
-        let attack_uuid = insert!(&mut tx, AttackInsert)
-            .return_primary_key()
-            .single(&AttackInsert {
-                uuid: Uuid::new_v4(),
-                attack_type: AttackType::QueryCertificateTransparency,
-                started_by: ForeignModelByField::Key(user_uuid),
-                workspace: ForeignModelByField::Key(workspace_uuid),
-                finished_at: Some(Utc::now()),
-            })
-            .await
-            .map_err(status_from_database)?;
+        let attack_uuid = Attack::insert(
+            &mut tx,
+            AttackType::QueryCertificateTransparency,
+            user_uuid,
+            workspace_uuid,
+        )
+        .await
+        .map_err(|e| match e {
+            InsertAttackError::DatabaseError(x) => status_from_database(x),
+            InsertAttackError::WorkspaceInvalid => Status::internal("Workspace does not exist"),
+        })?;
 
         for cert_entry in req.entries {
             let entry_uuid = insert!(&mut tx, CertificateTransparencyResultInsert)

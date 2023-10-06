@@ -3,14 +3,13 @@
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
-use rorm::prelude::ForeignModelByField;
-use rorm::{and, insert, query, update, Database, FieldAccess, Model};
+use rorm::{and, query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::handler::{workspaces, ApiError, ApiResult, Color, PathUuid, UuidResponse};
-use crate::models::{GlobalTag, WorkspaceTag, WorkspaceTagInsert};
+use crate::models::{GlobalTag, WorkspaceTag};
 
 /// The request to create a workspace tag
 #[derive(Deserialize, Debug, ToSchema)]
@@ -47,32 +46,8 @@ pub async fn create_workspace_tag(
 
     let mut tx = db.start_transaction().await?;
 
-    if req.name.is_empty() {
-        return Err(ApiError::InvalidName);
-    }
-
     if workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.uuid).await? {
-        if query!(&mut tx, (WorkspaceTag::F.uuid,))
-            .condition(and!(
-                WorkspaceTag::F.name.equals(&req.name),
-                WorkspaceTag::F.workspace.equals(path.uuid)
-            ))
-            .optional()
-            .await?
-            .is_some()
-        {
-            return Err(ApiError::NameAlreadyExists);
-        }
-
-        let uuid = insert!(&mut tx, WorkspaceTagInsert)
-            .return_primary_key()
-            .single(&WorkspaceTagInsert {
-                uuid: Uuid::new_v4(),
-                name: req.name,
-                color: req.color.into(),
-                workspace: ForeignModelByField::Key(path.uuid),
-            })
-            .await?;
+        let uuid = WorkspaceTag::insert(&mut tx, req.name, req.color, path.uuid).await?;
 
         tx.commit().await?;
 

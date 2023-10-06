@@ -7,6 +7,7 @@ use rorm::prelude::*;
 use uuid::Uuid;
 
 use crate::models::{Attack, OauthClient, User};
+mod operations;
 
 /// A workspace member has the privileges to access and modify a workspace of another user
 ///
@@ -28,13 +29,6 @@ pub struct WorkspaceMember {
     /// The point in time the member was granted access to the workspace
     #[rorm(auto_create_time)]
     pub created_at: DateTime<Utc>,
-}
-
-#[derive(Patch)]
-#[rorm(model = "WorkspaceMember")]
-pub(crate) struct WorkspaceMemberInsert {
-    pub(crate) member: ForeignModel<User>,
-    pub(crate) workspace: ForeignModel<Workspace>,
 }
 
 /// Representation of a set of connected data.
@@ -69,15 +63,6 @@ pub struct Workspace {
     pub attacks: BackRef<field!(Attack::F.workspace)>,
 }
 
-#[derive(Patch)]
-#[rorm(model = "Workspace")]
-pub(crate) struct WorkspaceInsert {
-    pub(crate) uuid: Uuid,
-    pub(crate) name: String,
-    pub(crate) description: Option<String>,
-    pub(crate) owner: ForeignModel<User>,
-}
-
 /// An oauth `access_token` for a workspace
 #[derive(Model)]
 pub struct WorkspaceAccessToken {
@@ -103,14 +88,4 @@ pub struct WorkspaceAccessToken {
 
     /// Date after which the token is invalid
     pub expires_at: DateTime<Utc>,
-}
-
-#[derive(Patch)]
-#[rorm(model = "WorkspaceAccessToken")]
-pub(crate) struct WorkspaceAccessTokenInsert {
-    pub token: String,
-    pub user: ForeignModel<User>,
-    pub workspace: ForeignModel<Workspace>,
-    pub expires_at: DateTime<Utc>,
-    pub application: ForeignModel<OauthClient>,
 }

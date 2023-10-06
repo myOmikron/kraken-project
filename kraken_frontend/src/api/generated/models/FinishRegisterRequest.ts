@@ -14,7 +14,7 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * 
+ * The request to finish the registration of a security key
  * @export
  * @interface FinishRegisterRequest
  */

@@ -1,6 +1,8 @@
 use rorm::prelude::*;
 use uuid::Uuid;
 
+mod operations;
+
 /// The data collectors of kraken
 #[derive(Model)]
 pub struct Leech {
@@ -19,13 +21,4 @@ pub struct Leech {
     /// Optional description of a leech
     #[rorm(max_length = 65535)]
     pub description: Option<String>,
-}
-
-#[derive(Patch)]
-#[rorm(model = "Leech")]
-pub(crate) struct LeechInsert {
-    pub(crate) uuid: Uuid,
-    pub(crate) name: String,
-    pub(crate) address: String,
-    pub(crate) description: Option<String>,
 }

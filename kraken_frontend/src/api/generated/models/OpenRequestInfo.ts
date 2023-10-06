@@ -27,7 +27,7 @@ import {
 } from './SimpleWorkspace';
 
 /**
- * 
+ * The information about an oauth request
  * @export
  * @interface OpenRequestInfo
  */

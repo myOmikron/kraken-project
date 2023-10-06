@@ -18,7 +18,7 @@ import type {
   ApiErrorResponse,
   CreateWorkspaceRequest,
   FullWorkspace,
-  GetWorkspaceResponse,
+  GetAllWorkspacesResponse,
   UpdateWorkspaceRequest,
   UuidResponse,
 } from '../models';
@@ -29,8 +29,8 @@ import {
     CreateWorkspaceRequestToJSON,
     FullWorkspaceFromJSON,
     FullWorkspaceToJSON,
-    GetWorkspaceResponseFromJSON,
-    GetWorkspaceResponseToJSON,
+    GetAllWorkspacesResponseFromJSON,
+    GetAllWorkspacesResponseToJSON,
     UpdateWorkspaceRequestFromJSON,
     UpdateWorkspaceRequestToJSON,
     UuidResponseFromJSON,
@@ -129,7 +129,7 @@ export class WorkspacesApi extends runtime.BaseAPI {
      * Retrieve all workspaces owned by executing user  For administration access, look at the `/admin/workspaces` endpoint.
      * Retrieve all workspaces owned by executing user
      */
-    async getAllWorkspacesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetWorkspaceResponse>> {
+    async getAllWorkspacesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAllWorkspacesResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -141,14 +141,14 @@ export class WorkspacesApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetWorkspaceResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetAllWorkspacesResponseFromJSON(jsonValue));
     }
 
     /**
      * Retrieve all workspaces owned by executing user  For administration access, look at the `/admin/workspaces` endpoint.
      * Retrieve all workspaces owned by executing user
      */
-    async getAllWorkspaces(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetWorkspaceResponse> {
+    async getAllWorkspaces(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAllWorkspacesResponse> {
         const response = await this.getAllWorkspacesRaw(initOverrides);
         return await response.value();
     }
