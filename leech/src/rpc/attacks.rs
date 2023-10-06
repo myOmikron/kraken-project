@@ -6,11 +6,10 @@ use std::time::Duration;
 
 use chrono::{Datelike, Timelike};
 use futures::Stream;
-use log::{error, info, warn};
+use log::{error, warn};
 use prost_types::Timestamp;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
-use tokio_stream::StreamExt;
 use tonic::{Request, Response, Status};
 
 use crate::backlog::Backlog;
@@ -49,18 +48,19 @@ impl ReqAttackService for Attacks {
         let (tx, mut rx) = mpsc::channel::<BruteforceSubdomainResult>(16);
 
         let req = request.into_inner();
-        let req_clone = req.clone();
         let backlog = self.backlog.clone();
 
-        tokio::spawn(async move {
-            while let Some(res) = rx.recv().await {
-                let rpc_res: BruteforceSubdomainResponse = res.into();
+        tokio::spawn({
+            let rpc_tx = rpc_tx.clone();
+            let req = req.clone();
+            async move {
+                while let Some(res) = rx.recv().await {
+                    let rpc_res: BruteforceSubdomainResponse = res.into();
 
-                if let Err(err) = rpc_tx.send(Ok(rpc_res.clone())).await {
-                    warn!("Could not send to rpc_tx: {err}");
-                    backlog
-                        .store_bruteforce_subdomains(&req_clone, rpc_res)
-                        .await;
+                    if let Err(err) = rpc_tx.send(Ok(rpc_res.clone())).await {
+                        warn!("Could not send to rpc_tx: {err}");
+                        backlog.store_bruteforce_subdomains(&req, rpc_res).await;
+                    }
                 }
             }
         });
@@ -70,10 +70,12 @@ impl ReqAttackService for Attacks {
             wordlist_path: req.wordlist_path.parse().unwrap(),
             concurrent_limit: req.concurrent_limit,
         };
-        if let Err(err) = bruteforce_subdomains(settings, tx).await {
-            warn!("Attack {} returned error: {err}", req.attack_uuid);
-            // TODO: Send error to grpc client
-        }
+        tokio::spawn(async move {
+            if let Err(err) = bruteforce_subdomains(settings, tx).await {
+                warn!("Attack {} returned error: {err}", req.attack_uuid);
+                let _ = rpc_tx.send(Err(Status::unknown(err.to_string()))).await;
+            }
+        });
 
         let output_stream = ReceiverStream::new(rpc_rx);
         Ok(Response::new(
@@ -92,14 +94,17 @@ impl ReqAttackService for Attacks {
         let (tx, mut rx) = mpsc::channel::<SocketAddr>(16);
 
         let req = request.into_inner();
-        let req_clone = req.clone();
         let backlog = self.backlog.clone();
 
-        tokio::spawn(async move {
-            while let Some(addr) = rx.recv().await {
-                if let Err(err) = rpc_tx.send(Ok(addr.into())).await {
-                    warn!("Could not send to rpc_tx: {err}");
-                    backlog.store_tcp_port_scans(&req_clone, addr).await;
+        tokio::spawn({
+            let rpc_tx = rpc_tx.clone();
+            let req = req.clone();
+            async move {
+                while let Some(addr) = rx.recv().await {
+                    if let Err(err) = rpc_tx.send(Ok(addr.into())).await {
+                        warn!("Could not send to rpc_tx: {err}");
+                        backlog.store_tcp_port_scans(&req, addr).await;
+                    }
                 }
             }
         });
@@ -124,11 +129,12 @@ impl ReqAttackService for Attacks {
             concurrent_limit: req.concurrent_limit,
             skip_icmp_check: req.skip_icmp_check,
         };
-
-        if let Err(err) = start_tcp_con_port_scan(settings, tx).await {
-            warn!("Attack {} returned error: {err}", req.attack_uuid);
-            // TODO: Send error to grpc client
-        }
+        tokio::spawn(async move {
+            if let Err(err) = start_tcp_con_port_scan(settings, tx).await {
+                warn!("Attack {} returned error: {err}", req.attack_uuid);
+                let _ = rpc_tx.send(Err(Status::unknown(err.to_string()))).await;
+            }
+        });
 
         let output_stream = ReceiverStream::new(rpc_rx);
         Ok(Response::new(
@@ -238,31 +244,47 @@ impl ReqAttackService for Attacks {
         &self,
         request: Request<HostsAliveRequest>,
     ) -> Result<Response<Self::HostsAliveCheckStream>, Status> {
-        info!("start checking if hosts are reachable");
-        let req = request.into_inner();
-
-        if req.targets.is_empty() {
+        if request.get_ref().targets.is_empty() {
             return Err(Status::invalid_argument("no hosts to check"));
         }
 
-        let req = IcmpScanSettings {
+        let (rpc_tx, rpc_rx) = mpsc::channel(16);
+        let (tx, mut rx) = mpsc::channel::<IpAddr>(16);
+
+        let req = request.into_inner();
+        let _backlog = self.backlog.clone();
+
+        tokio::spawn({
+            let rpc_tx = rpc_tx.clone();
+            let _req = req.clone();
+            async move {
+                while let Some(addr) = rx.recv().await {
+                    if let Err(err) = rpc_tx
+                        .send(Ok(HostsAliveResponse {
+                            host: Some(addr.into()),
+                        }))
+                        .await
+                    {
+                        warn!("Could not send to rpc_tx: {err}");
+                        //TODO backlog.store_hosts_alive_check(&req, addr).await;
+                    }
+                }
+            }
+        });
+
+        let settings = IcmpScanSettings {
             concurrent_limit: req.concurrent_limit,
             timeout: Duration::from_millis(req.timeout),
             addresses: req.targets.into_iter().map(|el| el.into()).collect(),
         };
-
-        let (tx, rx) = mpsc::channel::<IpAddr>(1);
-
-        if let Err(e) = start_icmp_scan(req, tx).await {
-            error!("error pinging hosts: {e}");
-            return Err(Status::internal("icmp check failed, see logs"));
-        }
-
-        let output_stream = ReceiverStream::new(rx).map(|addr| {
-            Ok(HostsAliveResponse {
-                host: Some(addr.into()),
-            })
+        tokio::spawn(async move {
+            if let Err(err) = start_icmp_scan(settings, tx).await {
+                warn!("Attack {} returned error: {err}", req.attack_uuid);
+                let _ = rpc_tx.send(Err(Status::unknown(err.to_string()))).await;
+            }
         });
+
+        let output_stream = ReceiverStream::new(rpc_rx);
         Ok(Response::new(
             Box::pin(output_stream) as Self::HostsAliveCheckStream
         ))
