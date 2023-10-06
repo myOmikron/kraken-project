@@ -10,8 +10,6 @@ use chrono::{DateTime, Utc};
 use ipnet::IpNet;
 use ipnetwork::IpNetwork;
 use log::debug;
-use rand::prelude::IteratorRandom;
-use rand::thread_rng;
 use rorm::db::transaction::Transaction;
 use rorm::prelude::*;
 use rorm::{and, insert, query, Database};
@@ -78,13 +76,7 @@ pub async fn bruteforce_subdomains(
         workspace_uuid,
     } = req.into_inner();
 
-    let client = rpc_clients
-        .get_ref()
-        .read()
-        .await
-        .get(&leech_uuid)
-        .ok_or(ApiError::InvalidLeech)?
-        .clone();
+    let client = rpc_clients.get_leech(&leech_uuid)?;
 
     let attack_uuid = insert!(db.as_ref(), AttackInsert)
         .return_primary_key()
@@ -249,15 +241,7 @@ pub async fn hosts_alive_check(
         })
         .await?;
 
-    let client = rpc_clients
-        .get_ref()
-        .read()
-        .await
-        .iter()
-        .choose(&mut thread_rng())
-        .ok_or(ApiError::NoLeechAvailable)?
-        .1
-        .clone();
+    let leech = rpc_clients.random_leech()?;
 
     tokio::spawn(
         AttackContext {
@@ -267,7 +251,7 @@ pub async fn hosts_alive_check(
             workspace_uuid,
             attack_uuid,
         }
-        .leech(client)
+        .leech(leech)
         .host_alive_check(rpc_definitions::HostsAliveRequest {
             targets: targets.into_iter().map(Into::into).collect(),
             timeout,
@@ -317,13 +301,7 @@ pub async fn scan_tcp_ports(
         workspace_uuid,
     } = req.into_inner();
 
-    let client = rpc_clients
-        .get_ref()
-        .read()
-        .await
-        .get(&leech_uuid)
-        .ok_or(ApiError::InvalidLeech)?
-        .clone();
+    let client = rpc_clients.get_leech(&leech_uuid)?;
 
     let attack_uuid = insert!(db.as_ref(), AttackInsert)
         .return_primary_key()
@@ -410,15 +388,7 @@ pub async fn query_certificate_transparency(
         workspace_uuid,
     } = req.into_inner();
 
-    let client = rpc_clients
-        .get_ref()
-        .read()
-        .await
-        .iter()
-        .choose(&mut thread_rng())
-        .ok_or(ApiError::NoLeechAvailable)?
-        .1
-        .clone();
+    let client = rpc_clients.random_leech()?;
 
     let attack_uuid = insert!(db.as_ref(), AttackInsert)
         .return_primary_key()

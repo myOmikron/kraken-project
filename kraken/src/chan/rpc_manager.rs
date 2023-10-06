@@ -1,22 +1,137 @@
 use std::collections::HashMap;
+use std::fmt;
 use std::str::FromStr;
+use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use std::time::Duration;
 
-use actix_web::web::Data;
-use log::{debug, warn};
+use actix_web::dev::Payload;
+use actix_web::{FromRequest, HttpRequest};
+use futures::future::{ready, Ready};
+use log::{debug, error, warn};
+use rand::prelude::IteratorRandom;
+use rand::thread_rng;
 use rorm::{query, Database, FieldAccess, Model};
+use thiserror::Error;
+use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
-use tokio::sync::{mpsc, RwLock};
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
 use tonic::transport::{Channel, Endpoint};
 use uuid::Uuid;
 
+use crate::api::handler::ApiError;
 use crate::models::Leech;
 use crate::rpc::rpc_definitions::req_attack_service_client::ReqAttackServiceClient;
 
 pub(crate) type RpcManagerChannel = Sender<RpcManagerEvent>;
-pub(crate) type RpcClients = Data<RwLock<HashMap<Uuid, ReqAttackServiceClient<Channel>>>>;
+
+/// Synchronized map of all connected leeches
+///
+/// ## actix
+/// This type behaves like a [`Data<_>`]
+///
+/// i.e. pass it to `App::app_data` and directly access it in your handlers
+#[derive(Debug, Clone)]
+pub struct RpcClients(Arc<RwLock<HashMap<Uuid, LeechClient>>>);
+
+/// Rpc client for sending attack requests to the leech
+pub type LeechClient = ReqAttackServiceClient<Channel>;
+
+impl RpcClients {
+    /// Create an empty map
+    pub fn new() -> Self {
+        Self(Arc::new(RwLock::new(HashMap::new())))
+    }
+
+    /// Retrieve a concrete leech by its id.
+    ///
+    /// You might want a concrete leech instead of a random one,
+    /// when it is deployed in a specific environment for example a private network
+    pub fn get_leech(&self, uuid: &Uuid) -> Result<LeechClient, InvalidLeech> {
+        self.read().get(uuid).cloned().ok_or(InvalidLeech)
+    }
+
+    /// Retrieve a random leech
+    pub fn random_leech(&self) -> Result<LeechClient, NoLeechAvailable> {
+        self.read()
+            .iter()
+            .choose(&mut thread_rng())
+            .map(|(_, leech)| leech.clone())
+            .ok_or(NoLeechAvailable)
+    }
+
+    fn read(&self) -> RwLockReadGuard<'_, HashMap<Uuid, LeechClient>> {
+        match self.0.read() {
+            Ok(guard) => guard,
+            Err(poison) => {
+                error!("The RpcClients' lock has been poisoned! This should never happen!");
+                poison.into_inner()
+            }
+        }
+    }
+
+    fn write(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, LeechClient>> {
+        match self.0.write() {
+            Ok(guard) => guard,
+            Err(poison) => {
+                error!("The RpcClients' lock has been poisoned! This should never happen!");
+                poison.into_inner()
+            }
+        }
+    }
+}
+
+/// The error returned by [`RpcClients::random_leech`] which can be converted into [`ApiError::NoLeechAvailable`]
+#[derive(Debug, Error)]
+pub struct NoLeechAvailable;
+impl From<NoLeechAvailable> for ApiError {
+    fn from(_: NoLeechAvailable) -> Self {
+        ApiError::NoLeechAvailable
+    }
+}
+impl fmt::Display for NoLeechAvailable {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        ApiError::NoLeechAvailable.fmt(f)
+    }
+}
+
+/// The error returned by [`RpcClients::get_leech`] which can be converted into [`ApiError::InvalidLeech`]
+#[derive(Debug, Error)]
+pub struct InvalidLeech;
+impl From<InvalidLeech> for ApiError {
+    fn from(_: InvalidLeech) -> Self {
+        ApiError::InvalidLeech
+    }
+}
+impl fmt::Display for InvalidLeech {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        ApiError::InvalidLeech.fmt(f)
+    }
+}
+
+impl FromRequest for RpcClients {
+    type Error = actix_web::Error;
+    type Future = Ready<Result<Self, actix_web::Error>>;
+
+    #[inline]
+    fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
+        if let Some(data) = req.app_data::<Self>() {
+            ready(Ok(data.clone()))
+        } else {
+            debug!(
+                "Failed to extract `RpcClients` for `{}` handler. \
+                Please pass your `RpcClients` instance to `App::app_data()` and \
+                don't wrap it into a `Data<RpcClients>`",
+                req.match_name().unwrap_or_else(|| req.path())
+            );
+
+            ready(Err(actix_web::error::ErrorInternalServerError(
+                "Requested application data is not configured correctly. \
+                View/enable debug logs for more details.",
+            )))
+        }
+    }
+}
 
 const CLIENT_RETRY_INTERVAL: Duration = Duration::from_secs(10);
 
@@ -61,8 +176,7 @@ pub async fn rpc_client_loop(leech: Leech, rpc_clients: RpcClients) {
 
     let client = ReqAttackServiceClient::new(chan);
 
-    let mut write = rpc_clients.write().await;
-    write.insert(leech.uuid, client);
+    rpc_clients.write().insert(leech.uuid, client);
 }
 
 /**
@@ -96,7 +210,7 @@ pub async fn start_rpc_manager(db: Database) -> Result<(RpcManagerChannel, RpcCl
         .await
         .map_err(|e| format!("Error while querying leeches: {e}"))?;
 
-    let rpc_clients: RpcClients = Data::new(RwLock::new(HashMap::new()));
+    let rpc_clients = RpcClients::new();
 
     let clients = rpc_clients.clone();
     tokio::spawn(async move {

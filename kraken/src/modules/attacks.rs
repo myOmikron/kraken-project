@@ -15,12 +15,13 @@ use rorm::prelude::*;
 use rorm::{and, insert, query, update, Database};
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
-use tonic::transport::Channel;
 use uuid::Uuid;
 
 #[cfg(doc)]
 use crate::api::handler;
-use crate::chan::{CertificateTransparencyEntry, WsManagerChan, WsManagerMessage, WsMessage};
+use crate::chan::{
+    CertificateTransparencyEntry, LeechClient, WsManagerChan, WsManagerMessage, WsMessage,
+};
 use crate::models::{
     Attack, BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert,
     CertificateTransparencyResultInsert, CertificateTransparencyValueNameInsert,
@@ -28,7 +29,6 @@ use crate::models::{
     PortInsert, PortProtocol, TcpPortScanResult, TcpPortScanResultInsert,
 };
 use crate::rpc::rpc_definitions;
-use crate::rpc::rpc_definitions::req_attack_service_client::ReqAttackServiceClient;
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
 
 /// Common data required to start any attack
@@ -52,7 +52,7 @@ pub struct AttackContext {
 
 impl AttackContext {
     /// Add a leech to the context
-    pub fn leech(self, leech: ReqAttackServiceClient<Channel>) -> LeechAttackContext {
+    pub fn leech(self, leech: LeechClient) -> LeechAttackContext {
         LeechAttackContext {
             common: self,
             leech,
@@ -117,7 +117,7 @@ pub struct LeechAttackContext {
     pub common: AttackContext,
 
     /// Client for talking with the leech
-    pub leech: ReqAttackServiceClient<Channel>,
+    pub leech: LeechClient,
 }
 
 impl LeechAttackContext {
