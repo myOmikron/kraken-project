@@ -89,15 +89,17 @@ message TcpPortScanResponse {
 
 // Certificate transparency request
 message CertificateTransparencyRequest {
+  // A unique id that identifier the attack
+  string attack_uuid = 1;
   // The target domain to query
-  string target = 1;
+  string target = 2;
   // Also include already expired certificates
-  bool include_expired = 2;
+  bool include_expired = 3;
   // The number of times the connection should be retried if it failed.
-  uint32 max_retries = 3;
+  uint32 max_retries = 4;
   // The interval to wait in between the retries
   // Specified in milliseconds.
-  uint64 retry_interval = 4;
+  uint64 retry_interval = 5;
 }
 
 
@@ -113,10 +115,12 @@ message CertificateTransparencyResponse {
 
 // Service detection request
 message ServiceDetectionRequest {
+  // A unique id that identifier the attack
+  string attack_uuid = 1;
   // The ip address to connect to
-  attacks.shared.Address address = 1;
+  attacks.shared.Address address = 2;
   // The port to connect to
-  uint32 port = 2;
+  uint32 port = 3;
   // The interval to wait for a response after connecting and sending an optional payload.
   // Specified in milliseconds.
   uint64 timeout = 4;
@@ -143,12 +147,14 @@ enum ServiceDetectionResponseType {
 
 // Request for checking if hosts are alive
 message HostsAliveRequest {
+  // A unique id that identifier the attack
+  string attack_uuid = 1;
   // The hosts that should be checked
-  repeated attacks.shared.Address targets = 1;
+  repeated attacks.shared.Address targets = 2;
   // The timeout, specified in milliseconds.
-  uint64 timeout = 2;
+  uint64 timeout = 3;
   // The concurrent task limit
-  uint32 concurrent_limit = 3;
+  uint32 concurrent_limit = 4;
 }
 
 // Response for checking which hosts are alive

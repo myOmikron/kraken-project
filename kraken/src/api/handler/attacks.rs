@@ -245,6 +245,7 @@ pub async fn hosts_alive_check(
         }
         .leech(leech)
         .host_alive_check(rpc_definitions::HostsAliveRequest {
+            attack_uuid: attack_uuid.to_string(),
             targets: targets.into_iter().map(Into::into).collect(),
             timeout,
             concurrent_limit,
@@ -397,6 +398,7 @@ pub async fn query_certificate_transparency(
         }
         .leech(client)
         .query_certificate_transparency(CertificateTransparencyRequest {
+            attack_uuid: attack_uuid.to_string(),
             target,
             include_expired,
             max_retries,
