@@ -154,7 +154,7 @@ message HostsAliveRequest {
 // Response for checking which hosts are alive
 message HostsAliveResponse {
   // the hosts that responded
-  repeated attacks.shared.Address hosts = 1;
+  attacks.shared.Address host = 1;
 }
 
 // Implemented by leech; allows kraken to request attack from a leech
@@ -163,7 +163,7 @@ service ReqAttackService {
   rpc RunTcpPortScan(TcpPortScanRequest) returns (stream TcpPortScanResponse);
   rpc QueryCertificateTransparency(CertificateTransparencyRequest) returns (CertificateTransparencyResponse);
   rpc ServiceDetection(ServiceDetectionRequest) returns (ServiceDetectionResponse);
-  rpc HostsAliveCheck(HostsAliveRequest) returns (HostsAliveResponse);
+  rpc HostsAliveCheck(HostsAliveRequest) returns (stream HostsAliveResponse);
 }
 
 /*

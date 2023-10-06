@@ -88,8 +88,8 @@ pub enum WsMessage {
     },
     /// A result for hosts alive check
     HostsAliveCheck {
-        /// The hosts that could be reached
-        targets: Vec<IpAddr>,
+        /// A host which could be reached
+        host: IpAddr,
     },
     /// A result for a tcp scan
     ScanTcpPortsResult {

@@ -10,6 +10,7 @@ use log::{error, info, warn};
 use prost_types::Timestamp;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
+use tokio_stream::StreamExt;
 use tonic::{Request, Response, Status};
 
 use crate::backlog::Backlog;
@@ -22,7 +23,7 @@ use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScan
 use crate::modules::service_detection::{detect_service, DetectServiceSettings, Service};
 use crate::rpc::rpc_attacks::port_or_range::PortOrRange;
 use crate::rpc::rpc_attacks::req_attack_service_server::ReqAttackService;
-use crate::rpc::rpc_attacks::shared::{Address, CertEntry};
+use crate::rpc::rpc_attacks::shared::CertEntry;
 use crate::rpc::rpc_attacks::{
     BruteforceSubdomainRequest, BruteforceSubdomainResponse, CertificateTransparencyRequest,
     CertificateTransparencyResponse, HostsAliveRequest, HostsAliveResponse,
@@ -230,10 +231,13 @@ impl ReqAttackService for Attacks {
         }))
     }
 
+    type HostsAliveCheckStream =
+        Pin<Box<dyn Stream<Item = Result<HostsAliveResponse, Status>> + Send>>;
+
     async fn hosts_alive_check(
         &self,
         request: Request<HostsAliveRequest>,
-    ) -> Result<Response<HostsAliveResponse>, Status> {
+    ) -> Result<Response<Self::HostsAliveCheckStream>, Status> {
         info!("start checking if hosts are reachable");
         let req = request.into_inner();
 
@@ -247,33 +251,20 @@ impl ReqAttackService for Attacks {
             addresses: req.targets.into_iter().map(|el| el.into()).collect(),
         };
 
-        let (tx, mut rx) = mpsc::channel::<IpAddr>(1);
-
-        let result_handle = tokio::spawn(async move {
-            let mut res: Vec<Address> = vec![];
-            while let Some(addr) = rx.recv().await {
-                res.push(addr.into())
-            }
-            if res.is_empty() {
-                warn!("all hosts are unreachable, check your targets");
-            }
-            res
-        });
+        let (tx, rx) = mpsc::channel::<IpAddr>(1);
 
         if let Err(e) = start_icmp_scan(req, tx).await {
             error!("error pinging hosts: {e}");
             return Err(Status::internal("icmp check failed, see logs"));
         }
 
-        return match result_handle.await {
-            Ok(hosts) => {
-                info!("finished checking if hosts are reachable");
-                Ok(Response::new(HostsAliveResponse { hosts }))
-            }
-            Err(e) => {
-                error!("error pinging hosts: {e}");
-                Err(Status::internal("icmp check failed, see logs"))
-            }
-        };
+        let output_stream = ReceiverStream::new(rx).map(|addr| {
+            Ok(HostsAliveResponse {
+                host: Some(addr.into()),
+            })
+        });
+        Ok(Response::new(
+            Box::pin(output_stream) as Self::HostsAliveCheckStream
+        ))
     }
 }

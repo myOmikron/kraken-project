@@ -25,8 +25,8 @@ use crate::chan::{
 use crate::models::{
     Attack, BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert,
     CertificateTransparencyResultInsert, CertificateTransparencyValueNameInsert,
-    DehashedQueryResultInsert, DnsRecordType, Domain, DomainInsert, Host, HostInsert, OsType, Port,
-    PortInsert, PortProtocol, TcpPortScanResult, TcpPortScanResultInsert,
+    DehashedQueryResultInsert, DnsRecordType, Domain, DomainInsert, Host, HostAliveResultInsert,
+    HostInsert, OsType, Port, PortInsert, PortProtocol, TcpPortScanResult, TcpPortScanResultInsert,
 };
 use crate::rpc::rpc_definitions;
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
@@ -505,22 +505,78 @@ impl LeechAttackContext {
     pub async fn host_alive_check(mut self, req: rpc_definitions::HostsAliveRequest) {
         match self.leech.hosts_alive_check(req).await {
             Ok(v) => {
-                self.send_ws(WsMessage::HostsAliveCheck {
-                    targets: v
-                        .into_inner()
-                        .hosts
-                        .into_iter()
-                        .map(|el| el.into())
-                        .collect(),
-                })
-                .await;
-                self.set_finished(true).await;
+                let mut stream = v.into_inner();
+
+                while let Some(res) = stream.next().await {
+                    match res {
+                        Ok(v) => {
+                            let Some(host) = v.host else {
+                                warn!(
+                                    "Missing field `host` in grpc response of bruteforce subdomains"
+                                );
+                                continue;
+                            };
+
+                            let host = host.into();
+                            self.send_ws(WsMessage::HostsAliveCheck { host }).await;
+                            if let Err(err) = self.insert_host_alive_check_result(host.into()).await
+                            {
+                                error!(
+                                    "Failed to insert query certificate transparency result: {err}"
+                                );
+                            }
+                        }
+                        Err(err) => {
+                            error!("Error while reading from stream: {err}");
+                            self.set_finished(false).await;
+                            return;
+                        }
+                    }
+                }
             }
-            Err(e) => {
-                error!("Error while reading from stream: {e}");
+            Err(err) => {
+                error!("Error while reading from stream: {err}");
                 self.set_finished(false).await;
+                return;
             }
+        };
+
+        self.set_finished(true).await;
+    }
+
+    /// Insert a host alive's result and update the aggregation
+    async fn insert_host_alive_check_result(&self, host: IpNetwork) -> Result<(), rorm::Error> {
+        let mut tx = self.db.start_transaction().await?;
+
+        insert!(&mut tx, HostAliveResultInsert)
+            .single(&HostAliveResultInsert {
+                uuid: Uuid::new_v4(),
+                attack: ForeignModelByField::Key(self.attack_uuid),
+                created_at: Utc::now(),
+                host,
+            })
+            .await?;
+
+        if let Some((_host_uuid,)) = query!(&mut tx, (Host::F.uuid,))
+            .condition(Host::F.ip_addr.equals(host))
+            .optional()
+            .await?
+        {
+            // TODO update reachable
+        } else {
+            insert!(&mut tx, HostInsert)
+                .single(&HostInsert {
+                    uuid: Uuid::new_v4(),
+                    ip_addr: host,
+                    os_type: OsType::Unknown,
+                    response_time: None,
+                    comment: String::new(),
+                    workspace: ForeignModelByField::Key(self.workspace_uuid),
+                })
+                .await?;
         }
+
+        tx.commit().await
     }
 
     /// Insert an aggregated domain if it doesn't exist yet.

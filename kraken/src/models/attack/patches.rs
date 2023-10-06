@@ -5,7 +5,8 @@ use uuid::Uuid;
 
 use crate::models::{
     Attack, BruteforceSubdomainsResult, CertificateTransparencyResult,
-    CertificateTransparencyValueName, DehashedQueryResult, DnsRecordType, TcpPortScanResult,
+    CertificateTransparencyValueName, DehashedQueryResult, DnsRecordType, HostAliveResult,
+    TcpPortScanResult,
 };
 
 #[derive(Patch)]
@@ -63,4 +64,13 @@ pub(crate) struct CertificateTransparencyResultInsert {
     pub(crate) not_before: Option<DateTime<Utc>>,
     pub(crate) not_after: Option<DateTime<Utc>>,
     pub(crate) serial_number: String,
+}
+
+#[derive(Patch)]
+#[rorm(model = "HostAliveResult")]
+pub(crate) struct HostAliveResultInsert {
+    pub(crate) uuid: Uuid,
+    pub(crate) attack: ForeignModel<Attack>,
+    pub(crate) created_at: DateTime<Utc>,
+    pub(crate) host: IpNetwork,
 }

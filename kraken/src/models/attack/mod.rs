@@ -213,3 +213,21 @@ pub struct CertificateTransparencyResult {
     #[rorm(max_length = 255)]
     pub serial_number: String,
 }
+
+/// Representation of a [Host Alive](AttackType::HostAlive) attack's result
+#[derive(Model)]
+pub struct HostAliveResult {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The [attack](Attack) which produced this result
+    pub attack: ForeignModel<Attack>,
+
+    /// The point in time, this result was produced
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
+
+    /// A host that responded
+    pub host: IpNetwork,
+}
