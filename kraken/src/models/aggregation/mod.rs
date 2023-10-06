@@ -5,10 +5,10 @@ use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+pub(crate) use crate::models::aggregation::operations::*;
 use crate::models::{GlobalTag, Workspace, WorkspaceTag};
 
 mod operations;
-pub(crate) use operations::*;
 
 /// A representation of an OS type
 #[derive(DbEnum, Copy, Clone, Debug, ToSchema, Serialize)]
