@@ -136,7 +136,7 @@ impl WorkspaceAccessToken {
         workspace: Uuid,
         application: Uuid,
     ) -> Result<i64, rorm::Error> {
-        Ok(insert!(executor, WorkspaceAccessTokenInsert)
+        insert!(executor, WorkspaceAccessTokenInsert)
             .return_primary_key()
             .single(&WorkspaceAccessTokenInsert {
                 token,
@@ -145,6 +145,6 @@ impl WorkspaceAccessToken {
                 workspace: ForeignModelByField::Key(workspace),
                 application: ForeignModelByField::Key(application),
             })
-            .await?)
+            .await
     }
 }
