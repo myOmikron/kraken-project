@@ -31,7 +31,7 @@ pub(crate) type RpcManagerChannel = Sender<RpcManagerEvent>;
 /// This type behaves like a [`Data<_>`]
 ///
 /// i.e. pass it to `App::app_data` and directly access it in your handlers
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct RpcClients(Arc<RwLock<HashMap<Uuid, LeechClient>>>);
 
 /// Rpc client for sending attack requests to the leech
@@ -40,7 +40,7 @@ pub type LeechClient = ReqAttackServiceClient<Channel>;
 impl RpcClients {
     /// Create an empty map
     pub fn new() -> Self {
-        Self(Arc::new(RwLock::new(HashMap::new())))
+        Self::default()
     }
 
     /// Retrieve a concrete leech by its id.

@@ -490,7 +490,7 @@ impl LeechAttackContext {
             self.insert_missing_domain(&mut tx, &entry.common_name)
                 .await?;
             for value in &entry.value_names {
-                self.insert_missing_domain(&mut tx, &value).await?;
+                self.insert_missing_domain(&mut tx, value).await?;
             }
         }
 
