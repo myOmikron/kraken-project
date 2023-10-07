@@ -10,6 +10,7 @@ import {
     CreateWorkspaceTagRequest,
     DomainsApi,
     GlobalTagsApi,
+    HostsAliveRequest,
     HostsApi,
     OAuthApi,
     OAuthApplicationApi,
@@ -114,6 +115,8 @@ export const Api = {
             handleError(attacks.bruteforceSubdomains({ bruteforceSubdomainsRequest: attack })),
         queryCertificateTransparency: (attack: QueryCertificateTransparencyRequest) =>
             handleError(attacks.queryCertificateTransparency({ queryCertificateTransparencyRequest: attack })),
+        hostAlive: (hostsAliveRequest: HostsAliveRequest) =>
+            handleError(attacks.hostsAliveCheck({ hostsAliveRequest })),
         scanTcpPorts: (attack: ScanTcpPortsRequest) =>
             handleError(attacks.scanTcpPorts({ scanTcpPortsRequest: attack })),
         getTcpPortScanResults: (uuid: UUID, offset: number, limit: number) =>
@@ -170,7 +173,7 @@ export const Api = {
                 handleError(workspaceTags.createWorkspaceTag({ uuid: workspaceUuid, createWorkspaceTagRequest })),
             update: (workspaceUuid: UUID, tagUuid: UUID, updateWorkspaceTag: UpdateWorkspaceTag) =>
                 handleError(
-                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag }),
+                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag })
                 ),
             delete: (workspaceUuid: UUID, tagUuid: UUID) =>
                 workspaceTags.deleteWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid }),

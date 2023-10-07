@@ -37,6 +37,12 @@ export interface HostsAliveRequest {
      * @memberof HostsAliveRequest
      */
     concurrentLimit: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof HostsAliveRequest
+     */
+    workspaceUuid: string;
 }
 
 /**
@@ -47,6 +53,7 @@ export function instanceOfHostsAliveRequest(value: object): boolean {
     isInstance = isInstance && "targets" in value;
     isInstance = isInstance && "timeout" in value;
     isInstance = isInstance && "concurrentLimit" in value;
+    isInstance = isInstance && "workspaceUuid" in value;
 
     return isInstance;
 }
@@ -64,6 +71,7 @@ export function HostsAliveRequestFromJSONTyped(json: any, ignoreDiscriminator: b
         'targets': json['targets'],
         'timeout': json['timeout'],
         'concurrentLimit': json['concurrent_limit'],
+        'workspaceUuid': json['workspace_uuid'],
     };
 }
 
@@ -79,6 +87,7 @@ export function HostsAliveRequestToJSON(value?: HostsAliveRequest | null): any {
         'targets': value.targets,
         'timeout': value.timeout,
         'concurrent_limit': value.concurrentLimit,
+        'workspace_uuid': value.workspaceUuid,
     };
 }
 
