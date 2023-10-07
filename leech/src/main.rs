@@ -25,6 +25,7 @@ use chrono::{Datelike, Timelike};
 use clap::{ArgAction, Parser, Subcommand, ValueEnum};
 use dehashed_rs::SearchType;
 use ipnet::IpNet;
+use ipnetwork::IpNetwork;
 use itertools::Itertools;
 use log::{error, info, warn};
 use prost_types::Timestamp;
@@ -490,7 +491,10 @@ async fn main() -> Result<(), String> {
                             }
                             PortScanTechnique::Icmp => {
                                 let settings = IcmpScanSettings {
-                                    addresses,
+                                    addresses: addresses
+                                        .into_iter()
+                                        .map(|x| IpNetwork::from(x))
+                                        .collect(),
                                     timeout: Duration::from_millis(timeout as u64),
                                     concurrent_limit: u32::from(concurrent_limit),
                                 };

@@ -24,12 +24,14 @@ pub mod rpc_attacks {
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
     use std::str::FromStr;
 
-    use ipnetwork::IpNetwork;
+    use ipnetwork::{IpNetwork, Ipv4Network, Ipv6Network};
 
     use crate::models::{BruteforceSubdomainsResult, DnsRecordType, TcpPortScanResult};
     use crate::modules::bruteforce_subdomains::BruteforceSubdomainResult;
     use crate::rpc::rpc_attacks::shared::dns_record::Record;
-    use crate::rpc::rpc_attacks::shared::{Aaaa, Address, Cname, DnsRecord, Ipv4, Ipv6, A};
+    use crate::rpc::rpc_attacks::shared::{
+        Aaaa, Address, Cname, DnsRecord, Ipv4, Ipv6, Net, NetOrAddress, A,
+    };
 
     pub mod shared {
         tonic::include_proto!("attacks.shared");
@@ -67,6 +69,47 @@ pub mod rpc_attacks {
             let part1 = i64::from_le_bytes([i, j, k, l, m, n, o, p]);
 
             Self { part0, part1 }
+        }
+    }
+
+    impl From<Net> for IpNetwork {
+        fn from(value: Net) -> Self {
+            match value.net.unwrap() {
+                shared::net::Net::Ipv4net(x) => {
+                    let addr: Ipv4Addr = x.address.unwrap().into();
+                    let [a, b, c, d] = x.netmask.to_le_bytes();
+
+                    Self::V4(Ipv4Network::with_netmask(addr, Ipv4Addr::new(a, b, c, d)).unwrap())
+                }
+                shared::net::Net::Ipv6net(x) => {
+                    let addr: Ipv6Addr = x.address.unwrap().into();
+                    let [a, b, c, d, e, f, g, h] = x.netmask0.to_le_bytes();
+                    let [i, j, k, l, m, n, o, p] = x.netmask1.to_le_bytes();
+
+                    Self::V6(
+                        Ipv6Network::with_netmask(
+                            addr,
+                            Ipv6Addr::from([a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p]),
+                        )
+                        .unwrap(),
+                    )
+                }
+            }
+        }
+    }
+
+    impl From<NetOrAddress> for IpNetwork {
+        fn from(value: NetOrAddress) -> Self {
+            match value.net_or_address.unwrap() {
+                shared::net_or_address::NetOrAddress::Address(x) => {
+                    let addr: IpAddr = x.into();
+                    match addr {
+                        IpAddr::V4(x) => Self::V4(Ipv4Network::from(x)),
+                        IpAddr::V6(x) => Self::V6(Ipv6Network::from(x)),
+                    }
+                }
+                shared::net_or_address::NetOrAddress::Net(x) => x.into(),
+            }
         }
     }
 

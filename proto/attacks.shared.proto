@@ -8,10 +8,23 @@ message Ipv4 {
   sfixed32 address = 1;
 }
 
+// Representation of an ip4 net
+message Ipv4Net {
+  Ipv4 address = 1;
+  sfixed32 netmask = 2;
+}
+
 // Representation of an ipv6 address
 message Ipv6 {
   sfixed64 part0 = 1;
   sfixed64 part1 = 2;
+}
+
+// Representation of an ipv6 net
+message Ipv6Net {
+  Ipv6 address = 1;
+  sfixed64 netmask0 = 2;
+  sfixed64 netmask1 = 3;
 }
 
 // Enum of addresses
@@ -19,6 +32,22 @@ message Address {
   oneof address {
     Ipv4 ipv4 = 1;
     Ipv6 ipv6 = 2;
+  }
+}
+
+// Enum of nets
+message Net {
+  oneof net {
+    Ipv4Net ipv4net = 1;
+    Ipv6Net ipv6net = 2;
+  }
+}
+
+// A net or address
+message NetOrAddress {
+  oneof net_or_address {
+    Address address = 1;
+    Net net = 2;
   }
 }
 

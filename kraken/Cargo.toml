@@ -70,7 +70,7 @@ thiserror = { version = "~1" }
 
 # ORM
 rorm = { version = "~0.6", default-features = false, features = ["tokio", "rustls", "cli", "uuid", "postgres-only", "chrono"] }
-ipnetwork = { version = "~0.20" }
+ipnetwork = { version = "~0.20", features = ["serde"] }
 
 # API for dehashed
 dehashed-rs = { version = "~0.3", features = ["tokio", "utoipa"] }

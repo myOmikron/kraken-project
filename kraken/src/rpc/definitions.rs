@@ -1,6 +1,8 @@
 pub mod rpc_definitions {
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
+    use ipnetwork::IpNetwork;
+
     pub mod shared {
         tonic::include_proto!("attacks.shared");
     }
@@ -56,6 +58,35 @@ pub mod rpc_definitions {
             match address.unwrap() {
                 shared::address::Address::Ipv4(v) => IpAddr::from(Ipv4Addr::from(v)),
                 shared::address::Address::Ipv6(v) => IpAddr::from(Ipv6Addr::from(v)),
+            }
+        }
+    }
+
+    impl From<IpNetwork> for shared::Net {
+        fn from(value: IpNetwork) -> Self {
+            Self {
+                net: match value {
+                    IpNetwork::V4(x) => Some(shared::net::Net::Ipv4net(shared::Ipv4Net {
+                        address: Some(x.ip().into()),
+                        netmask: i32::from_le_bytes(x.mask().octets()),
+                    })),
+                    IpNetwork::V6(x) => {
+                        let [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p] = x.mask().octets();
+                        Some(shared::net::Net::Ipv6net(shared::Ipv6Net {
+                            address: Some(x.ip().into()),
+                            netmask0: i64::from_le_bytes([a, b, c, d, e, f, g, h]),
+                            netmask1: i64::from_le_bytes([i, j, k, l, m, n, o, p]),
+                        }))
+                    }
+                },
+            }
+        }
+    }
+
+    impl From<IpNetwork> for shared::NetOrAddress {
+        fn from(value: IpNetwork) -> Self {
+            Self {
+                net_or_address: Some(shared::net_or_address::NetOrAddress::Net(value.into())),
             }
         }
     }

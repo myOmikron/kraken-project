@@ -4,6 +4,7 @@ use std::net::{IpAddr, SocketAddr};
 use std::time::Duration;
 
 use futures::{stream, StreamExt};
+use ipnetwork::IpNetwork;
 use itertools::iproduct;
 use log::{debug, error, info, trace, warn};
 use tokio::io::AsyncWriteExt;
@@ -73,7 +74,11 @@ pub async fn start_tcp_con_port_scan(
         });
 
         let icmp_settings = IcmpScanSettings {
-            addresses: settings.addresses,
+            addresses: settings
+                .addresses
+                .into_iter()
+                .map(|x| IpNetwork::from(x))
+                .collect(),
             timeout: Duration::from_millis(1000),
             concurrent_limit: settings.concurrent_limit,
         };

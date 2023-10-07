@@ -7,7 +7,6 @@ use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path, Query};
 use actix_web::{delete, get, post, HttpResponse};
 use chrono::{DateTime, Utc};
-use ipnet::IpNet;
 use ipnetwork::IpNetwork;
 use log::debug;
 use rorm::db::transaction::Transaction;
@@ -114,7 +113,7 @@ pub struct ScanTcpPortsRequest {
     pub(crate) targets: Vec<IpAddr>,
 
     #[schema(value_type = Vec<String>, example = json!(["10.13.37.252/30"]))]
-    pub(crate) exclude: Vec<IpNet>,
+    pub(crate) exclude: Vec<IpNetwork>,
 
     pub(crate) ports: Vec<PortOrRange>,
 
@@ -182,8 +181,8 @@ impl From<&PortOrRange> for rpc_definitions::PortOrRange {
 /// Host Alive check request
 #[derive(Deserialize, ToSchema)]
 pub struct HostsAliveRequest {
-    #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.2", "10.13.37.50"]))]
-    pub(crate) targets: Vec<IpAddr>,
+    #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.2", "10.13.37.0/24"]))]
+    pub(crate) targets: Vec<IpNetwork>,
 
     #[schema(example = 3000)]
     pub(crate) timeout: u64,
@@ -227,7 +226,7 @@ pub async fn hosts_alive_check(
 
     let attack_uuid = Attack::insert(
         db.as_ref(),
-        AttackType::TcpPortScan,
+        AttackType::HostAlive,
         user_uuid,
         workspace_uuid,
     )

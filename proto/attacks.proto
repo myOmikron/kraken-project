@@ -150,7 +150,7 @@ message HostsAliveRequest {
   // A unique id that identifier the attack
   string attack_uuid = 1;
   // The hosts that should be checked
-  repeated attacks.shared.Address targets = 2;
+  repeated attacks.shared.NetOrAddress targets = 2;
   // The timeout, specified in milliseconds.
   uint64 timeout = 3;
   // The concurrent task limit

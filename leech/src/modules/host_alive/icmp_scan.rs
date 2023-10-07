@@ -4,6 +4,7 @@ use std::net::IpAddr;
 use std::time::Duration;
 
 use futures::{stream, StreamExt};
+use ipnetwork::IpNetwork;
 use log::{debug, error, info, trace, warn};
 use rand::random;
 use surge_ping::{Client, PingIdentifier, PingSequence, SurgeError, ICMP};
@@ -15,7 +16,7 @@ use crate::modules::host_alive::error::IcmpScanError;
 #[derive(Debug)]
 pub struct IcmpScanSettings {
     /// The addresses to scan
-    pub addresses: Vec<IpAddr>,
+    pub addresses: Vec<IpNetwork>,
     /// The time wait for a pong
     pub timeout: Duration,
     /// Maximum of concurrent tasks that should be spawned
@@ -49,8 +50,8 @@ pub async fn start_icmp_scan(
     info!("Starting icmp check");
 
     stream::iter(settings.addresses)
-        .for_each_concurrent(settings.concurrent_limit as usize, |addr| {
-            let icmp_client = if addr.is_ipv4() {
+        .for_each_concurrent(settings.concurrent_limit as usize, |net| {
+            let icmp_client = if net.is_ipv4() {
                 icmp_v4_client.clone()
             } else {
                 icmp_v6_client.clone()
@@ -60,23 +61,26 @@ pub async fn start_icmp_scan(
 
             async move {
                 const PAYLOAD: &[u8] = &[];
-                let mut pinger = icmp_client
-                    .pinger(addr, PingIdentifier::from(random::<u16>()))
-                    .await;
 
-                if let Err(err) = pinger
-                    .timeout(settings.timeout)
-                    .ping(PingSequence(0), PAYLOAD)
-                    .await
-                {
-                    match err {
-                        SurgeError::Timeout { .. } => trace!("Host timeout: {addr}"),
-                        _ => error!("ICMP error: {err}"),
-                    }
-                } else {
-                    debug!("Host is up: {addr}");
-                    if let Err(err) = tx.send(addr).await {
-                        warn!("Could not send result to tx: {err}");
+                for addr in net.iter() {
+                    let mut pinger = icmp_client
+                        .pinger(addr, PingIdentifier::from(random::<u16>()))
+                        .await;
+
+                    if let Err(err) = pinger
+                        .timeout(settings.timeout)
+                        .ping(PingSequence(0), PAYLOAD)
+                        .await
+                    {
+                        match err {
+                            SurgeError::Timeout { .. } => trace!("Host timeout: {addr}"),
+                            _ => error!("ICMP error: {err}"),
+                        }
+                    } else {
+                        debug!("Host is up: {addr}");
+                        if let Err(err) = tx.send(addr).await {
+                            warn!("Could not send result to tx: {err}");
+                        }
                     }
                 }
             }
