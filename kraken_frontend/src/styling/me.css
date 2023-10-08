@@ -1,3 +1,13 @@
+.me-container {
+    display: grid;
+    gap: 1em;
+    grid-template-columns: 2fr 3fr;
+}
+
+.me-heading {
+    grid-area: 1 / 1 / span 1 / span 2;
+}
+
 .me {
     display: grid;
     grid-template-columns: 15em 3fr;
@@ -7,12 +17,72 @@
 
 .me-settings {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1em;
+    grid-template-columns: 1fr 2fr;
+    grid-auto-rows: max-content;
+    align-items: center;
+    gap: 0.5em;
 }
 
-.change-pwd {
+.me-settings > h2 {
+    grid-area: 1 / 1 / span 1 / span 2;
+}
+
+.me-settings > .button {
+    grid-area: 4 / 1 / span 1 / span 2;
+}
+
+.me-change-pwd {
+    grid-area: 3 / 1 / span 1 / span 1;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    grid-auto-rows: max-content;
+    align-items: center;
+    gap: 0.5em;
+}
+
+.me-change-pwd > h2 {
+    grid-area: 1 / 1 / span 1 / span 2;
+}
+
+.me-change-pwd > .button {
+    grid-area: 5 / 1 / span 1 / span 2;
+}
+
+.me-api-keys {
+    grid-area: 2 / 2 / span 2 / span 1;
     display: flex;
     flex-direction: column;
-    width: 20em;
+    gap: 2em;
+    grid-auto-rows: max-content;
+}
+
+.me-api-keys > h2 {
+    grid-area: 1 / 1 / span 1 / span 2;
+}
+
+.me-api-keys-create {
+    display: grid;
+    gap: 0.5em;
+    grid-template-columns: 1fr 2fr;
+    align-items: center;
+}
+
+.me-api-keys-create > .button {
+    grid-area: 2 / 1 / span 1 / span 2;
+}
+
+.me-api-keys-table {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+}
+
+.me-api-keys-row {
+    display: grid;
+    grid-template-columns: 2fr 4fr 1fr 1fr;
+    gap: 1em;
+    align-items: center;
+    border: 1px solid var(--text);
+    padding: 0.5em 1em;
+    border-radius: 0.5em;
 }

@@ -1,6 +1,7 @@
 import { login, test, registerKey, authenticate, logout } from "./auth";
 import { handleError } from "./error";
 import {
+    ApiKeysApi,
     BruteforceSubdomainsRequest,
     CreateAppRequest,
     CreateGlobalTagRequest,
@@ -65,6 +66,7 @@ const hosts = new HostsApi(configuration);
 const ports = new PortsApi(configuration);
 const domains = new DomainsApi(configuration);
 const services = new ServicesApi(configuration);
+const apiKeys = new ApiKeysApi(configuration);
 
 export const Api = {
     admin: {
@@ -138,6 +140,13 @@ export const Api = {
         update: (user: UpdateMeRequest) => handleError(userManagement.updateMe({ updateMeRequest: user })),
         setPassword: (currentPassword: string, newPassword: string) =>
             handleError(userManagement.setPassword({ setPasswordRequest: { currentPassword, newPassword } })),
+        apiKeys: {
+            create: (name: string) => handleError(apiKeys.createApiKey({ createApiKeyRequest: { name } })),
+            all: () => handleError(apiKeys.getApiKeys()),
+            delete: (uuid: UUID) => handleError(apiKeys.deleteApiKey({ uuid })),
+            update: (uuid: UUID, name: string) =>
+                handleError(apiKeys.updateApiKey({ uuid, updateApiKeyRequest: { name } })),
+        },
     },
     workspaces: {
         all: () => handleError(workspaces.getAllWorkspaces()),
