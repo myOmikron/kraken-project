@@ -140,10 +140,17 @@ export default function AttacksIcon(params: AttacksParams) {
                 }
                 transform="matrix(.23193 0 0 .23193 19.926 77.996)"
             />
-            {/* hosts 2 */}
+            {/* host alive */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                className={"kraken-attacks-hex-unavailable kraken-attacks-hex"}
+                onMouseEnter={() => onAttackHover("host_alive")}
+                onMouseLeave={() => onAttackHover(null)}
+                onClick={() => onAttackSelect("host_alive")}
+                className={
+                    activeAttack === "host_alive"
+                        ? "kraken-attacks-hex-selected kraken-attacks-hex kraken-attacks-clickable"
+                        : "kraken-attacks-hex kraken-attacks-clickable"
+                }
                 transform="matrix(.23193 0 0 .23193 -.12 77.808)"
             />
             {/* ports box */}
@@ -242,6 +249,9 @@ export default function AttacksIcon(params: AttacksParams) {
             </text>
             <text xmlSpace="preserve" x={133} y={31} className={"kraken-attacks-hex-text"}>
                 {"SvD"}
+            </text>
+            <text xmlSpace="preserve" x={5} y={94} className={"kraken-attacks-hex-text"}>
+                {"HA"}
             </text>
         </svg>
     );
