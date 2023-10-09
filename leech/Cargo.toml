@@ -78,7 +78,7 @@ rlimit = { version = "~0.10" }
 reqwest = { version = "~0.11", features = ["json", "trust-dns", "rustls-tls-native-roots"] }
 
 # dehashed api
-dehashed-rs = { version = "~0.3", features = ["tokio"] }
+dehashed-rs = { version = "~0.4", features = ["tokio"] }
 
 native-tls = { version = "~0.2", features = ["alpn"] }
 tokio-native-tls = { version = "~0.3" }
