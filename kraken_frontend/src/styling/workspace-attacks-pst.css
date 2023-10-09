@@ -25,8 +25,9 @@
 
 .workspace-attacks-pst-advanced {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 2fr;
     gap: 1em;
+    align-items: center;
     height: max-content;
     transition: all ease 750ms;
     opacity: 0;

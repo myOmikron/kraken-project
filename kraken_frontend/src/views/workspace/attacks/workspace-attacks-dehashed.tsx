@@ -119,6 +119,7 @@ export default class WorkspaceAttacksDehashed extends React.Component<
                         value={this.state.type}
                     />
                     <Input
+                        placeholder={"dehashed query"}
                         value={this.state.search}
                         onChange={(search) => {
                             this.setState({ search });
