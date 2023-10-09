@@ -24,7 +24,7 @@ export interface BruteforceSubdomainsRequest {
      * @type {string}
      * @memberof BruteforceSubdomainsRequest
      */
-    leechUuid: string;
+    leechUuid?: string | null;
     /**
      * 
      * @type {string}
@@ -56,7 +56,6 @@ export interface BruteforceSubdomainsRequest {
  */
 export function instanceOfBruteforceSubdomainsRequest(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "leechUuid" in value;
     isInstance = isInstance && "domain" in value;
     isInstance = isInstance && "wordlistPath" in value;
     isInstance = isInstance && "concurrentLimit" in value;
@@ -75,7 +74,7 @@ export function BruteforceSubdomainsRequestFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'leechUuid': json['leech_uuid'],
+        'leechUuid': !exists(json, 'leech_uuid') ? undefined : json['leech_uuid'],
         'domain': json['domain'],
         'wordlistPath': json['wordlist_path'],
         'concurrentLimit': json['concurrent_limit'],
