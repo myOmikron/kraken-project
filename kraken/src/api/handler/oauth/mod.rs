@@ -1,9 +1,6 @@
 //! OAuth related code lives here
 
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
 use std::str::FromStr;
-use std::sync::Mutex;
 use std::time::Duration;
 
 use actix_web::body::BoxBody;
@@ -16,9 +13,9 @@ use rand::distributions::{Alphanumeric, DistString};
 use rand::thread_rng;
 use rorm::prelude::*;
 use rorm::{query, Database};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 use webauthn_rs::prelude::Url;
 
@@ -29,62 +26,10 @@ use crate::api::handler::users::UserResponse;
 use crate::api::handler::workspaces::SimpleWorkspace;
 use crate::api::handler::{ApiError, PathUuid};
 use crate::models::{OauthClient, User, Workspace, WorkspaceAccessToken};
+use crate::modules::oauth::{OAuthRequest, OAuthScope, OauthManager, OpenIfError};
 
 mod applications;
 mod schemas;
-
-/// Wrapper type for holding the open and accepted oauth requests
-#[derive(Debug, Default)]
-pub struct OauthManager(Mutex<OauthManagerInner>);
-#[derive(Debug, Default)]
-struct OauthManagerInner {
-    /// Waiting for user interaction i.e. `/accept` or `/deny`
-    ///
-    /// Uses a `uuid` as key which is presented to the user's agent
-    open: HashMap<Uuid, OpenRequest>,
-
-    /// Waiting for server interaction i.e. `/token`
-    ///
-    /// Uses `code` as key which is passed through the user's agent to the client
-    accepted: HashMap<Uuid, OpenRequest>,
-}
-
-impl OauthManager {
-    fn insert_open(&self, request: OpenRequest) -> Uuid {
-        let mut inner = self.0.lock().unwrap();
-        loop {
-            let uuid = Uuid::new_v4();
-            if let Entry::Vacant(entry) = inner.open.entry(uuid) {
-                entry.insert(request);
-                return uuid;
-            }
-        }
-    }
-}
-
-/// Open oauth request which is waiting for user interactions
-#[derive(Debug, Clone)]
-struct OpenRequest {
-    /// Pk of the requesting [`OauthClient`]
-    client_pk: Uuid,
-
-    /// State provided by client in `/auth`
-    state: String,
-
-    /// Scope requested by client
-    scope: Scope,
-
-    /// User which is being asked
-    user: Uuid,
-
-    /// pkce's `code_challenge` with method `S256`
-    code_challenge: String,
-}
-
-#[derive(Debug, Clone)]
-struct Scope {
-    workspace: Uuid,
-}
 
 /// Initial endpoint an application redirects the user to.
 ///
@@ -206,14 +151,15 @@ pub async fn auth(
         );
     }
 
-    let request_uuid = manager.insert_open(OpenRequest {
+    let open_request = OAuthRequest {
         client_pk: request.client_id,
         state,
-        scope: Scope { workspace },
+        scope: OAuthScope { workspace },
         user: user_uuid,
         code_challenge,
-    });
+    };
 
+    let request_uuid = manager.insert_open(open_request);
     Ok(Redirect::to(format!("/#/oauth-request/{request_uuid}")))
 }
 
@@ -243,14 +189,7 @@ pub async fn info(
     manager: Data<OauthManager>,
     SessionUser(user_uuid): SessionUser,
 ) -> Result<Json<OpenRequestInfo>, ApiError> {
-    let request = {
-        let inner = manager.0.lock().unwrap();
-        inner
-            .open
-            .get(&path.uuid)
-            .ok_or(ApiError::InvalidUuid)?
-            .clone()
-    };
+    let request = manager.get_open(path.uuid).ok_or(ApiError::InvalidUuid)?;
 
     if user_uuid != request.user {
         return Err(ApiError::MissingPrivileges);
@@ -314,22 +253,13 @@ pub async fn accept(
     manager: Data<OauthManager>,
     SessionUser(user_uuid): SessionUser,
 ) -> Result<Redirect, ApiError> {
-    let open_request;
-    let code;
-    {
-        let mut inner = manager.0.lock().unwrap();
-
-        // Check validity
-        open_request = inner.open.remove(&path.uuid).ok_or(ApiError::InvalidUuid)?;
-        if open_request.user != user_uuid {
-            inner.open.insert(path.uuid, open_request);
-            return Err(ApiError::MissingPrivileges);
-        }
-
-        // Advance request
-        code = Uuid::new_v4();
-        inner.accepted.insert(code, open_request.clone());
-    };
+    let open_request =
+        match manager.remove_open_if(path.uuid, |open_request| open_request.user == user_uuid) {
+            Ok(open_request) => open_request,
+            Err(OpenIfError::NotFound) => return Err(ApiError::InvalidUuid),
+            Err(OpenIfError::FailedCheck) => return Err(ApiError::MissingPrivileges),
+        };
+    let code = manager.insert_accepted(open_request.clone());
 
     // Redirect
     let (redirect_uri,) = query!(db.as_ref(), (OauthClient::F.redirect_uri,))
@@ -370,15 +300,12 @@ pub async fn deny(
     path: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
 ) -> Result<Redirect, ApiError> {
-    let open_request = {
-        let mut inner = manager.0.lock().unwrap();
-
-        // Check validity
-        let open_request = inner.open.remove(&path.uuid).ok_or(ApiError::InvalidUuid)?;
-        if open_request.user != user_uuid {
-            inner.open.insert(path.uuid, open_request);
-            return Err(ApiError::MissingPrivileges);
-        }
+    let open_request =
+        match manager.remove_open_if(path.uuid, |open_request| open_request.user == user_uuid) {
+            Ok(open_request) => open_request,
+            Err(OpenIfError::NotFound) => return Err(ApiError::InvalidUuid),
+            Err(OpenIfError::FailedCheck) => return Err(ApiError::MissingPrivileges),
+        };
 
         open_request
     };
@@ -424,17 +351,10 @@ pub async fn token(
         code_verifier,
     } = request.into_inner();
 
-    let accepted: OpenRequest = {
-        let inner = manager.0.lock().unwrap();
-        inner
-            .accepted
-            .get(&code)
-            .ok_or(TokenError {
-                error: TokenErrorType::InvalidRequest,
-                error_description: Some("Invalid code"),
-            })?
-            .clone()
-    };
+    let accepted = manager.get_accepted(code).ok_or(TokenError {
+        error: TokenErrorType::InvalidRequest,
+        error_description: Some("Invalid code"),
+    })?;
     let client = query!(db.as_ref(), OauthClient)
         .condition(OauthClient::F.uuid.equals(accepted.client_pk))
         .one()

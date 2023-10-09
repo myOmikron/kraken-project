@@ -2,4 +2,5 @@
 //! throughout the code
 
 pub mod attacks;
+pub mod oauth;
 pub mod uri;

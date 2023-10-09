@@ -30,6 +30,7 @@ use crate::api::middleware::{
 use crate::api::swagger::{ExternalApi, FrontendApi};
 use crate::chan::{RpcClients, RpcManagerChannel, SettingsManagerChan, WsManagerChan};
 use crate::config::Config;
+use crate::modules::oauth::OauthManager;
 
 const ORIGIN_NAME: &str = "Kraken";
 
@@ -67,7 +68,7 @@ pub(crate) async fn start_server(
         .build()?,
     );
 
-    let oauth = Data::new(oauth::OauthManager::default());
+    let oauth = Data::new(OauthManager::default());
 
     let dehashed = Data::new(RwLock::new(dehashed_scheduler));
 
