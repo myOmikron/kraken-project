@@ -16,6 +16,7 @@
 import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
+  GetAllUsersResponse,
   GetUser,
   SetPasswordRequest,
   UpdateMeRequest,
@@ -23,6 +24,8 @@ import type {
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
+    GetAllUsersResponseFromJSON,
+    GetAllUsersResponseToJSON,
     GetUserFromJSON,
     GetUserToJSON,
     SetPasswordRequestFromJSON,
@@ -43,6 +46,34 @@ export interface UpdateMeOperationRequest {
  * 
  */
 export class UserManagementApi extends runtime.BaseAPI {
+
+    /**
+     * Request all users  This may be used to create invitations for workspaces
+     * Request all users
+     */
+    async getAllUsersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAllUsersResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/users`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetAllUsersResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Request all users  This may be used to create invitations for workspaces
+     * Request all users
+     */
+    async getAllUsers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAllUsersResponse> {
+        const response = await this.getAllUsersRaw(initOverrides);
+        return await response.value();
+    }
 
     /**
      * Retrieve the own user

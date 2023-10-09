@@ -40,6 +40,7 @@ models/FullOauthClient.ts
 models/FullWorkspace.ts
 models/FullWorkspaceTag.ts
 models/GetAllLeechesResponse.ts
+models/GetAllUsersResponse.ts
 models/GetAllWorkspacesResponse.ts
 models/GetApiKeysResponse.ts
 models/GetAppsResponse.ts
@@ -89,6 +90,7 @@ models/SimplePort.ts
 models/SimpleService.ts
 models/SimpleTag.ts
 models/SimpleTcpPortScanResult.ts
+models/SimpleUser.ts
 models/SimpleWorkspace.ts
 models/TagType.ts
 models/TcpPortScanResultsPage.ts

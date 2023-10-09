@@ -121,7 +121,7 @@ export class UserAdminManagementApi extends runtime.BaseAPI {
      * Retrieve all users
      * Retrieve all users
      */
-    async getAllUsersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetUserResponse>> {
+    async getAllUsersAdminRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetUserResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -140,8 +140,8 @@ export class UserAdminManagementApi extends runtime.BaseAPI {
      * Retrieve all users
      * Retrieve all users
      */
-    async getAllUsers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetUserResponse> {
-        const response = await this.getAllUsersRaw(initOverrides);
+    async getAllUsersAdmin(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetUserResponse> {
+        const response = await this.getAllUsersAdminRaw(initOverrides);
         return await response.value();
     }
 

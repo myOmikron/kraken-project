@@ -119,7 +119,7 @@ export class HostsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/api/v1/workspaces/{w_uuid}/hosts{h_uuid}`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"h_uuid"}}`, encodeURIComponent(String(requestParameters.hUuid))),
+            path: `/api/v1/workspaces/{w_uuid}/hosts/{h_uuid}`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"h_uuid"}}`, encodeURIComponent(String(requestParameters.hUuid))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,

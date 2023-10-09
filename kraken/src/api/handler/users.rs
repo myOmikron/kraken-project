@@ -365,7 +365,6 @@ pub struct GetAllUsersResponse {
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    request_body = UpdateMeRequest,
     security(("api_key" = []))
 )]
 #[get("/users")]

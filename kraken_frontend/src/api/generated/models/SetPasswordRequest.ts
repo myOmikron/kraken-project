@@ -14,7 +14,7 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * 
+ * The request to set a new password for a user
  * @export
  * @interface SetPasswordRequest
  */
