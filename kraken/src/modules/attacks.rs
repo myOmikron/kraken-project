@@ -10,6 +10,7 @@ use dehashed_rs::{DehashedError, Query, ScheduledRequest, SearchResult};
 use futures::StreamExt;
 use ipnetwork::IpNetwork;
 use log::{debug, error, warn};
+use rorm::conditions::{Condition, DynamicCollection};
 use rorm::db::transaction::Transaction;
 use rorm::prelude::*;
 use rorm::{and, insert, query, update, Database};
@@ -709,15 +710,19 @@ impl LeechAttackContext {
         port: Option<i16>,
         certainty: Certainty,
     ) -> Result<bool, rorm::Error> {
-        let service = query!(&mut *tx, Service)
-            .condition(and![
-                Service::F.workspace.equals(self.workspace_uuid),
-                Service::F.name.equals(name),
-                Service::F.host.ip_addr.equals(host),
-                Service::F.port.is_no
-            ])
-            .optional()
-            .await?;
+        let mut c = vec![
+            Service::F.workspace.equals(self.workspace_uuid).boxed(),
+            Service::F.name.equals(name).boxed(),
+            Service::F.host.ip_addr.equals(host).boxed(),
+        ];
+        let cond = if let Some(port) = port {
+            c.push(Service::F.port.port.equals(port).boxed());
+            DynamicCollection::and(c)
+        } else {
+            DynamicCollection::and(c)
+        };
+
+        let service = query!(&mut *tx, Service).condition(cond).optional().await?;
 
         if let Some(service) = service {
             if service.certainty != certainty && certainty == Certainty::Definitely {
@@ -725,7 +730,7 @@ impl LeechAttackContext {
                     .condition(Service::F.uuid.equals(service.uuid))
                     .set(Service::F.certainty, Certainty::Definitely)
                     .exec()
-                    .await?
+                    .await?;
             }
             Ok(false)
         } else {
