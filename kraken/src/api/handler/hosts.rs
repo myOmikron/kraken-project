@@ -135,7 +135,7 @@ pub struct PathHost {
     params(PathHost),
     security(("api_key" = []))
 )]
-#[get("/workspaces/{w_uuid}/hosts{h_uuid}")]
+#[get("/workspaces/{w_uuid}/hosts/{h_uuid}")]
 pub async fn get_host(
     path: Path<PathHost>,
     db: Data<Database>,
