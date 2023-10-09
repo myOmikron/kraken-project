@@ -6,6 +6,7 @@ import WorkspaceAttacksDehashed from "./attacks/workspace-attacks-dehashed";
 import WorkspaceAttacksPortScanTcp from "./attacks/workspace-attacks-port-scan-tcp";
 import WorkspaceAttacksCT from "./attacks/workspace-attacks-certificate-transparency";
 import WorkspaceAttacksHostAlive from "./attacks/workspace-attacks-host-alive";
+import WorkspaceAttacksServiceDetection from "./attacks/workspace-attacks-service-detection";
 
 export type AttackType =
     | "bruteforce_subdomains"
@@ -143,6 +144,8 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                         <WorkspaceAttacksCT workspaceUuid={this.props.workspace.uuid} />
                     ) : this.state.selectedAttack === "host_alive" ? (
                         <WorkspaceAttacksHostAlive workspaceUuid={this.props.workspace.uuid} />
+                    ) : this.state.selectedAttack === "service_detection" ? (
+                        <WorkspaceAttacksServiceDetection workspaceUuid={this.props.workspace.uuid} />
                     ) : (
                         <span>Not implemented yet</span>
                     )}

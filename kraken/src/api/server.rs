@@ -168,6 +168,7 @@ pub(crate) async fn start_server(
                     .service(attacks::get_attack)
                     .service(attacks::hosts_alive_check)
                     .service(attacks::query_dehashed)
+                    .service(attacks::service_detection)
                     .service(api_keys::create_api_key)
                     .service(api_keys::get_api_keys)
                     .service(api_keys::update_api_key)

@@ -88,6 +88,8 @@ pub enum WsMessage {
     },
     /// A result for hosts alive check
     HostsAliveCheck {
+        /// The corresponding id of the attack
+        attack_uuid: Uuid,
         /// A host which could be reached
         host: IpAddr,
     },
@@ -106,6 +108,13 @@ pub enum WsMessage {
         attack_uuid: Uuid,
         /// The entries of the result
         entries: Vec<CertificateTransparencyEntry>,
+    },
+    /// A result to service detection request
+    ServiceDetectionResult {
+        /// The corresponding id of the attack
+        attack_uuid: Uuid,
+        /// Name of the service
+        service: String,
     },
 }
 

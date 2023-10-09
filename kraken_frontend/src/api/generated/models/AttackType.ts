@@ -23,7 +23,8 @@ export const AttackType = {
     TcpPortScan: 'TcpPortScan',
     QueryCertificateTransparency: 'QueryCertificateTransparency',
     QueryUnhashed: 'QueryUnhashed',
-    HostAlive: 'HostAlive'
+    HostAlive: 'HostAlive',
+    ServiceDetection: 'ServiceDetection'
 } as const;
 export type AttackType = typeof AttackType[keyof typeof AttackType];
 

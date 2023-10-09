@@ -21,13 +21,14 @@ export enum StatusCode {
     AddressAlreadyExists = 1012,
     NameAlreadyExists = 1013,
     InvalidUuid = 1014,
-
+    InvalidWorkspace = 1015,
     EmptyJson = 1016,
     InvalidPassword = 1017,
     InvalidLeech = 1018,
-    UsernameAlreadyOccupied = 1019,
+    UsernameAlreadyExists = 1019,
     InvalidName = 1020,
     InvalidQueryLimit = 1021,
+    InvalidPort = 1022,
 
     InternalServerError = 2000,
     DatabaseError = 2001,

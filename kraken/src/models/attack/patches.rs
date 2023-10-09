@@ -4,9 +4,9 @@ use rorm::prelude::*;
 use uuid::Uuid;
 
 use crate::models::{
-    Attack, BruteforceSubdomainsResult, CertificateTransparencyResult,
+    Attack, BruteforceSubdomainsResult, Certainty, CertificateTransparencyResult,
     CertificateTransparencyValueName, DehashedQueryResult, DnsRecordType, HostAliveResult,
-    TcpPortScanResult,
+    ServiceDetectionResult, TcpPortScanResult,
 };
 
 #[derive(Patch)]
@@ -58,7 +58,6 @@ pub(crate) struct CertificateTransparencyValueNameInsert {
 pub(crate) struct CertificateTransparencyResultInsert {
     pub(crate) uuid: Uuid,
     pub(crate) attack: ForeignModel<Attack>,
-    pub(crate) created_at: DateTime<Utc>,
     pub(crate) issuer_name: String,
     pub(crate) common_name: String,
     pub(crate) not_before: Option<DateTime<Utc>>,
@@ -71,6 +70,15 @@ pub(crate) struct CertificateTransparencyResultInsert {
 pub(crate) struct HostAliveResultInsert {
     pub(crate) uuid: Uuid,
     pub(crate) attack: ForeignModel<Attack>,
-    pub(crate) created_at: DateTime<Utc>,
     pub(crate) host: IpNetwork,
+}
+
+#[derive(Patch)]
+#[rorm(model = "ServiceDetectionResult")]
+pub(crate) struct ServiceDetectionResultInsert {
+    pub(crate) uuid: Uuid,
+    pub(crate) attack: ForeignModel<Attack>,
+    pub(crate) certainty: Certainty,
+    pub(crate) host: IpNetwork,
+    pub(crate) port: i16,
 }

@@ -128,7 +128,7 @@ message ServiceDetectionRequest {
 
 // Response to a service detection request
 message ServiceDetectionResponse {
-  ServiceDetectionResponseType type = 1;
+  ServiceDetectionResponseType responseType = 1;
   repeated string services = 2;
 }
 

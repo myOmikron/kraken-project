@@ -1,7 +1,7 @@
 use ipnetwork::IpNetwork;
 use rorm::prelude::{BackRef, ForeignModel};
 use rorm::{field, DbEnum, Model};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -94,6 +94,17 @@ pub struct HostWorkspaceTag {
     pub host: ForeignModel<Host>,
 }
 
+/// The certainty a service is detected
+#[derive(Debug, Copy, Clone, ToSchema, Deserialize, Serialize, DbEnum, Eq, PartialEq)]
+pub enum Certainty {
+    /// Service is not detected
+    Unknown,
+    /// May be a certain service
+    Maybe,
+    /// Service is definitely correct
+    Definitely,
+}
+
 /// A detected service on a host
 #[derive(Model)]
 pub struct Service {
@@ -108,6 +119,9 @@ pub struct Service {
     /// Optional version of the service
     #[rorm(max_length = 255)]
     pub version: Option<String>,
+
+    /// The certainty the service is detected correct
+    pub certainty: Certainty,
 
     /// The host this service is attached to
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]

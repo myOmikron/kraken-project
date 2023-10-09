@@ -190,6 +190,8 @@ pub enum ApiStatusCode {
     InvalidName = 1020,
     /// Invalid query limit
     InvalidQueryLimit = 1021,
+    /// Invalid port
+    InvalidPort = 1022,
 
     /// Internal server error
     InternalServerError = 2000,
@@ -296,6 +298,9 @@ pub enum ApiError {
     /// Invalid query limit
     #[error("Invalid limit query")]
     InvalidQueryLimit,
+    /// Invalid port specified
+    #[error("Invalid port")]
+    InvalidPort,
 
     /// An internal server error occurred
     #[error("Internal server error")]
@@ -515,6 +520,10 @@ impl actix_web::ResponseError for ApiError {
             )),
             ApiError::InvalidWorkspace => HttpResponse::BadRequest().json(ApiErrorResponse::new(
                 ApiStatusCode::InvalidWorkspace,
+                self.to_string(),
+            )),
+            ApiError::InvalidPort => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::InvalidPort,
                 self.to_string(),
             )),
         }

@@ -76,6 +76,7 @@ models/SearchTypeOneOf1.ts
 models/SearchTypeOneOf2.ts
 models/SearchTypeOneOf3.ts
 models/SearchTypeOneOf4.ts
+models/ServiceDetectionRequest.ts
 models/ServiceResultsPage.ts
 models/SetPasswordRequest.ts
 models/SettingsFull.ts

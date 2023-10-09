@@ -81,7 +81,6 @@ impl AttackResultsService for Results {
                 .single(&CertificateTransparencyResultInsert {
                     uuid: Uuid::new_v4(),
                     attack: ForeignModelByField::Key(attack_uuid),
-                    created_at: Utc::now(),
                     issuer_name: cert_entry.issuer_name,
                     common_name: cert_entry.common_name,
                     not_before: cert_entry.not_before.map(|ts| {

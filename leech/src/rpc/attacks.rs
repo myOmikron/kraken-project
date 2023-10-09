@@ -223,15 +223,15 @@ impl ReqAttackService for Attacks {
 
         Ok(Response::new(match service {
             Service::Unknown => ServiceDetectionResponse {
-                r#type: ServiceDetectionResponseType::Unknown as _,
+                response_type: ServiceDetectionResponseType::Unknown as _,
                 services: Vec::new(),
             },
             Service::Maybe(services) => ServiceDetectionResponse {
-                r#type: ServiceDetectionResponseType::Maybe as _,
+                response_type: ServiceDetectionResponseType::Maybe as _,
                 services: services.iter().map(|s| s.to_string()).collect(),
             },
             Service::Definitely(service) => ServiceDetectionResponse {
-                r#type: ServiceDetectionResponseType::Definitely as _,
+                response_type: ServiceDetectionResponseType::Definitely as _,
                 services: vec![service.to_string()],
             },
         }))

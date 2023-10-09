@@ -58,6 +58,7 @@ export * from './SearchTypeOneOf1';
 export * from './SearchTypeOneOf2';
 export * from './SearchTypeOneOf3';
 export * from './SearchTypeOneOf4';
+export * from './ServiceDetectionRequest';
 export * from './ServiceResultsPage';
 export * from './SetPasswordRequest';
 export * from './SettingsFull';

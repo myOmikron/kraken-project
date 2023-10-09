@@ -19,8 +19,8 @@ use uuid::Uuid;
 use crate::api::extractors::BearerToken;
 use crate::api::handler::{ApiError, ApiResult, PathUuid};
 use crate::models::{
-    Domain, DomainGlobalTag, DomainWorkspaceTag, Host, HostGlobalTag, HostWorkspaceTag, OsType,
-    Port, PortGlobalTag, PortProtocol, PortWorkspaceTag, Service, ServiceGlobalTag,
+    Certainty, Domain, DomainGlobalTag, DomainWorkspaceTag, Host, HostGlobalTag, HostWorkspaceTag,
+    OsType, Port, PortGlobalTag, PortProtocol, PortWorkspaceTag, Service, ServiceGlobalTag,
     ServiceWorkspaceTag, WorkspaceAccessToken,
 };
 
@@ -118,6 +118,9 @@ pub struct AggregatedService {
 
     /// A comment to the service
     pub comment: String,
+
+    /// The certainty the service was detected
+    pub certainty: Certainty,
 
     /// Set of global and local tags
     #[serde(flatten)]
@@ -322,6 +325,7 @@ impl From<Service> for AggregatedService {
             host,
             port,
             comment,
+            certainty,
             workspace: _,
         } = value;
         Self {
@@ -331,6 +335,7 @@ impl From<Service> for AggregatedService {
             host: *host.key(),
             port: port.map(|port| *port.key()),
             comment,
+            certainty,
             tags: Default::default(),
         }
     }

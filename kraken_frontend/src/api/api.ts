@@ -19,6 +19,7 @@ import {
     Query,
     QueryCertificateTransparencyRequest,
     ScanTcpPortsRequest,
+    ServiceDetectionRequest,
     ServicesApi,
     SettingsManagementApi,
     UpdateAppRequest,
@@ -123,6 +124,8 @@ export const Api = {
             handleError(attacks.scanTcpPorts({ scanTcpPortsRequest: attack })),
         getTcpPortScanResults: (uuid: UUID, offset: number, limit: number) =>
             handleError(attacks.getTcpPortScanResults({ uuid, limit, offset })),
+        serviceDetection: (attack: ServiceDetectionRequest) =>
+            handleError(attacks.serviceDetection({ serviceDetectionRequest: attack })),
         queryDehashed: (uuid: UUID, query: Query) =>
             handleError(attacks.queryDehashed({ queryDehashedRequest: { workspaceUuid: uuid, query } })),
         get: (uuid: UUID) => handleError(attacks.getAttack({ uuid })),

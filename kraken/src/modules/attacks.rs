@@ -13,8 +13,7 @@ use log::{debug, error, warn};
 use rorm::db::transaction::Transaction;
 use rorm::prelude::*;
 use rorm::{and, insert, query, update, Database};
-use tokio::sync::mpsc;
-use tokio::sync::oneshot;
+use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;
 
 #[cfg(doc)]
@@ -23,13 +22,15 @@ use crate::chan::{
     CertificateTransparencyEntry, LeechClient, WsManagerChan, WsManagerMessage, WsMessage,
 };
 use crate::models::{
-    Attack, BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert,
+    Attack, BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert, Certainty,
     CertificateTransparencyResultInsert, CertificateTransparencyValueNameInsert,
     DehashedQueryResultInsert, DnsRecordType, Domain, DomainInsert, Host, HostAliveResultInsert,
-    HostInsert, OsType, Port, PortInsert, PortProtocol, TcpPortScanResult, TcpPortScanResultInsert,
+    HostInsert, OsType, Port, PortInsert, PortProtocol, Service, ServiceDetectionName,
+    ServiceDetectionResultInsert, ServiceInsert, TcpPortScanResult, TcpPortScanResultInsert,
 };
 use crate::rpc::rpc_definitions;
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
+use crate::rpc::rpc_definitions::ServiceDetectionResponse;
 
 /// Common data required to start any attack
 #[derive(Clone)]
@@ -454,7 +455,6 @@ impl LeechAttackContext {
                 .return_primary_key()
                 .single(&CertificateTransparencyResultInsert {
                     uuid: Uuid::new_v4(),
-                    created_at: Utc::now(),
                     attack: ForeignModelByField::Key(self.attack_uuid),
                     issuer_name: cert_entry.issuer_name.clone(),
                     serial_number: cert_entry.serial_number.clone(),
@@ -518,7 +518,11 @@ impl LeechAttackContext {
                             };
 
                             let host = host.into();
-                            self.send_ws(WsMessage::HostsAliveCheck { host }).await;
+                            self.send_ws(WsMessage::HostsAliveCheck {
+                                host,
+                                attack_uuid: self.attack_uuid,
+                            })
+                            .await;
                             if let Err(err) = self.insert_host_alive_check_result(host.into()).await
                             {
                                 error!(
@@ -552,7 +556,6 @@ impl LeechAttackContext {
             .single(&HostAliveResultInsert {
                 uuid: Uuid::new_v4(),
                 attack: ForeignModelByField::Key(self.attack_uuid),
-                created_at: Utc::now(),
                 host,
             })
             .await?;
@@ -607,6 +610,185 @@ impl LeechAttackContext {
             Ok(true)
         } else {
             Ok(false)
+        }
+    }
+
+    /// Check what services are running on a specific port
+    ///
+    /// See [`handler::attacks::service_detection`] for more information.
+    pub async fn service_detection(
+        mut self,
+        req: rpc_definitions::ServiceDetectionRequest,
+        host: IpAddr,
+        port: u16,
+    ) {
+        match self.leech.service_detection(req).await {
+            Ok(v) => {
+                let ServiceDetectionResponse {
+                    services,
+                    response_type,
+                } = v.into_inner();
+
+                let certainty = match response_type {
+                    1 => Certainty::Maybe,
+                    2 => Certainty::Definitely,
+                    _ => Certainty::Unknown,
+                };
+
+                if let Err(err) = self
+                    .insert_service_detection_result(&services, certainty, host.into(), port)
+                    .await
+                {
+                    error!("Failed to insert service detection result: {err}");
+                }
+            }
+            Err(err) => {
+                error!("Error while reading response: {err}");
+                self.set_finished(false).await;
+                return;
+            }
+        };
+
+        self.set_finished(true).await;
+    }
+
+    async fn insert_service_detection_result(
+        &self,
+        service_names: &[String],
+        certainty: Certainty,
+        host: IpNetwork,
+        port: u16,
+    ) -> Result<(), rorm::Error> {
+        let port: i16 = i16::from_ne_bytes(port.to_ne_bytes());
+
+        let mut tx = self.db.start_transaction().await?;
+
+        let uuid = insert!(&mut tx, ServiceDetectionResultInsert)
+            .return_primary_key()
+            .single(&ServiceDetectionResultInsert {
+                uuid: Uuid::new_v4(),
+                attack: ForeignModelByField::Key(self.attack_uuid),
+                certainty,
+                host,
+                port,
+            })
+            .await?;
+
+        insert!(&mut tx, ServiceDetectionName)
+            .return_nothing()
+            .bulk(
+                &service_names
+                    .iter()
+                    .map(|x| ServiceDetectionName {
+                        uuid: Uuid::new_v4(),
+                        name: x.to_string(),
+                        result: ForeignModelByField::Key(uuid),
+                    })
+                    .collect::<Vec<_>>(),
+            )
+            .await?;
+
+        for x in service_names {
+            self.insert_missing_service(&mut tx, x, host, Some(port), certainty)
+                .await?;
+        }
+
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    /// Insert an aggregated service if it doesn't exist yet.
+    ///
+    /// Returns whether the service was inserted or not.
+    async fn insert_missing_service(
+        &self,
+        tx: &mut Transaction,
+        name: &str,
+        host: IpNetwork,
+        port: Option<i16>,
+        certainty: Certainty,
+    ) -> Result<bool, rorm::Error> {
+        let service = query!(&mut *tx, Service)
+            .condition(and![
+                Service::F.workspace.equals(self.workspace_uuid),
+                Service::F.name.equals(name),
+                Service::F.host.ip_addr.equals(host),
+            ])
+            .optional()
+            .await?;
+
+        if let Some(service) = service {
+            if service.certainty != certainty {}
+            Ok(false)
+        } else {
+            // Check if host is already been created
+            let host_uuid = query!(&mut *tx, (Host::F.uuid,))
+                .condition(and!(
+                    Host::F.workspace.equals(self.workspace_uuid),
+                    Host::F.ip_addr.equals(host)
+                ))
+                .optional()
+                .await?;
+
+            let host_uuid = if let Some((host_uuid,)) = host_uuid {
+                host_uuid
+            } else {
+                insert!(&mut *tx, HostInsert)
+                    .return_primary_key()
+                    .single(&HostInsert {
+                        uuid: Uuid::new_v4(),
+                        ip_addr: host,
+                        os_type: OsType::Unknown,
+                        response_time: None,
+                        comment: String::new(),
+                        workspace: ForeignModelByField::Key(self.workspace_uuid),
+                    })
+                    .await?
+            };
+
+            let mut port_uuid = None;
+            if let Some(port) = port {
+                // Check if port already exists
+                let p = query!(&mut *tx, (Port::F.uuid,))
+                    .condition(and!(
+                        Port::F.workspace.equals(self.workspace_uuid),
+                        Port::F.host.equals(host_uuid),
+                        Port::F.port.equals(port)
+                    ))
+                    .optional()
+                    .await?;
+
+                port_uuid = Some(if let Some((port_uuid,)) = p {
+                    port_uuid
+                } else {
+                    insert!(&mut *tx, PortInsert)
+                        .return_primary_key()
+                        .single(&PortInsert {
+                            uuid: Uuid::new_v4(),
+                            port: 0,
+                            protocol: PortProtocol::Unknown,
+                            host: ForeignModelByField::Key(host_uuid),
+                            comment: "".to_string(),
+                            workspace: ForeignModelByField::Key(self.workspace_uuid),
+                        })
+                        .await?
+                });
+            }
+
+            insert!(tx, ServiceInsert)
+                .single(&ServiceInsert {
+                    uuid: Uuid::new_v4(),
+                    name: name.to_string(),
+                    version: None,
+                    host: ForeignModelByField::Key(host_uuid),
+                    comment: String::new(),
+                    workspace: ForeignModelByField::Key(self.workspace_uuid),
+                    port: port_uuid.map(ForeignModelByField::Key),
+                    certainty,
+                })
+                .await?;
+            Ok(true)
         }
     }
 }

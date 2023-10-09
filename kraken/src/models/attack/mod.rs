@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 pub use crate::models::attack::operations::*;
 pub(crate) use crate::models::attack::patches::*;
-use crate::models::{User, Workspace};
+use crate::models::{Certainty, User, Workspace};
 
 mod operations;
 mod patches;
@@ -29,6 +29,8 @@ pub enum AttackType {
     QueryUnhashed,
     /// Check if a host is reachable via icmp
     HostAlive,
+    /// Detect the service that is running on a port
+    ServiceDetection,
 }
 
 /// Representation of an attack
@@ -230,4 +232,49 @@ pub struct HostAliveResult {
 
     /// A host that responded
     pub host: IpNetwork,
+}
+
+/// The name of a result of a service that was found during a service detection
+#[derive(Model)]
+pub struct ServiceDetectionName {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The name of found service
+    #[rorm(max_length = 255)]
+    pub name: String,
+
+    /// The result this service name is linked to
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub result: ForeignModel<ServiceDetectionResult>,
+}
+
+/// Representation of a [Service Detection](AttackType::ServiceDetection) attack's result
+#[derive(Model)]
+pub struct ServiceDetectionResult {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The [attack](Attack) which produced this result
+    pub attack: ForeignModel<Attack>,
+
+    /// The point in time, this result was produced
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
+
+    /// The certainty of the result
+    pub certainty: Certainty,
+
+    /// The ip address a port was found on
+    pub host: IpNetwork,
+
+    /// Port number
+    ///
+    /// Reinterpret as u16 with to_ne_bytes and from_ne_bytes
+    pub port: i16,
+
+    /// The found names of the service
+    pub service_names: BackRef<field!(ServiceDetectionName::F.result)>,
 }

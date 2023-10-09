@@ -2,7 +2,7 @@ use ipnetwork::IpNetwork;
 use rorm::prelude::*;
 use uuid::Uuid;
 
-use crate::models::{Domain, Host, OsType, Port, PortProtocol, Service, Workspace};
+use crate::models::{Certainty, Domain, Host, OsType, Port, PortProtocol, Service, Workspace};
 
 #[derive(Patch)]
 #[rorm(model = "Host")]
@@ -23,6 +23,7 @@ pub(crate) struct ServiceInsert {
     pub(crate) version: Option<String>,
     pub(crate) host: ForeignModel<Host>,
     pub(crate) port: Option<ForeignModel<Port>>,
+    pub(crate) certainty: Certainty,
     pub(crate) comment: String,
     pub(crate) workspace: ForeignModel<Workspace>,
 }

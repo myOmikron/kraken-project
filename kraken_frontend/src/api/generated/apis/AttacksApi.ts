@@ -21,6 +21,7 @@ import type {
   QueryCertificateTransparencyRequest,
   QueryDehashedRequest,
   ScanTcpPortsRequest,
+  ServiceDetectionRequest,
   SimpleAttack,
   TcpPortScanResultsPage,
   UuidResponse,
@@ -38,6 +39,8 @@ import {
     QueryDehashedRequestToJSON,
     ScanTcpPortsRequestFromJSON,
     ScanTcpPortsRequestToJSON,
+    ServiceDetectionRequestFromJSON,
+    ServiceDetectionRequestToJSON,
     SimpleAttackFromJSON,
     SimpleAttackToJSON,
     TcpPortScanResultsPageFromJSON,
@@ -78,6 +81,10 @@ export interface QueryDehashedOperationRequest {
 
 export interface ScanTcpPortsOperationRequest {
     scanTcpPortsRequest: ScanTcpPortsRequest;
+}
+
+export interface ServiceDetectionOperationRequest {
+    serviceDetectionRequest: ServiceDetectionRequest;
 }
 
 /**
@@ -368,6 +375,41 @@ export class AttacksApi extends runtime.BaseAPI {
      */
     async scanTcpPorts(requestParameters: ScanTcpPortsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
         const response = await this.scanTcpPortsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Perform service detection on a ip and port combination
+     * Perform service detection on a ip and port combination
+     */
+    async serviceDetectionRaw(requestParameters: ServiceDetectionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
+        if (requestParameters.serviceDetectionRequest === null || requestParameters.serviceDetectionRequest === undefined) {
+            throw new runtime.RequiredError('serviceDetectionRequest','Required parameter requestParameters.serviceDetectionRequest was null or undefined when calling serviceDetection.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/attacks/serviceDetection`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ServiceDetectionRequestToJSON(requestParameters.serviceDetectionRequest),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Perform service detection on a ip and port combination
+     * Perform service detection on a ip and port combination
+     */
+    async serviceDetection(requestParameters: ServiceDetectionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
+        const response = await this.serviceDetectionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
