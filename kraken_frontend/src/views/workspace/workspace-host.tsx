@@ -30,14 +30,14 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
             ({ items }) => {
                 this.setState({ hostList: items.filter(({ uuid }) => uuid !== this.props.host_uuid) });
             },
-            (err) => toast.error(err.message),
+            (err) => toast.error(err.message)
         );
     }
 
     async getHost() {
         (await Api.workspaces.hosts.get(this.props.workspace.uuid, this.props.host_uuid)).match(
             (host) => this.setState({ host }),
-            (err) => toast.error(err.message),
+            (err) => toast.error(err.message)
         );
     }
 
@@ -55,13 +55,6 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
         return (
             <div className={"workspace-host-container"}>
                 <div className={"workspace-host-hosts-list"}>
-                    <div className={"pane workspace-host-hosts-search"}>
-                        <Input
-                            placeholder={"Search host"}
-                            value={this.state.searchTerm}
-                            onChange={(searchTerm) => this.setState({ searchTerm })}
-                        />
-                    </div>
                     <button
                         key={"back"}
                         className={"pane workspace-host-hosts-back"}
@@ -73,6 +66,13 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
                     >
                         <h2 className={"sub-heading"}>Back</h2>
                     </button>
+                    <div className={"pane workspace-host-hosts-search"}>
+                        <Input
+                            placeholder={"Search host"}
+                            value={this.state.searchTerm}
+                            onChange={(searchTerm) => this.setState({ searchTerm })}
+                        />
+                    </div>
                     {this.state.hostList.map((host) => {
                         return (
                             <button
