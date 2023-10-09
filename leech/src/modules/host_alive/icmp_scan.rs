@@ -49,9 +49,11 @@ pub async fn start_icmp_scan(
 
     info!("Starting icmp check");
 
-    stream::iter(settings.addresses)
-        .for_each_concurrent(settings.concurrent_limit as usize, |net| {
-            let icmp_client = if net.is_ipv4() {
+    let ips = settings.addresses.into_iter().flat_map(|x| x.iter());
+
+    stream::iter(ips)
+        .for_each_concurrent(settings.concurrent_limit as usize, |addr| {
+            let icmp_client = if addr.is_ipv4() {
                 icmp_v4_client.clone()
             } else {
                 icmp_v6_client.clone()
@@ -61,26 +63,23 @@ pub async fn start_icmp_scan(
 
             async move {
                 const PAYLOAD: &[u8] = &[];
+                let mut pinger = icmp_client
+                    .pinger(addr, PingIdentifier::from(random::<u16>()))
+                    .await;
 
-                for addr in net.iter() {
-                    let mut pinger = icmp_client
-                        .pinger(addr, PingIdentifier::from(random::<u16>()))
-                        .await;
-
-                    if let Err(err) = pinger
-                        .timeout(settings.timeout)
-                        .ping(PingSequence(0), PAYLOAD)
-                        .await
-                    {
-                        match err {
-                            SurgeError::Timeout { .. } => trace!("Host timeout: {addr}"),
-                            _ => error!("ICMP error: {err}"),
-                        }
-                    } else {
-                        debug!("Host is up: {addr}");
-                        if let Err(err) = tx.send(addr).await {
-                            warn!("Could not send result to tx: {err}");
-                        }
+                if let Err(err) = pinger
+                    .timeout(settings.timeout)
+                    .ping(PingSequence(0), PAYLOAD)
+                    .await
+                {
+                    match err {
+                        SurgeError::Timeout { .. } => trace!("Host timeout: {addr}"),
+                        _ => error!("ICMP error: {err}"),
+                    }
+                } else {
+                    debug!("Host is up: {addr}");
+                    if let Err(err) = tx.send(addr).await {
+                        warn!("Could not send result to tx: {err}");
                     }
                 }
             }
