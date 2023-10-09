@@ -4,6 +4,7 @@ import { FullHost, FullWorkspace, SimpleHost } from "../../api/generated";
 import { Api, UUID } from "../../api/api";
 import { toast } from "react-toastify";
 import { ROUTES } from "../../routes";
+import Input from "../../components/input";
 import OsIcon from "../../components/os-icon";
 
 type WorkspaceProps = {
@@ -14,13 +15,14 @@ type WorkspaceState = {
     selectedTab: "domains" | "ips" | "ports" | "services" | "other";
     host: FullHost | null;
     hostList: Array<SimpleHost>;
+    searchTerm: string;
 };
 
 export default class WorkspaceHost extends React.Component<WorkspaceProps, WorkspaceState> {
     constructor(props: WorkspaceProps) {
         super(props);
 
-        this.state = { selectedTab: "domains", host: null, hostList: [] };
+        this.state = { selectedTab: "domains", host: null, hostList: [], searchTerm: "" };
     }
 
     async getHostList() {
@@ -53,6 +55,24 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
         return (
             <div className={"workspace-host-container"}>
                 <div className={"workspace-host-hosts-list"}>
+                    <div className={"pane workspace-host-hosts-search"}>
+                        <Input
+                            placeholder={"Search host"}
+                            value={this.state.searchTerm}
+                            onChange={(searchTerm) => this.setState({ searchTerm })}
+                        />
+                    </div>
+                    <button
+                        key={"back"}
+                        className={"pane workspace-host-hosts-back"}
+                        onClick={() => {
+                            ROUTES.WORKSPACE_HOSTS.visit({
+                                uuid: this.props.workspace.uuid,
+                            });
+                        }}
+                    >
+                        <h2 className={"sub-heading"}>Back</h2>
+                    </button>
                     {this.state.hostList.map((host) => {
                         return (
                             <button

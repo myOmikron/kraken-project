@@ -92,6 +92,19 @@
     height: 100%;
 }
 
+.workspace-host-hosts-search {
+    gap: 1em;
+    padding: 1em;
+    border: none;
+}
+
+.workspace-host-hosts-back {
+    gap: 1em;
+    padding: 1em;
+    border: none;
+    cursor: pointer;
+}
+
 .workspace-host-hosts-item {
     display: grid;
     grid-template-columns: 3em 5fr;
@@ -103,7 +116,7 @@
     text-align: left;
 }
 
-.workspace-host-hosts-item:hover {
+.workspace-host-hosts-item:hover, .workspace-host-hosts-back:hover {
     box-shadow: 0 0 25em var(--primary-op), inset 0 0 10em #0cf3, inset 0 0 0.5em #0ff2, 0 0 1em var(--primary-op);
 }
 
