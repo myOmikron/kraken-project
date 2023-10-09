@@ -56,7 +56,7 @@ pub struct CreateUserRequest {
     security(("api_key" = []))
 )]
 #[post("/users")]
-pub(crate) async fn create_user(
+pub async fn create_user(
     req: Json<CreateUserRequest>,
     db: Data<Database>,
 ) -> ApiResult<Json<UuidResponse>> {
@@ -87,10 +87,7 @@ pub(crate) async fn create_user(
     security(("api_key" = []))
 )]
 #[delete("/users/{uuid}")]
-pub(crate) async fn delete_user(
-    req: Path<PathUuid>,
-    db: Data<Database>,
-) -> ApiResult<HttpResponse> {
+pub async fn delete_user(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<HttpResponse> {
     rorm::delete!(db.as_ref(), User)
         .condition(User::F.uuid.equals(req.uuid))
         .await?;
@@ -98,8 +95,9 @@ pub(crate) async fn delete_user(
     Ok(HttpResponse::Ok().finish())
 }
 
+/// A single user representation
 #[derive(Serialize, ToSchema)]
-pub(crate) struct GetUser {
+pub struct GetUser {
     pub(crate) uuid: Uuid,
     #[schema(example = "user123")]
     pub(crate) username: String,
@@ -111,8 +109,9 @@ pub(crate) struct GetUser {
     pub(crate) last_login: Option<DateTime<Utc>>,
 }
 
+/// The response of all users
 #[derive(Serialize, ToSchema)]
-pub(crate) struct GetUserResponse {
+pub struct GetUserResponse {
     pub(crate) users: Vec<GetUser>,
 }
 
@@ -129,7 +128,7 @@ pub(crate) struct GetUserResponse {
     security(("api_key" = []))
 )]
 #[get("/users/{uuid}")]
-pub(crate) async fn get_user(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<Json<GetUser>> {
+pub async fn get_user(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<Json<GetUser>> {
     let user = query!(db.as_ref(), User)
         .condition(User::F.uuid.equals(req.uuid))
         .optional()
@@ -158,7 +157,7 @@ pub(crate) async fn get_user(req: Path<PathUuid>, db: Data<Database>) -> ApiResu
     security(("api_key" = []))
 )]
 #[get("/users")]
-pub(crate) async fn get_all_users(db: Data<Database>) -> ApiResult<Json<GetUserResponse>> {
+pub async fn get_all_users(db: Data<Database>) -> ApiResult<Json<GetUserResponse>> {
     let users = query!(db.as_ref(), User).all().await?;
 
     Ok(Json(GetUserResponse {
@@ -188,7 +187,7 @@ pub(crate) async fn get_all_users(db: Data<Database>) -> ApiResult<Json<GetUserR
     security(("api_key" = []))
 )]
 #[get("/users/me")]
-pub(crate) async fn get_me(session: Session, db: Data<Database>) -> ApiResult<Json<GetUser>> {
+pub async fn get_me(session: Session, db: Data<Database>) -> ApiResult<Json<GetUser>> {
     let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let user = query!(db.as_ref(), User)
@@ -207,8 +206,9 @@ pub(crate) async fn get_me(session: Session, db: Data<Database>) -> ApiResult<Js
     }))
 }
 
+/// The request to set a new password for a user
 #[derive(Deserialize, ToSchema)]
-pub(crate) struct SetPasswordRequest {
+pub struct SetPasswordRequest {
     #[schema(example = "super-secure-password")]
     current_password: String,
     #[schema(example = "ultra-secure-password!1!1!")]
@@ -228,7 +228,7 @@ pub(crate) struct SetPasswordRequest {
     security(("api_key" = []))
 )]
 #[post("/users/setPassword")]
-pub(crate) async fn set_password(
+pub async fn set_password(
     req: Json<SetPasswordRequest>,
     session: Session,
     db: Data<Database>,
@@ -279,8 +279,11 @@ pub(crate) async fn set_password(
     Ok(HttpResponse::Ok().finish())
 }
 
+/// The request to update the own user
+///
+/// At least one of the options must be set
 #[derive(Deserialize, ToSchema)]
-pub(crate) struct UpdateMeRequest {
+pub struct UpdateMeRequest {
     #[schema(example = "cyber-user-123")]
     username: Option<String>,
     #[schema(example = "Cyberhacker")]
@@ -302,7 +305,7 @@ pub(crate) struct UpdateMeRequest {
     security(("api_key" = []))
 )]
 #[put("/users/me")]
-pub(crate) async fn update_me(
+pub async fn update_me(
     req: Json<UpdateMeRequest>,
     db: Data<Database>,
     session: Session,

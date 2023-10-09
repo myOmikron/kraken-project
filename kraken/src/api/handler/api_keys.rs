@@ -1,4 +1,4 @@
-//!
+//! The definition of all handler regarding api keys lives here
 
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
