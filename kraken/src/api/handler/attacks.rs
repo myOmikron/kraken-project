@@ -185,6 +185,8 @@ impl From<&PortOrRange> for rpc_definitions::PortOrRange {
 /// Host Alive check request
 #[derive(Deserialize, ToSchema)]
 pub struct HostsAliveRequest {
+    pub(crate) leech_uuid: Option<Uuid>,
+
     #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.2", "10.13.37.0/24"]))]
     pub(crate) targets: Vec<IpNetwork>,
 
@@ -222,6 +224,7 @@ pub async fn hosts_alive_check(
     ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
     let HostsAliveRequest {
+        leech_uuid,
         targets,
         timeout,
         concurrent_limit,
@@ -236,7 +239,11 @@ pub async fn hosts_alive_check(
     )
     .await?;
 
-    let leech = rpc_clients.random_leech()?;
+    let leech = if let Some(leech_uuid) = leech_uuid {
+        rpc_clients.get_leech(&leech_uuid)?
+    } else {
+        rpc_clients.random_leech()?
+    };
 
     tokio::spawn(
         AttackContext {
