@@ -491,10 +491,7 @@ async fn main() -> Result<(), String> {
                             }
                             PortScanTechnique::Icmp => {
                                 let settings = IcmpScanSettings {
-                                    addresses: addresses
-                                        .into_iter()
-                                        .map(|x| IpNetwork::from(x))
-                                        .collect(),
+                                    addresses: addresses.into_iter().map(IpNetwork::from).collect(),
                                     timeout: Duration::from_millis(timeout as u64),
                                     concurrent_limit: u32::from(concurrent_limit),
                                 };

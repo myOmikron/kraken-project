@@ -714,12 +714,19 @@ impl LeechAttackContext {
                 Service::F.workspace.equals(self.workspace_uuid),
                 Service::F.name.equals(name),
                 Service::F.host.ip_addr.equals(host),
+                Service::F.port.is_no
             ])
             .optional()
             .await?;
 
         if let Some(service) = service {
-            if service.certainty != certainty {}
+            if service.certainty != certainty && certainty == Certainty::Definitely {
+                update!(&mut *tx, Service)
+                    .condition(Service::F.uuid.equals(service.uuid))
+                    .set(Service::F.certainty, Certainty::Definitely)
+                    .exec()
+                    .await?
+            }
             Ok(false)
         } else {
             // Check if host is already been created

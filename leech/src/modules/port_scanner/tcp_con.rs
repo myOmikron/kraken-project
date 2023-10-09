@@ -77,7 +77,7 @@ pub async fn start_tcp_con_port_scan(
             addresses: settings
                 .addresses
                 .into_iter()
-                .map(|x| IpNetwork::from(x))
+                .map(IpNetwork::from)
                 .collect(),
             timeout: Duration::from_millis(1000),
             concurrent_limit: settings.concurrent_limit,
