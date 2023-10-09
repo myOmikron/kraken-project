@@ -32,7 +32,7 @@ use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
 /// The settings of a subdomain bruteforce request
 #[derive(Deserialize, ToSchema)]
 pub struct BruteforceSubdomainsRequest {
-    pub(crate) leech_uuid: Uuid,
+    pub(crate) leech_uuid: Option<Uuid>,
     #[schema(example = "example.com")]
     pub(crate) domain: String,
     #[schema(example = "/opt/wordlists/Discovery/DNS/subdomains-top1million-5000.txt")]
@@ -73,7 +73,11 @@ pub async fn bruteforce_subdomains(
         workspace_uuid,
     } = req.into_inner();
 
-    let client = rpc_clients.get_leech(&leech_uuid)?;
+    let client = if let Some(leech_uuid) = leech_uuid {
+        rpc_clients.get_leech(&leech_uuid)?
+    } else {
+        rpc_clients.random_leech()?
+    };
 
     let attack_uuid = Attack::insert(
         db.as_ref(),
@@ -107,7 +111,7 @@ pub async fn bruteforce_subdomains(
 /// The settings to configure a tcp port scan
 #[derive(Deserialize, ToSchema)]
 pub struct ScanTcpPortsRequest {
-    pub(crate) leech_uuid: Uuid,
+    pub(crate) leech_uuid: Option<Uuid>,
 
     #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.2", "10.13.37.50"]))]
     pub(crate) targets: Vec<IpAddr>,
@@ -293,7 +297,11 @@ pub async fn scan_tcp_ports(
         workspace_uuid,
     } = req.into_inner();
 
-    let client = rpc_clients.get_leech(&leech_uuid)?;
+    let client = if let Some(leech_uuid) = leech_uuid {
+        rpc_clients.get_leech(&leech_uuid)?
+    } else {
+        rpc_clients.random_leech()?
+    };
 
     let attack_uuid = Attack::insert(
         db.as_ref(),
