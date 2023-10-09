@@ -58,6 +58,10 @@
         name: leech
         system: yes
         group: leech
+    - name: Allow ping for every user
+      ansible.builtin.sysctl:
+        name: net.ipv4.ping_group_range
+        value: 0 2147483647
 
     - name: Create /etc/leech
       ansible.builtin.file:
