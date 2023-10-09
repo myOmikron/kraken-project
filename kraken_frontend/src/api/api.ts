@@ -72,7 +72,7 @@ const apiKeys = new ApiKeysApi(configuration);
 export const Api = {
     admin: {
         users: {
-            all: () => handleError(userAdminManagement.getAllUsers()),
+            all: () => handleError(userAdminManagement.getAllUsersAdmin()),
             create: (user: CreateUserRequest) =>
                 handleError(userAdminManagement.createUser({ createUserRequest: user })),
             get: (uuid: UUID) => handleError(userAdminManagement.getUser({ uuid })),
