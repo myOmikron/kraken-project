@@ -157,7 +157,7 @@ pub async fn get_user(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<Json
     security(("api_key" = []))
 )]
 #[get("/users")]
-pub async fn get_all_users(db: Data<Database>) -> ApiResult<Json<GetUserResponse>> {
+pub async fn get_all_users_admin(db: Data<Database>) -> ApiResult<Json<GetUserResponse>> {
     let users = query!(db.as_ref(), User).all().await?;
 
     Ok(Json(GetUserResponse {
@@ -338,4 +338,53 @@ pub async fn update_me(
     tx.commit().await?;
 
     Ok(HttpResponse::Ok().finish())
+}
+
+/// The simple representation of an user
+#[derive(Debug, Serialize, ToSchema)]
+pub struct SimpleUser {
+    pub(crate) uuid: Uuid,
+    pub(crate) username: String,
+    pub(crate) display_name: String,
+}
+
+/// The response with all users
+#[derive(Debug, Serialize, ToSchema)]
+pub struct GetAllUsersResponse {
+    users: Vec<SimpleUser>,
+}
+
+/// Request all users
+///
+/// This may be used to create invitations for workspaces
+#[utoipa::path(
+    tag = "User Management",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Simple representation of all users", body = GetAllUsersResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    request_body = UpdateMeRequest,
+    security(("api_key" = []))
+)]
+#[get("/users")]
+pub async fn get_all_users(db: Data<Database>) -> ApiResult<Json<GetAllUsersResponse>> {
+    let users = query!(
+        db.as_ref(),
+        (User::F.uuid, User::F.username, User::F.display_name)
+    )
+    .all()
+    .await?;
+
+    Ok(Json(GetAllUsersResponse {
+        users: users
+            .into_iter()
+            .map(|(uuid, username, display_name)| SimpleUser {
+                uuid,
+                username,
+                display_name,
+            })
+            .collect(),
+    }))
 }
