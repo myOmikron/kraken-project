@@ -3,6 +3,7 @@ import { Api, UUID } from "../api/api";
 import "../styling/oauth-request.css";
 import { SimpleOauthClient, SimpleWorkspace } from "../api/generated";
 import { handleApiError } from "../utils/helper";
+import Checkbox from "../components/checkbox";
 
 type OAuthRequestProps = {
     uuid: UUID;
@@ -10,6 +11,7 @@ type OAuthRequestProps = {
 type OAuthRequestState = {
     workspace: SimpleWorkspace | null;
     oauthApplication: SimpleOauthClient | null;
+    remember: boolean;
 };
 
 export default class OauthRequest extends React.Component<OAuthRequestProps, OAuthRequestState> {
@@ -19,6 +21,7 @@ export default class OauthRequest extends React.Component<OAuthRequestProps, OAu
         this.state = {
             workspace: null,
             oauthApplication: null,
+            remember: false,
         };
     }
 
@@ -26,6 +29,12 @@ export default class OauthRequest extends React.Component<OAuthRequestProps, OAu
         Api.oauth
             .info(this.props.uuid)
             .then(handleApiError(({ workspace, oauthApplication }) => this.setState({ workspace, oauthApplication })));
+    }
+
+    redirect(choice: "accept" | "deny") {
+        let url = `/api/v1/oauth/${choice}/${this.props.uuid}`;
+        if (this.state.remember) url = url + "?remember=true";
+        window.location.href = url;
     }
 
     render() {
@@ -44,21 +53,18 @@ export default class OauthRequest extends React.Component<OAuthRequestProps, OAu
                                 the access is revoked.
                             </p>
                             <p>You can always revoke the access in the settings of the workspace.</p>
+                            <label>
+                                <Checkbox
+                                    value={this.state.remember}
+                                    onChange={(remember) => this.setState({ remember })}
+                                />
+                                Remember my decision
+                            </label>
                             <div className={"oauth-buttons"}>
-                                <button
-                                    className={"button"}
-                                    onClick={() => {
-                                        window.location.href = `/api/v1/oauth/accept/${this.props.uuid}`;
-                                    }}
-                                >
+                                <button className={"button"} onClick={() => this.redirect("accept")}>
                                     Grant Access
                                 </button>
-                                <button
-                                    className={"button"}
-                                    onClick={() => {
-                                        window.location.href = `/api/v1/oauth/deny/${this.props.uuid}`;
-                                    }}
-                                >
+                                <button className={"button"} onClick={() => this.redirect("deny")}>
                                     Deny Access
                                 </button>
                             </div>

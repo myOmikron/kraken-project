@@ -25,7 +25,9 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::users::UserResponse;
 use crate::api::handler::workspaces::SimpleWorkspace;
 use crate::api::handler::{ApiError, PathUuid};
-use crate::models::{OauthClient, User, Workspace, WorkspaceAccessToken};
+use crate::models::{
+    OAuthDecision, OAuthDecisionAction, OauthClient, User, Workspace, WorkspaceAccessToken,
+};
 use crate::modules::oauth::{OAuthRequest, OAuthScope, OauthManager, OpenIfError};
 
 mod applications;
@@ -159,8 +161,38 @@ pub async fn auth(
         code_challenge,
     };
 
-    let request_uuid = manager.insert_open(open_request);
-    Ok(Redirect::to(format!("/#/oauth-request/{request_uuid}")))
+    if let Some(action) = OAuthDecision::get(
+        db.as_ref(),
+        user_uuid,
+        request.client_id,
+        open_request.scope,
+    )
+    .await?
+    {
+        match action {
+            OAuthDecisionAction::Accept => {
+                let state = open_request.state.clone();
+                let code = manager.insert_accepted(open_request);
+                #[derive(Serialize, Debug)]
+                struct AcceptRedirect {
+                    code: Uuid,
+                    state: String,
+                }
+                build_redirect(&client.redirect_uri, AcceptRedirect { code, state })
+            }
+            OAuthDecisionAction::Deny => build_redirect(
+                &client.redirect_uri,
+                AuthError {
+                    error: AuthErrorType::AccessDenied,
+                    state: Some(open_request.state),
+                    error_description: None,
+                },
+            ),
+        }
+    } else {
+        let request_uuid = manager.insert_open(open_request);
+        Ok(Redirect::to(format!("/#/oauth-request/{request_uuid}")))
+    }
 }
 
 /// The information about an oauth request
@@ -234,6 +266,14 @@ pub async fn info(
     }))
 }
 
+/// Query parameters for `/accept` and `/deny`
+#[derive(Deserialize, IntoParams)]
+pub struct OAuthDecisionQuery {
+    /// Should kraken remember this decision?
+    #[serde(default)]
+    pub remember: bool,
+}
+
 /// Endpoint visited by user to grant a requesting application access
 #[utoipa::path(
     tag = "OAuth",
@@ -243,7 +283,7 @@ pub async fn info(
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    params(PathUuid),
+    params(PathUuid, OAuthDecisionQuery),
     security(("api_key" = []))
 )]
 #[get("/accept/{uuid}")]
@@ -252,6 +292,7 @@ pub async fn accept(
     path: Path<PathUuid>,
     manager: Data<OauthManager>,
     SessionUser(user_uuid): SessionUser,
+    query: Query<OAuthDecisionQuery>,
 ) -> Result<Redirect, ApiError> {
     let open_request =
         match manager.remove_open_if(path.uuid, |open_request| open_request.user == user_uuid) {
@@ -260,6 +301,18 @@ pub async fn accept(
             Err(OpenIfError::FailedCheck) => return Err(ApiError::MissingPrivileges),
         };
     let code = manager.insert_accepted(open_request.clone());
+
+    // Remember decision
+    if query.remember {
+        OAuthDecision::insert(
+            db.as_ref(),
+            user_uuid,
+            open_request.client_pk,
+            open_request.scope,
+            OAuthDecisionAction::Accept,
+        )
+        .await?;
+    }
 
     // Redirect
     let (redirect_uri,) = query!(db.as_ref(), (OauthClient::F.redirect_uri,))
@@ -290,7 +343,7 @@ pub async fn accept(
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    params(PathUuid),
+    params(PathUuid, OAuthDecisionQuery),
     security(("api_key" = []))
 )]
 #[get("/deny/{uuid}")]
@@ -299,6 +352,7 @@ pub async fn deny(
     manager: Data<OauthManager>,
     path: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
+    query: Query<OAuthDecisionQuery>,
 ) -> Result<Redirect, ApiError> {
     let open_request =
         match manager.remove_open_if(path.uuid, |open_request| open_request.user == user_uuid) {
@@ -307,8 +361,17 @@ pub async fn deny(
             Err(OpenIfError::FailedCheck) => return Err(ApiError::MissingPrivileges),
         };
 
-        open_request
-    };
+    // Remember decision
+    if query.remember {
+        OAuthDecision::insert(
+            db.as_ref(),
+            user_uuid,
+            open_request.client_pk,
+            open_request.scope,
+            OAuthDecisionAction::Deny,
+        )
+        .await?;
+    }
 
     // Redirect
     let (redirect_uri,) = query!(db.as_ref(), (OauthClient::F.redirect_uri,))
