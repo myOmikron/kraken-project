@@ -95,21 +95,3 @@ export async function copyToClipboard(text: string | null) {
         }
     }
 }
-
-export function getOsIcon(os: OsType) {
-    return os === "Unknown" ? (
-        <AnonymousIcon />
-    ) : os === "Linux" ? (
-        <TuxIcon />
-    ) : os === "Apple" ? (
-        <AppleIcon />
-    ) : os === "Windows" ? (
-        <WindowsIcon />
-    ) : os === "FreeBSD" ? (
-        <FreeBSDIcon />
-    ) : os === "Android" ? (
-        <AndroidIcon />
-    ) : (
-        <AnonymousIcon />
-    );
-}

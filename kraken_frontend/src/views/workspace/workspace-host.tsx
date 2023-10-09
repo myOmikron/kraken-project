@@ -1,11 +1,10 @@
 import React from "react";
 import "../../styling/workspace-host.css";
-import { FullWorkspace, HostResultsPage, SimpleHost } from "../../api/generated";
-import FreeBSDIcon from "../../svg/freebsd";
+import { FullHost, FullWorkspace, SimpleHost } from "../../api/generated";
 import { Api, UUID } from "../../api/api";
 import { toast } from "react-toastify";
-import { getOsIcon } from "../../utils/helper";
 import { ROUTES } from "../../routes";
+import OsIcon from "../../components/os-icon";
 
 type WorkspaceProps = {
     workspace: FullWorkspace;
@@ -13,7 +12,7 @@ type WorkspaceProps = {
 };
 type WorkspaceState = {
     selectedTab: "domains" | "ips" | "ports" | "services" | "other";
-    host: SimpleHost | null;
+    host: FullHost | null;
     hostList: Array<SimpleHost>;
 };
 
@@ -54,22 +53,22 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
         return (
             <div className={"workspace-host-container"}>
                 <div className={"workspace-host-hosts-list"}>
-                    {this.state.hostList.map((x) => {
+                    {this.state.hostList.map((host) => {
                         return (
                             <button
-                                key={x.uuid}
+                                key={host.uuid}
                                 className={"pane workspace-host-hosts-item"}
                                 onClick={() => {
                                     ROUTES.WORKSPACE_SINGLE_HOST.visit({
                                         w_uuid: this.props.workspace.uuid,
-                                        h_uuid: x.uuid,
+                                        h_uuid: host.uuid,
                                     });
                                 }}
                             >
-                                {getOsIcon(x.osType)}
+                                <OsIcon os={host.osType} />
                                 <div className={"workspace-host-hosts-info"}>
-                                    <h2 className={"sub-heading"}>{x.ipAddr}</h2>
-                                    <span>{x.comment}</span>
+                                    <h2 className={"sub-heading"}>{host.ipAddr}</h2>
+                                    <span>{host.comment}</span>
                                 </div>
                             </button>
                         );
@@ -78,7 +77,7 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
                 <div className={"pane workspace-host-host-container"}>
                     {this.state.host !== null ? (
                         <>
-                            {getOsIcon(this.state.host.osType)}
+                            <OsIcon os={this.state.host.osType} />
                             <div className={"workspace-host-details"}>
                                 <h2 className={"heading"}>Host {this.state.host.ipAddr}</h2>
                                 <span>OS: {this.state.host.osType}</span>

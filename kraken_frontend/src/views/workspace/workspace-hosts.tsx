@@ -1,17 +1,11 @@
 import React from "react";
-import { FullWorkspace, OsType, SimpleHost } from "../../api/generated";
+import { FullWorkspace, SimpleHost } from "../../api/generated";
 import "../../styling/workspace-hosts.css";
 import Input from "../../components/input";
 import { Api } from "../../api/api";
 import { toast } from "react-toastify";
-import AnonymousIcon from "../../svg/anonymous";
-import TuxIcon from "../../svg/tux";
-import AppleIcon from "../../svg/apple";
-import WindowsIcon from "../../svg/windows";
-import FreeBSDIcon from "../../svg/freebsd";
-import AndroidIcon from "../../svg/android";
-import { getOsIcon } from "../../utils/helper";
 import { ROUTES } from "../../routes";
+import OsIcon from "../../components/os-icon";
 
 type WorkspaceHostsProps = {
     workspace: FullWorkspace;
@@ -48,25 +42,25 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
                     <Input
                         placeholder={"Search host"}
                         value={this.state.searchTerm}
-                        onChange={(v) => this.setState({ searchTerm: v })}
+                        onChange={(searchTerm) => this.setState({ searchTerm })}
                     />
                 </div>
-                {this.state.hosts.map((x) => {
+                {this.state.hosts.map((host) => {
                     return (
                         <div
-                            key={x.uuid}
+                            key={host.uuid}
                             className={"workspace-hosts-host pane"}
                             onClick={() => {
                                 ROUTES.WORKSPACE_SINGLE_HOST.visit({
                                     w_uuid: this.props.workspace.uuid,
-                                    h_uuid: x.uuid,
+                                    h_uuid: host.uuid,
                                 });
                             }}
                         >
-                            {getOsIcon(x.osType)}
+                            <OsIcon os={host.osType} />
                             <div className={"workspace-hosts-host-info"}>
-                                <h2 className={"sub-heading"}>{x.ipAddr}</h2>
-                                <span>{x.comment}</span>
+                                <h2 className={"sub-heading"}>{host.ipAddr}</h2>
+                                <span>{host.comment}</span>
                             </div>
                         </div>
                     );
