@@ -554,6 +554,7 @@ impl LeechAttackContext {
         let mut tx = self.db.start_transaction().await?;
 
         insert!(&mut tx, HostAliveResultInsert)
+            .return_nothing()
             .single(&HostAliveResultInsert {
                 uuid: Uuid::new_v4(),
                 attack: ForeignModelByField::Key(self.attack_uuid),
@@ -562,13 +563,17 @@ impl LeechAttackContext {
             .await?;
 
         if let Some((_host_uuid,)) = query!(&mut tx, (Host::F.uuid,))
-            .condition(Host::F.ip_addr.equals(host))
+            .condition(and!(
+                Host::F.ip_addr.equals(host),
+                Host::F.workspace.equals(self.workspace_uuid)
+            ))
             .optional()
             .await?
         {
             // TODO update reachable
         } else {
             insert!(&mut tx, HostInsert)
+                .return_nothing()
                 .single(&HostInsert {
                     uuid: Uuid::new_v4(),
                     ip_addr: host,
