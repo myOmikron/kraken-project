@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import Tag from "../../components/tag";
 import CloseIcon from "../../svg/close";
 import Popup from "reactjs-popup";
-import Select from "react-select";
+import Select, { defaultTheme } from "react-select";
 import { ROUTES } from "../../routes";
 
 type WorkspaceSettingsProps = {
