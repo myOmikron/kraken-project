@@ -30,7 +30,7 @@ pub mod rpc_attacks {
     use crate::modules::bruteforce_subdomains::BruteforceSubdomainResult;
     use crate::rpc::rpc_attacks::shared::dns_record::Record;
     use crate::rpc::rpc_attacks::shared::{
-        Aaaa, Address, Cname, DnsRecord, Ipv4, Ipv6, Net, NetOrAddress, A,
+        Aaaa, Address, DnsRecord, GenericRecord, Ipv4, Ipv6, Net, NetOrAddress, A,
     };
 
     pub mod shared {
@@ -130,7 +130,7 @@ pub mod rpc_attacks {
                         })),
                     },
                     BruteforceSubdomainResult::Cname { source, target } => DnsRecord {
-                        record: Some(Record::Cname(Cname { source, to: target })),
+                        record: Some(Record::Cname(GenericRecord { source, to: target })),
                     },
                 }),
             }
@@ -194,11 +194,12 @@ pub mod rpc_attacks {
                         })),
                     }),
                     DnsRecordType::Cname => Some(DnsRecord {
-                        record: Some(Record::Cname(Cname {
+                        record: Some(Record::Cname(GenericRecord {
                             source: value.source,
                             to: value.destination,
                         })),
                     }),
+                    _ => unimplemented!("type not supported"),
                 },
             }
         }

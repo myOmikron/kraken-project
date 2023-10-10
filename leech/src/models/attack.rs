@@ -12,13 +12,25 @@ pub enum DnsRecordType {
     A,
     /// [Aaaa](crate::rpc::rpc_attacks::shared::dns_record::Record::Aaaa) record type
     Aaaa,
-    /// [Cname](crate::rpc::rpc_attacks::shared::dns_record::Record::Cname) record type
+    /// [Caa](crate::rpc::rpc_attacks::shared::dns_record::Record::GenericRecord) record type
+    Caa,
+    /// [Cname](crate::rpc::rpc_attacks::shared::dns_record::Record::GenericRecord) record type
     Cname,
+    /// [Mx](crate::rpc::rpc_attacks::shared::dns_record::Record::GenericRecord) record type
+    Mx,
+    /// [Tlsa](crate::rpc::rpc_attacks::shared::dns_record::Record::GenericRecord) record type
+    Tlsa,
+    /// [Txt](crate::rpc::rpc_attacks::shared::dns_record::Record::GenericRecord) record type
+    Txt,
 }
 
 /// Representation of a [Bruteforce Subdomain](AttackType::BruteforceSubdomains) attack's result
+pub type BruteforceSubdomainsResult = DnsResult;
+pub(crate) type BruteforceSubdomainsResultInsert = DnsResultInsert;
+
+/// Generic representation of a DNS result
 #[derive(Model)]
-pub struct BruteforceSubdomainsResult {
+pub struct DnsResult {
     /// The primary key
     #[rorm(primary_key)]
     pub uuid: Uuid,
@@ -43,8 +55,8 @@ pub struct BruteforceSubdomainsResult {
 }
 
 #[derive(Patch)]
-#[rorm(model = "BruteforceSubdomainsResult")]
-pub(crate) struct BruteforceSubdomainsResultInsert {
+#[rorm(model = "DnsResult")]
+pub(crate) struct DnsResultInsert {
     pub(crate) uuid: Uuid,
     pub(crate) attack: Uuid,
     pub(crate) source: String,

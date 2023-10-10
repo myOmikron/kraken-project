@@ -180,6 +180,10 @@ impl BacklogService for Results {
                     )
                 }
                 Record::Cname(v) => (v.source, v.to, DnsRecordType::Cname),
+                _ => {
+                    debug!("record type not of concern");
+                    continue;
+                }
             };
 
             if query!(&mut db_trx, Attack)

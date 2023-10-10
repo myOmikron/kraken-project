@@ -4,14 +4,16 @@ use rorm::prelude::*;
 use uuid::Uuid;
 
 use crate::models::{
-    Attack, BruteforceSubdomainsResult, Certainty, CertificateTransparencyResult,
-    CertificateTransparencyValueName, DehashedQueryResult, DnsRecordType, HostAliveResult,
-    ServiceDetectionResult, TcpPortScanResult,
+    Attack, Certainty, CertificateTransparencyResult, CertificateTransparencyValueName,
+    DehashedQueryResult, DnsRecordResult, DnsRecordType, HostAliveResult, ServiceDetectionResult,
+    TcpPortScanResult,
 };
 
+pub(crate) type BruteforceSubdomainsResultInsert = DnsRecordResultInsert;
+
 #[derive(Patch)]
-#[rorm(model = "BruteforceSubdomainsResult")]
-pub(crate) struct BruteforceSubdomainsResultInsert {
+#[rorm(model = "DnsRecordResult")]
+pub(crate) struct DnsRecordResultInsert {
     pub(crate) uuid: Uuid,
     pub(crate) attack: ForeignModel<Attack>,
     pub(crate) source: String,
