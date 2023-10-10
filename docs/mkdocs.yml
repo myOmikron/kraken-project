@@ -1,4 +1,5 @@
 site_name: Kraken Project
+site_url: "https://kraken-project.org/"
 theme:
   name: material
   features:
@@ -33,5 +34,8 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
+extra:
+  version:
+    provider: mike
 nav:
   - Home: index.md
