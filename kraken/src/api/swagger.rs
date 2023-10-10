@@ -7,8 +7,8 @@ use utoipa::{Modify, OpenApi};
 
 use crate::api::handler;
 use crate::api::handler::{
-    api_keys, attacks, auth, data_export, domains, global_tags, hosts, leeches, oauth, ports,
-    services, settings, users, websocket, workspace_tags, workspaces,
+    api_keys, attacks, auth, data_export, domains, global_tags, hosts, leeches, oauth,
+    oauth_decisions, ports, services, settings, users, websocket, workspace_tags, workspaces,
 };
 use crate::models;
 
@@ -84,6 +84,8 @@ impl Modify for SecurityAddon2 {
         oauth::info,
         oauth::accept,
         oauth::deny,
+        oauth_decisions::get_decisions,
+        oauth_decisions::revoke_decision,
         settings::get_settings,
         settings::update_settings,
         api_keys::create_api_key,
@@ -150,6 +152,8 @@ impl Modify for SecurityAddon2 {
         oauth::GetAppsResponse,
         oauth::UpdateAppRequest,
         oauth::OpenRequestInfo,
+        oauth_decisions::GetMyDecisionsResponse,
+        oauth_decisions::FullDecision,
         settings::SettingsFull,
         settings::UpdateSettingsRequest,
         api_keys::FullApiKey,

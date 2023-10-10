@@ -1,4 +1,6 @@
 use rorm::prelude::*;
+use serde::Serialize;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::User;
@@ -48,7 +50,7 @@ pub struct OAuthDecision {
 }
 
 /// Action what to do with new oauth requests
-#[derive(DbEnum)]
+#[derive(DbEnum, ToSchema, Serialize)]
 pub enum OAuthDecisionAction {
     /// Auto accept new requests
     Accept,

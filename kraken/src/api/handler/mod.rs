@@ -35,6 +35,7 @@ pub mod global_tags;
 pub mod hosts;
 pub mod leeches;
 pub mod oauth;
+pub mod oauth_decisions;
 pub mod ports;
 pub mod services;
 pub mod settings;
