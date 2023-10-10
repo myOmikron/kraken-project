@@ -7,20 +7,8 @@ theme:
     - content.tabs.link
     - content.code.annotate
   palette:
-    - primary: black
-    # Palette toggle for light mode
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      toggle:
-        icon: material/toggle-switch
-        name: Switch to dark mode
-
-    # Palette toggle for dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      toggle:
-        icon: material/toggle-switch-off-outline
-        name: Switch to light mode
+    primary: black
+    scheme: slate
 repo_url: https://github.com/myOmikron/kraken-project
 repo_name: myOmikron/kraken-project
 markdown_extensions:
