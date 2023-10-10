@@ -26,3 +26,8 @@ To spin up a self-refreshing development server:
 mkdocs serve -a bind_addr:port
 ```
 
+Deploy with `mike`:
+
+```bash
+mike deploy --push --update-aliases 0.1 latest
+```
