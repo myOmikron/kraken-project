@@ -39,15 +39,14 @@ impl LeechAttackContext {
                 {
                     error!("Failed to insert service detection result: {err}");
                 }
+
+                self.set_finished(None).await;
             }
             Err(err) => {
-                error!("Error while reading response: {err}");
-                self.set_finished(false).await;
-                return;
+                self.set_finished(Some(format!("Error reading response: {err}")))
+                    .await;
             }
-        };
-
-        self.set_finished(true).await;
+        }
     }
 
     async fn insert_service_detection_result(

@@ -1,6 +1,5 @@
 use std::net::IpAddr;
 
-use futures::StreamExt;
 use ipnetwork::IpNetwork;
 use log::{error, warn};
 use rorm::prelude::*;
@@ -11,70 +10,55 @@ use crate::chan::WsMessage;
 use crate::models::{
     Host, HostInsert, OsType, Port, PortInsert, PortProtocol, TcpPortScanResultInsert,
 };
-use crate::modules::attacks::LeechAttackContext;
+use crate::modules::attacks::{AttackContext, LeechAttackContext};
 use crate::rpc::rpc_definitions::shared::address::Address;
-use crate::rpc::rpc_definitions::TcpPortScanRequest;
+use crate::rpc::rpc_definitions::{shared, TcpPortScanRequest, TcpPortScanResponse};
 
 impl LeechAttackContext {
     /// Start a tcp port scan
     ///
     /// See [`handler::attacks::scan_tcp_ports`] for more information.
     pub async fn tcp_port_scan(mut self, req: TcpPortScanRequest) {
-        match self.leech.run_tcp_port_scan(req).await {
-            Ok(v) => {
-                let mut stream = v.into_inner();
+        let result = AttackContext::handle_streamed_response(
+            self.leech.run_tcp_port_scan(req.clone()).await,
+            |response| async {
+                let TcpPortScanResponse {
+                    address:
+                        Some(shared::Address {
+                            address: Some(addr),
+                        }),
+                    port,
+                } = response
+                else {
+                    warn!("Missing address in grpc response of scan tcp ports");
+                    return Ok(());
+                };
 
-                while let Some(res) = stream.next().await {
-                    match res {
-                        Ok(v) => {
-                            let Some(addr) = v.address else {
-                                warn!("Missing field address in grpc response of scan tcp ports");
-                                continue;
-                            };
+                let address = match addr {
+                    Address::Ipv4(addr) => IpAddr::V4(addr.into()),
+                    Address::Ipv6(addr) => IpAddr::V6(addr.into()),
+                };
+                let port = port as u16;
 
-                            let Some(addr) = addr.address else {
-                                warn!("Missing field address.address in grpc response of scan tcp ports");
-                                continue;
-                            };
-
-                            let address = match addr {
-                                Address::Ipv4(addr) => IpAddr::V4(addr.into()),
-                                Address::Ipv6(addr) => IpAddr::V6(addr.into()),
-                            };
-
-                            if let Err(err) = self
-                                .insert_tcp_port_scan_result(
-                                    IpNetwork::from(address),
-                                    v.port as u16,
-                                )
-                                .await
-                            {
-                                error!("Database error: {err}");
-                            }
-
-                            self.send_ws(WsMessage::ScanTcpPortsResult {
-                                attack_uuid: self.attack_uuid,
-                                address: address.to_string(),
-                                port: v.port as u16,
-                            })
-                            .await;
-                        }
-                        Err(err) => {
-                            error!("Error while reading from stream: {err}");
-                            self.set_finished(false).await;
-                            return;
-                        }
-                    }
+                if let Err(err) = self
+                    .insert_tcp_port_scan_result(IpNetwork::from(address), port)
+                    .await
+                {
+                    error!("Database error: {err}");
                 }
-            }
-            Err(err) => {
-                error!("Error while reading from stream: {err}");
-                self.set_finished(false).await;
-                return;
-            }
-        };
 
-        self.set_finished(true).await;
+                self.send_ws(WsMessage::ScanTcpPortsResult {
+                    attack_uuid: self.attack_uuid,
+                    address: address.to_string(),
+                    port,
+                })
+                .await;
+
+                Ok(())
+            },
+        )
+        .await;
+        self.set_finished(result.err()).await;
     }
 
     /// Insert a tcp port scan's result and update the aggregation

@@ -11,9 +11,11 @@ mod service_detection;
 mod tcp_port_scan;
 
 use chrono::Utc;
+use futures::{TryFuture, TryStreamExt};
 use log::error;
 use rorm::prelude::*;
 use rorm::{update, Database};
+use tonic::{Response, Status, Streaming};
 use uuid::Uuid;
 
 #[cfg(doc)]
@@ -75,14 +77,18 @@ impl AttackContext {
     }
 
     /// Send the user a notification and update the [`Attack`] model
-    async fn set_finished(&self, finished_successful: bool) {
+    async fn set_finished(&self, error: Option<String>) {
         self.send_ws(WsMessage::AttackFinished {
             attack_uuid: self.attack_uuid,
-            finished_successful,
+            finished_successful: error.is_none(),
         })
         .await;
 
-        if finished_successful {
+        if let Some(error) = error.as_ref() {
+            error!("{error}");
+        }
+
+        if error.is_none() {
             if let Err(err) = update!(&self.db, Attack)
                 .condition(Attack::F.uuid.equals(self.attack_uuid))
                 .set(Attack::F.finished_at, Some(Utc::now()))
@@ -95,6 +101,23 @@ impl AttackContext {
                 );
             }
         }
+    }
+
+    async fn handle_streamed_response<T, Fut>(
+        streamed_response: Result<Response<Streaming<T>>, Status>,
+        handler: impl FnMut(T) -> Fut,
+    ) -> Result<(), String>
+    where
+        Fut: TryFuture<Ok = (), Error = String>,
+    {
+        let stream = streamed_response
+            .map_err(|status| format!("Failed getting stream: {status}"))?
+            .into_inner();
+
+        stream
+            .map_err(|status| format!("Failed reading stream: {status}"))
+            .try_for_each(handler)
+            .await
     }
 }
 impl std::ops::Deref for LeechAttackContext {

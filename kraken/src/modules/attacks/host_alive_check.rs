@@ -1,4 +1,3 @@
-use futures::StreamExt;
 use ipnetwork::IpNetwork;
 use log::{error, warn};
 use rorm::prelude::*;
@@ -7,57 +6,38 @@ use uuid::Uuid;
 
 use crate::chan::WsMessage;
 use crate::models::{Host, HostAliveResultInsert, HostInsert, OsType};
-use crate::modules::attacks::LeechAttackContext;
-use crate::rpc::rpc_definitions::HostsAliveRequest;
+use crate::modules::attacks::{AttackContext, LeechAttackContext};
+use crate::rpc::rpc_definitions::{HostsAliveRequest, HostsAliveResponse};
 
 impl LeechAttackContext {
     /// Check if hosts are reachable
     ///
     /// See [`handler::attacks::hosts_alive_check`] for more information.
     pub async fn host_alive_check(mut self, req: HostsAliveRequest) {
-        match self.leech.hosts_alive_check(req).await {
-            Ok(v) => {
-                let mut stream = v.into_inner();
+        let result = AttackContext::handle_streamed_response(
+            self.leech.hosts_alive_check(req).await,
+            |response| async {
+                let HostsAliveResponse { host: Some(host) } = response else {
+                    warn!("Missing field `host` in grpc response of bruteforce subdomains");
+                    return Ok(());
+                };
 
-                while let Some(res) = stream.next().await {
-                    match res {
-                        Ok(v) => {
-                            let Some(host) = v.host else {
-                                warn!(
-                                    "Missing field `host` in grpc response of bruteforce subdomains"
-                                );
-                                continue;
-                            };
+                let host = host.into();
+                self.send_ws(WsMessage::HostsAliveCheck {
+                    host,
+                    attack_uuid: self.attack_uuid,
+                })
+                .await;
 
-                            let host = host.into();
-                            self.send_ws(WsMessage::HostsAliveCheck {
-                                host,
-                                attack_uuid: self.attack_uuid,
-                            })
-                            .await;
-                            if let Err(err) = self.insert_host_alive_check_result(host.into()).await
-                            {
-                                error!(
-                                    "Failed to insert query certificate transparency result: {err}"
-                                );
-                            }
-                        }
-                        Err(err) => {
-                            error!("Error while reading from stream: {err}");
-                            self.set_finished(false).await;
-                            return;
-                        }
-                    }
+                if let Err(err) = self.insert_host_alive_check_result(host.into()).await {
+                    error!("Failed to insert query certificate transparency result: {err}");
                 }
-            }
-            Err(err) => {
-                error!("Error while reading from stream: {err}");
-                self.set_finished(false).await;
-                return;
-            }
-        };
 
-        self.set_finished(true).await;
+                Ok(())
+            },
+        )
+        .await;
+        self.set_finished(result.err()).await;
     }
 
     /// Insert a host alive's result and update the aggregation

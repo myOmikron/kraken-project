@@ -16,19 +16,22 @@ impl AttackContext {
     pub async fn query_dehashed(self, sender: mpsc::Sender<ScheduledRequest>, query: Query) {
         let (tx, rx) = oneshot::channel::<Result<SearchResult, DehashedError>>();
 
-        if let Err(err) = sender.send(ScheduledRequest::new(query, tx)).await {
-            error!("Couldn't send to dehashed scheduler: {err}");
-            return;
+        if let Err(_) = sender.send(ScheduledRequest::new(query, tx)).await {
+            return self
+                .set_finished(Some(format!("Couldn't send to dehashed scheduler")))
+                .await;
         }
 
         let res = match rx.await {
             Err(err) => {
-                error!("Error waiting for result: {err}");
-                return;
+                return self
+                    .set_finished(Some(format!("Error waiting for result: {err}")))
+                    .await;
             }
             Ok(Err(err)) => {
-                error!("Error while using dehashed: {err}");
-                return;
+                return self
+                    .set_finished(Some(format!("Error using dehashed: {err}")))
+                    .await;
             }
             Ok(Ok(res)) => res,
         };
@@ -54,9 +57,8 @@ impl AttackContext {
             .await
         {
             error!("Database error: {err}");
-            return;
         }
 
-        self.set_finished(true).await;
+        self.set_finished(None).await;
     }
 }

@@ -1,6 +1,5 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 
-use futures::StreamExt;
 use log::{debug, error, warn};
 use rorm::prelude::*;
 use rorm::{and, insert, query};
@@ -10,95 +9,83 @@ use crate::chan::WsMessage;
 use crate::models::{
     BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert, DnsRecordType, Domain,
 };
-use crate::modules::attacks::LeechAttackContext;
+use crate::modules::attacks::{AttackContext, LeechAttackContext};
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
-use crate::rpc::rpc_definitions::BruteforceSubdomainRequest;
+use crate::rpc::rpc_definitions::{
+    shared, BruteforceSubdomainRequest, BruteforceSubdomainResponse,
+};
 
 impl LeechAttackContext {
     /// Bruteforce subdomains through a DNS wordlist attack
     ///
     /// See [`handler::attacks::bruteforce_subdomains`] for more information.
     pub async fn bruteforce_subdomains(mut self, req: BruteforceSubdomainRequest) {
-        match self.leech.bruteforce_subdomains(req).await {
-            Ok(v) => {
-                let mut stream = v.into_inner();
+        let result = AttackContext::handle_streamed_response(
+            self.leech.bruteforce_subdomains(req).await,
+            |response| async {
+                let BruteforceSubdomainResponse {
+                    record:
+                        Some(shared::DnsRecord {
+                            record: Some(record),
+                        }),
+                } = response
+                else {
+                    warn!("Missing record in grpc response of bruteforce subdomains");
+                    return Ok(());
+                };
 
-                while let Some(res) = stream.next().await {
-                    match res {
-                        Ok(v) => {
-                            let Some(record) = v.record else {
-                                warn!("Missing field record in grpc response of bruteforce subdomains");
-                                continue;
-                            };
-                            let Some(record) = record.record else {
-                                warn!("Missing field record.record in grpc response of bruteforce subdomains");
-                                continue;
-                            };
-
-                            let source;
-                            let destination;
-                            let dns_record_type;
-                            match record {
-                                Record::A(a_rec) => {
-                                    let Some(to) = a_rec.to else {
-                                        warn!("Missing field record.record.a.to in grpc response of bruteforce subdomains");
-                                        continue;
-                                    };
-                                    source = a_rec.source;
-                                    destination = Ipv4Addr::from(to).to_string();
-                                    dns_record_type = DnsRecordType::A;
-                                }
-                                Record::Aaaa(aaaa_rec) => {
-                                    let Some(to) = aaaa_rec.to else {
-                                        warn!("Missing field record.record.aaaa.to in grpc response of bruteforce subdomains");
-                                        continue;
-                                    };
-                                    source = aaaa_rec.source;
-                                    destination = Ipv6Addr::from(to).to_string();
-                                    dns_record_type = DnsRecordType::Aaaa;
-                                }
-                                Record::Cname(cname_rec) => {
-                                    source = cname_rec.source;
-                                    destination = cname_rec.to;
-                                    dns_record_type = DnsRecordType::Cname;
-                                }
-                            };
-
-                            if let Err(err) = self
-                                .insert_bruteforce_subdomains_result(
-                                    source.clone(),
-                                    destination.clone(),
-                                    dns_record_type,
-                                )
-                                .await
-                            {
-                                error!("Could not insert data in db: {err}");
-                                return;
-                            }
-
-                            self.send_ws(WsMessage::BruteforceSubdomainsResult {
-                                attack_uuid: self.attack_uuid,
-                                source,
-                                destination,
-                            })
-                            .await;
-                        }
-                        Err(err) => {
-                            error!("Error while reading from stream: {err}");
-                            self.set_finished(false).await;
-                            return;
-                        }
+                let source;
+                let destination;
+                let dns_record_type;
+                match record {
+                    Record::A(a_rec) => {
+                        let Some(to) = a_rec.to else {
+                            warn!("Missing field record.record.a.to in grpc response of bruteforce subdomains");
+                            return Ok(());
+                        };
+                        source = a_rec.source;
+                        destination = Ipv4Addr::from(to).to_string();
+                        dns_record_type = DnsRecordType::A;
                     }
-                }
-            }
-            Err(err) => {
-                error!("Error while reading from stream: {err}");
-                self.set_finished(false).await;
-                return;
-            }
-        };
+                    Record::Aaaa(aaaa_rec) => {
+                        let Some(to) = aaaa_rec.to else {
+                            warn!("Missing field record.record.aaaa.to in grpc response of bruteforce subdomains");
+                            return Ok(());
+                        };
+                        source = aaaa_rec.source;
+                        destination = Ipv6Addr::from(to).to_string();
+                        dns_record_type = DnsRecordType::Aaaa;
+                    }
+                    Record::Cname(cname_rec) => {
+                        source = cname_rec.source;
+                        destination = cname_rec.to;
+                        dns_record_type = DnsRecordType::Cname;
+                    }
+                };
 
-        self.set_finished(true).await;
+                if let Err(err) = self
+                    .insert_bruteforce_subdomains_result(
+                        source.clone(),
+                        destination.clone(),
+                        dns_record_type,
+                    )
+                    .await
+                {
+                    error!("Could not insert data in db: {err}");
+                }
+
+                self.send_ws(WsMessage::BruteforceSubdomainsResult {
+                    attack_uuid: self.attack_uuid,
+                    source,
+                    destination,
+                })
+                    .await;
+
+                Ok(())
+            },
+        )
+        .await;
+        self.set_finished(result.err()).await;
     }
 
     /// Insert a tcp port scan's result and update the aggregation

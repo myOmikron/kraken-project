@@ -57,13 +57,13 @@ impl LeechAttackContext {
                 .await;
             }
             Err(err) => {
-                error!("Error while reading from stream: {err}");
-                self.set_finished(false).await;
+                self.set_finished(Some(format!("Error while reading from stream: {err}")))
+                    .await;
                 return;
             }
         }
 
-        self.set_finished(true).await;
+        self.set_finished(None).await;
     }
 
     /// Insert a query certificate transparency's result and update the aggregation
