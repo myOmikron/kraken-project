@@ -13,9 +13,11 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::{ApiError, ApiResult, PathUuid};
 use crate::models::{OAuthDecision, OAuthDecisionAction};
 
+/// Response holding a user's oauth decisions
 #[derive(Serialize, ToSchema)]
-pub(crate) struct GetMyDecisionsResponse {
-    pub(crate) decisions: Vec<FullDecision>,
+pub struct GetMyDecisionsResponse {
+    /// A user's oauth decisions
+    pub decisions: Vec<FullDecision>,
 }
 
 /// A user's remembered oauth decision
@@ -47,7 +49,7 @@ pub struct FullDecision {
     security(("api_key" = []))
 )]
 #[get("/oauthDecisions")]
-pub(crate) async fn get_decisions(
+pub async fn get_decisions(
     db: Data<Database>,
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<GetMyDecisionsResponse>> {
@@ -86,7 +88,7 @@ pub(crate) async fn get_decisions(
     security(("api_key" = [])),
 )]
 #[delete("/oauthDecisions/{uuid}")]
-pub(crate) async fn revoke_decision(
+pub async fn revoke_decision(
     db: Data<Database>,
     SessionUser(user_uuid): SessionUser,
     path: Path<PathUuid>,

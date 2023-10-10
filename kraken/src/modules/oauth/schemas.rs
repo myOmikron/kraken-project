@@ -99,43 +99,51 @@ pub(crate) enum AuthErrorType {
     TemporarilyUnavailable,
 }
 
+/// The client makes a request to the token endpoint by sending the
+/// following parameters using the "application/x-www-form-urlencoded"
+/// format.
 #[derive(Deserialize, ToSchema)]
 pub struct TokenRequest {
-    /// Must be "authorization_code"
-    pub grant_type: GrantType,
+    /// Value MUST be set to "authorization_code".
+    pub grant_type: String,
+
+    /// The authorization code received from the authorization server.
     pub code: Uuid,
-    pub redirect_uri: String,
+
+    /// if the "redirect_uri" parameter was included in the
+    /// authorization request as described in Section 4.1.1, and their
+    /// values MUST be identical.
+    pub redirect_uri: Option<String>,
+
+    /// The client identifier as described in [Section 2.2](https://www.rfc-editor.org/rfc/rfc6749#section-2.2).
     pub client_id: Uuid,
+
+    /// The client's secret to authenticate itself
     pub client_secret: String,
+
     /// Code verifier
     #[schema(value_type = String)]
     pub code_verifier: Option<String>,
 }
 
-#[derive(Deserialize, ToSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum GrantType {
-    AuthorizationCode,
-}
-
+/// The authorization server issues an access token and optional refresh
+/// token, and constructs the response by adding the following parameters
+/// to the entity-body of the HTTP response with a 200 (OK) status code:
 #[derive(Serialize, ToSchema)]
 pub struct TokenResponse {
     /// Always `"access_token"`
     #[schema(example = "access_token")]
-    pub token_type: TokenType,
+    pub token_type: &'static str,
 
+    /// The access token issued by the authorization server.
     pub access_token: String,
 
-    /// Duration in seconds the token is valid for
+    /// The lifetime in seconds of the access token.  For
+    /// example, the value "3600" denotes that the access token will
+    /// expire in one hour from the time the response was generated.
     #[schema(value_type = u64)]
     #[serde(serialize_with = "duration_seconds")]
     pub expires_in: Duration,
-}
-
-#[derive(Serialize, ToSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum TokenType {
-    AccessToken,
 }
 
 /// Possible error response when requesting an access token.

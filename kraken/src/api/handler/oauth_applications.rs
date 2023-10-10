@@ -1,3 +1,5 @@
+//! Endpoints to inspect and modify registered oauth applications
+
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use rand::distributions::{Alphanumeric, DistString};

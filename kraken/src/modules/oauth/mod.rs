@@ -6,6 +6,8 @@ use std::sync::Mutex;
 
 use uuid::Uuid;
 
+pub mod schemas;
+
 /// A synced collection of open and accepted oauth requests
 ///
 /// - **open request** are waiting for the user's interaction

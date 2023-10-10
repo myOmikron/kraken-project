@@ -21,8 +21,8 @@ use webauthn_rs::prelude::{Url, WebauthnError};
 use webauthn_rs::WebauthnBuilder;
 
 use crate::api::handler::{
-    api_keys, attacks, auth, data_export, domains, global_tags, hosts, leeches, oauth, ports,
-    services, settings, users, websocket, workspace_tags, workspaces,
+    api_keys, attacks, auth, data_export, domains, global_tags, hosts, leeches, oauth,
+    oauth_applications, ports, services, settings, users, websocket, workspace_tags, workspaces,
 };
 use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
@@ -138,11 +138,11 @@ pub(crate) async fn start_server(
                     .service(users::get_all_users_admin)
                     .service(workspaces::get_workspace_admin)
                     .service(workspaces::get_all_workspaces_admin)
-                    .service(oauth::create_oauth_app)
-                    .service(oauth::get_all_oauth_apps)
-                    .service(oauth::get_oauth_app)
-                    .service(oauth::update_oauth_app)
-                    .service(oauth::delete_oauth_app)
+                    .service(oauth_applications::create_oauth_app)
+                    .service(oauth_applications::get_all_oauth_apps)
+                    .service(oauth_applications::get_oauth_app)
+                    .service(oauth_applications::update_oauth_app)
+                    .service(oauth_applications::delete_oauth_app)
                     .service(settings::get_settings)
                     .service(settings::update_settings)
                     .service(global_tags::create_global_tag)

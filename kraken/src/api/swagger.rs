@@ -8,9 +8,11 @@ use utoipa::{Modify, OpenApi};
 use crate::api::handler;
 use crate::api::handler::{
     api_keys, attacks, auth, data_export, domains, global_tags, hosts, leeches, oauth,
-    oauth_decisions, ports, services, settings, users, websocket, workspace_tags, workspaces,
+    oauth_applications, oauth_decisions, ports, services, settings, users, websocket,
+    workspace_tags, workspaces,
 };
 use crate::models;
+use crate::modules::oauth::schemas as oauth_schemas;
 
 struct SecurityAddon;
 impl Modify for SecurityAddon {
@@ -76,11 +78,11 @@ impl Modify for SecurityAddon2 {
         attacks::query_dehashed,
         attacks::hosts_alive_check,
         attacks::service_detection,
-        oauth::create_oauth_app,
-        oauth::get_all_oauth_apps,
-        oauth::get_oauth_app,
-        oauth::update_oauth_app,
-        oauth::delete_oauth_app,
+        oauth_applications::create_oauth_app,
+        oauth_applications::get_all_oauth_apps,
+        oauth_applications::get_oauth_app,
+        oauth_applications::update_oauth_app,
+        oauth_applications::delete_oauth_app,
         oauth::info,
         oauth::accept,
         oauth::deny,
@@ -146,11 +148,11 @@ impl Modify for SecurityAddon2 {
         dehashed_rs::SearchType,
         attacks::QueryDehashedRequest,
         models::AttackType,
-        oauth::CreateAppRequest,
-        oauth::SimpleOauthClient,
-        oauth::FullOauthClient,
-        oauth::GetAppsResponse,
-        oauth::UpdateAppRequest,
+        oauth_applications::CreateAppRequest,
+        oauth_applications::SimpleOauthClient,
+        oauth_applications::FullOauthClient,
+        oauth_applications::GetAppsResponse,
+        oauth_applications::UpdateAppRequest,
         oauth::OpenRequestInfo,
         oauth_decisions::GetMyDecisionsResponse,
         oauth_decisions::FullDecision,
@@ -194,12 +196,10 @@ pub(crate) struct FrontendApi;
         models::PortProtocol,
         handler::ApiErrorResponse,
         handler::ApiStatusCode,
-        oauth::TokenRequest,
-        oauth::TokenResponse,
-        oauth::TokenType,
-        oauth::TokenError,
-        oauth::TokenErrorType,
-        oauth::GrantType,
+        oauth_schemas::TokenRequest,
+        oauth_schemas::TokenResponse,
+        oauth_schemas::TokenError,
+        oauth_schemas::TokenErrorType,
         data_export::AggregatedWorkspace,
         data_export::AggregatedHost,
         data_export::AggregatedPort,

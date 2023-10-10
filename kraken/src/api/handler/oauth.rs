@@ -19,19 +19,19 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 use webauthn_rs::prelude::Url;
 
-pub(crate) use self::applications::*;
-pub(crate) use self::schemas::*;
 use crate::api::extractors::SessionUser;
+use crate::api::handler::oauth_applications::SimpleOauthClient;
 use crate::api::handler::users::UserResponse;
 use crate::api::handler::workspaces::SimpleWorkspace;
 use crate::api::handler::{ApiError, PathUuid};
 use crate::models::{
     OAuthDecision, OAuthDecisionAction, OauthClient, User, Workspace, WorkspaceAccessToken,
 };
+use crate::modules::oauth::schemas::{
+    AuthError, AuthErrorType, AuthRequest, CodeChallengeMethod, TokenError, TokenErrorType,
+    TokenRequest, TokenResponse,
+};
 use crate::modules::oauth::{OAuthRequest, OAuthScope, OauthManager, OpenIfError};
-
-mod applications;
-mod schemas;
 
 /// Initial endpoint an application redirects the user to.
 ///
@@ -406,13 +406,20 @@ pub async fn token(
     request: Form<TokenRequest>,
 ) -> Result<Json<TokenResponse>, TokenError> {
     let TokenRequest {
-        grant_type: _grant_type, // "handled" by serde
+        grant_type,
         code,
         redirect_uri,
         client_id,
         client_secret,
         code_verifier,
     } = request.into_inner();
+
+    if grant_type != "authorization_code" {
+        return Err(TokenError {
+            error: TokenErrorType::UnsupportedGrantType,
+            error_description: Some("Only supported response_type is authorization_code"),
+        });
+    }
 
     let accepted = manager.get_accepted(code).ok_or(TokenError {
         error: TokenErrorType::InvalidRequest,
@@ -444,7 +451,7 @@ pub async fn token(
 
     if client_id != client.uuid
         || client_secret != client.secret
-        || redirect_uri != client.redirect_uri
+        || redirect_uri != Some(client.redirect_uri)
     {
         return Err(TokenError {
             error: TokenErrorType::InvalidClient,
@@ -466,7 +473,7 @@ pub async fn token(
     .await?;
 
     Ok(Json(TokenResponse {
-        token_type: TokenType::AccessToken,
+        token_type: "access_token",
         access_token,
         expires_in,
     }))
