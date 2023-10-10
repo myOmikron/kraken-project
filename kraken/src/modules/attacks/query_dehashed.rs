@@ -15,7 +15,7 @@ impl AttackContext {
     pub async fn query_dehashed(self, sender: mpsc::Sender<ScheduledRequest>, query: Query) {
         let (tx, rx) = oneshot::channel::<Result<SearchResult, DehashedError>>();
 
-        if let Err(_) = sender.send(ScheduledRequest::new(query, tx)).await {
+        if sender.send(ScheduledRequest::new(query, tx)).await.is_err() {
             return self
                 .set_finished(Some(AttackError::Custom(
                     "Couldn't send to dehashed scheduler".into(),

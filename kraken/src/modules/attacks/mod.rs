@@ -98,6 +98,19 @@ impl AttackContext {
         if let Err(err) = update!(&self.db, Attack)
             .condition(Attack::F.uuid.equals(self.attack_uuid))
             .set(Attack::F.finished_at, Some(Utc::now()))
+            .set(
+                Attack::F.error,
+                error.map(|err| {
+                    let mut string = err.to_string();
+                    for (char_index, (byte_index, _)) in string.char_indices().enumerate() {
+                        if char_index == 256 {
+                            string.truncate(byte_index);
+                            break;
+                        }
+                    }
+                    string
+                }),
+            )
             .exec()
             .await
         {
