@@ -1,5 +1,4 @@
 use ipnetwork::IpNetwork;
-use log::{error, warn};
 use rorm::prelude::*;
 use rorm::{and, insert, query};
 use uuid::Uuid;
@@ -18,8 +17,10 @@ impl LeechAttackContext {
             self.leech.hosts_alive_check(req).await,
             |response| async {
                 let HostsAliveResponse { host: Some(host) } = response else {
-                    warn!("Missing field `host` in grpc response of bruteforce subdomains");
-                    return Ok(());
+                    return Err(
+                        "Missing field `host` in grpc response of bruteforce subdomains"
+                            .to_string(),
+                    );
                 };
 
                 let host = host.into();
@@ -29,9 +30,11 @@ impl LeechAttackContext {
                 })
                 .await;
 
-                if let Err(err) = self.insert_host_alive_check_result(host.into()).await {
-                    error!("Failed to insert query certificate transparency result: {err}");
-                }
+                self.insert_host_alive_check_result(host.into())
+                    .await
+                    .map_err(|err| {
+                        format!("Failed to insert query certificate transparency result: {err}")
+                    })?;
 
                 Ok(())
             },

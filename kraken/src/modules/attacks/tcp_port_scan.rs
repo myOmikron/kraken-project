@@ -1,7 +1,6 @@
 use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
-use log::{error, warn};
 use rorm::prelude::*;
 use rorm::{and, insert, query};
 use uuid::Uuid;
@@ -30,8 +29,7 @@ impl LeechAttackContext {
                     port,
                 } = response
                 else {
-                    warn!("Missing address in grpc response of scan tcp ports");
-                    return Ok(());
+                    return Err("Missing address in grpc response of scan tcp ports".to_string());
                 };
 
                 let address = match addr {
@@ -40,19 +38,16 @@ impl LeechAttackContext {
                 };
                 let port = port as u16;
 
-                if let Err(err) = self
-                    .insert_tcp_port_scan_result(IpNetwork::from(address), port)
-                    .await
-                {
-                    error!("Database error: {err}");
-                }
-
                 self.send_ws(WsMessage::ScanTcpPortsResult {
                     attack_uuid: self.attack_uuid,
                     address: address.to_string(),
                     port,
                 })
                 .await;
+
+                self.insert_tcp_port_scan_result(IpNetwork::from(address), port)
+                    .await
+                    .map_err(|err| format!("Database error: {err}"))?;
 
                 Ok(())
             },

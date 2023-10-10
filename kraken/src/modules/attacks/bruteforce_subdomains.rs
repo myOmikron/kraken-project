@@ -1,6 +1,6 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 
-use log::{debug, error, warn};
+use log::debug;
 use rorm::prelude::*;
 use rorm::{and, insert, query};
 use uuid::Uuid;
@@ -30,8 +30,7 @@ impl LeechAttackContext {
                         }),
                 } = response
                 else {
-                    warn!("Missing record in grpc response of bruteforce subdomains");
-                    return Ok(());
+                    return Err(format!("Missing record in grpc response of bruteforce subdomains"));
                 };
 
                 let source;
@@ -39,19 +38,13 @@ impl LeechAttackContext {
                 let dns_record_type;
                 match record {
                     Record::A(a_rec) => {
-                        let Some(to) = a_rec.to else {
-                            warn!("Missing field record.record.a.to in grpc response of bruteforce subdomains");
-                            return Ok(());
-                        };
+                        let to = a_rec.to.ok_or( "Missing field record.record.a.to in grpc response of bruteforce subdomains")?;
                         source = a_rec.source;
                         destination = Ipv4Addr::from(to).to_string();
                         dns_record_type = DnsRecordType::A;
                     }
                     Record::Aaaa(aaaa_rec) => {
-                        let Some(to) = aaaa_rec.to else {
-                            warn!("Missing field record.record.aaaa.to in grpc response of bruteforce subdomains");
-                            return Ok(());
-                        };
+                        let to = aaaa_rec.to.ok_or( "Missing field record.record.aaaa.to in grpc response of bruteforce subdomains")?;
                         source = aaaa_rec.source;
                         destination = Ipv6Addr::from(to).to_string();
                         dns_record_type = DnsRecordType::Aaaa;
@@ -63,23 +56,22 @@ impl LeechAttackContext {
                     }
                 };
 
-                if let Err(err) = self
+                self.send_ws(WsMessage::BruteforceSubdomainsResult {
+                    attack_uuid: self.attack_uuid,
+                    source: source.clone(),
+                    destination: destination.clone(),
+                })
+                    .await;
+
+
+                self
                     .insert_bruteforce_subdomains_result(
-                        source.clone(),
-                        destination.clone(),
+                        source,
+                        destination,
                         dns_record_type,
                     )
                     .await
-                {
-                    error!("Could not insert data in db: {err}");
-                }
-
-                self.send_ws(WsMessage::BruteforceSubdomainsResult {
-                    attack_uuid: self.attack_uuid,
-                    source,
-                    destination,
-                })
-                    .await;
+                    .map_err(|err| format!("Could not insert data in db: {err}"))?;
 
                 Ok(())
             },
