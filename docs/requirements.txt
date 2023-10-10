@@ -1,2 +1,2 @@
-mkdocs=="1.2.5"
+mkdocs=="1.5.3"
 mkdocs-material=="9.4.5"
