@@ -1,3 +1,7 @@
+:root{
+    --red-button: rgba(255, 159, 159, 0.2)
+}
+
 .workspace-settings-layout{
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -5,18 +9,34 @@
     gap: 1em;
 }
 
+.workspace-settings-row{
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+}
+
 .workspace-settings-container{
     display: flex;
     flex-direction: column;
-    gap: 0.5em;
+    gap: 1em;
     height: max-content;
+}
 
+.danger{
+    background: radial-gradient(100% 130% at left center, rgba(255, 0, 0, 0.1), rgba(255, 0, 0, 0.05));
+    box-shadow: 0 0 25em var(--primary-op), inset 0 0 5em var(--toast-error), inset 0 0 0.5em #0ff2 !important;
 }
 
 .workspace-settings-table{
     display: grid;
     gap: 0.5em;
     grid-template-columns: 1fr 3fr;
+}
+
+.workspace-settings-danger{
+    display: grid;
+    gap: 0.5em;
+    grid-template-columns: 2fr 1fr;
 }
 
 .workspace-settings-table > textarea{
@@ -26,9 +46,69 @@
 
 .workspace-settings-invite{
     display: flex;
+    justify-content: flex-end;
 }
 
 .workspace-settings-user-table-heading{
     display: grid;
-    grid-template-columns: 2fr 2fr 1fr;
+    grid-template-columns: 3fr 3fr 1fr;
+    align-items: center;
+    gap: 1em;
+    border-radius: 0.5em;
+    border: 1px solid var(--text);
+    padding: 0.5em 1em;
+}
+
+.workspace-settings-button{
+    width: 10em;
+}
+
+.workspace-settings-red-button{
+    box-shadow: inset 0 -3px 2em var(--red-button), 0 0 10em var(--red-button), 0 0 .5em var(--red-button);
+}
+
+.workspace-settings-user-table-entry{
+    display: grid;
+    grid-template-columns: 3fr 3fr 1fr;
+    align-items: center;
+    gap: 1em;
+    border: 1px solid #bbbbbb70;
+    padding: 0.5em 1em;
+    border-radius: 0.5em;
+}
+
+.workspace-settings-tag-container{
+    display: flex;
+    flex-direction: row;
+    gap: 0.5em;
+}
+
+.workspace-setting-popup{
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+}
+
+.workspace-settings-oauth-table-heading{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: center;
+    gap: 1em;
+    border-radius: 0.5em;
+    border: 1px solid var(--text);
+    padding: 0.5em 1em;
+}
+
+.workspace-settings-oauth-table-entry{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: center;
+    gap: 1em;
+    border: 1px solid #bbbbbb70;
+    padding: 0.5em 1em;
+    border-radius: 0.5em;
+}
+
+.workspace-settings-popup{
+    width: 25em;
 }
