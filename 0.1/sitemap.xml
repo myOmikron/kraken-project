@@ -5,4 +5,9 @@
          <lastmod>2023-10-10</lastmod>
          <changefreq>daily</changefreq>
     </url>
+    <url>
+         <loc>https://kraken-project.org/0.1/contribution/style_guidelines/rust/</loc>
+         <lastmod>2023-10-10</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
 </urlset>
