@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::chan::WsMessage;
 use crate::models::{Host, HostAliveResultInsert, HostInsert, OsType};
-use crate::modules::attacks::{AttackContext, LeechAttackContext};
+use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions::{HostsAliveRequest, HostsAliveResponse};
 
 impl LeechAttackContext {
@@ -17,10 +17,7 @@ impl LeechAttackContext {
             self.leech.hosts_alive_check(req).await,
             |response| async {
                 let HostsAliveResponse { host: Some(host) } = response else {
-                    return Err(
-                        "Missing field `host` in grpc response of bruteforce subdomains"
-                            .to_string(),
-                    );
+                    return Err(AttackError::Malformed("Missing `host`"));
                 };
 
                 let host = host.into();
@@ -30,11 +27,7 @@ impl LeechAttackContext {
                 })
                 .await;
 
-                self.insert_host_alive_check_result(host.into())
-                    .await
-                    .map_err(|err| {
-                        format!("Failed to insert query certificate transparency result: {err}")
-                    })?;
+                self.insert_host_alive_check_result(host.into()).await?;
 
                 Ok(())
             },

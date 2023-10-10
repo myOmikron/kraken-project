@@ -1,5 +1,4 @@
 use chrono::{NaiveDateTime, TimeZone, Utc};
-use log::error;
 use rorm::insert;
 use rorm::prelude::*;
 use uuid::Uuid;
@@ -8,7 +7,7 @@ use crate::chan::{CertificateTransparencyEntry, WsMessage};
 use crate::models::{
     CertificateTransparencyResultInsert, CertificateTransparencyValueNameInsert, Domain,
 };
-use crate::modules::attacks::LeechAttackContext;
+use crate::modules::attacks::{AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions::{
     CertificateTransparencyRequest, CertificateTransparencyResponse,
 };
@@ -22,12 +21,13 @@ impl LeechAttackContext {
             Ok(res) => {
                 let res = res.into_inner();
 
-                if let Err(err) = self
-                    .insert_query_certificate_transparency_result(&res)
-                    .await
-                {
-                    error!("Failed to insert query certificate transparency result: {err}");
-                }
+                self.set_finished(
+                    self.insert_query_certificate_transparency_result(&res)
+                        .await
+                        .map_err(AttackError::from)
+                        .err(),
+                )
+                .await;
 
                 self.send_ws(WsMessage::CertificateTransparencyResult {
                     attack_uuid: self.attack_uuid,
@@ -56,14 +56,10 @@ impl LeechAttackContext {
                 })
                 .await;
             }
-            Err(err) => {
-                self.set_finished(Some(format!("Error while reading from stream: {err}")))
-                    .await;
-                return;
+            Err(status) => {
+                self.set_finished(Some(AttackError::Grpc(status))).await;
             }
         }
-
-        self.set_finished(None).await;
     }
 
     /// Insert a query certificate transparency's result and update the aggregation

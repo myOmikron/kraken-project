@@ -9,7 +9,7 @@ use crate::chan::WsMessage;
 use crate::models::{
     BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert, DnsRecordType, Domain,
 };
-use crate::modules::attacks::{AttackContext, LeechAttackContext};
+use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
 use crate::rpc::rpc_definitions::{
     shared, BruteforceSubdomainRequest, BruteforceSubdomainResponse,
@@ -30,7 +30,7 @@ impl LeechAttackContext {
                         }),
                 } = response
                 else {
-                    return Err(format!("Missing record in grpc response of bruteforce subdomains"));
+                    return Err(AttackError::Malformed("Missing `record`"));
                 };
 
                 let source;
@@ -38,13 +38,17 @@ impl LeechAttackContext {
                 let dns_record_type;
                 match record {
                     Record::A(a_rec) => {
-                        let to = a_rec.to.ok_or( "Missing field record.record.a.to in grpc response of bruteforce subdomains")?;
+                        let to = a_rec
+                            .to
+                            .ok_or(AttackError::Malformed("Missing `record.record.a.to`"))?;
                         source = a_rec.source;
                         destination = Ipv4Addr::from(to).to_string();
                         dns_record_type = DnsRecordType::A;
                     }
                     Record::Aaaa(aaaa_rec) => {
-                        let to = aaaa_rec.to.ok_or( "Missing field record.record.aaaa.to in grpc response of bruteforce subdomains")?;
+                        let to = aaaa_rec.to.ok_or(AttackError::Malformed(
+                            "Missing field `record.record.aaaa.to`",
+                        ))?;
                         source = aaaa_rec.source;
                         destination = Ipv6Addr::from(to).to_string();
                         dns_record_type = DnsRecordType::Aaaa;
@@ -61,17 +65,10 @@ impl LeechAttackContext {
                     source: source.clone(),
                     destination: destination.clone(),
                 })
-                    .await;
+                .await;
 
-
-                self
-                    .insert_bruteforce_subdomains_result(
-                        source,
-                        destination,
-                        dns_record_type,
-                    )
-                    .await
-                    .map_err(|err| format!("Could not insert data in db: {err}"))?;
+                self.insert_bruteforce_subdomains_result(source, destination, dns_record_type)
+                    .await?;
 
                 Ok(())
             },

@@ -10,11 +10,15 @@ mod query_dehashed;
 mod service_detection;
 mod tcp_port_scan;
 
+use std::error::Error as StdError;
+use std::fmt;
+
 use chrono::Utc;
 use futures::{TryFuture, TryStreamExt};
 use log::error;
 use rorm::prelude::*;
 use rorm::{update, Database};
+use thiserror::Error;
 use tonic::{Response, Status, Streaming};
 use uuid::Uuid;
 
@@ -77,7 +81,7 @@ impl AttackContext {
     }
 
     /// Send the user a notification and update the [`Attack`] model
-    async fn set_finished(&self, error: Option<String>) {
+    async fn set_finished(&self, error: Option<AttackError>) {
         self.send_ws(WsMessage::AttackFinished {
             attack_uuid: self.attack_uuid,
             finished_successful: error.is_none(),
@@ -85,41 +89,74 @@ impl AttackContext {
         .await;
 
         if let Some(error) = error.as_ref() {
-            error!("{error}");
+            error!(
+                "Attack {attack_uuid} failed: {error}",
+                attack_uuid = self.attack_uuid
+            );
         }
 
-        if error.is_none() {
-            if let Err(err) = update!(&self.db, Attack)
-                .condition(Attack::F.uuid.equals(self.attack_uuid))
-                .set(Attack::F.finished_at, Some(Utc::now()))
-                .exec()
-                .await
-            {
-                error!(
-                    "Failed to set the attack {attack_uuid} to finished: {err}",
-                    attack_uuid = self.attack_uuid
-                );
-            }
+        if let Err(err) = update!(&self.db, Attack)
+            .condition(Attack::F.uuid.equals(self.attack_uuid))
+            .set(Attack::F.finished_at, Some(Utc::now()))
+            .exec()
+            .await
+        {
+            error!(
+                "Failed to set the attack {attack_uuid} to finished: {err}",
+                attack_uuid = self.attack_uuid
+            );
         }
     }
 
     async fn handle_streamed_response<T, Fut>(
         streamed_response: Result<Response<Streaming<T>>, Status>,
         handler: impl FnMut(T) -> Fut,
-    ) -> Result<(), String>
+    ) -> Result<(), AttackError>
     where
-        Fut: TryFuture<Ok = (), Error = String>,
+        Fut: TryFuture<Ok = (), Error = AttackError>,
     {
-        let stream = streamed_response
-            .map_err(|status| format!("Failed getting stream: {status}"))?
-            .into_inner();
+        let stream = streamed_response?.into_inner();
 
         stream
-            .map_err(|status| format!("Failed reading stream: {status}"))
+            .map_err(AttackError::from)
             .try_for_each(handler)
             .await
     }
 }
+
+/// An error occurring during an attack which is logged and stored on the db
+#[derive(Error, Debug)]
+pub enum AttackError {
+    /// An error returned by grpc i.e. a [`Status`]
+    Grpc(#[from] Status),
+
+    /// An error produced by the database
+    Database(#[from] rorm::Error),
+
+    /// A malformed grpc message
+    ///
+    /// For example "optional" fields which have to be set
+    Malformed(&'static str),
+
+    /// Catch all variant for everything else
+    Custom(Box<dyn StdError + Send + Sync>),
+}
+impl fmt::Display for AttackError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            AttackError::Grpc(status) => write!(
+                f,
+                "GRPC: {code:?}, {msg:?}",
+                code = status.code(),
+                msg = status.message()
+            ),
+            AttackError::Database(err) => write!(f, "DB: {err}"),
+            AttackError::Malformed(err) => write!(f, "Malformed response: {err}"),
+            AttackError::Custom(err) => write!(f, "{err}"),
+        }
+    }
+}
+
 impl std::ops::Deref for LeechAttackContext {
     type Target = AttackContext;
     fn deref(&self) -> &Self::Target {

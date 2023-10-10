@@ -9,7 +9,7 @@ use crate::chan::WsMessage;
 use crate::models::{
     Host, HostInsert, OsType, Port, PortInsert, PortProtocol, TcpPortScanResultInsert,
 };
-use crate::modules::attacks::{AttackContext, LeechAttackContext};
+use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions::shared::address::Address;
 use crate::rpc::rpc_definitions::{shared, TcpPortScanRequest, TcpPortScanResponse};
 
@@ -29,7 +29,7 @@ impl LeechAttackContext {
                     port,
                 } = response
                 else {
-                    return Err("Missing address in grpc response of scan tcp ports".to_string());
+                    return Err(AttackError::Malformed("Missing `address`"));
                 };
 
                 let address = match addr {
@@ -46,8 +46,7 @@ impl LeechAttackContext {
                 .await;
 
                 self.insert_tcp_port_scan_result(IpNetwork::from(address), port)
-                    .await
-                    .map_err(|err| format!("Database error: {err}"))?;
+                    .await?;
 
                 Ok(())
             },

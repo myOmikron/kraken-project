@@ -1,13 +1,12 @@
 use dehashed_rs::{DehashedError, Query, ScheduledRequest, SearchResult};
 use ipnetwork::IpNetwork;
-use log::error;
 use rorm::insert;
 use rorm::prelude::*;
 use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;
 
 use crate::models::DehashedQueryResultInsert;
-use crate::modules::attacks::AttackContext;
+use crate::modules::attacks::{AttackContext, AttackError};
 
 impl AttackContext {
     /// Query the [dehashed](https://dehashed.com/) API.
@@ -18,19 +17,21 @@ impl AttackContext {
 
         if let Err(_) = sender.send(ScheduledRequest::new(query, tx)).await {
             return self
-                .set_finished(Some(format!("Couldn't send to dehashed scheduler")))
+                .set_finished(Some(AttackError::Custom(
+                    "Couldn't send to dehashed scheduler".into(),
+                )))
                 .await;
         }
 
         let res = match rx.await {
             Err(err) => {
                 return self
-                    .set_finished(Some(format!("Error waiting for result: {err}")))
+                    .set_finished(Some(AttackError::Custom(err.into())))
                     .await;
             }
             Ok(Err(err)) => {
                 return self
-                    .set_finished(Some(format!("Error using dehashed: {err}")))
+                    .set_finished(Some(AttackError::Custom(err.into())))
                     .await;
             }
             Ok(Ok(res)) => res,
@@ -52,13 +53,14 @@ impl AttackContext {
             attack: ForeignModelByField::Key(self.attack_uuid),
         });
 
-        if let Err(err) = insert!(&self.db, DehashedQueryResultInsert)
-            .bulk(entries)
-            .await
-        {
-            error!("Database error: {err}");
-        }
-
-        self.set_finished(None).await;
+        self.set_finished(
+            insert!(&self.db, DehashedQueryResultInsert)
+                .return_nothing()
+                .bulk(entries)
+                .await
+                .map_err(AttackError::from)
+                .err(),
+        )
+        .await;
     }
 }

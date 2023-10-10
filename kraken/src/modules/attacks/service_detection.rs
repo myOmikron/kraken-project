@@ -1,13 +1,12 @@
 use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
-use log::error;
 use rorm::insert;
 use rorm::prelude::*;
 use uuid::Uuid;
 
 use crate::models::{Certainty, Service, ServiceDetectionName, ServiceDetectionResultInsert};
-use crate::modules::attacks::LeechAttackContext;
+use crate::modules::attacks::{AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions::{ServiceDetectionRequest, ServiceDetectionResponse};
 
 impl LeechAttackContext {
@@ -33,18 +32,16 @@ impl LeechAttackContext {
                     _ => Certainty::Unknown,
                 };
 
-                if let Err(err) = self
-                    .insert_service_detection_result(&services, certainty, host.into(), port)
-                    .await
-                {
-                    error!("Failed to insert service detection result: {err}");
-                }
-
-                self.set_finished(None).await;
+                self.set_finished(
+                    self.insert_service_detection_result(&services, certainty, host.into(), port)
+                        .await
+                        .map_err(AttackError::from)
+                        .err(),
+                )
+                .await;
             }
-            Err(err) => {
-                self.set_finished(Some(format!("Error reading response: {err}")))
-                    .await;
+            Err(status) => {
+                self.set_finished(Some(AttackError::Grpc(status))).await;
             }
         }
     }
