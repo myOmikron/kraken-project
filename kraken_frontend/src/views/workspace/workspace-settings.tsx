@@ -22,7 +22,8 @@ type WorkspaceSettingsState = {
     deleteWorkspacePopup: boolean;
     transferOwnershipPopup: boolean;
     memberName: string;
-    memberList: Array<SelectValue>;
+    transferList: Array<SelectValue>;
+    inviteList: Array<SelectValue>;
     selectedUser: null | SelectValue;
 };
 
@@ -43,11 +44,12 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
             deleteWorkspacePopup: false,
             transferOwnershipPopup: false,
             memberName: "",
-            memberList: [],
+            transferList: [],
+            inviteList: [],
             selectedUser: null,
         };
-
-        this.createMemberList().then();
+        this.createTransferList().then();
+        this.createInviteList().then();
     }
 
     async updateWorkspace() {
@@ -69,13 +71,37 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
         );
     }
 
-    async createMemberList() {
+    async createTransferList() {
         (await Api.user.all()).match(
             (u) => {
-                u.users.map((s) => {
-                    let member = { label: s.displayName + " (" + s.username + ") ", value: s.uuid };
-                    this.state.memberList.push(member);
-                });
+                u.users
+                    .filter((s) => {
+                        return this.props.workspace.owner.uuid !== s.uuid;
+                    })
+                    .map((s) => {
+                        let member = { label: s.displayName + " (" + s.username + ") ", value: s.uuid };
+                        this.state.transferList.push(member);
+                    });
+            },
+            (err) => toast.error(err.message)
+        );
+    }
+
+    async createInviteList() {
+        (await Api.user.all()).match(
+            (u) => {
+                u.users
+                    .filter((s) => {
+                        let users = [
+                            ...this.props.workspace.members.map((x) => x.uuid),
+                            this.props.workspace.owner.uuid,
+                        ];
+                        return !users.some((x) => x === s.uuid);
+                    })
+                    .map((s) => {
+                        let member = { label: s.displayName + " (" + s.username + ") ", value: s.uuid };
+                        this.state.inviteList.push(member);
+                    });
             },
             (err) => toast.error(err.message)
         );
@@ -217,7 +243,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                         <div className="workspace-setting-popup">
                             <h2 className="sub-heading"> Invite member</h2>
                             <SelectMenu
-                                options={this.state.memberList}
+                                options={this.state.inviteList}
                                 theme={"default"}
                                 value={this.state.selectedUser}
                                 onChange={(type) => {
@@ -315,7 +341,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                         <div className="workspace-setting-popup">
                             <h2 className="sub-heading"> Transfer ownership</h2>
                             <SelectMenu
-                                options={this.state.memberList}
+                                options={this.state.transferList}
                                 theme={"red"}
                                 value={this.state.selectedUser}
                                 onChange={(type) => {
