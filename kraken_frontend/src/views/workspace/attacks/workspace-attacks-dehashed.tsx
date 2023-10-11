@@ -6,6 +6,7 @@ import "../../../styling/workspace-attacks-dehashed.css";
 import { Api, UUID } from "../../../api/api";
 import { toast } from "react-toastify";
 import { Query } from "../../../api/generated";
+import SelectMenu from "../../../components/select-menu";
 
 export type DehashedQueryType =
     | "email"
@@ -111,12 +112,13 @@ export default class WorkspaceAttacksDehashed extends React.Component<
         return (
             <div className={"workspace-attacks-dehashed-container"}>
                 <div className={"workspace-attacks-dehashed"}>
-                    <Select
+                    <SelectMenu
                         options={DEHASHED_SEARCH_TYPES}
+                        theme={"default"}
+                        value={this.state.type}
                         onChange={(type) => {
                             this.setState({ type });
                         }}
-                        value={this.state.type}
                     />
                     <Input
                         placeholder={"dehashed query"}

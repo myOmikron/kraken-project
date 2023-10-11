@@ -6,7 +6,7 @@
     --primary-light: #00ccffaa;
     --primary-op: #00ccff40;
     --secondary: #00ffb3;
-    --red-button: rgba(255, 159, 159, 0.2)
+    --red-button: rgba(255, 159, 159, 0.2);
 }
 
 @font-face {
