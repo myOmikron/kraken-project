@@ -133,3 +133,21 @@
     color: white;
     font-size: 1.5em;
 }
+
+.tag{
+    background-color: #00ccff20;
+    border: 1px solid var(--primary-op);
+    width: max-content;
+    padding: 0.1em 0.7em;
+    color: var(--text);
+    border-radius: 1em;
+}
+
+.tag-primary{
+    background-color: #00ccff50;
+}
+
+.tag-red{
+    background-color: #ff000050;
+    border: 1px solid #ff000070;
+}
