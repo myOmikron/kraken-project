@@ -31,6 +31,8 @@ pub enum AttackType {
     HostAlive,
     /// Detect the service that is running on a port
     ServiceDetection,
+    /// Resolve domain names
+    DnsResolution,
 }
 
 /// Representation of an attack
@@ -83,6 +85,9 @@ pub enum DnsRecordType {
 
 /// Representation of a [Bruteforce Subdomain](AttackType::BruteforceSubdomains) attack's result
 pub type BruteforceSubdomainsResult = DnsRecordResult;
+
+/// Representation of a [DNS resolution](AttackType::DnsResolution) attack's result
+pub type DnsResolutionResult = DnsRecordResult;
 
 /// Generic representation of a DNS result
 #[derive(Model)]

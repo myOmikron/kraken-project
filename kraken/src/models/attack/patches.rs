@@ -10,6 +10,7 @@ use crate::models::{
 };
 
 pub(crate) type BruteforceSubdomainsResultInsert = DnsRecordResultInsert;
+pub(crate) type DnsResolutionResultInsert = DnsRecordResultInsert;
 
 #[derive(Patch)]
 #[rorm(model = "DnsRecordResult")]

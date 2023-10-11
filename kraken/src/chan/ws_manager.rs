@@ -116,6 +116,15 @@ pub enum WsMessage {
         /// Name of the service
         service: String,
     },
+    /// A result for a DNS resolution requests
+    DnsResolutionResult {
+        /// The corresponding id of the attack
+        attack_uuid: Uuid,
+        /// The source address that was queried
+        source: String,
+        /// The destination address that was returned
+        destination: String,
+    },
 }
 
 /// A channel to send [WsManagerMessage] to the ws manager

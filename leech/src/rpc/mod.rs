@@ -114,7 +114,7 @@ pub mod rpc_attacks {
         }
     }
 
-    impl From<BruteforceSubdomainResult> for DnsResolutionResponse {
+    impl From<BruteforceSubdomainResult> for BruteforceSubdomainResponse {
         fn from(value: BruteforceSubdomainResult) -> Self {
             Self {
                 record: Some(match value {

@@ -21,6 +21,11 @@ message BruteforceSubdomainRequest {
   uint32 concurrent_limit = 4;
 }
 
+message BruteforceSubdomainResponse {
+  // Found record
+  shared.DNSRecord record = 1;
+}
+
 /*
 -- TcpPortScan
  */
@@ -179,7 +184,7 @@ message DnsResolutionResponse {
 
 // Implemented by leech; allows kraken to request attack from a leech
 service ReqAttackService {
-  rpc BruteforceSubdomains(BruteforceSubdomainRequest) returns (stream DnsResolutionResponse);
+  rpc BruteforceSubdomains(BruteforceSubdomainRequest) returns (stream BruteforceSubdomainResponse);
   rpc RunTcpPortScan(TcpPortScanRequest) returns (stream TcpPortScanResponse);
   rpc QueryCertificateTransparency(CertificateTransparencyRequest) returns (CertificateTransparencyResponse);
   rpc ServiceDetection(ServiceDetectionRequest) returns (ServiceDetectionResponse);

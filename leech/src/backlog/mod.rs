@@ -18,7 +18,7 @@ use crate::rpc::rpc_attacks::backlog_service_client::BacklogServiceClient;
 use crate::rpc::rpc_attacks::shared::dns_record::Record;
 use crate::rpc::rpc_attacks::{
     BacklogBruteforceSubdomainRequest, BacklogTcpPortScanRequest, BruteforceSubdomainRequest,
-    DnsResolutionResponse, TcpPortScanRequest,
+    BruteforceSubdomainResponse, TcpPortScanRequest,
 };
 
 /// The main struct for the Backlog,
@@ -34,7 +34,7 @@ impl Backlog {
     pub(crate) async fn store_bruteforce_subdomains(
         &self,
         req: &BruteforceSubdomainRequest,
-        response: DnsResolutionResponse,
+        response: BruteforceSubdomainResponse,
     ) {
         let Ok(attack_uuid) = Uuid::parse_str(&req.attack_uuid) else {
             error!("Invalid attack uuid");

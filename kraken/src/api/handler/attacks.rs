@@ -574,6 +574,83 @@ pub async fn service_detection(
     Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
 }
 
+/// Request to resolve domains
+#[derive(Deserialize, ToSchema)]
+pub struct DnsResolutionRequest {
+    /// If missing - a random leech is chosen
+    pub(crate) leech_uuid: Option<Uuid>,
+    #[schema(value_type = Vec<String>, example = json!(["example.com", "example.org"]))]
+    pub(crate) targets: Vec<String>,
+    #[schema(example = 2)]
+    pub(crate) concurrent_limit: u32,
+    pub(crate) workspace_uuid: Uuid,
+}
+
+/// Perform domain name resolution
+#[utoipa::path(
+tag = "Attacks",
+context_path = "/api/v1",
+    responses(
+        (status = 202, description = "Attack scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = DnsResolutionRequest,
+    security(("api_key" = []))
+)]
+#[post("/attacks/dnsResolution")]
+pub async fn dns_resolution(
+    req: Json<DnsResolutionRequest>,
+    db: Data<Database>,
+    rpc_clients: RpcClients,
+    SessionUser(user_uuid): SessionUser,
+    ws_manager_chan: Data<WsManagerChan>,
+) -> ApiResult<HttpResponse> {
+    let DnsResolutionRequest {
+        leech_uuid,
+        targets,
+        concurrent_limit,
+        workspace_uuid,
+    } = req.into_inner();
+
+    if targets.is_empty() {
+        return Err(ApiError::EmptyTargets);
+    }
+
+    let client = if let Some(leech_uuid) = leech_uuid {
+        rpc_clients.get_leech(&leech_uuid)?
+    } else {
+        rpc_clients.random_leech()?
+    };
+
+    let attack_uuid = Attack::insert(
+        db.as_ref(),
+        AttackType::DnsResolution,
+        user_uuid,
+        workspace_uuid,
+    )
+    .await?;
+
+    // start attack
+    tokio::spawn(
+        AttackContext {
+            db: Database::clone(&db),
+            ws_manager: WsManagerChan::clone(&ws_manager_chan),
+            user_uuid,
+            workspace_uuid,
+            attack_uuid,
+        }
+        .leech(client)
+        .dns_resolution(rpc_definitions::DnsResolutionRequest {
+            attack_uuid: attack_uuid.to_string(),
+            targets,
+            concurrent_limit,
+        }),
+    );
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
+}
+
 /// A simple version of an attack
 #[derive(Serialize, ToSchema)]
 pub struct SimpleAttack {
