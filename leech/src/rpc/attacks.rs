@@ -24,8 +24,8 @@ use crate::rpc::rpc_attacks::port_or_range::PortOrRange;
 use crate::rpc::rpc_attacks::req_attack_service_server::ReqAttackService;
 use crate::rpc::rpc_attacks::shared::CertEntry;
 use crate::rpc::rpc_attacks::{
-    BruteforceSubdomainRequest, BruteforceSubdomainResponse, CertificateTransparencyRequest,
-    CertificateTransparencyResponse, HostsAliveRequest, HostsAliveResponse,
+    BruteforceSubdomainRequest, CertificateTransparencyRequest, CertificateTransparencyResponse,
+    DnsResolutionRequest, DnsResolutionResponse, HostsAliveRequest, HostsAliveResponse,
     ServiceDetectionRequest, ServiceDetectionResponse, ServiceDetectionResponseType,
     TcpPortScanRequest, TcpPortScanResponse,
 };
@@ -38,7 +38,7 @@ pub struct Attacks {
 #[tonic::async_trait]
 impl ReqAttackService for Attacks {
     type BruteforceSubdomainsStream =
-        Pin<Box<dyn Stream<Item = Result<BruteforceSubdomainResponse, Status>> + Send>>;
+        Pin<Box<dyn Stream<Item = Result<DnsResolutionResponse, Status>> + Send>>;
 
     async fn bruteforce_subdomains(
         &self,
@@ -55,7 +55,7 @@ impl ReqAttackService for Attacks {
             let req = req.clone();
             async move {
                 while let Some(res) = rx.recv().await {
-                    let rpc_res: BruteforceSubdomainResponse = res.into();
+                    let rpc_res: DnsResolutionResponse = res.into();
 
                     if let Err(err) = rpc_tx.send(Ok(rpc_res.clone())).await {
                         warn!("Could not send to rpc_tx: {err}");
