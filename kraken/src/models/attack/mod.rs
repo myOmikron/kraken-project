@@ -81,6 +81,7 @@ pub struct BruteforceSubdomainsResult {
     pub uuid: Uuid,
 
     /// The [attack](Attack) which produced this result
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub attack: ForeignModel<Attack>,
 
     /// The source address
@@ -228,6 +229,7 @@ pub struct HostAliveResult {
     pub uuid: Uuid,
 
     /// The [attack](Attack) which produced this result
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub attack: ForeignModel<Attack>,
 
     /// The point in time, this result was produced
@@ -262,6 +264,7 @@ pub struct ServiceDetectionResult {
     pub uuid: Uuid,
 
     /// The [attack](Attack) which produced this result
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub attack: ForeignModel<Attack>,
 
     /// The point in time, this result was produced
