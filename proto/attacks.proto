@@ -158,6 +158,20 @@ message HostsAliveResponse {
   attacks.shared.Address host = 1;
 }
 
+/*
+ * DNS resolution
+ */
+message DnsResolutionRequest {
+  // A unique id that identifier the attack
+  string attack_uuid = 1;
+  // The domains to resolve
+  repeated string targets = 2;
+  // Maximum of concurrent tasks that should be spawned
+  //
+  // 0 means, that there should be no limit.
+  uint32 concurrent_limit = 3;
+}
+
 message DnsResolutionResponse {
   // Found record
   shared.DNSRecord record = 1;
@@ -170,6 +184,7 @@ service ReqAttackService {
   rpc QueryCertificateTransparency(CertificateTransparencyRequest) returns (CertificateTransparencyResponse);
   rpc ServiceDetection(ServiceDetectionRequest) returns (ServiceDetectionResponse);
   rpc HostsAliveCheck(HostsAliveRequest) returns (stream HostsAliveResponse);
+  rpc DnsResolution(DnsResolutionRequest) returns (stream DnsResolutionResponse);
 }
 
 /*

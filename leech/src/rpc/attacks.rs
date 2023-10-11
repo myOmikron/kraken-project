@@ -17,6 +17,7 @@ use crate::modules::bruteforce_subdomains::{
     bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
 };
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
+use crate::modules::dns::{dns_resolution, DnsRecordResult, DnsResolutionSettings};
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::modules::service_detection::{detect_service, DetectServiceSettings, Service};
@@ -287,6 +288,53 @@ impl ReqAttackService for Attacks {
         let output_stream = ReceiverStream::new(rpc_rx);
         Ok(Response::new(
             Box::pin(output_stream) as Self::HostsAliveCheckStream
+        ))
+    }
+
+    type DnsResolutionStream =
+        Pin<Box<dyn Stream<Item = Result<DnsResolutionResponse, Status>> + Send>>;
+
+    async fn dns_resolution(
+        &self,
+        request: Request<DnsResolutionRequest>,
+    ) -> Result<Response<Self::DnsResolutionStream>, Status> {
+        if request.get_ref().targets.is_empty() {
+            return Err(Status::invalid_argument("nothing to resolve"));
+        }
+
+        let (rpc_tx, rpc_rx) = mpsc::channel(16);
+        let (tx, mut rx) = mpsc::channel::<DnsRecordResult>(16);
+
+        let req = request.into_inner();
+        let _backlog = self.backlog.clone();
+
+        tokio::spawn({
+            let rpc_tx = rpc_tx.clone();
+            async move {
+                while let Some(res) = rx.recv().await {
+                    let rpc_res: DnsResolutionResponse = res.into();
+                    if let Err(err) = rpc_tx.send(Ok(rpc_res)).await {
+                        warn!("Could not send to rpc_tx: {err}");
+                        //TODO backlog
+                    }
+                }
+            }
+        });
+
+        let settings = DnsResolutionSettings {
+            domains: req.targets,
+            concurrent_limit: req.concurrent_limit,
+        };
+        tokio::spawn(async move {
+            if let Err(err) = dns_resolution(settings, tx).await {
+                warn!("Attack {} returned error: {err}", req.attack_uuid);
+                let _ = rpc_tx.send(Err(Status::unknown(err.to_string()))).await;
+            }
+        });
+
+        let output_stream = ReceiverStream::new(rpc_rx);
+        Ok(Response::new(
+            Box::pin(output_stream) as Self::DnsResolutionStream
         ))
     }
 }
