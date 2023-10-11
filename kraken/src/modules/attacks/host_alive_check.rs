@@ -20,7 +20,7 @@ impl LeechAttackContext {
                     return Err(AttackError::Malformed("Missing `host`"));
                 };
 
-                let host = host.into();
+                let host = host.try_into()?;
                 self.send_ws(WsMessage::HostsAliveCheck {
                     host,
                     attack_uuid: self.attack_uuid,

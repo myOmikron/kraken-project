@@ -26,6 +26,7 @@ use uuid::Uuid;
 use crate::api::handler;
 use crate::chan::{LeechClient, WsManagerChan, WsManagerMessage, WsMessage};
 use crate::models::Attack;
+use crate::rpc::rpc_definitions::AddressConvError;
 
 /// Common data required to start any attack
 #[derive(Clone)]
@@ -151,6 +152,9 @@ pub enum AttackError {
     /// For example "optional" fields which have to be set
     Malformed(&'static str),
 
+    /// An error produced by address conversion
+    AddressConv(#[from] AddressConvError),
+
     /// Catch all variant for everything else
     Custom(Box<dyn StdError + Send + Sync>),
 }
@@ -165,6 +169,7 @@ impl fmt::Display for AttackError {
             ),
             AttackError::Database(err) => write!(f, "DB: {err}"),
             AttackError::Malformed(err) => write!(f, "Malformed response: {err}"),
+            AttackError::AddressConv(err) => write!(f, "Error during address conversion: {err}"),
             AttackError::Custom(err) => write!(f, "{err}"),
         }
     }

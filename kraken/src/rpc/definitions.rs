@@ -2,6 +2,7 @@ pub mod rpc_definitions {
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
     use ipnetwork::IpNetwork;
+    use thiserror::Error;
 
     pub mod shared {
         tonic::include_proto!("attacks.shared");
@@ -52,13 +53,19 @@ pub mod rpc_definitions {
         }
     }
 
-    impl From<shared::Address> for IpAddr {
-        fn from(value: shared::Address) -> Self {
+    #[derive(Debug, Error)]
+    #[error("Address was None")]
+    pub struct AddressConvError;
+
+    impl TryFrom<shared::Address> for IpAddr {
+        type Error = AddressConvError;
+
+        fn try_from(value: shared::Address) -> Result<Self, Self::Error> {
             let shared::Address { address } = value;
-            match address.unwrap() {
+            Ok(match address.ok_or(AddressConvError)? {
                 shared::address::Address::Ipv4(v) => IpAddr::from(Ipv4Addr::from(v)),
                 shared::address::Address::Ipv6(v) => IpAddr::from(Ipv6Addr::from(v)),
-            }
+            })
         }
     }
 
