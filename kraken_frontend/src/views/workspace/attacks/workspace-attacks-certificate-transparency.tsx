@@ -51,11 +51,8 @@ export default class WorkspaceAttacksCT extends React.Component<WorkspaceAttacks
         return (
             <div className={"workspace-attacks-ct-container"}>
                 <div className={"workspace-attacks-ct"}>
-                    <Input
-                        placeholder={"Domain"}
-                        value={this.state.domain}
-                        onChange={(domain) => this.setState({ domain })}
-                    />
+                    <label htmlFor={"domain"}>Domain</label>
+                    <Input id={"domain"} value={this.state.domain} onChange={(domain) => this.setState({ domain })} />
                     <div className={"workspace-attacks-ct-include-expired"}>
                         <label htmlFor={"include-expired"}>Include expired certificates</label>
                         <Checkbox

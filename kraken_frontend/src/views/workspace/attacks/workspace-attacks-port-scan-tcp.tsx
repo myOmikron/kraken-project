@@ -100,7 +100,9 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
                                 : "workspace-attacks-pst-advanced"
                         }
                     >
+                        <label htmlFor={"timeout"}>Timeout (in ms)</label>
                         <Input
+                            id={"timeout"}
                             value={this.state.timeout.toString()}
                             placeholder={"timeout in ms"}
                             onChange={(timeout) => {
@@ -112,7 +114,9 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
                                 this.setState({ timeout: n });
                             }}
                         />
+                        <label htmlFor={"retries"}>Retries</label>
                         <Input
+                            id={"retries"}
                             placeholder={"retries"}
                             value={this.state.retries.toString()}
                             onChange={(retries) => {
@@ -124,7 +128,9 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
                                 this.setState({ retries: n });
                             }}
                         />
+                        <label htmlFor={"interval"}>Interval (in ms)</label>
                         <Input
+                            id={"interval"}
                             placeholder={"interval in ms"}
                             value={this.state.interval.toString()}
                             onChange={(interval) => {
@@ -136,7 +142,9 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
                                 this.setState({ interval: n });
                             }}
                         />
+                        <label htmlFor={"task-limit"}>Task limit</label>
                         <Input
+                            id={"task-limit"}
                             placeholder={"task limit"}
                             value={this.state.taskLimit.toString()}
                             onChange={(taskLimit) => {

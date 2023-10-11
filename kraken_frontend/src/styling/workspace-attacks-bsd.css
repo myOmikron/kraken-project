@@ -1,26 +1,17 @@
-.workspace-attacks-ct-container {
+.workspace-attacks-bsd-ct {
     display: grid;
-    gap: 1em;
     grid-template-rows: 1fr max-content;
 }
 
-.workspace-attacks-ct {
+.workspace-attacks-bsd {
     display: grid;
     grid-template-columns: 1fr 2fr;
     grid-auto-rows: max-content;
+    gap: 0.5em;
     align-items: center;
-    flex-direction: column;
-    gap: 1em;
-    height: max-content;
 }
 
-.workspace-attacks-ct-include-expired {
-    grid-column: span 2;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-}
-
-.workspace-attacks-ct-advanced-button {
+.workspace-attacks-bsd-advanced-button {
     grid-column: span 2;
     display: flex;
     height: 2em;
@@ -29,20 +20,21 @@
     justify-content: center;
 }
 
-.workspace-attacks-ct-advanced-button .icon {
+.workspace-attacks-bsd-advanced-button .icon {
     width: 2em;
 }
 
-.workspace-attacks-ct-advanced {
+.workspace-attacks-bsd-advanced {
     grid-column: span 2;
     display: grid;
     grid-template-columns: 1fr 2fr;
     gap: 1em;
+    align-items: center;
     height: max-content;
     transition: all ease 750ms;
     opacity: 0;
 }
 
-.workspace-attacks-ct-advanced-open {
+.workspace-attacks-bsd-advanced-open {
     opacity: 100%;
 }
