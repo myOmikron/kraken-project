@@ -29,5 +29,5 @@ mkdocs serve -a bind_addr:port
 Deploy with `mike`:
 
 ```bash
-mike deploy --push --update-aliases 0.1 latest
+mike deploy -p --update-aliases 0.1 latest
 ```

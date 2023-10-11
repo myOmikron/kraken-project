@@ -1,14 +1,18 @@
-site_name: Kraken Project
+site_name: Kraken Project Documentation
 site_url: "https://kraken-project.org/"
 theme:
   name: material
+  logo: "assets/kraken_logo.png"
+  favicon: "assets/favicon.svg"
+  icon:
+    repo: "fontawesome/brands/github"
   custom_dir: overrides
   features:
     - content.tabs.link
     - content.code.annotate
   palette:
-    primary: black
     scheme: slate
+    primary: black
 repo_url: https://github.com/myOmikron/kraken-project
 repo_name: myOmikron/kraken-project
 markdown_extensions:

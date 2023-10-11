@@ -53,6 +53,10 @@ pub struct Attack {
     /// The point in time, this attack has finished
     pub finished_at: Option<DateTime<Utc>>,
 
+    /// Contains an error message if the attack didn't finish successfully
+    #[rorm(max_length = 255)]
+    pub error: Option<String>,
+
     /// The point in time, this attack was created
     #[rorm(auto_create_time)]
     pub created_at: DateTime<Utc>,

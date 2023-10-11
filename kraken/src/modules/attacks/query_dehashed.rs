@@ -1,13 +1,12 @@
 use dehashed_rs::{DehashedError, Query, ScheduledRequest, SearchResult};
 use ipnetwork::IpNetwork;
-use log::error;
 use rorm::insert;
 use rorm::prelude::*;
 use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;
 
 use crate::models::DehashedQueryResultInsert;
-use crate::modules::attacks::AttackContext;
+use crate::modules::attacks::{AttackContext, AttackError};
 
 impl AttackContext {
     /// Query the [dehashed](https://dehashed.com/) API.
@@ -16,19 +15,24 @@ impl AttackContext {
     pub async fn query_dehashed(self, sender: mpsc::Sender<ScheduledRequest>, query: Query) {
         let (tx, rx) = oneshot::channel::<Result<SearchResult, DehashedError>>();
 
-        if let Err(err) = sender.send(ScheduledRequest::new(query, tx)).await {
-            error!("Couldn't send to dehashed scheduler: {err}");
-            return;
+        if sender.send(ScheduledRequest::new(query, tx)).await.is_err() {
+            return self
+                .set_finished(Some(AttackError::Custom(
+                    "Couldn't send to dehashed scheduler".into(),
+                )))
+                .await;
         }
 
         let res = match rx.await {
             Err(err) => {
-                error!("Error waiting for result: {err}");
-                return;
+                return self
+                    .set_finished(Some(AttackError::Custom(err.into())))
+                    .await;
             }
             Ok(Err(err)) => {
-                error!("Error while using dehashed: {err}");
-                return;
+                return self
+                    .set_finished(Some(AttackError::Custom(err.into())))
+                    .await;
             }
             Ok(Ok(res)) => res,
         };
@@ -49,14 +53,14 @@ impl AttackContext {
             attack: ForeignModelByField::Key(self.attack_uuid),
         });
 
-        if let Err(err) = insert!(&self.db, DehashedQueryResultInsert)
-            .bulk(entries)
-            .await
-        {
-            error!("Database error: {err}");
-            return;
-        }
-
-        self.set_finished(true).await;
+        self.set_finished(
+            insert!(&self.db, DehashedQueryResultInsert)
+                .return_nothing()
+                .bulk(entries)
+                .await
+                .map_err(AttackError::from)
+                .err(),
+        )
+        .await;
     }
 }
