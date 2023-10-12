@@ -65,7 +65,7 @@ pub struct Attack {
 }
 
 /// The type of DNS Record
-#[derive(Clone, DbEnum)]
+#[derive(Copy, Clone, DbEnum)]
 pub enum DnsRecordType {
     /// [A](crate::rpc::rpc_definitions::shared::dns_record::Record::A) record type
     A,

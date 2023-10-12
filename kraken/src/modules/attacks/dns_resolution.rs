@@ -113,7 +113,7 @@ impl LeechAttackContext {
                 DnsResolutionResult::F.attack.equals(self.attack_uuid),
                 DnsResolutionResult::F
                     .dns_record_type
-                    .equals(dns_record_type.clone()),
+                    .equals(dns_record_type),
                 DnsResolutionResult::F.source.equals(&source),
                 DnsResolutionResult::F.destination.equals(&destination)
             ))
@@ -127,7 +127,7 @@ impl LeechAttackContext {
                 .single(&DnsResolutionResultInsert {
                     uuid: Uuid::new_v4(),
                     attack: ForeignModelByField::Key(self.attack_uuid),
-                    dns_record_type: dns_record_type.clone(),
+                    dns_record_type,
                     source: source.clone(),
                     destination: destination.clone(),
                 })
