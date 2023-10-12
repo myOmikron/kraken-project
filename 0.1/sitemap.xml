@@ -1,23 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://kraken-project.org/0.1/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <loc>https://docs.kraken-project.org/0.1/</loc>
+         <lastmod>2023-10-12</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://kraken-project.org/0.1/contribution/style_guidelines/rust/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <loc>https://docs.kraken-project.org/0.1/administration/</loc>
+         <lastmod>2023-10-12</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://kraken-project.org/0.1/installation/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <loc>https://docs.kraken-project.org/0.1/contribution/style_guidelines/rust/</loc>
+         <lastmod>2023-10-12</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://kraken-project.org/0.1/usage/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <loc>https://docs.kraken-project.org/0.1/installation/</loc>
+         <lastmod>2023-10-12</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://docs.kraken-project.org/0.1/usage/</loc>
+         <lastmod>2023-10-12</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>
