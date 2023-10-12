@@ -24,7 +24,6 @@ use std::time::Duration;
 use chrono::{Datelike, Timelike};
 use clap::{ArgAction, Parser, Subcommand, ValueEnum};
 use dehashed_rs::SearchType;
-use ipnet::IpNet;
 use ipnetwork::IpNetwork;
 use itertools::Itertools;
 use log::{error, info, warn};
@@ -115,9 +114,6 @@ pub enum RunCommand {
         /// If no values are supplied, 1-65535 is used as default
         #[clap(short = 'p')]
         ports: Vec<String>,
-        /// Valid IPv4 or IPv6 addresses or networks in CIDR notation
-        #[clap(long)]
-        exclude: Vec<String>,
         /// The technique to use for port scans
         #[clap(short = 't', long)]
         #[clap(default_value = "tcp-con")]
@@ -419,7 +415,6 @@ async fn main() -> Result<(), String> {
                     }
                     RunCommand::PortScanner {
                         targets,
-                        exclude,
                         technique,
                         ports,
                         timeout,
@@ -431,34 +426,15 @@ async fn main() -> Result<(), String> {
                         let mut addresses = vec![];
                         for target in targets {
                             if let Ok(addr) = IpAddr::from_str(&target) {
-                                addresses.push(addr);
-                            } else if let Ok(net) = IpNet::from_str(&target) {
-                                addresses.extend(net.hosts());
+                                addresses.push(IpNetwork::from(addr));
+                            } else if let Ok(net) = IpNetwork::from_str(&target) {
+                                addresses.push(net);
                             } else {
                                 return Err(format!("{target} isn't valid ip address or ip net"));
                             }
                         }
 
-                        let mut exclude_addresses = vec![];
-                        for ex in exclude {
-                            if let Ok(addr) = IpAddr::from_str(&ex) {
-                                exclude_addresses.push(addr);
-                            } else if let Ok(net) = IpNet::from_str(&ex) {
-                                exclude_addresses.extend(net.hosts());
-                            } else {
-                                return Err(format!("{ex} isn't valid ip address or ip net"));
-                            }
-                        }
-
-                        let addresses: Vec<IpAddr> = addresses
-                            .into_iter()
-                            .filter(|addr| !exclude_addresses.contains(addr))
-                            .sorted()
-                            .dedup()
-                            .collect();
-
                         let mut port_range = vec![];
-
                         if ports.is_empty() {
                             port_range.extend(1..=u16::MAX);
                         } else {

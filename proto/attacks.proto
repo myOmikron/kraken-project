@@ -33,30 +33,28 @@ message BruteforceSubdomainResponse {
 message TcpPortScanRequest {
   // A unique id that identifier the attack
   string attack_uuid = 1;
-  // Valid IPv4 or IPv6 addresses
-  repeated shared.Address targets = 2;
+  // The ip addresses / networks to scan
+  repeated attacks.shared.NetOrAddress targets = 2;
   // List of single ports and port ranges
   //
   // If no values are supplied, 1-65535 is used as default
   repeated PortOrRange ports = 3;
-  // Valid IPv4 or IPv6 addresses or networks in CIDR notation
-  repeated string exclude = 4;
   // The time to wait until a connection is considered failed.
   //
   // The timeout is specified in milliseconds.
-  uint64 timeout = 5;
+  uint64 timeout = 4;
   // The concurrent task limit
-  uint32 concurrent_limit = 6;
+  uint32 concurrent_limit = 5;
   // The number of times the connection should be retried if it failed.
-  uint32 max_retries = 7;
+  uint32 max_retries = 6;
   // The interval that should be wait between retries on a port.
   //
   // The interval is specified in milliseconds.
-  uint64 retry_interval = 8;
+  uint64 retry_interval = 7;
   // Skips the initial icmp check.
   //
   // All hosts are assumed to be reachable
-  bool skip_icmp_check = 9;
+  bool skip_icmp_check = 8;
 }
 
 // An (inclusive) range of ports

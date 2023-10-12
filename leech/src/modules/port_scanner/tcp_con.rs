@@ -1,17 +1,18 @@
 //! This module holds a tcp connect port scanner
 
-use std::net::{IpAddr, SocketAddr};
+use std::net::SocketAddr;
 use std::time::Duration;
 
 use futures::{stream, StreamExt};
 use ipnetwork::IpNetwork;
 use itertools::iproduct;
-use log::{debug, error, info, trace, warn};
+use log::{debug, info, trace, warn};
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
 use tokio::time::{sleep, timeout};
+use tokio_stream::wrappers::ReceiverStream;
 
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::error::TcpPortScanError;
@@ -19,8 +20,8 @@ use crate::modules::port_scanner::error::TcpPortScanError;
 /// The settings of a tcp connection port scan
 #[derive(Clone, Debug)]
 pub struct TcpPortScannerSettings {
-    /// The addresses to scan
-    pub addresses: Vec<IpAddr>,
+    /// Ip addresses / networks to scan
+    pub addresses: Vec<IpNetwork>,
     /// The port range to scan
     pub port_range: Vec<u16>,
     /// The duration to wait for a response
@@ -54,47 +55,30 @@ pub async fn start_tcp_con_port_scan(
         return Err(TcpPortScanError::RiseNoFileLimit(err));
     }
 
-    let addresses;
-
-    if settings.skip_icmp_check {
+    let addresses = if settings.skip_icmp_check {
         info!("Skipping icmp check");
-        addresses = settings.addresses;
+        settings.addresses
     } else {
-        let (tx, mut rx) = mpsc::channel(1);
-
-        let handle = tokio::spawn(async move {
-            let mut a = vec![];
-            while let Some(addr) = rx.recv().await {
-                a.push(addr);
-            }
-            if a.is_empty() {
-                warn!("All hosts are unreachable. Check your targets or disable the icmp check.");
-            }
-            a
-        });
+        let (tx, rx) = mpsc::channel(1);
 
         let icmp_settings = IcmpScanSettings {
-            addresses: settings
-                .addresses
-                .into_iter()
-                .map(IpNetwork::from)
-                .collect(),
+            addresses: settings.addresses,
             timeout: Duration::from_millis(1000),
             concurrent_limit: settings.concurrent_limit,
         };
-
-        start_icmp_scan(icmp_settings, tx).await?;
-
-        match handle.await {
-            Ok(a) => addresses = a,
-            Err(err) => {
-                error!("Could not join on icmp rx handle task: {err}");
-                return Err(TcpPortScanError::TaskJoin(err));
-            }
-        }
+        let icmp_scan = tokio::spawn(start_icmp_scan(icmp_settings, tx));
+        let addresses = ReceiverStream::new(rx).map(IpNetwork::from).collect().await;
+        icmp_scan.await.map_err(TcpPortScanError::TaskJoin)??;
+        addresses
+    };
+    if addresses.is_empty() && settings.skip_icmp_check {
+        warn!("All hosts are unreachable. Check your targets or disable the icmp check.");
     }
 
-    let product_it = iproduct!(settings.port_range, addresses);
+    let product_it = iproduct!(
+        settings.port_range,
+        addresses.iter().flat_map(|network| network.iter())
+    );
 
     stream::iter(product_it)
         .for_each_concurrent(settings.concurrent_limit as usize, move |(port, addr)| {

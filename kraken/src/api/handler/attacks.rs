@@ -127,32 +127,49 @@ pub async fn bruteforce_subdomains(
 /// The settings to configure a tcp port scan
 #[derive(Deserialize, ToSchema)]
 pub struct ScanTcpPortsRequest {
-    pub(crate) leech_uuid: Option<Uuid>,
+    /// The leech to use
+    ///
+    /// Leave empty to use a random leech
+    pub leech_uuid: Option<Uuid>,
 
-    #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.2", "10.13.37.50"]))]
-    pub(crate) targets: Vec<IpAddr>,
+    /// The ip addresses / networks to scan
+    #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.2", "10.13.37.0/24"]))]
+    pub targets: Vec<IpNetwork>,
 
-    #[schema(value_type = Vec<String>, example = json!(["10.13.37.252/30"]))]
-    pub(crate) exclude: Vec<IpNetwork>,
+    /// List of single ports and port ranges
+    ///
+    /// If no values are supplied, 1-65535 is used as default
+    #[serde(default)]
+    pub ports: Vec<PortOrRange>,
 
-    pub(crate) ports: Vec<PortOrRange>,
-
+    /// The interval that should be wait between retries on a port.
+    ///
+    /// The interval is specified in milliseconds.
     #[schema(example = 100)]
-    pub(crate) retry_interval: u64,
+    pub retry_interval: u64,
 
+    /// The number of times the connection should be retried if it failed.
     #[schema(example = 2)]
-    pub(crate) max_retries: u32,
+    pub max_retries: u32,
 
+    /// The time to wait until a connection is considered failed.
+    ///
+    /// The timeout is specified in milliseconds.
     #[schema(example = 3000)]
-    pub(crate) timeout: u64,
+    pub timeout: u64,
 
+    /// The concurrent task limit
     #[schema(example = 5000)]
-    pub(crate) concurrent_limit: u32,
+    pub concurrent_limit: u32,
 
+    /// Skips the initial icmp check.
+    ///
+    /// All hosts are assumed to be reachable
     #[schema(example = false)]
-    pub(crate) skip_icmp_check: bool,
+    pub skip_icmp_check: bool,
 
-    pub(crate) workspace_uuid: Uuid,
+    /// The workspace to execute the attack in
+    pub workspace_uuid: Uuid,
 }
 
 /// Single port or a range of ports
@@ -180,22 +197,98 @@ where
         })
 }
 
-impl From<&PortOrRange> for rpc_definitions::PortOrRange {
-    fn from(value: &PortOrRange) -> Self {
-        rpc_definitions::PortOrRange {
-            port_or_range: Some(match value {
-                PortOrRange::Port(port) => {
-                    rpc_definitions::port_or_range::PortOrRange::Single(*port as u32)
-                }
-                PortOrRange::Range(range) => {
-                    rpc_definitions::port_or_range::PortOrRange::Range(rpc_definitions::PortRange {
-                        start: *range.start() as u32,
-                        end: *range.end() as u32,
-                    })
-                }
-            }),
+/// Start a tcp port scan
+///
+/// `exclude` accepts a list of ip networks in CIDR notation.
+///
+/// All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.
+///
+/// Set `max_retries` to 0 if you don't want to try a port more than 1 time.
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 202, description = "Attack scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = ScanTcpPortsRequest,
+    security(("api_key" = []))
+)]
+#[post("/attacks/scanTcpPorts")]
+pub async fn scan_tcp_ports(
+    req: Json<ScanTcpPortsRequest>,
+    db: Data<Database>,
+    rpc_clients: RpcClients,
+    ws_manager_chan: Data<WsManagerChan>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let ScanTcpPortsRequest {
+        leech_uuid,
+        targets,
+        ports,
+        retry_interval,
+        max_retries,
+        timeout,
+        concurrent_limit,
+        skip_icmp_check,
+        workspace_uuid,
+    } = req.into_inner();
+
+    let client = if let Some(leech_uuid) = leech_uuid {
+        rpc_clients.get_leech(&leech_uuid)?
+    } else {
+        rpc_clients.random_leech()?
+    };
+
+    let attack_uuid = Attack::insert(
+        db.as_ref(),
+        AttackType::TcpPortScan,
+        user_uuid,
+        workspace_uuid,
+    )
+    .await?;
+
+    // start attack
+    tokio::spawn(
+        AttackContext {
+            db: Database::clone(&db),
+            ws_manager: WsManagerChan::clone(&ws_manager_chan),
+            user_uuid,
+            workspace_uuid,
+            attack_uuid,
         }
-    }
+        .leech(client)
+        .tcp_port_scan(rpc_definitions::TcpPortScanRequest {
+            attack_uuid: attack_uuid.to_string(),
+            targets: targets.iter().map(|addr| (*addr).into()).collect(),
+            ports: ports
+                .iter()
+                .map(|value| rpc_definitions::PortOrRange {
+                    port_or_range: Some(match value {
+                        PortOrRange::Port(port) => {
+                            rpc_definitions::port_or_range::PortOrRange::Single(*port as u32)
+                        }
+                        PortOrRange::Range(range) => {
+                            rpc_definitions::port_or_range::PortOrRange::Range(
+                                rpc_definitions::PortRange {
+                                    start: *range.start() as u32,
+                                    end: *range.end() as u32,
+                                },
+                            )
+                        }
+                    }),
+                })
+                .collect(),
+            retry_interval,
+            max_retries,
+            timeout,
+            concurrent_limit,
+            skip_icmp_check,
+        }),
+    );
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: user_uuid }))
 }
 
 /// Host Alive check request
@@ -279,85 +372,6 @@ pub async fn hosts_alive_check(
     );
 
     Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
-}
-
-/// Start a tcp port scan
-///
-/// `exclude` accepts a list of ip networks in CIDR notation.
-///
-/// All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.
-///
-/// Set `max_retries` to 0 if you don't want to try a port more than 1 time.
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 202, description = "Attack scheduled", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    request_body = ScanTcpPortsRequest,
-    security(("api_key" = []))
-)]
-#[post("/attacks/scanTcpPorts")]
-pub async fn scan_tcp_ports(
-    req: Json<ScanTcpPortsRequest>,
-    db: Data<Database>,
-    rpc_clients: RpcClients,
-    ws_manager_chan: Data<WsManagerChan>,
-    SessionUser(user_uuid): SessionUser,
-) -> ApiResult<HttpResponse> {
-    let ScanTcpPortsRequest {
-        leech_uuid,
-        targets,
-        exclude,
-        ports,
-        retry_interval,
-        max_retries,
-        timeout,
-        concurrent_limit,
-        skip_icmp_check,
-        workspace_uuid,
-    } = req.into_inner();
-
-    let client = if let Some(leech_uuid) = leech_uuid {
-        rpc_clients.get_leech(&leech_uuid)?
-    } else {
-        rpc_clients.random_leech()?
-    };
-
-    let attack_uuid = Attack::insert(
-        db.as_ref(),
-        AttackType::TcpPortScan,
-        user_uuid,
-        workspace_uuid,
-    )
-    .await?;
-
-    // start attack
-    tokio::spawn(
-        AttackContext {
-            db: Database::clone(&db),
-            ws_manager: WsManagerChan::clone(&ws_manager_chan),
-            user_uuid,
-            workspace_uuid,
-            attack_uuid,
-        }
-        .leech(client)
-        .tcp_port_scan(rpc_definitions::TcpPortScanRequest {
-            attack_uuid: attack_uuid.to_string(),
-            targets: targets.iter().map(|addr| (*addr).into()).collect(),
-            exclude: exclude.iter().map(|addr| addr.to_string()).collect(),
-            ports: ports.iter().map(From::from).collect(),
-            retry_interval,
-            max_retries,
-            timeout,
-            concurrent_limit,
-            skip_icmp_check,
-        }),
-    );
-
-    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: user_uuid }))
 }
 
 /// The settings to configure a certificate transparency request
