@@ -63,8 +63,8 @@ message AAAA {
   Ipv6 to = 2;
 }
 
-// CNAME record representation
-message CNAME {
+// GenericRecord record representation
+message GenericRecord {
   string source = 1;
   string to = 2;
 }
@@ -72,9 +72,20 @@ message CNAME {
 // Generic DNS record representation
 message DNSRecord {
   oneof record {
+    // IPv4 address
     A a = 1;
+    // IPv address
     AAAA aaaa = 2;
-    CNAME cname = 3;
+    // Certificate authority authorization
+    GenericRecord caa = 3;
+    // Canonical name
+    GenericRecord cname = 4;
+    // Mail exchange
+    GenericRecord mx = 5;
+    // Certificate association for TLS
+    GenericRecord tlsa = 6;
+    // Human readable text
+    GenericRecord txt = 7;
   }
 }
 

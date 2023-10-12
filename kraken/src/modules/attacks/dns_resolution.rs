@@ -1,5 +1,7 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
+use std::str::FromStr;
 
+use ipnetwork::IpNetwork;
 use log::debug;
 use rorm::prelude::*;
 use rorm::{and, insert, query};
@@ -7,23 +9,22 @@ use uuid::Uuid;
 
 use crate::chan::WsMessage;
 use crate::models::{
-    BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert, DnsRecordType, Domain,
+    DnsRecordType, DnsResolutionResult, DnsResolutionResultInsert, Domain, Host, OsType,
 };
 use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
+use crate::rpc::rpc_definitions;
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
-use crate::rpc::rpc_definitions::{
-    shared, BruteforceSubdomainRequest, BruteforceSubdomainResponse,
-};
+use crate::rpc::rpc_definitions::{shared, DnsResolutionResponse};
 
 impl LeechAttackContext {
-    /// Bruteforce subdomains through a DNS wordlist attack
+    /// Resolve domain names
     ///
-    /// See [`handler::attacks::bruteforce_subdomains`] for more information.
-    pub async fn bruteforce_subdomains(mut self, req: BruteforceSubdomainRequest) {
+    /// See [`handler::attacks::dns_resolution`] for more information.
+    pub async fn dns_resolution(mut self, req: rpc_definitions::DnsResolutionRequest) {
         let result = AttackContext::handle_streamed_response(
-            self.leech.bruteforce_subdomains(req).await,
+            self.leech.dns_resolution(req).await,
             |response| async {
-                let BruteforceSubdomainResponse {
+                let DnsResolutionResponse {
                     record:
                         Some(shared::DnsRecord {
                             record: Some(record),
@@ -58,30 +59,48 @@ impl LeechAttackContext {
                         destination = cname_rec.to;
                         dns_record_type = DnsRecordType::Cname;
                     }
-                    _ => {
-                        return Err(AttackError::Malformed("unexpected `record type`"));
+                    Record::Caa(caa_rec) => {
+                        source = caa_rec.source;
+                        destination = caa_rec.to;
+                        dns_record_type = DnsRecordType::Caa;
+                    }
+                    Record::Mx(mx_rec) => {
+                        source = mx_rec.source;
+                        destination = mx_rec.to;
+                        dns_record_type = DnsRecordType::Mx;
+                    }
+                    Record::Tlsa(tlsa_rec) => {
+                        source = tlsa_rec.source;
+                        destination = tlsa_rec.to;
+                        dns_record_type = DnsRecordType::Tlsa;
+                    }
+                    Record::Txt(txt_rec) => {
+                        source = txt_rec.source;
+                        destination = txt_rec.to;
+                        dns_record_type = DnsRecordType::Txt;
                     }
                 };
 
-                self.send_ws(WsMessage::BruteforceSubdomainsResult {
+                self.send_ws(WsMessage::DnsResolutionResult {
                     attack_uuid: self.attack_uuid,
                     source: source.clone(),
                     destination: destination.clone(),
                 })
                 .await;
 
-                self.insert_bruteforce_subdomains_result(source, destination, dns_record_type)
+                self.insert_dns_result(source, destination, dns_record_type)
                     .await?;
 
                 Ok(())
             },
         )
         .await;
+
         self.set_finished(result.err()).await;
     }
 
-    /// Insert a tcp port scan's result and update the aggregation
-    async fn insert_bruteforce_subdomains_result(
+    /// Insert a dns resolution result and update the aggregation
+    async fn insert_dns_result(
         &self,
         source: String,
         destination: String,
@@ -89,18 +108,14 @@ impl LeechAttackContext {
     ) -> Result<(), rorm::Error> {
         let mut tx = self.db.start_transaction().await?;
 
-        if query!(&mut tx, BruteforceSubdomainsResult)
+        if query!(&mut tx, DnsResolutionResult)
             .condition(and!(
-                BruteforceSubdomainsResult::F
-                    .attack
-                    .equals(self.attack_uuid),
-                BruteforceSubdomainsResult::F
+                DnsResolutionResult::F.attack.equals(self.attack_uuid),
+                DnsResolutionResult::F
                     .dns_record_type
-                    .equals(dns_record_type.clone()),
-                BruteforceSubdomainsResult::F.source.equals(&source),
-                BruteforceSubdomainsResult::F
-                    .destination
-                    .equals(&destination)
+                    .equals(dns_record_type),
+                DnsResolutionResult::F.source.equals(&source),
+                DnsResolutionResult::F.destination.equals(&destination)
             ))
             .optional()
             .await?
@@ -108,8 +123,8 @@ impl LeechAttackContext {
         {
             debug!("entry already exists");
         } else {
-            insert!(&mut tx, BruteforceSubdomainsResult)
-                .single(&BruteforceSubdomainsResultInsert {
+            insert!(&mut tx, DnsResolutionResult)
+                .single(&DnsResolutionResultInsert {
                     uuid: Uuid::new_v4(),
                     attack: ForeignModelByField::Key(self.attack_uuid),
                     dns_record_type,
@@ -119,6 +134,18 @@ impl LeechAttackContext {
                 .await?;
 
             Domain::insert_if_missing(&mut tx, self.workspace_uuid, &source).await?;
+
+            match dns_record_type {
+                DnsRecordType::A | DnsRecordType::Aaaa => {
+                    let addr = IpNetwork::from_str(&destination).unwrap();
+                    Host::insert_if_missing(&mut tx, self.workspace_uuid, addr, OsType::Unknown)
+                        .await?;
+                }
+                DnsRecordType::Cname => {
+                    Domain::insert_if_missing(&mut tx, self.workspace_uuid, &destination).await?;
+                }
+                _ => {}
+            }
         }
 
         tx.commit().await

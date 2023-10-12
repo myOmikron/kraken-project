@@ -1,11 +1,11 @@
 [Migration]
-Hash = "12982503414070488554"
+Hash = "7119859070499997858"
 Initial = true
 Replaces = []
 
 [[Migration.Operations]]
 Type = "CreateModel"
-Name = "bruteforcesubdomainsresult"
+Name = "dnsresult"
 
 [[Migration.Operations.Fields]]
 Name = "uuid"
@@ -52,7 +52,11 @@ Type = "choices"
 Value = [
     "A",
     "Aaaa",
+    "Caa",
     "Cname",
+    "Mx",
+    "Tlsa",
+    "Txt",
 ]
 
 [[Migration.Operations.Fields.Annotations]]

@@ -77,6 +77,10 @@ impl Backlog {
                 )
             }
             Record::Cname(cname_rec) => (cname_rec.source, cname_rec.to, DnsRecordType::Cname),
+            _ => {
+                debug!("record type not of concern");
+                return;
+            }
         };
 
         if let Err(err) = insert!(&self.db, BruteforceSubdomainsResultInsert)

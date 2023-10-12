@@ -4,6 +4,7 @@
 //! and call your desired attack method.
 
 mod bruteforce_subdomains;
+mod dns_resolution;
 mod host_alive_check;
 mod query_certificate_transparency;
 mod query_dehashed;

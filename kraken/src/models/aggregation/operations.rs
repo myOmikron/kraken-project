@@ -202,3 +202,46 @@ impl Domain {
         Ok(inserted)
     }
 }
+
+impl Host {
+    /// Insert an aggregated host if it doesn't exist yet.
+    ///
+    /// Returns whether the domain was inserted or not.
+    pub async fn insert_if_missing(
+        executor: impl Executor<'_>,
+        workspace: Uuid,
+        ip_addr: IpNetwork,
+        os_type: OsType,
+    ) -> Result<bool, rorm::Error> {
+        let mut guard = executor.ensure_transaction().await?;
+        let tx = guard.get_transaction();
+
+        let inserted = if query!(&mut *tx, (Host::F.uuid,))
+            .condition(and![
+                Host::F.workspace.equals(workspace),
+                Host::F.ip_addr.equals(ip_addr),
+            ])
+            .optional()
+            .await?
+            .is_some()
+        {
+            false
+        } else {
+            insert!(&mut *tx, Host)
+                .return_nothing()
+                .single(&HostInsert {
+                    uuid: Uuid::new_v4(),
+                    ip_addr,
+                    os_type,
+                    response_time: None,
+                    comment: "".to_string(),
+                    workspace: ForeignModelByField::Key(workspace),
+                })
+                .await?;
+            true
+        };
+
+        guard.commit().await?;
+        Ok(inserted)
+    }
+}
