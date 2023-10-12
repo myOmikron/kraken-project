@@ -23,9 +23,11 @@ mod utils;
 #[allow(missing_docs)]
 pub mod rpc_attacks {
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
+    use std::ops::RangeInclusive;
     use std::str::FromStr;
 
     use ipnetwork::{IpNetwork, Ipv4Network, Ipv6Network};
+    use tonic::Status;
 
     use crate::models::{BruteforceSubdomainsResult, DnsRecordType, TcpPortScanResult};
     use crate::modules::bruteforce_subdomains::BruteforceSubdomainResult;
@@ -218,6 +220,41 @@ pub mod rpc_attacks {
                     IpAddr::V4(addr) => shared::address::Address::Ipv4(addr.into()),
                     IpAddr::V6(addr) => shared::address::Address::Ipv6(addr.into()),
                 }),
+            }
+        }
+    }
+
+    impl TryFrom<PortOrRange> for RangeInclusive<u16> {
+        type Error = Status;
+
+        fn try_from(value: PortOrRange) -> Result<Self, Self::Error> {
+            let value = value
+                .port_or_range
+                .ok_or_else(|| Status::invalid_argument("Missing inner field `port_or_range`"))?;
+            let try_port = |port| {
+                let port = u16::try_from(port)
+                    .map_err(|_| Status::invalid_argument(format!("Port {port} is too big")))?;
+                if port == 0 {
+                    return Err(Status::invalid_argument("Ports can't be zero"));
+                }
+                Ok(port)
+            };
+            match value {
+                port_or_range::PortOrRange::Single(port) => {
+                    let port = try_port(port)?;
+                    Ok(port..=port)
+                }
+                port_or_range::PortOrRange::Range(range) => {
+                    let start = try_port(range.start)?;
+                    let end = try_port(range.end)?;
+                    if start <= end {
+                        Ok(start..=end)
+                    } else {
+                        Err(Status::invalid_argument(
+                            "Range start is bigger than its end",
+                        ))
+                    }
+                }
             }
         }
     }

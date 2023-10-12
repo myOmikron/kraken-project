@@ -436,7 +436,7 @@ async fn main() -> Result<(), String> {
 
                         let mut port_range = vec![];
                         if ports.is_empty() {
-                            port_range.extend(1..=u16::MAX);
+                            port_range.push(1..=u16::MAX);
                         } else {
                             utils::parse_ports(&ports, &mut port_range)?;
                         }
@@ -445,7 +445,7 @@ async fn main() -> Result<(), String> {
                             PortScanTechnique::TcpCon => {
                                 let settings = TcpPortScannerSettings {
                                     addresses,
-                                    port_range,
+                                    ports: port_range,
                                     timeout: Duration::from_millis(timeout as u64),
                                     skip_icmp_check,
                                     max_retries,

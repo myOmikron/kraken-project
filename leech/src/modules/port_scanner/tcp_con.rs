@@ -1,11 +1,12 @@
 //! This module holds a tcp connect port scanner
 
 use std::net::SocketAddr;
+use std::ops::RangeInclusive;
 use std::time::Duration;
 
 use futures::{stream, StreamExt};
 use ipnetwork::IpNetwork;
-use itertools::iproduct;
+use itertools::Itertools;
 use log::{debug, info, trace, warn};
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
@@ -22,8 +23,8 @@ use crate::modules::port_scanner::error::TcpPortScanError;
 pub struct TcpPortScannerSettings {
     /// Ip addresses / networks to scan
     pub addresses: Vec<IpNetwork>,
-    /// The port range to scan
-    pub port_range: Vec<u16>,
+    /// The port ranges to scan
+    pub ports: Vec<RangeInclusive<u16>>,
     /// The duration to wait for a response
     pub timeout: Duration,
     /// Defines how many times a connection should be retried if it failed the last time
@@ -74,13 +75,10 @@ pub async fn start_tcp_con_port_scan(
     if addresses.is_empty() && settings.skip_icmp_check {
         warn!("All hosts are unreachable. Check your targets or disable the icmp check.");
     }
+    let iter_addresses = addresses.iter().flat_map(|network| network.iter());
+    let iter_ports = settings.ports.iter().cloned().flatten();
 
-    let product_it = iproduct!(
-        settings.port_range,
-        addresses.iter().flat_map(|network| network.iter())
-    );
-
-    stream::iter(product_it)
+    stream::iter(iter_ports.cartesian_product(iter_addresses))
         .for_each_concurrent(settings.concurrent_limit as usize, move |(port, addr)| {
             let tx = tx.clone();
 

@@ -18,7 +18,6 @@ use crate::modules::dns::{dns_resolution, DnsResolutionSettings};
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::modules::service_detection::{detect_service, DetectServiceSettings, Service};
-use crate::rpc::rpc_attacks::port_or_range::PortOrRange;
 use crate::rpc::rpc_attacks::req_attack_service_server::ReqAttackService;
 use crate::rpc::rpc_attacks::shared::CertEntry;
 use crate::rpc::rpc_attacks::{
@@ -88,24 +87,18 @@ impl ReqAttackService for Attacks {
         let attack_uuid = Uuid::parse_str(&req.attack_uuid)
             .map_err(|_| Status::invalid_argument("attack_uuid has to be an Uuid"))?;
 
-        let mut port_range = Vec::new();
-        for port_or_range in req.ports {
-            if let Some(port_or_range) = port_or_range.port_or_range {
-                match port_or_range {
-                    PortOrRange::Single(port) => port_range.push(port as u16),
-                    PortOrRange::Range(range) => {
-                        port_range.extend((range.start as u16)..=(range.end as u16))
-                    }
-                }
-            }
-        }
-        if port_range.is_empty() {
-            port_range.extend(1..=u16::MAX);
+        let mut ports = req
+            .ports
+            .into_iter()
+            .map(TryFrom::try_from)
+            .collect::<Result<Vec<_>, _>>()?;
+        if ports.is_empty() {
+            ports.push(1..=u16::MAX);
         }
 
         let settings = TcpPortScannerSettings {
             addresses: req.targets.into_iter().map(|addr| addr.into()).collect(),
-            port_range,
+            ports,
             timeout: Duration::from_millis(req.timeout),
             max_retries: req.max_retries,
             retry_interval: Duration::from_millis(req.retry_interval),
