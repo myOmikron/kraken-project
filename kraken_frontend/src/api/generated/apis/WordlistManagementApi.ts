@@ -42,10 +42,6 @@ export interface DeleteWordlistAdminRequest {
     uuid: string;
 }
 
-export interface GetAllWordlistsAdminRequest {
-    uuid: string;
-}
-
 export interface UpdateWordlistAdminRequest {
     uuid: string;
     updateWordlistRequest: UpdateWordlistRequest;
@@ -126,17 +122,13 @@ export class WordlistManagementApi extends runtime.BaseAPI {
      * Get a list of all wordlists including their paths
      * Get a list of all wordlists including their paths
      */
-    async getAllWordlistsAdminRaw(requestParameters: GetAllWordlistsAdminRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAllWordlistsAdminResponse>> {
-        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
-            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getAllWordlistsAdmin.');
-        }
-
+    async getAllWordlistsAdminRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAllWordlistsAdminResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/api/v1/admin/wordlists`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            path: `/api/v1/admin/wordlists`,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -149,8 +141,8 @@ export class WordlistManagementApi extends runtime.BaseAPI {
      * Get a list of all wordlists including their paths
      * Get a list of all wordlists including their paths
      */
-    async getAllWordlistsAdmin(requestParameters: GetAllWordlistsAdminRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAllWordlistsAdminResponse> {
-        const response = await this.getAllWordlistsAdminRaw(requestParameters, initOverrides);
+    async getAllWordlistsAdmin(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAllWordlistsAdminResponse> {
+        const response = await this.getAllWordlistsAdminRaw(initOverrides);
         return await response.value();
     }
 

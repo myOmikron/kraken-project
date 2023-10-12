@@ -6,7 +6,6 @@ import Input from "../../../components/input";
 import { toast } from "react-toastify";
 import StartAttack from "../components/start-attack";
 import "../../../styling/workspace-attacks-bsd.css";
-import Select from "react-select";
 import SelectMenu from "../../../components/select-menu";
 
 type WorkspaceAttacksBruteforceSubdomainsProps = {
@@ -45,21 +44,34 @@ export default class WorkspaceAttacksBruteforceSubdomains extends React.Componen
     }
 
     async retrieveWordlists() {
-        const wordlists = [{ label: "Test", value: "" }];
-
-        this.setState({ wordlists });
+        (await Api.wordlists.all()).match(
+            (wordlists) => {
+                this.setState({
+                    wordlists: wordlists.wordlists.map((x) => {
+                        return { label: x.name, value: x.uuid };
+                    }),
+                });
+            },
+            (err) => toast.error(err.message)
+        );
     }
 
     async startAttack() {
         if (this.state.domain === "") {
-            toast.error("");
+            toast.error("Domain must not be empty");
+            return;
+        }
+
+        if (this.state.wordlist === null) {
+            toast.error("Wordlist must not be empty");
+            return;
         }
 
         await Api.attacks.bruteforceSubdomains({
             workspaceUuid: this.props.workspaceUuid,
             domain: this.state.domain,
             concurrentLimit: this.state.taskLimit,
-            wordlistPath: "",
+            wordlistUuid: this.state.wordlist.value,
         });
     }
 

@@ -7,6 +7,7 @@ import {
     CreateGlobalTagRequest,
     CreateLeechRequest,
     CreateUserRequest,
+    CreateWordlistRequest,
     CreateWorkspaceRequest,
     CreateWorkspaceTagRequest,
     DomainsApi,
@@ -28,8 +29,11 @@ import {
     UpdateLeechRequest,
     UpdateMeRequest,
     UpdateSettingsRequest,
+    UpdateWordlistRequest,
     UpdateWorkspaceRequest,
     UpdateWorkspaceTag,
+    WordlistApi,
+    WordlistManagementApi,
     WorkspaceTagsApi,
 } from "./generated";
 import { Configuration } from "./generated";
@@ -68,6 +72,8 @@ const ports = new PortsApi(configuration);
 const domains = new DomainsApi(configuration);
 const services = new ServicesApi(configuration);
 const apiKeys = new ApiKeysApi(configuration);
+const wordlists = new WordlistApi(configuration);
+const wordlistsManagement = new WordlistManagementApi(configuration);
 
 export const Api = {
     admin: {
@@ -111,6 +117,14 @@ export const Api = {
             delete: (uuid: UUID) => handleError(globalTags.deleteGlobalTag({ uuid })),
             update: (uuid: UUID, updateGlobalTag: UpdateGlobalTag) =>
                 handleError(globalTags.updateGlobalTag({ uuid, updateGlobalTag })),
+        },
+        wordlists: {
+            all: () => handleError(wordlistsManagement.getAllWordlistsAdmin({})),
+            create: (createWordlistRequest: CreateWordlistRequest) =>
+                handleError(wordlistsManagement.createWordlistAdmin({ createWordlistRequest })),
+            update: (uuid: UUID, updateWordlistRequest: UpdateWordlistRequest) =>
+                handleError(wordlistsManagement.updateWordlistAdmin({ uuid, updateWordlistRequest })),
+            delete: (uuid: UUID) => handleError(wordlistsManagement.deleteWordlistAdmin({ uuid })),
         },
     },
     attacks: {
@@ -197,5 +211,8 @@ export const Api = {
     },
     globalTags: {
         all: () => handleError(globalTags.getAllGlobalTags()),
+    },
+    wordlists: {
+        all: () => handleError(wordlists.getAllWordlists()),
     },
 };
