@@ -22,7 +22,8 @@ use webauthn_rs::WebauthnBuilder;
 
 use crate::api::handler::{
     api_keys, attacks, auth, data_export, domains, global_tags, hosts, leeches, oauth,
-    oauth_applications, ports, services, settings, users, websocket, workspace_tags, workspaces,
+    oauth_applications, ports, services, settings, users, websocket, wordlist, workspace_tags,
+    workspaces,
 };
 use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
@@ -147,7 +148,11 @@ pub(crate) async fn start_server(
                     .service(settings::update_settings)
                     .service(global_tags::create_global_tag)
                     .service(global_tags::update_global_tag)
-                    .service(global_tags::delete_global_tag),
+                    .service(global_tags::delete_global_tag)
+                    .service(wordlist::wordlist_admin_create)
+                    .service(wordlist::wordlist_admin_get_all)
+                    .service(wordlist::wordlist_admin_update)
+                    .service(wordlist::wordlist_admin_delete),
             )
             .service(
                 scope("/api/v1")
@@ -186,7 +191,8 @@ pub(crate) async fn start_server(
                     .service(workspace_tags::delete_workspace_tag)
                     .service(ports::get_all_ports)
                     .service(services::get_all_services)
-                    .service(domains::get_all_domains),
+                    .service(domains::get_all_domains)
+                    .service(wordlist::wordlist_get_all),
             )
     })
     .bind((

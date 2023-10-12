@@ -8,7 +8,7 @@ use utoipa::{Modify, OpenApi};
 use crate::api::handler;
 use crate::api::handler::{
     api_keys, attacks, auth, data_export, domains, global_tags, hosts, leeches, oauth,
-    oauth_applications, oauth_decisions, ports, services, settings, users, websocket,
+    oauth_applications, oauth_decisions, ports, services, settings, users, websocket, wordlist,
     workspace_tags, workspaces,
 };
 use crate::models;
@@ -109,6 +109,11 @@ impl Modify for SecurityAddon2 {
         ports::get_all_ports,
         services::get_all_services,
         domains::get_all_domains,
+        wordlist::wordlist_get_all,
+        wordlist::wordlist_admin_create,
+        wordlist::wordlist_admin_get_all,
+        wordlist::wordlist_admin_update,
+        wordlist::wordlist_admin_delete,
     ),
     components(schemas(
         handler::ApiErrorResponse,
@@ -185,6 +190,12 @@ impl Modify for SecurityAddon2 {
         handler::ServiceResultsPage,
         domains::SimpleDomain,
         handler::DomainResultsPage,
+        wordlist::GetAllWordlistsResponse,
+        wordlist::SimpleWordlist,
+        wordlist::CreateWordlistRequest,
+        wordlist::GetAllWordlistsAdminResponse,
+        wordlist::FullWordlist,
+        wordlist::UpdateWordlistRequest,
     )),
     modifiers(&SecurityAddon, &SecurityAddon2)
 )]

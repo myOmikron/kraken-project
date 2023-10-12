@@ -42,6 +42,7 @@ pub mod services;
 pub mod settings;
 pub mod users;
 pub mod websocket;
+pub mod wordlist;
 pub mod workspace_tags;
 pub mod workspaces;
 
@@ -196,6 +197,8 @@ pub enum ApiStatusCode {
     InvalidPort = 1022,
     /// Empty targets
     EmptyTargets = 1023,
+    /// Path already exists
+    PathAlreadyExists = 1024,
 
     /// Internal server error
     InternalServerError = 2000,
@@ -276,6 +279,9 @@ pub enum ApiError {
     /// Name already exists
     #[error("Name already exists")]
     NameAlreadyExists,
+    /// Path already exists
+    #[error("Name already exists")]
+    PathAlreadyExists,
     /// Invalid uuid
     #[error("Invalid uuid")]
     InvalidUuid,
@@ -473,6 +479,10 @@ impl actix_web::ResponseError for ApiError {
             ),
             ApiError::NameAlreadyExists => HttpResponse::BadRequest().json(ApiErrorResponse::new(
                 ApiStatusCode::NameAlreadyExists,
+                self.to_string(),
+            )),
+            ApiError::PathAlreadyExists => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::PathAlreadyExists,
                 self.to_string(),
             )),
             ApiError::InvalidUuid => HttpResponse::BadRequest().json(ApiErrorResponse::new(
