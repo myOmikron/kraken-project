@@ -1,21 +1,11 @@
 //! Holds all the errors from dns resolution
 
-use std::fmt::{Display, Formatter};
-
-use trust_dns_resolver::error::ResolveError;
+use thiserror::Error;
 
 /// DNS Resolution error types
+#[derive(Debug, Error)]
 pub enum DnsResolutionError {
     /// Error creating the system resolver
-    CreateSystemResolver(ResolveError),
-}
-
-impl Display for DnsResolutionError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            DnsResolutionError::CreateSystemResolver(err) => {
-                write!(f, "Could not create system resolver: {err}")
-            }
-        }
-    }
+    #[error("Could not create system resolver: {0}")]
+    CreateSystemResolver(#[from] trust_dns_resolver::error::ResolveError),
 }
