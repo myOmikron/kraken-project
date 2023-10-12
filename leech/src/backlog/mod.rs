@@ -17,8 +17,7 @@ use crate::models::{
 use crate::rpc::rpc_attacks::backlog_service_client::BacklogServiceClient;
 use crate::rpc::rpc_attacks::shared::dns_record::Record;
 use crate::rpc::rpc_attacks::{
-    BacklogBruteforceSubdomainRequest, BacklogTcpPortScanRequest, BruteforceSubdomainRequest,
-    BruteforceSubdomainResponse, TcpPortScanRequest,
+    BacklogBruteforceSubdomainRequest, BacklogTcpPortScanRequest, BruteforceSubdomainResponse,
 };
 
 /// The main struct for the Backlog,
@@ -33,14 +32,9 @@ impl Backlog {
     /// information in the Leech's database
     pub(crate) async fn store_bruteforce_subdomains(
         &self,
-        req: &BruteforceSubdomainRequest,
+        attack_uuid: Uuid,
         response: BruteforceSubdomainResponse,
     ) {
-        let Ok(attack_uuid) = Uuid::parse_str(&req.attack_uuid) else {
-            error!("Invalid attack uuid");
-            return;
-        };
-
         let Some(dns_record) = &response.record else {
             info!("No DNS record");
             return;
@@ -100,16 +94,7 @@ impl Backlog {
 
     /// Stores the [TCP port scan results](crate::models::TcpPortScanResult)
     /// information in the Leech's database
-    pub(crate) async fn store_tcp_port_scans(
-        &self,
-        req: &TcpPortScanRequest,
-        socket_addr: SocketAddr,
-    ) {
-        let Ok(attack_uuid) = Uuid::parse_str(&req.attack_uuid) else {
-            error!("Invalid attack uuid");
-            return;
-        };
-
+    pub(crate) async fn store_tcp_port_scans(&self, attack_uuid: Uuid, socket_addr: SocketAddr) {
         if let Err(err) = insert!(&self.db, TcpPortScanResultInsert)
             .return_nothing()
             .single(&TcpPortScanResultInsert {
