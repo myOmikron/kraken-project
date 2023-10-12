@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   BruteforceSubdomainsRequest,
+  DnsResolutionRequest,
   HostsAliveRequest,
   QueryCertificateTransparencyRequest,
   QueryDehashedRequest,
@@ -31,6 +32,8 @@ import {
     ApiErrorResponseToJSON,
     BruteforceSubdomainsRequestFromJSON,
     BruteforceSubdomainsRequestToJSON,
+    DnsResolutionRequestFromJSON,
+    DnsResolutionRequestToJSON,
     HostsAliveRequestFromJSON,
     HostsAliveRequestToJSON,
     QueryCertificateTransparencyRequestFromJSON,
@@ -55,6 +58,10 @@ export interface BruteforceSubdomainsOperationRequest {
 
 export interface DeleteAttackRequest {
     uuid: string;
+}
+
+export interface DnsResolutionOperationRequest {
+    dnsResolutionRequest: DnsResolutionRequest;
 }
 
 export interface GetAttackRequest {
@@ -156,6 +163,41 @@ export class AttacksApi extends runtime.BaseAPI {
      */
     async deleteAttack(requestParameters: DeleteAttackRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteAttackRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Perform domain name resolution
+     * Perform domain name resolution
+     */
+    async dnsResolutionRaw(requestParameters: DnsResolutionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
+        if (requestParameters.dnsResolutionRequest === null || requestParameters.dnsResolutionRequest === undefined) {
+            throw new runtime.RequiredError('dnsResolutionRequest','Required parameter requestParameters.dnsResolutionRequest was null or undefined when calling dnsResolution.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/attacks/dnsResolution`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: DnsResolutionRequestToJSON(requestParameters.dnsResolutionRequest),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Perform domain name resolution
+     * Perform domain name resolution
+     */
+    async dnsResolution(requestParameters: DnsResolutionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
+        const response = await this.dnsResolutionRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**

@@ -86,10 +86,22 @@
 
 .workspace-host-hosts-list {
     grid-area: 1 / 1 / span 3 / span 1;
+    display: grid;
+    grid-template-rows: max-content 1fr;
+    gap: 1em;
+}
+
+.workspace-host-hosts-list-header {
     display: flex;
     flex-direction: column;
     gap: 1em;
-    height: 100%;
+}
+
+.workspace-host-hosts-list-entries {
+    display: grid;
+    gap: 1em;
+    overflow-y: auto;
+    height: 70vh;
 }
 
 .workspace-host-hosts-search {

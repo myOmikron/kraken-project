@@ -24,7 +24,8 @@ export const AttackType = {
     QueryCertificateTransparency: 'QueryCertificateTransparency',
     QueryUnhashed: 'QueryUnhashed',
     HostAlive: 'HostAlive',
-    ServiceDetection: 'ServiceDetection'
+    ServiceDetection: 'ServiceDetection',
+    DnsResolution: 'DnsResolution'
 } as const;
 export type AttackType = typeof AttackType[keyof typeof AttackType];
 
