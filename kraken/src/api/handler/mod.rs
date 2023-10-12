@@ -42,7 +42,7 @@ pub mod services;
 pub mod settings;
 pub mod users;
 pub mod websocket;
-pub mod wordlist;
+pub mod wordlists;
 pub mod workspace_tags;
 pub mod workspaces;
 

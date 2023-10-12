@@ -8,7 +8,7 @@ use utoipa::{Modify, OpenApi};
 use crate::api::handler;
 use crate::api::handler::{
     api_keys, attacks, auth, data_export, domains, global_tags, hosts, leeches, oauth,
-    oauth_applications, oauth_decisions, ports, services, settings, users, websocket, wordlist,
+    oauth_applications, oauth_decisions, ports, services, settings, users, websocket, wordlists,
     workspace_tags, workspaces,
 };
 use crate::models;
