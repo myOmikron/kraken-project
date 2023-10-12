@@ -26,9 +26,11 @@ pub struct SimpleWordlist {
     pub uuid: Uuid,
 
     /// The wordlist's name to be displayed select buttons
+    #[schema(example = "subdomains-top1million-5000.txt")]
     pub name: String,
 
     /// A description explaining the wordlist's intended use case
+    #[schema(example = "List of 5000 subdomains")]
     pub description: String,
 }
 
@@ -54,12 +56,15 @@ pub async fn wordlist_get_all(db: Data<Database>) -> ApiResult<Json<GetAllWordli
 #[derive(Deserialize, ToSchema)]
 pub struct CreateWordlistRequest {
     /// The wordlist's name to be displayed select buttons
+    #[schema(example = "subdomains-top1million-5000.txt")]
     pub name: String,
 
     /// A description explaining the wordlist's intended use case
+    #[schema(example = "List of 5000 subdomains")]
     pub description: String,
 
     /// The file path the wordlist is deployed under on each leech
+    #[schema(example = "/opt/wordlists/Discovery/DNS/subdomains-top1million-5000.txt")]
     pub path: String,
 }
 
@@ -105,12 +110,15 @@ pub struct FullWordlist {
     pub uuid: Uuid,
 
     /// The wordlist's name to be displayed select buttons
+    #[schema(example = "subdomains-top1million-5000.txt")]
     pub name: String,
 
     /// A description explaining the wordlist's intended use case
+    #[schema(example = "List of 5000 subdomains")]
     pub description: String,
 
     /// The file path the wordlist is deployed under on each leech
+    #[schema(example = "/opt/wordlists/Discovery/DNS/subdomains-top1million-5000.txt")]
     pub path: String,
 }
 
@@ -142,12 +150,15 @@ pub struct UpdateWordlistRequest {
     pub uuid: Uuid,
 
     /// The wordlist's name to be displayed select buttons
+    #[schema(example = "subdomains-top1million-5000.txt")]
     pub name: Option<String>,
 
     /// A description explaining the wordlist's intended use case
+    #[schema(example = "List of 5000 subdomains")]
     pub description: Option<String>,
 
     /// The file path the wordlist is deployed under on each leech
+    #[schema(example = "/opt/wordlists/Discovery/DNS/subdomains-top1million-5000.txt")]
     pub path: Option<String>,
 }
 

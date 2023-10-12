@@ -24,7 +24,7 @@ use crate::api::handler::{
 };
 use crate::api::server::DehashedScheduler;
 use crate::chan::{RpcClients, WsManagerChan};
-use crate::models::{Attack, AttackType, TcpPortScanResult, Workspace, WorkspaceMember};
+use crate::models::{Attack, AttackType, TcpPortScanResult, WordList, Workspace, WorkspaceMember};
 use crate::modules::attacks::AttackContext;
 use crate::rpc::rpc_definitions;
 use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
@@ -32,14 +32,24 @@ use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
 /// The settings of a subdomain bruteforce request
 #[derive(Deserialize, ToSchema)]
 pub struct BruteforceSubdomainsRequest {
-    pub(crate) leech_uuid: Option<Uuid>,
+    /// The leech to use
+    ///
+    /// Leave empty to use a random leech
+    pub leech_uuid: Option<Uuid>,
+
+    /// Domain to construct subdomains for
     #[schema(example = "example.com")]
-    pub(crate) domain: String,
-    #[schema(example = "/opt/wordlists/Discovery/DNS/subdomains-top1million-5000.txt")]
-    pub(crate) wordlist_path: String,
+    pub domain: String,
+
+    /// The wordlist to use
+    pub wordlist_uuid: Uuid,
+
+    /// The concurrent task limit
     #[schema(example = 20)]
     pub(crate) concurrent_limit: u32,
-    pub(crate) workspace_uuid: Uuid,
+
+    /// The workspace to execute the attack in
+    pub workspace_uuid: Uuid,
 }
 
 /// Bruteforce subdomains through a DNS wordlist attack
@@ -68,10 +78,16 @@ pub async fn bruteforce_subdomains(
     let BruteforceSubdomainsRequest {
         leech_uuid,
         domain,
-        wordlist_path,
+        wordlist_uuid,
         concurrent_limit,
         workspace_uuid,
     } = req.into_inner();
+
+    let (wordlist_path,) = query!(db.as_ref(), (WordList::F.path,))
+        .condition(WordList::F.uuid.equals(wordlist_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
 
     let client = if let Some(leech_uuid) = leech_uuid {
         rpc_clients.get_leech(&leech_uuid)?
