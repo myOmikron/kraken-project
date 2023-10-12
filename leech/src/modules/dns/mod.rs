@@ -15,7 +15,7 @@ use trust_dns_resolver::TokioAsyncResolver;
 use crate::modules::dns::errors::DnsResolutionError;
 
 /// Result of a subdomain
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum DnsRecordResult {
     /// A record
     A {

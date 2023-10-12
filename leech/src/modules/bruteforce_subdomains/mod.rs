@@ -36,7 +36,7 @@ pub struct BruteforceSubdomainsSettings {
 }
 
 /// Result of a subdomain
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BruteforceSubdomainResult {
     /// A record
     A {
