@@ -39,7 +39,7 @@ nav:
   - Home: index.md
   - Installation: installation/index.md
   - Administration: administration/index.md
-  - Usage: usage/index.md
+  - User guide: user/index.md
   - Contribution:
     - General information: contribution/index.md
     - Style guidelines:
