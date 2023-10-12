@@ -44,7 +44,7 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
 
     async startAttack() {
         await Api.attacks.scanTcpPorts({
-            ports: [{}],
+            ports: ["1-65535"],
             timeout: this.state.timeout,
             concurrentLimit: this.state.taskLimit,
             maxRetries: this.state.retries,
