@@ -46,7 +46,7 @@ pub struct SimpleWordlist {
     security(("api_key" = []))
 )]
 #[get("/wordlists")]
-pub async fn wordlist_get_all(db: Data<Database>) -> ApiResult<Json<GetAllWordlistsResponse>> {
+pub async fn get_all_wordlists(db: Data<Database>) -> ApiResult<Json<GetAllWordlistsResponse>> {
     Ok(Json(GetAllWordlistsResponse {
         wordlists: query!(db.as_ref(), SimpleWordlist).all().await?,
     }))
@@ -81,7 +81,7 @@ pub struct CreateWordlistRequest {
     security(("api_key" = []))
 )]
 #[post("/wordlists")]
-pub async fn wordlist_admin_create(
+pub async fn create_wordlist_admin(
     db: Data<Database>,
     req: Json<CreateWordlistRequest>,
 ) -> ApiResult<Json<UuidResponse>> {
@@ -135,7 +135,7 @@ pub struct FullWordlist {
     security(("api_key" = []))
 )]
 #[get("/wordlists")]
-pub async fn wordlist_admin_get_all(
+pub async fn get_all_wordlists_admin(
     db: Data<Database>,
 ) -> ApiResult<Json<GetAllWordlistsAdminResponse>> {
     Ok(Json(GetAllWordlistsAdminResponse {
@@ -176,7 +176,7 @@ pub struct UpdateWordlistRequest {
     security(("api_key" = []))
 )]
 #[put("/wordlists/{uuid}")]
-pub async fn wordlist_admin_update(
+pub async fn update_wordlist_admin(
     db: Data<Database>,
     req: Json<UpdateWordlistRequest>,
 ) -> ApiResult<HttpResponse> {
@@ -203,7 +203,7 @@ pub async fn wordlist_admin_update(
     security(("api_key" = []))
 )]
 #[delete("/wordlists/{uuid}")]
-pub async fn wordlist_admin_delete(
+pub async fn delete_wordlist_admin(
     db: Data<Database>,
     path: Path<PathUuid>,
 ) -> ApiResult<HttpResponse> {

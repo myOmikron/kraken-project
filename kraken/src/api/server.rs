@@ -149,10 +149,10 @@ pub(crate) async fn start_server(
                     .service(global_tags::create_global_tag)
                     .service(global_tags::update_global_tag)
                     .service(global_tags::delete_global_tag)
-                    .service(wordlist::wordlist_admin_create)
-                    .service(wordlist::wordlist_admin_get_all)
-                    .service(wordlist::wordlist_admin_update)
-                    .service(wordlist::wordlist_admin_delete),
+                    .service(wordlist::create_wordlist_admin)
+                    .service(wordlist::get_all_wordlists_admin)
+                    .service(wordlist::update_wordlist_admin)
+                    .service(wordlist::delete_wordlist_admin),
             )
             .service(
                 scope("/api/v1")
@@ -192,7 +192,7 @@ pub(crate) async fn start_server(
                     .service(ports::get_all_ports)
                     .service(services::get_all_services)
                     .service(domains::get_all_domains)
-                    .service(wordlist::wordlist_get_all),
+                    .service(wordlist::get_all_wordlists),
             )
     })
     .bind((
