@@ -203,7 +203,7 @@ impl BacklogService for Results {
                         .equals(&req_attack_uuid),
                     BruteforceSubdomainsResult::F
                         .dns_record_type
-                        .equals(dns_record_type.clone()),
+                        .equals(dns_record_type),
                     BruteforceSubdomainsResult::F.source.equals(&source),
                     BruteforceSubdomainsResult::F
                         .destination
