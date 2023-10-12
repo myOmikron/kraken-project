@@ -1,0 +1,40 @@
+{% extends "main.html" %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ 'assets/javascript/background.js' | url }}"></script>
+{% endblock %}
+
+{% block tabs %}
+{{ super() }}
+<style>.md-header{position:initial}.md-main__inner{margin:0}.md-content{display:none}@media screen and (min-width:60em){.md-sidebar--secondary{display:none}}@media screen and (min-width:76.25em){.md-sidebar--primary{display:none}}</style>
+<section class="mdx-container">
+    <div class="md-grid md-typeset">
+        <div class="mdx-hero" style="display: grid; grid-auto-rows: 1fr max-content; gap: 3em; height: 60vh">
+            <div class="mdx-hero__image">
+                <img src="assets/kraken-banner_alpha_small.png" alt="" width="640" height="200" draggable="false" style="padding: 2rem">
+                <canvas id="background" style="position: absolute; left: 0;width: 100vw; height: 85vh; background-color: black; z-index: -1"></canvas>
+            </div>
+            <div class="mdx-hero__content" style="padding: 1rem">
+                <h1 style="grid-column: span 2; filter: brightness(0) invert() drop-shadow(0 0 4px #0cf); color: white;">Taking pentesting to test next level</h1>
+                <div style="display: grid; grid-gap: 0.25em; grid-template-columns: repeat(auto-fill, minmax(15em, 1fr));">
+                    <a href="{{ page.next_page.url | url }}" title="{{ page.next_page.title | e }}" class="md-button md-button--primary">
+                        Installation
+                    </a>
+                    <a href="{{ 'administration/' | url }}" title="Administration instructions" class="md-button">
+                        Administration
+                    </a>
+                    <a href="{{ 'usage/' | url }}" title="User instructions" class="md-button">
+                        Usage
+                    </a>
+                    <a href="{{ 'contribute/' | url }}" title="Contribution instructions" class="md-button">
+                        Contribute
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+{% block content %}{% endblock %}
+{% block footer %}{% endblock %}

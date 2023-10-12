@@ -1,1 +1,4 @@
-# Home
+---
+title: Title
+template: home.html
+---

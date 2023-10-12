@@ -1,5 +1,5 @@
-site_name: Kraken Project Documentation
-site_url: "https://kraken-project.org/"
+site_name: Kraken Project Docs
+site_url: "https://docs.kraken-project.org/"
 theme:
   name: material
   logo: "assets/kraken_logo.png"
@@ -10,6 +10,10 @@ theme:
   features:
     - content.tabs.link
     - content.code.annotate
+    - toc.follow
+    - toc.integrate
+    - navigation.tabs
+    - navigation.top
   palette:
     scheme: slate
     primary: black
@@ -33,3 +37,10 @@ extra:
     provider: mike
 nav:
   - Home: index.md
+  - Installation: installation/index.md
+  - Administration: administration/index.md
+  - Usage: usage/index.md
+  - Contribution:
+    - General information: contribution/index.md
+    - Style guidelines:
+      - Rust: contribution/rust.md
