@@ -1,12 +1,12 @@
 use chrono::{DateTime, Utc};
 use rorm::db::Executor;
-use rorm::insert;
 use rorm::prelude::*;
+use rorm::{and, insert, query};
 use thiserror::Error;
 use uuid::Uuid;
 
 use crate::api::handler::ApiError;
-use crate::models::{Attack, AttackType, User, Workspace};
+use crate::models::{Attack, AttackType, User, Workspace, WorkspaceMember};
 
 #[derive(Patch)]
 #[rorm(model = "Attack")]
@@ -39,6 +39,37 @@ impl From<InsertAttackError> for ApiError {
 }
 
 impl Attack {
+    /// Does the user have access to the attack's workspace?
+    /// I.e. is owner or member?
+    pub async fn has_access(
+        executor: impl Executor<'_>,
+        attack_uuid: Uuid,
+        user_uuid: Uuid,
+    ) -> Result<bool, rorm::Error> {
+        let mut guard = executor.ensure_transaction().await?;
+        let tx = guard.get_transaction();
+
+        let (workspace, owner) = query!(&mut *tx, (Workspace::F.uuid, Workspace::F.owner))
+            .condition(Workspace::F.attacks.uuid.equals(attack_uuid))
+            .one()
+            .await?;
+        if *owner.key() == user_uuid {
+            return Ok(true);
+        }
+
+        let access = query!(&mut *tx, (WorkspaceMember::F.id,))
+            .condition(and!(
+                WorkspaceMember::F.workspace.equals(workspace),
+                WorkspaceMember::F.member.equals(user_uuid),
+            ))
+            .optional()
+            .await?
+            .is_some();
+
+        guard.commit().await?;
+        Ok(access)
+    }
+
     /// Insert a new [Attack]
     pub async fn insert(
         executor: impl Executor<'_>,
@@ -47,13 +78,14 @@ impl Attack {
         workspace: Uuid,
     ) -> Result<Uuid, InsertAttackError> {
         let mut guard = executor.ensure_transaction().await?;
+        let tx = guard.get_transaction();
 
-        if !Workspace::exists(guard.get_transaction(), workspace).await? {
+        if !Workspace::exists(&mut *tx, workspace).await? {
             return Err(InsertAttackError::WorkspaceInvalid);
         }
 
         let uuid = Uuid::new_v4();
-        insert!(guard.get_transaction(), AttackInsert)
+        insert!(&mut *tx, AttackInsert)
             .return_nothing()
             .single(&AttackInsert {
                 uuid,
@@ -65,7 +97,6 @@ impl Attack {
             .await?;
 
         guard.commit().await?;
-
         Ok(uuid)
     }
 }
