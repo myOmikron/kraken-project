@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::api::handler::{workspaces, ApiError, ApiResult, Color, PathUuid, UuidResponse};
-use crate::models::{GlobalTag, WorkspaceTag};
+use crate::api::handler::{ApiError, ApiResult, Color, PathUuid, UuidResponse};
+use crate::models::{GlobalTag, Workspace, WorkspaceTag};
 
 /// The request to create a workspace tag
 #[derive(Deserialize, Debug, ToSchema)]
@@ -46,7 +46,7 @@ pub async fn create_workspace_tag(
 
     let mut tx = db.start_transaction().await?;
 
-    if workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.uuid).await? {
+    if Workspace::is_user_member_or_owner(&mut tx, path.uuid, user_uuid).await? {
         let uuid = WorkspaceTag::insert(&mut tx, req.name, req.color, path.uuid).await?;
 
         tx.commit().await?;
@@ -96,7 +96,7 @@ pub async fn get_all_workspace_tags(
 
     let mut tx = db.start_transaction().await?;
 
-    if workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.uuid).await? {
+    if Workspace::is_user_member_or_owner(&mut tx, path.uuid, user_uuid).await? {
         let workspace_tags = query!(&mut tx, WorkspaceTag)
             .condition(WorkspaceTag::F.workspace.equals(path.uuid))
             .all()
@@ -164,7 +164,7 @@ pub async fn update_workspace_tag(
 
     let mut tx = db.start_transaction().await?;
 
-    if !workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.w_uuid).await? {
+    if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
     }
 
@@ -231,7 +231,7 @@ pub async fn delete_workspace_tag(
     let path = path.into_inner();
     let mut tx = db.start_transaction().await?;
 
-    if !workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.w_uuid).await? {
+    if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
     }
 

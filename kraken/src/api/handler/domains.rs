@@ -10,9 +10,9 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::{
-    get_page_params, workspaces, ApiError, ApiResult, DomainResultsPage, PageParams, PathUuid,
+    get_page_params, ApiError, ApiResult, DomainResultsPage, PageParams, PathUuid,
 };
-use crate::models::Domain;
+use crate::models::{Domain, Workspace};
 
 /// A simple representation of a domain in a workspace
 #[derive(Serialize, ToSchema)]
@@ -49,7 +49,7 @@ pub async fn get_all_domains(
 
     let mut tx = db.start_transaction().await?;
 
-    if !workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.uuid).await? {
+    if !Workspace::is_user_member_or_owner(&mut tx, path.uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
     }
 

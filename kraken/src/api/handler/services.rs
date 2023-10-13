@@ -11,9 +11,9 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::handler::{
-    get_page_params, workspaces, ApiError, ApiResult, PageParams, PathUuid, ServiceResultsPage,
+    get_page_params, ApiError, ApiResult, PageParams, PathUuid, ServiceResultsPage,
 };
-use crate::models::Service;
+use crate::models::{Service, Workspace};
 
 /// Query parameters for filtering the services to get
 #[derive(Deserialize, IntoParams)]
@@ -62,7 +62,7 @@ pub async fn get_all_services(
 
     let mut tx = db.start_transaction().await?;
 
-    if !workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.uuid).await? {
+    if !Workspace::is_user_member_or_owner(&mut tx, path.uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
     }
 

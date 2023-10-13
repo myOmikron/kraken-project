@@ -11,9 +11,9 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::handler::{
-    get_page_params, workspaces, ApiError, ApiResult, PageParams, PathUuid, PortResultsPage,
+    get_page_params, ApiError, ApiResult, PageParams, PathUuid, PortResultsPage,
 };
-use crate::models::{Port, PortProtocol};
+use crate::models::{Port, PortProtocol, Workspace};
 
 /// Query parameters for filtering the ports to get
 #[derive(Deserialize, IntoParams)]
@@ -63,7 +63,7 @@ pub async fn get_all_ports(
 
     let mut tx = db.start_transaction().await?;
 
-    if !workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.uuid).await? {
+    if !Workspace::is_user_member_or_owner(&mut tx, path.uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
     }
 
