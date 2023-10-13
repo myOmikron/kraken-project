@@ -4,15 +4,23 @@ use actix_toolbox::tb_middleware::Session;
 use actix_web::get;
 use actix_web::web::{Data, Json, Path, Query};
 use futures::TryStreamExt;
-use rorm::{query, Database, FieldAccess, Model};
-use serde::Serialize;
-use utoipa::ToSchema;
+use rorm::conditions::{BoxedCondition, Condition};
+use rorm::{and, query, Database, FieldAccess, Model};
+use serde::{Deserialize, Serialize};
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::handler::{
     get_page_params, workspaces, ApiError, ApiResult, PageParams, PathUuid, ServiceResultsPage,
 };
 use crate::models::Service;
+
+/// Query parameters for filtering the services to get
+#[derive(Deserialize, IntoParams)]
+pub struct GetAllServicesQuery {
+    /// Only get services associated with a specific host
+    pub host: Option<Uuid>,
+}
 
 /// A simple representation of a service
 #[derive(Serialize, ToSchema)]
@@ -38,13 +46,14 @@ pub struct SimpleService {
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    params(PathUuid, PageParams),
+    params(PathUuid, PageParams, GetAllServicesQuery),
     security(("api_key" = []))
 )]
 #[get("/workspaces/{uuid}/services")]
 pub async fn get_all_services(
     path: Path<PathUuid>,
-    query: Query<PageParams>,
+    page_params: Query<PageParams>,
+    filter_params: Query<GetAllServicesQuery>,
     db: Data<Database>,
     session: Session,
 ) -> ApiResult<Json<ServiceResultsPage>> {
@@ -57,15 +66,26 @@ pub async fn get_all_services(
         return Err(ApiError::MissingPrivileges);
     }
 
-    let (limit, offset) = get_page_params(query).await?;
+    let (limit, offset) = get_page_params(page_params).await?;
+
+    fn build_condition(workspace: Uuid, filter_params: &GetAllServicesQuery) -> BoxedCondition<'_> {
+        match filter_params {
+            GetAllServicesQuery { host: Some(host) } => and![
+                Service::F.workspace.equals(workspace),
+                Service::F.host.equals(*host)
+            ]
+            .boxed(),
+            GetAllServicesQuery { host: None } => Service::F.workspace.equals(workspace).boxed(),
+        }
+    }
 
     let (total,) = query!(&mut tx, (Service::F.uuid.count()))
-        .condition(Service::F.workspace.equals(path.uuid))
+        .condition(build_condition(path.uuid, &filter_params))
         .one()
         .await?;
 
     let services = query!(&mut tx, Service)
-        .condition(Service::F.workspace.equals(path.uuid))
+        .condition(build_condition(path.uuid, &filter_params))
         .limit(limit)
         .offset(offset)
         .stream()
