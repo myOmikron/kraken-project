@@ -19,7 +19,11 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 use webauthn_rs::prelude::WebauthnError;
 
-use crate::api::handler::attacks::SimpleTcpPortScanResult;
+use crate::api::handler::attack_results::{
+    FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
+    SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
+    SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+};
 use crate::api::handler::domains::SimpleDomain;
 use crate::api::handler::hosts::SimpleHost;
 use crate::api::handler::ports::SimplePort;
@@ -27,6 +31,7 @@ use crate::api::handler::services::SimpleService;
 use crate::models::{Color, User};
 
 pub mod api_keys;
+pub mod attack_results;
 pub mod attacks;
 pub mod auth;
 pub mod data_export;
@@ -83,11 +88,17 @@ pub struct PageParams {
 /// Response containing paginated data
 #[derive(Serialize, ToSchema)]
 #[aliases(
-    TcpPortScanResultsPage = Page<SimpleTcpPortScanResult>,
     DomainResultsPage = Page<SimpleDomain>,
     HostResultsPage = Page<SimpleHost>,
     ServiceResultsPage = Page<SimpleService>,
-    PortResultsPage = Page<SimplePort>
+    PortResultsPage = Page<SimplePort>,
+    BruteforceSubdomainsResultsPage = Page<SimpleBruteforceSubdomainsResult>,
+    TcpPortScanResultsPage = Page<SimpleTcpPortScanResult>,
+    QueryCertificateTransparencyResultsPage = Page<FullQueryCertificateTransparencyResult>,
+    QueryUnhashedResultsPage = Page<SimpleQueryUnhashedResult>,
+    HostAliveResultsPage = Page<SimpleHostAliveResult>,
+    ServiceDetectionResultsPage = Page<FullServiceDetectionResult>,
+    DnsResolutionResultsPage = Page<SimpleDnsResolutionResult>
 )]
 pub struct Page<T> {
     /// The page's items
