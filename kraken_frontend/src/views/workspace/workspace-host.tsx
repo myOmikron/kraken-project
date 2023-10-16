@@ -55,44 +55,48 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
         return (
             <div className={"workspace-host-container"}>
                 <div className={"workspace-host-hosts-list"}>
-                    <button
-                        key={"back"}
-                        className={"pane workspace-host-hosts-back"}
-                        onClick={() => {
-                            ROUTES.WORKSPACE_HOSTS.visit({
-                                uuid: this.props.workspace.uuid,
-                            });
-                        }}
-                    >
-                        <h2 className={"sub-heading"}>Back</h2>
-                    </button>
-                    <div className={"pane workspace-host-hosts-search"}>
-                        <Input
-                            placeholder={"Search host"}
-                            value={this.state.searchTerm}
-                            onChange={(searchTerm) => this.setState({ searchTerm })}
-                        />
+                    <div className={"workspace-host-hosts-list-header"}>
+                        <button
+                            key={"back"}
+                            className={"pane workspace-host-hosts-back"}
+                            onClick={() => {
+                                ROUTES.WORKSPACE_HOSTS.visit({
+                                    uuid: this.props.workspace.uuid,
+                                });
+                            }}
+                        >
+                            <h2 className={"sub-heading"}>Back</h2>
+                        </button>
+                        <div className={"pane workspace-host-hosts-search"}>
+                            <Input
+                                placeholder={"Search host"}
+                                value={this.state.searchTerm}
+                                onChange={(searchTerm) => this.setState({ searchTerm })}
+                            />
+                        </div>
                     </div>
-                    {this.state.hostList.map((host) => {
-                        return (
-                            <button
-                                key={host.uuid}
-                                className={"pane workspace-host-hosts-item"}
-                                onClick={() => {
-                                    ROUTES.WORKSPACE_SINGLE_HOST.visit({
-                                        w_uuid: this.props.workspace.uuid,
-                                        h_uuid: host.uuid,
-                                    });
-                                }}
-                            >
-                                <OsIcon os={host.osType} />
-                                <div className={"workspace-host-hosts-info"}>
-                                    <h2 className={"sub-heading"}>{host.ipAddr}</h2>
-                                    <span>{host.comment}</span>
-                                </div>
-                            </button>
-                        );
-                    })}
+                    <div className={"workspace-host-hosts-list-entries"}>
+                        {this.state.hostList.map((host) => {
+                            return (
+                                <button
+                                    key={host.uuid}
+                                    className={"pane workspace-host-hosts-item"}
+                                    onClick={() => {
+                                        ROUTES.WORKSPACE_SINGLE_HOST.visit({
+                                            w_uuid: this.props.workspace.uuid,
+                                            h_uuid: host.uuid,
+                                        });
+                                    }}
+                                >
+                                    <OsIcon os={host.osType} />
+                                    <div className={"workspace-host-hosts-info"}>
+                                        <h2 className={"sub-heading"}>{host.ipAddr}</h2>
+                                        <span>{host.comment}</span>
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
                 <div className={"pane workspace-host-host-container"}>
                     {this.state.host !== null ? (

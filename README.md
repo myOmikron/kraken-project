@@ -1,4 +1,4 @@
-![kraken](kraken_small.png)
+![kraken](assets/kraken-banner_alpha_small.png)
 
 ---
 

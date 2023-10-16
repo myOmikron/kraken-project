@@ -2,7 +2,7 @@ name: Build & Tests on linux
 on:
   push:
     paths-ignore:
-      - "*.md"
+      - "**/*.md"
   pull_request:
 
 jobs:

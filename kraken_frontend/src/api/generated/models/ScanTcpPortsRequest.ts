@@ -27,61 +27,65 @@ import {
  */
 export interface ScanTcpPortsRequest {
     /**
+     * The leech to use
      * 
+     * Leave empty to use a random leech
      * @type {string}
      * @memberof ScanTcpPortsRequest
      */
     leechUuid?: string | null;
     /**
-     * 
+     * The ip addresses / networks to scan
      * @type {Array<string>}
      * @memberof ScanTcpPortsRequest
      */
     targets: Array<string>;
     /**
+     * List of single ports and port ranges
      * 
-     * @type {Array<string>}
-     * @memberof ScanTcpPortsRequest
-     */
-    exclude: Array<string>;
-    /**
-     * 
+     * If no values are supplied, 1-65535 is used as default
      * @type {Array<PortOrRange>}
      * @memberof ScanTcpPortsRequest
      */
-    ports: Array<PortOrRange>;
+    ports?: Array<PortOrRange>;
     /**
+     * The interval that should be wait between retries on a port.
      * 
+     * The interval is specified in milliseconds.
      * @type {number}
      * @memberof ScanTcpPortsRequest
      */
     retryInterval: number;
     /**
-     * 
+     * The number of times the connection should be retried if it failed.
      * @type {number}
      * @memberof ScanTcpPortsRequest
      */
     maxRetries: number;
     /**
+     * The time to wait until a connection is considered failed.
      * 
+     * The timeout is specified in milliseconds.
      * @type {number}
      * @memberof ScanTcpPortsRequest
      */
     timeout: number;
     /**
-     * 
+     * The concurrent task limit
      * @type {number}
      * @memberof ScanTcpPortsRequest
      */
     concurrentLimit: number;
     /**
+     * Skips the initial icmp check.
      * 
+     * All hosts are assumed to be reachable
      * @type {boolean}
      * @memberof ScanTcpPortsRequest
      */
     skipIcmpCheck: boolean;
     /**
-     * 
+     * The workspace to execute the attack in
      * @type {string}
      * @memberof ScanTcpPortsRequest
      */
@@ -94,8 +98,6 @@ export interface ScanTcpPortsRequest {
 export function instanceOfScanTcpPortsRequest(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "targets" in value;
-    isInstance = isInstance && "exclude" in value;
-    isInstance = isInstance && "ports" in value;
     isInstance = isInstance && "retryInterval" in value;
     isInstance = isInstance && "maxRetries" in value;
     isInstance = isInstance && "timeout" in value;
@@ -118,8 +120,7 @@ export function ScanTcpPortsRequestFromJSONTyped(json: any, ignoreDiscriminator:
         
         'leechUuid': !exists(json, 'leech_uuid') ? undefined : json['leech_uuid'],
         'targets': json['targets'],
-        'exclude': json['exclude'],
-        'ports': ((json['ports'] as Array<any>).map(PortOrRangeFromJSON)),
+        'ports': !exists(json, 'ports') ? undefined : ((json['ports'] as Array<any>).map(PortOrRangeFromJSON)),
         'retryInterval': json['retry_interval'],
         'maxRetries': json['max_retries'],
         'timeout': json['timeout'],
@@ -140,8 +141,7 @@ export function ScanTcpPortsRequestToJSON(value?: ScanTcpPortsRequest | null): a
         
         'leech_uuid': value.leechUuid,
         'targets': value.targets,
-        'exclude': value.exclude,
-        'ports': ((value.ports as Array<any>).map(PortOrRangeToJSON)),
+        'ports': value.ports === undefined ? undefined : ((value.ports as Array<any>).map(PortOrRangeToJSON)),
         'retry_interval': value.retryInterval,
         'max_retries': value.maxRetries,
         'timeout': value.timeout,

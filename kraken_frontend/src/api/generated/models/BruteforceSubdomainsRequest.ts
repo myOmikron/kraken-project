@@ -20,31 +20,33 @@ import { exists, mapValues } from '../runtime';
  */
 export interface BruteforceSubdomainsRequest {
     /**
+     * The leech to use
      * 
+     * Leave empty to use a random leech
      * @type {string}
      * @memberof BruteforceSubdomainsRequest
      */
     leechUuid?: string | null;
     /**
-     * 
+     * Domain to construct subdomains for
      * @type {string}
      * @memberof BruteforceSubdomainsRequest
      */
     domain: string;
     /**
-     * 
+     * The wordlist to use
      * @type {string}
      * @memberof BruteforceSubdomainsRequest
      */
-    wordlistPath: string;
+    wordlistUuid: string;
     /**
-     * 
+     * The concurrent task limit
      * @type {number}
      * @memberof BruteforceSubdomainsRequest
      */
     concurrentLimit: number;
     /**
-     * 
+     * The workspace to execute the attack in
      * @type {string}
      * @memberof BruteforceSubdomainsRequest
      */
@@ -57,7 +59,7 @@ export interface BruteforceSubdomainsRequest {
 export function instanceOfBruteforceSubdomainsRequest(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "domain" in value;
-    isInstance = isInstance && "wordlistPath" in value;
+    isInstance = isInstance && "wordlistUuid" in value;
     isInstance = isInstance && "concurrentLimit" in value;
     isInstance = isInstance && "workspaceUuid" in value;
 
@@ -76,7 +78,7 @@ export function BruteforceSubdomainsRequestFromJSONTyped(json: any, ignoreDiscri
         
         'leechUuid': !exists(json, 'leech_uuid') ? undefined : json['leech_uuid'],
         'domain': json['domain'],
-        'wordlistPath': json['wordlist_path'],
+        'wordlistUuid': json['wordlist_uuid'],
         'concurrentLimit': json['concurrent_limit'],
         'workspaceUuid': json['workspace_uuid'],
     };
@@ -93,7 +95,7 @@ export function BruteforceSubdomainsRequestToJSON(value?: BruteforceSubdomainsRe
         
         'leech_uuid': value.leechUuid,
         'domain': value.domain,
-        'wordlist_path': value.wordlistPath,
+        'wordlist_uuid': value.wordlistUuid,
         'concurrent_limit': value.concurrentLimit,
         'workspace_uuid': value.workspaceUuid,
     };

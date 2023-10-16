@@ -1,34 +1,32 @@
 //! In this module is the definition of the gRPC services
 
-use std::net::{IpAddr, SocketAddr};
+use std::net::SocketAddr;
 use std::pin::Pin;
 use std::time::Duration;
 
 use chrono::{Datelike, Timelike};
 use futures::Stream;
-use log::{error, warn};
+use log::error;
 use prost_types::Timestamp;
-use tokio::sync::mpsc;
-use tokio_stream::wrappers::ReceiverStream;
 use tonic::{Request, Response, Status};
+use uuid::Uuid;
 
 use crate::backlog::Backlog;
-use crate::modules::bruteforce_subdomains::{
-    bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
-};
+use crate::modules::bruteforce_subdomains::{bruteforce_subdomains, BruteforceSubdomainsSettings};
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
+use crate::modules::dns::{dns_resolution, DnsResolutionSettings};
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::modules::service_detection::{detect_service, DetectServiceSettings, Service};
-use crate::rpc::rpc_attacks::port_or_range::PortOrRange;
 use crate::rpc::rpc_attacks::req_attack_service_server::ReqAttackService;
 use crate::rpc::rpc_attacks::shared::CertEntry;
 use crate::rpc::rpc_attacks::{
     BruteforceSubdomainRequest, BruteforceSubdomainResponse, CertificateTransparencyRequest,
-    CertificateTransparencyResponse, HostsAliveRequest, HostsAliveResponse,
-    ServiceDetectionRequest, ServiceDetectionResponse, ServiceDetectionResponseType,
-    TcpPortScanRequest, TcpPortScanResponse,
+    CertificateTransparencyResponse, DnsResolutionRequest, DnsResolutionResponse,
+    HostsAliveRequest, HostsAliveResponse, ServiceDetectionRequest, ServiceDetectionResponse,
+    ServiceDetectionResponseType, TcpPortScanRequest, TcpPortScanResponse,
 };
+use crate::rpc::utils::stream_attack;
 
 /// The Attack service
 pub struct Attacks {
@@ -44,43 +42,37 @@ impl ReqAttackService for Attacks {
         &self,
         request: Request<BruteforceSubdomainRequest>,
     ) -> Result<Response<Self::BruteforceSubdomainsStream>, Status> {
-        let (rpc_tx, rpc_rx) = mpsc::channel(16);
-        let (tx, mut rx) = mpsc::channel::<BruteforceSubdomainResult>(16);
-
         let req = request.into_inner();
-        let backlog = self.backlog.clone();
 
-        tokio::spawn({
-            let rpc_tx = rpc_tx.clone();
-            let req = req.clone();
-            async move {
-                while let Some(res) = rx.recv().await {
-                    let rpc_res: BruteforceSubdomainResponse = res.into();
-
-                    if let Err(err) = rpc_tx.send(Ok(rpc_res.clone())).await {
-                        warn!("Could not send to rpc_tx: {err}");
-                        backlog.store_bruteforce_subdomains(&req, rpc_res).await;
-                    }
-                }
-            }
-        });
+        let attack_uuid = Uuid::parse_str(&req.attack_uuid)
+            .map_err(|_| Status::invalid_argument("attack_uuid has to be an Uuid"))?;
 
         let settings = BruteforceSubdomainsSettings {
             domain: req.domain,
             wordlist_path: req.wordlist_path.parse().unwrap(),
             concurrent_limit: req.concurrent_limit,
         };
-        tokio::spawn(async move {
-            if let Err(err) = bruteforce_subdomains(settings, tx).await {
-                warn!("Attack {} returned error: {err}", req.attack_uuid);
-                let _ = rpc_tx.send(Err(Status::unknown(err.to_string()))).await;
-            }
-        });
 
-        let output_stream = ReceiverStream::new(rpc_rx);
-        Ok(Response::new(
-            Box::pin(output_stream) as Self::BruteforceSubdomainsStream
-        ))
+        stream_attack(
+            {
+                |tx| async move {
+                    bruteforce_subdomains(settings, tx)
+                        .await
+                        .map_err(|err| Status::unknown(err.to_string()))
+                }
+            },
+            {
+                let backlog = self.backlog.clone();
+                move |item| {
+                    let backlog = backlog.clone();
+                    async move {
+                        backlog
+                            .store_bruteforce_subdomains(attack_uuid, item.into())
+                            .await;
+                    }
+                }
+            },
+        )
     }
 
     type RunTcpPortScanStream =
@@ -90,56 +82,48 @@ impl ReqAttackService for Attacks {
         &self,
         request: Request<TcpPortScanRequest>,
     ) -> Result<Response<Self::RunTcpPortScanStream>, Status> {
-        let (rpc_tx, rpc_rx) = mpsc::channel(16);
-        let (tx, mut rx) = mpsc::channel::<SocketAddr>(16);
-
         let req = request.into_inner();
-        let backlog = self.backlog.clone();
 
-        tokio::spawn({
-            let rpc_tx = rpc_tx.clone();
-            let req = req.clone();
-            async move {
-                while let Some(addr) = rx.recv().await {
-                    if let Err(err) = rpc_tx.send(Ok(addr.into())).await {
-                        warn!("Could not send to rpc_tx: {err}");
-                        backlog.store_tcp_port_scans(&req, addr).await;
-                    }
-                }
-            }
-        });
+        let attack_uuid = Uuid::parse_str(&req.attack_uuid)
+            .map_err(|_| Status::invalid_argument("attack_uuid has to be an Uuid"))?;
 
-        let mut port_range = Vec::new();
-        for port_or_range in req.ports {
-            if let Some(port_or_range) = port_or_range.port_or_range {
-                match port_or_range {
-                    PortOrRange::Single(port) => port_range.push(port as u16),
-                    PortOrRange::Range(range) => {
-                        port_range.extend((range.start as u16)..=(range.end as u16))
-                    }
-                }
-            }
+        let mut ports = req
+            .ports
+            .into_iter()
+            .map(TryFrom::try_from)
+            .collect::<Result<Vec<_>, _>>()?;
+        if ports.is_empty() {
+            ports.push(1..=u16::MAX);
         }
+
         let settings = TcpPortScannerSettings {
             addresses: req.targets.into_iter().map(|addr| addr.into()).collect(),
-            port_range,
+            ports,
             timeout: Duration::from_millis(req.timeout),
             max_retries: req.max_retries,
             retry_interval: Duration::from_millis(req.retry_interval),
             concurrent_limit: req.concurrent_limit,
             skip_icmp_check: req.skip_icmp_check,
         };
-        tokio::spawn(async move {
-            if let Err(err) = start_tcp_con_port_scan(settings, tx).await {
-                warn!("Attack {} returned error: {err}", req.attack_uuid);
-                let _ = rpc_tx.send(Err(Status::unknown(err.to_string()))).await;
-            }
-        });
 
-        let output_stream = ReceiverStream::new(rpc_rx);
-        Ok(Response::new(
-            Box::pin(output_stream) as Self::RunTcpPortScanStream
-        ))
+        stream_attack(
+            {
+                |tx| async move {
+                    start_tcp_con_port_scan(settings, tx)
+                        .await
+                        .map_err(|err| Status::unknown(err.to_string()))
+                }
+            },
+            {
+                let backlog = self.backlog.clone();
+                move |item| {
+                    let backlog = backlog.clone();
+                    async move {
+                        backlog.store_tcp_port_scans(attack_uuid, item).await;
+                    }
+                }
+            },
+        )
     }
 
     async fn query_certificate_transparency(
@@ -244,49 +228,75 @@ impl ReqAttackService for Attacks {
         &self,
         request: Request<HostsAliveRequest>,
     ) -> Result<Response<Self::HostsAliveCheckStream>, Status> {
-        if request.get_ref().targets.is_empty() {
+        let req = request.into_inner();
+
+        if req.targets.is_empty() {
             return Err(Status::invalid_argument("no hosts to check"));
         }
 
-        let (rpc_tx, rpc_rx) = mpsc::channel(16);
-        let (tx, mut rx) = mpsc::channel::<IpAddr>(16);
-
-        let req = request.into_inner();
-        let _backlog = self.backlog.clone();
-
-        tokio::spawn({
-            let rpc_tx = rpc_tx.clone();
-            let _req = req.clone();
-            async move {
-                while let Some(addr) = rx.recv().await {
-                    if let Err(err) = rpc_tx
-                        .send(Ok(HostsAliveResponse {
-                            host: Some(addr.into()),
-                        }))
-                        .await
-                    {
-                        warn!("Could not send to rpc_tx: {err}");
-                        //TODO backlog.store_hosts_alive_check(&req, addr).await;
-                    }
-                }
-            }
-        });
+        let _attack_uuid = Uuid::parse_str(&req.attack_uuid)
+            .map_err(|_| Status::invalid_argument("attack_uuid has to be an Uuid"))?;
 
         let settings = IcmpScanSettings {
             concurrent_limit: req.concurrent_limit,
             timeout: Duration::from_millis(req.timeout),
             addresses: req.targets.into_iter().map(|el| el.into()).collect(),
         };
-        tokio::spawn(async move {
-            if let Err(err) = start_icmp_scan(settings, tx).await {
-                warn!("Attack {} returned error: {err}", req.attack_uuid);
-                let _ = rpc_tx.send(Err(Status::unknown(err.to_string()))).await;
-            }
-        });
 
-        let output_stream = ReceiverStream::new(rpc_rx);
-        Ok(Response::new(
-            Box::pin(output_stream) as Self::HostsAliveCheckStream
-        ))
+        stream_attack(
+            |tx| async move {
+                start_icmp_scan(settings, tx)
+                    .await
+                    .map_err(|err| Status::unknown(err.to_string()))
+            },
+            {
+                let backlog = self.backlog.clone();
+                move |_item| {
+                    let _backlog = backlog.clone();
+                    async move {
+                        // TODO backlog.store_hosts_alive_check(attack_uuid, item).await
+                    }
+                }
+            },
+        )
+    }
+
+    type DnsResolutionStream =
+        Pin<Box<dyn Stream<Item = Result<DnsResolutionResponse, Status>> + Send>>;
+
+    async fn dns_resolution(
+        &self,
+        request: Request<DnsResolutionRequest>,
+    ) -> Result<Response<Self::DnsResolutionStream>, Status> {
+        let req = request.into_inner();
+
+        if req.targets.is_empty() {
+            return Err(Status::invalid_argument("nothing to resolve"));
+        }
+
+        let _attack_uuid = Uuid::parse_str(&req.attack_uuid)
+            .map_err(|_| Status::invalid_argument("attack_uuid has to be an Uuid"))?;
+
+        let settings = DnsResolutionSettings {
+            domains: req.targets,
+            concurrent_limit: req.concurrent_limit,
+        };
+
+        stream_attack(
+            |tx| async move {
+                dns_resolution(settings, tx)
+                    .await
+                    .map_err(|err| Status::unknown(err.to_string()))
+            },
+            {
+                let backlog = self.backlog.clone();
+                move |_item| {
+                    let _backlog = backlog.clone();
+                    async move {
+                        // TODO backlog.store_dns_resultion(attack_uuid, item).await;
+                    }
+                }
+            },
+        )
     }
 }

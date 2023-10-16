@@ -180,6 +180,10 @@ impl BacklogService for Results {
                     )
                 }
                 Record::Cname(v) => (v.source, v.to, DnsRecordType::Cname),
+                _ => {
+                    debug!("record type not of concern");
+                    continue;
+                }
             };
 
             if query!(&mut db_trx, Attack)
@@ -199,7 +203,7 @@ impl BacklogService for Results {
                         .equals(&req_attack_uuid),
                     BruteforceSubdomainsResult::F
                         .dns_record_type
-                        .equals(dns_record_type.clone()),
+                        .equals(dns_record_type),
                     BruteforceSubdomainsResult::F.source.equals(&source),
                     BruteforceSubdomainsResult::F
                         .destination

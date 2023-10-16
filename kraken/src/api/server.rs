@@ -22,7 +22,8 @@ use webauthn_rs::WebauthnBuilder;
 
 use crate::api::handler::{
     api_keys, attacks, auth, data_export, domains, global_tags, hosts, leeches, oauth,
-    oauth_applications, ports, services, settings, users, websocket, workspace_tags, workspaces,
+    oauth_applications, ports, services, settings, users, websocket, wordlists, workspace_tags,
+    workspaces,
 };
 use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
@@ -147,7 +148,11 @@ pub(crate) async fn start_server(
                     .service(settings::update_settings)
                     .service(global_tags::create_global_tag)
                     .service(global_tags::update_global_tag)
-                    .service(global_tags::delete_global_tag),
+                    .service(global_tags::delete_global_tag)
+                    .service(wordlists::create_wordlist_admin)
+                    .service(wordlists::get_all_wordlists_admin)
+                    .service(wordlists::update_wordlist_admin)
+                    .service(wordlists::delete_wordlist_admin),
             )
             .service(
                 scope("/api/v1")
@@ -171,6 +176,7 @@ pub(crate) async fn start_server(
                     .service(attacks::hosts_alive_check)
                     .service(attacks::query_dehashed)
                     .service(attacks::service_detection)
+                    .service(attacks::dns_resolution)
                     .service(api_keys::create_api_key)
                     .service(api_keys::get_api_keys)
                     .service(api_keys::update_api_key)
@@ -185,7 +191,8 @@ pub(crate) async fn start_server(
                     .service(workspace_tags::delete_workspace_tag)
                     .service(ports::get_all_ports)
                     .service(services::get_all_services)
-                    .service(domains::get_all_domains),
+                    .service(domains::get_all_domains)
+                    .service(wordlists::get_all_wordlists),
             )
     })
     .bind((

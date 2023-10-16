@@ -7,11 +7,14 @@
 
 .workspace-attacks-pst {
     display: grid;
+    grid-template-columns: 1fr 2fr;
+    align-items: center;
     height: max-content;
     gap: 1em;
 }
 
 .workspace-attacks-pst-advanced-button {
+    grid-column: span 2;
     display: flex;
     height: 2em;
     cursor: pointer;
@@ -24,6 +27,7 @@
 }
 
 .workspace-attacks-pst-advanced {
+    grid-column: span 2;
     display: grid;
     grid-template-columns: 1fr 2fr;
     gap: 1em;

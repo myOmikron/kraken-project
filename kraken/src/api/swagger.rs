@@ -8,7 +8,7 @@ use utoipa::{Modify, OpenApi};
 use crate::api::handler;
 use crate::api::handler::{
     api_keys, attacks, auth, data_export, domains, global_tags, hosts, leeches, oauth,
-    oauth_applications, oauth_decisions, ports, services, settings, users, websocket,
+    oauth_applications, oauth_decisions, ports, services, settings, users, websocket, wordlists,
     workspace_tags, workspaces,
 };
 use crate::models;
@@ -78,6 +78,7 @@ impl Modify for SecurityAddon2 {
         attacks::query_dehashed,
         attacks::hosts_alive_check,
         attacks::service_detection,
+        attacks::dns_resolution,
         oauth_applications::create_oauth_app,
         oauth_applications::get_all_oauth_apps,
         oauth_applications::get_oauth_app,
@@ -108,6 +109,11 @@ impl Modify for SecurityAddon2 {
         ports::get_all_ports,
         services::get_all_services,
         domains::get_all_domains,
+        wordlists::get_all_wordlists,
+        wordlists::create_wordlist_admin,
+        wordlists::get_all_wordlists_admin,
+        wordlists::update_wordlist_admin,
+        wordlists::delete_wordlist_admin,
     ),
     components(schemas(
         handler::ApiErrorResponse,
@@ -142,6 +148,7 @@ impl Modify for SecurityAddon2 {
         attacks::QueryCertificateTransparencyRequest,
         attacks::PortOrRange,
         attacks::ServiceDetectionRequest,
+        attacks::DnsResolutionRequest,
         handler::TcpPortScanResultsPage,
         attacks::SimpleTcpPortScanResult,
         dehashed_rs::Query,
@@ -183,6 +190,12 @@ impl Modify for SecurityAddon2 {
         handler::ServiceResultsPage,
         domains::SimpleDomain,
         handler::DomainResultsPage,
+        wordlists::GetAllWordlistsResponse,
+        wordlists::SimpleWordlist,
+        wordlists::CreateWordlistRequest,
+        wordlists::GetAllWordlistsAdminResponse,
+        wordlists::FullWordlist,
+        wordlists::UpdateWordlistRequest,
     )),
     modifiers(&SecurityAddon, &SecurityAddon2)
 )]

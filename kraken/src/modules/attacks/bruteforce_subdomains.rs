@@ -58,6 +58,9 @@ impl LeechAttackContext {
                         destination = cname_rec.to;
                         dns_record_type = DnsRecordType::Cname;
                     }
+                    _ => {
+                        return Err(AttackError::Malformed("unexpected `record type`"));
+                    }
                 };
 
                 self.send_ws(WsMessage::BruteforceSubdomainsResult {
@@ -93,7 +96,7 @@ impl LeechAttackContext {
                     .equals(self.attack_uuid),
                 BruteforceSubdomainsResult::F
                     .dns_record_type
-                    .equals(dns_record_type.clone()),
+                    .equals(dns_record_type),
                 BruteforceSubdomainsResult::F.source.equals(&source),
                 BruteforceSubdomainsResult::F
                     .destination

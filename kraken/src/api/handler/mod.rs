@@ -42,6 +42,7 @@ pub mod services;
 pub mod settings;
 pub mod users;
 pub mod websocket;
+pub mod wordlists;
 pub mod workspace_tags;
 pub mod workspaces;
 
@@ -194,6 +195,10 @@ pub enum ApiStatusCode {
     InvalidQueryLimit = 1021,
     /// Invalid port
     InvalidPort = 1022,
+    /// Empty targets
+    EmptyTargets = 1023,
+    /// Path already exists
+    PathAlreadyExists = 1024,
 
     /// Internal server error
     InternalServerError = 2000,
@@ -274,6 +279,9 @@ pub enum ApiError {
     /// Name already exists
     #[error("Name already exists")]
     NameAlreadyExists,
+    /// Path already exists
+    #[error("Name already exists")]
+    PathAlreadyExists,
     /// Invalid uuid
     #[error("Invalid uuid")]
     InvalidUuid,
@@ -303,6 +311,9 @@ pub enum ApiError {
     /// Invalid port specified
     #[error("Invalid port")]
     InvalidPort,
+    /// Empty Targets
+    #[error("Empty Targets")]
+    EmptyTargets,
 
     /// An internal server error occurred
     #[error("Internal server error")]
@@ -470,6 +481,10 @@ impl actix_web::ResponseError for ApiError {
                 ApiStatusCode::NameAlreadyExists,
                 self.to_string(),
             )),
+            ApiError::PathAlreadyExists => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::PathAlreadyExists,
+                self.to_string(),
+            )),
             ApiError::InvalidUuid => HttpResponse::BadRequest().json(ApiErrorResponse::new(
                 ApiStatusCode::InvalidUuid,
                 self.to_string(),
@@ -526,6 +541,10 @@ impl actix_web::ResponseError for ApiError {
             )),
             ApiError::InvalidPort => HttpResponse::BadRequest().json(ApiErrorResponse::new(
                 ApiStatusCode::InvalidPort,
+                self.to_string(),
+            )),
+            ApiError::EmptyTargets => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::EmptyTargets,
                 self.to_string(),
             )),
         }

@@ -1,6 +1,5 @@
 import React from "react";
 import { Api, UUID } from "../../../api/api";
-import Select from "react-select";
 import Input from "../../../components/input";
 import StartAttack from "../components/start-attack";
 import "../../../styling/workspace-attacks-host-alive.css";
@@ -52,8 +51,9 @@ export default class WorkspaceAttacksHostAlive extends React.Component<
         return (
             <div className={"workspace-attacks-host-alive-container"}>
                 <div className={"workspace-attacks-host-alive"}>
+                    <label htmlFor={"cidr"}>IP / net in cidr</label>
                     <Input
-                        placeholder={"IP address / net in CIDR notation"}
+                        id={"cidr"}
                         value={this.state.target}
                         onChange={(target) => {
                             this.setState({ target });

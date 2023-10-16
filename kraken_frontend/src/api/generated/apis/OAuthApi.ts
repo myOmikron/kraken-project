@@ -27,10 +27,12 @@ import {
 
 export interface AcceptRequest {
     uuid: string;
+    remember?: boolean;
 }
 
 export interface DenyRequest {
     uuid: string;
+    remember?: boolean;
 }
 
 export interface InfoRequest {
@@ -52,6 +54,10 @@ export class OAuthApi extends runtime.BaseAPI {
         }
 
         const queryParameters: any = {};
+
+        if (requestParameters.remember !== undefined) {
+            queryParameters['remember'] = requestParameters.remember;
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -83,6 +89,10 @@ export class OAuthApi extends runtime.BaseAPI {
         }
 
         const queryParameters: any = {};
+
+        if (requestParameters.remember !== undefined) {
+            queryParameters['remember'] = requestParameters.remember;
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 

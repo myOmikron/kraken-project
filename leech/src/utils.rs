@@ -1,6 +1,7 @@
 //! Helper utilities
 
 use std::num::NonZeroU16;
+use std::ops::RangeInclusive;
 use std::str::FromStr;
 
 use once_cell::sync::Lazy;
@@ -33,7 +34,10 @@ impl From<ParsePortError> for String {
 }
 
 /// Parse ports retrieved via clap
-pub fn parse_ports(ports: &[String], parsed_ports: &mut Vec<u16>) -> Result<(), ParsePortError> {
+pub fn parse_ports(
+    ports: &[String],
+    parsed_ports: &mut Vec<RangeInclusive<u16>>,
+) -> Result<(), ParsePortError> {
     for port in ports {
         let port_parts = port.split(',');
         for part in port_parts {
@@ -76,12 +80,11 @@ pub fn parse_ports(ports: &[String], parsed_ports: &mut Vec<u16>) -> Result<(), 
                         )));
                     }
 
-                    for port in start..=end {
-                        parsed_ports.push(port);
-                    }
+                    parsed_ports.push(start..=end);
                 } else if let Some(m) = captures.name("single") {
                     if let Ok(v) = NonZeroU16::from_str(m.as_str()) {
-                        parsed_ports.push(u16::from(v));
+                        let port = u16::from(v);
+                        parsed_ports.push(port..=port);
                     } else {
                         return Err(ParsePortError::InvalidPort(m.as_str().to_string()));
                     }
@@ -93,9 +96,6 @@ pub fn parse_ports(ports: &[String], parsed_ports: &mut Vec<u16>) -> Result<(), 
             }
         }
     }
-
-    parsed_ports.sort();
-    parsed_ports.dedup();
 
     Ok(())
 }
