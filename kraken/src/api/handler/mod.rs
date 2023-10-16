@@ -74,14 +74,14 @@ pub struct PathUuid {
 }
 
 /// Query parameters for paginated data
-#[derive(Deserialize, ToSchema, IntoParams)]
+#[derive(Deserialize, IntoParams)]
 pub struct PageParams {
     /// Number of items to retrieve
-    #[schema(example = 50)]
+    #[param(example = 50, minimum = 1)]
     pub limit: u64,
 
     /// Position in the whole list to start retrieving from
-    #[schema(example = 0)]
+    #[param(example = 0, minimum = 1)]
     pub offset: u64,
 }
 
