@@ -183,16 +183,16 @@ export const Api = {
                 handleError(hosts.updateHost({ wUuid: workspaceUuid, hUuid: hostUuid, updateHostRequest })),
         },
         ports: {
-            all: (workspaceUuid: UUID, limit: number, offset: number) =>
-                handleError(ports.getAllPorts({ uuid: workspaceUuid, limit, offset })),
+            all: (workspaceUuid: UUID, limit: number, offset: number, filter: { host?: UUID } = {}) =>
+                handleError(ports.getAllPorts({ uuid: workspaceUuid, limit, offset, ...filter })),
         },
         domains: {
             all: (workspaceUuid: UUID, limit: number, offset: number) =>
                 handleError(domains.getAllDomains({ uuid: workspaceUuid, limit, offset })),
         },
         services: {
-            all: (workspaceUuid: UUID, limit: number, offset: number) =>
-                handleError(services.getAllServices({ uuid: workspaceUuid, limit, offset })),
+            all: (workspaceUuid: UUID, limit: number, offset: number, filter: { host?: UUID } = {}) =>
+                handleError(services.getAllServices({ uuid: workspaceUuid, limit, offset, ...filter })),
         },
         tags: {
             all: (workspaceUuid: UUID) => handleError(workspaceTags.getAllWorkspaceTags({ uuid: workspaceUuid })),
@@ -200,7 +200,7 @@ export const Api = {
                 handleError(workspaceTags.createWorkspaceTag({ uuid: workspaceUuid, createWorkspaceTagRequest })),
             update: (workspaceUuid: UUID, tagUuid: UUID, updateWorkspaceTag: UpdateWorkspaceTag) =>
                 handleError(
-                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag })
+                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag }),
                 ),
             delete: (workspaceUuid: UUID, tagUuid: UUID) =>
                 workspaceTags.deleteWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid }),

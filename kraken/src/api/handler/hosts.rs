@@ -12,10 +12,11 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::handler::{
-    get_page_params, workspaces, ApiError, ApiResult, HostResultsPage, PageParams, PathUuid,
-    SimpleTag, TagType,
+    get_page_params, ApiError, ApiResult, HostResultsPage, PageParams, PathUuid, SimpleTag, TagType,
 };
-use crate::models::{GlobalTag, Host, HostGlobalTag, HostWorkspaceTag, OsType, WorkspaceTag};
+use crate::models::{
+    GlobalTag, Host, HostGlobalTag, HostWorkspaceTag, OsType, Workspace, WorkspaceTag,
+};
 
 /// The simple representation of a host
 #[derive(Serialize, Debug, ToSchema)]
@@ -79,7 +80,7 @@ pub(crate) async fn get_all_hosts(
 
     let mut tx = db.start_transaction().await?;
 
-    if !workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.uuid).await? {
+    if !Workspace::is_user_member_or_owner(&mut tx, path.uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
     }
 
@@ -147,7 +148,7 @@ pub async fn get_host(
 
     let mut tx = db.start_transaction().await?;
 
-    if !workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.w_uuid).await? {
+    if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges)?;
     }
 
@@ -241,7 +242,7 @@ pub async fn update_host(
 
     let mut tx = db.start_transaction().await?;
 
-    if !workspaces::is_user_member_or_owner(&mut tx, user_uuid, path.w_uuid).await? {
+    if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
     }
 

@@ -4,27 +4,23 @@ use std::net::IpAddr;
 use std::ops::RangeInclusive;
 
 use actix_toolbox::tb_middleware::Session;
-use actix_web::web::{Data, Json, Path, Query};
+use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, HttpResponse};
 use chrono::{DateTime, Utc};
 use ipnetwork::IpNetwork;
 use log::debug;
-use rorm::db::transaction::Transaction;
 use rorm::prelude::*;
-use rorm::{and, query, Database};
+use rorm::{query, Database};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::users::UserResponse;
-use crate::api::handler::{
-    get_page_params, query_user, ApiError, ApiResult, Page, PageParams, PathUuid,
-    TcpPortScanResultsPage, UuidResponse,
-};
+use crate::api::handler::{query_user, ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::api::server::DehashedScheduler;
 use crate::chan::{RpcClients, WsManagerChan};
-use crate::models::{Attack, AttackType, TcpPortScanResult, WordList, Workspace, WorkspaceMember};
+use crate::models::{Attack, AttackType, WordList};
 use crate::modules::attacks::AttackContext;
 use crate::rpc::rpc_definitions;
 use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
@@ -708,7 +704,7 @@ pub struct SimpleAttack {
 pub async fn get_attack(
     req: Path<PathUuid>,
     db: Data<Database>,
-    session: Session,
+    SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<SimpleAttack>> {
     let mut tx = db.start_transaction().await?;
 
@@ -730,7 +726,7 @@ pub async fn get_attack(
     .await?
     .ok_or(ApiError::InvalidUuid)?;
 
-    let attack = if has_access(&mut tx, req.uuid, &session).await? {
+    let attack = if Attack::has_access(&mut tx, req.uuid, user_uuid).await? {
         let (
             uuid,
             workspace,
@@ -760,77 +756,6 @@ pub async fn get_attack(
     tx.commit().await?;
 
     Ok(Json(attack?))
-}
-
-/// A simple representation of a tcp port scan result
-#[derive(Serialize, ToSchema)]
-pub struct SimpleTcpPortScanResult {
-    uuid: Uuid,
-    attack: Uuid,
-    created_at: DateTime<Utc>,
-    #[schema(value_type = String)]
-    address: IpNetwork,
-    port: u16,
-}
-
-/// Retrieve a tcp port scan's results by the attack's id
-#[utoipa::path(
-tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns attack's results", body = TcpPortScanResultsPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid, PageParams),
-    security(("api_key" = []))
-)]
-#[get("/attacks/{uuid}/tcpPortScanResults")]
-pub async fn get_tcp_port_scan_results(
-    path: Path<PathUuid>,
-    query: Query<PageParams>,
-    session: Session,
-    db: Data<Database>,
-) -> ApiResult<Json<TcpPortScanResultsPage>> {
-    let mut tx = db.start_transaction().await?;
-
-    let uuid = path.uuid;
-    let (limit, offset) = get_page_params(query).await?;
-
-    let page = if !has_access(&mut tx, uuid, &session).await? {
-        Err(ApiError::MissingPrivileges)
-    } else {
-        let (total,) = query!(&mut tx, (TcpPortScanResult::F.uuid.count(),))
-            .condition(TcpPortScanResult::F.attack.equals(uuid))
-            .one()
-            .await?;
-        let results = query!(&mut tx, TcpPortScanResult)
-            .condition(TcpPortScanResult::F.attack.equals(uuid))
-            .order_asc(TcpPortScanResult::F.uuid)
-            .limit(limit)
-            .offset(offset)
-            .all()
-            .await?
-            .into_iter()
-            .map(|result| SimpleTcpPortScanResult {
-                uuid: result.uuid,
-                attack: *result.attack.key(),
-                created_at: result.created_at,
-                address: result.address,
-                port: result.port as u16,
-            })
-            .collect();
-        Ok(Page {
-            items: results,
-            limit,
-            offset,
-            total: total as u64,
-        })
-    };
-
-    tx.commit().await?;
-
-    Ok(Json(page?))
 }
 
 /// Delete an attack and its results
@@ -877,27 +802,4 @@ pub async fn delete_attack(
     tx.commit().await?;
 
     Ok(HttpResponse::Ok().finish())
-}
-
-/// Does the user have access to the attack's workspace?
-/// I.e. is owner or member?
-async fn has_access(tx: &mut Transaction, attack_uuid: Uuid, session: &Session) -> ApiResult<bool> {
-    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
-
-    let (workspace, owner) = query!(&mut *tx, (Workspace::F.uuid, Workspace::F.owner))
-        .condition(Workspace::F.attacks.uuid.equals(attack_uuid))
-        .one()
-        .await?;
-    if *owner.key() == uuid {
-        return Ok(true);
-    }
-
-    Ok(query!(&mut *tx, (WorkspaceMember::F.id,))
-        .condition(and!(
-            WorkspaceMember::F.workspace.equals(workspace),
-            WorkspaceMember::F.member.equals(uuid),
-        ))
-        .optional()
-        .await?
-        .is_some())
 }

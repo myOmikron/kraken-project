@@ -21,9 +21,9 @@ use webauthn_rs::prelude::{Url, WebauthnError};
 use webauthn_rs::WebauthnBuilder;
 
 use crate::api::handler::{
-    api_keys, attacks, auth, data_export, domains, global_tags, hosts, leeches, oauth,
-    oauth_applications, ports, services, settings, users, websocket, wordlists, workspace_tags,
-    workspaces,
+    api_keys, attack_results, attacks, auth, data_export, domains, global_tags, hosts, leeches,
+    oauth, oauth_applications, ports, services, settings, users, websocket, wordlists,
+    workspace_tags, workspaces,
 };
 use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
@@ -171,12 +171,18 @@ pub(crate) async fn start_server(
                     .service(attacks::scan_tcp_ports)
                     .service(attacks::query_certificate_transparency)
                     .service(attacks::delete_attack)
-                    .service(attacks::get_tcp_port_scan_results)
                     .service(attacks::get_attack)
                     .service(attacks::hosts_alive_check)
                     .service(attacks::query_dehashed)
                     .service(attacks::service_detection)
                     .service(attacks::dns_resolution)
+                    .service(attack_results::get_bruteforce_subdomains_results)
+                    .service(attack_results::get_tcp_port_scan_results)
+                    .service(attack_results::get_query_certificate_transparency_results)
+                    .service(attack_results::get_query_unhashed_results)
+                    .service(attack_results::get_host_alive_results)
+                    .service(attack_results::get_service_detection_results)
+                    .service(attack_results::get_dns_resolution_results)
                     .service(api_keys::create_api_key)
                     .service(api_keys::get_api_keys)
                     .service(api_keys::update_api_key)
