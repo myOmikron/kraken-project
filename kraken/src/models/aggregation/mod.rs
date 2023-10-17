@@ -266,6 +266,9 @@ pub struct Domain {
     #[rorm(max_length = 255)]
     pub comment: String,
 
+    /// Domains resolving to this host
+    pub hosts: BackRef<field!(DomainHostRelation::F.domain)>,
+
     /// Domains pointing to this one
     pub sources: BackRef<field!(CnameRelation::F.destination)>,
 

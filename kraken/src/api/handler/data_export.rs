@@ -347,6 +347,7 @@ impl From<Domain> for AggregatedDomain {
             uuid,
             domain,
             comment,
+            hosts,
             sources,
             destinations,
             workspace: _,
