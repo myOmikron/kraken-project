@@ -283,7 +283,7 @@ pub struct Domain {
 /// M2M relation between two [domains](Domain)
 #[derive(Model)]
 pub struct DomainDomainRelation {
-    /// The primary key of this connection
+    /// The primary key of this relation
     #[rorm(primary_key)]
     pub uuid: Uuid,
 
@@ -292,12 +292,16 @@ pub struct DomainDomainRelation {
 
     /// The destination address
     pub destination: ForeignModel<Domain>,
+
+    /// A reference to the workspace for faster querying
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub workspace: ForeignModel<Workspace>,
 }
 
 /// M2M relation between a [Domain] and a [Host]
 #[derive(Model)]
 pub struct DomainHostRelation {
-    /// The primary key of this connection
+    /// The primary key of this relation
     #[rorm(primary_key)]
     pub uuid: Uuid,
 
@@ -312,6 +316,10 @@ pub struct DomainHostRelation {
     /// If this flag is set to `true`, the domain directly points to the host via an `A` or `AAAA` record.
     /// If it is `false`, the domain redirects to another via `CNAME` which eventually resolves to the host.
     pub is_direct: bool,
+
+    /// A reference to the workspace for faster querying
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub workspace: ForeignModel<Workspace>,
 }
 
 /* This enum won't be actually used, but stays for now as reminder and collection of which relations will need implementations

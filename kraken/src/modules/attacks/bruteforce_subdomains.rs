@@ -128,14 +128,25 @@ impl LeechAttackContext {
                     let host_uuid =
                         Host::get_or_create(&mut tx, self.workspace_uuid, addr, OsType::Unknown)
                             .await?;
-                    DomainHostRelation::insert_if_missing(&mut tx, source_uuid, host_uuid, true)
-                        .await?;
+                    DomainHostRelation::insert_if_missing(
+                        &mut tx,
+                        self.workspace_uuid,
+                        source_uuid,
+                        host_uuid,
+                        true,
+                    )
+                    .await?;
                 }
                 DnsRecordType::Cname => {
                     let destination_uuid =
                         Domain::get_or_create(&mut tx, self.workspace_uuid, &destination).await?;
-                    DomainDomainRelation::insert_if_missing(&mut tx, source_uuid, destination_uuid)
-                        .await?;
+                    DomainDomainRelation::insert_if_missing(
+                        &mut tx,
+                        self.workspace_uuid,
+                        source_uuid,
+                        destination_uuid,
+                    )
+                    .await?;
                 }
                 _ => {}
             }

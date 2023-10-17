@@ -249,6 +249,7 @@ impl DomainDomainRelation {
     /// Insert a [`CnameRelation`] if it doesn't exist yet.
     pub async fn insert_if_missing(
         executor: impl Executor<'_>,
+        workspace: Uuid,
         source: Uuid,
         destination: Uuid,
     ) -> Result<(), rorm::Error> {
@@ -270,6 +271,7 @@ impl DomainDomainRelation {
                     uuid: Uuid::new_v4(),
                     source: ForeignModelByField::Key(source),
                     destination: ForeignModelByField::Key(destination),
+                    workspace: ForeignModelByField::Key(workspace),
                 })
                 .await?;
 
@@ -279,7 +281,14 @@ impl DomainDomainRelation {
                 .all()
                 .await?
             {
-                DomainHostRelation::insert_if_missing(&mut *tx, source, *host.key(), false).await?;
+                DomainHostRelation::insert_if_missing(
+                    &mut *tx,
+                    workspace,
+                    source,
+                    *host.key(),
+                    false,
+                )
+                .await?;
             }
         }
 
@@ -294,6 +303,7 @@ impl DomainHostRelation {
     /// Indirect relations are created implicitly by [`CnameRelation::insert_if_missing`].
     pub async fn insert_if_missing(
         executor: impl Executor<'_>,
+        workspace: Uuid,
         domain: Uuid,
         host: Uuid,
         is_direct: bool,
@@ -319,6 +329,7 @@ impl DomainHostRelation {
                         uuid: Uuid::new_v4(),
                         domain: ForeignModelByField::Key(domain),
                         host: ForeignModelByField::Key(host),
+                        workspace: ForeignModelByField::Key(workspace),
                         is_direct: true,
                     })
                     .await?;
