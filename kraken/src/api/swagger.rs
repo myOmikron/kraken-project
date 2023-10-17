@@ -220,6 +220,7 @@ pub(crate) struct FrontendApi;
     components(schemas(
         models::OsType,
         models::PortProtocol,
+        models::Certainty,
         handler::ApiErrorResponse,
         handler::ApiStatusCode,
         oauth_schemas::TokenRequest,
@@ -232,6 +233,7 @@ pub(crate) struct FrontendApi;
         data_export::AggregatedService,
         data_export::AggregatedDomain,
         data_export::AggregatedTags,
+        data_export::AggregatedRelation,
     )),
     modifiers(&SecurityAddon2)
 )]
