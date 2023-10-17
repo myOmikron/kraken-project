@@ -9,8 +9,8 @@ use uuid::Uuid;
 
 use crate::chan::WsMessage;
 use crate::models::{
-    BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert, CnameRelation, DnsRecordType,
-    Domain, DomainHostRelation, Host, OsType,
+    BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert, DnsRecordType, Domain,
+    DomainDomainRelation, DomainHostRelation, Host, OsType,
 };
 use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
@@ -134,7 +134,7 @@ impl LeechAttackContext {
                 DnsRecordType::Cname => {
                     let destination_uuid =
                         Domain::get_or_create(&mut tx, self.workspace_uuid, &destination).await?;
-                    CnameRelation::insert_if_missing(&mut tx, source_uuid, destination_uuid)
+                    DomainDomainRelation::insert_if_missing(&mut tx, source_uuid, destination_uuid)
                         .await?;
                 }
                 _ => {}

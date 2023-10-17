@@ -6,7 +6,7 @@ use rorm::{and, insert, query, update};
 use uuid::Uuid;
 
 use crate::models::{
-    Certainty, CnameRelation, Domain, DomainHostRelation, Host, OsType, Port, PortProtocol,
+    Certainty, Domain, DomainDomainRelation, DomainHostRelation, Host, OsType, Port, PortProtocol,
     Service, Workspace,
 };
 
@@ -245,7 +245,7 @@ impl Host {
     }
 }
 
-impl CnameRelation {
+impl DomainDomainRelation {
     /// Insert a [`CnameRelation`] if it doesn't exist yet.
     pub async fn insert_if_missing(
         executor: impl Executor<'_>,
@@ -255,18 +255,18 @@ impl CnameRelation {
         let mut guard = executor.ensure_transaction().await?;
         let tx = guard.get_transaction();
 
-        if query!(&mut *tx, (CnameRelation::F.uuid,))
+        if query!(&mut *tx, (DomainDomainRelation::F.uuid,))
             .condition(and![
-                CnameRelation::F.source.equals(source),
-                CnameRelation::F.destination.equals(destination)
+                DomainDomainRelation::F.source.equals(source),
+                DomainDomainRelation::F.destination.equals(destination)
             ])
             .optional()
             .await?
             .is_none()
         {
-            insert!(&mut *tx, CnameRelation)
+            insert!(&mut *tx, DomainDomainRelation)
                 .return_nothing()
-                .single(&CnameRelation {
+                .single(&DomainDomainRelation {
                     uuid: Uuid::new_v4(),
                     source: ForeignModelByField::Key(source),
                     destination: ForeignModelByField::Key(destination),

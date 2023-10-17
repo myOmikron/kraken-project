@@ -270,10 +270,10 @@ pub struct Domain {
     pub hosts: BackRef<field!(DomainHostRelation::F.domain)>,
 
     /// Domains pointing to this one
-    pub sources: BackRef<field!(CnameRelation::F.destination)>,
+    pub sources: BackRef<field!(DomainDomainRelation::F.destination)>,
 
     /// Domains, this one resolves to
-    pub destinations: BackRef<field!(CnameRelation::F.source)>,
+    pub destinations: BackRef<field!(DomainDomainRelation::F.source)>,
 
     /// A reference to the workspace this domain is referencing
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
@@ -282,7 +282,7 @@ pub struct Domain {
 
 /// M2M relation between two [domains](Domain)
 #[derive(Model)]
-pub struct CnameRelation {
+pub struct DomainDomainRelation {
     /// The primary key of this connection
     #[rorm(primary_key)]
     pub uuid: Uuid,

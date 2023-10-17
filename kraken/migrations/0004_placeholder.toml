@@ -1,0 +1,10 @@
+[Migration]
+Hash = "15691847194624850987"
+Initial = false
+Dependency = 3
+Replaces = []
+
+[[Migration.Operations]]
+Type = "RenameModel"
+Old = "cnamerelation"
+New = "domaindomainrelation"
