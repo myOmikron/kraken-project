@@ -81,7 +81,7 @@ pub struct PageParams {
     pub limit: u64,
 
     /// Position in the whole list to start retrieving from
-    #[param(example = 0, minimum = 1)]
+    #[param(example = 0)]
     pub offset: u64,
 }
 
