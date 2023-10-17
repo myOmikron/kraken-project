@@ -144,7 +144,7 @@ export const Api = {
         delete: (uuid: UUID) => handleError(attacks.deleteAttack({ uuid })),
         raw: {
             getBruteforceSubdomainsResults: (uuid: UUID, limit: number, offset: number) =>
-                handleError(attacks.getBruteforceSubdomainsResults({ uuid })),
+                handleError(attacks.getBruteforceSubdomainsResults({ uuid, limit, offset })),
             getDNSResolutionResults: (uuid: UUID, limit: number, offset: number) =>
                 handleError(attacks.getDnsResolutionResults({ uuid, limit, offset })),
             getHostAliveResults: (uuid: UUID, limit: number, offset: number) =>
