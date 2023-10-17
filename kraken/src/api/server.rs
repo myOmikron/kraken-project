@@ -167,6 +167,7 @@ pub(crate) async fn start_server(
                     .service(workspaces::create_workspace)
                     .service(workspaces::delete_workspace)
                     .service(workspaces::update_workspace)
+                    .service(workspaces::transfer_ownership)
                     .service(attacks::bruteforce_subdomains)
                     .service(attacks::scan_tcp_ports)
                     .service(attacks::query_certificate_transparency)
