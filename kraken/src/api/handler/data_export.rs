@@ -279,6 +279,7 @@ impl From<Host> for AggregatedHost {
             response_time,
             ports: _,
             services: _,
+            domains,
             comment,
             workspace: _,
         } = value;
@@ -346,6 +347,8 @@ impl From<Domain> for AggregatedDomain {
             uuid,
             domain,
             comment,
+            sources,
+            destinations,
             workspace: _,
         } = value;
         Self {

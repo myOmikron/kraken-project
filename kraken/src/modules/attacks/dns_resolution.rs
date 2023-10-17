@@ -9,7 +9,8 @@ use uuid::Uuid;
 
 use crate::chan::WsMessage;
 use crate::models::{
-    DnsRecordType, DnsResolutionResult, DnsResolutionResultInsert, Domain, Host, OsType,
+    CnameRelation, DnsRecordType, DnsResolutionResult, DnsResolutionResultInsert, Domain,
+    DomainHostRelation, Host, OsType,
 };
 use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions;
@@ -133,16 +134,21 @@ impl LeechAttackContext {
                 })
                 .await?;
 
-            Domain::insert_if_missing(&mut tx, self.workspace_uuid, &source).await?;
-
+            let source_uuid = Domain::get_or_create(&mut tx, self.workspace_uuid, &source).await?;
             match dns_record_type {
                 DnsRecordType::A | DnsRecordType::Aaaa => {
                     let addr = IpNetwork::from_str(&destination).unwrap();
-                    Host::insert_if_missing(&mut tx, self.workspace_uuid, addr, OsType::Unknown)
+                    let host_uuid =
+                        Host::get_or_create(&mut tx, self.workspace_uuid, addr, OsType::Unknown)
+                            .await?;
+                    DomainHostRelation::insert_if_missing(&mut tx, source_uuid, host_uuid, true)
                         .await?;
                 }
                 DnsRecordType::Cname => {
-                    Domain::insert_if_missing(&mut tx, self.workspace_uuid, &destination).await?;
+                    let destination_uuid =
+                        Domain::get_or_create(&mut tx, self.workspace_uuid, &destination).await?;
+                    CnameRelation::insert_if_missing(&mut tx, source_uuid, destination_uuid)
+                        .await?;
                 }
                 _ => {}
             }
