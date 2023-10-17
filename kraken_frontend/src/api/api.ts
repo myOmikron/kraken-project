@@ -136,14 +136,28 @@ export const Api = {
             handleError(attacks.hostsAliveCheck({ hostsAliveRequest })),
         scanTcpPorts: (attack: ScanTcpPortsRequest) =>
             handleError(attacks.scanTcpPorts({ scanTcpPortsRequest: attack })),
-        getTcpPortScanResults: (uuid: UUID, offset: number, limit: number) =>
-            handleError(attacks.getTcpPortScanResults({ uuid, limit, offset })),
         serviceDetection: (attack: ServiceDetectionRequest) =>
             handleError(attacks.serviceDetection({ serviceDetectionRequest: attack })),
         queryDehashed: (uuid: UUID, query: Query) =>
             handleError(attacks.queryDehashed({ queryDehashedRequest: { workspaceUuid: uuid, query } })),
         get: (uuid: UUID) => handleError(attacks.getAttack({ uuid })),
         delete: (uuid: UUID) => handleError(attacks.deleteAttack({ uuid })),
+        raw: {
+            getBruteforceSubdomainsResults: (uuid: UUID, limit: number, offset: number) =>
+                handleError(attacks.getBruteforceSubdomainsResults({ uuid })),
+            getDNSResolutionResults: (uuid: UUID, limit: number, offset: number) =>
+                handleError(attacks.getDnsResolutionResults({ uuid, limit, offset })),
+            getHostAliveResults: (uuid: UUID, limit: number, offset: number) =>
+                handleError(attacks.getHostAliveResults({ uuid, limit, offset })),
+            getCertificateTransparencyResults: (uuid: UUID, limit: number, offset: number) =>
+                handleError(attacks.getQueryCertificateTransparencyResults({ uuid, limit, offset })),
+            getUnhashedResults: (uuid: UUID, limit: number, offset: number) =>
+                handleError(attacks.getQueryUnhashedResults({ uuid, limit, offset })),
+            getServiceDetectionResults: (uuid: UUID, limit: number, offset: number) =>
+                handleError(attacks.getServiceDetectionResults({ uuid, limit, offset })),
+            getTcpPortScanResults: (uuid: UUID, limit: number, offset: number) =>
+                handleError(attacks.getTcpPortScanResults({ uuid, limit, offset })),
+        },
     },
     auth: {
         login,
