@@ -29,7 +29,7 @@ use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
 };
 use crate::api::swagger::{ExternalApi, FrontendApi};
-use crate::chan::{RpcClients, RpcManagerChannel, SettingsManagerChan, WsManagerChan};
+use crate::chan::{LeechManager, SettingsManagerChan, WsManagerChan};
 use crate::config::Config;
 use crate::modules::oauth::OauthManager;
 
@@ -44,8 +44,7 @@ pub type DehashedScheduler = Data<RwLock<Option<Scheduler>>>;
 pub(crate) async fn start_server(
     db: Database,
     config: &Config,
-    rpc_manager_chan: RpcManagerChannel,
-    rpc_clients: RpcClients,
+    leeches: Data<LeechManager>,
     ws_manager_chan: WsManagerChan,
     setting_manager_chan: Arc<SettingsManagerChan>,
     dehashed_scheduler: Option<Scheduler>,
@@ -81,8 +80,7 @@ pub(crate) async fn start_server(
             .app_data(webauthn.clone())
             .app_data(oauth.clone())
             .app_data(Data::new(ws_manager_chan.clone()))
-            .app_data(Data::new(rpc_manager_chan.clone()))
-            .app_data(rpc_clients.clone())
+            .app_data(leeches.clone())
             .app_data(Data::new(setting_manager_chan.clone()))
             .app_data(dehashed.clone())
             .wrap(setup_logging_mw(LoggingMiddlewareConfig::default()))

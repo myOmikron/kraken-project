@@ -2,14 +2,13 @@
 
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
-use log::error;
 use rorm::{query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
-use crate::chan::{RpcManagerChannel, RpcManagerEvent};
+use crate::chan::LeechManager;
 use crate::models::Leech;
 use crate::modules::uri::check_leech_address;
 
@@ -45,19 +44,13 @@ pub struct CreateLeechRequest {
 pub async fn create_leech(
     req: Json<CreateLeechRequest>,
     db: Data<Database>,
-    rpc_manager_channel: Data<RpcManagerChannel>,
+    leeches: Data<LeechManager>,
 ) -> ApiResult<Json<UuidResponse>> {
     let req = req.into_inner();
 
     let uuid = Leech::insert(db.as_ref(), req.name, req.address, req.description).await?;
 
-    // Notify rpc manager about new leech
-    if let Err(err) = rpc_manager_channel
-        .send(RpcManagerEvent::Created(uuid))
-        .await
-    {
-        error!("Error sending to rpc manager: {err}");
-    }
+    leeches.created_leech(uuid).await;
 
     Ok(Json(UuidResponse { uuid }))
 }
@@ -78,7 +71,7 @@ pub async fn create_leech(
 pub async fn delete_leech(
     path: Path<PathUuid>,
     db: Data<Database>,
-    rpc_manager_channel: Data<RpcManagerChannel>,
+    leeches: Data<LeechManager>,
 ) -> ApiResult<HttpResponse> {
     let mut tx = db.start_transaction().await?;
 
@@ -94,13 +87,7 @@ pub async fn delete_leech(
 
     tx.commit().await?;
 
-    // Notify rpc manager about deleted leech
-    if let Err(err) = rpc_manager_channel
-        .send(RpcManagerEvent::Deleted(path.uuid))
-        .await
-    {
-        error!("Error sending to rpc manager: {err}");
-    }
+    leeches.deleted_leech(path.uuid).await;
 
     Ok(HttpResponse::Ok().finish())
 }
@@ -211,7 +198,7 @@ pub async fn update_leech(
     path: Path<PathUuid>,
     req: Json<UpdateLeechRequest>,
     db: Data<Database>,
-    rpc_manager_channel: Data<RpcManagerChannel>,
+    leeches: Data<LeechManager>,
 ) -> ApiResult<HttpResponse> {
     let mut tx = db.start_transaction().await?;
 
@@ -242,13 +229,7 @@ pub async fn update_leech(
 
     tx.commit().await?;
 
-    // Notify rpc manager about updated leech
-    if let Err(err) = rpc_manager_channel
-        .send(RpcManagerEvent::Updated(path.uuid))
-        .await
-    {
-        error!("Error sending to rpc manager: {err}");
-    }
+    leeches.updated_leech(path.uuid).await;
 
     Ok(HttpResponse::Ok().finish())
 }

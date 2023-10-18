@@ -28,6 +28,7 @@ use clap::{Parser, Subcommand};
 use rorm::{cli, Database, DatabaseConfiguration, DatabaseDriver};
 
 use crate::api::server;
+use crate::chan::LeechManager;
 use crate::config::Config;
 use crate::models::{User, UserPermission};
 use crate::rpc::server::start_rpc_server;
@@ -107,7 +108,9 @@ async fn main() -> Result<(), String> {
                     .map_err(|e| e.to_string())?,
             );
 
-            let (rpc_manager_chan, rpc_clients) = chan::start_rpc_manager(db.clone()).await?;
+            let leeches = LeechManager::start(db.clone())
+                .await
+                .map_err(|e| format!("Failed to query initial leeches: {e}"))?;
             let ws_manager_chan = chan::start_ws_manager().await;
             let dehashed_scheduler =
                 chan::start_dehashed_manager(settings_manager_chan.clone()).await?;
@@ -117,8 +120,7 @@ async fn main() -> Result<(), String> {
             server::start_server(
                 db,
                 &config,
-                rpc_manager_chan,
-                rpc_clients,
+                leeches,
                 ws_manager_chan,
                 settings_manager_chan,
                 dehashed_scheduler,

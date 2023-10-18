@@ -19,7 +19,7 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::users::SimpleUser;
 use crate::api::handler::{query_user, ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::api::server::DehashedScheduler;
-use crate::chan::{RpcClients, WsManagerChan};
+use crate::chan::{LeechManager, WsManagerChan};
 use crate::models::{Attack, AttackType, UserPermission, WordList, Workspace};
 use crate::modules::attacks::AttackContext;
 use crate::rpc::rpc_definitions;
@@ -67,7 +67,7 @@ pub struct BruteforceSubdomainsRequest {
 pub async fn bruteforce_subdomains(
     req: Json<BruteforceSubdomainsRequest>,
     db: Data<Database>,
-    rpc_clients: RpcClients,
+    leeches: Data<LeechManager>,
     ws_manager_chan: Data<WsManagerChan>,
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
@@ -86,9 +86,9 @@ pub async fn bruteforce_subdomains(
         .ok_or(ApiError::InvalidUuid)?;
 
     let client = if let Some(leech_uuid) = leech_uuid {
-        rpc_clients.get_leech(&leech_uuid)?
+        leeches.get_leech(&leech_uuid)?
     } else {
-        rpc_clients.random_leech()?
+        leeches.random_leech()?
     };
 
     let attack_uuid = Attack::insert(
@@ -215,7 +215,7 @@ where
 pub async fn scan_tcp_ports(
     req: Json<ScanTcpPortsRequest>,
     db: Data<Database>,
-    rpc_clients: RpcClients,
+    leeches: Data<LeechManager>,
     ws_manager_chan: Data<WsManagerChan>,
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
@@ -232,9 +232,9 @@ pub async fn scan_tcp_ports(
     } = req.into_inner();
 
     let client = if let Some(leech_uuid) = leech_uuid {
-        rpc_clients.get_leech(&leech_uuid)?
+        leeches.get_leech(&leech_uuid)?
     } else {
-        rpc_clients.random_leech()?
+        leeches.random_leech()?
     };
 
     let attack_uuid = Attack::insert(
@@ -325,7 +325,7 @@ pub async fn hosts_alive_check(
     db: Data<Database>,
     req: Json<HostsAliveRequest>,
     SessionUser(user_uuid): SessionUser,
-    rpc_clients: RpcClients,
+    leeches: Data<LeechManager>,
     ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
     let HostsAliveRequest {
@@ -345,9 +345,9 @@ pub async fn hosts_alive_check(
     .await?;
 
     let leech = if let Some(leech_uuid) = leech_uuid {
-        rpc_clients.get_leech(&leech_uuid)?
+        leeches.get_leech(&leech_uuid)?
     } else {
-        rpc_clients.random_leech()?
+        leeches.random_leech()?
     };
 
     tokio::spawn(
@@ -406,7 +406,7 @@ pub struct QueryCertificateTransparencyRequest {
 pub async fn query_certificate_transparency(
     req: Json<QueryCertificateTransparencyRequest>,
     db: Data<Database>,
-    rpc_clients: RpcClients,
+    leeches: Data<LeechManager>,
     ws_manager_chan: Data<WsManagerChan>,
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
@@ -418,7 +418,7 @@ pub async fn query_certificate_transparency(
         workspace_uuid,
     } = req.into_inner();
 
-    let client = rpc_clients.random_leech()?;
+    let client = leeches.random_leech()?;
 
     let attack_uuid = Attack::insert(
         db.as_ref(),
@@ -545,7 +545,7 @@ pub struct ServiceDetectionRequest {
 pub async fn service_detection(
     req: Json<ServiceDetectionRequest>,
     ws_manager_chan: Data<WsManagerChan>,
-    rpc_clients: RpcClients,
+    leeches: Data<LeechManager>,
     SessionUser(user_uuid): SessionUser,
     db: Data<Database>,
 ) -> ApiResult<HttpResponse> {
@@ -562,9 +562,9 @@ pub async fn service_detection(
     }
 
     let client = if let Some(leech_uuid) = leech_uuid {
-        rpc_clients.get_leech(&leech_uuid)?
+        leeches.get_leech(&leech_uuid)?
     } else {
-        rpc_clients.random_leech()?
+        leeches.random_leech()?
     };
 
     let attack_uuid = Attack::insert(
@@ -628,7 +628,7 @@ context_path = "/api/v1",
 pub async fn dns_resolution(
     req: Json<DnsResolutionRequest>,
     db: Data<Database>,
-    rpc_clients: RpcClients,
+    leeches: Data<LeechManager>,
     SessionUser(user_uuid): SessionUser,
     ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
@@ -644,9 +644,9 @@ pub async fn dns_resolution(
     }
 
     let client = if let Some(leech_uuid) = leech_uuid {
-        rpc_clients.get_leech(&leech_uuid)?
+        leeches.get_leech(&leech_uuid)?
     } else {
-        rpc_clients.random_leech()?
+        leeches.random_leech()?
     };
 
     let attack_uuid = Attack::insert(
