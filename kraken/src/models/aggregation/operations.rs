@@ -5,7 +5,10 @@ use rorm::prelude::*;
 use rorm::{and, insert, query, update};
 use uuid::Uuid;
 
-use crate::models::{Certainty, Domain, Host, OsType, Port, PortProtocol, Service, Workspace};
+use crate::models::{
+    Certainty, Domain, DomainDomainRelation, DomainHostRelation, Host, OsType, Port, PortProtocol,
+    Service, Workspace,
+};
 
 #[derive(Patch)]
 #[rorm(model = "Host")]
@@ -166,69 +169,66 @@ impl Service {
 impl Domain {
     /// Insert an aggregated domain if it doesn't exist yet.
     ///
-    /// Returns whether the domain was inserted or not.
-    pub async fn insert_if_missing(
+    /// Returns the domain's primary key.
+    pub async fn get_or_create(
         executor: impl Executor<'_>,
         workspace: Uuid,
         domain: &str,
-    ) -> Result<bool, rorm::Error> {
+    ) -> Result<Uuid, rorm::Error> {
         let mut guard = executor.ensure_transaction().await?;
         let tx = guard.get_transaction();
 
-        let inserted = if query!(&mut *tx, (Domain::F.uuid,))
+        let uuid = if let Some((uuid,)) = query!(&mut *tx, (Domain::F.uuid,))
             .condition(and![
                 Domain::F.workspace.equals(workspace),
                 Domain::F.domain.equals(domain)
             ])
             .optional()
             .await?
-            .is_some()
         {
-            false
+            uuid
         } else {
             insert!(tx, Domain)
-                .return_nothing()
+                .return_primary_key()
                 .single(&DomainInsert {
                     uuid: Uuid::new_v4(),
                     domain: domain.to_string(),
                     comment: String::new(),
                     workspace: ForeignModelByField::Key(workspace),
                 })
-                .await?;
-            true
+                .await?
         };
 
         guard.commit().await?;
-        Ok(inserted)
+        Ok(uuid)
     }
 }
 
 impl Host {
     /// Insert an aggregated host if it doesn't exist yet.
     ///
-    /// Returns whether the domain was inserted or not.
-    pub async fn insert_if_missing(
+    /// Returns the host's primary key.
+    pub async fn get_or_create(
         executor: impl Executor<'_>,
         workspace: Uuid,
         ip_addr: IpNetwork,
         os_type: OsType,
-    ) -> Result<bool, rorm::Error> {
+    ) -> Result<Uuid, rorm::Error> {
         let mut guard = executor.ensure_transaction().await?;
         let tx = guard.get_transaction();
 
-        let inserted = if query!(&mut *tx, (Host::F.uuid,))
+        let uuid = if let Some((uuid,)) = query!(&mut *tx, (Host::F.uuid,))
             .condition(and![
                 Host::F.workspace.equals(workspace),
                 Host::F.ip_addr.equals(ip_addr),
             ])
             .optional()
             .await?
-            .is_some()
         {
-            false
+            uuid
         } else {
             insert!(&mut *tx, Host)
-                .return_nothing()
+                .return_primary_key()
                 .single(&HostInsert {
                     uuid: Uuid::new_v4(),
                     ip_addr,
@@ -237,11 +237,113 @@ impl Host {
                     comment: "".to_string(),
                     workspace: ForeignModelByField::Key(workspace),
                 })
-                .await?;
-            true
+                .await?
         };
 
         guard.commit().await?;
-        Ok(inserted)
+        Ok(uuid)
+    }
+}
+
+impl DomainDomainRelation {
+    /// Insert a [`CnameRelation`] if it doesn't exist yet.
+    pub async fn insert_if_missing(
+        executor: impl Executor<'_>,
+        workspace: Uuid,
+        source: Uuid,
+        destination: Uuid,
+    ) -> Result<(), rorm::Error> {
+        let mut guard = executor.ensure_transaction().await?;
+        let tx = guard.get_transaction();
+
+        if query!(&mut *tx, (DomainDomainRelation::F.uuid,))
+            .condition(and![
+                DomainDomainRelation::F.source.equals(source),
+                DomainDomainRelation::F.destination.equals(destination)
+            ])
+            .optional()
+            .await?
+            .is_none()
+        {
+            insert!(&mut *tx, DomainDomainRelation)
+                .return_nothing()
+                .single(&DomainDomainRelation {
+                    uuid: Uuid::new_v4(),
+                    source: ForeignModelByField::Key(source),
+                    destination: ForeignModelByField::Key(destination),
+                    workspace: ForeignModelByField::Key(workspace),
+                })
+                .await?;
+
+            // Create direct domain -> host relations
+            for (host,) in query!(&mut *tx, (DomainHostRelation::F.host,))
+                .condition(DomainHostRelation::F.domain.equals(destination))
+                .all()
+                .await?
+            {
+                DomainHostRelation::insert_if_missing(
+                    &mut *tx,
+                    workspace,
+                    source,
+                    *host.key(),
+                    false,
+                )
+                .await?;
+            }
+        }
+
+        guard.commit().await?;
+        Ok(())
+    }
+}
+
+impl DomainHostRelation {
+    /// Insert a [`DomainHostRelation`] if it doesn't exist yet.
+    ///
+    /// Indirect relations are created implicitly by [`CnameRelation::insert_if_missing`].
+    pub async fn insert_if_missing(
+        executor: impl Executor<'_>,
+        workspace: Uuid,
+        domain: Uuid,
+        host: Uuid,
+        is_direct: bool,
+    ) -> Result<(), rorm::Error> {
+        let mut guard = executor.ensure_transaction().await?;
+        let tx = guard.get_transaction();
+
+        match query!(
+            &mut *tx,
+            (DomainHostRelation::F.uuid, DomainHostRelation::F.is_direct)
+        )
+        .condition(and![
+            DomainHostRelation::F.domain.equals(domain),
+            DomainHostRelation::F.host.equals(host)
+        ])
+        .optional()
+        .await?
+        {
+            None => {
+                insert!(&mut *tx, DomainHostRelation)
+                    .return_nothing()
+                    .single(&DomainHostRelation {
+                        uuid: Uuid::new_v4(),
+                        domain: ForeignModelByField::Key(domain),
+                        host: ForeignModelByField::Key(host),
+                        workspace: ForeignModelByField::Key(workspace),
+                        is_direct: true,
+                    })
+                    .await?;
+            }
+            Some((uuid, false)) if is_direct => {
+                update!(&mut *tx, DomainHostRelation)
+                    .set(DomainHostRelation::F.is_direct, true)
+                    .condition(DomainHostRelation::F.uuid.equals(uuid))
+                    .await?;
+            }
+            _ => {}
+        }
+
+        guard.commit().await?;
+        Ok(())
     }
 }

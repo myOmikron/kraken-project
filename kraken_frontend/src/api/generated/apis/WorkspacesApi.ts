@@ -19,6 +19,7 @@ import type {
   CreateWorkspaceRequest,
   FullWorkspace,
   GetAllWorkspacesResponse,
+  TransferWorkspaceRequest,
   UpdateWorkspaceRequest,
   UuidResponse,
 } from '../models';
@@ -31,6 +32,8 @@ import {
     FullWorkspaceToJSON,
     GetAllWorkspacesResponseFromJSON,
     GetAllWorkspacesResponseToJSON,
+    TransferWorkspaceRequestFromJSON,
+    TransferWorkspaceRequestToJSON,
     UpdateWorkspaceRequestFromJSON,
     UpdateWorkspaceRequestToJSON,
     UuidResponseFromJSON,
@@ -47,6 +50,11 @@ export interface DeleteWorkspaceRequest {
 
 export interface GetWorkspaceRequest {
     uuid: string;
+}
+
+export interface TransferOwnershipRequest {
+    uuid: string;
+    transferWorkspaceRequest: TransferWorkspaceRequest;
 }
 
 export interface UpdateWorkspaceOperationRequest {
@@ -183,6 +191,44 @@ export class WorkspacesApi extends runtime.BaseAPI {
     async getWorkspace(requestParameters: GetWorkspaceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullWorkspace> {
         const response = await this.getWorkspaceRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Transfer ownership to another account  You will loose access to the workspace.
+     * Transfer ownership to another account
+     */
+    async transferOwnershipRaw(requestParameters: TransferOwnershipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling transferOwnership.');
+        }
+
+        if (requestParameters.transferWorkspaceRequest === null || requestParameters.transferWorkspaceRequest === undefined) {
+            throw new runtime.RequiredError('transferWorkspaceRequest','Required parameter requestParameters.transferWorkspaceRequest was null or undefined when calling transferOwnership.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{uuid}/transfer`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TransferWorkspaceRequestToJSON(requestParameters.transferWorkspaceRequest),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Transfer ownership to another account  You will loose access to the workspace.
+     * Transfer ownership to another account
+     */
+    async transferOwnership(requestParameters: TransferOwnershipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.transferOwnershipRaw(requestParameters, initOverrides);
     }
 
     /**

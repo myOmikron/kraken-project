@@ -14,62 +14,55 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * A simple representation of a tcp port scan result
+ * A simple representation of a host alive result
  * @export
- * @interface SimpleTcpPortScanResult
+ * @interface SimpleHostAliveResult
  */
-export interface SimpleTcpPortScanResult {
+export interface SimpleHostAliveResult {
     /**
      * The primary key
      * @type {string}
-     * @memberof SimpleTcpPortScanResult
+     * @memberof SimpleHostAliveResult
      */
     uuid: string;
     /**
      * The attack which produced this result
      * @type {string}
-     * @memberof SimpleTcpPortScanResult
+     * @memberof SimpleHostAliveResult
      */
     attack: string;
     /**
      * The point in time, this result was produced
      * @type {Date}
-     * @memberof SimpleTcpPortScanResult
+     * @memberof SimpleHostAliveResult
      */
     createdAt: Date;
     /**
-     * The ip address a port was found on
+     * A host that responded
      * @type {string}
-     * @memberof SimpleTcpPortScanResult
+     * @memberof SimpleHostAliveResult
      */
-    address: string;
-    /**
-     * The found port
-     * @type {number}
-     * @memberof SimpleTcpPortScanResult
-     */
-    port: number;
+    host: string;
 }
 
 /**
- * Check if a given object implements the SimpleTcpPortScanResult interface.
+ * Check if a given object implements the SimpleHostAliveResult interface.
  */
-export function instanceOfSimpleTcpPortScanResult(value: object): boolean {
+export function instanceOfSimpleHostAliveResult(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "attack" in value;
     isInstance = isInstance && "createdAt" in value;
-    isInstance = isInstance && "address" in value;
-    isInstance = isInstance && "port" in value;
+    isInstance = isInstance && "host" in value;
 
     return isInstance;
 }
 
-export function SimpleTcpPortScanResultFromJSON(json: any): SimpleTcpPortScanResult {
-    return SimpleTcpPortScanResultFromJSONTyped(json, false);
+export function SimpleHostAliveResultFromJSON(json: any): SimpleHostAliveResult {
+    return SimpleHostAliveResultFromJSONTyped(json, false);
 }
 
-export function SimpleTcpPortScanResultFromJSONTyped(json: any, ignoreDiscriminator: boolean): SimpleTcpPortScanResult {
+export function SimpleHostAliveResultFromJSONTyped(json: any, ignoreDiscriminator: boolean): SimpleHostAliveResult {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -78,12 +71,11 @@ export function SimpleTcpPortScanResultFromJSONTyped(json: any, ignoreDiscrimina
         'uuid': json['uuid'],
         'attack': json['attack'],
         'createdAt': (new Date(json['created_at'])),
-        'address': json['address'],
-        'port': json['port'],
+        'host': json['host'],
     };
 }
 
-export function SimpleTcpPortScanResultToJSON(value?: SimpleTcpPortScanResult | null): any {
+export function SimpleHostAliveResultToJSON(value?: SimpleHostAliveResult | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -95,8 +87,7 @@ export function SimpleTcpPortScanResultToJSON(value?: SimpleTcpPortScanResult | 
         'uuid': value.uuid,
         'attack': value.attack,
         'created_at': (value.createdAt.toISOString()),
-        'address': value.address,
-        'port': value.port,
+        'host': value.host,
     };
 }
 

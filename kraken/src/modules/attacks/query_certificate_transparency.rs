@@ -106,9 +106,9 @@ impl LeechAttackContext {
         }
 
         for entry in &res.entries {
-            Domain::insert_if_missing(&mut tx, self.workspace_uuid, &entry.common_name).await?;
+            Domain::get_or_create(&mut tx, self.workspace_uuid, &entry.common_name).await?;
             for value in &entry.value_names {
-                Domain::insert_if_missing(&mut tx, self.workspace_uuid, value).await?;
+                Domain::get_or_create(&mut tx, self.workspace_uuid, value).await?;
             }
         }
 

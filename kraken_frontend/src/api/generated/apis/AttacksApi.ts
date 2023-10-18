@@ -17,12 +17,18 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   BruteforceSubdomainsRequest,
+  BruteforceSubdomainsResultsPage,
   DnsResolutionRequest,
+  DnsResolutionResultsPage,
+  HostAliveResultsPage,
   HostsAliveRequest,
   QueryCertificateTransparencyRequest,
+  QueryCertificateTransparencyResultsPage,
   QueryDehashedRequest,
+  QueryUnhashedResultsPage,
   ScanTcpPortsRequest,
   ServiceDetectionRequest,
+  ServiceDetectionResultsPage,
   SimpleAttack,
   TcpPortScanResultsPage,
   UuidResponse,
@@ -32,18 +38,30 @@ import {
     ApiErrorResponseToJSON,
     BruteforceSubdomainsRequestFromJSON,
     BruteforceSubdomainsRequestToJSON,
+    BruteforceSubdomainsResultsPageFromJSON,
+    BruteforceSubdomainsResultsPageToJSON,
     DnsResolutionRequestFromJSON,
     DnsResolutionRequestToJSON,
+    DnsResolutionResultsPageFromJSON,
+    DnsResolutionResultsPageToJSON,
+    HostAliveResultsPageFromJSON,
+    HostAliveResultsPageToJSON,
     HostsAliveRequestFromJSON,
     HostsAliveRequestToJSON,
     QueryCertificateTransparencyRequestFromJSON,
     QueryCertificateTransparencyRequestToJSON,
+    QueryCertificateTransparencyResultsPageFromJSON,
+    QueryCertificateTransparencyResultsPageToJSON,
     QueryDehashedRequestFromJSON,
     QueryDehashedRequestToJSON,
+    QueryUnhashedResultsPageFromJSON,
+    QueryUnhashedResultsPageToJSON,
     ScanTcpPortsRequestFromJSON,
     ScanTcpPortsRequestToJSON,
     ServiceDetectionRequestFromJSON,
     ServiceDetectionRequestToJSON,
+    ServiceDetectionResultsPageFromJSON,
+    ServiceDetectionResultsPageToJSON,
     SimpleAttackFromJSON,
     SimpleAttackToJSON,
     TcpPortScanResultsPageFromJSON,
@@ -66,6 +84,42 @@ export interface DnsResolutionOperationRequest {
 
 export interface GetAttackRequest {
     uuid: string;
+}
+
+export interface GetBruteforceSubdomainsResultsRequest {
+    uuid: string;
+    limit: number;
+    offset: number;
+}
+
+export interface GetDnsResolutionResultsRequest {
+    uuid: string;
+    limit: number;
+    offset: number;
+}
+
+export interface GetHostAliveResultsRequest {
+    uuid: string;
+    limit: number;
+    offset: number;
+}
+
+export interface GetQueryCertificateTransparencyResultsRequest {
+    uuid: string;
+    limit: number;
+    offset: number;
+}
+
+export interface GetQueryUnhashedResultsRequest {
+    uuid: string;
+    limit: number;
+    offset: number;
+}
+
+export interface GetServiceDetectionResultsRequest {
+    uuid: string;
+    limit: number;
+    offset: number;
 }
 
 export interface GetTcpPortScanResultsRequest {
@@ -229,6 +283,294 @@ export class AttacksApi extends runtime.BaseAPI {
      */
     async getAttack(requestParameters: GetAttackRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SimpleAttack> {
         const response = await this.getAttackRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Retrieve a bruteforce subdomains\' results by the attack\'s id
+     * Retrieve a bruteforce subdomains\' results by the attack\'s id
+     */
+    async getBruteforceSubdomainsResultsRaw(requestParameters: GetBruteforceSubdomainsResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BruteforceSubdomainsResultsPage>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getBruteforceSubdomainsResults.');
+        }
+
+        if (requestParameters.limit === null || requestParameters.limit === undefined) {
+            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getBruteforceSubdomainsResults.');
+        }
+
+        if (requestParameters.offset === null || requestParameters.offset === undefined) {
+            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getBruteforceSubdomainsResults.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.limit !== undefined) {
+            queryParameters['limit'] = requestParameters.limit;
+        }
+
+        if (requestParameters.offset !== undefined) {
+            queryParameters['offset'] = requestParameters.offset;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/attacks/{uuid}/bruteforceSubdomainsResults`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BruteforceSubdomainsResultsPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve a bruteforce subdomains\' results by the attack\'s id
+     * Retrieve a bruteforce subdomains\' results by the attack\'s id
+     */
+    async getBruteforceSubdomainsResults(requestParameters: GetBruteforceSubdomainsResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BruteforceSubdomainsResultsPage> {
+        const response = await this.getBruteforceSubdomainsResultsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Retrieve a dns resolution\'s results by the attack\'s id
+     * Retrieve a dns resolution\'s results by the attack\'s id
+     */
+    async getDnsResolutionResultsRaw(requestParameters: GetDnsResolutionResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DnsResolutionResultsPage>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getDnsResolutionResults.');
+        }
+
+        if (requestParameters.limit === null || requestParameters.limit === undefined) {
+            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getDnsResolutionResults.');
+        }
+
+        if (requestParameters.offset === null || requestParameters.offset === undefined) {
+            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getDnsResolutionResults.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.limit !== undefined) {
+            queryParameters['limit'] = requestParameters.limit;
+        }
+
+        if (requestParameters.offset !== undefined) {
+            queryParameters['offset'] = requestParameters.offset;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/attacks/{uuid}/dnsResolutionResults`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => DnsResolutionResultsPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve a dns resolution\'s results by the attack\'s id
+     * Retrieve a dns resolution\'s results by the attack\'s id
+     */
+    async getDnsResolutionResults(requestParameters: GetDnsResolutionResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DnsResolutionResultsPage> {
+        const response = await this.getDnsResolutionResultsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Retrieve a host alive\'s results by the attack\'s id
+     * Retrieve a host alive\'s results by the attack\'s id
+     */
+    async getHostAliveResultsRaw(requestParameters: GetHostAliveResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<HostAliveResultsPage>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getHostAliveResults.');
+        }
+
+        if (requestParameters.limit === null || requestParameters.limit === undefined) {
+            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getHostAliveResults.');
+        }
+
+        if (requestParameters.offset === null || requestParameters.offset === undefined) {
+            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getHostAliveResults.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.limit !== undefined) {
+            queryParameters['limit'] = requestParameters.limit;
+        }
+
+        if (requestParameters.offset !== undefined) {
+            queryParameters['offset'] = requestParameters.offset;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/attacks/{uuid}/hostAliveResults`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => HostAliveResultsPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve a host alive\'s results by the attack\'s id
+     * Retrieve a host alive\'s results by the attack\'s id
+     */
+    async getHostAliveResults(requestParameters: GetHostAliveResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<HostAliveResultsPage> {
+        const response = await this.getHostAliveResultsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Retrieve a query certificate transparency\'s results by the attack\'s id
+     * Retrieve a query certificate transparency\'s results by the attack\'s id
+     */
+    async getQueryCertificateTransparencyResultsRaw(requestParameters: GetQueryCertificateTransparencyResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<QueryCertificateTransparencyResultsPage>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getQueryCertificateTransparencyResults.');
+        }
+
+        if (requestParameters.limit === null || requestParameters.limit === undefined) {
+            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getQueryCertificateTransparencyResults.');
+        }
+
+        if (requestParameters.offset === null || requestParameters.offset === undefined) {
+            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getQueryCertificateTransparencyResults.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.limit !== undefined) {
+            queryParameters['limit'] = requestParameters.limit;
+        }
+
+        if (requestParameters.offset !== undefined) {
+            queryParameters['offset'] = requestParameters.offset;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/attacks/{uuid}/queryCertificateTransparencyResults`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => QueryCertificateTransparencyResultsPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve a query certificate transparency\'s results by the attack\'s id
+     * Retrieve a query certificate transparency\'s results by the attack\'s id
+     */
+    async getQueryCertificateTransparencyResults(requestParameters: GetQueryCertificateTransparencyResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<QueryCertificateTransparencyResultsPage> {
+        const response = await this.getQueryCertificateTransparencyResultsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Retrieve a query dehashed\'s results by the attack\'s id
+     * Retrieve a query dehashed\'s results by the attack\'s id
+     */
+    async getQueryUnhashedResultsRaw(requestParameters: GetQueryUnhashedResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<QueryUnhashedResultsPage>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getQueryUnhashedResults.');
+        }
+
+        if (requestParameters.limit === null || requestParameters.limit === undefined) {
+            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getQueryUnhashedResults.');
+        }
+
+        if (requestParameters.offset === null || requestParameters.offset === undefined) {
+            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getQueryUnhashedResults.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.limit !== undefined) {
+            queryParameters['limit'] = requestParameters.limit;
+        }
+
+        if (requestParameters.offset !== undefined) {
+            queryParameters['offset'] = requestParameters.offset;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/attacks/{uuid}/queryUnhashedResults`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => QueryUnhashedResultsPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve a query dehashed\'s results by the attack\'s id
+     * Retrieve a query dehashed\'s results by the attack\'s id
+     */
+    async getQueryUnhashedResults(requestParameters: GetQueryUnhashedResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<QueryUnhashedResultsPage> {
+        const response = await this.getQueryUnhashedResultsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Retrieve a detect service\'s results by the attack\'s id
+     * Retrieve a detect service\'s results by the attack\'s id
+     */
+    async getServiceDetectionResultsRaw(requestParameters: GetServiceDetectionResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceDetectionResultsPage>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getServiceDetectionResults.');
+        }
+
+        if (requestParameters.limit === null || requestParameters.limit === undefined) {
+            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getServiceDetectionResults.');
+        }
+
+        if (requestParameters.offset === null || requestParameters.offset === undefined) {
+            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getServiceDetectionResults.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.limit !== undefined) {
+            queryParameters['limit'] = requestParameters.limit;
+        }
+
+        if (requestParameters.offset !== undefined) {
+            queryParameters['offset'] = requestParameters.offset;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/attacks/{uuid}/serviceDetectionResults`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ServiceDetectionResultsPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve a detect service\'s results by the attack\'s id
+     * Retrieve a detect service\'s results by the attack\'s id
+     */
+    async getServiceDetectionResults(requestParameters: GetServiceDetectionResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceDetectionResultsPage> {
+        const response = await this.getServiceDetectionResultsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -53,6 +53,9 @@ pub struct Host {
     /// The services of a host
     pub services: BackRef<field!(Service::F.host)>,
 
+    /// The domains of a host
+    pub domains: BackRef<field!(DomainHostRelation::F.host)>,
+
     /// A comment to the host
     #[rorm(max_length = 255)]
     pub comment: String,
@@ -263,10 +266,63 @@ pub struct Domain {
     #[rorm(max_length = 255)]
     pub comment: String,
 
+    /// Domains resolving to this host
+    pub hosts: BackRef<field!(DomainHostRelation::F.domain)>,
+
+    /// Domains pointing to this one
+    pub sources: BackRef<field!(DomainDomainRelation::F.destination)>,
+
+    /// Domains, this one resolves to
+    pub destinations: BackRef<field!(DomainDomainRelation::F.source)>,
+
     /// A reference to the workspace this domain is referencing
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub workspace: ForeignModel<Workspace>,
 }
+
+/// M2M relation between two [domains](Domain)
+#[derive(Model)]
+pub struct DomainDomainRelation {
+    /// The primary key of this relation
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The source address
+    pub source: ForeignModel<Domain>,
+
+    /// The destination address
+    pub destination: ForeignModel<Domain>,
+
+    /// A reference to the workspace for faster querying
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub workspace: ForeignModel<Workspace>,
+}
+
+/// M2M relation between a [Domain] and a [Host]
+#[derive(Model)]
+pub struct DomainHostRelation {
+    /// The primary key of this relation
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The source domain
+    pub domain: ForeignModel<Domain>,
+
+    /// The destination host
+    pub host: ForeignModel<Host>,
+
+    /// Does this relation exist directly as a dns record or is it the result of a chain of `CNAME`s?
+    ///
+    /// If this flag is set to `true`, the domain directly points to the host via an `A` or `AAAA` record.
+    /// If it is `false`, the domain redirects to another via `CNAME` which eventually resolves to the host.
+    pub is_direct: bool,
+
+    /// A reference to the workspace for faster querying
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub workspace: ForeignModel<Workspace>,
+}
+
+/* This enum won't be actually used, but stays for now as reminder and collection of which relations will need implementations
 
 /// The type of a relation
 #[derive(DbEnum)]
@@ -298,6 +354,7 @@ pub enum RelationType {
     /// Relation from an DMARC record
     DMARC,
 }
+*/
 
 /// M2M relation between [GlobalTag] and [Domain]
 #[derive(Model)]

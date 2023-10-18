@@ -69,6 +69,7 @@ impl Modify for SecurityAddon2 {
         workspaces::update_workspace,
         workspaces::get_workspace_admin,
         workspaces::get_all_workspaces_admin,
+        workspaces::transfer_ownership,
         attacks::bruteforce_subdomains,
         attacks::scan_tcp_ports,
         attacks::query_certificate_transparency,
@@ -146,6 +147,7 @@ impl Modify for SecurityAddon2 {
         workspaces::FullWorkspace,
         workspaces::GetAllWorkspacesResponse,
         workspaces::UpdateWorkspaceRequest,
+        workspaces::TransferWorkspaceRequest,
         attacks::SimpleAttack,
         attacks::BruteforceSubdomainsRequest,
         attacks::HostsAliveRequest,
@@ -218,6 +220,7 @@ pub(crate) struct FrontendApi;
     components(schemas(
         models::OsType,
         models::PortProtocol,
+        models::Certainty,
         handler::ApiErrorResponse,
         handler::ApiStatusCode,
         oauth_schemas::TokenRequest,
@@ -230,6 +233,7 @@ pub(crate) struct FrontendApi;
         data_export::AggregatedService,
         data_export::AggregatedDomain,
         data_export::AggregatedTags,
+        data_export::AggregatedRelation,
     )),
     modifiers(&SecurityAddon2)
 )]

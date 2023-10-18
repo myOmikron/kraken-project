@@ -1,5 +1,7 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
+use std::str::FromStr;
 
+use ipnetwork::IpNetwork;
 use log::debug;
 use rorm::prelude::*;
 use rorm::{and, insert, query};
@@ -8,6 +10,7 @@ use uuid::Uuid;
 use crate::chan::WsMessage;
 use crate::models::{
     BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert, DnsRecordType, Domain,
+    DomainDomainRelation, DomainHostRelation, Host, OsType,
 };
 use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
@@ -118,7 +121,35 @@ impl LeechAttackContext {
                 })
                 .await?;
 
-            Domain::insert_if_missing(&mut tx, self.workspace_uuid, &source).await?;
+            let source_uuid = Domain::get_or_create(&mut tx, self.workspace_uuid, &source).await?;
+            match dns_record_type {
+                DnsRecordType::A | DnsRecordType::Aaaa => {
+                    let addr = IpNetwork::from_str(&destination).unwrap();
+                    let host_uuid =
+                        Host::get_or_create(&mut tx, self.workspace_uuid, addr, OsType::Unknown)
+                            .await?;
+                    DomainHostRelation::insert_if_missing(
+                        &mut tx,
+                        self.workspace_uuid,
+                        source_uuid,
+                        host_uuid,
+                        true,
+                    )
+                    .await?;
+                }
+                DnsRecordType::Cname => {
+                    let destination_uuid =
+                        Domain::get_or_create(&mut tx, self.workspace_uuid, &destination).await?;
+                    DomainDomainRelation::insert_if_missing(
+                        &mut tx,
+                        self.workspace_uuid,
+                        source_uuid,
+                        destination_uuid,
+                    )
+                    .await?;
+                }
+                _ => {}
+            }
         }
 
         tx.commit().await

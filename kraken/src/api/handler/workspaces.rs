@@ -6,6 +6,7 @@ use actix_web::{delete, get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use log::debug;
 use rorm::db::transaction::Transaction;
+use rorm::prelude::ForeignModelByField;
 use rorm::{query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -280,6 +281,62 @@ pub async fn update_workspace(
         .set_if(Workspace::F.description, req.description)
         .finish_dyn_set()
         .map_err(|_| ApiError::EmptyJson)?
+        .exec()
+        .await?;
+
+    tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+/// The request to transfer a workspace to another account
+#[derive(Debug, ToSchema, Deserialize)]
+pub struct TransferWorkspaceRequest {
+    /// The uuid of the user that should receive the workspace
+    pub user: Uuid,
+}
+
+/// Transfer ownership to another account
+///
+/// You will loose access to the workspace.
+#[utoipa::path(
+    tag = "Workspaces",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Workspace was transferred"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid),
+    security(("api_key" = []))
+)]
+#[post("/workspaces/{uuid}/transfer")]
+pub async fn transfer_ownership(
+    req: Json<TransferWorkspaceRequest>,
+    path: Path<PathUuid>,
+    SessionUser(user_uuid): SessionUser,
+    db: Data<Database>,
+) -> ApiResult<HttpResponse> {
+    let new_owner_uuid = req.into_inner().user;
+    let workspace_uuid = path.into_inner().uuid;
+
+    let mut tx = db.start_transaction().await?;
+
+    let Some(workspace) = query!(&mut tx, Workspace)
+        .condition(Workspace::F.uuid.equals(workspace_uuid))
+        .optional()
+        .await?
+    else {
+        return Err(ApiError::MissingPrivileges);
+    };
+
+    if *workspace.owner.key() != user_uuid {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    update!(&mut tx, Workspace)
+        .condition(Workspace::F.uuid.equals(workspace_uuid))
+        .set(Workspace::F.owner, ForeignModelByField::Key(new_owner_uuid))
         .exec()
         .await?;
 

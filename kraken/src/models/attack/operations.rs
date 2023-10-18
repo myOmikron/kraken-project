@@ -49,10 +49,14 @@ impl Attack {
         let mut guard = executor.ensure_transaction().await?;
         let tx = guard.get_transaction();
 
-        let (workspace, owner) = query!(&mut *tx, (Workspace::F.uuid, Workspace::F.owner))
+        let Some((workspace, owner)) = query!(&mut *tx, (Workspace::F.uuid, Workspace::F.owner))
             .condition(Workspace::F.attacks.uuid.equals(attack_uuid))
-            .one()
-            .await?;
+            .optional()
+            .await?
+        else {
+            return Ok(false);
+        };
+
         if *owner.key() == user_uuid {
             return Ok(true);
         }

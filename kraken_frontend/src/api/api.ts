@@ -136,14 +136,28 @@ export const Api = {
             handleError(attacks.hostsAliveCheck({ hostsAliveRequest })),
         scanTcpPorts: (attack: ScanTcpPortsRequest) =>
             handleError(attacks.scanTcpPorts({ scanTcpPortsRequest: attack })),
-        getTcpPortScanResults: (uuid: UUID, offset: number, limit: number) =>
-            handleError(attacks.getTcpPortScanResults({ uuid, limit, offset })),
         serviceDetection: (attack: ServiceDetectionRequest) =>
             handleError(attacks.serviceDetection({ serviceDetectionRequest: attack })),
         queryDehashed: (uuid: UUID, query: Query) =>
             handleError(attacks.queryDehashed({ queryDehashedRequest: { workspaceUuid: uuid, query } })),
         get: (uuid: UUID) => handleError(attacks.getAttack({ uuid })),
         delete: (uuid: UUID) => handleError(attacks.deleteAttack({ uuid })),
+        raw: {
+            getBruteforceSubdomainsResults: (uuid: UUID, limit: number, offset: number) =>
+                handleError(attacks.getBruteforceSubdomainsResults({ uuid, limit, offset })),
+            getDNSResolutionResults: (uuid: UUID, limit: number, offset: number) =>
+                handleError(attacks.getDnsResolutionResults({ uuid, limit, offset })),
+            getHostAliveResults: (uuid: UUID, limit: number, offset: number) =>
+                handleError(attacks.getHostAliveResults({ uuid, limit, offset })),
+            getCertificateTransparencyResults: (uuid: UUID, limit: number, offset: number) =>
+                handleError(attacks.getQueryCertificateTransparencyResults({ uuid, limit, offset })),
+            getUnhashedResults: (uuid: UUID, limit: number, offset: number) =>
+                handleError(attacks.getQueryUnhashedResults({ uuid, limit, offset })),
+            getServiceDetectionResults: (uuid: UUID, limit: number, offset: number) =>
+                handleError(attacks.getServiceDetectionResults({ uuid, limit, offset })),
+            getTcpPortScanResults: (uuid: UUID, limit: number, offset: number) =>
+                handleError(attacks.getTcpPortScanResults({ uuid, limit, offset })),
+        },
     },
     auth: {
         login,
@@ -174,6 +188,8 @@ export const Api = {
         update: (uuid: UUID, workspace: UpdateWorkspaceRequest) =>
             handleError(workspaces.updateWorkspace({ uuid, updateWorkspaceRequest: workspace })),
         delete: (uuid: UUID) => handleError(workspaces.deleteWorkspace({ uuid })),
+        transferOwnership: (uuid: UUID, user: UUID) =>
+            handleError(workspaces.transferOwnership({ uuid, transferWorkspaceRequest: { user } })),
         hosts: {
             all: (workspaceUuid: UUID, limit: number, offset: number) =>
                 handleError(hosts.getAllHosts({ uuid: workspaceUuid, limit, offset })),
@@ -200,7 +216,7 @@ export const Api = {
                 handleError(workspaceTags.createWorkspaceTag({ uuid: workspaceUuid, createWorkspaceTagRequest })),
             update: (workspaceUuid: UUID, tagUuid: UUID, updateWorkspaceTag: UpdateWorkspaceTag) =>
                 handleError(
-                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag }),
+                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag })
                 ),
             delete: (workspaceUuid: UUID, tagUuid: UUID) =>
                 workspaceTags.deleteWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid }),

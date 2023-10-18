@@ -19,9 +19,10 @@ use uuid::Uuid;
 use crate::api::extractors::BearerToken;
 use crate::api::handler::{ApiError, ApiResult, PathUuid};
 use crate::models::{
-    Certainty, Domain, DomainGlobalTag, DomainWorkspaceTag, Host, HostGlobalTag, HostWorkspaceTag,
-    OsType, Port, PortGlobalTag, PortProtocol, PortWorkspaceTag, Service, ServiceGlobalTag,
-    ServiceWorkspaceTag, WorkspaceAccessToken,
+    Certainty, Domain, DomainDomainRelation, DomainGlobalTag, DomainHostRelation,
+    DomainWorkspaceTag, Host, HostGlobalTag, HostWorkspaceTag, OsType, Port, PortGlobalTag,
+    PortProtocol, PortWorkspaceTag, Service, ServiceGlobalTag, ServiceWorkspaceTag,
+    WorkspaceAccessToken,
 };
 
 /// The aggregated results of a workspace
@@ -38,6 +39,9 @@ pub struct AggregatedWorkspace {
 
     /// The domains found by this workspace
     pub domains: HashMap<Uuid, AggregatedDomain>,
+
+    /// All m2m relations which are not inlined
+    pub relations: HashMap<Uuid, AggregatedRelation>,
 }
 
 /// A representation of an host.
@@ -63,6 +67,9 @@ pub struct AggregatedHost {
 
     /// The services of a host
     pub services: Vec<Uuid>,
+
+    /// Uuids to [`AggregatedRelation::DomainHost`]
+    pub domains: Vec<Uuid>,
 
     /// A comment to the host
     pub comment: String,
@@ -136,6 +143,15 @@ pub struct AggregatedDomain {
     /// The domain that was found
     pub domain: String,
 
+    /// Uuids to [`AggregatedRelation::DomainHost`]
+    pub hosts: Vec<Uuid>,
+
+    /// Uuids to [`AggregatedRelation::DomainDomain`] where this domain is the `destination`
+    pub sources: Vec<Uuid>,
+
+    /// Uuids to [`AggregatedRelation::DomainDomain`] where this domain is the `source`
+    pub destinations: Vec<Uuid>,
+
     /// A comment to the domain
     pub comment: String,
 
@@ -152,6 +168,34 @@ pub struct AggregatedTags {
 
     /// Tags which are local to the workspace
     local_tags: Vec<String>,
+}
+
+/// An m2m relation
+#[derive(Serialize, ToSchema)]
+#[serde(untagged)]
+pub enum AggregatedRelation {
+    /// A DNS relation between two domains
+    DomainDomain {
+        /// The source domain pointing to the other domain
+        source: Uuid,
+
+        /// The destination domain which is pointed to by the other domain
+        destination: Uuid,
+    },
+    /// A DNS relation between a domain and a host
+    DomainHost {
+        /// The domain resolving to a host
+        domain: Uuid,
+
+        /// The host resolved to by a domain
+        host: Uuid,
+
+        /// Does this relation exist directly as a dns record or is it the result of a chain of `CNAME`s?
+        ///
+        /// If this flag is set to `true`, the domain directly points to the host via an `A` or `AAAA` record.
+        /// If it is `false`, the domain redirects to another via `CNAME` which eventually resolves to the host.
+        is_direct: bool,
+    },
 }
 
 #[utoipa::path(
@@ -208,6 +252,50 @@ pub(crate) async fn export_workspace(
         .stream()
         .map_ok(|domain| (domain.uuid, domain.into()))
         .try_collect()
+        .await?;
+    let mut relations = HashMap::new();
+
+    query!(&mut tx, DomainDomainRelation)
+        .condition(DomainDomainRelation::F.workspace.equals(path.uuid))
+        .stream()
+        .try_for_each(|x| {
+            relations.insert(
+                x.uuid,
+                AggregatedRelation::DomainDomain {
+                    source: *x.source.key(),
+                    destination: *x.destination.key(),
+                },
+            );
+            if let Some(domain) = domains.get_mut(x.source.key()) {
+                domain.destinations.push(x.uuid);
+            }
+            if let Some(domain) = domains.get_mut(x.destination.key()) {
+                domain.sources.push(x.uuid);
+            }
+            async { Ok(()) }
+        })
+        .await?;
+
+    query!(&mut tx, DomainHostRelation)
+        .condition(DomainHostRelation::F.workspace.equals(path.uuid))
+        .stream()
+        .try_for_each(|x| {
+            relations.insert(
+                x.uuid,
+                AggregatedRelation::DomainHost {
+                    domain: *x.domain.key(),
+                    host: *x.host.key(),
+                    is_direct: x.is_direct,
+                },
+            );
+            if let Some(host) = hosts.get_mut(x.host.key()) {
+                host.domains.push(x.uuid);
+            }
+            if let Some(domain) = domains.get_mut(x.domain.key()) {
+                domain.hosts.push(x.uuid);
+            }
+            async { Ok(()) }
+        })
         .await?;
 
     // Resolve BackRefs manually
@@ -267,6 +355,7 @@ pub(crate) async fn export_workspace(
         ports,
         services,
         domains,
+        relations,
     }))
 }
 
@@ -279,6 +368,7 @@ impl From<Host> for AggregatedHost {
             response_time,
             ports: _,
             services: _,
+            domains: _,
             comment,
             workspace: _,
         } = value;
@@ -289,6 +379,7 @@ impl From<Host> for AggregatedHost {
             response_time,
             ports: Vec::new(),
             services: Vec::new(),
+            domains: Vec::new(),
             comment,
             tags: Default::default(),
         }
@@ -346,11 +437,17 @@ impl From<Domain> for AggregatedDomain {
             uuid,
             domain,
             comment,
+            hosts: _,
+            sources: _,
+            destinations: _,
             workspace: _,
         } = value;
         Self {
             uuid,
             domain,
+            hosts: Vec::new(),
+            sources: Vec::new(),
+            destinations: Vec::new(),
             comment,
             tags: Default::default(),
         }

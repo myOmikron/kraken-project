@@ -4,15 +4,24 @@ use actix_toolbox::tb_middleware::Session;
 use actix_web::get;
 use actix_web::web::{Data, Json, Path, Query};
 use futures::TryStreamExt;
-use rorm::{query, Database, FieldAccess, Model};
-use serde::Serialize;
-use utoipa::ToSchema;
+use rorm::{and, query, Database, FieldAccess, Model};
+use serde::{Deserialize, Serialize};
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::handler::{
     get_page_params, ApiError, ApiResult, DomainResultsPage, PageParams, PathUuid,
 };
-use crate::models::{Domain, Workspace};
+use crate::models::{Domain, DomainHostRelation, Host, Workspace};
+
+/// Query parameters for filtering the domains to get
+#[derive(Deserialize, IntoParams)]
+pub struct GetAllDomainsQuery {
+    /// Only get domains pointing to a specific host
+    ///
+    /// This includes domains which point to another domain which points to this host.
+    pub host: Option<Uuid>,
+}
 
 /// A simple representation of a domain in a workspace
 #[derive(Serialize, ToSchema)]
@@ -34,13 +43,14 @@ pub struct SimpleDomain {
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    params(PathUuid, PageParams),
+    params(PathUuid, PageParams, GetAllDomainsQuery),
     security(("api_key" = []))
 )]
 #[get("/workspaces/{uuid}/domains")]
 pub async fn get_all_domains(
     path: Path<PathUuid>,
-    query: Query<PageParams>,
+    page_params: Query<PageParams>,
+    filter_params: Query<GetAllDomainsQuery>,
     session: Session,
     db: Data<Database>,
 ) -> ApiResult<Json<DomainResultsPage>> {
@@ -53,33 +63,73 @@ pub async fn get_all_domains(
         return Err(ApiError::MissingPrivileges);
     }
 
-    let (limit, offset) = get_page_params(query).await?;
+    let (limit, offset) = get_page_params(page_params).await?;
 
-    let (total,) = query!(&mut tx, (Domain::F.uuid.count()))
-        .condition(Domain::F.workspace.equals(path.uuid))
-        .one()
-        .await?;
+    match filter_params.into_inner().host {
+        None => {
+            let (total,) = query!(&mut tx, (Domain::F.uuid.count()))
+                .condition(Domain::F.workspace.equals(path.uuid))
+                .one()
+                .await?;
 
-    let domains = query!(&mut tx, Domain)
-        .condition(Domain::F.workspace.equals(path.uuid))
-        .limit(limit)
-        .offset(offset)
-        .stream()
-        .map_ok(|x| SimpleDomain {
-            uuid: x.uuid,
-            domain: x.domain,
-            comment: x.comment,
-            workspace: *x.workspace.key(),
-        })
-        .try_collect()
-        .await?;
+            let domains = query!(&mut tx, Domain)
+                .condition(Domain::F.workspace.equals(path.uuid))
+                .limit(limit)
+                .offset(offset)
+                .stream()
+                .map_ok(|x| SimpleDomain {
+                    uuid: x.uuid,
+                    domain: x.domain,
+                    comment: x.comment,
+                    workspace: *x.workspace.key(),
+                })
+                .try_collect()
+                .await?;
 
-    tx.commit().await?;
+            tx.commit().await?;
+            Ok(Json(DomainResultsPage {
+                items: domains,
+                limit,
+                offset,
+                total: total as u64,
+            }))
+        }
+        Some(host_uuid) => {
+            query!(&mut tx, (Host::F.uuid,))
+                .condition(and![
+                    Host::F.workspace.equals(path.uuid),
+                    Host::F.uuid.equals(host_uuid)
+                ])
+                .optional()
+                .await?
+                .ok_or(ApiError::InvalidUuid)?;
 
-    Ok(Json(DomainResultsPage {
-        items: domains,
-        limit,
-        offset,
-        total: total as u64,
-    }))
+            let (total,) = query!(&mut tx, (DomainHostRelation::F.uuid.count()))
+                .condition(DomainHostRelation::F.host.equals(host_uuid))
+                .one()
+                .await?;
+
+            let domains = query!(&mut tx, (DomainHostRelation::F.domain as Domain,))
+                .condition(DomainHostRelation::F.host.equals(host_uuid))
+                .limit(limit)
+                .offset(offset)
+                .stream()
+                .map_ok(|(x,)| SimpleDomain {
+                    uuid: x.uuid,
+                    domain: x.domain,
+                    comment: x.comment,
+                    workspace: *x.workspace.key(),
+                })
+                .try_collect()
+                .await?;
+
+            tx.commit().await?;
+            Ok(Json(DomainResultsPage {
+                items: domains,
+                limit,
+                offset,
+                total: total as u64,
+            }))
+        }
+    }
 }
