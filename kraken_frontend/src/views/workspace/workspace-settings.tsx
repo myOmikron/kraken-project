@@ -19,6 +19,7 @@ type WorkspaceSettingsState = {
     workspaceDescription: string | null | undefined;
     invitePopup: boolean;
     deleteUserPopup: boolean;
+    selected: boolean;
     deleteWorkspacePopup: boolean;
     transferOwnershipPopup: boolean;
     memberName: string;
@@ -43,6 +44,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
             deleteUserPopup: false,
             deleteWorkspacePopup: false,
             transferOwnershipPopup: false,
+            selected: false,
             memberName: "",
             transferList: [],
             inviteList: [],
@@ -225,6 +227,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                             <span>User</span>
                         </div>
                         <div className={"workspace-settings-oauth-table-entry neon"}>
+                            {/*TODO show linked apps*/}
                             <span>19/01/2023</span>
                             <span>Karla</span>
                             <span>dino</span>
@@ -334,34 +337,52 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                     nested={true}
                     open={this.state.transferOwnershipPopup}
                     onClose={() => {
-                        this.setState({ transferOwnershipPopup: false, selectedUser: null });
+                        this.setState({ transferOwnershipPopup: false, selectedUser: null, selected: false });
                     }}
                 >
-                    <form className="workspace-settings-popup danger pane">
-                        <div className="workspace-setting-popup">
-                            <h2 className="sub-heading"> Transfer ownership</h2>
-                            <SelectMenu
-                                options={this.state.transferList}
-                                theme={"red"}
-                                value={this.state.selectedUser}
-                                onChange={(type) => {
-                                    this.setState({ selectedUser: type });
-                                }}
-                            />
+                    {this.state.selected && this.state.selectedUser !== null ? (
+                        <form className="workspace-setting-popup danger pane">
+                            <span>Are you sure you want to transfer the ownership to</span>
+                            <span> {this.state.selectedUser?.label} ?</span>
+                            <button className="workspace-settings-red-button button">
+                                {/*TODO more ownership transfer stuff */}Yes
+                            </button>
                             <button
                                 className="workspace-settings-red-button button"
                                 onClick={() => {
-                                    this.setState({ transferOwnershipPopup: false, selectedUser: null });
+                                    this.setState({
+                                        transferOwnershipPopup: false,
+                                        selectedUser: null,
+                                        selected: false,
+                                    });
                                 }}
                             >
-                                Select
+                                No
                             </button>
-                        </div>
-                        {/*TODO more ownership transfer stuff and another confirmation*/}
-                        <div>Are you sure you want to transfer the ownership to {this.state.selectedUser?.label} ?</div>
-                        <button className="workspace-settings-red-button button">Yes</button>
-                        <button className="workspace-settings-red-button button">No</button>
-                    </form>
+                        </form>
+                    ) : (
+                        <form className="workspace-settings-popup danger pane">
+                            <div className="workspace-setting-popup">
+                                <h2 className="sub-heading"> Transfer ownership</h2>
+                                <SelectMenu
+                                    options={this.state.transferList}
+                                    theme={"red"}
+                                    value={this.state.selectedUser}
+                                    onChange={(type) => {
+                                        this.setState({ selectedUser: type });
+                                    }}
+                                />
+                                <button
+                                    className="workspace-settings-red-button button"
+                                    onClick={() => {
+                                        this.setState({ selected: true });
+                                    }}
+                                >
+                                    Select
+                                </button>
+                            </div>
+                        </form>
+                    )}
                 </Popup>
             </>
         );
