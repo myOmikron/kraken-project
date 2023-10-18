@@ -14,6 +14,7 @@
 )]
 
 use std::env;
+use std::error::Error;
 use std::io::Write;
 use std::net::{IpAddr, SocketAddr};
 use std::num::NonZeroU32;
@@ -224,7 +225,7 @@ pub struct Cli {
 
 #[rorm::rorm_main]
 #[tokio::main]
-async fn main() -> Result<(), String> {
+async fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
     match cli.commands {
@@ -254,9 +255,7 @@ async fn main() -> Result<(), String> {
             env_logger::init();
 
             if let Some(workspace) = push {
-                let config = get_config(&cli.config_path).map_err(|e| {
-                    format!("Couldn't retrieve necessary config for pushing to kraken: {e}")
-                })?;
+                let config = get_config(&cli.config_path)?;
 
                 let api_key = if let Some(api_key) = api_key {
                     api_key
@@ -264,8 +263,7 @@ async fn main() -> Result<(), String> {
                     print!("Please enter your api key: ");
                     std::io::stdout().flush().unwrap();
                     input()
-                        .await
-                        .map_err(|err| err.to_string())?
+                        .await?
                         .ok_or_else(|| "Can't push to kraken without api key".to_string())?
                 };
 
@@ -423,16 +421,10 @@ async fn main() -> Result<(), String> {
                         retry_interval,
                         skip_icmp_check,
                     } => {
-                        let mut addresses = vec![];
-                        for target in targets {
-                            if let Ok(addr) = IpAddr::from_str(&target) {
-                                addresses.push(IpNetwork::from(addr));
-                            } else if let Ok(net) = IpNetwork::from_str(&target) {
-                                addresses.push(net);
-                            } else {
-                                return Err(format!("{target} isn't valid ip address or ip net"));
-                            }
-                        }
+                        let addresses = targets
+                            .iter()
+                            .map(|s| IpNetwork::from_str(s))
+                            .collect::<Result<_, _>>()?;
 
                         let mut port_range = vec![];
                         if ports.is_empty() {
@@ -467,7 +459,7 @@ async fn main() -> Result<(), String> {
                             }
                             PortScanTechnique::Icmp => {
                                 let settings = IcmpScanSettings {
-                                    addresses: addresses.into_iter().map(IpNetwork::from).collect(),
+                                    addresses,
                                     timeout: Duration::from_millis(timeout as u64),
                                     concurrent_limit: u32::from(concurrent_limit),
                                 };
@@ -490,18 +482,14 @@ async fn main() -> Result<(), String> {
                             Ok(x) => x,
                             Err(_) => {
                                 error!("Missing environment variable DEHASHED_EMAIL");
-                                return Err(
-                                    "Missing environment variable DEHASHED_EMAIL".to_string()
-                                );
+                                return Err("Missing environment variable DEHASHED_EMAIL".into());
                             }
                         };
                         let api_key = match env::var("DEHASHED_API_KEY") {
                             Ok(x) => x,
                             Err(_) => {
                                 error!("Missing environment variable DEHASHED_API_KEY");
-                                return Err(
-                                    "Missing environment variable DEHASHED_API_KEY".to_string()
-                                );
+                                return Err("Missing environment variable DEHASHED_API_KEY".into());
                             }
                         };
 
@@ -521,9 +509,8 @@ async fn main() -> Result<(), String> {
                         }
                     }
                     RunCommand::Whois { query } => match whois::query_whois(query).await {
-                        Ok(x) => {
-                            info!("Found result\n{x:#?}");
-                        }
+                        Ok(x) => info!("Found result\n{x:#?}"),
+
                         Err(err) => error!("{err}"),
                     },
                     RunCommand::ServiceDetection {
@@ -548,7 +535,7 @@ async fn main() -> Result<(), String> {
     Ok(())
 }
 
-async fn migrate(config_path: &str, migration_dir: String) -> Result<(), String> {
+async fn migrate(config_path: &str, migration_dir: String) -> Result<(), Box<dyn Error>> {
     let config = get_config(config_path)?;
     cli::migrate::run_migrate_custom(
         cli::config::DatabaseConfig {
@@ -565,8 +552,8 @@ async fn migrate(config_path: &str, migration_dir: String) -> Result<(), String>
         false,
         None,
     )
-    .await
-    .map_err(|e| e.to_string())
+    .await?;
+    Ok(())
 }
 
 async fn get_db(config: &Config) -> Result<Database, String> {
