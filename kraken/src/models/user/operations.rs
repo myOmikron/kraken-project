@@ -96,6 +96,15 @@ impl From<InsertUserError> for ApiError {
 }
 
 impl User {
+    /// Checks whether a user exists
+    pub async fn exists(executor: impl Executor<'_>, uuid: Uuid) -> Result<bool, rorm::Error> {
+        query!(executor, (User::F.uuid,))
+            .condition(User::F.uuid.equals(uuid))
+            .optional()
+            .await
+            .map(|x| x.is_some())
+    }
+
     /// Check whether a user exists when querying by username
     pub async fn exists_by_username(
         executor: impl Executor<'_>,

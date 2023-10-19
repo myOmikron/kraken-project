@@ -70,6 +70,7 @@ impl Modify for SecurityAddon2 {
         workspaces::get_workspace_admin,
         workspaces::get_all_workspaces_admin,
         workspaces::transfer_ownership,
+        workspaces::invite,
         attacks::bruteforce_subdomains,
         attacks::scan_tcp_ports,
         attacks::query_certificate_transparency,
@@ -148,6 +149,7 @@ impl Modify for SecurityAddon2 {
         workspaces::GetAllWorkspacesResponse,
         workspaces::UpdateWorkspaceRequest,
         workspaces::TransferWorkspaceRequest,
+        workspaces::InviteToWorkspace,
         attacks::SimpleAttack,
         attacks::BruteforceSubdomainsRequest,
         attacks::HostsAliveRequest,
@@ -210,7 +212,7 @@ impl Modify for SecurityAddon2 {
         wordlists::FullWordlist,
         wordlists::UpdateWordlistRequest,
     )),
-    modifiers(&SecurityAddon, &SecurityAddon2)
+    modifiers(&SecurityAddon)
 )]
 pub(crate) struct FrontendApi;
 

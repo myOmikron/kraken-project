@@ -6,7 +6,9 @@ use thiserror::Error;
 use uuid::Uuid;
 
 use crate::api::handler::ApiError;
-use crate::models::{OauthClient, User, Workspace, WorkspaceAccessToken, WorkspaceMember};
+use crate::models::{
+    OauthClient, User, Workspace, WorkspaceAccessToken, WorkspaceInvitation, WorkspaceMember,
+};
 
 #[derive(Patch)]
 #[rorm(model = "WorkspaceMember")]
@@ -90,6 +92,22 @@ impl Workspace {
         Ok(true)
     }
 
+    /// Checks whether a user is owner of a specific workspace
+    pub async fn is_owner(
+        executor: impl Executor<'_>,
+        workspace: Uuid,
+        user: Uuid,
+    ) -> Result<bool, rorm::Error> {
+        Ok(query!(executor, (Workspace::F.owner,))
+            .condition(and!(
+                Workspace::F.uuid.equals(workspace),
+                Workspace::F.owner.equals(user)
+            ))
+            .optional()
+            .await?
+            .is_some())
+    }
+
     /// Check whether a workspace exists
     pub async fn exists(executor: impl Executor<'_>, uuid: Uuid) -> Result<bool, rorm::Error> {
         Ok(query!(executor, (Workspace::F.uuid,))
@@ -146,5 +164,100 @@ impl WorkspaceAccessToken {
                 application: ForeignModelByField::Key(application),
             })
             .await
+    }
+}
+
+impl WorkspaceInvitation {
+    /// Insert a new invitation for the workspace
+    pub async fn insert(
+        executor: impl Executor<'_>,
+        workspace: Uuid,
+        from: Uuid,
+        target: Uuid,
+    ) -> Result<(), InsertWorkspaceInvitationError> {
+        if from == target {
+            return Err(InsertWorkspaceInvitationError::InvalidTarget);
+        }
+
+        let mut guard = executor.ensure_transaction().await?;
+
+        if !Workspace::exists(guard.get_transaction(), workspace).await? {
+            return Err(InsertWorkspaceInvitationError::InvalidWorkspace);
+        }
+
+        if !Workspace::is_owner(guard.get_transaction(), workspace, from).await? {
+            return Err(InsertWorkspaceInvitationError::MissingPrivileges);
+        }
+
+        if !User::exists(guard.get_transaction(), target).await? {
+            return Err(InsertWorkspaceInvitationError::InvalidTarget);
+        }
+
+        // Check if target is already part of the workspace
+        if query!(guard.get_transaction(), (WorkspaceMember::F.id,))
+            .condition(and!(
+                WorkspaceMember::F.workspace.equals(workspace),
+                WorkspaceMember::F.member.equals(target)
+            ))
+            .optional()
+            .await?
+            .is_some()
+        {
+            return Err(InsertWorkspaceInvitationError::AlreadyInWorkspace);
+        }
+
+        // Check if the user was already invited
+        if query!(guard.get_transaction(), (WorkspaceInvitation::F.uuid,))
+            .condition(and!(
+                WorkspaceInvitation::F.workspace.equals(workspace),
+                WorkspaceInvitation::F.target.equals(target),
+                WorkspaceInvitation::F.from.equals(from)
+            ))
+            .optional()
+            .await?
+            .is_some()
+        {
+            return Err(InsertWorkspaceInvitationError::InvalidTarget);
+        }
+
+        guard.commit().await?;
+
+        Ok(())
+    }
+}
+
+/// The errors that can occur when inserting an invitation to an workspace
+#[derive(Debug, Error)]
+pub enum InsertWorkspaceInvitationError {
+    /// A database error
+    #[error("Database error occurred: {0}")]
+    Database(#[from] rorm::Error),
+    /// Invalid workspace
+    #[error("Invalid workspace")]
+    InvalidWorkspace,
+    /// Missing privileges
+    #[error("Missing privileges")]
+    MissingPrivileges,
+    /// Invalid target user
+    #[error("Invalid target user")]
+    InvalidTarget,
+    /// The target is already part of the workspace
+    #[error("The target is already part of the workspace")]
+    AlreadyInWorkspace,
+    /// The user was already invited
+    #[error("The user was already invited")]
+    AlreadyInvited,
+}
+
+impl From<InsertWorkspaceInvitationError> for ApiError {
+    fn from(value: InsertWorkspaceInvitationError) -> Self {
+        match value {
+            InsertWorkspaceInvitationError::Database(x) => ApiError::DatabaseError(x),
+            InsertWorkspaceInvitationError::InvalidWorkspace => ApiError::InvalidWorkspace,
+            InsertWorkspaceInvitationError::MissingPrivileges => ApiError::MissingPrivileges,
+            InsertWorkspaceInvitationError::InvalidTarget => ApiError::InvalidTarget,
+            InsertWorkspaceInvitationError::AlreadyInWorkspace => ApiError::AlreadyMember,
+            InsertWorkspaceInvitationError::AlreadyInvited => ApiError::AlreadyInvited,
+        }
     }
 }

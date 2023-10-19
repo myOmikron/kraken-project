@@ -16,7 +16,7 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::attacks::SimpleAttack;
 use crate::api::handler::users::UserResponse;
 use crate::api::handler::{de_optional, query_user, ApiError, ApiResult, PathUuid, UuidResponse};
-use crate::models::{Attack, User, Workspace, WorkspaceMember};
+use crate::models::{Attack, User, Workspace, WorkspaceInvitation, WorkspaceMember};
 
 /// The request to create a new workspace
 #[derive(Deserialize, ToSchema)]
@@ -341,6 +341,43 @@ pub async fn transfer_ownership(
         .await?;
 
     tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+/// The request to invite a user to the workspace
+#[derive(Deserialize, Debug, ToSchema)]
+pub struct InviteToWorkspace {
+    /// The user to invite
+    pub user: Uuid,
+}
+
+/// Invite a user to the workspace
+///
+/// This action can only be invoked by the owner of a workspace
+#[utoipa::path(
+    tag = "Workspaces",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The user was invited."),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid),
+    request_body = InviteToWorkspace,
+    security(("api_key" = []))
+)]
+#[post("/workspaces/{uuid}/invite")]
+pub async fn invite(
+    req: Json<InviteToWorkspace>,
+    path: Path<PathUuid>,
+    db: Data<Database>,
+    SessionUser(uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let InviteToWorkspace { user } = req.into_inner();
+    let workspace = path.into_inner().uuid;
+
+    WorkspaceInvitation::insert(db.as_ref(), workspace, uuid, user).await?;
 
     Ok(HttpResponse::Ok().finish())
 }
