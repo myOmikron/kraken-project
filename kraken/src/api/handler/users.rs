@@ -17,19 +17,6 @@ use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::chan::{WsManagerChan, WsManagerMessage};
 use crate::models::User;
 
-/// This struct holds the user information.
-///
-/// Note that `username` is unique, but as it is changeable,
-/// identify the user by its `uuid`
-#[derive(Serialize, ToSchema)]
-pub struct UserResponse {
-    pub(crate) uuid: Uuid,
-    #[schema(example = "user123")]
-    pub(crate) username: String,
-    #[schema(example = "Anon")]
-    pub(crate) display_name: String,
-}
-
 /// The request to create a user
 #[derive(Deserialize, ToSchema)]
 pub struct CreateUserRequest {
@@ -340,8 +327,11 @@ pub async fn update_me(
     Ok(HttpResponse::Ok().finish())
 }
 
-/// The simple representation of an user
-#[derive(Debug, Serialize, ToSchema)]
+/// This struct holds the user information.
+///
+/// Note that `username` is unique, but as it is changeable,
+/// identify the user by its `uuid`
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
 pub struct SimpleUser {
     pub(crate) uuid: Uuid,
     pub(crate) username: String,

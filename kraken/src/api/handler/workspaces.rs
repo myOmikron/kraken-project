@@ -4,7 +4,7 @@ use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
-use log::debug;
+use log::{debug, warn};
 use rorm::db::transaction::Transaction;
 use rorm::prelude::ForeignModelByField;
 use rorm::{query, update, Database, FieldAccess, Model};
@@ -14,8 +14,9 @@ use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::attacks::SimpleAttack;
-use crate::api::handler::users::UserResponse;
+use crate::api::handler::users::SimpleUser;
 use crate::api::handler::{de_optional, query_user, ApiError, ApiResult, PathUuid, UuidResponse};
+use crate::chan::{WsManagerChan, WsManagerMessage, WsMessage};
 use crate::models::{Attack, User, Workspace, WorkspaceInvitation, WorkspaceMember};
 
 /// The request to create a new workspace
@@ -102,14 +103,14 @@ pub async fn delete_workspace(
 }
 
 /// A simple version of a workspace
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, ToSchema, Clone)]
 pub struct SimpleWorkspace {
     pub(crate) uuid: Uuid,
     #[schema(example = "ultra-secure-workspace")]
     pub(crate) name: String,
     #[schema(example = "This workspace is ultra secure and should not be looked at!!")]
     pub(crate) description: Option<String>,
-    pub(crate) owner: UserResponse,
+    pub(crate) owner: SimpleUser,
     pub(crate) created_at: DateTime<Utc>,
 }
 
@@ -121,9 +122,9 @@ pub struct FullWorkspace {
     pub(crate) name: String,
     #[schema(example = "This workspace is ultra secure and should not be looked at!!")]
     pub(crate) description: Option<String>,
-    pub(crate) owner: UserResponse,
+    pub(crate) owner: SimpleUser,
     pub(crate) attacks: Vec<SimpleAttack>,
-    pub(crate) members: Vec<UserResponse>,
+    pub(crate) members: Vec<SimpleUser>,
     pub(crate) created_at: DateTime<Utc>,
 }
 
@@ -202,7 +203,7 @@ pub async fn get_all_workspaces(
                 uuid: w.uuid,
                 name: w.name,
                 description: w.description,
-                owner: UserResponse {
+                owner: SimpleUser {
                     uuid: owner.uuid,
                     username: owner.username.clone(),
                     display_name: owner.display_name.clone(),
@@ -371,13 +372,36 @@ pub struct InviteToWorkspace {
 pub async fn invite(
     req: Json<InviteToWorkspace>,
     path: Path<PathUuid>,
+    ws_manager_chan: Data<WsManagerChan>,
     db: Data<Database>,
-    SessionUser(uuid): SessionUser,
+    session: Session,
 ) -> ApiResult<HttpResponse> {
     let InviteToWorkspace { user } = req.into_inner();
     let workspace = path.into_inner().uuid;
 
-    WorkspaceInvitation::insert(db.as_ref(), workspace, uuid, user).await?;
+    let mut tx = db.start_transaction().await?;
+    let session_user = query_user(&mut tx, &session).await?;
+
+    WorkspaceInvitation::insert(db.as_ref(), workspace, session_user.uuid, user).await?;
+
+    tx.commit().await?;
+
+    if let Err(err) = ws_manager_chan
+        .send(WsManagerMessage::Message(
+            user,
+            WsMessage::InvitationToWorkspace {
+                from: SimpleUser {
+                    uuid: session_user.uuid,
+                    username: session_user.username,
+                    display_name: session_user.display_name,
+                },
+                workspace_uuid: workspace,
+            },
+        ))
+        .await
+    {
+        warn!("Could not send to ws manager chan: {err}")
+    }
 
     Ok(HttpResponse::Ok().finish())
 }
@@ -451,7 +475,7 @@ pub async fn get_all_workspaces_admin(
                         uuid,
                         name,
                         description,
-                        owner: UserResponse {
+                        owner: SimpleUser {
                             uuid: by_uuid,
                             username,
                             display_name,
@@ -499,7 +523,7 @@ async fn get_workspace_unchecked(uuid: Uuid, tx: &mut Transaction) -> ApiResult<
                 uuid: attack_uuid,
                 workspace_uuid: uuid,
                 attack_type,
-                started_from: UserResponse {
+                started_from: SimpleUser {
                     uuid: by_uuid,
                     username,
                     display_name,
@@ -523,7 +547,7 @@ async fn get_workspace_unchecked(uuid: Uuid, tx: &mut Transaction) -> ApiResult<
     .all()
     .await?
     .into_iter()
-    .map(|(uuid, username, display_name)| UserResponse {
+    .map(|(uuid, username, display_name)| SimpleUser {
         uuid,
         username,
         display_name,
@@ -534,7 +558,7 @@ async fn get_workspace_unchecked(uuid: Uuid, tx: &mut Transaction) -> ApiResult<
         uuid: workspace.uuid,
         name: workspace.name,
         description: workspace.description,
-        owner: UserResponse {
+        owner: SimpleUser {
             uuid: owner.uuid,
             username: owner.username,
             display_name: owner.display_name,

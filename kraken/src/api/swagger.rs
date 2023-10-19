@@ -138,7 +138,6 @@ impl Modify for SecurityAddon2 {
         users::CreateUserRequest,
         users::GetUser,
         users::GetUserResponse,
-        users::UserResponse,
         users::UpdateMeRequest,
         users::SetPasswordRequest,
         users::SimpleUser,

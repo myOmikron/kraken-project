@@ -11,6 +11,8 @@ use tokio::sync::mpsc::Sender;
 use tokio::task;
 use webauthn_rs::prelude::Uuid;
 
+use crate::api::handler::users::SimpleUser;
+
 pub(crate) async fn start_ws_sender(tx: ws::Sender, mut rx: mpsc::Receiver<WsMessage>) {
     while let Some(msg) = rx.recv().await {
         match msg {
@@ -70,6 +72,13 @@ pub enum WsMessage {
     ///
     /// This message type is sent to the client.
     InvalidMessage,
+    /// An invitation to a workspace was issued
+    InvitationToWorkspace {
+        /// The workspace the user is invited to
+        workspace_uuid: Uuid,
+        /// The user that has issued the invitation
+        from: SimpleUser,
+    },
     /// A notification about a finished attack
     AttackFinished {
         /// The corresponding id of the attack

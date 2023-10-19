@@ -16,7 +16,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::users::UserResponse;
+use crate::api::handler::users::SimpleUser;
 use crate::api::handler::{query_user, ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::api::server::DehashedScheduler;
 use crate::chan::{RpcClients, WsManagerChan};
@@ -683,7 +683,7 @@ pub struct SimpleAttack {
     pub(crate) uuid: Uuid,
     pub(crate) workspace_uuid: Uuid,
     pub(crate) attack_type: AttackType,
-    pub(crate) started_from: UserResponse,
+    pub(crate) started_from: SimpleUser,
     pub(crate) finished_at: Option<DateTime<Utc>>,
     pub(crate) created_at: DateTime<Utc>,
 }
@@ -741,7 +741,7 @@ pub async fn get_attack(
             uuid,
             workspace_uuid: *workspace.key(),
             attack_type,
-            started_from: UserResponse {
+            started_from: SimpleUser {
                 uuid: by_uuid,
                 username,
                 display_name,
