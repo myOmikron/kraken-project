@@ -68,7 +68,7 @@
     padding: 1em;
     text-decoration: none;
     display: block;
-
+    cursor: pointer;
 }
 
 .workspace-heading-dropdown-content div:hover{
