@@ -8,18 +8,10 @@
     z-index: 1;
 }
 
-.workspace-heading > h2 {
-    margin: 0;
-}
-
 .workspace-heading-uuid {
     display: flex;
     gap: 1em;
     align-items: center;
-}
-
-.workspace-heading-dropdown{
-
 }
 
 .workspace-heading-dropdown-heading{
