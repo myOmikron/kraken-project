@@ -6,6 +6,7 @@ use std::str::FromStr;
 
 use once_cell::sync::Lazy;
 use regex::Regex;
+use thiserror::Error;
 use tokio::io::{self, stdin, AsyncBufReadExt, BufReader};
 
 pub(crate) struct Regexes {
@@ -17,20 +18,15 @@ static RE: Lazy<Regexes> = Lazy::new(|| Regexes {
 });
 
 /// Error while parsing ports
+#[derive(Debug, Error)]
 pub enum ParsePortError {
     /// Invalid port parsed
+    #[error("{0}")]
     InvalidPort(String),
-    /// Invalid port range parsed
-    InvalidPortRange(String),
-}
 
-impl From<ParsePortError> for String {
-    fn from(value: ParsePortError) -> String {
-        match value {
-            ParsePortError::InvalidPort(err) => err,
-            ParsePortError::InvalidPortRange(err) => err,
-        }
-    }
+    /// Invalid port range parsed
+    #[error("{0}")]
+    InvalidPortRange(String),
 }
 
 /// Parse ports retrieved via clap

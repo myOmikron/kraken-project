@@ -35,19 +35,21 @@ Class | Method | HTTP request | Description
  - [AggregatedDomain](docs/AggregatedDomain.md)
  - [AggregatedHost](docs/AggregatedHost.md)
  - [AggregatedPort](docs/AggregatedPort.md)
+ - [AggregatedRelation](docs/AggregatedRelation.md)
+ - [AggregatedRelationOneOf](docs/AggregatedRelationOneOf.md)
+ - [AggregatedRelationOneOf1](docs/AggregatedRelationOneOf1.md)
  - [AggregatedService](docs/AggregatedService.md)
  - [AggregatedTags](docs/AggregatedTags.md)
  - [AggregatedWorkspace](docs/AggregatedWorkspace.md)
  - [ApiErrorResponse](docs/ApiErrorResponse.md)
  - [ApiStatusCode](docs/ApiStatusCode.md)
- - [GrantType](docs/GrantType.md)
+ - [Certainty](docs/Certainty.md)
  - [OsType](docs/OsType.md)
  - [PortProtocol](docs/PortProtocol.md)
  - [TokenError](docs/TokenError.md)
  - [TokenErrorType](docs/TokenErrorType.md)
  - [TokenRequest](docs/TokenRequest.md)
  - [TokenResponse](docs/TokenResponse.md)
- - [TokenType](docs/TokenType.md)
 
 
 To get access to the crate's generated documentation, use:

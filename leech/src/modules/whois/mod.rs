@@ -6,9 +6,9 @@ use log::{debug, warn};
 use reqwest::{Client, StatusCode};
 use serde::{Deserialize, Serialize};
 
-pub use crate::modules::whois::errors::*;
+pub use crate::modules::whois::error::WhoisError;
 
-mod errors;
+mod error;
 
 const URL: &str = "https://rdap.db.ripe.net/ip/";
 

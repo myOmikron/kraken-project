@@ -57,7 +57,7 @@ jobs:
         run: cargo deny check --hide-inclusion-graph
 
       - name: Run rust-clippy
-        run: cargo clippy --workspace --exclude kraken-sdk --message-format=json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
+        run: cargo clippy --workspace --message-format=json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
         continue-on-error: true
 
       - name: Upload clippy analysis results to GitHub

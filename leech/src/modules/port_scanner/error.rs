@@ -1,37 +1,26 @@
 //! The errors of a port scan
 
-use std::fmt::{Display, Formatter};
 use std::io;
 
+use thiserror::Error;
 use tokio::task::JoinError;
 
 use crate::modules::host_alive::error::IcmpScanError;
 
 /// The errors of a tcp port scan
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum TcpPortScanError {
     /// Error while creating the icmp client
+    #[error("Could not create icmp client: {0}")]
     CreateIcmpClient(io::Error),
-    /// Error while rising the NO_FILE limit
-    RiseNoFileLimit(io::Error),
-    /// Error joining a task
-    TaskJoin(JoinError),
-}
 
-impl Display for TcpPortScanError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            TcpPortScanError::CreateIcmpClient(err) => {
-                write!(f, "Could not create icmp client: {err}")
-            }
-            TcpPortScanError::RiseNoFileLimit(err) => {
-                write!(f, "Could not increase NO_FILE limit: {err}")
-            }
-            TcpPortScanError::TaskJoin(err) => {
-                write!(f, "Error joining task: {err}")
-            }
-        }
-    }
+    /// Error while rising the NO_FILE limit
+    #[error("Could not increase NO_FILE limit: {0}")]
+    RiseNoFileLimit(io::Error),
+
+    /// Error joining a task
+    #[error("Error joining task: {0}")]
+    TaskJoin(#[from] JoinError),
 }
 
 impl From<IcmpScanError> for TcpPortScanError {

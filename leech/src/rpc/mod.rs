@@ -6,6 +6,7 @@
 //!
 //! In cli mode, the leech can push the results to kraken if desired.
 
+use std::error::Error;
 use std::net::SocketAddr;
 
 use log::info;
@@ -337,7 +338,7 @@ pub mod rpc_attacks {
 ///
 /// **Parameter**:
 /// - `config`: Reference to [Config]
-pub async fn start_rpc_server(config: &Config, backlog: Backlog) -> Result<(), String> {
+pub async fn start_rpc_server(config: &Config, backlog: Backlog) -> Result<(), Box<dyn Error>> {
     info!("Starting Server");
     Server::builder()
         .add_service(ReqAttackServiceServer::new(Attacks { backlog }))
@@ -345,8 +346,7 @@ pub async fn start_rpc_server(config: &Config, backlog: Backlog) -> Result<(), S
             config.server.listen_address.parse().unwrap(),
             config.server.listen_port,
         ))
-        .await
-        .unwrap();
+        .await?;
 
     Ok(())
 }
