@@ -103,7 +103,7 @@ pub async fn delete_workspace(
 }
 
 /// A simple version of a workspace
-#[derive(Serialize, ToSchema, Clone)]
+#[derive(Debug, Serialize, ToSchema, Clone)]
 pub struct SimpleWorkspace {
     pub(crate) uuid: Uuid,
     #[schema(example = "ultra-secure-workspace")]

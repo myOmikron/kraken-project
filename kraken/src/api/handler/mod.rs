@@ -48,6 +48,7 @@ pub mod settings;
 pub mod users;
 pub mod websocket;
 pub mod wordlists;
+pub mod workspace_invitations;
 pub mod workspace_tags;
 pub mod workspaces;
 

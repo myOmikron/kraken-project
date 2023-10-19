@@ -23,7 +23,7 @@ use webauthn_rs::WebauthnBuilder;
 use crate::api::handler::{
     api_keys, attack_results, attacks, auth, data_export, domains, global_tags, hosts, leeches,
     oauth, oauth_applications, ports, services, settings, users, websocket, wordlists,
-    workspace_tags, workspaces,
+    workspace_invitations, workspace_tags, workspaces,
 };
 use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
@@ -200,7 +200,9 @@ pub(crate) async fn start_server(
                     .service(ports::get_all_ports)
                     .service(services::get_all_services)
                     .service(domains::get_all_domains)
-                    .service(wordlists::get_all_wordlists),
+                    .service(wordlists::get_all_wordlists)
+                    .service(workspace_invitations::get_all_workspace_invitations)
+                    .service(workspace_invitations::accept_invitation),
             )
     })
     .bind((

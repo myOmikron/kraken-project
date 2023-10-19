@@ -9,7 +9,7 @@ use crate::api::handler;
 use crate::api::handler::{
     api_keys, attack_results, attacks, auth, data_export, domains, global_tags, hosts, leeches,
     oauth, oauth_applications, oauth_decisions, ports, services, settings, users, websocket,
-    wordlists, workspace_tags, workspaces,
+    wordlists, workspace_invitations, workspace_tags, workspaces,
 };
 use crate::models;
 use crate::modules::oauth::schemas as oauth_schemas;
@@ -122,6 +122,8 @@ impl Modify for SecurityAddon2 {
         wordlists::get_all_wordlists_admin,
         wordlists::update_wordlist_admin,
         wordlists::delete_wordlist_admin,
+        workspace_invitations::get_all_workspace_invitations,
+        workspace_invitations::accept_invitation,
     ),
     components(schemas(
         handler::ApiErrorResponse,
@@ -210,6 +212,8 @@ impl Modify for SecurityAddon2 {
         wordlists::GetAllWordlistsAdminResponse,
         wordlists::FullWordlist,
         wordlists::UpdateWordlistRequest,
+        workspace_invitations::FullWorkspaceInvitation,
+        workspace_invitations::WorkspaceInvitationList,
     )),
     modifiers(&SecurityAddon)
 )]
