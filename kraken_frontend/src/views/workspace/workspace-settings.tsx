@@ -16,7 +16,7 @@ type WorkspaceSettingsProps = {
 };
 type WorkspaceSettingsState = {
     workspaceName: string;
-    workspaceDescription: string | null | undefined;
+    workspaceDescription: string | null;
     invitePopup: boolean;
     deleteUserPopup: boolean;
     deleteWorkspacePopup: boolean;
@@ -37,7 +37,8 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
 
         this.state = {
             workspaceName: this.props.workspace.name,
-            workspaceDescription: this.props.workspace.description,
+            workspaceDescription:
+                this.props.workspace.description === undefined ? null : this.props.workspace.description,
             invitePopup: false,
             deleteUserPopup: false,
             deleteWorkspacePopup: false,
@@ -51,12 +52,17 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
     }
 
     async updateWorkspace() {
-        (
-            await Api.workspaces.update(this.props.workspace.uuid, {
-                name: this.state.workspaceName,
-                description: this.state.workspaceDescription,
-            })
-        ).match(
+        let update: { name: null | string; description: null | string } = { name: null, description: null };
+
+        if (this.state.workspaceName !== this.props.workspace.name && this.state.workspaceName !== "") {
+            update = { ...update, name: this.state.workspaceName };
+        }
+
+        if (this.state.workspaceDescription !== this.props.workspace.description) {
+            update = { ...update, description: this.state.workspaceDescription };
+        }
+
+        (await Api.workspaces.update(this.props.workspace.uuid, update)).match(
             () => toast.success("Workspace updated"),
             (err) => toast.error(err.message)
         );
