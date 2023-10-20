@@ -1,20 +1,19 @@
-use std::net::IpAddr;
+mod cert;
+
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 use std::{fmt, fs, io};
 
 use actix_web::web::Data;
 use log::error;
-use rcgen::{
-    BasicConstraints, Certificate, CertificateParams, DnType, ExtendedKeyUsagePurpose, IsCa,
-    KeyPair, KeyUsagePurpose, RcgenError, SanType, PKCS_ECDSA_P256_SHA256,
-};
+use rcgen::{Certificate, CertificateParams, KeyPair, RcgenError};
 use serde::Serialize;
 use thiserror::Error;
 use tonic::transport::{Certificate as TonicCertificate, ClientTlsConfig, ServerTlsConfig};
+use url::Url;
 use utoipa::ToSchema;
 
 use crate::api::handler::ApiError;
+use crate::modules::tls::cert::CertificateBuilder;
 
 pub struct TlsManager {
     /// The CA's certificate with its private key
@@ -44,7 +43,7 @@ impl TlsManager {
 
         let ca;
         if !cert_path.exists() || !key_path.exists() {
-            ca = new_cert(ca_params)?;
+            ca = cert::CA.build()?;
             fs::write(cert_path, ca.serialize_pem()?)?;
             fs::write(key_path, ca.serialize_private_key_pem())?;
         } else {
@@ -62,7 +61,10 @@ impl TlsManager {
 
     /// Generate a new certificate for a leech
     pub fn gen_leech_cert(&self) -> Result<LeechCert, TlsManagerError> {
-        let cert = new_cert(leech_params)?;
+        let cert = cert::Leech {
+            url: Url::parse("https://10.13.37.11:31337").unwrap(),
+        }
+        .build()?;
         let cert_pem = cert.serialize_pem_with_signer(&self.ca)?;
         let key_pem = cert.serialize_private_key_pem();
         Ok(LeechCert {
@@ -80,38 +82,6 @@ impl TlsManager {
     pub fn tonic_server(&self) -> ServerTlsConfig {
         todo!()
     }
-}
-
-fn new_cert(builder: impl FnOnce(&mut CertificateParams)) -> Result<Certificate, RcgenError> {
-    let mut params = CertificateParams::default();
-    builder(&mut params);
-    Certificate::from_params(params)
-}
-fn ca_params(params: &mut CertificateParams) {
-    params.alg = &PKCS_ECDSA_P256_SHA256;
-    params
-        .distinguished_name
-        .push(DnType::CommonName, "kraken CA");
-    params.is_ca = IsCa::Ca(BasicConstraints::Unconstrained);
-    params.key_usages.push(KeyUsagePurpose::KeyCertSign);
-}
-fn leech_params(params: &mut CertificateParams) {
-    params.alg = &PKCS_ECDSA_P256_SHA256;
-    params
-        .distinguished_name
-        .push(DnType::CommonName, "leech cert");
-    params.is_ca = IsCa::ExplicitNoCa;
-    params.key_usages.extend([
-        KeyUsagePurpose::DigitalSignature,
-        KeyUsagePurpose::KeyEncipherment,
-    ]);
-    params
-        .extended_key_usages
-        .extend([ExtendedKeyUsagePurpose::ServerAuth]);
-    params
-        .subject_alt_names
-        .extend([SanType::IpAddress(IpAddr::from_str("10.13.37.11").unwrap())]); // TODO parse alt name from address
-    params.use_authority_key_identifier_extension = true;
 }
 
 #[derive(Debug, Error)]

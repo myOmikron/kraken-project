@@ -1885,6 +1885,7 @@ dependencies = [
  "toml 0.8.1",
  "tonic",
  "tonic-build",
+ "url",
  "utoipa",
  "utoipa-swagger-ui",
  "uuid",
