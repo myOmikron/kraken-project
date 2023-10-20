@@ -236,7 +236,7 @@ impl ReqAttackService for Attacks {
             return Err(Status::invalid_argument("no hosts to check"));
         }
 
-        let _attack_uuid = Uuid::parse_str(&req.attack_uuid)
+        let attack_uuid = Uuid::parse_str(&req.attack_uuid)
             .map_err(|_| Status::invalid_argument("attack_uuid has to be an Uuid"))?;
 
         let settings = IcmpScanSettings {
@@ -253,11 +253,9 @@ impl ReqAttackService for Attacks {
             },
             {
                 let backlog = self.backlog.clone();
-                move |_item| {
-                    let _backlog = backlog.clone();
-                    async move {
-                        // TODO backlog.store_hosts_alive_check(attack_uuid, item).await
-                    }
+                move |item| {
+                    let backlog = backlog.clone();
+                    async move { backlog.store_hosts_alive_check(attack_uuid, item).await }
                 }
             },
         )

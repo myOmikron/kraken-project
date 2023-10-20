@@ -1,9 +1,10 @@
 //! This modules handles all backlog tasks
 
-use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::str::FromStr;
 use std::time::Duration;
 
+use ipnetwork::IpNetwork;
 use log::{debug, error, info, warn};
 use rorm::{delete, insert, query, Database};
 use tonic::transport::Endpoint;
@@ -11,13 +12,15 @@ use uuid::Uuid;
 
 use crate::config::KrakenConfig;
 use crate::models::{
-    BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert, DnsRecordType, TcpPortScanResult,
-    TcpPortScanResultInsert,
+    BruteforceSubdomainsResultInsert, DnsRecordType, DnsResolutionResult,
+    DnsResolutionResultInsert, DnsResult, HostAliveResult, HostAliveResultInsert,
+    TcpPortScanResult, TcpPortScanResultInsert,
 };
 use crate::rpc::rpc_attacks::backlog_service_client::BacklogServiceClient;
 use crate::rpc::rpc_attacks::shared::dns_record::Record;
 use crate::rpc::rpc_attacks::{
-    BacklogBruteforceSubdomainRequest, BacklogTcpPortScanRequest, BruteforceSubdomainResponse,
+    BacklogDnsRequest, BacklogTcpPortScanRequest, BruteforceSubdomainResponse,
+    DnsResolutionResponse,
 };
 
 /// The main struct for the Backlog,
@@ -102,6 +105,22 @@ impl Backlog {
                 attack: attack_uuid,
                 address: socket_addr.ip().into(),
                 port: socket_addr.port() as i32,
+            })
+            .await
+        {
+            error!("Could not insert data into database: {err}");
+        }
+    }
+
+    /// Stores the [Host alive results](crate::models::HostAliveResult)
+    /// information in the Leech's database
+    pub(crate) async fn store_hosts_alive_check(&self, attack_uuid: Uuid, item: IpAddr) {
+        if let Err(err) = insert!(&self.db, HostAliveResult)
+            .return_nothing()
+            .single(&HostAliveResultInsert {
+                uuid: Uuid::new_v4(),
+                attack: attack_uuid,
+                host: IpNetwork::from(item),
             })
             .await
         {

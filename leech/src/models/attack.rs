@@ -28,6 +28,10 @@ pub enum DnsRecordType {
 pub type BruteforceSubdomainsResult = DnsResult;
 pub(crate) type BruteforceSubdomainsResultInsert = DnsResultInsert;
 
+/// Representation of a [DNS Resolution](AttackType::BruteforceSubdomains) attack's result
+pub type DnsResolutionResult = DnsResult;
+pub(crate) type DnsResolutionResultInsert = DnsResultInsert;
+
 /// Generic representation of a DNS result
 #[derive(Model)]
 pub struct DnsResult {
@@ -95,4 +99,30 @@ pub(crate) struct TcpPortScanResultInsert {
     pub(crate) attack: Uuid,
     pub(crate) address: IpNetwork,
     pub(crate) port: i32,
+}
+
+/// Representation of a [host alive check](AttackType::HostAliveResult) attack's result
+#[derive(Model)]
+pub struct HostAliveResult {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The [attack](Attack) which produced this result
+    pub attack: Uuid,
+
+    /// The point in time, this result was produced
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
+
+    /// A host that responded
+    pub host: IpNetwork,
+}
+
+#[derive(Patch)]
+#[rorm(model = "HostAliveResult")]
+pub(crate) struct HostAliveResultInsert {
+    pub(crate) uuid: Uuid,
+    pub(crate) attack: Uuid,
+    pub(crate) host: IpNetwork,
 }
