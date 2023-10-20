@@ -32,6 +32,7 @@ use crate::api::swagger::{ExternalApi, FrontendApi};
 use crate::chan::{LeechManager, SettingsManagerChan, WsManagerChan};
 use crate::config::Config;
 use crate::modules::oauth::OauthManager;
+use crate::modules::tls::TlsManager;
 
 const ORIGIN_NAME: &str = "Kraken";
 
@@ -48,6 +49,7 @@ pub(crate) async fn start_server(
     ws_manager_chan: WsManagerChan,
     setting_manager_chan: Arc<SettingsManagerChan>,
     dehashed_scheduler: Option<Scheduler>,
+    tls_manager: Data<TlsManager>,
 ) -> Result<(), StartServerError> {
     let key = Key::try_from(
         BASE64_STANDARD
@@ -81,6 +83,7 @@ pub(crate) async fn start_server(
             .app_data(oauth.clone())
             .app_data(Data::new(ws_manager_chan.clone()))
             .app_data(leeches.clone())
+            .app_data(tls_manager.clone())
             .app_data(Data::new(setting_manager_chan.clone()))
             .app_data(dehashed.clone())
             .wrap(setup_logging_mw(LoggingMiddlewareConfig::default()))

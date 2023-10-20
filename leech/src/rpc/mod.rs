@@ -10,7 +10,7 @@ use std::error::Error;
 use std::net::SocketAddr;
 
 use log::info;
-use tonic::transport::Server;
+use tonic::transport::{Identity, Server, ServerTlsConfig};
 
 use crate::backlog::Backlog;
 use crate::config::Config;
@@ -393,6 +393,10 @@ pub mod rpc_attacks {
 pub async fn start_rpc_server(config: &Config, backlog: Backlog) -> Result<(), Box<dyn Error>> {
     info!("Starting Server");
     Server::builder()
+        .tls_config(ServerTlsConfig::new().identity(Identity::from_pem(
+            &config.kraken.tls_cert,
+            &config.kraken.tls_key,
+        )))?
         .add_service(ReqAttackServiceServer::new(Attacks { backlog }))
         .serve(SocketAddr::new(
             config.server.listen_address.parse().unwrap(),

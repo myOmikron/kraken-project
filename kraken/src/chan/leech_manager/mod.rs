@@ -14,14 +14,17 @@ use rand::prelude::IteratorRandom;
 use rand::thread_rng;
 use rorm::prelude::*;
 use rorm::{query, Database};
+use thiserror::Error;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
-use tonic::transport::{Channel, Endpoint};
+use tonic::codegen::http::uri::InvalidUri;
+use tonic::transport::{Channel, Uri};
 use uuid::Uuid;
 
 pub use self::errors::*;
 use crate::models::Leech;
+use crate::modules::tls::TlsManager;
 use crate::rpc::rpc_definitions::req_attack_service_client::ReqAttackServiceClient;
 
 /// Handle for interacting with the leech manager
@@ -42,7 +45,7 @@ impl LeechManager {
     ///
     /// ## Errors
     /// if the leeches currently in the database couldn't be queried.
-    pub async fn start(db: Database) -> Result<Data<Self>, rorm::Error> {
+    pub async fn start(db: Database, tls: Arc<TlsManager>) -> Result<Data<Self>, rorm::Error> {
         let initial_leeches = query!(&db, Leech).all().await?;
 
         let (sender, receiver) = mpsc::channel(16);
@@ -56,7 +59,7 @@ impl LeechManager {
             handle
                 .clone()
                 .into_inner()
-                .run(db, receiver, initial_leeches),
+                .run(db, tls, receiver, initial_leeches),
         );
 
         Ok(handle)
@@ -147,15 +150,16 @@ impl LeechManager {
     async fn run(
         self: Arc<Self>,
         db: Database,
+        tls: Arc<TlsManager>,
         mut receiver: mpsc::Receiver<LeechManagerEvent>,
         initial_leeches: Vec<Leech>,
     ) -> Infallible {
-        let mut client_join_handles: HashMap<Uuid, JoinHandle<()>> = HashMap::new();
+        let mut client_join_handles: HashMap<Uuid, JoinHandle<_>> = HashMap::new();
 
         for leech in initial_leeches {
             let leech_uuid = leech.uuid;
             debug!("Spawning rpc client loop for {leech_uuid}");
-            let join_handle = tokio::spawn(connect_to_leech(leech, self.clone()));
+            let join_handle = tokio::spawn(connect_to_leech(leech, self.clone(), tls.clone()));
             client_join_handles.insert(leech_uuid, join_handle);
         }
 
@@ -174,7 +178,8 @@ impl LeechManager {
                         .await
                     {
                         debug!("Starting rpc client loop for {uuid}");
-                        let join_handle = tokio::spawn(connect_to_leech(leech, self.clone()));
+                        let join_handle =
+                            tokio::spawn(connect_to_leech(leech, self.clone(), tls.clone()));
                         client_join_handles.insert(uuid, join_handle);
                     }
                 }
@@ -190,7 +195,8 @@ impl LeechManager {
                             .await
                         {
                             debug!("Starting rpc client loop for {uuid}");
-                            *join_handle = tokio::spawn(connect_to_leech(leech, self.clone()));
+                            *join_handle =
+                                tokio::spawn(connect_to_leech(leech, self.clone(), tls.clone()));
                         }
                     }
                 }
@@ -207,10 +213,14 @@ impl LeechManager {
 }
 
 /// Connect to the leech (retry if necessary) and add it to the manager upon established connection.
-async fn connect_to_leech(leech: Leech, handle: Arc<LeechManager>) {
+async fn connect_to_leech(leech: Leech, leeches: Arc<LeechManager>, tls: Arc<TlsManager>) {
     const CLIENT_RETRY_INTERVAL: Duration = Duration::from_secs(10);
 
-    let endpoint = match Endpoint::from_str(&leech.address) {
+    let endpoint = match (|| {
+        Ok::<_, ConnectError>(
+            Channel::builder(Uri::from_str(&leech.address)?).tls_config(tls.tonic_client())?,
+        )
+    })() {
         Ok(endpoint) => endpoint,
         Err(err) => {
             warn!(
@@ -238,5 +248,13 @@ async fn connect_to_leech(leech: Leech, handle: Arc<LeechManager>) {
         sleep(CLIENT_RETRY_INTERVAL).await;
     };
 
-    handle.write().insert(leech.uuid, client);
+    leeches.write().insert(leech.uuid, client);
+}
+
+#[derive(Debug, Error)]
+enum ConnectError {
+    #[error("Invalid leech uri: {0}")]
+    Uri(#[from] InvalidUri),
+    #[error("Invalid tls config: {0}")]
+    Tls(#[from] tonic::transport::Error),
 }

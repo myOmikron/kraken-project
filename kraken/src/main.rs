@@ -31,6 +31,7 @@ use crate::api::server;
 use crate::chan::LeechManager;
 use crate::config::Config;
 use crate::models::{User, UserPermission};
+use crate::modules::tls::TlsManager;
 use crate::rpc::server::start_rpc_server;
 
 pub mod api;
@@ -108,7 +109,9 @@ async fn main() -> Result<(), String> {
                     .map_err(|e| e.to_string())?,
             );
 
-            let leeches = LeechManager::start(db.clone())
+            let tls_manager = TlsManager::load("/var/lib/kraken")
+                .map_err(|e| format!("Failed to initialize tls: {e}"))?;
+            let leeches = LeechManager::start(db.clone(), tls_manager.clone().into_inner())
                 .await
                 .map_err(|e| format!("Failed to query initial leeches: {e}"))?;
             let ws_manager_chan = chan::start_ws_manager().await;
@@ -124,6 +127,7 @@ async fn main() -> Result<(), String> {
                 ws_manager_chan,
                 settings_manager_chan,
                 dehashed_scheduler,
+                tls_manager,
             )
             .await?;
         }
