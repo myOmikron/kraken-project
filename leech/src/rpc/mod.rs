@@ -30,7 +30,7 @@ pub mod rpc_attacks {
     use ipnetwork::{IpNetwork, Ipv4Network, Ipv6Network};
     use tonic::Status;
 
-    use crate::models::{BruteforceSubdomainsResult, DnsRecordType, TcpPortScanResult};
+    use crate::models::{DnsRecordType, DnsResult, TcpPortScanResult};
     use crate::modules::bruteforce_subdomains::BruteforceSubdomainResult;
     use crate::modules::dns::DnsRecordResult;
     use crate::rpc::rpc_attacks::shared::dns_record::Record;
@@ -260,8 +260,8 @@ pub mod rpc_attacks {
         }
     }
 
-    impl From<BruteforceSubdomainsResult> for BacklogBruteforceSubdomainResult {
-        fn from(value: BruteforceSubdomainsResult) -> Self {
+    impl From<DnsResult> for BacklogDnsResult {
+        fn from(value: DnsResult) -> Self {
             Self {
                 attack_uuid: value.attack.to_string(),
                 record: match value.dns_record_type {
@@ -283,15 +283,38 @@ pub mod rpc_attacks {
                             to: value.destination,
                         })),
                     }),
-                    _ => unimplemented!("type not supported"),
+                    DnsRecordType::Caa => Some(DnsRecord {
+                        record: Some(Record::Caa(GenericRecord {
+                            source: value.source,
+                            to: value.destination,
+                        })),
+                    }),
+                    DnsRecordType::Mx => Some(DnsRecord {
+                        record: Some(Record::Mx(GenericRecord {
+                            source: value.source,
+                            to: value.destination,
+                        })),
+                    }),
+                    DnsRecordType::Tlsa => Some(DnsRecord {
+                        record: Some(Record::Tlsa(GenericRecord {
+                            source: value.source,
+                            to: value.destination,
+                        })),
+                    }),
+                    DnsRecordType::Txt => Some(DnsRecord {
+                        record: Some(Record::Txt(GenericRecord {
+                            source: value.source,
+                            to: value.destination,
+                        })),
+                    }),
                 },
             }
         }
     }
 
-    impl From<Vec<BruteforceSubdomainsResult>> for BacklogBruteforceSubdomainRequest {
-        fn from(value: Vec<BruteforceSubdomainsResult>) -> Self {
-            let mut entries: Vec<BacklogBruteforceSubdomainResult> = Vec::new();
+    impl From<Vec<DnsResult>> for BacklogDnsRequest {
+        fn from(value: Vec<DnsResult>) -> Self {
+            let mut entries: Vec<BacklogDnsResult> = Vec::new();
             entries.reserve(value.len());
 
             for e in value {

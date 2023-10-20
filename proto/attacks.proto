@@ -236,28 +236,40 @@ service AttackResultsService {
 ------------------------ Backlog -------------------------------
  */
 
+// Empty response
 message EmptyResponse {}
 
-message BacklogBruteforceSubdomainResult{
+// Dns result (applies to 'bruteforce subdomains' as well as 'dns resolution')
+message BacklogDnsResult{
+  // the attack that produced the result
   string attack_uuid = 1;
+  // the dns record
   shared.DNSRecord record = 2;
 }
 
-message BacklogBruteforceSubdomainRequest {
-  repeated BacklogBruteforceSubdomainResult entries = 1;
+// multiple dns results
+message BacklogDnsRequest {
+  repeated BacklogDnsResult entries = 1;
 }
 
+// Result of tcp port scan
 message BacklogTcpPortScanResult {
+  // the attack that produced the result
   string attack_uuid = 1;
+  // the ip address
   attacks.shared.Address address = 2;
+  // the port
   uint32 port = 3;
 }
 
+// multiple tcp port scan results
 message BacklogTcpPortScanRequest {
   repeated BacklogTcpPortScanResult entries = 1;
 }
 
+// Implemented by kraken; allows leeches to upload results that failed to upload previously
 service BacklogService {
-  rpc BruteforceSubdomains(BacklogBruteforceSubdomainRequest) returns (EmptyResponse);
+  rpc DnsResults(BacklogDnsRequest) returns (EmptyResponse);
   rpc TcpPortScan(BacklogTcpPortScanRequest) returns (EmptyResponse);
+
 }

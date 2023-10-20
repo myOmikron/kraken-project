@@ -12,8 +12,8 @@ use uuid::Uuid;
 
 use crate::config::Config;
 use crate::models::{
-    Attack, AttackType, BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert,
-    CertificateTransparencyResultInsert, CertificateTransparencyValueNameInsert, DnsRecordType,
+    Attack, AttackType, CertificateTransparencyResultInsert,
+    CertificateTransparencyValueNameInsert, DnsRecordResult, DnsRecordResultInsert, DnsRecordType,
     InsertAttackError, LeechApiKey, TcpPortScanResult, TcpPortScanResultInsert, Workspace,
 };
 use crate::rpc::definitions::rpc_definitions::attack_results_service_server::AttackResultsService;
@@ -22,8 +22,8 @@ use crate::rpc::rpc_definitions::backlog_service_server::{BacklogService, Backlo
 use crate::rpc::rpc_definitions::shared::address::Address;
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
 use crate::rpc::rpc_definitions::{
-    BacklogBruteforceSubdomainRequest, BacklogTcpPortScanRequest, CertificateTransparencyResult,
-    EmptyResponse, ResultResponse, SubdomainEnumerationResult,
+    BacklogDnsRequest, BacklogTcpPortScanRequest, CertificateTransparencyResult, EmptyResponse,
+    ResultResponse, SubdomainEnumerationResult,
 };
 
 /// Helper type to implement result handler to
@@ -135,9 +135,9 @@ impl AttackResultsService for Results {
 
 #[tonic::async_trait]
 impl BacklogService for Results {
-    async fn bruteforce_subdomains(
+    async fn dns_results(
         &self,
-        request: Request<BacklogBruteforceSubdomainRequest>,
+        request: Request<BacklogDnsRequest>,
     ) -> Result<Response<EmptyResponse>, Status> {
         let Ok(mut db_trx) = self.db.start_transaction().await else {
             error!("could not start batch processing");
@@ -180,10 +180,10 @@ impl BacklogService for Results {
                     )
                 }
                 Record::Cname(v) => (v.source, v.to, DnsRecordType::Cname),
-                _ => {
-                    debug!("record type not of concern");
-                    continue;
-                }
+                Record::Caa(v) => (v.source, v.to, DnsRecordType::Caa),
+                Record::Mx(v) => (v.source, v.to, DnsRecordType::Mx),
+                Record::Tlsa(v) => (v.source, v.to, DnsRecordType::Tlsa),
+                Record::Txt(v) => (v.source, v.to, DnsRecordType::Txt),
             };
 
             if query!(&mut db_trx, Attack)
@@ -196,18 +196,12 @@ impl BacklogService for Results {
                 continue;
             }
 
-            let Ok(None) = query!(&mut db_trx, BruteforceSubdomainsResult)
+            let Ok(None) = query!(&mut db_trx, DnsRecordResult)
                 .condition(and!(
-                    BruteforceSubdomainsResult::F
-                        .attack
-                        .equals(&req_attack_uuid),
-                    BruteforceSubdomainsResult::F
-                        .dns_record_type
-                        .equals(dns_record_type),
-                    BruteforceSubdomainsResult::F.source.equals(&source),
-                    BruteforceSubdomainsResult::F
-                        .destination
-                        .equals(&destination)
+                    DnsRecordResult::F.attack.equals(&req_attack_uuid),
+                    DnsRecordResult::F.dns_record_type.equals(dns_record_type),
+                    DnsRecordResult::F.source.equals(&source),
+                    DnsRecordResult::F.destination.equals(&destination)
                 ))
                 .optional()
                 .await
@@ -216,8 +210,8 @@ impl BacklogService for Results {
                 continue;
             };
 
-            if let Err(e) = insert!(&mut db_trx, BruteforceSubdomainsResultInsert)
-                .single(&BruteforceSubdomainsResultInsert {
+            if let Err(e) = insert!(&mut db_trx, DnsRecordResult)
+                .single(&DnsRecordResultInsert {
                     uuid: Uuid::new_v4(),
                     attack: ForeignModelByField::Key(req_attack_uuid),
                     source,
