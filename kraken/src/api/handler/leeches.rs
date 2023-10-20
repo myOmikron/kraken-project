@@ -10,6 +10,7 @@ use uuid::Uuid;
 use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::chan::LeechManager;
 use crate::models::Leech;
+use crate::modules::tls::{LeechCert, TlsManager};
 use crate::modules::uri::check_leech_address;
 
 /// The request to create a new leech
@@ -127,6 +128,26 @@ pub async fn get_leech(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<Jso
         name: leech.name,
         address: leech.address,
     }))
+}
+
+/// Generate a new tls cert for the leech
+#[utoipa::path(
+    tag = "Leech management",
+    context_path = "/api/v1/admin",
+    responses(
+        (status = 200, description = "Newly generated leech cert", body = LeechCert),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    params(PathUuid),
+    security(("api_key" = []))
+)]
+#[get("/leeches/{uuid}/cert")]
+pub async fn gen_leech_cert(
+    req: Path<PathUuid>,
+    tls: Data<TlsManager>,
+) -> ApiResult<Json<LeechCert>> {
+    Ok(Json(tls.gen_leech_cert()?))
 }
 
 /// The response that hold all leeches

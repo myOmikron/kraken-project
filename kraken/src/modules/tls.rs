@@ -4,12 +4,17 @@ use std::str::FromStr;
 use std::{fmt, fs, io};
 
 use actix_web::web::Data;
+use log::error;
 use rcgen::{
     BasicConstraints, Certificate, CertificateParams, DnType, ExtendedKeyUsagePurpose, IsCa,
     KeyPair, KeyUsagePurpose, RcgenError, SanType, PKCS_ECDSA_P256_SHA256,
 };
+use serde::Serialize;
 use thiserror::Error;
 use tonic::transport::{Certificate as TonicCertificate, ClientTlsConfig, ServerTlsConfig};
+use utoipa::ToSchema;
+
+use crate::api::handler::ApiError;
 
 pub struct TlsManager {
     /// The CA's certificate with its private key
@@ -19,9 +24,12 @@ pub struct TlsManager {
     tonic_ca: TonicCertificate,
 }
 
-#[derive(Debug)]
+#[derive(Debug, ToSchema, Serialize)]
 pub struct LeechCert {
+    /// PEM encoded certificate
     pub cert: String,
+
+    /// PEM encoded private key for the certificate
     pub key: String,
 }
 
@@ -114,6 +122,13 @@ pub enum TlsManagerError {
     Io(#[from] io::Error),
     #[error("Directory not found: {0}")]
     DirNotFound(PathBuf),
+}
+
+impl From<TlsManagerError> for ApiError {
+    fn from(value: TlsManagerError) -> Self {
+        error!("tls manager error in api: {value}");
+        Self::InternalServerError
+    }
 }
 
 impl fmt::Debug for TlsManager {

@@ -12,6 +12,7 @@ use crate::api::handler::{
     wordlists, workspace_invitations, workspace_tags, workspaces,
 };
 use crate::modules::oauth::schemas as oauth_schemas;
+use crate::modules::tls;
 use crate::{chan, models};
 
 struct SecurityAddon;
@@ -53,6 +54,7 @@ impl Modify for SecurityAddon2 {
         leeches::get_all_leeches,
         leeches::get_leech,
         leeches::update_leech,
+        leeches::gen_leech_cert,
         websocket::websocket,
         users::create_user,
         users::delete_user,
@@ -151,6 +153,7 @@ impl Modify for SecurityAddon2 {
         leeches::SimpleLeech,
         leeches::GetAllLeechesResponse,
         leeches::UpdateLeechRequest,
+        tls::LeechCert,
         users::CreateUserRequest,
         users::GetUser,
         users::GetUserResponse,

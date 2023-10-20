@@ -101,6 +101,7 @@ export const Api = {
             update: (uuid: UUID, leech: UpdateLeechRequest) =>
                 handleError(leechManagement.updateLeech({ uuid, updateLeechRequest: leech })),
             delete: (uuid: UUID) => handleError(leechManagement.deleteLeech({ uuid })),
+            genCert: (uuid: UUID) => handleError(leechManagement.genLeechCert({ uuid })),
         },
         settings: {
             get: () => handleError(settingsManagement.getSettings()),
@@ -243,7 +244,7 @@ export const Api = {
                 handleError(workspaceTags.createWorkspaceTag({ uuid: workspaceUuid, createWorkspaceTagRequest })),
             update: (workspaceUuid: UUID, tagUuid: UUID, updateWorkspaceTag: UpdateWorkspaceTag) =>
                 handleError(
-                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag })
+                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag }),
                 ),
             delete: (workspaceUuid: UUID, tagUuid: UUID) =>
                 workspaceTags.deleteWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid }),
