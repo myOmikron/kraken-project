@@ -19,8 +19,8 @@ use crate::models::{
 use crate::rpc::rpc_attacks::backlog_service_client::BacklogServiceClient;
 use crate::rpc::rpc_attacks::shared::dns_record::Record;
 use crate::rpc::rpc_attacks::{
-    BacklogDnsRequest, BacklogTcpPortScanRequest, BruteforceSubdomainResponse,
-    DnsResolutionResponse,
+    BacklogDnsRequest, BacklogHostAliveRequest, BacklogTcpPortScanRequest,
+    BruteforceSubdomainResponse, DnsResolutionResponse,
 };
 
 /// The main struct for the Backlog,
@@ -264,6 +264,25 @@ pub async fn start_backlog(db: Database, kraken_config: &KrakenConfig) -> Result
                         }
                     }
                 }; // end TcpPortScanResult
+
+                if let Ok(data) = query!(&mut db_trx, HostAliveResult)
+                    .limit(DB_QUERY_LIMIT)
+                    .all()
+                    .await
+                {
+                    if !data.is_empty() {
+                        data_changed = true;
+                        if let Err(e) = delete!(&mut db_trx, HostAliveResult).bulk(&data).await {
+                            warn!("bulk delete failed: {e}");
+                        };
+
+                        let data: BacklogHostAliveRequest = data.into();
+                        if let Err(e) = kraken.host_alive_check(data).await {
+                            error!("could not send data to kraken: {e}. restarting connection");
+                            break;
+                        }
+                    }
+                }; // end HostAliveResult
 
                 if data_changed {
                     if let Err(e) = db_trx.commit().await {

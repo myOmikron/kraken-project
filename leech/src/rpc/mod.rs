@@ -30,7 +30,7 @@ pub mod rpc_attacks {
     use ipnetwork::{IpNetwork, Ipv4Network, Ipv6Network};
     use tonic::Status;
 
-    use crate::models::{DnsRecordType, DnsResult, TcpPortScanResult};
+    use crate::models::{DnsRecordType, DnsResult, HostAliveResult, TcpPortScanResult};
     use crate::modules::bruteforce_subdomains::BruteforceSubdomainResult;
     use crate::modules::dns::DnsRecordResult;
     use crate::rpc::rpc_attacks::shared::dns_record::Record;
@@ -347,6 +347,35 @@ pub mod rpc_attacks {
     impl From<Vec<TcpPortScanResult>> for BacklogTcpPortScanRequest {
         fn from(value: Vec<TcpPortScanResult>) -> Self {
             let mut entries: Vec<BacklogTcpPortScanResult> = Vec::new();
+            entries.reserve(value.len());
+
+            for e in value {
+                entries.push(e.into());
+            }
+            Self { entries }
+        }
+    }
+
+    impl From<HostAliveResult> for BacklogHostAliveResult {
+        fn from(value: HostAliveResult) -> Self {
+            let address = match value.host {
+                IpNetwork::V4(v) => Address {
+                    address: Some(shared::address::Address::Ipv4((v.ip()).into())),
+                },
+                IpNetwork::V6(v) => Address {
+                    address: Some(shared::address::Address::Ipv6((v.ip()).into())),
+                },
+            };
+            Self {
+                attack_uuid: value.attack.to_string(),
+                host: Some(address),
+            }
+        }
+    }
+
+    impl From<Vec<HostAliveResult>> for BacklogHostAliveRequest {
+        fn from(value: Vec<HostAliveResult>) -> Self {
+            let mut entries: Vec<BacklogHostAliveResult> = Vec::new();
             entries.reserve(value.len());
 
             for e in value {

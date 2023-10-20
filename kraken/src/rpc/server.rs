@@ -1,4 +1,4 @@
-use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::str::FromStr;
 
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -14,7 +14,8 @@ use crate::config::Config;
 use crate::models::{
     Attack, AttackType, CertificateTransparencyResultInsert,
     CertificateTransparencyValueNameInsert, DnsRecordResult, DnsRecordResultInsert, DnsRecordType,
-    InsertAttackError, LeechApiKey, TcpPortScanResult, TcpPortScanResultInsert, Workspace,
+    HostAliveResult, HostAliveResultInsert, InsertAttackError, LeechApiKey, TcpPortScanResult,
+    TcpPortScanResultInsert, Workspace,
 };
 use crate::rpc::definitions::rpc_definitions::attack_results_service_server::AttackResultsService;
 use crate::rpc::rpc_definitions::attack_results_service_server::AttackResultsServiceServer;
@@ -22,8 +23,8 @@ use crate::rpc::rpc_definitions::backlog_service_server::{BacklogService, Backlo
 use crate::rpc::rpc_definitions::shared::address::Address;
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
 use crate::rpc::rpc_definitions::{
-    BacklogDnsRequest, BacklogTcpPortScanRequest, CertificateTransparencyResult, EmptyResponse,
-    ResultResponse, SubdomainEnumerationResult,
+    BacklogDnsRequest, BacklogHostAliveRequest, BacklogTcpPortScanRequest,
+    CertificateTransparencyResult, EmptyResponse, ResultResponse, SubdomainEnumerationResult,
 };
 
 /// Helper type to implement result handler to
@@ -292,6 +293,62 @@ impl BacklogService for Results {
                     attack: ForeignModelByField::Key(req_attack_uuid),
                     address,
                     port: entry.port as i32,
+                })
+                .await
+            {
+                error!("could not insert into database: {e}");
+                continue;
+            }
+        }
+
+        if let Err(e) = db_trx.commit().await {
+            error!("could not commit to database: {e}");
+            return Err(Status::internal("internal server error"));
+        }
+
+        Ok(Response::new(EmptyResponse {}))
+    }
+
+    async fn host_alive_check(
+        &self,
+        request: Request<BacklogHostAliveRequest>,
+    ) -> Result<Response<EmptyResponse>, Status> {
+        let Ok(mut db_trx) = self.db.start_transaction().await else {
+            error!("could not start batch processing");
+            return Err(Status::internal("internal server error"));
+        };
+
+        for entry in request.into_inner().entries {
+            let Ok(req_attack_uuid) = Uuid::from_str(&entry.attack_uuid) else {
+                error!("could not get attack uuid from request");
+                continue;
+            };
+
+            let Some(host) = entry.host else {
+                warn!("no host");
+                continue;
+            };
+
+            let Ok(host): Result<IpAddr, _> = host.try_into() else {
+                continue;
+            };
+
+            if query!(&mut db_trx, Attack)
+                .condition(Attack::F.uuid.equals(req_attack_uuid))
+                .one()
+                .await
+                .is_err()
+            {
+                debug!("attack does not exist");
+                continue;
+            }
+
+            if let Err(e) = insert!(&mut db_trx, HostAliveResult)
+                .return_nothing()
+                .single(&HostAliveResultInsert {
+                    uuid: Uuid::new_v4(),
+                    attack: ForeignModelByField::Key(req_attack_uuid),
+                    host: host.into(),
                 })
                 .await
             {

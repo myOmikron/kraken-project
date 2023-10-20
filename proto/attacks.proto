@@ -267,9 +267,22 @@ message BacklogTcpPortScanRequest {
   repeated BacklogTcpPortScanResult entries = 1;
 }
 
+// result of host alive check request
+message BacklogHostAliveResult {
+  // the attack that produced the result
+  string attack_uuid = 1;
+  // the hosts that responded
+  attacks.shared.Address host = 2;
+}
+
+// multiple host alive results
+message BacklogHostAliveRequest {
+  repeated BacklogHostAliveResult entries = 1;
+}
+
 // Implemented by kraken; allows leeches to upload results that failed to upload previously
 service BacklogService {
   rpc DnsResults(BacklogDnsRequest) returns (EmptyResponse);
   rpc TcpPortScan(BacklogTcpPortScanRequest) returns (EmptyResponse);
-
+  rpc HostAliveCheck(BacklogHostAliveRequest) returns (EmptyResponse);
 }
