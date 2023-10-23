@@ -19,12 +19,12 @@ import {
     AttackTypeFromJSONTyped,
     AttackTypeToJSON,
 } from './AttackType';
-import type { UserResponse } from './UserResponse';
+import type { SimpleUser } from './SimpleUser';
 import {
-    UserResponseFromJSON,
-    UserResponseFromJSONTyped,
-    UserResponseToJSON,
-} from './UserResponse';
+    SimpleUserFromJSON,
+    SimpleUserFromJSONTyped,
+    SimpleUserToJSON,
+} from './SimpleUser';
 
 /**
  * A simple version of an attack
@@ -52,10 +52,10 @@ export interface SimpleAttack {
     attackType: AttackType;
     /**
      * 
-     * @type {UserResponse}
+     * @type {SimpleUser}
      * @memberof SimpleAttack
      */
-    startedFrom: UserResponse;
+    startedFrom: SimpleUser;
     /**
      * 
      * @type {Date}
@@ -97,7 +97,7 @@ export function SimpleAttackFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'uuid': json['uuid'],
         'workspaceUuid': json['workspace_uuid'],
         'attackType': AttackTypeFromJSON(json['attack_type']),
-        'startedFrom': UserResponseFromJSON(json['started_from']),
+        'startedFrom': SimpleUserFromJSON(json['started_from']),
         'finishedAt': !exists(json, 'finished_at') ? undefined : (json['finished_at'] === null ? null : new Date(json['finished_at'])),
         'createdAt': (new Date(json['created_at'])),
     };
@@ -115,7 +115,7 @@ export function SimpleAttackToJSON(value?: SimpleAttack | null): any {
         'uuid': value.uuid,
         'workspace_uuid': value.workspaceUuid,
         'attack_type': AttackTypeToJSON(value.attackType),
-        'started_from': UserResponseToJSON(value.startedFrom),
+        'started_from': SimpleUserToJSON(value.startedFrom),
         'finished_at': value.finishedAt === undefined ? undefined : (value.finishedAt === null ? null : value.finishedAt.toISOString()),
         'created_at': (value.createdAt.toISOString()),
     };

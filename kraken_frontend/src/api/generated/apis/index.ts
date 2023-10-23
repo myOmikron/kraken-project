@@ -19,5 +19,6 @@ export * from './UserManagementApi';
 export * from './WebsocketApi';
 export * from './WordlistApi';
 export * from './WordlistManagementApi';
+export * from './WorkspaceInvitationsApi';
 export * from './WorkspaceTagsApi';
 export * from './WorkspacesApi';

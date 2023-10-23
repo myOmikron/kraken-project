@@ -14,7 +14,10 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * The simple representation of an user
+ * This struct holds the user information.
+ * 
+ * Note that `username` is unique, but as it is changeable,
+ * identify the user by its `uuid`
  * @export
  * @interface SimpleUser
  */

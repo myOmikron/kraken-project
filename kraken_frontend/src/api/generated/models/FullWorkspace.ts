@@ -19,12 +19,12 @@ import {
     SimpleAttackFromJSONTyped,
     SimpleAttackToJSON,
 } from './SimpleAttack';
-import type { UserResponse } from './UserResponse';
+import type { SimpleUser } from './SimpleUser';
 import {
-    UserResponseFromJSON,
-    UserResponseFromJSONTyped,
-    UserResponseToJSON,
-} from './UserResponse';
+    SimpleUserFromJSON,
+    SimpleUserFromJSONTyped,
+    SimpleUserToJSON,
+} from './SimpleUser';
 
 /**
  * A full version of a workspace
@@ -52,10 +52,10 @@ export interface FullWorkspace {
     description?: string | null;
     /**
      * 
-     * @type {UserResponse}
+     * @type {SimpleUser}
      * @memberof FullWorkspace
      */
-    owner: UserResponse;
+    owner: SimpleUser;
     /**
      * 
      * @type {Array<SimpleAttack>}
@@ -64,10 +64,10 @@ export interface FullWorkspace {
     attacks: Array<SimpleAttack>;
     /**
      * 
-     * @type {Array<UserResponse>}
+     * @type {Array<SimpleUser>}
      * @memberof FullWorkspace
      */
-    members: Array<UserResponse>;
+    members: Array<SimpleUser>;
     /**
      * 
      * @type {Date}
@@ -104,9 +104,9 @@ export function FullWorkspaceFromJSONTyped(json: any, ignoreDiscriminator: boole
         'uuid': json['uuid'],
         'name': json['name'],
         'description': !exists(json, 'description') ? undefined : json['description'],
-        'owner': UserResponseFromJSON(json['owner']),
+        'owner': SimpleUserFromJSON(json['owner']),
         'attacks': ((json['attacks'] as Array<any>).map(SimpleAttackFromJSON)),
-        'members': ((json['members'] as Array<any>).map(UserResponseFromJSON)),
+        'members': ((json['members'] as Array<any>).map(SimpleUserFromJSON)),
         'createdAt': (new Date(json['created_at'])),
     };
 }
@@ -123,9 +123,9 @@ export function FullWorkspaceToJSON(value?: FullWorkspace | null): any {
         'uuid': value.uuid,
         'name': value.name,
         'description': value.description,
-        'owner': UserResponseToJSON(value.owner),
+        'owner': SimpleUserToJSON(value.owner),
         'attacks': ((value.attacks as Array<any>).map(SimpleAttackToJSON)),
-        'members': ((value.members as Array<any>).map(UserResponseToJSON)),
+        'members': ((value.members as Array<any>).map(SimpleUserToJSON)),
         'created_at': (value.createdAt.toISOString()),
     };
 }

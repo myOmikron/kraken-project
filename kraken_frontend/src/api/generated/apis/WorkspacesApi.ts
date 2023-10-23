@@ -19,6 +19,7 @@ import type {
   CreateWorkspaceRequest,
   FullWorkspace,
   GetAllWorkspacesResponse,
+  InviteToWorkspace,
   TransferWorkspaceRequest,
   UpdateWorkspaceRequest,
   UuidResponse,
@@ -32,6 +33,8 @@ import {
     FullWorkspaceToJSON,
     GetAllWorkspacesResponseFromJSON,
     GetAllWorkspacesResponseToJSON,
+    InviteToWorkspaceFromJSON,
+    InviteToWorkspaceToJSON,
     TransferWorkspaceRequestFromJSON,
     TransferWorkspaceRequestToJSON,
     UpdateWorkspaceRequestFromJSON,
@@ -50,6 +53,11 @@ export interface DeleteWorkspaceRequest {
 
 export interface GetWorkspaceRequest {
     uuid: string;
+}
+
+export interface InviteRequest {
+    uuid: string;
+    inviteToWorkspace: InviteToWorkspace;
 }
 
 export interface TransferOwnershipRequest {
@@ -191,6 +199,44 @@ export class WorkspacesApi extends runtime.BaseAPI {
     async getWorkspace(requestParameters: GetWorkspaceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullWorkspace> {
         const response = await this.getWorkspaceRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Invite a user to the workspace  This action can only be invoked by the owner of a workspace
+     * Invite a user to the workspace
+     */
+    async inviteRaw(requestParameters: InviteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling invite.');
+        }
+
+        if (requestParameters.inviteToWorkspace === null || requestParameters.inviteToWorkspace === undefined) {
+            throw new runtime.RequiredError('inviteToWorkspace','Required parameter requestParameters.inviteToWorkspace was null or undefined when calling invite.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{uuid}/invite`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: InviteToWorkspaceToJSON(requestParameters.inviteToWorkspace),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Invite a user to the workspace  This action can only be invoked by the owner of a workspace
+     * Invite a user to the workspace
+     */
+    async invite(requestParameters: InviteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.inviteRaw(requestParameters, initOverrides);
     }
 
     /**
