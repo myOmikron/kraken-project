@@ -100,6 +100,7 @@ pub async fn get_all_workspace_invitations(
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
+    params(PathUuid),
     security(("api_key" = []))
 )]
 #[post("/invitations/{uuid}/accept")]

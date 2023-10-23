@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { UserResponse } from './UserResponse';
+import type { SimpleUser } from './SimpleUser';
 import {
-    UserResponseFromJSON,
-    UserResponseFromJSONTyped,
-    UserResponseToJSON,
-} from './UserResponse';
+    SimpleUserFromJSON,
+    SimpleUserFromJSONTyped,
+    SimpleUserToJSON,
+} from './SimpleUser';
 
 /**
  * A simple version of a workspace
@@ -46,10 +46,10 @@ export interface SimpleWorkspace {
     description?: string | null;
     /**
      * 
-     * @type {UserResponse}
+     * @type {SimpleUser}
      * @memberof SimpleWorkspace
      */
-    owner: UserResponse;
+    owner: SimpleUser;
     /**
      * 
      * @type {Date}
@@ -84,7 +84,7 @@ export function SimpleWorkspaceFromJSONTyped(json: any, ignoreDiscriminator: boo
         'uuid': json['uuid'],
         'name': json['name'],
         'description': !exists(json, 'description') ? undefined : json['description'],
-        'owner': UserResponseFromJSON(json['owner']),
+        'owner': SimpleUserFromJSON(json['owner']),
         'createdAt': (new Date(json['created_at'])),
     };
 }
@@ -101,7 +101,7 @@ export function SimpleWorkspaceToJSON(value?: SimpleWorkspace | null): any {
         'uuid': value.uuid,
         'name': value.name,
         'description': value.description,
-        'owner': UserResponseToJSON(value.owner),
+        'owner': SimpleUserToJSON(value.owner),
         'created_at': (value.createdAt.toISOString()),
     };
 }

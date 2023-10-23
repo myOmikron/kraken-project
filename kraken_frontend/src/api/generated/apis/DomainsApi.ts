@@ -29,6 +29,7 @@ export interface GetAllDomainsRequest {
     uuid: string;
     limit: number;
     offset: number;
+    host?: string | null;
 }
 
 /**
@@ -61,6 +62,10 @@ export class DomainsApi extends runtime.BaseAPI {
 
         if (requestParameters.offset !== undefined) {
             queryParameters['offset'] = requestParameters.offset;
+        }
+
+        if (requestParameters.host !== undefined) {
+            queryParameters['host'] = requestParameters.host;
         }
 
         const headerParameters: runtime.HTTPHeaders = {};

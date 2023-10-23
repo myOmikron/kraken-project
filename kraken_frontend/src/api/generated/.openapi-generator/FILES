@@ -17,6 +17,7 @@ apis/UserManagementApi.ts
 apis/WebsocketApi.ts
 apis/WordlistApi.ts
 apis/WordlistManagementApi.ts
+apis/WorkspaceInvitationsApi.ts
 apis/WorkspaceTagsApi.ts
 apis/WorkspacesApi.ts
 apis/index.ts
@@ -49,6 +50,7 @@ models/FullQueryCertificateTransparencyResult.ts
 models/FullServiceDetectionResult.ts
 models/FullWordlist.ts
 models/FullWorkspace.ts
+models/FullWorkspaceInvitation.ts
 models/FullWorkspaceTag.ts
 models/GetAllLeechesResponse.ts
 models/GetAllUsersResponse.ts
@@ -65,6 +67,7 @@ models/GetWorkspaceTagsResponse.ts
 models/HostAliveResultsPage.ts
 models/HostResultsPage.ts
 models/HostsAliveRequest.ts
+models/InviteToWorkspace.ts
 models/LoginRequest.ts
 models/OpenRequestInfo.ts
 models/OsType.ts
@@ -127,7 +130,7 @@ models/UpdateSettingsRequest.ts
 models/UpdateWordlistRequest.ts
 models/UpdateWorkspaceRequest.ts
 models/UpdateWorkspaceTag.ts
-models/UserResponse.ts
 models/UuidResponse.ts
+models/WorkspaceInvitationList.ts
 models/index.ts
 runtime.ts
