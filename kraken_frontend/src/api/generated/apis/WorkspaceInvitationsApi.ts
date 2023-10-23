@@ -29,6 +29,10 @@ export interface AcceptInvitationRequest {
     uuid: string;
 }
 
+export interface DeclineInvitationRequest {
+    uuid: string;
+}
+
 /**
  * 
  */
@@ -66,10 +70,41 @@ export class WorkspaceInvitationsApi extends runtime.BaseAPI {
     }
 
     /**
+     * Decline an invitation to a workspace
+     * Decline an invitation to a workspace
+     */
+    async declineInvitationRaw(requestParameters: DeclineInvitationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling declineInvitation.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/invitations/{uuid}/decline`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Decline an invitation to a workspace
+     * Decline an invitation to a workspace
+     */
+    async declineInvitation(requestParameters: DeclineInvitationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.declineInvitationRaw(requestParameters, initOverrides);
+    }
+
+    /**
      * Retrieve all open invitations to workspaces the currently logged-in user has retrieved
      * Retrieve all open invitations to workspaces the currently logged-in user
      */
-    async getAllWorkspaceInvitationsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkspaceInvitationList>> {
+    async getAllInvitationsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkspaceInvitationList>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -88,8 +123,8 @@ export class WorkspaceInvitationsApi extends runtime.BaseAPI {
      * Retrieve all open invitations to workspaces the currently logged-in user has retrieved
      * Retrieve all open invitations to workspaces the currently logged-in user
      */
-    async getAllWorkspaceInvitations(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkspaceInvitationList> {
-        const response = await this.getAllWorkspaceInvitationsRaw(initOverrides);
+    async getAllInvitations(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkspaceInvitationList> {
+        const response = await this.getAllInvitationsRaw(initOverrides);
         return await response.value();
     }
 

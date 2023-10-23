@@ -168,7 +168,9 @@ pub(crate) async fn start_server(
                     .service(workspaces::delete_workspace)
                     .service(workspaces::update_workspace)
                     .service(workspaces::transfer_ownership)
-                    .service(workspaces::invite)
+                    .service(workspaces::create_invitation)
+                    .service(workspaces::retract_invitation)
+                    .service(workspaces::get_all_workspace_invitations)
                     .service(attacks::bruteforce_subdomains)
                     .service(attacks::scan_tcp_ports)
                     .service(attacks::query_certificate_transparency)
@@ -201,8 +203,9 @@ pub(crate) async fn start_server(
                     .service(services::get_all_services)
                     .service(domains::get_all_domains)
                     .service(wordlists::get_all_wordlists)
-                    .service(workspace_invitations::get_all_workspace_invitations)
-                    .service(workspace_invitations::accept_invitation),
+                    .service(workspace_invitations::get_all_invitations)
+                    .service(workspace_invitations::accept_invitation)
+                    .service(workspace_invitations::decline_invitation),
             )
     })
     .bind((

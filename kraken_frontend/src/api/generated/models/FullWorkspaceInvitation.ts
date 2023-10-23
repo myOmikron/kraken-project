@@ -50,6 +50,12 @@ export interface FullWorkspaceInvitation {
      * @memberof FullWorkspaceInvitation
      */
     from: SimpleUser;
+    /**
+     * 
+     * @type {SimpleUser}
+     * @memberof FullWorkspaceInvitation
+     */
+    target: SimpleUser;
 }
 
 /**
@@ -60,6 +66,7 @@ export function instanceOfFullWorkspaceInvitation(value: object): boolean {
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "from" in value;
+    isInstance = isInstance && "target" in value;
 
     return isInstance;
 }
@@ -77,6 +84,7 @@ export function FullWorkspaceInvitationFromJSONTyped(json: any, ignoreDiscrimina
         'uuid': json['uuid'],
         'workspace': SimpleWorkspaceFromJSON(json['workspace']),
         'from': SimpleUserFromJSON(json['from']),
+        'target': SimpleUserFromJSON(json['target']),
     };
 }
 
@@ -92,6 +100,7 @@ export function FullWorkspaceInvitationToJSON(value?: FullWorkspaceInvitation | 
         'uuid': value.uuid,
         'workspace': SimpleWorkspaceToJSON(value.workspace),
         'from': SimpleUserToJSON(value.from),
+        'target': SimpleUserToJSON(value.target),
     };
 }
 

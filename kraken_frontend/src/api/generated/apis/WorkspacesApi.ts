@@ -23,6 +23,7 @@ import type {
   TransferWorkspaceRequest,
   UpdateWorkspaceRequest,
   UuidResponse,
+  WorkspaceInvitationList,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
@@ -41,7 +42,14 @@ import {
     UpdateWorkspaceRequestToJSON,
     UuidResponseFromJSON,
     UuidResponseToJSON,
+    WorkspaceInvitationListFromJSON,
+    WorkspaceInvitationListToJSON,
 } from '../models';
+
+export interface CreateInvitationRequest {
+    uuid: string;
+    inviteToWorkspace: InviteToWorkspace;
+}
 
 export interface CreateWorkspaceOperationRequest {
     createWorkspaceRequest: CreateWorkspaceRequest;
@@ -51,13 +59,17 @@ export interface DeleteWorkspaceRequest {
     uuid: string;
 }
 
+export interface GetAllWorkspaceInvitationsRequest {
+    uuid: string;
+}
+
 export interface GetWorkspaceRequest {
     uuid: string;
 }
 
-export interface InviteRequest {
-    uuid: string;
-    inviteToWorkspace: InviteToWorkspace;
+export interface RetractInvitationRequest {
+    wUuid: string;
+    iUuid: string;
 }
 
 export interface TransferOwnershipRequest {
@@ -74,6 +86,44 @@ export interface UpdateWorkspaceOperationRequest {
  * 
  */
 export class WorkspacesApi extends runtime.BaseAPI {
+
+    /**
+     * Invite a user to the workspace  This action can only be invoked by the owner of a workspace
+     * Invite a user to the workspace
+     */
+    async createInvitationRaw(requestParameters: CreateInvitationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling createInvitation.');
+        }
+
+        if (requestParameters.inviteToWorkspace === null || requestParameters.inviteToWorkspace === undefined) {
+            throw new runtime.RequiredError('inviteToWorkspace','Required parameter requestParameters.inviteToWorkspace was null or undefined when calling createInvitation.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{uuid}/invitations`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: InviteToWorkspaceToJSON(requestParameters.inviteToWorkspace),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Invite a user to the workspace  This action can only be invoked by the owner of a workspace
+     * Invite a user to the workspace
+     */
+    async createInvitation(requestParameters: CreateInvitationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.createInvitationRaw(requestParameters, initOverrides);
+    }
 
     /**
      * Create a new workspace
@@ -142,6 +192,38 @@ export class WorkspacesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Query all open invitations to a workspace
+     * Query all open invitations to a workspace
+     */
+    async getAllWorkspaceInvitationsRaw(requestParameters: GetAllWorkspaceInvitationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkspaceInvitationList>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getAllWorkspaceInvitations.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{uuid}/invitations`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkspaceInvitationListFromJSON(jsonValue));
+    }
+
+    /**
+     * Query all open invitations to a workspace
+     * Query all open invitations to a workspace
+     */
+    async getAllWorkspaceInvitations(requestParameters: GetAllWorkspaceInvitationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkspaceInvitationList> {
+        const response = await this.getAllWorkspaceInvitationsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Retrieve all workspaces owned by executing user  For administration access, look at the `/admin/workspaces` endpoint.
      * Retrieve all workspaces owned by executing user
      */
@@ -202,41 +284,38 @@ export class WorkspacesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Invite a user to the workspace  This action can only be invoked by the owner of a workspace
-     * Invite a user to the workspace
+     * Retract an invitation to the workspace  This action can only be invoked by the owner of a workspace
+     * Retract an invitation to the workspace
      */
-    async inviteRaw(requestParameters: InviteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
-            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling invite.');
+    async retractInvitationRaw(requestParameters: RetractInvitationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling retractInvitation.');
         }
 
-        if (requestParameters.inviteToWorkspace === null || requestParameters.inviteToWorkspace === undefined) {
-            throw new runtime.RequiredError('inviteToWorkspace','Required parameter requestParameters.inviteToWorkspace was null or undefined when calling invite.');
+        if (requestParameters.iUuid === null || requestParameters.iUuid === undefined) {
+            throw new runtime.RequiredError('iUuid','Required parameter requestParameters.iUuid was null or undefined when calling retractInvitation.');
         }
 
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
 
-        headerParameters['Content-Type'] = 'application/json';
-
         const response = await this.request({
-            path: `/api/v1/workspaces/{uuid}/invite`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
-            method: 'POST',
+            path: `/api/v1/workspaces/{w_uuid}/invitations/{i_uuid}`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"i_uuid"}}`, encodeURIComponent(String(requestParameters.iUuid))),
+            method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-            body: InviteToWorkspaceToJSON(requestParameters.inviteToWorkspace),
         }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
 
     /**
-     * Invite a user to the workspace  This action can only be invoked by the owner of a workspace
-     * Invite a user to the workspace
+     * Retract an invitation to the workspace  This action can only be invoked by the owner of a workspace
+     * Retract an invitation to the workspace
      */
-    async invite(requestParameters: InviteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.inviteRaw(requestParameters, initOverrides);
+    async retractInvitation(requestParameters: RetractInvitationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.retractInvitationRaw(requestParameters, initOverrides);
     }
 
     /**

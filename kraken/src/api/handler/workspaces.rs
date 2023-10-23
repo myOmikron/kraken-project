@@ -7,14 +7,17 @@ use chrono::{DateTime, Utc};
 use log::{debug, warn};
 use rorm::db::transaction::Transaction;
 use rorm::prelude::ForeignModelByField;
-use rorm::{query, update, Database, FieldAccess, Model};
+use rorm::{and, query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::attacks::SimpleAttack;
 use crate::api::handler::users::SimpleUser;
+use crate::api::handler::workspace_invitations::{
+    FullWorkspaceInvitation, WorkspaceInvitationList,
+};
 use crate::api::handler::{de_optional, query_user, ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::chan::{WsManagerChan, WsManagerMessage, WsMessage};
 use crate::models::{Attack, User, Workspace, WorkspaceInvitation, WorkspaceMember};
@@ -368,8 +371,8 @@ pub struct InviteToWorkspace {
     request_body = InviteToWorkspace,
     security(("api_key" = []))
 )]
-#[post("/workspaces/{uuid}/invite")]
-pub async fn invite(
+#[post("/workspaces/{uuid}/invitations")]
+pub async fn create_invitation(
     req: Json<InviteToWorkspace>,
     path: Path<PathUuid>,
     ws_manager_chan: Data<WsManagerChan>,
@@ -404,6 +407,134 @@ pub async fn invite(
     }
 
     Ok(HttpResponse::Ok().finish())
+}
+
+/// The url components of an invitation
+#[derive(Deserialize, IntoParams)]
+pub struct InviteUuid {
+    /// The UUID of the workspace
+    pub w_uuid: Uuid,
+    /// The UUID of the invitation
+    pub i_uuid: Uuid,
+}
+
+/// Retract an invitation to the workspace
+///
+/// This action can only be invoked by the owner of a workspace
+#[utoipa::path(
+    tag = "Workspaces",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The invitation was retracted."),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(InviteUuid),
+    security(("api_key" = []))
+)]
+#[delete("/workspaces/{w_uuid}/invitations/{i_uuid}")]
+pub async fn retract_invitation(
+    path: Path<InviteUuid>,
+    db: Data<Database>,
+    SessionUser(session_user): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let InviteUuid { w_uuid, i_uuid } = path.into_inner();
+
+    let mut tx = db.start_transaction().await?;
+
+    let workspace = query!(&mut tx, Workspace)
+        .condition(Workspace::F.uuid.equals(w_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidWorkspace)?;
+
+    if *workspace.owner.key() != session_user {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    query!(&mut tx, (WorkspaceInvitation::F.uuid,))
+        .condition(and!(
+            WorkspaceInvitation::F.uuid.equals(i_uuid),
+            WorkspaceInvitation::F.workspace.equals(w_uuid)
+        ))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidInvitation)?;
+
+    rorm::delete!(&mut tx, WorkspaceInvitation)
+        .condition(WorkspaceInvitation::F.uuid.equals(i_uuid))
+        .await?;
+
+    tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+/// Query all open invitations to a workspace
+#[utoipa::path(
+    tag = "Workspaces",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Returns all open invitations to the workspace.", body = WorkspaceInvitationList),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{uuid}/invitations")]
+pub async fn get_all_workspace_invitations(
+    path: Path<PathUuid>,
+    db: Data<Database>,
+    SessionUser(session_user): SessionUser,
+) -> ApiResult<Json<WorkspaceInvitationList>> {
+    let workspace_uuid = path.into_inner().uuid;
+
+    let mut tx = db.start_transaction().await?;
+
+    let workspace = query!(&mut tx, Workspace)
+        .condition(Workspace::F.uuid.equals(workspace_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidWorkspace)?;
+
+    if *workspace.owner.key() != session_user {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    let invitations = query!(
+        &mut tx,
+        (
+            WorkspaceInvitation::F.uuid,
+            WorkspaceInvitation::F.workspace as Workspace,
+            WorkspaceInvitation::F.from as SimpleUser,
+            WorkspaceInvitation::F.target as SimpleUser,
+            WorkspaceInvitation::F.workspace.owner as SimpleUser
+        )
+    )
+    .condition(WorkspaceInvitation::F.workspace.equals(workspace_uuid))
+    .all()
+    .await?
+    .into_iter()
+    .map(
+        |(uuid, workspace, from, target, owner)| FullWorkspaceInvitation {
+            uuid,
+            workspace: SimpleWorkspace {
+                uuid: workspace.uuid,
+                owner,
+                name: workspace.name,
+                description: workspace.description,
+                created_at: workspace.created_at,
+            },
+            from,
+            target,
+        },
+    )
+    .collect();
+
+    tx.commit().await?;
+
+    Ok(Json(WorkspaceInvitationList { invitations }))
 }
 
 /// Retrieve a workspace by id

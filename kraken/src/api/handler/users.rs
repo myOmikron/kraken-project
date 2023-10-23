@@ -8,7 +8,7 @@ use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use chrono::{DateTime, Utc};
 use log::error;
 use rand::thread_rng;
-use rorm::{query, update, Database, FieldAccess, Model};
+use rorm::{query, update, Database, FieldAccess, Model, Patch};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -331,7 +331,8 @@ pub async fn update_me(
 ///
 /// Note that `username` is unique, but as it is changeable,
 /// identify the user by its `uuid`
-#[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Patch)]
+#[rorm(model = "User")]
 pub struct SimpleUser {
     pub(crate) uuid: Uuid,
     pub(crate) username: String,

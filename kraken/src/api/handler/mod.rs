@@ -217,6 +217,8 @@ pub enum ApiStatusCode {
     AlreadyInvited = 1026,
     /// The user is already a member
     AlreadyMember = 1027,
+    /// The invitation is invalid
+    InvalidInvitation = 1028,
 
     /// Internal server error
     InternalServerError = 2000,
@@ -341,6 +343,9 @@ pub enum ApiError {
     /// The user is already a member
     #[error("The user is already a member")]
     AlreadyMember,
+    /// The invitation is invalid
+    #[error("Invalid invitation")]
+    InvalidInvitation,
 
     /// An internal server error occurred
     #[error("Internal server error")]
@@ -584,6 +589,10 @@ impl actix_web::ResponseError for ApiError {
             )),
             ApiError::InvalidTarget => HttpResponse::BadRequest().json(ApiErrorResponse::new(
                 ApiStatusCode::InvalidTarget,
+                self.to_string(),
+            )),
+            ApiError::InvalidInvitation => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::InvalidInvitation,
                 self.to_string(),
             )),
         }
