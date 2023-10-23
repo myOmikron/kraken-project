@@ -12,9 +12,11 @@ use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
 use crate::backlog::Backlog;
-use crate::modules::bruteforce_subdomains::{bruteforce_subdomains, BruteforceSubdomainsSettings};
+use crate::modules::bruteforce_subdomains::{
+    bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
+};
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
-use crate::modules::dns::{dns_resolution, DnsResolutionSettings};
+use crate::modules::dns::{dns_resolution, DnsRecordResult, DnsResolutionSettings};
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::modules::service_detection::{detect_service, DetectServiceSettings, Service};
@@ -63,7 +65,7 @@ impl ReqAttackService for Attacks {
             },
             {
                 let backlog = self.backlog.clone();
-                move |item| {
+                move |item: BruteforceSubdomainResult| {
                     let backlog = backlog.clone();
                     async move {
                         backlog
@@ -234,7 +236,7 @@ impl ReqAttackService for Attacks {
             return Err(Status::invalid_argument("no hosts to check"));
         }
 
-        let _attack_uuid = Uuid::parse_str(&req.attack_uuid)
+        let attack_uuid = Uuid::parse_str(&req.attack_uuid)
             .map_err(|_| Status::invalid_argument("attack_uuid has to be an Uuid"))?;
 
         let settings = IcmpScanSettings {
@@ -251,11 +253,9 @@ impl ReqAttackService for Attacks {
             },
             {
                 let backlog = self.backlog.clone();
-                move |_item| {
-                    let _backlog = backlog.clone();
-                    async move {
-                        // TODO backlog.store_hosts_alive_check(attack_uuid, item).await
-                    }
+                move |item| {
+                    let backlog = backlog.clone();
+                    async move { backlog.store_hosts_alive_check(attack_uuid, item).await }
                 }
             },
         )
@@ -274,7 +274,7 @@ impl ReqAttackService for Attacks {
             return Err(Status::invalid_argument("nothing to resolve"));
         }
 
-        let _attack_uuid = Uuid::parse_str(&req.attack_uuid)
+        let attack_uuid = Uuid::parse_str(&req.attack_uuid)
             .map_err(|_| Status::invalid_argument("attack_uuid has to be an Uuid"))?;
 
         let settings = DnsResolutionSettings {
@@ -290,10 +290,10 @@ impl ReqAttackService for Attacks {
             },
             {
                 let backlog = self.backlog.clone();
-                move |_item| {
-                    let _backlog = backlog.clone();
+                move |item: DnsRecordResult| {
+                    let backlog = backlog.clone();
                     async move {
-                        // TODO backlog.store_dns_resultion(attack_uuid, item).await;
+                        backlog.store_dns_resolution(attack_uuid, item.into()).await;
                     }
                 }
             },

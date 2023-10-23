@@ -48,6 +48,7 @@ pub mod settings;
 pub mod users;
 pub mod websocket;
 pub mod wordlists;
+pub mod workspace_invitations;
 pub mod workspace_tags;
 pub mod workspaces;
 
@@ -210,6 +211,12 @@ pub enum ApiStatusCode {
     EmptyTargets = 1023,
     /// Path already exists
     PathAlreadyExists = 1024,
+    /// The target is invalid
+    InvalidTarget = 1025,
+    /// The user was already invited
+    AlreadyInvited = 1026,
+    /// The user is already a member
+    AlreadyMember = 1027,
 
     /// Internal server error
     InternalServerError = 2000,
@@ -325,6 +332,15 @@ pub enum ApiError {
     /// Empty Targets
     #[error("Empty Targets")]
     EmptyTargets,
+    /// The target is invalid
+    #[error("Invalid target")]
+    InvalidTarget,
+    /// The user was already invited
+    #[error("The user is already invited")]
+    AlreadyInvited,
+    /// The user is already a member
+    #[error("The user is already a member")]
+    AlreadyMember,
 
     /// An internal server error occurred
     #[error("Internal server error")]
@@ -556,6 +572,18 @@ impl actix_web::ResponseError for ApiError {
             )),
             ApiError::EmptyTargets => HttpResponse::BadRequest().json(ApiErrorResponse::new(
                 ApiStatusCode::EmptyTargets,
+                self.to_string(),
+            )),
+            ApiError::AlreadyInvited => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::AlreadyInvited,
+                self.to_string(),
+            )),
+            ApiError::AlreadyMember => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::AlreadyMember,
+                self.to_string(),
+            )),
+            ApiError::InvalidTarget => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::InvalidTarget,
                 self.to_string(),
             )),
         }

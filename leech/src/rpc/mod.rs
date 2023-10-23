@@ -30,7 +30,7 @@ pub mod rpc_attacks {
     use ipnetwork::{IpNetwork, Ipv4Network, Ipv6Network};
     use tonic::Status;
 
-    use crate::models::{BruteforceSubdomainsResult, DnsRecordType, TcpPortScanResult};
+    use crate::models::{DnsRecordType, DnsResult, HostAliveResult, TcpPortScanResult};
     use crate::modules::bruteforce_subdomains::BruteforceSubdomainResult;
     use crate::modules::dns::DnsRecordResult;
     use crate::rpc::rpc_attacks::shared::dns_record::Record;
@@ -260,8 +260,8 @@ pub mod rpc_attacks {
         }
     }
 
-    impl From<BruteforceSubdomainsResult> for BacklogBruteforceSubdomainResult {
-        fn from(value: BruteforceSubdomainsResult) -> Self {
+    impl From<DnsResult> for BacklogDnsResult {
+        fn from(value: DnsResult) -> Self {
             Self {
                 attack_uuid: value.attack.to_string(),
                 record: match value.dns_record_type {
@@ -283,15 +283,38 @@ pub mod rpc_attacks {
                             to: value.destination,
                         })),
                     }),
-                    _ => unimplemented!("type not supported"),
+                    DnsRecordType::Caa => Some(DnsRecord {
+                        record: Some(Record::Caa(GenericRecord {
+                            source: value.source,
+                            to: value.destination,
+                        })),
+                    }),
+                    DnsRecordType::Mx => Some(DnsRecord {
+                        record: Some(Record::Mx(GenericRecord {
+                            source: value.source,
+                            to: value.destination,
+                        })),
+                    }),
+                    DnsRecordType::Tlsa => Some(DnsRecord {
+                        record: Some(Record::Tlsa(GenericRecord {
+                            source: value.source,
+                            to: value.destination,
+                        })),
+                    }),
+                    DnsRecordType::Txt => Some(DnsRecord {
+                        record: Some(Record::Txt(GenericRecord {
+                            source: value.source,
+                            to: value.destination,
+                        })),
+                    }),
                 },
             }
         }
     }
 
-    impl From<Vec<BruteforceSubdomainsResult>> for BacklogBruteforceSubdomainRequest {
-        fn from(value: Vec<BruteforceSubdomainsResult>) -> Self {
-            let mut entries: Vec<BacklogBruteforceSubdomainResult> = Vec::new();
+    impl From<Vec<DnsResult>> for BacklogDnsRequest {
+        fn from(value: Vec<DnsResult>) -> Self {
+            let mut entries: Vec<BacklogDnsResult> = Vec::new();
             entries.reserve(value.len());
 
             for e in value {
@@ -324,6 +347,35 @@ pub mod rpc_attacks {
     impl From<Vec<TcpPortScanResult>> for BacklogTcpPortScanRequest {
         fn from(value: Vec<TcpPortScanResult>) -> Self {
             let mut entries: Vec<BacklogTcpPortScanResult> = Vec::new();
+            entries.reserve(value.len());
+
+            for e in value {
+                entries.push(e.into());
+            }
+            Self { entries }
+        }
+    }
+
+    impl From<HostAliveResult> for BacklogHostAliveResult {
+        fn from(value: HostAliveResult) -> Self {
+            let address = match value.host {
+                IpNetwork::V4(v) => Address {
+                    address: Some(shared::address::Address::Ipv4((v.ip()).into())),
+                },
+                IpNetwork::V6(v) => Address {
+                    address: Some(shared::address::Address::Ipv6((v.ip()).into())),
+                },
+            };
+            Self {
+                attack_uuid: value.attack.to_string(),
+                host: Some(address),
+            }
+        }
+    }
+
+    impl From<Vec<HostAliveResult>> for BacklogHostAliveRequest {
+        fn from(value: Vec<HostAliveResult>) -> Self {
+            let mut entries: Vec<BacklogHostAliveResult> = Vec::new();
             entries.reserve(value.len());
 
             for e in value {

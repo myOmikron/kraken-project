@@ -50,7 +50,7 @@ export default class WorkspaceHeading extends React.Component<WorkspaceHeadingPr
                                 this.setState({ dropdownOpen: false });
                             }}
                         >
-                            <h2 className={"heading"}>{this.props.name}</h2>
+                            <h2 className={"sub-heading"}>{this.props.name}</h2>
                             <ArrowUpIcon />
                         </div>
                         <div className="workspace-heading-dropdown-content">
@@ -83,7 +83,7 @@ export default class WorkspaceHeading extends React.Component<WorkspaceHeadingPr
                                 this.setState({ dropdownOpen: true });
                             }}
                         >
-                            <h2 className={"heading"}>{this.props.name}</h2>
+                            <h2 className={"sub-heading"}>{this.props.name}</h2>
                             <ArrowDownIcon />
                         </div>
                     </div>

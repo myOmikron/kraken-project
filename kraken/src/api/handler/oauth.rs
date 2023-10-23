@@ -21,9 +21,9 @@ use webauthn_rs::prelude::Url;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::oauth_applications::SimpleOauthClient;
-use crate::api::handler::users::UserResponse;
 use crate::api::handler::workspaces::SimpleWorkspace;
 use crate::api::handler::{ApiError, PathUuid};
+use crate::api::handler::users::SimpleUser;
 use crate::models::{
     OAuthDecision, OAuthDecisionAction, OauthClient, User, Workspace, WorkspaceAccessToken,
 };
@@ -256,7 +256,7 @@ pub async fn info(
             name,
             description,
             created_at,
-            owner: UserResponse {
+            owner: SimpleUser {
                 display_name: owner.display_name,
                 username: owner.username,
                 uuid: owner.uuid,

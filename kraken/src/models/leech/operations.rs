@@ -20,12 +20,16 @@ struct LeechInsert {
 /// The errors that can occur while creating a leech
 #[derive(Error, Debug)]
 pub enum InsertLeechError {
+    /// Database error
     #[error("Database error: {0}")]
     DatabaseError(#[from] rorm::Error),
+    /// Address already exists
     #[error("The address exists already")]
     AddressAlreadyExists,
+    /// Name already exists
     #[error("The name exists already")]
     NameAlreadyExists,
+    /// The address is invalid
     #[error("The address is invalid")]
     InvalidAddress,
 }

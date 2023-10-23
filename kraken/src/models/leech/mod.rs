@@ -1,6 +1,8 @@
 use rorm::prelude::*;
 use uuid::Uuid;
 
+pub use self::operations::*;
+
 mod operations;
 
 /// The data collectors of kraken

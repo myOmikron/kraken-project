@@ -6,7 +6,9 @@ use thiserror::Error;
 use uuid::Uuid;
 
 use crate::api::handler::ApiError;
-use crate::models::{OauthClient, User, Workspace, WorkspaceAccessToken, WorkspaceMember};
+use crate::models::{
+    OauthClient, User, Workspace, WorkspaceAccessToken, WorkspaceInvitation, WorkspaceMember,
+};
 
 #[derive(Patch)]
 #[rorm(model = "WorkspaceMember")]
@@ -53,6 +55,53 @@ impl From<InsertWorkspaceError> for ApiError {
 }
 
 impl Workspace {
+    /// Add a member to a workspace
+    pub async fn add_member(
+        executor: impl Executor<'_>,
+        workspace_uuid: Uuid,
+        user: Uuid,
+    ) -> Result<(), AddMemberError> {
+        let mut guard = executor.ensure_transaction().await?;
+
+        let workspace = query!(guard.get_transaction(), Workspace)
+            .condition(Workspace::F.uuid.equals(workspace_uuid))
+            .optional()
+            .await?
+            .ok_or(AddMemberError::InvalidWorkspace)?;
+
+        if !User::exists(guard.get_transaction(), user).await? {
+            return Err(AddMemberError::InvalidUser);
+        }
+
+        if *workspace.owner.key() == user {
+            return Err(AddMemberError::IsOwner);
+        }
+
+        // Check if the user is already member of the workspace
+        if query!(guard.get_transaction(), (WorkspaceMember::F.id,))
+            .condition(and!(
+                WorkspaceMember::F.workspace.equals(workspace_uuid),
+                WorkspaceMember::F.member.equals(user)
+            ))
+            .optional()
+            .await?
+            .is_some()
+        {
+            return Err(AddMemberError::AlreadyMember);
+        }
+
+        insert!(guard.get_transaction(), WorkspaceMemberInsert)
+            .single(&WorkspaceMemberInsert {
+                member: ForeignModelByField::Key(user),
+                workspace: ForeignModelByField::Key(workspace_uuid),
+            })
+            .await?;
+
+        guard.commit().await?;
+
+        Ok(())
+    }
+
     /// Check if a user is owner or member of a workspace
     pub async fn is_user_member_or_owner(
         executor: impl Executor<'_>,
@@ -88,6 +137,22 @@ impl Workspace {
         guard.commit().await?;
 
         Ok(true)
+    }
+
+    /// Checks whether a user is owner of a specific workspace
+    pub async fn is_owner(
+        executor: impl Executor<'_>,
+        workspace: Uuid,
+        user: Uuid,
+    ) -> Result<bool, rorm::Error> {
+        Ok(query!(executor, (Workspace::F.owner,))
+            .condition(and!(
+                Workspace::F.uuid.equals(workspace),
+                Workspace::F.owner.equals(user)
+            ))
+            .optional()
+            .await?
+            .is_some())
     }
 
     /// Check whether a workspace exists
@@ -126,6 +191,37 @@ impl Workspace {
     }
 }
 
+/// The errors that can occur while adding a member to a workspace
+#[derive(Debug, Error)]
+pub enum AddMemberError {
+    /// Database error
+    #[error("Database error occurred: {0}")]
+    Database(#[from] rorm::Error),
+    /// Invalid workspace
+    #[error("Invalid Workspace")]
+    InvalidWorkspace,
+    /// Invalid user
+    #[error("Invalid User")]
+    InvalidUser,
+    /// The user is already member
+    #[error("The user is already member of the workspace")]
+    AlreadyMember,
+    /// The user is owner of the workspace
+    #[error("The user is owner of the workspace")]
+    IsOwner,
+}
+
+impl From<AddMemberError> for ApiError {
+    /// Can always be mapped to internal server error for the api, as the database must be
+    /// corrupt the error occurs
+    fn from(value: AddMemberError) -> Self {
+        match value {
+            AddMemberError::Database(x) => ApiError::DatabaseError(x),
+            _ => ApiError::InternalServerError,
+        }
+    }
+}
+
 impl WorkspaceAccessToken {
     /// Insert a workspace access token
     pub async fn insert(
@@ -146,5 +242,100 @@ impl WorkspaceAccessToken {
                 application: ForeignModelByField::Key(application),
             })
             .await
+    }
+}
+
+impl WorkspaceInvitation {
+    /// Insert a new invitation for the workspace
+    pub async fn insert(
+        executor: impl Executor<'_>,
+        workspace: Uuid,
+        from: Uuid,
+        target: Uuid,
+    ) -> Result<(), InsertWorkspaceInvitationError> {
+        if from == target {
+            return Err(InsertWorkspaceInvitationError::InvalidTarget);
+        }
+
+        let mut guard = executor.ensure_transaction().await?;
+
+        if !Workspace::exists(guard.get_transaction(), workspace).await? {
+            return Err(InsertWorkspaceInvitationError::InvalidWorkspace);
+        }
+
+        if !Workspace::is_owner(guard.get_transaction(), workspace, from).await? {
+            return Err(InsertWorkspaceInvitationError::MissingPrivileges);
+        }
+
+        if !User::exists(guard.get_transaction(), target).await? {
+            return Err(InsertWorkspaceInvitationError::InvalidTarget);
+        }
+
+        // Check if target is already part of the workspace
+        if query!(guard.get_transaction(), (WorkspaceMember::F.id,))
+            .condition(and!(
+                WorkspaceMember::F.workspace.equals(workspace),
+                WorkspaceMember::F.member.equals(target)
+            ))
+            .optional()
+            .await?
+            .is_some()
+        {
+            return Err(InsertWorkspaceInvitationError::AlreadyInWorkspace);
+        }
+
+        // Check if the user was already invited
+        if query!(guard.get_transaction(), (WorkspaceInvitation::F.uuid,))
+            .condition(and!(
+                WorkspaceInvitation::F.workspace.equals(workspace),
+                WorkspaceInvitation::F.target.equals(target),
+                WorkspaceInvitation::F.from.equals(from)
+            ))
+            .optional()
+            .await?
+            .is_some()
+        {
+            return Err(InsertWorkspaceInvitationError::InvalidTarget);
+        }
+
+        guard.commit().await?;
+
+        Ok(())
+    }
+}
+
+/// The errors that can occur when inserting an invitation to an workspace
+#[derive(Debug, Error)]
+pub enum InsertWorkspaceInvitationError {
+    /// A database error
+    #[error("Database error occurred: {0}")]
+    Database(#[from] rorm::Error),
+    /// Invalid workspace
+    #[error("Invalid workspace")]
+    InvalidWorkspace,
+    /// Missing privileges
+    #[error("Missing privileges")]
+    MissingPrivileges,
+    /// Invalid target user
+    #[error("Invalid target user")]
+    InvalidTarget,
+    /// The target is already part of the workspace
+    #[error("The target is already part of the workspace")]
+    AlreadyInWorkspace,
+    /// The user was already invited
+    #[error("The user was already invited")]
+    AlreadyInvited,
+}
+
+impl From<InsertWorkspaceInvitationError> for ApiError {
+    fn from(value: InsertWorkspaceInvitationError) -> Self {
+        match value {
+            InsertWorkspaceInvitationError::Database(x) => ApiError::DatabaseError(x),
+            InsertWorkspaceInvitationError::InvalidWorkspace => ApiError::InvalidWorkspace,
+            InsertWorkspaceInvitationError::MissingPrivileges => ApiError::MissingPrivileges,
+            InsertWorkspaceInvitationError::InvalidTarget => ApiError::InvalidTarget,
+            InsertWorkspaceInvitationError::AlreadyInWorkspace => ApiError::AlreadyMember,
+            InsertWorkspaceInvitationError::AlreadyInvited => ApiError::AlreadyInvited,
+        }
     }
 }

@@ -89,3 +89,23 @@ pub struct WorkspaceAccessToken {
     /// Date after which the token is invalid
     pub expires_at: DateTime<Utc>,
 }
+
+/// This represents an invitation to a workspace
+#[derive(Model)]
+pub struct WorkspaceInvitation {
+    /// Primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The workspace, this invitation is for
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub workspace: ForeignModel<Workspace>,
+
+    /// The user this invitation is from
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub from: ForeignModel<User>,
+
+    /// The receiver of the invitation
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub target: ForeignModel<User>,
+}

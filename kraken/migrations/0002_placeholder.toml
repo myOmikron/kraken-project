@@ -1,0 +1,76 @@
+[Migration]
+Hash = "1922817281819242720"
+Initial = false
+Dependency = 1
+Replaces = []
+
+[[Migration.Operations]]
+Type = "CreateModel"
+Name = "workspaceinvitation"
+
+[[Migration.Operations.Fields]]
+Name = "uuid"
+Type = "uuid"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "primary_key"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "workspaceinvitation"
+
+[Migration.Operations.Field]
+Name = "workspace"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "workspace"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "workspaceinvitation"
+
+[Migration.Operations.Field]
+Name = "from"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "user"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "workspaceinvitation"
+
+[Migration.Operations.Field]
+Name = "target"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "user"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
