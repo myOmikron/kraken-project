@@ -10,7 +10,7 @@ use uuid::Uuid;
 use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::chan::LeechManager;
 use crate::models::Leech;
-use crate::modules::tls::{LeechCert, TlsManager};
+use crate::modules::tls::{LeechTlsConfig, TlsManager};
 use crate::modules::uri::check_leech_address;
 
 /// The request to create a new leech
@@ -135,7 +135,7 @@ pub async fn get_leech(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<Jso
     tag = "Leech management",
     context_path = "/api/v1/admin",
     responses(
-        (status = 200, description = "Newly generated leech cert", body = LeechCert),
+        (status = 200, description = "Newly generated leech cert", body = LeechTlsConfig),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse)
     ),
@@ -146,7 +146,7 @@ pub async fn get_leech(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<Jso
 pub async fn gen_leech_cert(
     req: Path<PathUuid>,
     tls: Data<TlsManager>,
-) -> ApiResult<Json<LeechCert>> {
+) -> ApiResult<Json<LeechTlsConfig>> {
     Ok(Json(tls.gen_leech_cert()?))
 }
 

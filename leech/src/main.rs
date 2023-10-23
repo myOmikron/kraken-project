@@ -32,7 +32,6 @@ use prost_types::Timestamp;
 use rorm::{cli, Database, DatabaseConfiguration, DatabaseDriver};
 use tokio::sync::mpsc;
 use tokio::task;
-use tonic::transport::Endpoint;
 use trust_dns_resolver::Name;
 use uuid::Uuid;
 
@@ -50,7 +49,7 @@ use crate::rpc::rpc_attacks::attack_results_service_client::AttackResultsService
 use crate::rpc::rpc_attacks::shared::CertEntry;
 use crate::rpc::rpc_attacks::{CertificateTransparencyResult, MetaAttackInfo};
 use crate::rpc::start_rpc_server;
-use crate::utils::input;
+use crate::utils::{input, kraken_endpoint};
 
 pub mod backlog;
 pub mod config;
@@ -299,8 +298,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                         info!("Sending results to kraken");
 
-                        let endpoint =
-                            Endpoint::from_str(config.kraken.kraken_uri.as_ref()).unwrap();
+                        let endpoint = kraken_endpoint(&config.kraken)?;
                         let chan = endpoint.connect().await.unwrap();
 
                         let mut client = AttackResultsServiceClient::new(chan);

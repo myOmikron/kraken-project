@@ -106,8 +106,8 @@ export default class KrakenNetwork extends React.Component<KrakenNetworkProps, K
 
                                     let config = "";
                                     result.match(
-                                        ({ cert, key }) => {
-                                            config = `TlsCert = """\n${cert}"""\nTlsKey="""\n${key}"""`;
+                                        ({ ca, cert, key, sni }) => {
+                                            config = `KrakenSni = "${sni}"\nKrakenCa = """\n${ca}"""\nLeechCert = """\n${cert}"""\nLeechKey="""\n${key}"""`;
                                         },
                                         (err) => {
                                             toast.error(err.message);

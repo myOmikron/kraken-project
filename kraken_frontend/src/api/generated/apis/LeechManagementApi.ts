@@ -18,7 +18,7 @@ import type {
   ApiErrorResponse,
   CreateLeechRequest,
   GetAllLeechesResponse,
-  LeechCert,
+  LeechTlsConfig,
   SimpleLeech,
   UpdateLeechRequest,
   UuidResponse,
@@ -30,8 +30,8 @@ import {
     CreateLeechRequestToJSON,
     GetAllLeechesResponseFromJSON,
     GetAllLeechesResponseToJSON,
-    LeechCertFromJSON,
-    LeechCertToJSON,
+    LeechTlsConfigFromJSON,
+    LeechTlsConfigToJSON,
     SimpleLeechFromJSON,
     SimpleLeechToJSON,
     UpdateLeechRequestFromJSON,
@@ -136,7 +136,7 @@ export class LeechManagementApi extends runtime.BaseAPI {
      * Generate a new tls cert for the leech
      * Generate a new tls cert for the leech
      */
-    async genLeechCertRaw(requestParameters: GenLeechCertRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LeechCert>> {
+    async genLeechCertRaw(requestParameters: GenLeechCertRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LeechTlsConfig>> {
         if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
             throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling genLeechCert.');
         }
@@ -152,14 +152,14 @@ export class LeechManagementApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => LeechCertFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => LeechTlsConfigFromJSON(jsonValue));
     }
 
     /**
      * Generate a new tls cert for the leech
      * Generate a new tls cert for the leech
      */
-    async genLeechCert(requestParameters: GenLeechCertRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LeechCert> {
+    async genLeechCert(requestParameters: GenLeechCertRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LeechTlsConfig> {
         const response = await this.genLeechCertRaw(requestParameters, initOverrides);
         return await response.value();
     }

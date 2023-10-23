@@ -14,52 +14,68 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * 
+ * The tls related part of a leech's config
  * @export
- * @interface LeechCert
+ * @interface LeechTlsConfig
  */
-export interface LeechCert {
+export interface LeechTlsConfig {
+    /**
+     * PEM encoded CA managed by kraken
+     * @type {string}
+     * @memberof LeechTlsConfig
+     */
+    ca: string;
     /**
      * PEM encoded certificate
      * @type {string}
-     * @memberof LeechCert
+     * @memberof LeechTlsConfig
      */
     cert: string;
     /**
      * PEM encoded private key for the certificate
      * @type {string}
-     * @memberof LeechCert
+     * @memberof LeechTlsConfig
      */
     key: string;
+    /**
+     * The randomly generated fake domain for the kraken to be used for sni
+     * @type {string}
+     * @memberof LeechTlsConfig
+     */
+    sni: string;
 }
 
 /**
- * Check if a given object implements the LeechCert interface.
+ * Check if a given object implements the LeechTlsConfig interface.
  */
-export function instanceOfLeechCert(value: object): boolean {
+export function instanceOfLeechTlsConfig(value: object): boolean {
     let isInstance = true;
+    isInstance = isInstance && "ca" in value;
     isInstance = isInstance && "cert" in value;
     isInstance = isInstance && "key" in value;
+    isInstance = isInstance && "sni" in value;
 
     return isInstance;
 }
 
-export function LeechCertFromJSON(json: any): LeechCert {
-    return LeechCertFromJSONTyped(json, false);
+export function LeechTlsConfigFromJSON(json: any): LeechTlsConfig {
+    return LeechTlsConfigFromJSONTyped(json, false);
 }
 
-export function LeechCertFromJSONTyped(json: any, ignoreDiscriminator: boolean): LeechCert {
+export function LeechTlsConfigFromJSONTyped(json: any, ignoreDiscriminator: boolean): LeechTlsConfig {
     if ((json === undefined) || (json === null)) {
         return json;
     }
     return {
         
+        'ca': json['ca'],
         'cert': json['cert'],
         'key': json['key'],
+        'sni': json['sni'],
     };
 }
 
-export function LeechCertToJSON(value?: LeechCert | null): any {
+export function LeechTlsConfigToJSON(value?: LeechTlsConfig | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -68,8 +84,10 @@ export function LeechCertToJSON(value?: LeechCert | null): any {
     }
     return {
         
+        'ca': value.ca,
         'cert': value.cert,
         'key': value.key,
+        'sni': value.sni,
     };
 }
 

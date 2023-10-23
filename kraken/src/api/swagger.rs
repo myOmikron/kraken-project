@@ -153,7 +153,7 @@ impl Modify for SecurityAddon2 {
         leeches::SimpleLeech,
         leeches::GetAllLeechesResponse,
         leeches::UpdateLeechRequest,
-        tls::LeechCert,
+        tls::LeechTlsConfig,
         users::CreateUserRequest,
         users::GetUser,
         users::GetUserResponse,

@@ -1,13 +1,12 @@
 //! This modules handles all backlog tasks
 
+use std::error::Error;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
-use std::str::FromStr;
 use std::time::Duration;
 
 use ipnetwork::IpNetwork;
 use log::{debug, error, info, warn};
 use rorm::{delete, insert, query, Database};
-use tonic::transport::Endpoint;
 use uuid::Uuid;
 
 use crate::config::KrakenConfig;
@@ -22,6 +21,7 @@ use crate::rpc::rpc_attacks::{
     BacklogDnsRequest, BacklogHostAliveRequest, BacklogTcpPortScanRequest,
     BruteforceSubdomainResponse, DnsResolutionResponse,
 };
+use crate::utils::kraken_endpoint;
 
 /// The main struct for the Backlog,
 /// holds a connection to the database
@@ -198,9 +198,11 @@ const DB_QUERY_INTERVAL: Duration = Duration::from_secs(10);
 const DB_QUERY_LIMIT: u64 = 1000;
 
 /// Starts the backlog upload server
-pub async fn start_backlog(db: Database, kraken_config: &KrakenConfig) -> Result<Backlog, String> {
-    let kraken_endpoint = Endpoint::from_str(kraken_config.kraken_uri.as_str())
-        .map_err(|e| format!("error creating endpoint: {e}"))?;
+pub async fn start_backlog(
+    db: Database,
+    kraken_config: &KrakenConfig,
+) -> Result<Backlog, Box<dyn Error>> {
+    let kraken_endpoint = kraken_endpoint(kraken_config)?;
 
     let db_clone = db.clone();
     tokio::spawn(async move {

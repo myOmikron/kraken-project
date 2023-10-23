@@ -394,8 +394,8 @@ pub async fn start_rpc_server(config: &Config, backlog: Backlog) -> Result<(), B
     info!("Starting Server");
     Server::builder()
         .tls_config(ServerTlsConfig::new().identity(Identity::from_pem(
-            &config.kraken.tls_cert,
-            &config.kraken.tls_key,
+            &config.kraken.leech_cert,
+            &config.kraken.leech_key,
         )))?
         .add_service(ReqAttackServiceServer::new(Attacks { backlog }))
         .serve(SocketAddr::new(

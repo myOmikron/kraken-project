@@ -118,7 +118,7 @@ async fn main() -> Result<(), String> {
             let dehashed_scheduler =
                 chan::start_dehashed_manager(settings_manager_chan.clone()).await?;
 
-            start_rpc_server(&config, db.clone())?;
+            start_rpc_server(&config, db.clone(), &tls_manager);
 
             server::start_server(
                 db,

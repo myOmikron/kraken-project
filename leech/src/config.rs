@@ -50,11 +50,17 @@ pub struct KrakenConfig {
     /// The url to reach kraken's grpc server
     pub kraken_uri: Url,
 
-    /// PEM encoded certificate to present when communicating with kraken over grpc
-    pub tls_cert: String,
+    /// The fake domain the kraken's cert is valid for
+    pub kraken_sni: String,
 
-    /// PEM encoded private key for the `tls_cert`
-    pub tls_key: String,
+    /// PEM encoded CA managed by kraken
+    pub kraken_ca: String,
+
+    /// PEM encoded certificate to present when communicating with kraken over grpc
+    pub leech_cert: String,
+
+    /// PEM encoded private key for the `leech_key`
+    pub leech_key: String,
 }
 
 /// The configuration of the dehashed API

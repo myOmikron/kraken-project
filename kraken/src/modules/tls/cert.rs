@@ -8,7 +8,7 @@ use rcgen::{
 };
 use url::{Host, Url};
 
-/// [`CertificateBuilder`] which builds the kraken's main certificate
+/// [`CertificateBuilder`] which builds the kraken's CA
 pub struct CA;
 impl CertificateBuilder for CA {
     fn params(self, params: &mut CertificateParams) {
@@ -21,7 +21,33 @@ impl CertificateBuilder for CA {
     }
 }
 
-/// [`CertificateBuilder`] which builds a leech's server and client certificate
+/// [`CertificateBuilder`] which builds the kraken's server certificate
+pub struct Kraken {
+    /// The randomly generated fake domain for the kraken to be used for sni
+    pub domain: String,
+}
+impl CertificateBuilder for Kraken {
+    fn params(self, params: &mut CertificateParams) {
+        params.alg = &PKCS_ECDSA_P256_SHA256;
+        params
+            .distinguished_name
+            .push(DnType::CommonName, "kraken cert");
+        params.is_ca = IsCa::ExplicitNoCa;
+        params.key_usages.extend([
+            KeyUsagePurpose::DigitalSignature,
+            KeyUsagePurpose::KeyEncipherment,
+        ]);
+        params
+            .extended_key_usages
+            .extend([ExtendedKeyUsagePurpose::ServerAuth]);
+        params
+            .subject_alt_names
+            .extend([SanType::DnsName(self.domain)]);
+        params.use_authority_key_identifier_extension = true;
+    }
+}
+
+/// [`CertificateBuilder`] which builds a leech's server certificate
 pub struct Leech {
     /// The uri used to connect to the leech via grpc
     pub url: Url,

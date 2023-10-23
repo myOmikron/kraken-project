@@ -8,6 +8,9 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use thiserror::Error;
 use tokio::io::{self, stdin, AsyncBufReadExt, BufReader};
+use tonic::transport::{Certificate, ClientTlsConfig, Endpoint};
+
+use crate::config::KrakenConfig;
 
 pub(crate) struct Regexes {
     pub(crate) ports: Regex,
@@ -99,4 +102,13 @@ pub fn parse_ports(
 /// Read a line from stdin
 pub async fn input() -> io::Result<Option<String>> {
     BufReader::new(stdin()).lines().next_line().await
+}
+
+/// Build an endpoint for connecting to kraken.
+pub fn kraken_endpoint(config: &KrakenConfig) -> Result<Endpoint, tonic::transport::Error> {
+    Endpoint::from_str(config.kraken_uri.as_str())?.tls_config(
+        ClientTlsConfig::new()
+            .ca_certificate(Certificate::from_pem(&config.kraken_ca))
+            .domain_name(&config.kraken_sni),
+    )
 }
