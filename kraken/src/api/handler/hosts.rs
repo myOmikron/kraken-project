@@ -35,8 +35,6 @@ pub struct SimpleHost {
     pub comment: String,
     /// The workspace this host is in
     pub workspace: Uuid,
-    /// The list of tags this host has attached to
-    pub tags: Vec<SimpleTag>,
 }
 
 /// The full representation of a host
@@ -118,7 +116,7 @@ pub(crate) async fn get_all_hosts(
             HostGlobalTag::F.host
         ),
         HostGlobalTag::F.host,
-        hosts
+        hosts.iter().map(|x| x.uuid)
     );
 
     tx.commit().await?;
@@ -126,7 +124,7 @@ pub(crate) async fn get_all_hosts(
     Ok(Json(HostResultsPage {
         items: hosts
             .into_iter()
-            .map(|x| SimpleHost {
+            .map(|x| FullHost {
                 uuid: x.uuid,
                 ip_addr: x.ip_addr.ip().to_string(),
                 comment: x.comment,

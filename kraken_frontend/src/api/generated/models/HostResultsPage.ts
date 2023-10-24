@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleHost } from './SimpleHost';
+import type { FullHost } from './FullHost';
 import {
-    SimpleHostFromJSON,
-    SimpleHostFromJSONTyped,
-    SimpleHostToJSON,
-} from './SimpleHost';
+    FullHostFromJSON,
+    FullHostFromJSONTyped,
+    FullHostToJSON,
+} from './FullHost';
 
 /**
  * Response containing paginated data
@@ -28,10 +28,10 @@ import {
 export interface HostResultsPage {
     /**
      * The page's items
-     * @type {Array<SimpleHost>}
+     * @type {Array<FullHost>}
      * @memberof HostResultsPage
      */
-    items: Array<SimpleHost>;
+    items: Array<FullHost>;
     /**
      * The limit this page was retrieved with
      * @type {number}
@@ -75,7 +75,7 @@ export function HostResultsPageFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'items': ((json['items'] as Array<any>).map(SimpleHostFromJSON)),
+        'items': ((json['items'] as Array<any>).map(FullHostFromJSON)),
         'limit': json['limit'],
         'offset': json['offset'],
         'total': json['total'],
@@ -91,7 +91,7 @@ export function HostResultsPageToJSON(value?: HostResultsPage | null): any {
     }
     return {
         
-        'items': ((value.items as Array<any>).map(SimpleHostToJSON)),
+        'items': ((value.items as Array<any>).map(FullHostToJSON)),
         'limit': value.limit,
         'offset': value.offset,
         'total': value.total,

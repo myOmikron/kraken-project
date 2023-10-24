@@ -40,6 +40,17 @@ pub struct SimpleDomain {
     #[schema(example = "This is a important domain!")]
     comment: String,
     workspace: Uuid,
+}
+
+/// A full representation of a domain in a workspace
+#[derive(Serialize, ToSchema)]
+pub struct FullDomain {
+    uuid: Uuid,
+    #[schema(example = "example.com")]
+    domain: String,
+    #[schema(example = "This is a important domain!")]
+    comment: String,
+    workspace: Uuid,
     tags: Vec<SimpleTag>,
 }
 
@@ -103,12 +114,12 @@ pub async fn get_all_domains(
                     DomainGlobalTag::F.domain
                 ),
                 DomainGlobalTag::F.domain,
-                domains
+                domains.iter().map(|x| x.uuid)
             );
 
             let items = domains
                 .into_iter()
-                .map(|x| SimpleDomain {
+                .map(|x| FullDomain {
                     uuid: x.uuid,
                     domain: x.domain,
                     comment: x.comment,
@@ -162,12 +173,12 @@ pub async fn get_all_domains(
                     DomainGlobalTag::F.domain
                 ),
                 DomainGlobalTag::F.domain,
-                domains
+                domains.iter().map(|x| x.uuid)
             );
 
             let items = domains
                 .into_iter()
-                .map(|x| SimpleDomain {
+                .map(|x| FullDomain {
                     uuid: x.uuid,
                     domain: x.domain,
                     comment: x.comment,

@@ -24,10 +24,10 @@ use crate::api::handler::attack_results::{
     SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
     SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
 };
-use crate::api::handler::domains::SimpleDomain;
-use crate::api::handler::hosts::SimpleHost;
-use crate::api::handler::ports::SimplePort;
-use crate::api::handler::services::SimpleService;
+use crate::api::handler::domains::FullDomain;
+use crate::api::handler::hosts::FullHost;
+use crate::api::handler::ports::FullPort;
+use crate::api::handler::services::FullService;
 use crate::models::{Color, User};
 
 pub mod api_keys;
@@ -89,10 +89,10 @@ pub struct PageParams {
 /// Response containing paginated data
 #[derive(Serialize, ToSchema)]
 #[aliases(
-    DomainResultsPage = Page<SimpleDomain>,
-    HostResultsPage = Page<SimpleHost>,
-    ServiceResultsPage = Page<SimpleService>,
-    PortResultsPage = Page<SimplePort>,
+    DomainResultsPage = Page<FullDomain>,
+    HostResultsPage = Page<FullHost>,
+    ServiceResultsPage = Page<FullService>,
+    PortResultsPage = Page<FullPort>,
     BruteforceSubdomainsResultsPage = Page<SimpleBruteforceSubdomainsResult>,
     TcpPortScanResultsPage = Page<SimpleTcpPortScanResult>,
     QueryCertificateTransparencyResultsPage = Page<FullQueryCertificateTransparencyResult>,
@@ -640,15 +640,12 @@ where
 /// Provide the field the condition should be built on for querying WorkspaceTags
 /// Provide the Query for the GlobalTags that provides a tuple of the GlobalTag and the Item struct
 /// Provide the field the condition should be built on for querying GlobalTags
-/// Provide the list of Items as $items
+/// Provide an iterator over the list of Item Uuids as $items
 #[macro_export]
 macro_rules! query_tags {
-    ($map: ident, $tx: ident, $workspace_query: tt, $workspace_cond: expr, $global_query: tt, $global_cond: expr, $items: ident) => {{
+    ($map: ident, $tx: ident, $workspace_query: tt, $workspace_cond: expr, $global_query: tt, $global_cond: expr, $items: expr) => {{
         {
-            let workspace_conditions: Vec<_> = $items
-                .iter()
-                .map(|x| $workspace_cond.equals(x.uuid))
-                .collect();
+            let workspace_conditions: Vec<_> = $items.map(|x| $workspace_cond.equals(x)).collect();
 
             if !workspace_conditions.is_empty() {
                 let mut workspace_tag_stream = query!(&mut $tx, $workspace_query)
@@ -667,8 +664,7 @@ macro_rules! query_tags {
         }
 
         {
-            let global_conditions: Vec<_> =
-                $items.iter().map(|x| $global_cond.equals(x.uuid)).collect();
+            let global_conditions: Vec<_> = $items.map(|x| $global_cond.equals(x)).collect();
 
             if !global_conditions.is_empty() {
                 let mut global_tag_stream = query!(&mut $tx, $global_query)

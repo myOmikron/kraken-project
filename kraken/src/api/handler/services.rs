@@ -12,12 +12,14 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+use crate::api::handler::hosts::SimpleHost;
 use crate::api::handler::{
     get_page_params, ApiError, ApiResult, PageParams, PathUuid, ServiceResultsPage, SimpleTag,
     TagType,
 };
 use crate::models::{
-    GlobalTag, Service, ServiceGlobalTag, ServiceWorkspaceTag, Workspace, WorkspaceTag,
+    Certainty, GlobalTag, Host, Service, ServiceGlobalTag, ServiceWorkspaceTag, Workspace,
+    WorkspaceTag,
 };
 use crate::query_tags;
 
@@ -37,6 +39,22 @@ pub struct SimpleService {
     #[schema(example = "13.0.1")]
     version: Option<String>,
     host: Uuid,
+    port: Option<Uuid>,
+    #[schema(example = "Holds all relevant information")]
+    comment: String,
+    workspace: Uuid,
+}
+
+/// A full representation of a service
+#[derive(Serialize, ToSchema)]
+pub struct FullService {
+    uuid: Uuid,
+    #[schema(example = "postgresql")]
+    name: String,
+    #[schema(example = "13.0.1")]
+    version: Option<String>,
+    certainty: Certainty,
+    host: SimpleHost,
     port: Option<Uuid>,
     #[schema(example = "Holds all relevant information")]
     comment: String,
@@ -91,12 +109,24 @@ pub async fn get_all_services(
         .one()
         .await?;
 
-    let services = query!(&mut tx, Service)
-        .condition(build_condition(path.uuid, &filter_params))
-        .limit(limit)
-        .offset(offset)
-        .all()
-        .await?;
+    let services = query!(
+        &mut tx,
+        (
+            Service::F.uuid,
+            Service::F.name,
+            Service::F.version,
+            Service::F.certainty,
+            Service::F.comment,
+            Service::F.host as Host,
+            Service::F.port,
+            Service::F.workspace,
+        )
+    )
+    .condition(build_condition(path.uuid, &filter_params))
+    .limit(limit)
+    .offset(offset)
+    .all()
+    .await?;
 
     let mut tags = HashMap::new();
 
@@ -113,23 +143,32 @@ pub async fn get_all_services(
             ServiceGlobalTag::F.service
         ),
         ServiceGlobalTag::F.service,
-        services
+        services.iter().map(|x| x.0)
     );
 
     tx.commit().await?;
 
     let items = services
         .into_iter()
-        .map(|x| SimpleService {
-            uuid: x.uuid,
-            name: x.name,
-            version: x.version,
-            host: *x.host.key(),
-            port: x.port.map(|y| *y.key()),
-            comment: x.comment,
-            workspace: *x.workspace.key(),
-            tags: tags.remove(&x.uuid).unwrap_or_default(),
-        })
+        .map(
+            |(uuid, name, version, certainty, comment, host, port, workspace)| FullService {
+                uuid,
+                name,
+                version,
+                certainty,
+                comment,
+                host: SimpleHost {
+                    uuid: host.uuid,
+                    ip_addr: host.ip_addr.to_string(),
+                    os_type: host.os_type,
+                    comment: host.comment,
+                    workspace: *host.workspace.key(),
+                },
+                port: port.map(|y| *y.key()),
+                workspace: *workspace.key(),
+                tags: tags.remove(&uuid).unwrap_or_default(),
+            },
+        )
         .collect();
 
     Ok(Json(ServiceResultsPage {

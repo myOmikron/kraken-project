@@ -19,71 +19,90 @@ import {
     PortProtocolFromJSONTyped,
     PortProtocolToJSON,
 } from './PortProtocol';
+import type { SimpleHost } from './SimpleHost';
+import {
+    SimpleHostFromJSON,
+    SimpleHostFromJSONTyped,
+    SimpleHostToJSON,
+} from './SimpleHost';
+import type { SimpleTag } from './SimpleTag';
+import {
+    SimpleTagFromJSON,
+    SimpleTagFromJSONTyped,
+    SimpleTagToJSON,
+} from './SimpleTag';
 
 /**
- * The simple representation of a port
+ * The full representation of a port
  * @export
- * @interface SimplePort
+ * @interface FullPort
  */
-export interface SimplePort {
+export interface FullPort {
     /**
      * Uuid of the port
      * @type {string}
-     * @memberof SimplePort
+     * @memberof FullPort
      */
     uuid: string;
     /**
      * Port number
      * @type {number}
-     * @memberof SimplePort
+     * @memberof FullPort
      */
     port: number;
     /**
      * 
      * @type {PortProtocol}
-     * @memberof SimplePort
+     * @memberof FullPort
      */
     protocol: PortProtocol;
     /**
-     * The host this port is assigned to
-     * @type {string}
-     * @memberof SimplePort
+     * 
+     * @type {SimpleHost}
+     * @memberof FullPort
      */
-    host: string;
+    host: SimpleHost;
     /**
      * A comment to the port
      * @type {string}
-     * @memberof SimplePort
+     * @memberof FullPort
      */
     comment: string;
     /**
+     * The tags this port is linked to
+     * @type {Array<SimpleTag>}
+     * @memberof FullPort
+     */
+    tags: Array<SimpleTag>;
+    /**
      * The workspace this port is linked to
      * @type {string}
-     * @memberof SimplePort
+     * @memberof FullPort
      */
     workspace: string;
 }
 
 /**
- * Check if a given object implements the SimplePort interface.
+ * Check if a given object implements the FullPort interface.
  */
-export function instanceOfSimplePort(value: object): boolean {
+export function instanceOfFullPort(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "port" in value;
     isInstance = isInstance && "protocol" in value;
     isInstance = isInstance && "host" in value;
     isInstance = isInstance && "comment" in value;
+    isInstance = isInstance && "tags" in value;
     isInstance = isInstance && "workspace" in value;
 
     return isInstance;
 }
 
-export function SimplePortFromJSON(json: any): SimplePort {
-    return SimplePortFromJSONTyped(json, false);
+export function FullPortFromJSON(json: any): FullPort {
+    return FullPortFromJSONTyped(json, false);
 }
 
-export function SimplePortFromJSONTyped(json: any, ignoreDiscriminator: boolean): SimplePort {
+export function FullPortFromJSONTyped(json: any, ignoreDiscriminator: boolean): FullPort {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -92,13 +111,14 @@ export function SimplePortFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'uuid': json['uuid'],
         'port': json['port'],
         'protocol': PortProtocolFromJSON(json['protocol']),
-        'host': json['host'],
+        'host': SimpleHostFromJSON(json['host']),
         'comment': json['comment'],
+        'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
         'workspace': json['workspace'],
     };
 }
 
-export function SimplePortToJSON(value?: SimplePort | null): any {
+export function FullPortToJSON(value?: FullPort | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -110,8 +130,9 @@ export function SimplePortToJSON(value?: SimplePort | null): any {
         'uuid': value.uuid,
         'port': value.port,
         'protocol': PortProtocolToJSON(value.protocol),
-        'host': value.host,
+        'host': SimpleHostToJSON(value.host),
         'comment': value.comment,
+        'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),
         'workspace': value.workspace,
     };
 }
