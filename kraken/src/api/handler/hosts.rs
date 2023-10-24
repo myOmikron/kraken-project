@@ -1,5 +1,7 @@
 //! The aggregated data of hosts
 
+use std::collections::HashMap;
+
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path, Query};
 use actix_web::{get, put, HttpResponse};
@@ -17,6 +19,7 @@ use crate::api::handler::{
 use crate::models::{
     GlobalTag, Host, HostGlobalTag, HostWorkspaceTag, OsType, Workspace, WorkspaceTag,
 };
+use crate::query_tags;
 
 /// The simple representation of a host
 #[derive(Serialize, Debug, ToSchema)]
@@ -32,6 +35,8 @@ pub struct SimpleHost {
     pub comment: String,
     /// The workspace this host is in
     pub workspace: Uuid,
+    /// The list of tags this host has attached to
+    pub tags: Vec<SimpleTag>,
 }
 
 /// The full representation of a host
@@ -98,6 +103,24 @@ pub(crate) async fn get_all_hosts(
         .all()
         .await?;
 
+    let mut tags = HashMap::new();
+
+    query_tags!(
+        tags,
+        tx,
+        (
+            HostWorkspaceTag::F.workspace_tag as WorkspaceTag,
+            HostWorkspaceTag::F.host
+        ),
+        HostWorkspaceTag::F.host,
+        (
+            HostGlobalTag::F.global_tag as GlobalTag,
+            HostGlobalTag::F.host
+        ),
+        HostGlobalTag::F.host,
+        hosts
+    );
+
     tx.commit().await?;
 
     Ok(Json(HostResultsPage {
@@ -109,6 +132,7 @@ pub(crate) async fn get_all_hosts(
                 comment: x.comment,
                 os_type: x.os_type,
                 workspace: *x.workspace.key(),
+                tags: tags.remove(&x.uuid).unwrap_or_default(),
             })
             .collect(),
         limit,
