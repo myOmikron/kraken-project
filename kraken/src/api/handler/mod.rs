@@ -631,3 +631,59 @@ where
 {
     Ok(Some(Option::deserialize(d)?))
 }
+
+/// Query all tags related to a list of aggregated results
+///
+/// Create a HashMap and provide it has $map
+/// Provide the Transaction as $tx
+/// Provide the Query for the WorkspaceTags that provides a tuple of the WorkspaceTag and the Item struct
+/// Provide the field the condition should be built on for querying WorkspaceTags
+/// Provide the Query for the GlobalTags that provides a tuple of the GlobalTag and the Item struct
+/// Provide the field the condition should be built on for querying GlobalTags
+/// Provide the list of Items as $items
+#[macro_export]
+macro_rules! query_tags {
+    ($map: ident, $tx: ident, $workspace_query: tt, $workspace_cond: expr, $global_query: tt, $global_cond: expr, $items: ident) => {{
+        {
+            let workspace_conditions: Vec<_> = $items
+                .iter()
+                .map(|x| $workspace_cond.equals(x.uuid))
+                .collect();
+
+            if !workspace_conditions.is_empty() {
+                let mut workspace_tag_stream = query!(&mut $tx, $workspace_query)
+                    .condition(DynamicCollection::or(workspace_conditions))
+                    .stream();
+
+                while let Some((tag, item)) = workspace_tag_stream.try_next().await? {
+                    $map.entry(*item.key()).or_insert(vec![]).push(SimpleTag {
+                        uuid: tag.uuid,
+                        name: tag.name,
+                        tag_type: TagType::Workspace,
+                        color: tag.color.into(),
+                    });
+                }
+            }
+        }
+
+        {
+            let global_conditions: Vec<_> =
+                $items.iter().map(|x| $global_cond.equals(x.uuid)).collect();
+
+            if !global_conditions.is_empty() {
+                let mut global_tag_stream = query!(&mut $tx, $global_query)
+                    .condition(DynamicCollection::or(global_conditions))
+                    .stream();
+
+                while let Some((tag, item)) = global_tag_stream.try_next().await? {
+                    $map.entry(*item.key()).or_insert(vec![]).push(SimpleTag {
+                        uuid: tag.uuid,
+                        name: tag.name,
+                        tag_type: TagType::Global,
+                        color: tag.color.into(),
+                    });
+                }
+            }
+        }
+    }};
+}

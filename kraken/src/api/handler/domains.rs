@@ -20,6 +20,7 @@ use crate::models::{
     Domain, DomainGlobalTag, DomainHostRelation, DomainWorkspaceTag, GlobalTag, Host, Workspace,
     WorkspaceTag,
 };
+use crate::query_tags;
 
 /// Query parameters for filtering the domains to get
 #[derive(Deserialize, IntoParams)]
@@ -40,47 +41,6 @@ pub struct SimpleDomain {
     comment: String,
     workspace: Uuid,
     tags: Vec<SimpleTag>,
-}
-
-macro_rules! query_tags {
-    ($map: ident, $tx: ident, $workspace_query: tt, $workspace_cond: expr, $global_query: tt, $global_cond: expr, $items: ident) => {{
-        {
-            let mut workspace_tag_stream = query!(&mut $tx, $workspace_query)
-                .condition(DynamicCollection::or(
-                    $items
-                        .iter()
-                        .map(|x| $workspace_cond.equals(x.uuid))
-                        .collect(),
-                ))
-                .stream();
-
-            while let Some((tag, item)) = workspace_tag_stream.try_next().await? {
-                $map.entry(*item.key()).or_insert(vec![]).push(SimpleTag {
-                    uuid: tag.uuid,
-                    name: tag.name,
-                    tag_type: TagType::Workspace,
-                    color: tag.color.into(),
-                });
-            }
-        }
-
-        {
-            let mut global_tag_stream = query!(&mut $tx, $global_query)
-                .condition(DynamicCollection::or(
-                    $items.iter().map(|x| $global_cond.equals(x.uuid)).collect(),
-                ))
-                .stream();
-
-            while let Some((tag, item)) = global_tag_stream.try_next().await? {
-                $map.entry(*item.key()).or_insert(vec![]).push(SimpleTag {
-                    uuid: tag.uuid,
-                    name: tag.name,
-                    tag_type: TagType::Global,
-                    color: tag.color.into(),
-                });
-            }
-        }
-    }};
 }
 
 /// Retrieve all domains of a specific workspace
