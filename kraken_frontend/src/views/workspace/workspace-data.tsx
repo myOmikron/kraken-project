@@ -4,7 +4,16 @@ import { Api } from "../../api/api";
 import "../../styling/workspace-data.css";
 import { Result } from "../../utils/result";
 import { ApiError } from "../../api/error";
-import { SimpleDomain, SimpleHost, SimplePort, SimpleService } from "../../api/generated";
+import {
+    FullDomain,
+    FullHost,
+    FullPort,
+    FullService,
+    SimpleDomain,
+    SimpleHost,
+    SimplePort,
+    SimpleService,
+} from "../../api/generated";
 import SelectMenu, { selectStyles } from "../../components/select-menu";
 import Select from "react-select";
 
@@ -78,7 +87,7 @@ export default class WorkspaceData extends React.Component<WorkspaceDataProps, W
                             {(port) => (
                                 <div className={"workspace-data-table-row pane"}>
                                     <span>{port.port}</span>
-                                    <span>{port.host}</span>
+                                    <span>{port.host.ipAddr}</span>
                                     <span>{port.comment}</span>
                                 </div>
                             )}
@@ -99,7 +108,7 @@ export default class WorkspaceData extends React.Component<WorkspaceDataProps, W
                             {(service) => (
                                 <div className={"workspace-data-table-row pane"}>
                                     <span>{service.name}</span>
-                                    <span>{service.host}</span>
+                                    <span>{service.host.ipAddr}</span>
                                     <span>{service.port}</span>
                                     <span>{service.comment}</span>
                                 </div>
@@ -131,10 +140,10 @@ export default class WorkspaceData extends React.Component<WorkspaceDataProps, W
     }
 }
 
-export const WorkspaceDataDomains = (props: WorkspaceDataTableProps<SimpleDomain>) => WorkspaceDataTable(props);
-export const WorkspaceDataHosts = (props: WorkspaceDataTableProps<SimpleHost>) => WorkspaceDataTable(props);
-export const WorkspaceDataPorts = (props: WorkspaceDataTableProps<SimplePort>) => WorkspaceDataTable(props);
-export const WorkspaceDataServices = (props: WorkspaceDataTableProps<SimpleService>) => WorkspaceDataTable(props);
+export const WorkspaceDataDomains = (props: WorkspaceDataTableProps<FullDomain>) => WorkspaceDataTable(props);
+export const WorkspaceDataHosts = (props: WorkspaceDataTableProps<FullHost>) => WorkspaceDataTable(props);
+export const WorkspaceDataPorts = (props: WorkspaceDataTableProps<FullPort>) => WorkspaceDataTable(props);
+export const WorkspaceDataServices = (props: WorkspaceDataTableProps<FullService>) => WorkspaceDataTable(props);
 export const WorkspaceDataOther = (props: WorkspaceDataTableProps<never>) => WorkspaceDataTable(props);
 
 type WorkspaceDataTableProps<T> = {
@@ -165,7 +174,7 @@ function WorkspaceDataTable<T>(props: WorkspaceDataTableProps<T>) {
             handleApiError(({ items, total }) => {
                 setItems(items);
                 setTotal(total);
-            }),
+            })
         );
     }, [limit, page, ...(queryDeps || [])]);
 
