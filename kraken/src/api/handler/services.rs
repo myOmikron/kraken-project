@@ -1,19 +1,25 @@
 //! This module holds the aggregated data of services
 
+use std::collections::HashMap;
+
 use actix_toolbox::tb_middleware::Session;
 use actix_web::get;
 use actix_web::web::{Data, Json, Path, Query};
 use futures::TryStreamExt;
-use rorm::conditions::{BoxedCondition, Condition};
+use rorm::conditions::{BoxedCondition, Condition, DynamicCollection};
 use rorm::{and, query, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::handler::{
-    get_page_params, ApiError, ApiResult, PageParams, PathUuid, ServiceResultsPage,
+    get_page_params, ApiError, ApiResult, PageParams, PathUuid, ServiceResultsPage, SimpleTag,
+    TagType,
 };
-use crate::models::{Service, Workspace};
+use crate::models::{
+    GlobalTag, Service, ServiceGlobalTag, ServiceWorkspaceTag, Workspace, WorkspaceTag,
+};
+use crate::query_tags;
 
 /// Query parameters for filtering the services to get
 #[derive(Deserialize, IntoParams)]
@@ -35,6 +41,7 @@ pub struct SimpleService {
     #[schema(example = "Holds all relevant information")]
     comment: String,
     workspace: Uuid,
+    tags: Vec<SimpleTag>,
 }
 
 /// List the services of a workspace
@@ -88,8 +95,32 @@ pub async fn get_all_services(
         .condition(build_condition(path.uuid, &filter_params))
         .limit(limit)
         .offset(offset)
-        .stream()
-        .map_ok(|x| SimpleService {
+        .all()
+        .await?;
+
+    let mut tags = HashMap::new();
+
+    query_tags!(
+        tags,
+        tx,
+        (
+            ServiceWorkspaceTag::F.workspace_tag as WorkspaceTag,
+            ServiceWorkspaceTag::F.service
+        ),
+        ServiceWorkspaceTag::F.service,
+        (
+            ServiceGlobalTag::F.global_tag as GlobalTag,
+            ServiceGlobalTag::F.service
+        ),
+        ServiceGlobalTag::F.service,
+        services
+    );
+
+    tx.commit().await?;
+
+    let items = services
+        .into_iter()
+        .map(|x| SimpleService {
             uuid: x.uuid,
             name: x.name,
             version: x.version,
@@ -97,14 +128,12 @@ pub async fn get_all_services(
             port: x.port.map(|y| *y.key()),
             comment: x.comment,
             workspace: *x.workspace.key(),
+            tags: tags.remove(&x.uuid).unwrap_or_default(),
         })
-        .try_collect()
-        .await?;
-
-    tx.commit().await?;
+        .collect();
 
     Ok(Json(ServiceResultsPage {
-        items: services,
+        items,
         limit,
         offset,
         total: total as u64,
