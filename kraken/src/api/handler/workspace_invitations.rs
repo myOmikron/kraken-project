@@ -11,7 +11,7 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::users::SimpleUser;
 use crate::api::handler::workspaces::SimpleWorkspace;
 use crate::api::handler::{ApiError, ApiResult, PathUuid};
-use crate::models::{User, Workspace, WorkspaceInvitation};
+use crate::models::{Workspace, WorkspaceInvitation};
 
 /// The full representation of an invitation to a workspace
 #[derive(Debug, Clone, Serialize, ToSchema)]
@@ -22,6 +22,8 @@ pub struct FullWorkspaceInvitation {
     pub workspace: SimpleWorkspace,
     /// The user that has issued the invitation
     pub from: SimpleUser,
+    /// The user that was invited
+    pub target: SimpleUser,
 }
 
 /// A list of invitations to workspaces
@@ -44,7 +46,7 @@ pub struct WorkspaceInvitationList {
     security(("api_key" = []))
 )]
 #[get("/invitations")]
-pub async fn get_all_workspace_invitations(
+pub async fn get_all_invitations(
     SessionUser(session_user): SessionUser,
     db: Data<Database>,
 ) -> ApiResult<Json<WorkspaceInvitationList>> {
@@ -52,13 +54,14 @@ pub async fn get_all_workspace_invitations(
 
     let mut invitations = vec![];
 
-    for (uuid, workspace, from, owner) in query!(
+    for (uuid, workspace, from, target, owner) in query!(
         &mut tx,
         (
             WorkspaceInvitation::F.uuid,
             WorkspaceInvitation::F.workspace as Workspace,
-            WorkspaceInvitation::F.from as User,
-            WorkspaceInvitation::F.workspace.owner as User,
+            WorkspaceInvitation::F.from as SimpleUser,
+            WorkspaceInvitation::F.target as SimpleUser,
+            WorkspaceInvitation::F.workspace.owner as SimpleUser,
         )
     )
     .condition(WorkspaceInvitation::F.target.equals(session_user))
@@ -71,18 +74,11 @@ pub async fn get_all_workspace_invitations(
                 uuid: workspace.uuid,
                 name: workspace.name,
                 description: workspace.description,
-                owner: SimpleUser {
-                    uuid: owner.uuid,
-                    username: owner.username,
-                    display_name: owner.display_name,
-                },
+                owner,
                 created_at: workspace.created_at,
             },
-            from: SimpleUser {
-                uuid: from.uuid,
-                username: from.username,
-                display_name: from.display_name,
-            },
+            target,
+            from,
         });
     }
 
@@ -124,6 +120,47 @@ pub async fn accept_invitation(
     }
 
     Workspace::add_member(&mut tx, *invitation.workspace.key(), session_user).await?;
+
+    rorm::delete!(&mut tx, WorkspaceInvitation)
+        .condition(WorkspaceInvitation::F.uuid.equals(invitation_uuid))
+        .await?;
+
+    tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+/// Decline an invitation to a workspace
+#[utoipa::path(
+    tag = "Workspace Invitations",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Decline an invitation"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid),
+    security(("api_key" = []))
+)]
+#[post("/invitations/{uuid}/decline")]
+pub async fn decline_invitation(
+    path: Path<PathUuid>,
+    db: Data<Database>,
+    SessionUser(session_user): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let invitation_uuid = path.into_inner().uuid;
+
+    let mut tx = db.start_transaction().await?;
+
+    let invitation = query!(&mut tx, WorkspaceInvitation)
+        .condition(WorkspaceInvitation::F.uuid.equals(invitation_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    if *invitation.target.key() != session_user {
+        return Err(ApiError::MissingPrivileges);
+    }
 
     rorm::delete!(&mut tx, WorkspaceInvitation)
         .condition(WorkspaceInvitation::F.uuid.equals(invitation_uuid))

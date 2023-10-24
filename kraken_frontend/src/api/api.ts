@@ -34,6 +34,7 @@ import {
     UpdateWorkspaceTag,
     WordlistApi,
     WordlistManagementApi,
+    WorkspaceInvitationsApi,
     WorkspaceTagsApi,
 } from "./generated";
 import { Configuration } from "./generated";
@@ -62,6 +63,7 @@ const attacks = new AttacksApi(configuration);
 const leechManagement = new LeechManagementApi(configuration);
 const userManagement = new UserManagementApi(configuration);
 const workspaces = new WorkspacesApi(configuration);
+const workspaceInvitations = new WorkspaceInvitationsApi(configuration);
 const oauth = new OAuthApi(configuration);
 const oauthApplications = new OAuthApplicationApi(configuration);
 const settingsManagement = new SettingsManagementApi(configuration);
@@ -190,6 +192,13 @@ export const Api = {
         delete: (uuid: UUID) => handleError(workspaces.deleteWorkspace({ uuid })),
         transferOwnership: (uuid: UUID, user: UUID) =>
             handleError(workspaces.transferOwnership({ uuid, transferWorkspaceRequest: { user } })),
+        invitations: {
+            all: (uuid: UUID) => handleError(workspaces.getAllWorkspaceInvitations({ uuid })),
+            create: (uuid: UUID, user: UUID) =>
+                handleError(workspaces.createInvitation({ uuid, inviteToWorkspace: { user } })),
+            retract: (wUuid: UUID, invitation: UUID) =>
+                handleError(workspaces.retractInvitation({ wUuid, iUuid: invitation })),
+        },
         hosts: {
             all: (workspaceUuid: UUID, limit: number, offset: number) =>
                 handleError(hosts.getAllHosts({ uuid: workspaceUuid, limit, offset })),
@@ -230,5 +239,10 @@ export const Api = {
     },
     wordlists: {
         all: () => handleError(wordlists.getAllWordlists()),
+    },
+    invitations: {
+        all: () => handleError(workspaceInvitations.getAllInvitations()),
+        accept: (uuid: UUID) => handleError(workspaceInvitations.acceptInvitation({ uuid })),
+        decline: (uuid: UUID) => handleError(workspaceInvitations.declineInvitation({ uuid })),
     },
 };
