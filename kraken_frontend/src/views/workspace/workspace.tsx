@@ -9,6 +9,7 @@ import WorkspaceHost from "./workspace-host";
 import WorkspaceHosts from "./workspace-hosts";
 import WorkspaceAttacks from "./workspace-attacks";
 import WorkspaceSettings from "./workspace-settings";
+import WorkspaceData from "./workspace-data";
 
 type WorkspaceProps = {
     uuid: UUID;
@@ -34,8 +35,8 @@ export default class Workspace extends React.Component<WorkspaceProps, Workspace
         Api.workspaces.get(this.props.uuid).then((res) =>
             res.match(
                 (workspace) => this.setState({ workspace }),
-                (err) => toast.error(err.message)
-            )
+                (err) => toast.error(err.message),
+            ),
         );
     }
 
@@ -44,8 +45,8 @@ export default class Workspace extends React.Component<WorkspaceProps, Workspace
             Api.workspaces.get(this.props.uuid).then((res) =>
                 res.match(
                     (workspace) => this.setState({ workspace }),
-                    (err) => toast.error(err.message)
-                )
+                    (err) => toast.error(err.message),
+                ),
             );
         }
     }
@@ -65,7 +66,7 @@ export default class Workspace extends React.Component<WorkspaceProps, Workspace
                 ) : this.props.view === "search" ? (
                     <></>
                 ) : this.props.view === "data" ? (
-                    <></>
+                    <WorkspaceData workspace={this.props.uuid} />
                 ) : this.props.view === "workspace_settings" ? (
                     <WorkspaceSettings workspace={this.state.workspace} />
                 ) : this.props.view === "attacks" ? (
