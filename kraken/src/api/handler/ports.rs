@@ -1,19 +1,24 @@
 //! This module holds the aggregated data of ports
 
+use std::collections::HashMap;
+
 use actix_toolbox::tb_middleware::Session;
 use actix_web::get;
 use actix_web::web::{Data, Json, Path, Query};
 use futures::TryStreamExt;
-use rorm::conditions::{BoxedCondition, Condition};
+use rorm::conditions::{BoxedCondition, Condition, DynamicCollection};
 use rorm::{and, query, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::handler::{
-    get_page_params, ApiError, ApiResult, PageParams, PathUuid, PortResultsPage,
+    get_page_params, ApiError, ApiResult, PageParams, PathUuid, PortResultsPage, SimpleTag, TagType,
 };
-use crate::models::{Port, PortProtocol, Workspace};
+use crate::models::{
+    GlobalTag, Port, PortGlobalTag, PortProtocol, PortWorkspaceTag, Workspace, WorkspaceTag,
+};
+use crate::query_tags;
 
 /// Query parameters for filtering the ports to get
 #[derive(Deserialize, IntoParams)]
@@ -36,6 +41,8 @@ pub struct SimplePort {
     pub host: Uuid,
     /// A comment to the port
     pub comment: String,
+    /// The tags this port is linked to
+    pub tags: Vec<SimpleTag>,
 }
 
 /// List the ports of a workspace
@@ -89,21 +96,43 @@ pub async fn get_all_ports(
         .condition(build_condition(path.uuid, &filter_params))
         .limit(limit)
         .offset(offset)
-        .stream()
-        .map_ok(|x| SimplePort {
+        .all()
+        .await?;
+
+    let mut tags = HashMap::new();
+
+    query_tags!(
+        tags,
+        tx,
+        (
+            PortWorkspaceTag::F.workspace_tag as WorkspaceTag,
+            PortWorkspaceTag::F.port
+        ),
+        PortWorkspaceTag::F.port,
+        (
+            PortGlobalTag::F.global_tag as GlobalTag,
+            PortGlobalTag::F.port
+        ),
+        PortGlobalTag::F.port,
+        ports
+    );
+
+    let items = ports
+        .into_iter()
+        .map(|x| SimplePort {
             uuid: x.uuid,
             port: u16::from_ne_bytes(x.port.to_ne_bytes()),
             protocol: x.protocol,
             comment: x.comment,
             host: *x.host.key(),
+            tags: tags.remove(&x.uuid).unwrap_or_default(),
         })
-        .try_collect()
-        .await?;
+        .collect();
 
     tx.commit().await?;
 
     Ok(Json(PortResultsPage {
-        items: ports,
+        items,
         limit,
         offset,
         total: total as u64,
