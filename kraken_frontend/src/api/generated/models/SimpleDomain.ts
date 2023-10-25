@@ -43,6 +43,12 @@ export interface SimpleDomain {
      * @memberof SimpleDomain
      */
     workspace: string;
+    /**
+     * 
+     * @type {Date}
+     * @memberof SimpleDomain
+     */
+    createdAt: Date;
 }
 
 /**
@@ -54,6 +60,7 @@ export function instanceOfSimpleDomain(value: object): boolean {
     isInstance = isInstance && "domain" in value;
     isInstance = isInstance && "comment" in value;
     isInstance = isInstance && "workspace" in value;
+    isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
 }
@@ -72,6 +79,7 @@ export function SimpleDomainFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'domain': json['domain'],
         'comment': json['comment'],
         'workspace': json['workspace'],
+        'createdAt': (new Date(json['created_at'])),
     };
 }
 
@@ -88,6 +96,7 @@ export function SimpleDomainToJSON(value?: SimpleDomain | null): any {
         'domain': value.domain,
         'comment': value.comment,
         'workspace': value.workspace,
+        'created_at': (value.createdAt.toISOString()),
     };
 }
 

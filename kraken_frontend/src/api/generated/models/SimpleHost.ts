@@ -56,6 +56,12 @@ export interface SimpleHost {
      * @memberof SimpleHost
      */
     workspace: string;
+    /**
+     * The point in time, the record was created
+     * @type {Date}
+     * @memberof SimpleHost
+     */
+    createdAt: Date;
 }
 
 /**
@@ -68,6 +74,7 @@ export function instanceOfSimpleHost(value: object): boolean {
     isInstance = isInstance && "osType" in value;
     isInstance = isInstance && "comment" in value;
     isInstance = isInstance && "workspace" in value;
+    isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
 }
@@ -87,6 +94,7 @@ export function SimpleHostFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'osType': OsTypeFromJSON(json['os_type']),
         'comment': json['comment'],
         'workspace': json['workspace'],
+        'createdAt': (new Date(json['created_at'])),
     };
 }
 
@@ -104,6 +112,7 @@ export function SimpleHostToJSON(value?: SimpleHost | null): any {
         'os_type': OsTypeToJSON(value.osType),
         'comment': value.comment,
         'workspace': value.workspace,
+        'created_at': (value.createdAt.toISOString()),
     };
 }
 

@@ -62,6 +62,12 @@ export interface SimplePort {
      * @memberof SimplePort
      */
     workspace: string;
+    /**
+     * The point in time, the record was created
+     * @type {Date}
+     * @memberof SimplePort
+     */
+    createdAt: Date;
 }
 
 /**
@@ -75,6 +81,7 @@ export function instanceOfSimplePort(value: object): boolean {
     isInstance = isInstance && "host" in value;
     isInstance = isInstance && "comment" in value;
     isInstance = isInstance && "workspace" in value;
+    isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
 }
@@ -95,6 +102,7 @@ export function SimplePortFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'host': json['host'],
         'comment': json['comment'],
         'workspace': json['workspace'],
+        'createdAt': (new Date(json['created_at'])),
     };
 }
 
@@ -113,6 +121,7 @@ export function SimplePortToJSON(value?: SimplePort | null): any {
         'host': value.host,
         'comment': value.comment,
         'workspace': value.workspace,
+        'created_at': (value.createdAt.toISOString()),
     };
 }
 

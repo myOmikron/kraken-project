@@ -92,6 +92,12 @@ export interface FullService {
      * @memberof FullService
      */
     tags: Array<SimpleTag>;
+    /**
+     * The point in time, the record was created
+     * @type {Date}
+     * @memberof FullService
+     */
+    createdAt: Date;
 }
 
 /**
@@ -106,6 +112,7 @@ export function instanceOfFullService(value: object): boolean {
     isInstance = isInstance && "comment" in value;
     isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "tags" in value;
+    isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
 }
@@ -129,6 +136,7 @@ export function FullServiceFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'comment': json['comment'],
         'workspace': json['workspace'],
         'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
+        'createdAt': (new Date(json['created_at'])),
     };
 }
 
@@ -150,6 +158,7 @@ export function FullServiceToJSON(value?: FullService | null): any {
         'comment': value.comment,
         'workspace': value.workspace,
         'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),
+        'created_at': (value.createdAt.toISOString()),
     };
 }
 
