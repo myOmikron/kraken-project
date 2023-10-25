@@ -1,0 +1,76 @@
+.workspace-table {
+    padding: 2em 1em;
+
+    /* Is overwritten by javascript to set the number of columns */
+    --columns: 4;
+}
+
+.workspace-table-filter {
+    margin: 0 1em 1.5em;
+}
+
+.workspace-table-body {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    height: calc(100vh - 31.5em);
+    padding: 0 1.5em;
+}
+
+.workspace-table-body-host{
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 0 1.5em;
+    height: calc(100vh - 53.5em);
+}
+
+.workspace-table-button{
+    background: none;
+    border: none;
+}
+
+.workspace-table-button > .icon {
+    width: 2em;
+    height: 2em;
+    cursor: pointer;
+    padding: 0;
+}
+
+.workspace-table-button  > .icon:hover{
+    filter: brightness(0) invert() drop-shadow(0 0 8px var(--primary));
+}
+
+
+.workspace-table-controls {
+    align-self: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr  1fr;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+}
+
+.pagination-icon > svg{
+    display: flex;
+    width: 2.5em;
+    height: 2.5em;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+.workspace-table-controls-page-container{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 2em;
+}
+
+.workspace-table-controls-button-container{
+    grid-column-start: 3;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

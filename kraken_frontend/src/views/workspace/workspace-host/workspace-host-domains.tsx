@@ -6,15 +6,17 @@ import { FullHost, SimpleDomain } from "../../../api/generated";
 export type WorkspaceDataDomainsProps = {
     workspace: string;
     onSelect: (uuid: string) => void;
+    host: FullHost | null;
 };
 
-export function WorkspaceDataDomains(props: WorkspaceDataDomainsProps) {
-    const { workspace, onSelect } = props;
+export function WorkspaceHostDomains(props: WorkspaceDataDomainsProps) {
+    const { workspace, onSelect, host } = props;
     return (
         <WorkspaceTable<SimpleDomain>
-            query={(limit, offset) => Api.workspaces.domains.all(workspace, limit, offset)}
-            queryDeps={[workspace]}
+            query={(limit, offset) => Api.workspaces.domains.all(workspace, limit, offset, { host: host?.uuid })}
+            queryDeps={[workspace, host?.uuid]}
             columns={2}
+            type={"Host"}
         >
             <div className={"workspace-data-table-header"}>
                 <span>Name</span>

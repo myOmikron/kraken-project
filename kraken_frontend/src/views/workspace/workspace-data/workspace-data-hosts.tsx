@@ -1,7 +1,7 @@
 import { Api } from "../../../api/api";
 import React from "react";
 import { FullHost, SimpleDomain, SimpleHost } from "../../../api/generated";
-import WorkspaceDataTable from "./workspace-data-table";
+import WorkspaceTable from "../components/workspace-table";
 import { handleApiError } from "../../../utils/helper";
 
 export type WorkspaceDataHostsProps = {
@@ -12,7 +12,7 @@ export type WorkspaceDataHostsProps = {
 export function WorkspaceDataHosts(props: WorkspaceDataHostsProps) {
     const { workspace, onSelect } = props;
     return (
-        <WorkspaceDataTable<FullHost>
+        <WorkspaceTable<FullHost>
             query={(limit, offset) => Api.workspaces.hosts.all(workspace, limit, offset)}
             queryDeps={[workspace]}
             columns={2}
@@ -27,6 +27,6 @@ export function WorkspaceDataHosts(props: WorkspaceDataHostsProps) {
                     <span>{host.comment}</span>
                 </div>
             )}
-        </WorkspaceDataTable>
+        </WorkspaceTable>
     );
 }

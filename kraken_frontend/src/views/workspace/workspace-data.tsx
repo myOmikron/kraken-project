@@ -1,6 +1,6 @@
 import React from "react";
 import "../../styling/workspace-data.css";
-import WorkspaceDataTable, { WorkspaceDataTableProps } from "./workspace-data/workspace-data-table";
+import WorkspaceTable, { WorkspaceDataTableProps } from "./components/workspace-table";
 import { WorkspaceDataDomains } from "./workspace-data/workspace-data-domains";
 import { WorkspaceDataHosts } from "./workspace-data/workspace-data-hosts";
 import { WorkspaceDataPorts } from "./workspace-data/workspace-data-ports";
@@ -80,4 +80,4 @@ export default class WorkspaceData extends React.Component<WorkspaceDataProps, W
     }
 }
 
-export const WorkspaceDataOther = (props: WorkspaceDataTableProps<never>) => WorkspaceDataTable(props);
+export const WorkspaceDataOther = (props: WorkspaceDataTableProps<never>) => WorkspaceTable(props);

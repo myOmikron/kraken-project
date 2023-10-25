@@ -212,8 +212,8 @@ export const Api = {
                 handleError(ports.getAllPorts({ uuid: workspaceUuid, limit, offset, ...filter })),
         },
         domains: {
-            all: (workspaceUuid: UUID, limit: number, offset: number) =>
-                handleError(domains.getAllDomains({ uuid: workspaceUuid, limit, offset })),
+            all: (workspaceUuid: UUID, limit: number, offset: number, filter: { host?: UUID } = {}) =>
+                handleError(domains.getAllDomains({ uuid: workspaceUuid, limit, offset, ...filter })),
         },
         services: {
             all: (workspaceUuid: UUID, limit: number, offset: number, filter: { host?: UUID } = {}) =>

@@ -1,28 +1,53 @@
 import React from "react";
 import "../../styling/workspace-host.css";
-import { FullHost, FullWorkspace, SimpleHost } from "../../api/generated";
+import { FullHost, FullWorkspace, SimpleDomain, SimpleHost, SimplePort, SimpleService } from "../../api/generated";
 import { Api, UUID } from "../../api/api";
 import { toast } from "react-toastify";
 import { ROUTES } from "../../routes";
 import Input from "../../components/input";
 import OsIcon from "../../components/os-icon";
+import ArrowLeftIcon from "../../svg/arrow-left";
+import { WorkspaceHostDomains } from "./workspace-host/workspace-host-domains";
+import { WorkspaceHostPorts } from "./workspace-host/workspace-host-ports";
+import { WorkspaceHostServices } from "./workspace-host/workspace-host-services";
+
+const TABS = { domains: "Domains", ports: "Ports", services: "Services", other: "Other" };
 
 type WorkspaceProps = {
     workspace: FullWorkspace;
     host_uuid: UUID;
 };
 type WorkspaceState = {
-    selectedTab: "domains" | "ips" | "ports" | "services" | "other";
+    selectedTab: keyof typeof TABS;
+    selected: { type: keyof typeof TABS; uuid: string } | null;
     host: FullHost | null;
+    domains: Array<SimpleDomain>;
+    ports: Array<SimplePort>;
+    services: Array<SimpleService>;
     hostList: Array<SimpleHost>;
     searchTerm: string;
+    limit: number;
+    offset: number;
+    totalDomains: number;
 };
 
 export default class WorkspaceHost extends React.Component<WorkspaceProps, WorkspaceState> {
     constructor(props: WorkspaceProps) {
         super(props);
 
-        this.state = { selectedTab: "domains", host: null, hostList: [], searchTerm: "" };
+        this.state = {
+            selectedTab: "domains",
+            selected: null,
+            host: null,
+            hostList: [],
+            domains: [],
+            ports: [],
+            services: [],
+            searchTerm: "",
+            limit: 5,
+            offset: 0,
+            totalDomains: 0,
+        };
     }
 
     async getHostList() {
@@ -52,23 +77,54 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
     }
 
     render() {
+        const { selectedTab } = this.state;
+        const { host } = this.state;
+        const table = (() => {
+            switch (selectedTab) {
+                case "domains":
+                    return (
+                        <WorkspaceHostDomains
+                            workspace={this.props.workspace.uuid}
+                            onSelect={(uuid) => this.setState({ selected: { type: "domains", uuid } })}
+                            host={this.state.host}
+                        />
+                    );
+                case "ports":
+                    return (
+                        <WorkspaceHostPorts
+                            workspace={this.props.workspace.uuid}
+                            onSelect={(uuid) => this.setState({ selected: { type: "ports", uuid } })}
+                            host={this.state.host}
+                        />
+                    );
+                case "services":
+                    return (
+                        <WorkspaceHostServices
+                            workspace={this.props.workspace.uuid}
+                            onSelect={(uuid) => this.setState({ selected: { type: "services", uuid } })}
+                            host={this.state.host}
+                        />
+                    );
+                default:
+                    return "Unimplemented";
+            }
+        })();
         return (
             <div className={"workspace-host-container"}>
                 <div className={"workspace-host-hosts-list"}>
                     <div className={"workspace-host-hosts-list-header"}>
-                        <button
-                            key={"back"}
-                            className={"pane workspace-host-hosts-back"}
-                            onClick={() => {
-                                ROUTES.WORKSPACE_HOSTS.visit({
-                                    uuid: this.props.workspace.uuid,
-                                });
-                            }}
-                        >
-                            <h2 className={"sub-heading"}>Back</h2>
-                        </button>
                         <div className={"pane workspace-host-hosts-search"}>
+                            <ArrowLeftIcon
+                                key={"back"}
+                                onClick={() => {
+                                    ROUTES.WORKSPACE_HOSTS.visit({
+                                        uuid: this.props.workspace.uuid,
+                                    });
+                                }}
+                            />
+
                             <Input
+                                className={"workspace-host-search-bar"}
                                 placeholder={"Search host"}
                                 value={this.state.searchTerm}
                                 onChange={(searchTerm) => this.setState({ searchTerm })}
@@ -112,66 +168,20 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
                         <div>Loading ..</div>
                     )}
                 </div>
+
                 <div className={"workspace-host-section-selector"}>
-                    <div
-                        className={this.state.selectedTab === "domains" ? "pane workspace-host-selected-tab" : "pane"}
-                        onClick={() => {
-                            this.setState({ selectedTab: "domains" });
-                        }}
-                    >
-                        <h3 className={"heading"}>Domains</h3>
-                    </div>
-                    <div
-                        className={this.state.selectedTab === "ports" ? "pane workspace-host-selected-tab" : "pane"}
-                        onClick={() => {
-                            this.setState({ selectedTab: "ports" });
-                        }}
-                    >
-                        <h3 className={"heading"}>Ports</h3>
-                    </div>
-                    <div
-                        className={this.state.selectedTab === "services" ? "pane workspace-host-selected-tab" : "pane"}
-                        onClick={() => {
-                            this.setState({ selectedTab: "services" });
-                        }}
-                    >
-                        <h3 className={"heading"}>Services</h3>
-                    </div>
-                    <div
-                        className={this.state.selectedTab === "other" ? "pane workspace-host-selected-tab" : "pane"}
-                        onClick={() => {
-                            this.setState({ selectedTab: "other" });
-                        }}
-                    >
-                        <h3 className={"heading"}>Other</h3>
-                    </div>
+                    {Object.entries(TABS).map(([key, displayName]) => (
+                        <div
+                            className={"pane" + (this.state.selectedTab !== key ? "" : " workspace-host-selected-tab")}
+                            onClick={() => this.setState({ selectedTab: key as keyof typeof TABS })}
+                        >
+                            <h3 className={"heading"}>{displayName}</h3>
+                        </div>
+                    ))}
                 </div>
-                <div className={"workspace-host-content-table"}>
-                    <div className={"pane workspace-host-content-row"}>
-                        <span>Domain</span>
-                        <span>DNS</span>
-                        <span>Tags</span>
-                        <span>Attacks</span>
-                        <span>Comment</span>
-                    </div>
-                    <div className={"pane workspace-host-content-row"}>
-                        <span>trufflepig-forensics.com</span>
-                        <div className={"bubble-list"}>
-                            <div className={"bubble"}>A</div>
-                            <div className={"bubble"}>AAAA</div>
-                            <div className={"bubble"}>MX</div>
-                            <div className={"bubble"}>TXT</div>
-                        </div>
-                        <div className={"bubble-list"}>
-                            <div className={"bubble red"}>Critical</div>
-                        </div>
-                        <div className={"bubble-list"}>
-                            <div className={"bubble"}>CT 2</div>
-                            <div className={"bubble"}>BS 17</div>
-                        </div>
-                        <span>Netscaler</span>
-                    </div>
-                </div>
+
+                <div className={"workspace-host-content-table"}>{table}</div>
+
                 <div className={"workspace-host-content-details pane"}>
                     <h2 className={"heading"}>Details</h2>
                 </div>

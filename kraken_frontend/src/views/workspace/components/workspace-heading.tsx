@@ -39,42 +39,54 @@ export default class WorkspaceHeading extends React.Component<WorkspaceHeadingPr
     }
 
     render() {
-        console.log(this.props.name);
         return (
             <div className={"pane workspace-heading"}>
                 {this.state.dropdownOpen ? (
-                    <div className="workspace-heading-dropdown">
+                    <>
                         <div
-                            className="workspace-heading-dropdown-open"
+                            className={"workspace-heading-event-listener"}
                             onClick={() => {
                                 this.setState({ dropdownOpen: false });
                             }}
                         >
-                            <h2 className={"sub-heading"}>{this.props.name}</h2>
-                            <ArrowUpIcon />
+                            {" "}
                         </div>
-                        <div className="workspace-heading-dropdown-content">
-                            {this.state.workspaces
-                                ?.filter((e) => {
-                                    {
-                                        /*TODO sort where you are owner/member*/
-                                    }
-                                    return e.name !== this.props.name;
-                                })
-                                .map((w) => {
-                                    return (
-                                        <div
-                                            onClick={() => {
-                                                ROUTES.WORKSPACE_HOSTS.visit({ uuid: w.uuid });
-                                                this.setState({ dropdownOpen: false });
-                                            }}
-                                        >
-                                            {w.name}
-                                        </div>
-                                    );
-                                })}
+                        <div className="workspace-heading-dropdown">
+                            <div
+                                className="workspace-heading-dropdown-open"
+                                onClick={() => {
+                                    this.setState({ dropdownOpen: false });
+                                }}
+                            >
+                                <h2 className={"sub-heading"}>{this.props.name}</h2>
+                                <ArrowUpIcon />
+                            </div>
+                            <div className="workspace-heading-dropdown-content">
+                                {this.state.workspaces
+                                    ?.filter((e) => {
+                                        return e.name !== this.props.name;
+                                    })
+                                    .map((w) => {
+                                        return (
+                                            <div
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    ROUTES.WORKSPACE_HOSTS.visit({ uuid: w.uuid });
+                                                    this.setState({ dropdownOpen: false });
+                                                }}
+                                                onAuxClick={(event) => {
+                                                    event.stopPropagation();
+                                                    ROUTES.WORKSPACE_HOSTS.open({ uuid: w.uuid });
+                                                    this.setState({ dropdownOpen: false });
+                                                }}
+                                            >
+                                                {w.name}
+                                            </div>
+                                        );
+                                    })}
+                            </div>
                         </div>
-                    </div>
+                    </>
                 ) : (
                     <div className="workspace-heading-dropdown">
                         <div
