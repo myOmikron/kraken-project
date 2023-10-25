@@ -2,7 +2,7 @@
     grid-area: 2 / 1 / span 1 / span 1;
     display: grid;
     grid-template-columns: 8fr 3fr;
-    grid-template-rows: 4em 4em auto 2em 1fr;
+    grid-template-rows: min-content auto auto;
     gap: 1em;
     animation: yourAnimation 0.3s step-End 0.4s 1 normal backwards;
 }
@@ -45,40 +45,65 @@
     text-align: center;
 }
 
+.workspace-data-table {
+    padding: 2em 1em;
+
+    /* Is overwritten by javascript to set the number of columns */
+    --columns: 4;
+}
+
+.workspace-data-filter {
+    margin: 0 1em 1.5em;
+}
+
 .workspace-data-table-header {
-    grid-area: 2 / 1 / span 1 / span 1;
-    background-color: var(--primary-light);
-    color: white;
     display: grid;
-    grid-template-columns: 1.5fr 1.5fr 1fr 1.5fr 1.5fr;
-    align-items: center;
+    grid-template-columns: repeat(var(--columns), 1fr);
     gap: 0.5em;
-    border-radius: 0.5em;
-    padding: 0.75em 1em;
-    transition: all ease 200ms;
+    align-items: center;
+
+    color: white;
+    padding: 0 1em 0.2em;
+    margin: 0 1em 0.5em;
+    border-bottom: 1px solid white;
 }
 
 .workspace-data-table-body {
-    max-height: calc(100vh - 28em);
-    grid-area: 3 / 1 / span 1 / span 1;
     display: flex;
     flex-direction: column;
-    gap: 1em;
+
     overflow-y: auto;
+    height: calc(100vh - 31.1em);
+    padding: 0 1.5em;
 }
 
 .workspace-data-table-row {
     display: grid;
-    grid-template-columns: 1.5fr 1.5fr 1fr 1.5fr 1.5fr;
-    align-items: center;
+    grid-template-columns: repeat(var(--columns), 1fr);
     gap: 0.5em;
-    border-radius: 0.5em;
-    padding: 0.75em 1em;
+    align-items: center;
+
     transition: all ease 200ms;
+    cursor: pointer;
+    padding: 0.3em 0.5em;
+}
+
+.workspace-data-table-row:hover {
+    --color: var(--primary-op);
+    --blur: 0.5em;
+    --offset: 0.2em;
+    box-shadow:
+        inset 0 var(--offset) var(--blur) var(--color),
+        inset 0 calc(-1 * var(--offset)) var(--blur) var(--color);
+}
+
+.workspace-data-table-row:not(:first-child) {
+    border-top: 2px solid var(--primary-op);
 }
 
 .workspace-data-table-controls {
+    align-self: center;
     display: flex;
     flex-direction: row;
-    grid-area: 4/ 1 / span 1 / span 1;
+    align-items: center;
 }

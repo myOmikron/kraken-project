@@ -1,14 +1,18 @@
-import React from "react";
+import React, { CSSProperties } from "react";
 import { handleApiError } from "../../../utils/helper";
 import Select from "react-select";
 import { selectStyles } from "../../../components/select-menu";
 import { Result } from "../../../utils/result";
 import { ApiError } from "../../../api/error";
+import Input from "../../../components/input";
 
 export type WorkspaceDataTableProps<T> = {
     query: (limit: number, offset: number) => Promise<Result<GenericPage<T>, ApiError>>;
     queryDeps?: React.DependencyList;
     children: [React.ReactNode, (item: T) => React.ReactNode];
+
+    /** The number of columns to render (controls css grid) */
+    columns?: number;
 };
 export type GenericPage<T> = {
     items: Array<T>;
@@ -22,35 +26,44 @@ export default function WorkspaceDataTable<T>(props: WorkspaceDataTableProps<T>)
         query,
         queryDeps,
         children: [header, renderItem],
+        columns,
     } = props;
 
     const [limit, setLimit] = React.useState(10);
-    const [page, setRawPage] = React.useState(1);
+    const [offset, setRawOffset] = React.useState(0);
     const [total, setTotal] = React.useState(0);
     const [items, setItems] = React.useState<Array<T>>([]);
 
     React.useEffect(() => {
-        query(limit, limit * (page - 1)).then(
+        query(limit, offset).then(
             handleApiError(({ items, total }) => {
                 setItems(items);
                 setTotal(total);
             }),
         );
-    }, [limit, page, ...(queryDeps || [])]);
+    }, [limit, offset, ...(queryDeps || [])]);
 
-    const lastPage = Math.ceil(total / limit) || 1;
-    function setPage(page: number) {
-        if (page <= 0) {
-            setRawPage(1);
-        } else if (page > lastPage) {
-            setRawPage(lastPage);
+    const lastOffset = Math.floor(total / limit) * limit;
+    function setOffset(offset: number) {
+        if (offset < 0) {
+            setRawOffset(0);
+        } else if (offset > lastOffset) {
+            setRawOffset(lastOffset);
         } else {
-            setRawPage(page);
+            setRawOffset(offset);
         }
     }
 
+    // @ts-ignore
+    const style: CSSProperties = { "--columns": columns };
     return (
-        <>
+        <div className={"workspace-data-table pane"} style={style}>
+            <Input
+                className={"input workspace-data-filter"}
+                placeholder={"Filter..."}
+                value={""}
+                onChange={console.log}
+            />
             {header}
             <div className={"workspace-data-table-body"}>{items.map(renderItem)}</div>
             <div className={"workspace-data-table-controls"}>
@@ -63,36 +76,20 @@ export default function WorkspaceDataTable<T>(props: WorkspaceDataTableProps<T>)
                     }}
                     styles={selectStyles("default")}
                 />
-                <button className={"button"} disabled={page === 1} onClick={() => setPage(1)}>
+                <button className={"button"} disabled={offset === 0} onClick={() => setOffset(0)}>
                     First
                 </button>
-                <button className={"button"} disabled={page === 1} onClick={() => setPage(page - 1)}>
+                <button className={"button"} disabled={offset === 0} onClick={() => setOffset(offset - limit)}>
                     Prev
                 </button>
-                <form
-                    onSubmit={(event) => {
-                        event.preventDefault();
-                        const input = event.currentTarget["page"] as HTMLInputElement;
-                        const page = Number(input.value);
-                        input.value = "";
-                        setPage(page);
-                    }}
-                >
-                    <input
-                        className={"input"}
-                        title={"Page number"}
-                        name={"page"}
-                        pattern={"[1-9]\\d*"}
-                        placeholder={`Page ${page} of ${lastPage}`}
-                    />
-                </form>
-                <button className={"button"} disabled={page === lastPage} onClick={() => setPage(page + 1)}>
+                <span>{`${offset + 1} - ${Math.min(total, offset + limit + 1)} of ${total}`}</span>
+                <button className={"button"} disabled={offset === lastOffset} onClick={() => setOffset(offset + limit)}>
                     Next
                 </button>
-                <button className={"button"} disabled={page === lastPage} onClick={() => setPage(Infinity)}>
+                <button className={"button"} disabled={offset === lastOffset} onClick={() => setOffset(lastOffset)}>
                     Last
                 </button>
             </div>
-        </>
+        </div>
     );
 }

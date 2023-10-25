@@ -14,13 +14,14 @@ export function WorkspaceDataDomains(props: WorkspaceDataDomainsProps) {
         <WorkspaceDataTable<SimpleDomain>
             query={(limit, offset) => Api.workspaces.domains.all(workspace, limit, offset)}
             queryDeps={[workspace]}
+            columns={2}
         >
-            <div className={"workspace-data-table-header pane"}>
+            <div className={"workspace-data-table-header"}>
                 <span>Name</span>
                 <span>Comment</span>
             </div>
             {(domain) => (
-                <div className={"workspace-data-table-row pane"} onClick={() => onSelect(domain.uuid)}>
+                <div className={"workspace-data-table-row"} onClick={() => onSelect(domain.uuid)}>
                     <span>{domain.domain}</span>
                     <span>{domain.comment}</span>
                 </div>

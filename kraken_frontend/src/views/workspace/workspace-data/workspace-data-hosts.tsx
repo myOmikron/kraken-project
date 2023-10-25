@@ -15,13 +15,14 @@ export function WorkspaceDataHosts(props: WorkspaceDataHostsProps) {
         <WorkspaceDataTable<FullHost>
             query={(limit, offset) => Api.workspaces.hosts.all(workspace, limit, offset)}
             queryDeps={[workspace]}
+            columns={2}
         >
-            <div className={"workspace-data-table-header pane"}>
+            <div className={"workspace-data-table-header"}>
                 <span>IP</span>
                 <span>Comment</span>
             </div>
             {(host) => (
-                <div className={"workspace-data-table-row pane"} onClick={() => onSelect(host.uuid)}>
+                <div className={"workspace-data-table-row"} onClick={() => onSelect(host.uuid)}>
                     <span>{host.ipAddr}</span>
                     <span>{host.comment}</span>
                 </div>

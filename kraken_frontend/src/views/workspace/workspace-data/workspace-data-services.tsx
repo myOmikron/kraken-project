@@ -14,15 +14,16 @@ export function WorkspaceDataServices(props: WorkspaceDataServicesProps) {
         <WorkspaceDataTable<FullService>
             query={(limit, offset) => Api.workspaces.services.all(workspace, limit, offset)}
             queryDeps={[workspace]}
+            columns={4}
         >
-            <div className={"workspace-data-table-header pane"}>
+            <div className={"workspace-data-table-header"}>
                 <span>Name</span>
                 <span>Host</span>
-                <span>Number</span>
+                <span>Port</span>
                 <span>Comment</span>
             </div>
             {(service) => (
-                <div className={"workspace-data-table-row pane"} onClick={() => onSelect(service.uuid)}>
+                <div className={"workspace-data-table-row"} onClick={() => onSelect(service.uuid)}>
                     <span>{service.name}</span>
                     <span>{service.host.ipAddr}</span>
                     <span>{service.port}</span>
