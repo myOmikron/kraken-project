@@ -14,12 +14,13 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::handler::hosts::SimpleHost;
+use crate::api::handler::ports::SimplePort;
 use crate::api::handler::{
     get_page_params, ApiError, ApiResult, PageParams, PathUuid, ServiceResultsPage, SimpleTag,
     TagType,
 };
 use crate::models::{
-    Certainty, GlobalTag, Host, Service, ServiceGlobalTag, ServiceWorkspaceTag, Workspace,
+    Certainty, GlobalTag, Host, Port, Service, ServiceGlobalTag, ServiceWorkspaceTag, Workspace,
     WorkspaceTag,
 };
 use crate::query_tags;
@@ -58,7 +59,7 @@ pub struct FullService {
     version: Option<String>,
     certainty: Certainty,
     host: SimpleHost,
-    port: Option<Uuid>,
+    port: Option<SimplePort>,
     #[schema(example = "Holds all relevant information")]
     comment: String,
     workspace: Uuid,
@@ -135,6 +136,33 @@ pub async fn get_all_services(
     .all()
     .await?;
 
+    let mut ports = HashMap::new();
+    let p: Vec<_> = services
+        .iter()
+        .filter_map(|x| x.7.as_ref().map(|y| Port::F.uuid.equals(*y.key())))
+        .collect();
+
+    if !p.is_empty() {
+        let mut port_stream = query!(&mut tx, Port)
+            .condition(DynamicCollection::or(p))
+            .stream();
+
+        while let Some(port) = port_stream.try_next().await? {
+            ports.insert(
+                port.uuid,
+                SimplePort {
+                    uuid: port.uuid,
+                    port: u16::from_ne_bytes(port.port.to_ne_bytes()),
+                    protocol: port.protocol,
+                    comment: port.comment,
+                    created_at: port.created_at,
+                    workspace: *port.workspace.key(),
+                    host: *port.host.key(),
+                },
+            );
+        }
+    }
+
     let mut tags = HashMap::new();
 
     query_tags!(
@@ -173,7 +201,7 @@ pub async fn get_all_services(
                         workspace: *host.workspace.key(),
                         created_at: host.created_at,
                     },
-                    port: port.map(|y| *y.key()),
+                    port: port.map(|y| ports.remove(y.key()).unwrap()),
                     workspace: *workspace.key(),
                     tags: tags.remove(&uuid).unwrap_or_default(),
                     created_at,
