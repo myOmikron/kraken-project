@@ -61,6 +61,12 @@ export interface SimpleService {
      * @memberof SimpleService
      */
     workspace: string;
+    /**
+     * The point in time, the record was created
+     * @type {Date}
+     * @memberof SimpleService
+     */
+    createdAt: Date;
 }
 
 /**
@@ -73,6 +79,7 @@ export function instanceOfSimpleService(value: object): boolean {
     isInstance = isInstance && "host" in value;
     isInstance = isInstance && "comment" in value;
     isInstance = isInstance && "workspace" in value;
+    isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
 }
@@ -94,6 +101,7 @@ export function SimpleServiceFromJSONTyped(json: any, ignoreDiscriminator: boole
         'port': !exists(json, 'port') ? undefined : json['port'],
         'comment': json['comment'],
         'workspace': json['workspace'],
+        'createdAt': (new Date(json['created_at'])),
     };
 }
 
@@ -113,6 +121,7 @@ export function SimpleServiceToJSON(value?: SimpleService | null): any {
         'port': value.port,
         'comment': value.comment,
         'workspace': value.workspace,
+        'created_at': (value.createdAt.toISOString()),
     };
 }
 

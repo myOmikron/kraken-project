@@ -56,6 +56,12 @@ export interface FullDomain {
      * @memberof FullDomain
      */
     tags: Array<SimpleTag>;
+    /**
+     * 
+     * @type {Date}
+     * @memberof FullDomain
+     */
+    createdAt: Date;
 }
 
 /**
@@ -68,6 +74,7 @@ export function instanceOfFullDomain(value: object): boolean {
     isInstance = isInstance && "comment" in value;
     isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "tags" in value;
+    isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
 }
@@ -87,6 +94,7 @@ export function FullDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'comment': json['comment'],
         'workspace': json['workspace'],
         'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
+        'createdAt': (new Date(json['created_at'])),
     };
 }
 
@@ -104,6 +112,7 @@ export function FullDomainToJSON(value?: FullDomain | null): any {
         'comment': value.comment,
         'workspace': value.workspace,
         'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),
+        'created_at': (value.createdAt.toISOString()),
     };
 }
 

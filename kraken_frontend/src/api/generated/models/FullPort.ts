@@ -80,6 +80,12 @@ export interface FullPort {
      * @memberof FullPort
      */
     workspace: string;
+    /**
+     * The point in time, the record was created
+     * @type {Date}
+     * @memberof FullPort
+     */
+    createdAt: Date;
 }
 
 /**
@@ -94,6 +100,7 @@ export function instanceOfFullPort(value: object): boolean {
     isInstance = isInstance && "comment" in value;
     isInstance = isInstance && "tags" in value;
     isInstance = isInstance && "workspace" in value;
+    isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
 }
@@ -115,6 +122,7 @@ export function FullPortFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         'comment': json['comment'],
         'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
         'workspace': json['workspace'],
+        'createdAt': (new Date(json['created_at'])),
     };
 }
 
@@ -134,6 +142,7 @@ export function FullPortToJSON(value?: FullPort | null): any {
         'comment': value.comment,
         'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),
         'workspace': value.workspace,
+        'created_at': (value.createdAt.toISOString()),
     };
 }
 

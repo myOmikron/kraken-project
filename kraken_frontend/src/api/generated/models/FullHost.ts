@@ -68,6 +68,12 @@ export interface FullHost {
      * @memberof FullHost
      */
     tags: Array<SimpleTag>;
+    /**
+     * The point in time, the record was created
+     * @type {Date}
+     * @memberof FullHost
+     */
+    createdAt: Date;
 }
 
 /**
@@ -81,6 +87,7 @@ export function instanceOfFullHost(value: object): boolean {
     isInstance = isInstance && "comment" in value;
     isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "tags" in value;
+    isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
 }
@@ -101,6 +108,7 @@ export function FullHostFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         'comment': json['comment'],
         'workspace': json['workspace'],
         'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
+        'createdAt': (new Date(json['created_at'])),
     };
 }
 
@@ -119,6 +127,7 @@ export function FullHostToJSON(value?: FullHost | null): any {
         'comment': value.comment,
         'workspace': value.workspace,
         'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),
+        'created_at': (value.createdAt.toISOString()),
     };
 }
 
