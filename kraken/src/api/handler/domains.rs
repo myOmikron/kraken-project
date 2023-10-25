@@ -1,18 +1,26 @@
 //! The handlers for the aggregated data of domains are located here
 
+use std::collections::HashMap;
+
 use actix_toolbox::tb_middleware::Session;
 use actix_web::get;
 use actix_web::web::{Data, Json, Path, Query};
 use futures::TryStreamExt;
+use rorm::conditions::DynamicCollection;
 use rorm::{and, query, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::handler::{
-    get_page_params, ApiError, ApiResult, DomainResultsPage, PageParams, PathUuid,
+    get_page_params, ApiError, ApiResult, DomainResultsPage, PageParams, PathUuid, SimpleTag,
+    TagType,
 };
-use crate::models::{Domain, DomainHostRelation, Host, Workspace};
+use crate::models::{
+    Domain, DomainGlobalTag, DomainHostRelation, DomainWorkspaceTag, GlobalTag, Host, Workspace,
+    WorkspaceTag,
+};
+use crate::query_tags;
 
 /// Query parameters for filtering the domains to get
 #[derive(Deserialize, IntoParams)]
@@ -32,6 +40,18 @@ pub struct SimpleDomain {
     #[schema(example = "This is a important domain!")]
     comment: String,
     workspace: Uuid,
+}
+
+/// A full representation of a domain in a workspace
+#[derive(Serialize, ToSchema)]
+pub struct FullDomain {
+    uuid: Uuid,
+    #[schema(example = "example.com")]
+    domain: String,
+    #[schema(example = "This is a important domain!")]
+    comment: String,
+    workspace: Uuid,
+    tags: Vec<SimpleTag>,
 }
 
 /// Retrieve all domains of a specific workspace
@@ -59,6 +79,8 @@ pub async fn get_all_domains(
 
     let mut tx = db.start_transaction().await?;
 
+    let mut tags: HashMap<Uuid, Vec<SimpleTag>> = HashMap::new();
+
     if !Workspace::is_user_member_or_owner(&mut tx, path.uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
     }
@@ -76,19 +98,39 @@ pub async fn get_all_domains(
                 .condition(Domain::F.workspace.equals(path.uuid))
                 .limit(limit)
                 .offset(offset)
-                .stream()
-                .map_ok(|x| SimpleDomain {
+                .all()
+                .await?;
+
+            query_tags!(
+                tags,
+                tx,
+                (
+                    DomainWorkspaceTag::F.workspace_tag as WorkspaceTag,
+                    DomainWorkspaceTag::F.domain
+                ),
+                DomainWorkspaceTag::F.domain,
+                (
+                    DomainGlobalTag::F.global_tag as GlobalTag,
+                    DomainGlobalTag::F.domain
+                ),
+                DomainGlobalTag::F.domain,
+                domains.iter().map(|x| x.uuid)
+            );
+
+            let items = domains
+                .into_iter()
+                .map(|x| FullDomain {
                     uuid: x.uuid,
                     domain: x.domain,
                     comment: x.comment,
                     workspace: *x.workspace.key(),
+                    tags: tags.remove(&x.uuid).unwrap_or_default(),
                 })
-                .try_collect()
-                .await?;
+                .collect();
 
             tx.commit().await?;
             Ok(Json(DomainResultsPage {
-                items: domains,
+                items,
                 limit,
                 offset,
                 total: total as u64,
@@ -109,23 +151,45 @@ pub async fn get_all_domains(
                 .one()
                 .await?;
 
-            let domains = query!(&mut tx, (DomainHostRelation::F.domain as Domain,))
+            let domains: Vec<Domain> = query!(&mut tx, (DomainHostRelation::F.domain as Domain,))
                 .condition(DomainHostRelation::F.host.equals(host_uuid))
                 .limit(limit)
                 .offset(offset)
                 .stream()
-                .map_ok(|(x,)| SimpleDomain {
+                .map_ok(|x| x.0)
+                .try_collect()
+                .await?;
+
+            query_tags!(
+                tags,
+                tx,
+                (
+                    DomainWorkspaceTag::F.workspace_tag as WorkspaceTag,
+                    DomainWorkspaceTag::F.domain
+                ),
+                DomainWorkspaceTag::F.domain,
+                (
+                    DomainGlobalTag::F.global_tag as GlobalTag,
+                    DomainGlobalTag::F.domain
+                ),
+                DomainGlobalTag::F.domain,
+                domains.iter().map(|x| x.uuid)
+            );
+
+            let items = domains
+                .into_iter()
+                .map(|x| FullDomain {
                     uuid: x.uuid,
                     domain: x.domain,
                     comment: x.comment,
                     workspace: *x.workspace.key(),
+                    tags: tags.remove(&x.uuid).unwrap_or_default(),
                 })
-                .try_collect()
-                .await?;
+                .collect();
 
             tx.commit().await?;
             Ok(Json(DomainResultsPage {
-                items: domains,
+                items,
                 limit,
                 offset,
                 total: total as u64,

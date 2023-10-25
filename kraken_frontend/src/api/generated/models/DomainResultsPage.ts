@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleDomain } from './SimpleDomain';
+import type { FullDomain } from './FullDomain';
 import {
-    SimpleDomainFromJSON,
-    SimpleDomainFromJSONTyped,
-    SimpleDomainToJSON,
-} from './SimpleDomain';
+    FullDomainFromJSON,
+    FullDomainFromJSONTyped,
+    FullDomainToJSON,
+} from './FullDomain';
 
 /**
  * Response containing paginated data
@@ -28,10 +28,10 @@ import {
 export interface DomainResultsPage {
     /**
      * The page's items
-     * @type {Array<SimpleDomain>}
+     * @type {Array<FullDomain>}
      * @memberof DomainResultsPage
      */
-    items: Array<SimpleDomain>;
+    items: Array<FullDomain>;
     /**
      * The limit this page was retrieved with
      * @type {number}
@@ -75,7 +75,7 @@ export function DomainResultsPageFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'items': ((json['items'] as Array<any>).map(SimpleDomainFromJSON)),
+        'items': ((json['items'] as Array<any>).map(FullDomainFromJSON)),
         'limit': json['limit'],
         'offset': json['offset'],
         'total': json['total'],
@@ -91,7 +91,7 @@ export function DomainResultsPageToJSON(value?: DomainResultsPage | null): any {
     }
     return {
         
-        'items': ((value.items as Array<any>).map(SimpleDomainToJSON)),
+        'items': ((value.items as Array<any>).map(FullDomainToJSON)),
         'limit': value.limit,
         'offset': value.offset,
         'total': value.total,

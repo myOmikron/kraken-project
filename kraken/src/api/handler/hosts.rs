@@ -1,5 +1,7 @@
 //! The aggregated data of hosts
 
+use std::collections::HashMap;
+
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path, Query};
 use actix_web::{get, put, HttpResponse};
@@ -17,6 +19,7 @@ use crate::api::handler::{
 use crate::models::{
     GlobalTag, Host, HostGlobalTag, HostWorkspaceTag, OsType, Workspace, WorkspaceTag,
 };
+use crate::query_tags;
 
 /// The simple representation of a host
 #[derive(Serialize, Debug, ToSchema)]
@@ -98,17 +101,36 @@ pub(crate) async fn get_all_hosts(
         .all()
         .await?;
 
+    let mut tags = HashMap::new();
+
+    query_tags!(
+        tags,
+        tx,
+        (
+            HostWorkspaceTag::F.workspace_tag as WorkspaceTag,
+            HostWorkspaceTag::F.host
+        ),
+        HostWorkspaceTag::F.host,
+        (
+            HostGlobalTag::F.global_tag as GlobalTag,
+            HostGlobalTag::F.host
+        ),
+        HostGlobalTag::F.host,
+        hosts.iter().map(|x| x.uuid)
+    );
+
     tx.commit().await?;
 
     Ok(Json(HostResultsPage {
         items: hosts
             .into_iter()
-            .map(|x| SimpleHost {
+            .map(|x| FullHost {
                 uuid: x.uuid,
                 ip_addr: x.ip_addr.ip().to_string(),
                 comment: x.comment,
                 os_type: x.os_type,
                 workspace: *x.workspace.key(),
+                tags: tags.remove(&x.uuid).unwrap_or_default(),
             })
             .collect(),
         limit,

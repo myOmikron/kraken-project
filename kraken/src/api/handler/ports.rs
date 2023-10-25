@@ -1,19 +1,25 @@
 //! This module holds the aggregated data of ports
 
+use std::collections::HashMap;
+
 use actix_toolbox::tb_middleware::Session;
 use actix_web::get;
 use actix_web::web::{Data, Json, Path, Query};
 use futures::TryStreamExt;
-use rorm::conditions::{BoxedCondition, Condition};
+use rorm::conditions::{BoxedCondition, Condition, DynamicCollection};
 use rorm::{and, query, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+use crate::api::handler::hosts::SimpleHost;
 use crate::api::handler::{
-    get_page_params, ApiError, ApiResult, PageParams, PathUuid, PortResultsPage,
+    get_page_params, ApiError, ApiResult, PageParams, PathUuid, PortResultsPage, SimpleTag, TagType,
 };
-use crate::models::{Port, PortProtocol, Workspace};
+use crate::models::{
+    GlobalTag, Host, Port, PortGlobalTag, PortProtocol, PortWorkspaceTag, Workspace, WorkspaceTag,
+};
+use crate::query_tags;
 
 /// Query parameters for filtering the ports to get
 #[derive(Deserialize, IntoParams)]
@@ -36,6 +42,28 @@ pub struct SimplePort {
     pub host: Uuid,
     /// A comment to the port
     pub comment: String,
+    /// The workspace this port is linked to
+    pub workspace: Uuid,
+}
+
+/// The full representation of a port
+#[derive(Serialize, ToSchema)]
+pub struct FullPort {
+    /// Uuid of the port
+    pub uuid: Uuid,
+    /// Port number
+    #[schema(example = 1337)]
+    pub port: u16,
+    /// Port protocol
+    pub protocol: PortProtocol,
+    /// The host this port is assigned to
+    pub host: SimpleHost,
+    /// A comment to the port
+    pub comment: String,
+    /// The tags this port is linked to
+    pub tags: Vec<SimpleTag>,
+    /// The workspace this port is linked to
+    pub workspace: Uuid,
 }
 
 /// List the ports of a workspace
@@ -85,25 +113,66 @@ pub async fn get_all_ports(
         .one()
         .await?;
 
-    let ports: Vec<_> = query!(&mut tx, Port)
-        .condition(build_condition(path.uuid, &filter_params))
-        .limit(limit)
-        .offset(offset)
-        .stream()
-        .map_ok(|x| SimplePort {
-            uuid: x.uuid,
-            port: u16::from_ne_bytes(x.port.to_ne_bytes()),
-            protocol: x.protocol,
-            comment: x.comment,
-            host: *x.host.key(),
-        })
-        .try_collect()
-        .await?;
+    let ports: Vec<_> = query!(
+        &mut tx,
+        (
+            Port::F.uuid,
+            Port::F.port,
+            Port::F.protocol,
+            Port::F.comment,
+            Port::F.host as Host,
+            Port::F.workspace
+        )
+    )
+    .condition(build_condition(path.uuid, &filter_params))
+    .limit(limit)
+    .offset(offset)
+    .all()
+    .await?;
+
+    let mut tags = HashMap::new();
+
+    query_tags!(
+        tags,
+        tx,
+        (
+            PortWorkspaceTag::F.workspace_tag as WorkspaceTag,
+            PortWorkspaceTag::F.port
+        ),
+        PortWorkspaceTag::F.port,
+        (
+            PortGlobalTag::F.global_tag as GlobalTag,
+            PortGlobalTag::F.port
+        ),
+        PortGlobalTag::F.port,
+        ports.iter().map(|x| x.0)
+    );
+
+    let items = ports
+        .into_iter()
+        .map(
+            |(uuid, port, protocol, comment, host, workspace)| FullPort {
+                uuid,
+                port: u16::from_ne_bytes(port.to_ne_bytes()),
+                protocol,
+                comment,
+                host: SimpleHost {
+                    uuid: host.uuid,
+                    ip_addr: host.ip_addr.to_string(),
+                    os_type: host.os_type,
+                    workspace: *host.workspace.key(),
+                    comment: host.comment,
+                },
+                workspace: *workspace.key(),
+                tags: tags.remove(&uuid).unwrap_or_default(),
+            },
+        )
+        .collect();
 
     tx.commit().await?;
 
     Ok(Json(PortResultsPage {
-        items: ports,
+        items,
         limit,
         offset,
         total: total as u64,

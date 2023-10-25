@@ -60,6 +60,12 @@ pub struct Host {
     #[rorm(max_length = 255)]
     pub comment: String,
 
+    /// Workspace tags of the host
+    pub workspace_tags: BackRef<field!(HostWorkspaceTag::F.host)>,
+
+    /// Global tags of the host
+    pub global_tags: BackRef<field!(HostGlobalTag::F.host)>,
+
     /// A reference to the workspace this host is referencing
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub workspace: ForeignModel<Workspace>,
@@ -138,6 +144,12 @@ pub struct Service {
     #[rorm(max_length = 255)]
     pub comment: String,
 
+    /// Workspace tags of the service
+    pub workspace_tags: BackRef<field!(ServiceWorkspaceTag::F.service)>,
+
+    /// Global tags of the service
+    pub global_tags: BackRef<field!(ServiceGlobalTag::F.service)>,
+
     /// A reference to the workspace this service is referencing
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub workspace: ForeignModel<Workspace>,
@@ -214,6 +226,12 @@ pub struct Port {
     #[rorm(max_length = 255)]
     pub comment: String,
 
+    /// Workspace tags of the port
+    pub workspace_tags: BackRef<field!(PortWorkspaceTag::F.port)>,
+
+    /// Global tags of the port
+    pub global_tags: BackRef<field!(PortGlobalTag::F.port)>,
+
     /// A reference to the workspace this port is referencing
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub workspace: ForeignModel<Workspace>,
@@ -274,6 +292,12 @@ pub struct Domain {
 
     /// Domains, this one resolves to
     pub destinations: BackRef<field!(DomainDomainRelation::F.source)>,
+
+    /// Workspace tags of the domain
+    pub workspace_tags: BackRef<field!(DomainWorkspaceTag::F.domain)>,
+
+    /// Global tags of the domain
+    pub global_tags: BackRef<field!(DomainGlobalTag::F.domain)>,
 
     /// A reference to the workspace this domain is referencing
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]

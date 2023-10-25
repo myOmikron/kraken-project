@@ -27,6 +27,7 @@ models/ApiStatusCode.ts
 models/AttackType.ts
 models/BruteforceSubdomainsRequest.ts
 models/BruteforceSubdomainsResultsPage.ts
+models/Certainty.ts
 models/Color.ts
 models/CreateApiKeyRequest.ts
 models/CreateAppRequest.ts
@@ -43,10 +44,13 @@ models/FinishRegisterRequest.ts
 models/FinishRegisterRequestAllOf.ts
 models/FullApiKey.ts
 models/FullDecision.ts
+models/FullDomain.ts
 models/FullGlobalTag.ts
 models/FullHost.ts
 models/FullOauthClient.ts
+models/FullPort.ts
 models/FullQueryCertificateTransparencyResult.ts
+models/FullService.ts
 models/FullServiceDetectionResult.ts
 models/FullWordlist.ts
 models/FullWorkspace.ts

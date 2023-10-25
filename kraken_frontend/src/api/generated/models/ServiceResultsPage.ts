@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleService } from './SimpleService';
+import type { FullService } from './FullService';
 import {
-    SimpleServiceFromJSON,
-    SimpleServiceFromJSONTyped,
-    SimpleServiceToJSON,
-} from './SimpleService';
+    FullServiceFromJSON,
+    FullServiceFromJSONTyped,
+    FullServiceToJSON,
+} from './FullService';
 
 /**
  * Response containing paginated data
@@ -28,10 +28,10 @@ import {
 export interface ServiceResultsPage {
     /**
      * The page's items
-     * @type {Array<SimpleService>}
+     * @type {Array<FullService>}
      * @memberof ServiceResultsPage
      */
-    items: Array<SimpleService>;
+    items: Array<FullService>;
     /**
      * The limit this page was retrieved with
      * @type {number}
@@ -75,7 +75,7 @@ export function ServiceResultsPageFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'items': ((json['items'] as Array<any>).map(SimpleServiceFromJSON)),
+        'items': ((json['items'] as Array<any>).map(FullServiceFromJSON)),
         'limit': json['limit'],
         'offset': json['offset'],
         'total': json['total'],
@@ -91,7 +91,7 @@ export function ServiceResultsPageToJSON(value?: ServiceResultsPage | null): any
     }
     return {
         
-        'items': ((value.items as Array<any>).map(SimpleServiceToJSON)),
+        'items': ((value.items as Array<any>).map(FullServiceToJSON)),
         'limit': value.limit,
         'offset': value.offset,
         'total': value.total,

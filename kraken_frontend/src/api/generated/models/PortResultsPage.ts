@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimplePort } from './SimplePort';
+import type { FullPort } from './FullPort';
 import {
-    SimplePortFromJSON,
-    SimplePortFromJSONTyped,
-    SimplePortToJSON,
-} from './SimplePort';
+    FullPortFromJSON,
+    FullPortFromJSONTyped,
+    FullPortToJSON,
+} from './FullPort';
 
 /**
  * Response containing paginated data
@@ -28,10 +28,10 @@ import {
 export interface PortResultsPage {
     /**
      * The page's items
-     * @type {Array<SimplePort>}
+     * @type {Array<FullPort>}
      * @memberof PortResultsPage
      */
-    items: Array<SimplePort>;
+    items: Array<FullPort>;
     /**
      * The limit this page was retrieved with
      * @type {number}
@@ -75,7 +75,7 @@ export function PortResultsPageFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'items': ((json['items'] as Array<any>).map(SimplePortFromJSON)),
+        'items': ((json['items'] as Array<any>).map(FullPortFromJSON)),
         'limit': json['limit'],
         'offset': json['offset'],
         'total': json['total'],
@@ -91,7 +91,7 @@ export function PortResultsPageToJSON(value?: PortResultsPage | null): any {
     }
     return {
         
-        'items': ((value.items as Array<any>).map(SimplePortToJSON)),
+        'items': ((value.items as Array<any>).map(FullPortToJSON)),
         'limit': value.limit,
         'offset': value.offset,
         'total': value.total,

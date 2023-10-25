@@ -371,6 +371,8 @@ impl From<Host> for AggregatedHost {
             domains: _,
             comment,
             workspace: _,
+            workspace_tags: _,
+            global_tags: _,
         } = value;
         Self {
             uuid,
@@ -395,6 +397,8 @@ impl From<Port> for AggregatedPort {
             services: _,
             comment,
             workspace: _,
+            global_tags: _,
+            workspace_tags: _,
         } = value;
         Self {
             uuid,
@@ -418,6 +422,8 @@ impl From<Service> for AggregatedService {
             comment,
             certainty,
             workspace: _,
+            workspace_tags: _,
+            global_tags: _,
         } = value;
         Self {
             uuid,
@@ -441,6 +447,8 @@ impl From<Domain> for AggregatedDomain {
             sources: _,
             destinations: _,
             workspace: _,
+            workspace_tags: _,
+            global_tags: _,
         } = value;
         Self {
             uuid,
