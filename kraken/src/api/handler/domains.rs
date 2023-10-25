@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use actix_toolbox::tb_middleware::Session;
 use actix_web::get;
 use actix_web::web::{Data, Json, Path, Query};
+use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use rorm::conditions::DynamicCollection;
 use rorm::{and, query, Database, FieldAccess, Model};
@@ -40,6 +41,7 @@ pub struct SimpleDomain {
     #[schema(example = "This is a important domain!")]
     comment: String,
     workspace: Uuid,
+    created_at: DateTime<Utc>,
 }
 
 /// A full representation of a domain in a workspace
@@ -52,6 +54,7 @@ pub struct FullDomain {
     comment: String,
     workspace: Uuid,
     tags: Vec<SimpleTag>,
+    created_at: DateTime<Utc>,
 }
 
 /// Retrieve all domains of a specific workspace
@@ -96,6 +99,7 @@ pub async fn get_all_domains(
 
             let domains = query!(&mut tx, Domain)
                 .condition(Domain::F.workspace.equals(path.uuid))
+                .order_desc(Domain::F.created_at)
                 .limit(limit)
                 .offset(offset)
                 .all()
@@ -125,6 +129,7 @@ pub async fn get_all_domains(
                     comment: x.comment,
                     workspace: *x.workspace.key(),
                     tags: tags.remove(&x.uuid).unwrap_or_default(),
+                    created_at: x.created_at,
                 })
                 .collect();
 
@@ -153,6 +158,7 @@ pub async fn get_all_domains(
 
             let domains: Vec<Domain> = query!(&mut tx, (DomainHostRelation::F.domain as Domain,))
                 .condition(DomainHostRelation::F.host.equals(host_uuid))
+                .order_desc(DomainHostRelation::F.domain.created_at)
                 .limit(limit)
                 .offset(offset)
                 .stream()
@@ -184,6 +190,7 @@ pub async fn get_all_domains(
                     comment: x.comment,
                     workspace: *x.workspace.key(),
                     tags: tags.remove(&x.uuid).unwrap_or_default(),
+                    created_at: x.created_at,
                 })
                 .collect();
 

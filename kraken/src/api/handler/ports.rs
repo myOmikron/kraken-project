@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use actix_toolbox::tb_middleware::Session;
 use actix_web::get;
 use actix_web::web::{Data, Json, Path, Query};
+use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use rorm::conditions::{BoxedCondition, Condition, DynamicCollection};
 use rorm::{and, query, Database, FieldAccess, Model};
@@ -44,6 +45,8 @@ pub struct SimplePort {
     pub comment: String,
     /// The workspace this port is linked to
     pub workspace: Uuid,
+    /// The point in time, the record was created
+    pub created_at: DateTime<Utc>,
 }
 
 /// The full representation of a port
@@ -64,6 +67,8 @@ pub struct FullPort {
     pub tags: Vec<SimpleTag>,
     /// The workspace this port is linked to
     pub workspace: Uuid,
+    /// The point in time, the record was created
+    pub created_at: DateTime<Utc>,
 }
 
 /// List the ports of a workspace
@@ -120,11 +125,13 @@ pub async fn get_all_ports(
             Port::F.port,
             Port::F.protocol,
             Port::F.comment,
+            Port::F.created_at,
             Port::F.host as Host,
             Port::F.workspace
         )
     )
     .condition(build_condition(path.uuid, &filter_params))
+    .order_desc(Port::F.created_at)
     .limit(limit)
     .offset(offset)
     .all()
@@ -151,7 +158,7 @@ pub async fn get_all_ports(
     let items = ports
         .into_iter()
         .map(
-            |(uuid, port, protocol, comment, host, workspace)| FullPort {
+            |(uuid, port, protocol, comment, created_at, host, workspace)| FullPort {
                 uuid,
                 port: u16::from_ne_bytes(port.to_ne_bytes()),
                 protocol,
@@ -162,9 +169,11 @@ pub async fn get_all_ports(
                     os_type: host.os_type,
                     workspace: *host.workspace.key(),
                     comment: host.comment,
+                    created_at: host.created_at,
                 },
                 workspace: *workspace.key(),
                 tags: tags.remove(&uuid).unwrap_or_default(),
+                created_at,
             },
         )
         .collect();

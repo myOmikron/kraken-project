@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use ipnetwork::IpNetwork;
 use rorm::prelude::{BackRef, ForeignModel};
 use rorm::{field, DbEnum, Model};
@@ -69,6 +70,10 @@ pub struct Host {
     /// A reference to the workspace this host is referencing
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub workspace: ForeignModel<Workspace>,
+
+    /// The point in time, this entry was created
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
 }
 
 /// M2M relation between [GlobalTag] and [Host]
@@ -153,6 +158,10 @@ pub struct Service {
     /// A reference to the workspace this service is referencing
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub workspace: ForeignModel<Workspace>,
+
+    /// The point in time, this entry was created
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
 }
 
 /// M2M relation between [GlobalTag] and [Service]
@@ -235,6 +244,10 @@ pub struct Port {
     /// A reference to the workspace this port is referencing
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub workspace: ForeignModel<Workspace>,
+
+    /// The point in time, this entry was created
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
 }
 
 /// M2M relation between [GlobalTag] and [Port]
@@ -302,6 +315,10 @@ pub struct Domain {
     /// A reference to the workspace this domain is referencing
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub workspace: ForeignModel<Workspace>,
+
+    /// The point in time, this entry was created
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
 }
 
 /// M2M relation between two [domains](Domain)

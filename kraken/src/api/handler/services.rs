@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use actix_toolbox::tb_middleware::Session;
 use actix_web::get;
 use actix_web::web::{Data, Json, Path, Query};
+use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use rorm::conditions::{BoxedCondition, Condition, DynamicCollection};
 use rorm::{and, query, Database, FieldAccess, Model};
@@ -43,6 +44,8 @@ pub struct SimpleService {
     #[schema(example = "Holds all relevant information")]
     comment: String,
     workspace: Uuid,
+    /// The point in time, the record was created
+    pub created_at: DateTime<Utc>,
 }
 
 /// A full representation of a service
@@ -60,6 +63,8 @@ pub struct FullService {
     comment: String,
     workspace: Uuid,
     tags: Vec<SimpleTag>,
+    /// The point in time, the record was created
+    pub created_at: DateTime<Utc>,
 }
 
 /// List the services of a workspace
@@ -117,12 +122,14 @@ pub async fn get_all_services(
             Service::F.version,
             Service::F.certainty,
             Service::F.comment,
+            Service::F.created_at,
             Service::F.host as Host,
             Service::F.port,
             Service::F.workspace,
         )
     )
     .condition(build_condition(path.uuid, &filter_params))
+    .order_desc(Service::F.created_at)
     .limit(limit)
     .offset(offset)
     .all()
@@ -151,22 +158,26 @@ pub async fn get_all_services(
     let items = services
         .into_iter()
         .map(
-            |(uuid, name, version, certainty, comment, host, port, workspace)| FullService {
-                uuid,
-                name,
-                version,
-                certainty,
-                comment,
-                host: SimpleHost {
-                    uuid: host.uuid,
-                    ip_addr: host.ip_addr.to_string(),
-                    os_type: host.os_type,
-                    comment: host.comment,
-                    workspace: *host.workspace.key(),
-                },
-                port: port.map(|y| *y.key()),
-                workspace: *workspace.key(),
-                tags: tags.remove(&uuid).unwrap_or_default(),
+            |(uuid, name, version, certainty, comment, created_at, host, port, workspace)| {
+                FullService {
+                    uuid,
+                    name,
+                    version,
+                    certainty,
+                    comment,
+                    host: SimpleHost {
+                        uuid: host.uuid,
+                        ip_addr: host.ip_addr.to_string(),
+                        os_type: host.os_type,
+                        comment: host.comment,
+                        workspace: *host.workspace.key(),
+                        created_at: host.created_at,
+                    },
+                    port: port.map(|y| *y.key()),
+                    workspace: *workspace.key(),
+                    tags: tags.remove(&uuid).unwrap_or_default(),
+                    created_at,
+                }
             },
         )
         .collect();

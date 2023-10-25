@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path, Query};
 use actix_web::{get, put, HttpResponse};
+use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use rorm::conditions::DynamicCollection;
 use rorm::prelude::*;
@@ -35,6 +36,8 @@ pub struct SimpleHost {
     pub comment: String,
     /// The workspace this host is in
     pub workspace: Uuid,
+    /// The point in time, the record was created
+    pub created_at: DateTime<Utc>,
 }
 
 /// The full representation of a host
@@ -53,6 +56,8 @@ pub struct FullHost {
     pub workspace: Uuid,
     /// The list of tags this host has attached to
     pub tags: Vec<SimpleTag>,
+    /// The point in time, the record was created
+    pub created_at: DateTime<Utc>,
 }
 
 /// Retrieve all hosts.
@@ -96,6 +101,7 @@ pub(crate) async fn get_all_hosts(
 
     let hosts = query!(&mut tx, Host)
         .condition(Host::F.workspace.equals(path.uuid))
+        .order_desc(Host::F.created_at)
         .limit(limit)
         .offset(offset)
         .all()
@@ -131,6 +137,7 @@ pub(crate) async fn get_all_hosts(
                 os_type: x.os_type,
                 workspace: *x.workspace.key(),
                 tags: tags.remove(&x.uuid).unwrap_or_default(),
+                created_at: x.created_at,
             })
             .collect(),
         limit,
@@ -221,6 +228,7 @@ pub async fn get_host(
         os_type: host.os_type,
         comment: host.comment,
         tags,
+        created_at: host.created_at,
     }))
 }
 
