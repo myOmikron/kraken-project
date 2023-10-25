@@ -10,6 +10,7 @@ import CloseIcon from "../../svg/close";
 import Popup from "reactjs-popup";
 import { ROUTES } from "../../routes";
 import SelectMenu from "../../components/select-menu";
+import Bubble from "../../components/bubble";
 
 type WorkspaceSettingsProps = {
     workspace: FullWorkspace;
@@ -68,14 +69,14 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
 
         (await Api.workspaces.update(this.props.workspace.uuid, update)).match(
             () => toast.success("Workspace updated"),
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 
     async deleteWorkspace() {
         (await Api.workspaces.delete(this.props.workspace.uuid)).match(
             () => toast.success("Deleted Workspace "),
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 
@@ -91,7 +92,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                         this.state.transferList.push(member);
                     });
             },
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 
@@ -111,7 +112,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                         this.state.inviteList.push(member);
                     });
             },
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 
@@ -199,7 +200,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                             <div className={"workspace-settings-user-table-entry neon"}>
                                 <span>{this.props.workspace.owner.displayName}</span>
                                 <div className={"workspace-settings-tag-container"}>
-                                    <Tag name={"owner"} color={"primary"} />
+                                    <Bubble name={"owner"} color={"primary"} />
                                 </div>
                             </div>
                             {this.props.workspace.members.map((m) => (

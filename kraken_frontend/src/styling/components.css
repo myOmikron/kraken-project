@@ -68,6 +68,15 @@
     box-shadow: inset 0 -3px 2em -3px var(--primary-op), 0 0 10em #0cf3, 0 0 .5em #0ff2;
 }
 
+.bubble-primary{
+    background-color: #00ccff50;
+}
+
+.bubble-red{
+    background-color: #ff000050;
+    border: 1px solid #ff000070;
+}
+
 .red {
     background-color: var(--toast-error);
 }
@@ -135,21 +144,15 @@
 }
 
 .tag{
-    background-color: #00ccff20;
+    /* Overwritten by javascript to match the dynamic color stored in db */
+    --color: #00ccff20;
+
+    background-color: var(--color);
     border: 1px solid var(--primary-op);
     width: max-content;
     padding: 0.1em 0.7em;
     color: var(--text);
     border-radius: 1em;
-}
-
-.tag-primary{
-    background-color: #00ccff50;
-}
-
-.tag-red{
-    background-color: #ff000050;
-    border: 1px solid #ff000070;
 }
 
 ::-webkit-scrollbar {
@@ -164,5 +167,3 @@
     background: var(--grey-blue);
     border-radius: 20px;
 }
-
-

@@ -1,5 +1,5 @@
 import React from "react";
-import Select, { SingleValue, StylesConfig } from "react-select";
+import Select, { StylesConfig } from "react-select";
 import { GroupBase } from "react-select/dist/declarations/src/types";
 
 type SelectMenuProps = {
