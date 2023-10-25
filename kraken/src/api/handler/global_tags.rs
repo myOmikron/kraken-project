@@ -134,6 +134,7 @@ pub async fn update_global_tag(
     }
 
     update!(&mut tx, GlobalTag)
+        .condition(GlobalTag::F.uuid.equals(path.uuid))
         .begin_dyn_set()
         .set_if(GlobalTag::F.name, req.name)
         .set_if(GlobalTag::F.color, req.color.map(|x| x.into()))

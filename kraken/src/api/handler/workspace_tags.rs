@@ -194,6 +194,7 @@ pub async fn update_workspace_tag(
     }
 
     update!(&mut tx, WorkspaceTag)
+        .condition(WorkspaceTag::F.uuid.equals(path.w_uuid))
         .begin_dyn_set()
         .set_if(WorkspaceTag::F.name, req.name)
         .set_if(WorkspaceTag::F.color, req.color.map(|x| x.into()))
