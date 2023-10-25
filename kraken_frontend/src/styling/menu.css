@@ -38,6 +38,11 @@
     filter: brightness(0) invert() drop-shadow(0 0 8px var(--primary));
 }
 
+.width{
+    width: 1em;
+    height: 1em;
+}
+
 .menu-item:hover > .icon {
     animation: bounceLR 1s infinite;
     transform-origin: center left;

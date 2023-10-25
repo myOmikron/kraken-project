@@ -45,17 +45,6 @@
     text-align: center;
 }
 
-.workspace-data-table {
-    padding: 2em 1em;
-
-    /* Is overwritten by javascript to set the number of columns */
-    --columns: 4;
-}
-
-.workspace-data-filter {
-    margin: 0 1em 1.5em;
-}
-
 .workspace-data-table-header {
     display: grid;
     grid-template-columns: repeat(var(--columns), 1fr);
@@ -68,21 +57,11 @@
     border-bottom: 1px solid white;
 }
 
-.workspace-data-table-body {
-    display: flex;
-    flex-direction: column;
-
-    overflow-y: auto;
-    height: calc(100vh - 31.1em);
-    padding: 0 1.5em;
-}
-
 .workspace-data-table-row {
     display: grid;
     grid-template-columns: repeat(var(--columns), 1fr);
     gap: 0.5em;
     align-items: center;
-
     transition: all ease 200ms;
     cursor: pointer;
     padding: 0.3em 0.5em;
@@ -93,17 +72,10 @@
     --blur: 0.5em;
     --offset: 0.2em;
     box-shadow:
-        inset 0 var(--offset) var(--blur) var(--color),
-        inset 0 calc(-1 * var(--offset)) var(--blur) var(--color);
+            inset 0 var(--offset) var(--blur) var(--color),
+            inset 0 calc(-1 * var(--offset)) var(--blur) var(--color);
 }
 
 .workspace-data-table-row:not(:first-child) {
     border-top: 2px solid var(--primary-op);
-}
-
-.workspace-data-table-controls {
-    align-self: center;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
 }

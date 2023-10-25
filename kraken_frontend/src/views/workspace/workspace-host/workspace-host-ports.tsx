@@ -6,25 +6,25 @@ import { FullHost, FullPort, SimplePort } from "../../../api/generated";
 type WorkspaceDataPortsProps = {
     workspace: string;
     onSelect: (uuid: string) => void;
+    host: FullHost | null;
 };
 
-export function WorkspaceDataPorts(props: WorkspaceDataPortsProps) {
-    const { workspace, onSelect } = props;
+export function WorkspaceHostPorts(props: WorkspaceDataPortsProps) {
+    const { workspace, onSelect, host } = props;
     return (
         <WorkspaceTable<FullPort>
-            query={(limit, offset) => Api.workspaces.ports.all(workspace, limit, offset)}
-            queryDeps={[workspace]}
-            columns={3}
+            query={(limit, offset) => Api.workspaces.ports.all(workspace, limit, offset, { host: host?.uuid })}
+            queryDeps={[workspace, host?.uuid]}
+            columns={2}
+            type={"Host"}
         >
             <div className={"workspace-data-table-header"}>
                 <span>Port</span>
-                <span>Host</span>
                 <span>Comment</span>
             </div>
             {(port) => (
                 <div className={"workspace-data-table-row"} onClick={() => onSelect(port.uuid)}>
                     <span>{port.port}</span>
-                    <span>{port.host.ipAddr}</span>
                     <span>{port.comment}</span>
                 </div>
             )}
