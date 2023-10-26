@@ -225,7 +225,7 @@ export const Api = {
                 handleError(workspaceTags.createWorkspaceTag({ uuid: workspaceUuid, createWorkspaceTagRequest })),
             update: (workspaceUuid: UUID, tagUuid: UUID, updateWorkspaceTag: UpdateWorkspaceTag) =>
                 handleError(
-                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag })
+                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag }),
                 ),
             delete: (workspaceUuid: UUID, tagUuid: UUID) =>
                 workspaceTags.deleteWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid }),
@@ -236,6 +236,11 @@ export const Api = {
     },
     globalTags: {
         all: () => handleError(globalTags.getAllGlobalTags()),
+        create: (tag: CreateGlobalTagRequest) =>
+            handleError(globalTags.createGlobalTag({ createGlobalTagRequest: tag })),
+        update: (uuid: UUID, tag: UpdateGlobalTag) =>
+            handleError(globalTags.updateGlobalTag({ uuid, updateGlobalTag: tag })),
+        delete: (uuid: UUID) => globalTags.deleteGlobalTag({ uuid }),
     },
     wordlists: {
         all: () => handleError(wordlists.getAllWordlists()),

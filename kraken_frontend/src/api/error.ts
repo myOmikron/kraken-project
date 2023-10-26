@@ -53,6 +53,7 @@ export async function handleError<T>(promise: Promise<T>): Promise<Result<T, Api
         if (e instanceof ResponseError) {
             return Err(await parseError(e.response));
         } else if (e instanceof RequiredError) {
+            console.error(e);
             return Err({
                 status_code: StatusCode.JsonDecodeError,
                 message: "The server's response didn't match the spec",
