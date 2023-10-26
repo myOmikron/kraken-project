@@ -283,67 +283,77 @@ pub async fn update_host(
         .ok_or(ApiError::InvalidUuid)?;
 
     if let Some(global_tags) = req.global_tags {
-        let cond = DynamicCollection::or(
-            global_tags
-                .iter()
-                .map(|x| GlobalTag::F.uuid.equals(*x))
-                .collect(),
-        );
-
-        let res = query!(&mut tx, GlobalTag).condition(cond).all().await?;
-        if res.len() != global_tags.len() {
-            return Err(ApiError::InvalidUuid);
+        if !global_tags.is_empty() {
+            let (count,) = query!(&mut tx, (GlobalTag::F.uuid.count(),))
+                .condition(DynamicCollection::or(
+                    global_tags
+                        .iter()
+                        .map(|x| GlobalTag::F.uuid.equals(*x))
+                        .collect(),
+                ))
+                .one()
+                .await?;
+            if global_tags.len() as i64 != count {
+                return Err(ApiError::InvalidUuid);
+            }
         }
 
         rorm::delete!(&mut tx, HostGlobalTag)
             .condition(HostGlobalTag::F.host.equals(path.h_uuid))
             .await?;
 
-        insert!(&mut tx, HostGlobalTag)
-            .return_nothing()
-            .bulk(
-                &global_tags
-                    .into_iter()
-                    .map(|x| HostGlobalTag {
-                        uuid: Uuid::new_v4(),
-                        host: ForeignModelByField::Key(path.h_uuid),
-                        global_tag: ForeignModelByField::Key(x),
-                    })
-                    .collect::<Vec<_>>(),
-            )
-            .await?;
+        if !global_tags.is_empty() {
+            insert!(&mut tx, HostGlobalTag)
+                .return_nothing()
+                .bulk(
+                    &global_tags
+                        .into_iter()
+                        .map(|x| HostGlobalTag {
+                            uuid: Uuid::new_v4(),
+                            host: ForeignModelByField::Key(path.h_uuid),
+                            global_tag: ForeignModelByField::Key(x),
+                        })
+                        .collect::<Vec<_>>(),
+                )
+                .await?;
+        }
     }
 
     if let Some(workspace_tags) = req.workspace_tags {
-        let cond = DynamicCollection::or(
-            workspace_tags
-                .iter()
-                .map(|x| GlobalTag::F.uuid.equals(*x))
-                .collect(),
-        );
-
-        let res = query!(&mut tx, GlobalTag).condition(cond).all().await?;
-        if res.len() != workspace_tags.len() {
-            return Err(ApiError::InvalidUuid);
+        if !workspace_tags.is_empty() {
+            let (count,) = query!(&mut tx, (WorkspaceTag::F.uuid.count(),))
+                .condition(DynamicCollection::or(
+                    workspace_tags
+                        .iter()
+                        .map(|x| WorkspaceTag::F.uuid.equals(*x))
+                        .collect(),
+                ))
+                .one()
+                .await?;
+            if workspace_tags.len() as i64 != count {
+                return Err(ApiError::InvalidUuid);
+            }
         }
 
         rorm::delete!(&mut tx, HostWorkspaceTag)
             .condition(HostWorkspaceTag::F.host.equals(path.h_uuid))
             .await?;
 
-        insert!(&mut tx, HostWorkspaceTag)
-            .return_nothing()
-            .bulk(
-                &workspace_tags
-                    .into_iter()
-                    .map(|x| HostWorkspaceTag {
-                        uuid: Uuid::new_v4(),
-                        host: ForeignModelByField::Key(path.h_uuid),
-                        workspace_tag: ForeignModelByField::Key(x),
-                    })
-                    .collect::<Vec<_>>(),
-            )
-            .await?;
+        if !workspace_tags.is_empty() {
+            insert!(&mut tx, HostWorkspaceTag)
+                .return_nothing()
+                .bulk(
+                    &workspace_tags
+                        .into_iter()
+                        .map(|x| HostWorkspaceTag {
+                            uuid: Uuid::new_v4(),
+                            host: ForeignModelByField::Key(path.h_uuid),
+                            workspace_tag: ForeignModelByField::Key(x),
+                        })
+                        .collect::<Vec<_>>(),
+                )
+                .await?;
+        }
     }
 
     if let Some(comment) = req.comment {
