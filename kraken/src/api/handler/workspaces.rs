@@ -4,11 +4,16 @@ use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
-use log::{debug, warn};
+use futures::StreamExt;
+use log::{debug, error, info, warn};
+use rorm::db::executor::Stream;
+use rorm::db::sql::value::Value;
 use rorm::db::transaction::Transaction;
+use rorm::db::Executor;
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, query, update, Database, FieldAccess, Model};
+use rorm::{and, insert, query, update, Database, Error, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
+use tokio::sync::mpsc;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -21,7 +26,8 @@ use crate::api::handler::workspace_invitations::{
 use crate::api::handler::{de_optional, query_user, ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::chan::{WsManagerChan, WsManagerMessage, WsMessage};
 use crate::models::{
-    Attack, User, UserPermission, Workspace, WorkspaceInvitation, WorkspaceMember,
+    Attack, ModelType, Search, SearchInsert, SearchResult, User, UserPermission, Workspace,
+    WorkspaceInvitation, WorkspaceMember,
 };
 
 /// The request to create a new workspace
@@ -97,7 +103,7 @@ pub async fn delete_workspace(
         rorm::delete!(&mut tx, Workspace).single(&workspace).await?;
     } else {
         debug!(
-            "User {} does not has the privileges to delete the workspace {}",
+            "User {} does not have the privileges to delete the workspace {}",
             executing_user.username, workspace.uuid
         );
 
@@ -621,6 +627,258 @@ pub async fn get_all_workspaces_admin(
             )
             .collect(),
     }))
+}
+
+/// Request to search the workspace
+#[derive(Deserialize, ToSchema)]
+pub struct SearchWorkspaceRequest {
+    /// the term to search for
+    pub(crate) search_term: String,
+}
+
+/// Search through a workspaces' data
+#[utoipa::path(
+    tag = "Workspaces",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Search has been scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid),
+    request_body = SearchWorkspaceRequest,
+    security(("api_key" = []))
+)]
+#[post("/workspaces/{uuid}/search")]
+pub async fn search(
+    path: Path<PathUuid>,
+    request: Json<SearchWorkspaceRequest>,
+    db: Data<Database>,
+    SessionUser(user_uuid): SessionUser,
+    ws_manager_chan: Data<WsManagerChan>,
+) -> ApiResult<HttpResponse> {
+    let search_term = request
+        .into_inner()
+        .search_term
+        .escape_default()
+        .to_string();
+
+    if search_term.is_empty() {
+        return Err(ApiError::InvalidSearch);
+    }
+
+    let mut db_trx = db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut db_trx, path.uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    info!("Started workspace search for: '{}'", search_term);
+
+    let search_uuid = insert!(&mut db_trx, Search)
+        .return_primary_key()
+        .single(&SearchInsert {
+            uuid: Uuid::new_v4(),
+            started_by: ForeignModelByField::Key(user_uuid),
+            workspace: ForeignModelByField::Key(path.uuid),
+            search_term: search_term.clone(),
+        })
+        .await?;
+
+    db_trx.commit().await.map_err(ApiError::DatabaseError)?;
+
+    let (result_tx, mut result_rx) = mpsc::channel::<Result<SearchResult, Error>>(16);
+
+    tokio::spawn({
+        let mut db_trx = db
+            .start_transaction()
+            .await
+            .map_err(ApiError::DatabaseError)?;
+
+        let search_term = search_term.clone();
+
+        async move {
+            let mut finished_successful = true;
+            while let Some(result) = result_rx.recv().await {
+                match result {
+                    Err(err) => {
+                        debug!("received search error, stopping search");
+                        if update!(&mut db_trx, Search)
+                            .condition(Search::F.uuid.equals(search_uuid))
+                            .set(Search::F.error, Some(err.to_string()))
+                            .await
+                            .is_err()
+                        {
+                            error!("could not insert error msg into database");
+                        }
+
+                        finished_successful = false;
+                    }
+                    Ok(result) => {
+                        debug!("received search result with key: {:?}", result.ref_key);
+                        let Ok(result_uuid) = insert!(&mut db_trx, SearchResult)
+                            .return_primary_key()
+                            .single(&result)
+                            .await
+                        else {
+                            error!("could not insert data into database");
+                            continue;
+                        };
+
+                        let _ = ws_manager_chan
+                            .send(Message(
+                                user_uuid,
+                                WsMessage::SearchNotify {
+                                    search_uuid,
+                                    result_uuid,
+                                },
+                            ))
+                            .await;
+                    }
+                }
+            }
+
+            if update!(&mut db_trx, Search)
+                .condition(Search::F.uuid.equals(search_uuid))
+                .set(Search::F.finished_at, Some(Utc::now()))
+                .await
+                .is_err()
+            {
+                error!("could not update Search result");
+            }
+
+            if let Err(err) = db_trx.commit().await {
+                error!("could not commit changes to database: {err}");
+            };
+
+            let _ = ws_manager_chan
+                .send(Message(
+                    user_uuid,
+                    WsMessage::SearchFinished {
+                        search_uuid,
+                        finished_successful,
+                    },
+                ))
+                .await;
+
+            info!("Finished workspace search for: '{}'", search_term);
+        }
+    });
+
+    tokio::spawn({
+        let mut db_trx = db
+            .start_transaction()
+            .await
+            .map_err(ApiError::DatabaseError)?;
+        async move {
+            let params = vec![Value::Uuid(path.uuid)];
+
+            for entry in build_query_list(&search_term).await {
+                search_tables(
+                    &mut db_trx,
+                    search_uuid,
+                    entry.0,
+                    params.clone(),
+                    entry.1,
+                    result_tx.clone(),
+                )
+                .await;
+            }
+        }
+    });
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: search_uuid }))
+}
+
+async fn build_query_list(search_term: &String) -> Vec<(String, ModelType)> {
+    let table_names_no_ref_to_ws = vec![
+        ModelType::DnsRecordResult,
+        ModelType::TcpPortScanResult,
+        ModelType::DehashedQueryResult,
+        ModelType::CertificateTransparencyResult,
+        ModelType::HostAliveResult,
+        ModelType::ServiceDetectionResult,
+    ];
+
+    let table_names_ref_to_ws = vec![
+        ModelType::Attack,
+        ModelType::Host,
+        ModelType::Service,
+        ModelType::Port,
+        ModelType::Domain,
+    ];
+
+    let mut data = vec![];
+    data.reserve(table_names_no_ref_to_ws.len() + table_names_ref_to_ws.len());
+
+    data.extend(table_names_no_ref_to_ws.into_iter().map(|table_entry| {
+        (format!(
+            r"SELECT
+                workspace_related_table.uuid
+            FROM
+                (SELECT t.* FROM {table_entry} t JOIN attack on t.attack = attack.uuid WHERE attack.workspace = $1) workspace_related_table
+            WHERE
+                (workspace_related_table.*)::text ~* '^.*{search_term}.*$';"
+        ), table_entry)
+    }).collect::<Vec<(String, ModelType)>>());
+
+    data.extend(
+        table_names_ref_to_ws
+            .into_iter()
+            .map(|table_entry| {
+                (format!(
+                        r"SELECT
+                            workspace_related_table.uuid
+                        FROM
+                            (SELECT t.* FROM {table_entry} t WHERE t.workspace = $1) workspace_related_table
+                        WHERE
+                            (workspace_related_table.*)::text ~* '^.*{search_term}.*$';"
+                    ),
+                    table_entry,
+                )
+            })
+            .collect::<Vec<(String, ModelType)>>(),
+    );
+
+    data
+}
+
+async fn search_tables(
+    executor: impl Executor<'_>,
+    search_uuid: Uuid,
+    sql: String,
+    params: Vec<Value<'_>>,
+    model_type: ModelType,
+    result_chan: mpsc::Sender<Result<SearchResult, Error>>,
+) {
+    debug!("search sql: {sql}");
+
+    let mut stream = executor.execute::<Stream>(sql, params);
+
+    while let Some(result) = stream.next().await {
+        match result {
+            Ok(row) => {
+                let ref_key = row.get::<Uuid, usize>(0).unwrap();
+                let data = Ok(SearchResult {
+                    uuid: Uuid::new_v4(),
+                    ref_key,
+                    ref_type: model_type,
+                    search: ForeignModelByField::Key(search_uuid),
+                });
+                if let Err(err) = result_chan.send(data).await {
+                    error!("error sending result row: {err}");
+                    return;
+                };
+            }
+            Err(err) => {
+                let data = Err(err);
+                if let Err(err) = result_chan.send(data).await {
+                    error!("error sending error: {err}");
+                };
+                return;
+            }
+        };
+    }
 }
 
 /// Get a [`FullWorkspace`] by its uuid without permission checks
