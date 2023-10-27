@@ -96,6 +96,7 @@ export function selectStyles<Option, IsMulti extends boolean, Group extends Grou
                     : "url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFUlEQVQIW2P8//+/FCMj4zNGBigAADqJBAO/UCEeAAAAAElFTkSuQmCC), linear-gradient(0deg,#00263a,#001417)",
         }),
         singleValue: (styles) => ({ ...styles, color: "#bbb" }),
+        multiValue: (styles) => ({ ...styles, backgroundColor: "none" }),
         indicatorSeparator: (styles) => ({ ...styles, display: "none" }),
     };
 }
