@@ -657,11 +657,7 @@ pub async fn search(
     SessionUser(user_uuid): SessionUser,
     ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
-    let search_term = request
-        .into_inner()
-        .search_term
-        .escape_default()
-        .to_string();
+    let search_term = request.into_inner().search_term;
 
     if search_term.is_empty() {
         return Err(ApiError::InvalidSearch);
@@ -771,9 +767,10 @@ pub async fn search(
             .await
             .map_err(ApiError::DatabaseError)?;
         async move {
-            let params = vec![Value::Uuid(path.uuid)];
+            let search_term = format!("%{search_term}%");
+            let params = vec![Value::Uuid(path.uuid), Value::String(&search_term)];
 
-            for entry in build_query_list(&search_term).await {
+            for entry in build_query_list().await {
                 search_tables(
                     &mut db_trx,
                     search_uuid,
@@ -791,6 +788,7 @@ pub async fn search(
 }
 
 async fn build_query_list(search_term: &String) -> Vec<(String, ModelType)> {
+async fn build_query_list() -> Vec<(String, ModelType)> {
     let table_names_no_ref_to_ws = vec![
         ModelType::DnsRecordResult,
         ModelType::TcpPortScanResult,
@@ -813,12 +811,12 @@ async fn build_query_list(search_term: &String) -> Vec<(String, ModelType)> {
 
     data.extend(table_names_no_ref_to_ws.into_iter().map(|table_entry| {
         (format!(
-            r"SELECT
+            "SELECT
                 workspace_related_table.uuid
             FROM
-                (SELECT t.* FROM {table_entry} t JOIN attack on t.attack = attack.uuid WHERE attack.workspace = $1) workspace_related_table
+                (SELECT t.* FROM \"{table_entry}\" t JOIN attack on t.attack = attack.uuid WHERE attack.workspace = $1) workspace_related_table
             WHERE
-                (workspace_related_table.*)::text ~* '^.*{search_term}.*$';"
+                (workspace_related_table.*)::text ILIKE $2;"
         ), table_entry)
     }).collect::<Vec<(String, ModelType)>>());
 
@@ -827,12 +825,12 @@ async fn build_query_list(search_term: &String) -> Vec<(String, ModelType)> {
             .into_iter()
             .map(|table_entry| {
                 (format!(
-                        r"SELECT
+                        "SELECT
                             workspace_related_table.uuid
                         FROM
-                            (SELECT t.* FROM {table_entry} t WHERE t.workspace = $1) workspace_related_table
+                            (SELECT t.* FROM \"{table_entry}\" t WHERE t.workspace = $1) workspace_related_table
                         WHERE
-                            (workspace_related_table.*)::text ~* '^.*{search_term}.*$';"
+                            (workspace_related_table.*)::text ILIKE $2;"
                     ),
                     table_entry,
                 )
