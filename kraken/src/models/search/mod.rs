@@ -6,6 +6,7 @@ use chrono::{DateTime, Utc};
 use rorm::prelude::*;
 use uuid::Uuid;
 
+use crate::models;
 pub(crate) use crate::models::search::patches::*;
 use crate::models::{User, Workspace};
 
@@ -65,27 +66,27 @@ pub struct SearchResult {
 /// Model Types
 #[derive(DbEnum, Copy, Clone)]
 pub enum ModelType {
-    /// [Attack](crate::models::Attack) type
+    /// [Attack](models::Attack) type
     Attack,
-    /// [Host](crate::models::Host) type
+    /// [Host](models::Host) type
     Host,
-    /// [Service](crate::models::Service) type
+    /// [Service](models::Service) type
     Service,
-    /// [Port](crate::models::Port) type
+    /// [Port](models::Port) type
     Port,
-    /// [Domain](crate::models::Domain) type
+    /// [Domain](models::Domain) type
     Domain,
-    /// [DnsRecordResult](crate::models::DnsRecordResult) type
+    /// [DnsRecordResult](models::DnsRecordResult) type
     DnsRecordResult,
-    /// [TcpPortScanResult](crate::models::TcpPortScanResult) type
+    /// [TcpPortScanResult](models::TcpPortScanResult) type
     TcpPortScanResult,
-    /// [DehashedQueryResult](crate::models::DehashedQueryResult) type
+    /// [DehashedQueryResult](models::DehashedQueryResult) type
     DehashedQueryResult,
-    /// [CertificateTransparencyResult](crate::models::CertificateTransparencyResult) type
+    /// [CertificateTransparencyResult](models::CertificateTransparencyResult) type
     CertificateTransparencyResult,
-    /// [HostAliveResult](crate::models::HostAliveResult) type
+    /// [HostAliveResult](models::HostAliveResult) type
     HostAliveResult,
-    /// [ServiceDetectionResult](crate::models::ServiceDetectionResult) type
+    /// [ServiceDetectionResult](models::ServiceDetectionResult) type
     ServiceDetectionResult,
 }
 
@@ -93,37 +94,37 @@ impl Display for ModelType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             ModelType::Attack => {
-                write!(f, "Attack")
+                write!(f, "{}", models::Attack::TABLE)
             }
             ModelType::Host => {
-                write!(f, "Host")
+                write!(f, "{}", models::Host::TABLE)
             }
             ModelType::Service => {
-                write!(f, "Service")
+                write!(f, "{}", models::Service::TABLE)
             }
             ModelType::Port => {
-                write!(f, "Port")
+                write!(f, "{}", models::Port::TABLE)
             }
             ModelType::Domain => {
-                write!(f, "Domain")
+                write!(f, "{}", models::Domain::TABLE)
             }
             ModelType::DnsRecordResult => {
-                write!(f, "DnsRecordResult")
+                write!(f, "{}", models::DnsRecordResult::TABLE)
             }
             ModelType::TcpPortScanResult => {
-                write!(f, "TcpPortScanResult")
+                write!(f, "{}", models::TcpPortScanResult::TABLE)
             }
             ModelType::DehashedQueryResult => {
-                write!(f, "DehashedQueryResult")
+                write!(f, "{}", models::DehashedQueryResult::TABLE)
             }
             ModelType::CertificateTransparencyResult => {
-                write!(f, "CertificateTransparencyResult")
+                write!(f, "{}", models::CertificateTransparencyResult::TABLE)
             }
             ModelType::HostAliveResult => {
-                write!(f, "HostAliveResult")
+                write!(f, "{}", models::HostAliveResult::TABLE)
             }
             ModelType::ServiceDetectionResult => {
-                write!(f, "ServiceDetectionResult")
+                write!(f, "{}", models::ServiceDetectionResult::TABLE)
             }
         }
     }
