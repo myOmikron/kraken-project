@@ -25,6 +25,12 @@ import {
     SimpleHostFromJSONTyped,
     SimpleHostToJSON,
 } from './SimpleHost';
+import type { SimplePort } from './SimplePort';
+import {
+    SimplePortFromJSON,
+    SimplePortFromJSONTyped,
+    SimplePortToJSON,
+} from './SimplePort';
 import type { SimpleTag } from './SimpleTag';
 import {
     SimpleTagFromJSON,
@@ -70,10 +76,10 @@ export interface FullService {
     host: SimpleHost;
     /**
      * 
-     * @type {string}
+     * @type {SimplePort}
      * @memberof FullService
      */
-    port?: string | null;
+    port?: SimplePort | null;
     /**
      * 
      * @type {string}
@@ -132,7 +138,7 @@ export function FullServiceFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'version': !exists(json, 'version') ? undefined : json['version'],
         'certainty': CertaintyFromJSON(json['certainty']),
         'host': SimpleHostFromJSON(json['host']),
-        'port': !exists(json, 'port') ? undefined : json['port'],
+        'port': !exists(json, 'port') ? undefined : SimplePortFromJSON(json['port']),
         'comment': json['comment'],
         'workspace': json['workspace'],
         'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
@@ -154,7 +160,7 @@ export function FullServiceToJSON(value?: FullService | null): any {
         'version': value.version,
         'certainty': CertaintyToJSON(value.certainty),
         'host': SimpleHostToJSON(value.host),
-        'port': value.port,
+        'port': SimplePortToJSON(value.port),
         'comment': value.comment,
         'workspace': value.workspace,
         'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),

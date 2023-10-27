@@ -143,6 +143,12 @@
     font-size: 1.5em;
 }
 
+.tag-list {
+    display: flex;
+    gap: 0.5em;
+    flex-wrap: wrap;
+}
+
 .tag{
     /* Overwritten by javascript to match the dynamic color stored in db */
     --color: #00ccff20;

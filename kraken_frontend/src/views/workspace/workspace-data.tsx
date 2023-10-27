@@ -1,11 +1,9 @@
 import React from "react";
 import "../../styling/workspace-data.css";
-import WorkspaceTable, {
-    StatelessWorkspaceTable,
-    useTable,
-    WorkspaceDataTableProps,
-} from "./components/workspace-table";
+import { StatelessWorkspaceTable, useTable } from "./components/workspace-table";
 import { Api } from "../../api/api";
+import Tag from "../../components/tag";
+import { SimpleTag } from "../../api/generated";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services", other: "Other" };
 
@@ -43,11 +41,13 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable {...domainsTable}>
                         <div className={"workspace-data-table-header"}>
                             <span>Name</span>
+                            <span>Tags</span>
                             <span>Comment</span>
                         </div>
                         {domains.map((domain) => (
                             <div className={"workspace-data-table-row"}>
                                 <span>{domain.domain}</span>
+                                <TagList tags={domain.tags} />
                                 <span>{domain.comment}</span>
                             </div>
                         ))}
@@ -58,11 +58,13 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable {...hostsTable}>
                         <div className={"workspace-data-table-header"}>
                             <span>IP</span>
+                            <span>Tags</span>
                             <span>Comment</span>
                         </div>
                         {hosts.map((host) => (
                             <div className={"workspace-data-table-row"}>
                                 <span>{host.ipAddr}</span>
+                                <TagList tags={host.tags} />
                                 <span>{host.comment}</span>
                             </div>
                         ))}
@@ -74,12 +76,14 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         <div className={"workspace-data-table-header"}>
                             <span>Port</span>
                             <span>Host</span>
+                            <span>Tags</span>
                             <span>Comment</span>
                         </div>
                         {ports.map((port) => (
                             <div className={"workspace-data-table-row"}>
                                 <span>{port.port}</span>
                                 <span>{port.host.ipAddr}</span>
+                                <TagList tags={port.tags} />
                                 <span>{port.comment}</span>
                             </div>
                         ))}
@@ -92,13 +96,15 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>Name</span>
                             <span>Host</span>
                             <span>Port</span>
+                            <span>Tags</span>
                             <span>Comment</span>
                         </div>
                         {services.map((service) => (
                             <div className={"workspace-data-table-row"}>
                                 <span>{service.name}</span>
                                 <span>{service.host.ipAddr}</span>
-                                <span>{service.port}</span>
+                                <span>{service.port?.port}</span>
+                                <TagList tags={service.tags} />
                                 <span>{service.comment}</span>
                             </div>
                         ))}
@@ -128,4 +134,12 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
     );
 }
 
-export const WorkspaceDataOther = (props: WorkspaceDataTableProps<never>) => WorkspaceTable(props);
+function TagList(props: { tags: Array<SimpleTag> }) {
+    return (
+        <div className={"tag-list"}>
+            {props.tags.map((tag) => (
+                <Tag key={tag.uuid} {...tag} />
+            ))}
+        </div>
+    );
+}

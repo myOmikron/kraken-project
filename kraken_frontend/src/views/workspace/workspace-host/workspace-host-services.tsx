@@ -26,7 +26,7 @@ export function WorkspaceHostServices(props: WorkspaceDataServicesProps) {
             {(service) => (
                 <div className={"workspace-data-table-row"} onClick={() => onSelect(service.uuid)}>
                     <span>{service.name}</span>
-                    <span>{service.port}</span>
+                    <span>{service.port?.port}</span>
                     <span>{service.comment}</span>
                 </div>
             )}
