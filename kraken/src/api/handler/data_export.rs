@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use actix_web::get;
 use actix_web::web::{Data, Json, Path};
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use ipnetwork::IpNetwork;
 use rorm::prelude::*;
@@ -77,6 +77,9 @@ pub struct AggregatedHost {
     /// Set of global and local tags
     #[serde(flatten)]
     pub tags: AggregatedTags,
+
+    /// The first time this host was encountered
+    pub created_at: DateTime<Utc>,
 }
 
 /// An open port on a host
@@ -103,6 +106,9 @@ pub struct AggregatedPort {
     /// Set of global and local tags
     #[serde(flatten)]
     pub tags: AggregatedTags,
+
+    /// The first time this port was encountered
+    pub created_at: DateTime<Utc>,
 }
 
 /// A detected service on a host
@@ -132,6 +138,9 @@ pub struct AggregatedService {
     /// Set of global and local tags
     #[serde(flatten)]
     pub tags: AggregatedTags,
+
+    /// The first time this service was encountered
+    pub created_at: DateTime<Utc>,
 }
 
 /// A domain
@@ -158,6 +167,9 @@ pub struct AggregatedDomain {
     /// Set of global and local tags
     #[serde(flatten)]
     pub tags: AggregatedTags,
+
+    /// The first time this domain was encountered
+    pub created_at: DateTime<Utc>,
 }
 
 /// Set of global and local tags
@@ -373,8 +385,11 @@ impl From<Host> for AggregatedHost {
             workspace: _,
             workspace_tags: _,
             global_tags: _,
-            created_at: _,
+            created_at,
         } = value;
+        // DON'T just ignore new fields with `: _`
+        // Make sure you export the field in some other way!
+
         Self {
             uuid,
             ip_addr,
@@ -385,6 +400,7 @@ impl From<Host> for AggregatedHost {
             domains: Vec::new(),
             comment,
             tags: Default::default(),
+            created_at,
         }
     }
 }
@@ -400,8 +416,11 @@ impl From<Port> for AggregatedPort {
             workspace: _,
             global_tags: _,
             workspace_tags: _,
-            created_at: _,
+            created_at,
         } = value;
+        // DON'T just ignore new fields with `: _`
+        // Make sure you export the field in some other way!
+
         Self {
             uuid,
             port: u16::from_ne_bytes(port.to_ne_bytes()),
@@ -410,6 +429,7 @@ impl From<Port> for AggregatedPort {
             services: Vec::new(),
             comment,
             tags: Default::default(),
+            created_at,
         }
     }
 }
@@ -426,8 +446,11 @@ impl From<Service> for AggregatedService {
             workspace: _,
             workspace_tags: _,
             global_tags: _,
-            created_at: _,
+            created_at,
         } = value;
+        // DON'T just ignore new fields with `: _`
+        // Make sure you export the field in some other way!
+
         Self {
             uuid,
             name,
@@ -437,6 +460,7 @@ impl From<Service> for AggregatedService {
             comment,
             certainty,
             tags: Default::default(),
+            created_at,
         }
     }
 }
@@ -452,8 +476,11 @@ impl From<Domain> for AggregatedDomain {
             workspace: _,
             workspace_tags: _,
             global_tags: _,
-            created_at: _,
+            created_at,
         } = value;
+        // DON'T just ignore new fields with `: _`
+        // Make sure you export the field in some other way!
+
         Self {
             uuid,
             domain,
@@ -462,6 +489,7 @@ impl From<Domain> for AggregatedDomain {
             destinations: Vec::new(),
             comment,
             tags: Default::default(),
+            created_at,
         }
     }
 }

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use chrono::{DateTime, Utc};
 use ipnetwork::IpNetwork;
 use uuid::Uuid;
 
@@ -54,6 +55,9 @@ pub struct AggregatedHost {
     /// Set of global and local tags
     #[serde(flatten)]
     pub tags: AggregatedTags,
+
+    /// The first time this host was encountered
+    pub created_at: DateTime<Utc>,
 }
 
 /// An open port on a host
@@ -80,6 +84,9 @@ pub struct AggregatedPort {
     /// Set of global and local tags
     #[serde(flatten)]
     pub tags: AggregatedTags,
+
+    /// The first time this port was encountered
+    pub created_at: DateTime<Utc>,
 }
 
 /// A detected service on a host
@@ -109,6 +116,9 @@ pub struct AggregatedService {
     /// Set of global and local tags
     #[serde(flatten)]
     pub tags: AggregatedTags,
+
+    /// The first time this service was encountered
+    pub created_at: DateTime<Utc>,
 }
 
 /// A domain
@@ -135,6 +145,9 @@ pub struct AggregatedDomain {
     /// Set of global and local tags
     #[serde(flatten)]
     pub tags: AggregatedTags,
+
+    /// The first time this domain was encountered
+    pub created_at: DateTime<Utc>,
 }
 
 /// Set of global and local tags

@@ -1852,6 +1852,7 @@ dependencies = [
 name = "kraken-sdk"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "ipnetwork",
  "reqwest",
  "serde",
