@@ -12,12 +12,24 @@ import ArrowFirstIcon from "../../../svg/arrow-first";
 import ArrowLastIcon from "../../../svg/arrow-last";
 
 export type WorkspaceDataTableProps<T> = {
+    /** Method used to query a page */
     query: (limit: number, offset: number) => Promise<Result<GenericPage<T>, ApiError>>;
+
+    /**
+     * List of dependencies captured by `query`.
+     *
+     * I.e. add every variable the `query` function captures from its environment.
+     * Read about {@link React.useEffect}'s second argument for more details.
+     */
     queryDeps?: React.DependencyList;
+
+    /** The table's header row and a function for rendering the body's rows */
     children: [React.ReactNode, (item: T) => React.ReactNode];
 
     /** The number of columns to render (controls css grid) */
     columns?: number;
+
+    /** The table's "type" (controls the table's body's css class) */
     type?: "Host" | "Data";
 };
 export type GenericPage<T> = {
@@ -27,6 +39,11 @@ export type GenericPage<T> = {
     total: number;
 };
 
+/**
+ * Stateful table handling pagination
+ *
+ * Consider {@link StatelessWorkspaceTable} and {@link useTable} when you need control of the table's state.
+ */
 export default function WorkspaceTable<T>(props: WorkspaceDataTableProps<T>) {
     const {
         query,
@@ -36,19 +53,52 @@ export default function WorkspaceTable<T>(props: WorkspaceDataTableProps<T>) {
         type,
     } = props;
 
-    const [limit, setLimit] = React.useState(20);
-    const [offset, setRawOffset] = React.useState(0);
-    const [total, setTotal] = React.useState(0);
-    const [items, setItems] = React.useState<Array<T>>([]);
+    const { items, ...table } = useTable(query, queryDeps);
 
-    React.useEffect(() => {
-        query(limit, offset).then(
-            handleApiError(({ items, total }) => {
-                setItems(items);
-                setTotal(total);
-            })
-        );
-    }, [limit, offset, ...(queryDeps || [])]);
+    return StatelessWorkspaceTable({
+        ...table,
+        children: [header, items.map(renderItem)],
+        columns,
+        type,
+    });
+}
+
+export type StatelessWorkspaceTableProps = {
+    /** The total number of items across all pages */
+    total: number;
+
+    /** The number of items per page */
+    limit: number;
+    setLimit: (limit: number) => void;
+
+    /** The number of items in the pages before the current one */
+    offset: number;
+    setOffset: (offset: number) => void;
+
+    /** The table's header row and body rows*/
+    children: [React.ReactNode, Array<React.ReactNode>];
+
+    /**
+     * Sets the number of columns to render explicitly (controls css grid)
+     *
+     * When omitted, the number of direct children of the table's header will be used.
+     */
+    columns?: number;
+
+    /** The table's "type" (controls the table's body's css class) */
+    type?: "Host" | "Data";
+};
+export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
+    const {
+        total,
+        limit,
+        setLimit,
+        offset,
+        setOffset: setRawOffset,
+        children: [header, body],
+        columns: explicitColumns,
+        type,
+    } = props;
 
     const lastOffset = Math.floor(total / limit) * limit;
     function setOffset(offset: number) {
@@ -58,6 +108,17 @@ export default function WorkspaceTable<T>(props: WorkspaceDataTableProps<T>) {
             setRawOffset(lastOffset);
         } else {
             setRawOffset(offset);
+        }
+    }
+
+    // Use `explicitColumns` or count `header`'s children
+    let columns = undefined;
+    if (explicitColumns !== undefined) {
+        columns = explicitColumns;
+    } else if (typeof header === "object" && header !== null) {
+        if ("props" in header) {
+            const children: any = header.props?.children;
+            if (children !== undefined) columns = React.Children.count(children);
         }
     }
 
@@ -72,9 +133,7 @@ export default function WorkspaceTable<T>(props: WorkspaceDataTableProps<T>) {
                 onChange={console.log}
             />
             {header}
-            <div className={type === "Host" ? "workspace-table-body-host" : "workspace-table-body"}>
-                {items.map(renderItem)}
-            </div>
+            <div className={type === "Host" ? "workspace-table-body-host" : "workspace-table-body"}>{body}</div>
             <div className={"workspace-table-controls"}>
                 <div className={"workspace-table-controls-button-container"}>
                     <button className={"workspace-table-button"} disabled={offset === 0} onClick={() => setOffset(0)}>
@@ -117,4 +176,26 @@ export default function WorkspaceTable<T>(props: WorkspaceDataTableProps<T>) {
             </div>
         </div>
     );
+}
+
+/** Hook which provides the data required for {@link StatelessWorkspaceTable} */
+export function useTable<T>(
+    query: (limit: number, offset: number) => Promise<Result<GenericPage<T>, ApiError>>,
+    queryDeps?: React.DependencyList,
+) {
+    const [limit, setLimit] = React.useState(20);
+    const [offset, setOffset] = React.useState(0);
+    const [total, setTotal] = React.useState(0);
+    const [items, setItems] = React.useState<Array<T>>([]);
+
+    React.useEffect(() => {
+        query(limit, offset).then(
+            handleApiError(({ items, total }) => {
+                setItems(items);
+                setTotal(total);
+            }),
+        );
+    }, [limit, offset, ...(queryDeps || [])]);
+
+    return { limit, setLimit, offset, setOffset, total, setTotal, items, setItems };
 }
