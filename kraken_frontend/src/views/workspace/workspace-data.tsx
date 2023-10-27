@@ -1,10 +1,11 @@
 import React from "react";
 import "../../styling/workspace-data.css";
-import WorkspaceTable, { WorkspaceDataTableProps } from "./components/workspace-table";
-import { WorkspaceDataDomains } from "./workspace-data/workspace-data-domains";
-import { WorkspaceDataHosts } from "./workspace-data/workspace-data-hosts";
-import { WorkspaceDataPorts } from "./workspace-data/workspace-data-ports";
-import { WorkspaceDataServices } from "./workspace-data/workspace-data-services";
+import WorkspaceTable, {
+    StatelessWorkspaceTable,
+    useTable,
+    WorkspaceDataTableProps,
+} from "./components/workspace-table";
+import { Api } from "../../api/api";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services", other: "Other" };
 
@@ -12,72 +13,119 @@ type WorkspaceDataProps = {
     /** Workspace uuid */
     workspace: string;
 };
-type WorkspaceDataState = {
-    selectedTab: keyof typeof TABS;
-    selected: { type: keyof typeof TABS; uuid: string } | null;
-};
 
-export default class WorkspaceData extends React.Component<WorkspaceDataProps, WorkspaceDataState> {
-    state: WorkspaceDataState = {
-        selectedTab: "domains",
-        selected: null,
-    };
+export default function WorkspaceData(props: WorkspaceDataProps) {
+    const { workspace } = props;
 
-    render() {
-        const { selectedTab } = this.state;
-        const table = (() => {
-            switch (selectedTab) {
-                case "domains":
-                    return (
-                        <WorkspaceDataDomains
-                            workspace={this.props.workspace}
-                            onSelect={(uuid) => this.setState({ selected: { type: "domains", uuid } })}
-                        />
-                    );
-                case "hosts":
-                    return (
-                        <WorkspaceDataHosts
-                            workspace={this.props.workspace}
-                            onSelect={(uuid) => this.setState({ selected: { type: "hosts", uuid } })}
-                        />
-                    );
-                case "ports":
-                    return (
-                        <WorkspaceDataPorts
-                            workspace={this.props.workspace}
-                            onSelect={(uuid) => this.setState({ selected: { type: "ports", uuid } })}
-                        />
-                    );
-                case "services":
-                    return (
-                        <WorkspaceDataServices
-                            workspace={this.props.workspace}
-                            onSelect={(uuid) => this.setState({ selected: { type: "services", uuid } })}
-                        />
-                    );
-                default:
-                    return "Unimplemented";
-            }
-        })();
-        return (
-            <div className={"workspace-data-container"}>
-                <div className={"workspace-data-selector"}>
-                    {Object.entries(TABS).map(([key, displayName]) => (
-                        <div
-                            className={"pane" + (this.state.selectedTab !== key ? "" : " workspace-data-selected-tab")}
-                            onClick={() => this.setState({ selectedTab: key as keyof typeof TABS })}
-                        >
-                            <h3 className={"heading"}>{displayName}</h3>
+    const [tab, setTab] = React.useState<keyof typeof TABS>("hosts");
+
+    const { items: domains, ...domainsTable } = useTable(
+        (limit, offset) => Api.workspaces.domains.all(workspace, limit, offset),
+        [workspace],
+    );
+    const { items: hosts, ...hostsTable } = useTable(
+        (limit, offset) => Api.workspaces.hosts.all(workspace, limit, offset),
+        [workspace],
+    );
+    const { items: ports, ...portsTable } = useTable(
+        (limit, offset) => Api.workspaces.ports.all(workspace, limit, offset),
+        [workspace],
+    );
+    const { items: services, ...servicesTable } = useTable(
+        (limit, offset) => Api.workspaces.services.all(workspace, limit, offset),
+        [workspace],
+    );
+
+    const tableElement = (() => {
+        switch (tab) {
+            case "domains":
+                return (
+                    <StatelessWorkspaceTable {...domainsTable}>
+                        <div className={"workspace-data-table-header"}>
+                            <span>Name</span>
+                            <span>Comment</span>
                         </div>
-                    ))}
-                </div>
-                {table}
-                <div className={"workspace-data-details pane"}>
-                    <h2 className={"heading"}>Details</h2>
-                </div>
+                        {domains.map((domain) => (
+                            <div className={"workspace-data-table-row"}>
+                                <span>{domain.domain}</span>
+                                <span>{domain.comment}</span>
+                            </div>
+                        ))}
+                    </StatelessWorkspaceTable>
+                );
+            case "hosts":
+                return (
+                    <StatelessWorkspaceTable {...hostsTable}>
+                        <div className={"workspace-data-table-header"}>
+                            <span>IP</span>
+                            <span>Comment</span>
+                        </div>
+                        {hosts.map((host) => (
+                            <div className={"workspace-data-table-row"}>
+                                <span>{host.ipAddr}</span>
+                                <span>{host.comment}</span>
+                            </div>
+                        ))}
+                    </StatelessWorkspaceTable>
+                );
+            case "ports":
+                return (
+                    <StatelessWorkspaceTable {...portsTable}>
+                        <div className={"workspace-data-table-header"}>
+                            <span>Port</span>
+                            <span>Host</span>
+                            <span>Comment</span>
+                        </div>
+                        {ports.map((port) => (
+                            <div className={"workspace-data-table-row"}>
+                                <span>{port.port}</span>
+                                <span>{port.host.ipAddr}</span>
+                                <span>{port.comment}</span>
+                            </div>
+                        ))}
+                    </StatelessWorkspaceTable>
+                );
+            case "services":
+                return (
+                    <StatelessWorkspaceTable {...servicesTable}>
+                        <div className={"workspace-data-table-header"}>
+                            <span>Name</span>
+                            <span>Host</span>
+                            <span>Port</span>
+                            <span>Comment</span>
+                        </div>
+                        {services.map((service) => (
+                            <div className={"workspace-data-table-row"}>
+                                <span>{service.name}</span>
+                                <span>{service.host.ipAddr}</span>
+                                <span>{service.port}</span>
+                                <span>{service.comment}</span>
+                            </div>
+                        ))}
+                    </StatelessWorkspaceTable>
+                );
+            default:
+                return "Unimplemented";
+        }
+    })();
+    return (
+        <div className={"workspace-data-container"}>
+            <div className={"workspace-data-selector"}>
+                {Object.entries(TABS).map(([key, displayName]) => (
+                    <div
+                        className={"pane" + (tab !== key ? "" : " workspace-data-selected-tab")}
+                        onClick={() => setTab(key as keyof typeof TABS)}
+                    >
+                        <h3 className={"heading"}>{displayName}</h3>
+                    </div>
+                ))}
             </div>
-        );
-    }
+            {tableElement}
+            <div className={"workspace-data-details pane"}>
+                <h2 className={"heading"}>Details</h2>
+            </div>
+        </div>
+    );
 }
 
 export const WorkspaceDataOther = (props: WorkspaceDataTableProps<never>) => WorkspaceTable(props);
