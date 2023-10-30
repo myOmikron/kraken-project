@@ -16,11 +16,14 @@
 import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
+  FullPort,
   PortResultsPage,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
+    FullPortFromJSON,
+    FullPortToJSON,
     PortResultsPageFromJSON,
     PortResultsPageToJSON,
 } from '../models';
@@ -30,6 +33,11 @@ export interface GetAllPortsRequest {
     limit: number;
     offset: number;
     host?: string | null;
+}
+
+export interface GetPortRequest {
+    wUuid: string;
+    pUuid: string;
 }
 
 /**
@@ -86,6 +94,42 @@ export class PortsApi extends runtime.BaseAPI {
      */
     async getAllPorts(requestParameters: GetAllPortsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PortResultsPage> {
         const response = await this.getAllPortsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Retrieve all information about a single port
+     * Retrieve all information about a single port
+     */
+    async getPortRaw(requestParameters: GetPortRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FullPort>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling getPort.');
+        }
+
+        if (requestParameters.pUuid === null || requestParameters.pUuid === undefined) {
+            throw new runtime.RequiredError('pUuid','Required parameter requestParameters.pUuid was null or undefined when calling getPort.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/ports/{p_uuid}`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"p_uuid"}}`, encodeURIComponent(String(requestParameters.pUuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FullPortFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve all information about a single port
+     * Retrieve all information about a single port
+     */
+    async getPort(requestParameters: GetPortRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullPort> {
+        const response = await this.getPortRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -2,7 +2,6 @@
 
 use std::collections::HashMap;
 
-use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path, Query};
 use actix_web::{get, put, HttpResponse};
 use chrono::{DateTime, Utc};
@@ -14,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+use crate::api::extractors::SessionUser;
 use crate::api::handler::{
     get_page_params, ApiError, ApiResult, HostResultsPage, PageParams, PathUuid, SimpleTag, TagType,
 };
@@ -79,12 +79,10 @@ pub struct FullHost {
 pub(crate) async fn get_all_hosts(
     path: Path<PathUuid>,
     query: Query<PageParams>,
-    session: Session,
+    SessionUser(user_uuid): SessionUser,
     db: Data<Database>,
 ) -> ApiResult<Json<HostResultsPage>> {
     let path = path.into_inner();
-
-    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let mut tx = db.start_transaction().await?;
 
@@ -169,11 +167,9 @@ pub struct PathHost {
 pub async fn get_host(
     path: Path<PathHost>,
     db: Data<Database>,
-    session: Session,
+    SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<FullHost>> {
     let path = path.into_inner();
-
-    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let mut tx = db.start_transaction().await?;
 
@@ -260,11 +256,10 @@ pub async fn update_host(
     req: Json<UpdateHostRequest>,
     path: Path<PathHost>,
     db: Data<Database>,
-    session: Session,
+    SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
     let path = path.into_inner();
     let req = req.into_inner();
-    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     if req.workspace_tags.is_none() && req.global_tags.is_none() && req.comment.is_none() {
         return Err(ApiError::EmptyJson);

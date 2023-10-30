@@ -210,14 +210,20 @@ export const Api = {
         ports: {
             all: (workspaceUuid: UUID, limit: number, offset: number, filter: { host?: UUID } = {}) =>
                 handleError(ports.getAllPorts({ uuid: workspaceUuid, limit, offset, ...filter })),
+            get: (workspaceUuid: UUID, portUuid: UUID) =>
+                handleError(ports.getPort({ wUuid: workspaceUuid, pUuid: portUuid })),
         },
         domains: {
             all: (workspaceUuid: UUID, limit: number, offset: number, filter: { host?: UUID } = {}) =>
                 handleError(domains.getAllDomains({ uuid: workspaceUuid, limit, offset, ...filter })),
+            get: (workspaceUuid: UUID, domainUuid: UUID) =>
+                handleError(domains.getDomain({ wUuid: workspaceUuid, dUuid: domainUuid })),
         },
         services: {
             all: (workspaceUuid: UUID, limit: number, offset: number, filter: { host?: UUID } = {}) =>
                 handleError(services.getAllServices({ uuid: workspaceUuid, limit, offset, ...filter })),
+            get: (workspaceUuid: UUID, serviceUuid: UUID) =>
+                handleError(services.getService({ wUuid: workspaceUuid, sUuid: serviceUuid })),
         },
         tags: {
             all: (workspaceUuid: UUID) => handleError(workspaceTags.getAllWorkspaceTags({ uuid: workspaceUuid })),

@@ -17,12 +17,15 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   DomainResultsPage,
+  FullDomain,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
     DomainResultsPageFromJSON,
     DomainResultsPageToJSON,
+    FullDomainFromJSON,
+    FullDomainToJSON,
 } from '../models';
 
 export interface GetAllDomainsRequest {
@@ -30,6 +33,11 @@ export interface GetAllDomainsRequest {
     limit: number;
     offset: number;
     host?: string | null;
+}
+
+export interface GetDomainRequest {
+    wUuid: string;
+    dUuid: string;
 }
 
 /**
@@ -86,6 +94,42 @@ export class DomainsApi extends runtime.BaseAPI {
      */
     async getAllDomains(requestParameters: GetAllDomainsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DomainResultsPage> {
         const response = await this.getAllDomainsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Retrieve all information about a single domain
+     * Retrieve all information about a single domain
+     */
+    async getDomainRaw(requestParameters: GetDomainRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FullDomain>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling getDomain.');
+        }
+
+        if (requestParameters.dUuid === null || requestParameters.dUuid === undefined) {
+            throw new runtime.RequiredError('dUuid','Required parameter requestParameters.dUuid was null or undefined when calling getDomain.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/domains/{d_uuid}`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"d_uuid"}}`, encodeURIComponent(String(requestParameters.dUuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FullDomainFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve all information about a single domain
+     * Retrieve all information about a single domain
+     */
+    async getDomain(requestParameters: GetDomainRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullDomain> {
+        const response = await this.getDomainRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

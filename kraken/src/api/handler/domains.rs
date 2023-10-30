@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+use crate::api::extractors::SessionUser;
 use crate::api::handler::{
     get_page_params, ApiError, ApiResult, DomainResultsPage, PageParams, PathUuid, SimpleTag,
     TagType,
@@ -203,4 +204,87 @@ pub async fn get_all_domains(
             }))
         }
     }
+}
+
+/// The path parameter of a domain
+#[derive(Deserialize, IntoParams)]
+pub struct PathDomain {
+    /// The workspace's uuid
+    pub w_uuid: Uuid,
+    /// The domain's uuid
+    pub d_uuid: Uuid,
+}
+
+/// Retrieve all information about a single domain
+#[utoipa::path(
+    tag = "Domains",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Retrieved the selected domain", body = FullDomain),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathDomain),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/domains/{d_uuid}")]
+pub async fn get_domain(
+    path: Path<PathDomain>,
+    db: Data<Database>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<Json<FullDomain>> {
+    let mut tx = db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges)?;
+    }
+
+    let domain = query!(&mut tx, Domain)
+        .condition(and!(
+            Domain::F.workspace.equals(path.w_uuid),
+            Domain::F.uuid.equals(path.d_uuid)
+        ))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    let mut tags: Vec<_> = query!(&mut tx, (DomainGlobalTag::F.global_tag as GlobalTag,))
+        .condition(DomainGlobalTag::F.domain.equals(path.d_uuid))
+        .stream()
+        .map_ok(|(x,)| SimpleTag {
+            uuid: x.uuid,
+            name: x.name,
+            color: x.color.into(),
+            tag_type: TagType::Global,
+        })
+        .try_collect()
+        .await?;
+
+    let global_tags: Vec<_> = query!(
+        &mut tx,
+        (DomainWorkspaceTag::F.workspace_tag as WorkspaceTag,)
+    )
+    .condition(DomainWorkspaceTag::F.domain.equals(path.d_uuid))
+    .stream()
+    .map_ok(|(x,)| SimpleTag {
+        uuid: x.uuid,
+        name: x.name,
+        color: x.color.into(),
+        tag_type: TagType::Workspace,
+    })
+    .try_collect()
+    .await?;
+
+    tags.extend(global_tags);
+
+    tx.commit().await?;
+
+    Ok(Json(FullDomain {
+        uuid: path.d_uuid,
+        domain: domain.domain,
+        comment: domain.comment,
+        workspace: path.w_uuid,
+        tags,
+        created_at: domain.created_at,
+    }))
 }

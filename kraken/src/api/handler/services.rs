@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+use crate::api::extractors::SessionUser;
 use crate::api::handler::hosts::SimpleHost;
 use crate::api::handler::ports::SimplePort;
 use crate::api::handler::{
@@ -215,5 +216,126 @@ pub async fn get_all_services(
         limit,
         offset,
         total: total as u64,
+    }))
+}
+
+/// The path parameter of a service
+#[derive(Deserialize, IntoParams)]
+pub struct PathService {
+    /// The workspace's uuid
+    pub w_uuid: Uuid,
+    /// The service's uuid
+    pub s_uuid: Uuid,
+}
+
+/// Retrieve all information about a single service
+#[utoipa::path(
+    tag = "Services",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Retrieved the selected service", body = FullService),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathService),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/services/{s_uuid}")]
+pub async fn get_service(
+    path: Path<PathService>,
+    db: Data<Database>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<Json<FullService>> {
+    let mut tx = db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges)?;
+    }
+
+    let service = query!(&mut tx, Service)
+        .condition(and!(
+            Service::F.workspace.equals(path.w_uuid),
+            Service::F.uuid.equals(path.s_uuid)
+        ))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    let host = query!(&mut tx, Host)
+        .condition(Host::F.uuid.equals(*service.host.key()))
+        .one()
+        .await?;
+
+    let port = if let Some(port) = service.port.as_ref() {
+        Some(
+            query!(&mut tx, Port)
+                .condition(and!(
+                    Port::F.workspace.equals(path.w_uuid),
+                    Port::F.uuid.equals(*port.key())
+                ))
+                .one()
+                .await?,
+        )
+    } else {
+        None
+    };
+
+    let mut tags: Vec<_> = query!(&mut tx, (ServiceGlobalTag::F.global_tag as GlobalTag,))
+        .condition(ServiceGlobalTag::F.service.equals(path.s_uuid))
+        .stream()
+        .map_ok(|(x,)| SimpleTag {
+            uuid: x.uuid,
+            name: x.name,
+            color: x.color.into(),
+            tag_type: TagType::Global,
+        })
+        .try_collect()
+        .await?;
+
+    let global_tags: Vec<_> = query!(
+        &mut tx,
+        (ServiceWorkspaceTag::F.workspace_tag as WorkspaceTag,)
+    )
+    .condition(ServiceWorkspaceTag::F.service.equals(path.s_uuid))
+    .stream()
+    .map_ok(|(x,)| SimpleTag {
+        uuid: x.uuid,
+        name: x.name,
+        color: x.color.into(),
+        tag_type: TagType::Workspace,
+    })
+    .try_collect()
+    .await?;
+
+    tags.extend(global_tags);
+
+    tx.commit().await?;
+
+    Ok(Json(FullService {
+        uuid: path.s_uuid,
+        name: service.name,
+        version: service.version,
+        certainty: service.certainty,
+        host: SimpleHost {
+            uuid: host.uuid,
+            ip_addr: host.ip_addr.to_string(),
+            os_type: host.os_type,
+            comment: host.comment,
+            workspace: path.w_uuid,
+            created_at: host.created_at,
+        },
+        port: port.map(|port| SimplePort {
+            uuid: port.uuid,
+            port: u16::from_ne_bytes(port.port.to_ne_bytes()),
+            protocol: port.protocol,
+            host: host.uuid,
+            comment: port.comment,
+            workspace: path.w_uuid,
+            created_at: port.created_at,
+        }),
+        comment: service.comment,
+        workspace: path.w_uuid,
+        tags,
+        created_at: service.created_at,
     }))
 }

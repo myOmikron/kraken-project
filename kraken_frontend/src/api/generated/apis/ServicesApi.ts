@@ -16,11 +16,14 @@
 import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
+  FullService,
   ServiceResultsPage,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
+    FullServiceFromJSON,
+    FullServiceToJSON,
     ServiceResultsPageFromJSON,
     ServiceResultsPageToJSON,
 } from '../models';
@@ -30,6 +33,11 @@ export interface GetAllServicesRequest {
     limit: number;
     offset: number;
     host?: string | null;
+}
+
+export interface GetServiceRequest {
+    wUuid: string;
+    sUuid: string;
 }
 
 /**
@@ -86,6 +94,42 @@ export class ServicesApi extends runtime.BaseAPI {
      */
     async getAllServices(requestParameters: GetAllServicesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceResultsPage> {
         const response = await this.getAllServicesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Retrieve all information about a single service
+     * Retrieve all information about a single service
+     */
+    async getServiceRaw(requestParameters: GetServiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FullService>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling getService.');
+        }
+
+        if (requestParameters.sUuid === null || requestParameters.sUuid === undefined) {
+            throw new runtime.RequiredError('sUuid','Required parameter requestParameters.sUuid was null or undefined when calling getService.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/services/{s_uuid}`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"s_uuid"}}`, encodeURIComponent(String(requestParameters.sUuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FullServiceFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve all information about a single service
+     * Retrieve all information about a single service
+     */
+    async getService(requestParameters: GetServiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullService> {
+        const response = await this.getServiceRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

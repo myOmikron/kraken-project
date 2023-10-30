@@ -2,7 +2,6 @@
 
 use std::collections::HashMap;
 
-use actix_toolbox::tb_middleware::Session;
 use actix_web::get;
 use actix_web::web::{Data, Json, Path, Query};
 use chrono::{DateTime, Utc};
@@ -13,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+use crate::api::extractors::SessionUser;
 use crate::api::handler::hosts::SimpleHost;
 use crate::api::handler::{
     get_page_params, ApiError, ApiResult, PageParams, PathUuid, PortResultsPage, SimpleTag, TagType,
@@ -89,9 +89,8 @@ pub async fn get_all_ports(
     page_params: Query<PageParams>,
     filter_params: Query<GetAllPortsQuery>,
     db: Data<Database>,
-    session: Session,
+    SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<PortResultsPage>> {
-    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
     let path = path.into_inner();
 
     let mut tx = db.start_transaction().await?;
@@ -185,5 +184,102 @@ pub async fn get_all_ports(
         limit,
         offset,
         total: total as u64,
+    }))
+}
+
+/// The path parameter of a port
+#[derive(Deserialize, IntoParams)]
+pub struct PathPort {
+    /// The workspace's uuid
+    pub w_uuid: Uuid,
+    /// The port's uuid
+    pub p_uuid: Uuid,
+}
+
+/// Retrieve all information about a single port
+#[utoipa::path(
+    tag = "Ports",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Retrieved the selected port", body = FullPort),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathPort),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/ports/{p_uuid}")]
+pub async fn get_port(
+    path: Path<PathPort>,
+    db: Data<Database>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<Json<FullPort>> {
+    let mut tx = db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges)?;
+    }
+
+    let port = query!(&mut tx, Port)
+        .condition(and!(
+            Port::F.workspace.equals(path.w_uuid),
+            Port::F.uuid.equals(path.p_uuid)
+        ))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    let host = query!(&mut tx, Host)
+        .condition(Host::F.uuid.equals(*port.host.key()))
+        .one()
+        .await?;
+
+    let mut tags: Vec<_> = query!(&mut tx, (PortGlobalTag::F.global_tag as GlobalTag,))
+        .condition(PortGlobalTag::F.port.equals(path.p_uuid))
+        .stream()
+        .map_ok(|(x,)| SimpleTag {
+            uuid: x.uuid,
+            name: x.name,
+            color: x.color.into(),
+            tag_type: TagType::Global,
+        })
+        .try_collect()
+        .await?;
+
+    let global_tags: Vec<_> = query!(
+        &mut tx,
+        (PortWorkspaceTag::F.workspace_tag as WorkspaceTag,)
+    )
+    .condition(PortWorkspaceTag::F.port.equals(path.p_uuid))
+    .stream()
+    .map_ok(|(x,)| SimpleTag {
+        uuid: x.uuid,
+        name: x.name,
+        color: x.color.into(),
+        tag_type: TagType::Workspace,
+    })
+    .try_collect()
+    .await?;
+
+    tags.extend(global_tags);
+
+    tx.commit().await?;
+
+    Ok(Json(FullPort {
+        uuid: port.uuid,
+        port: u16::from_ne_bytes(port.port.to_ne_bytes()),
+        protocol: port.protocol,
+        host: SimpleHost {
+            uuid: host.uuid,
+            ip_addr: host.ip_addr.to_string(),
+            os_type: host.os_type,
+            comment: host.comment,
+            workspace: path.w_uuid,
+            created_at: host.created_at,
+        },
+        comment: port.comment,
+        tags,
+        workspace: path.w_uuid,
+        created_at: port.created_at,
     }))
 }
