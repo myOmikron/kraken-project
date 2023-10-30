@@ -32,7 +32,11 @@ impl LeechAttackContext {
                     1 => ServiceCertainty::MaybeVerified,
                     2 => ServiceCertainty::DefinitelyVerified,
                     _ => {
-                        todo!("Figure out some way to match unknown certainties")
+                        self.set_finished(Some(AttackError::Custom(
+                            "Retrieved certainty Unknown".into(),
+                        )))
+                        .await;
+                        return;
                     }
                 };
 
