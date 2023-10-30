@@ -172,6 +172,8 @@ pub(crate) async fn start_server(
                     .service(workspaces::retract_invitation)
                     .service(workspaces::get_all_workspace_invitations)
                     .service(workspaces::search)
+                    .service(workspaces::get_search_results)
+                    .service(workspaces::get_searches)
                     .service(attacks::bruteforce_subdomains)
                     .service(attacks::scan_tcp_ports)
                     .service(attacks::query_certificate_transparency)

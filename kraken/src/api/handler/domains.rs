@@ -35,13 +35,13 @@ pub struct GetAllDomainsQuery {
 /// A simple representation of a domain in a workspace
 #[derive(Serialize, ToSchema)]
 pub struct SimpleDomain {
-    uuid: Uuid,
+    pub(crate) uuid: Uuid,
     #[schema(example = "example.com")]
-    domain: String,
+    pub(crate) domain: String,
     #[schema(example = "This is a important domain!")]
-    comment: String,
-    workspace: Uuid,
-    created_at: DateTime<Utc>,
+    pub(crate) comment: String,
+    pub(crate) workspace: Uuid,
+    pub(crate) created_at: DateTime<Utc>,
 }
 
 /// A full representation of a domain in a workspace

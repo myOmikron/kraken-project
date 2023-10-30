@@ -66,8 +66,6 @@ pub struct SearchResult {
 /// Model Types
 #[derive(DbEnum, Copy, Clone)]
 pub enum ModelType {
-    /// [Attack](models::Attack) type
-    Attack,
     /// [Host](models::Host) type
     Host,
     /// [Service](models::Service) type
@@ -93,9 +91,6 @@ pub enum ModelType {
 impl Display for ModelType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ModelType::Attack => {
-                write!(f, "{}", models::Attack::TABLE)
-            }
             ModelType::Host => {
                 write!(f, "{}", models::Host::TABLE)
             }

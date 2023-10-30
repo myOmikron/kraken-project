@@ -28,6 +28,7 @@ use crate::api::handler::domains::FullDomain;
 use crate::api::handler::hosts::FullHost;
 use crate::api::handler::ports::FullPort;
 use crate::api::handler::services::FullService;
+use crate::api::handler::workspaces::{SearchEntry, SearchResultEntry};
 use crate::models::{Color, User};
 
 pub mod api_keys;
@@ -99,7 +100,9 @@ pub struct PageParams {
     QueryUnhashedResultsPage = Page<SimpleQueryUnhashedResult>,
     HostAliveResultsPage = Page<SimpleHostAliveResult>,
     ServiceDetectionResultsPage = Page<FullServiceDetectionResult>,
-    DnsResolutionResultsPage = Page<SimpleDnsResolutionResult>
+    DnsResolutionResultsPage = Page<SimpleDnsResolutionResult>,
+    SearchResultPage = Page<SearchResultEntry>,
+    SearchesResultPage = Page<SearchEntry>,
 )]
 pub struct Page<T> {
     /// The page's items
