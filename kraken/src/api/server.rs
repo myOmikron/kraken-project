@@ -70,8 +70,8 @@ pub(crate) async fn start_server(
     );
 
     let oauth = Data::new(OauthManager::default());
-
     let dehashed = Data::new(RwLock::new(dehashed_scheduler));
+    let database = db.clone();
 
     HttpServer::new(move || {
         App::new()
@@ -214,6 +214,9 @@ pub(crate) async fn start_server(
     ))?
     .run()
     .await?;
+
+    // TODO: Stop rpc server as it also has access to the database
+    database.close().await;
 
     Ok(())
 }

@@ -173,6 +173,8 @@ async fn create_user(db: Database) -> Result<(), String> {
 
     println!("Created user {username}");
 
+    db.close().await;
+
     Ok(())
 }
 
