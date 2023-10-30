@@ -227,7 +227,7 @@ pub async fn set_password(
     // TODO: Other error case
     let (password_hash, local_user_uuid) =
         query!(&mut tx, (LocalUser::F.password_hash, LocalUser::F.uuid))
-            .condition(User::F.uuid.equals(uuid))
+            .condition(LocalUser::F.user.uuid.equals(uuid))
             .optional()
             .await?
             .ok_or(ApiError::SessionCorrupt)?;
