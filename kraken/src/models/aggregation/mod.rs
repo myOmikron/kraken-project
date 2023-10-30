@@ -51,6 +51,7 @@ pub struct Host {
     /// The IP address of the host.
     ///
     /// If the host has multiple addresses, create a [Host] for each and link them.
+    #[rorm(index)]
     pub ip_addr: IpNetwork,
 
     /// The type of OS of this host
@@ -143,11 +144,11 @@ pub struct Service {
     pub uuid: Uuid,
 
     /// Name of the service
-    #[rorm(max_length = 255)]
+    #[rorm(index, max_length = 255)]
     pub name: String,
 
     /// Optional version of the service
-    #[rorm(max_length = 255)]
+    #[rorm(index, max_length = 255)]
     pub version: Option<String>,
 
     /// The certainty the service is detected correct
@@ -246,6 +247,7 @@ pub struct Port {
     /// Port number
     ///
     /// Reinterpret as u16 with to_ne_bytes and from_ne_bytes
+    #[rorm(index)]
     pub port: i16,
 
     /// Port protocol
@@ -329,7 +331,7 @@ pub struct Domain {
     pub uuid: Uuid,
 
     /// The domain that was found
-    #[rorm(max_length = 255)]
+    #[rorm(index, max_length = 255)]
     pub domain: String,
 
     /// The certainty of this domain entry

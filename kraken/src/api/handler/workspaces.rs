@@ -1,27 +1,48 @@
 //! Everything regarding workspace management is located in this module
 
 use actix_toolbox::tb_middleware::Session;
-use actix_web::web::{Data, Json, Path};
+use actix_web::web::{Data, Json, Path, Query};
 use actix_web::{delete, get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
-use log::{debug, warn};
+use futures::{StreamExt, TryStreamExt};
+use log::{debug, error, info, warn};
+use rorm::db::executor::Stream;
+use rorm::db::sql::value::Value;
 use rorm::db::transaction::Transaction;
+use rorm::db::Executor;
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, query, update, Database, FieldAccess, Model};
+use rorm::{and, insert, query, update, Database, Error, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
+use tokio::sync::mpsc;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
+use crate::api::handler::attack_results::{
+    FullQueryCertificateTransparencyResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
+    SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+};
 use crate::api::handler::attacks::SimpleAttack;
+use crate::api::handler::domains::SimpleDomain;
+use crate::api::handler::hosts::SimpleHost;
+use crate::api::handler::ports::SimplePort;
+use crate::api::handler::services::SimpleService;
 use crate::api::handler::users::SimpleUser;
 use crate::api::handler::workspace_invitations::{
     FullWorkspaceInvitation, WorkspaceInvitationList,
 };
-use crate::api::handler::{de_optional, query_user, ApiError, ApiResult, PathUuid, UuidResponse};
+use crate::api::handler::{
+    de_optional, query_user, ApiError, ApiResult, Page, PageParams, PathUuid, SearchResultPage,
+    SearchesResultPage, UuidResponse,
+};
+use crate::chan::WsManagerMessage::Message;
 use crate::chan::{WsManagerChan, WsManagerMessage, WsMessage};
+use crate::models;
 use crate::models::{
-    Attack, User, UserPermission, Workspace, WorkspaceInvitation, WorkspaceMember,
+    Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
+    DnsResolutionResult, Domain, Host, HostAliveResult, ModelType, Port, Search, SearchInsert,
+    SearchResult, Service, TcpPortScanResult, User, UserPermission, Workspace, WorkspaceInvitation,
+    WorkspaceMember,
 };
 
 /// The request to create a new workspace
@@ -97,7 +118,7 @@ pub async fn delete_workspace(
         rorm::delete!(&mut tx, Workspace).single(&workspace).await?;
     } else {
         debug!(
-            "User {} does not has the privileges to delete the workspace {}",
+            "User {} does not have the privileges to delete the workspace {}",
             executing_user.username, workspace.uuid
         );
 
@@ -621,6 +642,603 @@ pub async fn get_all_workspaces_admin(
             )
             .collect(),
     }))
+}
+
+/// Request to search the workspace
+#[derive(Deserialize, ToSchema)]
+pub struct SearchWorkspaceRequest {
+    /// the term to search for
+    pub(crate) search_term: String,
+}
+
+/// Search through a workspaces' data
+#[utoipa::path(
+    tag = "Workspaces",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Search has been scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid),
+    request_body = SearchWorkspaceRequest,
+    security(("api_key" = []))
+)]
+#[post("/workspaces/{uuid}/search")]
+pub async fn search(
+    path: Path<PathUuid>,
+    request: Json<SearchWorkspaceRequest>,
+    db: Data<Database>,
+    SessionUser(user_uuid): SessionUser,
+    ws_manager_chan: Data<WsManagerChan>,
+) -> ApiResult<HttpResponse> {
+    let search_term = request.into_inner().search_term;
+
+    if search_term.is_empty() {
+        return Err(ApiError::InvalidSearch);
+    }
+
+    let mut db_trx = db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut db_trx, path.uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    info!("Started workspace search for: '{}'", search_term);
+
+    let search_uuid = insert!(&mut db_trx, Search)
+        .return_primary_key()
+        .single(&SearchInsert {
+            uuid: Uuid::new_v4(),
+            started_by: ForeignModelByField::Key(user_uuid),
+            workspace: ForeignModelByField::Key(path.uuid),
+            search_term: search_term.clone(),
+        })
+        .await?;
+
+    db_trx.commit().await.map_err(ApiError::DatabaseError)?;
+
+    let (result_tx, mut result_rx) = mpsc::channel::<Result<SearchResult, Error>>(16);
+
+    tokio::spawn({
+        let mut db_trx = db
+            .start_transaction()
+            .await
+            .map_err(ApiError::DatabaseError)?;
+
+        let search_term = search_term.clone();
+
+        async move {
+            let mut finished_successful = true;
+            while let Some(result) = result_rx.recv().await {
+                match result {
+                    Err(err) => {
+                        debug!("received search error, stopping search");
+                        if update!(&mut db_trx, Search)
+                            .condition(Search::F.uuid.equals(search_uuid))
+                            .set(Search::F.error, Some(err.to_string()))
+                            .await
+                            .is_err()
+                        {
+                            error!("could not insert error msg into database");
+                        }
+
+                        finished_successful = false;
+                    }
+                    Ok(result) => {
+                        debug!("received search result with key: {:?}", result.ref_key);
+                        let Ok(result_uuid) = insert!(&mut db_trx, SearchResult)
+                            .return_primary_key()
+                            .single(&result)
+                            .await
+                        else {
+                            error!("could not insert data into database");
+                            continue;
+                        };
+
+                        let _ = ws_manager_chan
+                            .send(Message(
+                                user_uuid,
+                                WsMessage::SearchNotify {
+                                    search_uuid,
+                                    result_uuid,
+                                },
+                            ))
+                            .await;
+                    }
+                }
+            }
+
+            if update!(&mut db_trx, Search)
+                .condition(Search::F.uuid.equals(search_uuid))
+                .set(Search::F.finished_at, Some(Utc::now()))
+                .await
+                .is_err()
+            {
+                error!("could not update Search result");
+            }
+
+            if let Err(err) = db_trx.commit().await {
+                error!("could not commit changes to database: {err}");
+            };
+
+            let _ = ws_manager_chan
+                .send(Message(
+                    user_uuid,
+                    WsMessage::SearchFinished {
+                        search_uuid,
+                        finished_successful,
+                    },
+                ))
+                .await;
+
+            info!("Finished workspace search for: '{}'", search_term);
+        }
+    });
+
+    tokio::spawn({
+        let mut db_trx = db
+            .start_transaction()
+            .await
+            .map_err(ApiError::DatabaseError)?;
+        async move {
+            let search_term = format!("%{search_term}%");
+            let params = vec![Value::Uuid(path.uuid), Value::String(&search_term)];
+
+            for entry in build_query_list().await {
+                search_tables(
+                    &mut db_trx,
+                    search_uuid,
+                    entry.0,
+                    params.clone(),
+                    entry.1,
+                    result_tx.clone(),
+                )
+                .await;
+            }
+        }
+    });
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: search_uuid }))
+}
+
+/// Searched entry
+#[derive(Serialize, ToSchema)]
+pub struct SearchEntry {
+    pub(crate) uuid: Uuid,
+    pub(crate) created_at: DateTime<Utc>,
+    pub(crate) finished_at: Option<DateTime<Utc>>,
+    pub(crate) search_term: String,
+}
+
+/// Query all searches
+#[utoipa::path(
+    tag = "Workspaces",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Search results", body = SearchesResultPage),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid, PageParams),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{uuid}/search")]
+pub async fn get_searches(
+    path: Path<PathUuid>,
+    request: Query<PageParams>,
+    SessionUser(user_uuid): SessionUser,
+    db: Data<Database>,
+) -> ApiResult<Json<SearchesResultPage>> {
+    let PathUuid { uuid } = path.into_inner();
+    let PageParams { limit, offset } = request.into_inner();
+
+    let mut tx = db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut tx, uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    };
+
+    let (total,) = query!(&mut tx, (Search::F.uuid.count(),)).one().await?;
+
+    let items = query!(&mut tx, Search)
+        .condition(Search::F.workspace.equals(uuid))
+        .limit(limit)
+        .offset(offset)
+        .stream()
+        .map_ok(|entry| SearchEntry {
+            uuid: entry.uuid,
+            created_at: entry.created_at,
+            finished_at: entry.finished_at,
+            search_term: entry.search_term,
+        })
+        .try_collect()
+        .await?;
+
+    tx.commit().await?;
+
+    Ok(Json(Page {
+        items,
+        limit,
+        offset,
+        total: total as u64,
+    }))
+}
+
+// TODO: unify with 'InviteUuid'
+/// The url components of an search
+#[derive(Deserialize, IntoParams)]
+pub struct SearchUuid {
+    /// The UUID of the workspace
+    pub w_uuid: Uuid,
+    /// The UUID of the search
+    pub s_uuid: Uuid,
+}
+
+// pub struct
+
+/// Dynamic result
+#[derive(Serialize, ToSchema)]
+pub enum SearchResultEntry {
+    /// Host Result
+    HostEntry(crate::api::handler::hosts::SimpleHost),
+    /// Service Result
+    ServiceEntry(crate::api::handler::services::SimpleService),
+    /// Port Result
+    PortEntry(crate::api::handler::ports::SimplePort),
+    /// Domain Result
+    DomainEntry(crate::api::handler::domains::SimpleDomain),
+    /// DNS Record Result
+    DnsRecordResultEntry(crate::api::handler::SimpleDnsResolutionResult),
+    /// TCP Port Result
+    TcpPortScanResultEntry(crate::api::handler::SimpleTcpPortScanResult),
+    /// Dehashed Query Result
+    DehashedQueryResultEntry(crate::api::handler::SimpleQueryUnhashedResult),
+    /// Certificate Transparency Result
+    CertificateTransparencyResultEntry(crate::api::handler::FullQueryCertificateTransparencyResult),
+    /// Host Alive Result
+    HostAliveResult(crate::api::handler::SimpleHostAliveResult),
+    /// Service Detection Result
+    ServiceDetectionResult(crate::api::handler::FullServiceDetectionResult),
+}
+
+/// Retrieve results for a search by it's uuid
+#[utoipa::path(
+    tag = "Workspaces",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Search results", body = SearchResultPage),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(SearchUuid, PageParams),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/search/{s_uuid}")]
+pub async fn get_search_results(
+    path: Path<SearchUuid>,
+    request: Query<PageParams>,
+    SessionUser(user_uuid): SessionUser,
+    db: Data<Database>,
+) -> ApiResult<Json<SearchResultPage>> {
+    let SearchUuid { w_uuid, s_uuid } = path.into_inner();
+    let PageParams { limit, offset } = request.into_inner();
+
+    let mut tx = db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut tx, w_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    };
+
+    let (total,) = query!(&mut tx, (SearchResult::F.uuid.count(),))
+        .condition(SearchResult::F.search.equals(s_uuid))
+        .one()
+        .await?;
+
+    let proxy_items = query!(&mut tx, SearchResult)
+        .condition(and!(
+            SearchResult::F.search.equals(s_uuid),
+            SearchResult::F.search.workspace.equals(w_uuid),
+        ))
+        .limit(limit)
+        .offset(offset)
+        .all()
+        .await?;
+
+    let mut items = vec![];
+    items.reserve(proxy_items.len());
+
+    for item in proxy_items {
+        items.push(match item.ref_type {
+            ModelType::Host => {
+                let data = query!(&mut tx, Host)
+                    .condition(Host::F.uuid.equals(item.ref_key))
+                    .one()
+                    .await
+                    .unwrap();
+
+                SearchResultEntry::HostEntry(SimpleHost {
+                    uuid: data.uuid,
+                    workspace: *data.workspace.key(),
+                    comment: data.comment,
+                    os_type: data.os_type,
+                    ip_addr: data.ip_addr.to_string(),
+                    created_at: data.created_at,
+                })
+            }
+            ModelType::Service => {
+                let data = query!(&mut tx, Service)
+                    .condition(Service::F.uuid.equals(item.ref_key))
+                    .one()
+                    .await
+                    .unwrap();
+
+                let port = if data.port.is_some() {
+                    Some(*data.port.unwrap().key())
+                } else {
+                    None
+                };
+
+                SearchResultEntry::ServiceEntry(SimpleService {
+                    uuid: data.uuid,
+                    name: data.name,
+                    version: data.version,
+                    host: *data.host.key(),
+                    comment: data.comment,
+                    workspace: *data.workspace.key(),
+                    created_at: data.created_at,
+                    port,
+                })
+            }
+            ModelType::Port => {
+                let data = query!(&mut tx, Port)
+                    .condition(Port::F.uuid.equals(item.ref_key))
+                    .one()
+                    .await
+                    .unwrap();
+
+                SearchResultEntry::PortEntry(SimplePort {
+                    uuid: data.uuid,
+                    comment: data.comment,
+                    workspace: *data.workspace.key(),
+                    port: data.port as u16,
+                    created_at: data.created_at,
+                    host: *data.host.key(),
+                    protocol: data.protocol,
+                })
+            }
+            ModelType::Domain => {
+                let data = query!(&mut tx, Domain)
+                    .condition(Domain::F.uuid.equals(item.ref_key))
+                    .one()
+                    .await
+                    .unwrap();
+
+                SearchResultEntry::DomainEntry(SimpleDomain {
+                    uuid: data.uuid,
+                    comment: data.comment,
+                    workspace: *data.workspace.key(),
+                    created_at: data.created_at,
+                    domain: data.domain,
+                })
+            }
+            ModelType::DnsRecordResult => {
+                let data = query!(&mut tx, DnsResolutionResult)
+                    .condition(DnsResolutionResult::F.uuid.equals(item.ref_key))
+                    .one()
+                    .await
+                    .unwrap();
+
+                SearchResultEntry::DnsRecordResultEntry(SimpleDnsResolutionResult {
+                    uuid: data.uuid,
+                    created_at: data.created_at,
+                    attack: *data.attack.key(),
+                    source: data.source,
+                    destination: data.destination,
+                    dns_record_type: data.dns_record_type,
+                })
+            }
+            ModelType::TcpPortScanResult => {
+                let data = query!(&mut tx, TcpPortScanResult)
+                    .condition(TcpPortScanResult::F.uuid.equals(item.ref_key))
+                    .one()
+                    .await
+                    .unwrap();
+
+                SearchResultEntry::TcpPortScanResultEntry(SimpleTcpPortScanResult {
+                    uuid: data.uuid,
+                    created_at: data.created_at,
+                    attack: *data.attack.key(),
+                    address: data.address,
+                    port: data.port as u16,
+                })
+            }
+            ModelType::DehashedQueryResult => {
+                let data = query!(&mut tx, DehashedQueryResult)
+                    .condition(DehashedQueryResult::F.uuid.equals(item.ref_key))
+                    .one()
+                    .await
+                    .unwrap();
+
+                SearchResultEntry::DehashedQueryResultEntry(SimpleQueryUnhashedResult {
+                    uuid: data.uuid,
+                    created_at: data.created_at,
+                    attack: *data.attack.key(),
+                    address: data.address,
+                    phone: data.phone,
+                    database_name: data.database_name,
+                    dehashed_id: data.dehashed_id,
+                    hashed_password: data.hashed_password,
+                    ip_address: data.ip_address,
+                    email: data.email,
+                    password: data.password,
+                    username: data.username,
+                    vin: data.vin,
+                    name: data.name,
+                })
+            }
+            ModelType::CertificateTransparencyResult => {
+                let mut data = query!(&mut tx, CertificateTransparencyResult)
+                    .condition(CertificateTransparencyResult::F.uuid.equals(item.ref_key))
+                    .one()
+                    .await
+                    .unwrap();
+
+                if CertificateTransparencyResult::F
+                    .value_names
+                    .populate(&mut tx, &mut data)
+                    .await
+                    .is_err()
+                {
+                    error!("could not resolve backref's");
+                }
+
+                let names: Vec<CertificateTransparencyValueName> =
+                    data.value_names.cached.unwrap_or(vec![]);
+
+                SearchResultEntry::CertificateTransparencyResultEntry(
+                    FullQueryCertificateTransparencyResult {
+                        uuid: data.uuid,
+                        created_at: data.created_at,
+                        attack: *data.attack.key(),
+                        common_name: data.common_name,
+                        value_names: names.into_iter().map(|entry| entry.value_name).collect(),
+                        issuer_name: data.issuer_name,
+                        serial_number: data.serial_number,
+                        not_before: data.not_before,
+                        not_after: data.not_after,
+                    },
+                )
+            }
+            ModelType::HostAliveResult => {
+                let data = query!(&mut tx, models::HostAliveResult)
+                    .condition(models::HostAliveResult::F.uuid.equals(item.ref_key))
+                    .one()
+                    .await
+                    .unwrap();
+
+                SearchResultEntry::HostAliveResult(SimpleHostAliveResult {
+                    uuid: data.uuid,
+                    created_at: data.created_at,
+                    attack: *data.attack.key(),
+                    host: data.host,
+                })
+            }
+            ModelType::ServiceDetectionResult => {
+                let data = query!(&mut tx, HostAliveResult)
+                    .condition(HostAliveResult::F.uuid.equals(item.ref_key))
+                    .one()
+                    .await
+                    .unwrap();
+
+                SearchResultEntry::HostAliveResult(SimpleHostAliveResult {
+                    uuid: data.uuid,
+                    created_at: data.created_at,
+                    attack: *data.attack.key(),
+                    host: data.host,
+                })
+            }
+        })
+    }
+
+    tx.commit().await?;
+
+    Ok(Json(Page {
+        items,
+        limit,
+        offset,
+        total: total as u64,
+    }))
+}
+
+async fn build_query_list() -> Vec<(String, ModelType)> {
+    let table_names_no_ref_to_ws = vec![
+        ModelType::DnsRecordResult,
+        ModelType::TcpPortScanResult,
+        ModelType::DehashedQueryResult,
+        ModelType::CertificateTransparencyResult,
+        ModelType::HostAliveResult,
+        ModelType::ServiceDetectionResult,
+    ];
+
+    let table_names_ref_to_ws = vec![
+        ModelType::Host,
+        ModelType::Service,
+        ModelType::Port,
+        ModelType::Domain,
+    ];
+
+    let mut data = vec![];
+    data.reserve(table_names_no_ref_to_ws.len() + table_names_ref_to_ws.len());
+
+    data.extend(table_names_no_ref_to_ws.into_iter().map(|table_entry| {
+        (format!(
+            "SELECT
+                workspace_related_table.uuid
+            FROM
+                (SELECT t.* FROM \"{table_entry}\" t JOIN attack on t.attack = attack.uuid WHERE attack.workspace = $1) workspace_related_table
+            WHERE
+                (workspace_related_table.*)::text ILIKE $2;"
+        ), table_entry)
+    }).collect::<Vec<(String, ModelType)>>());
+
+    data.extend(
+        table_names_ref_to_ws
+            .into_iter()
+            .map(|table_entry| {
+                (format!(
+                        "SELECT
+                            workspace_related_table.uuid
+                        FROM
+                            (SELECT t.* FROM \"{table_entry}\" t WHERE t.workspace = $1) workspace_related_table
+                        WHERE
+                            (workspace_related_table.*)::text ILIKE $2;"
+                    ),
+                    table_entry,
+                )
+            })
+            .collect::<Vec<(String, ModelType)>>(),
+    );
+
+    data
+}
+
+async fn search_tables(
+    executor: impl Executor<'_>,
+    search_uuid: Uuid,
+    sql: String,
+    params: Vec<Value<'_>>,
+    model_type: ModelType,
+    result_chan: mpsc::Sender<Result<SearchResult, Error>>,
+) {
+    debug!("search sql: {sql}");
+
+    let mut stream = executor.execute::<Stream>(sql, params);
+
+    while let Some(result) = stream.next().await {
+        match result {
+            Ok(row) => {
+                let ref_key = row.get::<Uuid, usize>(0).unwrap();
+                let data = Ok(SearchResult {
+                    uuid: Uuid::new_v4(),
+                    ref_key,
+                    ref_type: model_type,
+                    search: ForeignModelByField::Key(search_uuid),
+                });
+                if let Err(err) = result_chan.send(data).await {
+                    error!("error sending result row: {err}");
+                    return;
+                };
+            }
+            Err(err) => {
+                let data = Err(err);
+                if let Err(err) = result_chan.send(data).await {
+                    error!("error sending error: {err}");
+                };
+                return;
+            }
+        };
+    }
 }
 
 /// Get a [`FullWorkspace`] by its uuid without permission checks

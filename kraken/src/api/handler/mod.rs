@@ -28,6 +28,7 @@ use crate::api::handler::domains::FullDomain;
 use crate::api::handler::hosts::FullHost;
 use crate::api::handler::ports::FullPort;
 use crate::api::handler::services::FullService;
+use crate::api::handler::workspaces::{SearchEntry, SearchResultEntry};
 use crate::models::{Color, User};
 
 pub mod api_keys;
@@ -99,7 +100,9 @@ pub struct PageParams {
     QueryUnhashedResultsPage = Page<SimpleQueryUnhashedResult>,
     HostAliveResultsPage = Page<SimpleHostAliveResult>,
     ServiceDetectionResultsPage = Page<FullServiceDetectionResult>,
-    DnsResolutionResultsPage = Page<SimpleDnsResolutionResult>
+    DnsResolutionResultsPage = Page<SimpleDnsResolutionResult>,
+    SearchResultPage = Page<SearchResultEntry>,
+    SearchesResultPage = Page<SearchEntry>,
 )]
 pub struct Page<T> {
     /// The page's items
@@ -219,6 +222,8 @@ pub enum ApiStatusCode {
     AlreadyMember = 1027,
     /// The invitation is invalid
     InvalidInvitation = 1028,
+    /// The search term was invalid
+    InvalidSearch = 1029,
 
     /// Internal server error
     InternalServerError = 2000,
@@ -346,6 +351,9 @@ pub enum ApiError {
     /// The invitation is invalid
     #[error("Invalid invitation")]
     InvalidInvitation,
+    /// The search term was invalid
+    #[error("The search term was invalid")]
+    InvalidSearch,
 
     /// An internal server error occurred
     #[error("Internal server error")]
@@ -589,6 +597,10 @@ impl actix_web::ResponseError for ApiError {
             )),
             ApiError::InvalidTarget => HttpResponse::BadRequest().json(ApiErrorResponse::new(
                 ApiStatusCode::InvalidTarget,
+                self.to_string(),
+            )),
+            ApiError::InvalidSearch => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::InvalidSearch,
                 self.to_string(),
             )),
             ApiError::InvalidInvitation => HttpResponse::BadRequest().json(ApiErrorResponse::new(

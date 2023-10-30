@@ -86,6 +86,21 @@ pub enum WsMessage {
         /// Whether the attack was finished successful
         finished_successful: bool,
     },
+    // TODO: TaskFinished as generic result
+    /// A notification about a finished search
+    SearchFinished {
+        /// The corresponding id of the search
+        search_uuid: Uuid,
+        /// Whether the search was finished successfully
+        finished_successful: bool,
+    },
+    /// A notification about a search result
+    SearchNotify {
+        /// The corresponding id of the search results
+        search_uuid: Uuid,
+        /// A result entry
+        result_uuid: Uuid,
+    },
     /// A result for a subdomain enumeration using bruteforce DNS requests
     BruteforceSubdomainsResult {
         /// The corresponding id of the attack

@@ -35,16 +35,16 @@ pub struct GetAllServicesQuery {
 /// A simple representation of a service
 #[derive(Serialize, ToSchema)]
 pub struct SimpleService {
-    uuid: Uuid,
+    pub(crate) uuid: Uuid,
     #[schema(example = "postgresql")]
-    name: String,
+    pub(crate) name: String,
     #[schema(example = "13.0.1")]
-    version: Option<String>,
-    host: Uuid,
-    port: Option<Uuid>,
+    pub(crate) version: Option<String>,
+    pub(crate) host: Uuid,
+    pub(crate) port: Option<Uuid>,
     #[schema(example = "Holds all relevant information")]
-    comment: String,
-    workspace: Uuid,
+    pub(crate) comment: String,
+    pub(crate) workspace: Uuid,
     /// The point in time, the record was created
     pub created_at: DateTime<Utc>,
 }
