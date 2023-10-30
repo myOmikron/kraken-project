@@ -27,7 +27,6 @@ models/ApiStatusCode.ts
 models/AttackType.ts
 models/BruteforceSubdomainsRequest.ts
 models/BruteforceSubdomainsResultsPage.ts
-models/Certainty.ts
 models/Color.ts
 models/CreateApiKeyRequest.ts
 models/CreateAppRequest.ts
@@ -39,6 +38,7 @@ models/CreateWorkspaceRequest.ts
 models/CreateWorkspaceTagRequest.ts
 models/DnsResolutionRequest.ts
 models/DnsResolutionResultsPage.ts
+models/DomainCertainty.ts
 models/DomainResultsPage.ts
 models/FinishRegisterRequest.ts
 models/FinishRegisterRequestAllOf.ts
@@ -69,12 +69,14 @@ models/GetUser.ts
 models/GetUserResponse.ts
 models/GetWorkspaceTagsResponse.ts
 models/HostAliveResultsPage.ts
+models/HostCertainty.ts
 models/HostResultsPage.ts
 models/HostsAliveRequest.ts
 models/InviteToWorkspace.ts
 models/LoginRequest.ts
 models/OpenRequestInfo.ts
 models/OsType.ts
+models/PortCertainty.ts
 models/PortOrRange.ts
 models/PortProtocol.ts
 models/PortResultsPage.ts
@@ -100,6 +102,7 @@ models/SearchTypeOneOf1.ts
 models/SearchTypeOneOf2.ts
 models/SearchTypeOneOf3.ts
 models/SearchTypeOneOf4.ts
+models/ServiceCertainty.ts
 models/ServiceDetectionRequest.ts
 models/ServiceDetectionResultsPage.ts
 models/ServiceResultsPage.ts
@@ -134,6 +137,7 @@ models/UpdateSettingsRequest.ts
 models/UpdateWordlistRequest.ts
 models/UpdateWorkspaceRequest.ts
 models/UpdateWorkspaceTag.ts
+models/UserPermission.ts
 models/UuidResponse.ts
 models/WorkspaceInvitationList.ts
 models/index.ts

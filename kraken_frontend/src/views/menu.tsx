@@ -9,6 +9,7 @@ import UsersIcon from "../svg/users";
 import UserSettingsIcon from "../svg/user_settings";
 import "../styling/menu.css";
 import SettingsIcon from "../svg/settings";
+import { UserPermission } from "../api/generated";
 
 type MenuItem =
     | "me"
@@ -90,7 +91,7 @@ export default class Menu extends React.Component<MenuProps, MenuState> {
                             <div className={"menu-hint"}>User Settings</div>
                         </div>
                     </div>
-                    {this.context.user.admin ? (
+                    {this.context.user.permission === UserPermission.Admin ? (
                         <>
                             <div className={"menu-seperator"}>Admin</div>
                             <div className={"menu-item-container"}>

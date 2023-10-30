@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { UserPermission } from './UserPermission';
+import {
+    UserPermissionFromJSON,
+    UserPermissionFromJSONTyped,
+    UserPermissionToJSON,
+} from './UserPermission';
+
 /**
  * The request to update the settings
  * @export
@@ -20,13 +27,25 @@ import { exists, mapValues } from '../runtime';
  */
 export interface UpdateSettingsRequest {
     /**
+     * Require mfa for local users
+     * @type {boolean}
+     * @memberof UpdateSettingsRequest
+     */
+    mfaRequired: boolean;
+    /**
      * 
+     * @type {UserPermission}
+     * @memberof UpdateSettingsRequest
+     */
+    oidcInitialPermissionLevel: UserPermission;
+    /**
+     * The email for the dehashed account
      * @type {string}
      * @memberof UpdateSettingsRequest
      */
     dehashedEmail?: string | null;
     /**
-     * 
+     * The api key for the dehashed account
      * @type {string}
      * @memberof UpdateSettingsRequest
      */
@@ -38,6 +57,8 @@ export interface UpdateSettingsRequest {
  */
 export function instanceOfUpdateSettingsRequest(value: object): boolean {
     let isInstance = true;
+    isInstance = isInstance && "mfaRequired" in value;
+    isInstance = isInstance && "oidcInitialPermissionLevel" in value;
 
     return isInstance;
 }
@@ -52,6 +73,8 @@ export function UpdateSettingsRequestFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
+        'mfaRequired': json['mfa_required'],
+        'oidcInitialPermissionLevel': UserPermissionFromJSON(json['oidc_initial_permission_level']),
         'dehashedEmail': !exists(json, 'dehashed_email') ? undefined : json['dehashed_email'],
         'dehashedApiKey': !exists(json, 'dehashed_api_key') ? undefined : json['dehashed_api_key'],
     };
@@ -66,6 +89,8 @@ export function UpdateSettingsRequestToJSON(value?: UpdateSettingsRequest | null
     }
     return {
         
+        'mfa_required': value.mfaRequired,
+        'oidc_initial_permission_level': UserPermissionToJSON(value.oidcInitialPermissionLevel),
         'dehashed_email': value.dehashedEmail,
         'dehashed_api_key': value.dehashedApiKey,
     };

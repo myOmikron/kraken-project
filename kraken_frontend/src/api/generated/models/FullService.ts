@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { Certainty } from './Certainty';
+import type { ServiceCertainty } from './ServiceCertainty';
 import {
-    CertaintyFromJSON,
-    CertaintyFromJSONTyped,
-    CertaintyToJSON,
-} from './Certainty';
+    ServiceCertaintyFromJSON,
+    ServiceCertaintyFromJSONTyped,
+    ServiceCertaintyToJSON,
+} from './ServiceCertainty';
 import type { SimpleHost } from './SimpleHost';
 import {
     SimpleHostFromJSON,
@@ -64,10 +64,10 @@ export interface FullService {
     version?: string | null;
     /**
      * 
-     * @type {Certainty}
+     * @type {ServiceCertainty}
      * @memberof FullService
      */
-    certainty: Certainty;
+    certainty: ServiceCertainty;
     /**
      * 
      * @type {SimpleHost}
@@ -136,7 +136,7 @@ export function FullServiceFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'uuid': json['uuid'],
         'name': json['name'],
         'version': !exists(json, 'version') ? undefined : json['version'],
-        'certainty': CertaintyFromJSON(json['certainty']),
+        'certainty': ServiceCertaintyFromJSON(json['certainty']),
         'host': SimpleHostFromJSON(json['host']),
         'port': !exists(json, 'port') ? undefined : SimplePortFromJSON(json['port']),
         'comment': json['comment'],
@@ -158,7 +158,7 @@ export function FullServiceToJSON(value?: FullService | null): any {
         'uuid': value.uuid,
         'name': value.name,
         'version': value.version,
-        'certainty': CertaintyToJSON(value.certainty),
+        'certainty': ServiceCertaintyToJSON(value.certainty),
         'host': SimpleHostToJSON(value.host),
         'port': SimplePortToJSON(value.port),
         'comment': value.comment,

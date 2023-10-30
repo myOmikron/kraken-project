@@ -1,4 +1,4 @@
-import { FullGlobalTag, FullWorkspaceTag } from "../../../api/generated";
+import { FullGlobalTag, FullWorkspaceTag, UserPermission } from "../../../api/generated";
 import React from "react";
 import USER_CONTEXT from "../../../context/user";
 import { Api } from "../../../api/api";
@@ -29,7 +29,7 @@ export default function WorkspaceCreateTag(props: WorkspaceCreateTagProps) {
     const { workspace, initialName, onCreated } = props;
 
     const {
-        user: { admin },
+        user: { permission },
     } = React.useContext(USER_CONTEXT);
 
     // State
@@ -94,7 +94,7 @@ export default function WorkspaceCreateTag(props: WorkspaceCreateTagProps) {
                     onChange={(string) => setColorAlpha(parseInt(string))}
                 />
             </label>
-            {admin ? (
+            {permission === UserPermission.Admin ? (
                 <label>
                     Global: <Checkbox value={isGlobal} onChange={setIsGlobal} />
                 </label>

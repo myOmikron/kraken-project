@@ -68,9 +68,10 @@ export interface FullServiceDetectionResult {
  * @export
  */
 export const FullServiceDetectionResultCertaintyEnum = {
-    Unknown: 'Unknown',
-    Maybe: 'Maybe',
-    Definitely: 'Definitely'
+    Historical: 'Historical',
+    SupposedTo: 'SupposedTo',
+    MaybeVerified: 'MaybeVerified',
+    DefinitelyVerified: 'DefinitelyVerified'
 } as const;
 export type FullServiceDetectionResultCertaintyEnum = typeof FullServiceDetectionResultCertaintyEnum[keyof typeof FullServiceDetectionResultCertaintyEnum];
 

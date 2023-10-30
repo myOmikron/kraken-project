@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { UserPermission } from './UserPermission';
+import {
+    UserPermissionFromJSON,
+    UserPermissionFromJSONTyped,
+    UserPermissionToJSON,
+} from './UserPermission';
+
 /**
  * The request to create a user
  * @export
@@ -39,10 +46,10 @@ export interface CreateUserRequest {
     password: string;
     /**
      * 
-     * @type {boolean}
+     * @type {UserPermission}
      * @memberof CreateUserRequest
      */
-    admin: boolean;
+    permission: UserPermission;
 }
 
 /**
@@ -53,7 +60,7 @@ export function instanceOfCreateUserRequest(value: object): boolean {
     isInstance = isInstance && "username" in value;
     isInstance = isInstance && "displayName" in value;
     isInstance = isInstance && "password" in value;
-    isInstance = isInstance && "admin" in value;
+    isInstance = isInstance && "permission" in value;
 
     return isInstance;
 }
@@ -71,7 +78,7 @@ export function CreateUserRequestFromJSONTyped(json: any, ignoreDiscriminator: b
         'username': json['username'],
         'displayName': json['display_name'],
         'password': json['password'],
-        'admin': json['admin'],
+        'permission': UserPermissionFromJSON(json['permission']),
     };
 }
 
@@ -87,7 +94,7 @@ export function CreateUserRequestToJSON(value?: CreateUserRequest | null): any {
         'username': value.username,
         'display_name': value.displayName,
         'password': value.password,
-        'admin': value.admin,
+        'permission': UserPermissionToJSON(value.permission),
     };
 }
 

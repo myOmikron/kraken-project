@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { UserPermission } from './UserPermission';
+import {
+    UserPermissionFromJSON,
+    UserPermissionFromJSONTyped,
+    UserPermissionToJSON,
+} from './UserPermission';
+
 /**
  * The live settings of kraken
  * @export
@@ -20,23 +27,35 @@ import { exists, mapValues } from '../runtime';
  */
 export interface SettingsFull {
     /**
-     * 
-     * @type {Date}
+     * Require mfa for local users
+     * @type {boolean}
      * @memberof SettingsFull
      */
-    createdAt: Date;
+    mfaRequired: boolean;
     /**
      * 
+     * @type {UserPermission}
+     * @memberof SettingsFull
+     */
+    oidcInitialPermissionLevel: UserPermission;
+    /**
+     * The email for the dehashed account
      * @type {string}
      * @memberof SettingsFull
      */
     dehashedEmail?: string | null;
     /**
-     * 
+     * The api key for the dehashed account
      * @type {string}
      * @memberof SettingsFull
      */
     dehashedApiKey?: string | null;
+    /**
+     * The point in time the settings were created
+     * @type {Date}
+     * @memberof SettingsFull
+     */
+    createdAt: Date;
 }
 
 /**
@@ -44,6 +63,8 @@ export interface SettingsFull {
  */
 export function instanceOfSettingsFull(value: object): boolean {
     let isInstance = true;
+    isInstance = isInstance && "mfaRequired" in value;
+    isInstance = isInstance && "oidcInitialPermissionLevel" in value;
     isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
@@ -59,9 +80,11 @@ export function SettingsFullFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'createdAt': (new Date(json['created_at'])),
+        'mfaRequired': json['mfa_required'],
+        'oidcInitialPermissionLevel': UserPermissionFromJSON(json['oidc_initial_permission_level']),
         'dehashedEmail': !exists(json, 'dehashed_email') ? undefined : json['dehashed_email'],
         'dehashedApiKey': !exists(json, 'dehashed_api_key') ? undefined : json['dehashed_api_key'],
+        'createdAt': (new Date(json['created_at'])),
     };
 }
 
@@ -74,9 +97,11 @@ export function SettingsFullToJSON(value?: SettingsFull | null): any {
     }
     return {
         
-        'created_at': (value.createdAt.toISOString()),
+        'mfa_required': value.mfaRequired,
+        'oidc_initial_permission_level': UserPermissionToJSON(value.oidcInitialPermissionLevel),
         'dehashed_email': value.dehashedEmail,
         'dehashed_api_key': value.dehashedApiKey,
+        'created_at': (value.createdAt.toISOString()),
     };
 }
 

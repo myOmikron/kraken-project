@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { UserPermission } from './UserPermission';
+import {
+    UserPermissionFromJSON,
+    UserPermissionFromJSONTyped,
+    UserPermissionToJSON,
+} from './UserPermission';
+
 /**
  * A single user representation
  * @export
@@ -39,10 +46,10 @@ export interface GetUser {
     displayName: string;
     /**
      * 
-     * @type {boolean}
+     * @type {UserPermission}
      * @memberof GetUser
      */
-    admin: boolean;
+    permission: UserPermission;
     /**
      * 
      * @type {Date}
@@ -65,7 +72,7 @@ export function instanceOfGetUser(value: object): boolean {
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "username" in value;
     isInstance = isInstance && "displayName" in value;
-    isInstance = isInstance && "admin" in value;
+    isInstance = isInstance && "permission" in value;
     isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
@@ -84,7 +91,7 @@ export function GetUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): G
         'uuid': json['uuid'],
         'username': json['username'],
         'displayName': json['display_name'],
-        'admin': json['admin'],
+        'permission': UserPermissionFromJSON(json['permission']),
         'createdAt': (new Date(json['created_at'])),
         'lastLogin': !exists(json, 'last_login') ? undefined : (json['last_login'] === null ? null : new Date(json['last_login'])),
     };
@@ -102,7 +109,7 @@ export function GetUserToJSON(value?: GetUser | null): any {
         'uuid': value.uuid,
         'username': value.username,
         'display_name': value.displayName,
-        'admin': value.admin,
+        'permission': UserPermissionToJSON(value.permission),
         'created_at': (value.createdAt.toISOString()),
         'last_login': value.lastLogin === undefined ? undefined : (value.lastLogin === null ? null : value.lastLogin.toISOString()),
     };

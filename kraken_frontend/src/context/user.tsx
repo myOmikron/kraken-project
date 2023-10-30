@@ -1,5 +1,5 @@
 import React from "react";
-import { GetUser } from "../api/generated/models";
+import { GetUser, UserPermission } from "../api/generated/models";
 import { Api } from "../api/api";
 import Loading from "../components/loading";
 import { ApiError, StatusCode } from "../api/error";
@@ -16,7 +16,14 @@ export type UserContext = {
 
 /** {@link React.Context Context} to access {@link GetUser user information} */
 const USER_CONTEXT = React.createContext<UserContext>({
-    user: { username: "", displayName: "", uuid: "", createdAt: new Date(0), admin: false, lastLogin: null },
+    user: {
+        username: "",
+        displayName: "",
+        uuid: "",
+        createdAt: new Date(0),
+        permission: UserPermission.ReadOnly,
+        lastLogin: null,
+    },
 });
 USER_CONTEXT.displayName = "UserContext";
 export default USER_CONTEXT;
@@ -50,8 +57,8 @@ export class UserProvider extends React.Component<UserProviderProps, UserProvide
                                 toast.error(error.message);
                                 break;
                         }
-                    }
-                )
+                    },
+                ),
             );
     }
 
