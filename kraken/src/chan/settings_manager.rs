@@ -5,7 +5,7 @@ use tokio::sync::watch::error::SendError;
 use tokio::sync::watch::{Receiver, Sender};
 use uuid::Uuid;
 
-use crate::models::{Settings, SettingsInsert};
+use crate::models::{Settings, SettingsInsert, UserPermission};
 
 /// The errors that can occur while
 #[derive(Error, Debug)]
@@ -60,8 +60,10 @@ pub async fn start_settings_manager(
             insert!(db, SettingsInsert)
                 .single(&SettingsInsert {
                     uuid: Uuid::new_v4(),
+                    mfa_required: false,
                     dehashed_api_key: None,
                     dehashed_email: None,
+                    oidc_initial_permission_level: UserPermission::ReadOnly,
                 })
                 .await?
         }
