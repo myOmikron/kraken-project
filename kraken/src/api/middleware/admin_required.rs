@@ -93,7 +93,7 @@ where
 
             match permission {
                 UserPermission::Admin => next.await,
-                _ => return Err(ApiError::MissingPrivileges.into()),
+                _ => Err(ApiError::MissingPrivileges.into()),
             }
         })
     }
