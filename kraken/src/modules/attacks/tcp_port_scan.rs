@@ -7,7 +7,8 @@ use uuid::Uuid;
 
 use crate::chan::WsMessage;
 use crate::models::{
-    Host, HostInsert, OsType, Port, PortInsert, PortProtocol, TcpPortScanResultInsert,
+    Host, HostCertainty, HostInsert, OsType, Port, PortCertainty, PortInsert, PortProtocol,
+    TcpPortScanResultInsert,
 };
 use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions::shared::address::Address;
@@ -91,6 +92,7 @@ impl LeechAttackContext {
                     os_type: OsType::Unknown,
                     response_time: None,
                     comment: String::new(),
+                    certainty: HostCertainty::Verified,
                     workspace: ForeignModelByField::Key(self.workspace_uuid),
                 })
                 .await?
@@ -114,6 +116,7 @@ impl LeechAttackContext {
                     uuid: Uuid::new_v4(),
                     port: i16::from_ne_bytes(port_num.to_ne_bytes()),
                     protocol: PortProtocol::Tcp,
+                    certainty: PortCertainty::Verified,
                     host: ForeignModelByField::Key(host_uuid),
                     comment: String::new(),
                     workspace: ForeignModelByField::Key(self.workspace_uuid),

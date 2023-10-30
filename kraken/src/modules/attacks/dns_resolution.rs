@@ -9,8 +9,8 @@ use uuid::Uuid;
 
 use crate::chan::WsMessage;
 use crate::models::{
-    DnsRecordType, DnsResolutionResult, DnsResolutionResultInsert, Domain, DomainDomainRelation,
-    DomainHostRelation, Host, OsType,
+    DnsRecordType, DnsResolutionResult, DnsResolutionResultInsert, Domain, DomainCertainty,
+    DomainDomainRelation, DomainHostRelation, Host, HostCertainty, OsType,
 };
 use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions;
@@ -134,13 +134,24 @@ impl LeechAttackContext {
                 })
                 .await?;
 
-            let source_uuid = Domain::get_or_create(&mut tx, self.workspace_uuid, &source).await?;
+            let source_uuid = Domain::get_or_create(
+                &mut tx,
+                self.workspace_uuid,
+                &source,
+                DomainCertainty::Verified,
+            )
+            .await?;
             match dns_record_type {
                 DnsRecordType::A | DnsRecordType::Aaaa => {
                     let addr = IpNetwork::from_str(&destination).unwrap();
-                    let host_uuid =
-                        Host::get_or_create(&mut tx, self.workspace_uuid, addr, OsType::Unknown)
-                            .await?;
+                    let host_uuid = Host::get_or_create(
+                        &mut tx,
+                        self.workspace_uuid,
+                        addr,
+                        OsType::Unknown,
+                        HostCertainty::SupposedTo,
+                    )
+                    .await?;
                     DomainHostRelation::insert_if_missing(
                         &mut tx,
                         self.workspace_uuid,
@@ -151,8 +162,13 @@ impl LeechAttackContext {
                     .await?;
                 }
                 DnsRecordType::Cname => {
-                    let destination_uuid =
-                        Domain::get_or_create(&mut tx, self.workspace_uuid, &destination).await?;
+                    let destination_uuid = Domain::get_or_create(
+                        &mut tx,
+                        self.workspace_uuid,
+                        &destination,
+                        DomainCertainty::Unverified,
+                    )
+                    .await?;
                     DomainDomainRelation::insert_if_missing(
                         &mut tx,
                         self.workspace_uuid,

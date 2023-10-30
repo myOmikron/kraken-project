@@ -6,8 +6,8 @@ use rorm::{and, insert, query, update};
 use uuid::Uuid;
 
 use crate::models::{
-    Domain, DomainDomainRelation, DomainHostRelation, Host, OsType, Port, PortProtocol, Service,
-    ServiceCertainty, Workspace,
+    Domain, DomainCertainty, DomainDomainRelation, DomainHostRelation, Host, HostCertainty, OsType,
+    Port, PortCertainty, PortProtocol, Service, ServiceCertainty, Workspace,
 };
 
 #[derive(Patch)]
@@ -18,6 +18,7 @@ pub(crate) struct HostInsert {
     pub(crate) os_type: OsType,
     pub(crate) response_time: Option<i32>,
     pub(crate) comment: String,
+    pub(crate) certainty: HostCertainty,
     pub(crate) workspace: ForeignModel<Workspace>,
 }
 
@@ -40,6 +41,7 @@ pub(crate) struct PortInsert {
     pub(crate) uuid: Uuid,
     pub(crate) port: i16,
     pub(crate) protocol: PortProtocol,
+    pub(crate) certainty: PortCertainty,
     pub(crate) host: ForeignModel<Host>,
     pub(crate) comment: String,
     pub(crate) workspace: ForeignModel<Workspace>,
@@ -49,6 +51,7 @@ pub(crate) struct PortInsert {
 pub(crate) struct DomainInsert {
     pub(crate) uuid: Uuid,
     pub(crate) domain: String,
+    pub(crate) certainty: DomainCertainty,
     pub(crate) comment: String,
     pub(crate) workspace: ForeignModel<Workspace>,
 }
@@ -92,30 +95,14 @@ impl Service {
             }
             false
         } else {
-            // Check if host is already been created
-            let host_uuid = query!(&mut *tx, (Host::F.uuid,))
-                .condition(and!(
-                    Host::F.workspace.equals(workspace),
-                    Host::F.ip_addr.equals(host)
-                ))
-                .optional()
-                .await?;
-
-            let host_uuid = if let Some((host_uuid,)) = host_uuid {
-                host_uuid
-            } else {
-                insert!(&mut *tx, HostInsert)
-                    .return_primary_key()
-                    .single(&HostInsert {
-                        uuid: Uuid::new_v4(),
-                        ip_addr: host,
-                        os_type: OsType::Unknown,
-                        response_time: None,
-                        comment: String::new(),
-                        workspace: ForeignModelByField::Key(workspace),
-                    })
-                    .await?
-            };
+            let host_uuid = Host::get_or_create(
+                &mut *tx,
+                workspace,
+                host,
+                OsType::Unknown,
+                HostCertainty::Verified, // we talked to one of its ports
+            )
+            .await?;
 
             let mut port_uuid = None;
             if let Some(port) = port {
@@ -138,6 +125,7 @@ impl Service {
                             uuid: Uuid::new_v4(),
                             port: 0,
                             protocol: PortProtocol::Unknown,
+                            certainty: PortCertainty::Verified, // we talked to it
                             host: ForeignModelByField::Key(host_uuid),
                             comment: "".to_string(),
                             workspace: ForeignModelByField::Key(workspace),
@@ -174,6 +162,7 @@ impl Domain {
         executor: impl Executor<'_>,
         workspace: Uuid,
         domain: &str,
+        certainty: DomainCertainty,
     ) -> Result<Uuid, rorm::Error> {
         let mut guard = executor.ensure_transaction().await?;
         let tx = guard.get_transaction();
@@ -193,6 +182,7 @@ impl Domain {
                 .single(&DomainInsert {
                     uuid: Uuid::new_v4(),
                     domain: domain.to_string(),
+                    certainty, // TODO update Unverified to Verified
                     comment: String::new(),
                     workspace: ForeignModelByField::Key(workspace),
                 })
@@ -213,6 +203,7 @@ impl Host {
         workspace: Uuid,
         ip_addr: IpNetwork,
         os_type: OsType,
+        certainty: HostCertainty,
     ) -> Result<Uuid, rorm::Error> {
         let mut guard = executor.ensure_transaction().await?;
         let tx = guard.get_transaction();
@@ -235,6 +226,7 @@ impl Host {
                     os_type,
                     response_time: None,
                     comment: "".to_string(),
+                    certainty, // TODO update if higher
                     workspace: ForeignModelByField::Key(workspace),
                 })
                 .await?

@@ -10,7 +10,7 @@ use uuid::Uuid;
 use crate::chan::WsMessage;
 use crate::models::{
     BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert, DnsRecordType, Domain,
-    DomainDomainRelation, DomainHostRelation, Host, OsType,
+    DomainCertainty, DomainDomainRelation, DomainHostRelation, Host, HostCertainty, OsType,
 };
 use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
@@ -121,13 +121,24 @@ impl LeechAttackContext {
                 })
                 .await?;
 
-            let source_uuid = Domain::get_or_create(&mut tx, self.workspace_uuid, &source).await?;
+            let source_uuid = Domain::get_or_create(
+                &mut tx,
+                self.workspace_uuid,
+                &source,
+                DomainCertainty::Verified, // we just queried this domain
+            )
+            .await?;
             match dns_record_type {
                 DnsRecordType::A | DnsRecordType::Aaaa => {
                     let addr = IpNetwork::from_str(&destination).unwrap();
-                    let host_uuid =
-                        Host::get_or_create(&mut tx, self.workspace_uuid, addr, OsType::Unknown)
-                            .await?;
+                    let host_uuid = Host::get_or_create(
+                        &mut tx,
+                        self.workspace_uuid,
+                        addr,
+                        OsType::Unknown,
+                        HostCertainty::SupposedTo, // there is a current dns record to it
+                    )
+                    .await?;
                     DomainHostRelation::insert_if_missing(
                         &mut tx,
                         self.workspace_uuid,
@@ -138,8 +149,13 @@ impl LeechAttackContext {
                     .await?;
                 }
                 DnsRecordType::Cname => {
-                    let destination_uuid =
-                        Domain::get_or_create(&mut tx, self.workspace_uuid, &destination).await?;
+                    let destination_uuid = Domain::get_or_create(
+                        &mut tx,
+                        self.workspace_uuid,
+                        &destination,
+                        DomainCertainty::Unverified, // we haven't queried this domain yet
+                    )
+                    .await?;
                     DomainDomainRelation::insert_if_missing(
                         &mut tx,
                         self.workspace_uuid,

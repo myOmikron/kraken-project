@@ -6,6 +6,7 @@ use uuid::Uuid;
 use crate::chan::{CertificateTransparencyEntry, WsMessage};
 use crate::models::{
     CertificateTransparencyResultInsert, CertificateTransparencyValueNameInsert, Domain,
+    DomainCertainty,
 };
 use crate::modules::attacks::{AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions::{
@@ -106,9 +107,21 @@ impl LeechAttackContext {
         }
 
         for entry in &res.entries {
-            Domain::get_or_create(&mut tx, self.workspace_uuid, &entry.common_name).await?;
+            Domain::get_or_create(
+                &mut tx,
+                self.workspace_uuid,
+                &entry.common_name,
+                DomainCertainty::Unverified,
+            )
+            .await?;
             for value in &entry.value_names {
-                Domain::get_or_create(&mut tx, self.workspace_uuid, value).await?;
+                Domain::get_or_create(
+                    &mut tx,
+                    self.workspace_uuid,
+                    value,
+                    DomainCertainty::Unverified,
+                )
+                .await?;
             }
         }
 

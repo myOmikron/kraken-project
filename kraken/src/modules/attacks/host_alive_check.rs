@@ -4,7 +4,7 @@ use rorm::{and, insert, query};
 use uuid::Uuid;
 
 use crate::chan::WsMessage;
-use crate::models::{Host, HostAliveResultInsert, HostInsert, OsType};
+use crate::models::{Host, HostAliveResultInsert, HostCertainty, HostInsert, OsType};
 use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions::{HostsAliveRequest, HostsAliveResponse};
 
@@ -67,6 +67,7 @@ impl LeechAttackContext {
                     os_type: OsType::Unknown,
                     response_time: None,
                     comment: String::new(),
+                    certainty: HostCertainty::Verified,
                     workspace: ForeignModelByField::Key(self.workspace_uuid),
                 })
                 .await?;
