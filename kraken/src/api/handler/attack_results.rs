@@ -22,9 +22,10 @@ use crate::api::handler::{
     TcpPortScanResultsPage,
 };
 use crate::models::{
-    Attack, BruteforceSubdomainsResult, Certainty, CertificateTransparencyResult,
+    Attack, BruteforceSubdomainsResult, CertificateTransparencyResult,
     CertificateTransparencyValueName, DehashedQueryResult, DnsRecordType, DnsResolutionResult,
-    HostAliveResult, ServiceDetectionName, ServiceDetectionResult, TcpPortScanResult,
+    HostAliveResult, ServiceCertainty, ServiceDetectionName, ServiceDetectionResult,
+    TcpPortScanResult,
 };
 
 /// A simple representation of a bruteforce subdomains result
@@ -503,7 +504,7 @@ pub struct FullServiceDetectionResult {
 
     /// The certainty of the result
     #[schema(inline)]
-    pub certainty: Certainty,
+    pub certainty: ServiceCertainty,
 
     /// The found names of the service
     pub service_names: Vec<String>,
@@ -575,8 +576,7 @@ pub async fn get_service_detection_results(
                 created_at: x.created_at,
                 certainty: x.certainty,
                 service_names: match x.certainty {
-                    Certainty::Unknown => Vec::new(),
-                    Certainty::Maybe => names.remove(&x.uuid).ok_or_else(|| {
+                    ServiceCertainty::MaybeVerified => names.remove(&x.uuid).ok_or_else(|| {
                         error!(
                             "Inconsistent database: ServiceDetectionResult {uuid} has \
                             Certainty::Maybe but no ServiceDetectionName were found",
@@ -584,7 +584,7 @@ pub async fn get_service_detection_results(
                         );
                         ApiError::InternalServerError
                     })?,
-                    Certainty::Definitely => names
+                    ServiceCertainty::DefinitelyVerified => names
                         .remove(&x.uuid)
                         .ok_or_else(|| {
                             error!(
@@ -606,6 +606,7 @@ pub async fn get_service_detection_results(
                                 Ok(names)
                             }
                         })?,
+                    _ => vec![],
                 },
                 host: x.host,
                 port: x.port,

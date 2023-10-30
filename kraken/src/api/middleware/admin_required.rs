@@ -8,7 +8,7 @@ use rorm::{query, Database, FieldAccess, Model};
 use uuid::Uuid;
 
 use crate::api::handler::ApiError;
-use crate::models::{User, UserKey};
+use crate::models::{LocalUserKey, User, UserPermission};
 
 pub(crate) struct AdminRequired;
 
@@ -74,8 +74,8 @@ where
                 .map_err(ApiError::SessionGet)?
                 .ok_or(ApiError::SessionCorrupt)?;
 
-            let second_factor_required = query!(&db, (UserKey::F.uuid,))
-                .condition(UserKey::F.user.equals(uuid))
+            let second_factor_required = query!(&db, (LocalUserKey::F.uuid,))
+                .condition(LocalUserKey::F.user.equals(uuid))
                 .optional()
                 .await
                 .map_err(ApiError::DatabaseError)?;
@@ -84,18 +84,17 @@ where
                 return Err(ApiError::Missing2FA.into());
             }
 
-            let (is_admin,) = query!(&db, (User::F.admin,))
+            let (permission,) = query!(&db, (User::F.permission,))
                 .condition(User::F.uuid.equals(uuid))
                 .optional()
                 .await
                 .map_err(ApiError::DatabaseError)?
                 .ok_or(ApiError::SessionCorrupt)?;
 
-            if !is_admin {
-                return Err(ApiError::MissingPrivileges.into());
+            match permission {
+                UserPermission::Admin => next.await,
+                _ => return Err(ApiError::MissingPrivileges.into()),
             }
-
-            next.await
         })
     }
 }

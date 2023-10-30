@@ -28,6 +28,17 @@ pub enum OsType {
     FreeBSD,
 }
 
+/// The certainty of a host
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+pub enum HostCertainty {
+    /// 3rd party historical data
+    Historical,
+    /// 3rd party data
+    SupposedTo,
+    /// The host has responded either by HostAlive, Port or Service Detection or something similar
+    Verified,
+}
+
 /// A representation of an host.
 ///
 /// Will be collected from all results that yield IP addresses
@@ -60,6 +71,9 @@ pub struct Host {
     /// A comment to the host
     #[rorm(max_length = 255)]
     pub comment: String,
+
+    /// The certainty of this host
+    pub certainty: HostCertainty,
 
     /// Workspace tags of the host
     pub workspace_tags: BackRef<field!(HostWorkspaceTag::F.host)>,
@@ -110,13 +124,15 @@ pub struct HostWorkspaceTag {
 
 /// The certainty a service is detected
 #[derive(Debug, Copy, Clone, ToSchema, Deserialize, Serialize, DbEnum, Eq, PartialEq)]
-pub enum Certainty {
-    /// Service is not detected
-    Unknown,
+pub enum ServiceCertainty {
+    /// 3rd party historical data
+    Historical,
+    /// 3rd party data
+    SupposedTo,
     /// May be a certain service
-    Maybe,
+    MaybeVerified,
     /// Service is definitely correct
-    Definitely,
+    DefinitelyVerified,
 }
 
 /// A detected service on a host
@@ -135,7 +151,7 @@ pub struct Service {
     pub version: Option<String>,
 
     /// The certainty the service is detected correct
-    pub certainty: Certainty,
+    pub certainty: ServiceCertainty,
 
     /// The host this service is attached to
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
@@ -209,6 +225,17 @@ pub enum PortProtocol {
     Sctp,
 }
 
+/// The certainty states of a port
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+pub enum PortCertainty {
+    /// 3rd party historical data
+    Historical,
+    /// 3rd party data
+    SupposedTo,
+    /// The host has responded either by HostAlive, Port or Service Detection or something similar
+    Verified,
+}
+
 /// A port
 #[derive(Model)]
 pub struct Port {
@@ -223,6 +250,9 @@ pub struct Port {
 
     /// Port protocol
     pub protocol: PortProtocol,
+
+    /// The certainty of this port
+    pub certainty: PortCertainty,
 
     /// The host this service is attached to
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
@@ -282,6 +312,15 @@ pub struct PortWorkspaceTag {
     pub port: ForeignModel<Port>,
 }
 
+/// The certainty of a domain
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+pub enum DomainCertainty {
+    /// The domain was not found through DNS
+    Unverified,
+    /// Domain was verified through DNS
+    Verified,
+}
+
 /// A domain
 #[derive(Model)]
 pub struct Domain {
@@ -292,6 +331,9 @@ pub struct Domain {
     /// The domain that was found
     #[rorm(max_length = 255)]
     pub domain: String,
+
+    /// The certainty of this domain entry
+    pub certainty: DomainCertainty,
 
     /// A comment to the domain
     #[rorm(max_length = 255)]

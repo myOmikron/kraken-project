@@ -5,7 +5,9 @@ use rorm::insert;
 use rorm::prelude::*;
 use uuid::Uuid;
 
-use crate::models::{Certainty, Service, ServiceDetectionName, ServiceDetectionResultInsert};
+use crate::models::{
+    Service, ServiceCertainty, ServiceDetectionName, ServiceDetectionResultInsert,
+};
 use crate::modules::attacks::{AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions::{ServiceDetectionRequest, ServiceDetectionResponse};
 
@@ -27,9 +29,11 @@ impl LeechAttackContext {
                 } = v.into_inner();
 
                 let certainty = match response_type {
-                    1 => Certainty::Maybe,
-                    2 => Certainty::Definitely,
-                    _ => Certainty::Unknown,
+                    1 => ServiceCertainty::MaybeVerified,
+                    2 => ServiceCertainty::DefinitelyVerified,
+                    _ => {
+                        todo!("Figure out some way to match unknown certainties")
+                    }
                 };
 
                 self.set_finished(
@@ -49,7 +53,7 @@ impl LeechAttackContext {
     async fn insert_service_detection_result(
         &self,
         service_names: &[String],
-        certainty: Certainty,
+        certainty: ServiceCertainty,
         host: IpNetwork,
         port: u16,
     ) -> Result<(), rorm::Error> {

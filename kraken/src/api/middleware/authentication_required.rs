@@ -8,7 +8,7 @@ use rorm::{query, Database, FieldAccess, Model};
 use uuid::Uuid;
 
 use crate::api::handler::ApiError;
-use crate::models::UserKey;
+use crate::models::LocalUserKey;
 
 pub(crate) struct AuthenticationRequired;
 
@@ -74,8 +74,8 @@ where
                 .map_err(ApiError::SessionGet)?
                 .ok_or(ApiError::SessionCorrupt)?;
 
-            let second_factor_required = query!(&db, (UserKey::F.uuid,))
-                .condition(UserKey::F.user.equals(uuid))
+            let second_factor_required = query!(&db, (LocalUserKey::F.uuid,))
+                .condition(LocalUserKey::F.user.equals(uuid))
                 .optional()
                 .await
                 .map_err(ApiError::DatabaseError)?;

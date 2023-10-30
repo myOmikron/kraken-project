@@ -7,6 +7,7 @@ use argon2::password_hash::Error;
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use chrono::Utc;
 use log::{debug, error};
+use rorm::prelude::{BackRef, ForeignModelByField};
 use rorm::{query, update, Database, FieldAccess, Model};
 use serde::Deserialize;
 use utoipa::ToSchema;
@@ -20,7 +21,7 @@ use webauthn_rs::Webauthn;
 use crate::api::handler::{ApiError, ApiResult};
 use crate::api::middleware::AuthenticationRequired;
 use crate::chan::{WsManagerChan, WsManagerMessage};
-use crate::models::{User, UserKey};
+use crate::models::{LocalUser, LocalUserKey, User};
 
 /// Test the current login state
 ///
@@ -69,17 +70,17 @@ pub async fn login(
 ) -> ApiResult<HttpResponse> {
     let mut tx = db.start_transaction().await?;
 
-    let user = query!(&mut tx, User)
-        .condition(User::F.username.equals(&req.username))
-        .optional()
-        .await?
-        .ok_or(ApiError::LoginFailed)?;
+    let (user, password_hash) = query!(
+        &mut tx,
+        (LocalUser::F.user as User, LocalUser::F.password_hash)
+    )
+    .condition(LocalUser::F.user.username.equals(&req.username))
+    .optional()
+    .await?
+    .ok_or(ApiError::LoginFailed)?;
 
     Argon2::default()
-        .verify_password(
-            req.password.as_bytes(),
-            &PasswordHash::new(&user.password_hash)?,
-        )
+        .verify_password(req.password.as_bytes(), &PasswordHash::new(&password_hash)?)
         .map_err(|e| match e {
             Error::Password => ApiError::LoginFailed,
             _ => ApiError::InvalidHash(e),
@@ -158,8 +159,8 @@ pub async fn start_auth(
 
     session.remove("auth_state");
 
-    let keys = query!(db.as_ref(), UserKey)
-        .condition(UserKey::F.user.equals(uuid))
+    let keys = query!(db.as_ref(), LocalUserKey)
+        .condition(LocalUserKey::F.user.equals(uuid))
         .all()
         .await?;
 
@@ -246,15 +247,33 @@ pub async fn start_register(
 
     let mut tx = db.start_transaction().await?;
 
-    let mut user = query!(&mut tx, User)
-        .condition(User::F.uuid.equals(uuid))
-        .optional()
-        .await?
-        .ok_or(ApiError::SessionCorrupt)?;
+    // TODO: Make other error for this
+    let (user, local_user_uuid, password_hash) = query!(
+        &mut tx,
+        (
+            LocalUser::F.user as User,
+            LocalUser::F.uuid,
+            LocalUser::F.password_hash
+        )
+    )
+    .condition(LocalUser::F.user.equals(uuid))
+    .optional()
+    .await?
+    .ok_or(ApiError::SessionCorrupt)?;
 
-    User::F.user_keys.populate(&mut tx, &mut user).await?;
+    let mut local_user = LocalUser {
+        uuid: local_user_uuid,
+        user: ForeignModelByField::Key(user.uuid),
+        password_hash,
+        user_keys: BackRef { cached: None },
+    };
 
-    if !user.user_keys.cached.unwrap().is_empty()
+    LocalUser::F
+        .user_keys
+        .populate(&mut tx, &mut local_user)
+        .await?;
+
+    if !local_user.user_keys.cached.unwrap().is_empty()
         && !session.get("2fa")?.ok_or(ApiError::Missing2FA)?
     {
         return Err(ApiError::Missing2FA);
@@ -262,8 +281,8 @@ pub async fn start_register(
 
     session.remove("reg_state");
 
-    let excluded_keys: Vec<CredentialID> = query!(&mut tx, UserKey)
-        .condition(UserKey::F.user.equals(uuid))
+    let excluded_keys: Vec<CredentialID> = query!(&mut tx, LocalUserKey)
+        .condition(LocalUserKey::F.user.equals(local_user_uuid))
         .all()
         .await?
         .into_iter()
@@ -328,7 +347,7 @@ pub async fn finish_register(
 
     let passkey = webauthn.finish_passkey_registration(&req.register_pk_credential, &reg_state)?;
 
-    UserKey::insert(db.as_ref(), uuid, req.name, passkey).await?;
+    LocalUserKey::insert(db.as_ref(), uuid, req.name, passkey).await?;
 
     Ok(HttpResponse::Ok().finish())
 }

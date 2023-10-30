@@ -19,10 +19,10 @@ use uuid::Uuid;
 use crate::api::extractors::BearerToken;
 use crate::api::handler::{ApiError, ApiResult, PathUuid};
 use crate::models::{
-    Certainty, Domain, DomainDomainRelation, DomainGlobalTag, DomainHostRelation,
-    DomainWorkspaceTag, Host, HostGlobalTag, HostWorkspaceTag, OsType, Port, PortGlobalTag,
-    PortProtocol, PortWorkspaceTag, Service, ServiceGlobalTag, ServiceWorkspaceTag,
-    WorkspaceAccessToken,
+    Domain, DomainCertainty, DomainDomainRelation, DomainGlobalTag, DomainHostRelation,
+    DomainWorkspaceTag, Host, HostCertainty, HostGlobalTag, HostWorkspaceTag, OsType, Port,
+    PortCertainty, PortGlobalTag, PortProtocol, PortWorkspaceTag, Service, ServiceCertainty,
+    ServiceGlobalTag, ServiceWorkspaceTag, WorkspaceAccessToken,
 };
 
 /// The aggregated results of a workspace
@@ -58,6 +58,9 @@ pub struct AggregatedHost {
 
     /// The type of OS of this host
     pub os_type: OsType,
+
+    /// The certainty of the host
+    pub certainty: HostCertainty,
 
     /// Response time in ms
     pub response_time: Option<i32>,
@@ -100,6 +103,9 @@ pub struct AggregatedPort {
     /// The services that link to this port
     pub services: Vec<Uuid>,
 
+    /// The certainty of the port
+    pub certainty: PortCertainty,
+
     /// A comment to the port
     pub comment: String,
 
@@ -133,7 +139,7 @@ pub struct AggregatedService {
     pub comment: String,
 
     /// The certainty the service was detected
-    pub certainty: Certainty,
+    pub certainty: ServiceCertainty,
 
     /// Set of global and local tags
     #[serde(flatten)]
@@ -160,6 +166,9 @@ pub struct AggregatedDomain {
 
     /// Uuids to [`AggregatedRelation::DomainDomain`] where this domain is the `source`
     pub destinations: Vec<Uuid>,
+
+    /// The certainty of the domain
+    pub certainty: DomainCertainty,
 
     /// A comment to the domain
     pub comment: String,
@@ -386,6 +395,7 @@ impl From<Host> for AggregatedHost {
             workspace_tags: _,
             global_tags: _,
             created_at,
+            certainty,
         } = value;
         // DON'T just ignore new fields with `: _`
         // Make sure you export the field in some other way!
@@ -395,6 +405,7 @@ impl From<Host> for AggregatedHost {
             ip_addr,
             os_type,
             response_time,
+            certainty,
             ports: Vec::new(),
             services: Vec::new(),
             domains: Vec::new(),
@@ -417,6 +428,7 @@ impl From<Port> for AggregatedPort {
             global_tags: _,
             workspace_tags: _,
             created_at,
+            certainty,
         } = value;
         // DON'T just ignore new fields with `: _`
         // Make sure you export the field in some other way!
@@ -427,6 +439,7 @@ impl From<Port> for AggregatedPort {
             protocol,
             host: *host.key(),
             services: Vec::new(),
+            certainty,
             comment,
             tags: Default::default(),
             created_at,
@@ -477,6 +490,7 @@ impl From<Domain> for AggregatedDomain {
             workspace_tags: _,
             global_tags: _,
             created_at,
+            certainty,
         } = value;
         // DON'T just ignore new fields with `: _`
         // Make sure you export the field in some other way!
@@ -487,6 +501,7 @@ impl From<Domain> for AggregatedDomain {
             hosts: Vec::new(),
             sources: Vec::new(),
             destinations: Vec::new(),
+            certainty,
             comment,
             tags: Default::default(),
             created_at,

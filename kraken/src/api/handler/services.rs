@@ -20,8 +20,8 @@ use crate::api::handler::{
     TagType,
 };
 use crate::models::{
-    Certainty, GlobalTag, Host, Port, Service, ServiceGlobalTag, ServiceWorkspaceTag, Workspace,
-    WorkspaceTag,
+    GlobalTag, Host, Port, Service, ServiceCertainty, ServiceGlobalTag, ServiceWorkspaceTag,
+    Workspace, WorkspaceTag,
 };
 use crate::query_tags;
 
@@ -57,7 +57,7 @@ pub struct FullService {
     name: String,
     #[schema(example = "13.0.1")]
     version: Option<String>,
-    certainty: Certainty,
+    certainty: ServiceCertainty,
     host: SimpleHost,
     port: Option<SimplePort>,
     #[schema(example = "Holds all relevant information")]

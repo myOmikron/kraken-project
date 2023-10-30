@@ -1,0 +1,38 @@
+.workspace-create-tag {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 0.5em;
+}
+.workspace-create-tag > label {
+    display: contents;
+}
+.workspace-create-tag-heading {
+    grid-area: 1 / 1 / span 1 / -1;
+    justify-self: center;
+}
+.workspace-create-tag-submit {
+    grid-area: 7 / 1 / span 1 / -1;
+    justify-self: center;
+}
+.workspace-create-tag-color-picker {
+    /* Required for rules set on input below */
+    position: relative;
+    overflow: clip;
+
+    /* Makes the preview tag slightly bigger */
+    font-size: 1.5em;
+}
+.workspace-create-tag-color-picker > input {
+    /*
+    The html color picker shouldn't be visible.
+    But the browser depends on its position for positioning the actual color picker popup.
+    So we make the parent div clip its overflow and move the input outside of it
+    */
+    position: absolute;
+    box-sizing: border-box;
+    width: 1em;
+    left: -1em;
+}
+.workspace-create-tag-color-picker > .tag {
+    min-height: 1em;
+}

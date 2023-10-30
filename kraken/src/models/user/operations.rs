@@ -1,6 +1,5 @@
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHasher};
-use chrono::{DateTime, Utc};
 use rand::thread_rng;
 use rorm::db::Executor;
 use rorm::fields::types::Json;
@@ -10,8 +9,9 @@ use thiserror::Error;
 use uuid::Uuid;
 use webauthn_rs::prelude::Passkey;
 
-use super::{User, UserKey};
+use super::{LocalUser, LocalUserKey, User};
 use crate::api::handler::ApiError;
+use crate::models::UserPermission;
 
 #[derive(Patch)]
 #[rorm(model = "User")]
@@ -19,21 +19,27 @@ struct UserInsert {
     uuid: Uuid,
     username: String,
     display_name: String,
-    password_hash: String,
-    admin: bool,
-    last_login: Option<DateTime<Utc>>,
+    permission: UserPermission,
 }
 
 #[derive(Patch)]
-#[rorm(model = "UserKey")]
-struct UserKeyInsert {
+#[rorm(model = "LocalUser")]
+struct LocalUserInsert {
+    uuid: Uuid,
+    user: ForeignModel<User>,
+    password_hash: String,
+}
+
+#[derive(Patch)]
+#[rorm(model = "LocalUserKey")]
+struct LocalUserKeyInsert {
     uuid: Uuid,
     name: String,
-    user: ForeignModel<User>,
+    user: ForeignModel<LocalUser>,
     key: Json<Passkey>,
 }
 
-/// The errors that can occur when inserting a [UserKey]
+/// The errors that can occur when inserting a [LocalUserKey]
 #[derive(Debug, Error)]
 pub enum InsertUserKeyError {
     #[error("Database error: {0}")]
@@ -48,8 +54,8 @@ impl From<InsertUserKeyError> for ApiError {
     }
 }
 
-impl UserKey {
-    /// Insert a new [UserKey]
+impl LocalUserKey {
+    /// Insert a new [LocalUserKey]
     pub async fn insert(
         executor: impl Executor<'_>,
         user: Uuid,
@@ -58,8 +64,8 @@ impl UserKey {
     ) -> Result<Uuid, InsertUserKeyError> {
         let uuid = Uuid::new_v4();
 
-        insert!(executor, UserKeyInsert)
-            .single(&UserKeyInsert {
+        insert!(executor, LocalUserKeyInsert)
+            .single(&LocalUserKeyInsert {
                 uuid,
                 user: ForeignModelByField::Key(user),
                 key: Json(key),
@@ -118,12 +124,12 @@ impl User {
     }
 
     /// Insert a new [User]
-    pub async fn insert(
+    pub async fn insert_local_user(
         executor: impl Executor<'_>,
         username: String,
         display_name: String,
         password: String,
-        admin: bool,
+        permission: UserPermission,
     ) -> Result<Uuid, InsertUserError> {
         if username.is_empty() {
             return Err(InsertUserError::InvalidUsername);
@@ -144,13 +150,21 @@ impl User {
             .to_string();
 
         insert!(guard.get_transaction(), UserInsert)
+            .return_nothing()
             .single(&UserInsert {
                 uuid,
                 username,
                 display_name,
+                permission,
+            })
+            .await?;
+
+        insert!(guard.get_transaction(), LocalUserInsert)
+            .return_nothing()
+            .single(&LocalUserInsert {
+                uuid: Uuid::new_v4(),
+                user: ForeignModelByField::Key(uuid),
                 password_hash,
-                admin,
-                last_login: None,
             })
             .await?;
 

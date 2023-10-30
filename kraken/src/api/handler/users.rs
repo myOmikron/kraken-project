@@ -15,7 +15,7 @@ use uuid::Uuid;
 
 use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::chan::{WsManagerChan, WsManagerMessage};
-use crate::models::User;
+use crate::models::{LocalUser, User, UserPermission};
 
 /// The request to create a user
 #[derive(Deserialize, ToSchema)]
@@ -26,8 +26,7 @@ pub struct CreateUserRequest {
     pub(crate) display_name: String,
     #[schema(example = "super-secure-password")]
     pub(crate) password: String,
-    #[schema(example = true)]
-    pub(crate) admin: bool,
+    pub(crate) permission: UserPermission,
 }
 
 /// Create a user
@@ -49,12 +48,12 @@ pub async fn create_user(
 ) -> ApiResult<Json<UuidResponse>> {
     let req = req.into_inner();
 
-    let uuid = User::insert(
+    let uuid = User::insert_local_user(
         db.as_ref(),
         req.username,
         req.display_name,
         req.password,
-        req.admin,
+        req.permission,
     )
     .await?;
 
@@ -91,7 +90,7 @@ pub struct GetUser {
     #[schema(example = "Anon")]
     pub(crate) display_name: String,
     #[schema(example = true)]
-    pub(crate) admin: bool,
+    pub(crate) permission: UserPermission,
     pub(crate) created_at: DateTime<Utc>,
     pub(crate) last_login: Option<DateTime<Utc>>,
 }
@@ -126,7 +125,7 @@ pub async fn get_user(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<Json
         uuid: user.uuid,
         username: user.username,
         display_name: user.display_name,
-        admin: user.admin,
+        permission: user.permission,
         created_at: user.created_at,
         last_login: user.last_login,
     }))
@@ -154,7 +153,7 @@ pub async fn get_all_users_admin(db: Data<Database>) -> ApiResult<Json<GetUserRe
                 uuid: u.uuid,
                 username: u.username,
                 display_name: u.display_name,
-                admin: u.admin,
+                permission: u.permission,
                 created_at: u.created_at,
                 last_login: u.last_login,
             })
@@ -187,7 +186,7 @@ pub async fn get_me(session: Session, db: Data<Database>) -> ApiResult<Json<GetU
         uuid: user.uuid,
         username: user.username,
         display_name: user.display_name,
-        admin: user.admin,
+        permission: user.permission,
         created_at: user.created_at,
         last_login: user.last_login,
     }))
@@ -225,16 +224,18 @@ pub async fn set_password(
 
     let mut tx = db.start_transaction().await?;
 
-    let user = query!(&mut tx, User)
-        .condition(User::F.uuid.equals(uuid))
-        .optional()
-        .await?
-        .ok_or(ApiError::SessionCorrupt)?;
+    // TODO: Other error case
+    let (password_hash, local_user_uuid) =
+        query!(&mut tx, (LocalUser::F.password_hash, LocalUser::F.uuid))
+            .condition(User::F.uuid.equals(uuid))
+            .optional()
+            .await?
+            .ok_or(ApiError::SessionCorrupt)?;
 
     if Argon2::default()
         .verify_password(
             req.current_password.as_bytes(),
-            &PasswordHash::try_from(user.password_hash.as_str())?,
+            &PasswordHash::try_from(password_hash.as_str())?,
         )
         .is_err()
     {
@@ -246,8 +247,9 @@ pub async fn set_password(
         .hash_password(req.new_password.as_bytes(), &salt)?
         .to_string();
 
-    update!(&mut tx, User)
-        .set(User::F.password_hash, password_hash)
+    update!(&mut tx, LocalUser)
+        .set(LocalUser::F.password_hash, password_hash)
+        .condition(LocalUser::F.uuid.equals(local_user_uuid))
         .exec()
         .await?;
 

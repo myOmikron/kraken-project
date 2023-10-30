@@ -20,7 +20,9 @@ use crate::api::handler::workspace_invitations::{
 };
 use crate::api::handler::{de_optional, query_user, ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::chan::{WsManagerChan, WsManagerMessage, WsMessage};
-use crate::models::{Attack, User, Workspace, WorkspaceInvitation, WorkspaceMember};
+use crate::models::{
+    Attack, User, UserPermission, Workspace, WorkspaceInvitation, WorkspaceMember,
+};
 
 /// The request to create a new workspace
 #[derive(Deserialize, ToSchema)]
@@ -84,7 +86,9 @@ pub async fn delete_workspace(
         .await?
         .ok_or(ApiError::InvalidUuid)?;
 
-    if executing_user.admin || *workspace.owner.key() == executing_user.uuid {
+    if executing_user.permission == UserPermission::Admin
+        || *workspace.owner.key() == executing_user.uuid
+    {
         debug!(
             "Workspace {} got deleted by {}",
             workspace.uuid, executing_user.username

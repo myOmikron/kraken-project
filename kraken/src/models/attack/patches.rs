@@ -4,8 +4,8 @@ use rorm::prelude::*;
 use uuid::Uuid;
 
 use crate::models::{
-    Attack, Certainty, CertificateTransparencyResult, CertificateTransparencyValueName,
-    DehashedQueryResult, DnsRecordResult, DnsRecordType, HostAliveResult, ServiceDetectionResult,
+    Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
+    DnsRecordResult, DnsRecordType, HostAliveResult, ServiceCertainty, ServiceDetectionResult,
     TcpPortScanResult,
 };
 
@@ -81,7 +81,7 @@ pub(crate) struct HostAliveResultInsert {
 pub(crate) struct ServiceDetectionResultInsert {
     pub(crate) uuid: Uuid,
     pub(crate) attack: ForeignModel<Attack>,
-    pub(crate) certainty: Certainty,
+    pub(crate) certainty: ServiceCertainty,
     pub(crate) host: IpNetwork,
     pub(crate) port: i16,
 }

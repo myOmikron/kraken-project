@@ -3,6 +3,7 @@ use rorm::prelude::*;
 use uuid::Uuid;
 
 pub(crate) use crate::models::settings::operations::*;
+use crate::models::UserPermission;
 
 mod operations;
 
@@ -12,6 +13,12 @@ pub struct Settings {
     /// The primary key of the settings
     #[rorm(primary_key)]
     pub uuid: Uuid,
+
+    /// Require mfa for local users
+    pub mfa_required: bool,
+
+    /// The default permission a user from oidc is set to
+    pub oidc_initial_permission_level: UserPermission,
 
     /// The email for the dehashed account
     #[rorm(max_length = 1024)]

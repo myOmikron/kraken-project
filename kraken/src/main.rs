@@ -29,7 +29,7 @@ use rorm::{cli, Database, DatabaseConfiguration, DatabaseDriver};
 
 use crate::api::server;
 use crate::config::Config;
-use crate::models::User;
+use crate::models::{User, UserPermission};
 use crate::rpc::server::start_rpc_server;
 
 pub mod api;
@@ -161,9 +161,15 @@ async fn create_user(db: Database) -> Result<(), String> {
 
     let password = rpassword::prompt_password("Enter password: ").unwrap();
 
-    User::insert(&db, username.to_string(), display_name, password, true)
-        .await
-        .map_err(|e| format!("Failed to create user: {e}"))?;
+    User::insert_local_user(
+        &db,
+        username.to_string(),
+        display_name,
+        password,
+        UserPermission::Admin,
+    )
+    .await
+    .map_err(|e| format!("Failed to create user: {e}"))?;
 
     println!("Created user {username}");
 

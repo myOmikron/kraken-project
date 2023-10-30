@@ -6,8 +6,8 @@ use rorm::{and, insert, query, update};
 use uuid::Uuid;
 
 use crate::models::{
-    Certainty, Domain, DomainDomainRelation, DomainHostRelation, Host, OsType, Port, PortProtocol,
-    Service, Workspace,
+    Domain, DomainDomainRelation, DomainHostRelation, Host, OsType, Port, PortProtocol, Service,
+    ServiceCertainty, Workspace,
 };
 
 #[derive(Patch)]
@@ -29,7 +29,7 @@ pub(crate) struct ServiceInsert {
     pub(crate) version: Option<String>,
     pub(crate) host: ForeignModel<Host>,
     pub(crate) port: Option<ForeignModel<Port>>,
-    pub(crate) certainty: Certainty,
+    pub(crate) certainty: ServiceCertainty,
     pub(crate) comment: String,
     pub(crate) workspace: ForeignModel<Workspace>,
 }
@@ -63,7 +63,7 @@ impl Service {
         name: &str,
         host: IpNetwork,
         port: Option<i16>,
-        certainty: Certainty,
+        certainty: ServiceCertainty,
     ) -> Result<bool, rorm::Error> {
         let mut guard = executor.ensure_transaction().await?;
         let tx = guard.get_transaction();
@@ -83,10 +83,10 @@ impl Service {
         let service = query!(&mut *tx, Service).condition(cond).optional().await?;
 
         let res = if let Some(service) = service {
-            if service.certainty != certainty && certainty == Certainty::Definitely {
+            if service.certainty != certainty && certainty == ServiceCertainty::DefinitelyVerified {
                 update!(&mut *tx, Service)
                     .condition(Service::F.uuid.equals(service.uuid))
-                    .set(Service::F.certainty, Certainty::Definitely)
+                    .set(Service::F.certainty, ServiceCertainty::DefinitelyVerified)
                     .exec()
                     .await?;
             }

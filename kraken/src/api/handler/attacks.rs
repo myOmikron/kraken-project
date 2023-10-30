@@ -20,7 +20,7 @@ use crate::api::handler::users::SimpleUser;
 use crate::api::handler::{query_user, ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::api::server::DehashedScheduler;
 use crate::chan::{RpcClients, WsManagerChan};
-use crate::models::{Attack, AttackType, WordList};
+use crate::models::{Attack, AttackType, UserPermission, WordList};
 use crate::modules::attacks::AttackContext;
 use crate::rpc::rpc_definitions;
 use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
@@ -786,7 +786,7 @@ pub async fn delete_attack(
         .await?
         .ok_or(ApiError::InvalidUuid)?;
 
-    if user.admin || *attack.started_by.key() == user.uuid {
+    if user.permission == UserPermission::Admin || *attack.started_by.key() == user.uuid {
         debug!("Attack {} got deleted by {}", attack.uuid, user.username);
 
         rorm::delete!(&mut tx, Attack).single(&attack).await?;

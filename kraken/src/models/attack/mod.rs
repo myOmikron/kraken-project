@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 pub use crate::models::attack::operations::*;
 pub(crate) use crate::models::attack::patches::*;
-use crate::models::{Certainty, User, Workspace};
+use crate::models::{ServiceCertainty, User, Workspace};
 
 mod operations;
 mod patches;
@@ -288,7 +288,7 @@ pub struct ServiceDetectionResult {
     pub created_at: DateTime<Utc>,
 
     /// The certainty of the result
-    pub certainty: Certainty,
+    pub certainty: ServiceCertainty,
 
     /// The ip address a port was found on
     pub host: IpNetwork,
