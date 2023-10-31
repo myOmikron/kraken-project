@@ -19,8 +19,8 @@ use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::attack_results::{
-    FullQueryCertificateTransparencyResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
-    SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+    FullQueryCertificateTransparencyResult, FullServiceDetectionResult, SimpleDnsResolutionResult,
+    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
 };
 use crate::api::handler::attacks::SimpleAttack;
 use crate::api::handler::domains::SimpleDomain;
@@ -881,25 +881,25 @@ pub struct SearchUuid {
 #[derive(Serialize, ToSchema)]
 pub enum SearchResultEntry {
     /// Host Result
-    HostEntry(crate::api::handler::hosts::SimpleHost),
+    HostEntry(SimpleHost),
     /// Service Result
-    ServiceEntry(crate::api::handler::services::SimpleService),
+    ServiceEntry(SimpleService),
     /// Port Result
-    PortEntry(crate::api::handler::ports::SimplePort),
+    PortEntry(SimplePort),
     /// Domain Result
-    DomainEntry(crate::api::handler::domains::SimpleDomain),
+    DomainEntry(SimpleDomain),
     /// DNS Record Result
-    DnsRecordResultEntry(crate::api::handler::SimpleDnsResolutionResult),
+    DnsRecordResultEntry(SimpleDnsResolutionResult),
     /// TCP Port Result
-    TcpPortScanResultEntry(crate::api::handler::SimpleTcpPortScanResult),
+    TcpPortScanResultEntry(SimpleTcpPortScanResult),
     /// Dehashed Query Result
-    DehashedQueryResultEntry(crate::api::handler::SimpleQueryUnhashedResult),
+    DehashedQueryResultEntry(SimpleQueryUnhashedResult),
     /// Certificate Transparency Result
-    CertificateTransparencyResultEntry(crate::api::handler::FullQueryCertificateTransparencyResult),
+    CertificateTransparencyResultEntry(FullQueryCertificateTransparencyResult),
     /// Host Alive Result
-    HostAliveResult(crate::api::handler::SimpleHostAliveResult),
+    HostAliveResult(SimpleHostAliveResult),
     /// Service Detection Result
-    ServiceDetectionResult(crate::api::handler::FullServiceDetectionResult),
+    ServiceDetectionResult(FullServiceDetectionResult),
 }
 
 /// Retrieve results for a search by it's uuid
