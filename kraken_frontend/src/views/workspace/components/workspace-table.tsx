@@ -44,7 +44,7 @@ export type GenericPage<T> = {
  *
  * Consider {@link StatelessWorkspaceTable} and {@link useTable} when you need control of the table's state.
  */
-export default function WorkspaceTable<T>(props: WorkspaceDataTableProps<T>) {
+export default function WorkspaceTable<T extends { uuid: string }>(props: WorkspaceDataTableProps<T>) {
     const {
         query,
         queryDeps,
@@ -179,7 +179,7 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
 }
 
 /** Hook which provides the data required for {@link StatelessWorkspaceTable} */
-export function useTable<T>(
+export function useTable<T extends { uuid: string }>(
     query: (limit: number, offset: number) => Promise<Result<GenericPage<T>, ApiError>>,
     queryDeps?: React.DependencyList,
 ) {
@@ -197,5 +197,41 @@ export function useTable<T>(
         );
     }, [limit, offset, ...(queryDeps || [])]);
 
-    return { limit, setLimit, offset, setOffset, total, setTotal, items, setItems };
+    return {
+        /** The current number of items per page*/
+        limit,
+        /** Change the number of items per page */
+        setLimit,
+
+        /** The index of the first item of the current page */
+        offset,
+        /** Set the index of the first item of the current page i.e. changing the shown page */
+        setOffset,
+
+        /** The total number of items found by the query */
+        total,
+
+        /** The current page's items */
+        items,
+
+        /**
+         * Updates the item identified by `uuid` without querying the backend again
+         *
+         * If the item is not shown on the current page i.e. not in local memory, this function will do nothing
+         *
+         * @param uuid is the uuid identifying the item to update
+         * @param update is an arbitrary subset of `T`'s fields to overwrite the original values with
+         * @returns `true` if the item is on the current page and therefore has been updated
+         */
+        updateItem(uuid: string, update: Partial<T>) {
+            const index = items.findIndex(({ uuid: u }) => u === uuid);
+            if (index > -1) {
+                items[index] = { ...items[index], ...update };
+                setItems([...items]);
+                return true;
+            } else {
+                return false;
+            }
+        },
+    };
 }
