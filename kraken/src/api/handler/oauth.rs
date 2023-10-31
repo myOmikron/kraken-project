@@ -12,7 +12,7 @@ use log::{debug, error};
 use rand::distributions::{Alphanumeric, DistString};
 use rand::thread_rng;
 use rorm::prelude::*;
-use rorm::{query, Database};
+use rorm::{and, delete, query, Database};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use utoipa::{IntoParams, ToSchema};
@@ -21,9 +21,9 @@ use webauthn_rs::prelude::Url;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::oauth_applications::SimpleOauthClient;
+use crate::api::handler::users::SimpleUser;
 use crate::api::handler::workspaces::SimpleWorkspace;
 use crate::api::handler::{ApiError, PathUuid};
-use crate::api::handler::users::SimpleUser;
 use crate::models::{
     OAuthDecision, OAuthDecisionAction, OauthClient, User, Workspace, WorkspaceAccessToken,
 };
@@ -477,6 +477,74 @@ pub async fn token(
         access_token,
         expires_in,
     }))
+}
+
+/// Request to revoke a token
+#[derive(Deserialize, ToSchema)]
+pub struct RevokeTokenRequest {
+    /// The token to be revoked.
+    pub token: String,
+
+    /// The client identifier
+    pub client_id: Uuid,
+
+    /// The client's secret to authenticate itself
+    pub client_secret: String,
+}
+
+/// Endpoint an application calls itself to revoke an access token
+#[utoipa::path(
+    tag = "OAuth",
+    context_path = "/api/v1/oauth-server",
+    responses(
+        (status = 200, description = "Token was revoked"),
+        (status = 400, description = "Client error", body = TokenError),
+        (status = 500, description = "Server error", body = TokenError),
+    ),
+    request_body = RevokeTokenRequest,
+)]
+#[post("/revoke")]
+pub async fn revoke(
+    db: Data<Database>,
+    request: Form<RevokeTokenRequest>,
+) -> Result<HttpResponse, TokenError> {
+    let request = request.into_inner();
+    let token_str: &str = request.token.as_ref();
+
+    let mut tx = db.start_transaction().await?;
+
+    if query!(&mut tx, OauthClient)
+        .condition(and!(
+            (OauthClient::F.uuid.equals(request.client_id)),
+            (OauthClient::F.secret.equals(request.client_secret))
+        ))
+        .optional()
+        .await?
+        .is_none()
+    {
+        return Err(TokenError {
+            error: TokenErrorType::InvalidClient,
+            error_description: Some("Invalid client_id or client_secret"),
+        });
+    }
+
+    if query!(&mut tx, WorkspaceAccessToken)
+        .condition(WorkspaceAccessToken::F.token.equals(token_str))
+        .optional()
+        .await?
+        .is_none()
+    {
+        return Err(TokenError {
+            error: TokenErrorType::InvalidRequest,
+            error_description: Some("Invalid token"),
+        });
+    }
+
+    delete!(&mut tx, WorkspaceAccessToken)
+        .condition(WorkspaceAccessToken::F.token.equals(token_str))
+        .await?;
+
+    Ok(HttpResponse::Ok().finish())
 }
 
 fn build_redirect(

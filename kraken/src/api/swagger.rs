@@ -238,7 +238,7 @@ pub(crate) struct FrontendApi;
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(oauth::auth, oauth::token, data_export::export_workspace),
+    paths(oauth::auth, oauth::token, oauth::revoke, data_export::export_workspace),
     components(schemas(
         models::OsType,
         models::PortProtocol,
@@ -252,6 +252,7 @@ pub(crate) struct FrontendApi;
         oauth_schemas::TokenResponse,
         oauth_schemas::TokenError,
         oauth_schemas::TokenErrorType,
+        oauth::RevokeTokenRequest,
         data_export::AggregatedWorkspace,
         data_export::AggregatedHost,
         data_export::AggregatedPort,

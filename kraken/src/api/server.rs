@@ -123,7 +123,11 @@ pub(crate) async fn start_server(
                     .service(oauth::accept)
                     .service(oauth::deny),
             )
-            .service(scope("/api/v1/oauth-server").service(oauth::token))
+            .service(
+                scope("/api/v1/oauth-server")
+                    .service(oauth::token)
+                    .service(oauth::revoke),
+            )
             .service(scope("/api/v1/export").service(data_export::export_workspace))
             .service(
                 scope("/api/v1/admin")
