@@ -42,11 +42,12 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
     return (
         <>
             <div className={"pane"}>
-                {`Service ${service.name} running on ${service.host.ipAddr}`}
+                <h3 className={"sub-heading"}>Service</h3>
+                {`${service.name} running on ${service.host.ipAddr}`}
                 {!service.port ? "" : ` (Port ${service.port.port})`}
             </div>
-            <div className={"workspace-data-details-comment pane"}>
-                Comment
+            <div className={"pane"}>
+                <h3 className={"sub-heading"}>Comment</h3>
                 <Textarea value={service.comment} onChange={(comment) => setService({ ...service, comment })} />
                 <button
                     className={"button"}
@@ -56,7 +57,7 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
                 </button>
             </div>
             <div className={"pane"}>
-                Tags
+                <h3 className={"sub-heading"}>Tags</h3>
                 <EditableTags
                     workspace={workspace}
                     tags={service.tags}

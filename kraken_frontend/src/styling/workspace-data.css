@@ -38,11 +38,20 @@
     display: flex;
     flex-direction: column;
     justify-items: center;
+    gap: 1em;
 }
 
 .workspace-data-details > h2 {
     margin: 0;
     text-align: center;
+}
+
+.workspace-data-details > .pane {
+    gap: 0.5em;
+}
+
+.workspace-data-details textarea {
+    resize: vertical;
 }
 
 .workspace-data-table-header {

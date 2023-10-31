@@ -185,7 +185,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
             </div>
             {tableElement}
             <div className={"workspace-data-details pane"}>
-                <h2 className={"heading"}>Details</h2>
+                <h2 className={"sub-heading"}>Details</h2>
                 {detailsElement}
             </div>
         </div>

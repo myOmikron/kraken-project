@@ -41,9 +41,12 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
     if (host === null) return null;
     return (
         <>
-            <div className={"pane"}>{`Host: ${host.ipAddr}`}</div>
-            <div className={"workspace-data-details-comment pane"}>
-                Comment
+            <div className={"pane"}>
+                <h3 className={"sub-heading"}>Host</h3>
+                {host.ipAddr}
+            </div>
+            <div className={"pane"}>
+                <h3 className={"sub-heading"}>Comment</h3>
                 <Textarea value={host.comment} onChange={(comment) => setHost({ ...host, comment })} />
                 <button
                     className={"button"}
@@ -53,7 +56,7 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
                 </button>
             </div>
             <div className={"pane"}>
-                Tags
+                <h3 className={"sub-heading"}>Tags</h3>
                 <EditableTags
                     workspace={workspace}
                     tags={host.tags}

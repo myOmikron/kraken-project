@@ -41,9 +41,12 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
     if (port === null) return null;
     return (
         <>
-            <div className={"pane"}>{`Port ${port.port} on ${port.host.ipAddr}`}</div>
-            <div className={"workspace-data-details-comment pane"}>
-                Comment
+            <div className={"pane"}>
+                <h3 className={"sub-heading"}>Port</h3>
+                {`${port.port} open on ${port.host.ipAddr}`}
+            </div>
+            <div className={"pane"}>
+                <h3 className={"sub-heading"}>Comment</h3>
                 <Textarea value={port.comment} onChange={(comment) => setPort({ ...port, comment })} />
                 <button
                     className={"button"}
@@ -53,7 +56,7 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
                 </button>
             </div>
             <div className={"pane"}>
-                Tags
+                <h3 className={"sub-heading"}>Tags</h3>
                 <EditableTags
                     workspace={workspace}
                     tags={port.tags}

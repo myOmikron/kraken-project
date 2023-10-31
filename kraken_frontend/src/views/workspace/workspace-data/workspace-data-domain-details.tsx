@@ -40,9 +40,12 @@ export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProp
     if (domain === null) return null;
     return (
         <>
-            <div className={"pane"}>{`Domain: ${domain.domain}`}</div>
-            <div className={"workspace-data-details-comment pane"}>
-                Comment
+            <div className={"pane"}>
+                <h3 className={"sub-heading"}>Domain</h3>
+                {domain.domain}
+            </div>
+            <div className={"pane"}>
+                <h3 className={"sub-heading"}>Comment</h3>
                 <Textarea value={domain.comment} onChange={(comment) => setDomain({ ...domain, comment })} />
                 <button
                     className={"button"}
@@ -52,7 +55,7 @@ export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProp
                 </button>
             </div>
             <div className={"pane"}>
-                Tags
+                <h3 className={"sub-heading"}>Tags</h3>
                 <EditableTags
                     workspace={workspace}
                     tags={domain.tags}
