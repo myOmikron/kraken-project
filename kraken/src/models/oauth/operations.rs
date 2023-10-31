@@ -21,8 +21,8 @@ impl OAuthDecision {
 
         let mut guard = executor.ensure_transaction().await?;
 
-        if !Workspace::exists(guard.get_transaction(), workspace).await? {
-            return Err(InsertOAuthDecisionError::InvalidWorkspace);
+        if !Workspace::is_user_member_or_owner(guard.get_transaction(), workspace, user).await? {
+            return Err(InsertOAuthDecisionError::MissingPrivileges);
         }
 
         let uuid = insert!(guard.get_transaction(), OAuthDecision)
@@ -67,16 +67,16 @@ pub enum InsertOAuthDecisionError {
     /// Database error
     #[error("Database error: {0}")]
     Database(#[from] rorm::Error),
-    /// Workspace does not exist
-    #[error("The provided workspace is invalid")]
-    InvalidWorkspace,
+    /// Workspace does not exist or the user doesn't has privileges to access it
+    #[error("The provided workspace is invalid or not accessible")]
+    MissingPrivileges,
 }
 
 impl From<InsertOAuthDecisionError> for ApiError {
     fn from(value: InsertOAuthDecisionError) -> Self {
         match value {
             InsertOAuthDecisionError::Database(x) => ApiError::DatabaseError(x),
-            InsertOAuthDecisionError::InvalidWorkspace => ApiError::InvalidWorkspace,
+            InsertOAuthDecisionError::MissingPrivileges => ApiError::MissingPrivileges,
         }
     }
 }
