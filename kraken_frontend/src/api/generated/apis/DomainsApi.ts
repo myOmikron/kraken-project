@@ -18,6 +18,7 @@ import type {
   ApiErrorResponse,
   DomainResultsPage,
   FullDomain,
+  UpdateDomainRequest,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
@@ -26,6 +27,8 @@ import {
     DomainResultsPageToJSON,
     FullDomainFromJSON,
     FullDomainToJSON,
+    UpdateDomainRequestFromJSON,
+    UpdateDomainRequestToJSON,
 } from '../models';
 
 export interface GetAllDomainsRequest {
@@ -38,6 +41,12 @@ export interface GetAllDomainsRequest {
 export interface GetDomainRequest {
     wUuid: string;
     dUuid: string;
+}
+
+export interface UpdateDomainOperationRequest {
+    wUuid: string;
+    dUuid: string;
+    updateDomainRequest: UpdateDomainRequest;
 }
 
 /**
@@ -131,6 +140,48 @@ export class DomainsApi extends runtime.BaseAPI {
     async getDomain(requestParameters: GetDomainRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullDomain> {
         const response = await this.getDomainRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Update a domain  You must include at least on parameter
+     * Update a domain
+     */
+    async updateDomainRaw(requestParameters: UpdateDomainOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling updateDomain.');
+        }
+
+        if (requestParameters.dUuid === null || requestParameters.dUuid === undefined) {
+            throw new runtime.RequiredError('dUuid','Required parameter requestParameters.dUuid was null or undefined when calling updateDomain.');
+        }
+
+        if (requestParameters.updateDomainRequest === null || requestParameters.updateDomainRequest === undefined) {
+            throw new runtime.RequiredError('updateDomainRequest','Required parameter requestParameters.updateDomainRequest was null or undefined when calling updateDomain.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/domains/{d_uuid}`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"d_uuid"}}`, encodeURIComponent(String(requestParameters.dUuid))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateDomainRequestToJSON(requestParameters.updateDomainRequest),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Update a domain  You must include at least on parameter
+     * Update a domain
+     */
+    async updateDomain(requestParameters: UpdateDomainOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.updateDomainRaw(requestParameters, initOverrides);
     }
 
 }

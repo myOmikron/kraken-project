@@ -3,12 +3,13 @@
 use std::collections::HashMap;
 
 use actix_toolbox::tb_middleware::Session;
-use actix_web::get;
 use actix_web::web::{Data, Json, Path, Query};
+use actix_web::{get, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use rorm::conditions::DynamicCollection;
-use rorm::{and, query, Database, FieldAccess, Model};
+use rorm::prelude::ForeignModelByField;
+use rorm::{and, insert, query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -287,4 +288,117 @@ pub async fn get_domain(
         tags,
         created_at: domain.created_at,
     }))
+}
+
+/// The request to update a domain
+#[derive(Deserialize, ToSchema)]
+pub struct UpdateDomainRequest {
+    comment: Option<String>,
+    global_tags: Option<Vec<Uuid>>,
+    workspace_tags: Option<Vec<Uuid>>,
+}
+
+/// Update a domain
+///
+/// You must include at least on parameter
+#[utoipa::path(
+    tag = "Domains",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Domain was updated"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    request_body = UpdateDomainRequest,
+    params(PathDomain),
+    security(("api_key" = []))
+)]
+#[put("/workspaces/{w_uuid}/domains/{d_uuid}")]
+pub async fn update_domain(
+    req: Json<UpdateDomainRequest>,
+    path: Path<PathDomain>,
+    db: Data<Database>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let req = req.into_inner();
+
+    if req.workspace_tags.is_none() && req.global_tags.is_none() && req.comment.is_none() {
+        return Err(ApiError::EmptyJson);
+    }
+
+    let mut tx = db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    query!(&mut tx, (Domain::F.uuid,))
+        .condition(Domain::F.uuid.equals(path.d_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    if let Some(global_tags) = req.global_tags {
+        GlobalTag::exist_all(&mut tx, global_tags.iter().copied())
+            .await?
+            .ok_or(ApiError::InvalidUuid)?;
+
+        rorm::delete!(&mut tx, DomainGlobalTag)
+            .condition(DomainGlobalTag::F.domain.equals(path.d_uuid))
+            .await?;
+
+        if !global_tags.is_empty() {
+            insert!(&mut tx, DomainGlobalTag)
+                .return_nothing()
+                .bulk(
+                    &global_tags
+                        .into_iter()
+                        .map(|x| DomainGlobalTag {
+                            uuid: Uuid::new_v4(),
+                            domain: ForeignModelByField::Key(path.d_uuid),
+                            global_tag: ForeignModelByField::Key(x),
+                        })
+                        .collect::<Vec<_>>(),
+                )
+                .await?;
+        }
+    }
+
+    if let Some(workspace_tags) = req.workspace_tags {
+        WorkspaceTag::exist_all(&mut tx, workspace_tags.iter().copied())
+            .await?
+            .ok_or(ApiError::InvalidUuid)?;
+
+        rorm::delete!(&mut tx, DomainWorkspaceTag)
+            .condition(DomainWorkspaceTag::F.domain.equals(path.d_uuid))
+            .await?;
+
+        if !workspace_tags.is_empty() {
+            insert!(&mut tx, DomainWorkspaceTag)
+                .return_nothing()
+                .bulk(
+                    &workspace_tags
+                        .into_iter()
+                        .map(|x| DomainWorkspaceTag {
+                            uuid: Uuid::new_v4(),
+                            domain: ForeignModelByField::Key(path.d_uuid),
+                            workspace_tag: ForeignModelByField::Key(x),
+                        })
+                        .collect::<Vec<_>>(),
+                )
+                .await?;
+        }
+    }
+
+    if let Some(comment) = req.comment {
+        update!(&mut tx, Domain)
+            .condition(Domain::F.uuid.equals(path.d_uuid))
+            .set(Domain::F.comment, comment)
+            .exec()
+            .await?;
+    }
+
+    tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
 }

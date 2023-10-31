@@ -144,10 +144,13 @@ models/TcpPortScanResultsPage.ts
 models/TransferWorkspaceRequest.ts
 models/UpdateApiKeyRequest.ts
 models/UpdateAppRequest.ts
+models/UpdateDomainRequest.ts
 models/UpdateGlobalTag.ts
 models/UpdateHostRequest.ts
 models/UpdateLeechRequest.ts
 models/UpdateMeRequest.ts
+models/UpdatePortRequest.ts
+models/UpdateServiceRequest.ts
 models/UpdateSettingsRequest.ts
 models/UpdateWordlistRequest.ts
 models/UpdateWorkspaceRequest.ts

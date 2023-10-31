@@ -3,12 +3,13 @@
 use std::collections::HashMap;
 
 use actix_toolbox::tb_middleware::Session;
-use actix_web::get;
 use actix_web::web::{Data, Json, Path, Query};
+use actix_web::{get, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use rorm::conditions::{BoxedCondition, Condition, DynamicCollection};
-use rorm::{and, query, Database, FieldAccess, Model};
+use rorm::prelude::ForeignModelByField;
+use rorm::{and, insert, query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -338,4 +339,117 @@ pub async fn get_service(
         tags,
         created_at: service.created_at,
     }))
+}
+
+/// The request to update a service
+#[derive(Deserialize, ToSchema)]
+pub struct UpdateServiceRequest {
+    comment: Option<String>,
+    global_tags: Option<Vec<Uuid>>,
+    workspace_tags: Option<Vec<Uuid>>,
+}
+
+/// Update a service
+///
+/// You must include at least on parameter
+#[utoipa::path(
+    tag = "Services",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Service was updated"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    request_body = UpdateServiceRequest,
+    params(PathService),
+    security(("api_key" = []))
+)]
+#[put("/workspaces/{w_uuid}/services/{s_uuid}")]
+pub async fn update_service(
+    req: Json<UpdateServiceRequest>,
+    path: Path<PathService>,
+    db: Data<Database>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let req = req.into_inner();
+
+    if req.workspace_tags.is_none() && req.global_tags.is_none() && req.comment.is_none() {
+        return Err(ApiError::EmptyJson);
+    }
+
+    let mut tx = db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    query!(&mut tx, (Service::F.uuid,))
+        .condition(Service::F.uuid.equals(path.s_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    if let Some(global_tags) = req.global_tags {
+        GlobalTag::exist_all(&mut tx, global_tags.iter().copied())
+            .await?
+            .ok_or(ApiError::InvalidUuid)?;
+
+        rorm::delete!(&mut tx, ServiceGlobalTag)
+            .condition(ServiceGlobalTag::F.service.equals(path.s_uuid))
+            .await?;
+
+        if !global_tags.is_empty() {
+            insert!(&mut tx, ServiceGlobalTag)
+                .return_nothing()
+                .bulk(
+                    &global_tags
+                        .into_iter()
+                        .map(|x| ServiceGlobalTag {
+                            uuid: Uuid::new_v4(),
+                            service: ForeignModelByField::Key(path.s_uuid),
+                            global_tag: ForeignModelByField::Key(x),
+                        })
+                        .collect::<Vec<_>>(),
+                )
+                .await?;
+        }
+    }
+
+    if let Some(workspace_tags) = req.workspace_tags {
+        WorkspaceTag::exist_all(&mut tx, workspace_tags.iter().copied())
+            .await?
+            .ok_or(ApiError::InvalidUuid)?;
+
+        rorm::delete!(&mut tx, ServiceWorkspaceTag)
+            .condition(ServiceWorkspaceTag::F.service.equals(path.s_uuid))
+            .await?;
+
+        if !workspace_tags.is_empty() {
+            insert!(&mut tx, ServiceWorkspaceTag)
+                .return_nothing()
+                .bulk(
+                    &workspace_tags
+                        .into_iter()
+                        .map(|x| ServiceWorkspaceTag {
+                            uuid: Uuid::new_v4(),
+                            service: ForeignModelByField::Key(path.s_uuid),
+                            workspace_tag: ForeignModelByField::Key(x),
+                        })
+                        .collect::<Vec<_>>(),
+                )
+                .await?;
+        }
+    }
+
+    if let Some(comment) = req.comment {
+        update!(&mut tx, Service)
+            .condition(Service::F.uuid.equals(path.s_uuid))
+            .set(Service::F.comment, comment)
+            .exec()
+            .await?;
+    }
+
+    tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
 }

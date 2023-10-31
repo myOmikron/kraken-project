@@ -278,20 +278,9 @@ pub async fn update_host(
         .ok_or(ApiError::InvalidUuid)?;
 
     if let Some(global_tags) = req.global_tags {
-        if !global_tags.is_empty() {
-            let (count,) = query!(&mut tx, (GlobalTag::F.uuid.count(),))
-                .condition(DynamicCollection::or(
-                    global_tags
-                        .iter()
-                        .map(|x| GlobalTag::F.uuid.equals(*x))
-                        .collect(),
-                ))
-                .one()
-                .await?;
-            if global_tags.len() as i64 != count {
-                return Err(ApiError::InvalidUuid);
-            }
-        }
+        GlobalTag::exist_all(&mut tx, global_tags.iter().copied())
+            .await?
+            .ok_or(ApiError::InvalidUuid)?;
 
         rorm::delete!(&mut tx, HostGlobalTag)
             .condition(HostGlobalTag::F.host.equals(path.h_uuid))
@@ -315,20 +304,9 @@ pub async fn update_host(
     }
 
     if let Some(workspace_tags) = req.workspace_tags {
-        if !workspace_tags.is_empty() {
-            let (count,) = query!(&mut tx, (WorkspaceTag::F.uuid.count(),))
-                .condition(DynamicCollection::or(
-                    workspace_tags
-                        .iter()
-                        .map(|x| WorkspaceTag::F.uuid.equals(*x))
-                        .collect(),
-                ))
-                .one()
-                .await?;
-            if workspace_tags.len() as i64 != count {
-                return Err(ApiError::InvalidUuid);
-            }
-        }
+        WorkspaceTag::exist_all(&mut tx, workspace_tags.iter().copied())
+            .await?
+            .ok_or(ApiError::InvalidUuid)?;
 
         rorm::delete!(&mut tx, HostWorkspaceTag)
             .condition(HostWorkspaceTag::F.host.equals(path.h_uuid))

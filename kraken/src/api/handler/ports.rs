@@ -2,12 +2,13 @@
 
 use std::collections::HashMap;
 
-use actix_web::get;
 use actix_web::web::{Data, Json, Path, Query};
+use actix_web::{get, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use rorm::conditions::{BoxedCondition, Condition, DynamicCollection};
-use rorm::{and, query, Database, FieldAccess, Model};
+use rorm::prelude::ForeignModelByField;
+use rorm::{and, insert, query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -282,4 +283,117 @@ pub async fn get_port(
         workspace: path.w_uuid,
         created_at: port.created_at,
     }))
+}
+
+/// The request to update a port
+#[derive(Deserialize, ToSchema)]
+pub struct UpdatePortRequest {
+    comment: Option<String>,
+    global_tags: Option<Vec<Uuid>>,
+    workspace_tags: Option<Vec<Uuid>>,
+}
+
+/// Update a port
+///
+/// You must include at least on parameter
+#[utoipa::path(
+    tag = "Ports",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Port was updated"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    request_body = UpdatePortRequest,
+    params(PathPort),
+    security(("api_key" = []))
+)]
+#[put("/workspaces/{w_uuid}/ports/{p_uuid}")]
+pub async fn update_port(
+    req: Json<UpdatePortRequest>,
+    path: Path<PathPort>,
+    db: Data<Database>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let req = req.into_inner();
+
+    if req.workspace_tags.is_none() && req.global_tags.is_none() && req.comment.is_none() {
+        return Err(ApiError::EmptyJson);
+    }
+
+    let mut tx = db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    query!(&mut tx, (Port::F.uuid,))
+        .condition(Port::F.uuid.equals(path.p_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    if let Some(global_tags) = req.global_tags {
+        GlobalTag::exist_all(&mut tx, global_tags.iter().copied())
+            .await?
+            .ok_or(ApiError::InvalidUuid)?;
+
+        rorm::delete!(&mut tx, PortGlobalTag)
+            .condition(PortGlobalTag::F.port.equals(path.p_uuid))
+            .await?;
+
+        if !global_tags.is_empty() {
+            insert!(&mut tx, PortGlobalTag)
+                .return_nothing()
+                .bulk(
+                    &global_tags
+                        .into_iter()
+                        .map(|x| PortGlobalTag {
+                            uuid: Uuid::new_v4(),
+                            port: ForeignModelByField::Key(path.p_uuid),
+                            global_tag: ForeignModelByField::Key(x),
+                        })
+                        .collect::<Vec<_>>(),
+                )
+                .await?;
+        }
+    }
+
+    if let Some(workspace_tags) = req.workspace_tags {
+        WorkspaceTag::exist_all(&mut tx, workspace_tags.iter().copied())
+            .await?
+            .ok_or(ApiError::InvalidUuid)?;
+
+        rorm::delete!(&mut tx, PortWorkspaceTag)
+            .condition(PortWorkspaceTag::F.port.equals(path.p_uuid))
+            .await?;
+
+        if !workspace_tags.is_empty() {
+            insert!(&mut tx, PortWorkspaceTag)
+                .return_nothing()
+                .bulk(
+                    &workspace_tags
+                        .into_iter()
+                        .map(|x| PortWorkspaceTag {
+                            uuid: Uuid::new_v4(),
+                            port: ForeignModelByField::Key(path.p_uuid),
+                            workspace_tag: ForeignModelByField::Key(x),
+                        })
+                        .collect::<Vec<_>>(),
+                )
+                .await?;
+        }
+    }
+
+    if let Some(comment) = req.comment {
+        update!(&mut tx, Port)
+            .condition(Port::F.uuid.equals(path.p_uuid))
+            .set(Port::F.comment, comment)
+            .exec()
+            .await?;
+    }
+
+    tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
 }

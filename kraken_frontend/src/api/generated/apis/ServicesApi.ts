@@ -18,6 +18,7 @@ import type {
   ApiErrorResponse,
   FullService,
   ServiceResultsPage,
+  UpdateServiceRequest,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
@@ -26,6 +27,8 @@ import {
     FullServiceToJSON,
     ServiceResultsPageFromJSON,
     ServiceResultsPageToJSON,
+    UpdateServiceRequestFromJSON,
+    UpdateServiceRequestToJSON,
 } from '../models';
 
 export interface GetAllServicesRequest {
@@ -38,6 +41,12 @@ export interface GetAllServicesRequest {
 export interface GetServiceRequest {
     wUuid: string;
     sUuid: string;
+}
+
+export interface UpdateServiceOperationRequest {
+    wUuid: string;
+    sUuid: string;
+    updateServiceRequest: UpdateServiceRequest;
 }
 
 /**
@@ -131,6 +140,48 @@ export class ServicesApi extends runtime.BaseAPI {
     async getService(requestParameters: GetServiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullService> {
         const response = await this.getServiceRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Update a service  You must include at least on parameter
+     * Update a service
+     */
+    async updateServiceRaw(requestParameters: UpdateServiceOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling updateService.');
+        }
+
+        if (requestParameters.sUuid === null || requestParameters.sUuid === undefined) {
+            throw new runtime.RequiredError('sUuid','Required parameter requestParameters.sUuid was null or undefined when calling updateService.');
+        }
+
+        if (requestParameters.updateServiceRequest === null || requestParameters.updateServiceRequest === undefined) {
+            throw new runtime.RequiredError('updateServiceRequest','Required parameter requestParameters.updateServiceRequest was null or undefined when calling updateService.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/services/{s_uuid}`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"s_uuid"}}`, encodeURIComponent(String(requestParameters.sUuid))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateServiceRequestToJSON(requestParameters.updateServiceRequest),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Update a service  You must include at least on parameter
+     * Update a service
+     */
+    async updateService(requestParameters: UpdateServiceOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.updateServiceRaw(requestParameters, initOverrides);
     }
 
 }
