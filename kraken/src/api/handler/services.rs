@@ -196,7 +196,7 @@ pub async fn get_all_services(
                     comment,
                     host: SimpleHost {
                         uuid: host.uuid,
-                        ip_addr: host.ip_addr.to_string(),
+                        ip_addr: host.ip_addr.ip().to_string(),
                         os_type: host.os_type,
                         comment: host.comment,
                         workspace: *host.workspace.key(),
@@ -318,7 +318,7 @@ pub async fn get_service(
         certainty: service.certainty,
         host: SimpleHost {
             uuid: host.uuid,
-            ip_addr: host.ip_addr.to_string(),
+            ip_addr: host.ip_addr.ip().to_string(),
             os_type: host.os_type,
             comment: host.comment,
             workspace: path.w_uuid,

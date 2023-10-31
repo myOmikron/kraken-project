@@ -164,7 +164,7 @@ pub async fn get_all_ports(
                 comment,
                 host: SimpleHost {
                     uuid: host.uuid,
-                    ip_addr: host.ip_addr.to_string(),
+                    ip_addr: host.ip_addr.ip().to_string(),
                     os_type: host.os_type,
                     workspace: *host.workspace.key(),
                     comment: host.comment,
@@ -271,7 +271,7 @@ pub async fn get_port(
         protocol: port.protocol,
         host: SimpleHost {
             uuid: host.uuid,
-            ip_addr: host.ip_addr.to_string(),
+            ip_addr: host.ip_addr.ip().to_string(),
             os_type: host.os_type,
             comment: host.comment,
             workspace: path.w_uuid,
