@@ -10,8 +10,10 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
+use crate::api::handler::users::SimpleUser;
+use crate::api::handler::workspaces::SimpleWorkspace;
 use crate::api::handler::{ApiError, ApiResult, PathUuid};
-use crate::models::{OAuthDecision, OAuthDecisionAction};
+use crate::models::{OAuthDecision, OAuthDecisionAction, Workspace, WorkspaceAccessToken};
 
 /// Response holding a user's oauth decisions
 #[derive(Serialize, ToSchema)]
@@ -30,7 +32,7 @@ pub struct FullDecision {
     pub app: String,
 
     /// The requested workspace
-    pub scope_workspace: Uuid,
+    pub workspace: SimpleWorkspace,
 
     /// Action what to do with new incoming oauth requests
     #[schema(inline)]
@@ -57,17 +59,24 @@ pub async fn get_decisions(
         db.as_ref(),
         (
             OAuthDecision::F.uuid,
-            OAuthDecision::F.app.name,
-            OAuthDecision::F.scope_workspace,
+            OAuthDecision::F.application.name,
+            OAuthDecision::F.workspace as Workspace,
+            OAuthDecision::F.workspace.owner as SimpleUser,
             OAuthDecision::F.action,
         )
     )
     .condition(OAuthDecision::F.user.equals(user_uuid))
     .stream()
-    .map_ok(|(uuid, app, scope_workspace, action)| FullDecision {
+    .map_ok(|(uuid, app, workspace, owner, action)| FullDecision {
         uuid,
         app,
-        scope_workspace,
+        workspace: SimpleWorkspace {
+            uuid: workspace.uuid,
+            name: workspace.name,
+            description: workspace.description,
+            created_at: workspace.created_at,
+            owner,
+        },
         action,
     })
     .try_collect()
@@ -93,16 +102,35 @@ pub async fn revoke_decision(
     SessionUser(user_uuid): SessionUser,
     path: Path<PathUuid>,
 ) -> ApiResult<HttpResponse> {
-    let deleted = rorm::delete!(db.as_ref(), OAuthDecision)
-        .condition(and![
-            OAuthDecision::F.uuid.equals(path.uuid),
-            OAuthDecision::F.user.equals(user_uuid)
-        ])
+    let mut tx = db.start_transaction().await?;
+
+    let decision = query!(&mut tx, OAuthDecision)
+        .condition(OAuthDecision::F.uuid.equals(path.uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    if *decision.user.key() != user_uuid {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    rorm::delete!(db.as_ref(), OAuthDecision)
+        .condition(OAuthDecision::F.uuid.equals(path.uuid))
         .await?;
 
-    if deleted > 0 {
-        Ok(HttpResponse::Ok().finish())
-    } else {
-        Err(ApiError::InvalidUuid)
-    }
+    rorm::delete!(&mut tx, WorkspaceAccessToken)
+        .condition(and!(
+            WorkspaceAccessToken::F.user.equals(user_uuid),
+            WorkspaceAccessToken::F
+                .workspace
+                .equals(*decision.workspace.key()),
+            WorkspaceAccessToken::F
+                .application
+                .equals(*decision.application.key())
+        ))
+        .await?;
+
+    tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
 }

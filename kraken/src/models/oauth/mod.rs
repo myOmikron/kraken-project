@@ -3,7 +3,7 @@ use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::User;
+use crate::models::{User, Workspace};
 
 mod operations;
 
@@ -40,10 +40,11 @@ pub struct OAuthDecision {
 
     /// The application the decision was made for
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
-    pub app: ForeignModel<OauthClient>,
+    pub application: ForeignModel<OauthClient>,
 
     /// The requested workspace
-    pub scope_workspace: Uuid,
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub workspace: ForeignModel<Workspace>,
 
     /// Action what to do with new incoming oauth requests
     pub action: OAuthDecisionAction,
