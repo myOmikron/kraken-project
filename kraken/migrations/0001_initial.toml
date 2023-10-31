@@ -1,5 +1,5 @@
 [Migration]
-Hash = "418042255090781544"
+Hash = "11042195060836106536"
 Initial = true
 Replaces = []
 
@@ -697,6 +697,94 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateModel"
+Name = "search"
+
+[[Migration.Operations.Fields]]
+Name = "uuid"
+Type = "uuid"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "primary_key"
+
+[[Migration.Operations.Fields]]
+Name = "finished_at"
+Type = "datetime"
+Annotations = []
+
+[[Migration.Operations.Fields]]
+Name = "error"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Fields]]
+Name = "created_at"
+Type = "datetime"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "auto_create_time"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations.Fields]]
+Name = "search_term"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 20
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateModel"
+Name = "searchresult"
+
+[[Migration.Operations.Fields]]
+Name = "uuid"
+Type = "uuid"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "primary_key"
+
+[[Migration.Operations.Fields]]
+Name = "ref_key"
+Type = "uuid"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations.Fields]]
+Name = "ref_type"
+Type = "choices"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "choices"
+Value = [
+    "Host",
+    "Service",
+    "Port",
+    "Domain",
+    "DnsRecordResult",
+    "TcpPortScanResult",
+    "DehashedQueryResult",
+    "CertificateTransparencyResult",
+    "HostAliveResult",
+    "ServiceDetectionResult",
+]
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "index"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateModel"
 Name = "oidcuser"
 
 [[Migration.Operations.Fields]]
@@ -1042,6 +1130,16 @@ Type = "uuid"
 [[Migration.Operations.Fields.Annotations]]
 Type = "primary_key"
 
+[[Migration.Operations.Fields]]
+Name = "created_at"
+Type = "datetime"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "auto_create_time"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
 [[Migration.Operations]]
 Type = "CreateModel"
 Name = "workspacequeryfilter"
@@ -1225,6 +1323,9 @@ Name = "ip_addr"
 Type = "ipnetwork"
 
 [[Migration.Operations.Fields.Annotations]]
+Type = "index"
+
+[[Migration.Operations.Fields.Annotations]]
 Type = "not_null"
 
 [[Migration.Operations.Fields]]
@@ -1324,6 +1425,9 @@ Name = "name"
 Type = "varchar"
 
 [[Migration.Operations.Fields.Annotations]]
+Type = "index"
+
+[[Migration.Operations.Fields.Annotations]]
 Type = "max_length"
 Value = 255
 
@@ -1333,6 +1437,9 @@ Type = "not_null"
 [[Migration.Operations.Fields]]
 Name = "version"
 Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "index"
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "max_length"
@@ -1411,6 +1518,9 @@ Type = "primary_key"
 [[Migration.Operations.Fields]]
 Name = "port"
 Type = "int16"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "index"
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "not_null"
@@ -1503,6 +1613,9 @@ Type = "primary_key"
 [[Migration.Operations.Fields]]
 Name = "domain"
 Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "index"
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "max_length"
@@ -1629,7 +1742,7 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "servicedetectionresult"
+Model = "dehashedqueryresult"
 
 [Migration.Operations.Field]
 Name = "attack"
@@ -1649,7 +1762,7 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "tcpportscanresult"
+Model = "dnsrecordresult"
 
 [Migration.Operations.Field]
 Name = "attack"
@@ -1660,189 +1773,6 @@ Type = "foreign_key"
 
 [Migration.Operations.Field.Annotations.Value]
 TableName = "attack"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "domainglobaltag"
-
-[Migration.Operations.Field]
-Name = "global_tag"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "globaltag"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "domainglobaltag"
-
-[Migration.Operations.Field]
-Name = "domain"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "domain"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "port"
-
-[Migration.Operations.Field]
-Name = "host"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "host"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "port"
-
-[Migration.Operations.Field]
-Name = "workspace"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "workspace"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "workspacetag"
-
-[Migration.Operations.Field]
-Name = "workspace"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "workspace"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "workspace"
-
-[Migration.Operations.Field]
-Name = "owner"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "index"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "user"
-ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "host"
-
-[Migration.Operations.Field]
-Name = "workspace"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "workspace"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "servicedetectionname"
-
-[Migration.Operations.Field]
-Name = "result"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "servicedetectionresult"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "domain"
-
-[Migration.Operations.Field]
-Name = "workspace"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "workspace"
 ColumnName = "uuid"
 OnDelete = "Cascade"
 OnUpdate = "Cascade"
@@ -1892,17 +1822,17 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "oauthdecision"
+Model = "service"
 
 [Migration.Operations.Field]
-Name = "user"
+Name = "host"
 Type = "uuid"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "foreign_key"
 
 [Migration.Operations.Field.Annotations.Value]
-TableName = "user"
+TableName = "host"
 ColumnName = "uuid"
 OnDelete = "Cascade"
 OnUpdate = "Cascade"
@@ -1912,17 +1842,94 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "oauthdecision"
+Model = "service"
 
 [Migration.Operations.Field]
-Name = "app"
+Name = "port"
 Type = "uuid"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "foreign_key"
 
 [Migration.Operations.Field.Annotations.Value]
-TableName = "oauthclient"
+TableName = "port"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "service"
+
+[Migration.Operations.Field]
+Name = "workspace"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "workspace"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "workspacetag"
+
+[Migration.Operations.Field]
+Name = "workspace"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "workspace"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "portworkspacetag"
+
+[Migration.Operations.Field]
+Name = "workspace_tag"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "workspacetag"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "portworkspacetag"
+
+[Migration.Operations.Field]
+Name = "port"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "port"
 ColumnName = "uuid"
 OnDelete = "Cascade"
 OnUpdate = "Cascade"
@@ -1972,91 +1979,14 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "domaindomainrelation"
+Model = "workspace"
 
 [Migration.Operations.Field]
-Name = "source"
+Name = "owner"
 Type = "uuid"
 
 [[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "domain"
-ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "domaindomainrelation"
-
-[Migration.Operations.Field]
-Name = "destination"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "domain"
-ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "domaindomainrelation"
-
-[Migration.Operations.Field]
-Name = "workspace"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "workspace"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "workspaceinvitation"
-
-[Migration.Operations.Field]
-Name = "workspace"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "workspace"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "workspaceinvitation"
-
-[Migration.Operations.Field]
-Name = "from"
-Type = "uuid"
+Type = "index"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "foreign_key"
@@ -2064,28 +1994,8 @@ Type = "foreign_key"
 [Migration.Operations.Field.Annotations.Value]
 TableName = "user"
 ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "workspaceinvitation"
-
-[Migration.Operations.Field]
-Name = "target"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "user"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
+OnDelete = "Restrict"
+OnUpdate = "Restrict"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"
@@ -2112,106 +2022,6 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "domainhostrelation"
-
-[Migration.Operations.Field]
-Name = "domain"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "domain"
-ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "domainhostrelation"
-
-[Migration.Operations.Field]
-Name = "host"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "host"
-ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "domainhostrelation"
-
-[Migration.Operations.Field]
-Name = "workspace"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "workspace"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "domainworkspacetag"
-
-[Migration.Operations.Field]
-Name = "workspace_tag"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "workspacetag"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "domainworkspacetag"
-
-[Migration.Operations.Field]
-Name = "domain"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "domain"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
 Model = "hostaliveresult"
 
 [Migration.Operations.Field]
@@ -2232,67 +2042,7 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "dnsrecordresult"
-
-[Migration.Operations.Field]
-Name = "attack"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "attack"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "localuser"
-
-[Migration.Operations.Field]
-Name = "user"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "user"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "certificatetransparencyresult"
-
-[Migration.Operations.Field]
-Name = "attack"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "attack"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "portworkspacetag"
+Model = "hostworkspacetag"
 
 [Migration.Operations.Field]
 Name = "workspace_tag"
@@ -2312,97 +2062,17 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "portworkspacetag"
+Model = "hostworkspacetag"
 
 [Migration.Operations.Field]
-Name = "port"
+Name = "host"
 Type = "uuid"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "foreign_key"
 
 [Migration.Operations.Field.Annotations.Value]
-TableName = "port"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "certificatetransparencyvaluename"
-
-[Migration.Operations.Field]
-Name = "ct_result"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "certificatetransparencyresult"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "workspaceaccesstoken"
-
-[Migration.Operations.Field]
-Name = "user"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "user"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "workspaceaccesstoken"
-
-[Migration.Operations.Field]
-Name = "workspace"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "workspace"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "workspaceaccesstoken"
-
-[Migration.Operations.Field]
-Name = "application"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "oauthclient"
+TableName = "host"
 ColumnName = "uuid"
 OnDelete = "Cascade"
 OnUpdate = "Cascade"
@@ -2512,7 +2182,7 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "leechapikey"
+Model = "localuser"
 
 [Migration.Operations.Field]
 Name = "user"
@@ -2532,7 +2202,27 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "service"
+Model = "domainhostrelation"
+
+[Migration.Operations.Field]
+Name = "domain"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "domain"
+ColumnName = "uuid"
+OnDelete = "Restrict"
+OnUpdate = "Restrict"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "domainhostrelation"
 
 [Migration.Operations.Field]
 Name = "host"
@@ -2544,32 +2234,15 @@ Type = "foreign_key"
 [Migration.Operations.Field.Annotations.Value]
 TableName = "host"
 ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
+OnDelete = "Restrict"
+OnUpdate = "Restrict"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "service"
-
-[Migration.Operations.Field]
-Name = "port"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "port"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "service"
+Model = "domainhostrelation"
 
 [Migration.Operations.Field]
 Name = "workspace"
@@ -2589,57 +2262,17 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "workspacequeryfilter"
+Model = "servicedetectionname"
 
 [Migration.Operations.Field]
-Name = "workspace"
+Name = "result"
 Type = "uuid"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "foreign_key"
 
 [Migration.Operations.Field.Annotations.Value]
-TableName = "workspace"
-ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "localuserkey"
-
-[Migration.Operations.Field]
-Name = "user"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "localuser"
-ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "dehashedqueryresult"
-
-[Migration.Operations.Field]
-Name = "attack"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "attack"
+TableName = "servicedetectionresult"
 ColumnName = "uuid"
 OnDelete = "Cascade"
 OnUpdate = "Cascade"
@@ -2649,37 +2282,17 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "attack"
+Model = "certificatetransparencyvaluename"
 
 [Migration.Operations.Field]
-Name = "started_by"
+Name = "ct_result"
 Type = "uuid"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "foreign_key"
 
 [Migration.Operations.Field.Annotations.Value]
-TableName = "user"
-ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "attack"
-
-[Migration.Operations.Field]
-Name = "workspace"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "workspace"
+TableName = "certificatetransparencyresult"
 ColumnName = "uuid"
 OnDelete = "Cascade"
 OnUpdate = "Cascade"
@@ -2729,7 +2342,7 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "hostworkspacetag"
+Model = "domainworkspacetag"
 
 [Migration.Operations.Field]
 Name = "workspace_tag"
@@ -2749,7 +2362,247 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "hostworkspacetag"
+Model = "domainworkspacetag"
+
+[Migration.Operations.Field]
+Name = "domain"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "domain"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "oauthdecision"
+
+[Migration.Operations.Field]
+Name = "user"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "user"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "oauthdecision"
+
+[Migration.Operations.Field]
+Name = "app"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "oauthclient"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "search"
+
+[Migration.Operations.Field]
+Name = "started_by"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "user"
+ColumnName = "uuid"
+OnDelete = "Restrict"
+OnUpdate = "Restrict"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "search"
+
+[Migration.Operations.Field]
+Name = "workspace"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "workspace"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "attack"
+
+[Migration.Operations.Field]
+Name = "started_by"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "user"
+ColumnName = "uuid"
+OnDelete = "Restrict"
+OnUpdate = "Restrict"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "attack"
+
+[Migration.Operations.Field]
+Name = "workspace"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "workspace"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "workspaceaccesstoken"
+
+[Migration.Operations.Field]
+Name = "user"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "user"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "workspaceaccesstoken"
+
+[Migration.Operations.Field]
+Name = "workspace"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "workspace"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "workspaceaccesstoken"
+
+[Migration.Operations.Field]
+Name = "application"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "oauthclient"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "servicedetectionresult"
+
+[Migration.Operations.Field]
+Name = "attack"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "attack"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "localuserkey"
+
+[Migration.Operations.Field]
+Name = "user"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "localuser"
+ColumnName = "uuid"
+OnDelete = "Restrict"
+OnUpdate = "Restrict"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "port"
 
 [Migration.Operations.Field]
 Name = "host"
@@ -2760,6 +2613,326 @@ Type = "foreign_key"
 
 [Migration.Operations.Field.Annotations.Value]
 TableName = "host"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "port"
+
+[Migration.Operations.Field]
+Name = "workspace"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "workspace"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "certificatetransparencyresult"
+
+[Migration.Operations.Field]
+Name = "attack"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "attack"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "leechapikey"
+
+[Migration.Operations.Field]
+Name = "user"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "user"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "host"
+
+[Migration.Operations.Field]
+Name = "workspace"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "workspace"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "searchresult"
+
+[Migration.Operations.Field]
+Name = "search"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "search"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "tcpportscanresult"
+
+[Migration.Operations.Field]
+Name = "attack"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "attack"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "workspaceinvitation"
+
+[Migration.Operations.Field]
+Name = "workspace"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "workspace"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "workspaceinvitation"
+
+[Migration.Operations.Field]
+Name = "from"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "user"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "workspaceinvitation"
+
+[Migration.Operations.Field]
+Name = "target"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "user"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "workspacequeryfilter"
+
+[Migration.Operations.Field]
+Name = "workspace"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "workspace"
+ColumnName = "uuid"
+OnDelete = "Restrict"
+OnUpdate = "Restrict"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "domainglobaltag"
+
+[Migration.Operations.Field]
+Name = "global_tag"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "globaltag"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "domainglobaltag"
+
+[Migration.Operations.Field]
+Name = "domain"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "domain"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "domain"
+
+[Migration.Operations.Field]
+Name = "workspace"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "workspace"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "domaindomainrelation"
+
+[Migration.Operations.Field]
+Name = "source"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "domain"
+ColumnName = "uuid"
+OnDelete = "Restrict"
+OnUpdate = "Restrict"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "domaindomainrelation"
+
+[Migration.Operations.Field]
+Name = "destination"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "domain"
+ColumnName = "uuid"
+OnDelete = "Restrict"
+OnUpdate = "Restrict"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "domaindomainrelation"
+
+[Migration.Operations.Field]
+Name = "workspace"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "workspace"
 ColumnName = "uuid"
 OnDelete = "Cascade"
 OnUpdate = "Cascade"

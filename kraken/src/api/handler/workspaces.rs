@@ -35,7 +35,6 @@ use crate::api::handler::{
     de_optional, query_user, ApiError, ApiResult, Page, PageParams, PathUuid, SearchResultPage,
     SearchesResultPage, UuidResponse,
 };
-use crate::chan::WsManagerMessage::Message;
 use crate::chan::{WsManagerChan, WsManagerMessage, WsMessage};
 use crate::models;
 use crate::models::{
@@ -737,7 +736,7 @@ pub async fn search(
                         };
 
                         let _ = ws_manager_chan
-                            .send(Message(
+                            .send(WsManagerMessage::Message(
                                 user_uuid,
                                 WsMessage::SearchNotify {
                                     search_uuid,
@@ -763,7 +762,7 @@ pub async fn search(
             };
 
             let _ = ws_manager_chan
-                .send(Message(
+                .send(WsManagerMessage::Message(
                     user_uuid,
                     WsMessage::SearchFinished {
                         search_uuid,

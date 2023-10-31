@@ -298,10 +298,29 @@ impl WorkspaceInvitation {
             return Err(InsertWorkspaceInvitationError::InvalidTarget);
         }
 
+        // Insert the invitation
+        insert!(guard.get_transaction(), WorkspaceInvitationInsert)
+            .single(&WorkspaceInvitationInsert {
+                uuid: Uuid::new_v4(),
+                workspace: ForeignModelByField::Key(workspace),
+                target: ForeignModelByField::Key(target),
+                from: ForeignModelByField::Key(from),
+            })
+            .await?;
+
         guard.commit().await?;
 
         Ok(())
     }
+}
+
+#[derive(Patch)]
+#[rorm(model = "WorkspaceInvitation")]
+struct WorkspaceInvitationInsert {
+    uuid: Uuid,
+    workspace: ForeignModel<Workspace>,
+    from: ForeignModel<User>,
+    target: ForeignModel<User>,
 }
 
 /// The errors that can occur when inserting an invitation to an workspace

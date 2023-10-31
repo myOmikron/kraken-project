@@ -130,6 +130,10 @@ pub struct WorkspaceInvitation {
     /// The receiver of the invitation
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
     pub target: ForeignModel<User>,
+
+    /// The point in time this invite was created
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
 }
 
 /// The target of a [WorkspaceQueryFilter]
