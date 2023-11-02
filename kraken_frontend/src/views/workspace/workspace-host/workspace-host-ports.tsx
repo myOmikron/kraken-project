@@ -15,15 +15,15 @@ export function WorkspaceHostPorts(props: WorkspaceDataPortsProps) {
         <WorkspaceTable<FullPort>
             query={(limit, offset) => Api.workspaces.ports.all(workspace, limit, offset, { host: host?.uuid })}
             queryDeps={[workspace, host?.uuid]}
-            columns={2}
+            columnsTemplate={"5ch 1fr"}
             type={"Host"}
         >
-            <div className={"workspace-data-table-header"}>
+            <div className={"workspace-table-header"}>
                 <span>Port</span>
                 <span>Comment</span>
             </div>
             {(port) => (
-                <div className={"workspace-data-table-row"} onClick={() => onSelect(port.uuid)}>
+                <div className={"workspace-table-row"} onClick={() => onSelect(port.uuid)}>
                     <span>{port.port}</span>
                     <span>{port.comment}</span>
                 </div>

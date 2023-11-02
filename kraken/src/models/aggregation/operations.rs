@@ -123,11 +123,11 @@ impl Service {
                         .return_primary_key()
                         .single(&PortInsert {
                             uuid: Uuid::new_v4(),
-                            port: 0,
+                            port,
                             protocol: PortProtocol::Unknown,
                             certainty: PortCertainty::Verified, // we talked to it
                             host: ForeignModelByField::Key(host_uuid),
-                            comment: "".to_string(),
+                            comment: String::new(),
                             workspace: ForeignModelByField::Key(workspace),
                         })
                         .await?

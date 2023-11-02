@@ -20,6 +20,9 @@ import type {
   FullWorkspace,
   GetAllWorkspacesResponse,
   InviteToWorkspace,
+  SearchResultPage,
+  SearchWorkspaceRequest,
+  SearchesResultPage,
   TransferWorkspaceRequest,
   UpdateWorkspaceRequest,
   UuidResponse,
@@ -36,6 +39,12 @@ import {
     GetAllWorkspacesResponseToJSON,
     InviteToWorkspaceFromJSON,
     InviteToWorkspaceToJSON,
+    SearchResultPageFromJSON,
+    SearchResultPageToJSON,
+    SearchWorkspaceRequestFromJSON,
+    SearchWorkspaceRequestToJSON,
+    SearchesResultPageFromJSON,
+    SearchesResultPageToJSON,
     TransferWorkspaceRequestFromJSON,
     TransferWorkspaceRequestToJSON,
     UpdateWorkspaceRequestFromJSON,
@@ -63,6 +72,19 @@ export interface GetAllWorkspaceInvitationsRequest {
     uuid: string;
 }
 
+export interface GetSearchResultsRequest {
+    wUuid: string;
+    sUuid: string;
+    limit: number;
+    offset: number;
+}
+
+export interface GetSearchesRequest {
+    uuid: string;
+    limit: number;
+    offset: number;
+}
+
 export interface GetWorkspaceRequest {
     uuid: string;
 }
@@ -70,6 +92,11 @@ export interface GetWorkspaceRequest {
 export interface RetractInvitationRequest {
     wUuid: string;
     iUuid: string;
+}
+
+export interface SearchRequest {
+    uuid: string;
+    searchWorkspaceRequest: SearchWorkspaceRequest;
 }
 
 export interface TransferOwnershipRequest {
@@ -252,6 +279,106 @@ export class WorkspacesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Retrieve results for a search by it\'s uuid
+     * Retrieve results for a search by it\'s uuid
+     */
+    async getSearchResultsRaw(requestParameters: GetSearchResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SearchResultPage>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling getSearchResults.');
+        }
+
+        if (requestParameters.sUuid === null || requestParameters.sUuid === undefined) {
+            throw new runtime.RequiredError('sUuid','Required parameter requestParameters.sUuid was null or undefined when calling getSearchResults.');
+        }
+
+        if (requestParameters.limit === null || requestParameters.limit === undefined) {
+            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getSearchResults.');
+        }
+
+        if (requestParameters.offset === null || requestParameters.offset === undefined) {
+            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getSearchResults.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.limit !== undefined) {
+            queryParameters['limit'] = requestParameters.limit;
+        }
+
+        if (requestParameters.offset !== undefined) {
+            queryParameters['offset'] = requestParameters.offset;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/search/{s_uuid}`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"s_uuid"}}`, encodeURIComponent(String(requestParameters.sUuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SearchResultPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve results for a search by it\'s uuid
+     * Retrieve results for a search by it\'s uuid
+     */
+    async getSearchResults(requestParameters: GetSearchResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SearchResultPage> {
+        const response = await this.getSearchResultsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Query all searches
+     * Query all searches
+     */
+    async getSearchesRaw(requestParameters: GetSearchesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SearchesResultPage>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getSearches.');
+        }
+
+        if (requestParameters.limit === null || requestParameters.limit === undefined) {
+            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getSearches.');
+        }
+
+        if (requestParameters.offset === null || requestParameters.offset === undefined) {
+            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getSearches.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.limit !== undefined) {
+            queryParameters['limit'] = requestParameters.limit;
+        }
+
+        if (requestParameters.offset !== undefined) {
+            queryParameters['offset'] = requestParameters.offset;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{uuid}/search`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SearchesResultPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Query all searches
+     * Query all searches
+     */
+    async getSearches(requestParameters: GetSearchesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SearchesResultPage> {
+        const response = await this.getSearchesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Retrieve a workspace by id
      * Retrieve a workspace by id
      */
@@ -316,6 +443,45 @@ export class WorkspacesApi extends runtime.BaseAPI {
      */
     async retractInvitation(requestParameters: RetractInvitationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.retractInvitationRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Search through a workspaces\' data
+     * Search through a workspaces\' data
+     */
+    async searchRaw(requestParameters: SearchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling search.');
+        }
+
+        if (requestParameters.searchWorkspaceRequest === null || requestParameters.searchWorkspaceRequest === undefined) {
+            throw new runtime.RequiredError('searchWorkspaceRequest','Required parameter requestParameters.searchWorkspaceRequest was null or undefined when calling search.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{uuid}/search`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: SearchWorkspaceRequestToJSON(requestParameters.searchWorkspaceRequest),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Search through a workspaces\' data
+     * Search through a workspaces\' data
+     */
+    async search(requestParameters: SearchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
+        const response = await this.searchRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**

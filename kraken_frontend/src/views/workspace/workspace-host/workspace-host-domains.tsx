@@ -15,15 +15,15 @@ export function WorkspaceHostDomains(props: WorkspaceDataDomainsProps) {
         <WorkspaceTable<SimpleDomain>
             query={(limit, offset) => Api.workspaces.domains.all(workspace, limit, offset, { host: host?.uuid })}
             queryDeps={[workspace, host?.uuid]}
-            columns={2}
+            columnsTemplate={"1fr 1fr"}
             type={"Host"}
         >
-            <div className={"workspace-data-table-header"}>
+            <div className={"workspace-table-header"}>
                 <span>Name</span>
                 <span>Comment</span>
             </div>
             {(domain) => (
-                <div className={"workspace-data-table-row"} onClick={() => onSelect(domain.uuid)}>
+                <div className={"workspace-table-row"} onClick={() => onSelect(domain.uuid)}>
                     <span>{domain.domain}</span>
                     <span>{domain.comment}</span>
                 </div>

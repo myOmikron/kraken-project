@@ -1,38 +1,38 @@
 .workspace-create-tag {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: 0.5em;
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    justify-items: left;
 }
-.workspace-create-tag > label {
-    display: contents;
-}
-.workspace-create-tag-heading {
-    grid-area: 1 / 1 / span 1 / -1;
-    justify-self: center;
-}
-.workspace-create-tag-submit {
-    grid-area: 7 / 1 / span 1 / -1;
-    justify-self: center;
-}
-.workspace-create-tag-color-picker {
-    /* Required for rules set on input below */
-    position: relative;
-    overflow: clip;
 
-    /* Makes the preview tag slightly bigger */
+.workspace-create-tag > .tag {
     font-size: 1.5em;
 }
-.workspace-create-tag-color-picker > input {
-    /*
-    The html color picker shouldn't be visible.
-    But the browser depends on its position for positioning the actual color picker popup.
-    So we make the parent div clip its overflow and move the input outside of it
-    */
-    position: absolute;
-    box-sizing: border-box;
-    width: 1em;
-    left: -1em;
+
+.workspace-create-tag-body {
+    display: grid;
+    gap: 0.5em 2em;
 }
-.workspace-create-tag-color-picker > .tag {
-    min-height: 1em;
+.workspace-create-tag-body label {
+    display: contents;
+}
+.workspace-create-tag-body input {
+    grid-row: 2;
+}
+.workspace-create-tag-body label {
+    grid-row: 1;
+}
+
+.workspace-create-tag-body input[type="range"] {
+    width: 5em;
+}
+
+.workspace-create-tag-global {
+    display: flex;
+    align-items: center;
+    gap: 2em;
+}
+
+.workspace-create-tag-submit {
+    justify-self: stretch;
 }

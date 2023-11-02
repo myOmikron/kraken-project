@@ -1,3 +1,4 @@
+use rorm::conditions::DynamicCollection;
 use rorm::db::Executor;
 use rorm::prelude::*;
 use rorm::{and, insert, query};
@@ -86,6 +87,39 @@ impl GlobalTag {
             .is_some())
     }
 
+    /// Check whether all global tags in a list exist by quering their uuids
+    ///
+    /// This function returns a `Option<()>` instead of a `bool` to allow easier error propagation:
+    /// ```norun
+    /// fn example(db: &Database, global_tags: Vec<Uuid>) -> Result<(), ApiError> {
+    ///     GlobalTag::exist_all(db, global_tags.iter().copied())
+    ///         .await?
+    ///         .ok_or(ApiError::InvalidUuid)?;
+    ///     Ok(())
+    /// }
+    /// ```
+    pub async fn exist_all(
+        executor: impl Executor<'_>,
+        uuids: impl IntoIterator<Item = Uuid>,
+    ) -> Result<Option<()>, rorm::Error> {
+        let tags: Vec<_> = uuids
+            .into_iter()
+            .map(|uuid| GlobalTag::F.uuid.equals(uuid))
+            .collect();
+
+        // Short circuit if the there are no uuids to check
+        if tags.is_empty() {
+            return Ok(Some(()));
+        }
+
+        let search = tags.len();
+        let (found,) = query!(executor, (GlobalTag::F.uuid.count(),))
+            .condition(DynamicCollection::or(tags))
+            .one()
+            .await?;
+        Ok((found == search as i64).then_some(()))
+    }
+
     /// Insert a [GlobalTag]
     pub async fn insert(
         executor: impl Executor<'_>,
@@ -157,6 +191,39 @@ impl WorkspaceTag {
             .optional()
             .await?
             .is_some())
+    }
+
+    /// Check whether all workspace tags in a list exist by quering their uuids
+    ///
+    /// This function returns a `Option<()>` instead of a `bool` to allow easier error propagation:
+    /// ```norun
+    /// fn example(db: &Database, workspace_tags: Vec<Uuid>) -> Result<(), ApiError> {
+    ///     WorkspaceTag::exist_all(db, workspace_tags.iter().copied())
+    ///         .await
+    ///         .ok_or(ApiError::InvalidUuid)?;
+    ///     Ok(())
+    /// }
+    /// ```
+    pub async fn exist_all(
+        executor: impl Executor<'_>,
+        uuids: impl IntoIterator<Item = Uuid>,
+    ) -> Result<Option<()>, rorm::Error> {
+        let tags: Vec<_> = uuids
+            .into_iter()
+            .map(|uuid| WorkspaceTag::F.uuid.equals(uuid))
+            .collect();
+
+        // Short circuit if the there are no uuids to check
+        if tags.is_empty() {
+            return Ok(Some(()));
+        }
+
+        let search = tags.len();
+        let (found,) = query!(executor, (WorkspaceTag::F.uuid.count(),))
+            .condition(DynamicCollection::or(tags))
+            .one()
+            .await?;
+        Ok((found == search as i64).then_some(()))
     }
 
     /// Insert a [WorkspaceTag]
