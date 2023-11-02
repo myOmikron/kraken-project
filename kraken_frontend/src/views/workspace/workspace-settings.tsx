@@ -1,5 +1,5 @@
 import React from "react";
-import { FullWorkspace } from "../../api/generated";
+import { FullWorkspace, FullWorkspaceInvitation, SimpleUser } from "../../api/generated";
 import "../../styling/workspace-settings.css";
 import Input from "../../components/input";
 import { Api } from "../../api/api";
@@ -27,6 +27,7 @@ type WorkspaceSettingsState = {
     transferList: Array<SelectValue>;
     inviteList: Array<SelectValue>;
     selectedUser: null | SelectValue;
+    invitedUsers: Array<FullWorkspaceInvitation>;
 };
 
 type SelectValue = {
@@ -51,9 +52,18 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
             transferList: [],
             inviteList: [],
             selectedUser: null,
+            invitedUsers: [],
         };
         this.createTransferList().then();
         this.createInviteList().then();
+        this.updateInvitedUsers().then();
+    }
+
+    async updateInvitedUsers() {
+        (await Api.workspaces.invitations.all(this.props.workspace.uuid)).match(
+            (x) => this.setState({ invitedUsers: x.invitations }),
+            (err) => toast.error(err.message)
+        );
     }
 
     async updateWorkspace() {
@@ -123,9 +133,10 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
         }
 
         (await Api.workspaces.invitations.create(this.props.workspace.uuid, this.state.selectedUser.value)).match(
-            (_) => {
+            async () => {
                 toast.success("Invitation was sent");
                 this.setState({ selectedUser: null, invitePopup: false });
+                await this.updateInvitedUsers();
             },
             (err) => toast.error(err.message)
         );
@@ -232,6 +243,35 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                                                     deleteUserPopup: true,
                                                     memberName: m.displayName,
                                                 });
+                                            }}
+                                        >
+                                            <CloseIcon />
+                                        </button>
+                                    </span>
+                                </div>
+                            ))}
+                            {this.state.invitedUsers.map((i) => (
+                                <div key={i.uuid} className={"workspace-settings-user-table-entry neon"}>
+                                    <span>{i.target.displayName}</span>
+                                    <div className={"workspace-settings-tag-container"}>
+                                        <Tag name={"invited"} />
+                                    </div>
+                                    <span>
+                                        <button
+                                            className={"icon-button"}
+                                            onClick={async () => {
+                                                (
+                                                    await Api.workspaces.invitations.retract(
+                                                        this.props.workspace.uuid,
+                                                        i.uuid
+                                                    )
+                                                ).match(
+                                                    async () => {
+                                                        toast.success("Invitation retracted");
+                                                        await this.updateInvitedUsers();
+                                                    },
+                                                    (err) => toast.error(err.message)
+                                                );
                                             }}
                                         >
                                             <CloseIcon />
