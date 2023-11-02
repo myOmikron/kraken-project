@@ -1,11 +1,24 @@
+.base-layout {
+    display: grid;
+    margin: 1em;
+    gap: 1em;
+    grid-template-columns: 7em calc(100vw - 3em - 7em);
+    grid-template-rows: 5em calc(100vh - 3em - 5em);
+}
+
+.top-bar {
+    grid-area: 1 / 2 / span 1 / span 1;
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.content-container {
+    grid-area: 2 / 2 / span 1 / span 1;
+}
 
 .menu {
-    position: absolute;
+    grid-area: 1 / 1 / span 2 / span 1;
     padding: 1em;
-    top: 1em;
-    left: 1em;
-    width: 5em;
-    height: calc(100vh - 4em);
     animation: yourAnimation 0.9s step-End 0.4s 1 normal backwards;
 }
 
@@ -97,11 +110,7 @@
 }
 
 .workspace-selector-container {
-    position: absolute;
-    top: 1em;
-    right: 1em;
     width: 25em;
-    height: 3em;
     display: flex;
     flex-direction: row;
     justify-content: flex-end;
@@ -113,26 +122,3 @@
     width: 3em;
 }
 
-.content-container {
-    margin-top: 7em;
-    margin-left: 9em;
-    width: calc(100% - 10em);
-    height: calc(100vh - 2em);
-}
-
-@media screen and (max-width: 2000px) {
-    .menu {
-        width: 5em;
-    }
-
-    .workspace-selector-container {
-        height: 2em;
-        width: 20em;
-    }
-
-    .content-container {
-        margin-top: 6em;
-        margin-left: 9em;
-        width: calc(100% - 10em);
-    }
-}

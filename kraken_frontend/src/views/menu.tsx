@@ -163,10 +163,24 @@ export default class Menu extends React.Component<MenuProps, MenuState> {
                         </>
                     ) : null}
                 </div>
-                <div className={"workspace-selector-container pane"}>
-                    <WorkspaceIcon />
+                <div className={"top-bar"}>
+                    <div className={"workspace-selector-container pane"}>
+                        <WorkspaceIcon />
+                    </div>
                 </div>
             </>
         );
     }
+}
+
+type ContentWithMenuProps = {
+    children: React.ReactNode;
+};
+export function ContentWithMenu(props: ContentWithMenuProps) {
+    return (
+        <div className={"base-layout"}>
+            <div className={"content-container"}>{props.children}</div>
+            <Menu />
+        </div>
+    );
 }
