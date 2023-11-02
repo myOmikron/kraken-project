@@ -69,14 +69,14 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
 
         (await Api.workspaces.update(this.props.workspace.uuid, update)).match(
             () => toast.success("Workspace updated"),
-            (err) => toast.error(err.message),
+            (err) => toast.error(err.message)
         );
     }
 
     async deleteWorkspace() {
         (await Api.workspaces.delete(this.props.workspace.uuid)).match(
             () => toast.success("Deleted Workspace "),
-            (err) => toast.error(err.message),
+            (err) => toast.error(err.message)
         );
     }
 
@@ -92,7 +92,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                         this.state.transferList.push(member);
                     });
             },
-            (err) => toast.error(err.message),
+            (err) => toast.error(err.message)
         );
     }
 
@@ -112,7 +112,22 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                         this.state.inviteList.push(member);
                     });
             },
-            (err) => toast.error(err.message),
+            (err) => toast.error(err.message)
+        );
+    }
+
+    async inviteUser() {
+        if (this.state.selectedUser === null) {
+            toast.error("No user selected");
+            return;
+        }
+
+        (await Api.workspaces.invitations.create(this.props.workspace.uuid, this.state.selectedUser.value)).match(
+            (_) => {
+                toast.success("Invitation was sent");
+                this.setState({ selectedUser: null, invitePopup: false });
+            },
+            (err) => toast.error(err.message)
         );
     }
 
@@ -249,7 +264,14 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                         this.setState({ invitePopup: false, selectedUser: null });
                     }}
                 >
-                    <form className="workspace-settings-popup pane">
+                    <form
+                        method={"post"}
+                        className="workspace-settings-popup pane"
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            await this.inviteUser();
+                        }}
+                    >
                         <div className="workspace-setting-popup">
                             <h2 className="sub-heading"> Invite member</h2>
                             <SelectMenu
@@ -260,15 +282,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                                     this.setState({ selectedUser: type });
                                 }}
                             />
-                            <button
-                                className="button"
-                                onClick={() => {
-                                    this.setState({ invitePopup: false, selectedUser: null });
-                                }}
-                            >
-                                Invite
-                                {/*TODO send out invitation*/}
-                            </button>
+                            <button className="button">Invite</button>
                         </div>
                     </form>
                 </Popup>

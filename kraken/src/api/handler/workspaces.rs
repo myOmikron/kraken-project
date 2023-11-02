@@ -409,7 +409,7 @@ pub async fn create_invitation(
     let mut tx = db.start_transaction().await?;
     let session_user = query_user(&mut tx, &session).await?;
 
-    WorkspaceInvitation::insert(db.as_ref(), workspace, session_user.uuid, user).await?;
+    WorkspaceInvitation::insert(&mut tx, workspace, session_user.uuid, user).await?;
 
     tx.commit().await?;
 
