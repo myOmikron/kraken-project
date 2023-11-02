@@ -72,34 +72,36 @@ export default function WorkspaceCreateTag(props: WorkspaceCreateTagProps) {
                 }
             }}
         >
-            <h3 className={"heading workspace-create-tag-heading"}>Create new tag</h3>
-            <label>
-                Name: <Input value={name} onChange={setName} />
-            </label>
-            <label>
-                Color:
-                <div className={"workspace-create-tag-color-picker"}>
-                    <Input className={undefined} type={"color"} value={colorString} onChange={setColorString} />
-                    <Tag {...tag} />
-                </div>
-            </label>
-            <label>
-                Alpha:
-                <Input
-                    className={undefined}
-                    type={"range"}
-                    min={0}
-                    max={255}
-                    value={String(colorAlpha)}
-                    onChange={(string) => setColorAlpha(parseInt(string))}
-                />
-            </label>
-            {permission === UserPermission.Admin ? (
+            <h2 className={"sub-heading workspace-create-tag-heading"}>Create new tag</h2>
+            <Tag {...tag} />
+            <div className={"workspace-create-tag-body"}>
                 <label>
-                    Global: <Checkbox value={isGlobal} onChange={setIsGlobal} />
+                    <span>Name:</span>
+                    <Input value={name} onChange={setName} />
+                </label>
+                <label>
+                    <span>Color:</span>
+                    <Input type={"color"} value={colorString} onChange={setColorString} />
+                </label>
+                <label>
+                    <span>Alpha:</span>
+                    <Input
+                        className={undefined}
+                        type={"range"}
+                        min={0}
+                        max={255}
+                        value={String(colorAlpha)}
+                        onChange={(string) => setColorAlpha(parseInt(string))}
+                    />
+                </label>
+            </div>
+            {permission === UserPermission.Admin ? (
+                <label className={"workspace-create-tag-global"}>
+                    <span>Global:</span>
+                    <Checkbox value={isGlobal} onChange={setIsGlobal} />
                 </label>
             ) : null}
-            <button className={"button workspace-create-tag-submit"} type={"submit"}>
+            <button className={"button workspace-create-tag-submit"} type={"submit"} disabled={name.length === 0}>
                 Create and add
             </button>
         </form>
