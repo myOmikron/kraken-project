@@ -1,8 +1,8 @@
 .workspace-hosts-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(20em, 1fr));;
+    grid-template-columns: repeat(auto-fit, minmax(30em, 1fr));;
     gap: 1em;
-    height: fit-content;
+    overflow-y: auto;
 }
 
 .workspace-hosts-search-pane {

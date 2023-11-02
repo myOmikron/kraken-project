@@ -16,7 +16,6 @@ export function WorkspaceHostPorts(props: WorkspaceDataPortsProps) {
             query={(limit, offset) => Api.workspaces.ports.all(workspace, limit, offset, { host: host?.uuid })}
             queryDeps={[workspace, host?.uuid]}
             columnsTemplate={"5ch 1fr"}
-            type={"Host"}
         >
             <div className={"workspace-table-header"}>
                 <span>Port</span>

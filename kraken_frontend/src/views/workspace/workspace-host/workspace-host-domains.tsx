@@ -16,7 +16,6 @@ export function WorkspaceHostDomains(props: WorkspaceDataDomainsProps) {
             query={(limit, offset) => Api.workspaces.domains.all(workspace, limit, offset, { host: host?.uuid })}
             queryDeps={[workspace, host?.uuid]}
             columnsTemplate={"1fr 1fr"}
-            type={"Host"}
         >
             <div className={"workspace-table-header"}>
                 <span>Name</span>

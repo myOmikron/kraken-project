@@ -16,7 +16,6 @@ export function WorkspaceHostServices(props: WorkspaceDataServicesProps) {
             query={(limit, offset) => Api.workspaces.services.all(workspace, limit, offset, { host: host?.uuid })}
             queryDeps={[workspace, host?.uuid]}
             columnsTemplate={"1fr 5ch 1fr"}
-            type={"Host"}
         >
             <div className={"workspace-table-header"}>
                 <span>Name</span>

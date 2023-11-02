@@ -28,9 +28,6 @@ export type WorkspaceDataTableProps<T> = {
 
     /** The `grid-template-rows` to use */
     columnsTemplate: string;
-
-    /** The table's "type" (controls the table's body's css class) */
-    type?: "Host" | "Data";
 };
 export type GenericPage<T> = {
     items: Array<T>;
@@ -50,7 +47,6 @@ export default function WorkspaceTable<T extends { uuid: string }>(props: Worksp
         queryDeps,
         children: [header, renderItem],
         columnsTemplate,
-        type,
     } = props;
 
     const { items, ...table } = useTable(query, queryDeps);
@@ -59,7 +55,6 @@ export default function WorkspaceTable<T extends { uuid: string }>(props: Worksp
         ...table,
         children: [header, items.map(renderItem)],
         columnsTemplate,
-        type,
     });
 }
 
@@ -80,9 +75,6 @@ export type StatelessWorkspaceTableProps = {
 
     /** The `grid-template-rows` to use */
     columnsTemplate: string;
-
-    /** The table's "type" (controls the table's body's css class) */
-    type?: "Host" | "Data";
 };
 export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
     const {
@@ -93,7 +85,6 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
         setOffset: setRawOffset,
         children: [header, body],
         columnsTemplate,
-        type,
     } = props;
 
     const lastOffset = Math.floor(total / limit) * limit;
@@ -118,7 +109,7 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
                 onChange={console.log}
             />
             {header}
-            <div className={type === "Host" ? "workspace-table-body-host" : "workspace-table-body"}>{body}</div>
+            <div className={"workspace-table-body"}>{body}</div>
             <div className={"workspace-table-controls"}>
                 <div className={"workspace-table-controls-button-container"}>
                     <button className={"workspace-table-button"} disabled={offset === 0} onClick={() => setOffset(0)}>
