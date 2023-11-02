@@ -43,15 +43,15 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
         switch (tab) {
             case "domains":
                 return (
-                    <StatelessWorkspaceTable {...domainsTable}>
-                        <div className={"workspace-data-table-header"}>
+                    <StatelessWorkspaceTable {...domainsTable} columnsTemplate={"1fr 1fr 1fr"}>
+                        <div className={"workspace-table-header"}>
                             <span>Name</span>
                             <span>Tags</span>
                             <span>Comment</span>
                         </div>
                         {domains.map((domain) => (
                             <div
-                                className={"workspace-data-table-row"}
+                                className={"workspace-table-row"}
                                 onClick={() => setSelected({ type: "domains", uuid: domain.uuid })}
                             >
                                 <span>{domain.domain}</span>
@@ -63,15 +63,15 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 );
             case "hosts":
                 return (
-                    <StatelessWorkspaceTable {...hostsTable}>
-                        <div className={"workspace-data-table-header"}>
+                    <StatelessWorkspaceTable {...hostsTable} columnsTemplate={"39ch 1fr 1fr"}>
+                        <div className={"workspace-table-header"}>
                             <span>IP</span>
                             <span>Tags</span>
                             <span>Comment</span>
                         </div>
                         {hosts.map((host) => (
                             <div
-                                className={"workspace-data-table-row"}
+                                className={"workspace-table-row"}
                                 onClick={() => setSelected({ type: "hosts", uuid: host.uuid })}
                             >
                                 <span>{host.ipAddr}</span>
@@ -83,8 +83,8 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 );
             case "ports":
                 return (
-                    <StatelessWorkspaceTable {...portsTable}>
-                        <div className={"workspace-data-table-header"}>
+                    <StatelessWorkspaceTable {...portsTable} columnsTemplate={"5ch 39ch 1fr 1fr"}>
+                        <div className={"workspace-table-header"}>
                             <span>Port</span>
                             <span>Host</span>
                             <span>Tags</span>
@@ -92,7 +92,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         </div>
                         {ports.map((port) => (
                             <div
-                                className={"workspace-data-table-row"}
+                                className={"workspace-table-row"}
                                 onClick={() => setSelected({ type: "ports", uuid: port.uuid })}
                             >
                                 <span>{port.port}</span>
@@ -105,8 +105,8 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 );
             case "services":
                 return (
-                    <StatelessWorkspaceTable {...servicesTable}>
-                        <div className={"workspace-data-table-header"}>
+                    <StatelessWorkspaceTable {...servicesTable} columnsTemplate={"1fr 39ch 5ch 1fr 1fr"}>
+                        <div className={"workspace-table-header"}>
                             <span>Name</span>
                             <span>Host</span>
                             <span>Port</span>
@@ -115,7 +115,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         </div>
                         {services.map((service) => (
                             <div
-                                className={"workspace-data-table-row"}
+                                className={"workspace-table-row"}
                                 onClick={() => setSelected({ type: "services", uuid: service.uuid })}
                             >
                                 <span>{service.name}</span>

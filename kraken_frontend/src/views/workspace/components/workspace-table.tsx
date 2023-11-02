@@ -26,8 +26,8 @@ export type WorkspaceDataTableProps<T> = {
     /** The table's header row and a function for rendering the body's rows */
     children: [React.ReactNode, (item: T) => React.ReactNode];
 
-    /** The number of columns to render (controls css grid) */
-    columns?: number;
+    /** The `grid-template-rows` to use */
+    columnsTemplate: string;
 
     /** The table's "type" (controls the table's body's css class) */
     type?: "Host" | "Data";
@@ -49,7 +49,7 @@ export default function WorkspaceTable<T extends { uuid: string }>(props: Worksp
         query,
         queryDeps,
         children: [header, renderItem],
-        columns,
+        columnsTemplate,
         type,
     } = props;
 
@@ -58,7 +58,7 @@ export default function WorkspaceTable<T extends { uuid: string }>(props: Worksp
     return StatelessWorkspaceTable({
         ...table,
         children: [header, items.map(renderItem)],
-        columns,
+        columnsTemplate,
         type,
     });
 }
@@ -78,12 +78,8 @@ export type StatelessWorkspaceTableProps = {
     /** The table's header row and body rows*/
     children: [React.ReactNode, Array<React.ReactNode>];
 
-    /**
-     * Sets the number of columns to render explicitly (controls css grid)
-     *
-     * When omitted, the number of direct children of the table's header will be used.
-     */
-    columns?: number;
+    /** The `grid-template-rows` to use */
+    columnsTemplate: string;
 
     /** The table's "type" (controls the table's body's css class) */
     type?: "Host" | "Data";
@@ -96,7 +92,7 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
         offset,
         setOffset: setRawOffset,
         children: [header, body],
-        columns: explicitColumns,
+        columnsTemplate,
         type,
     } = props;
 
@@ -111,19 +107,8 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
         }
     }
 
-    // Use `explicitColumns` or count `header`'s children
-    let columns = undefined;
-    if (explicitColumns !== undefined) {
-        columns = explicitColumns;
-    } else if (typeof header === "object" && header !== null) {
-        if ("props" in header) {
-            const children: any = header.props?.children;
-            if (children !== undefined) columns = React.Children.count(children);
-        }
-    }
-
     // @ts-ignore
-    const style: CSSProperties = { "--columns": columns };
+    const style: CSSProperties = { "--columns": columnsTemplate };
     return (
         <div className={"workspace-table pane"} style={style}>
             <Input

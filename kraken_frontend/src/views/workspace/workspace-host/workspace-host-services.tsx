@@ -15,16 +15,16 @@ export function WorkspaceHostServices(props: WorkspaceDataServicesProps) {
         <WorkspaceTable<FullService>
             query={(limit, offset) => Api.workspaces.services.all(workspace, limit, offset, { host: host?.uuid })}
             queryDeps={[workspace, host?.uuid]}
-            columns={3}
+            columnsTemplate={"1fr 5ch 1fr"}
             type={"Host"}
         >
-            <div className={"workspace-data-table-header"}>
+            <div className={"workspace-table-header"}>
                 <span>Name</span>
                 <span>Port</span>
                 <span>Comment</span>
             </div>
             {(service) => (
-                <div className={"workspace-data-table-row"} onClick={() => onSelect(service.uuid)}>
+                <div className={"workspace-table-row"} onClick={() => onSelect(service.uuid)}>
                     <span>{service.name}</span>
                     <span>{service.port?.port}</span>
                     <span>{service.comment}</span>
