@@ -1,13 +1,18 @@
 .workspace-hosts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+}
+
+.workspace-hosts-search-pane {
+    padding: 1em;
+}
+
+.workspace-hosts-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(30em, 1fr));;
     gap: 1em;
     overflow-y: auto;
-}
-
-.workspace-hosts-search-pane {
-    grid-area: 1 / 1 / span 1 / -1;
-    padding: 1em;
 }
 
 .workspace-hosts-host {

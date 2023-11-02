@@ -45,26 +45,28 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
                         onChange={(searchTerm) => this.setState({ searchTerm })}
                     />
                 </div>
-                {this.state.hosts.map((host) => {
-                    return (
-                        <div
-                            key={host.uuid}
-                            className={"workspace-hosts-host pane"}
-                            onClick={() => {
-                                ROUTES.WORKSPACE_SINGLE_HOST.visit({
-                                    w_uuid: this.props.workspace.uuid,
-                                    h_uuid: host.uuid,
-                                });
-                            }}
-                        >
-                            <OsIcon os={host.osType} />
-                            <div className={"workspace-hosts-host-info"}>
-                                <h2 className={"sub-heading"}>{host.ipAddr}</h2>
-                                <span>{host.comment}</span>
+                <div className={"workspace-hosts-list"}>
+                    {this.state.hosts.map((host) => {
+                        return (
+                            <div
+                                key={host.uuid}
+                                className={"workspace-hosts-host pane"}
+                                onClick={() => {
+                                    ROUTES.WORKSPACE_SINGLE_HOST.visit({
+                                        w_uuid: this.props.workspace.uuid,
+                                        h_uuid: host.uuid,
+                                    });
+                                }}
+                            >
+                                <OsIcon os={host.osType} />
+                                <div className={"workspace-hosts-host-info"}>
+                                    <h2 className={"sub-heading"}>{host.ipAddr}</h2>
+                                    <span>{host.comment}</span>
+                                </div>
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
             </div>
         );
     }
