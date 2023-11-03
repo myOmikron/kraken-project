@@ -25,7 +25,7 @@ use uuid::Uuid;
 
 #[cfg(doc)]
 use crate::api::handler;
-use crate::chan::{LeechClient, WsManagerChan, WsManagerMessage, WsMessage};
+use crate::chan::{LeechClient, WsManagerChan, WsMessage};
 use crate::models::Attack;
 use crate::rpc::rpc_definitions::AddressConvError;
 
@@ -72,14 +72,7 @@ pub struct LeechAttackContext {
 impl AttackContext {
     /// Send a websocket message and log the error
     async fn send_ws(&self, message: WsMessage) {
-        if self
-            .ws_manager
-            .send(WsManagerMessage::Message(self.user_uuid, message))
-            .await
-            .is_err()
-        {
-            error!("Couldn't send websocket message, the websocket manager died!");
-        }
+        self.ws_manager.message(self.user_uuid, message).await;
     }
 
     /// Send the user a notification and update the [`Attack`] model

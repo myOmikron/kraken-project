@@ -108,7 +108,7 @@ async fn main() -> Result<(), String> {
             );
 
             let (rpc_manager_chan, rpc_clients) = chan::start_rpc_manager(db.clone()).await?;
-            let ws_manager_chan = chan::start_ws_manager().await?;
+            let ws_manager_chan = chan::start_ws_manager().await;
             let dehashed_scheduler =
                 chan::start_dehashed_manager(settings_manager_chan.clone()).await?;
 

@@ -6,7 +6,6 @@ use actix_web::{delete, get, post, put, HttpResponse};
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use chrono::{DateTime, Utc};
-use log::error;
 use rand::thread_rng;
 use rorm::{query, update, Database, FieldAccess, Model, Patch};
 use serde::{Deserialize, Serialize};
@@ -14,7 +13,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
-use crate::chan::{WsManagerChan, WsManagerMessage};
+use crate::chan::WsManagerChan;
 use crate::models::{LocalUser, User, UserPermission};
 
 /// The request to create a user
@@ -257,13 +256,7 @@ pub async fn set_password(
 
     session.purge();
 
-    if let Err(err) = ws_manager_chan
-        .send(WsManagerMessage::CloseSocket(uuid))
-        .await
-    {
-        error!("Error sending to websocket manager: {err}");
-        return Err(ApiError::InternalServerError);
-    }
+    ws_manager_chan.close_all(uuid).await;
 
     Ok(HttpResponse::Ok().finish())
 }

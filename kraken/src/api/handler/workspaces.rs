@@ -5,7 +5,7 @@ use actix_web::web::{Data, Json, Path, Query};
 use actix_web::{delete, get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::{StreamExt, TryStreamExt};
-use log::{debug, error, info, warn};
+use log::{debug, error, info};
 use rorm::db::executor::Stream;
 use rorm::db::sql::value::Value;
 use rorm::db::transaction::Transaction;
@@ -35,7 +35,7 @@ use crate::api::handler::{
     de_optional, query_user, ApiError, ApiResult, Page, PageParams, PathUuid, SearchResultPage,
     SearchesResultPage, UuidResponse,
 };
-use crate::chan::{WsManagerChan, WsManagerMessage, WsMessage};
+use crate::chan::{WsManagerChan, WsMessage};
 use crate::models;
 use crate::models::{
     Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
@@ -413,8 +413,8 @@ pub async fn create_invitation(
 
     tx.commit().await?;
 
-    if let Err(err) = ws_manager_chan
-        .send(WsManagerMessage::Message(
+    ws_manager_chan
+        .message(
             user,
             WsMessage::InvitationToWorkspace {
                 from: SimpleUser {
@@ -424,11 +424,8 @@ pub async fn create_invitation(
                 },
                 workspace_uuid: workspace,
             },
-        ))
-        .await
-    {
-        warn!("Could not send to ws manager chan: {err}")
-    }
+        )
+        .await;
 
     Ok(HttpResponse::Ok().finish())
 }
@@ -735,14 +732,14 @@ pub async fn search(
                             continue;
                         };
 
-                        let _ = ws_manager_chan
-                            .send(WsManagerMessage::Message(
+                        ws_manager_chan
+                            .message(
                                 user_uuid,
                                 WsMessage::SearchNotify {
                                     search_uuid,
                                     result_uuid,
                                 },
-                            ))
+                            )
                             .await;
                     }
                 }
@@ -761,14 +758,14 @@ pub async fn search(
                 error!("could not commit changes to database: {err}");
             };
 
-            let _ = ws_manager_chan
-                .send(WsManagerMessage::Message(
+            ws_manager_chan
+                .message(
                     user_uuid,
                     WsMessage::SearchFinished {
                         search_uuid,
                         finished_successful,
                     },
-                ))
+                )
                 .await;
 
             info!("Finished workspace search for: '{}'", search_term);

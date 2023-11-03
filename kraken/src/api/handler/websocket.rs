@@ -14,7 +14,7 @@ use tokio::sync::Mutex;
 use uuid::Uuid;
 
 use crate::api::handler::ApiError;
-use crate::chan::{WsManagerChan, WsManagerMessage, WsMessage};
+use crate::chan::{WsManagerChan, WsMessage};
 
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -131,15 +131,7 @@ pub async fn websocket(
     });
 
     // Give sender to ws manager
-    if let Err(err) = ws_manager_chan
-        .send(WsManagerMessage::OpenedSocket(uuid, tx.clone()))
-        .await
-    {
-        error!("Could not send ws tx to ws manager: {err}. Closing websocket");
-        if let Err(err) = tx.close().await {
-            error!("Couldn't close websocket: {err}");
-        }
-    }
+    ws_manager_chan.add(uuid, tx.clone()).await;
 
     Ok(response)
 }

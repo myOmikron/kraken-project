@@ -6,7 +6,7 @@ use actix_web::{get, post, HttpResponse};
 use argon2::password_hash::Error;
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use chrono::Utc;
-use log::{debug, error};
+use log::debug;
 use rorm::prelude::{BackRef, ForeignModelByField};
 use rorm::{query, update, Database, FieldAccess, Model};
 use serde::Deserialize;
@@ -18,9 +18,10 @@ use webauthn_rs::prelude::{
 };
 use webauthn_rs::Webauthn;
 
+use crate::api::extractors::SessionUser;
 use crate::api::handler::{ApiError, ApiResult};
 use crate::api::middleware::AuthenticationRequired;
-use crate::chan::{WsManagerChan, WsManagerMessage};
+use crate::chan::WsManagerChan;
 use crate::models::{LocalUser, LocalUserKey, User};
 
 /// Test the current login state
@@ -115,18 +116,12 @@ pub async fn login(
 #[get("/logout")]
 pub async fn logout(
     session: Session,
+    SessionUser(user_uuid): SessionUser,
     ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
-    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
     session.purge();
 
-    if let Err(err) = ws_manager_chan
-        .send(WsManagerMessage::CloseSocket(uuid))
-        .await
-    {
-        error!("Error sending to websocket manager: {err}");
-        return Err(ApiError::InternalServerError);
-    }
+    ws_manager_chan.close_all(user_uuid).await;
 
     Ok(HttpResponse::Ok().finish())
 }

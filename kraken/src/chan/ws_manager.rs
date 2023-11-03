@@ -4,44 +4,13 @@ use std::net::IpAddr;
 use actix_toolbox::ws;
 use actix_toolbox::ws::Message;
 use chrono::{DateTime, Utc};
-use log::error;
+use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
-use tokio::sync::mpsc::Sender;
-use tokio::task;
 use utoipa::ToSchema;
 use webauthn_rs::prelude::Uuid;
 
 use crate::api::handler::users::SimpleUser;
-
-pub(crate) async fn start_ws_sender(tx: ws::Sender, mut rx: mpsc::Receiver<WsMessage>) {
-    while let Some(msg) = rx.recv().await {
-        match msg {
-            WsMessage::ServerQuitSocket {} => {
-                if let Err(err) = tx.close().await {
-                    error!("Error while closing ws sender: {err}");
-                }
-                break;
-            }
-            _ => {
-                let txt = match serde_json::to_string(&msg) {
-                    Ok(v) => v,
-                    Err(err) => {
-                        error!("Error serializing WsMessage: {err}");
-                        continue;
-                    }
-                };
-
-                if let Err(err) = tx.send(Message::Text(txt.into())).await {
-                    error!("Error sending to client: {err}, closing socket");
-                    if let Err(err) = tx.close().await {
-                        error!("Error closing socket: {err}");
-                    }
-                }
-            }
-        }
-    }
-}
 
 /// Entry of certificate transparency results
 #[derive(Deserialize, Serialize, Clone, ToSchema)]
@@ -64,11 +33,6 @@ pub struct CertificateTransparencyEntry {
 #[derive(Deserialize, Serialize, Clone, ToSchema)]
 #[serde(tag = "type")]
 pub enum WsMessage {
-    /// The message for the websocket worker to stop and quit.
-    ///
-    /// This message is not sent to the client.
-    #[serde(skip)]
-    ServerQuitSocket {},
     /// An invalid message was received.
     ///
     /// This message type is sent to the client.
@@ -153,66 +117,102 @@ pub enum WsMessage {
     },
 }
 
-/// A channel to send [WsManagerMessage] to the ws manager
-pub type WsManagerChan = Sender<WsManagerMessage>;
+/// A channel to send events to the ws manager
+#[derive(Clone, Debug)]
+pub struct WsManagerChan(mpsc::Sender<WsManagerEvent>);
 
-/// Messages to control the websocket manager
-pub enum WsManagerMessage {
-    /// Close the socket from the server side
-    CloseSocket(Uuid),
-    /// Client with given uuid initialized a websocket
-    OpenedSocket(Uuid, ws::Sender),
-    /// Send a message to given uuid
-    Message(Uuid, WsMessage),
+impl WsManagerChan {
+    /// Add a newly opened websocket for a user
+    pub async fn add(&self, uuid: Uuid, socket: ws::Sender) {
+        self.send(WsManagerEvent::Add(uuid, socket)).await;
+    }
+
+    /// Send a message to a user
+    pub async fn message(&self, uuid: Uuid, msg: WsMessage) {
+        self.send(WsManagerEvent::Message(uuid, msg)).await;
+    }
+
+    /// Close all websocket's owned by a user
+    pub async fn close_all(&self, uuid: Uuid) {
+        self.send(WsManagerEvent::CloseAll(uuid)).await;
+    }
+
+    async fn send(&self, event: WsManagerEvent) {
+        if self.0.send(event).await.is_err() {
+            error!("The ws_manager died! This should never happen!");
+        }
+    }
 }
 
-pub(crate) async fn start_ws_manager() -> Result<WsManagerChan, String> {
-    let mut lookup: HashMap<Uuid, Vec<Sender<WsMessage>>> = HashMap::new();
+pub(crate) async fn start_ws_manager() -> WsManagerChan {
+    let (sender, receiver) = mpsc::channel(16);
+    tokio::spawn(run_ws_manager(receiver));
+    WsManagerChan(sender)
+}
 
-    let (tx, mut rx) = mpsc::channel(16);
+enum WsManagerEvent {
+    Add(Uuid, ws::Sender),
+    Message(Uuid, WsMessage),
+    CloseAll(Uuid),
+}
 
-    tokio::spawn(async move {
-        while let Some(msg) = rx.recv().await {
-            match msg {
-                WsManagerMessage::CloseSocket(uuid) => {
-                    // Trigger close for all websockets associated with uuid
-                    if let Some(sockets) = lookup.get(&uuid) {
-                        for s in sockets {
-                            if !s.is_closed() {
-                                if let Err(err) = s.send(WsMessage::ServerQuitSocket {}).await {
-                                    error!("Couldn't send close to ws sender: {err}");
-                                }
-                            }
+async fn run_ws_manager(mut receiver: mpsc::Receiver<WsManagerEvent>) {
+    let mut sockets: HashMap<Uuid, Vec<mpsc::Sender<WsMessage>>> = HashMap::new();
+
+    while let Some(event) = receiver.recv().await {
+        match event {
+            WsManagerEvent::Add(uuid, socket) => {
+                let (tx, rx) = mpsc::channel(16);
+                tokio::spawn(run_single_socket(socket, rx));
+                sockets.entry(uuid).or_default().push(tx);
+            }
+            WsManagerEvent::CloseAll(uuid) => {
+                sockets.remove(&uuid);
+            }
+            WsManagerEvent::Message(uuid, msg) => {
+                if let Some(sockets) = sockets.get_mut(&uuid) {
+                    let mut closed = Vec::new();
+                    for (index, socket) in sockets.iter().enumerate() {
+                        // Try send
+                        if socket.send(msg.clone()).await.is_err() {
+                            // Note the closed ones
+                            closed.push(index);
                         }
                     }
-
-                    lookup.remove(&uuid);
-                }
-                WsManagerMessage::OpenedSocket(uuid, ws_tx) => {
-                    let (tx, rx) = mpsc::channel(16);
-                    task::spawn(start_ws_sender(ws_tx, rx));
-
-                    // Add new client connection to state
-                    if let Some(sockets) = lookup.get_mut(&uuid) {
-                        sockets.push(tx);
-                    }
-                    // Insert new client connection
-                    else {
-                        lookup.insert(uuid, vec![tx]);
-                    }
-                }
-                WsManagerMessage::Message(uuid, msg) => {
-                    if let Some(sender) = lookup.get(&uuid) {
-                        for tx in sender {
-                            if let Err(err) = tx.send(msg.clone()).await {
-                                error!("Could not send to ws sender: {err}");
-                            }
-                        }
+                    // Remove the closed ones
+                    for index in closed.into_iter().rev() {
+                        sockets.swap_remove(index);
                     }
                 }
             }
         }
-    });
+    }
+}
 
-    Ok(tx)
+async fn run_single_socket(actor_chan: ws::Sender, mut manager_chan: mpsc::Receiver<WsMessage>) {
+    loop {
+        // Receive
+        let Some(msg) = manager_chan.recv().await else {
+            if actor_chan.close().await.is_err() {
+                debug!("Couldn't close websocket, because it is already closed");
+            }
+            return;
+        };
+
+        // Convert
+        let txt = match serde_json::to_string(&msg) {
+            Ok(v) => v,
+            Err(err) => {
+                error!("Error serializing WsMessage: {err}");
+                continue;
+            }
+        };
+
+        // Send
+        let Ok(_) = actor_chan.send(Message::Text(txt.into())).await else {
+            debug!("Couldn't send to websocket, because it is closed");
+            manager_chan.close();
+            return;
+        };
+    }
 }
