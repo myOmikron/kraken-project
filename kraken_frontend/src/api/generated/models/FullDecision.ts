@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { SimpleWorkspace } from './SimpleWorkspace';
+import {
+    SimpleWorkspaceFromJSON,
+    SimpleWorkspaceFromJSONTyped,
+    SimpleWorkspaceToJSON,
+} from './SimpleWorkspace';
+
 /**
  * A user's remembered oauth decision
  * @export
@@ -32,11 +39,11 @@ export interface FullDecision {
      */
     app: string;
     /**
-     * The requested workspace
-     * @type {string}
+     * 
+     * @type {SimpleWorkspace}
      * @memberof FullDecision
      */
-    scopeWorkspace: string;
+    workspace: SimpleWorkspace;
     /**
      * Action what to do with new oauth requests
      * @type {string}
@@ -63,7 +70,7 @@ export function instanceOfFullDecision(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "app" in value;
-    isInstance = isInstance && "scopeWorkspace" in value;
+    isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "action" in value;
 
     return isInstance;
@@ -81,7 +88,7 @@ export function FullDecisionFromJSONTyped(json: any, ignoreDiscriminator: boolea
         
         'uuid': json['uuid'],
         'app': json['app'],
-        'scopeWorkspace': json['scope_workspace'],
+        'workspace': SimpleWorkspaceFromJSON(json['workspace']),
         'action': json['action'],
     };
 }
@@ -97,7 +104,7 @@ export function FullDecisionToJSON(value?: FullDecision | null): any {
         
         'uuid': value.uuid,
         'app': value.app,
-        'scope_workspace': value.scopeWorkspace,
+        'workspace': SimpleWorkspaceToJSON(value.workspace),
         'action': value.action,
     };
 }

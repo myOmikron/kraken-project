@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
 use tokio::task;
+use utoipa::ToSchema;
 use webauthn_rs::prelude::Uuid;
 
 use crate::api::handler::users::SimpleUser;
@@ -16,7 +17,7 @@ use crate::api::handler::users::SimpleUser;
 pub(crate) async fn start_ws_sender(tx: ws::Sender, mut rx: mpsc::Receiver<WsMessage>) {
     while let Some(msg) = rx.recv().await {
         match msg {
-            WsMessage::ServerQuitSocket => {
+            WsMessage::ServerQuitSocket {} => {
                 if let Err(err) = tx.close().await {
                     error!("Error while closing ws sender: {err}");
                 }
@@ -43,7 +44,7 @@ pub(crate) async fn start_ws_sender(tx: ws::Sender, mut rx: mpsc::Receiver<WsMes
 }
 
 /// Entry of certificate transparency results
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, ToSchema)]
 pub struct CertificateTransparencyEntry {
     /// The serial number of the certificate
     pub serial_number: String,
@@ -60,18 +61,18 @@ pub struct CertificateTransparencyEntry {
 }
 
 /// Message that is sent via websocket
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, ToSchema)]
 #[serde(tag = "type")]
 pub enum WsMessage {
     /// The message for the websocket worker to stop and quit.
     ///
     /// This message is not sent to the client.
     #[serde(skip)]
-    ServerQuitSocket,
+    ServerQuitSocket {},
     /// An invalid message was received.
     ///
     /// This message type is sent to the client.
-    InvalidMessage,
+    InvalidMessage {},
     /// An invitation to a workspace was issued
     InvitationToWorkspace {
         /// The workspace the user is invited to
@@ -115,6 +116,7 @@ pub enum WsMessage {
         /// The corresponding id of the attack
         attack_uuid: Uuid,
         /// A host which could be reached
+        #[schema(value_type = String)]
         host: IpAddr,
     },
     /// A result for a tcp scan
@@ -177,7 +179,7 @@ pub(crate) async fn start_ws_manager() -> Result<WsManagerChan, String> {
                     if let Some(sockets) = lookup.get(&uuid) {
                         for s in sockets {
                             if !s.is_closed() {
-                                if let Err(err) = s.send(WsMessage::ServerQuitSocket).await {
+                                if let Err(err) = s.send(WsMessage::ServerQuitSocket {}).await {
                                     error!("Couldn't send close to ws sender: {err}");
                                 }
                             }

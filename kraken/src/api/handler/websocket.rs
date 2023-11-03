@@ -95,8 +95,8 @@ pub async fn websocket(
                                 Err(err) => {
                                     debug!("Error deserializing data: {err}");
 
-                                    let msg =
-                                        serde_json::to_string(&WsMessage::InvalidMessage).unwrap();
+                                    let msg = serde_json::to_string(&WsMessage::InvalidMessage {})
+                                        .unwrap();
                                     if let Err(err) = recv_tx.send(Message::Text(msg.into())).await
                                     {
                                         error!("Error sending message: {err}");

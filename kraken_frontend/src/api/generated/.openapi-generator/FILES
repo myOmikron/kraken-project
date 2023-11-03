@@ -27,6 +27,7 @@ models/ApiStatusCode.ts
 models/AttackType.ts
 models/BruteforceSubdomainsRequest.ts
 models/BruteforceSubdomainsResultsPage.ts
+models/CertificateTransparencyEntry.ts
 models/Color.ts
 models/CreateApiKeyRequest.ts
 models/CreateAppRequest.ts
@@ -158,5 +159,17 @@ models/UpdateWorkspaceTag.ts
 models/UserPermission.ts
 models/UuidResponse.ts
 models/WorkspaceInvitationList.ts
+models/WsMessage.ts
+models/WsMessageOneOf.ts
+models/WsMessageOneOf1.ts
+models/WsMessageOneOf10.ts
+models/WsMessageOneOf2.ts
+models/WsMessageOneOf3.ts
+models/WsMessageOneOf4.ts
+models/WsMessageOneOf5.ts
+models/WsMessageOneOf6.ts
+models/WsMessageOneOf7.ts
+models/WsMessageOneOf8.ts
+models/WsMessageOneOf9.ts
 models/index.ts
 runtime.ts
