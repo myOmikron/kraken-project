@@ -11,7 +11,7 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::users::SimpleUser;
 use crate::api::handler::workspaces::SimpleWorkspace;
 use crate::api::handler::{ApiError, ApiResult, PathUuid};
-use crate::models::{Workspace, WorkspaceInvitation};
+use crate::models::{Workspace, WorkspaceInvitation, WorkspaceMemberPermission};
 
 /// The full representation of an invitation to a workspace
 #[derive(Debug, Clone, Serialize, ToSchema)]
@@ -119,7 +119,13 @@ pub async fn accept_invitation(
         return Err(ApiError::MissingPrivileges);
     }
 
-    Workspace::add_member(&mut tx, *invitation.workspace.key(), session_user).await?;
+    Workspace::add_member(
+        &mut tx,
+        *invitation.workspace.key(),
+        session_user,
+        WorkspaceMemberPermission::ReadWrite,
+    )
+    .await?;
 
     rorm::delete!(&mut tx, WorkspaceInvitation)
         .condition(WorkspaceInvitation::F.uuid.equals(invitation_uuid))

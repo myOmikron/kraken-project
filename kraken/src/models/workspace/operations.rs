@@ -8,12 +8,14 @@ use uuid::Uuid;
 use crate::api::handler::ApiError;
 use crate::models::{
     OauthClient, User, Workspace, WorkspaceAccessToken, WorkspaceInvitation, WorkspaceMember,
+    WorkspaceMemberPermission,
 };
 
 #[derive(Patch)]
 #[rorm(model = "WorkspaceMember")]
 struct WorkspaceMemberInsert {
     member: ForeignModel<User>,
+    permission: WorkspaceMemberPermission,
     workspace: ForeignModel<Workspace>,
 }
 
@@ -60,6 +62,7 @@ impl Workspace {
         executor: impl Executor<'_>,
         workspace_uuid: Uuid,
         user: Uuid,
+        permission: WorkspaceMemberPermission,
     ) -> Result<(), AddMemberError> {
         let mut guard = executor.ensure_transaction().await?;
 
@@ -94,6 +97,7 @@ impl Workspace {
             .single(&WorkspaceMemberInsert {
                 member: ForeignModelByField::Key(user),
                 workspace: ForeignModelByField::Key(workspace_uuid),
+                permission,
             })
             .await?;
 
