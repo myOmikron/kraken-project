@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-import { ToastContainer } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./styling/toastify.css";
 import "./styling/components.css";
@@ -10,8 +10,8 @@ import "./styling/animations.css";
 import "./index.css";
 import Background from "./views/background";
 import { ROUTER } from "./routes";
-import Menu from "./views/menu";
 import { UserProvider } from "./context/user";
+import WS from "./api/websocket";
 
 type RouterProps = {};
 type RouterState = {
@@ -24,6 +24,9 @@ class Router extends React.Component<RouterProps, RouterState> {
     };
 
     componentDidMount() {
+        WS.addEventListener("state.connected", () => toast.success("Websocket has connected", { autoClose: 1000 }));
+        WS.connect(`${window.location.origin.replace("http", "ws")}/api/v1/ws`);
+
         // Update state to match url
         const setPath = () => {
             const rawPath = window.location.hash;
@@ -66,5 +69,5 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             toastClassName="toast-pane"
             progressClassName="toast-neon toast-progress"
         />
-    </>
+    </>,
 );
