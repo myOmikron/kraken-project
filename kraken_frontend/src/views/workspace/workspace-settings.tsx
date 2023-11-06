@@ -142,6 +142,22 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
         );
     }
 
+    async transferOwnership() {
+        if (this.state.selectedUser === null) {
+            toast.error("No user selected");
+            return;
+        }
+        (await Api.workspaces.transferOwnership(this.props.workspace.uuid, this.state.selectedUser.value)).match(
+            () => {
+                toast.success("Transfer was successful");
+                this.setState({ selectedUser: null, transferOwnershipPopup: false, selected: false });
+            },
+            (err) => {
+                toast.error(err.message);
+            }
+        );
+    }
+
     render() {
         return (
             <>
@@ -288,12 +304,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                             <span>Name</span>
                             <span>User</span>
                         </div>
-                        <div className={"workspace-settings-oauth-table-entry neon"}>
-                            {/*TODO show linked apps*/}
-                            <span>19/01/2023</span>
-                            <span>Karla</span>
-                            <span>dino</span>
-                        </div>
+                        {/*TODO show linked apps*/}
                     </div>
                 </div>
                 <Popup
@@ -402,12 +413,18 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                     }}
                 >
                     {this.state.selected && this.state.selectedUser !== null ? (
-                        <form className="workspace-setting-popup danger pane">
-                            <span>Are you sure you want to transfer the ownership to</span>
-                            <span> {this.state.selectedUser?.label} ?</span>
-                            <button className="workspace-settings-red-button button">
-                                {/*TODO more ownership transfer stuff */}Yes
-                            </button>
+                        <form
+                            className="workspace-setting-popup danger pane"
+                            method={"post"}
+                            onSubmit={async (e) => {
+                                e.preventDefault();
+                                await this.transferOwnership();
+                                ROUTES.WORKSPACES.visit({});
+                            }}
+                        >
+                            <h2 className="sub-heading">Transfer the ownership to {this.state.selectedUser?.label}?</h2>
+                            <span> You will loose access to this workspace!</span>
+                            <button className="workspace-settings-red-button button">Transfer</button>
                             <button
                                 className="workspace-settings-red-button button"
                                 onClick={() => {
@@ -418,11 +435,11 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                                     });
                                 }}
                             >
-                                No
+                                Abort
                             </button>
                         </form>
                     ) : (
-                        <form className="workspace-settings-popup danger pane">
+                        <div className="workspace-settings-popup danger pane">
                             <div className="workspace-setting-popup">
                                 <h2 className="sub-heading"> Transfer ownership</h2>
                                 <SelectMenu
@@ -436,13 +453,18 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                                 <button
                                     className="workspace-settings-red-button button"
                                     onClick={() => {
-                                        this.setState({ selected: true });
+                                        if (this.state.selectedUser === null) {
+                                            toast.error("No user selected");
+                                            return;
+                                        } else {
+                                            this.setState({ selected: true });
+                                        }
                                     }}
                                 >
                                     Select
                                 </button>
                             </div>
-                        </form>
+                        </div>
                     )}
                 </Popup>
             </>
