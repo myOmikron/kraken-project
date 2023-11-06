@@ -87,37 +87,51 @@ pub struct PageParams {
     pub offset: u64,
 }
 
-/// Response containing paginated data
-#[derive(Serialize, ToSchema)]
-#[aliases(
-    DomainResultsPage = Page<FullDomain>,
-    HostResultsPage = Page<FullHost>,
-    ServiceResultsPage = Page<FullService>,
-    PortResultsPage = Page<FullPort>,
-    BruteforceSubdomainsResultsPage = Page<SimpleBruteforceSubdomainsResult>,
-    TcpPortScanResultsPage = Page<SimpleTcpPortScanResult>,
-    QueryCertificateTransparencyResultsPage = Page<FullQueryCertificateTransparencyResult>,
-    QueryUnhashedResultsPage = Page<SimpleQueryUnhashedResult>,
-    HostAliveResultsPage = Page<SimpleHostAliveResult>,
-    ServiceDetectionResultsPage = Page<FullServiceDetectionResult>,
-    DnsResolutionResultsPage = Page<SimpleDnsResolutionResult>,
-    SearchResultPage = Page<SearchResultEntry>,
-    SearchesResultPage = Page<SearchEntry>,
-)]
-pub struct Page<T> {
-    /// The page's items
-    pub items: Vec<T>,
+pub use utoipa_fix::Page;
+pub(crate) use utoipa_fix::{
+    BruteforceSubdomainsResultsPage, DnsResolutionResultsPage, DomainResultsPage,
+    HostAliveResultsPage, HostResultsPage, PortResultsPage,
+    QueryCertificateTransparencyResultsPage, QueryUnhashedResultsPage, SearchResultPage,
+    SearchesResultPage, ServiceDetectionResultsPage, ServiceResultsPage, TcpPortScanResultsPage,
+};
+mod utoipa_fix {
+    use serde::Serialize;
+    use utoipa::ToSchema;
 
-    /// The limit this page was retrieved with
-    #[schema(example = 50)]
-    pub limit: u64,
+    use super::*;
 
-    /// The offset this page was retrieved with
-    #[schema(example = 0)]
-    pub offset: u64,
+    /// Response containing paginated data
+    #[derive(Serialize, ToSchema)]
+    #[aliases(
+        DomainResultsPage = Page<FullDomain>,
+        HostResultsPage = Page<FullHost>,
+        ServiceResultsPage = Page<FullService>,
+        PortResultsPage = Page<FullPort>,
+        BruteforceSubdomainsResultsPage = Page<SimpleBruteforceSubdomainsResult>,
+        TcpPortScanResultsPage = Page<SimpleTcpPortScanResult>,
+        QueryCertificateTransparencyResultsPage = Page<FullQueryCertificateTransparencyResult>,
+        QueryUnhashedResultsPage = Page<SimpleQueryUnhashedResult>,
+        HostAliveResultsPage = Page<SimpleHostAliveResult>,
+        ServiceDetectionResultsPage = Page<FullServiceDetectionResult>,
+        DnsResolutionResultsPage = Page<SimpleDnsResolutionResult>,
+        SearchResultPage = Page<SearchResultEntry>,
+        SearchesResultPage = Page<SearchEntry>,
+    )]
+    pub struct Page<T> {
+        /// The page's items
+        pub items: Vec<T>,
 
-    /// The total number of items this page is a subset of
-    pub total: u64,
+        /// The limit this page was retrieved with
+        #[schema(example = 50)]
+        pub limit: u64,
+
+        /// The offset this page was retrieved with
+        #[schema(example = 0)]
+        pub offset: u64,
+
+        /// The total number of items this page is a subset of
+        pub total: u64,
+    }
 }
 
 const QUERY_LIMIT_MAX: u64 = 1000;
