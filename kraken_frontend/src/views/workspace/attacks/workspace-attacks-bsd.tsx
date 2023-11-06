@@ -67,12 +67,17 @@ export default class WorkspaceAttacksBruteforceSubdomains extends React.Componen
             return;
         }
 
-        await Api.attacks.bruteforceSubdomains({
-            workspaceUuid: this.props.workspaceUuid,
-            domain: this.state.domain,
-            concurrentLimit: this.state.taskLimit,
-            wordlistUuid: this.state.wordlist.value,
-        });
+        (
+            await Api.attacks.bruteforceSubdomains({
+                workspaceUuid: this.props.workspaceUuid,
+                domain: this.state.domain,
+                concurrentLimit: this.state.taskLimit,
+                wordlistUuid: this.state.wordlist.value,
+            })
+        ).match(
+            (_) => toast.success("Attack started"),
+            (err) => toast.error(err.message)
+        );
     }
 
     render() {

@@ -42,7 +42,7 @@ export default class WorkspaceAttacksCT extends React.Component<WorkspaceAttacks
                 retryInterval: this.state.retryInterval,
             })
         ).match(
-            (ok) => {},
+            (ok) => toast.success("Attack started"),
             (err) => toast.error(err.message)
         );
     }

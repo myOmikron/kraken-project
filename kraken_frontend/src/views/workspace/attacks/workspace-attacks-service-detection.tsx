@@ -45,7 +45,7 @@ export default class WorkspaceAttacksServiceDetection extends React.Component<
         (
             await Api.attacks.serviceDetection({ workspaceUuid: this.props.workspaceUuid, address, port: p, timeout })
         ).match(
-            (_) => toast.success("Started service detection"),
+            (_) => toast.success("Attack started"),
             (err) => toast.error(err.message)
         );
     }

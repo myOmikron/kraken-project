@@ -103,7 +103,7 @@ export default class WorkspaceAttacksDehashed extends React.Component<
         }
 
         (await Api.attacks.queryDehashed(this.props.workspaceUuid, query)).match(
-            (uuid) => {},
+            (uuid) => toast.success("Attack started"),
             (err) => toast.error(err.message)
         );
     }

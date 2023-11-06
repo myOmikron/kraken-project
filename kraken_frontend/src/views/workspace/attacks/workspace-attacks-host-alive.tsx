@@ -42,7 +42,7 @@ export default class WorkspaceAttacksHostAlive extends React.Component<
                 workspaceUuid: this.props.workspaceUuid,
             })
         ).match(
-            (_) => {},
+            (_) => toast.success("Attack started"),
             (err) => toast.error(err.message)
         );
     }
