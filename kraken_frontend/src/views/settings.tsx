@@ -3,10 +3,11 @@ import "../styling/settings.css";
 import Input from "../components/input";
 import { Api } from "../api/api";
 import { toast } from "react-toastify";
-import { FullOauthClient, SettingsFull } from "../api/generated";
+import { FullOauthClient, FullWordlist, SettingsFull } from "../api/generated";
 import CopyIcon from "../svg/copy";
 import CloseIcon from "../svg/close";
 import { copyToClipboard } from "../utils/helper";
+import Textarea from "../components/textarea";
 
 type SettingsProps = {};
 type SettingsState = {
@@ -14,6 +15,10 @@ type SettingsState = {
     oauthApplications: Array<FullOauthClient>;
     newOAuthAppName: string;
     newOAuthAppRedirectUrl: string;
+    wordlists: Array<FullWordlist>;
+    wordlistName: string;
+    wordlistPath: string;
+    wordlistDescription: string;
 };
 
 export default class Settings extends React.Component<SettingsProps, SettingsState> {
@@ -23,14 +28,17 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
         this.state = {
             settings: null,
             oauthApplications: [],
+            wordlists: [],
             newOAuthAppName: "",
             newOAuthAppRedirectUrl: "",
+            wordlistName: "",
+            wordlistPath: "",
+            wordlistDescription: "",
         };
     }
 
     componentDidMount() {
-        this.getOAuthApps().then();
-        this.retrieveSettings().then();
+        Promise.all([this.getOAuthApps(), this.retrieveSettings(), this.updateWordlists()]).then();
     }
 
     async retrieveSettings() {
@@ -45,6 +53,37 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
             (apps) => {
                 this.setState({ oauthApplications: apps.apps });
             },
+            (err) => toast.error(err.message)
+        );
+    }
+
+    async updateWordlists() {
+        (await Api.admin.wordlists.all()).match(
+            (wordlists) => {
+                this.setState({ wordlists: wordlists.wordlists });
+            },
+            (err) => toast.error(err.message)
+        );
+    }
+
+    async createWordlist() {
+        if (this.state.wordlistName === "") {
+            toast.error("Name of the wordlist must not be empty");
+            return;
+        }
+
+        if (this.state.wordlistPath === "") {
+            toast.error("Path of the wordlist must not be empty");
+        }
+
+        (
+            await Api.admin.wordlists.create({
+                name: this.state.wordlistName,
+                path: this.state.wordlistPath,
+                description: this.state.wordlistDescription,
+            })
+        ).match(
+            (_) => toast.success("Created wordlist"),
             (err) => toast.error(err.message)
         );
     }
@@ -131,6 +170,69 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
                     ) : (
                         <div className={"pane"}>Loading ...</div>
                     )}
+                    <div className={"pane settings-wordlists"}>
+                        <h2 className={"heading"}>Wordlists</h2>
+                        <form
+                            className={"settings-wordlists-creation"}
+                            method={"post"}
+                            onSubmit={async (event) => {
+                                event.preventDefault();
+                                await this.createWordlist();
+                                await this.updateWordlists();
+                            }}
+                        >
+                            <h3 className={"sub-heading"}>Create wordlist</h3>
+                            <label htmlFor={"wordlist-name"}>Name</label>
+                            <Input
+                                id={"wordlist-name"}
+                                required={true}
+                                value={this.state.wordlistName}
+                                onChange={(v) => this.setState({ wordlistName: v })}
+                            />
+                            <label htmlFor={"wordlist-path"}>Path</label>
+                            <Input
+                                id={"wordlist-path"}
+                                required={true}
+                                value={this.state.wordlistPath}
+                                onChange={(v) => this.setState({ wordlistPath: v })}
+                            />
+                            <label htmlFor={"wordlist-description"}>Description</label>
+                            <Textarea
+                                id={"wordlist-description"}
+                                value={this.state.wordlistDescription}
+                                onChange={(v) => this.setState({ wordlistDescription: v })}
+                            />
+                            <button className={"button"}>Create</button>
+                        </form>
+                        <h3 className={"sub-heading"}>Existing wordlists</h3>
+                        <div className={"settings-wordlists-list"}>
+                            <span>Name</span>
+                            <span>Path</span>
+                            <span>Description</span>
+                            <span>Delete</span>
+                            {this.state.wordlists.map((x) => (
+                                <>
+                                    <span>{x.name}</span>
+                                    <span>{x.path}</span>
+                                    <span>{x.description}</span>
+                                    <button
+                                        className={"icon-button"}
+                                        onClick={async () => {
+                                            (await Api.admin.wordlists.delete(x.uuid)).match(
+                                                async () => {
+                                                    toast.success("Wordlist deleted");
+                                                    await this.updateWordlists();
+                                                },
+                                                (err) => toast.error(err.message)
+                                            );
+                                        }}
+                                    >
+                                        <CloseIcon />
+                                    </button>
+                                </>
+                            ))}
+                        </div>
+                    </div>
                     <div className={"pane settings-oauth"}>
                         <h2 className={"heading"}>OAuth applications</h2>
                         <form

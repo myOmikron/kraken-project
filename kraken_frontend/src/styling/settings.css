@@ -57,5 +57,32 @@
 .settings-oauth-applications-row > div {
 }
 
+.settings-wordlists-creation {
+    display: grid;
+    gap: 0.5em;
+    grid-template-columns: 2fr 3fr;
+}
 
+.settings-wordlists-creation .sub-heading,
+.settings-wordlists-creation .button {
+    grid-column: span 2;
+}
 
+.settings-wordlists-creation > textarea {
+    resize: vertical;
+}
+
+.settings-wordlists > .heading {
+    margin: 0 0 0.5em 0;
+}
+
+.settings-wordlists .sub-heading {
+    margin: 1rem 0;
+}
+
+.settings-wordlists-list {
+    display: grid;
+    grid-template-columns: 2fr 2fr 4fr 1fr;
+    gap: 0.5em;
+    align-items: center;
+}
