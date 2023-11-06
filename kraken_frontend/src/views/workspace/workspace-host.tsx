@@ -7,6 +7,7 @@ import { ROUTES } from "../../routes";
 import Input from "../../components/input";
 import OsIcon from "../../components/os-icon";
 import ArrowLeftIcon from "../../svg/arrow-left";
+
 import { WorkspaceHostDomains } from "./workspace-host/workspace-host-domains";
 import { WorkspaceHostPorts } from "./workspace-host/workspace-host-ports";
 import { WorkspaceHostServices } from "./workspace-host/workspace-host-services";
@@ -55,14 +56,14 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
             ({ items }) => {
                 this.setState({ hostList: items.filter(({ uuid }) => uuid !== this.props.host_uuid) });
             },
-            (err) => toast.error(err.message),
+            (err) => toast.error(err.message)
         );
     }
 
     async getHost() {
         (await Api.workspaces.hosts.get(this.props.workspace.uuid, this.props.host_uuid)).match(
             (host) => this.setState({ host }),
-            (err) => toast.error(err.message),
+            (err) => toast.error(err.message)
         );
     }
 
@@ -179,7 +180,6 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
                         </div>
                     ))}
                 </div>
-
                 {table}
 
                 <div className={"workspace-host-content-details pane"}>
