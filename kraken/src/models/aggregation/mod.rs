@@ -1,3 +1,5 @@
+use std::fmt;
+
 use chrono::{DateTime, Utc};
 use ipnetwork::IpNetwork;
 use rorm::prelude::{BackRef, ForeignModel};
@@ -7,7 +9,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 pub(crate) use crate::models::aggregation::operations::*;
-use crate::models::{GlobalTag, Workspace, WorkspaceTag};
+use crate::models::{AttackType, GlobalTag, Workspace, WorkspaceTag};
 
 mod operations;
 
@@ -471,4 +473,58 @@ pub struct DomainWorkspaceTag {
     /// The domain this entry links to
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
     pub domain: ForeignModel<Domain>,
+}
+
+/// M2M relation between a generic attack result (ex: [`HostAliveResult`])
+/// and a generic aggregation table it was aggregated into (ex: [`Host`])
+#[derive(Model)]
+pub struct AggregationSource {
+    /// Primary key of this table
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// Workspace, the involved parties belong to
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub workspace: ForeignModel<Workspace>,
+
+    /// Attack type which yielded the result
+    pub result_type: AttackType,
+
+    /// The attack result's primary key
+    ///
+    /// The table this key is valid in, depends on the `result_type`
+    pub result_uuid: Uuid,
+
+    /// The table the result was aggregated into
+    pub aggregated_table: AggregationTable,
+
+    /// The aggregated model's primary key
+    ///
+    /// The table this key is valid in, depends on the `aggregated_table`
+    pub aggregated_uuid: Uuid,
+}
+
+/// Enum used in [`AggregationSource`] to identify which table it points to
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+pub enum AggregationTable {
+    /// The [`Host`] table
+    Host,
+    /// The [`Port`] table
+    Port,
+    /// The [`Service`] table
+    Service,
+    /// The [`Domain`] table
+    Domain,
+}
+
+impl fmt::Display for AggregationTable {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let table = match self {
+            AggregationTable::Host => Host::TABLE,
+            AggregationTable::Port => Port::TABLE,
+            AggregationTable::Service => Service::TABLE,
+            AggregationTable::Domain => Domain::TABLE,
+        };
+        write!(f, "{table}")
+    }
 }
