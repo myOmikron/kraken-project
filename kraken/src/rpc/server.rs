@@ -1,9 +1,12 @@
+use std::collections::hash_map::Entry;
+use std::collections::HashMap;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::str::FromStr;
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 use ipnetwork::{IpNetwork, Ipv4Network, Ipv6Network};
 use log::{debug, error, info, warn};
+use rorm::db::Executor;
 use rorm::prelude::ForeignModelByField;
 use rorm::{and, insert, query, Database, FieldAccess, Model};
 use tonic::transport::Server;
@@ -14,9 +17,9 @@ use crate::config::Config;
 use crate::models::{
     Attack, AttackType, CertificateTransparencyResultInsert,
     CertificateTransparencyValueNameInsert, DnsRecordResult, DnsRecordResultInsert, DnsRecordType,
-    HostAliveResult, HostAliveResultInsert, InsertAttackError, LeechApiKey, TcpPortScanResult,
-    TcpPortScanResultInsert, Workspace,
+    InsertAttackError, LeechApiKey, TcpPortScanResult, TcpPortScanResultInsert, Workspace,
 };
+use crate::modules::attack_results::store_host_alive_check_result;
 use crate::rpc::definitions::rpc_definitions::attack_results_service_server::AttackResultsService;
 use crate::rpc::rpc_definitions::attack_results_service_server::AttackResultsServiceServer;
 use crate::rpc::rpc_definitions::backlog_service_server::{BacklogService, BacklogServiceServer};
@@ -318,9 +321,21 @@ impl BacklogService for Results {
             return Err(Status::internal("internal server error"));
         };
 
+        // Map from attack_uuid to workspace_uuid
+        let mut workspaces = WorkspaceCache::default();
+
         for entry in request.into_inner().entries {
-            let Ok(req_attack_uuid) = Uuid::from_str(&entry.attack_uuid) else {
+            let Ok(attack_uuid) = Uuid::from_str(&entry.attack_uuid) else {
                 error!("could not get attack uuid from request");
+                continue;
+            };
+
+            let Some(workspace_uuid) = workspaces
+                .get(&mut db_trx, attack_uuid)
+                .await
+                .map_err(status_from_database)?
+            else {
+                warn!("Got result for unknown attack: {attack_uuid}");
                 continue;
             };
 
@@ -333,28 +348,12 @@ impl BacklogService for Results {
                 continue;
             };
 
-            if query!(&mut db_trx, Attack)
-                .condition(Attack::F.uuid.equals(req_attack_uuid))
-                .one()
+            store_host_alive_check_result(&mut db_trx, attack_uuid, workspace_uuid, host.into())
                 .await
-                .is_err()
-            {
-                debug!("attack does not exist");
-                continue;
-            }
-
-            if let Err(e) = insert!(&mut db_trx, HostAliveResult)
-                .return_nothing()
-                .single(&HostAliveResultInsert {
-                    uuid: Uuid::new_v4(),
-                    attack: ForeignModelByField::Key(req_attack_uuid),
-                    host: host.into(),
-                })
-                .await
-            {
-                error!("could not insert into database: {e}");
-                continue;
-            }
+                .map_err(|err| {
+                    error!("Database error in backlog: {err}");
+                    Status::internal("database error")
+                })?;
         }
 
         if let Err(e) = db_trx.commit().await {
@@ -393,4 +392,31 @@ pub fn start_rpc_server(config: &Config, db: Database) -> Result<(), String> {
 fn status_from_database(err: rorm::Error) -> Status {
     error!("Database error in rpc endpoint: {err}");
     Status::new(Code::Internal, "Database error")
+}
+
+/// Helper for retrieving an attack's workspace
+#[derive(Debug, Default)]
+pub struct WorkspaceCache(HashMap<Uuid, Option<Uuid>>);
+impl WorkspaceCache {
+    /// Get the workspace uuid for a given attack uuid
+    ///
+    /// Returns `Ok(None)``if the attack does not exist.
+    pub async fn get(
+        &mut self,
+        executor: impl Executor<'_>,
+        attack: Uuid,
+    ) -> Result<Option<Uuid>, rorm::Error> {
+        Ok(match self.0.entry(attack) {
+            Entry::Occupied(entry) => *entry.get(),
+            Entry::Vacant(entry) => {
+                let workspace_uuid = query!(executor, (Attack::F.workspace))
+                    .condition(Attack::F.uuid.equals(attack))
+                    .optional()
+                    .await?
+                    .map(|(foreign,)| *foreign.key());
+                entry.insert(workspace_uuid);
+                workspace_uuid
+            }
+        })
+    }
 }
