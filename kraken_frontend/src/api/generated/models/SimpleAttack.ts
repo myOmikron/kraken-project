@@ -33,13 +33,13 @@ import {
  */
 export interface SimpleAttack {
     /**
-     * 
+     * The identifier of the attack
      * @type {string}
      * @memberof SimpleAttack
      */
     uuid: string;
     /**
-     * 
+     * The workspace this attack is attached to
      * @type {string}
      * @memberof SimpleAttack
      */
@@ -55,15 +55,21 @@ export interface SimpleAttack {
      * @type {SimpleUser}
      * @memberof SimpleAttack
      */
-    startedFrom: SimpleUser;
+    startedBy: SimpleUser;
     /**
-     * 
+     * If this is None, the attack is still running
      * @type {Date}
      * @memberof SimpleAttack
      */
     finishedAt?: Date | null;
     /**
-     * 
+     * If this field is set, the attack has finished with an error
+     * @type {string}
+     * @memberof SimpleAttack
+     */
+    error?: string | null;
+    /**
+     * The point in time this attack was started
      * @type {Date}
      * @memberof SimpleAttack
      */
@@ -78,7 +84,7 @@ export function instanceOfSimpleAttack(value: object): boolean {
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "workspaceUuid" in value;
     isInstance = isInstance && "attackType" in value;
-    isInstance = isInstance && "startedFrom" in value;
+    isInstance = isInstance && "startedBy" in value;
     isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
@@ -97,8 +103,9 @@ export function SimpleAttackFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'uuid': json['uuid'],
         'workspaceUuid': json['workspace_uuid'],
         'attackType': AttackTypeFromJSON(json['attack_type']),
-        'startedFrom': SimpleUserFromJSON(json['started_from']),
+        'startedBy': SimpleUserFromJSON(json['started_by']),
         'finishedAt': !exists(json, 'finished_at') ? undefined : (json['finished_at'] === null ? null : new Date(json['finished_at'])),
+        'error': !exists(json, 'error') ? undefined : json['error'],
         'createdAt': (new Date(json['created_at'])),
     };
 }
@@ -115,8 +122,9 @@ export function SimpleAttackToJSON(value?: SimpleAttack | null): any {
         'uuid': value.uuid,
         'workspace_uuid': value.workspaceUuid,
         'attack_type': AttackTypeToJSON(value.attackType),
-        'started_from': SimpleUserToJSON(value.startedFrom),
+        'started_by': SimpleUserToJSON(value.startedBy),
         'finished_at': value.finishedAt === undefined ? undefined : (value.finishedAt === null ? null : value.finishedAt.toISOString()),
+        'error': value.error,
         'created_at': (value.createdAt.toISOString()),
     };
 }

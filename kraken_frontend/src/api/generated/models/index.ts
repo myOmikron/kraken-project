@@ -52,6 +52,7 @@ export * from './HostCertainty';
 export * from './HostResultsPage';
 export * from './HostsAliveRequest';
 export * from './InviteToWorkspace';
+export * from './ListAttacks';
 export * from './LoginRequest';
 export * from './OpenRequestInfo';
 export * from './OsType';

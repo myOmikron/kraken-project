@@ -22,6 +22,7 @@ import type {
   DnsResolutionResultsPage,
   HostAliveResultsPage,
   HostsAliveRequest,
+  ListAttacks,
   QueryCertificateTransparencyRequest,
   QueryCertificateTransparencyResultsPage,
   QueryDehashedRequest,
@@ -48,6 +49,8 @@ import {
     HostAliveResultsPageToJSON,
     HostsAliveRequestFromJSON,
     HostsAliveRequestToJSON,
+    ListAttacksFromJSON,
+    ListAttacksToJSON,
     QueryCertificateTransparencyRequestFromJSON,
     QueryCertificateTransparencyRequestToJSON,
     QueryCertificateTransparencyResultsPageFromJSON,
@@ -126,6 +129,10 @@ export interface GetTcpPortScanResultsRequest {
     uuid: string;
     limit: number;
     offset: number;
+}
+
+export interface GetWorkspaceAttacksRequest {
+    uuid: string;
 }
 
 export interface HostsAliveCheckRequest {
@@ -619,6 +626,38 @@ export class AttacksApi extends runtime.BaseAPI {
      */
     async getTcpPortScanResults(requestParameters: GetTcpPortScanResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TcpPortScanResultsPage> {
         const response = await this.getTcpPortScanResultsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Query all attacks of a workspace
+     * Query all attacks of a workspace
+     */
+    async getWorkspaceAttacksRaw(requestParameters: GetWorkspaceAttacksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListAttacks>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getWorkspaceAttacks.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{uuid}/attacks`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListAttacksFromJSON(jsonValue));
+    }
+
+    /**
+     * Query all attacks of a workspace
+     * Query all attacks of a workspace
+     */
+    async getWorkspaceAttacks(requestParameters: GetWorkspaceAttacksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListAttacks> {
+        const response = await this.getWorkspaceAttacksRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

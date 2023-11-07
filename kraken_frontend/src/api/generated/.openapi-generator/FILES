@@ -74,6 +74,7 @@ models/HostCertainty.ts
 models/HostResultsPage.ts
 models/HostsAliveRequest.ts
 models/InviteToWorkspace.ts
+models/ListAttacks.ts
 models/LoginRequest.ts
 models/OpenRequestInfo.ts
 models/OsType.ts

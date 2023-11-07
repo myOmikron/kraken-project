@@ -195,6 +195,9 @@ export const Api = {
         delete: (uuid: UUID) => handleError(workspaces.deleteWorkspace({ uuid })),
         transferOwnership: (uuid: UUID, user: UUID) =>
             handleError(workspaces.transferOwnership({ uuid, transferWorkspaceRequest: { user } })),
+        attacks: {
+            all: (uuid: UUID) => handleError(attacks.getWorkspaceAttacks({ uuid })),
+        },
         invitations: {
             all: (uuid: UUID) => handleError(workspaces.getAllWorkspaceInvitations({ uuid })),
             create: (uuid: UUID, user: UUID) =>
@@ -240,7 +243,7 @@ export const Api = {
                 handleError(workspaceTags.createWorkspaceTag({ uuid: workspaceUuid, createWorkspaceTagRequest })),
             update: (workspaceUuid: UUID, tagUuid: UUID, updateWorkspaceTag: UpdateWorkspaceTag) =>
                 handleError(
-                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag }),
+                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag })
                 ),
             delete: (workspaceUuid: UUID, tagUuid: UUID) =>
                 workspaceTags.deleteWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid }),
