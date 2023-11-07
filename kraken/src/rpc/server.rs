@@ -3,23 +3,20 @@ use std::collections::HashMap;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::str::FromStr;
 
-use chrono::{DateTime, NaiveDateTime, Utc};
 use ipnetwork::{IpNetwork, Ipv4Network, Ipv6Network};
-use log::{debug, error, info, warn};
+use log::{error, info, warn};
 use rorm::db::Executor;
-use rorm::prelude::ForeignModelByField;
-use rorm::{and, insert, query, Database, FieldAccess, Model};
+use rorm::{query, Database, FieldAccess, Model};
 use tonic::transport::Server;
 use tonic::{Code, Request, Response, Status, Streaming};
 use uuid::Uuid;
 
 use crate::config::Config;
-use crate::models::{
-    Attack, AttackType, CertificateTransparencyResultInsert,
-    CertificateTransparencyValueNameInsert, DnsRecordResult, DnsRecordResultInsert, DnsRecordType,
-    InsertAttackError, LeechApiKey, TcpPortScanResult, TcpPortScanResultInsert, Workspace,
+use crate::models::{Attack, AttackType, DnsRecordType, InsertAttackError, LeechApiKey, Workspace};
+use crate::modules::attack_results::{
+    store_dns_resolution_result, store_host_alive_check_result,
+    store_query_certificate_transparency_result, store_tcp_port_scan_result,
 };
-use crate::modules::attack_results::store_host_alive_check_result;
 use crate::rpc::definitions::rpc_definitions::attack_results_service_server::AttackResultsService;
 use crate::rpc::rpc_definitions::attack_results_service_server::AttackResultsServiceServer;
 use crate::rpc::rpc_definitions::backlog_service_server::{BacklogService, BacklogServiceServer};
@@ -80,44 +77,14 @@ impl AttackResultsService for Results {
         })?;
 
         for cert_entry in req.entries {
-            let entry_uuid = insert!(&mut tx, CertificateTransparencyResultInsert)
-                .return_primary_key()
-                .single(&CertificateTransparencyResultInsert {
-                    uuid: Uuid::new_v4(),
-                    attack: ForeignModelByField::Key(attack_uuid),
-                    issuer_name: cert_entry.issuer_name,
-                    common_name: cert_entry.common_name,
-                    not_before: cert_entry.not_before.map(|ts| {
-                        DateTime::from_naive_utc_and_offset(
-                            NaiveDateTime::from_timestamp_opt(ts.seconds, ts.nanos as u32).unwrap(),
-                            Utc,
-                        )
-                    }),
-                    not_after: cert_entry.not_after.map(|ts| {
-                        DateTime::from_naive_utc_and_offset(
-                            NaiveDateTime::from_timestamp_opt(ts.seconds, ts.nanos as u32).unwrap(),
-                            Utc,
-                        )
-                    }),
-                    serial_number: cert_entry.serial_number,
-                })
-                .await
-                .map_err(status_from_database)?;
-
-            insert!(&mut tx, CertificateTransparencyValueNameInsert)
-                .bulk(
-                    &cert_entry
-                        .value_names
-                        .into_iter()
-                        .map(|x| CertificateTransparencyValueNameInsert {
-                            uuid: Uuid::new_v4(),
-                            value_name: x,
-                            ct_result: ForeignModelByField::Key(entry_uuid),
-                        })
-                        .collect::<Vec<_>>(),
-                )
-                .await
-                .map_err(status_from_database)?;
+            store_query_certificate_transparency_result(
+                &mut tx,
+                attack_uuid,
+                workspace_uuid,
+                cert_entry,
+            )
+            .await
+            .map_err(status_from_database)?
         }
 
         tx.commit().await.map_err(status_from_database)?;
@@ -131,9 +98,7 @@ impl AttackResultsService for Results {
         &self,
         _request: Request<Streaming<SubdomainEnumerationResult>>,
     ) -> Result<Response<ResultResponse>, Status> {
-        Ok(Response::new(ResultResponse {
-            uuid: Uuid::new_v4().to_string(),
-        }))
+        Err(Status::unimplemented("TODO"))
     }
 }
 
@@ -148,9 +113,21 @@ impl BacklogService for Results {
             return Err(Status::internal("internal server error"));
         };
 
+        // Map from attack_uuid to workspace_uuid
+        let mut workspaces = WorkspaceCache::default();
+
         for entry in request.into_inner().entries {
-            let Ok(req_attack_uuid) = Uuid::from_str(&entry.attack_uuid) else {
+            let Ok(attack_uuid) = Uuid::from_str(&entry.attack_uuid) else {
                 error!("could not get attack uuid from request");
+                continue;
+            };
+
+            let Some(workspace_uuid) = workspaces
+                .get(&mut db_trx, attack_uuid)
+                .await
+                .map_err(status_from_database)?
+            else {
+                warn!("Got result for unknown attack: {attack_uuid}");
                 continue;
             };
 
@@ -190,43 +167,16 @@ impl BacklogService for Results {
                 Record::Txt(v) => (v.source, v.to, DnsRecordType::Txt),
             };
 
-            if query!(&mut db_trx, Attack)
-                .condition(Attack::F.uuid.equals(req_attack_uuid))
-                .one()
-                .await
-                .is_err()
-            {
-                debug!("attack does not exist");
-                continue;
-            }
-
-            let Ok(None) = query!(&mut db_trx, DnsRecordResult)
-                .condition(and!(
-                    DnsRecordResult::F.attack.equals(&req_attack_uuid),
-                    DnsRecordResult::F.dns_record_type.equals(dns_record_type),
-                    DnsRecordResult::F.source.equals(&source),
-                    DnsRecordResult::F.destination.equals(&destination)
-                ))
-                .optional()
-                .await
-            else {
-                debug!("entry already exists");
-                continue;
-            };
-
-            if let Err(e) = insert!(&mut db_trx, DnsRecordResult)
-                .single(&DnsRecordResultInsert {
-                    uuid: Uuid::new_v4(),
-                    attack: ForeignModelByField::Key(req_attack_uuid),
-                    source,
-                    destination,
-                    dns_record_type,
-                })
-                .await
-            {
-                error!("could not insert into database: {e}");
-                continue;
-            }
+            store_dns_resolution_result(
+                &mut db_trx,
+                attack_uuid,
+                workspace_uuid,
+                source,
+                destination,
+                dns_record_type,
+            )
+            .await
+            .map_err(status_from_database)?;
         }
 
         if let Err(e) = db_trx.commit().await {
@@ -246,21 +196,23 @@ impl BacklogService for Results {
             return Err(Status::internal("internal server error"));
         };
 
+        // Map from attack_uuid to workspace_uuid
+        let mut workspaces = WorkspaceCache::default();
+
         for entry in request.into_inner().entries {
-            let Ok(req_attack_uuid) = Uuid::from_str(&entry.attack_uuid) else {
+            let Ok(attack_uuid) = Uuid::from_str(&entry.attack_uuid) else {
                 error!("could not get attack uuid from request");
                 continue;
             };
 
-            if query!(&mut db_trx, Attack)
-                .condition(Attack::F.uuid.equals(req_attack_uuid))
-                .one()
+            let Some(workspace_uuid) = workspaces
+                .get(&mut db_trx, attack_uuid)
                 .await
-                .is_err()
-            {
-                debug!("attack does not exist");
+                .map_err(status_from_database)?
+            else {
+                warn!("Got result for unknown attack: {attack_uuid}");
                 continue;
-            }
+            };
 
             let Some(address) = entry.address else {
                 warn!("no address");
@@ -277,31 +229,15 @@ impl BacklogService for Results {
                 Address::Ipv6(v) => IpNetwork::V6(Ipv6Network::from(Ipv6Addr::from(v))),
             };
 
-            if let Ok(None) = query!(&mut db_trx, TcpPortScanResult)
-                .condition(and!(
-                    TcpPortScanResult::F.attack.equals(req_attack_uuid),
-                    TcpPortScanResult::F.port.equals(entry.port as i32),
-                    TcpPortScanResult::F.address.equals(address),
-                ))
-                .optional()
-                .await
-            {
-                debug!("entry already exists");
-                continue;
-            };
-
-            if let Err(e) = insert!(&mut db_trx, TcpPortScanResultInsert)
-                .single(&TcpPortScanResultInsert {
-                    uuid: Uuid::new_v4(),
-                    attack: ForeignModelByField::Key(req_attack_uuid),
-                    address,
-                    port: entry.port as i32,
-                })
-                .await
-            {
-                error!("could not insert into database: {e}");
-                continue;
-            }
+            store_tcp_port_scan_result(
+                &mut db_trx,
+                attack_uuid,
+                workspace_uuid,
+                address,
+                entry.port as u16,
+            )
+            .await
+            .map_err(status_from_database)?;
         }
 
         if let Err(e) = db_trx.commit().await {
