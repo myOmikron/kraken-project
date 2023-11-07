@@ -20,7 +20,7 @@ use crate::api::handler::users::SimpleUser;
 use crate::api::handler::{query_user, ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::api::server::DehashedScheduler;
 use crate::chan::{RpcClients, WsManagerChan};
-use crate::models::{Attack, AttackType, UserPermission, WordList};
+use crate::models::{Attack, AttackType, UserPermission, WordList, Workspace};
 use crate::modules::attacks::AttackContext;
 use crate::rpc::rpc_definitions;
 use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
@@ -678,14 +678,22 @@ pub async fn dns_resolution(
 }
 
 /// A simple version of an attack
-#[derive(Serialize, ToSchema)]
+#[derive(Clone, Serialize, ToSchema)]
 pub struct SimpleAttack {
-    pub(crate) uuid: Uuid,
-    pub(crate) workspace_uuid: Uuid,
-    pub(crate) attack_type: AttackType,
-    pub(crate) started_from: SimpleUser,
-    pub(crate) finished_at: Option<DateTime<Utc>>,
-    pub(crate) created_at: DateTime<Utc>,
+    /// The identifier of the attack
+    pub uuid: Uuid,
+    /// The workspace this attack is attached to
+    pub workspace_uuid: Uuid,
+    /// The type of attack
+    pub attack_type: AttackType,
+    /// The user that has started the attack
+    pub started_by: SimpleUser,
+    /// If this is None, the attack is still running
+    pub finished_at: Option<DateTime<Utc>>,
+    /// If this field is set, the attack has finished with an error
+    pub error: Option<String>,
+    /// The point in time this attack was started
+    pub created_at: DateTime<Utc>,
 }
 
 /// Retrieve an attack by id
@@ -716,9 +724,8 @@ pub async fn get_attack(
             Attack::F.attack_type,
             Attack::F.finished_at,
             Attack::F.created_at,
-            Attack::F.started_by.uuid,
-            Attack::F.started_by.username,
-            Attack::F.started_by.display_name,
+            Attack::F.started_by as SimpleUser,
+            Attack::F.error,
         )
     )
     .condition(Attack::F.uuid.equals(req.uuid))
@@ -727,27 +734,15 @@ pub async fn get_attack(
     .ok_or(ApiError::InvalidUuid)?;
 
     let attack = if Attack::has_access(&mut tx, req.uuid, user_uuid).await? {
-        let (
-            uuid,
-            workspace,
-            attack_type,
-            finished_at,
-            created_at,
-            by_uuid,
-            username,
-            display_name,
-        ) = attack;
+        let (uuid, workspace, attack_type, finished_at, created_at, started_by, error) = attack;
         Ok(SimpleAttack {
             uuid,
             workspace_uuid: *workspace.key(),
             attack_type,
-            started_from: SimpleUser {
-                uuid: by_uuid,
-                username,
-                display_name,
-            },
+            started_by,
             finished_at,
             created_at,
+            error,
         })
     } else {
         Err(ApiError::MissingPrivileges)
@@ -756,6 +751,72 @@ pub async fn get_attack(
     tx.commit().await?;
 
     Ok(Json(attack?))
+}
+
+/// A list of attacks
+#[derive(Clone, ToSchema, Serialize)]
+pub struct ListAttacks {
+    /// The list of the attacks
+    pub attacks: Vec<SimpleAttack>,
+}
+
+/// Query all attacks of a workspace
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Retrieve a list of all attacks of a workspace", body = ListAttacks),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    params(PathUuid),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{uuid}/attacks")]
+pub async fn get_workspace_attacks(
+    path: Path<PathUuid>,
+    db: Data<Database>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<Json<ListAttacks>> {
+    let workspace = path.uuid;
+
+    let mut tx = db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut tx, workspace, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    let attacks = query!(
+        &mut tx,
+        (
+            Attack::F.uuid,
+            Attack::F.attack_type,
+            Attack::F.error,
+            Attack::F.created_at,
+            Attack::F.finished_at,
+            Attack::F.started_by as SimpleUser
+        )
+    )
+    .condition(Attack::F.workspace.equals(workspace))
+    .all()
+    .await?
+    .into_iter()
+    .map(
+        |(uuid, attack_type, error, created_at, finished_at, started_by)| SimpleAttack {
+            uuid,
+            attack_type,
+            started_by,
+            created_at,
+            finished_at,
+            error,
+            workspace_uuid: workspace,
+        },
+    )
+    .collect::<Vec<_>>();
+
+    tx.commit().await?;
+
+    Ok(Json(ListAttacks { attacks }))
 }
 
 /// Delete an attack and its results

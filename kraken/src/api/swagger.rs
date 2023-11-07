@@ -11,9 +11,8 @@ use crate::api::handler::{
     oauth, oauth_applications, oauth_decisions, ports, services, settings, users, websocket,
     wordlists, workspace_invitations, workspace_tags, workspaces,
 };
-use crate::chan;
-use crate::models;
 use crate::modules::oauth::schemas as oauth_schemas;
+use crate::{chan, models};
 
 struct SecurityAddon;
 impl Modify for SecurityAddon {
@@ -82,6 +81,7 @@ impl Modify for SecurityAddon2 {
         attacks::query_certificate_transparency,
         attacks::delete_attack,
         attacks::get_attack,
+        attacks::get_workspace_attacks,
         attacks::query_dehashed,
         attacks::hosts_alive_check,
         attacks::service_detection,
@@ -168,6 +168,7 @@ impl Modify for SecurityAddon2 {
         workspaces::SearchEntry,
         workspaces::SearchResultEntry,
         attacks::SimpleAttack,
+        attacks::ListAttacks,
         attacks::BruteforceSubdomainsRequest,
         attacks::HostsAliveRequest,
         attacks::ScanTcpPortsRequest,

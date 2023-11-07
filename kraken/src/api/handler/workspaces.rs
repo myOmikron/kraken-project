@@ -1257,9 +1257,8 @@ async fn get_workspace_unchecked(uuid: Uuid, tx: &mut Transaction) -> ApiResult<
             Attack::F.attack_type,
             Attack::F.finished_at,
             Attack::F.created_at,
-            Attack::F.started_by.uuid,
-            Attack::F.started_by.username,
-            Attack::F.started_by.display_name,
+            Attack::F.started_by as SimpleUser,
+            Attack::F.error,
         )
     )
     .condition(Attack::F.workspace.equals(uuid))
@@ -1267,19 +1266,14 @@ async fn get_workspace_unchecked(uuid: Uuid, tx: &mut Transaction) -> ApiResult<
     .await?
     .into_iter()
     .map(
-        |(attack_uuid, attack_type, finished_at, created_at, by_uuid, username, display_name)| {
-            SimpleAttack {
-                uuid: attack_uuid,
-                workspace_uuid: uuid,
-                attack_type,
-                started_from: SimpleUser {
-                    uuid: by_uuid,
-                    username,
-                    display_name,
-                },
-                finished_at,
-                created_at,
-            }
+        |(attack_uuid, attack_type, finished_at, created_at, started_by, error)| SimpleAttack {
+            uuid: attack_uuid,
+            workspace_uuid: uuid,
+            attack_type,
+            started_by,
+            finished_at,
+            created_at,
+            error,
         },
     )
     .collect();

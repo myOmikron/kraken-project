@@ -179,6 +179,7 @@ pub(crate) async fn start_server(
                     .service(attacks::query_certificate_transparency)
                     .service(attacks::delete_attack)
                     .service(attacks::get_attack)
+                    .service(attacks::get_workspace_attacks)
                     .service(attacks::hosts_alive_check)
                     .service(attacks::query_dehashed)
                     .service(attacks::service_detection)
