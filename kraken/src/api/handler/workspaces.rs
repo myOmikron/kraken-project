@@ -214,14 +214,23 @@ pub async fn get_all_workspaces(
 ) -> ApiResult<Json<GetAllWorkspacesResponse>> {
     let mut tx = db.start_transaction().await?;
 
-    let owner = query_user(&mut tx, &session).await?;
+    let session_user = query_user(&mut tx, &session).await?;
 
-    let workspaces = query!(&mut tx, Workspace)
-        .condition(Workspace::F.owner.equals(owner.uuid))
+    let mut workspaces = query!(&mut tx, Workspace)
+        .condition(Workspace::F.owner.equals(session_user.uuid))
         .all()
         .await?;
 
+    let w: Vec<Workspace> = query!(&mut tx, (WorkspaceMember::F.workspace as Workspace))
+        .condition(WorkspaceMember::F.member.equals(session_user.uuid))
+        .stream()
+        .map_ok(|(x,)| x)
+        .try_collect()
+        .await?;
+
     tx.commit().await?;
+
+    workspaces.extend(w);
 
     Ok(Json(GetAllWorkspacesResponse {
         workspaces: workspaces
@@ -231,9 +240,9 @@ pub async fn get_all_workspaces(
                 name: w.name,
                 description: w.description,
                 owner: SimpleUser {
-                    uuid: owner.uuid,
-                    username: owner.username.clone(),
-                    display_name: owner.display_name.clone(),
+                    uuid: session_user.uuid,
+                    username: session_user.username.clone(),
+                    display_name: session_user.display_name.clone(),
                 },
                 created_at: w.created_at,
             })
