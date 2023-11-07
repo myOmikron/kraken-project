@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-pub(crate) use crate::models::aggregation::operations::*;
 use crate::models::{AttackType, GlobalTag, Workspace, WorkspaceTag};
 
 mod operations;
@@ -31,14 +30,14 @@ pub enum OsType {
 }
 
 /// The certainty of a host
-#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug, PartialOrd, PartialEq)]
 pub enum HostCertainty {
     /// 3rd party historical data
-    Historical,
+    Historical = 0,
     /// 3rd party data
-    SupposedTo,
+    SupposedTo = 1,
     /// The host has responded either by HostAlive, Port or Service Detection or something similar
-    Verified,
+    Verified = 2,
 }
 
 /// A representation of an host.
@@ -126,16 +125,16 @@ pub struct HostWorkspaceTag {
 }
 
 /// The certainty a service is detected
-#[derive(Debug, Copy, Clone, ToSchema, Deserialize, Serialize, DbEnum, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, ToSchema, Deserialize, Serialize, DbEnum, PartialOrd, PartialEq)]
 pub enum ServiceCertainty {
     /// 3rd party historical data
-    Historical,
+    Historical = 0,
     /// 3rd party data
-    SupposedTo,
+    SupposedTo = 1,
     /// May be a certain service
-    MaybeVerified,
+    MaybeVerified = 2,
     /// Service is definitely correct
-    DefinitelyVerified,
+    DefinitelyVerified = 3,
 }
 
 /// A detected service on a host
@@ -229,14 +228,14 @@ pub enum PortProtocol {
 }
 
 /// The certainty states of a port
-#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug, PartialOrd, PartialEq)]
 pub enum PortCertainty {
     /// 3rd party historical data
-    Historical,
+    Historical = 0,
     /// 3rd party data
-    SupposedTo,
+    SupposedTo = 1,
     /// The host has responded either by HostAlive, Port or Service Detection or something similar
-    Verified,
+    Verified = 2,
 }
 
 /// A port
@@ -317,12 +316,12 @@ pub struct PortWorkspaceTag {
 }
 
 /// The certainty of a domain
-#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug, PartialOrd, PartialEq)]
 pub enum DomainCertainty {
     /// The domain was not found through DNS
-    Unverified,
+    Unverified = 0,
     /// Domain was verified through DNS
-    Verified,
+    Verified = 1,
 }
 
 /// A domain
