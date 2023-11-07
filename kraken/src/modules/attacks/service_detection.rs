@@ -1,13 +1,7 @@
 use std::net::IpAddr;
 
-use ipnetwork::IpNetwork;
-use rorm::insert;
-use rorm::prelude::*;
-use uuid::Uuid;
-
-use crate::models::{
-    Service, ServiceCertainty, ServiceDetectionName, ServiceDetectionResultInsert,
-};
+use crate::models::ServiceCertainty;
+use crate::modules::attack_results::store_service_detection_result;
 use crate::modules::attacks::{AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions::{ServiceDetectionRequest, ServiceDetectionResponse};
 
@@ -41,10 +35,18 @@ impl LeechAttackContext {
                 };
 
                 self.set_finished(
-                    self.insert_service_detection_result(&services, certainty, host.into(), port)
-                        .await
-                        .map_err(AttackError::from)
-                        .err(),
+                    store_service_detection_result(
+                        &self.db,
+                        self.attack_uuid,
+                        self.workspace_uuid,
+                        &services,
+                        certainty,
+                        host.into(),
+                        port,
+                    )
+                    .await
+                    .map_err(AttackError::from)
+                    .err(),
                 )
                 .await;
             }
@@ -52,51 +54,5 @@ impl LeechAttackContext {
                 self.set_finished(Some(AttackError::Grpc(status))).await;
             }
         }
-    }
-
-    async fn insert_service_detection_result(
-        &self,
-        service_names: &[String],
-        certainty: ServiceCertainty,
-        host: IpNetwork,
-        port: u16,
-    ) -> Result<(), rorm::Error> {
-        let port: i16 = i16::from_ne_bytes(port.to_ne_bytes());
-
-        let mut tx = self.db.start_transaction().await?;
-
-        let uuid = insert!(&mut tx, ServiceDetectionResultInsert)
-            .return_primary_key()
-            .single(&ServiceDetectionResultInsert {
-                uuid: Uuid::new_v4(),
-                attack: ForeignModelByField::Key(self.attack_uuid),
-                certainty,
-                host,
-                port,
-            })
-            .await?;
-
-        insert!(&mut tx, ServiceDetectionName)
-            .return_nothing()
-            .bulk(
-                &service_names
-                    .iter()
-                    .map(|x| ServiceDetectionName {
-                        uuid: Uuid::new_v4(),
-                        name: x.to_string(),
-                        result: ForeignModelByField::Key(uuid),
-                    })
-                    .collect::<Vec<_>>(),
-            )
-            .await?;
-
-        for x in service_names {
-            Service::update_or_insert(&mut tx, self.workspace_uuid, x, host, Some(port), certainty)
-                .await?;
-        }
-
-        tx.commit().await?;
-
-        Ok(())
     }
 }

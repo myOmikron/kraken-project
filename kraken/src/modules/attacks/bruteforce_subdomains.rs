@@ -1,17 +1,8 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
-use std::str::FromStr;
-
-use ipnetwork::IpNetwork;
-use log::debug;
-use rorm::prelude::*;
-use rorm::{and, insert, query};
-use uuid::Uuid;
 
 use crate::chan::WsMessage;
-use crate::models::{
-    BruteforceSubdomainsResult, BruteforceSubdomainsResultInsert, DnsRecordType, Domain,
-    DomainCertainty, DomainDomainRelation, DomainHostRelation, Host, HostCertainty, OsType,
-};
+use crate::models::DnsRecordType;
+use crate::modules::attack_results::store_bruteforce_subdomains_result;
 use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
 use crate::rpc::rpc_definitions::{
@@ -73,101 +64,20 @@ impl LeechAttackContext {
                 })
                 .await;
 
-                self.insert_bruteforce_subdomains_result(source, destination, dns_record_type)
-                    .await?;
+                store_bruteforce_subdomains_result(
+                    &self.db,
+                    self.attack_uuid,
+                    self.workspace_uuid,
+                    source,
+                    destination,
+                    dns_record_type,
+                )
+                .await?;
 
                 Ok(())
             },
         )
         .await;
         self.set_finished(result.err()).await;
-    }
-
-    /// Insert a tcp port scan's result and update the aggregation
-    async fn insert_bruteforce_subdomains_result(
-        &self,
-        source: String,
-        destination: String,
-        dns_record_type: DnsRecordType,
-    ) -> Result<(), rorm::Error> {
-        let mut tx = self.db.start_transaction().await?;
-
-        if query!(&mut tx, BruteforceSubdomainsResult)
-            .condition(and!(
-                BruteforceSubdomainsResult::F
-                    .attack
-                    .equals(self.attack_uuid),
-                BruteforceSubdomainsResult::F
-                    .dns_record_type
-                    .equals(dns_record_type),
-                BruteforceSubdomainsResult::F.source.equals(&source),
-                BruteforceSubdomainsResult::F
-                    .destination
-                    .equals(&destination)
-            ))
-            .optional()
-            .await?
-            .is_some()
-        {
-            debug!("entry already exists");
-        } else {
-            insert!(&mut tx, BruteforceSubdomainsResult)
-                .single(&BruteforceSubdomainsResultInsert {
-                    uuid: Uuid::new_v4(),
-                    attack: ForeignModelByField::Key(self.attack_uuid),
-                    dns_record_type,
-                    source: source.clone(),
-                    destination: destination.clone(),
-                })
-                .await?;
-
-            let source_uuid = Domain::get_or_create(
-                &mut tx,
-                self.workspace_uuid,
-                &source,
-                DomainCertainty::Verified, // we just queried this domain
-            )
-            .await?;
-            match dns_record_type {
-                DnsRecordType::A | DnsRecordType::Aaaa => {
-                    let addr = IpNetwork::from_str(&destination).unwrap();
-                    let host_uuid = Host::get_or_create(
-                        &mut tx,
-                        self.workspace_uuid,
-                        addr,
-                        OsType::Unknown,
-                        HostCertainty::SupposedTo, // there is a current dns record to it
-                    )
-                    .await?;
-                    DomainHostRelation::insert_if_missing(
-                        &mut tx,
-                        self.workspace_uuid,
-                        source_uuid,
-                        host_uuid,
-                        true,
-                    )
-                    .await?;
-                }
-                DnsRecordType::Cname => {
-                    let destination_uuid = Domain::get_or_create(
-                        &mut tx,
-                        self.workspace_uuid,
-                        &destination,
-                        DomainCertainty::Unverified, // we haven't queried this domain yet
-                    )
-                    .await?;
-                    DomainDomainRelation::insert_if_missing(
-                        &mut tx,
-                        self.workspace_uuid,
-                        source_uuid,
-                        destination_uuid,
-                    )
-                    .await?;
-                }
-                _ => {}
-            }
-        }
-
-        tx.commit().await
     }
 }

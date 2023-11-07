@@ -1,17 +1,9 @@
 use chrono::{NaiveDateTime, TimeZone, Utc};
-use rorm::insert;
-use rorm::prelude::*;
-use uuid::Uuid;
 
 use crate::chan::{CertificateTransparencyEntry, WsMessage};
-use crate::models::{
-    CertificateTransparencyResultInsert, CertificateTransparencyValueNameInsert, Domain,
-    DomainCertainty,
-};
+use crate::modules::attack_results::store_query_certificate_transparency_result;
 use crate::modules::attacks::{AttackError, LeechAttackContext};
-use crate::rpc::rpc_definitions::{
-    CertificateTransparencyRequest, CertificateTransparencyResponse,
-};
+use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
 
 impl LeechAttackContext {
     /// Query a certificate transparency log collector.
@@ -22,13 +14,20 @@ impl LeechAttackContext {
             Ok(res) => {
                 let res = res.into_inner();
 
-                self.set_finished(
-                    self.insert_query_certificate_transparency_result(&res)
-                        .await
-                        .map_err(AttackError::from)
-                        .err(),
-                )
-                .await;
+                for entry in &res.entries {
+                    if let Err(error) = store_query_certificate_transparency_result(
+                        &self.db,
+                        self.attack_uuid,
+                        self.workspace_uuid,
+                        entry.clone(),
+                    )
+                    .await
+                    {
+                        self.set_finished(Some(error.into())).await;
+                        return;
+                    }
+                }
+                self.set_finished(None).await;
 
                 self.send_ws(WsMessage::CertificateTransparencyResult {
                     attack_uuid: self.attack_uuid,
@@ -61,72 +60,5 @@ impl LeechAttackContext {
                 self.set_finished(Some(AttackError::Grpc(status))).await;
             }
         }
-    }
-
-    /// Insert a query certificate transparency's result and update the aggregation
-    async fn insert_query_certificate_transparency_result(
-        &self,
-        res: &CertificateTransparencyResponse,
-    ) -> Result<(), rorm::Error> {
-        let mut tx = self.db.start_transaction().await?;
-
-        for cert_entry in &res.entries {
-            let cert_uuid = insert!(&mut tx, CertificateTransparencyResultInsert)
-                .return_primary_key()
-                .single(&CertificateTransparencyResultInsert {
-                    uuid: Uuid::new_v4(),
-                    attack: ForeignModelByField::Key(self.attack_uuid),
-                    issuer_name: cert_entry.issuer_name.clone(),
-                    serial_number: cert_entry.serial_number.clone(),
-                    common_name: cert_entry.common_name.clone(),
-                    not_before: cert_entry.not_before.clone().map(|x| {
-                        Utc.from_utc_datetime(
-                            &NaiveDateTime::from_timestamp_millis(x.seconds * 1000).unwrap(),
-                        )
-                    }),
-                    not_after: cert_entry.not_after.clone().map(|x| {
-                        Utc.from_utc_datetime(
-                            &NaiveDateTime::from_timestamp_millis(x.seconds * 1000).unwrap(),
-                        )
-                    }),
-                })
-                .await?;
-
-            let value_names = cert_entry.value_names.clone().into_iter().map(|x| {
-                CertificateTransparencyValueNameInsert {
-                    uuid: Uuid::new_v4(),
-                    value_name: x,
-                    ct_result: ForeignModelByField::Key(cert_uuid),
-                }
-            });
-
-            insert!(&mut tx, CertificateTransparencyValueNameInsert)
-                .return_nothing()
-                .bulk(value_names)
-                .await?;
-        }
-
-        for entry in &res.entries {
-            Domain::get_or_create(
-                &mut tx,
-                self.workspace_uuid,
-                &entry.common_name,
-                DomainCertainty::Unverified,
-            )
-            .await?;
-            for value in &entry.value_names {
-                Domain::get_or_create(
-                    &mut tx,
-                    self.workspace_uuid,
-                    value,
-                    DomainCertainty::Unverified,
-                )
-                .await?;
-            }
-        }
-
-        tx.commit().await?;
-
-        Ok(())
     }
 }
