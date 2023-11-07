@@ -216,17 +216,32 @@ pub async fn get_all_workspaces(
 
     let session_user = query_user(&mut tx, &session).await?;
 
-    let mut workspaces = query!(&mut tx, Workspace)
+    let mut workspaces: Vec<(Workspace, SimpleUser)> = query!(&mut tx, Workspace)
         .condition(Workspace::F.owner.equals(session_user.uuid))
-        .all()
-        .await?;
-
-    let w: Vec<Workspace> = query!(&mut tx, (WorkspaceMember::F.workspace as Workspace))
-        .condition(WorkspaceMember::F.member.equals(session_user.uuid))
         .stream()
-        .map_ok(|(x,)| x)
+        .map_ok(|x| {
+            (
+                x,
+                SimpleUser {
+                    uuid: session_user.uuid,
+                    username: session_user.username.clone(),
+                    display_name: session_user.display_name.clone(),
+                },
+            )
+        })
         .try_collect()
         .await?;
+
+    let w: Vec<(Workspace, SimpleUser)> = query!(
+        &mut tx,
+        (
+            WorkspaceMember::F.workspace as Workspace,
+            WorkspaceMember::F.workspace.owner as SimpleUser
+        )
+    )
+    .condition(WorkspaceMember::F.member.equals(session_user.uuid))
+    .all()
+    .await?;
 
     tx.commit().await?;
 
@@ -235,15 +250,11 @@ pub async fn get_all_workspaces(
     Ok(Json(GetAllWorkspacesResponse {
         workspaces: workspaces
             .into_iter()
-            .map(|w| SimpleWorkspace {
+            .map(|(w, owner)| SimpleWorkspace {
                 uuid: w.uuid,
                 name: w.name,
                 description: w.description,
-                owner: SimpleUser {
-                    uuid: session_user.uuid,
-                    username: session_user.username.clone(),
-                    display_name: session_user.display_name.clone(),
-                },
+                owner,
                 created_at: w.created_at,
             })
             .collect(),
