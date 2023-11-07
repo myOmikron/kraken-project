@@ -12,6 +12,7 @@ import Background from "./views/background";
 import { ROUTER } from "./routes";
 import { UserProvider } from "./context/user";
 import WS from "./api/websocket";
+import GlobalPopup from "./views/gobal-popup";
 
 type RouterProps = {};
 type RouterState = {
@@ -69,5 +70,6 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             toastClassName="toast-pane"
             progressClassName="toast-neon toast-progress"
         />
-    </>,
+        <GlobalPopup />
+    </>
 );
