@@ -19,6 +19,12 @@ import {
     SimpleUserFromJSONTyped,
     SimpleUserToJSON,
 } from './SimpleUser';
+import type { SimpleWorkspace } from './SimpleWorkspace';
+import {
+    SimpleWorkspaceFromJSON,
+    SimpleWorkspaceFromJSONTyped,
+    SimpleWorkspaceToJSON,
+} from './SimpleWorkspace';
 
 /**
  * An invitation to a workspace was issued
@@ -27,11 +33,11 @@ import {
  */
 export interface WsMessageOneOf1 {
     /**
-     * The workspace the user is invited to
-     * @type {string}
+     * 
+     * @type {SimpleWorkspace}
      * @memberof WsMessageOneOf1
      */
-    workspaceUuid: string;
+    workspace: SimpleWorkspace;
     /**
      * 
      * @type {SimpleUser}
@@ -61,7 +67,7 @@ export type WsMessageOneOf1TypeEnum = typeof WsMessageOneOf1TypeEnum[keyof typeo
  */
 export function instanceOfWsMessageOneOf1(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "workspaceUuid" in value;
+    isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "from" in value;
     isInstance = isInstance && "type" in value;
 
@@ -78,7 +84,7 @@ export function WsMessageOneOf1FromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'workspaceUuid': json['workspace_uuid'],
+        'workspace': SimpleWorkspaceFromJSON(json['workspace']),
         'from': SimpleUserFromJSON(json['from']),
         'type': json['type'],
     };
@@ -93,7 +99,7 @@ export function WsMessageOneOf1ToJSON(value?: WsMessageOneOf1 | null): any {
     }
     return {
         
-        'workspace_uuid': value.workspaceUuid,
+        'workspace': SimpleWorkspaceToJSON(value.workspace),
         'from': SimpleUserToJSON(value.from),
         'type': value.type,
     };
