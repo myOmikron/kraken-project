@@ -194,14 +194,14 @@ pub struct GetAllWorkspacesResponse {
     pub(crate) workspaces: Vec<SimpleWorkspace>,
 }
 
-/// Retrieve all workspaces owned by executing user
+/// Retrieve all workspaces that the executing user has access to
 ///
 /// For administration access, look at the `/admin/workspaces` endpoint.
 #[utoipa::path(
     tag = "Workspaces",
     context_path = "/api/v1",
     responses(
-        (status = 200, description = "Returns all workspaces owned by the executing user", body = GetAllWorkspacesResponse),
+        (status = 200, description = "Returns all workspaces that the executing user has access to", body = GetAllWorkspacesResponse),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
