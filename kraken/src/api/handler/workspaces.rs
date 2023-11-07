@@ -409,7 +409,8 @@ pub async fn create_invitation(
     let mut tx = db.start_transaction().await?;
     let session_user = query_user(&mut tx, &session).await?;
 
-    WorkspaceInvitation::insert(&mut tx, workspace_uuid, session_user.uuid, user).await?;
+    let invitation_uuid =
+        WorkspaceInvitation::insert(&mut tx, workspace_uuid, session_user.uuid, user).await?;
 
     let workspace = query!(&mut tx, Workspace)
         .condition(Workspace::F.uuid.equals(workspace_uuid))
@@ -428,6 +429,7 @@ pub async fn create_invitation(
         .message(
             user,
             WsMessage::InvitationToWorkspace {
+                invitation_uuid,
                 from: SimpleUser {
                     uuid: session_user.uuid,
                     username: session_user.username,

@@ -40,6 +40,8 @@ pub enum WsMessage {
     InvalidMessage {},
     /// An invitation to a workspace was issued
     InvitationToWorkspace {
+        /// The uuid of the invitation
+        invitation_uuid: Uuid,
         /// The workspace the user is invited to
         workspace: SimpleWorkspace,
         /// The user that has issued the invitation

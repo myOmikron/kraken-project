@@ -256,7 +256,7 @@ impl WorkspaceInvitation {
         workspace: Uuid,
         from: Uuid,
         target: Uuid,
-    ) -> Result<(), InsertWorkspaceInvitationError> {
+    ) -> Result<Uuid, InsertWorkspaceInvitationError> {
         if from == target {
             return Err(InsertWorkspaceInvitationError::InvalidTarget);
         }
@@ -303,7 +303,8 @@ impl WorkspaceInvitation {
         }
 
         // Insert the invitation
-        insert!(guard.get_transaction(), WorkspaceInvitationInsert)
+        let invitation_uuid = insert!(guard.get_transaction(), WorkspaceInvitationInsert)
+            .return_primary_key()
             .single(&WorkspaceInvitationInsert {
                 uuid: Uuid::new_v4(),
                 workspace: ForeignModelByField::Key(workspace),
@@ -314,7 +315,7 @@ impl WorkspaceInvitation {
 
         guard.commit().await?;
 
-        Ok(())
+        Ok(invitation_uuid)
     }
 }
 

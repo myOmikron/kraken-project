@@ -33,6 +33,12 @@ import {
  */
 export interface WsMessageOneOf1 {
     /**
+     * The uuid of the invitation
+     * @type {string}
+     * @memberof WsMessageOneOf1
+     */
+    invitationUuid: string;
+    /**
      * 
      * @type {SimpleWorkspace}
      * @memberof WsMessageOneOf1
@@ -67,6 +73,7 @@ export type WsMessageOneOf1TypeEnum = typeof WsMessageOneOf1TypeEnum[keyof typeo
  */
 export function instanceOfWsMessageOneOf1(value: object): boolean {
     let isInstance = true;
+    isInstance = isInstance && "invitationUuid" in value;
     isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "from" in value;
     isInstance = isInstance && "type" in value;
@@ -84,6 +91,7 @@ export function WsMessageOneOf1FromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
+        'invitationUuid': json['invitation_uuid'],
         'workspace': SimpleWorkspaceFromJSON(json['workspace']),
         'from': SimpleUserFromJSON(json['from']),
         'type': json['type'],
@@ -99,6 +107,7 @@ export function WsMessageOneOf1ToJSON(value?: WsMessageOneOf1 | null): any {
     }
     return {
         
+        'invitation_uuid': value.invitationUuid,
         'workspace': SimpleWorkspaceToJSON(value.workspace),
         'from': SimpleUserToJSON(value.from),
         'type': value.type,
