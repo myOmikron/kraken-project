@@ -11,6 +11,7 @@ use utoipa::ToSchema;
 use webauthn_rs::prelude::Uuid;
 
 use crate::api::handler::users::SimpleUser;
+use crate::api::handler::workspaces::SimpleWorkspace;
 
 /// Entry of certificate transparency results
 #[derive(Deserialize, Serialize, Clone, ToSchema)]
@@ -40,7 +41,7 @@ pub enum WsMessage {
     /// An invitation to a workspace was issued
     InvitationToWorkspace {
         /// The workspace the user is invited to
-        workspace_uuid: Uuid,
+        workspace: SimpleWorkspace,
         /// The user that has issued the invitation
         from: SimpleUser,
     },

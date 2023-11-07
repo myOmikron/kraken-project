@@ -130,7 +130,7 @@ pub async fn delete_workspace(
 }
 
 /// A simple version of a workspace
-#[derive(Debug, Serialize, ToSchema, Clone)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
 pub struct SimpleWorkspace {
     pub(crate) uuid: Uuid,
     #[schema(example = "ultra-secure-workspace")]
@@ -404,12 +404,23 @@ pub async fn create_invitation(
     session: Session,
 ) -> ApiResult<HttpResponse> {
     let InviteToWorkspace { user } = req.into_inner();
-    let workspace = path.into_inner().uuid;
+    let workspace_uuid = path.into_inner().uuid;
 
     let mut tx = db.start_transaction().await?;
     let session_user = query_user(&mut tx, &session).await?;
 
-    WorkspaceInvitation::insert(&mut tx, workspace, session_user.uuid, user).await?;
+    WorkspaceInvitation::insert(&mut tx, workspace_uuid, session_user.uuid, user).await?;
+
+    let workspace = query!(&mut tx, Workspace)
+        .condition(Workspace::F.uuid.equals(workspace_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    let (owner,) = query!(&mut tx, (Workspace::F.owner as SimpleUser))
+        .condition(Workspace::F.uuid.equals(workspace_uuid))
+        .one()
+        .await?;
 
     tx.commit().await?;
 
@@ -422,7 +433,13 @@ pub async fn create_invitation(
                     username: session_user.username,
                     display_name: session_user.display_name,
                 },
-                workspace_uuid: workspace,
+                workspace: SimpleWorkspace {
+                    uuid: workspace_uuid,
+                    name: workspace.name,
+                    description: workspace.description,
+                    created_at: workspace.created_at,
+                    owner,
+                },
             },
         )
         .await;
