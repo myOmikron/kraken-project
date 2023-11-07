@@ -15,10 +15,12 @@ use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::{
-    get_page_params, ApiError, ApiResult, HostResultsPage, PageParams, PathUuid, SimpleTag, TagType,
+    get_page_params, ApiError, ApiResult, HostResultsPage, PageParams, PathUuid,
+    SimpleAggregationSource, SimpleTag, TagType,
 };
 use crate::models::{
-    GlobalTag, Host, HostGlobalTag, HostWorkspaceTag, OsType, Workspace, WorkspaceTag,
+    AggregationSource, AggregationTable, GlobalTag, Host, HostGlobalTag, HostWorkspaceTag, OsType,
+    Workspace, WorkspaceTag,
 };
 use crate::query_tags;
 
@@ -56,6 +58,8 @@ pub struct FullHost {
     pub workspace: Uuid,
     /// The list of tags this host has attached to
     pub tags: Vec<SimpleTag>,
+    /// The number of attacks which found this host
+    pub sources: SimpleAggregationSource,
     /// The point in time, the record was created
     pub created_at: DateTime<Utc>,
 }
@@ -106,7 +110,6 @@ pub(crate) async fn get_all_hosts(
         .await?;
 
     let mut tags = HashMap::new();
-
     query_tags!(
         tags,
         tx,
@@ -123,6 +126,14 @@ pub(crate) async fn get_all_hosts(
         hosts.iter().map(|x| x.uuid)
     );
 
+    let mut sources = SimpleAggregationSource::query(
+        &mut tx,
+        path.uuid,
+        AggregationTable::Host,
+        hosts.iter().map(|x| x.uuid),
+    )
+    .await?;
+
     tx.commit().await?;
 
     Ok(Json(HostResultsPage {
@@ -135,6 +146,7 @@ pub(crate) async fn get_all_hosts(
                 os_type: x.os_type,
                 workspace: *x.workspace.key(),
                 tags: tags.remove(&x.uuid).unwrap_or_default(),
+                sources: sources.remove(&x.uuid).unwrap_or_default(),
                 created_at: x.created_at,
             })
             .collect(),
@@ -215,6 +227,13 @@ pub async fn get_host(
 
     tags.extend(global_tags);
 
+    let sources = query!(&mut tx, (AggregationSource::F.result_type,))
+        .condition(AggregationSource::F.aggregated_uuid.equals(host.uuid))
+        .stream()
+        .map_ok(|(x,)| x)
+        .try_collect()
+        .await?;
+
     tx.commit().await?;
 
     Ok(Json(FullHost {
@@ -224,6 +243,7 @@ pub async fn get_host(
         os_type: host.os_type,
         comment: host.comment,
         tags,
+        sources,
         created_at: host.created_at,
     }))
 }

@@ -16,12 +16,12 @@ use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::{
-    get_page_params, ApiError, ApiResult, DomainResultsPage, PageParams, PathUuid, SimpleTag,
-    TagType,
+    get_page_params, ApiError, ApiResult, DomainResultsPage, PageParams, PathUuid,
+    SimpleAggregationSource, SimpleTag, TagType,
 };
 use crate::models::{
-    Domain, DomainGlobalTag, DomainHostRelation, DomainWorkspaceTag, GlobalTag, Host, Workspace,
-    WorkspaceTag,
+    AggregationSource, AggregationTable, Domain, DomainGlobalTag, DomainHostRelation,
+    DomainWorkspaceTag, GlobalTag, Host, Workspace, WorkspaceTag,
 };
 use crate::query_tags;
 
@@ -49,14 +49,22 @@ pub struct SimpleDomain {
 /// A full representation of a domain in a workspace
 #[derive(Serialize, ToSchema)]
 pub struct FullDomain {
-    uuid: Uuid,
+    /// The primary key of the domain
+    pub uuid: Uuid,
+    /// The domain's name
     #[schema(example = "example.com")]
-    domain: String,
+    pub domain: String,
+    /// A comment
     #[schema(example = "This is a important domain!")]
-    comment: String,
-    workspace: Uuid,
-    tags: Vec<SimpleTag>,
-    created_at: DateTime<Utc>,
+    pub comment: String,
+    /// The workspace this domain is in
+    pub workspace: Uuid,
+    /// The list of tags this domain has attached to
+    pub tags: Vec<SimpleTag>,
+    /// The number of attacks which found this domain
+    pub sources: SimpleAggregationSource,
+    /// The point in time, the record was created
+    pub created_at: DateTime<Utc>,
 }
 
 /// Retrieve all domains of a specific workspace
@@ -123,6 +131,14 @@ pub async fn get_all_domains(
                 domains.iter().map(|x| x.uuid)
             );
 
+            let mut sources = SimpleAggregationSource::query(
+                &mut tx,
+                path.uuid,
+                AggregationTable::Domain,
+                domains.iter().map(|x| x.uuid),
+            )
+            .await?;
+
             let items = domains
                 .into_iter()
                 .map(|x| FullDomain {
@@ -131,6 +147,7 @@ pub async fn get_all_domains(
                     comment: x.comment,
                     workspace: *x.workspace.key(),
                     tags: tags.remove(&x.uuid).unwrap_or_default(),
+                    sources: sources.remove(&x.uuid).unwrap_or_default(),
                     created_at: x.created_at,
                 })
                 .collect();
@@ -184,6 +201,14 @@ pub async fn get_all_domains(
                 domains.iter().map(|x| x.uuid)
             );
 
+            let mut sources = SimpleAggregationSource::query(
+                &mut tx,
+                path.uuid,
+                AggregationTable::Domain,
+                domains.iter().map(|x| x.uuid),
+            )
+            .await?;
+
             let items = domains
                 .into_iter()
                 .map(|x| FullDomain {
@@ -192,6 +217,7 @@ pub async fn get_all_domains(
                     comment: x.comment,
                     workspace: *x.workspace.key(),
                     tags: tags.remove(&x.uuid).unwrap_or_default(),
+                    sources: sources.remove(&x.uuid).unwrap_or_default(),
                     created_at: x.created_at,
                 })
                 .collect();
@@ -278,6 +304,13 @@ pub async fn get_domain(
 
     tags.extend(global_tags);
 
+    let sources = query!(&mut tx, (AggregationSource::F.result_type,))
+        .condition(AggregationSource::F.aggregated_uuid.equals(domain.uuid))
+        .stream()
+        .map_ok(|(x,)| x)
+        .try_collect()
+        .await?;
+
     tx.commit().await?;
 
     Ok(Json(FullDomain {
@@ -286,6 +319,7 @@ pub async fn get_domain(
         comment: domain.comment,
         workspace: path.w_uuid,
         tags,
+        sources,
         created_at: domain.created_at,
     }))
 }

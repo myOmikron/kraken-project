@@ -144,6 +144,7 @@ impl Modify for SecurityAddon2 {
         handler::UuidResponse,
         handler::SimpleTag,
         handler::TagType,
+        handler::SimpleAggregationSource,
         auth::LoginRequest,
         auth::FinishRegisterRequest,
         leeches::CreateLeechRequest,

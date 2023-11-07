@@ -16,10 +16,12 @@ use uuid::Uuid;
 use crate::api::extractors::SessionUser;
 use crate::api::handler::hosts::SimpleHost;
 use crate::api::handler::{
-    get_page_params, ApiError, ApiResult, PageParams, PathUuid, PortResultsPage, SimpleTag, TagType,
+    get_page_params, ApiError, ApiResult, PageParams, PathUuid, PortResultsPage,
+    SimpleAggregationSource, SimpleTag, TagType,
 };
 use crate::models::{
-    GlobalTag, Host, Port, PortGlobalTag, PortProtocol, PortWorkspaceTag, Workspace, WorkspaceTag,
+    AggregationSource, AggregationTable, GlobalTag, Host, Port, PortGlobalTag, PortProtocol,
+    PortWorkspaceTag, Workspace, WorkspaceTag,
 };
 use crate::query_tags;
 
@@ -68,6 +70,8 @@ pub struct FullPort {
     pub tags: Vec<SimpleTag>,
     /// The workspace this port is linked to
     pub workspace: Uuid,
+    /// The number of attacks which found this host
+    pub sources: SimpleAggregationSource,
     /// The point in time, the record was created
     pub created_at: DateTime<Utc>,
 }
@@ -155,6 +159,14 @@ pub async fn get_all_ports(
         ports.iter().map(|x| x.0)
     );
 
+    let mut sources = SimpleAggregationSource::query(
+        &mut tx,
+        path.uuid,
+        AggregationTable::Port,
+        ports.iter().map(|x| x.0),
+    )
+    .await?;
+
     let items = ports
         .into_iter()
         .map(
@@ -173,6 +185,7 @@ pub async fn get_all_ports(
                 },
                 workspace: *workspace.key(),
                 tags: tags.remove(&uuid).unwrap_or_default(),
+                sources: sources.remove(&uuid).unwrap_or_default(),
                 created_at,
             },
         )
@@ -264,6 +277,13 @@ pub async fn get_port(
 
     tags.extend(global_tags);
 
+    let sources = query!(&mut tx, (AggregationSource::F.result_type,))
+        .condition(AggregationSource::F.aggregated_uuid.equals(host.uuid))
+        .stream()
+        .map_ok(|(x,)| x)
+        .try_collect()
+        .await?;
+
     tx.commit().await?;
 
     Ok(Json(FullPort {
@@ -280,6 +300,7 @@ pub async fn get_port(
         },
         comment: port.comment,
         tags,
+        sources,
         workspace: path.w_uuid,
         created_at: port.created_at,
     }))

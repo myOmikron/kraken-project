@@ -3,15 +3,19 @@
 //! This module also contains common types, such as [ApiError], [PathUuid] and the complete
 //! error implementation
 
+use std::collections::HashMap;
 use std::sync::TryLockError;
 
 use actix_toolbox::tb_middleware::{actix_session, Session};
 use actix_web::body::BoxBody;
 use actix_web::web::Query;
 use actix_web::HttpResponse;
+use futures::TryStreamExt;
 use log::{debug, error, info, trace, warn};
+use rorm::conditions::DynamicCollection;
+use rorm::db::transaction::Transaction;
 use rorm::db::Executor;
-use rorm::{query, FieldAccess, Model};
+use rorm::{and, query, FieldAccess, Model};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_repr::Serialize_repr;
 use thiserror::Error;
@@ -29,7 +33,7 @@ use crate::api::handler::hosts::FullHost;
 use crate::api::handler::ports::FullPort;
 use crate::api::handler::services::FullService;
 use crate::api::handler::workspaces::{SearchEntry, SearchResultEntry};
-use crate::models::{Color, User};
+use crate::models::{AggregationSource, AggregationTable, AttackType, Color, User};
 
 pub mod api_keys;
 pub mod attack_results;
@@ -708,4 +712,103 @@ macro_rules! query_tags {
             }
         }
     }};
+}
+
+/// Numbers how many attacks of a certain kind found an aggregated model
+#[derive(Copy, Clone, Serialize, ToSchema, Debug, Default)]
+pub struct SimpleAggregationSource {
+    /// Bruteforce subdomains via DNS requests
+    #[serde(skip_serializing_if = "is_zero")]
+    bruteforce_subdomains: usize,
+
+    /// Scan tcp ports
+    #[serde(skip_serializing_if = "is_zero")]
+    #[schema(required = false, minimum = 1)]
+    tcp_port_scan: usize,
+
+    /// Query certificate transparency
+    #[serde(skip_serializing_if = "is_zero")]
+    query_certificate_transparency: usize,
+
+    /// Query the dehashed API
+    #[serde(skip_serializing_if = "is_zero")]
+    query_dehashed: usize,
+
+    /// Check if a host is reachable via icmp
+    #[serde(skip_serializing_if = "is_zero")]
+    host_alive: usize,
+
+    /// Detect the service that is running on a port
+    #[serde(skip_serializing_if = "is_zero")]
+    service_detection: usize,
+
+    /// Resolve domain names
+    #[serde(skip_serializing_if = "is_zero")]
+    dns_resolution: usize,
+}
+
+impl SimpleAggregationSource {
+    /// Queries the [`SimpleAggregationSource`] for a list of aggregated models
+    pub async fn query(
+        tx: &mut Transaction,
+        workspace: Uuid,
+        aggregated_table: AggregationTable,
+        aggregated_uuids: impl IntoIterator<Item = Uuid>,
+    ) -> Result<HashMap<Uuid, Self>, rorm::Error> {
+        let aggregated_uuids: Vec<_> = aggregated_uuids
+            .into_iter()
+            .map(|uuid| AggregationSource::F.aggregated_uuid.equals(uuid))
+            .collect();
+
+        if aggregated_uuids.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let mut stream = query!(
+            tx,
+            (
+                AggregationSource::F.aggregated_uuid,
+                AggregationSource::F.result_type
+            )
+        )
+        .condition(and![
+            AggregationSource::F.workspace.equals(workspace),
+            AggregationSource::F
+                .aggregated_table
+                .equals(aggregated_table),
+            DynamicCollection::or(aggregated_uuids)
+        ])
+        .stream();
+
+        let mut sources: HashMap<Uuid, SimpleAggregationSource> = HashMap::new();
+        while let Some((uuid, attack_type)) = stream.try_next().await? {
+            sources.entry(uuid).or_default().add(attack_type);
+        }
+        Ok(sources)
+    }
+
+    fn add(&mut self, attack_type: AttackType) {
+        match attack_type {
+            AttackType::Undefined => {}
+            AttackType::BruteforceSubdomains => self.bruteforce_subdomains += 1,
+            AttackType::TcpPortScan => self.tcp_port_scan += 1,
+            AttackType::QueryCertificateTransparency => self.query_certificate_transparency += 1,
+            AttackType::QueryUnhashed => self.query_dehashed += 1,
+            AttackType::HostAlive => self.host_alive += 1,
+            AttackType::ServiceDetection => self.service_detection += 1,
+            AttackType::DnsResolution => self.dns_resolution += 1,
+        }
+    }
+}
+
+impl Extend<AttackType> for SimpleAggregationSource {
+    fn extend<T: IntoIterator<Item = AttackType>>(&mut self, iter: T) {
+        for attack_type in iter {
+            self.add(attack_type)
+        }
+    }
+}
+
+fn is_zero(number: &usize) -> bool {
+    *number == 0
 }

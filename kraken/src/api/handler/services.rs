@@ -18,12 +18,12 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::hosts::SimpleHost;
 use crate::api::handler::ports::SimplePort;
 use crate::api::handler::{
-    get_page_params, ApiError, ApiResult, PageParams, PathUuid, ServiceResultsPage, SimpleTag,
-    TagType,
+    get_page_params, ApiError, ApiResult, PageParams, PathUuid, ServiceResultsPage,
+    SimpleAggregationSource, SimpleTag, TagType,
 };
 use crate::models::{
-    GlobalTag, Host, Port, Service, ServiceCertainty, ServiceGlobalTag, ServiceWorkspaceTag,
-    Workspace, WorkspaceTag,
+    AggregationSource, AggregationTable, GlobalTag, Host, Port, Service, ServiceCertainty,
+    ServiceGlobalTag, ServiceWorkspaceTag, Workspace, WorkspaceTag,
 };
 use crate::query_tags;
 
@@ -54,18 +54,29 @@ pub struct SimpleService {
 /// A full representation of a service
 #[derive(Serialize, ToSchema)]
 pub struct FullService {
-    uuid: Uuid,
+    /// Uuid of the service
+    pub uuid: Uuid,
+    /// The service's name
     #[schema(example = "postgresql")]
-    name: String,
+    pub name: String,
+    /// An optional version of the running service
     #[schema(example = "13.0.1")]
-    version: Option<String>,
-    certainty: ServiceCertainty,
-    host: SimpleHost,
-    port: Option<SimplePort>,
+    pub version: Option<String>,
+    /// The certainty of the detection
+    pub certainty: ServiceCertainty,
+    /// The host this service is assigned to
+    pub host: SimpleHost,
+    /// An optional port this service listens on
+    pub port: Option<SimplePort>,
+    /// A comment to the service
     #[schema(example = "Holds all relevant information")]
-    comment: String,
-    workspace: Uuid,
-    tags: Vec<SimpleTag>,
+    pub comment: String,
+    /// The workspace this service is linked to
+    pub workspace: Uuid,
+    /// The tags this service is linked to
+    pub tags: Vec<SimpleTag>,
+    /// The number of attacks which found this host
+    pub sources: SimpleAggregationSource,
     /// The point in time, the record was created
     pub created_at: DateTime<Utc>,
 }
@@ -183,6 +194,14 @@ pub async fn get_all_services(
         services.iter().map(|x| x.0)
     );
 
+    let mut sources = SimpleAggregationSource::query(
+        &mut tx,
+        path.uuid,
+        AggregationTable::Service,
+        services.iter().map(|x| x.0),
+    )
+    .await?;
+
     tx.commit().await?;
 
     let items = services
@@ -206,6 +225,7 @@ pub async fn get_all_services(
                     port: port.map(|y| ports.remove(y.key()).unwrap()),
                     workspace: *workspace.key(),
                     tags: tags.remove(&uuid).unwrap_or_default(),
+                    sources: sources.remove(&uuid).unwrap_or_default(),
                     created_at,
                 }
             },
@@ -310,6 +330,13 @@ pub async fn get_service(
 
     tags.extend(global_tags);
 
+    let sources = query!(&mut tx, (AggregationSource::F.result_type,))
+        .condition(AggregationSource::F.aggregated_uuid.equals(host.uuid))
+        .stream()
+        .map_ok(|(x,)| x)
+        .try_collect()
+        .await?;
+
     tx.commit().await?;
 
     Ok(Json(FullService {
@@ -337,6 +364,7 @@ pub async fn get_service(
         comment: service.comment,
         workspace: path.w_uuid,
         tags,
+        sources,
         created_at: service.created_at,
     }))
 }
