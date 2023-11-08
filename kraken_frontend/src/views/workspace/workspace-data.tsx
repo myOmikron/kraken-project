@@ -9,6 +9,7 @@ import { WorkspaceDataServiceDetails } from "./workspace-data/workspace-data-ser
 import { WorkspaceDataPortDetails } from "./workspace-data/workspace-data-port-details";
 import { WorkspaceDataDomainDetails } from "./workspace-data/workspace-data-domain-details";
 import SourcesList from "./components/sources-list";
+import TagList from "./components/tag-list";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 
@@ -197,16 +198,6 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 <h2 className={"sub-heading"}>Details</h2>
                 {detailsElement}
             </div>
-        </div>
-    );
-}
-
-function TagList(props: { tags: Array<SimpleTag> }) {
-    return (
-        <div className={"tag-list"}>
-            {props.tags.map((tag) => (
-                <Tag key={tag.uuid} {...tag} />
-            ))}
         </div>
     );
 }

@@ -3,6 +3,7 @@ import React from "react";
 import WorkspaceTable from "../components/workspace-table";
 import { FullHost, FullService, SimpleService } from "../../../api/generated";
 import SourcesList from "../components/sources-list";
+import TagList from "../components/tag-list";
 
 export type WorkspaceDataServicesProps = {
     workspace: string;
@@ -16,11 +17,12 @@ export function WorkspaceHostServices(props: WorkspaceDataServicesProps) {
         <WorkspaceTable<FullService>
             query={(limit, offset) => Api.workspaces.services.all(workspace, limit, offset, { host: host?.uuid })}
             queryDeps={[workspace, host?.uuid]}
-            columnsTemplate={"1fr 5ch 1fr 1fr"}
+            columnsTemplate={"1fr 5ch 1fr 1fr 1fr"}
         >
             <div className={"workspace-table-header"}>
                 <span>Name</span>
                 <span>Port</span>
+                <span>Tags</span>
                 <span>Comment</span>
                 <span>Attacks</span>
             </div>
@@ -28,6 +30,7 @@ export function WorkspaceHostServices(props: WorkspaceDataServicesProps) {
                 <div className={"workspace-table-row"} onClick={() => onSelect(service.uuid)}>
                     <span>{service.name}</span>
                     <span>{service.port?.port}</span>
+                    <TagList tags={service.tags} />
                     <span>{service.comment}</span>
                     <SourcesList sources={service.sources} />
                 </div>
