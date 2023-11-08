@@ -19,6 +19,12 @@ import {
     OsTypeFromJSONTyped,
     OsTypeToJSON,
 } from './OsType';
+import type { SimpleAggregationSource } from './SimpleAggregationSource';
+import {
+    SimpleAggregationSourceFromJSON,
+    SimpleAggregationSourceFromJSONTyped,
+    SimpleAggregationSourceToJSON,
+} from './SimpleAggregationSource';
 import type { SimpleTag } from './SimpleTag';
 import {
     SimpleTagFromJSON,
@@ -69,6 +75,12 @@ export interface FullHost {
      */
     tags: Array<SimpleTag>;
     /**
+     * 
+     * @type {SimpleAggregationSource}
+     * @memberof FullHost
+     */
+    sources: SimpleAggregationSource;
+    /**
      * The point in time, the record was created
      * @type {Date}
      * @memberof FullHost
@@ -87,6 +99,7 @@ export function instanceOfFullHost(value: object): boolean {
     isInstance = isInstance && "comment" in value;
     isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "tags" in value;
+    isInstance = isInstance && "sources" in value;
     isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
@@ -108,6 +121,7 @@ export function FullHostFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         'comment': json['comment'],
         'workspace': json['workspace'],
         'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
+        'sources': SimpleAggregationSourceFromJSON(json['sources']),
         'createdAt': (new Date(json['created_at'])),
     };
 }
@@ -127,6 +141,7 @@ export function FullHostToJSON(value?: FullHost | null): any {
         'comment': value.comment,
         'workspace': value.workspace,
         'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),
+        'sources': SimpleAggregationSourceToJSON(value.sources),
         'created_at': (value.createdAt.toISOString()),
     };
 }

@@ -103,6 +103,7 @@ export * from './ServiceDetectionResultsPage';
 export * from './ServiceResultsPage';
 export * from './SetPasswordRequest';
 export * from './SettingsFull';
+export * from './SimpleAggregationSource';
 export * from './SimpleAttack';
 export * from './SimpleBruteforceSubdomainsResult';
 export * from './SimpleDnsResolutionResult';

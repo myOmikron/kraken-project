@@ -3,11 +3,12 @@ import "../../styling/workspace-data.css";
 import { StatelessWorkspaceTable, useTable } from "./components/workspace-table";
 import { Api } from "../../api/api";
 import Tag from "../../components/tag";
-import { FullDomain, FullHost, FullPort, FullService, SimpleTag } from "../../api/generated";
+import { FullDomain, FullHost, FullPort, FullService, SimpleAggregationSource, SimpleTag } from "../../api/generated";
 import { WorkspaceDataHostDetails } from "./workspace-data/workspace-data-host-details";
 import { WorkspaceDataServiceDetails } from "./workspace-data/workspace-data-service-details";
 import { WorkspaceDataPortDetails } from "./workspace-data/workspace-data-port-details";
 import { WorkspaceDataDomainDetails } from "./workspace-data/workspace-data-domain-details";
+import SourcesList from "./components/sources-list";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 
@@ -43,11 +44,12 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
         switch (tab) {
             case "domains":
                 return (
-                    <StatelessWorkspaceTable {...domainsTable} columnsTemplate={"1fr 1fr 1fr"}>
+                    <StatelessWorkspaceTable {...domainsTable} columnsTemplate={"1fr 1fr 1fr 1fr"}>
                         <div className={"workspace-table-header"}>
                             <span>Name</span>
                             <span>Tags</span>
                             <span>Comment</span>
+                            <span>Attacks</span>
                         </div>
                         {domains.map((domain) => (
                             <div
@@ -57,17 +59,19 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <span>{domain.domain}</span>
                                 <TagList tags={domain.tags} />
                                 <span>{domain.comment}</span>
+                                <SourcesList sources={domain.sources} />
                             </div>
                         ))}
                     </StatelessWorkspaceTable>
                 );
             case "hosts":
                 return (
-                    <StatelessWorkspaceTable {...hostsTable} columnsTemplate={"39ch 1fr 1fr"}>
+                    <StatelessWorkspaceTable {...hostsTable} columnsTemplate={"39ch 1fr 1fr 1fr"}>
                         <div className={"workspace-table-header"}>
                             <span>IP</span>
                             <span>Tags</span>
                             <span>Comment</span>
+                            <span>Attacks</span>
                         </div>
                         {hosts.map((host) => (
                             <div
@@ -77,18 +81,20 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <span>{host.ipAddr}</span>
                                 <TagList tags={host.tags} />
                                 <span>{host.comment}</span>
+                                <SourcesList sources={host.sources} />
                             </div>
                         ))}
                     </StatelessWorkspaceTable>
                 );
             case "ports":
                 return (
-                    <StatelessWorkspaceTable {...portsTable} columnsTemplate={"5ch 39ch 1fr 1fr"}>
+                    <StatelessWorkspaceTable {...portsTable} columnsTemplate={"5ch 39ch 1fr 1fr 1fr"}>
                         <div className={"workspace-table-header"}>
                             <span>Port</span>
                             <span>Host</span>
                             <span>Tags</span>
                             <span>Comment</span>
+                            <span>Attacks</span>
                         </div>
                         {ports.map((port) => (
                             <div
@@ -99,19 +105,21 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <span>{port.host.ipAddr}</span>
                                 <TagList tags={port.tags} />
                                 <span>{port.comment}</span>
+                                <SourcesList sources={port.sources} />
                             </div>
                         ))}
                     </StatelessWorkspaceTable>
                 );
             case "services":
                 return (
-                    <StatelessWorkspaceTable {...servicesTable} columnsTemplate={"1fr 39ch 5ch 1fr 1fr"}>
+                    <StatelessWorkspaceTable {...servicesTable} columnsTemplate={"1fr 39ch 5ch 1fr 1fr 1fr"}>
                         <div className={"workspace-table-header"}>
                             <span>Name</span>
                             <span>Host</span>
                             <span>Port</span>
                             <span>Tags</span>
                             <span>Comment</span>
+                            <span>Attacks</span>
                         </div>
                         {services.map((service) => (
                             <div
@@ -123,6 +131,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <span>{service.port?.port}</span>
                                 <TagList tags={service.tags} />
                                 <span>{service.comment}</span>
+                                <SourcesList sources={service.sources} />
                             </div>
                         ))}
                     </StatelessWorkspaceTable>

@@ -125,6 +125,7 @@ models/ServiceDetectionResultsPage.ts
 models/ServiceResultsPage.ts
 models/SetPasswordRequest.ts
 models/SettingsFull.ts
+models/SimpleAggregationSource.ts
 models/SimpleAttack.ts
 models/SimpleBruteforceSubdomainsResult.ts
 models/SimpleDnsResolutionResult.ts

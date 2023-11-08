@@ -1,7 +1,8 @@
 import { Api } from "../../../api/api";
 import React from "react";
 import WorkspaceTable from "../components/workspace-table";
-import { FullHost, SimpleDomain } from "../../../api/generated";
+import { FullDomain, FullHost } from "../../../api/generated";
+import SourcesList from "../components/sources-list";
 
 export type WorkspaceDataDomainsProps = {
     workspace: string;
@@ -12,19 +13,21 @@ export type WorkspaceDataDomainsProps = {
 export function WorkspaceHostDomains(props: WorkspaceDataDomainsProps) {
     const { workspace, onSelect, host } = props;
     return (
-        <WorkspaceTable<SimpleDomain>
+        <WorkspaceTable<FullDomain>
             query={(limit, offset) => Api.workspaces.domains.all(workspace, limit, offset, { host: host?.uuid })}
             queryDeps={[workspace, host?.uuid]}
-            columnsTemplate={"1fr 1fr"}
+            columnsTemplate={"1fr 1fr 1fr"}
         >
             <div className={"workspace-table-header"}>
                 <span>Name</span>
                 <span>Comment</span>
+                <span>Attacks</span>
             </div>
             {(domain) => (
                 <div className={"workspace-table-row"} onClick={() => onSelect(domain.uuid)}>
                     <span>{domain.domain}</span>
                     <span>{domain.comment}</span>
+                    <SourcesList sources={domain.sources} />
                 </div>
             )}
         </WorkspaceTable>

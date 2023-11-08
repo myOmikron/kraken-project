@@ -101,3 +101,7 @@
 .workspace-table-row:not(:first-child) {
     border-top: 2px solid var(--primary-op);
 }
+
+.workspace-table-row .bubble {
+    padding: 0 0.5em;
+}

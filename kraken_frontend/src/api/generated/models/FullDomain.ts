@@ -13,6 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { SimpleAggregationSource } from './SimpleAggregationSource';
+import {
+    SimpleAggregationSourceFromJSON,
+    SimpleAggregationSourceFromJSONTyped,
+    SimpleAggregationSourceToJSON,
+} from './SimpleAggregationSource';
 import type { SimpleTag } from './SimpleTag';
 import {
     SimpleTagFromJSON,
@@ -27,37 +33,43 @@ import {
  */
 export interface FullDomain {
     /**
-     * 
+     * The primary key of the domain
      * @type {string}
      * @memberof FullDomain
      */
     uuid: string;
     /**
-     * 
+     * The domain's name
      * @type {string}
      * @memberof FullDomain
      */
     domain: string;
     /**
-     * 
+     * A comment
      * @type {string}
      * @memberof FullDomain
      */
     comment: string;
     /**
-     * 
+     * The workspace this domain is in
      * @type {string}
      * @memberof FullDomain
      */
     workspace: string;
     /**
-     * 
+     * The list of tags this domain has attached to
      * @type {Array<SimpleTag>}
      * @memberof FullDomain
      */
     tags: Array<SimpleTag>;
     /**
      * 
+     * @type {SimpleAggregationSource}
+     * @memberof FullDomain
+     */
+    sources: SimpleAggregationSource;
+    /**
+     * The point in time, the record was created
      * @type {Date}
      * @memberof FullDomain
      */
@@ -74,6 +86,7 @@ export function instanceOfFullDomain(value: object): boolean {
     isInstance = isInstance && "comment" in value;
     isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "tags" in value;
+    isInstance = isInstance && "sources" in value;
     isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
@@ -94,6 +107,7 @@ export function FullDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'comment': json['comment'],
         'workspace': json['workspace'],
         'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
+        'sources': SimpleAggregationSourceFromJSON(json['sources']),
         'createdAt': (new Date(json['created_at'])),
     };
 }
@@ -112,6 +126,7 @@ export function FullDomainToJSON(value?: FullDomain | null): any {
         'comment': value.comment,
         'workspace': value.workspace,
         'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),
+        'sources': SimpleAggregationSourceToJSON(value.sources),
         'created_at': (value.createdAt.toISOString()),
     };
 }

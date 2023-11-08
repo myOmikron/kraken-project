@@ -19,6 +19,12 @@ import {
     PortProtocolFromJSONTyped,
     PortProtocolToJSON,
 } from './PortProtocol';
+import type { SimpleAggregationSource } from './SimpleAggregationSource';
+import {
+    SimpleAggregationSourceFromJSON,
+    SimpleAggregationSourceFromJSONTyped,
+    SimpleAggregationSourceToJSON,
+} from './SimpleAggregationSource';
 import type { SimpleHost } from './SimpleHost';
 import {
     SimpleHostFromJSON,
@@ -81,6 +87,12 @@ export interface FullPort {
      */
     workspace: string;
     /**
+     * 
+     * @type {SimpleAggregationSource}
+     * @memberof FullPort
+     */
+    sources: SimpleAggregationSource;
+    /**
      * The point in time, the record was created
      * @type {Date}
      * @memberof FullPort
@@ -100,6 +112,7 @@ export function instanceOfFullPort(value: object): boolean {
     isInstance = isInstance && "comment" in value;
     isInstance = isInstance && "tags" in value;
     isInstance = isInstance && "workspace" in value;
+    isInstance = isInstance && "sources" in value;
     isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
@@ -122,6 +135,7 @@ export function FullPortFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         'comment': json['comment'],
         'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
         'workspace': json['workspace'],
+        'sources': SimpleAggregationSourceFromJSON(json['sources']),
         'createdAt': (new Date(json['created_at'])),
     };
 }
@@ -142,6 +156,7 @@ export function FullPortToJSON(value?: FullPort | null): any {
         'comment': value.comment,
         'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),
         'workspace': value.workspace,
+        'sources': SimpleAggregationSourceToJSON(value.sources),
         'created_at': (value.createdAt.toISOString()),
     };
 }

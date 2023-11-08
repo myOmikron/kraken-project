@@ -19,6 +19,12 @@ import {
     ServiceCertaintyFromJSONTyped,
     ServiceCertaintyToJSON,
 } from './ServiceCertainty';
+import type { SimpleAggregationSource } from './SimpleAggregationSource';
+import {
+    SimpleAggregationSourceFromJSON,
+    SimpleAggregationSourceFromJSONTyped,
+    SimpleAggregationSourceToJSON,
+} from './SimpleAggregationSource';
 import type { SimpleHost } from './SimpleHost';
 import {
     SimpleHostFromJSON,
@@ -45,19 +51,19 @@ import {
  */
 export interface FullService {
     /**
-     * 
+     * Uuid of the service
      * @type {string}
      * @memberof FullService
      */
     uuid: string;
     /**
-     * 
+     * The service's name
      * @type {string}
      * @memberof FullService
      */
     name: string;
     /**
-     * 
+     * An optional version of the running service
      * @type {string}
      * @memberof FullService
      */
@@ -81,23 +87,29 @@ export interface FullService {
      */
     port?: SimplePort | null;
     /**
-     * 
+     * A comment to the service
      * @type {string}
      * @memberof FullService
      */
     comment: string;
     /**
-     * 
+     * The workspace this service is linked to
      * @type {string}
      * @memberof FullService
      */
     workspace: string;
     /**
-     * 
+     * The tags this service is linked to
      * @type {Array<SimpleTag>}
      * @memberof FullService
      */
     tags: Array<SimpleTag>;
+    /**
+     * 
+     * @type {SimpleAggregationSource}
+     * @memberof FullService
+     */
+    sources: SimpleAggregationSource;
     /**
      * The point in time, the record was created
      * @type {Date}
@@ -118,6 +130,7 @@ export function instanceOfFullService(value: object): boolean {
     isInstance = isInstance && "comment" in value;
     isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "tags" in value;
+    isInstance = isInstance && "sources" in value;
     isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
@@ -142,6 +155,7 @@ export function FullServiceFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'comment': json['comment'],
         'workspace': json['workspace'],
         'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
+        'sources': SimpleAggregationSourceFromJSON(json['sources']),
         'createdAt': (new Date(json['created_at'])),
     };
 }
@@ -164,6 +178,7 @@ export function FullServiceToJSON(value?: FullService | null): any {
         'comment': value.comment,
         'workspace': value.workspace,
         'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),
+        'sources': SimpleAggregationSourceToJSON(value.sources),
         'created_at': (value.createdAt.toISOString()),
     };
 }
