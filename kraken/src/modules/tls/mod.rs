@@ -130,11 +130,8 @@ impl TlsManager {
     /// Generate a new certificate for a leech.
     ///
     /// Also returns everything else the leech needs in order to do tls.
-    pub fn gen_leech_cert(&self) -> Result<LeechTlsConfig, TlsManagerError> {
-        let cert = cert::Leech {
-            url: Url::parse("https://10.13.37.11:31337").unwrap(),
-        }
-        .build()?;
+    pub fn gen_leech_cert(&self, url: Url) -> Result<LeechTlsConfig, TlsManagerError> {
+        let cert = cert::Leech { url }.build()?;
         let ca_pem = self.ca.serialize_pem()?;
         let cert_pem = cert.serialize_pem_with_signer(&self.ca)?;
         let key_pem = cert.serialize_private_key_pem();

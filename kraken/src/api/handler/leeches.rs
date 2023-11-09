@@ -1,9 +1,13 @@
 //! The management endpoints of the leech are located here
 
+use std::str::FromStr;
+
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
+use log::error;
 use rorm::{query, update, Database, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
+use url::Url;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -155,13 +159,16 @@ pub async fn gen_leech_config(
     db: Data<Database>,
     tls: Data<TlsManager>,
 ) -> ApiResult<Json<LeechConfig>> {
-    let (secret,) = query!(db.as_ref(), (Leech::F.secret,))
+    let (secret, address) = query!(db.as_ref(), (Leech::F.secret, Leech::F.address))
         .condition(Leech::F.uuid.equals(req.uuid))
         .optional()
         .await?
         .ok_or(ApiError::InvalidUuid)?;
     Ok(Json(LeechConfig {
-        tls: tls.gen_leech_cert()?,
+        tls: tls.gen_leech_cert(Url::from_str(&address).map_err(|_| {
+            error!("The leech {} doesn't have a valid address", req.uuid);
+            ApiError::InternalServerError
+        })?)?,
         secret,
     }))
 }
