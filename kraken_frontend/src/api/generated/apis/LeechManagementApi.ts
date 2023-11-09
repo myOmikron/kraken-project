@@ -18,7 +18,7 @@ import type {
   ApiErrorResponse,
   CreateLeechRequest,
   GetAllLeechesResponse,
-  LeechTlsConfig,
+  LeechConfig,
   SimpleLeech,
   UpdateLeechRequest,
   UuidResponse,
@@ -30,8 +30,8 @@ import {
     CreateLeechRequestToJSON,
     GetAllLeechesResponseFromJSON,
     GetAllLeechesResponseToJSON,
-    LeechTlsConfigFromJSON,
-    LeechTlsConfigToJSON,
+    LeechConfigFromJSON,
+    LeechConfigToJSON,
     SimpleLeechFromJSON,
     SimpleLeechToJSON,
     UpdateLeechRequestFromJSON,
@@ -48,7 +48,7 @@ export interface DeleteLeechRequest {
     uuid: string;
 }
 
-export interface GenLeechCertRequest {
+export interface GenLeechConfigRequest {
     uuid: string;
 }
 
@@ -133,12 +133,12 @@ export class LeechManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Generate a new tls cert for the leech
-     * Generate a new tls cert for the leech
+     * Generate a new config for the leech
+     * Generate a new config for the leech
      */
-    async genLeechCertRaw(requestParameters: GenLeechCertRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LeechTlsConfig>> {
+    async genLeechConfigRaw(requestParameters: GenLeechConfigRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LeechConfig>> {
         if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
-            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling genLeechCert.');
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling genLeechConfig.');
         }
 
         const queryParameters: any = {};
@@ -152,15 +152,15 @@ export class LeechManagementApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => LeechTlsConfigFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => LeechConfigFromJSON(jsonValue));
     }
 
     /**
-     * Generate a new tls cert for the leech
-     * Generate a new tls cert for the leech
+     * Generate a new config for the leech
+     * Generate a new config for the leech
      */
-    async genLeechCert(requestParameters: GenLeechCertRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LeechTlsConfig> {
-        const response = await this.genLeechCertRaw(requestParameters, initOverrides);
+    async genLeechConfig(requestParameters: GenLeechConfigRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LeechConfig> {
+        const response = await this.genLeechConfigRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -23,4 +23,10 @@ pub struct Leech {
     /// Optional description of a leech
     #[rorm(max_length = 65535)]
     pub description: Option<String>,
+
+    /// Random string the leech has to present when connecting to kraken during the backlog process.
+    ///
+    /// It enables blocking incoming connections of outdated leeches whose TLS cert are still valid.
+    #[rorm(max_length = 255)]
+    pub secret: String,
 }

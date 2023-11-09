@@ -61,6 +61,9 @@ pub struct KrakenConfig {
 
     /// PEM encoded private key for the `leech_key`
     pub leech_key: String,
+
+    /// Random string the leech has to present when connecting to kraken during the backlog process.
+    pub leech_secret: String,
 }
 
 /// The configuration of the dehashed API

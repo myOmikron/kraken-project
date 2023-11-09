@@ -101,7 +101,7 @@ export const Api = {
             update: (uuid: UUID, leech: UpdateLeechRequest) =>
                 handleError(leechManagement.updateLeech({ uuid, updateLeechRequest: leech })),
             delete: (uuid: UUID) => handleError(leechManagement.deleteLeech({ uuid })),
-            genCert: (uuid: UUID) => handleError(leechManagement.genLeechCert({ uuid })),
+            genConfig: (uuid: UUID) => handleError(leechManagement.genLeechConfig({ uuid })),
         },
         settings: {
             get: () => handleError(settingsManagement.getSettings()),

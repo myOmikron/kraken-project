@@ -130,12 +130,19 @@ pub async fn get_leech(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<Jso
     }))
 }
 
-/// Generate a new tls cert for the leech
+#[derive(Serialize, ToSchema)]
+pub struct LeechConfig {
+    #[serde(flatten)]
+    tls: LeechTlsConfig,
+    secret: String,
+}
+
+/// Generate a new config for the leech
 #[utoipa::path(
     tag = "Leech management",
     context_path = "/api/v1/admin",
     responses(
-        (status = 200, description = "Newly generated leech cert", body = LeechTlsConfig),
+        (status = 200, description = "Newly generated leech cert", body = LeechConfig),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse)
     ),
@@ -143,11 +150,20 @@ pub async fn get_leech(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<Jso
     security(("api_key" = []))
 )]
 #[get("/leeches/{uuid}/cert")]
-pub async fn gen_leech_cert(
+pub async fn gen_leech_config(
     req: Path<PathUuid>,
+    db: Data<Database>,
     tls: Data<TlsManager>,
-) -> ApiResult<Json<LeechTlsConfig>> {
-    Ok(Json(tls.gen_leech_cert()?))
+) -> ApiResult<Json<LeechConfig>> {
+    let (secret,) = query!(db.as_ref(), (Leech::F.secret,))
+        .condition(Leech::F.uuid.equals(req.uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+    Ok(Json(LeechConfig {
+        tls: tls.gen_leech_cert()?,
+        secret,
+    }))
 }
 
 /// The response that hold all leeches

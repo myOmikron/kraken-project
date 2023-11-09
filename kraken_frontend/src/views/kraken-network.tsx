@@ -102,12 +102,12 @@ export default class KrakenNetwork extends React.Component<KrakenNetworkProps, K
                                 className="button"
                                 type="button"
                                 onClick={async () => {
-                                    const result = await Api.admin.leeches.genCert(l.uuid);
+                                    const result = await Api.admin.leeches.genConfig(l.uuid);
 
                                     let config = "";
                                     result.match(
-                                        ({ ca, cert, key, sni }) => {
-                                            config = `KrakenSni = "${sni}"\nKrakenCa = """\n${ca}"""\nLeechCert = """\n${cert}"""\nLeechKey="""\n${key}"""`;
+                                        ({ ca, cert, key, sni, secret }) => {
+                                            config = `KrakenSni = "${sni}"\nKrakenCa = """\n${ca}"""\nLeechCert = """\n${cert}"""\nLeechKey="""\n${key}"""\nLeechSecret="${secret}"`;
                                         },
                                         (err) => {
                                             toast.error(err.message);

@@ -1,3 +1,5 @@
+use rand::distributions::{Alphanumeric, DistString};
+use rand::thread_rng;
 use rorm::db::Executor;
 use rorm::prelude::*;
 use rorm::{insert, query};
@@ -15,6 +17,7 @@ struct LeechInsert {
     name: String,
     address: String,
     description: Option<String>,
+    secret: String,
 }
 
 /// The errors that can occur while creating a leech
@@ -86,6 +89,7 @@ impl Leech {
                 name,
                 address,
                 description,
+                secret: Alphanumeric.sample_string(&mut thread_rng(), 255),
             })
             .await?;
 

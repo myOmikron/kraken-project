@@ -134,7 +134,7 @@ pub(crate) async fn start_server(
                     .service(leeches::create_leech)
                     .service(leeches::delete_leech)
                     .service(leeches::update_leech)
-                    .service(leeches::gen_leech_cert)
+                    .service(leeches::gen_leech_config)
                     .service(users::create_user)
                     .service(users::delete_user)
                     .service(users::get_user)

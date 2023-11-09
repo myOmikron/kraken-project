@@ -7,6 +7,8 @@ use std::time::Duration;
 use ipnetwork::IpNetwork;
 use log::{debug, error, info, warn};
 use rorm::{delete, insert, query, Database};
+use tonic::metadata::AsciiMetadataValue;
+use tonic::Request;
 use uuid::Uuid;
 
 use crate::config::KrakenConfig;
@@ -205,6 +207,7 @@ pub async fn start_backlog(
     let kraken_endpoint = kraken_endpoint(kraken_config)?;
 
     let db_clone = db.clone();
+    let secret: AsciiMetadataValue = kraken_config.leech_secret.parse()?;
     tokio::spawn(async move {
         loop {
             let mut kraken;
@@ -217,7 +220,12 @@ pub async fn start_backlog(
                     tokio::time::sleep(KRAKEN_RETRY_INTERVAL).await;
                     continue;
                 };
-                kraken = BacklogServiceClient::new(chan);
+                let secret = secret.clone();
+                kraken =
+                    BacklogServiceClient::with_interceptor(chan, move |mut req: Request<()>| {
+                        req.metadata_mut().insert("x-leech-secret", secret.clone());
+                        Ok(req)
+                    });
                 info!("connected to kraken @ {}", kraken_endpoint.uri());
                 break;
             }
