@@ -1,11 +1,17 @@
 import React from "react";
-import { FullWorkspace, SimpleHost } from "../../api/generated";
+import { FullHost, FullWorkspace, SimpleHost } from "../../api/generated";
 import "../../styling/workspace-hosts.css";
 import Input from "../../components/input";
 import { Api } from "../../api/api";
 import { toast } from "react-toastify";
 import { ROUTES } from "../../routes";
 import OsIcon from "../../components/os-icon";
+import ArrowFirstIcon from "../../svg/arrow-first";
+import ArrowLeftIcon from "../../svg/arrow-left";
+import ArrowRightIcon from "../../svg/arrow-right";
+import ArrowLastIcon from "../../svg/arrow-last";
+import Select from "react-select";
+import { selectStyles } from "../../components/select-menu";
 
 type WorkspaceHostsProps = {
     workspace: FullWorkspace;
@@ -13,19 +19,22 @@ type WorkspaceHostsProps = {
 type WorkspaceHostsState = {
     searchTerm: string;
     hosts: SimpleHost[];
+    total: number;
+    limit: number;
+    offset: number;
 };
 
 export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps, WorkspaceHostsState> {
     constructor(props: WorkspaceHostsProps) {
         super(props);
 
-        this.state = { searchTerm: "", hosts: [] };
+        this.state = { searchTerm: "", hosts: [], total: 0, offset: 0, limit: 28 };
     }
 
     async retrieveHosts() {
-        (await Api.workspaces.hosts.all(this.props.workspace.uuid, 1000, 0)).match(
-            ({ items }) => this.setState({ hosts: items }),
-            (err) => toast.error(err.message),
+        (await Api.workspaces.hosts.all(this.props.workspace.uuid, this.state.limit, this.state.offset)).match(
+            ({ items, total }) => this.setState({ hosts: items, total }),
+            (err) => toast.error(err.message)
         );
     }
 
@@ -33,8 +42,28 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
         this.retrieveHosts().then();
     }
 
+    componentDidUpdate(
+        prevProps: Readonly<WorkspaceHostsProps>,
+        prevState: Readonly<WorkspaceHostsState>,
+        snapshot?: any
+    ) {
+        if (prevState.offset !== this.state.offset || this.state.limit !== prevState.limit) {
+            this.retrieveHosts().then();
+        }
+    }
+
     render() {
-        console.log(this.state.hosts);
+        const { offset, limit, total } = this.state;
+        const lastOffset = Math.floor(total / limit) * limit;
+        const setOffset = (offset: number) => {
+            if (offset < 0) {
+                this.setState({ offset: 0 });
+            } else if (offset > lastOffset) {
+                this.setState({ offset: lastOffset });
+            } else {
+                this.setState({ offset });
+            }
+        };
 
         return (
             <div className={"workspace-hosts-container"}>
@@ -45,6 +74,7 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
                         onChange={(searchTerm) => this.setState({ searchTerm })}
                     />
                 </div>
+
                 <div className={"workspace-hosts-list"}>
                     {this.state.hosts.map((host) => {
                         return (
@@ -66,6 +96,53 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
                             </div>
                         );
                     })}
+                </div>
+                <div className={"workspace-table-controls"}>
+                    <div className={"workspace-table-controls-button-container"}>
+                        <button
+                            className={"workspace-table-button"}
+                            disabled={offset === 0}
+                            onClick={() => setOffset(0)}
+                        >
+                            <ArrowFirstIcon />
+                        </button>
+                        <button
+                            className={"workspace-table-button"}
+                            disabled={offset === 0}
+                            onClick={() => setOffset(offset - limit)}
+                        >
+                            <ArrowLeftIcon />
+                        </button>
+                        <button
+                            className={"workspace-table-button"}
+                            disabled={offset === lastOffset}
+                            onClick={() => setOffset(offset + limit)}
+                        >
+                            <ArrowRightIcon />
+                        </button>
+                        <button
+                            className={"workspace-table-button"}
+                            disabled={offset === lastOffset}
+                            onClick={() => setOffset(lastOffset)}
+                        >
+                            <ArrowLastIcon />
+                        </button>
+                    </div>
+                    <div className={"workspace-table-controls-page-container"}>
+                        <span>{`${offset + 1} - ${Math.min(total, offset + limit + 1)} of ${total}`}</span>
+                        <Select<{ label: string; value: number }, false>
+                            menuPlacement={"auto"}
+                            value={{ value: limit, label: String(limit) }}
+                            options={[10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((n) => ({
+                                value: n,
+                                label: String(n),
+                            }))}
+                            onChange={(value) => {
+                                this.setState({ limit: value?.value || limit });
+                            }}
+                            styles={selectStyles("default")}
+                        />
+                    </div>
                 </div>
             </div>
         );
