@@ -97,7 +97,7 @@ pub async fn delete_leech(
     Ok(HttpResponse::Ok().finish())
 }
 
-/// T
+/// The simple representation of a leech
 #[derive(Serialize, ToSchema)]
 pub struct SimpleLeech {
     uuid: Uuid,
@@ -134,6 +134,7 @@ pub async fn get_leech(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<Jso
     }))
 }
 
+/// The configuration of a leech
 #[derive(Serialize, ToSchema)]
 pub struct LeechConfig {
     #[serde(flatten)]

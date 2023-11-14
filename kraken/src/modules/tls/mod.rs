@@ -1,4 +1,4 @@
-mod cert;
+//! The TLS manager is defined in this module
 
 use std::fs::{set_permissions, Permissions};
 use std::os::unix::fs::PermissionsExt;
@@ -20,6 +20,8 @@ use utoipa::ToSchema;
 
 use crate::api::handler::ApiError;
 use crate::modules::tls::cert::CertificateBuilder;
+
+mod cert;
 
 /// Struct managing all tls related data used in grpc
 pub struct TlsManager {
