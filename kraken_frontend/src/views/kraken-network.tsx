@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import { handleApiError, sleep } from "../utils/helper";
 import Input from "../components/input";
 import Popup from "reactjs-popup";
-import { SimpleLeech } from "../api/generated/models";
+import { SimpleLeech } from "../api/generated";
 import "../styling/kraken-network.css";
 
 type KrakenNetworkProps = {};
@@ -59,7 +59,7 @@ export default class KrakenNetwork extends React.Component<KrakenNetworkProps, K
                 this.setState({ leeches });
                 await sleep(10);
                 this.setState({});
-            })
+            }),
         );
     }
 
@@ -72,7 +72,7 @@ export default class KrakenNetwork extends React.Component<KrakenNetworkProps, K
                 toast.success("Created leech");
                 this.setState({ showPopup: false, address: "", name: "" });
                 this.retrieveLeeches();
-            })
+            }),
         );
     }
 
@@ -101,15 +101,25 @@ export default class KrakenNetwork extends React.Component<KrakenNetworkProps, K
                             <button
                                 className="button"
                                 type="button"
-                                disabled
-                                // TODO expose token in api
-                                /*onClick={() => {
-                                    navigator.clipboard.writeText(l.token).then(() => {
-                                        toast.success("Copied token to clipboard", { autoClose: 1500 });
-                                    });
-                                }}*/
+                                onClick={async () => {
+                                    const result = await Api.admin.leeches.genConfig(l.uuid);
+
+                                    let config = "";
+                                    result.match(
+                                        ({ ca, cert, key, sni, secret }) => {
+                                            config = `KrakenSni = "${sni}"\nKrakenCa = """\n${ca}"""\nLeechCert = """\n${cert}"""\nLeechKey="""\n${key}"""\nLeechSecret="${secret}"`;
+                                        },
+                                        (err) => {
+                                            toast.error(err.message);
+                                        },
+                                    );
+                                    if (config.length == 0) return;
+
+                                    await navigator.clipboard.writeText(config);
+                                    toast.success("Copied client tls config to clipboard", { autoClose: 1500 });
+                                }}
                             >
-                                Copy token
+                                Gen tls config
                             </button>
                         </th>
                     </tr>

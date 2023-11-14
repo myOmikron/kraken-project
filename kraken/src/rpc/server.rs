@@ -12,11 +12,14 @@ use tonic::{Code, Request, Response, Status, Streaming};
 use uuid::Uuid;
 
 use crate::config::Config;
-use crate::models::{Attack, AttackType, DnsRecordType, InsertAttackError, LeechApiKey, Workspace};
+use crate::models::{
+    Attack, AttackType, DnsRecordType, InsertAttackError, Leech, LeechApiKey, Workspace,
+};
 use crate::modules::attack_results::{
     store_dns_resolution_result, store_host_alive_check_result,
     store_query_certificate_transparency_result, store_tcp_port_scan_result,
 };
+use crate::modules::tls::TlsManager;
 use crate::rpc::definitions::rpc_definitions::attack_results_service_server::AttackResultsService;
 use crate::rpc::rpc_definitions::attack_results_service_server::AttackResultsServiceServer;
 use crate::rpc::rpc_definitions::backlog_service_server::{BacklogService, BacklogServiceServer};
@@ -108,6 +111,8 @@ impl BacklogService for Results {
         &self,
         request: Request<BacklogDnsRequest>,
     ) -> Result<Response<EmptyResponse>, Status> {
+        auth_leech(&self.db, &request).await?;
+
         let Ok(mut db_trx) = self.db.start_transaction().await else {
             error!("could not start batch processing");
             return Err(Status::internal("internal server error"));
@@ -191,6 +196,8 @@ impl BacklogService for Results {
         &self,
         request: Request<BacklogTcpPortScanRequest>,
     ) -> Result<Response<EmptyResponse>, Status> {
+        auth_leech(&self.db, &request).await?;
+
         let Ok(mut db_trx) = self.db.start_transaction().await else {
             error!("could not start batch processing");
             return Err(Status::internal("internal server error"));
@@ -252,6 +259,8 @@ impl BacklogService for Results {
         &self,
         request: Request<BacklogHostAliveRequest>,
     ) -> Result<Response<EmptyResponse>, Status> {
+        auth_leech(&self.db, &request).await?;
+
         let Ok(mut db_trx) = self.db.start_transaction().await else {
             error!("could not start batch processing");
             return Err(Status::internal("internal server error"));
@@ -301,17 +310,38 @@ impl BacklogService for Results {
     }
 }
 
+/// Authenticates a leech by checking the `x-leech-secret` header.
+pub async fn auth_leech<T>(db: &Database, request: &Request<T>) -> Result<(), Status> {
+    let secret = request
+        .metadata()
+        .get("x-leech-secret")
+        .ok_or_else(|| Status::unauthenticated("Missing `x-leech-secret` header"))?;
+    let secret = secret
+        .to_str()
+        .map_err(|_| Status::unauthenticated("Invalid `x-leech-secret`"))?;
+    query!(db, (Leech::F.uuid,))
+        .condition(Leech::F.secret.equals(secret))
+        .optional()
+        .await
+        .map_err(status_from_database)?
+        .ok_or_else(|| Status::unauthenticated("Invalid `x-leech-secret`"))?;
+    Ok(())
+}
+
 /// Starts the gRPC server
 ///
 /// **Parameter**:
 /// - `config`: Reference to [Config]
-pub fn start_rpc_server(config: &Config, db: Database) -> Result<(), String> {
+pub fn start_rpc_server(config: &Config, db: Database, tls: &TlsManager) {
     let listen_address = config.server.rpc_listen_address.parse().unwrap();
     let listen_port = config.server.rpc_listen_port;
+    let tls_config = tls.tonic_server();
 
     tokio::spawn(async move {
         info!("Starting gRPC server");
         if let Err(err) = Server::builder()
+            .tls_config(tls_config)
+            .expect("The tls config should be valid")
             .add_service(AttackResultsServiceServer::new(Results { db: db.clone() }))
             .add_service(BacklogServiceServer::new(Results { db }))
             .serve(SocketAddr::new(listen_address, listen_port))
@@ -321,7 +351,6 @@ pub fn start_rpc_server(config: &Config, db: Database) -> Result<(), String> {
             error!("Error running gRPC server: {err}");
         }
     });
-    Ok(())
 }
 
 /// Convert [`rorm::Error`] to [`tonic::Status`]

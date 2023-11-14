@@ -9,6 +9,30 @@ use url::Url;
 
 use crate::logging::LoggingConfig;
 
+/// The configuration for leech.
+///
+/// This struct can be parsed from a configuration file
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct Config {
+    /// Server configuration
+    pub server: ServerConfig,
+
+    /// Database configuration
+    pub database: DBConfig,
+
+    /// Logging configuration
+    ///
+    /// Only used in the [`server`](crate::Command::Server) command
+    pub logging: LoggingConfig,
+
+    /// Dehashed configuration
+    pub dehashed: Option<DehashedConfig>,
+
+    /// The configuration for all kraken related stuff
+    pub kraken: KrakenConfig,
+}
+
 /// The configuration of the server part
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "PascalCase")]
@@ -25,6 +49,21 @@ pub struct ServerConfig {
 pub struct KrakenConfig {
     /// The url to reach kraken's grpc server
     pub kraken_uri: Url,
+
+    /// The fake domain the kraken's cert is valid for
+    pub kraken_sni: String,
+
+    /// PEM encoded CA managed by kraken
+    pub kraken_ca: String,
+
+    /// PEM encoded certificate to present when communicating with kraken over grpc
+    pub leech_cert: String,
+
+    /// PEM encoded private key for the `leech_key`
+    pub leech_key: String,
+
+    /// Random string the leech has to present when connecting to kraken during the backlog process.
+    pub leech_secret: String,
 }
 
 /// The configuration of the dehashed API
@@ -51,26 +90,6 @@ pub struct DBConfig {
     pub user: String,
     /// Password to use to connect to the database
     pub password: String,
-}
-
-/// The configuration for leech.
-///
-/// This struct can be parsed from a configuration file
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct Config {
-    /// Server configuration
-    pub server: ServerConfig,
-    /// Database configuration
-    pub database: DBConfig,
-    /// Logging configuration
-    ///
-    /// Only used in the [`server`](crate::Command::Server) command
-    pub logging: LoggingConfig,
-    /// Dehashed configuration
-    pub dehashed: Option<DehashedConfig>,
-    /// The configuration for all kraken related stuff
-    pub kraken: KrakenConfig,
 }
 
 /// Errors that can occur while retrieving the config file

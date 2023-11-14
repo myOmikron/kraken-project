@@ -4,7 +4,25 @@ ListenPort = 31337
 Token = "{{ leech_token }}"
 
 [Kraken]
-KrakenUri = "http://10.13.37.10:31337"
+KrakenUri = "https://10.13.37.10:31337"
+KrakenSni = "..."
+KrakenCa = """
+-----BEGIN CERTIFICATE-----
+...
+-----END CERTIFICATE-----
+"""
+LeechCert = """
+-----BEGIN CERTIFICATE-----
+...
+-----END CERTIFICATE-----
+"""
+LeechKey="""
+-----BEGIN PRIVATE KEY-----
+...
+-----END PRIVATE KEY-----
+"""
+LeechSecret = "..."
+
 
 [Database]
 # Only used by rorm-cli

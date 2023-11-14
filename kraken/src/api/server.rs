@@ -29,9 +29,10 @@ use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
 };
 use crate::api::swagger::{ExternalApi, FrontendApi};
-use crate::chan::{RpcClients, RpcManagerChannel, SettingsManagerChan, WsManagerChan};
+use crate::chan::{LeechManager, SettingsManagerChan, WsManagerChan};
 use crate::config::Config;
 use crate::modules::oauth::OauthManager;
+use crate::modules::tls::TlsManager;
 
 const ORIGIN_NAME: &str = "Kraken";
 
@@ -44,11 +45,11 @@ pub type DehashedScheduler = Data<RwLock<Option<Scheduler>>>;
 pub(crate) async fn start_server(
     db: Database,
     config: &Config,
-    rpc_manager_chan: RpcManagerChannel,
-    rpc_clients: RpcClients,
+    leeches: Data<LeechManager>,
     ws_manager_chan: WsManagerChan,
     setting_manager_chan: Arc<SettingsManagerChan>,
     dehashed_scheduler: Option<Scheduler>,
+    tls_manager: Data<TlsManager>,
 ) -> Result<(), StartServerError> {
     let key = Key::try_from(
         BASE64_STANDARD
@@ -81,8 +82,8 @@ pub(crate) async fn start_server(
             .app_data(webauthn.clone())
             .app_data(oauth.clone())
             .app_data(Data::new(ws_manager_chan.clone()))
-            .app_data(Data::new(rpc_manager_chan.clone()))
-            .app_data(rpc_clients.clone())
+            .app_data(leeches.clone())
+            .app_data(tls_manager.clone())
             .app_data(Data::new(setting_manager_chan.clone()))
             .app_data(dehashed.clone())
             .wrap(setup_logging_mw(LoggingMiddlewareConfig::default()))
@@ -133,6 +134,7 @@ pub(crate) async fn start_server(
                     .service(leeches::create_leech)
                     .service(leeches::delete_leech)
                     .service(leeches::update_leech)
+                    .service(leeches::gen_leech_config)
                     .service(users::create_user)
                     .service(users::delete_user)
                     .service(users::get_user)
