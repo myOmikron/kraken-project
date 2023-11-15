@@ -34,7 +34,7 @@ futures = { version = "~0.3" }
 tokio-stream = { version = "~0.1" }
 
 # Expansion of the Iterator trait
-itertools = { version = "~0.11" }
+itertools = { version = "~0.12" }
 
 # gRPC implementation
 tonic = { version = "~0.10", features = ["transport", "tls"] }
