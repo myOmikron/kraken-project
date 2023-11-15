@@ -9,3 +9,21 @@
   leech_db_user: "leech"
   leech_db_password: ""
   leech_token: ""
+  generated_leech_conf: |
+    KrakenSni = "..."
+    KrakenCa = """
+    -----BEGIN CERTIFICATE-----
+    ...
+    -----END CERTIFICATE-----
+    """
+    LeechCert = """
+    -----BEGIN CERTIFICATE-----
+    ...
+    -----END CERTIFICATE-----
+    """
+    LeechKey="""
+    -----BEGIN PRIVATE KEY-----
+    ...
+    -----END PRIVATE KEY-----
+    """
+    LeechSecret = "..."
