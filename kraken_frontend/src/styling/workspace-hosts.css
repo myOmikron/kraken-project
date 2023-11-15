@@ -1,5 +1,6 @@
 .workspace-hosts-container {
-    display: flex;
+    display: grid;
+    grid-auto-rows: min-content 1fr min-content;
     flex-direction: column;
     gap: 1em;
 }
@@ -13,6 +14,7 @@
     grid-template-columns: repeat(auto-fit, minmax(30em, 1fr));;
     gap: 1em;
     overflow-y: auto;
+    height: fit-content;
 }
 
 .workspace-hosts-host {
