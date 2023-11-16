@@ -16,20 +16,31 @@
 import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
+  CreateServiceRequest,
   FullService,
   ServiceResultsPage,
   UpdateServiceRequest,
+  UuidResponse,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
+    CreateServiceRequestFromJSON,
+    CreateServiceRequestToJSON,
     FullServiceFromJSON,
     FullServiceToJSON,
     ServiceResultsPageFromJSON,
     ServiceResultsPageToJSON,
     UpdateServiceRequestFromJSON,
     UpdateServiceRequestToJSON,
+    UuidResponseFromJSON,
+    UuidResponseToJSON,
 } from '../models';
+
+export interface CreateServiceOperationRequest {
+    uuid: string;
+    createServiceRequest: CreateServiceRequest;
+}
 
 export interface GetAllServicesRequest {
     uuid: string;
@@ -53,6 +64,45 @@ export interface UpdateServiceOperationRequest {
  * 
  */
 export class ServicesApi extends runtime.BaseAPI {
+
+    /**
+     * Manually add a service
+     * Manually add a service
+     */
+    async createServiceRaw(requestParameters: CreateServiceOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling createService.');
+        }
+
+        if (requestParameters.createServiceRequest === null || requestParameters.createServiceRequest === undefined) {
+            throw new runtime.RequiredError('createServiceRequest','Required parameter requestParameters.createServiceRequest was null or undefined when calling createService.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{uuid}/services`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CreateServiceRequestToJSON(requestParameters.createServiceRequest),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Manually add a service
+     * Manually add a service
+     */
+    async createService(requestParameters: CreateServiceOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
+        const response = await this.createServiceRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * List the services of a workspace

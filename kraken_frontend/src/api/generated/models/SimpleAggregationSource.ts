@@ -24,43 +24,49 @@ export interface SimpleAggregationSource {
      * @type {number}
      * @memberof SimpleAggregationSource
      */
-    bruteforceSubdomains?: number;
+    bruteforceSubdomains: number;
     /**
      * Scan tcp ports
      * @type {number}
      * @memberof SimpleAggregationSource
      */
-    tcpPortScan?: number;
+    tcpPortScan: number;
     /**
      * Query certificate transparency
      * @type {number}
      * @memberof SimpleAggregationSource
      */
-    queryCertificateTransparency?: number;
+    queryCertificateTransparency: number;
     /**
      * Query the dehashed API
      * @type {number}
      * @memberof SimpleAggregationSource
      */
-    queryDehashed?: number;
+    queryDehashed: number;
     /**
      * Check if a host is reachable via icmp
      * @type {number}
      * @memberof SimpleAggregationSource
      */
-    hostAlive?: number;
+    hostAlive: number;
     /**
      * Detect the service that is running on a port
      * @type {number}
      * @memberof SimpleAggregationSource
      */
-    serviceDetection?: number;
+    serviceDetection: number;
     /**
      * Resolve domain names
      * @type {number}
      * @memberof SimpleAggregationSource
      */
-    dnsResolution?: number;
+    dnsResolution: number;
+    /**
+     * Manually inserted
+     * @type {boolean}
+     * @memberof SimpleAggregationSource
+     */
+    manual: boolean;
 }
 
 /**
@@ -68,6 +74,14 @@ export interface SimpleAggregationSource {
  */
 export function instanceOfSimpleAggregationSource(value: object): boolean {
     let isInstance = true;
+    isInstance = isInstance && "bruteforceSubdomains" in value;
+    isInstance = isInstance && "tcpPortScan" in value;
+    isInstance = isInstance && "queryCertificateTransparency" in value;
+    isInstance = isInstance && "queryDehashed" in value;
+    isInstance = isInstance && "hostAlive" in value;
+    isInstance = isInstance && "serviceDetection" in value;
+    isInstance = isInstance && "dnsResolution" in value;
+    isInstance = isInstance && "manual" in value;
 
     return isInstance;
 }
@@ -82,13 +96,14 @@ export function SimpleAggregationSourceFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'bruteforceSubdomains': !exists(json, 'bruteforce_subdomains') ? undefined : json['bruteforce_subdomains'],
-        'tcpPortScan': !exists(json, 'tcp_port_scan') ? undefined : json['tcp_port_scan'],
-        'queryCertificateTransparency': !exists(json, 'query_certificate_transparency') ? undefined : json['query_certificate_transparency'],
-        'queryDehashed': !exists(json, 'query_dehashed') ? undefined : json['query_dehashed'],
-        'hostAlive': !exists(json, 'host_alive') ? undefined : json['host_alive'],
-        'serviceDetection': !exists(json, 'service_detection') ? undefined : json['service_detection'],
-        'dnsResolution': !exists(json, 'dns_resolution') ? undefined : json['dns_resolution'],
+        'bruteforceSubdomains': json['bruteforce_subdomains'],
+        'tcpPortScan': json['tcp_port_scan'],
+        'queryCertificateTransparency': json['query_certificate_transparency'],
+        'queryDehashed': json['query_dehashed'],
+        'hostAlive': json['host_alive'],
+        'serviceDetection': json['service_detection'],
+        'dnsResolution': json['dns_resolution'],
+        'manual': json['manual'],
     };
 }
 
@@ -108,6 +123,7 @@ export function SimpleAggregationSourceToJSON(value?: SimpleAggregationSource | 
         'host_alive': value.hostAlive,
         'service_detection': value.serviceDetection,
         'dns_resolution': value.dnsResolution,
+        'manual': value.manual,
     };
 }
 

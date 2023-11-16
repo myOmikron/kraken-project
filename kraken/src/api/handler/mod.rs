@@ -718,36 +718,20 @@ macro_rules! query_tags {
 #[derive(Copy, Clone, Serialize, ToSchema, Debug, Default)]
 pub struct SimpleAggregationSource {
     /// Bruteforce subdomains via DNS requests
-    #[serde(skip_serializing_if = "is_zero")]
     bruteforce_subdomains: usize,
-
     /// Scan tcp ports
-    #[serde(skip_serializing_if = "is_zero")]
-    #[schema(required = false, minimum = 1)]
     tcp_port_scan: usize,
-
     /// Query certificate transparency
-    #[serde(skip_serializing_if = "is_zero")]
     query_certificate_transparency: usize,
-
     /// Query the dehashed API
-    #[serde(skip_serializing_if = "is_zero")]
     query_dehashed: usize,
-
     /// Check if a host is reachable via icmp
-    #[serde(skip_serializing_if = "is_zero")]
     host_alive: usize,
-
     /// Detect the service that is running on a port
-    #[serde(skip_serializing_if = "is_zero")]
     service_detection: usize,
-
     /// Resolve domain names
-    #[serde(skip_serializing_if = "is_zero")]
     dns_resolution: usize,
-
     /// Manually inserted
-    #[serde(skip_serializing_if = "Clone::clone")]
     manual: bool,
 }
 
@@ -814,8 +798,4 @@ impl Extend<SourceType> for SimpleAggregationSource {
             self.add(result_type)
         }
     }
-}
-
-fn is_zero(number: &usize) -> bool {
-    *number == 0
 }

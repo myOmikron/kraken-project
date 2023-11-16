@@ -251,8 +251,8 @@ export class WorkspacesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all workspaces owned by executing user  For administration access, look at the `/admin/workspaces` endpoint.
-     * Retrieve all workspaces owned by executing user
+     * Retrieve all workspaces that the executing user has access to  For administration access, look at the `/admin/workspaces` endpoint.
+     * Retrieve all workspaces that the executing user has access to
      */
     async getAllWorkspacesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAllWorkspacesResponse>> {
         const queryParameters: any = {};
@@ -270,8 +270,8 @@ export class WorkspacesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all workspaces owned by executing user  For administration access, look at the `/admin/workspaces` endpoint.
-     * Retrieve all workspaces owned by executing user
+     * Retrieve all workspaces that the executing user has access to  For administration access, look at the `/admin/workspaces` endpoint.
+     * Retrieve all workspaces that the executing user has access to
      */
     async getAllWorkspaces(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAllWorkspacesResponse> {
         const response = await this.getAllWorkspacesRaw(initOverrides);

@@ -16,20 +16,31 @@
 import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
+  CreateDomainRequest,
   DomainResultsPage,
   FullDomain,
   UpdateDomainRequest,
+  UuidResponse,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
+    CreateDomainRequestFromJSON,
+    CreateDomainRequestToJSON,
     DomainResultsPageFromJSON,
     DomainResultsPageToJSON,
     FullDomainFromJSON,
     FullDomainToJSON,
     UpdateDomainRequestFromJSON,
     UpdateDomainRequestToJSON,
+    UuidResponseFromJSON,
+    UuidResponseToJSON,
 } from '../models';
+
+export interface CreateDomainOperationRequest {
+    uuid: string;
+    createDomainRequest: CreateDomainRequest;
+}
 
 export interface GetAllDomainsRequest {
     uuid: string;
@@ -53,6 +64,45 @@ export interface UpdateDomainOperationRequest {
  * 
  */
 export class DomainsApi extends runtime.BaseAPI {
+
+    /**
+     * Manually add a domain
+     * Manually add a domain
+     */
+    async createDomainRaw(requestParameters: CreateDomainOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling createDomain.');
+        }
+
+        if (requestParameters.createDomainRequest === null || requestParameters.createDomainRequest === undefined) {
+            throw new runtime.RequiredError('createDomainRequest','Required parameter requestParameters.createDomainRequest was null or undefined when calling createDomain.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{uuid}/domains`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CreateDomainRequestToJSON(requestParameters.createDomainRequest),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Manually add a domain
+     * Manually add a domain
+     */
+    async createDomain(requestParameters: CreateDomainOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
+        const response = await this.createDomainRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Retrieve all domains of a specific workspace

@@ -14,7 +14,7 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * T
+ * The simple representation of a leech
  * @export
  * @interface SimpleLeech
  */

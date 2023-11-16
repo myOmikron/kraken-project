@@ -14,7 +14,7 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * 
+ * The configuration of a leech
  * @export
  * @interface LeechConfig
  */

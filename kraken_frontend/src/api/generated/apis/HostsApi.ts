@@ -16,20 +16,31 @@
 import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
+  CreateHostRequest,
   FullHost,
   HostResultsPage,
   UpdateHostRequest,
+  UuidResponse,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
+    CreateHostRequestFromJSON,
+    CreateHostRequestToJSON,
     FullHostFromJSON,
     FullHostToJSON,
     HostResultsPageFromJSON,
     HostResultsPageToJSON,
     UpdateHostRequestFromJSON,
     UpdateHostRequestToJSON,
+    UuidResponseFromJSON,
+    UuidResponseToJSON,
 } from '../models';
+
+export interface CreateHostOperationRequest {
+    uuid: string;
+    createHostRequest: CreateHostRequest;
+}
 
 export interface GetAllHostsRequest {
     uuid: string;
@@ -52,6 +63,45 @@ export interface UpdateHostOperationRequest {
  * 
  */
 export class HostsApi extends runtime.BaseAPI {
+
+    /**
+     * Manually add a host
+     * Manually add a host
+     */
+    async createHostRaw(requestParameters: CreateHostOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling createHost.');
+        }
+
+        if (requestParameters.createHostRequest === null || requestParameters.createHostRequest === undefined) {
+            throw new runtime.RequiredError('createHostRequest','Required parameter requestParameters.createHostRequest was null or undefined when calling createHost.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{uuid}/hosts`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CreateHostRequestToJSON(requestParameters.createHostRequest),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Manually add a host
+     * Manually add a host
+     */
+    async createHost(requestParameters: CreateHostOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
+        const response = await this.createHostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Retrieve all hosts.  Hosts are created out of aggregating data or by user input. They represent a single host and can be created by providing an IP address

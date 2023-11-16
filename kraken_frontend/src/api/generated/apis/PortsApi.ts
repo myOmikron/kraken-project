@@ -16,20 +16,31 @@
 import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
+  CreatePortRequest,
   FullPort,
   PortResultsPage,
   UpdatePortRequest,
+  UuidResponse,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
+    CreatePortRequestFromJSON,
+    CreatePortRequestToJSON,
     FullPortFromJSON,
     FullPortToJSON,
     PortResultsPageFromJSON,
     PortResultsPageToJSON,
     UpdatePortRequestFromJSON,
     UpdatePortRequestToJSON,
+    UuidResponseFromJSON,
+    UuidResponseToJSON,
 } from '../models';
+
+export interface CreatePortOperationRequest {
+    uuid: string;
+    createPortRequest: CreatePortRequest;
+}
 
 export interface GetAllPortsRequest {
     uuid: string;
@@ -53,6 +64,45 @@ export interface UpdatePortOperationRequest {
  * 
  */
 export class PortsApi extends runtime.BaseAPI {
+
+    /**
+     * Manually add a port
+     * Manually add a port
+     */
+    async createPortRaw(requestParameters: CreatePortOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling createPort.');
+        }
+
+        if (requestParameters.createPortRequest === null || requestParameters.createPortRequest === undefined) {
+            throw new runtime.RequiredError('createPortRequest','Required parameter requestParameters.createPortRequest was null or undefined when calling createPort.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{uuid}/ports`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CreatePortRequestToJSON(requestParameters.createPortRequest),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Manually add a port
+     * Manually add a port
+     */
+    async createPort(requestParameters: CreatePortOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
+        const response = await this.createPortRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * List the ports of a workspace

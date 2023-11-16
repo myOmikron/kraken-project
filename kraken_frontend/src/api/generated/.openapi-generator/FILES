@@ -31,8 +31,12 @@ models/CertificateTransparencyEntry.ts
 models/Color.ts
 models/CreateApiKeyRequest.ts
 models/CreateAppRequest.ts
+models/CreateDomainRequest.ts
 models/CreateGlobalTagRequest.ts
+models/CreateHostRequest.ts
 models/CreateLeechRequest.ts
+models/CreatePortRequest.ts
+models/CreateServiceRequest.ts
 models/CreateUserRequest.ts
 models/CreateWordlistRequest.ts
 models/CreateWorkspaceRequest.ts
@@ -74,8 +78,14 @@ models/HostCertainty.ts
 models/HostResultsPage.ts
 models/HostsAliveRequest.ts
 models/InviteToWorkspace.ts
+models/LeechConfig.ts
+models/LeechConfigAllOf.ts
+models/LeechTlsConfig.ts
 models/ListAttacks.ts
 models/LoginRequest.ts
+models/ManualHostCertainty.ts
+models/ManualPortCertainty.ts
+models/ManualServiceCertainty.ts
 models/OpenRequestInfo.ts
 models/OsType.ts
 models/PortCertainty.ts
