@@ -3,9 +3,10 @@
 use std::collections::HashMap;
 
 use actix_web::web::{Data, Json, Path, Query};
-use actix_web::{get, put, HttpResponse};
+use actix_web::{get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
+use ipnetwork::IpNetwork;
 use rorm::conditions::{BoxedCondition, Condition, DynamicCollection};
 use rorm::prelude::ForeignModelByField;
 use rorm::{and, insert, query, update, Database, FieldAccess, Model};
@@ -17,11 +18,11 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::hosts::SimpleHost;
 use crate::api::handler::{
     get_page_params, ApiError, ApiResult, PageParams, PathUuid, PortResultsPage,
-    SimpleAggregationSource, SimpleTag, TagType,
+    SimpleAggregationSource, SimpleTag, TagType, UuidResponse,
 };
 use crate::models::{
-    AggregationSource, AggregationTable, GlobalTag, Host, Port, PortGlobalTag, PortProtocol,
-    PortWorkspaceTag, Workspace, WorkspaceTag,
+    AggregationSource, AggregationTable, GlobalTag, Host, ManualPort, ManualPortCertainty, Port,
+    PortGlobalTag, PortProtocol, PortWorkspaceTag, Workspace, WorkspaceTag,
 };
 use crate::query_tags;
 
@@ -303,6 +304,66 @@ pub async fn get_port(
         sources,
         workspace: path.w_uuid,
         created_at: port.created_at,
+    }))
+}
+
+/// The request to manually add a port
+#[derive(Deserialize, ToSchema)]
+pub struct CreatePortRequest {
+    /// The ip address the port is open on
+    #[schema(value_type = String, example = "127.0.0.1")]
+    pub ip_addr: IpNetwork,
+
+    /// The port to add
+    #[schema(example = "8080")]
+    pub port: u16,
+
+    /// Whether the port should exist right now or existed at some point
+    pub certainty: ManualPortCertainty,
+
+    /// The port's protocol
+    #[schema(example = "Tcp")]
+    pub protocol: PortProtocol,
+}
+
+/// Manually add a port
+#[utoipa::path(
+    tag = "Ports",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Port was created", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    request_body = CreatePortRequest,
+    params(PathUuid),
+    security(("api_key" = []))
+)]
+#[post("/workspaces/{uuid}/ports")]
+pub async fn create_port(
+    req: Json<CreatePortRequest>,
+    path: Path<PathUuid>,
+    db: Data<Database>,
+    SessionUser(user): SessionUser,
+) -> ApiResult<Json<UuidResponse>> {
+    let CreatePortRequest {
+        ip_addr,
+        port,
+        certainty,
+        protocol,
+    } = req.into_inner();
+    let PathUuid { uuid: workspace } = path.into_inner();
+    Ok(Json(UuidResponse {
+        uuid: ManualPort::insert(
+            db.as_ref(),
+            workspace,
+            user,
+            ip_addr,
+            port,
+            certainty,
+            protocol,
+        )
+        .await?,
     }))
 }
 

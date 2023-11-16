@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path, Query};
-use actix_web::{get, put, HttpResponse};
+use actix_web::{get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use rorm::conditions::DynamicCollection;
@@ -17,11 +17,11 @@ use uuid::Uuid;
 use crate::api::extractors::SessionUser;
 use crate::api::handler::{
     get_page_params, ApiError, ApiResult, DomainResultsPage, PageParams, PathUuid,
-    SimpleAggregationSource, SimpleTag, TagType,
+    SimpleAggregationSource, SimpleTag, TagType, UuidResponse,
 };
 use crate::models::{
     AggregationSource, AggregationTable, Domain, DomainGlobalTag, DomainHostRelation,
-    DomainWorkspaceTag, GlobalTag, Host, Workspace, WorkspaceTag,
+    DomainWorkspaceTag, GlobalTag, Host, ManualDomain, Workspace, WorkspaceTag,
 };
 use crate::query_tags;
 
@@ -321,6 +321,41 @@ pub async fn get_domain(
         tags,
         sources,
         created_at: domain.created_at,
+    }))
+}
+
+/// The request to manually add a domain
+#[derive(Deserialize, ToSchema)]
+pub struct CreateDomainRequest {
+    /// The domain to add
+    #[schema(example = "kraken.test")]
+    pub domain: String,
+}
+
+/// Manually add a domain
+#[utoipa::path(
+    tag = "Domains",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Domain was created", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    request_body = CreateDomainRequest,
+    params(PathUuid),
+    security(("api_key" = []))
+)]
+#[post("/workspaces/{uuid}/domains")]
+pub async fn create_domain(
+    req: Json<CreateDomainRequest>,
+    path: Path<PathUuid>,
+    db: Data<Database>,
+    SessionUser(user): SessionUser,
+) -> ApiResult<Json<UuidResponse>> {
+    let CreateDomainRequest { domain } = req.into_inner();
+    let PathUuid { uuid: workspace } = path.into_inner();
+    Ok(Json(UuidResponse {
+        uuid: ManualDomain::insert(db.as_ref(), workspace, user, domain).await?,
     }))
 }
 

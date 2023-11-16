@@ -2,6 +2,7 @@
 pub use aggregation::*;
 pub use attack::*;
 pub use leech::*;
+pub use manual::*;
 pub use oauth::*;
 pub use search::*;
 pub use settings::*;
@@ -13,6 +14,7 @@ pub use workspace::*;
 mod aggregation;
 mod attack;
 mod leech;
+mod manual;
 mod oauth;
 mod search;
 mod settings;

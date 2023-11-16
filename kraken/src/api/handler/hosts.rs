@@ -3,9 +3,10 @@
 use std::collections::HashMap;
 
 use actix_web::web::{Data, Json, Path, Query};
-use actix_web::{get, put, HttpResponse};
+use actix_web::{get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
+use ipnetwork::IpNetwork;
 use rorm::conditions::DynamicCollection;
 use rorm::prelude::*;
 use rorm::{and, insert, query, update, Database};
@@ -16,11 +17,11 @@ use uuid::Uuid;
 use crate::api::extractors::SessionUser;
 use crate::api::handler::{
     get_page_params, ApiError, ApiResult, HostResultsPage, PageParams, PathUuid,
-    SimpleAggregationSource, SimpleTag, TagType,
+    SimpleAggregationSource, SimpleTag, TagType, UuidResponse,
 };
 use crate::models::{
-    AggregationSource, AggregationTable, GlobalTag, Host, HostGlobalTag, HostWorkspaceTag, OsType,
-    Workspace, WorkspaceTag,
+    AggregationSource, AggregationTable, GlobalTag, Host, HostGlobalTag, HostWorkspaceTag,
+    ManualHost, ManualHostCertainty, OsType, Workspace, WorkspaceTag,
 };
 use crate::query_tags;
 
@@ -245,6 +246,44 @@ pub async fn get_host(
         tags,
         sources,
         created_at: host.created_at,
+    }))
+}
+
+/// The request to manually add a host
+#[derive(Deserialize, ToSchema)]
+pub struct CreateHostRequest {
+    /// The host's ip address
+    #[schema(value_type = String, example = "127.0.0.1")]
+    pub ip_addr: IpNetwork,
+
+    /// Whether the host should exist right now or existed at some point
+    pub certainty: ManualHostCertainty,
+}
+
+/// Manually add a host
+#[utoipa::path(
+    tag = "Hosts",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Host was created", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    request_body = CreateHostRequest,
+    params(PathUuid),
+    security(("api_key" = []))
+)]
+#[post("/workspaces/{uuid}/hosts")]
+pub async fn create_host(
+    req: Json<CreateHostRequest>,
+    path: Path<PathUuid>,
+    db: Data<Database>,
+    SessionUser(user): SessionUser,
+) -> ApiResult<Json<UuidResponse>> {
+    let CreateHostRequest { ip_addr, certainty } = req.into_inner();
+    let PathUuid { uuid: workspace } = path.into_inner();
+    Ok(Json(UuidResponse {
+        uuid: ManualHost::insert(db.as_ref(), workspace, user, ip_addr, certainty).await?,
     }))
 }
 
