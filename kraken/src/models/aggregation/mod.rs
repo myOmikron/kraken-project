@@ -474,8 +474,8 @@ pub struct DomainWorkspaceTag {
     pub domain: ForeignModel<Domain>,
 }
 
-/// M2M relation between a generic attack result (ex: [`HostAliveResult`])
-/// and a generic aggregation table it was aggregated into (ex: [`Host`])
+/// Generic M2M relation between aggregated models (ex: [`Host`])
+/// and the sources which contributed to them (ex: [`HostAliveResult`])
 #[derive(Model)]
 pub struct AggregationSource {
     /// Primary key of this table
@@ -486,15 +486,15 @@ pub struct AggregationSource {
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
     pub workspace: ForeignModel<Workspace>,
 
-    /// Attack type which yielded the result
-    pub result_type: ResultType,
+    /// The type of the source which contributed to the aggregated model
+    pub source_type: SourceType,
 
-    /// The attack result's primary key
+    /// The primary key of the source which contributed to the aggregated model
     ///
-    /// The table this key is valid in, depends on the `result_type`
-    pub result_uuid: Uuid,
+    /// The table this key is valid in, depends on the `source_type`
+    pub source_uuid: Uuid,
 
-    /// The table the result was aggregated into
+    /// The aggregated model's type
     pub aggregated_table: AggregationTable,
 
     /// The aggregated model's primary key
@@ -505,7 +505,7 @@ pub struct AggregationSource {
 
 /// Enum used in [`AggregationSource`] to identify which table it points to
 #[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
-pub enum ResultType {
+pub enum SourceType {
     /// The [`BruteforceSubdomainsResult`] table
     BruteforceSubdomains,
     /// The [`TcpPortScanResult`] table

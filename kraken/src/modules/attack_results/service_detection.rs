@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::models::{
     AggregationSource, AggregationTable, Host, HostCertainty, Port, PortCertainty, PortProtocol,
-    ResultType, Service, ServiceCertainty, ServiceDetectionName, ServiceDetectionResultInsert,
+    Service, ServiceCertainty, ServiceDetectionName, ServiceDetectionResultInsert, SourceType,
 };
 
 /// Store a service detection's result and update the aggregated hosts, ports and services
@@ -75,16 +75,16 @@ pub async fn store_service_detection_result(
                 AggregationSource {
                     uuid: Uuid::new_v4(),
                     workspace: ForeignModelByField::Key(workspace_uuid),
-                    result_type: ResultType::ServiceDetection,
-                    result_uuid,
+                    source_type: SourceType::ServiceDetection,
+                    source_uuid: result_uuid,
                     aggregated_table: AggregationTable::Host,
                     aggregated_uuid: host_uuid,
                 },
                 AggregationSource {
                     uuid: Uuid::new_v4(),
                     workspace: ForeignModelByField::Key(workspace_uuid),
-                    result_type: ResultType::ServiceDetection,
-                    result_uuid,
+                    source_type: SourceType::ServiceDetection,
+                    source_uuid: result_uuid,
                     aggregated_table: AggregationTable::Port,
                     aggregated_uuid: port_uuid,
                 },
@@ -96,8 +96,8 @@ pub async fn store_service_detection_result(
                     .map(|service_uuid| AggregationSource {
                         uuid: Uuid::new_v4(),
                         workspace: ForeignModelByField::Key(workspace_uuid),
-                        result_type: ResultType::ServiceDetection,
-                        result_uuid,
+                        source_type: SourceType::ServiceDetection,
+                        source_uuid: result_uuid,
                         aggregated_table: AggregationTable::Service,
                         aggregated_uuid: service_uuid,
                     }),

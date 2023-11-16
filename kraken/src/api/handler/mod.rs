@@ -33,7 +33,7 @@ use crate::api::handler::hosts::FullHost;
 use crate::api::handler::ports::FullPort;
 use crate::api::handler::services::FullService;
 use crate::api::handler::workspaces::{SearchEntry, SearchResultEntry};
-use crate::models::{AggregationSource, AggregationTable, Color, ResultType, User};
+use crate::models::{AggregationSource, AggregationTable, Color, SourceType, User};
 
 pub mod api_keys;
 pub mod attack_results;
@@ -768,7 +768,7 @@ impl SimpleAggregationSource {
             tx,
             (
                 AggregationSource::F.aggregated_uuid,
-                AggregationSource::F.result_type
+                AggregationSource::F.source_type
             )
         )
         .condition(and![
@@ -781,28 +781,27 @@ impl SimpleAggregationSource {
         .stream();
 
         let mut sources: HashMap<Uuid, SimpleAggregationSource> = HashMap::new();
-        while let Some((uuid, result_type)) = stream.try_next().await? {
-            sources.entry(uuid).or_default().add(result_type);
+        while let Some((uuid, source_type)) = stream.try_next().await? {
+            sources.entry(uuid).or_default().add(source_type);
         }
         Ok(sources)
     }
 
-    fn add(&mut self, result_type: ResultType) {
-        match result_type {
-            ResultType::BruteforceSubdomains => self.bruteforce_subdomains += 1,
-            ResultType::TcpPortScan => self.tcp_port_scan += 1,
-            ResultType::QueryCertificateTransparency => self.query_certificate_transparency += 1,
-            ResultType::QueryDehashed => self.query_dehashed += 1,
-            ResultType::HostAlive => self.host_alive += 1,
-            ResultType::ServiceDetection => self.service_detection += 1,
-            ResultType::DnsResolution => self.dns_resolution += 1,
-            _ => {}
+    fn add(&mut self, source_type: SourceType) {
+        match source_type {
+            SourceType::BruteforceSubdomains => self.bruteforce_subdomains += 1,
+            SourceType::TcpPortScan => self.tcp_port_scan += 1,
+            SourceType::QueryCertificateTransparency => self.query_certificate_transparency += 1,
+            SourceType::QueryDehashed => self.query_dehashed += 1,
+            SourceType::HostAlive => self.host_alive += 1,
+            SourceType::ServiceDetection => self.service_detection += 1,
+            SourceType::DnsResolution => self.dns_resolution += 1,
         }
     }
 }
 
-impl Extend<ResultType> for SimpleAggregationSource {
-    fn extend<T: IntoIterator<Item = ResultType>>(&mut self, iter: T) {
+impl Extend<SourceType> for SimpleAggregationSource {
+    fn extend<T: IntoIterator<Item = SourceType>>(&mut self, iter: T) {
         for result_type in iter {
             self.add(result_type)
         }

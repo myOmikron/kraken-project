@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use crate::models::{
     AggregationSource, AggregationTable, BruteforceSubdomainsResultInsert, DnsRecordType, Domain,
-    DomainCertainty, DomainDomainRelation, DomainHostRelation, Host, HostCertainty, ResultType,
+    DomainCertainty, DomainDomainRelation, DomainHostRelation, Host, HostCertainty, SourceType,
 };
 
 /// Store a bruteforce subdomains' result and update the aggregated domains and hosts
@@ -91,8 +91,8 @@ pub async fn store_bruteforce_subdomains_result(
             [AggregationSource {
                 uuid: Uuid::new_v4(),
                 workspace: ForeignModelByField::Key(workspace_uuid),
-                result_type: ResultType::BruteforceSubdomains,
-                result_uuid,
+                source_type: SourceType::BruteforceSubdomains,
+                source_uuid: result_uuid,
                 aggregated_table: AggregationTable::Domain,
                 aggregated_uuid: source_uuid,
             }]
@@ -101,8 +101,8 @@ pub async fn store_bruteforce_subdomains_result(
                 destination.map(|(aggregated_table, aggregated_uuid)| AggregationSource {
                     uuid: Uuid::new_v4(),
                     workspace: ForeignModelByField::Key(workspace_uuid),
-                    result_type: ResultType::BruteforceSubdomains,
-                    result_uuid,
+                    source_type: SourceType::BruteforceSubdomains,
+                    source_uuid: result_uuid,
                     aggregated_table,
                     aggregated_uuid,
                 }),

@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::models::{
     AggregationSource, AggregationTable, CertificateTransparencyResultInsert,
-    CertificateTransparencyValueNameInsert, Domain, DomainCertainty, ResultType,
+    CertificateTransparencyValueNameInsert, Domain, DomainCertainty, SourceType,
 };
 use crate::rpc::rpc_definitions::shared::CertEntry;
 
@@ -76,8 +76,8 @@ pub async fn store_query_certificate_transparency_result(
         .bulk(domains.into_iter().map(|domain_uuid| AggregationSource {
             uuid: Uuid::new_v4(),
             workspace: ForeignModelByField::Key(workspace_uuid),
-            result_type: ResultType::QueryCertificateTransparency,
-            result_uuid,
+            source_type: SourceType::QueryCertificateTransparency,
+            source_uuid: result_uuid,
             aggregated_table: AggregationTable::Domain,
             aggregated_uuid: domain_uuid,
         }))

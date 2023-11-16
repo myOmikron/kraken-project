@@ -330,7 +330,7 @@ pub async fn get_service(
 
     tags.extend(global_tags);
 
-    let sources = query!(&mut tx, (AggregationSource::F.result_type,))
+    let sources = query!(&mut tx, (AggregationSource::F.source_type,))
         .condition(AggregationSource::F.aggregated_uuid.equals(host.uuid))
         .stream()
         .map_ok(|(x,)| x)

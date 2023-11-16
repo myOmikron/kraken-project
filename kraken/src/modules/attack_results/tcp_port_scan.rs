@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::models::{
     AggregationSource, AggregationTable, Host, HostCertainty, Port, PortCertainty, PortProtocol,
-    ResultType, TcpPortScanResultInsert,
+    SourceType, TcpPortScanResultInsert,
 };
 
 /// Store a tcp port scan's result and update the aggregated hosts and ports
@@ -49,16 +49,16 @@ pub async fn store_tcp_port_scan_result(
             AggregationSource {
                 uuid: Uuid::new_v4(),
                 workspace: ForeignModelByField::Key(workspace_uuid),
-                result_type: ResultType::TcpPortScan,
-                result_uuid,
+                source_type: SourceType::TcpPortScan,
+                source_uuid: result_uuid,
                 aggregated_table: AggregationTable::Host,
                 aggregated_uuid: host_uuid,
             },
             AggregationSource {
                 uuid: Uuid::new_v4(),
                 workspace: ForeignModelByField::Key(workspace_uuid),
-                result_type: ResultType::TcpPortScan,
-                result_uuid,
+                source_type: SourceType::TcpPortScan,
+                source_uuid: result_uuid,
                 aggregated_table: AggregationTable::Port,
                 aggregated_uuid: port_uuid,
             },

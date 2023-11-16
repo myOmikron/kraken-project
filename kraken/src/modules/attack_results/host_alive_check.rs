@@ -5,7 +5,7 @@ use rorm::prelude::*;
 use uuid::Uuid;
 
 use crate::models::{
-    AggregationSource, AggregationTable, Host, HostAliveResultInsert, HostCertainty, ResultType,
+    AggregationSource, AggregationTable, Host, HostAliveResultInsert, HostCertainty, SourceType,
 };
 
 /// Store a host alive check's result and update the aggregated hosts
@@ -35,8 +35,8 @@ pub async fn store_host_alive_check_result(
         .single(&AggregationSource {
             uuid: Uuid::new_v4(),
             workspace: ForeignModelByField::Key(workspace_uuid),
-            result_type: ResultType::HostAlive,
-            result_uuid,
+            source_type: SourceType::HostAlive,
+            source_uuid: result_uuid,
             aggregated_table: AggregationTable::Host,
             aggregated_uuid: host_uuid,
         })
