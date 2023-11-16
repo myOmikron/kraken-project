@@ -4,9 +4,10 @@ use std::collections::HashMap;
 
 use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Data, Json, Path, Query};
-use actix_web::{get, put, HttpResponse};
+use actix_web::{get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
+use ipnetwork::IpNetwork;
 use rorm::conditions::{BoxedCondition, Condition, DynamicCollection};
 use rorm::prelude::ForeignModelByField;
 use rorm::{and, insert, query, update, Database, FieldAccess, Model};
@@ -19,11 +20,12 @@ use crate::api::handler::hosts::SimpleHost;
 use crate::api::handler::ports::SimplePort;
 use crate::api::handler::{
     get_page_params, ApiError, ApiResult, PageParams, PathUuid, ServiceResultsPage,
-    SimpleAggregationSource, SimpleTag, TagType,
+    SimpleAggregationSource, SimpleTag, TagType, UuidResponse,
 };
 use crate::models::{
-    AggregationSource, AggregationTable, GlobalTag, Host, Port, Service, ServiceCertainty,
-    ServiceGlobalTag, ServiceWorkspaceTag, Workspace, WorkspaceTag,
+    AggregationSource, AggregationTable, GlobalTag, Host, ManualService, ManualServiceCertainty,
+    Port, Service, ServiceCertainty, ServiceGlobalTag, ServiceWorkspaceTag, Workspace,
+    WorkspaceTag,
 };
 use crate::query_tags;
 
@@ -366,6 +368,58 @@ pub async fn get_service(
         tags,
         sources,
         created_at: service.created_at,
+    }))
+}
+
+/// The request to manually add a service
+#[derive(Deserialize, ToSchema)]
+pub struct CreateServiceRequest {
+    /// The service's name
+    #[schema(example = "django")]
+    pub name: String,
+
+    /// Whether the port should exist right now or existed at some point
+    pub certainty: ManualServiceCertainty,
+
+    /// The ip address the service runs on
+    #[schema(value_type = String, example = "127.0.0.1")]
+    pub host: IpNetwork,
+
+    /// An optional port the service runs on
+    #[schema(example = "8080")]
+    pub port: Option<u16>,
+}
+
+/// Manually add a service
+#[utoipa::path(
+    tag = "Services",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Service was created", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    request_body = CreateServiceRequest,
+    params(PathUuid),
+    security(("api_key" = []))
+)]
+#[post("/workspaces/{uuid}/services")]
+pub async fn create_service(
+    req: Json<CreateServiceRequest>,
+    path: Path<PathUuid>,
+    db: Data<Database>,
+    SessionUser(user): SessionUser,
+) -> ApiResult<Json<UuidResponse>> {
+    let CreateServiceRequest {
+        name,
+        certainty,
+        host,
+        port,
+    } = req.into_inner();
+    let PathUuid { uuid: workspace } = path.into_inner();
+    Ok(Json(UuidResponse {
+        uuid: ManualService::insert(db.as_ref(), workspace, user, name, host, port, certainty)
+            .await?,
     }))
 }
 

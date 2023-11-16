@@ -745,6 +745,10 @@ pub struct SimpleAggregationSource {
     /// Resolve domain names
     #[serde(skip_serializing_if = "is_zero")]
     dns_resolution: usize,
+
+    /// Manually inserted
+    #[serde(skip_serializing_if = "Clone::clone")]
+    manual: bool,
 }
 
 impl SimpleAggregationSource {
@@ -796,6 +800,10 @@ impl SimpleAggregationSource {
             SourceType::HostAlive => self.host_alive += 1,
             SourceType::ServiceDetection => self.service_detection += 1,
             SourceType::DnsResolution => self.dns_resolution += 1,
+            SourceType::ManualDomain
+            | SourceType::ManualHost
+            | SourceType::ManualPort
+            | SourceType::ManualService => self.manual = true,
         }
     }
 }

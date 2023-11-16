@@ -520,6 +520,14 @@ pub enum SourceType {
     ServiceDetection,
     /// The [`DnsResolutionResult`] table
     DnsResolution,
+    /// The [`ManualDomain`] table
+    ManualDomain,
+    /// The [`ManualHost`] table
+    ManualHost,
+    /// The [`ManualPort`] table
+    ManualPort,
+    /// The [`ManualService`] table
+    ManualService,
 }
 
 /// Enum used in [`AggregationSource`] to identify which table it points to
