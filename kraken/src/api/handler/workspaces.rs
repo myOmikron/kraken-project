@@ -980,8 +980,7 @@ pub async fn get_search_results(
         .all()
         .await?;
 
-    let mut items = vec![];
-    items.reserve(proxy_items.len());
+    let mut items = Vec::with_capacity(proxy_items.len());
 
     for item in proxy_items {
         items.push(match item.ref_type {
@@ -1203,8 +1202,7 @@ async fn build_query_list() -> Vec<(String, ModelType)> {
         ModelType::Domain,
     ];
 
-    let mut data = vec![];
-    data.reserve(table_names_no_ref_to_ws.len() + table_names_ref_to_ws.len());
+    let mut data = Vec::with_capacity(table_names_no_ref_to_ws.len() + table_names_ref_to_ws.len());
 
     data.extend(table_names_no_ref_to_ws.into_iter().map(|table_entry| {
         (format!(

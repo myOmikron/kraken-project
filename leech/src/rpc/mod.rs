@@ -314,8 +314,7 @@ pub mod rpc_attacks {
 
     impl From<Vec<DnsResult>> for BacklogDnsRequest {
         fn from(value: Vec<DnsResult>) -> Self {
-            let mut entries: Vec<BacklogDnsResult> = Vec::new();
-            entries.reserve(value.len());
+            let mut entries: Vec<BacklogDnsResult> = Vec::with_capacity(value.len());
 
             for e in value {
                 entries.push(e.into());
@@ -346,8 +345,7 @@ pub mod rpc_attacks {
 
     impl From<Vec<TcpPortScanResult>> for BacklogTcpPortScanRequest {
         fn from(value: Vec<TcpPortScanResult>) -> Self {
-            let mut entries: Vec<BacklogTcpPortScanResult> = Vec::new();
-            entries.reserve(value.len());
+            let mut entries: Vec<BacklogTcpPortScanResult> = Vec::with_capacity(value.len());
 
             for e in value {
                 entries.push(e.into());
@@ -375,8 +373,7 @@ pub mod rpc_attacks {
 
     impl From<Vec<HostAliveResult>> for BacklogHostAliveRequest {
         fn from(value: Vec<HostAliveResult>) -> Self {
-            let mut entries: Vec<BacklogHostAliveResult> = Vec::new();
-            entries.reserve(value.len());
+            let mut entries: Vec<BacklogHostAliveResult> = Vec::with_capacity(value.len());
 
             for e in value {
                 entries.push(e.into());
