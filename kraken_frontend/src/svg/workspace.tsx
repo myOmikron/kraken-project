@@ -1,4 +1,6 @@
-export default function WorkspaceIcon(props: any) {
+import React from "react";
+
+export default function WorkspaceIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
         <div className={"icon"} {...props}>
             <svg

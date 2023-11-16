@@ -1,9 +1,9 @@
 import React from "react";
 import "../index.css";
 
-export default function ArrowUpIcon(params: any) {
+export default function ArrowUpIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
-        <div className={"icon"} {...params}>
+        <div className={"icon"} {...props}>
             <svg
                 className={"neon"}
                 fill="none"

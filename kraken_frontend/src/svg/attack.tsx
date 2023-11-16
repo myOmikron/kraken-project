@@ -1,4 +1,6 @@
-export default function AttackIcon(props: any) {
+import React from "react";
+
+export default function AttackIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
         <div className={"icon"} {...props}>
             <svg

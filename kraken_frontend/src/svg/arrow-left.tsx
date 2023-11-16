@@ -1,9 +1,9 @@
 import React from "react";
 import "../index.css";
 
-export default function ArrowLeftIcon(params: any) {
+export default function ArrowLeftIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
-        <div className={"icon"} {...params}>
+        <div className={"icon"} {...props}>
             <svg
                 className={"neon"}
                 fill="#000000"

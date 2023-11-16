@@ -1,6 +1,8 @@
-export default function AppleIcon(params: any) {
+import React from "react";
+
+export default function AppleIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
-        <div className={"icon"} {...params}>
+        <div className={"icon"} {...props}>
             <svg className={"neon"} width="800px" height="800px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <title>apple</title>
                 <rect width="24" height="24" fill="none" />

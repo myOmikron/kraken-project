@@ -1,6 +1,8 @@
-export default function FreeBSDIcon(params: any) {
+import React from "react";
+
+export default function FreeBSDIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
-        <div className={"icon"} {...params}>
+        <div className={"icon"} {...props}>
             <svg
                 className={"neon"}
                 fill="#000000"

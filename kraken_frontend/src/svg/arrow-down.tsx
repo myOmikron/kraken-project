@@ -1,6 +1,8 @@
-export default function ArrowDownIcon(params: any) {
+import React from "react";
+
+export default function ArrowDownIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
-        <div className={"icon"} {...params}>
+        <div className={"icon"} {...props}>
             <svg
                 className={"neon"}
                 fill="none"

@@ -1,4 +1,6 @@
-export default function UserSettingsIcon(props: any) {
+import React from "react";
+
+export default function UserSettingsIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
         <div className={"icon"} {...props}>
             <svg

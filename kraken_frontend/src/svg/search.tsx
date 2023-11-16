@@ -1,4 +1,6 @@
-export default function SearchIcon(props: any) {
+import React from "react";
+
+export default function SearchIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
         <div className={"icon"} {...props}>
             <svg

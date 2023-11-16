@@ -1,4 +1,6 @@
-export default function KrakenIcon(props: any) {
+import React from "react";
+
+export default function KrakenIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
         <div className={"icon"} {...props}>
             <svg

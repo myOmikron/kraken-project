@@ -1,6 +1,8 @@
-export default function ArrowRightIcon(params: any) {
+import React from "react";
+
+export default function ArrowRightIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
-        <div className={"icon"} {...params}>
+        <div className={"icon"} {...props}>
             <svg
                 className={"neon"}
                 fill="#000000"

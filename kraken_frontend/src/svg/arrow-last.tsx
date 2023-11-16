@@ -1,9 +1,9 @@
 import React from "react";
 import "../index.css";
 
-export default function ArrowLastIcon(params: any) {
+export default function ArrowLastIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
-        <div className={"pagination-icon"} {...params}>
+        <div className={"pagination-icon"} {...props}>
             <svg
                 className="neon"
                 fill="#000000"

@@ -1,6 +1,8 @@
-export default function HostIcon(params: any) {
+import React from "react";
+
+export default function HostIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
-        <div className={"icon"} {...params}>
+        <div className={"icon"} {...props}>
             <svg
                 className={"neon"}
                 fill="#000000"

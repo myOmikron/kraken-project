@@ -1,4 +1,6 @@
-export default function LeechIcon(props: any) {
+import React from "react";
+
+export default function LeechIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
         <div className={"icon"} {...props}>
             <svg

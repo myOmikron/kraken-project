@@ -1,6 +1,8 @@
-export default function AnonymousIcon(params: any) {
+import React from "react";
+
+export default function AnonymousIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
-        <div className={"icon"} {...params}>
+        <div className={"icon"} {...props}>
             <svg
                 className={"neon"}
                 width="800px"

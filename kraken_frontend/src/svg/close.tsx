@@ -1,6 +1,8 @@
-export default function CloseIcon(params: any) {
+import React from "react";
+
+export default function CloseIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
-        <div className={"icon"} {...params}>
+        <div className={"icon"} {...props}>
             <svg
                 className={"neon"}
                 width="512px"
