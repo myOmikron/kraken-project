@@ -1,5 +1,7 @@
 import { SimpleAggregationSource } from "../../../api/generated";
 import React from "react";
+import { ObjectFns } from "../../../utils/helper";
+import Bubble from "../../../components/bubble";
 
 type SourcesListProps = {
     sources: SimpleAggregationSource;
@@ -7,35 +9,22 @@ type SourcesListProps = {
 export default function SourcesList(props: SourcesListProps) {
     return (
         <div className={"bubble-list"}>
-            {Object.entries(props.sources)
-                .filter(([_, count]) => count > 0)
-                .map(
-                    // @ts-ignore
-                    ([attackType, count]: [keyof SimpleAggregationSource, number]) => (
-                        <div className={"bubble bubble-primary"} title={ATTACK_NAME[attackType]}>
-                            {ATTACK_ABRV[attackType]} {count}
-                        </div>
-                    ),
-                )}
+            {ObjectFns.entries(ATTACKS).map(([key, [abrv, name]]) =>
+                props.sources[key] > 0 ? (
+                    <Bubble color={"primary"} name={`${abrv} ${props.sources[key]}`} title={name} />
+                ) : null,
+            )}
+            {props.sources.manual ? <Bubble name={"MI"} title={"Manually inserted"} /> : null}
         </div>
     );
 }
 
-const ATTACK_ABRV: { [attackType in keyof SimpleAggregationSource]: string } = {
-    bruteforceSubdomains: "BSd",
-    tcpPortScan: "PsT",
-    queryCertificateTransparency: "CT",
-    queryDehashed: "Dh",
-    hostAlive: "HA",
-    serviceDetection: "SvD",
-    dnsResolution: "DR",
-};
-const ATTACK_NAME: { [attackType in keyof SimpleAggregationSource]: string } = {
-    bruteforceSubdomains: "Bruteforce Subdomains",
-    tcpPortScan: "TCP port scan",
-    queryCertificateTransparency: "Certificate Transparency",
-    queryDehashed: "Dehashed",
-    hostAlive: "Host alive",
-    serviceDetection: "Service Detection",
-    dnsResolution: "DNS Resolution",
+const ATTACKS = {
+    bruteforceSubdomains: ["BSd", "Bruteforce Subdomains"],
+    tcpPortScan: ["PsT", "TCP port scan"],
+    queryCertificateTransparency: ["CT", "Certificate Transparency"],
+    queryDehashed: ["Dh", "Dehashed"],
+    hostAlive: ["HA", "Host alive"],
+    serviceDetection: ["SvD", "Service Detection"],
+    dnsResolution: ["DR", "DNS Resolution"],
 };

@@ -11,6 +11,20 @@ import FreeBSDIcon from "../svg/freebsd";
 import AndroidIcon from "../svg/android";
 import React from "react";
 
+export namespace ObjectFns {
+    /** {@link ObjectConstructor.keys `Object.keys`} which preserves the keys' type */
+    export function keys<Key extends string>(obj: Record<Key, any>): Array<Key> {
+        // @ts-ignore
+        return Object.keys(obj);
+    }
+
+    /** {@link ObjectConstructor.entries `Object.entries`} which preserves the keys' type */
+    export function entries<Key extends string, Value>(obj: Record<Key, Value>): Array<[Key, Value]> {
+        // @ts-ignore
+        return Object.entries(obj);
+    }
+}
+
 /**
  * Sleeps x milliseconds async
  *
