@@ -33,7 +33,7 @@ use crate::api::handler::hosts::FullHost;
 use crate::api::handler::ports::FullPort;
 use crate::api::handler::services::FullService;
 use crate::api::handler::workspaces::{SearchEntry, SearchResultEntry};
-use crate::models::{AggregationSource, AggregationTable, AttackType, Color, User};
+use crate::models::{AggregationSource, AggregationTable, Color, ResultType, User};
 
 pub mod api_keys;
 pub mod attack_results;
@@ -781,30 +781,30 @@ impl SimpleAggregationSource {
         .stream();
 
         let mut sources: HashMap<Uuid, SimpleAggregationSource> = HashMap::new();
-        while let Some((uuid, attack_type)) = stream.try_next().await? {
-            sources.entry(uuid).or_default().add(attack_type);
+        while let Some((uuid, result_type)) = stream.try_next().await? {
+            sources.entry(uuid).or_default().add(result_type);
         }
         Ok(sources)
     }
 
-    fn add(&mut self, attack_type: AttackType) {
-        match attack_type {
-            AttackType::Undefined => {}
-            AttackType::BruteforceSubdomains => self.bruteforce_subdomains += 1,
-            AttackType::TcpPortScan => self.tcp_port_scan += 1,
-            AttackType::QueryCertificateTransparency => self.query_certificate_transparency += 1,
-            AttackType::QueryUnhashed => self.query_dehashed += 1,
-            AttackType::HostAlive => self.host_alive += 1,
-            AttackType::ServiceDetection => self.service_detection += 1,
-            AttackType::DnsResolution => self.dns_resolution += 1,
+    fn add(&mut self, result_type: ResultType) {
+        match result_type {
+            ResultType::BruteforceSubdomains => self.bruteforce_subdomains += 1,
+            ResultType::TcpPortScan => self.tcp_port_scan += 1,
+            ResultType::QueryCertificateTransparency => self.query_certificate_transparency += 1,
+            ResultType::QueryDehashed => self.query_dehashed += 1,
+            ResultType::HostAlive => self.host_alive += 1,
+            ResultType::ServiceDetection => self.service_detection += 1,
+            ResultType::DnsResolution => self.dns_resolution += 1,
+            _ => {}
         }
     }
 }
 
-impl Extend<AttackType> for SimpleAggregationSource {
-    fn extend<T: IntoIterator<Item = AttackType>>(&mut self, iter: T) {
-        for attack_type in iter {
-            self.add(attack_type)
+impl Extend<ResultType> for SimpleAggregationSource {
+    fn extend<T: IntoIterator<Item = ResultType>>(&mut self, iter: T) {
+        for result_type in iter {
+            self.add(result_type)
         }
     }
 }

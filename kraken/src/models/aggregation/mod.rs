@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{AttackType, GlobalTag, Workspace, WorkspaceTag};
+use crate::models::{GlobalTag, Workspace, WorkspaceTag};
 
 mod operations;
 
@@ -215,7 +215,7 @@ pub struct ServiceWorkspaceTag {
 }
 
 /// A protocol of a port
-#[derive(DbEnum, ToSchema, Debug, Copy, Clone, Serialize)]
+#[derive(DbEnum, ToSchema, Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum PortProtocol {
     /// Unknown protocol
     Unknown,
@@ -487,7 +487,7 @@ pub struct AggregationSource {
     pub workspace: ForeignModel<Workspace>,
 
     /// Attack type which yielded the result
-    pub result_type: AttackType,
+    pub result_type: ResultType,
 
     /// The attack result's primary key
     ///
@@ -501,6 +501,25 @@ pub struct AggregationSource {
     ///
     /// The table this key is valid in, depends on the `aggregated_table`
     pub aggregated_uuid: Uuid,
+}
+
+/// Enum used in [`AggregationSource`] to identify which table it points to
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+pub enum ResultType {
+    /// The [`BruteforceSubdomainsResult`] table
+    BruteforceSubdomains,
+    /// The [`TcpPortScanResult`] table
+    TcpPortScan,
+    /// The [`CertificateTransparencyResult`] table
+    QueryCertificateTransparency,
+    /// The [`DehashedQueryResult`] table
+    QueryDehashed,
+    /// The [`HostAliveResult`] table
+    HostAlive,
+    /// The [`ServiceDetectionResult`] table
+    ServiceDetection,
+    /// The [`DnsResolutionResult`] table
+    DnsResolution,
 }
 
 /// Enum used in [`AggregationSource`] to identify which table it points to

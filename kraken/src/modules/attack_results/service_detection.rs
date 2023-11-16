@@ -5,8 +5,8 @@ use rorm::prelude::ForeignModelByField;
 use uuid::Uuid;
 
 use crate::models::{
-    AggregationSource, AggregationTable, AttackType, Host, HostCertainty, Port, PortCertainty,
-    PortProtocol, Service, ServiceCertainty, ServiceDetectionName, ServiceDetectionResultInsert,
+    AggregationSource, AggregationTable, Host, HostCertainty, Port, PortCertainty, PortProtocol,
+    ResultType, Service, ServiceCertainty, ServiceDetectionName, ServiceDetectionResultInsert,
 };
 
 /// Store a service detection's result and update the aggregated hosts, ports and services
@@ -75,7 +75,7 @@ pub async fn store_service_detection_result(
                 AggregationSource {
                     uuid: Uuid::new_v4(),
                     workspace: ForeignModelByField::Key(workspace_uuid),
-                    result_type: AttackType::ServiceDetection,
+                    result_type: ResultType::ServiceDetection,
                     result_uuid,
                     aggregated_table: AggregationTable::Host,
                     aggregated_uuid: host_uuid,
@@ -83,7 +83,7 @@ pub async fn store_service_detection_result(
                 AggregationSource {
                     uuid: Uuid::new_v4(),
                     workspace: ForeignModelByField::Key(workspace_uuid),
-                    result_type: AttackType::ServiceDetection,
+                    result_type: ResultType::ServiceDetection,
                     result_uuid,
                     aggregated_table: AggregationTable::Port,
                     aggregated_uuid: port_uuid,
@@ -96,7 +96,7 @@ pub async fn store_service_detection_result(
                     .map(|service_uuid| AggregationSource {
                         uuid: Uuid::new_v4(),
                         workspace: ForeignModelByField::Key(workspace_uuid),
-                        result_type: AttackType::ServiceDetection,
+                        result_type: ResultType::ServiceDetection,
                         result_uuid,
                         aggregated_table: AggregationTable::Service,
                         aggregated_uuid: service_uuid,
