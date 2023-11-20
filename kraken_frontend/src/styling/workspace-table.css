@@ -5,8 +5,19 @@
     --columns: 1fr 1fr 1fr 1fr;
 }
 
-.workspace-table-filter {
+.workspace-table-pre-header {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5em;
     margin: 0 1em 1.5em;
+}
+
+.workspace-table-pre-header > input {
+    flex-grow: 1;
+}
+
+.workspace-table-pre-header .icon {
+    width: 1.4em;
 }
 
 .workspace-table-body {

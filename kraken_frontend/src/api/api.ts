@@ -4,8 +4,12 @@ import {
     ApiKeysApi,
     BruteforceSubdomainsRequest,
     CreateAppRequest,
+    CreateDomainRequest,
     CreateGlobalTagRequest,
+    CreateHostRequest,
     CreateLeechRequest,
+    CreatePortRequest,
+    CreateServiceRequest,
     CreateUserRequest,
     CreateWordlistRequest,
     CreateWorkspaceRequest,
@@ -213,6 +217,8 @@ export const Api = {
                 handleError(hosts.getHost({ wUuid: workspaceUuid, hUuid: hostUuid })),
             update: (workspaceUuid: UUID, hostUuid: UUID, updateHostRequest: UpdateHostRequest) =>
                 handleError(hosts.updateHost({ wUuid: workspaceUuid, hUuid: hostUuid, updateHostRequest })),
+            create: (workspaceUuid: UUID, createHostRequest: CreateHostRequest) =>
+                handleError(hosts.createHost({ uuid: workspaceUuid, createHostRequest })),
         },
         ports: {
             all: (workspaceUuid: UUID, limit: number, offset: number, filter: { host?: UUID } = {}) =>
@@ -221,6 +227,8 @@ export const Api = {
                 handleError(ports.getPort({ wUuid: workspaceUuid, pUuid: portUuid })),
             update: (workspaceUuid: UUID, portUuid: UUID, updatePortRequest: UpdatePortRequest) =>
                 handleError(ports.updatePort({ wUuid: workspaceUuid, pUuid: portUuid, updatePortRequest })),
+            create: (workspaceUuid: UUID, createPortRequest: CreatePortRequest) =>
+                handleError(ports.createPort({ uuid: workspaceUuid, createPortRequest })),
         },
         domains: {
             all: (workspaceUuid: UUID, limit: number, offset: number, filter: { host?: UUID } = {}) =>
@@ -229,6 +237,8 @@ export const Api = {
                 handleError(domains.getDomain({ wUuid: workspaceUuid, dUuid: domainUuid })),
             update: (workspaceUuid: UUID, domainUuid: UUID, updateDomainRequest: UpdateDomainRequest) =>
                 handleError(domains.updateDomain({ wUuid: workspaceUuid, dUuid: domainUuid, updateDomainRequest })),
+            create: (workspaceUuid: UUID, createDomainRequest: CreateDomainRequest) =>
+                handleError(domains.createDomain({ uuid: workspaceUuid, createDomainRequest })),
         },
         services: {
             all: (workspaceUuid: UUID, limit: number, offset: number, filter: { host?: UUID } = {}) =>
@@ -237,6 +247,8 @@ export const Api = {
                 handleError(services.getService({ wUuid: workspaceUuid, sUuid: serviceUuid })),
             update: (workspaceUuid: UUID, serviceUuid: UUID, updateServiceRequest: UpdateServiceRequest) =>
                 handleError(services.updateService({ wUuid: workspaceUuid, sUuid: serviceUuid, updateServiceRequest })),
+            create: (workspaceUuid: UUID, createServiceRequest: CreateServiceRequest) =>
+                handleError(services.createService({ uuid: workspaceUuid, createServiceRequest })),
         },
         tags: {
             all: (workspaceUuid: UUID) => handleError(workspaceTags.getAllWorkspaceTags({ uuid: workspaceUuid })),

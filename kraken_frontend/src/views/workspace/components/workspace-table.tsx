@@ -10,6 +10,8 @@ import ArrowLeftIcon from "../../../svg/arrow-left";
 import ArrowRightIcon from "../../../svg/arrow-right";
 import ArrowFirstIcon from "../../../svg/arrow-first";
 import ArrowLastIcon from "../../../svg/arrow-last";
+import PlusIcon from "../../../svg/plus";
+import Popup from "reactjs-popup";
 
 export type WorkspaceDataTableProps<T> = {
     /** Method used to query a page */
@@ -28,6 +30,13 @@ export type WorkspaceDataTableProps<T> = {
 
     /** The `grid-template-rows` to use */
     columnsTemplate: string;
+
+    /**
+     * Callback when the `+` button is clicked
+     *
+     * When this callback is omitted, the button is as well.
+     */
+    onAdd?: () => void;
 };
 export type GenericPage<T> = {
     items: Array<T>;
@@ -47,6 +56,7 @@ export default function WorkspaceTable<T extends { uuid: string }>(props: Worksp
         queryDeps,
         children: [header, renderItem],
         columnsTemplate,
+        onAdd,
     } = props;
 
     const { items, ...table } = useTable(query, queryDeps);
@@ -55,6 +65,7 @@ export default function WorkspaceTable<T extends { uuid: string }>(props: Worksp
         ...table,
         children: [header, items.map(renderItem)],
         columnsTemplate,
+        onAdd,
     });
 }
 
@@ -75,6 +86,13 @@ export type StatelessWorkspaceTableProps = {
 
     /** The `grid-template-rows` to use */
     columnsTemplate: string;
+
+    /**
+     * Callback when the `+` button is clicked
+     *
+     * When this callback is omitted, the button is as well.
+     */
+    onAdd?: () => void;
 };
 export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
     const {
@@ -85,6 +103,7 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
         setOffset: setRawOffset,
         children: [header, body],
         columnsTemplate,
+        onAdd,
     } = props;
 
     const lastOffset = Math.floor(total / limit) * limit;
@@ -102,12 +121,14 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
     const style: CSSProperties = { "--columns": columnsTemplate };
     return (
         <div className={"workspace-table pane"} style={style}>
-            <Input
-                className={"input workspace-table-filter"}
-                placeholder={"Filter..."}
-                value={""}
-                onChange={console.log}
-            />
+            <div className={"workspace-table-pre-header"}>
+                <Input className={"input"} placeholder={"Filter..."} value={""} onChange={console.log} />
+                {onAdd === undefined ? null : (
+                    <button className={"button"} type={"button"} onClick={onAdd}>
+                        <PlusIcon />
+                    </button>
+                )}
+            </div>
             {header}
             <div className={"workspace-table-body"}>{body}</div>
             <div className={"workspace-table-controls"}>
@@ -164,6 +185,8 @@ export function useTable<T extends { uuid: string }>(
     const [total, setTotal] = React.useState(0);
     const [items, setItems] = React.useState<Array<T>>([]);
 
+    const [reload, setReload] = React.useState(0);
+
     React.useEffect(() => {
         query(limit, offset).then(
             handleApiError(({ items, total }) => {
@@ -171,7 +194,7 @@ export function useTable<T extends { uuid: string }>(
                 setTotal(total);
             }),
         );
-    }, [limit, offset, ...(queryDeps || [])]);
+    }, [limit, offset, reload, ...(queryDeps || [])]);
 
     return {
         /** The current number of items per page*/
@@ -189,6 +212,11 @@ export function useTable<T extends { uuid: string }>(
 
         /** The current page's items */
         items,
+
+        /** Triggers a reload of the current page */
+        reload() {
+            setReload(reload + 1);
+        },
 
         /**
          * Updates the item identified by `uuid` without querying the backend again

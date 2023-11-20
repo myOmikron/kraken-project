@@ -3,13 +3,35 @@ import "../../styling/workspace-data.css";
 import { StatelessWorkspaceTable, useTable } from "./components/workspace-table";
 import { Api } from "../../api/api";
 import Tag from "../../components/tag";
-import { FullDomain, FullHost, FullPort, FullService, SimpleAggregationSource, SimpleTag } from "../../api/generated";
+import {
+    FullDomain,
+    FullHost,
+    FullPort,
+    FullService,
+    instanceOfPortResultsPage,
+    ManualHostCertainty,
+    ManualPortCertainty,
+    ManualServiceCertainty,
+    PortProtocol,
+    SimpleAggregationSource,
+    SimpleTag,
+} from "../../api/generated";
 import { WorkspaceDataHostDetails } from "./workspace-data/workspace-data-host-details";
 import { WorkspaceDataServiceDetails } from "./workspace-data/workspace-data-service-details";
 import { WorkspaceDataPortDetails } from "./workspace-data/workspace-data-port-details";
 import { WorkspaceDataDomainDetails } from "./workspace-data/workspace-data-domain-details";
 import SourcesList from "./components/sources-list";
 import TagList from "./components/tag-list";
+import Popup from "reactjs-popup";
+import Input from "../../components/input";
+import Select, { SingleValue } from "react-select";
+import { selectStyles } from "../../components/select-menu";
+import { handleApiError } from "../../utils/helper";
+import { toast } from "react-toastify";
+import { CreateDomainForm } from "./workspace-data/workspace-data-create-domain";
+import { CreateHostForm } from "./workspace-data/workspace-data-create-host";
+import { CreatePortForm } from "./workspace-data/workspace-data-create-port";
+import { CreateServiceForm } from "./workspace-data/workspace-data-create-service";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 
@@ -23,6 +45,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
 
     const [tab, setTab] = React.useState<keyof typeof TABS>("hosts");
     const [selected, setSelected] = React.useState<{ type: keyof typeof TABS; uuid: string } | null>(null);
+    const [createForm, setCreateForm] = React.useState<keyof typeof TABS | null>(null);
 
     const { items: domains, ...domainsTable } = useTable<FullDomain>(
         (limit, offset) => Api.workspaces.domains.all(workspace, limit, offset),
@@ -45,7 +68,11 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
         switch (tab) {
             case "domains":
                 return (
-                    <StatelessWorkspaceTable {...domainsTable} columnsTemplate={"1fr 1fr 1fr 1fr"}>
+                    <StatelessWorkspaceTable
+                        {...domainsTable}
+                        columnsTemplate={"1fr 1fr 1fr 1fr"}
+                        onAdd={() => setCreateForm("domains")}
+                    >
                         <div className={"workspace-table-header"}>
                             <span>Name</span>
                             <span>Tags</span>
@@ -67,7 +94,11 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 );
             case "hosts":
                 return (
-                    <StatelessWorkspaceTable {...hostsTable} columnsTemplate={"39ch 1fr 1fr 1fr"}>
+                    <StatelessWorkspaceTable
+                        {...hostsTable}
+                        columnsTemplate={"39ch 1fr 1fr 1fr"}
+                        onAdd={() => setCreateForm("hosts")}
+                    >
                         <div className={"workspace-table-header"}>
                             <span>IP</span>
                             <span>Tags</span>
@@ -89,7 +120,11 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 );
             case "ports":
                 return (
-                    <StatelessWorkspaceTable {...portsTable} columnsTemplate={"5ch 39ch 1fr 1fr 1fr"}>
+                    <StatelessWorkspaceTable
+                        {...portsTable}
+                        columnsTemplate={"5ch 39ch 1fr 1fr 1fr"}
+                        onAdd={() => setCreateForm("ports")}
+                    >
                         <div className={"workspace-table-header"}>
                             <span>Port</span>
                             <span>Host</span>
@@ -113,7 +148,11 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 );
             case "services":
                 return (
-                    <StatelessWorkspaceTable {...servicesTable} columnsTemplate={"1fr 39ch 5ch 1fr 1fr 1fr"}>
+                    <StatelessWorkspaceTable
+                        {...servicesTable}
+                        columnsTemplate={"1fr 39ch 5ch 1fr 1fr 1fr"}
+                        onAdd={() => setCreateForm("services")}
+                    >
                         <div className={"workspace-table-header"}>
                             <span>Name</span>
                             <span>Host</span>
@@ -181,23 +220,77 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 return "Unimplemented";
         }
     })();
+    const createElement = (() => {
+        switch (createForm) {
+            case null:
+                return null;
+            case "domains":
+                return (
+                    <CreateDomainForm
+                        workspace={workspace}
+                        onSubmit={() => {
+                            setCreateForm(null);
+                            domainsTable.reload();
+                        }}
+                    />
+                );
+            case "hosts":
+                return (
+                    <CreateHostForm
+                        workspace={workspace}
+                        onSubmit={() => {
+                            setCreateForm(null);
+                            hostsTable.reload();
+                        }}
+                    />
+                );
+            case "ports":
+                return (
+                    <CreatePortForm
+                        workspace={workspace}
+                        onSubmit={() => {
+                            setCreateForm(null);
+                            hostsTable.reload();
+                            portsTable.reload();
+                        }}
+                    />
+                );
+            case "services":
+                return (
+                    <CreateServiceForm
+                        workspace={workspace}
+                        onSubmit={() => {
+                            setCreateForm(null);
+                            hostsTable.reload();
+                            portsTable.reload();
+                            servicesTable.reload();
+                        }}
+                    />
+                );
+        }
+    })();
     return (
-        <div className={"workspace-data-container"}>
-            <div className={"workspace-data-selector"}>
-                {Object.entries(TABS).map(([key, displayName]) => (
-                    <div
-                        className={"pane" + (tab !== key ? "" : " workspace-data-selected-tab")}
-                        onClick={() => setTab(key as keyof typeof TABS)}
-                    >
-                        <h3 className={"heading"}>{displayName}</h3>
-                    </div>
-                ))}
+        <>
+            <div className={"workspace-data-container"}>
+                <div className={"workspace-data-selector"}>
+                    {Object.entries(TABS).map(([key, displayName]) => (
+                        <div
+                            className={"pane" + (tab !== key ? "" : " workspace-data-selected-tab")}
+                            onClick={() => setTab(key as keyof typeof TABS)}
+                        >
+                            <h3 className={"heading"}>{displayName}</h3>
+                        </div>
+                    ))}
+                </div>
+                {tableElement}
+                <div className={"workspace-data-details pane"}>
+                    <h2 className={"sub-heading"}>Details</h2>
+                    {detailsElement}
+                </div>
             </div>
-            {tableElement}
-            <div className={"workspace-data-details pane"}>
-                <h2 className={"sub-heading"}>Details</h2>
-                {detailsElement}
-            </div>
-        </div>
+            <Popup nested modal open={createForm !== null} onClose={() => setCreateForm(null)}>
+                {createElement}
+            </Popup>
+        </>
     );
 }
