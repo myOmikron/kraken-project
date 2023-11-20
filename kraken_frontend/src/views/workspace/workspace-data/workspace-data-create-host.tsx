@@ -32,7 +32,7 @@ export function CreateHostForm(props: CreateHostFormProps) {
             <h2 className={"sub-heading"}>Manually add a host</h2>
             <label>
                 Address:
-                <Input value={ip} onChange={setIp} />
+                <Input value={ip} onChange={setIp} required />
             </label>
             <label>
                 Certainty:

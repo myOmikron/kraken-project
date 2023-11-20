@@ -23,6 +23,13 @@ export function CreateServiceForm(props: CreateServiceFormProps) {
             className={"pane workspace-data-create-form"}
             onSubmit={(event) => {
                 event.preventDefault();
+                if (port.length > 0) {
+                    const parsedPort = Number(port);
+                    if (Number.isNaN(parsedPort) || parsedPort <= 0 || 65535 < parsedPort) {
+                        toast.error("Port must be a number between 1 and 65535");
+                        return;
+                    }
+                }
                 Api.workspaces.services
                     .create(workspace, {
                         name,
@@ -41,15 +48,15 @@ export function CreateServiceForm(props: CreateServiceFormProps) {
             <h2 className={"sub-heading"}>Manually add a service</h2>
             <label>
                 Name:
-                <Input value={name} onChange={setName} />
+                <Input value={name} onChange={setName} required />
             </label>
             <label>
                 Address:
-                <Input value={ip} onChange={setIp} />
+                <Input value={ip} onChange={setIp} required />
             </label>
             <label>
                 Port:
-                <Input value={port} onChange={setPort} type={"number"} />
+                <Input value={port} onChange={setPort} />
             </label>
             <label>
                 Certainty:

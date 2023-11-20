@@ -17,6 +17,10 @@ export function CreateDomainForm(props: CreateDomainFormProps) {
             className={"pane workspace-data-create-form"}
             onSubmit={(event) => {
                 event.preventDefault();
+                if (domain.search(" ") >= 0) {
+                    toast.error("Domain must not contain whitespace");
+                    return;
+                }
                 Api.workspaces.domains.create(workspace, { domain }).then(
                     handleApiError(() => {
                         toast.success("Added domain");
@@ -28,7 +32,7 @@ export function CreateDomainForm(props: CreateDomainFormProps) {
             <h2 className={"sub-heading"}>Manually add a domain</h2>
             <label>
                 Domain:
-                <Input value={domain} onChange={setDomain} />
+                <Input value={domain} onChange={setDomain} required />
             </label>
             <button className={"button"} type={"submit"}>
                 Add

@@ -23,6 +23,11 @@ export function CreatePortForm(props: CreatePortFormProps) {
             className={"pane workspace-data-create-form"}
             onSubmit={(event) => {
                 event.preventDefault();
+                const parsedPort = Number(port);
+                if (Number.isNaN(parsedPort) || parsedPort <= 0 || 65535 < parsedPort) {
+                    toast.error("Port must be a number between 1 and 65535");
+                    return;
+                }
                 Api.workspaces.ports
                     .create(workspace, { ipAddr: ip, port: Number(port), certainty: certy, protocol: proto })
                     .then(
@@ -36,11 +41,11 @@ export function CreatePortForm(props: CreatePortFormProps) {
             <h2 className={"sub-heading"}>Manually add a port</h2>
             <label>
                 Address:
-                <Input value={ip} onChange={setIp} />
+                <Input value={ip} onChange={setIp} required />
             </label>
             <label>
                 Port:
-                <Input value={port} onChange={setPort} type={"number"} />
+                <Input value={port} onChange={setPort} required />
             </label>
             <label>
                 Certainty:
