@@ -8,6 +8,7 @@ import WorkspaceAttacksCT from "./attacks/workspace-attacks-certificate-transpar
 import WorkspaceAttacksHostAlive from "./attacks/workspace-attacks-host-alive";
 import WorkspaceAttacksServiceDetection from "./attacks/workspace-attacks-service-detection";
 import WorkspaceAttacksBruteforceSubdomains from "./attacks/workspace-attacks-bsd";
+import { WORKSPACE_CONTEXT } from "./workspace";
 
 export type AttackType =
     | "bruteforce_subdomains"
@@ -25,9 +26,7 @@ export type AttackInfo = {
     description: string;
 };
 
-type WorkspaceAttacksProps = {
-    workspace: FullWorkspace;
-};
+type WorkspaceAttacksProps = {};
 type WorkspaceAttacksState = {
     selectedAttack: AttackType | null;
     hoverAttack: AttackType | null;
@@ -69,6 +68,9 @@ const ATTACK_INFOS: { [key: string]: AttackInfo } = {
 };
 
 export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksProps, WorkspaceAttacksState> {
+    static contextType = WORKSPACE_CONTEXT;
+    declare context: React.ContextType<typeof WORKSPACE_CONTEXT>;
+
     constructor(props: WorkspaceAttacksProps) {
         super(props);
 
@@ -138,17 +140,17 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                             <span> - Click on an attack to start - </span>
                         </div>
                     ) : this.state.selectedAttack === "dehashed" ? (
-                        <WorkspaceAttacksDehashed workspaceUuid={this.props.workspace.uuid} />
+                        <WorkspaceAttacksDehashed />
                     ) : this.state.selectedAttack === "tcp_con" ? (
-                        <WorkspaceAttacksPortScanTcp workspaceUuid={this.props.workspace.uuid} />
+                        <WorkspaceAttacksPortScanTcp />
                     ) : this.state.selectedAttack === "certificate_transparency" ? (
-                        <WorkspaceAttacksCT workspaceUuid={this.props.workspace.uuid} />
+                        <WorkspaceAttacksCT />
                     ) : this.state.selectedAttack === "host_alive" ? (
-                        <WorkspaceAttacksHostAlive workspaceUuid={this.props.workspace.uuid} />
+                        <WorkspaceAttacksHostAlive />
                     ) : this.state.selectedAttack === "service_detection" ? (
-                        <WorkspaceAttacksServiceDetection workspaceUuid={this.props.workspace.uuid} />
+                        <WorkspaceAttacksServiceDetection />
                     ) : this.state.selectedAttack === "bruteforce_subdomains" ? (
-                        <WorkspaceAttacksBruteforceSubdomains workspaceUuid={this.props.workspace.uuid} />
+                        <WorkspaceAttacksBruteforceSubdomains />
                     ) : (
                         <span>Not implemented yet</span>
                     )}

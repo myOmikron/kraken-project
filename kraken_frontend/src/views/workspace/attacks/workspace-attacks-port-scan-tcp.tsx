@@ -7,10 +7,9 @@ import CollapseIcon from "../../../svg/collapse";
 import ExpandIcon from "../../../svg/expand";
 import Checkbox from "../../../components/checkbox";
 import { toast } from "react-toastify";
+import { WORKSPACE_CONTEXT } from "../workspace";
 
-type WorkspaceAttacksPortScanTcpProps = {
-    workspaceUuid: UUID;
-};
+type WorkspaceAttacksPortScanTcpProps = {};
 type WorkspaceAttacksPortScanTcpState = {
     ipAddInput: string;
     showAdvanced: boolean;
@@ -28,6 +27,9 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
     WorkspaceAttacksPortScanTcpProps,
     WorkspaceAttacksPortScanTcpState
 > {
+    static contextType = WORKSPACE_CONTEXT;
+    declare context: React.ContextType<typeof WORKSPACE_CONTEXT>;
+
     constructor(props: WorkspaceAttacksPortScanTcpProps) {
         super(props);
 
@@ -50,14 +52,14 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
                 timeout: this.state.timeout,
                 concurrentLimit: this.state.taskLimit,
                 maxRetries: this.state.retries,
-                workspaceUuid: this.props.workspaceUuid,
+                workspaceUuid: this.context.workspace.uuid,
                 skipIcmpCheck: this.state.skipIcmpCheck,
                 targets: [this.state.ipAddInput],
                 retryInterval: this.state.interval,
             })
         ).match(
             (_) => toast.success("Attack started"),
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 

@@ -7,10 +7,9 @@ import { toast } from "react-toastify";
 import StartAttack from "../components/start-attack";
 import "../../../styling/workspace-attacks-bsd.css";
 import SelectMenu from "../../../components/select-menu";
+import { WORKSPACE_CONTEXT } from "../workspace";
 
-type WorkspaceAttacksBruteforceSubdomainsProps = {
-    workspaceUuid: UUID;
-};
+type WorkspaceAttacksBruteforceSubdomainsProps = {};
 type WorkspaceAttacksBruteforceSubdomainsState = {
     domain: string;
     taskLimit: number;
@@ -27,6 +26,9 @@ export default class WorkspaceAttacksBruteforceSubdomains extends React.Componen
     WorkspaceAttacksBruteforceSubdomainsProps,
     WorkspaceAttacksBruteforceSubdomainsState
 > {
+    static contextType = WORKSPACE_CONTEXT;
+    declare context: React.ContextType<typeof WORKSPACE_CONTEXT>;
+
     constructor(props: WorkspaceAttacksBruteforceSubdomainsProps) {
         super(props);
 
@@ -52,7 +54,7 @@ export default class WorkspaceAttacksBruteforceSubdomains extends React.Componen
                     }),
                 });
             },
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 
@@ -69,14 +71,14 @@ export default class WorkspaceAttacksBruteforceSubdomains extends React.Componen
 
         (
             await Api.attacks.bruteforceSubdomains({
-                workspaceUuid: this.props.workspaceUuid,
+                workspaceUuid: this.context.workspace.uuid,
                 domain: this.state.domain,
                 concurrentLimit: this.state.taskLimit,
                 wordlistUuid: this.state.wordlist.value,
             })
         ).match(
             (_) => toast.success("Attack started"),
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 

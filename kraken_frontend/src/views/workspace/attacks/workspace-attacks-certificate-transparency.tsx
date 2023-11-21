@@ -7,8 +7,9 @@ import Checkbox from "../../../components/checkbox";
 import CollapseIcon from "../../../svg/collapse";
 import ExpandIcon from "../../../svg/expand";
 import { toast } from "react-toastify";
+import { WORKSPACE_CONTEXT } from "../workspace";
 
-type WorkspaceAttacksCTProps = { workspaceUuid: UUID };
+type WorkspaceAttacksCTProps = {};
 type WorkspaceAttacksCTState = {
     domain: string;
     includeExpired: boolean;
@@ -19,6 +20,9 @@ type WorkspaceAttacksCTState = {
 };
 
 export default class WorkspaceAttacksCT extends React.Component<WorkspaceAttacksCTProps, WorkspaceAttacksCTState> {
+    static contextType = WORKSPACE_CONTEXT;
+    declare context: React.ContextType<typeof WORKSPACE_CONTEXT>;
+
     constructor(props: WorkspaceAttacksCTProps) {
         super(props);
 
@@ -36,14 +40,14 @@ export default class WorkspaceAttacksCT extends React.Component<WorkspaceAttacks
         (
             await Api.attacks.queryCertificateTransparency({
                 includeExpired: this.state.includeExpired,
-                workspaceUuid: this.props.workspaceUuid,
+                workspaceUuid: this.context.workspace.uuid,
                 target: this.state.domain,
                 maxRetries: this.state.maxRetries,
                 retryInterval: this.state.retryInterval,
             })
         ).match(
             (ok) => toast.success("Attack started"),
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 

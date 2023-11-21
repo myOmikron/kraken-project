@@ -6,14 +6,17 @@ import { toast } from "react-toastify";
 import Input from "../../../components/input";
 import Select from "react-select";
 import { selectStyles } from "../../../components/select-menu";
+import { WORKSPACE_CONTEXT } from "../workspace";
 
 type CreatePortFormProps = {
-    workspace: string;
     onSubmit: () => void;
 };
 
 export function CreatePortForm(props: CreatePortFormProps) {
-    const { workspace, onSubmit } = props;
+    const { onSubmit } = props;
+    const {
+        workspace: { uuid: workspace },
+    } = React.useContext(WORKSPACE_CONTEXT);
     const [ip, setIp] = React.useState("");
     const [port, setPort] = React.useState("");
     const [certy, setCerty] = React.useState<ManualPortCertainty>("SupposedTo");

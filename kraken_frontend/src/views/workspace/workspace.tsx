@@ -5,22 +5,31 @@ import "../../styling/workspace.css";
 import WorkspaceHeading from "./components/workspace-heading";
 import WorkspaceMenu from "./components/workspace-menu";
 import { FullWorkspace } from "../../api/generated";
-import WorkspaceHost from "./workspace-host";
-import WorkspaceHosts from "./workspace-hosts";
-import WorkspaceAttacks from "./workspace-attacks";
-import WorkspaceSettings from "./workspace-settings";
-import WorkspaceData from "./workspace-data";
+
+export type WorkspaceContext = { workspace: FullWorkspace };
+export const WORKSPACE_CONTEXT = React.createContext<WorkspaceContext>({
+    workspace: {
+        name: "",
+        description: "",
+        uuid: "",
+        owner: { uuid: "", username: "", displayName: "" },
+        attacks: [],
+        members: [],
+        createdAt: new Date(),
+    },
+});
+WORKSPACE_CONTEXT.displayName = "WorkspaceContext";
 
 type WorkspaceProps = {
     uuid: UUID;
     view: WorkspaceView;
-    host_uuid?: UUID;
+    children: React.ReactNode;
 };
 type WorkspaceState = {
     workspace: FullWorkspace | null;
 };
 
-export type WorkspaceView = "search" | "attacks" | "hosts" | "data" | "workspace_settings" | "single_host";
+export type WorkspaceView = "search" | "attacks" | "data" | "hosts" | "settings";
 
 export default class Workspace extends React.Component<WorkspaceProps, WorkspaceState> {
     constructor(props: WorkspaceProps) {
@@ -52,8 +61,6 @@ export default class Workspace extends React.Component<WorkspaceProps, Workspace
     }
 
     render() {
-        console.log(this.props.host_uuid);
-
         return (
             <div className={"workspace-container"}>
                 <WorkspaceHeading
@@ -61,22 +68,10 @@ export default class Workspace extends React.Component<WorkspaceProps, Workspace
                     name={this.state.workspace !== null ? this.state.workspace.name : "Loading .."}
                 />
                 <WorkspaceMenu uuid={this.props.uuid} active={this.props.view} />
-                {this.state.workspace === null ? (
-                    <></>
-                ) : this.props.view === "search" ? (
-                    <></>
-                ) : this.props.view === "data" ? (
-                    <WorkspaceData workspace={this.props.uuid} />
-                ) : this.props.view === "workspace_settings" ? (
-                    <WorkspaceSettings workspace={this.state.workspace} />
-                ) : this.props.view === "attacks" ? (
-                    <WorkspaceAttacks workspace={this.state.workspace} />
-                ) : this.props.view === "hosts" ? (
-                    <WorkspaceHosts workspace={this.state.workspace} />
-                ) : this.props.view === "single_host" && this.props.host_uuid !== undefined ? (
-                    <WorkspaceHost workspace={this.state.workspace} host_uuid={this.props.host_uuid} />
-                ) : (
-                    <></>
+                {this.state.workspace && (
+                    <WORKSPACE_CONTEXT.Provider value={{ workspace: this.state.workspace }}>
+                        {this.props.children}
+                    </WORKSPACE_CONTEXT.Provider>
                 )}
             </div>
         );

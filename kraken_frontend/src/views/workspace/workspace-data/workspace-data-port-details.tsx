@@ -5,15 +5,18 @@ import { handleApiError } from "../../../utils/helper";
 import Textarea from "../../../components/textarea";
 import { toast } from "react-toastify";
 import EditableTags from "../components/editable-tags";
+import { WORKSPACE_CONTEXT } from "../workspace";
 
 export type WorkspaceDataPortDetailsProps = {
-    workspace: string;
     port: string;
     updatePort?: (uuid: string, update: Partial<FullPort>) => void;
 };
 
 export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
-    const { workspace, port: uuid, updatePort: signalUpdate } = props;
+    const { port: uuid, updatePort: signalUpdate } = props;
+    const {
+        workspace: { uuid: workspace },
+    } = React.useContext(WORKSPACE_CONTEXT);
 
     const [port, setPort] = React.useState<FullPort | null>(null);
     React.useEffect(() => {

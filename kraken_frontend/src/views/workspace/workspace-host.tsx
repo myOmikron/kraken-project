@@ -11,12 +11,12 @@ import ArrowLeftIcon from "../../svg/arrow-left";
 import { WorkspaceHostDomains } from "./workspace-host/workspace-host-domains";
 import { WorkspaceHostPorts } from "./workspace-host/workspace-host-ports";
 import { WorkspaceHostServices } from "./workspace-host/workspace-host-services";
+import { WORKSPACE_CONTEXT } from "./workspace";
 
 const TABS = { domains: "Domains", ports: "Ports", services: "Services", other: "Other" };
 
 type WorkspaceProps = {
-    workspace: FullWorkspace;
-    host_uuid: UUID;
+    uuid: UUID;
 };
 type WorkspaceState = {
     selectedTab: keyof typeof TABS;
@@ -33,6 +33,9 @@ type WorkspaceState = {
 };
 
 export default class WorkspaceHost extends React.Component<WorkspaceProps, WorkspaceState> {
+    static contextType = WORKSPACE_CONTEXT;
+    declare context: React.ContextType<typeof WORKSPACE_CONTEXT>;
+
     constructor(props: WorkspaceProps) {
         super(props);
 
@@ -52,23 +55,23 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
     }
 
     async getHostList() {
-        (await Api.workspaces.hosts.all(this.props.workspace.uuid, 1000, 0)).match(
+        (await Api.workspaces.hosts.all(this.context.workspace.uuid, 1000, 0)).match(
             ({ items }) => {
-                this.setState({ hostList: items.filter(({ uuid }) => uuid !== this.props.host_uuid) });
+                this.setState({ hostList: items.filter(({ uuid }) => uuid !== this.props.uuid) });
             },
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 
     async getHost() {
-        (await Api.workspaces.hosts.get(this.props.workspace.uuid, this.props.host_uuid)).match(
+        (await Api.workspaces.hosts.get(this.context.workspace.uuid, this.props.uuid)).match(
             (host) => this.setState({ host }),
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 
     componentDidUpdate(prevProps: Readonly<WorkspaceProps>, prevState: Readonly<WorkspaceState>, snapshot?: any) {
-        if (prevProps.host_uuid !== this.props.host_uuid) {
+        if (prevProps.uuid !== this.props.uuid) {
             Promise.all([this.getHost(), this.getHostList()]).then();
         }
     }
@@ -85,7 +88,6 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
                 case "domains":
                     return (
                         <WorkspaceHostDomains
-                            workspace={this.props.workspace.uuid}
                             onSelect={(uuid) => this.setState({ selected: { type: "domains", uuid } })}
                             host={this.state.host}
                         />
@@ -93,7 +95,6 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
                 case "ports":
                     return (
                         <WorkspaceHostPorts
-                            workspace={this.props.workspace.uuid}
                             onSelect={(uuid) => this.setState({ selected: { type: "ports", uuid } })}
                             host={this.state.host}
                         />
@@ -101,7 +102,6 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
                 case "services":
                     return (
                         <WorkspaceHostServices
-                            workspace={this.props.workspace.uuid}
                             onSelect={(uuid) => this.setState({ selected: { type: "services", uuid } })}
                             host={this.state.host}
                         />
@@ -119,7 +119,7 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
                                 key={"back"}
                                 onClick={() => {
                                     ROUTES.WORKSPACE_HOSTS.visit({
-                                        uuid: this.props.workspace.uuid,
+                                        uuid: this.context.workspace.uuid,
                                     });
                                 }}
                             />
@@ -140,7 +140,7 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
                                     className={"pane workspace-host-hosts-item"}
                                     onClick={() => {
                                         ROUTES.WORKSPACE_SINGLE_HOST.visit({
-                                            w_uuid: this.props.workspace.uuid,
+                                            w_uuid: this.context.workspace.uuid,
                                             h_uuid: host.uuid,
                                         });
                                     }}

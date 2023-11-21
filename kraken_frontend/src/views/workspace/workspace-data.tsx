@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import "../../styling/workspace-data.css";
 import { StatelessWorkspaceTable, useTable } from "./components/workspace-table";
 import { Api } from "../../api/api";
@@ -32,16 +32,16 @@ import { CreateDomainForm } from "./workspace-data/workspace-data-create-domain"
 import { CreateHostForm } from "./workspace-data/workspace-data-create-host";
 import { CreatePortForm } from "./workspace-data/workspace-data-create-port";
 import { CreateServiceForm } from "./workspace-data/workspace-data-create-service";
+import { WORKSPACE_CONTEXT } from "./workspace";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 
-type WorkspaceDataProps = {
-    /** Workspace uuid */
-    workspace: string;
-};
+type WorkspaceDataProps = {};
 
 export default function WorkspaceData(props: WorkspaceDataProps) {
-    const { workspace } = props;
+    const {
+        workspace: { uuid: workspace },
+    } = useContext(WORKSPACE_CONTEXT);
 
     const [tab, setTab] = React.useState<keyof typeof TABS>("hosts");
     const [selected, setSelected] = React.useState<{ type: keyof typeof TABS; uuid: string } | null>(null);
@@ -183,37 +183,13 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
     const detailsElement = (() => {
         switch (selected?.type) {
             case "domains":
-                return (
-                    <WorkspaceDataDomainDetails
-                        workspace={workspace}
-                        domain={selected.uuid}
-                        updateDomain={domainsTable.updateItem}
-                    />
-                );
+                return <WorkspaceDataDomainDetails domain={selected.uuid} updateDomain={domainsTable.updateItem} />;
             case "hosts":
-                return (
-                    <WorkspaceDataHostDetails
-                        workspace={workspace}
-                        host={selected.uuid}
-                        updateHost={hostsTable.updateItem}
-                    />
-                );
+                return <WorkspaceDataHostDetails host={selected.uuid} updateHost={hostsTable.updateItem} />;
             case "ports":
-                return (
-                    <WorkspaceDataPortDetails
-                        workspace={workspace}
-                        port={selected.uuid}
-                        updatePort={portsTable.updateItem}
-                    />
-                );
+                return <WorkspaceDataPortDetails port={selected.uuid} updatePort={portsTable.updateItem} />;
             case "services":
-                return (
-                    <WorkspaceDataServiceDetails
-                        workspace={workspace}
-                        service={selected.uuid}
-                        updateService={servicesTable.updateItem}
-                    />
-                );
+                return <WorkspaceDataServiceDetails service={selected.uuid} updateService={servicesTable.updateItem} />;
             case undefined:
                 return null;
             default:
@@ -227,7 +203,6 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
             case "domains":
                 return (
                     <CreateDomainForm
-                        workspace={workspace}
                         onSubmit={() => {
                             setCreateForm(null);
                             domainsTable.reload();
@@ -237,7 +212,6 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
             case "hosts":
                 return (
                     <CreateHostForm
-                        workspace={workspace}
                         onSubmit={() => {
                             setCreateForm(null);
                             hostsTable.reload();
@@ -247,7 +221,6 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
             case "ports":
                 return (
                     <CreatePortForm
-                        workspace={workspace}
                         onSubmit={() => {
                             setCreateForm(null);
                             hostsTable.reload();
@@ -258,7 +231,6 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
             case "services":
                 return (
                     <CreateServiceForm
-                        workspace={workspace}
                         onSubmit={() => {
                             setCreateForm(null);
                             hostsTable.reload();

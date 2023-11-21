@@ -4,15 +4,18 @@ import WorkspaceTable from "../components/workspace-table";
 import { FullDomain, FullHost } from "../../../api/generated";
 import SourcesList from "../components/sources-list";
 import TagList from "../components/tag-list";
+import { WORKSPACE_CONTEXT } from "../workspace";
 
 export type WorkspaceDataDomainsProps = {
-    workspace: string;
     onSelect: (uuid: string) => void;
     host: FullHost | null;
 };
 
 export function WorkspaceHostDomains(props: WorkspaceDataDomainsProps) {
-    const { workspace, onSelect, host } = props;
+    const { onSelect, host } = props;
+    const {
+        workspace: { uuid: workspace },
+    } = React.useContext(WORKSPACE_CONTEXT);
     return (
         <WorkspaceTable<FullDomain>
             query={(limit, offset) => Api.workspaces.domains.all(workspace, limit, offset, { host: host?.uuid })}

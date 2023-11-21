@@ -6,10 +6,9 @@ import "../../../styling/workspace-attacks-host-alive.css";
 import { toast } from "react-toastify";
 import CollapseIcon from "../../../svg/collapse";
 import ExpandIcon from "../../../svg/expand";
+import { WORKSPACE_CONTEXT } from "../workspace";
 
-type WorkspaceAttacksHostAliveProps = {
-    workspaceUuid: UUID;
-};
+type WorkspaceAttacksHostAliveProps = {};
 type WorkspaceAttacksHostAliveState = {
     target: string;
     timeout: number;
@@ -22,6 +21,9 @@ export default class WorkspaceAttacksHostAlive extends React.Component<
     WorkspaceAttacksHostAliveProps,
     WorkspaceAttacksHostAliveState
 > {
+    static contextType = WORKSPACE_CONTEXT;
+    declare context: React.ContextType<typeof WORKSPACE_CONTEXT>;
+
     constructor(props: WorkspaceAttacksHostAliveProps) {
         super(props);
 
@@ -39,11 +41,11 @@ export default class WorkspaceAttacksHostAlive extends React.Component<
                 timeout: this.state.timeout,
                 concurrentLimit: this.state.concurrentLimit,
                 targets: [this.state.target],
-                workspaceUuid: this.props.workspaceUuid,
+                workspaceUuid: this.context.workspace.uuid,
             })
         ).match(
             (_) => toast.success("Attack started"),
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 

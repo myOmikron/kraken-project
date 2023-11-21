@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Context } from "react";
 import { FullWorkspace, FullWorkspaceInvitation, SimpleUser } from "../../api/generated";
 import "../../styling/workspace-settings.css";
 import Input from "../../components/input";
@@ -11,10 +11,9 @@ import Popup from "reactjs-popup";
 import { ROUTES } from "../../routes";
 import SelectMenu from "../../components/select-menu";
 import Bubble from "../../components/bubble";
+import Workspace, { WORKSPACE_CONTEXT, WorkspaceContext } from "./workspace";
 
-type WorkspaceSettingsProps = {
-    workspace: FullWorkspace;
-};
+type WorkspaceSettingsProps = {};
 type WorkspaceSettingsState = {
     workspaceName: string;
     workspaceDescription: string | null;
@@ -36,57 +35,63 @@ type SelectValue = {
 };
 
 export default class WorkspaceSettings extends React.Component<WorkspaceSettingsProps, WorkspaceSettingsState> {
-    constructor(props: WorkspaceSettingsProps) {
-        super(props);
+    static contextType = WORKSPACE_CONTEXT;
+    declare context: React.ContextType<typeof WORKSPACE_CONTEXT>;
 
-        this.state = {
-            workspaceName: this.props.workspace.name,
-            workspaceDescription:
-                this.props.workspace.description === undefined ? null : this.props.workspace.description,
-            invitePopup: false,
-            deleteUserPopup: false,
-            deleteWorkspacePopup: false,
-            transferOwnershipPopup: false,
-            selected: false,
-            memberName: "",
-            transferList: [],
-            inviteList: [],
-            selectedUser: null,
-            invitedUsers: [],
-        };
+    state: WorkspaceSettingsState = {
+        workspaceName: "",
+        workspaceDescription: "",
+        invitePopup: false,
+        deleteUserPopup: false,
+        deleteWorkspacePopup: false,
+        transferOwnershipPopup: false,
+        selected: false,
+        memberName: "",
+        transferList: [],
+        inviteList: [],
+        selectedUser: null,
+        invitedUsers: [],
+    };
+
+    componentDidMount() {
         this.createTransferList().then();
         this.createInviteList().then();
         this.updateInvitedUsers().then();
+
+        this.setState({
+            workspaceName: this.context.workspace.name,
+            workspaceDescription: this.context.workspace.description || null,
+        });
     }
 
     async updateInvitedUsers() {
-        (await Api.workspaces.invitations.all(this.props.workspace.uuid)).match(
+        (await Api.workspaces.invitations.all(this.context.workspace.uuid)).match(
             (x) => this.setState({ invitedUsers: x.invitations }),
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 
     async updateWorkspace() {
         let update: { name: null | string; description: null | string } = { name: null, description: null };
 
-        if (this.state.workspaceName !== this.props.workspace.name && this.state.workspaceName !== "") {
+        if (this.state.workspaceName !== this.context.workspace.name && this.state.workspaceName !== "") {
             update = { ...update, name: this.state.workspaceName };
         }
 
-        if (this.state.workspaceDescription !== this.props.workspace.description) {
+        if (this.state.workspaceDescription !== this.context.workspace.description) {
             update = { ...update, description: this.state.workspaceDescription };
         }
 
-        (await Api.workspaces.update(this.props.workspace.uuid, update)).match(
+        (await Api.workspaces.update(this.context.workspace.uuid, update)).match(
             () => toast.success("Workspace updated"),
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 
     async deleteWorkspace() {
-        (await Api.workspaces.delete(this.props.workspace.uuid)).match(
+        (await Api.workspaces.delete(this.context.workspace.uuid)).match(
             () => toast.success("Deleted Workspace "),
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 
@@ -95,14 +100,14 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
             (u) => {
                 u.users
                     .filter((s) => {
-                        return this.props.workspace.owner.uuid !== s.uuid;
+                        return this.context.workspace.owner.uuid !== s.uuid;
                     })
                     .map((s) => {
                         let member = { label: s.displayName + " (" + s.username + ") ", value: s.uuid };
                         this.state.transferList.push(member);
                     });
             },
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 
@@ -112,8 +117,8 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                 u.users
                     .filter((s) => {
                         let users = [
-                            ...this.props.workspace.members.map((x) => x.uuid),
-                            this.props.workspace.owner.uuid,
+                            ...this.context.workspace.members.map((x) => x.uuid),
+                            this.context.workspace.owner.uuid,
                         ];
                         return !users.some((x) => x === s.uuid);
                     })
@@ -122,7 +127,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                         this.state.inviteList.push(member);
                     });
             },
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 
@@ -132,13 +137,13 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
             return;
         }
 
-        (await Api.workspaces.invitations.create(this.props.workspace.uuid, this.state.selectedUser.value)).match(
+        (await Api.workspaces.invitations.create(this.context.workspace.uuid, this.state.selectedUser.value)).match(
             async () => {
                 toast.success("Invitation was sent");
                 this.setState({ selectedUser: null, invitePopup: false });
                 await this.updateInvitedUsers();
             },
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 
@@ -147,14 +152,14 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
             toast.error("No user selected");
             return;
         }
-        (await Api.workspaces.transferOwnership(this.props.workspace.uuid, this.state.selectedUser.value)).match(
+        (await Api.workspaces.transferOwnership(this.context.workspace.uuid, this.state.selectedUser.value)).match(
             () => {
                 toast.success("Transfer was successful");
                 this.setState({ selectedUser: null, transferOwnershipPopup: false, selected: false });
             },
             (err) => {
                 toast.error(err.message);
-            }
+            },
         );
     }
 
@@ -179,7 +184,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                                     onChange={(v) => {
                                         this.setState({ workspaceName: v });
                                     }}
-                                    placeholder={this.props.workspace.name}
+                                    placeholder={this.context.workspace.name}
                                 />
                                 <span>Description</span>
                                 <Textarea
@@ -240,12 +245,12 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                                 <span>Delete</span>
                             </div>
                             <div className={"workspace-settings-user-table-entry neon"}>
-                                <span>{this.props.workspace.owner.displayName}</span>
+                                <span>{this.context.workspace.owner.displayName}</span>
                                 <div className={"workspace-settings-tag-container"}>
                                     <Bubble name={"owner"} color={"primary"} />
                                 </div>
                             </div>
-                            {this.props.workspace.members.map((m) => (
+                            {this.context.workspace.members.map((m) => (
                                 <div key={m.uuid} className={"workspace-settings-user-table-entry neon"}>
                                     <span>{m.displayName}</span>
                                     <div className={"workspace-settings-tag-container"}>
@@ -278,15 +283,15 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                                             onClick={async () => {
                                                 (
                                                     await Api.workspaces.invitations.retract(
-                                                        this.props.workspace.uuid,
-                                                        i.uuid
+                                                        this.context.workspace.uuid,
+                                                        i.uuid,
                                                     )
                                                 ).match(
                                                     async () => {
                                                         toast.success("Invitation retracted");
                                                         await this.updateInvitedUsers();
                                                     },
-                                                    (err) => toast.error(err.message)
+                                                    (err) => toast.error(err.message),
                                                 );
                                             }}
                                         >

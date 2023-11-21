@@ -7,6 +7,7 @@ import { Api, UUID } from "../../../api/api";
 import { toast } from "react-toastify";
 import { Query } from "../../../api/generated";
 import SelectMenu from "../../../components/select-menu";
+import { WORKSPACE_CONTEXT } from "../workspace";
 
 export type DehashedQueryType =
     | "email"
@@ -38,9 +39,7 @@ const DEHASHED_SEARCH_TYPES: Array<SelectValue> = [
     { label: "Vin", value: "vin" },
 ];
 
-type WorkspaceAttacksDehashedProps = {
-    workspaceUuid: UUID;
-};
+type WorkspaceAttacksDehashedProps = {};
 type WorkspaceAttacksDehashedState = {
     type: null | SelectValue;
     search: string;
@@ -50,6 +49,9 @@ export default class WorkspaceAttacksDehashed extends React.Component<
     WorkspaceAttacksDehashedProps,
     WorkspaceAttacksDehashedState
 > {
+    static contextType = WORKSPACE_CONTEXT;
+    declare context: React.ContextType<typeof WORKSPACE_CONTEXT>;
+
     constructor(props: WorkspaceAttacksDehashedProps) {
         super(props);
 
@@ -102,9 +104,9 @@ export default class WorkspaceAttacksDehashed extends React.Component<
                 return;
         }
 
-        (await Api.attacks.queryDehashed(this.props.workspaceUuid, query)).match(
+        (await Api.attacks.queryDehashed(this.context.workspace.uuid, query)).match(
             (uuid) => toast.success("Attack started"),
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 

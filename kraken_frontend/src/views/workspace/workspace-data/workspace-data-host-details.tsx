@@ -5,15 +5,18 @@ import { handleApiError } from "../../../utils/helper";
 import Textarea from "../../../components/textarea";
 import { toast } from "react-toastify";
 import EditableTags from "../components/editable-tags";
+import { WORKSPACE_CONTEXT } from "../workspace";
 
 export type WorkspaceDataHostDetailsProps = {
-    workspace: string;
     host: string;
     updateHost?: (uuid: string, update: Partial<FullHost>) => void;
 };
 
 export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
-    const { workspace, host: uuid, updateHost: signalUpdate } = props;
+    const { host: uuid, updateHost: signalUpdate } = props;
+    const {
+        workspace: { uuid: workspace },
+    } = React.useContext(WORKSPACE_CONTEXT);
 
     const [host, setHost] = React.useState<FullHost | null>(null);
     React.useEffect(() => {

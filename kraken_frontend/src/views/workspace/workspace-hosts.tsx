@@ -12,10 +12,9 @@ import ArrowRightIcon from "../../svg/arrow-right";
 import ArrowLastIcon from "../../svg/arrow-last";
 import Select from "react-select";
 import { selectStyles } from "../../components/select-menu";
+import { WORKSPACE_CONTEXT } from "./workspace";
 
-type WorkspaceHostsProps = {
-    workspace: FullWorkspace;
-};
+type WorkspaceHostsProps = {};
 type WorkspaceHostsState = {
     searchTerm: string;
     hosts: SimpleHost[];
@@ -25,6 +24,9 @@ type WorkspaceHostsState = {
 };
 
 export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps, WorkspaceHostsState> {
+    static contextType = WORKSPACE_CONTEXT;
+    declare context: React.ContextType<typeof WORKSPACE_CONTEXT>;
+
     constructor(props: WorkspaceHostsProps) {
         super(props);
 
@@ -32,9 +34,9 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
     }
 
     async retrieveHosts() {
-        (await Api.workspaces.hosts.all(this.props.workspace.uuid, this.state.limit, this.state.offset)).match(
+        (await Api.workspaces.hosts.all(this.context.workspace.uuid, this.state.limit, this.state.offset)).match(
             ({ items, total }) => this.setState({ hosts: items, total }),
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 
@@ -45,7 +47,7 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
     componentDidUpdate(
         prevProps: Readonly<WorkspaceHostsProps>,
         prevState: Readonly<WorkspaceHostsState>,
-        snapshot?: any
+        snapshot?: any,
     ) {
         if (prevState.offset !== this.state.offset || this.state.limit !== prevState.limit) {
             this.retrieveHosts().then();
@@ -83,7 +85,7 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
                                 className={"workspace-hosts-host pane"}
                                 onClick={() => {
                                     ROUTES.WORKSPACE_SINGLE_HOST.visit({
-                                        w_uuid: this.props.workspace.uuid,
+                                        w_uuid: this.context.workspace.uuid,
                                         h_uuid: host.uuid,
                                     });
                                 }}

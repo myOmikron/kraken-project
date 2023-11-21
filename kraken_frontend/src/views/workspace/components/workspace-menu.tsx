@@ -20,78 +20,35 @@ export default class WorkspaceMenu extends React.Component<WorkspaceMenuProps, W
             <div className={"workspace-menu pane"}>
                 <div
                     className={this.props.active === "search" ? "workspace-menu-item active" : "workspace-menu-item"}
-                    onClick={() => {
-                        this.setState({ active: "search" });
-                        ROUTES.WORKSPACE_SEARCH.visit({ uuid: this.props.uuid });
-                    }}
-                    onAuxClick={() => {
-                        this.setState({ active: "search" });
-                        ROUTES.WORKSPACE_SEARCH.open({ uuid: this.props.uuid });
-                    }}
+                    {...ROUTES.WORKSPACE_SEARCH.clickHandler({ uuid: this.props.uuid })}
                 >
                     <SearchIcon />
                     <div className={"workspace-menu-hint"}>Search</div>
                 </div>
                 <div
                     className={this.props.active === "attacks" ? "workspace-menu-item active" : "workspace-menu-item"}
-                    onClick={() => {
-                        this.setState({ active: "attacks" });
-                        ROUTES.WORKSPACE_ATTACKS.visit({ uuid: this.props.uuid });
-                    }}
-                    onAuxClick={() => {
-                        this.setState({ active: "attacks" });
-                        ROUTES.WORKSPACE_ATTACKS.open({ uuid: this.props.uuid });
-                    }}
+                    {...ROUTES.WORKSPACE_ATTACKS.clickHandler({ uuid: this.props.uuid })}
                 >
                     <AttackIcon />
                     <div className={"workspace-menu-hint"}>Attacks</div>
                 </div>
                 <div
                     className={this.props.active === "data" ? "workspace-menu-item active" : "workspace-menu-item"}
-                    onClick={() => {
-                        this.setState({ active: "data" });
-                        ROUTES.WORKSPACE_DATA.visit({ uuid: this.props.uuid });
-                    }}
-                    onAuxClick={() => {
-                        this.setState({ active: "data" });
-                        ROUTES.WORKSPACE_DATA.open({ uuid: this.props.uuid });
-                    }}
+                    {...ROUTES.WORKSPACE_DATA.clickHandler({ uuid: this.props.uuid })}
                 >
                     <DataIcon />
                     <div className={"workspace-menu-hint"}>Data</div>
                 </div>
                 <div
-                    className={
-                        this.props.active === "hosts" || this.props.active === "single_host"
-                            ? "workspace-menu-item active"
-                            : "workspace-menu-item"
-                    }
-                    onClick={() => {
-                        this.setState({ active: "hosts" });
-                        ROUTES.WORKSPACE_HOSTS.visit({ uuid: this.props.uuid });
-                    }}
-                    onAuxClick={() => {
-                        this.setState({ active: "hosts" });
-                        ROUTES.WORKSPACE_HOSTS.open({ uuid: this.props.uuid });
-                    }}
+                    className={this.props.active === "hosts" ? "workspace-menu-item active" : "workspace-menu-item"}
+                    {...ROUTES.WORKSPACE_HOSTS.clickHandler({ uuid: this.props.uuid })}
                 >
                     <HostIcon />
                     <div className={"workspace-menu-hint"}>Hosts</div>
                 </div>
                 <div
-                    className={
-                        this.props.active === "workspace_settings"
-                            ? "workspace-menu-item active"
-                            : "workspace-menu-item"
-                    }
-                    onClick={() => {
-                        this.setState({ active: "workspace_settings" });
-                        ROUTES.WORKSPACE_SETTINGS.visit({ uuid: this.props.uuid });
-                    }}
-                    onAuxClick={() => {
-                        this.setState({ active: "workspace_settings" });
-                        ROUTES.WORKSPACE_SETTINGS.open({ uuid: this.props.uuid });
-                    }}
+                    className={this.props.active === "settings" ? "workspace-menu-item active" : "workspace-menu-item"}
+                    {...ROUTES.WORKSPACE_SETTINGS.clickHandler({ uuid: this.props.uuid })}
                 >
                     <SettingsIcon />
                     <div className={"workspace-menu-hint"}>Workspace Settings</div>

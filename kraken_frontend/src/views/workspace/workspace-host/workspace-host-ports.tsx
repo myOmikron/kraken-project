@@ -4,15 +4,18 @@ import WorkspaceTable from "../components/workspace-table";
 import { FullHost, FullPort, SimplePort } from "../../../api/generated";
 import SourcesList from "../components/sources-list";
 import TagList from "../components/tag-list";
+import { WORKSPACE_CONTEXT } from "../workspace";
 
 type WorkspaceDataPortsProps = {
-    workspace: string;
     onSelect: (uuid: string) => void;
     host: FullHost | null;
 };
 
 export function WorkspaceHostPorts(props: WorkspaceDataPortsProps) {
-    const { workspace, onSelect, host } = props;
+    const { onSelect, host } = props;
+    const {
+        workspace: { uuid: workspace },
+    } = React.useContext(WORKSPACE_CONTEXT);
     return (
         <WorkspaceTable<FullPort>
             query={(limit, offset) => Api.workspaces.ports.all(workspace, limit, offset, { host: host?.uuid })}

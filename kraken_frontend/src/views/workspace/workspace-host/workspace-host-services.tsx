@@ -4,15 +4,18 @@ import WorkspaceTable from "../components/workspace-table";
 import { FullHost, FullService, SimpleService } from "../../../api/generated";
 import SourcesList from "../components/sources-list";
 import TagList from "../components/tag-list";
+import { WORKSPACE_CONTEXT } from "../workspace";
 
 export type WorkspaceDataServicesProps = {
-    workspace: string;
     onSelect: (uuid: string) => void;
     host: FullHost | null;
 };
 
 export function WorkspaceHostServices(props: WorkspaceDataServicesProps) {
-    const { workspace, onSelect, host } = props;
+    const { onSelect, host } = props;
+    const {
+        workspace: { uuid: workspace },
+    } = React.useContext(WORKSPACE_CONTEXT);
     return (
         <WorkspaceTable<FullService>
             query={(limit, offset) => Api.workspaces.services.all(workspace, limit, offset, { host: host?.uuid })}

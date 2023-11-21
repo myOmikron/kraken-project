@@ -5,15 +5,18 @@ import { handleApiError } from "../../../utils/helper";
 import Textarea from "../../../components/textarea";
 import { toast } from "react-toastify";
 import EditableTags from "../components/editable-tags";
+import { WORKSPACE_CONTEXT } from "../workspace";
 
 export type WorkspaceDataDomainDetailsProps = {
-    workspace: string;
     domain: string;
     updateDomain?: (uuid: string, update: Partial<FullDomain>) => void;
 };
 
 export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProps) {
-    const { workspace, domain: uuid, updateDomain: signalUpdate } = props;
+    const { domain: uuid, updateDomain: signalUpdate } = props;
+    const {
+        workspace: { uuid: workspace },
+    } = React.useContext(WORKSPACE_CONTEXT);
 
     const [domain, setDomain] = React.useState<FullDomain | null>(null);
     React.useEffect(() => {

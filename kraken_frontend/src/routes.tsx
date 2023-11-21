@@ -11,6 +11,11 @@ import OauthRequest from "./views/oauth-request";
 import { ContentWithMenu } from "./views/menu";
 import Settings from "./views/settings";
 import Workspace from "./views/workspace/workspace";
+import WorkspaceSettings from "./views/workspace/workspace-settings";
+import WorkspaceData from "./views/workspace/workspace-data";
+import WorkspaceAttacks from "./views/workspace/workspace-attacks";
+import WorkspaceHosts from "./views/workspace/workspace-hosts";
+import WorkspaceHost from "./views/workspace/workspace-host";
 
 export const ROUTER = new Router();
 
@@ -47,7 +52,9 @@ export const ROUTES = {
         parser: { uuid: String },
         render: ({ uuid }) => (
             <ContentWithMenu>
-                <Workspace view={"workspace_settings"} uuid={uuid} />
+                <Workspace view={"settings"} uuid={uuid}>
+                    <WorkspaceSettings />
+                </Workspace>
             </ContentWithMenu>
         ),
     }),
@@ -56,7 +63,9 @@ export const ROUTES = {
         parser: { uuid: String },
         render: ({ uuid }) => (
             <ContentWithMenu>
-                <Workspace view={"data"} uuid={uuid} />
+                <Workspace view={"data"} uuid={uuid}>
+                    <WorkspaceData />
+                </Workspace>
             </ContentWithMenu>
         ),
     }),
@@ -65,7 +74,9 @@ export const ROUTES = {
         parser: { uuid: String },
         render: ({ uuid }) => (
             <ContentWithMenu>
-                <Workspace view={"attacks"} uuid={uuid} />
+                <Workspace view={"attacks"} uuid={uuid}>
+                    <WorkspaceAttacks />
+                </Workspace>
             </ContentWithMenu>
         ),
     }),
@@ -74,7 +85,9 @@ export const ROUTES = {
         parser: { uuid: String },
         render: ({ uuid }) => (
             <ContentWithMenu>
-                <Workspace view={"search"} uuid={uuid} />
+                <Workspace view={"search"} uuid={uuid}>
+                    {null}
+                </Workspace>
             </ContentWithMenu>
         ),
     }),
@@ -83,7 +96,9 @@ export const ROUTES = {
         parser: { uuid: String },
         render: ({ uuid }) => (
             <ContentWithMenu>
-                <Workspace view={"hosts"} uuid={uuid} />
+                <Workspace view={"hosts"} uuid={uuid}>
+                    <WorkspaceHosts />
+                </Workspace>
             </ContentWithMenu>
         ),
     }),
@@ -92,7 +107,9 @@ export const ROUTES = {
         parser: { w_uuid: String, h_uuid: String },
         render: ({ w_uuid, h_uuid }) => (
             <ContentWithMenu>
-                <Workspace view={"single_host"} uuid={w_uuid} host_uuid={h_uuid} />
+                <Workspace view={"hosts"} uuid={w_uuid}>
+                    <WorkspaceHost uuid={h_uuid} />
+                </Workspace>
             </ContentWithMenu>
         ),
     }),

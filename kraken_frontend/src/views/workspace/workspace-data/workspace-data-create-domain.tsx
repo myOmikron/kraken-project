@@ -3,14 +3,17 @@ import { Api } from "../../../api/api";
 import { handleApiError } from "../../../utils/helper";
 import { toast } from "react-toastify";
 import Input from "../../../components/input";
+import { WORKSPACE_CONTEXT } from "../workspace";
 
 type CreateDomainFormProps = {
-    workspace: string;
     onSubmit: () => void;
 };
 
 export function CreateDomainForm(props: CreateDomainFormProps) {
-    const { workspace, onSubmit } = props;
+    const { onSubmit } = props;
+    const {
+        workspace: { uuid: workspace },
+    } = React.useContext(WORKSPACE_CONTEXT);
     const [domain, setDomain] = React.useState("");
     return (
         <form

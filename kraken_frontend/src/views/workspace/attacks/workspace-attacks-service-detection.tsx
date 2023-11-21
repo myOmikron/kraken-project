@@ -6,10 +6,9 @@ import Input from "../../../components/input";
 import CollapseIcon from "../../../svg/collapse";
 import ExpandIcon from "../../../svg/expand";
 import { toast } from "react-toastify";
+import { WORKSPACE_CONTEXT } from "../workspace";
 
-type WorkspaceAttacksServiceDetectionProps = {
-    workspaceUuid: UUID;
-};
+type WorkspaceAttacksServiceDetectionProps = {};
 type WorkspaceAttacksServiceDetectionState = {
     address: string;
     port: string;
@@ -22,6 +21,9 @@ export default class WorkspaceAttacksServiceDetection extends React.Component<
     WorkspaceAttacksServiceDetectionProps,
     WorkspaceAttacksServiceDetectionState
 > {
+    static contextType = WORKSPACE_CONTEXT;
+    declare context: React.ContextType<typeof WORKSPACE_CONTEXT>;
+
     constructor(props: WorkspaceAttacksServiceDetectionProps) {
         super(props);
 
@@ -43,10 +45,15 @@ export default class WorkspaceAttacksServiceDetection extends React.Component<
         }
 
         (
-            await Api.attacks.serviceDetection({ workspaceUuid: this.props.workspaceUuid, address, port: p, timeout })
+            await Api.attacks.serviceDetection({
+                workspaceUuid: this.context.workspace.uuid,
+                address,
+                port: p,
+                timeout,
+            })
         ).match(
             (_) => toast.success("Attack started"),
-            (err) => toast.error(err.message)
+            (err) => toast.error(err.message),
         );
     }
 
