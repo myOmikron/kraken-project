@@ -1,14 +1,15 @@
 //! The tags of a workspace are defined here
 
 use actix_toolbox::tb_middleware::Session;
-use actix_web::web::{Data, Json, Path};
+use actix_web::web::{Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
-use rorm::{and, query, update, Database, FieldAccess, Model};
+use rorm::{and, query, update, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::handler::{ApiError, ApiResult, Color, PathUuid, UuidResponse};
+use crate::chan::GLOBAL;
 use crate::models::{GlobalTag, Workspace, WorkspaceTag};
 
 /// The request to create a workspace tag
@@ -37,14 +38,14 @@ pub struct CreateWorkspaceTagRequest {
 pub async fn create_workspace_tag(
     path: Path<PathUuid>,
     req: Json<CreateWorkspaceTagRequest>,
-    db: Data<Database>,
+
     session: Session,
 ) -> ApiResult<Json<UuidResponse>> {
     let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
     let req = req.into_inner();
     let path = path.into_inner();
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if Workspace::is_user_member_or_owner(&mut tx, path.uuid, user_uuid).await? {
         let uuid = WorkspaceTag::insert(&mut tx, req.name, req.color, path.uuid).await?;
@@ -88,13 +89,13 @@ pub struct GetWorkspaceTagsResponse {
 #[get("/workspaces/{uuid}/tags")]
 pub async fn get_all_workspace_tags(
     path: Path<PathUuid>,
-    db: Data<Database>,
+
     session: Session,
 ) -> ApiResult<Json<GetWorkspaceTagsResponse>> {
     let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
     let path = path.into_inner();
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if Workspace::is_user_member_or_owner(&mut tx, path.uuid, user_uuid).await? {
         let workspace_tags = query!(&mut tx, WorkspaceTag)
@@ -155,14 +156,14 @@ pub struct PathWorkspaceTag {
 pub async fn update_workspace_tag(
     req: Json<UpdateWorkspaceTag>,
     path: Path<PathWorkspaceTag>,
-    db: Data<Database>,
+
     session: Session,
 ) -> ApiResult<HttpResponse> {
     let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
     let path = path.into_inner();
     let req = req.into_inner();
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
@@ -225,12 +226,12 @@ pub async fn update_workspace_tag(
 #[delete("/workspaces/{w_uuid}/tags/{t_uuid}")]
 pub async fn delete_workspace_tag(
     path: Path<PathWorkspaceTag>,
-    db: Data<Database>,
+
     session: Session,
 ) -> ApiResult<HttpResponse> {
     let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
     let path = path.into_inner();
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);

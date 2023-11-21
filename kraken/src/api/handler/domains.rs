@@ -3,13 +3,13 @@
 use std::collections::HashMap;
 
 use actix_toolbox::tb_middleware::Session;
-use actix_web::web::{Data, Json, Path, Query};
+use actix_web::web::{Json, Path, Query};
 use actix_web::{get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use rorm::conditions::DynamicCollection;
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, insert, query, update, Database, FieldAccess, Model};
+use rorm::{and, insert, query, update, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -19,6 +19,7 @@ use crate::api::handler::{
     get_page_params, ApiError, ApiResult, DomainResultsPage, PageParams, PathUuid,
     SimpleAggregationSource, SimpleTag, TagType, UuidResponse,
 };
+use crate::chan::GLOBAL;
 use crate::models::{
     AggregationSource, AggregationTable, Domain, DomainGlobalTag, DomainHostRelation,
     DomainWorkspaceTag, GlobalTag, Host, ManualDomain, Workspace, WorkspaceTag,
@@ -85,12 +86,11 @@ pub async fn get_all_domains(
     page_params: Query<PageParams>,
     filter_params: Query<GetAllDomainsQuery>,
     session: Session,
-    db: Data<Database>,
 ) -> ApiResult<Json<DomainResultsPage>> {
     let path = path.into_inner();
     let user_uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let mut tags: HashMap<Uuid, Vec<SimpleTag>> = HashMap::new();
 
@@ -257,10 +257,10 @@ pub struct PathDomain {
 #[get("/workspaces/{w_uuid}/domains/{d_uuid}")]
 pub async fn get_domain(
     path: Path<PathDomain>,
-    db: Data<Database>,
+
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<FullDomain>> {
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges)?;
@@ -349,13 +349,13 @@ pub struct CreateDomainRequest {
 pub async fn create_domain(
     req: Json<CreateDomainRequest>,
     path: Path<PathUuid>,
-    db: Data<Database>,
+
     SessionUser(user): SessionUser,
 ) -> ApiResult<Json<UuidResponse>> {
     let CreateDomainRequest { domain } = req.into_inner();
     let PathUuid { uuid: workspace } = path.into_inner();
     Ok(Json(UuidResponse {
-        uuid: ManualDomain::insert(db.as_ref(), workspace, user, domain).await?,
+        uuid: ManualDomain::insert(&GLOBAL.db, workspace, user, domain).await?,
     }))
 }
 
@@ -386,7 +386,7 @@ pub struct UpdateDomainRequest {
 pub async fn update_domain(
     req: Json<UpdateDomainRequest>,
     path: Path<PathDomain>,
-    db: Data<Database>,
+
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
     let req = req.into_inner();
@@ -395,7 +395,7 @@ pub async fn update_domain(
         return Err(ApiError::EmptyJson);
     }
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);

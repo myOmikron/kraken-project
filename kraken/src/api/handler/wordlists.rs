@@ -1,14 +1,15 @@
 //! Endpoints for listing and managing wordlists
 
-use actix_web::web::{Data, Json, Path};
+use actix_web::web::{Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use rorm::prelude::*;
-use rorm::{query, Database};
+use rorm::query;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
+use crate::chan::GLOBAL;
 use crate::models::WordList;
 
 /// Response containing all wordlists
@@ -46,9 +47,9 @@ pub struct SimpleWordlist {
     security(("api_key" = []))
 )]
 #[get("/wordlists")]
-pub async fn get_all_wordlists(db: Data<Database>) -> ApiResult<Json<GetAllWordlistsResponse>> {
+pub async fn get_all_wordlists() -> ApiResult<Json<GetAllWordlistsResponse>> {
     Ok(Json(GetAllWordlistsResponse {
-        wordlists: query!(db.as_ref(), SimpleWordlist).all().await?,
+        wordlists: query!(&GLOBAL.db, SimpleWordlist).all().await?,
     }))
 }
 
@@ -82,7 +83,6 @@ pub struct CreateWordlistRequest {
 )]
 #[post("/wordlists")]
 pub async fn create_wordlist_admin(
-    db: Data<Database>,
     req: Json<CreateWordlistRequest>,
 ) -> ApiResult<Json<UuidResponse>> {
     let CreateWordlistRequest {
@@ -91,7 +91,7 @@ pub async fn create_wordlist_admin(
         path,
     } = req.into_inner();
     Ok(Json(UuidResponse {
-        uuid: WordList::insert(db.as_ref(), name, description, path).await?,
+        uuid: WordList::insert(&GLOBAL.db, name, description, path).await?,
     }))
 }
 
@@ -134,11 +134,9 @@ pub struct FullWordlist {
     security(("api_key" = []))
 )]
 #[get("/wordlists")]
-pub async fn get_all_wordlists_admin(
-    db: Data<Database>,
-) -> ApiResult<Json<GetAllWordlistsAdminResponse>> {
+pub async fn get_all_wordlists_admin() -> ApiResult<Json<GetAllWordlistsAdminResponse>> {
     Ok(Json(GetAllWordlistsAdminResponse {
-        wordlists: query!(db.as_ref(), FullWordlist).all().await?,
+        wordlists: query!(&GLOBAL.db, FullWordlist).all().await?,
     }))
 }
 
@@ -175,17 +173,14 @@ pub struct UpdateWordlistRequest {
     security(("api_key" = []))
 )]
 #[put("/wordlists/{uuid}")]
-pub async fn update_wordlist_admin(
-    db: Data<Database>,
-    req: Json<UpdateWordlistRequest>,
-) -> ApiResult<HttpResponse> {
+pub async fn update_wordlist_admin(req: Json<UpdateWordlistRequest>) -> ApiResult<HttpResponse> {
     let UpdateWordlistRequest {
         uuid,
         name,
         description,
         path,
     } = req.into_inner();
-    WordList::update(db.as_ref(), uuid, name, description, path).await?;
+    WordList::update(&GLOBAL.db, uuid, name, description, path).await?;
     Ok(HttpResponse::Ok().finish())
 }
 
@@ -202,11 +197,8 @@ pub async fn update_wordlist_admin(
     security(("api_key" = []))
 )]
 #[delete("/wordlists/{uuid}")]
-pub async fn delete_wordlist_admin(
-    db: Data<Database>,
-    path: Path<PathUuid>,
-) -> ApiResult<HttpResponse> {
-    let deleted = rorm::delete!(db.as_ref(), WordList)
+pub async fn delete_wordlist_admin(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
+    let deleted = rorm::delete!(&GLOBAL.db, WordList)
         .condition(WordList::F.uuid.equals(path.uuid))
         .await?;
     if deleted > 0 {

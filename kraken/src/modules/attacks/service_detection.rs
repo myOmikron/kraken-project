@@ -1,5 +1,6 @@
 use std::net::IpAddr;
 
+use crate::chan::GLOBAL;
 use crate::models::ServiceCertainty;
 use crate::modules::attack_results::store_service_detection_result;
 use crate::modules::attacks::{AttackError, LeechAttackContext};
@@ -36,7 +37,7 @@ impl LeechAttackContext {
 
                 self.set_finished(
                     store_service_detection_result(
-                        &self.db,
+                        &GLOBAL.db,
                         self.attack_uuid,
                         self.workspace_uuid,
                         &services,

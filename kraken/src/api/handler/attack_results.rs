@@ -3,13 +3,13 @@
 use std::collections::HashMap;
 
 use actix_web::get;
-use actix_web::web::{Data, Json, Path, Query};
+use actix_web::web::{Json, Path, Query};
 use chrono::{DateTime, Utc};
 use futures::{StreamExt, TryStreamExt};
 use ipnetwork::IpNetwork;
 use log::error;
 use rorm::prelude::*;
-use rorm::{query, Database};
+use rorm::query;
 use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -21,6 +21,7 @@ use crate::api::handler::{
     QueryCertificateTransparencyResultsPage, QueryUnhashedResultsPage, ServiceDetectionResultsPage,
     TcpPortScanResultsPage,
 };
+use crate::chan::GLOBAL;
 use crate::models::{
     Attack, BruteforceSubdomainsResult, CertificateTransparencyResult,
     CertificateTransparencyValueName, DehashedQueryResult, DnsRecordType, DnsResolutionResult,
@@ -68,9 +69,8 @@ pub async fn get_bruteforce_subdomains_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-    db: Data<Database>,
 ) -> ApiResult<Json<BruteforceSubdomainsResultsPage>> {
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
     let (limit, offset) = get_page_params(page_params).await?;
@@ -147,9 +147,8 @@ pub async fn get_tcp_port_scan_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-    db: Data<Database>,
 ) -> ApiResult<Json<TcpPortScanResultsPage>> {
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let uuid = path.uuid;
     let (limit, offset) = get_page_params(page_params).await?;
@@ -236,9 +235,8 @@ pub async fn get_query_certificate_transparency_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-    db: Data<Database>,
 ) -> ApiResult<Json<QueryCertificateTransparencyResultsPage>> {
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
     let (limit, offset) = get_page_params(page_params).await?;
@@ -366,9 +364,8 @@ pub async fn get_query_unhashed_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-    db: Data<Database>,
 ) -> ApiResult<Json<QueryUnhashedResultsPage>> {
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
     let (limit, offset) = get_page_params(page_params).await?;
@@ -450,9 +447,8 @@ pub async fn get_host_alive_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-    db: Data<Database>,
 ) -> ApiResult<Json<HostAliveResultsPage>> {
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
     let (limit, offset) = get_page_params(page_params).await?;
@@ -534,9 +530,8 @@ pub async fn get_service_detection_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-    db: Data<Database>,
 ) -> ApiResult<Json<ServiceDetectionResultsPage>> {
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
     let (limit, offset) = get_page_params(page_params).await?;
@@ -665,9 +660,8 @@ pub async fn get_dns_resolution_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-    db: Data<Database>,
 ) -> ApiResult<Json<DnsResolutionResultsPage>> {
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
     let (limit, offset) = get_page_params(page_params).await?;

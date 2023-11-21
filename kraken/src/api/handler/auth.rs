@@ -8,7 +8,7 @@ use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use chrono::Utc;
 use log::debug;
 use rorm::prelude::{BackRef, ForeignModelByField};
-use rorm::{query, update, Database, FieldAccess, Model};
+use rorm::{query, update, FieldAccess, Model};
 use serde::Deserialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -21,7 +21,7 @@ use webauthn_rs::Webauthn;
 use crate::api::extractors::SessionUser;
 use crate::api::handler::{ApiError, ApiResult};
 use crate::api::middleware::AuthenticationRequired;
-use crate::chan::WsManagerChan;
+use crate::chan::GLOBAL;
 use crate::models::{LocalUser, LocalUserKey, User};
 
 /// Test the current login state
@@ -64,12 +64,8 @@ pub struct LoginRequest {
     request_body = LoginRequest,
 )]
 #[post("/login")]
-pub async fn login(
-    req: Json<LoginRequest>,
-    db: Data<Database>,
-    session: Session,
-) -> ApiResult<HttpResponse> {
-    let mut tx = db.start_transaction().await?;
+pub async fn login(req: Json<LoginRequest>, session: Session) -> ApiResult<HttpResponse> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let (user, password_hash) = query!(
         &mut tx,
@@ -117,11 +113,10 @@ pub async fn login(
 pub async fn logout(
     session: Session,
     SessionUser(user_uuid): SessionUser,
-    ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
     session.purge();
 
-    ws_manager_chan.close_all(user_uuid).await;
+    GLOBAL.ws.close_all(user_uuid).await;
 
     Ok(HttpResponse::Ok().finish())
 }
@@ -142,7 +137,6 @@ pub async fn logout(
 )]
 #[post("/startAuth")]
 pub async fn start_auth(
-    db: Data<Database>,
     session: Session,
     webauthn: Data<Webauthn>,
 ) -> ApiResult<Json<RequestChallengeResponse>> {
@@ -154,7 +148,7 @@ pub async fn start_auth(
 
     session.remove("auth_state");
 
-    let keys = query!(db.as_ref(), LocalUserKey)
+    let keys = query!(&GLOBAL.db, LocalUserKey)
         .condition(LocalUserKey::F.user.equals(uuid))
         .all()
         .await?;
@@ -188,7 +182,7 @@ pub async fn start_auth(
 #[post("/finishAuth")]
 pub async fn finish_auth(
     auth: Json<PublicKeyCredential>,
-    db: Data<Database>,
+
     session: Session,
     webauthn: Data<Webauthn>,
 ) -> ApiResult<HttpResponse> {
@@ -204,7 +198,7 @@ pub async fn finish_auth(
 
     webauthn.finish_passkey_authentication(&auth, &auth_state)?;
 
-    update!(db.as_ref(), User)
+    update!(&GLOBAL.db, User)
         .condition(User::F.uuid.equals(uuid))
         .set(User::F.last_login, Some(Utc::now()))
         .exec()
@@ -231,7 +225,6 @@ pub async fn finish_auth(
 )]
 #[post("/startRegister")]
 pub async fn start_register(
-    db: Data<Database>,
     session: Session,
     webauthn: Data<Webauthn>,
 ) -> ApiResult<Json<CreationChallengeResponse>> {
@@ -240,7 +233,7 @@ pub async fn start_register(
     }
     let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     // TODO: Make other error for this
     let (user, local_user_uuid, password_hash) = query!(
@@ -325,7 +318,7 @@ pub struct FinishRegisterRequest {
 #[post("/finishRegister")]
 pub async fn finish_register(
     req: Json<FinishRegisterRequest>,
-    db: Data<Database>,
+
     session: Session,
     webauthn: Data<Webauthn>,
 ) -> ApiResult<HttpResponse> {
@@ -342,7 +335,7 @@ pub async fn finish_register(
 
     let passkey = webauthn.finish_passkey_registration(&req.register_pk_credential, &reg_state)?;
 
-    LocalUserKey::insert(db.as_ref(), uuid, req.name, passkey).await?;
+    LocalUserKey::insert(&GLOBAL.db, uuid, req.name, passkey).await?;
 
     Ok(HttpResponse::Ok().finish())
 }

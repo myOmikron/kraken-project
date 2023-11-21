@@ -3,14 +3,14 @@
 use std::collections::HashMap;
 
 use actix_toolbox::tb_middleware::Session;
-use actix_web::web::{Data, Json, Path, Query};
+use actix_web::web::{Json, Path, Query};
 use actix_web::{get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use ipnetwork::IpNetwork;
 use rorm::conditions::{BoxedCondition, Condition, DynamicCollection};
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, insert, query, update, Database, FieldAccess, Model};
+use rorm::{and, insert, query, update, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -22,6 +22,7 @@ use crate::api::handler::{
     get_page_params, ApiError, ApiResult, PageParams, PathUuid, ServiceResultsPage,
     SimpleAggregationSource, SimpleTag, TagType, UuidResponse,
 };
+use crate::chan::GLOBAL;
 use crate::models::{
     AggregationSource, AggregationTable, GlobalTag, Host, ManualService, ManualServiceCertainty,
     Port, Service, ServiceCertainty, ServiceGlobalTag, ServiceWorkspaceTag, Workspace,
@@ -100,13 +101,13 @@ pub async fn get_all_services(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     filter_params: Query<GetAllServicesQuery>,
-    db: Data<Database>,
+
     session: Session,
 ) -> ApiResult<Json<ServiceResultsPage>> {
     let path = path.into_inner();
     let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if !Workspace::is_user_member_or_owner(&mut tx, path.uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
@@ -266,10 +267,10 @@ pub struct PathService {
 #[get("/workspaces/{w_uuid}/services/{s_uuid}")]
 pub async fn get_service(
     path: Path<PathService>,
-    db: Data<Database>,
+
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<FullService>> {
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges)?;
@@ -407,7 +408,7 @@ pub struct CreateServiceRequest {
 pub async fn create_service(
     req: Json<CreateServiceRequest>,
     path: Path<PathUuid>,
-    db: Data<Database>,
+
     SessionUser(user): SessionUser,
 ) -> ApiResult<Json<UuidResponse>> {
     let CreateServiceRequest {
@@ -418,7 +419,7 @@ pub async fn create_service(
     } = req.into_inner();
     let PathUuid { uuid: workspace } = path.into_inner();
     Ok(Json(UuidResponse {
-        uuid: ManualService::insert(db.as_ref(), workspace, user, name, host, port, certainty)
+        uuid: ManualService::insert(&GLOBAL.db, workspace, user, name, host, port, certainty)
             .await?,
     }))
 }
@@ -450,7 +451,7 @@ pub struct UpdateServiceRequest {
 pub async fn update_service(
     req: Json<UpdateServiceRequest>,
     path: Path<PathService>,
-    db: Data<Database>,
+
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
     let req = req.into_inner();
@@ -459,7 +460,7 @@ pub async fn update_service(
         return Err(ApiError::EmptyJson);
     }
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);

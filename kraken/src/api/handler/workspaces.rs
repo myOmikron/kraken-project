@@ -1,7 +1,7 @@
 //! Everything regarding workspace management is located in this module
 
 use actix_toolbox::tb_middleware::Session;
-use actix_web::web::{Data, Json, Path, Query};
+use actix_web::web::{Json, Path, Query};
 use actix_web::{delete, get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::{StreamExt, TryStreamExt};
@@ -11,7 +11,7 @@ use rorm::db::sql::value::Value;
 use rorm::db::transaction::Transaction;
 use rorm::db::Executor;
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, insert, query, update, Database, Error, FieldAccess, Model};
+use rorm::{and, insert, query, update, Error, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use utoipa::{IntoParams, ToSchema};
@@ -35,7 +35,8 @@ use crate::api::handler::{
     de_optional, query_user, ApiError, ApiResult, Page, PageParams, PathUuid, SearchResultPage,
     SearchesResultPage, UuidResponse,
 };
-use crate::chan::{WsManagerChan, WsMessage};
+use crate::chan::WsMessage;
+use crate::chan::GLOBAL;
 use crate::models;
 use crate::models::{
     Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
@@ -68,12 +69,12 @@ pub struct CreateWorkspaceRequest {
 #[post("/workspaces")]
 pub async fn create_workspace(
     req: Json<CreateWorkspaceRequest>,
-    db: Data<Database>,
+
     session: SessionUser,
 ) -> ApiResult<Json<UuidResponse>> {
     let req = req.into_inner();
 
-    let uuid = Workspace::insert(db.as_ref(), req.name, req.description, session.0).await?;
+    let uuid = Workspace::insert(&GLOBAL.db, req.name, req.description, session.0).await?;
 
     Ok(Json(UuidResponse { uuid }))
 }
@@ -91,12 +92,8 @@ pub async fn create_workspace(
     security(("api_key" = []))
 )]
 #[delete("/workspaces/{uuid}")]
-pub async fn delete_workspace(
-    req: Path<PathUuid>,
-    session: Session,
-    db: Data<Database>,
-) -> ApiResult<HttpResponse> {
-    let mut tx = db.start_transaction().await?;
+pub async fn delete_workspace(req: Path<PathUuid>, session: Session) -> ApiResult<HttpResponse> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let executing_user = query_user(&mut tx, &session).await?;
 
@@ -170,12 +167,12 @@ pub struct FullWorkspace {
 #[get("/workspaces/{uuid}")]
 pub async fn get_workspace(
     req: Path<PathUuid>,
-    db: Data<Database>,
+
     session: Session,
 ) -> ApiResult<Json<FullWorkspace>> {
     let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let workspace = if Workspace::is_user_member_or_owner(&mut tx, req.uuid, user_uuid).await? {
         get_workspace_unchecked(req.uuid, &mut tx).await
@@ -208,11 +205,8 @@ pub struct GetAllWorkspacesResponse {
     security(("api_key" = []))
 )]
 #[get("/workspaces")]
-pub async fn get_all_workspaces(
-    db: Data<Database>,
-    session: Session,
-) -> ApiResult<Json<GetAllWorkspacesResponse>> {
-    let mut tx = db.start_transaction().await?;
+pub async fn get_all_workspaces(session: Session) -> ApiResult<Json<GetAllWorkspacesResponse>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let session_user = query_user(&mut tx, &session).await?;
 
@@ -297,14 +291,14 @@ pub struct UpdateWorkspaceRequest {
 pub async fn update_workspace(
     path: Path<PathUuid>,
     req: Json<UpdateWorkspaceRequest>,
-    db: Data<Database>,
+
     session: Session,
 ) -> ApiResult<HttpResponse> {
     let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let req = req.into_inner();
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let w = query!(&mut tx, Workspace)
         .condition(Workspace::F.uuid.equals(path.uuid))
@@ -363,12 +357,11 @@ pub async fn transfer_ownership(
     req: Json<TransferWorkspaceRequest>,
     path: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
-    db: Data<Database>,
 ) -> ApiResult<HttpResponse> {
     let new_owner_uuid = req.into_inner().user;
     let workspace_uuid = path.into_inner().uuid;
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let Some(workspace) = query!(&mut tx, Workspace)
         .condition(Workspace::F.uuid.equals(workspace_uuid))
@@ -419,14 +412,12 @@ pub struct InviteToWorkspace {
 pub async fn create_invitation(
     req: Json<InviteToWorkspace>,
     path: Path<PathUuid>,
-    ws_manager_chan: Data<WsManagerChan>,
-    db: Data<Database>,
     session: Session,
 ) -> ApiResult<HttpResponse> {
     let InviteToWorkspace { user } = req.into_inner();
     let workspace_uuid = path.into_inner().uuid;
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
     let session_user = query_user(&mut tx, &session).await?;
 
     let invitation_uuid =
@@ -445,7 +436,8 @@ pub async fn create_invitation(
 
     tx.commit().await?;
 
-    ws_manager_chan
+    GLOBAL
+        .ws
         .message(
             user,
             WsMessage::InvitationToWorkspace {
@@ -495,12 +487,12 @@ pub struct InviteUuid {
 #[delete("/workspaces/{w_uuid}/invitations/{i_uuid}")]
 pub async fn retract_invitation(
     path: Path<InviteUuid>,
-    db: Data<Database>,
+
     SessionUser(session_user): SessionUser,
 ) -> ApiResult<HttpResponse> {
     let InviteUuid { w_uuid, i_uuid } = path.into_inner();
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let workspace = query!(&mut tx, Workspace)
         .condition(Workspace::F.uuid.equals(w_uuid))
@@ -545,12 +537,12 @@ pub async fn retract_invitation(
 #[get("/workspaces/{uuid}/invitations")]
 pub async fn get_all_workspace_invitations(
     path: Path<PathUuid>,
-    db: Data<Database>,
+
     SessionUser(session_user): SessionUser,
 ) -> ApiResult<Json<WorkspaceInvitationList>> {
     let workspace_uuid = path.into_inner().uuid;
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let workspace = query!(&mut tx, Workspace)
         .condition(Workspace::F.uuid.equals(workspace_uuid))
@@ -610,11 +602,8 @@ pub async fn get_all_workspace_invitations(
     security(("api_key" = []))
 )]
 #[get("/workspaces/{uuid}")]
-pub async fn get_workspace_admin(
-    req: Path<PathUuid>,
-    db: Data<Database>,
-) -> ApiResult<Json<FullWorkspace>> {
-    let mut tx = db.start_transaction().await?;
+pub async fn get_workspace_admin(req: Path<PathUuid>) -> ApiResult<Json<FullWorkspace>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let workspace = get_workspace_unchecked(req.uuid, &mut tx).await;
 
@@ -635,10 +624,8 @@ pub async fn get_workspace_admin(
     security(("api_key" = []))
 )]
 #[get("/workspaces")]
-pub async fn get_all_workspaces_admin(
-    db: Data<Database>,
-) -> ApiResult<Json<GetAllWorkspacesResponse>> {
-    let mut tx = db.start_transaction().await?;
+pub async fn get_all_workspaces_admin() -> ApiResult<Json<GetAllWorkspacesResponse>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let workspaces = query!(
         &mut tx,
@@ -703,9 +690,7 @@ pub struct SearchWorkspaceRequest {
 pub async fn search(
     path: Path<PathUuid>,
     request: Json<SearchWorkspaceRequest>,
-    db: Data<Database>,
     SessionUser(user_uuid): SessionUser,
-    ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
     let search_term = request.into_inner().search_term;
 
@@ -713,7 +698,7 @@ pub async fn search(
         return Err(ApiError::InvalidSearch);
     }
 
-    let mut db_trx = db.start_transaction().await?;
+    let mut db_trx = GLOBAL.db.start_transaction().await?;
 
     if !Workspace::is_user_member_or_owner(&mut db_trx, path.uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
@@ -736,7 +721,8 @@ pub async fn search(
     let (result_tx, mut result_rx) = mpsc::channel::<Result<SearchResult, Error>>(16);
 
     tokio::spawn({
-        let mut db_trx = db
+        let mut db_trx = GLOBAL
+            .db
             .start_transaction()
             .await
             .map_err(ApiError::DatabaseError)?;
@@ -771,7 +757,8 @@ pub async fn search(
                             continue;
                         };
 
-                        ws_manager_chan
+                        GLOBAL
+                            .ws
                             .message(
                                 user_uuid,
                                 WsMessage::SearchNotify {
@@ -797,7 +784,8 @@ pub async fn search(
                 error!("could not commit changes to database: {err}");
             };
 
-            ws_manager_chan
+            GLOBAL
+                .ws
                 .message(
                     user_uuid,
                     WsMessage::SearchFinished {
@@ -812,7 +800,8 @@ pub async fn search(
     });
 
     tokio::spawn({
-        let mut db_trx = db
+        let mut db_trx = GLOBAL
+            .db
             .start_transaction()
             .await
             .map_err(ApiError::DatabaseError)?;
@@ -863,12 +852,11 @@ pub async fn get_searches(
     path: Path<PathUuid>,
     request: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-    db: Data<Database>,
 ) -> ApiResult<Json<SearchesResultPage>> {
     let PathUuid { uuid } = path.into_inner();
     let PageParams { limit, offset } = request.into_inner();
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if !Workspace::is_user_member_or_owner(&mut tx, uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
@@ -954,12 +942,11 @@ pub async fn get_search_results(
     path: Path<SearchUuid>,
     request: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-    db: Data<Database>,
 ) -> ApiResult<Json<SearchResultPage>> {
     let SearchUuid { w_uuid, s_uuid } = path.into_inner();
     let PageParams { limit, offset } = request.into_inner();
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if !Workspace::is_user_member_or_owner(&mut tx, w_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);

@@ -1,10 +1,10 @@
 //! Endpoints for inspecting and revoking a user's oauth decisions
 
-use actix_web::web::{Data, Json, Path};
+use actix_web::web::{Json, Path};
 use actix_web::{delete, get, HttpResponse};
 use futures::TryStreamExt;
 use rorm::prelude::*;
-use rorm::{and, query, Database};
+use rorm::{and, query};
 use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -13,6 +13,7 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::users::SimpleUser;
 use crate::api::handler::workspaces::SimpleWorkspace;
 use crate::api::handler::{ApiError, ApiResult, PathUuid};
+use crate::chan::GLOBAL;
 use crate::models::{OAuthDecision, OAuthDecisionAction, Workspace, WorkspaceAccessToken};
 
 /// Response holding a user's oauth decisions
@@ -52,11 +53,10 @@ pub struct FullDecision {
 )]
 #[get("/oauthDecisions")]
 pub async fn get_decisions(
-    db: Data<Database>,
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<GetMyDecisionsResponse>> {
     let decisions = query!(
-        db.as_ref(),
+        &GLOBAL.db,
         (
             OAuthDecision::F.uuid,
             OAuthDecision::F.application.name,
@@ -98,11 +98,10 @@ pub async fn get_decisions(
 )]
 #[delete("/oauthDecisions/{uuid}")]
 pub async fn revoke_decision(
-    db: Data<Database>,
     SessionUser(user_uuid): SessionUser,
     path: Path<PathUuid>,
 ) -> ApiResult<HttpResponse> {
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let decision = query!(&mut tx, OAuthDecision)
         .condition(OAuthDecision::F.uuid.equals(path.uuid))
@@ -114,7 +113,7 @@ pub async fn revoke_decision(
         return Err(ApiError::MissingPrivileges);
     }
 
-    rorm::delete!(db.as_ref(), OAuthDecision)
+    rorm::delete!(&GLOBAL.db, OAuthDecision)
         .condition(OAuthDecision::F.uuid.equals(path.uuid))
         .await?;
 

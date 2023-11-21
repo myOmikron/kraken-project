@@ -1,6 +1,6 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 
-use crate::chan::WsMessage;
+use crate::chan::{WsMessage, GLOBAL};
 use crate::models::DnsRecordType;
 use crate::modules::attack_results::store_dns_resolution_result;
 use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
@@ -81,7 +81,7 @@ impl LeechAttackContext {
                 .await;
 
                 store_dns_resolution_result(
-                    &self.db,
+                    &GLOBAL.db,
                     self.attack_uuid,
                     self.workspace_uuid,
                     source,

@@ -18,7 +18,7 @@
 use std::fs::read_to_string;
 use std::io;
 use std::io::Write;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 use actix_toolbox::logging::setup_logging;
 use actix_web::cookie::Key;
@@ -28,7 +28,7 @@ use clap::{Parser, Subcommand};
 use rorm::{cli, Database, DatabaseConfiguration, DatabaseDriver};
 
 use crate::api::server;
-use crate::chan::LeechManager;
+use crate::chan::{GlobalChan, LeechManager, GLOBAL};
 use crate::config::Config;
 use crate::models::{User, UserPermission};
 use crate::modules::tls::TlsManager;
@@ -103,33 +103,40 @@ async fn main() -> Result<(), String> {
         Command::Start => {
             let db = get_db(&config).await?;
 
-            let settings_manager_chan = Arc::new(
+            let settings = Arc::new(
                 chan::start_settings_manager(&db)
                     .await
                     .map_err(|e| e.to_string())?,
             );
+            let dehashed = Arc::new(RwLock::new(
+                chan::start_dehashed_manager(settings.clone()).await?,
+            ));
 
-            let tls_manager = TlsManager::load("/var/lib/kraken")
-                .map_err(|e| format!("Failed to initialize tls: {e}"))?;
-            let leeches = LeechManager::start(db.clone(), tls_manager.clone().into_inner())
+            let tls = Arc::new(
+                TlsManager::load("/var/lib/kraken")
+                    .map_err(|e| format!("Failed to initialize tls: {e}"))?,
+            );
+            let leeches = LeechManager::start(db.clone(), tls.clone())
                 .await
                 .map_err(|e| format!("Failed to query initial leeches: {e}"))?;
-            let ws_manager_chan = chan::start_ws_manager().await;
-            let dehashed_scheduler =
-                chan::start_dehashed_manager(settings_manager_chan.clone()).await?;
 
-            start_rpc_server(&config, db.clone(), &tls_manager);
+            let ws = chan::start_ws_manager().await;
 
-            server::start_server(
+            GLOBAL.init(GlobalChan {
                 db,
-                &config,
                 leeches,
-                ws_manager_chan,
-                settings_manager_chan,
-                dehashed_scheduler,
-                tls_manager,
-            )
-            .await?;
+                ws,
+                settings,
+                dehashed,
+                tls,
+            });
+
+            start_rpc_server(&config);
+
+            server::start_server(&config).await?;
+
+            // TODO: Stop rpc server as it also has access to the database
+            GLOBAL.db.clone().close().await;
         }
         Command::Keygen => {
             let key = Key::generate();

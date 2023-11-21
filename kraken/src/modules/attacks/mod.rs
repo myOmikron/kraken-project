@@ -18,26 +18,20 @@ use chrono::Utc;
 use futures::{TryFuture, TryStreamExt};
 use log::error;
 use rorm::prelude::*;
-use rorm::{update, Database};
+use rorm::update;
 use thiserror::Error;
 use tonic::{Response, Status, Streaming};
 use uuid::Uuid;
 
 #[cfg(doc)]
 use crate::api::handler;
-use crate::chan::{LeechClient, WsManagerChan, WsMessage};
+use crate::chan::{LeechClient, WsMessage, GLOBAL};
 use crate::models::Attack;
 use crate::rpc::rpc_definitions::AddressConvError;
 
 /// Common data required to start any attack
 #[derive(Clone)]
 pub struct AttackContext {
-    /// Handle to the database to insert results into
-    pub db: Database,
-
-    /// Handle to send status updates over websocket
-    pub ws_manager: WsManagerChan,
-
     /// The user starting the attack
     pub user_uuid: Uuid,
 
@@ -72,7 +66,7 @@ pub struct LeechAttackContext {
 impl AttackContext {
     /// Send a websocket message and log the error
     async fn send_ws(&self, message: WsMessage) {
-        self.ws_manager.message(self.user_uuid, message).await;
+        GLOBAL.ws.message(self.user_uuid, message).await;
     }
 
     /// Send the user a notification and update the [`Attack`] model
@@ -90,7 +84,7 @@ impl AttackContext {
             );
         }
 
-        if let Err(err) = update!(&self.db, Attack)
+        if let Err(err) = update!(&GLOBAL.db, Attack)
             .condition(Attack::F.uuid.equals(self.attack_uuid))
             .set(Attack::F.finished_at, Some(Utc::now()))
             .set(

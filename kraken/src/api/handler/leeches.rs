@@ -2,19 +2,19 @@
 
 use std::str::FromStr;
 
-use actix_web::web::{Data, Json, Path};
+use actix_web::web::{Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use log::error;
-use rorm::{query, update, Database, FieldAccess, Model};
+use rorm::{query, update, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use url::Url;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
-use crate::chan::LeechManager;
+use crate::chan::GLOBAL;
 use crate::models::Leech;
-use crate::modules::tls::{LeechTlsConfig, TlsManager};
+use crate::modules::tls::LeechTlsConfig;
 use crate::modules::uri::check_leech_address;
 
 /// The request to create a new leech
@@ -46,16 +46,12 @@ pub struct CreateLeechRequest {
     security(("api_key" = []))
 )]
 #[post("/leeches")]
-pub async fn create_leech(
-    req: Json<CreateLeechRequest>,
-    db: Data<Database>,
-    leeches: Data<LeechManager>,
-) -> ApiResult<Json<UuidResponse>> {
+pub async fn create_leech(req: Json<CreateLeechRequest>) -> ApiResult<Json<UuidResponse>> {
     let req = req.into_inner();
 
-    let uuid = Leech::insert(db.as_ref(), req.name, req.address, req.description).await?;
+    let uuid = Leech::insert(&GLOBAL.db, req.name, req.address, req.description).await?;
 
-    leeches.created_leech(uuid).await;
+    GLOBAL.leeches.created_leech(uuid).await;
 
     Ok(Json(UuidResponse { uuid }))
 }
@@ -73,12 +69,8 @@ pub async fn create_leech(
     security(("api_key" = []))
 )]
 #[delete("/leeches/{uuid}")]
-pub async fn delete_leech(
-    path: Path<PathUuid>,
-    db: Data<Database>,
-    leeches: Data<LeechManager>,
-) -> ApiResult<HttpResponse> {
-    let mut tx = db.start_transaction().await?;
+pub async fn delete_leech(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     query!(&mut tx, (Leech::F.uuid,))
         .condition(Leech::F.uuid.equals(path.uuid))
@@ -92,7 +84,7 @@ pub async fn delete_leech(
 
     tx.commit().await?;
 
-    leeches.deleted_leech(path.uuid).await;
+    GLOBAL.leeches.deleted_leech(path.uuid).await;
 
     Ok(HttpResponse::Ok().finish())
 }
@@ -120,8 +112,8 @@ pub struct SimpleLeech {
     security(("api_key" = []))
 )]
 #[get("/leeches/{uuid}")]
-pub async fn get_leech(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<Json<SimpleLeech>> {
-    let leech = query!(db.as_ref(), Leech)
+pub async fn get_leech(req: Path<PathUuid>) -> ApiResult<Json<SimpleLeech>> {
+    let leech = query!(&GLOBAL.db, Leech)
         .condition(Leech::F.uuid.equals(req.uuid))
         .optional()
         .await?
@@ -155,21 +147,19 @@ pub struct LeechConfig {
     security(("api_key" = []))
 )]
 #[get("/leeches/{uuid}/cert")]
-pub async fn gen_leech_config(
-    req: Path<PathUuid>,
-    db: Data<Database>,
-    tls: Data<TlsManager>,
-) -> ApiResult<Json<LeechConfig>> {
-    let (secret, address) = query!(db.as_ref(), (Leech::F.secret, Leech::F.address))
+pub async fn gen_leech_config(req: Path<PathUuid>) -> ApiResult<Json<LeechConfig>> {
+    let (secret, address) = query!(&GLOBAL.db, (Leech::F.secret, Leech::F.address))
         .condition(Leech::F.uuid.equals(req.uuid))
         .optional()
         .await?
         .ok_or(ApiError::InvalidUuid)?;
     Ok(Json(LeechConfig {
-        tls: tls.gen_leech_cert(Url::from_str(&address).map_err(|_| {
-            error!("The leech {} doesn't have a valid address", req.uuid);
-            ApiError::InternalServerError
-        })?)?,
+        tls: GLOBAL
+            .tls
+            .gen_leech_cert(Url::from_str(&address).map_err(|_| {
+                error!("The leech {} doesn't have a valid address", req.uuid);
+                ApiError::InternalServerError
+            })?)?,
         secret,
     }))
 }
@@ -192,8 +182,8 @@ pub struct GetAllLeechesResponse {
     security(("api_key" = []))
 )]
 #[get("/leeches")]
-pub async fn get_all_leeches(db: Data<Database>) -> ApiResult<Json<GetAllLeechesResponse>> {
-    let leeches = query!(db.as_ref(), Leech).all().await?;
+pub async fn get_all_leeches() -> ApiResult<Json<GetAllLeechesResponse>> {
+    let leeches = query!(&GLOBAL.db, Leech).all().await?;
 
     Ok(Json(GetAllLeechesResponse {
         leeches: leeches
@@ -242,10 +232,8 @@ pub struct UpdateLeechRequest {
 pub async fn update_leech(
     path: Path<PathUuid>,
     req: Json<UpdateLeechRequest>,
-    db: Data<Database>,
-    leeches: Data<LeechManager>,
 ) -> ApiResult<HttpResponse> {
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let req = req.into_inner();
 
@@ -274,7 +262,7 @@ pub async fn update_leech(
 
     tx.commit().await?;
 
-    leeches.updated_leech(path.uuid).await;
+    GLOBAL.leeches.updated_leech(path.uuid).await;
 
     Ok(HttpResponse::Ok().finish())
 }

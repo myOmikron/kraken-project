@@ -2,14 +2,14 @@
 
 use std::collections::HashMap;
 
-use actix_web::web::{Data, Json, Path, Query};
+use actix_web::web::{Json, Path, Query};
 use actix_web::{get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use ipnetwork::IpNetwork;
 use rorm::conditions::DynamicCollection;
 use rorm::prelude::*;
-use rorm::{and, insert, query, update, Database};
+use rorm::{and, insert, query, update};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -19,6 +19,7 @@ use crate::api::handler::{
     get_page_params, ApiError, ApiResult, HostResultsPage, PageParams, PathUuid,
     SimpleAggregationSource, SimpleTag, TagType, UuidResponse,
 };
+use crate::chan::GLOBAL;
 use crate::models::{
     AggregationSource, AggregationTable, GlobalTag, Host, HostGlobalTag, HostWorkspaceTag,
     ManualHost, ManualHostCertainty, OsType, Workspace, WorkspaceTag,
@@ -85,11 +86,10 @@ pub(crate) async fn get_all_hosts(
     path: Path<PathUuid>,
     query: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-    db: Data<Database>,
 ) -> ApiResult<Json<HostResultsPage>> {
     let path = path.into_inner();
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if !Workspace::is_user_member_or_owner(&mut tx, path.uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
@@ -179,12 +179,12 @@ pub struct PathHost {
 #[get("/workspaces/{w_uuid}/hosts/{h_uuid}")]
 pub async fn get_host(
     path: Path<PathHost>,
-    db: Data<Database>,
+
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<FullHost>> {
     let path = path.into_inner();
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges)?;
@@ -277,13 +277,13 @@ pub struct CreateHostRequest {
 pub async fn create_host(
     req: Json<CreateHostRequest>,
     path: Path<PathUuid>,
-    db: Data<Database>,
+
     SessionUser(user): SessionUser,
 ) -> ApiResult<Json<UuidResponse>> {
     let CreateHostRequest { ip_addr, certainty } = req.into_inner();
     let PathUuid { uuid: workspace } = path.into_inner();
     Ok(Json(UuidResponse {
-        uuid: ManualHost::insert(db.as_ref(), workspace, user, ip_addr, certainty).await?,
+        uuid: ManualHost::insert(&GLOBAL.db, workspace, user, ip_addr, certainty).await?,
     }))
 }
 
@@ -314,7 +314,7 @@ pub struct UpdateHostRequest {
 pub async fn update_host(
     req: Json<UpdateHostRequest>,
     path: Path<PathHost>,
-    db: Data<Database>,
+
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
     let path = path.into_inner();
@@ -324,7 +324,7 @@ pub async fn update_host(
         return Err(ApiError::EmptyJson);
     }
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);

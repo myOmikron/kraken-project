@@ -2,12 +2,12 @@ use std::future::{ready, Ready};
 
 use actix_toolbox::tb_middleware::actix_session::SessionExt;
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
-use actix_web::web::Data;
 use futures::future::LocalBoxFuture;
-use rorm::{query, Database, FieldAccess, Model};
+use rorm::{query, FieldAccess, Model};
 use uuid::Uuid;
 
 use crate::api::handler::ApiError;
+use crate::chan::GLOBAL;
 use crate::models::{LocalUserKey, User, UserPermission};
 
 pub(crate) struct AdminRequired;
@@ -58,12 +58,6 @@ where
 
         let uuid = session.get("uuid");
 
-        let db = if let Some(db) = &req.app_data::<Data<Database>>() {
-            db.get_ref().clone()
-        } else {
-            panic!("Did you forgot to provide the Database to your App?")
-        };
-
         let next = self.service.call(req);
         Box::pin(async move {
             if !logged_in.map_err(ApiError::SessionGet)? {
@@ -74,7 +68,7 @@ where
                 .map_err(ApiError::SessionGet)?
                 .ok_or(ApiError::SessionCorrupt)?;
 
-            let second_factor_required = query!(&db, (LocalUserKey::F.uuid,))
+            let second_factor_required = query!(&GLOBAL.db, (LocalUserKey::F.uuid,))
                 .condition(LocalUserKey::F.user.equals(uuid))
                 .optional()
                 .await
@@ -84,7 +78,7 @@ where
                 return Err(ApiError::Missing2FA.into());
             }
 
-            let (permission,) = query!(&db, (User::F.permission,))
+            let (permission,) = query!(&GLOBAL.db, (User::F.permission,))
                 .condition(User::F.uuid.equals(uuid))
                 .optional()
                 .await

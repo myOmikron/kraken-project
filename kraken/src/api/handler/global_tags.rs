@@ -1,13 +1,14 @@
 //! The handlers for global tags are defined in this module
 
-use actix_web::web::{Data, Json, Path};
+use actix_web::web::{Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
-use rorm::{query, update, Database, FieldAccess, Model};
+use rorm::{query, update, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::{ApiError, ApiResult, Color, PathUuid, UuidResponse};
+use crate::chan::GLOBAL;
 use crate::models::GlobalTag;
 
 /// The request to create a global tag
@@ -34,13 +35,10 @@ pub struct CreateGlobalTagRequest {
     security(("api_key" = []))
 )]
 #[post("/globalTags")]
-pub async fn create_global_tag(
-    req: Json<CreateGlobalTagRequest>,
-    db: Data<Database>,
-) -> ApiResult<Json<UuidResponse>> {
+pub async fn create_global_tag(req: Json<CreateGlobalTagRequest>) -> ApiResult<Json<UuidResponse>> {
     let req = req.into_inner();
 
-    let uuid = GlobalTag::insert(db.as_ref(), req.name, req.color).await?;
+    let uuid = GlobalTag::insert(&GLOBAL.db, req.name, req.color).await?;
 
     Ok(Json(UuidResponse { uuid }))
 }
@@ -71,8 +69,8 @@ pub struct GetGlobalTagsResponse {
     security(("api_key" = []))
 )]
 #[get("/globalTags")]
-pub async fn get_all_global_tags(db: Data<Database>) -> ApiResult<Json<GetGlobalTagsResponse>> {
-    let global_tags = query!(db.as_ref(), GlobalTag).all().await?;
+pub async fn get_all_global_tags() -> ApiResult<Json<GetGlobalTagsResponse>> {
+    let global_tags = query!(&GLOBAL.db, GlobalTag).all().await?;
 
     Ok(Json(GetGlobalTagsResponse {
         global_tags: global_tags
@@ -114,12 +112,11 @@ tag = "Global Tags",
 pub async fn update_global_tag(
     req: Json<UpdateGlobalTag>,
     path: Path<PathUuid>,
-    db: Data<Database>,
 ) -> ApiResult<HttpResponse> {
     let path = path.into_inner();
     let req = req.into_inner();
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     query!(&mut tx, (GlobalTag::F.uuid,))
         .condition(GlobalTag::F.uuid.equals(path.uuid))
@@ -163,12 +160,9 @@ pub async fn update_global_tag(
     security(("api_key" = []))
 )]
 #[delete("/globalTags/{uuid}")]
-pub async fn delete_global_tag(
-    path: Path<PathUuid>,
-    db: Data<Database>,
-) -> ApiResult<HttpResponse> {
+pub async fn delete_global_tag(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
     let path = path.into_inner();
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     query!(&mut tx, (GlobalTag::F.uuid,))
         .condition(GlobalTag::F.uuid.equals(path.uuid))

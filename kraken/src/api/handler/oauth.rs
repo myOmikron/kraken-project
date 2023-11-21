@@ -12,7 +12,7 @@ use log::{debug, error};
 use rand::distributions::{Alphanumeric, DistString};
 use rand::thread_rng;
 use rorm::prelude::*;
-use rorm::{query, Database};
+use rorm::query;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use utoipa::{IntoParams, ToSchema};
@@ -21,9 +21,10 @@ use webauthn_rs::prelude::Url;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::oauth_applications::SimpleOauthClient;
+use crate::api::handler::users::SimpleUser;
 use crate::api::handler::workspaces::SimpleWorkspace;
 use crate::api::handler::{ApiError, PathUuid};
-use crate::api::handler::users::SimpleUser;
+use crate::chan::GLOBAL;
 use crate::models::{
     OAuthDecision, OAuthDecisionAction, OauthClient, User, Workspace, WorkspaceAccessToken,
 };
@@ -50,14 +51,13 @@ use crate::modules::oauth::{OAuthRequest, OAuthScope, OauthManager, OpenIfError}
 )]
 #[get("/auth")]
 pub async fn auth(
-    db: Data<Database>,
     manager: Data<OauthManager>,
     request: Query<AuthRequest>,
     SessionUser(user_uuid): SessionUser,
 ) -> Result<Redirect, ApiError> {
     let request = request.into_inner();
 
-    let Some(client) = query!(db.as_ref(), OauthClient)
+    let Some(client) = query!(&GLOBAL.db, OauthClient)
         .condition(OauthClient::F.uuid.equals(request.client_id))
         .optional()
         .await?
@@ -161,13 +161,8 @@ pub async fn auth(
         code_challenge,
     };
 
-    if let Some(action) = OAuthDecision::get(
-        db.as_ref(),
-        user_uuid,
-        request.client_id,
-        open_request.scope,
-    )
-    .await?
+    if let Some(action) =
+        OAuthDecision::get(&GLOBAL.db, user_uuid, request.client_id, open_request.scope).await?
     {
         match action {
             OAuthDecisionAction::Accept => {
@@ -216,7 +211,6 @@ pub struct OpenRequestInfo {
 )]
 #[get("/info/{uuid}")]
 pub async fn info(
-    db: Data<Database>,
     path: Path<PathUuid>,
     manager: Data<OauthManager>,
     SessionUser(user_uuid): SessionUser,
@@ -227,12 +221,12 @@ pub async fn info(
         return Err(ApiError::MissingPrivileges);
     }
 
-    let oauth_application = query!(db.as_ref(), SimpleOauthClient)
+    let oauth_application = query!(&GLOBAL.db, SimpleOauthClient)
         .condition(OauthClient::F.uuid.equals(request.client_pk))
         .one()
         .await?;
     let (uuid, name, description, created_at, owner) = query!(
-        db.as_ref(),
+        &GLOBAL.db,
         (
             Workspace::F.uuid,
             Workspace::F.name,
@@ -245,7 +239,7 @@ pub async fn info(
     .one()
     .await?;
 
-    let owner = query!(db.as_ref(), User)
+    let owner = query!(&GLOBAL.db, User)
         .condition(User::F.uuid.equals(*owner.key()))
         .one()
         .await?;
@@ -288,7 +282,6 @@ pub struct OAuthDecisionQuery {
 )]
 #[get("/accept/{uuid}")]
 pub async fn accept(
-    db: Data<Database>,
     path: Path<PathUuid>,
     manager: Data<OauthManager>,
     SessionUser(user_uuid): SessionUser,
@@ -305,7 +298,7 @@ pub async fn accept(
     // Remember decision
     if query.remember {
         OAuthDecision::insert(
-            db.as_ref(),
+            &GLOBAL.db,
             user_uuid,
             open_request.client_pk,
             open_request.scope,
@@ -315,7 +308,7 @@ pub async fn accept(
     }
 
     // Redirect
-    let (redirect_uri,) = query!(db.as_ref(), (OauthClient::F.redirect_uri,))
+    let (redirect_uri,) = query!(&GLOBAL.db, (OauthClient::F.redirect_uri,))
         .condition(OauthClient::F.uuid.equals(open_request.client_pk))
         .one()
         .await?;
@@ -348,7 +341,6 @@ pub async fn accept(
 )]
 #[get("/deny/{uuid}")]
 pub async fn deny(
-    db: Data<Database>,
     manager: Data<OauthManager>,
     path: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
@@ -364,7 +356,7 @@ pub async fn deny(
     // Remember decision
     if query.remember {
         OAuthDecision::insert(
-            db.as_ref(),
+            &GLOBAL.db,
             user_uuid,
             open_request.client_pk,
             open_request.scope,
@@ -374,7 +366,7 @@ pub async fn deny(
     }
 
     // Redirect
-    let (redirect_uri,) = query!(db.as_ref(), (OauthClient::F.redirect_uri,))
+    let (redirect_uri,) = query!(&GLOBAL.db, (OauthClient::F.redirect_uri,))
         .condition(OauthClient::F.uuid.equals(open_request.client_pk))
         .one()
         .await?;
@@ -401,7 +393,6 @@ pub async fn deny(
 )]
 #[post("/token")]
 pub async fn token(
-    db: Data<Database>,
     manager: Data<OauthManager>,
     request: Form<TokenRequest>,
 ) -> Result<Json<TokenResponse>, TokenError> {
@@ -425,7 +416,7 @@ pub async fn token(
         error: TokenErrorType::InvalidRequest,
         error_description: Some("Invalid code"),
     })?;
-    let client = query!(db.as_ref(), OauthClient)
+    let client = query!(&GLOBAL.db, OauthClient)
         .condition(OauthClient::F.uuid.equals(accepted.client_pk))
         .one()
         .await?;
@@ -463,7 +454,7 @@ pub async fn token(
     let expires_in = Duration::from_secs(120);
 
     WorkspaceAccessToken::insert(
-        db.as_ref(),
+        &GLOBAL.db,
         access_token.clone(),
         Utc::now() + expires_in,
         accepted.user,

@@ -5,7 +5,6 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::{fmt, fs, io};
 
-use actix_web::web::Data;
 use log::error;
 use rand::distributions::{Distribution, Uniform};
 use rand::thread_rng;
@@ -62,7 +61,7 @@ impl TlsManager {
     ///
     /// If this directory contains a `tls` sub-dir, data will be loaded from it.
     /// If it doesn't everything will be generated and written to the newly created `tls` sub-dir.
-    pub fn load(var: impl AsRef<Path>) -> Result<Data<Self>, TlsManagerError> {
+    pub fn load(var: impl AsRef<Path>) -> Result<Self, TlsManagerError> {
         let base_path = var.as_ref().join("tls");
         let ca_cert_path = base_path.join("ca.crt");
         let ca_key_path = base_path.join("ca.key");
@@ -121,12 +120,12 @@ impl TlsManager {
             server.serialize_private_key_pem(),
         );
 
-        Ok(Data::new(Self {
+        Ok(Self {
             ca,
             tonic_ca,
             server,
             domain,
-        }))
+        })
     }
 
     /// Generate a new certificate for a leech.

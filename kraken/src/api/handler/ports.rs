@@ -2,14 +2,14 @@
 
 use std::collections::HashMap;
 
-use actix_web::web::{Data, Json, Path, Query};
+use actix_web::web::{Json, Path, Query};
 use actix_web::{get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use ipnetwork::IpNetwork;
 use rorm::conditions::{BoxedCondition, Condition, DynamicCollection};
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, insert, query, update, Database, FieldAccess, Model};
+use rorm::{and, insert, query, update, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -20,6 +20,7 @@ use crate::api::handler::{
     get_page_params, ApiError, ApiResult, PageParams, PathUuid, PortResultsPage,
     SimpleAggregationSource, SimpleTag, TagType, UuidResponse,
 };
+use crate::chan::GLOBAL;
 use crate::models::{
     AggregationSource, AggregationTable, GlobalTag, Host, ManualPort, ManualPortCertainty, Port,
     PortGlobalTag, PortProtocol, PortWorkspaceTag, Workspace, WorkspaceTag,
@@ -94,12 +95,12 @@ pub async fn get_all_ports(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     filter_params: Query<GetAllPortsQuery>,
-    db: Data<Database>,
+
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<PortResultsPage>> {
     let path = path.into_inner();
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if !Workspace::is_user_member_or_owner(&mut tx, path.uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
@@ -226,10 +227,10 @@ pub struct PathPort {
 #[get("/workspaces/{w_uuid}/ports/{p_uuid}")]
 pub async fn get_port(
     path: Path<PathPort>,
-    db: Data<Database>,
+
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<FullPort>> {
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges)?;
@@ -343,7 +344,7 @@ pub struct CreatePortRequest {
 pub async fn create_port(
     req: Json<CreatePortRequest>,
     path: Path<PathUuid>,
-    db: Data<Database>,
+
     SessionUser(user): SessionUser,
 ) -> ApiResult<Json<UuidResponse>> {
     let CreatePortRequest {
@@ -355,13 +356,7 @@ pub async fn create_port(
     let PathUuid { uuid: workspace } = path.into_inner();
     Ok(Json(UuidResponse {
         uuid: ManualPort::insert(
-            db.as_ref(),
-            workspace,
-            user,
-            ip_addr,
-            port,
-            certainty,
-            protocol,
+            &GLOBAL.db, workspace, user, ip_addr, port, certainty, protocol,
         )
         .await?,
     }))
@@ -394,7 +389,7 @@ pub struct UpdatePortRequest {
 pub async fn update_port(
     req: Json<UpdatePortRequest>,
     path: Path<PathPort>,
-    db: Data<Database>,
+
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
     let req = req.into_inner();
@@ -403,7 +398,7 @@ pub async fn update_port(
         return Err(ApiError::EmptyJson);
     }
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);

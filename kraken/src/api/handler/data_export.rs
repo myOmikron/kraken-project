@@ -6,18 +6,19 @@
 use std::collections::HashMap;
 
 use actix_web::get;
-use actix_web::web::{Data, Json, Path};
+use actix_web::web::{Json, Path};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use ipnetwork::IpNetwork;
 use rorm::prelude::*;
-use rorm::{and, query, Database};
+use rorm::{and, query};
 use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::extractors::BearerToken;
 use crate::api::handler::{ApiError, ApiResult, PathUuid};
+use crate::chan::GLOBAL;
 use crate::models::{
     Domain, DomainCertainty, DomainDomainRelation, DomainGlobalTag, DomainHostRelation,
     DomainWorkspaceTag, Host, HostCertainty, HostGlobalTag, HostWorkspaceTag, OsType, Port,
@@ -232,11 +233,10 @@ pub enum AggregatedRelation {
 )]
 #[get("/workspace/{uuid}")]
 pub(crate) async fn export_workspace(
-    db: Data<Database>,
     path: Path<PathUuid>,
     token: BearerToken,
 ) -> ApiResult<Json<AggregatedWorkspace>> {
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     // Check access
     query!(&mut tx, (WorkspaceAccessToken::F.id,))

@@ -2,7 +2,7 @@ use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
 
-use crate::chan::WsMessage;
+use crate::chan::{WsMessage, GLOBAL};
 use crate::modules::attack_results::store_tcp_port_scan_result;
 use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions::shared::address::Address;
@@ -41,7 +41,7 @@ impl LeechAttackContext {
                 .await;
 
                 store_tcp_port_scan_result(
-                    &self.db,
+                    &GLOBAL.db,
                     self.attack_uuid,
                     self.workspace_uuid,
                     IpNetwork::from(address),

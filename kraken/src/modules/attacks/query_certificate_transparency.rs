@@ -1,6 +1,6 @@
 use chrono::{NaiveDateTime, TimeZone, Utc};
 
-use crate::chan::{CertificateTransparencyEntry, WsMessage};
+use crate::chan::{CertificateTransparencyEntry, WsMessage, GLOBAL};
 use crate::modules::attack_results::store_query_certificate_transparency_result;
 use crate::modules::attacks::{AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
@@ -16,7 +16,7 @@ impl LeechAttackContext {
 
                 for entry in &res.entries {
                     if let Err(error) = store_query_certificate_transparency_result(
-                        &self.db,
+                        &GLOBAL.db,
                         self.attack_uuid,
                         self.workspace_uuid,
                         entry.clone(),

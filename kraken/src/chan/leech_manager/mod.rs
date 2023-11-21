@@ -8,7 +8,6 @@ use std::str::FromStr;
 use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use std::time::Duration;
 
-use actix_web::web::Data;
 use log::{debug, error, warn};
 use rand::prelude::IteratorRandom;
 use rand::thread_rng;
@@ -45,22 +44,17 @@ impl LeechManager {
     ///
     /// ## Errors
     /// if the leeches currently in the database couldn't be queried.
-    pub async fn start(db: Database, tls: Arc<TlsManager>) -> Result<Data<Self>, rorm::Error> {
+    pub async fn start(db: Database, tls: Arc<TlsManager>) -> Result<Arc<Self>, rorm::Error> {
         let initial_leeches = query!(&db, Leech).all().await?;
 
         let (sender, receiver) = mpsc::channel(16);
 
-        let handle = Data::new(Self {
+        let handle = Arc::new(Self {
             sender,
             clients: RwLock::new(HashMap::new()),
         });
 
-        tokio::spawn(
-            handle
-                .clone()
-                .into_inner()
-                .run(db, tls, receiver, initial_leeches),
-        );
+        tokio::spawn(handle.clone().run(db, tls, receiver, initial_leeches));
 
         Ok(handle)
     }

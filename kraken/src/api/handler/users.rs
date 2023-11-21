@@ -1,19 +1,19 @@
 //! User management is defined here
 
 use actix_toolbox::tb_middleware::Session;
-use actix_web::web::{Data, Json, Path};
+use actix_web::web::{Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use chrono::{DateTime, Utc};
 use rand::thread_rng;
-use rorm::{query, update, Database, FieldAccess, Model, Patch};
+use rorm::{query, update, FieldAccess, Model, Patch};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
-use crate::chan::WsManagerChan;
+use crate::chan::GLOBAL;
 use crate::models::{LocalUser, User, UserPermission};
 
 /// The request to create a user
@@ -41,14 +41,11 @@ pub struct CreateUserRequest {
     security(("api_key" = []))
 )]
 #[post("/users")]
-pub async fn create_user(
-    req: Json<CreateUserRequest>,
-    db: Data<Database>,
-) -> ApiResult<Json<UuidResponse>> {
+pub async fn create_user(req: Json<CreateUserRequest>) -> ApiResult<Json<UuidResponse>> {
     let req = req.into_inner();
 
     let uuid = User::insert_local_user(
-        db.as_ref(),
+        &GLOBAL.db,
         req.username,
         req.display_name,
         req.password,
@@ -72,8 +69,8 @@ pub async fn create_user(
     security(("api_key" = []))
 )]
 #[delete("/users/{uuid}")]
-pub async fn delete_user(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<HttpResponse> {
-    rorm::delete!(db.as_ref(), User)
+pub async fn delete_user(req: Path<PathUuid>) -> ApiResult<HttpResponse> {
+    rorm::delete!(&GLOBAL.db, User)
         .condition(User::F.uuid.equals(req.uuid))
         .await?;
 
@@ -113,8 +110,8 @@ pub struct GetUserResponse {
     security(("api_key" = []))
 )]
 #[get("/users/{uuid}")]
-pub async fn get_user(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<Json<GetUser>> {
-    let user = query!(db.as_ref(), User)
+pub async fn get_user(req: Path<PathUuid>) -> ApiResult<Json<GetUser>> {
+    let user = query!(&GLOBAL.db, User)
         .condition(User::F.uuid.equals(req.uuid))
         .optional()
         .await?
@@ -142,8 +139,8 @@ pub async fn get_user(req: Path<PathUuid>, db: Data<Database>) -> ApiResult<Json
     security(("api_key" = []))
 )]
 #[get("/users")]
-pub async fn get_all_users_admin(db: Data<Database>) -> ApiResult<Json<GetUserResponse>> {
-    let users = query!(db.as_ref(), User).all().await?;
+pub async fn get_all_users_admin() -> ApiResult<Json<GetUserResponse>> {
+    let users = query!(&GLOBAL.db, User).all().await?;
 
     Ok(Json(GetUserResponse {
         users: users
@@ -172,10 +169,10 @@ pub async fn get_all_users_admin(db: Data<Database>) -> ApiResult<Json<GetUserRe
     security(("api_key" = []))
 )]
 #[get("/users/me")]
-pub async fn get_me(session: Session, db: Data<Database>) -> ApiResult<Json<GetUser>> {
+pub async fn get_me(session: Session) -> ApiResult<Json<GetUser>> {
     let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
-    let user = query!(db.as_ref(), User)
+    let user = query!(&GLOBAL.db, User)
         .condition(User::F.uuid.equals(uuid))
         .optional()
         .await?
@@ -216,12 +213,10 @@ pub struct SetPasswordRequest {
 pub async fn set_password(
     req: Json<SetPasswordRequest>,
     session: Session,
-    db: Data<Database>,
-    ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
     let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     // TODO: Other error case
     let (password_hash, local_user_uuid) =
@@ -256,7 +251,7 @@ pub async fn set_password(
 
     session.purge();
 
-    ws_manager_chan.close_all(uuid).await;
+    GLOBAL.ws.close_all(uuid).await;
 
     Ok(HttpResponse::Ok().finish())
 }
@@ -287,15 +282,11 @@ pub struct UpdateMeRequest {
     security(("api_key" = []))
 )]
 #[put("/users/me")]
-pub async fn update_me(
-    req: Json<UpdateMeRequest>,
-    db: Data<Database>,
-    session: Session,
-) -> ApiResult<HttpResponse> {
+pub async fn update_me(req: Json<UpdateMeRequest>, session: Session) -> ApiResult<HttpResponse> {
     let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
     let req = req.into_inner();
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if let Some(username) = &req.username {
         if query!(&mut tx, (User::F.uuid,))
@@ -354,9 +345,9 @@ pub struct GetAllUsersResponse {
     security(("api_key" = []))
 )]
 #[get("/users")]
-pub async fn get_all_users(db: Data<Database>) -> ApiResult<Json<GetAllUsersResponse>> {
+pub async fn get_all_users() -> ApiResult<Json<GetAllUsersResponse>> {
     let users = query!(
-        db.as_ref(),
+        &GLOBAL.db,
         (User::F.uuid, User::F.username, User::F.display_name)
     )
     .all()

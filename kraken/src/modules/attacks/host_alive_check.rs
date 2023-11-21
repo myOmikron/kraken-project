@@ -1,4 +1,4 @@
-use crate::chan::WsMessage;
+use crate::chan::{WsMessage, GLOBAL};
 use crate::modules::attack_results::store_host_alive_check_result;
 use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
 use crate::rpc::rpc_definitions::{HostsAliveRequest, HostsAliveResponse};
@@ -23,7 +23,7 @@ impl LeechAttackContext {
                 .await;
 
                 store_host_alive_check_result(
-                    &self.db,
+                    &GLOBAL.db,
                     self.attack_uuid,
                     self.workspace_uuid,
                     host.into(),

@@ -4,13 +4,13 @@ use std::net::IpAddr;
 use std::ops::RangeInclusive;
 
 use actix_toolbox::tb_middleware::Session;
-use actix_web::web::{Data, Json, Path};
+use actix_web::web::{Json, Path};
 use actix_web::{delete, get, post, HttpResponse};
 use chrono::{DateTime, Utc};
 use ipnetwork::IpNetwork;
 use log::debug;
 use rorm::prelude::*;
-use rorm::{query, Database};
+use rorm::query;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -18,8 +18,7 @@ use uuid::Uuid;
 use crate::api::extractors::SessionUser;
 use crate::api::handler::users::SimpleUser;
 use crate::api::handler::{query_user, ApiError, ApiResult, PathUuid, UuidResponse};
-use crate::api::server::DehashedScheduler;
-use crate::chan::{LeechManager, WsManagerChan};
+use crate::chan::GLOBAL;
 use crate::models::{Attack, AttackType, UserPermission, WordList, Workspace};
 use crate::modules::attacks::AttackContext;
 use crate::rpc::rpc_definitions;
@@ -66,9 +65,6 @@ pub struct BruteforceSubdomainsRequest {
 #[post("/attacks/bruteforceSubdomains")]
 pub async fn bruteforce_subdomains(
     req: Json<BruteforceSubdomainsRequest>,
-    db: Data<Database>,
-    leeches: Data<LeechManager>,
-    ws_manager_chan: Data<WsManagerChan>,
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
     let BruteforceSubdomainsRequest {
@@ -79,20 +75,20 @@ pub async fn bruteforce_subdomains(
         workspace_uuid,
     } = req.into_inner();
 
-    let (wordlist_path,) = query!(db.as_ref(), (WordList::F.path,))
+    let (wordlist_path,) = query!(&GLOBAL.db, (WordList::F.path,))
         .condition(WordList::F.uuid.equals(wordlist_uuid))
         .optional()
         .await?
         .ok_or(ApiError::InvalidUuid)?;
 
     let client = if let Some(leech_uuid) = leech_uuid {
-        leeches.get_leech(&leech_uuid)?
+        GLOBAL.leeches.get_leech(&leech_uuid)?
     } else {
-        leeches.random_leech()?
+        GLOBAL.leeches.random_leech()?
     };
 
     let attack_uuid = Attack::insert(
-        db.as_ref(),
+        &GLOBAL.db,
         AttackType::BruteforceSubdomains,
         user_uuid,
         workspace_uuid,
@@ -102,8 +98,6 @@ pub async fn bruteforce_subdomains(
     // start attack
     tokio::spawn(
         AttackContext {
-            db: Database::clone(&db),
-            ws_manager: WsManagerChan::clone(&ws_manager_chan),
             user_uuid,
             workspace_uuid,
             attack_uuid,
@@ -214,9 +208,6 @@ where
 #[post("/attacks/scanTcpPorts")]
 pub async fn scan_tcp_ports(
     req: Json<ScanTcpPortsRequest>,
-    db: Data<Database>,
-    leeches: Data<LeechManager>,
-    ws_manager_chan: Data<WsManagerChan>,
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
     let ScanTcpPortsRequest {
@@ -232,13 +223,13 @@ pub async fn scan_tcp_ports(
     } = req.into_inner();
 
     let client = if let Some(leech_uuid) = leech_uuid {
-        leeches.get_leech(&leech_uuid)?
+        GLOBAL.leeches.get_leech(&leech_uuid)?
     } else {
-        leeches.random_leech()?
+        GLOBAL.leeches.random_leech()?
     };
 
     let attack_uuid = Attack::insert(
-        db.as_ref(),
+        &GLOBAL.db,
         AttackType::TcpPortScan,
         user_uuid,
         workspace_uuid,
@@ -248,8 +239,6 @@ pub async fn scan_tcp_ports(
     // start attack
     tokio::spawn(
         AttackContext {
-            db: Database::clone(&db),
-            ws_manager: WsManagerChan::clone(&ws_manager_chan),
             user_uuid,
             workspace_uuid,
             attack_uuid,
@@ -322,11 +311,8 @@ pub struct HostsAliveRequest {
 )]
 #[post("/attacks/hostsAlive")]
 pub async fn hosts_alive_check(
-    db: Data<Database>,
     req: Json<HostsAliveRequest>,
     SessionUser(user_uuid): SessionUser,
-    leeches: Data<LeechManager>,
-    ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
     let HostsAliveRequest {
         leech_uuid,
@@ -336,24 +322,17 @@ pub async fn hosts_alive_check(
         workspace_uuid,
     } = req.into_inner();
 
-    let attack_uuid = Attack::insert(
-        db.as_ref(),
-        AttackType::HostAlive,
-        user_uuid,
-        workspace_uuid,
-    )
-    .await?;
+    let attack_uuid =
+        Attack::insert(&GLOBAL.db, AttackType::HostAlive, user_uuid, workspace_uuid).await?;
 
     let leech = if let Some(leech_uuid) = leech_uuid {
-        leeches.get_leech(&leech_uuid)?
+        GLOBAL.leeches.get_leech(&leech_uuid)?
     } else {
-        leeches.random_leech()?
+        GLOBAL.leeches.random_leech()?
     };
 
     tokio::spawn(
         AttackContext {
-            db: Database::clone(&db),
-            ws_manager: WsManagerChan::clone(&ws_manager_chan),
             user_uuid,
             workspace_uuid,
             attack_uuid,
@@ -405,9 +384,6 @@ pub struct QueryCertificateTransparencyRequest {
 #[post("/attacks/queryCertificateTransparency")]
 pub async fn query_certificate_transparency(
     req: Json<QueryCertificateTransparencyRequest>,
-    db: Data<Database>,
-    leeches: Data<LeechManager>,
-    ws_manager_chan: Data<WsManagerChan>,
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
     let QueryCertificateTransparencyRequest {
@@ -418,10 +394,10 @@ pub async fn query_certificate_transparency(
         workspace_uuid,
     } = req.into_inner();
 
-    let client = leeches.random_leech()?;
+    let client = GLOBAL.leeches.random_leech()?;
 
     let attack_uuid = Attack::insert(
-        db.as_ref(),
+        &GLOBAL.db,
         AttackType::QueryCertificateTransparency,
         user_uuid,
         workspace_uuid,
@@ -430,8 +406,6 @@ pub async fn query_certificate_transparency(
 
     tokio::spawn(
         AttackContext {
-            db: Database::clone(&db),
-            ws_manager: WsManagerChan::clone(&ws_manager_chan),
             user_uuid,
             workspace_uuid,
             attack_uuid,
@@ -476,10 +450,7 @@ pub struct QueryDehashedRequest {
 #[post("/attacks/queryDehashed")]
 pub async fn query_dehashed(
     req: Json<QueryDehashedRequest>,
-    ws_manager_chan: Data<WsManagerChan>,
     SessionUser(user_uuid): SessionUser,
-    dehashed_scheduler: DehashedScheduler,
-    db: Data<Database>,
 ) -> ApiResult<HttpResponse> {
     let QueryDehashedRequest {
         query,
@@ -487,14 +458,14 @@ pub async fn query_dehashed(
     } = req.into_inner();
 
     let sender = {
-        match dehashed_scheduler.try_read()?.as_ref() {
+        match GLOBAL.dehashed.try_read()?.as_ref() {
             None => return Err(ApiError::DehashedNotAvailable),
             Some(scheduler) => scheduler.retrieve_sender(),
         }
     };
 
     let attack_uuid = Attack::insert(
-        db.as_ref(),
+        &GLOBAL.db,
         AttackType::QueryUnhashed,
         user_uuid,
         workspace_uuid,
@@ -503,8 +474,6 @@ pub async fn query_dehashed(
 
     tokio::spawn(
         AttackContext {
-            db: Database::clone(&db),
-            ws_manager: WsManagerChan::clone(&ws_manager_chan),
             user_uuid,
             workspace_uuid,
             attack_uuid,
@@ -544,10 +513,7 @@ pub struct ServiceDetectionRequest {
 #[post("/attacks/serviceDetection")]
 pub async fn service_detection(
     req: Json<ServiceDetectionRequest>,
-    ws_manager_chan: Data<WsManagerChan>,
-    leeches: Data<LeechManager>,
     SessionUser(user_uuid): SessionUser,
-    db: Data<Database>,
 ) -> ApiResult<HttpResponse> {
     let ServiceDetectionRequest {
         leech_uuid,
@@ -562,13 +528,13 @@ pub async fn service_detection(
     }
 
     let client = if let Some(leech_uuid) = leech_uuid {
-        leeches.get_leech(&leech_uuid)?
+        GLOBAL.leeches.get_leech(&leech_uuid)?
     } else {
-        leeches.random_leech()?
+        GLOBAL.leeches.random_leech()?
     };
 
     let attack_uuid = Attack::insert(
-        db.as_ref(),
+        &GLOBAL.db,
         AttackType::ServiceDetection,
         user_uuid,
         workspace_uuid,
@@ -578,8 +544,6 @@ pub async fn service_detection(
     // start attack
     tokio::spawn(
         AttackContext {
-            db: Database::clone(&db),
-            ws_manager: WsManagerChan::clone(&ws_manager_chan),
             user_uuid,
             workspace_uuid,
             attack_uuid,
@@ -627,10 +591,7 @@ context_path = "/api/v1",
 #[post("/attacks/dnsResolution")]
 pub async fn dns_resolution(
     req: Json<DnsResolutionRequest>,
-    db: Data<Database>,
-    leeches: Data<LeechManager>,
     SessionUser(user_uuid): SessionUser,
-    ws_manager_chan: Data<WsManagerChan>,
 ) -> ApiResult<HttpResponse> {
     let DnsResolutionRequest {
         leech_uuid,
@@ -644,13 +605,13 @@ pub async fn dns_resolution(
     }
 
     let client = if let Some(leech_uuid) = leech_uuid {
-        leeches.get_leech(&leech_uuid)?
+        GLOBAL.leeches.get_leech(&leech_uuid)?
     } else {
-        leeches.random_leech()?
+        GLOBAL.leeches.random_leech()?
     };
 
     let attack_uuid = Attack::insert(
-        db.as_ref(),
+        &GLOBAL.db,
         AttackType::DnsResolution,
         user_uuid,
         workspace_uuid,
@@ -660,8 +621,6 @@ pub async fn dns_resolution(
     // start attack
     tokio::spawn(
         AttackContext {
-            db: Database::clone(&db),
-            ws_manager: WsManagerChan::clone(&ws_manager_chan),
             user_uuid,
             workspace_uuid,
             attack_uuid,
@@ -711,10 +670,10 @@ pub struct SimpleAttack {
 #[get("/attacks/{uuid}")]
 pub async fn get_attack(
     req: Path<PathUuid>,
-    db: Data<Database>,
+
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<SimpleAttack>> {
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack = query!(
         &mut tx,
@@ -775,12 +734,12 @@ pub struct ListAttacks {
 #[get("/workspaces/{uuid}/attacks")]
 pub async fn get_workspace_attacks(
     path: Path<PathUuid>,
-    db: Data<Database>,
+
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<ListAttacks>> {
     let workspace = path.uuid;
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     if !Workspace::is_user_member_or_owner(&mut tx, workspace, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
@@ -832,12 +791,8 @@ pub async fn get_workspace_attacks(
     security(("api_key" = []))
 )]
 #[delete("/attacks/{uuid}")]
-pub async fn delete_attack(
-    req: Path<PathUuid>,
-    session: Session,
-    db: Data<Database>,
-) -> ApiResult<HttpResponse> {
-    let mut tx = db.start_transaction().await?;
+pub async fn delete_attack(req: Path<PathUuid>, session: Session) -> ApiResult<HttpResponse> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let user = query_user(&mut tx, &session).await?;
 

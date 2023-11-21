@@ -1,18 +1,19 @@
 //! The definition of all handler regarding api keys lives here
 
-use actix_web::web::{Data, Json, Path};
+use actix_web::web::{Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use futures::TryStreamExt;
 use rand::distributions::{Alphanumeric, DistString};
 use rand::thread_rng;
 use rorm::prelude::*;
-use rorm::{and, insert, query, update, Database};
+use rorm::{and, insert, query, update};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
+use crate::chan::GLOBAL;
 use crate::models::LeechApiKey;
 
 /// Request to create a new api key
@@ -38,11 +39,10 @@ pub struct CreateApiKeyRequest {
 #[post("/apiKeys")]
 pub async fn create_api_key(
     req: Json<CreateApiKeyRequest>,
-    db: Data<Database>,
     SessionUser(user): SessionUser,
 ) -> ApiResult<Json<UuidResponse>> {
     let uuid = Uuid::new_v4();
-    insert!(db.as_ref(), LeechApiKey)
+    insert!(&GLOBAL.db, LeechApiKey)
         .return_nothing()
         .single(&LeechApiKey {
             uuid,
@@ -69,10 +69,9 @@ pub async fn create_api_key(
 #[delete("/apiKeys/{uuid}")]
 pub async fn delete_api_key(
     path: Path<PathUuid>,
-    db: Data<Database>,
     SessionUser(user): SessionUser,
 ) -> ApiResult<HttpResponse> {
-    let deleted = rorm::delete!(db.as_ref(), LeechApiKey)
+    let deleted = rorm::delete!(&GLOBAL.db, LeechApiKey)
         .condition(and!(
             LeechApiKey::F.uuid.equals(path.uuid),
             LeechApiKey::F.user.equals(user)
@@ -119,12 +118,9 @@ pub struct GetApiKeysResponse {
     security(("api_key" = []))
 )]
 #[get("/apiKeys")]
-pub async fn get_api_keys(
-    db: Data<Database>,
-    SessionUser(user): SessionUser,
-) -> ApiResult<Json<GetApiKeysResponse>> {
+pub async fn get_api_keys(SessionUser(user): SessionUser) -> ApiResult<Json<GetApiKeysResponse>> {
     let keys = query!(
-        db.as_ref(),
+        &GLOBAL.db,
         (LeechApiKey::F.key, LeechApiKey::F.name, LeechApiKey::F.uuid)
     )
     .condition(LeechApiKey::F.user.equals(user))
@@ -162,7 +158,6 @@ pub struct UpdateApiKeyRequest {
 pub async fn update_api_key(
     path: Path<PathUuid>,
     req: Json<UpdateApiKeyRequest>,
-    db: Data<Database>,
     SessionUser(user): SessionUser,
 ) -> ApiResult<HttpResponse> {
     let req = req.into_inner();
@@ -171,7 +166,7 @@ pub async fn update_api_key(
         return Err(ApiError::InvalidName);
     }
 
-    let updated = update!(db.as_ref(), LeechApiKey)
+    let updated = update!(&GLOBAL.db, LeechApiKey)
         .set(LeechApiKey::F.name, req.name)
         .condition(and!(
             LeechApiKey::F.uuid.equals(path.uuid),

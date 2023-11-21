@@ -1,15 +1,16 @@
 //! Endpoints to inspect and modify registered oauth applications
 
-use actix_web::web::{Data, Json, Path};
+use actix_web::web::{Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use rand::distributions::{Alphanumeric, DistString};
 use rorm::prelude::*;
-use rorm::{insert, query, update, Database};
+use rorm::{insert, query, update};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
+use crate::chan::GLOBAL;
 use crate::models::OauthClient;
 
 #[derive(Deserialize, ToSchema)]
@@ -35,11 +36,10 @@ pub(crate) struct CreateAppRequest {
 )]
 #[post("/applications")]
 pub(crate) async fn create_oauth_app(
-    db: Data<Database>,
     request: Json<CreateAppRequest>,
 ) -> ApiResult<Json<UuidResponse>> {
     let CreateAppRequest { name, redirect_uri } = request.into_inner();
-    let uuid = insert!(db.as_ref(), OauthClient)
+    let uuid = insert!(&GLOBAL.db, OauthClient)
         .return_primary_key()
         .single(&OauthClient {
             uuid: Uuid::new_v4(),
@@ -78,9 +78,9 @@ pub(crate) struct GetAppsResponse {
     security(("api_key" = []))
 )]
 #[get("/applications")]
-pub(crate) async fn get_all_oauth_apps(db: Data<Database>) -> ApiResult<Json<GetAppsResponse>> {
+pub(crate) async fn get_all_oauth_apps() -> ApiResult<Json<GetAppsResponse>> {
     Ok(Json(GetAppsResponse {
-        apps: query!(db.as_ref(), FullOauthClient).all().await?,
+        apps: query!(&GLOBAL.db, FullOauthClient).all().await?,
     }))
 }
 
@@ -109,16 +109,13 @@ pub(crate) struct FullOauthClient {
     security(("api_key" = []))
 )]
 #[get("/applications/{uuid}")]
-pub(crate) async fn get_oauth_app(
-    db: Data<Database>,
-    path: Path<PathUuid>,
-) -> ApiResult<Json<FullOauthClient>> {
+pub(crate) async fn get_oauth_app(path: Path<PathUuid>) -> ApiResult<Json<FullOauthClient>> {
     let OauthClient {
         uuid,
         name,
         redirect_uri,
         secret,
-    } = query!(db.as_ref(), OauthClient)
+    } = query!(&GLOBAL.db, OauthClient)
         .condition(OauthClient::F.uuid.equals(path.uuid))
         .optional()
         .await?
@@ -156,12 +153,12 @@ pub(crate) struct UpdateAppRequest {
 #[put("/applications/{uuid}")]
 pub(crate) async fn update_oauth_app(
     path: Path<PathUuid>,
-    db: Data<Database>,
+
     request: Json<UpdateAppRequest>,
 ) -> ApiResult<HttpResponse> {
     let UpdateAppRequest { name, redirect_uri } = request.into_inner();
 
-    let affected = update!(db.as_ref(), OauthClient)
+    let affected = update!(&GLOBAL.db, OauthClient)
         .condition(OauthClient::F.uuid.equals(path.uuid))
         .begin_dyn_set()
         .set_if(OauthClient::F.name, name)
@@ -190,11 +187,8 @@ pub(crate) async fn update_oauth_app(
     security(("api_key" = []))
 )]
 #[delete("/applications/{uuid}")]
-pub(crate) async fn delete_oauth_app(
-    path: Path<PathUuid>,
-    db: Data<Database>,
-) -> ApiResult<HttpResponse> {
-    let affected = rorm::delete!(db.as_ref(), OauthClient)
+pub(crate) async fn delete_oauth_app(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
+    let affected = rorm::delete!(&GLOBAL.db, OauthClient)
         .condition(OauthClient::F.uuid.equals(path.uuid))
         .await?;
 

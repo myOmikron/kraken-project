@@ -5,6 +5,7 @@ use rorm::prelude::*;
 use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;
 
+use crate::chan::GLOBAL;
 use crate::models::DehashedQueryResultInsert;
 use crate::modules::attacks::{AttackContext, AttackError};
 
@@ -54,7 +55,7 @@ impl AttackContext {
         });
 
         self.set_finished(
-            insert!(&self.db, DehashedQueryResultInsert)
+            insert!(&GLOBAL.db, DehashedQueryResultInsert)
                 .return_nothing()
                 .bulk(entries)
                 .await

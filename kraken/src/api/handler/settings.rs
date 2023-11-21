@@ -1,8 +1,6 @@
 //! This module holds the handler to retrieve and update settings
 
-use std::sync::Arc;
-
-use actix_web::web::{Data, Json};
+use actix_web::web::Json;
 use actix_web::{get, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use log::error;
@@ -11,7 +9,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::{ApiError, ApiResult};
-use crate::chan::SettingsManagerChan;
+use crate::chan::GLOBAL;
 use crate::models::{SettingsInsert, UserPermission};
 
 /// The live settings of kraken
@@ -47,10 +45,8 @@ pub struct SettingsFull {
     security(("api_key" = []))
 )]
 #[get("/settings")]
-pub async fn get_settings(
-    settings_chan: Data<Arc<SettingsManagerChan>>,
-) -> ApiResult<Json<SettingsFull>> {
-    let settings = settings_chan.get_settings();
+pub async fn get_settings() -> ApiResult<Json<SettingsFull>> {
+    let settings = GLOBAL.settings.get_settings();
     Ok(Json(SettingsFull {
         mfa_required: settings.mfa_required,
         created_at: settings.created_at,
@@ -91,10 +87,7 @@ pub struct UpdateSettingsRequest {
     security(("api_key" = []))
 )]
 #[put("/settings")]
-pub async fn update_settings(
-    req: Json<UpdateSettingsRequest>,
-    settings_chan: Data<Arc<SettingsManagerChan>>,
-) -> ApiResult<HttpResponse> {
+pub async fn update_settings(req: Json<UpdateSettingsRequest>) -> ApiResult<HttpResponse> {
     let mut req = req.into_inner();
 
     if let Some(api_key) = &req.dehashed_api_key {
@@ -109,7 +102,8 @@ pub async fn update_settings(
         }
     }
 
-    settings_chan
+    GLOBAL
+        .settings
         .update_settings(&SettingsInsert {
             uuid: Uuid::new_v4(),
             mfa_required: req.mfa_required,

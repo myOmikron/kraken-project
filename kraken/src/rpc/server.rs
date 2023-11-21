@@ -11,6 +11,7 @@ use tonic::transport::Server;
 use tonic::{Code, Request, Response, Status, Streaming};
 use uuid::Uuid;
 
+use crate::chan::GLOBAL;
 use crate::config::Config;
 use crate::models::{
     Attack, AttackType, DnsRecordType, InsertAttackError, Leech, LeechApiKey, Workspace,
@@ -19,7 +20,6 @@ use crate::modules::attack_results::{
     store_dns_resolution_result, store_host_alive_check_result,
     store_query_certificate_transparency_result, store_tcp_port_scan_result,
 };
-use crate::modules::tls::TlsManager;
 use crate::rpc::definitions::rpc_definitions::attack_results_service_server::AttackResultsService;
 use crate::rpc::rpc_definitions::attack_results_service_server::AttackResultsServiceServer;
 use crate::rpc::rpc_definitions::backlog_service_server::{BacklogService, BacklogServiceServer};
@@ -31,9 +31,7 @@ use crate::rpc::rpc_definitions::{
 };
 
 /// Helper type to implement result handler to
-pub struct Results {
-    db: Database,
-}
+pub struct Results;
 
 #[tonic::async_trait]
 impl AttackResultsService for Results {
@@ -47,7 +45,7 @@ impl AttackResultsService for Results {
             .ok_or(Status::new(Code::Unknown, "Missing attack_info"))?;
         let workspace_uuid = Uuid::try_parse(&attack_info.workspace_uuid).unwrap();
 
-        let mut tx = self.db.start_transaction().await.unwrap();
+        let mut tx = GLOBAL.db.start_transaction().await.unwrap();
 
         // Check api key and get user
         let (user,) = query!(&mut tx, (LeechApiKey::F.user,))
@@ -111,9 +109,9 @@ impl BacklogService for Results {
         &self,
         request: Request<BacklogDnsRequest>,
     ) -> Result<Response<EmptyResponse>, Status> {
-        auth_leech(&self.db, &request).await?;
+        auth_leech(&GLOBAL.db, &request).await?;
 
-        let Ok(mut db_trx) = self.db.start_transaction().await else {
+        let Ok(mut db_trx) = GLOBAL.db.start_transaction().await else {
             error!("could not start batch processing");
             return Err(Status::internal("internal server error"));
         };
@@ -196,9 +194,9 @@ impl BacklogService for Results {
         &self,
         request: Request<BacklogTcpPortScanRequest>,
     ) -> Result<Response<EmptyResponse>, Status> {
-        auth_leech(&self.db, &request).await?;
+        auth_leech(&GLOBAL.db, &request).await?;
 
-        let Ok(mut db_trx) = self.db.start_transaction().await else {
+        let Ok(mut db_trx) = GLOBAL.db.start_transaction().await else {
             error!("could not start batch processing");
             return Err(Status::internal("internal server error"));
         };
@@ -259,9 +257,9 @@ impl BacklogService for Results {
         &self,
         request: Request<BacklogHostAliveRequest>,
     ) -> Result<Response<EmptyResponse>, Status> {
-        auth_leech(&self.db, &request).await?;
+        auth_leech(&GLOBAL.db, &request).await?;
 
-        let Ok(mut db_trx) = self.db.start_transaction().await else {
+        let Ok(mut db_trx) = GLOBAL.db.start_transaction().await else {
             error!("could not start batch processing");
             return Err(Status::internal("internal server error"));
         };
@@ -332,18 +330,18 @@ pub async fn auth_leech<T>(db: &Database, request: &Request<T>) -> Result<(), St
 ///
 /// **Parameter**:
 /// - `config`: Reference to [Config]
-pub fn start_rpc_server(config: &Config, db: Database, tls: &TlsManager) {
+pub fn start_rpc_server(config: &Config) {
     let listen_address = config.server.rpc_listen_address.parse().unwrap();
     let listen_port = config.server.rpc_listen_port;
-    let tls_config = tls.tonic_server();
+    let tls_config = GLOBAL.tls.tonic_server();
 
     tokio::spawn(async move {
         info!("Starting gRPC server");
         if let Err(err) = Server::builder()
             .tls_config(tls_config)
             .expect("The tls config should be valid")
-            .add_service(AttackResultsServiceServer::new(Results { db: db.clone() }))
-            .add_service(BacklogServiceServer::new(Results { db }))
+            .add_service(AttackResultsServiceServer::new(Results))
+            .add_service(BacklogServiceServer::new(Results))
             .serve(SocketAddr::new(listen_address, listen_port))
             .await
         {

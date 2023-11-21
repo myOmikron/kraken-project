@@ -1,8 +1,8 @@
 //! Invitations to workspaces are defined here
 
-use actix_web::web::{Data, Json, Path};
+use actix_web::web::{Json, Path};
 use actix_web::{get, post, HttpResponse};
-use rorm::{query, Database, FieldAccess, Model};
+use rorm::{query, FieldAccess, Model};
 use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -11,6 +11,7 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::users::SimpleUser;
 use crate::api::handler::workspaces::SimpleWorkspace;
 use crate::api::handler::{ApiError, ApiResult, PathUuid};
+use crate::chan::GLOBAL;
 use crate::models::{Workspace, WorkspaceInvitation, WorkspaceMemberPermission};
 
 /// The full representation of an invitation to a workspace
@@ -48,9 +49,8 @@ pub struct WorkspaceInvitationList {
 #[get("/invitations")]
 pub async fn get_all_invitations(
     SessionUser(session_user): SessionUser,
-    db: Data<Database>,
 ) -> ApiResult<Json<WorkspaceInvitationList>> {
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let mut invitations = vec![];
 
@@ -102,12 +102,12 @@ pub async fn get_all_invitations(
 #[post("/invitations/{uuid}/accept")]
 pub async fn accept_invitation(
     path: Path<PathUuid>,
-    db: Data<Database>,
+
     SessionUser(session_user): SessionUser,
 ) -> ApiResult<HttpResponse> {
     let invitation_uuid = path.into_inner().uuid;
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let invitation = query!(&mut tx, WorkspaceInvitation)
         .condition(WorkspaceInvitation::F.uuid.equals(invitation_uuid))
@@ -151,12 +151,12 @@ pub async fn accept_invitation(
 #[post("/invitations/{uuid}/decline")]
 pub async fn decline_invitation(
     path: Path<PathUuid>,
-    db: Data<Database>,
+
     SessionUser(session_user): SessionUser,
 ) -> ApiResult<HttpResponse> {
     let invitation_uuid = path.into_inner().uuid;
 
-    let mut tx = db.start_transaction().await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
     let invitation = query!(&mut tx, WorkspaceInvitation)
         .condition(WorkspaceInvitation::F.uuid.equals(invitation_uuid))

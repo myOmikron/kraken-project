@@ -1,6 +1,5 @@
 use std::fmt::{Display, Formatter};
 use std::io;
-use std::sync::{Arc, RwLock};
 
 use actix_toolbox::tb_middleware::{
     setup_logging_mw, DBSessionStore, LoggingMiddlewareConfig, PersistentSession, SessionMiddleware,
@@ -13,8 +12,6 @@ use actix_web::web::{scope, Data, JsonConfig, PayloadConfig};
 use actix_web::{App, HttpServer};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
-use dehashed_rs::Scheduler;
-use rorm::Database;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 use webauthn_rs::prelude::{Url, WebauthnError};
@@ -29,28 +26,13 @@ use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
 };
 use crate::api::swagger::{ExternalApi, FrontendApi};
-use crate::chan::{LeechManager, SettingsManagerChan, WsManagerChan};
+use crate::chan::GLOBAL;
 use crate::config::Config;
 use crate::modules::oauth::OauthManager;
-use crate::modules::tls::TlsManager;
 
 const ORIGIN_NAME: &str = "Kraken";
 
-/// A type alias for the scheduler of the dehashed api
-///
-/// It consists of an rwlock with an option that is either None, if no scheduler is
-/// available (due to missing credentials) or the scheduler.
-pub type DehashedScheduler = Data<RwLock<Option<Scheduler>>>;
-
-pub(crate) async fn start_server(
-    db: Database,
-    config: &Config,
-    leeches: Data<LeechManager>,
-    ws_manager_chan: WsManagerChan,
-    setting_manager_chan: Arc<SettingsManagerChan>,
-    dehashed_scheduler: Option<Scheduler>,
-    tls_manager: Data<TlsManager>,
-) -> Result<(), StartServerError> {
+pub(crate) async fn start_server(config: &Config) -> Result<(), StartServerError> {
     let key = Key::try_from(
         BASE64_STANDARD
             .decode(&config.server.secret_key)?
@@ -71,24 +53,16 @@ pub(crate) async fn start_server(
     );
 
     let oauth = Data::new(OauthManager::default());
-    let dehashed = Data::new(RwLock::new(dehashed_scheduler));
-    let database = db.clone();
 
     HttpServer::new(move || {
         App::new()
-            .app_data(Data::new(db.clone()))
             .app_data(JsonConfig::default().error_handler(json_extractor_error))
             .app_data(PayloadConfig::default())
             .app_data(webauthn.clone())
             .app_data(oauth.clone())
-            .app_data(Data::new(ws_manager_chan.clone()))
-            .app_data(leeches.clone())
-            .app_data(tls_manager.clone())
-            .app_data(Data::new(setting_manager_chan.clone()))
-            .app_data(dehashed.clone())
             .wrap(setup_logging_mw(LoggingMiddlewareConfig::default()))
             .wrap(
-                SessionMiddleware::builder(DBSessionStore::new(db.clone()), key.clone())
+                SessionMiddleware::builder(DBSessionStore::new(GLOBAL.db.clone()), key.clone())
                     .session_lifecycle(PersistentSession::session_ttl(
                         PersistentSession::default(),
                         Duration::hours(1),
@@ -230,9 +204,6 @@ pub(crate) async fn start_server(
     ))?
     .run()
     .await?;
-
-    // TODO: Stop rpc server as it also has access to the database
-    database.close().await;
 
     Ok(())
 }
