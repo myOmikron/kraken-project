@@ -2,13 +2,14 @@ use std::str::FromStr;
 
 use ipnetwork::IpNetwork;
 use rorm::db::Executor;
-use rorm::insert;
-use rorm::prelude::ForeignModelByField;
+use rorm::prelude::*;
+use rorm::{insert, query};
 use uuid::Uuid;
 
 use crate::models::{
-    AggregationSource, AggregationTable, BruteforceSubdomainsResultInsert, DnsRecordType, Domain,
-    DomainCertainty, DomainDomainRelation, DomainHostRelation, Host, HostCertainty, SourceType,
+    AggregationSource, AggregationTable, Attack, BruteforceSubdomainsResultInsert, DnsRecordType,
+    Domain, DomainCertainty, DomainDomainRelation, DomainHostRelation, Host, HostCertainty,
+    SourceType,
 };
 
 /// Store a bruteforce subdomains' result and update the aggregated domains and hosts
@@ -22,6 +23,13 @@ pub async fn store_bruteforce_subdomains_result(
 ) -> Result<(), rorm::Error> {
     let mut guard = executor.ensure_transaction().await?;
     let tx = guard.get_transaction();
+
+    let user_uuid = *query!(&mut *tx, (Attack::F.started_by,))
+        .condition(Attack::F.uuid.equals(attack_uuid))
+        .one()
+        .await?
+        .0
+        .key();
 
     let result_uuid = insert!(&mut *tx, BruteforceSubdomainsResultInsert)
         .return_primary_key()
@@ -39,6 +47,7 @@ pub async fn store_bruteforce_subdomains_result(
         workspace_uuid,
         &source,
         DomainCertainty::Verified, // we just queried this domain
+        user_uuid,
     )
     .await?;
 
@@ -69,6 +78,7 @@ pub async fn store_bruteforce_subdomains_result(
                 workspace_uuid,
                 &destination,
                 DomainCertainty::Unverified, // we haven't queried this domain yet
+                user_uuid,
             )
             .await?;
 

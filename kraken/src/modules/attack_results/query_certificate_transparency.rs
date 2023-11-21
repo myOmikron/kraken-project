@@ -1,11 +1,11 @@
 use chrono::{NaiveDateTime, TimeZone, Utc};
 use rorm::db::Executor;
-use rorm::insert;
-use rorm::prelude::ForeignModelByField;
+use rorm::prelude::*;
+use rorm::{insert, query};
 use uuid::Uuid;
 
 use crate::models::{
-    AggregationSource, AggregationTable, CertificateTransparencyResultInsert,
+    AggregationSource, AggregationTable, Attack, CertificateTransparencyResultInsert,
     CertificateTransparencyValueNameInsert, Domain, DomainCertainty, SourceType,
 };
 use crate::rpc::rpc_definitions::shared::CertEntry;
@@ -19,6 +19,13 @@ pub async fn store_query_certificate_transparency_result(
 ) -> Result<(), rorm::Error> {
     let mut guard = executor.ensure_transaction().await?;
     let tx = guard.get_transaction();
+
+    let user_uuid = *query!(&mut *tx, (Attack::F.started_by,))
+        .condition(Attack::F.uuid.equals(attack_uuid))
+        .one()
+        .await?
+        .0
+        .key();
 
     let result_uuid = insert!(&mut *tx, CertificateTransparencyResultInsert)
         .return_primary_key()
@@ -62,12 +69,20 @@ pub async fn store_query_certificate_transparency_result(
             workspace_uuid,
             &entry.common_name,
             DomainCertainty::Unverified,
+            user_uuid,
         )
         .await?,
     );
     for value in &entry.value_names {
         domains.push(
-            Domain::aggregate(&mut *tx, workspace_uuid, value, DomainCertainty::Unverified).await?,
+            Domain::aggregate(
+                &mut *tx,
+                workspace_uuid,
+                value,
+                DomainCertainty::Unverified,
+                user_uuid,
+            )
+            .await?,
         );
     }
 

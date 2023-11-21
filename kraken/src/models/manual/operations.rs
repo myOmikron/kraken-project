@@ -46,8 +46,14 @@ impl ManualDomain {
             })
             .await?;
 
-        let domain_uuid =
-            Domain::aggregate(&mut *tx, workspace, &domain, DomainCertainty::Unverified).await?;
+        let domain_uuid = Domain::aggregate(
+            &mut *tx,
+            workspace,
+            &domain,
+            DomainCertainty::Unverified,
+            user,
+        )
+        .await?;
 
         insert!(&mut *tx, AggregationSource)
             .single(&AggregationSource {

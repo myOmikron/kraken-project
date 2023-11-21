@@ -1,14 +1,19 @@
 use ipnetwork::IpNetwork;
+use log::warn;
 use rorm::db::Executor;
 use rorm::fields::traits::FieldType;
 use rorm::prelude::*;
 use rorm::{and, insert, query, update};
 use uuid::Uuid;
 
+use crate::chan::GLOBAL;
 use crate::models::{
-    Domain, DomainCertainty, DomainDomainRelation, DomainHostRelation, Host, HostCertainty, OsType,
-    Port, PortCertainty, PortProtocol, Service, ServiceCertainty, Workspace,
+    Attack, AttackType, Domain, DomainCertainty, DomainDomainRelation, DomainHostRelation, Host,
+    HostCertainty, InsertAttackError, OsType, Port, PortCertainty, PortProtocol, Service,
+    ServiceCertainty, Workspace,
 };
+use crate::modules::attacks::{AttackContext, LeechAttackContext};
+use crate::rpc::rpc_definitions::DnsResolutionRequest;
 
 #[derive(Patch)]
 #[rorm(model = "Host")]
@@ -119,11 +124,14 @@ impl Domain {
     /// Insert an aggregated domain if it doesn't exist yet or
     /// update it if its information is not as precise
     /// and return its primary key.
+    ///
+    /// The `user` is required to start dns resolution attacks implicitly.
     pub async fn aggregate(
         executor: impl Executor<'_>,
         workspace: Uuid,
         domain: &str,
         certainty: DomainCertainty,
+        user: Uuid,
     ) -> Result<Uuid, rorm::Error> {
         let mut guard = executor.ensure_transaction().await?;
         let tx = guard.get_transaction();
@@ -145,7 +153,7 @@ impl Domain {
             }
             uuid
         } else {
-            insert!(tx, Domain)
+            let domain_uuid = insert!(&mut *tx, Domain)
                 .return_primary_key()
                 .single(&DomainInsert {
                     uuid: Uuid::new_v4(),
@@ -154,7 +162,37 @@ impl Domain {
                     comment: String::new(),
                     workspace: ForeignModelByField::Key(workspace),
                 })
-                .await?
+                .await?;
+
+            if let Ok(leech) = GLOBAL.leeches.random_leech() {
+                let attack_uuid =
+                    Attack::insert(&mut *tx, AttackType::DnsResolution, user, workspace)
+                        .await
+                        .map_err(|err| match err {
+                            InsertAttackError::DatabaseError(err) => err,
+                            InsertAttackError::WorkspaceInvalid => {
+                                unreachable!("Workspace already used above")
+                            }
+                        })?;
+                tokio::spawn(
+                    LeechAttackContext {
+                        common: AttackContext {
+                            user_uuid: user,
+                            workspace_uuid: workspace,
+                            attack_uuid,
+                        },
+                        leech,
+                    }
+                    .dns_resolution(DnsResolutionRequest {
+                        attack_uuid: attack_uuid.to_string(),
+                        targets: vec![domain.to_string()],
+                        concurrent_limit: 1,
+                    }),
+                );
+            } else {
+                warn!("Couldn't resolve new domain \"{domain}\" automatically: No leech");
+            }
+            domain_uuid
         };
 
         guard.commit().await?;
