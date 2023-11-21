@@ -3,7 +3,6 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use actix_toolbox::tb_middleware::Session;
 use actix_toolbox::ws;
 use actix_toolbox::ws::{MailboxError, Message};
 use actix_web::web::Payload;
@@ -11,9 +10,8 @@ use actix_web::{get, HttpRequest, HttpResponse};
 use bytes::Bytes;
 use log::{debug, error};
 use tokio::sync::Mutex;
-use uuid::Uuid;
 
-use crate::api::handler::ApiError;
+use crate::api::extractors::SessionUser;
 use crate::chan::{WsMessage, GLOBAL};
 
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
@@ -37,10 +35,8 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
 pub async fn websocket(
     request: HttpRequest,
     payload: Payload,
-    session: Session,
+    SessionUser(user_uuid): SessionUser,
 ) -> Result<HttpResponse, actix_web::Error> {
-    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
-
     let (tx, mut rx, response) = ws::start(&request, payload)?;
     debug!("Initializing websocket connection");
     let last_hb = Arc::new(Mutex::new(Instant::now()));
@@ -130,7 +126,7 @@ pub async fn websocket(
     });
 
     // Give sender to ws manager
-    GLOBAL.ws.add(uuid, tx.clone()).await;
+    GLOBAL.ws.add(user_uuid, tx.clone()).await;
 
     Ok(response)
 }

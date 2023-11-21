@@ -2,7 +2,6 @@
 
 use std::collections::HashMap;
 
-use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Json, Path, Query};
 use actix_web::{get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
@@ -85,10 +84,9 @@ pub async fn get_all_domains(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     filter_params: Query<GetAllDomainsQuery>,
-    session: Session,
+    SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<DomainResultsPage>> {
     let path = path.into_inner();
-    let user_uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
 
     let mut tx = GLOBAL.db.start_transaction().await?;
 

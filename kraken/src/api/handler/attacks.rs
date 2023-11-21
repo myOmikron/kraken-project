@@ -3,7 +3,6 @@
 use std::net::IpAddr;
 use std::ops::RangeInclusive;
 
-use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Json, Path};
 use actix_web::{delete, get, post, HttpResponse};
 use chrono::{DateTime, Utc};
@@ -17,9 +16,9 @@ use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::users::SimpleUser;
-use crate::api::handler::{query_user, ApiError, ApiResult, PathUuid, UuidResponse};
+use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::chan::GLOBAL;
-use crate::models::{Attack, AttackType, UserPermission, WordList, Workspace};
+use crate::models::{Attack, AttackType, User, UserPermission, WordList, Workspace};
 use crate::modules::attacks::AttackContext;
 use crate::rpc::rpc_definitions;
 use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
@@ -791,10 +790,17 @@ pub async fn get_workspace_attacks(
     security(("api_key" = []))
 )]
 #[delete("/attacks/{uuid}")]
-pub async fn delete_attack(req: Path<PathUuid>, session: Session) -> ApiResult<HttpResponse> {
+pub async fn delete_attack(
+    req: Path<PathUuid>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
-    let user = query_user(&mut tx, &session).await?;
+    let user = query!(&mut tx, User)
+        .condition(User::F.uuid.equals(user_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::SessionCorrupt)?;
 
     let attack = query!(&mut tx, Attack)
         .condition(Attack::F.uuid.equals(req.uuid))

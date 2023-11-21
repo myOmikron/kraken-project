@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use crate::api::extractors::SessionUser;
 use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::chan::GLOBAL;
 use crate::models::{LocalUser, User, UserPermission};
@@ -169,11 +170,9 @@ pub async fn get_all_users_admin() -> ApiResult<Json<GetUserResponse>> {
     security(("api_key" = []))
 )]
 #[get("/users/me")]
-pub async fn get_me(session: Session) -> ApiResult<Json<GetUser>> {
-    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
-
+pub async fn get_me(SessionUser(user_uuid): SessionUser) -> ApiResult<Json<GetUser>> {
     let user = query!(&GLOBAL.db, User)
-        .condition(User::F.uuid.equals(uuid))
+        .condition(User::F.uuid.equals(user_uuid))
         .optional()
         .await?
         .ok_or(ApiError::SessionCorrupt)?;
@@ -212,16 +211,15 @@ pub struct SetPasswordRequest {
 #[post("/users/setPassword")]
 pub async fn set_password(
     req: Json<SetPasswordRequest>,
+    SessionUser(user_uuid): SessionUser,
     session: Session,
 ) -> ApiResult<HttpResponse> {
-    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
-
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     // TODO: Other error case
     let (password_hash, local_user_uuid) =
         query!(&mut tx, (LocalUser::F.password_hash, LocalUser::F.uuid))
-            .condition(LocalUser::F.user.uuid.equals(uuid))
+            .condition(LocalUser::F.user.uuid.equals(user_uuid))
             .optional()
             .await?
             .ok_or(ApiError::SessionCorrupt)?;
@@ -251,7 +249,7 @@ pub async fn set_password(
 
     session.purge();
 
-    GLOBAL.ws.close_all(uuid).await;
+    GLOBAL.ws.close_all(user_uuid).await;
 
     Ok(HttpResponse::Ok().finish())
 }
@@ -282,8 +280,10 @@ pub struct UpdateMeRequest {
     security(("api_key" = []))
 )]
 #[put("/users/me")]
-pub async fn update_me(req: Json<UpdateMeRequest>, session: Session) -> ApiResult<HttpResponse> {
-    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
+pub async fn update_me(
+    req: Json<UpdateMeRequest>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
     let req = req.into_inner();
 
     let mut tx = GLOBAL.db.start_transaction().await?;
@@ -300,7 +300,7 @@ pub async fn update_me(req: Json<UpdateMeRequest>, session: Session) -> ApiResul
     }
 
     update!(&mut tx, User)
-        .condition(User::F.uuid.equals(uuid))
+        .condition(User::F.uuid.equals(user_uuid))
         .begin_dyn_set()
         .set_if(User::F.username, req.username)
         .set_if(User::F.display_name, req.display_name)

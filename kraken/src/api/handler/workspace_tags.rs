@@ -1,6 +1,5 @@
 //! The tags of a workspace are defined here
 
-use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use rorm::{and, query, update, FieldAccess, Model};
@@ -8,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+use crate::api::extractors::SessionUser;
 use crate::api::handler::{ApiError, ApiResult, Color, PathUuid, UuidResponse};
 use crate::chan::GLOBAL;
 use crate::models::{GlobalTag, Workspace, WorkspaceTag};
@@ -38,10 +38,8 @@ pub struct CreateWorkspaceTagRequest {
 pub async fn create_workspace_tag(
     path: Path<PathUuid>,
     req: Json<CreateWorkspaceTagRequest>,
-
-    session: Session,
+    SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<UuidResponse>> {
-    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
     let req = req.into_inner();
     let path = path.into_inner();
 
@@ -90,9 +88,8 @@ pub struct GetWorkspaceTagsResponse {
 pub async fn get_all_workspace_tags(
     path: Path<PathUuid>,
 
-    session: Session,
+    SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<GetWorkspaceTagsResponse>> {
-    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
     let path = path.into_inner();
 
     let mut tx = GLOBAL.db.start_transaction().await?;
@@ -156,10 +153,8 @@ pub struct PathWorkspaceTag {
 pub async fn update_workspace_tag(
     req: Json<UpdateWorkspaceTag>,
     path: Path<PathWorkspaceTag>,
-
-    session: Session,
+    SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
-    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
     let path = path.into_inner();
     let req = req.into_inner();
 
@@ -226,10 +221,8 @@ pub async fn update_workspace_tag(
 #[delete("/workspaces/{w_uuid}/tags/{t_uuid}")]
 pub async fn delete_workspace_tag(
     path: Path<PathWorkspaceTag>,
-
-    session: Session,
+    SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
-    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
     let path = path.into_inner();
     let mut tx = GLOBAL.db.start_transaction().await?;
 

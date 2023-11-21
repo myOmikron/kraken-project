@@ -1,6 +1,5 @@
 //! Everything regarding workspace management is located in this module
 
-use actix_toolbox::tb_middleware::Session;
 use actix_web::web::{Json, Path, Query};
 use actix_web::{delete, get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
@@ -32,7 +31,7 @@ use crate::api::handler::workspace_invitations::{
     FullWorkspaceInvitation, WorkspaceInvitationList,
 };
 use crate::api::handler::{
-    de_optional, query_user, ApiError, ApiResult, Page, PageParams, PathUuid, SearchResultPage,
+    de_optional, ApiError, ApiResult, Page, PageParams, PathUuid, SearchResultPage,
     SearchesResultPage, UuidResponse,
 };
 use crate::chan::WsMessage;
@@ -69,12 +68,11 @@ pub struct CreateWorkspaceRequest {
 #[post("/workspaces")]
 pub async fn create_workspace(
     req: Json<CreateWorkspaceRequest>,
-
-    session: SessionUser,
+    SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<UuidResponse>> {
     let req = req.into_inner();
 
-    let uuid = Workspace::insert(&GLOBAL.db, req.name, req.description, session.0).await?;
+    let uuid = Workspace::insert(&GLOBAL.db, req.name, req.description, user_uuid).await?;
 
     Ok(Json(UuidResponse { uuid }))
 }
@@ -92,10 +90,17 @@ pub async fn create_workspace(
     security(("api_key" = []))
 )]
 #[delete("/workspaces/{uuid}")]
-pub async fn delete_workspace(req: Path<PathUuid>, session: Session) -> ApiResult<HttpResponse> {
+pub async fn delete_workspace(
+    req: Path<PathUuid>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
-    let executing_user = query_user(&mut tx, &session).await?;
+    let executing_user = query!(&mut tx, User)
+        .condition(User::F.uuid.equals(user_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::SessionCorrupt)?;
 
     let workspace = query!(&mut tx, Workspace)
         .condition(Workspace::F.uuid.equals(req.uuid))
@@ -168,10 +173,8 @@ pub struct FullWorkspace {
 pub async fn get_workspace(
     req: Path<PathUuid>,
 
-    session: Session,
+    SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<FullWorkspace>> {
-    let user_uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
-
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     let workspace = if Workspace::is_user_member_or_owner(&mut tx, req.uuid, user_uuid).await? {
@@ -205,10 +208,16 @@ pub struct GetAllWorkspacesResponse {
     security(("api_key" = []))
 )]
 #[get("/workspaces")]
-pub async fn get_all_workspaces(session: Session) -> ApiResult<Json<GetAllWorkspacesResponse>> {
+pub async fn get_all_workspaces(
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<Json<GetAllWorkspacesResponse>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
-    let session_user = query_user(&mut tx, &session).await?;
+    let session_user = query!(&mut tx, User)
+        .condition(User::F.uuid.equals(user_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::SessionCorrupt)?;
 
     let mut workspaces: Vec<(Workspace, SimpleUser)> = query!(&mut tx, Workspace)
         .condition(Workspace::F.owner.equals(session_user.uuid))
@@ -292,10 +301,8 @@ pub async fn update_workspace(
     path: Path<PathUuid>,
     req: Json<UpdateWorkspaceRequest>,
 
-    session: Session,
+    SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
-    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
-
     let req = req.into_inner();
 
     let mut tx = GLOBAL.db.start_transaction().await?;
@@ -306,7 +313,7 @@ pub async fn update_workspace(
         .await?
         .ok_or(ApiError::InvalidUuid)?;
 
-    if *w.owner.key() != uuid {
+    if *w.owner.key() != user_uuid {
         return Err(ApiError::MissingPrivileges);
     }
 
@@ -412,13 +419,17 @@ pub struct InviteToWorkspace {
 pub async fn create_invitation(
     req: Json<InviteToWorkspace>,
     path: Path<PathUuid>,
-    session: Session,
+    SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<HttpResponse> {
     let InviteToWorkspace { user } = req.into_inner();
     let workspace_uuid = path.into_inner().uuid;
 
     let mut tx = GLOBAL.db.start_transaction().await?;
-    let session_user = query_user(&mut tx, &session).await?;
+    let session_user = query!(&mut tx, User)
+        .condition(User::F.uuid.equals(user_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::SessionCorrupt)?;
 
     let invitation_uuid =
         WorkspaceInvitation::insert(&mut tx, workspace_uuid, session_user.uuid, user).await?;

@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 use std::sync::TryLockError;
 
-use actix_toolbox::tb_middleware::{actix_session, Session};
+use actix_toolbox::tb_middleware::actix_session;
 use actix_web::body::BoxBody;
 use actix_web::web::Query;
 use actix_web::HttpResponse;
@@ -14,7 +14,6 @@ use futures::TryStreamExt;
 use log::{debug, error, info, trace, warn};
 use rorm::conditions::DynamicCollection;
 use rorm::db::transaction::Transaction;
-use rorm::db::Executor;
 use rorm::{and, query, FieldAccess, Model};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_repr::Serialize_repr;
@@ -33,7 +32,7 @@ use crate::api::handler::hosts::FullHost;
 use crate::api::handler::ports::FullPort;
 use crate::api::handler::services::FullService;
 use crate::api::handler::workspaces::{SearchEntry, SearchResultEntry};
-use crate::models::{AggregationSource, AggregationTable, Color, SourceType, User};
+use crate::models::{AggregationSource, AggregationTable, Color, SourceType};
 
 pub mod api_keys;
 pub mod attack_results;
@@ -56,16 +55,6 @@ pub mod wordlists;
 pub mod workspace_invitations;
 pub mod workspace_tags;
 pub mod workspaces;
-
-/// Query the current user's model
-pub(crate) async fn query_user(db: impl Executor<'_>, session: &Session) -> ApiResult<User> {
-    let uuid: Uuid = session.get("uuid")?.ok_or(ApiError::SessionCorrupt)?;
-    query!(db, User)
-        .condition(User::F.uuid.equals(uuid))
-        .optional()
-        .await?
-        .ok_or(ApiError::SessionCorrupt)
-}
 
 /// A common response that contains a single uuid
 #[derive(Serialize, ToSchema)]

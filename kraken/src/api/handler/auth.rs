@@ -182,7 +182,6 @@ pub async fn start_auth(
 #[post("/finishAuth")]
 pub async fn finish_auth(
     auth: Json<PublicKeyCredential>,
-
     session: Session,
     webauthn: Data<Webauthn>,
 ) -> ApiResult<HttpResponse> {
@@ -318,7 +317,6 @@ pub struct FinishRegisterRequest {
 #[post("/finishRegister")]
 pub async fn finish_register(
     req: Json<FinishRegisterRequest>,
-
     session: Session,
     webauthn: Data<Webauthn>,
 ) -> ApiResult<HttpResponse> {
