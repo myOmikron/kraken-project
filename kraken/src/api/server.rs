@@ -156,6 +156,7 @@ pub(crate) async fn start_server(config: &Config) -> Result<(), StartServerError
                     .service(attacks::delete_attack)
                     .service(attacks::get_attack)
                     .service(attacks::get_workspace_attacks)
+                    .service(attacks::get_all_attacks)
                     .service(attacks::hosts_alive_check)
                     .service(attacks::query_dehashed)
                     .service(attacks::service_detection)

@@ -6,8 +6,10 @@ use std::ops::RangeInclusive;
 use actix_web::web::{Json, Path};
 use actix_web::{delete, get, post, HttpResponse};
 use chrono::{DateTime, Utc};
+use futures::TryStreamExt;
 use ipnetwork::IpNetwork;
 use log::debug;
+use rorm::conditions::{Condition, DynamicCollection};
 use rorm::prelude::*;
 use rorm::query;
 use serde::{Deserialize, Serialize};
@@ -18,7 +20,9 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::users::SimpleUser;
 use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::chan::GLOBAL;
-use crate::models::{Attack, AttackType, User, UserPermission, WordList, Workspace};
+use crate::models::{
+    Attack, AttackType, User, UserPermission, WordList, Workspace, WorkspaceMember,
+};
 use crate::modules::attacks::AttackContext;
 use crate::rpc::rpc_definitions;
 use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
@@ -716,6 +720,72 @@ pub async fn get_attack(
 pub struct ListAttacks {
     /// The list of the attacks
     pub attacks: Vec<SimpleAttack>,
+}
+
+/// Retrieve all attacks the user has access to
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Retrieve a list of all attacks the user has access to", body = ListAttacks),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    security(("api_key" = []))
+)]
+#[get("/attacks")]
+pub async fn get_all_attacks(
+    SessionUser(session_user): SessionUser,
+) -> ApiResult<Json<ListAttacks>> {
+    let db = &GLOBAL.db;
+
+    let mut tx = db.start_transaction().await?;
+
+    let mut workspaces: Vec<_> = query!(&mut tx, (Workspace::F.uuid,))
+        .condition(Workspace::F.owner.equals(session_user))
+        .stream()
+        .map_ok(|(x,)| Attack::F.workspace.equals(x).boxed())
+        .try_collect()
+        .await?;
+    let workspace_members: Vec<_> = query!(&mut tx, (WorkspaceMember::F.workspace,))
+        .condition(WorkspaceMember::F.member.equals(session_user))
+        .stream()
+        .map_ok(|(x,)| Attack::F.workspace.equals(*x.key()).boxed())
+        .try_collect()
+        .await?;
+    workspaces.extend(workspace_members);
+
+    let attacks = query!(
+        &mut tx,
+        (
+            Attack::F.uuid,
+            Attack::F.attack_type,
+            Attack::F.error,
+            Attack::F.created_at,
+            Attack::F.finished_at,
+            Attack::F.workspace,
+            Attack::F.started_by as SimpleUser
+        )
+    )
+    .condition(DynamicCollection::or(workspaces))
+    .stream()
+    .map_ok(
+        |(uuid, attack_type, error, created_at, finished_at, workspace, started_by)| SimpleAttack {
+            uuid,
+            attack_type,
+            error,
+            created_at,
+            finished_at,
+            started_by,
+            workspace_uuid: *workspace.key(),
+        },
+    )
+    .try_collect()
+    .await?;
+
+    tx.commit().await?;
+
+    Ok(Json(ListAttacks { attacks }))
 }
 
 /// Query all attacks of a workspace

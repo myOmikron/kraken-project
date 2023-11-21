@@ -150,6 +150,7 @@ export const Api = {
             handleError(attacks.serviceDetection({ serviceDetectionRequest: attack })),
         queryDehashed: (uuid: UUID, query: Query) =>
             handleError(attacks.queryDehashed({ queryDehashedRequest: { workspaceUuid: uuid, query } })),
+        all: () => handleError(attacks.getAllAttacks()),
         get: (uuid: UUID) => handleError(attacks.getAttack({ uuid })),
         delete: (uuid: UUID) => handleError(attacks.deleteAttack({ uuid })),
         raw: {
@@ -256,7 +257,7 @@ export const Api = {
                 handleError(workspaceTags.createWorkspaceTag({ uuid: workspaceUuid, createWorkspaceTagRequest })),
             update: (workspaceUuid: UUID, tagUuid: UUID, updateWorkspaceTag: UpdateWorkspaceTag) =>
                 handleError(
-                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag }),
+                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag })
                 ),
             delete: (workspaceUuid: UUID, tagUuid: UUID) =>
                 workspaceTags.deleteWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid }),

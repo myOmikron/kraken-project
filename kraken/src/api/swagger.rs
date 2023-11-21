@@ -83,6 +83,7 @@ impl Modify for SecurityAddon2 {
         attacks::query_certificate_transparency,
         attacks::delete_attack,
         attacks::get_attack,
+        attacks::get_all_attacks,
         attacks::get_workspace_attacks,
         attacks::query_dehashed,
         attacks::hosts_alive_check,

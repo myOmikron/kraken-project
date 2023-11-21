@@ -262,6 +262,34 @@ export class AttacksApi extends runtime.BaseAPI {
     }
 
     /**
+     * Retrieve all attacks the user has access to
+     * Retrieve all attacks the user has access to
+     */
+    async getAllAttacksRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListAttacks>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/attacks`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListAttacksFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve all attacks the user has access to
+     * Retrieve all attacks the user has access to
+     */
+    async getAllAttacks(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListAttacks> {
+        const response = await this.getAllAttacksRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Retrieve an attack by id
      * Retrieve an attack by id
      */
