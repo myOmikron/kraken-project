@@ -4,10 +4,23 @@
     gap: 1em;
 }
 
+.workspace-attacks-center-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+}
+
+.workspace-attacks-target {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
 .workspace-attacks {
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-grow: 1;
 }
 
 .kraken-attacks-hex-selected {

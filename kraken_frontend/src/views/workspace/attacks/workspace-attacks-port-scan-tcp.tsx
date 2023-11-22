@@ -8,8 +8,9 @@ import ExpandIcon from "../../../svg/expand";
 import Checkbox from "../../../components/checkbox";
 import { toast } from "react-toastify";
 import { WORKSPACE_CONTEXT } from "../workspace";
+import { PrefilledAttackParams } from "../workspace-attacks";
 
-type WorkspaceAttacksPortScanTcpProps = {};
+type WorkspaceAttacksPortScanTcpProps = { prefilled: PrefilledAttackParams };
 type WorkspaceAttacksPortScanTcpState = {
     ipAddInput: string;
     showAdvanced: boolean;
@@ -34,7 +35,7 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
         super(props);
 
         this.state = {
-            ipAddInput: "",
+            ipAddInput: this.props.prefilled.ipAddr || "",
             showAdvanced: false,
             interval: 100,
             retries: 6,
@@ -43,6 +44,11 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
             skipIcmpCheck: false,
             ips: [],
         };
+    }
+
+    componentDidUpdate(prevProps: Readonly<WorkspaceAttacksPortScanTcpProps>) {
+        if (this.props.prefilled.ipAddr !== undefined && this.props.prefilled.ipAddr !== prevProps.prefilled.ipAddr)
+            this.setState({ ipAddInput: this.props.prefilled.ipAddr });
     }
 
     async startAttack() {

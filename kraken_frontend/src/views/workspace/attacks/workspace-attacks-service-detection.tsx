@@ -7,8 +7,9 @@ import CollapseIcon from "../../../svg/collapse";
 import ExpandIcon from "../../../svg/expand";
 import { toast } from "react-toastify";
 import { WORKSPACE_CONTEXT } from "../workspace";
+import { PrefilledAttackParams } from "../workspace-attacks";
 
-type WorkspaceAttacksServiceDetectionProps = {};
+type WorkspaceAttacksServiceDetectionProps = { prefilled: PrefilledAttackParams };
 type WorkspaceAttacksServiceDetectionState = {
     address: string;
     port: string;
@@ -28,11 +29,18 @@ export default class WorkspaceAttacksServiceDetection extends React.Component<
         super(props);
 
         this.state = {
-            address: "",
-            port: "",
+            address: this.props.prefilled.ipAddr || "",
+            port: (this.props.prefilled.port && String(this.props.prefilled.port)) || "",
             timeout: 500,
             showAdvanced: false,
         };
+    }
+
+    componentDidUpdate(prevProps: Readonly<WorkspaceAttacksServiceDetectionProps>) {
+        if (this.props.prefilled.ipAddr !== undefined && this.props.prefilled.ipAddr !== prevProps.prefilled.ipAddr)
+            this.setState({ address: this.props.prefilled.ipAddr });
+        if (this.props.prefilled.port !== undefined && this.props.prefilled.port !== prevProps.prefilled.port)
+            this.setState({ port: String(this.props.prefilled.port) });
     }
 
     async startAttack() {

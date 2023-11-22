@@ -8,8 +8,9 @@ import StartAttack from "../components/start-attack";
 import "../../../styling/workspace-attacks-bsd.css";
 import SelectMenu from "../../../components/select-menu";
 import { WORKSPACE_CONTEXT } from "../workspace";
+import { PrefilledAttackParams } from "../workspace-attacks";
 
-type WorkspaceAttacksBruteforceSubdomainsProps = {};
+type WorkspaceAttacksBruteforceSubdomainsProps = { prefilled: PrefilledAttackParams };
 type WorkspaceAttacksBruteforceSubdomainsState = {
     domain: string;
     taskLimit: number;
@@ -34,11 +35,16 @@ export default class WorkspaceAttacksBruteforceSubdomains extends React.Componen
 
         this.state = {
             showAdvanced: false,
-            domain: "",
+            domain: this.props.prefilled.domain || "",
             taskLimit: 1000,
             wordlists: [],
             wordlist: null,
         };
+    }
+
+    componentDidUpdate(prevProps: Readonly<WorkspaceAttacksBruteforceSubdomainsProps>) {
+        if (this.props.prefilled.domain !== undefined && this.props.prefilled.domain !== prevProps.prefilled.domain)
+            this.setState({ domain: this.props.prefilled.domain });
     }
 
     componentDidMount() {

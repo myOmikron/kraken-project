@@ -7,13 +7,13 @@ import { toast } from "react-toastify";
 import CollapseIcon from "../../../svg/collapse";
 import ExpandIcon from "../../../svg/expand";
 import { WORKSPACE_CONTEXT } from "../workspace";
+import { PrefilledAttackParams } from "../workspace-attacks";
 
-type WorkspaceAttacksHostAliveProps = {};
+type WorkspaceAttacksHostAliveProps = { prefilled: PrefilledAttackParams };
 type WorkspaceAttacksHostAliveState = {
     target: string;
     timeout: number;
     concurrentLimit: number;
-
     showAdvanced: boolean;
 };
 
@@ -28,11 +28,16 @@ export default class WorkspaceAttacksHostAlive extends React.Component<
         super(props);
 
         this.state = {
-            target: "",
+            target: this.props.prefilled.ipAddr || "",
             timeout: 1000,
             concurrentLimit: 50,
             showAdvanced: false,
         };
+    }
+
+    componentDidUpdate(prevProps: Readonly<WorkspaceAttacksHostAliveProps>) {
+        if (this.props.prefilled.ipAddr !== undefined && this.props.prefilled.ipAddr !== prevProps.prefilled.ipAddr)
+            this.setState({ target: this.props.prefilled.ipAddr });
     }
 
     async startAttack() {

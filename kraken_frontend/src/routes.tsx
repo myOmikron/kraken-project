@@ -13,7 +13,7 @@ import Settings from "./views/settings";
 import Workspace from "./views/workspace/workspace";
 import WorkspaceSettings from "./views/workspace/workspace-settings";
 import WorkspaceData from "./views/workspace/workspace-data";
-import WorkspaceAttacks from "./views/workspace/workspace-attacks";
+import WorkspaceAttacks, { TargetType } from "./views/workspace/workspace-attacks";
 import WorkspaceHosts from "./views/workspace/workspace-hosts";
 import WorkspaceHost from "./views/workspace/workspace-host";
 
@@ -76,6 +76,17 @@ export const ROUTES = {
             <ContentWithMenu>
                 <Workspace view={"attacks"} uuid={uuid}>
                     <WorkspaceAttacks />
+                </Workspace>
+            </ContentWithMenu>
+        ),
+    }),
+    WORKSPACE_TARGETED_ATTACKS: ROUTER.add({
+        url: "workspaces/{workspaceUuid}/attacks/{targetType}/{targetUuid}",
+        parser: { workspaceUuid: String, targetType: TargetType, targetUuid: String },
+        render: ({ workspaceUuid, targetType, targetUuid }) => (
+            <ContentWithMenu>
+                <Workspace view={"attacks"} uuid={workspaceUuid}>
+                    <WorkspaceAttacks targetType={targetType} targetUuid={targetUuid} />
                 </Workspace>
             </ContentWithMenu>
         ),

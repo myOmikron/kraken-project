@@ -8,8 +8,9 @@ import CollapseIcon from "../../../svg/collapse";
 import ExpandIcon from "../../../svg/expand";
 import { toast } from "react-toastify";
 import { WORKSPACE_CONTEXT } from "../workspace";
+import { PrefilledAttackParams } from "../workspace-attacks";
 
-type WorkspaceAttacksCTProps = {};
+type WorkspaceAttacksCTProps = { prefilled: PrefilledAttackParams };
 type WorkspaceAttacksCTState = {
     domain: string;
     includeExpired: boolean;
@@ -27,13 +28,18 @@ export default class WorkspaceAttacksCT extends React.Component<WorkspaceAttacks
         super(props);
 
         this.state = {
-            domain: "",
+            domain: this.props.prefilled.domain || "",
             includeExpired: false,
             maxRetries: 3,
             retryInterval: 500,
 
             showAdvanced: false,
         };
+    }
+
+    componentDidUpdate(prevProps: Readonly<WorkspaceAttacksCTProps>) {
+        if (this.props.prefilled.domain !== undefined && this.props.prefilled.domain !== prevProps.prefilled.domain)
+            this.setState({ domain: this.props.prefilled.domain });
     }
 
     async startAttack() {

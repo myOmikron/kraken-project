@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import { Query } from "../../../api/generated";
 import SelectMenu from "../../../components/select-menu";
 import { WORKSPACE_CONTEXT } from "../workspace";
+import { PrefilledAttackParams, TargetType } from "../workspace-attacks";
 
 export type DehashedQueryType =
     | "email"
@@ -39,7 +40,7 @@ const DEHASHED_SEARCH_TYPES: Array<SelectValue> = [
     { label: "Vin", value: "vin" },
 ];
 
-type WorkspaceAttacksDehashedProps = {};
+type WorkspaceAttacksDehashedProps = { prefilled: PrefilledAttackParams; targetType: TargetType | null };
 type WorkspaceAttacksDehashedState = {
     type: null | SelectValue;
     search: string;
@@ -56,9 +57,20 @@ export default class WorkspaceAttacksDehashed extends React.Component<
         super(props);
 
         this.state = {
-            search: "",
+            search:
+                (this.props.targetType === "domain" ? this.props.prefilled.domain : this.props.prefilled.ipAddr) || "",
             type: null,
         };
+    }
+
+    componentDidUpdate(prevProps: Readonly<WorkspaceAttacksDehashedProps>) {
+        if (this.props.targetType === "domain") {
+            if (this.props.prefilled.domain !== undefined && this.props.prefilled.domain !== prevProps.prefilled.domain)
+                this.setState({ search: this.props.prefilled.domain });
+        } else {
+            if (this.props.prefilled.ipAddr !== undefined && this.props.prefilled.ipAddr !== prevProps.prefilled.ipAddr)
+                this.setState({ search: this.props.prefilled.ipAddr });
+        }
     }
 
     async startAttack() {

@@ -5,10 +5,20 @@ export type AttacksParams = {
     activeAttack: AttackType | null;
     onAttackHover: (attack_type: AttackType | null) => void;
     onAttackSelect: (attack_type: AttackType) => void;
+    disabled: Partial<Record<AttackType, boolean>>;
 };
 
 export default function AttacksIcon(params: AttacksParams) {
-    const { activeAttackCategory, onAttackHover, onAttackSelect, activeAttack } = params;
+    const { activeAttackCategory, onAttackHover, onAttackSelect, activeAttack, disabled } = params;
+
+    const mouseHandler = (attackType: AttackType) =>
+        disabled[attackType] || false
+            ? {}
+            : {
+                  onClick: () => onAttackSelect(attackType),
+                  onMouseEnter: () => onAttackHover(attackType),
+                  onMouseLeave: () => onAttackHover(null),
+              };
 
     return (
         <svg
@@ -37,24 +47,22 @@ export default function AttacksIcon(params: AttacksParams) {
             {/* services box */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                className={
-                    activeAttackCategory === "services"
-                        ? "kraken-attacks-hex-box-selected kraken-attacks-hex"
-                        : "kraken-attacks-hex"
-                }
+                className={`kraken-attacks-hex ${
+                    activeAttackCategory === "services" ? "kraken-attacks-hex-box-selected" : ""
+                } ${disabled.service_detection ? "kraken-attacks-hex-unavailable" : ""}`}
                 transform="matrix(.46387 0 0 .46387 103.637 28.54)"
             />
             {/* service detection */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                onMouseEnter={() => onAttackHover("service_detection")}
-                onMouseLeave={() => onAttackHover(null)}
-                onClick={() => onAttackSelect("service_detection")}
-                className={
-                    activeAttack === "service_detection"
-                        ? "kraken-attacks-hex-selected kraken-attacks-hex kraken-attacks-clickable"
-                        : "kraken-attacks-hex kraken-attacks-clickable"
-                }
+                {...mouseHandler(AttackType.ServiceDetection)}
+                className={`kraken-attacks-hex ${
+                    activeAttack === AttackType.ServiceDetection ? "kraken-attacks-hex-selected" : ""
+                } ${
+                    !disabled[AttackType.ServiceDetection]
+                        ? "kraken-attacks-clickable"
+                        : "kraken-attacks-hex-unavailable"
+                }`}
                 transform="matrix(.23193 0 0 .23193 129.444 15.441)"
             />
             {/* services 2 */}
@@ -78,37 +86,39 @@ export default function AttacksIcon(params: AttacksParams) {
             {/* domains box */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                className={
-                    activeAttackCategory === "domains"
-                        ? "kraken-attacks-hex-box-selected kraken-attacks-hex"
-                        : "kraken-attacks-hex"
-                }
+                className={`kraken-attacks-hex ${
+                    activeAttackCategory === "domains" ? "kraken-attacks-hex-box-selected" : ""
+                } ${
+                    disabled.certificate_transparency && disabled.bruteforce_subdomains
+                        ? "kraken-attacks-hex-unavailable"
+                        : ""
+                }`}
                 transform="matrix(.46387 0 0 .46387 62.247 99.997)"
             />
             {/* bruteforce subdomains */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                onMouseEnter={() => onAttackHover("bruteforce_subdomains")}
-                onMouseLeave={() => onAttackHover(null)}
-                onClick={() => onAttackSelect("bruteforce_subdomains")}
-                className={
-                    activeAttack === "bruteforce_subdomains"
-                        ? "kraken-attacks-hex-selected kraken-attacks-clickable kraken-attacks-hex"
-                        : "kraken-attacks-hex kraken-attacks-clickable"
-                }
+                {...mouseHandler(AttackType.BruteforceSubdomains)}
+                className={`kraken-attacks-hex ${
+                    activeAttack === AttackType.BruteforceSubdomains ? "kraken-attacks-hex-selected" : ""
+                } ${
+                    !disabled[AttackType.BruteforceSubdomains]
+                        ? "kraken-attacks-clickable"
+                        : "kraken-attacks-hex-unavailable"
+                }`}
                 transform="matrix(.23193 0 0 .23193 56.23 139.609)"
             />
             {/* certificate transparency */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                onMouseEnter={() => onAttackHover("certificate_transparency")}
-                onMouseLeave={() => onAttackHover(null)}
-                onClick={() => onAttackSelect("certificate_transparency")}
-                className={
-                    activeAttack === "certificate_transparency"
-                        ? "kraken-attacks-hex-selected kraken-attacks-hex kraken-attacks-clickable"
-                        : "kraken-attacks-hex kraken-attacks-clickable"
-                }
+                {...mouseHandler(AttackType.CertificateTransparency)}
+                className={`kraken-attacks-hex ${
+                    activeAttack === AttackType.CertificateTransparency ? "kraken-attacks-hex-selected" : ""
+                } ${
+                    !disabled[AttackType.CertificateTransparency]
+                        ? "kraken-attacks-clickable"
+                        : "kraken-attacks-hex-unavailable"
+                }`}
                 transform="matrix(.23193 0 0 .23193 45.911 157.022)"
             />
             {/* domains 3 */}
@@ -120,60 +130,44 @@ export default function AttacksIcon(params: AttacksParams) {
             {/* hosts box */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                className={
-                    activeAttackCategory === "hosts"
-                        ? "kraken-attacks-hex-box-selected kraken-attacks-hex"
-                        : "kraken-attacks-hex"
-                }
+                className={`kraken-attacks-hex ${
+                    activeAttackCategory === "hosts" ? "kraken-attacks-hex-box-selected" : ""
+                } ${disabled.host_alive && disabled.whois ? "kraken-attacks-hex-unavailable" : ""}`}
                 transform="matrix(.46387 0 0 .46387 41.129 64.555)"
             />
             {/* whois */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                onMouseEnter={() => onAttackHover("whois")}
-                onMouseLeave={() => onAttackHover(null)}
-                onClick={() => onAttackSelect("whois")}
-                className={
-                    activeAttack === "whois"
-                        ? "kraken-attacks-hex-selected kraken-attacks-hex kraken-attacks-clickable"
-                        : "kraken-attacks-hex kraken-attacks-clickable"
-                }
+                {...mouseHandler(AttackType.Whois)}
+                className={`kraken-attacks-hex ${
+                    activeAttack === AttackType.Whois ? "kraken-attacks-hex-selected" : ""
+                } ${!disabled[AttackType.Whois] ? "kraken-attacks-clickable" : "kraken-attacks-hex-unavailable"}`}
                 transform="matrix(.23193 0 0 .23193 19.926 77.996)"
             />
             {/* host alive */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                onMouseEnter={() => onAttackHover("host_alive")}
-                onMouseLeave={() => onAttackHover(null)}
-                onClick={() => onAttackSelect("host_alive")}
-                className={
-                    activeAttack === "host_alive"
-                        ? "kraken-attacks-hex-selected kraken-attacks-hex kraken-attacks-clickable"
-                        : "kraken-attacks-hex kraken-attacks-clickable"
-                }
+                {...mouseHandler(AttackType.HostAlive)}
+                className={`kraken-attacks-hex ${
+                    activeAttack === AttackType.HostAlive ? "kraken-attacks-hex-selected" : ""
+                } ${!disabled[AttackType.HostAlive] ? "kraken-attacks-clickable" : "kraken-attacks-hex-unavailable"}`}
                 transform="matrix(.23193 0 0 .23193 -.12 77.808)"
             />
             {/* ports box */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                className={
-                    activeAttackCategory === "ports"
-                        ? "kraken-attacks-hex-box-selected kraken-attacks-hex"
-                        : "kraken-attacks-hex"
-                }
+                className={`kraken-attacks-hex ${
+                    activeAttackCategory === "ports" ? "kraken-attacks-hex-box-selected" : ""
+                } ${disabled.tcp_con ? "kraken-attacks-hex-unavailable" : ""}`}
                 transform="matrix(.46387 0 0 .46387 61.48 28.148)"
             />
             {/* tcp port scan */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                onMouseEnter={() => onAttackHover("tcp_con")}
-                onMouseLeave={() => onAttackHover(null)}
-                onClick={() => onAttackSelect("tcp_con")}
-                className={
-                    activeAttack === "tcp_con"
-                        ? "kraken-attacks-hex-selected kraken-attacks-hex kraken-attacks-clickable"
-                        : "kraken-attacks-hex kraken-attacks-clickable"
-                }
+                {...mouseHandler(AttackType.TcpCon)}
+                className={`kraken-attacks-hex ${
+                    activeAttack === AttackType.TcpCon ? "kraken-attacks-hex-selected" : ""
+                } ${!disabled[AttackType.TcpCon] ? "kraken-attacks-clickable" : "kraken-attacks-hex-unavailable"}`}
                 transform="matrix(.23193 0 0 .23193 55.05 14.824)"
             />
             {/* ports 2 */}
@@ -191,24 +185,18 @@ export default function AttacksIcon(params: AttacksParams) {
             {/* others box */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                className={
-                    activeAttackCategory === "other"
-                        ? "kraken-attacks-hex-box-selected kraken-attacks-hex"
-                        : "kraken-attacks-hex"
-                }
+                className={`kraken-attacks-hex ${
+                    activeAttackCategory === "other" ? "kraken-attacks-hex-box-selected" : ""
+                } ${disabled.dehashed ? "kraken-attacks-hex-unavailable" : ""}`}
                 transform="matrix(.46387 0 0 .46387 124.843 64.555)"
             />
             {/* dehashed */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                onMouseEnter={() => onAttackHover("dehashed")}
-                onMouseLeave={() => onAttackHover(null)}
-                onClick={() => onAttackSelect("dehashed")}
-                className={
-                    activeAttack === "dehashed"
-                        ? "kraken-attacks-hex-selected kraken-attacks-hex kraken-attacks-clickable"
-                        : "kraken-attacks-hex kraken-attacks-clickable"
-                }
+                {...mouseHandler(AttackType.Dehashed)}
+                className={`kraken-attacks-hex ${
+                    activeAttack === AttackType.Dehashed ? "kraken-attacks-hex-selected" : ""
+                } ${!disabled[AttackType.Dehashed] ? "kraken-attacks-clickable" : "kraken-attacks-hex-unavailable"}`}
                 transform="matrix(.23193 0 0 .23193 165.876 77.747)"
             />
             {/* unused box */}
