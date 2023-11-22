@@ -95,8 +95,11 @@ pub async fn dns_resolution(
         .map_err(DnsResolutionError::CreateSystemResolver)?;
 
     // TODO: hard limit MAX workers
-    let chunk_count =
-        (settings.domains.len() as f32 / settings.concurrent_limit as f32).ceil() as usize;
+    let chunk_count = if settings.concurrent_limit == 0 {
+        settings.domains.len()
+    } else {
+        (settings.domains.len() as f32 / settings.concurrent_limit as f32).ceil() as usize
+    };
 
     stream::iter(settings.domains)
         .chunks(chunk_count)
