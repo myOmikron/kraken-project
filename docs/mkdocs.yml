@@ -23,7 +23,9 @@ markdown_extensions:
   - admonition
   - attr_list
   - pymdownx.highlight:
+      use_pygments: true
       anchor_linenums: true
+      line_spans: __span
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences

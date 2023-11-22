@@ -1,3 +1,4 @@
 mkdocs==1.*
 mkdocs-material==9.*
 mike==1.*
+pygments>=1.27
