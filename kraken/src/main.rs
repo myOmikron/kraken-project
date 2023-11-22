@@ -31,6 +31,7 @@ use crate::api::server;
 use crate::chan::{GlobalChan, LeechManager, GLOBAL};
 use crate::config::Config;
 use crate::models::{User, UserPermission};
+use crate::modules::cache::WorkspaceCache;
 use crate::modules::tls::TlsManager;
 use crate::rpc::server::start_rpc_server;
 
@@ -122,6 +123,8 @@ async fn main() -> Result<(), String> {
 
             let ws = chan::start_ws_manager().await;
 
+            let workspace_cache = Arc::new(WorkspaceCache::new());
+
             GLOBAL.init(GlobalChan {
                 db,
                 leeches,
@@ -129,6 +132,7 @@ async fn main() -> Result<(), String> {
                 settings,
                 dehashed,
                 tls,
+                workspace_cache,
             });
 
             start_rpc_server(&config);

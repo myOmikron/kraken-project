@@ -10,6 +10,7 @@ use rorm::Database;
 pub use settings_manager::*;
 pub use ws_manager::*;
 
+use crate::modules::cache::WorkspaceCache;
 use crate::modules::tls::TlsManager;
 
 mod dehashed_manager;
@@ -40,6 +41,9 @@ pub struct GlobalChan {
 
     /// Kraken's CA and certificate
     pub tls: Arc<TlsManager>,
+
+    /// The caching layer for workspace members
+    pub workspace_cache: Arc<WorkspaceCache>,
 }
 
 /// Simple [`OnceLock`] which panics in case of error.
