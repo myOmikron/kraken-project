@@ -44,3 +44,4 @@ nav:
     - General information: contribution/index.md
     - Style guidelines:
       - Rust: contribution/rust.md
+      - Typescript: contribution/typescript.md
