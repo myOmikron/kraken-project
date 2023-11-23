@@ -227,6 +227,7 @@ impl Modify for SecurityAddon2 {
         domains::SimpleDomain,
         domains::FullDomain,
         domains::UpdateDomainRequest,
+        domains::GetAllDomainsQuery,
         domains::CreateDomainRequest,
         handler::HostResultsPage,
         handler::DomainResultsPage,
