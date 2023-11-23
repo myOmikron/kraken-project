@@ -1,5 +1,5 @@
 import { login, test, registerKey, authenticate, logout } from "./auth";
-import { handleError } from "./error";
+import { ApiError, parseError, StatusCode } from "./error";
 import {
     ApiKeysApi,
     BruteforceSubdomainsRequest,
@@ -23,6 +23,8 @@ import {
     PortsApi,
     Query,
     QueryCertificateTransparencyRequest,
+    RequiredError,
+    ResponseError,
     ScanTcpPortsRequest,
     ServiceDetectionRequest,
     ServicesApi,
@@ -53,6 +55,7 @@ import {
     UserManagementApi,
     WorkspacesApi,
 } from "./generated";
+import { Err, Ok, Result } from "../utils/result";
 
 /** Database id i.e. and u32 */
 export type ID = number;
@@ -257,7 +260,7 @@ export const Api = {
                 handleError(workspaceTags.createWorkspaceTag({ uuid: workspaceUuid, createWorkspaceTagRequest })),
             update: (workspaceUuid: UUID, tagUuid: UUID, updateWorkspaceTag: UpdateWorkspaceTag) =>
                 handleError(
-                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag })
+                    workspaceTags.updateWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid, updateWorkspaceTag }),
                 ),
             delete: (workspaceUuid: UUID, tagUuid: UUID) =>
                 workspaceTags.deleteWorkspaceTag({ wUuid: workspaceUuid, tUuid: tagUuid }),
@@ -283,3 +286,28 @@ export const Api = {
         decline: (uuid: UUID) => handleError(workspaceInvitations.declineInvitation({ uuid })),
     },
 };
+
+/**
+ * Wraps a promise returned by the generated SDK which handles its errors and returns a {@link Result}
+ */
+async function handleError<T>(promise: Promise<T>): Promise<Result<T, ApiError>> {
+    try {
+        return Ok(await promise);
+    } catch (e) {
+        if (e instanceof ResponseError) {
+            return Err(await parseError(e.response));
+        } else if (e instanceof RequiredError) {
+            console.error(e);
+            return Err({
+                status_code: StatusCode.JsonDecodeError,
+                message: "The server's response didn't match the spec",
+            });
+        } else {
+            console.error("Unknown error occurred:", e);
+            return Err({
+                status_code: StatusCode.ArbitraryJSError,
+                message: "Unknown error occurred",
+            });
+        }
+    }
+}
