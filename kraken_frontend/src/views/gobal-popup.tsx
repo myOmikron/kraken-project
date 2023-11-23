@@ -1,6 +1,6 @@
 import React from "react";
 import WS from "../api/websocket";
-import Invitation from "./workspace/Invitation/invitation";
+import Invitation from "./workspace/invitation/invitation";
 import { SimpleUser, SimpleWorkspace, WsMessageOneOf1 } from "../api/generated";
 import { toast } from "react-toastify";
 import { Api, UUID } from "../api/api";
