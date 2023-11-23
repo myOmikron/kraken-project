@@ -8,6 +8,7 @@ use futures::{stream, StreamExt};
 use ipnetwork::IpNetwork;
 use itertools::Itertools;
 use log::{debug, info, trace, warn};
+use rlimit::Resource;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc;
@@ -52,7 +53,7 @@ pub async fn start_tcp_con_port_scan(
 ) -> Result<(), TcpPortScanError> {
     info!("Starting tcp port Scan");
     // Increase the NO_FILE limit if necessary
-    if let Err(err) = rlimit::increase_nofile_limit(settings.concurrent_limit as u64 + 100) {
+    if let Err(err) = rlimit::increase_nofile_limit(100_000) {
         return Err(TcpPortScanError::RiseNoFileLimit(err));
     }
 
