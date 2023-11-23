@@ -8,7 +8,6 @@ use futures::{stream, StreamExt};
 use ipnetwork::IpNetwork;
 use itertools::Itertools;
 use log::{debug, info, trace, warn};
-use rlimit::Resource;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc;
