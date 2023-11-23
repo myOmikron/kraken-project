@@ -9,6 +9,7 @@ import Checkbox from "../../../components/checkbox";
 import { toast } from "react-toastify";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import { PrefilledAttackParams } from "../workspace-attacks";
+import { handleApiError } from "../../../utils/helper";
 
 type WorkspaceAttacksPortScanTcpProps = { prefilled: PrefilledAttackParams };
 type WorkspaceAttacksPortScanTcpState = {
@@ -52,8 +53,8 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
     }
 
     async startAttack() {
-        (
-            await Api.attacks.scanTcpPorts({
+        await Api.attacks
+            .scanTcpPorts({
                 ports: ["1-65535"],
                 timeout: this.state.timeout,
                 concurrentLimit: this.state.taskLimit,
@@ -63,10 +64,7 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
                 targets: [this.state.ipAddInput],
                 retryInterval: this.state.interval,
             })
-        ).match(
-            (_) => toast.success("Attack started"),
-            (err) => toast.error(err.message),
-        );
+            .then(handleApiError((_) => toast.success("Attack started")));
     }
 
     render() {

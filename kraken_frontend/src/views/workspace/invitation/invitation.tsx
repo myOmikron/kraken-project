@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
 import "../../../styling/invitation.css";
 import WorkspaceIcon from "../../../svg/workspace";
+import { handleApiError } from "../../../utils/helper";
 
 type InvitationProps = {
     invitationUuid: UUID;
@@ -28,21 +29,11 @@ export default class Invitation extends React.Component<InvitationProps, Invitat
     }
 
     async acceptInvitation() {
-        (await Api.invitations.accept(this.props.invitationUuid)).match(
-            () => this.props.onFinish(),
-            (err) => {
-                toast.error(err.message);
-            }
-        );
+        await Api.invitations.accept(this.props.invitationUuid).then(handleApiError(() => this.props.onFinish()));
     }
 
     async declineInvitation() {
-        (await Api.invitations.decline(this.props.invitationUuid)).match(
-            () => this.props.onFinish(),
-            (err) => {
-                toast.error(err.message);
-            }
-        );
+        await Api.invitations.decline(this.props.invitationUuid).then(handleApiError(() => this.props.onFinish()));
     }
 
     render() {

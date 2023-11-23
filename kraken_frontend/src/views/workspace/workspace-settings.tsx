@@ -12,6 +12,7 @@ import { ROUTES } from "../../routes";
 import SelectMenu from "../../components/select-menu";
 import Bubble from "../../components/bubble";
 import Workspace, { WORKSPACE_CONTEXT, WorkspaceContext } from "./workspace";
+import { handleApiError } from "../../utils/helper";
 
 type WorkspaceSettingsProps = {};
 type WorkspaceSettingsState = {
@@ -65,10 +66,9 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
     }
 
     async updateInvitedUsers() {
-        (await Api.workspaces.invitations.all(this.context.workspace.uuid)).match(
-            (x) => this.setState({ invitedUsers: x.invitations }),
-            (err) => toast.error(err.message),
-        );
+        await Api.workspaces.invitations
+            .all(this.context.workspace.uuid)
+            .then(handleApiError((x) => this.setState({ invitedUsers: x.invitations })));
     }
 
     async updateWorkspace() {
@@ -82,22 +82,20 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
             update = { ...update, description: this.state.workspaceDescription };
         }
 
-        (await Api.workspaces.update(this.context.workspace.uuid, update)).match(
-            () => toast.success("Workspace updated"),
-            (err) => toast.error(err.message),
-        );
+        await Api.workspaces
+            .update(this.context.workspace.uuid, update)
+            .then(handleApiError(() => toast.success("Workspace updated")));
     }
 
     async deleteWorkspace() {
-        (await Api.workspaces.delete(this.context.workspace.uuid)).match(
-            () => toast.success("Deleted Workspace "),
-            (err) => toast.error(err.message),
-        );
+        await Api.workspaces
+            .delete(this.context.workspace.uuid)
+            .then(handleApiError(() => toast.success("Deleted Workspace ")));
     }
 
     async createTransferList() {
-        (await Api.user.all()).match(
-            (u) => {
+        await Api.user.all().then(
+            handleApiError((u) => {
                 u.users
                     .filter((s) => {
                         return this.context.workspace.owner.uuid !== s.uuid;
@@ -106,14 +104,13 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                         let member = { label: s.displayName + " (" + s.username + ") ", value: s.uuid };
                         this.state.transferList.push(member);
                     });
-            },
-            (err) => toast.error(err.message),
+            }),
         );
     }
 
     async createInviteList() {
-        (await Api.user.all()).match(
-            (u) => {
+        await Api.user.all().then(
+            handleApiError((u) => {
                 u.users
                     .filter((s) => {
                         let users = [
@@ -126,8 +123,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                         let member = { label: s.displayName + " (" + s.username + ") ", value: s.uuid };
                         this.state.inviteList.push(member);
                     });
-            },
-            (err) => toast.error(err.message),
+            }),
         );
     }
 
@@ -137,13 +133,12 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
             return;
         }
 
-        (await Api.workspaces.invitations.create(this.context.workspace.uuid, this.state.selectedUser.value)).match(
-            async () => {
+        await Api.workspaces.invitations.create(this.context.workspace.uuid, this.state.selectedUser.value).then(
+            handleApiError(async () => {
                 toast.success("Invitation was sent");
                 this.setState({ selectedUser: null, invitePopup: false });
                 await this.updateInvitedUsers();
-            },
-            (err) => toast.error(err.message),
+            }),
         );
     }
 
@@ -152,14 +147,11 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
             toast.error("No user selected");
             return;
         }
-        (await Api.workspaces.transferOwnership(this.context.workspace.uuid, this.state.selectedUser.value)).match(
-            () => {
+        await Api.workspaces.transferOwnership(this.context.workspace.uuid, this.state.selectedUser.value).then(
+            handleApiError(() => {
                 toast.success("Transfer was successful");
                 this.setState({ selectedUser: null, transferOwnershipPopup: false, selected: false });
-            },
-            (err) => {
-                toast.error(err.message);
-            },
+            }),
         );
     }
 
@@ -281,18 +273,14 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                                         <button
                                             className={"icon-button"}
                                             onClick={async () => {
-                                                (
-                                                    await Api.workspaces.invitations.retract(
-                                                        this.context.workspace.uuid,
-                                                        i.uuid,
-                                                    )
-                                                ).match(
-                                                    async () => {
-                                                        toast.success("Invitation retracted");
-                                                        await this.updateInvitedUsers();
-                                                    },
-                                                    (err) => toast.error(err.message),
-                                                );
+                                                await Api.workspaces.invitations
+                                                    .retract(this.context.workspace.uuid, i.uuid)
+                                                    .then(
+                                                        handleApiError(async () => {
+                                                            toast.success("Invitation retracted");
+                                                            await this.updateInvitedUsers();
+                                                        }),
+                                                    );
                                             }}
                                         >
                                             <CloseIcon />

@@ -9,6 +9,7 @@ import "../../../styling/workspace-attacks-bsd.css";
 import SelectMenu from "../../../components/select-menu";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import { PrefilledAttackParams } from "../workspace-attacks";
+import { handleApiError } from "../../../utils/helper";
 
 type WorkspaceAttacksBruteforceSubdomainsProps = { prefilled: PrefilledAttackParams };
 type WorkspaceAttacksBruteforceSubdomainsState = {
@@ -52,15 +53,14 @@ export default class WorkspaceAttacksBruteforceSubdomains extends React.Componen
     }
 
     async retrieveWordlists() {
-        (await Api.wordlists.all()).match(
-            (wordlists) => {
+        await Api.wordlists.all().then(
+            handleApiError((wordlists) =>
                 this.setState({
                     wordlists: wordlists.wordlists.map((x) => {
                         return { label: x.name, value: x.uuid };
                     }),
-                });
-            },
-            (err) => toast.error(err.message),
+                }),
+            ),
         );
     }
 
@@ -75,17 +75,14 @@ export default class WorkspaceAttacksBruteforceSubdomains extends React.Componen
             return;
         }
 
-        (
-            await Api.attacks.bruteforceSubdomains({
+        await Api.attacks
+            .bruteforceSubdomains({
                 workspaceUuid: this.context.workspace.uuid,
                 domain: this.state.domain,
                 concurrentLimit: this.state.taskLimit,
                 wordlistUuid: this.state.wordlist.value,
             })
-        ).match(
-            (_) => toast.success("Attack started"),
-            (err) => toast.error(err.message),
-        );
+            .then(handleApiError((_) => toast.success("Attack started")));
     }
 
     render() {

@@ -9,6 +9,7 @@ import { Query } from "../../../api/generated";
 import SelectMenu from "../../../components/select-menu";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import { PrefilledAttackParams, TargetType } from "../workspace-attacks";
+import { handleApiError } from "../../../utils/helper";
 
 export type DehashedQueryType =
     | "email"
@@ -116,10 +117,9 @@ export default class WorkspaceAttacksDehashed extends React.Component<
                 return;
         }
 
-        (await Api.attacks.queryDehashed(this.context.workspace.uuid, query)).match(
-            (uuid) => toast.success("Attack started"),
-            (err) => toast.error(err.message),
-        );
+        await Api.attacks
+            .queryDehashed(this.context.workspace.uuid, query)
+            .then(handleApiError((uuid) => toast.success("Attack started")));
     }
 
     render() {

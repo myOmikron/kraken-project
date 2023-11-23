@@ -65,32 +65,29 @@ export default class Me extends React.Component<MeProps, MeState> {
             toast.error("Name must not be empty");
         }
 
-        (await Api.user.apiKeys.create(this.state.apiKeyName)).match(
-            async (_) => {
+        await Api.user.apiKeys.create(this.state.apiKeyName).then(
+            handleApiError(async (_) => {
                 toast.success("Created api key");
                 this.setState({ apiKeyName: "" });
                 await this.retrieveApiKeys();
-            },
-            (err) => toast.error(err.message),
+            }),
         );
     }
 
     async retrieveApiKeys() {
-        (await Api.user.apiKeys.all()).match(
-            (keys) => {
+        await Api.user.apiKeys.all().then(
+            handleApiError((keys) => {
                 this.setState({ apiKeys: keys.keys });
-            },
-            (err) => toast.error(err.message),
+            }),
         );
     }
 
     async deleteApiKey(uuid: UUID) {
-        (await Api.user.apiKeys.delete(uuid)).match(
-            async (_) => {
+        Api.user.apiKeys.delete(uuid).then(
+            handleApiError(async (_) => {
                 toast.success("Deleted api key");
                 await this.retrieveApiKeys();
-            },
-            (err) => toast.error(err.message),
+            }),
         );
     }
 
@@ -116,16 +113,13 @@ export default class Me extends React.Component<MeProps, MeState> {
             displayName: displayName !== user.displayName ? displayName : null,
         };
 
-        (await Api.user.update(changes)).match(
-            (_) => {
+        await Api.user.update(changes).then(
+            handleApiError((_) => {
                 user.displayName = displayName;
                 user.username = username;
                 this.setState({ user });
                 toast.success("Account data updated");
-            },
-            (err) => {
-                toast.error(err.message);
-            },
+            }),
         );
     }
 

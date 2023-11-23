@@ -12,6 +12,7 @@ import { WorkspaceHostDomains } from "./workspace-host/workspace-host-domains";
 import { WorkspaceHostPorts } from "./workspace-host/workspace-host-ports";
 import { WorkspaceHostServices } from "./workspace-host/workspace-host-services";
 import { WORKSPACE_CONTEXT } from "./workspace";
+import { handleApiError } from "../../utils/helper";
 
 const TABS = { domains: "Domains", ports: "Ports", services: "Services", other: "Other" };
 
@@ -55,19 +56,17 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
     }
 
     async getHostList() {
-        (await Api.workspaces.hosts.all(this.context.workspace.uuid, 1000, 0)).match(
-            ({ items }) => {
+        await Api.workspaces.hosts.all(this.context.workspace.uuid, 1000, 0).then(
+            handleApiError(({ items }) => {
                 this.setState({ hostList: items.filter(({ uuid }) => uuid !== this.props.uuid) });
-            },
-            (err) => toast.error(err.message),
+            }),
         );
     }
 
     async getHost() {
-        (await Api.workspaces.hosts.get(this.context.workspace.uuid, this.props.uuid)).match(
-            (host) => this.setState({ host }),
-            (err) => toast.error(err.message),
-        );
+        await Api.workspaces.hosts
+            .get(this.context.workspace.uuid, this.props.uuid)
+            .then(handleApiError((host) => this.setState({ host })));
     }
 
     componentDidUpdate(prevProps: Readonly<WorkspaceProps>, prevState: Readonly<WorkspaceState>, snapshot?: any) {

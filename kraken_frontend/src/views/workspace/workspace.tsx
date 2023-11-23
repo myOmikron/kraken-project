@@ -5,6 +5,7 @@ import "../../styling/workspace.css";
 import WorkspaceHeading from "./components/workspace-heading";
 import WorkspaceMenu from "./components/workspace-menu";
 import { FullWorkspace } from "../../api/generated";
+import { handleApiError } from "../../utils/helper";
 
 export type WorkspaceContext = { workspace: FullWorkspace };
 export const WORKSPACE_CONTEXT = React.createContext<WorkspaceContext>({
@@ -41,22 +42,12 @@ export default class Workspace extends React.Component<WorkspaceProps, Workspace
     }
 
     componentDidMount() {
-        Api.workspaces.get(this.props.uuid).then((res) =>
-            res.match(
-                (workspace) => this.setState({ workspace }),
-                (err) => toast.error(err.message),
-            ),
-        );
+        Api.workspaces.get(this.props.uuid).then(handleApiError((workspace) => this.setState({ workspace })));
     }
 
     componentDidUpdate(prevProps: Readonly<WorkspaceProps>, prevState: Readonly<WorkspaceState>, snapshot?: any) {
         if (prevProps.uuid !== this.props.uuid) {
-            Api.workspaces.get(this.props.uuid).then((res) =>
-                res.match(
-                    (workspace) => this.setState({ workspace }),
-                    (err) => toast.error(err.message),
-                ),
-            );
+            Api.workspaces.get(this.props.uuid).then(handleApiError((workspace) => this.setState({ workspace })));
         }
     }
 

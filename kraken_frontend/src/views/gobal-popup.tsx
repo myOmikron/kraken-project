@@ -4,6 +4,7 @@ import Invitation from "./workspace/invitation/invitation";
 import { SimpleUser, SimpleWorkspace, WsMessageOneOf1 } from "../api/generated";
 import { toast } from "react-toastify";
 import { Api, UUID } from "../api/api";
+import { handleApiError } from "../utils/helper";
 
 type Popup = WsInvitationToWorkspace;
 
@@ -39,17 +40,16 @@ export default class GlobalPopup extends React.Component<GlobalPopupProps, Globa
     }
 
     async retrieveInvitations() {
-        (await Api.invitations.all()).match(
-            (e) => {
+        await Api.invitations.all().then(
+            handleApiError((e) => {
                 const popups = this.state.popups;
                 popups.push(
                     ...e.invitations.map((i): WsInvitationToWorkspace => {
                         return { type: "invitation", invitationUuid: i.uuid, from: i.from, workspace: i.workspace };
-                    })
+                    }),
                 );
                 this.setState({ popups });
-            },
-            (err) => toast.error(err.message)
+            }),
         );
     }
 
@@ -57,7 +57,7 @@ export default class GlobalPopup extends React.Component<GlobalPopupProps, Globa
         console.log(
             this.state.popups.map((e) => {
                 return e.workspace.name;
-            })
+            }),
         );
         if (this.state.popups.length !== 0) {
             const popup = this.state.popups[0];

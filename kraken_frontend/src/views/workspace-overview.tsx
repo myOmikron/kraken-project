@@ -60,8 +60,8 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
             handleApiError(({ workspaces }) =>
                 this.setState({
                     workspaces,
-                })
-            )
+                }),
+            ),
         );
     }
 
@@ -69,15 +69,12 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
         const { newName, newDesc } = this.state;
         if (!check([[newName.length > 0, "Empty name"]])) return;
 
-        (await Api.workspaces.create({ name: newName, description: newDesc.length > 0 ? newDesc : null })).match(
-            (_) => {
+        await Api.workspaces.create({ name: newName, description: newDesc.length > 0 ? newDesc : null }).then(
+            handleApiError((_) => {
                 toast.success("Created new workspace");
                 this.setState({ newName: "", newDesc: "", createNew: false });
                 this.fetchState();
-            },
-            (err) => {
-                toast.error(err.message);
-            }
+            }),
         );
     }
 

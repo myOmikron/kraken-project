@@ -9,6 +9,7 @@ import ExpandIcon from "../../../svg/expand";
 import { toast } from "react-toastify";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import { PrefilledAttackParams } from "../workspace-attacks";
+import { handleApiError } from "../../../utils/helper";
 
 type WorkspaceAttacksCTProps = { prefilled: PrefilledAttackParams };
 type WorkspaceAttacksCTState = {
@@ -43,18 +44,15 @@ export default class WorkspaceAttacksCT extends React.Component<WorkspaceAttacks
     }
 
     async startAttack() {
-        (
-            await Api.attacks.queryCertificateTransparency({
+        await Api.attacks
+            .queryCertificateTransparency({
                 includeExpired: this.state.includeExpired,
                 workspaceUuid: this.context.workspace.uuid,
                 target: this.state.domain,
                 maxRetries: this.state.maxRetries,
                 retryInterval: this.state.retryInterval,
             })
-        ).match(
-            (ok) => toast.success("Attack started"),
-            (err) => toast.error(err.message),
-        );
+            .then(handleApiError((ok) => toast.success("Attack started")));
     }
 
     render() {

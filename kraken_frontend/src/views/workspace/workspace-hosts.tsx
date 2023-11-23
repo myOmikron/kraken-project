@@ -13,6 +13,7 @@ import ArrowLastIcon from "../../svg/arrow-last";
 import Select from "react-select";
 import { selectStyles } from "../../components/select-menu";
 import { WORKSPACE_CONTEXT } from "./workspace";
+import { handleApiError } from "../../utils/helper";
 
 type WorkspaceHostsProps = {};
 type WorkspaceHostsState = {
@@ -34,10 +35,9 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
     }
 
     async retrieveHosts() {
-        (await Api.workspaces.hosts.all(this.context.workspace.uuid, this.state.limit, this.state.offset)).match(
-            ({ items, total }) => this.setState({ hosts: items, total }),
-            (err) => toast.error(err.message),
-        );
+        await Api.workspaces.hosts
+            .all(this.context.workspace.uuid, this.state.limit, this.state.offset)
+            .then(handleApiError(({ items, total }) => this.setState({ hosts: items, total })));
     }
 
     componentDidMount() {

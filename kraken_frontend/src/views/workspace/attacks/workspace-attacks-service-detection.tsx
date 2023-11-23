@@ -8,6 +8,7 @@ import ExpandIcon from "../../../svg/expand";
 import { toast } from "react-toastify";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import { PrefilledAttackParams } from "../workspace-attacks";
+import { handleApiError } from "../../../utils/helper";
 
 type WorkspaceAttacksServiceDetectionProps = { prefilled: PrefilledAttackParams };
 type WorkspaceAttacksServiceDetectionState = {
@@ -52,17 +53,14 @@ export default class WorkspaceAttacksServiceDetection extends React.Component<
             return;
         }
 
-        (
-            await Api.attacks.serviceDetection({
+        await Api.attacks
+            .serviceDetection({
                 workspaceUuid: this.context.workspace.uuid,
                 address,
                 port: p,
                 timeout,
             })
-        ).match(
-            (_) => toast.success("Attack started"),
-            (err) => toast.error(err.message),
-        );
+            .then(handleApiError((_) => toast.success("Attack started")));
     }
 
     render() {

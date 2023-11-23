@@ -106,14 +106,9 @@ export default class KrakenNetwork extends React.Component<KrakenNetworkProps, K
                                     const result = await Api.admin.leeches.genConfig(l.uuid);
 
                                     let config = "";
-                                    result.match(
-                                        ({ ca, cert, key, sni, secret }) => {
-                                            config = `KrakenSni = "${sni}"\nKrakenCa = """\n${ca}"""\nLeechCert = """\n${cert}"""\nLeechKey="""\n${key}"""\nLeechSecret="${secret}"`;
-                                        },
-                                        (err) => {
-                                            toast.error(err.message);
-                                        },
-                                    );
+                                    handleApiError(result, ({ ca, cert, key, sni, secret }) => {
+                                        config = `KrakenSni = "${sni}"\nKrakenCa = """\n${ca}"""\nLeechCert = """\n${cert}"""\nLeechKey="""\n${key}"""\nLeechSecret="${secret}"`;
+                                    });
                                     if (config.length == 0) return;
 
                                     await navigator.clipboard.writeText(config);

@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { FullOauthClient, FullWordlist, SettingsFull } from "../api/generated";
 import CopyIcon from "../svg/copy";
 import CloseIcon from "../svg/close";
-import { copyToClipboard } from "../utils/helper";
+import { copyToClipboard, handleApiError } from "../utils/helper";
 import Textarea from "../components/textarea";
 
 type SettingsProps = {};
@@ -42,27 +42,22 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
     }
 
     async retrieveSettings() {
-        (await Api.admin.settings.get()).match(
-            (settings) => this.setState({ settings }),
-            (err) => toast.error(err.message)
-        );
+        await Api.admin.settings.get().then(handleApiError((settings) => this.setState({ settings })));
     }
 
     async getOAuthApps() {
-        (await Api.admin.oauthApplications.all()).match(
-            (apps) => {
+        await Api.admin.oauthApplications.all().then(
+            handleApiError((apps) => {
                 this.setState({ oauthApplications: apps.apps });
-            },
-            (err) => toast.error(err.message)
+            }),
         );
     }
 
     async updateWordlists() {
-        (await Api.admin.wordlists.all()).match(
-            (wordlists) => {
+        await Api.admin.wordlists.all().then(
+            handleApiError((wordlists) => {
                 this.setState({ wordlists: wordlists.wordlists });
-            },
-            (err) => toast.error(err.message)
+            }),
         );
     }
 
@@ -76,16 +71,13 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
             toast.error("Path of the wordlist must not be empty");
         }
 
-        (
-            await Api.admin.wordlists.create({
+        await Api.admin.wordlists
+            .create({
                 name: this.state.wordlistName,
                 path: this.state.wordlistPath,
                 description: this.state.wordlistDescription,
             })
-        ).match(
-            (_) => toast.success("Created wordlist"),
-            (err) => toast.error(err.message)
-        );
+            .then(handleApiError((_) => toast.success("Created wordlist")));
     }
 
     async saveSettings() {
@@ -95,10 +87,7 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
             return;
         }
 
-        (await Api.admin.settings.update(settings)).match(
-            (_) => toast.success("Settings updated"),
-            (err) => toast.error(err.message)
-        );
+        await Api.admin.settings.update(settings).then(handleApiError((_) => toast.success("Settings updated")));
     }
 
     async createOAuthApp() {
@@ -108,12 +97,9 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
             return;
         }
 
-        (
-            await Api.admin.oauthApplications.create({ name: newOAuthAppName, redirectUri: newOAuthAppRedirectUrl })
-        ).match(
-            (_) => toast.success("OAuth application created"),
-            (err) => toast.error(err.message)
-        );
+        await Api.admin.oauthApplications
+            .create({ name: newOAuthAppName, redirectUri: newOAuthAppRedirectUrl })
+            .then(handleApiError((_) => toast.success("OAuth application created")));
     }
 
     render() {
@@ -218,12 +204,11 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
                                     <button
                                         className={"icon-button"}
                                         onClick={async () => {
-                                            (await Api.admin.wordlists.delete(x.uuid)).match(
-                                                async () => {
+                                            await Api.admin.wordlists.delete(x.uuid).then(
+                                                handleApiError(async () => {
                                                     toast.success("Wordlist deleted");
                                                     await this.updateWordlists();
-                                                },
-                                                (err) => toast.error(err.message)
+                                                }),
                                             );
                                         }}
                                     >
@@ -291,14 +276,11 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
                                     <button
                                         className={"icon-button"}
                                         onClick={async () => {
-                                            (await Api.admin.oauthApplications.delete(x.uuid)).match(
-                                                async (_) => {
+                                            await Api.admin.oauthApplications.delete(x.uuid).then(
+                                                handleApiError(async (_) => {
                                                     toast.success(`Deleted application ${x.name}`);
                                                     await this.getOAuthApps();
-                                                },
-                                                (err) => {
-                                                    toast.error(err.message);
-                                                }
+                                                }),
                                             );
                                         }}
                                     >

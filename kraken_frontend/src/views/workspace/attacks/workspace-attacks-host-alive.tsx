@@ -8,6 +8,7 @@ import CollapseIcon from "../../../svg/collapse";
 import ExpandIcon from "../../../svg/expand";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import { PrefilledAttackParams } from "../workspace-attacks";
+import { handleApiError } from "../../../utils/helper";
 
 type WorkspaceAttacksHostAliveProps = { prefilled: PrefilledAttackParams };
 type WorkspaceAttacksHostAliveState = {
@@ -41,17 +42,14 @@ export default class WorkspaceAttacksHostAlive extends React.Component<
     }
 
     async startAttack() {
-        (
-            await Api.attacks.hostAlive({
+        await Api.attacks
+            .hostAlive({
                 timeout: this.state.timeout,
                 concurrentLimit: this.state.concurrentLimit,
                 targets: [this.state.target],
                 workspaceUuid: this.context.workspace.uuid,
             })
-        ).match(
-            (_) => toast.success("Attack started"),
-            (err) => toast.error(err.message),
-        );
+            .then(handleApiError((_) => toast.success("Attack started")));
     }
 
     render() {
