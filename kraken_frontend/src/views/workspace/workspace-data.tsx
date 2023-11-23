@@ -33,6 +33,8 @@ import { CreateHostForm } from "./workspace-data/workspace-data-create-host";
 import { CreatePortForm } from "./workspace-data/workspace-data-create-port";
 import { CreateServiceForm } from "./workspace-data/workspace-data-create-service";
 import { WORKSPACE_CONTEXT } from "./workspace";
+import { ROUTES } from "../../routes";
+import AttackIcon from "../../svg/attack";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 
@@ -70,7 +72,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 return (
                     <StatelessWorkspaceTable
                         {...domainsTable}
-                        columnsTemplate={"1fr 1fr 1fr 1fr"}
+                        columnsTemplate={"1fr 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("domains")}
                     >
                         <div className={"workspace-table-header"}>
@@ -78,6 +80,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>Tags</span>
                             <span>Comment</span>
                             <span>Attacks</span>
+                            <span />
                         </div>
                         {domains.map((domain) => (
                             <div
@@ -88,6 +91,11 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <TagList tags={domain.tags} />
                                 <span>{domain.comment}</span>
                                 <SourcesList sources={domain.sources} />
+                                <AttackButton
+                                    workspaceUuid={workspace}
+                                    targetUuid={domain.uuid}
+                                    targetType={"domain"}
+                                />
                             </div>
                         ))}
                     </StatelessWorkspaceTable>
@@ -96,7 +104,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 return (
                     <StatelessWorkspaceTable
                         {...hostsTable}
-                        columnsTemplate={"39ch 1fr 1fr 1fr"}
+                        columnsTemplate={"39ch 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("hosts")}
                     >
                         <div className={"workspace-table-header"}>
@@ -104,6 +112,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>Tags</span>
                             <span>Comment</span>
                             <span>Attacks</span>
+                            <span />
                         </div>
                         {hosts.map((host) => (
                             <div
@@ -114,6 +123,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <TagList tags={host.tags} />
                                 <span>{host.comment}</span>
                                 <SourcesList sources={host.sources} />
+                                <AttackButton workspaceUuid={workspace} targetUuid={host.uuid} targetType={"host"} />
                             </div>
                         ))}
                     </StatelessWorkspaceTable>
@@ -122,7 +132,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 return (
                     <StatelessWorkspaceTable
                         {...portsTable}
-                        columnsTemplate={"5ch 39ch 1fr 1fr 1fr"}
+                        columnsTemplate={"5ch 39ch 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("ports")}
                     >
                         <div className={"workspace-table-header"}>
@@ -131,6 +141,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>Tags</span>
                             <span>Comment</span>
                             <span>Attacks</span>
+                            <span />
                         </div>
                         {ports.map((port) => (
                             <div
@@ -142,6 +153,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <TagList tags={port.tags} />
                                 <span>{port.comment}</span>
                                 <SourcesList sources={port.sources} />
+                                <AttackButton workspaceUuid={workspace} targetUuid={port.uuid} targetType={"port"} />
                             </div>
                         ))}
                     </StatelessWorkspaceTable>
@@ -150,7 +162,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 return (
                     <StatelessWorkspaceTable
                         {...servicesTable}
-                        columnsTemplate={"1fr 39ch 5ch 1fr 1fr 1fr"}
+                        columnsTemplate={"1fr 39ch 5ch 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("services")}
                     >
                         <div className={"workspace-table-header"}>
@@ -160,6 +172,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>Tags</span>
                             <span>Comment</span>
                             <span>Attacks</span>
+                            <span />
                         </div>
                         {services.map((service) => (
                             <div
@@ -172,6 +185,11 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <TagList tags={service.tags} />
                                 <span>{service.comment}</span>
                                 <SourcesList sources={service.sources} />
+                                <AttackButton
+                                    workspaceUuid={workspace}
+                                    targetUuid={service.uuid}
+                                    targetType={"service"}
+                                />
                             </div>
                         ))}
                     </StatelessWorkspaceTable>
@@ -264,5 +282,13 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 {createElement}
             </Popup>
         </>
+    );
+}
+
+export function AttackButton(props: Parameters<typeof ROUTES.WORKSPACE_TARGETED_ATTACKS.clickHandler>[0]) {
+    return (
+        <button className={"icon-button"} type={"button"} {...ROUTES.WORKSPACE_TARGETED_ATTACKS.clickHandler(props)}>
+            <AttackIcon />
+        </button>
     );
 }
