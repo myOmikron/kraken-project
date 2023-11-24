@@ -1,10 +1,10 @@
 //! This module implements all attacks
 
 mod bruteforce_subdomains;
+mod certificate_transparency;
+mod dehashed_query;
 mod dns_resolution;
-mod host_alive_check;
-mod query_certificate_transparency;
-mod query_dehashed;
+mod host_alive;
 mod service_detection;
 mod tcp_port_scan;
 
@@ -107,7 +107,7 @@ pub async fn start_host_alive(
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
-            let result = ctx.host_alive_check(leech, params).await;
+            let result = ctx.host_alive(leech, params).await;
             ctx.set_finished(result).await;
         }),
     ))
@@ -140,7 +140,7 @@ pub async fn start_certificate_transparency(
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
-            let result = ctx.query_certificate_transparency(leech, params).await;
+            let result = ctx.certificate_transparency(leech, params).await;
             ctx.set_finished(result).await;
         }),
     ))
@@ -162,7 +162,7 @@ pub async fn start_dehashed_query(
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
-            let result = ctx.query_dehashed(sender, params).await;
+            let result = ctx.dehashed_query(sender, params).await;
             ctx.set_finished(result).await;
         }),
     ))

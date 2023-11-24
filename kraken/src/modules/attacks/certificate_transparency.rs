@@ -7,7 +7,7 @@ use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
 
 impl AttackContext {
     /// Executes the "certificate transparency" attack
-    pub async fn query_certificate_transparency(
+    pub async fn certificate_transparency(
         &self,
         mut leech: LeechClient,
         params: CertificateTransparencyParams,

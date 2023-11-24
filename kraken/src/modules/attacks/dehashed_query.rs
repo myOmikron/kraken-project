@@ -10,8 +10,8 @@ use crate::models::DehashedQueryResultInsert;
 use crate::modules::attacks::{AttackContext, AttackError, DehashedQueryParams};
 
 impl AttackContext {
-    /// Executes the "query dehashed" attack
-    pub async fn query_dehashed(
+    /// Executes the "dehashed query" attack
+    pub async fn dehashed_query(
         &self,
         sender: mpsc::Sender<ScheduledRequest>,
         params: DehashedQueryParams,

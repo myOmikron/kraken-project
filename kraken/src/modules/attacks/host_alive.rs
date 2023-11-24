@@ -5,7 +5,7 @@ use crate::rpc::rpc_definitions::{HostsAliveRequest, HostsAliveResponse};
 
 impl AttackContext {
     /// Executes the "host alive" attack
-    pub async fn host_alive_check(
+    pub async fn host_alive(
         &self,
         mut leech: LeechClient,
         params: HostAliveParams,
