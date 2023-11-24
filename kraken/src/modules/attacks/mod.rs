@@ -9,7 +9,6 @@ mod service_detection;
 mod tcp_port_scan;
 
 use std::error::Error as StdError;
-use std::fmt;
 use std::net::IpAddr;
 
 use chrono::Utc;
@@ -338,35 +337,24 @@ impl AttackContext {
 #[derive(Error, Debug)]
 pub enum AttackError {
     /// An error returned by grpc i.e. a [`Status`]
+    #[error("GRPC: {:?}, {:?}", .0.code(), .0.message())]
     Grpc(#[from] Status),
 
     /// An error produced by the database
+    #[error("DB: {0}")]
     Database(#[from] rorm::Error),
 
     /// A malformed grpc message
     ///
     /// For example "optional" fields which have to be set
+    #[error("Malformed response: {0}")]
     Malformed(&'static str),
 
     /// An error produced by address conversion
+    #[error("Error during address conversion:  {0}")]
     AddressConv(#[from] AddressConvError),
 
     /// Catch all variant for everything else
+    #[error("{0}")]
     Custom(Box<dyn StdError + Send + Sync>),
-}
-impl fmt::Display for AttackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            AttackError::Grpc(status) => write!(
-                f,
-                "GRPC: {code:?}, {msg:?}",
-                code = status.code(),
-                msg = status.message()
-            ),
-            AttackError::Database(err) => write!(f, "DB: {err}"),
-            AttackError::Malformed(err) => write!(f, "Malformed response: {err}"),
-            AttackError::AddressConv(err) => write!(f, "Error during address conversion: {err}"),
-            AttackError::Custom(err) => write!(f, "{err}"),
-        }
-    }
 }
