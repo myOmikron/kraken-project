@@ -244,18 +244,27 @@ pub async fn scan_tcp_ports(
 /// Host Alive check request
 #[derive(Deserialize, ToSchema)]
 pub struct HostsAliveRequest {
-    pub(crate) leech_uuid: Option<Uuid>,
+    /// The leech to use
+    ///
+    /// Leave empty to use a random leech
+    pub leech_uuid: Option<Uuid>,
 
+    /// The ip addresses / networks to scan
     #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.2", "10.13.37.0/24"]))]
-    pub(crate) targets: Vec<IpNetwork>,
+    pub targets: Vec<IpNetwork>,
 
+    /// The time to wait until a host is considered down.
+    ///
+    /// The timeout is specified in milliseconds.
     #[schema(example = 3000)]
-    pub(crate) timeout: u64,
+    pub timeout: u64,
 
+    /// The concurrent task limit
     #[schema(example = 30)]
-    pub(crate) concurrent_limit: u32,
+    pub concurrent_limit: u32,
 
-    pub(crate) workspace_uuid: Uuid,
+    /// The workspace to execute the attack in
+    pub workspace_uuid: Uuid,
 }
 
 /// Check if hosts are reachable
@@ -311,15 +320,26 @@ pub async fn hosts_alive_check(
 /// The settings to configure a certificate transparency request
 #[derive(Deserialize, ToSchema)]
 pub struct QueryCertificateTransparencyRequest {
+    /// Domain to query certificates for
     #[schema(example = "example.com")]
-    pub(crate) target: String,
+    pub target: String,
+
+    /// Should expired certificates be included as well
     #[schema(example = true)]
-    pub(crate) include_expired: bool,
+    pub include_expired: bool,
+
+    /// The number of times the query should be retried if it failed.
     #[schema(example = 3)]
-    pub(crate) max_retries: u32,
+    pub max_retries: u32,
+
+    /// The interval that should be waited between retries.
+    ///
+    /// The interval is specified in milliseconds.
     #[schema(example = 500)]
-    pub(crate) retry_interval: u64,
-    pub(crate) workspace_uuid: Uuid,
+    pub retry_interval: u64,
+
+    /// The workspace to execute the attack in
+    pub workspace_uuid: Uuid,
 }
 
 /// Query a certificate transparency log collector.
@@ -374,9 +394,12 @@ pub async fn query_certificate_transparency(
 /// The request to query the dehashed API
 #[derive(ToSchema, Deserialize)]
 pub struct QueryDehashedRequest {
+    /// The query to send to dehashed
     #[schema(value_type = Query)]
-    query: dehashed_rs::Query,
-    workspace_uuid: Uuid,
+    pub query: dehashed_rs::Query,
+
+    /// The workspace to execute the attack in
+    pub workspace_uuid: Uuid,
 }
 
 /// Query the [dehashed](https://dehashed.com/) API.
@@ -426,15 +449,28 @@ pub async fn query_dehashed(
 /// The request to start a service detection
 #[derive(Debug, ToSchema, Deserialize)]
 pub struct ServiceDetectionRequest {
-    /// If missing - a random leech is chosen
-    pub(crate) leech_uuid: Option<Uuid>,
+    /// The leech to use
+    ///
+    /// Leave empty to use a random leech
+    pub leech_uuid: Option<Uuid>,
+
+    /// The ip address the service listens on
     #[schema(value_type = String, example = "10.13.37.1")]
-    pub(crate) address: IpAddr,
+    pub address: IpAddr,
+
+    /// The port the service listens on
     #[schema(example = 443)]
-    pub(crate) port: u16,
+    pub port: u16,
+
+    /// Time to wait for a response after sending the payload
+    /// (or after establishing a connection, if not payload is to be sent)
+    ///
+    /// The timeout is specified in milliseconds.
     #[schema(example = 3000)]
-    pub(crate) timeout: u64,
-    pub(crate) workspace_uuid: Uuid,
+    pub timeout: u64,
+
+    /// The workspace to execute the attack in
+    pub workspace_uuid: Uuid,
 }
 
 /// Perform service detection on a ip and port combination
@@ -490,13 +526,21 @@ pub async fn service_detection(
 /// Request to resolve domains
 #[derive(Deserialize, ToSchema)]
 pub struct DnsResolutionRequest {
-    /// If missing - a random leech is chosen
-    pub(crate) leech_uuid: Option<Uuid>,
+    /// The leech to use
+    ///
+    /// Leave empty to use a random leech
+    pub leech_uuid: Option<Uuid>,
+
+    /// The domains to resolve
     #[schema(value_type = Vec<String>, example = json!(["example.com", "example.org"]))]
-    pub(crate) targets: Vec<String>,
+    pub targets: Vec<String>,
+
+    /// The concurrent task limit
     #[schema(example = 2)]
-    pub(crate) concurrent_limit: u32,
-    pub(crate) workspace_uuid: Uuid,
+    pub concurrent_limit: u32,
+
+    /// The workspace to execute the attack in
+    pub workspace_uuid: Uuid,
 }
 
 /// Perform domain name resolution

@@ -25,18 +25,23 @@ use tokio::task::JoinHandle;
 use tonic::{Response, Status, Streaming};
 use uuid::Uuid;
 
-#[cfg(doc)]
-use crate::api::handler;
 use crate::api::handler::attacks::PortOrRange;
 use crate::chan::{LeechClient, WsMessage, GLOBAL};
 use crate::models::{Attack, AttackType, InsertAttackError};
 use crate::rpc::rpc_definitions::AddressConvError;
 
+/// The parameters of a "bruteforce subdomains" attack
 pub struct BruteforceSubdomainsParams {
+    /// Domain to construct subdomains for
     pub target: String,
+
+    /// The wordlist to use
     pub wordlist_path: String,
+
+    /// The concurrent task limit
     pub concurrent_limit: u32,
 }
+/// Start a "bruteforce subdomains" attack
 pub async fn start_bruteforce_subdomains(
     workspace: Uuid,
     user: Uuid,
@@ -53,10 +58,15 @@ pub async fn start_bruteforce_subdomains(
     ))
 }
 
+/// The parameters of a "dns resolution" attack
 pub struct DnsResolutionParams {
+    /// The domains to resolve
     pub targets: Vec<String>,
+
+    /// The concurrent task limit
     pub concurrent_limit: u32,
 }
+/// Start a "dns resolution" attack
 pub async fn start_dns_resolution(
     workspace: Uuid,
     user: Uuid,
@@ -73,11 +83,20 @@ pub async fn start_dns_resolution(
     ))
 }
 
+/// The parameters of a "host alive" attack
 pub struct HostAliveParams {
+    /// The ip addresses / networks to scan
     pub targets: Vec<IpNetwork>,
+
+    /// The time to wait until a host is considered down.
+    ///
+    /// The timeout is specified in milliseconds.
     pub timeout: u64,
+
+    /// The concurrent task limit
     pub concurrent_limit: u32,
 }
+/// Start a "host alive" attack
 pub async fn start_host_alive(
     workspace: Uuid,
     user: Uuid,
@@ -94,12 +113,23 @@ pub async fn start_host_alive(
     ))
 }
 
+/// The parameters of a "certificate transparency" attack
 pub struct CertificateTransparencyParams {
+    /// Domain to query certificates for
     pub target: String,
+
+    /// Should expired certificates be included as well
     pub include_expired: bool,
+
+    /// The number of times the query should be retried if it failed.
     pub max_retries: u32,
+
+    /// The interval that should be waited between retries.
+    ///
+    /// The interval is specified in milliseconds.
     pub retry_interval: u64,
 }
+/// Start a "certificate transparency" attack
 pub async fn start_certificate_transparency(
     workspace: Uuid,
     user: Uuid,
@@ -116,9 +146,12 @@ pub async fn start_certificate_transparency(
     ))
 }
 
+/// The parameters of a "dehashed query" attack
 pub struct DehashedQueryParams {
+    /// The query to send to dehashed
     pub query: Query,
 }
+/// Start a "dehashed query" attack
 pub async fn start_dehashed_query(
     workspace: Uuid,
     user: Uuid,
@@ -135,11 +168,21 @@ pub async fn start_dehashed_query(
     ))
 }
 
+/// The parameters of a "service detection" attack
 pub struct ServiceDetectionParams {
+    /// The ip address the service listens on
     pub target: IpAddr,
+
+    /// The port the service listens on
     pub port: u16,
+
+    /// Time to wait for a response after sending the payload
+    /// (or after establishing a connection, if not payload is to be sent)
+    ///
+    /// The timeout is specified in milliseconds.
     pub timeout: u64,
 }
+/// Start a "service detection" attack
 pub async fn start_service_detection(
     workspace: Uuid,
     user: Uuid,
@@ -156,15 +199,36 @@ pub async fn start_service_detection(
     ))
 }
 
+/// The parameters of a "tcp port scan" attack
 pub struct TcpPortScanParams {
+    /// The ip addresses / networks to scan
     pub targets: Vec<IpNetwork>,
+
+    /// List of single ports and port ranges
     pub ports: Vec<PortOrRange>,
+
+    /// The time to wait until a connection is considered failed.
+    ///
+    /// The timeout is specified in milliseconds.
     pub timeout: u64,
+
+    /// The concurrent task limit
     pub concurrent_limit: u32,
+
+    /// The number of times the connection should be retried if it failed.
     pub max_retries: u32,
+
+    /// The interval that should be wait between retries on a port.
+    ///
+    /// The interval is specified in milliseconds.
     pub retry_interval: u64,
+
+    /// Skips the initial icmp check.
+    ///
+    /// All hosts are assumed to be reachable
     pub skip_icmp_check: bool,
 }
+/// Start a "tcp port scan" attack
 pub async fn start_tcp_port_scan(
     workspace: Uuid,
     user: Uuid,
