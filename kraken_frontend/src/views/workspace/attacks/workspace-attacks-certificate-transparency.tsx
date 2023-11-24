@@ -66,7 +66,12 @@ export default class WorkspaceAttacksCT extends React.Component<WorkspaceAttacks
             >
                 <div className={"workspace-attacks-ct"}>
                     <label htmlFor={"domain"}>Domain</label>
-                    <Input id={"domain"} value={this.state.domain} onChange={(domain) => this.setState({ domain })} />
+                    <Input
+                        id={"domain"}
+                        required
+                        value={this.state.domain}
+                        onChange={(domain) => this.setState({ domain })}
+                    />
                     <div className={"workspace-attacks-ct-include-expired"}>
                         <label htmlFor={"include-expired"}>Include expired certificates</label>
                         <Checkbox
@@ -119,7 +124,7 @@ export default class WorkspaceAttacksCT extends React.Component<WorkspaceAttacks
                         />
                     </div>
                 </div>
-                <StartAttack active={this.state.domain !== ""} />
+                <StartAttack />
             </form>
         );
     }

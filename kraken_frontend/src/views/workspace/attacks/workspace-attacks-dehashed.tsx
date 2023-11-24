@@ -133,6 +133,7 @@ export default class WorkspaceAttacksDehashed extends React.Component<
             >
                 <div className={"workspace-attacks-dehashed"}>
                     <SelectMenu
+                        required
                         options={DEHASHED_SEARCH_TYPES}
                         theme={"default"}
                         value={this.state.type}
@@ -141,6 +142,7 @@ export default class WorkspaceAttacksDehashed extends React.Component<
                         }}
                     />
                     <Input
+                        required
                         placeholder={"dehashed query"}
                         value={this.state.search}
                         onChange={(search) => {
@@ -148,7 +150,7 @@ export default class WorkspaceAttacksDehashed extends React.Component<
                         }}
                     />
                 </div>
-                <StartAttack active={this.state.search !== "" && this.state.type !== null} />
+                <StartAttack />
             </form>
         );
     }

@@ -79,6 +79,7 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
                 <div className={"workspace-attacks-pst"}>
                     <label htmlFor={"cidr"}>IP / net in cidr</label>
                     <Input
+                        required
                         id={"cidr"}
                         value={this.state.ipAddInput}
                         onChange={(ipAddInput) => this.setState({ ipAddInput })}
@@ -165,7 +166,7 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
                         />
                     </div>
                 </div>
-                <StartAttack active={this.state.ipAddInput !== ""} />
+                <StartAttack />
             </form>
         );
     }

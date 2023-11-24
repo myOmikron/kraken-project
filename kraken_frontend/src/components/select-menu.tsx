@@ -8,6 +8,7 @@ type SelectMenuProps = {
     value: null | SelectValue;
     onChange: (value: SelectValue | null) => void;
     id?: string;
+    required?: boolean;
 };
 type SelectMenuState = {};
 
@@ -31,6 +32,7 @@ export default class SelectMenu extends React.Component<SelectMenuProps, SelectM
         return (
             <Select<SelectValue>
                 id={this.props.id}
+                required={this.props.required}
                 options={this.props.options}
                 onChange={(type) => {
                     this.props.onChange(type);

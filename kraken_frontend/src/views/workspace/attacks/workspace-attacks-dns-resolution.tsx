@@ -57,9 +57,14 @@ export default class WorkspaceAttacksDnsResolution extends React.Component<
             >
                 <div className={"workspace-attacks-dns-resolution"}>
                     <label htmlFor={"domain"}>Domain</label>
-                    <Input id={"domain"} value={this.state.domain} onChange={(domain) => this.setState({ domain })} />
+                    <Input
+                        id={"domain"}
+                        required
+                        value={this.state.domain}
+                        onChange={(domain) => this.setState({ domain })}
+                    />
                 </div>
-                <StartAttack active={this.state.domain !== ""} />
+                <StartAttack />
             </form>
         );
     }

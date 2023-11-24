@@ -64,6 +64,7 @@ export default class WorkspaceAttacksHostAlive extends React.Component<
                 <div className={"workspace-attacks-host-alive"}>
                     <label htmlFor={"cidr"}>IP / net in cidr</label>
                     <Input
+                        required
                         id={"cidr"}
                         value={this.state.target}
                         onChange={(target) => {
@@ -116,7 +117,7 @@ export default class WorkspaceAttacksHostAlive extends React.Component<
                         />
                     </div>
                 </div>
-                <StartAttack active={this.state.target !== ""} />
+                <StartAttack />
             </form>
         );
     }

@@ -96,10 +96,16 @@ export default class WorkspaceAttacksBruteforceSubdomains extends React.Componen
             >
                 <div className={"workspace-attacks-bsd"}>
                     <label htmlFor={"domain"}>Domain</label>
-                    <Input id={"domain"} value={this.state.domain} onChange={(v) => this.setState({ domain: v })} />
+                    <Input
+                        id={"domain"}
+                        required
+                        value={this.state.domain}
+                        onChange={(v) => this.setState({ domain: v })}
+                    />
                     <label htmlFor={"wordlist"}>Wordlist</label>
                     <SelectMenu
                         id={"wordlist"}
+                        required
                         options={this.state.wordlists}
                         theme={"default"}
                         value={this.state.wordlist}
@@ -139,7 +145,7 @@ export default class WorkspaceAttacksBruteforceSubdomains extends React.Componen
                         />
                     </div>
                 </div>
-                <StartAttack active={this.state.domain !== "" && this.state.wordlist !== null} />
+                <StartAttack />
             </form>
         );
     }

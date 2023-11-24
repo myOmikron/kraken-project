@@ -1,20 +1,12 @@
 import React from "react";
 
-export type StartAttackProps = {
-    active: boolean;
-};
+export type StartAttackProps = {};
 
 export default function StartAttack(props: StartAttackProps) {
-    const { active } = props;
     return (
         <div className={"start-attack-container"}>
-            <button type={"submit"} className={"start-attack-button"} disabled={!active}>
-                <svg
-                    width={285}
-                    height={285}
-                    viewBox="0 0 75.841 75.296"
-                    className={active ? "start-attack" : "start-attack-disabled"}
-                >
+            <button type={"submit"} className={"start-attack-button"}>
+                <svg width={285} height={285} viewBox="0 0 75.841 75.296" className={"start-attack"}>
                     <g>
                         <path
                             d="m73.618 107.264-31.586 18.279-31.623-18.215-.037-36.493 31.586-18.279L73.58 70.771Z"

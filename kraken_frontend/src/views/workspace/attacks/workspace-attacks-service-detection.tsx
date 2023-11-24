@@ -76,6 +76,7 @@ export default class WorkspaceAttacksServiceDetection extends React.Component<
                     <label htmlFor={"ip"}>IP</label>
                     <Input
                         id={"ip"}
+                        required
                         placeholder={"IP address"}
                         value={this.state.address}
                         onChange={(v) => this.setState({ address: v })}
@@ -83,6 +84,7 @@ export default class WorkspaceAttacksServiceDetection extends React.Component<
                     <label htmlFor={"port"}>Port</label>
                     <Input
                         id={"port"}
+                        required
                         placeholder={"Port"}
                         value={this.state.port}
                         onChange={(v) => this.setState({ port: v })}
@@ -119,7 +121,7 @@ export default class WorkspaceAttacksServiceDetection extends React.Component<
                         />
                     </div>
                 </div>
-                <StartAttack active={this.state.address !== "" && this.state.port !== ""} />
+                <StartAttack />
             </form>
         );
     }
