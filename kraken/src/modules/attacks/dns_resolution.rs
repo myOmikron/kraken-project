@@ -1,15 +1,14 @@
 use std::future::Future;
 use std::net::{Ipv4Addr, Ipv6Addr};
 
-use crate::chan::{WsMessage, GLOBAL};
+use crate::chan::{LeechClient, WsMessage, GLOBAL};
 use crate::models::DnsRecordType;
 use crate::modules::attack_results::store_dns_resolution_result;
-use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
-use crate::rpc::rpc_definitions;
+use crate::modules::attacks::{AttackContext, AttackError, DnsResolutionParams};
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
-use crate::rpc::rpc_definitions::{shared, DnsResolutionResponse};
+use crate::rpc::rpc_definitions::{shared, DnsResolutionRequest, DnsResolutionResponse};
 
-impl LeechAttackContext {
+impl AttackContext {
     // What's up with this signature?
     //
     // It is a workaround for an interesting problem:
@@ -23,16 +22,20 @@ impl LeechAttackContext {
     // Annotate this function's future explicitly as `Send`, so `tokio::spawn` doesn't trigger the check
     // and the compiler can proof this bound separately after checking `Domain::aggregate`.
     #[allow(clippy::manual_async_fn)]
-    /// Resolve domain names
-    ///
-    /// See [`handler::attacks::dns_resolution`] for more information.
+    /// Executes the "dns resolution" attack
     pub fn dns_resolution(
-        mut self,
-        req: rpc_definitions::DnsResolutionRequest,
-    ) -> impl Future<Output = ()> + Send + 'static {
+        &self,
+        mut leech: LeechClient,
+        params: DnsResolutionParams,
+    ) -> impl Future<Output = Result<(), AttackError>> + Send + '_ {
         async move {
-            let result = AttackContext::handle_streamed_response(
-                self.leech.dns_resolution(req).await,
+            let request = DnsResolutionRequest {
+                attack_uuid: self.attack_uuid.to_string(),
+                targets: params.targets,
+                concurrent_limit: params.concurrent_limit,
+            };
+            AttackContext::handle_streamed_response(
+                leech.dns_resolution(request).await,
                 |response| async {
                     let DnsResolutionResponse {
                         record:
@@ -111,9 +114,7 @@ impl LeechAttackContext {
                     Ok(())
                 },
             )
-            .await;
-
-            self.set_finished(result.err()).await;
+            .await
         }
     }
 }

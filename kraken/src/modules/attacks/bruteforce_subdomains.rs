@@ -1,21 +1,29 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 
-use crate::chan::{WsMessage, GLOBAL};
+use crate::chan::{LeechClient, WsMessage, GLOBAL};
 use crate::models::DnsRecordType;
 use crate::modules::attack_results::store_bruteforce_subdomains_result;
-use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
+use crate::modules::attacks::{AttackContext, AttackError, BruteforceSubdomainsParams};
 use crate::rpc::rpc_definitions::shared::dns_record::Record;
 use crate::rpc::rpc_definitions::{
     shared, BruteforceSubdomainRequest, BruteforceSubdomainResponse,
 };
 
-impl LeechAttackContext {
-    /// Bruteforce subdomains through a DNS wordlist attack
-    ///
-    /// See [`handler::attacks::bruteforce_subdomains`] for more information.
-    pub async fn bruteforce_subdomains(mut self, req: BruteforceSubdomainRequest) {
-        let result = AttackContext::handle_streamed_response(
-            self.leech.bruteforce_subdomains(req).await,
+impl AttackContext {
+    /// Executes the "bruteforce subdomains" attack
+    pub async fn bruteforce_subdomains(
+        &self,
+        mut leech: LeechClient,
+        params: BruteforceSubdomainsParams,
+    ) -> Result<(), AttackError> {
+        let request = BruteforceSubdomainRequest {
+            attack_uuid: self.attack_uuid.to_string(),
+            domain: params.target,
+            wordlist_path: params.wordlist_path,
+            concurrent_limit: params.concurrent_limit,
+        };
+        AttackContext::handle_streamed_response(
+            leech.bruteforce_subdomains(request).await,
             |response| async {
                 let BruteforceSubdomainResponse {
                     record:
@@ -77,7 +85,6 @@ impl LeechAttackContext {
                 Ok(())
             },
         )
-        .await;
-        self.set_finished(result.err()).await;
+        .await
     }
 }

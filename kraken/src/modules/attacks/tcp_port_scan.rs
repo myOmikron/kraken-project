@@ -2,19 +2,51 @@ use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
 
-use crate::chan::{WsMessage, GLOBAL};
+use crate::api::handler::attacks::PortOrRange;
+use crate::chan::{LeechClient, WsMessage, GLOBAL};
 use crate::modules::attack_results::store_tcp_port_scan_result;
-use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
+use crate::modules::attacks::{AttackContext, AttackError, TcpPortScanParams};
+use crate::rpc::rpc_definitions;
 use crate::rpc::rpc_definitions::shared::address::Address;
 use crate::rpc::rpc_definitions::{shared, TcpPortScanRequest, TcpPortScanResponse};
 
-impl LeechAttackContext {
-    /// Start a tcp port scan
-    ///
-    /// See [`handler::attacks::scan_tcp_ports`] for more information.
-    pub async fn tcp_port_scan(mut self, req: TcpPortScanRequest) {
-        let result = AttackContext::handle_streamed_response(
-            self.leech.run_tcp_port_scan(req.clone()).await,
+impl AttackContext {
+    /// Executes the "tcp port scan" attack
+    pub async fn tcp_port_scan(
+        &self,
+        mut leech: LeechClient,
+        params: TcpPortScanParams,
+    ) -> Result<(), AttackError> {
+        let request = TcpPortScanRequest {
+            attack_uuid: self.attack_uuid.to_string(),
+            targets: params.targets.into_iter().map(From::from).collect(),
+            ports: params
+                .ports
+                .into_iter()
+                .map(|x| rpc_definitions::PortOrRange {
+                    port_or_range: Some(match x {
+                        PortOrRange::Port(port) => {
+                            rpc_definitions::port_or_range::PortOrRange::Single(port as u32)
+                        }
+                        PortOrRange::Range(range) => {
+                            rpc_definitions::port_or_range::PortOrRange::Range(
+                                rpc_definitions::PortRange {
+                                    start: *range.start() as u32,
+                                    end: *range.end() as u32,
+                                },
+                            )
+                        }
+                    }),
+                })
+                .collect(),
+            timeout: params.timeout,
+            concurrent_limit: params.concurrent_limit,
+            max_retries: params.max_retries,
+            retry_interval: params.retry_interval,
+            skip_icmp_check: params.skip_icmp_check,
+        };
+        AttackContext::handle_streamed_response(
+            leech.run_tcp_port_scan(request).await,
             |response| async {
                 let TcpPortScanResponse {
                     address:
@@ -52,7 +84,6 @@ impl LeechAttackContext {
                 Ok(())
             },
         )
-        .await;
-        self.set_finished(result.err()).await;
+        .await
     }
 }

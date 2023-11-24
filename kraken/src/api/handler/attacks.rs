@@ -23,9 +23,12 @@ use crate::chan::GLOBAL;
 use crate::models::{
     Attack, AttackType, User, UserPermission, WordList, Workspace, WorkspaceMember,
 };
-use crate::modules::attacks::AttackContext;
-use crate::rpc::rpc_definitions;
-use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
+use crate::modules::attacks::{
+    start_bruteforce_subdomains, start_certificate_transparency, start_dehashed_query,
+    start_dns_resolution, start_host_alive, start_service_detection, start_tcp_port_scan,
+    BruteforceSubdomainsParams, CertificateTransparencyParams, DehashedQueryParams,
+    DnsResolutionParams, HostAliveParams, ServiceDetectionParams, TcpPortScanParams,
+};
 
 /// The settings of a subdomain bruteforce request
 #[derive(Deserialize, ToSchema)]
@@ -90,29 +93,17 @@ pub async fn bruteforce_subdomains(
         GLOBAL.leeches.random_leech()?
     };
 
-    let attack_uuid = Attack::insert(
-        &GLOBAL.db,
-        AttackType::BruteforceSubdomains,
-        user_uuid,
+    let (attack_uuid, _) = start_bruteforce_subdomains(
         workspace_uuid,
-    )
-    .await?;
-
-    // start attack
-    tokio::spawn(
-        AttackContext {
-            user_uuid,
-            workspace_uuid,
-            attack_uuid,
-        }
-        .leech(client)
-        .bruteforce_subdomains(rpc_definitions::BruteforceSubdomainRequest {
-            attack_uuid: attack_uuid.to_string(),
-            domain: domain.to_string(),
+        user_uuid,
+        client,
+        BruteforceSubdomainsParams {
+            target: domain,
             wordlist_path,
             concurrent_limit,
-        }),
-    );
+        },
+    )
+    .await?;
 
     Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
 }
@@ -231,52 +222,23 @@ pub async fn scan_tcp_ports(
         GLOBAL.leeches.random_leech()?
     };
 
-    let attack_uuid = Attack::insert(
-        &GLOBAL.db,
-        AttackType::TcpPortScan,
-        user_uuid,
+    let (attack_uuid, _) = start_tcp_port_scan(
         workspace_uuid,
+        user_uuid,
+        client,
+        TcpPortScanParams {
+            targets,
+            ports,
+            timeout,
+            concurrent_limit,
+            max_retries,
+            retry_interval,
+            skip_icmp_check,
+        },
     )
     .await?;
 
-    // start attack
-    tokio::spawn(
-        AttackContext {
-            user_uuid,
-            workspace_uuid,
-            attack_uuid,
-        }
-        .leech(client)
-        .tcp_port_scan(rpc_definitions::TcpPortScanRequest {
-            attack_uuid: attack_uuid.to_string(),
-            targets: targets.iter().map(|addr| (*addr).into()).collect(),
-            ports: ports
-                .iter()
-                .map(|value| rpc_definitions::PortOrRange {
-                    port_or_range: Some(match value {
-                        PortOrRange::Port(port) => {
-                            rpc_definitions::port_or_range::PortOrRange::Single(*port as u32)
-                        }
-                        PortOrRange::Range(range) => {
-                            rpc_definitions::port_or_range::PortOrRange::Range(
-                                rpc_definitions::PortRange {
-                                    start: *range.start() as u32,
-                                    end: *range.end() as u32,
-                                },
-                            )
-                        }
-                    }),
-                })
-                .collect(),
-            retry_interval,
-            max_retries,
-            timeout,
-            concurrent_limit,
-            skip_icmp_check,
-        }),
-    );
-
-    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: user_uuid }))
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
 }
 
 /// Host Alive check request
@@ -325,29 +287,23 @@ pub async fn hosts_alive_check(
         workspace_uuid,
     } = req.into_inner();
 
-    let attack_uuid =
-        Attack::insert(&GLOBAL.db, AttackType::HostAlive, user_uuid, workspace_uuid).await?;
-
     let leech = if let Some(leech_uuid) = leech_uuid {
         GLOBAL.leeches.get_leech(&leech_uuid)?
     } else {
         GLOBAL.leeches.random_leech()?
     };
 
-    tokio::spawn(
-        AttackContext {
-            user_uuid,
-            workspace_uuid,
-            attack_uuid,
-        }
-        .leech(leech)
-        .host_alive_check(rpc_definitions::HostsAliveRequest {
-            attack_uuid: attack_uuid.to_string(),
-            targets: targets.into_iter().map(Into::into).collect(),
+    let (attack_uuid, _) = start_host_alive(
+        workspace_uuid,
+        user_uuid,
+        leech,
+        HostAliveParams {
+            targets,
             timeout,
             concurrent_limit,
-        }),
-    );
+        },
+    )
+    .await?;
 
     Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
 }
@@ -399,29 +355,18 @@ pub async fn query_certificate_transparency(
 
     let client = GLOBAL.leeches.random_leech()?;
 
-    let attack_uuid = Attack::insert(
-        &GLOBAL.db,
-        AttackType::QueryCertificateTransparency,
-        user_uuid,
+    let (attack_uuid, _) = start_certificate_transparency(
         workspace_uuid,
-    )
-    .await?;
-
-    tokio::spawn(
-        AttackContext {
-            user_uuid,
-            workspace_uuid,
-            attack_uuid,
-        }
-        .leech(client)
-        .query_certificate_transparency(CertificateTransparencyRequest {
-            attack_uuid: attack_uuid.to_string(),
+        user_uuid,
+        client,
+        CertificateTransparencyParams {
             target,
             include_expired,
             max_retries,
             retry_interval,
-        }),
-    );
+        },
+    )
+    .await?;
 
     Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
 }
@@ -467,22 +412,13 @@ pub async fn query_dehashed(
         }
     };
 
-    let attack_uuid = Attack::insert(
-        &GLOBAL.db,
-        AttackType::QueryUnhashed,
-        user_uuid,
+    let (attack_uuid, _) = start_dehashed_query(
         workspace_uuid,
+        user_uuid,
+        sender,
+        DehashedQueryParams { query },
     )
     .await?;
-
-    tokio::spawn(
-        AttackContext {
-            user_uuid,
-            workspace_uuid,
-            attack_uuid,
-        }
-        .query_dehashed(sender, query),
-    );
 
     Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
 }
@@ -536,33 +472,17 @@ pub async fn service_detection(
         GLOBAL.leeches.random_leech()?
     };
 
-    let attack_uuid = Attack::insert(
-        &GLOBAL.db,
-        AttackType::ServiceDetection,
-        user_uuid,
+    let (attack_uuid, _) = start_service_detection(
         workspace_uuid,
+        user_uuid,
+        client,
+        ServiceDetectionParams {
+            target: address,
+            port,
+            timeout,
+        },
     )
     .await?;
-
-    // start attack
-    tokio::spawn(
-        AttackContext {
-            user_uuid,
-            workspace_uuid,
-            attack_uuid,
-        }
-        .leech(client)
-        .service_detection(
-            rpc_definitions::ServiceDetectionRequest {
-                attack_uuid: attack_uuid.to_string(),
-                address: Some(address.into()),
-                timeout,
-                port: port as u32,
-            },
-            address,
-            port,
-        ),
-    );
 
     Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
 }
@@ -613,28 +533,16 @@ pub async fn dns_resolution(
         GLOBAL.leeches.random_leech()?
     };
 
-    let attack_uuid = Attack::insert(
-        &GLOBAL.db,
-        AttackType::DnsResolution,
-        user_uuid,
+    let (attack_uuid, _) = start_dns_resolution(
         workspace_uuid,
-    )
-    .await?;
-
-    // start attack
-    tokio::spawn(
-        AttackContext {
-            user_uuid,
-            workspace_uuid,
-            attack_uuid,
-        }
-        .leech(client)
-        .dns_resolution(rpc_definitions::DnsResolutionRequest {
-            attack_uuid: attack_uuid.to_string(),
+        user_uuid,
+        client,
+        DnsResolutionParams {
             targets,
             concurrent_limit,
-        }),
-    );
+        },
+    )
+    .await?;
 
     Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
 }

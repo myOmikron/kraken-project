@@ -1,15 +1,23 @@
-use crate::chan::{WsMessage, GLOBAL};
+use crate::chan::{LeechClient, WsMessage, GLOBAL};
 use crate::modules::attack_results::store_host_alive_check_result;
-use crate::modules::attacks::{AttackContext, AttackError, LeechAttackContext};
+use crate::modules::attacks::{AttackContext, AttackError, HostAliveParams};
 use crate::rpc::rpc_definitions::{HostsAliveRequest, HostsAliveResponse};
 
-impl LeechAttackContext {
-    /// Check if hosts are reachable
-    ///
-    /// See [`handler::attacks::hosts_alive_check`] for more information.
-    pub async fn host_alive_check(mut self, req: HostsAliveRequest) {
-        let result = AttackContext::handle_streamed_response(
-            self.leech.hosts_alive_check(req).await,
+impl AttackContext {
+    /// Executes the "host alive" attack
+    pub async fn host_alive_check(
+        &self,
+        mut leech: LeechClient,
+        params: HostAliveParams,
+    ) -> Result<(), AttackError> {
+        let request = HostsAliveRequest {
+            attack_uuid: self.attack_uuid.to_string(),
+            targets: params.targets.into_iter().map(From::from).collect(),
+            timeout: params.timeout,
+            concurrent_limit: params.concurrent_limit,
+        };
+        AttackContext::handle_streamed_response(
+            leech.hosts_alive_check(request).await,
             |response| async {
                 let HostsAliveResponse { host: Some(host) } = response else {
                     return Err(AttackError::Malformed("Missing `host`"));
@@ -33,7 +41,6 @@ impl LeechAttackContext {
                 Ok(())
             },
         )
-        .await;
-        self.set_finished(result.err()).await;
+        .await
     }
 }

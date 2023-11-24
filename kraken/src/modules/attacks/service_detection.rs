@@ -1,59 +1,46 @@
-use std::net::IpAddr;
-
-use crate::chan::GLOBAL;
+use crate::chan::{LeechClient, GLOBAL};
 use crate::models::ServiceCertainty;
 use crate::modules::attack_results::store_service_detection_result;
-use crate::modules::attacks::{AttackError, LeechAttackContext};
+use crate::modules::attacks::{AttackContext, AttackError, ServiceDetectionParams};
 use crate::rpc::rpc_definitions::{ServiceDetectionRequest, ServiceDetectionResponse};
 
-impl LeechAttackContext {
-    /// Check what services are running on a specific port
-    ///
-    /// See [`handler::attacks::service_detection`] for more information.
+impl AttackContext {
+    /// Executes the "service detection" attack
     pub async fn service_detection(
-        mut self,
-        req: ServiceDetectionRequest,
-        host: IpAddr,
-        port: u16,
-    ) {
-        match self.leech.service_detection(req).await {
-            Ok(v) => {
-                let ServiceDetectionResponse {
-                    services,
-                    response_type,
-                } = v.into_inner();
+        &self,
+        mut leech: LeechClient,
+        params: ServiceDetectionParams,
+    ) -> Result<(), AttackError> {
+        let request = ServiceDetectionRequest {
+            attack_uuid: self.attack_uuid.to_string(),
+            address: Some(params.target.into()),
+            port: params.port as u32,
+            timeout: params.timeout,
+        };
+        let ServiceDetectionResponse {
+            services,
+            response_type,
+        } = leech.service_detection(request).await?.into_inner();
 
-                let certainty = match response_type {
-                    1 => ServiceCertainty::MaybeVerified,
-                    2 => ServiceCertainty::DefinitelyVerified,
-                    _ => {
-                        self.set_finished(Some(AttackError::Custom(
-                            "Retrieved certainty Unknown".into(),
-                        )))
-                        .await;
-                        return;
-                    }
-                };
+        let certainty = match response_type {
+            1 => ServiceCertainty::MaybeVerified,
+            2 => ServiceCertainty::DefinitelyVerified,
+            _ => {
+                return Err(AttackError::Custom("Retrieved certainty Unknown".into()));
+            }
+        };
 
-                self.set_finished(
-                    store_service_detection_result(
-                        &GLOBAL.db,
-                        self.attack_uuid,
-                        self.workspace_uuid,
-                        &services,
-                        certainty,
-                        host.into(),
-                        port,
-                    )
-                    .await
-                    .map_err(AttackError::from)
-                    .err(),
-                )
-                .await;
-            }
-            Err(status) => {
-                self.set_finished(Some(AttackError::Grpc(status))).await;
-            }
-        }
+        store_service_detection_result(
+            &GLOBAL.db,
+            self.attack_uuid,
+            self.workspace_uuid,
+            &services,
+            certainty,
+            params.target.into(),
+            params.port,
+        )
+        .await?;
+
+        Ok(())
     }
 }

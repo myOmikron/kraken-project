@@ -8,12 +8,11 @@ use uuid::Uuid;
 
 use crate::chan::GLOBAL;
 use crate::models::{
-    Attack, AttackType, Domain, DomainCertainty, DomainDomainRelation, DomainHostRelation, Host,
-    HostCertainty, InsertAttackError, OsType, Port, PortCertainty, PortProtocol, Service,
-    ServiceCertainty, Workspace,
+    Domain, DomainCertainty, DomainDomainRelation, DomainHostRelation, Host, HostCertainty,
+    InsertAttackError, OsType, Port, PortCertainty, PortProtocol, Service, ServiceCertainty,
+    Workspace,
 };
-use crate::modules::attacks::{AttackContext, LeechAttackContext};
-use crate::rpc::rpc_definitions::DnsResolutionRequest;
+use crate::modules::attacks::{start_dns_resolution, DnsResolutionParams};
 
 #[derive(Patch)]
 #[rorm(model = "Host")]
@@ -165,30 +164,22 @@ impl Domain {
                 .await?;
 
             if let Ok(leech) = GLOBAL.leeches.random_leech() {
-                let attack_uuid =
-                    Attack::insert(&mut *tx, AttackType::DnsResolution, user, workspace)
-                        .await
-                        .map_err(|err| match err {
-                            InsertAttackError::DatabaseError(err) => err,
-                            InsertAttackError::WorkspaceInvalid => {
-                                unreachable!("Workspace already used above")
-                            }
-                        })?;
-                tokio::spawn(
-                    LeechAttackContext {
-                        common: AttackContext {
-                            user_uuid: user,
-                            workspace_uuid: workspace,
-                            attack_uuid,
-                        },
-                        leech,
-                    }
-                    .dns_resolution(DnsResolutionRequest {
-                        attack_uuid: attack_uuid.to_string(),
+                start_dns_resolution(
+                    workspace,
+                    user,
+                    leech,
+                    DnsResolutionParams {
                         targets: vec![domain.to_string()],
                         concurrent_limit: 1,
-                    }),
-                );
+                    },
+                )
+                .await
+                .map_err(|err| match err {
+                    InsertAttackError::DatabaseError(err) => err,
+                    InsertAttackError::WorkspaceInvalid => {
+                        unreachable!("Workspace already used above")
+                    }
+                })?;
             } else {
                 warn!("Couldn't resolve new domain \"{domain}\" automatically: No leech");
             }
