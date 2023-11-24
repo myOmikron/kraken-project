@@ -5,7 +5,7 @@ use ipnetwork::IpNetwork;
 use crate::api::handler::attacks::PortOrRange;
 use crate::chan::{LeechClient, WsMessage, GLOBAL};
 use crate::modules::attack_results::store_tcp_port_scan_result;
-use crate::modules::attacks::{AttackContext, AttackError, TcpPortScanParams};
+use crate::modules::attacks::{AttackContext, AttackError, DomainOrNetwork, TcpPortScanParams};
 use crate::rpc::rpc_definitions;
 use crate::rpc::rpc_definitions::shared::address::Address;
 use crate::rpc::rpc_definitions::{shared, TcpPortScanRequest, TcpPortScanResponse};
@@ -17,9 +17,12 @@ impl AttackContext {
         mut leech: LeechClient,
         params: TcpPortScanParams,
     ) -> Result<(), AttackError> {
+        let targets =
+            DomainOrNetwork::resolve(self.workspace_uuid, self.user_uuid, &leech, &params.targets)
+                .await?;
         let request = TcpPortScanRequest {
             attack_uuid: self.attack_uuid.to_string(),
-            targets: params.targets.into_iter().map(From::from).collect(),
+            targets: targets.into_iter().map(From::from).collect(),
             ports: params
                 .ports
                 .into_iter()

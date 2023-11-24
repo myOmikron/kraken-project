@@ -8,6 +8,7 @@ mod host_alive;
 mod service_detection;
 mod tcp_port_scan;
 
+use std::collections::HashSet;
 use std::error::Error as StdError;
 use std::net::IpAddr;
 
@@ -15,18 +16,21 @@ use chrono::Utc;
 use dehashed_rs::{Query, ScheduledRequest};
 use futures::{TryFuture, TryStreamExt};
 use ipnetwork::IpNetwork;
-use log::error;
+use log::{debug, error};
 use rorm::prelude::*;
-use rorm::update;
+use rorm::{and, query, update};
+use serde::Deserialize;
 use thiserror::Error;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tonic::{Response, Status, Streaming};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::attacks::PortOrRange;
 use crate::chan::{LeechClient, WsMessage, GLOBAL};
-use crate::models::{Attack, AttackType, InsertAttackError};
+use crate::models::{Attack, AttackType, DomainHostRelation, InsertAttackError};
+use crate::models::{Domain, DomainCertainty};
 use crate::rpc::rpc_definitions::AddressConvError;
 
 /// The parameters of a "bruteforce subdomains" attack
@@ -85,7 +89,7 @@ pub async fn start_dns_resolution(
 /// The parameters of a "host alive" attack
 pub struct HostAliveParams {
     /// The ip addresses / networks to scan
-    pub targets: Vec<IpNetwork>,
+    pub targets: Vec<DomainOrNetwork>,
 
     /// The time to wait until a host is considered down.
     ///
@@ -106,6 +110,7 @@ pub async fn start_host_alive(
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
+            debug!("{:#?}", params.targets);
             let result = ctx.host_alive(leech, params).await;
             ctx.set_finished(result).await;
         }),
@@ -201,7 +206,7 @@ pub async fn start_service_detection(
 /// The parameters of a "tcp port scan" attack
 pub struct TcpPortScanParams {
     /// The ip addresses / networks to scan
-    pub targets: Vec<IpNetwork>,
+    pub targets: Vec<DomainOrNetwork>,
 
     /// List of single ports and port ranges
     pub ports: Vec<PortOrRange>,
@@ -357,4 +362,79 @@ pub enum AttackError {
     /// Catch all variant for everything else
     #[error("{0}")]
     Custom(Box<dyn StdError + Send + Sync>),
+}
+impl From<InsertAttackError> for AttackError {
+    fn from(value: InsertAttackError) -> Self {
+        match value {
+            InsertAttackError::DatabaseError(error) => Self::Database(error),
+            InsertAttackError::WorkspaceInvalid => Self::Custom(Box::new(value)),
+        }
+    }
+}
+
+/// Either an ip address / network or a domain name
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+#[serde(untagged)]
+pub enum DomainOrNetwork {
+    /// A ip address / network
+    #[schema(value_type = String, example = "10.13.37.10")]
+    Network(IpNetwork),
+
+    /// A domain name
+    #[schema(value_type = String, example = "kraken.test")]
+    Domain(String),
+}
+impl DomainOrNetwork {
+    /// Takes a list of [`DomainOrNetwork`] and produces it into a list of [`IpNetwork`]
+    /// by resolving the domains in a given workspace and starting implicit attacks if necessary.
+    pub async fn resolve(
+        workspace: Uuid,
+        user: Uuid,
+        leech: &LeechClient,
+        targets: &[Self],
+    ) -> Result<HashSet<IpNetwork>, AttackError> {
+        let mut ips = HashSet::new();
+        for domain_or_network in targets {
+            match domain_or_network {
+                Self::Network(network) => {
+                    ips.insert(*network);
+                }
+                Self::Domain(domain) => {
+                    let certainty = query!(&GLOBAL.db, (Domain::F.certainty))
+                        .condition(and![
+                            Domain::F.workspace.equals(workspace),
+                            Domain::F.domain.equals(domain)
+                        ])
+                        .optional()
+                        .await?;
+                    if certainty != Some((DomainCertainty::Verified,)) {
+                        let (_, attack) = start_dns_resolution(
+                            workspace,
+                            user,
+                            leech.clone(),
+                            DnsResolutionParams {
+                                targets: vec![domain.to_string()],
+                                concurrent_limit: 1,
+                            },
+                        )
+                        .await?;
+                        let _ = attack.await;
+                    }
+
+                    query!(&GLOBAL.db, (DomainHostRelation::F.host.ip_addr,))
+                        .condition(and![
+                            DomainHostRelation::F.workspace.equals(workspace),
+                            DomainHostRelation::F.domain.domain.equals(domain)
+                        ])
+                        .stream()
+                        .try_for_each(|(ip,)| {
+                            ips.insert(ip);
+                            async { Ok(()) }
+                        })
+                        .await?;
+                }
+            }
+        }
+        Ok(ips)
+    }
 }

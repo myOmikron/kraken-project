@@ -1,6 +1,6 @@
 use crate::chan::{LeechClient, WsMessage, GLOBAL};
 use crate::modules::attack_results::store_host_alive_check_result;
-use crate::modules::attacks::{AttackContext, AttackError, HostAliveParams};
+use crate::modules::attacks::{AttackContext, AttackError, DomainOrNetwork, HostAliveParams};
 use crate::rpc::rpc_definitions::{HostsAliveRequest, HostsAliveResponse};
 
 impl AttackContext {
@@ -10,9 +10,12 @@ impl AttackContext {
         mut leech: LeechClient,
         params: HostAliveParams,
     ) -> Result<(), AttackError> {
+        let targets =
+            DomainOrNetwork::resolve(self.workspace_uuid, self.user_uuid, &leech, &params.targets)
+                .await?;
         let request = HostsAliveRequest {
             attack_uuid: self.attack_uuid.to_string(),
-            targets: params.targets.into_iter().map(From::from).collect(),
+            targets: targets.into_iter().map(From::from).collect(),
             timeout: params.timeout,
             concurrent_limit: params.concurrent_limit,
         };

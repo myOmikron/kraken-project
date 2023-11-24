@@ -11,6 +11,7 @@ use crate::api::handler::{
     oauth, oauth_applications, oauth_decisions, ports, services, settings, users, websocket,
     wordlists, workspace_invitations, workspace_tags, workspaces,
 };
+use crate::modules;
 use crate::modules::oauth::schemas as oauth_schemas;
 use crate::modules::tls;
 use crate::{chan, models};
@@ -267,6 +268,7 @@ impl Modify for SecurityAddon2 {
         workspace_invitations::WorkspaceInvitationList,
         chan::WsMessage,
         chan::CertificateTransparencyEntry,
+        modules::attacks::DomainOrNetwork,
     )),
     modifiers(&SecurityAddon)
 )]
