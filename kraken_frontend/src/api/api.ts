@@ -14,6 +14,7 @@ import {
     CreateWordlistRequest,
     CreateWorkspaceRequest,
     CreateWorkspaceTagRequest,
+    DnsResolutionRequest,
     DomainsApi,
     GlobalTagsApi,
     HostsAliveRequest,
@@ -153,6 +154,8 @@ export const Api = {
             handleError(attacks.serviceDetection({ serviceDetectionRequest: attack })),
         queryDehashed: (uuid: UUID, query: Query) =>
             handleError(attacks.queryDehashed({ queryDehashedRequest: { workspaceUuid: uuid, query } })),
+        dnsResolution: (attack: DnsResolutionRequest) =>
+            handleError(attacks.dnsResolution({ dnsResolutionRequest: attack })),
         all: () => handleError(attacks.getAllAttacks()),
         get: (uuid: UUID) => handleError(attacks.getAttack({ uuid })),
         delete: (uuid: UUID) => handleError(attacks.deleteAttack({ uuid })),

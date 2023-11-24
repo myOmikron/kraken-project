@@ -13,6 +13,7 @@ import { Api } from "../../api/api";
 import { handleApiError } from "../../utils/helper";
 import CloseIcon from "../../svg/close";
 import { ROUTES } from "../../routes";
+import WorkspaceAttacksDnsResolution from "./attacks/workspace-attacks-dns-resolution";
 
 export enum AttackCategory {
     Domains = "domains",
@@ -30,6 +31,7 @@ export enum AttackType {
     Whois = "whois",
     BruteforceSubdomains = "bruteforce_subdomains",
     TcpCon = "tcp_con",
+    DnsResolution = "dns_resolution",
 }
 
 const ATTACKS: Record<
@@ -58,6 +60,12 @@ const ATTACKS: Record<
         This attack will query the logs of a certificate transparency log collector to retrieve certificates with the given name in it.`,
         category: AttackCategory.Domains,
         form: WorkspaceAttacksCT,
+    },
+    dns_resolution: {
+        name: "Dns Resolution",
+        description: "Query a DNS server to resolve a given domain",
+        category: AttackCategory.Domains,
+        form: WorkspaceAttacksDnsResolution,
     },
     whois: {
         name: "Whois",
@@ -204,6 +212,7 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
             } else {
                 disabled.bruteforce_subdomains = true;
                 disabled.certificate_transparency = true;
+                disabled.dns_resolution = true;
             }
         }
 
