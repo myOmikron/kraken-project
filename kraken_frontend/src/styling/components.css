@@ -117,6 +117,12 @@ input[type="color"].input {
     align-items: center;
 }
 
+.start-attack-button {
+    background: none;
+    border: none;
+    padding: 0;
+}
+
 .start-attack-container svg {
     width: 5em;
     height: fit-content;

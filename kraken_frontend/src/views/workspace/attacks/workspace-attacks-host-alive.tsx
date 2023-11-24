@@ -41,8 +41,8 @@ export default class WorkspaceAttacksHostAlive extends React.Component<
             this.setState({ target: this.props.prefilled.ipAddr });
     }
 
-    async startAttack() {
-        await Api.attacks
+    startAttack() {
+        Api.attacks
             .hostAlive({
                 timeout: this.state.timeout,
                 concurrentLimit: this.state.concurrentLimit,
@@ -54,7 +54,13 @@ export default class WorkspaceAttacksHostAlive extends React.Component<
 
     render() {
         return (
-            <div className={"workspace-attacks-host-alive-container"}>
+            <form
+                className={"workspace-attacks-host-alive-container"}
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    this.startAttack();
+                }}
+            >
                 <div className={"workspace-attacks-host-alive"}>
                     <label htmlFor={"cidr"}>IP / net in cidr</label>
                     <Input
@@ -110,13 +116,8 @@ export default class WorkspaceAttacksHostAlive extends React.Component<
                         />
                     </div>
                 </div>
-                <StartAttack
-                    active={this.state.target !== ""}
-                    onClick={() => {
-                        this.startAttack().then();
-                    }}
-                />
-            </div>
+                <StartAttack active={this.state.target !== ""} />
+            </form>
         );
     }
 }

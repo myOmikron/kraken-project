@@ -43,8 +43,8 @@ export default class WorkspaceAttacksCT extends React.Component<WorkspaceAttacks
             this.setState({ domain: this.props.prefilled.domain });
     }
 
-    async startAttack() {
-        await Api.attacks
+    startAttack() {
+        Api.attacks
             .queryCertificateTransparency({
                 includeExpired: this.state.includeExpired,
                 workspaceUuid: this.context.workspace.uuid,
@@ -57,7 +57,13 @@ export default class WorkspaceAttacksCT extends React.Component<WorkspaceAttacks
 
     render() {
         return (
-            <div className={"workspace-attacks-ct-container"}>
+            <form
+                className={"workspace-attacks-ct-container"}
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    this.startAttack();
+                }}
+            >
                 <div className={"workspace-attacks-ct"}>
                     <label htmlFor={"domain"}>Domain</label>
                     <Input id={"domain"} value={this.state.domain} onChange={(domain) => this.setState({ domain })} />
@@ -113,8 +119,8 @@ export default class WorkspaceAttacksCT extends React.Component<WorkspaceAttacks
                         />
                     </div>
                 </div>
-                <StartAttack active={this.state.domain !== ""} onClick={() => this.startAttack().then()} />
-            </div>
+                <StartAttack active={this.state.domain !== ""} />
+            </form>
         );
     }
 }

@@ -64,7 +64,7 @@ export default class WorkspaceAttacksBruteforceSubdomains extends React.Componen
         );
     }
 
-    async startAttack() {
+    startAttack() {
         if (this.state.domain === "") {
             toast.error("Domain must not be empty");
             return;
@@ -75,7 +75,7 @@ export default class WorkspaceAttacksBruteforceSubdomains extends React.Componen
             return;
         }
 
-        await Api.attacks
+        Api.attacks
             .bruteforceSubdomains({
                 workspaceUuid: this.context.workspace.uuid,
                 domain: this.state.domain,
@@ -87,7 +87,13 @@ export default class WorkspaceAttacksBruteforceSubdomains extends React.Componen
 
     render() {
         return (
-            <div className={"workspace-attacks-bsd-ct"}>
+            <form
+                className={"workspace-attacks-bsd-ct"}
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    this.startAttack();
+                }}
+            >
                 <div className={"workspace-attacks-bsd"}>
                     <label htmlFor={"domain"}>Domain</label>
                     <Input id={"domain"} value={this.state.domain} onChange={(v) => this.setState({ domain: v })} />
@@ -133,8 +139,8 @@ export default class WorkspaceAttacksBruteforceSubdomains extends React.Componen
                         />
                     </div>
                 </div>
-                <StartAttack active={this.state.domain !== ""} onClick={() => this.startAttack().then()} />
-            </div>
+                <StartAttack active={this.state.domain !== "" && this.state.wordlist !== null} />
+            </form>
         );
     }
 }

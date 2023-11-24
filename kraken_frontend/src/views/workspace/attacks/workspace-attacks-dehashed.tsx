@@ -74,7 +74,7 @@ export default class WorkspaceAttacksDehashed extends React.Component<
         }
     }
 
-    async startAttack() {
+    startAttack() {
         if (this.state.search === "" || this.state.type === null) {
             toast.error("Search and type necessary to start an attack");
             return;
@@ -117,14 +117,20 @@ export default class WorkspaceAttacksDehashed extends React.Component<
                 return;
         }
 
-        await Api.attacks
+        Api.attacks
             .queryDehashed(this.context.workspace.uuid, query)
             .then(handleApiError((uuid) => toast.success("Attack started")));
     }
 
     render() {
         return (
-            <div className={"workspace-attacks-dehashed-container"}>
+            <form
+                className={"workspace-attacks-dehashed-container"}
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    this.startAttack();
+                }}
+            >
                 <div className={"workspace-attacks-dehashed"}>
                     <SelectMenu
                         options={DEHASHED_SEARCH_TYPES}
@@ -142,13 +148,8 @@ export default class WorkspaceAttacksDehashed extends React.Component<
                         }}
                     />
                 </div>
-                <StartAttack
-                    active={this.state.search !== "" && this.state.type !== null}
-                    onClick={() => {
-                        this.startAttack().then();
-                    }}
-                />
-            </div>
+                <StartAttack active={this.state.search !== "" && this.state.type !== null} />
+            </form>
         );
     }
 }

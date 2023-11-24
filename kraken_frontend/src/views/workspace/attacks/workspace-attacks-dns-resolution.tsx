@@ -36,8 +36,8 @@ export default class WorkspaceAttacksDnsResolution extends React.Component<
             this.setState({ domain: this.props.prefilled.domain });
     }
 
-    async startAttack() {
-        await Api.attacks
+    startAttack() {
+        Api.attacks
             .dnsResolution({
                 targets: [this.state.domain],
                 concurrentLimit: 1,
@@ -48,13 +48,19 @@ export default class WorkspaceAttacksDnsResolution extends React.Component<
 
     render() {
         return (
-            <div className={"workspace-attacks-dns-resolution-container"}>
+            <form
+                className={"workspace-attacks-dns-resolution-container"}
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    this.startAttack();
+                }}
+            >
                 <div className={"workspace-attacks-dns-resolution"}>
                     <label htmlFor={"domain"}>Domain</label>
                     <Input id={"domain"} value={this.state.domain} onChange={(domain) => this.setState({ domain })} />
                 </div>
-                <StartAttack active={this.state.domain !== ""} onClick={() => this.startAttack().then()} />
-            </div>
+                <StartAttack active={this.state.domain !== ""} />
+            </form>
         );
     }
 }
