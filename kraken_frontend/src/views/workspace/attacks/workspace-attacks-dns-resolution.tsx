@@ -60,6 +60,7 @@ export default class WorkspaceAttacksDnsResolution extends React.Component<
                     <Input
                         id={"domain"}
                         required
+                        autoFocus
                         value={this.state.domain}
                         onChange={(domain) => this.setState({ domain })}
                     />

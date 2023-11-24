@@ -80,6 +80,7 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
                     <label htmlFor={"cidr"}>IP / net in cidr</label>
                     <Input
                         required
+                        autoFocus
                         id={"cidr"}
                         value={this.state.ipAddInput}
                         onChange={(ipAddInput) => this.setState({ ipAddInput })}

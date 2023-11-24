@@ -69,6 +69,7 @@ export default class WorkspaceAttacksCT extends React.Component<WorkspaceAttacks
                     <Input
                         id={"domain"}
                         required
+                        autoFocus
                         value={this.state.domain}
                         onChange={(domain) => this.setState({ domain })}
                     />

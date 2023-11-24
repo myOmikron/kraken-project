@@ -99,6 +99,7 @@ export default class WorkspaceAttacksBruteforceSubdomains extends React.Componen
                     <Input
                         id={"domain"}
                         required
+                        autoFocus
                         value={this.state.domain}
                         onChange={(v) => this.setState({ domain: v })}
                     />

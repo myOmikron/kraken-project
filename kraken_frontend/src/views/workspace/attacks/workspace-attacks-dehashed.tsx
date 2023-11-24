@@ -143,6 +143,7 @@ export default class WorkspaceAttacksDehashed extends React.Component<
                     />
                     <Input
                         required
+                        autoFocus
                         placeholder={"dehashed query"}
                         value={this.state.search}
                         onChange={(search) => {

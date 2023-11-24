@@ -77,6 +77,7 @@ export default class WorkspaceAttacksServiceDetection extends React.Component<
                     <Input
                         id={"ip"}
                         required
+                        autoFocus
                         placeholder={"IP address"}
                         value={this.state.address}
                         onChange={(v) => this.setState({ address: v })}
