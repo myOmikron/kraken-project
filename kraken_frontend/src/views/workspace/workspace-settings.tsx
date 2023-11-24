@@ -88,9 +88,13 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
     }
 
     async deleteWorkspace() {
-        await Api.workspaces
-            .delete(this.context.workspace.uuid)
-            .then(handleApiError(() => toast.success("Deleted Workspace ")));
+        const toastId = toast.loading("Deleting workspace");
+        await Api.workspaces.delete(this.context.workspace.uuid).then(
+            handleApiError(() => {
+                toast.dismiss(toastId);
+                toast.success("Deleted Workspace");
+            }),
+        );
     }
 
     async createTransferList() {
