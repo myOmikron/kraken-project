@@ -6,8 +6,8 @@ use std::fs;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::path::PathBuf;
 
-use futures::{stream, StreamExt};
-use log::{debug, error, info, trace, warn};
+use futures::{stream, StreamExt, TryStreamExt};
+use log::{debug, error, info, trace};
 use rand::distributions::{Alphanumeric, DistString};
 use rand::thread_rng;
 use tokio::sync::mpsc::Sender;
@@ -99,9 +99,7 @@ pub async fn bruteforce_subdomains(
                             source: search.clone(),
                             target,
                         };
-                        if let Err(err) = tx.send(res).await {
-                            warn!("Could not send result to tx: {err}");
-                        }
+                        tx.send(res).await?;
                     }
                     RecordType::A => {
                         let r = record.into_data().unwrap().into_a().unwrap();
@@ -110,9 +108,7 @@ pub async fn bruteforce_subdomains(
                             source: search.clone(),
                             target: *r,
                         };
-                        if let Err(err) = tx.send(res).await {
-                            warn!("Could not send result to tx: {err}");
-                        }
+                        tx.send(res).await?;
                     }
                     RecordType::AAAA => {
                         let r = record.into_data().unwrap().into_aaaa().unwrap();
@@ -121,9 +117,7 @@ pub async fn bruteforce_subdomains(
                             source: search.clone(),
                             target: *r,
                         };
-                        if let Err(err) = tx.send(res).await {
-                            warn!("Could not send result to tx: {err}");
-                        }
+                        tx.send(res).await?;
                     }
                     _ => {
                         error!("Got unexpected record type");
@@ -145,15 +139,15 @@ pub async fn bruteforce_subdomains(
 
     stream::iter(wordlist.lines())
         .chunks((wordlist.len() as f32 / settings.concurrent_limit as f32).ceil() as usize)
-        .for_each_concurrent(settings.concurrent_limit as usize, move |chunk| {
-            let c = chunk;
+        .map(|chunk| Result::<_, BruteforceSubdomainError>::Ok(chunk))
+        .try_for_each_concurrent(settings.concurrent_limit as usize, move |chunk| {
             let resolver = resolver.clone();
             let domain = settings.domain.clone();
             let wildcard_cname = wildcard_cname.clone();
             let tx = tx.clone();
 
             async move {
-                for entry in c {
+                for entry in chunk {
                     let search = format!("{entry}.{}.", &domain);
                     match resolver.lookup_ip(&search).await {
                         Ok(answer) => {
@@ -178,9 +172,7 @@ pub async fn bruteforce_subdomains(
                                             source: domain,
                                             target,
                                         };
-                                        if let Err(err) = tx.send(res).await {
-                                            warn!("Could not send result to tx: {err}");
-                                        }
+                                        tx.send(res).await?;
                                     }
                                     RecordType::A => {
                                         if let Some(wildcard) = wildcard_v4 {
@@ -193,9 +185,7 @@ pub async fn bruteforce_subdomains(
                                                 source: domain,
                                                 target: **target,
                                             };
-                                            if let Err(err) = tx.send(res).await {
-                                                warn!("Could not send result to tx: {err}");
-                                            }
+                                            tx.send(res).await?;
                                         }
                                     }
                                     RecordType::AAAA => {
@@ -209,9 +199,7 @@ pub async fn bruteforce_subdomains(
                                                 source: domain,
                                                 target: **target,
                                             };
-                                            if let Err(err) = tx.send(res).await {
-                                                warn!("Could not send result to tx: {err}");
-                                            }
+                                            tx.send(res).await?;
                                         }
                                     }
                                     _ => {
@@ -236,9 +224,10 @@ pub async fn bruteforce_subdomains(
                         },
                     }
                 }
+                Ok(())
             }
         })
-        .await;
+        .await?;
 
     info!("Finished subdomain enumeration");
 
