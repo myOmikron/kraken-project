@@ -52,8 +52,8 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
             this.setState({ ipAddInput: this.props.prefilled.ipAddr });
     }
 
-    async startAttack() {
-        await Api.attacks
+    startAttack() {
+        Api.attacks
             .scanTcpPorts({
                 ports: ["1-65535"],
                 timeout: this.state.timeout,
@@ -69,10 +69,18 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
 
     render() {
         return (
-            <div className={"workspace-attacks-pst-container"}>
+            <form
+                className={"workspace-attacks-pst-container"}
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    this.startAttack();
+                }}
+            >
                 <div className={"workspace-attacks-pst"}>
                     <label htmlFor={"cidr"}>IP / net in cidr</label>
                     <Input
+                        required
+                        autoFocus
                         id={"cidr"}
                         value={this.state.ipAddInput}
                         onChange={(ipAddInput) => this.setState({ ipAddInput })}
@@ -159,8 +167,8 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
                         />
                     </div>
                 </div>
-                <StartAttack active={this.state.ipAddInput !== ""} onClick={async () => await this.startAttack()} />
-            </div>
+                <StartAttack />
+            </form>
         );
     }
 }

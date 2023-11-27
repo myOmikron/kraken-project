@@ -44,7 +44,7 @@ export default class WorkspaceAttacksServiceDetection extends React.Component<
             this.setState({ port: String(this.props.prefilled.port) });
     }
 
-    async startAttack() {
+    startAttack() {
         const { address, port, timeout } = this.state;
 
         const p = Number(port);
@@ -53,7 +53,7 @@ export default class WorkspaceAttacksServiceDetection extends React.Component<
             return;
         }
 
-        await Api.attacks
+        Api.attacks
             .serviceDetection({
                 workspaceUuid: this.context.workspace.uuid,
                 address,
@@ -65,11 +65,19 @@ export default class WorkspaceAttacksServiceDetection extends React.Component<
 
     render() {
         return (
-            <div className={"workspace-attacks-svd-container"}>
+            <form
+                className={"workspace-attacks-svd-container"}
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    this.startAttack();
+                }}
+            >
                 <div className={"workspace-attacks-svd"}>
                     <label htmlFor={"ip"}>IP</label>
                     <Input
                         id={"ip"}
+                        required
+                        autoFocus
                         placeholder={"IP address"}
                         value={this.state.address}
                         onChange={(v) => this.setState({ address: v })}
@@ -77,6 +85,7 @@ export default class WorkspaceAttacksServiceDetection extends React.Component<
                     <label htmlFor={"port"}>Port</label>
                     <Input
                         id={"port"}
+                        required
                         placeholder={"Port"}
                         value={this.state.port}
                         onChange={(v) => this.setState({ port: v })}
@@ -113,11 +122,8 @@ export default class WorkspaceAttacksServiceDetection extends React.Component<
                         />
                     </div>
                 </div>
-                <StartAttack
-                    active={this.state.address !== "" && this.state.port !== ""}
-                    onClick={async () => await this.startAttack()}
-                />
-            </div>
+                <StartAttack />
+            </form>
         );
     }
 }

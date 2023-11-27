@@ -89,7 +89,7 @@ export default function AttacksIcon(params: AttacksParams) {
                 className={`kraken-attacks-hex ${
                     activeAttackCategory === "domains" ? "kraken-attacks-hex-box-selected" : ""
                 } ${
-                    disabled.certificate_transparency && disabled.bruteforce_subdomains
+                    disabled.certificate_transparency && disabled.bruteforce_subdomains && disabled.dns_resolution
                         ? "kraken-attacks-hex-unavailable"
                         : ""
                 }`}
@@ -121,10 +121,15 @@ export default function AttacksIcon(params: AttacksParams) {
                 }`}
                 transform="matrix(.23193 0 0 .23193 45.911 157.022)"
             />
-            {/* domains 3 */}
+            {/* dns resolution */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                className={"kraken-attacks-hex-unavailable kraken-attacks-hex"}
+                {...mouseHandler(AttackType.DnsResolution)}
+                className={`kraken-attacks-hex ${
+                    activeAttack === AttackType.DnsResolution ? "kraken-attacks-hex-selected" : ""
+                } ${
+                    !disabled[AttackType.DnsResolution] ? "kraken-attacks-clickable" : "kraken-attacks-hex-unavailable"
+                }`}
                 transform="matrix(.23193 0 0 .23193 25.876 157.213)"
             />
             {/* hosts box */}
@@ -225,6 +230,9 @@ export default function AttacksIcon(params: AttacksParams) {
             </text>
             <text xmlSpace="preserve" x={51.5} y={173} className={"kraken-attacks-hex-text"}>
                 {"CT"}
+            </text>
+            <text xmlSpace="preserve" x={31} y={173} className={"kraken-attacks-hex-text"}>
+                {"DR"}
             </text>
             <text xmlSpace="preserve" x={171.25} y={94} className={"kraken-attacks-hex-text"}>
                 {"Dh"}
