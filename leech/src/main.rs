@@ -358,30 +358,30 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     } => {
                         let (tx, mut rx) = mpsc::channel(128);
 
-                        task::spawn(async move {
-                            while let Some(res) = rx.recv().await {
-                                match res {
-                                    BruteforceSubdomainResult::A { source, target } => {
-                                        info!("Found a record for {source}: {target}");
-                                    }
-                                    BruteforceSubdomainResult::Aaaa { source, target } => {
-                                        info!("Found aaaa record for {source}: {target}");
-                                    }
-                                    BruteforceSubdomainResult::Cname { source, target } => {
-                                        info!("Found cname record for {source}: {target}");
-                                    }
-                                };
-                            }
-                        });
+                        let join_handle = task::spawn(bruteforce_subdomains(
+                            BruteforceSubdomainsSettings {
+                                domain: target.to_string(),
+                                wordlist_path,
+                                concurrent_limit: u32::from(concurrent_limit),
+                            },
+                            tx,
+                        ));
 
-                        let settings = BruteforceSubdomainsSettings {
-                            domain: target.to_string(),
-                            wordlist_path,
-                            concurrent_limit: u32::from(concurrent_limit),
-                        };
-                        if let Err(err) = bruteforce_subdomains(settings, tx).await {
-                            error!("{err}");
+                        while let Some(res) = rx.recv().await {
+                            match res {
+                                BruteforceSubdomainResult::A { source, target } => {
+                                    info!("Found a record for {source}: {target}");
+                                }
+                                BruteforceSubdomainResult::Aaaa { source, target } => {
+                                    info!("Found aaaa record for {source}: {target}");
+                                }
+                                BruteforceSubdomainResult::Cname { source, target } => {
+                                    info!("Found cname record for {source}: {target}");
+                                }
+                            };
                         }
+
+                        join_handle.await??;
                     }
                     RunCommand::CertificateTransparency {
                         target,
