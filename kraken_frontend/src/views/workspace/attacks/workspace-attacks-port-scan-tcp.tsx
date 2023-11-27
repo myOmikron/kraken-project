@@ -8,10 +8,10 @@ import ExpandIcon from "../../../svg/expand";
 import Checkbox from "../../../components/checkbox";
 import { toast } from "react-toastify";
 import { WORKSPACE_CONTEXT } from "../workspace";
-import { PrefilledAttackParams } from "../workspace-attacks";
+import { PrefilledAttackParams, TargetType } from "../workspace-attacks";
 import { handleApiError } from "../../../utils/helper";
 
-type WorkspaceAttacksPortScanTcpProps = { prefilled: PrefilledAttackParams };
+type WorkspaceAttacksPortScanTcpProps = { prefilled: PrefilledAttackParams; targetType: TargetType | null };
 type WorkspaceAttacksPortScanTcpState = {
     ipAddInput: string;
     showAdvanced: boolean;
@@ -36,7 +36,8 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
         super(props);
 
         this.state = {
-            ipAddInput: this.props.prefilled.ipAddr || "",
+            ipAddInput:
+                (this.props.targetType === "domain" ? this.props.prefilled.domain : this.props.prefilled.ipAddr) || "",
             showAdvanced: false,
             interval: 100,
             retries: 6,
@@ -48,8 +49,13 @@ export default class WorkspaceAttacksPortScanTcp extends React.Component<
     }
 
     componentDidUpdate(prevProps: Readonly<WorkspaceAttacksPortScanTcpProps>) {
-        if (this.props.prefilled.ipAddr !== undefined && this.props.prefilled.ipAddr !== prevProps.prefilled.ipAddr)
-            this.setState({ ipAddInput: this.props.prefilled.ipAddr });
+        if (this.props.targetType === "domain") {
+            if (this.props.prefilled.domain !== undefined && this.props.prefilled.domain !== prevProps.prefilled.domain)
+                this.setState({ ipAddInput: this.props.prefilled.domain });
+        } else {
+            if (this.props.prefilled.ipAddr !== undefined && this.props.prefilled.ipAddr !== prevProps.prefilled.ipAddr)
+                this.setState({ ipAddInput: this.props.prefilled.ipAddr });
+        }
     }
 
     startAttack() {

@@ -7,10 +7,10 @@ import { toast } from "react-toastify";
 import CollapseIcon from "../../../svg/collapse";
 import ExpandIcon from "../../../svg/expand";
 import { WORKSPACE_CONTEXT } from "../workspace";
-import { PrefilledAttackParams } from "../workspace-attacks";
+import { PrefilledAttackParams, TargetType } from "../workspace-attacks";
 import { handleApiError } from "../../../utils/helper";
 
-type WorkspaceAttacksHostAliveProps = { prefilled: PrefilledAttackParams };
+type WorkspaceAttacksHostAliveProps = { prefilled: PrefilledAttackParams; targetType: TargetType | null };
 type WorkspaceAttacksHostAliveState = {
     target: string;
     timeout: number;
@@ -29,7 +29,8 @@ export default class WorkspaceAttacksHostAlive extends React.Component<
         super(props);
 
         this.state = {
-            target: this.props.prefilled.ipAddr || "",
+            target:
+                (this.props.targetType === "domain" ? this.props.prefilled.domain : this.props.prefilled.ipAddr) || "",
             timeout: 1000,
             concurrentLimit: 50,
             showAdvanced: false,
@@ -37,8 +38,13 @@ export default class WorkspaceAttacksHostAlive extends React.Component<
     }
 
     componentDidUpdate(prevProps: Readonly<WorkspaceAttacksHostAliveProps>) {
-        if (this.props.prefilled.ipAddr !== undefined && this.props.prefilled.ipAddr !== prevProps.prefilled.ipAddr)
-            this.setState({ target: this.props.prefilled.ipAddr });
+        if (this.props.targetType === "domain") {
+            if (this.props.prefilled.domain !== undefined && this.props.prefilled.domain !== prevProps.prefilled.domain)
+                this.setState({ target: this.props.prefilled.domain });
+        } else {
+            if (this.props.prefilled.ipAddr !== undefined && this.props.prefilled.ipAddr !== prevProps.prefilled.ipAddr)
+                this.setState({ target: this.props.prefilled.ipAddr });
+        }
     }
 
     startAttack() {
