@@ -2,15 +2,17 @@
 //!
 //! It requests A and AAAA records of the constructed domain of a DNS server.
 
-use std::fs;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::path::PathBuf;
+use std::sync::Arc;
+use std::{fs, panic};
 
-use futures::{stream, StreamExt, TryStreamExt};
+use itertools::Itertools;
 use log::{debug, error, info, trace};
 use rand::distributions::{Alphanumeric, DistString};
 use rand::thread_rng;
 use tokio::sync::mpsc::Sender;
+use tokio::task::JoinSet;
 use trust_dns_resolver::config::{LookupIpStrategy, ResolverConfig, ResolverOpts};
 use trust_dns_resolver::error::ResolveErrorKind;
 use trust_dns_resolver::proto::rr::{RData, RecordType};
@@ -137,18 +139,29 @@ pub async fn bruteforce_subdomains(
         },
     }
 
-    stream::iter(wordlist.lines())
-        .chunks((wordlist.len() as f32 / settings.concurrent_limit as f32).ceil() as usize)
-        .map(|chunk| Result::<_, BruteforceSubdomainError>::Ok(chunk))
-        .try_for_each_concurrent(settings.concurrent_limit as usize, move |chunk| {
-            let resolver = resolver.clone();
-            let domain = settings.domain.clone();
-            let wildcard_cname = wildcard_cname.clone();
-            let tx = tx.clone();
+    // Collection of `Sync` type which are shared by all tasks
+    let ctx = Arc::new((resolver, settings.domain, tx));
 
+    let mut tasks = JoinSet::new();
+    let num_lines = wordlist.lines().count();
+    let chunk_size = if settings.concurrent_limit == 0 {
+        num_lines
+    } else if settings.concurrent_limit as usize > num_lines {
+        1
+    } else {
+        num_lines / settings.concurrent_limit as usize
+    };
+    for chunk in &wordlist.lines().chunks(chunk_size) {
+        let ctx = ctx.clone();
+        let wildcard_cname = wildcard_cname.clone();
+        let entries: Vec<_> = chunk.map(ToString::to_string).collect();
+
+        tasks.spawn({
             async move {
-                for entry in chunk {
-                    let search = format!("{entry}.{}.", &domain);
+                let (resolver, domain, tx) = &*ctx;
+
+                for entry in entries {
+                    let search = format!("{entry}.{domain}.");
                     match resolver.lookup_ip(&search).await {
                         Ok(answer) => {
                             for record in answer.as_lookup().records() {
@@ -224,10 +237,21 @@ pub async fn bruteforce_subdomains(
                         },
                     }
                 }
-                Ok(())
+                Result::<(), BruteforceSubdomainError>::Ok(())
             }
-        })
-        .await?;
+        });
+    }
+    while let Some(result) = tasks.join_next().await {
+        match result {
+            Ok(Ok(())) => {}
+            Ok(Err(error)) => return Err(error),
+            Err(join_error) => panic::resume_unwind(
+                join_error
+                    .try_into_panic()
+                    .expect("The tasks are never canceled"),
+            ),
+        }
+    }
 
     info!("Finished subdomain enumeration");
 
