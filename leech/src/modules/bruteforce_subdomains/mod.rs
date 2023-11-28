@@ -6,14 +6,16 @@ use std::collections::HashSet;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Duration;
 use std::{fs, panic};
 
 use itertools::Itertools;
 use log::{debug, error, info, trace};
 use rand::distributions::{Alphanumeric, DistString};
 use rand::thread_rng;
-use tokio::sync::mpsc::Sender;
+use tokio::sync::mpsc;
 use tokio::task::JoinSet;
+use tokio::time::sleep;
 use trust_dns_resolver::config::{LookupIpStrategy, ResolverConfig, ResolverOpts};
 use trust_dns_resolver::error::{ResolveError, ResolveErrorKind};
 use trust_dns_resolver::proto::rr::rdata::{A, AAAA, CNAME};
@@ -23,6 +25,13 @@ use trust_dns_resolver::TokioAsyncResolver;
 use crate::modules::bruteforce_subdomains::error::BruteforceSubdomainError;
 
 pub mod error;
+
+/// How many times [`resolve`] tries a specific domain
+/// before aborting the entire operation with a [`BruteforceSubdomainError::RepeatedError`].
+pub const RETRY: usize = 3;
+
+/// The duration [`resolve`] waits between its attempts
+pub const RETRY_INTERVAL: Duration = Duration::from_millis(200);
 
 /// The settings to configure a subdomain bruteforce
 #[derive(Debug)]
@@ -72,7 +81,7 @@ pub enum BruteforceSubdomainResult {
 /// - `tx`: [Sender] of [BruteforceSubdomainResult]
 pub async fn bruteforce_subdomains(
     settings: BruteforceSubdomainsSettings,
-    tx: Sender<BruteforceSubdomainResult>,
+    tx: mpsc::Sender<BruteforceSubdomainResult>,
 ) -> Result<(), BruteforceSubdomainError> {
     info!("Started subdomain enumeration for {}", settings.domain);
 
@@ -106,7 +115,7 @@ pub async fn bruteforce_subdomains(
     } else if settings.concurrent_limit as usize > num_lines {
         1
     } else {
-        num_lines / settings.concurrent_limit as usize
+        num_lines.div_ceil(settings.concurrent_limit as usize)
     };
     for chunk in &wordlist.lines().chunks(chunk_size) {
         let ctx = ctx.clone();
@@ -115,90 +124,20 @@ pub async fn bruteforce_subdomains(
         tasks.spawn({
             async move {
                 let (resolver, domain, tx, wildcard) = &*ctx;
-                let wildcard = wildcard.as_ref();
-
                 for entry in entries {
-                    let search = format!("{entry}.{domain}.");
-                    match resolver.lookup_ip(&search).await {
-                        Ok(answer) => {
-                            for record in answer.as_lookup().records() {
-                                let domain = record
-                                    .name()
-                                    .to_string()
-                                    .strip_suffix('.')
-                                    .unwrap()
-                                    .to_string();
-
-                                match record.record_type() {
-                                    RecordType::CNAME => {
-                                        if wildcard.map(|wc| wc.matches(record)).unwrap_or(false) {
-                                            continue;
-                                        }
-
-                                        if let Some(RData::CNAME(target)) = record.data() {
-                                            let mut target = target.to_string();
-                                            if target.ends_with(',') {
-                                                target.pop();
-                                            }
-                                            let res = BruteforceSubdomainResult::Cname {
-                                                source: domain,
-                                                target,
-                                            };
-                                            tx.send(res).await?;
-                                        }
-                                    }
-                                    RecordType::A => {
-                                        if wildcard.map(|wc| wc.matches(record)).unwrap_or(false) {
-                                            continue;
-                                        }
-
-                                        if let Some(RData::A(target)) = record.data() {
-                                            let res = BruteforceSubdomainResult::A {
-                                                source: domain,
-                                                target: **target,
-                                            };
-                                            tx.send(res).await?;
-                                        }
-                                    }
-                                    RecordType::AAAA => {
-                                        if wildcard.map(|wc| wc.matches(record)).unwrap_or(false) {
-                                            continue;
-                                        }
-
-                                        if let Some(RData::AAAA(target)) = record.data() {
-                                            let res = BruteforceSubdomainResult::Aaaa {
-                                                source: domain,
-                                                target: **target,
-                                            };
-                                            tx.send(res).await?;
-                                        }
-                                    }
-                                    _ => {
-                                        error!("Got unexpected record type")
-                                    }
-                                }
-                            }
-                        }
-                        Err(err) => match err.kind() {
-                            ResolveErrorKind::Message(err) => error!("Message: {err}"),
-                            ResolveErrorKind::Msg(err) => error!("Msg: {err}"),
-                            ResolveErrorKind::NoConnections => {
-                                error!("There are no resolvers available")
-                            }
-                            ResolveErrorKind::Io(err) => error!("IO error: {err}"),
-                            ResolveErrorKind::Proto(err) => error!("Proto error {err}"),
-                            ResolveErrorKind::Timeout => error!("Timeout while query"),
-                            ResolveErrorKind::NoRecordsFound { .. } => {
-                                trace!("No record found: {search}");
-                            }
-                            _ => error!("Unknown error"),
-                        },
-                    }
+                    resolve(
+                        resolver,
+                        &format!("{entry}.{domain}."),
+                        wildcard.as_ref(),
+                        tx,
+                    )
+                    .await?;
                 }
-                Result::<(), BruteforceSubdomainError>::Ok(())
+                Ok(())
             }
         });
     }
+    debug!("Started {} tasks", tasks.len());
     while let Some(result) = tasks.join_next().await {
         match result {
             Ok(Ok(())) => {}
@@ -216,6 +155,102 @@ pub async fn bruteforce_subdomains(
     Ok(())
 }
 
+/// Tries to resolve a single domain.
+///
+/// This function calls [`TokioAsyncResolver::lookup_ip`] up to [`RETRY`]-times with `search`.
+/// If it succeeds, it will send the results over the `tx`.
+///
+/// ## Errors
+/// - If the channel `tx` is closed, [`BruteforceSubdomainError::ChannelClosed`] will be returned.
+/// - If [`TokioAsyncResolver::lookup_ip`] fails [`RETRY`]-times, [`BruteforceSubdomainError::RepeatedError`] will be returned.
+pub async fn resolve(
+    resolver: &TokioAsyncResolver,
+    search: &str,
+    wildcards: Option<&Wildcards>,
+    tx: &mpsc::Sender<BruteforceSubdomainResult>,
+) -> Result<(), BruteforceSubdomainError> {
+    for _ in 0..RETRY {
+        match resolver.lookup_ip(search).await {
+            Err(err) => match err.kind() {
+                ResolveErrorKind::NoRecordsFound { .. } => {
+                    trace!("No record found: {search}");
+                    return Ok(());
+                }
+                _ => {
+                    debug!(
+                        "Failed to resolve {search:?}: {err}. Retrying in {}ms",
+                        RETRY_INTERVAL.as_millis()
+                    );
+                    sleep(RETRY_INTERVAL).await;
+                    continue;
+                }
+            },
+            Ok(answer) => {
+                for record in answer.as_lookup().records() {
+                    let domain = record
+                        .name()
+                        .to_string()
+                        .strip_suffix('.')
+                        .unwrap()
+                        .to_string();
+
+                    match record.record_type() {
+                        RecordType::CNAME => {
+                            if wildcards.map(|wc| wc.matches(record)).unwrap_or(false) {
+                                continue;
+                            }
+
+                            if let Some(RData::CNAME(target)) = record.data() {
+                                let mut target = target.to_string();
+                                if target.ends_with(',') {
+                                    target.pop();
+                                }
+                                let res = BruteforceSubdomainResult::Cname {
+                                    source: domain,
+                                    target,
+                                };
+                                tx.send(res).await?;
+                            }
+                        }
+                        RecordType::A => {
+                            if wildcards.map(|wc| wc.matches(record)).unwrap_or(false) {
+                                continue;
+                            }
+
+                            if let Some(RData::A(target)) = record.data() {
+                                let res = BruteforceSubdomainResult::A {
+                                    source: domain,
+                                    target: **target,
+                                };
+                                tx.send(res).await?;
+                            }
+                        }
+                        RecordType::AAAA => {
+                            if wildcards.map(|wc| wc.matches(record)).unwrap_or(false) {
+                                continue;
+                            }
+
+                            if let Some(RData::AAAA(target)) = record.data() {
+                                let res = BruteforceSubdomainResult::Aaaa {
+                                    source: domain,
+                                    target: **target,
+                                };
+                                tx.send(res).await?;
+                            }
+                        }
+                        _ => {
+                            error!("Got unexpected record type")
+                        }
+                    }
+                }
+                return Ok(());
+            }
+        }
+    }
+    Err(BruteforceSubdomainError::RepeatedError)
+}
+
+/// Struct storing the records which apply to any domain i.e. the wildcards
 #[derive(Debug)]
 pub struct Wildcards {
     domain: String,
@@ -224,6 +259,9 @@ pub struct Wildcards {
     cname: HashSet<CNAME>,
 }
 impl Wildcards {
+    /// Query a random domain and store its records
+    ///
+    /// Unlike [`resolve`] this method won't handle [`ResolveError`] and won't retry.
     pub async fn new(
         resolver: &TokioAsyncResolver,
         domain: &str,
@@ -271,6 +309,7 @@ impl Wildcards {
         }
     }
 
+    /// Check whether a given `record` appeared in the wildcards
     pub fn matches(&self, record: &Record) -> bool {
         match record.data() {
             Some(RData::A(a)) => self.a.contains(a),
@@ -280,6 +319,7 @@ impl Wildcards {
         }
     }
 
+    /// Iterate over the wildcard records as results
     pub fn as_results(&self) -> impl Iterator<Item = BruteforceSubdomainResult> + '_ {
         let a = self.a.iter().map(|target| BruteforceSubdomainResult::A {
             source: format!("*.{}", self.domain),

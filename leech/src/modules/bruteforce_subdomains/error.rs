@@ -17,4 +17,8 @@ pub enum BruteforceSubdomainError {
     /// Error while sending a result
     #[error("The result channel has been closed")]
     ChannelClosed(#[from] SendError<BruteforceSubdomainResult>),
+
+    /// The enumeration was aborted because the dns failed to respond repeatedly
+    #[error("DNS failed repeatedly, please retry or contact your admin")]
+    RepeatedError,
 }
