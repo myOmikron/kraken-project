@@ -6,6 +6,7 @@ use thiserror::Error;
 use uuid::Uuid;
 
 use crate::api::handler::ApiError;
+use crate::chan::GLOBAL;
 use crate::models::{
     OauthClient, User, Workspace, WorkspaceAccessToken, WorkspaceInvitation, WorkspaceMember,
     WorkspaceMemberPermission,
@@ -112,35 +113,15 @@ impl Workspace {
         workspace: Uuid,
         user: Uuid,
     ) -> Result<bool, rorm::Error> {
-        let mut guard = executor.ensure_transaction().await?;
-
-        // Check existence of workspace
-        let Some((owner,)) = query!(guard.get_transaction(), (Workspace::F.owner,))
-            .condition(Workspace::F.uuid.equals(workspace))
-            .optional()
+        if let Some(users) = GLOBAL
+            .workspace_cache
+            .get_users(workspace, executor)
             .await?
-        else {
-            return Ok(false);
-        };
-
-        // Check if user is owner or member
-        if *owner.key() != user {
-            let existent = query!(guard.get_transaction(), (WorkspaceMember::F.id,))
-                .condition(and!(
-                    WorkspaceMember::F.member.equals(user),
-                    WorkspaceMember::F.workspace.equals(workspace)
-                ))
-                .optional()
-                .await?;
-
-            if existent.is_none() {
-                return Ok(false);
-            }
+        {
+            Ok(users.contains(&user))
+        } else {
+            Ok(false)
         }
-
-        guard.commit().await?;
-
-        Ok(true)
     }
 
     /// Checks whether a user is owner of a specific workspace

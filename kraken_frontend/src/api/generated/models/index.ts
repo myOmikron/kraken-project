@@ -163,6 +163,7 @@ export * from './WsMessage';
 export * from './WsMessageOneOf';
 export * from './WsMessageOneOf1';
 export * from './WsMessageOneOf10';
+export * from './WsMessageOneOf11';
 export * from './WsMessageOneOf2';
 export * from './WsMessageOneOf3';
 export * from './WsMessageOneOf4';

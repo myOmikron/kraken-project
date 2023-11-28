@@ -1,0 +1,98 @@
+.running-attacks-container {
+    display: flex;
+    gap: 1em;
+    width: calc(100% - 2em);
+    align-items: center;
+    margin: 0 1em;
+}
+
+.running-attacks-seperator {
+    height: 50%;
+    width: 1px;
+    background-color: white;
+}
+
+.running-attacks-attack {
+    position: relative;
+    width: 3.5em;
+    height: 3.5em;
+    transition: all ease 200ms;
+}
+
+.running-attacks-attack:hover {
+    animation: running-attack-rotate linear infinite;
+}
+
+.running-attacks-attack > svg {
+    width: 3.5em;
+    height: 3.5em;
+}
+
+.running-attacks-attack > .running-attacks-inner {
+    position: absolute;
+    display: flex;
+    top: 0;
+    left: 0;
+    justify-content: center;
+    align-items: center;
+    width: 3.5em;
+    height: 3.5em;
+    z-index: 1;
+}
+
+@keyframes toggle-icon-text {
+    0% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 100%;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes toggle-text-icon {
+    0% {
+        opacity: 100%;
+    }
+
+    50% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 100%;
+    }
+}
+
+.running-attacks-inner.stopped > :nth-child(1) {
+    animation: toggle-text-icon ease-in-out 4s infinite;
+}
+
+.running-attacks-inner.stopped > :nth-child(2){
+    animation: toggle-icon-text ease-in-out 4s infinite;
+}
+
+.running-attacks-inner.stopped > * {
+    position: absolute;
+    left: 0;
+    width: 3.5em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 1.5em;
+}
+
+.running-attacks-inner > svg {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.running-attacks-attack > svg path {
+    stroke-dasharray: 40px !important;
+    stroke: var(--primary) !important;
+    animation: dash linear 2.5s infinite;
+}

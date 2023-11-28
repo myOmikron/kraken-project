@@ -14,7 +14,7 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * A notification about a finished attack
+ * A notification about a started attack
  * @export
  * @interface WsMessageOneOf2
  */
@@ -26,11 +26,11 @@ export interface WsMessageOneOf2 {
      */
     attackUuid: string;
     /**
-     * Whether the attack was finished successful
-     * @type {boolean}
+     * The corresponding id of the workspace
+     * @type {string}
      * @memberof WsMessageOneOf2
      */
-    finishedSuccessful: boolean;
+    workspaceUuid: string;
     /**
      * 
      * @type {string}
@@ -44,7 +44,7 @@ export interface WsMessageOneOf2 {
  * @export
  */
 export const WsMessageOneOf2TypeEnum = {
-    AttackFinished: 'AttackFinished'
+    AttackStarted: 'AttackStarted'
 } as const;
 export type WsMessageOneOf2TypeEnum = typeof WsMessageOneOf2TypeEnum[keyof typeof WsMessageOneOf2TypeEnum];
 
@@ -55,7 +55,7 @@ export type WsMessageOneOf2TypeEnum = typeof WsMessageOneOf2TypeEnum[keyof typeo
 export function instanceOfWsMessageOneOf2(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "attackUuid" in value;
-    isInstance = isInstance && "finishedSuccessful" in value;
+    isInstance = isInstance && "workspaceUuid" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -72,7 +72,7 @@ export function WsMessageOneOf2FromJSONTyped(json: any, ignoreDiscriminator: boo
     return {
         
         'attackUuid': json['attack_uuid'],
-        'finishedSuccessful': json['finished_successful'],
+        'workspaceUuid': json['workspace_uuid'],
         'type': json['type'],
     };
 }
@@ -87,7 +87,7 @@ export function WsMessageOneOf2ToJSON(value?: WsMessageOneOf2 | null): any {
     return {
         
         'attack_uuid': value.attackUuid,
-        'finished_successful': value.finishedSuccessful,
+        'workspace_uuid': value.workspaceUuid,
         'type': value.type,
     };
 }

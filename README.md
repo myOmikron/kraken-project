@@ -24,6 +24,13 @@ If you don't want to have the whole platform deployed, you can just execute `lee
 
 With the subcommand `execute`, you can start and configure the modules as they were normal cli utilities.
 
+## Compile on debian
+
+```bash
+# Protobuf compiler and prebuilt proto files
+apt install protobuf-compiler libprotoc-dev
+```
+
 ## Contact
 
 You want to discuss something? Get in touch with us in our [matrix

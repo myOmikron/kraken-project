@@ -14,7 +14,7 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * A result for a DNS resolution requests
+ * A result to service detection request
  * @export
  * @interface WsMessageOneOf10
  */
@@ -26,17 +26,11 @@ export interface WsMessageOneOf10 {
      */
     attackUuid: string;
     /**
-     * The source address that was queried
+     * Name of the service
      * @type {string}
      * @memberof WsMessageOneOf10
      */
-    source: string;
-    /**
-     * The destination address that was returned
-     * @type {string}
-     * @memberof WsMessageOneOf10
-     */
-    destination: string;
+    service: string;
     /**
      * 
      * @type {string}
@@ -50,7 +44,7 @@ export interface WsMessageOneOf10 {
  * @export
  */
 export const WsMessageOneOf10TypeEnum = {
-    DnsResolutionResult: 'DnsResolutionResult'
+    ServiceDetectionResult: 'ServiceDetectionResult'
 } as const;
 export type WsMessageOneOf10TypeEnum = typeof WsMessageOneOf10TypeEnum[keyof typeof WsMessageOneOf10TypeEnum];
 
@@ -61,8 +55,7 @@ export type WsMessageOneOf10TypeEnum = typeof WsMessageOneOf10TypeEnum[keyof typ
 export function instanceOfWsMessageOneOf10(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "attackUuid" in value;
-    isInstance = isInstance && "source" in value;
-    isInstance = isInstance && "destination" in value;
+    isInstance = isInstance && "service" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -79,8 +72,7 @@ export function WsMessageOneOf10FromJSONTyped(json: any, ignoreDiscriminator: bo
     return {
         
         'attackUuid': json['attack_uuid'],
-        'source': json['source'],
-        'destination': json['destination'],
+        'service': json['service'],
         'type': json['type'],
     };
 }
@@ -95,8 +87,7 @@ export function WsMessageOneOf10ToJSON(value?: WsMessageOneOf10 | null): any {
     return {
         
         'attack_uuid': value.attackUuid,
-        'source': value.source,
-        'destination': value.destination,
+        'service': value.service,
         'type': value.type,
     };
 }

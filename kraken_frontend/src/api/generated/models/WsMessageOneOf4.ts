@@ -14,23 +14,23 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * A notification about a search result
+ * A notification about a finished search
  * @export
  * @interface WsMessageOneOf4
  */
 export interface WsMessageOneOf4 {
     /**
-     * The corresponding id of the search results
+     * The corresponding id of the search
      * @type {string}
      * @memberof WsMessageOneOf4
      */
     searchUuid: string;
     /**
-     * A result entry
-     * @type {string}
+     * Whether the search was finished successfully
+     * @type {boolean}
      * @memberof WsMessageOneOf4
      */
-    resultUuid: string;
+    finishedSuccessful: boolean;
     /**
      * 
      * @type {string}
@@ -44,7 +44,7 @@ export interface WsMessageOneOf4 {
  * @export
  */
 export const WsMessageOneOf4TypeEnum = {
-    SearchNotify: 'SearchNotify'
+    SearchFinished: 'SearchFinished'
 } as const;
 export type WsMessageOneOf4TypeEnum = typeof WsMessageOneOf4TypeEnum[keyof typeof WsMessageOneOf4TypeEnum];
 
@@ -55,7 +55,7 @@ export type WsMessageOneOf4TypeEnum = typeof WsMessageOneOf4TypeEnum[keyof typeo
 export function instanceOfWsMessageOneOf4(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "searchUuid" in value;
-    isInstance = isInstance && "resultUuid" in value;
+    isInstance = isInstance && "finishedSuccessful" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -72,7 +72,7 @@ export function WsMessageOneOf4FromJSONTyped(json: any, ignoreDiscriminator: boo
     return {
         
         'searchUuid': json['search_uuid'],
-        'resultUuid': json['result_uuid'],
+        'finishedSuccessful': json['finished_successful'],
         'type': json['type'],
     };
 }
@@ -87,7 +87,7 @@ export function WsMessageOneOf4ToJSON(value?: WsMessageOneOf4 | null): any {
     return {
         
         'search_uuid': value.searchUuid,
-        'result_uuid': value.resultUuid,
+        'finished_successful': value.finishedSuccessful,
         'type': value.type,
     };
 }

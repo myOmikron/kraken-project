@@ -13,15 +13,8 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { CertificateTransparencyEntry } from './CertificateTransparencyEntry';
-import {
-    CertificateTransparencyEntryFromJSON,
-    CertificateTransparencyEntryFromJSONTyped,
-    CertificateTransparencyEntryToJSON,
-} from './CertificateTransparencyEntry';
-
 /**
- * A result to a certificate transparency request
+ * A result for a tcp scan
  * @export
  * @interface WsMessageOneOf8
  */
@@ -33,11 +26,17 @@ export interface WsMessageOneOf8 {
      */
     attackUuid: string;
     /**
-     * The entries of the result
-     * @type {Array<CertificateTransparencyEntry>}
+     * The address of the result
+     * @type {string}
      * @memberof WsMessageOneOf8
      */
-    entries: Array<CertificateTransparencyEntry>;
+    address: string;
+    /**
+     * The port of the result
+     * @type {number}
+     * @memberof WsMessageOneOf8
+     */
+    port: number;
     /**
      * 
      * @type {string}
@@ -51,7 +50,7 @@ export interface WsMessageOneOf8 {
  * @export
  */
 export const WsMessageOneOf8TypeEnum = {
-    CertificateTransparencyResult: 'CertificateTransparencyResult'
+    ScanTcpPortsResult: 'ScanTcpPortsResult'
 } as const;
 export type WsMessageOneOf8TypeEnum = typeof WsMessageOneOf8TypeEnum[keyof typeof WsMessageOneOf8TypeEnum];
 
@@ -62,7 +61,8 @@ export type WsMessageOneOf8TypeEnum = typeof WsMessageOneOf8TypeEnum[keyof typeo
 export function instanceOfWsMessageOneOf8(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "attackUuid" in value;
-    isInstance = isInstance && "entries" in value;
+    isInstance = isInstance && "address" in value;
+    isInstance = isInstance && "port" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -79,7 +79,8 @@ export function WsMessageOneOf8FromJSONTyped(json: any, ignoreDiscriminator: boo
     return {
         
         'attackUuid': json['attack_uuid'],
-        'entries': ((json['entries'] as Array<any>).map(CertificateTransparencyEntryFromJSON)),
+        'address': json['address'],
+        'port': json['port'],
         'type': json['type'],
     };
 }
@@ -94,7 +95,8 @@ export function WsMessageOneOf8ToJSON(value?: WsMessageOneOf8 | null): any {
     return {
         
         'attack_uuid': value.attackUuid,
-        'entries': ((value.entries as Array<any>).map(CertificateTransparencyEntryToJSON)),
+        'address': value.address,
+        'port': value.port,
         'type': value.type,
     };
 }

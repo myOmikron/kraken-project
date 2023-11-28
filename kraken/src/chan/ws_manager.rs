@@ -13,6 +13,7 @@ use webauthn_rs::prelude::Uuid;
 
 use crate::api::handler::users::SimpleUser;
 use crate::api::handler::workspaces::SimpleWorkspace;
+use crate::chan::GLOBAL;
 
 /// Entry of certificate transparency results
 #[derive(Deserialize, Serialize, Clone, ToSchema)]
@@ -47,6 +48,13 @@ pub enum WsMessage {
         workspace: SimpleWorkspace,
         /// The user that has issued the invitation
         from: SimpleUser,
+    },
+    /// A notification about a started attack
+    AttackStarted {
+        /// The corresponding id of the attack
+        attack_uuid: Uuid,
+        /// The corresponding id of the workspace
+        workspace_uuid: Uuid,
     },
     /// A notification about a finished attack
     AttackFinished {
@@ -139,6 +147,23 @@ impl WsManagerChan {
                     .await
             }
             Err(err) => error!("Error serializing WsMessage: {err}"),
+        }
+    }
+
+    /// Send a message to a workspace
+    pub async fn message_workspace(&self, workspace: Uuid, msg: WsMessage) {
+        match GLOBAL
+            .workspace_cache
+            .get_users(workspace, &GLOBAL.db)
+            .await
+        {
+            Ok(Some(users)) => {
+                for user in users {
+                    self.message(user, msg.clone()).await;
+                }
+            }
+            Ok(None) => debug!("No users in cache, nothing to do"),
+            Err(err) => error!("Cache error: {err}"),
         }
     }
 

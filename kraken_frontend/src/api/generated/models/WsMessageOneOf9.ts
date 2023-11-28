@@ -13,8 +13,15 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { CertificateTransparencyEntry } from './CertificateTransparencyEntry';
+import {
+    CertificateTransparencyEntryFromJSON,
+    CertificateTransparencyEntryFromJSONTyped,
+    CertificateTransparencyEntryToJSON,
+} from './CertificateTransparencyEntry';
+
 /**
- * A result to service detection request
+ * A result to a certificate transparency request
  * @export
  * @interface WsMessageOneOf9
  */
@@ -26,11 +33,11 @@ export interface WsMessageOneOf9 {
      */
     attackUuid: string;
     /**
-     * Name of the service
-     * @type {string}
+     * The entries of the result
+     * @type {Array<CertificateTransparencyEntry>}
      * @memberof WsMessageOneOf9
      */
-    service: string;
+    entries: Array<CertificateTransparencyEntry>;
     /**
      * 
      * @type {string}
@@ -44,7 +51,7 @@ export interface WsMessageOneOf9 {
  * @export
  */
 export const WsMessageOneOf9TypeEnum = {
-    ServiceDetectionResult: 'ServiceDetectionResult'
+    CertificateTransparencyResult: 'CertificateTransparencyResult'
 } as const;
 export type WsMessageOneOf9TypeEnum = typeof WsMessageOneOf9TypeEnum[keyof typeof WsMessageOneOf9TypeEnum];
 
@@ -55,7 +62,7 @@ export type WsMessageOneOf9TypeEnum = typeof WsMessageOneOf9TypeEnum[keyof typeo
 export function instanceOfWsMessageOneOf9(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "attackUuid" in value;
-    isInstance = isInstance && "service" in value;
+    isInstance = isInstance && "entries" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -72,7 +79,7 @@ export function WsMessageOneOf9FromJSONTyped(json: any, ignoreDiscriminator: boo
     return {
         
         'attackUuid': json['attack_uuid'],
-        'service': json['service'],
+        'entries': ((json['entries'] as Array<any>).map(CertificateTransparencyEntryFromJSON)),
         'type': json['type'],
     };
 }
@@ -87,7 +94,7 @@ export function WsMessageOneOf9ToJSON(value?: WsMessageOneOf9 | null): any {
     return {
         
         'attack_uuid': value.attackUuid,
-        'service': value.service,
+        'entries': ((value.entries as Array<any>).map(CertificateTransparencyEntryToJSON)),
         'type': value.type,
     };
 }

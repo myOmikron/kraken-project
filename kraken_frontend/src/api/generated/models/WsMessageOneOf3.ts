@@ -14,19 +14,19 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * A notification about a finished search
+ * A notification about a finished attack
  * @export
  * @interface WsMessageOneOf3
  */
 export interface WsMessageOneOf3 {
     /**
-     * The corresponding id of the search
+     * The corresponding id of the attack
      * @type {string}
      * @memberof WsMessageOneOf3
      */
-    searchUuid: string;
+    attackUuid: string;
     /**
-     * Whether the search was finished successfully
+     * Whether the attack was finished successful
      * @type {boolean}
      * @memberof WsMessageOneOf3
      */
@@ -44,7 +44,7 @@ export interface WsMessageOneOf3 {
  * @export
  */
 export const WsMessageOneOf3TypeEnum = {
-    SearchFinished: 'SearchFinished'
+    AttackFinished: 'AttackFinished'
 } as const;
 export type WsMessageOneOf3TypeEnum = typeof WsMessageOneOf3TypeEnum[keyof typeof WsMessageOneOf3TypeEnum];
 
@@ -54,7 +54,7 @@ export type WsMessageOneOf3TypeEnum = typeof WsMessageOneOf3TypeEnum[keyof typeo
  */
 export function instanceOfWsMessageOneOf3(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "searchUuid" in value;
+    isInstance = isInstance && "attackUuid" in value;
     isInstance = isInstance && "finishedSuccessful" in value;
     isInstance = isInstance && "type" in value;
 
@@ -71,7 +71,7 @@ export function WsMessageOneOf3FromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'searchUuid': json['search_uuid'],
+        'attackUuid': json['attack_uuid'],
         'finishedSuccessful': json['finished_successful'],
         'type': json['type'],
     };
@@ -86,7 +86,7 @@ export function WsMessageOneOf3ToJSON(value?: WsMessageOneOf3 | null): any {
     }
     return {
         
-        'search_uuid': value.searchUuid,
+        'attack_uuid': value.attackUuid,
         'finished_successful': value.finishedSuccessful,
         'type': value.type,
     };

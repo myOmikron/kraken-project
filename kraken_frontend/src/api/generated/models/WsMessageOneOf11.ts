@@ -14,51 +14,51 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * A result for a subdomain enumeration using bruteforce DNS requests
+ * A result for a DNS resolution requests
  * @export
- * @interface WsMessageOneOf6
+ * @interface WsMessageOneOf11
  */
-export interface WsMessageOneOf6 {
+export interface WsMessageOneOf11 {
     /**
      * The corresponding id of the attack
      * @type {string}
-     * @memberof WsMessageOneOf6
+     * @memberof WsMessageOneOf11
      */
     attackUuid: string;
     /**
      * The source address that was queried
      * @type {string}
-     * @memberof WsMessageOneOf6
+     * @memberof WsMessageOneOf11
      */
     source: string;
     /**
      * The destination address that was returned
      * @type {string}
-     * @memberof WsMessageOneOf6
+     * @memberof WsMessageOneOf11
      */
     destination: string;
     /**
      * 
      * @type {string}
-     * @memberof WsMessageOneOf6
+     * @memberof WsMessageOneOf11
      */
-    type: WsMessageOneOf6TypeEnum;
+    type: WsMessageOneOf11TypeEnum;
 }
 
 
 /**
  * @export
  */
-export const WsMessageOneOf6TypeEnum = {
-    BruteforceSubdomainsResult: 'BruteforceSubdomainsResult'
+export const WsMessageOneOf11TypeEnum = {
+    DnsResolutionResult: 'DnsResolutionResult'
 } as const;
-export type WsMessageOneOf6TypeEnum = typeof WsMessageOneOf6TypeEnum[keyof typeof WsMessageOneOf6TypeEnum];
+export type WsMessageOneOf11TypeEnum = typeof WsMessageOneOf11TypeEnum[keyof typeof WsMessageOneOf11TypeEnum];
 
 
 /**
- * Check if a given object implements the WsMessageOneOf6 interface.
+ * Check if a given object implements the WsMessageOneOf11 interface.
  */
-export function instanceOfWsMessageOneOf6(value: object): boolean {
+export function instanceOfWsMessageOneOf11(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "attackUuid" in value;
     isInstance = isInstance && "source" in value;
@@ -68,11 +68,11 @@ export function instanceOfWsMessageOneOf6(value: object): boolean {
     return isInstance;
 }
 
-export function WsMessageOneOf6FromJSON(json: any): WsMessageOneOf6 {
-    return WsMessageOneOf6FromJSONTyped(json, false);
+export function WsMessageOneOf11FromJSON(json: any): WsMessageOneOf11 {
+    return WsMessageOneOf11FromJSONTyped(json, false);
 }
 
-export function WsMessageOneOf6FromJSONTyped(json: any, ignoreDiscriminator: boolean): WsMessageOneOf6 {
+export function WsMessageOneOf11FromJSONTyped(json: any, ignoreDiscriminator: boolean): WsMessageOneOf11 {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -85,7 +85,7 @@ export function WsMessageOneOf6FromJSONTyped(json: any, ignoreDiscriminator: boo
     };
 }
 
-export function WsMessageOneOf6ToJSON(value?: WsMessageOneOf6 | null): any {
+export function WsMessageOneOf11ToJSON(value?: WsMessageOneOf11 | null): any {
     if (value === undefined) {
         return undefined;
     }

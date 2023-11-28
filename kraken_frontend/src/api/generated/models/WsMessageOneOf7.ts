@@ -14,7 +14,7 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * A result for a tcp scan
+ * A result for hosts alive check
  * @export
  * @interface WsMessageOneOf7
  */
@@ -26,17 +26,11 @@ export interface WsMessageOneOf7 {
      */
     attackUuid: string;
     /**
-     * The address of the result
+     * A host which could be reached
      * @type {string}
      * @memberof WsMessageOneOf7
      */
-    address: string;
-    /**
-     * The port of the result
-     * @type {number}
-     * @memberof WsMessageOneOf7
-     */
-    port: number;
+    host: string;
     /**
      * 
      * @type {string}
@@ -50,7 +44,7 @@ export interface WsMessageOneOf7 {
  * @export
  */
 export const WsMessageOneOf7TypeEnum = {
-    ScanTcpPortsResult: 'ScanTcpPortsResult'
+    HostsAliveCheck: 'HostsAliveCheck'
 } as const;
 export type WsMessageOneOf7TypeEnum = typeof WsMessageOneOf7TypeEnum[keyof typeof WsMessageOneOf7TypeEnum];
 
@@ -61,8 +55,7 @@ export type WsMessageOneOf7TypeEnum = typeof WsMessageOneOf7TypeEnum[keyof typeo
 export function instanceOfWsMessageOneOf7(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "attackUuid" in value;
-    isInstance = isInstance && "address" in value;
-    isInstance = isInstance && "port" in value;
+    isInstance = isInstance && "host" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -79,8 +72,7 @@ export function WsMessageOneOf7FromJSONTyped(json: any, ignoreDiscriminator: boo
     return {
         
         'attackUuid': json['attack_uuid'],
-        'address': json['address'],
-        'port': json['port'],
+        'host': json['host'],
         'type': json['type'],
     };
 }
@@ -95,8 +87,7 @@ export function WsMessageOneOf7ToJSON(value?: WsMessageOneOf7 | null): any {
     return {
         
         'attack_uuid': value.attackUuid,
-        'address': value.address,
-        'port': value.port,
+        'host': value.host,
         'type': value.type,
     };
 }

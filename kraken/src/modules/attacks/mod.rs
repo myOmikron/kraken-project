@@ -278,7 +278,16 @@ impl AttackContext {
 
     /// Send a websocket message and log the error
     async fn send_ws(&self, message: WsMessage) {
-        GLOBAL.ws.message(self.user_uuid, message).await;
+        GLOBAL.ws.message_workspace(self.user_uuid, message).await;
+    }
+
+    /// Send the user a notification
+    async fn set_started(&self) {
+        self.send_ws(WsMessage::AttackStarted {
+            attack_uuid: self.attack_uuid,
+            workspace_uuid: self.workspace_uuid,
+        })
+        .await;
     }
 
     /// Send the user a notification and update the [`Attack`] model

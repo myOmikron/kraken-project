@@ -185,6 +185,7 @@ models/WsMessage.ts
 models/WsMessageOneOf.ts
 models/WsMessageOneOf1.ts
 models/WsMessageOneOf10.ts
+models/WsMessageOneOf11.ts
 models/WsMessageOneOf2.ts
 models/WsMessageOneOf3.ts
 models/WsMessageOneOf4.ts

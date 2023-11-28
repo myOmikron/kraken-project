@@ -14,29 +14,23 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * A result for a subdomain enumeration using bruteforce DNS requests
+ * A notification about a search result
  * @export
  * @interface WsMessageOneOf5
  */
 export interface WsMessageOneOf5 {
     /**
-     * The corresponding id of the attack
+     * The corresponding id of the search results
      * @type {string}
      * @memberof WsMessageOneOf5
      */
-    attackUuid: string;
+    searchUuid: string;
     /**
-     * The source address that was queried
+     * A result entry
      * @type {string}
      * @memberof WsMessageOneOf5
      */
-    source: string;
-    /**
-     * The destination address that was returned
-     * @type {string}
-     * @memberof WsMessageOneOf5
-     */
-    destination: string;
+    resultUuid: string;
     /**
      * 
      * @type {string}
@@ -50,7 +44,7 @@ export interface WsMessageOneOf5 {
  * @export
  */
 export const WsMessageOneOf5TypeEnum = {
-    BruteforceSubdomainsResult: 'BruteforceSubdomainsResult'
+    SearchNotify: 'SearchNotify'
 } as const;
 export type WsMessageOneOf5TypeEnum = typeof WsMessageOneOf5TypeEnum[keyof typeof WsMessageOneOf5TypeEnum];
 
@@ -60,9 +54,8 @@ export type WsMessageOneOf5TypeEnum = typeof WsMessageOneOf5TypeEnum[keyof typeo
  */
 export function instanceOfWsMessageOneOf5(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "attackUuid" in value;
-    isInstance = isInstance && "source" in value;
-    isInstance = isInstance && "destination" in value;
+    isInstance = isInstance && "searchUuid" in value;
+    isInstance = isInstance && "resultUuid" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -78,9 +71,8 @@ export function WsMessageOneOf5FromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'attackUuid': json['attack_uuid'],
-        'source': json['source'],
-        'destination': json['destination'],
+        'searchUuid': json['search_uuid'],
+        'resultUuid': json['result_uuid'],
         'type': json['type'],
     };
 }
@@ -94,9 +86,8 @@ export function WsMessageOneOf5ToJSON(value?: WsMessageOneOf5 | null): any {
     }
     return {
         
-        'attack_uuid': value.attackUuid,
-        'source': value.source,
-        'destination': value.destination,
+        'search_uuid': value.searchUuid,
+        'result_uuid': value.resultUuid,
         'type': value.type,
     };
 }
