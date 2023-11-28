@@ -1,8 +1,5 @@
 //! This module holds a tcp connect port scanner
 
-use std::error::Error;
-use std::io;
-use std::io::ErrorKind;
 use std::net::SocketAddr;
 use std::ops::RangeInclusive;
 use std::time::Duration;
