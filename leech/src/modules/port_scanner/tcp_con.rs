@@ -1,5 +1,8 @@
 //! This module holds a tcp connect port scanner
 
+use std::error::Error;
+use std::io;
+use std::io::ErrorKind;
 use std::net::SocketAddr;
 use std::ops::RangeInclusive;
 use std::time::Duration;
@@ -103,8 +106,10 @@ pub async fn start_tcp_con_port_scan(
                                 let err_str = err.to_string();
                                 if err_str.contains("refused") {
                                     trace!("Connection refused on {s_addr}: {err}");
+                                } else if err_str.contains("No route to host") {
+                                    trace!("{err} on port {port}");
                                 } else {
-                                    warn!("Unknown error: {err}");
+                                    warn!("Unknown error on port {port}: {err}");
                                 }
                             }
                         }
