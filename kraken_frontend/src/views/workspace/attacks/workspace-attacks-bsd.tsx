@@ -37,7 +37,7 @@ export default class WorkspaceAttacksBruteforceSubdomains extends React.Componen
         this.state = {
             showAdvanced: false,
             domain: this.props.prefilled.domain || "",
-            taskLimit: 1000,
+            taskLimit: 100,
             wordlists: [],
             wordlist: null,
         };

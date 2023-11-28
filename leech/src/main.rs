@@ -82,7 +82,7 @@ pub enum RunCommand {
         wordlist_path: PathBuf,
         /// The concurrent task limit
         #[clap(long)]
-        #[clap(default_value_t = NonZeroU32::new(50).unwrap())]
+        #[clap(default_value_t = NonZeroU32::new(100).unwrap())]
         concurrent_limit: NonZeroU32,
     },
     /// Retrieve domains through certificate transparency

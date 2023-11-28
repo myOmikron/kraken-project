@@ -46,7 +46,7 @@ pub struct BruteforceSubdomainsRequest {
     pub wordlist_uuid: Uuid,
 
     /// The concurrent task limit
-    #[schema(example = 20)]
+    #[schema(example = 100)]
     pub(crate) concurrent_limit: u32,
 
     /// The workspace to execute the attack in
