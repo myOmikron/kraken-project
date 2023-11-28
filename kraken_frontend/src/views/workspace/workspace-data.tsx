@@ -51,19 +51,19 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
 
     const { items: domains, ...domainsTable } = useTable<FullDomain>(
         (limit, offset) => Api.workspaces.domains.all(workspace, limit, offset),
-        [workspace],
+        [workspace]
     );
     const { items: hosts, ...hostsTable } = useTable<FullHost>(
         (limit, offset) => Api.workspaces.hosts.all(workspace, limit, offset),
-        [workspace],
+        [workspace]
     );
     const { items: ports, ...portsTable } = useTable<FullPort>(
         (limit, offset) => Api.workspaces.ports.all(workspace, limit, offset),
-        [workspace],
+        [workspace]
     );
     const { items: services, ...servicesTable } = useTable<FullService>(
         (limit, offset) => Api.workspaces.services.all(workspace, limit, offset),
-        [workspace],
+        [workspace]
     );
 
     const tableElement = (() => {
@@ -132,11 +132,12 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 return (
                     <StatelessWorkspaceTable
                         {...portsTable}
-                        columnsTemplate={"5ch 39ch 1fr 1fr 1fr min-content"}
+                        columnsTemplate={"5ch 8ch 39ch 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("ports")}
                     >
                         <div className={"workspace-table-header"}>
                             <span>Port</span>
+                            <span>Protocol</span>
                             <span>Host</span>
                             <span>Tags</span>
                             <span>Comment</span>
@@ -149,6 +150,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 onClick={() => setSelected({ type: "ports", uuid: port.uuid })}
                             >
                                 <span>{port.port}</span>
+                                <span>{port.protocol.toUpperCase()}</span>
                                 <span>{port.host.ipAddr}</span>
                                 <TagList tags={port.tags} />
                                 <span>{port.comment}</span>
