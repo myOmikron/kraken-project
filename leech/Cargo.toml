@@ -24,7 +24,7 @@ env_logger = { version = "~0.10" }
 # Logging framework for `server` command
 log4rs = { version = "~1", features = ["gzip"] }
 uuid = { version = "~1", features = ["v4"] }
-byte-unit = { version = "~4", features = ["serde"] }
+byte-unit = { version = "~5", features = ["serde"] }
 
 # Async runtime
 tokio = { version = ">=1.23.1", features = ["macros", "sync", "rt-multi-thread", "net", "time"] }

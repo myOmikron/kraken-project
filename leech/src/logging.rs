@@ -121,9 +121,7 @@ pub fn setup_logging(config: &LoggingConfig) -> Result<Handle, String> {
         .build(
             &config.path,
             Box::new(CompoundPolicy::new(
-                Box::new(SizeTrigger::new(
-                    config.rotation_file_size.get_bytes() as u64
-                )),
+                Box::new(SizeTrigger::new(config.rotation_file_size.as_u64())),
                 roller,
             )),
         )
@@ -150,7 +148,7 @@ pub fn setup_logging(config: &LoggingConfig) -> Result<Handle, String> {
                 .build(
                     &x.path,
                     Box::new(CompoundPolicy::new(
-                        Box::new(SizeTrigger::new(x.rotation_file_size.get_bytes() as u64)),
+                        Box::new(SizeTrigger::new(x.rotation_file_size.as_u64())),
                         roller,
                     )),
                 )
