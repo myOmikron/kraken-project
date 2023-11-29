@@ -23,7 +23,6 @@ use crate::models::{
     AggregationSource, AggregationTable, Domain, DomainGlobalTag, DomainHostRelation,
     DomainWorkspaceTag, GlobalTag, Host, ManualDomain, Workspace, WorkspaceTag,
 };
-use crate::modules::syntax::{GlobalAST, Parser};
 use crate::query_tags;
 
 /// Query parameters for filtering the domains to get
@@ -33,9 +32,6 @@ pub struct GetAllDomainsQuery {
     ///
     /// This includes domains which point to another domain which points to this host.
     pub host: Option<Uuid>,
-
-    /// raw filter query string
-    pub raw_filter: Option<String>,
 }
 
 /// A simple representation of a domain in a workspace
@@ -102,41 +98,6 @@ pub async fn get_all_domains(
     }
 
     let (limit, offset) = get_page_params(page_params).await?;
-
-    let filter_params = filter_params.into_inner();
-
-    // TODO: move to correct location
-    if let Some(input) = filter_params.raw_filter {
-        let parser = Parser::new(input.as_str()).unwrap();
-        let g_ast = GlobalAST::parse(&parser).unwrap();
-        println!("{g_ast:?}");
-    }
-    // let mut query = QueryStruct {
-    //     tags: None,
-    //     created_at: None,
-    // };
-    //
-    // // TODO: move to correct location
-    // if filter_params.raw_filter.is_some() {
-    //     let input = &filter_params.raw_filter.unwrap();
-    //     let parser = Parser::new(input).unwrap();
-    //
-    //     loop {
-    //         let Ok(Some(field)) = parser.parse_field() else {
-    //             break;
-    //         };
-    //
-    //         let statement = parser
-    //             .parse_statement(QueryStruct::field_is_ranged(&field))
-    //             .unwrap()
-    //             .unwrap();
-    //
-    //         query.extract(&field, statement);
-    //     }
-    //     println!("{query:?}");
-    // }
-
-    // let data = query.tags.unwrap().0.iter().map(|or_el| or_el.0.iter().map(|and_el| and_el.0)
 
     match filter_params.host {
         None => {
