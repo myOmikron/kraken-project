@@ -20,25 +20,27 @@ import { exists, mapValues } from '../runtime';
  */
 export interface DnsResolutionRequest {
     /**
-     * If missing - a random leech is chosen
+     * The leech to use
+     * 
+     * Leave empty to use a random leech
      * @type {string}
      * @memberof DnsResolutionRequest
      */
     leechUuid?: string | null;
     /**
-     * 
+     * The domains to resolve
      * @type {Array<string>}
      * @memberof DnsResolutionRequest
      */
     targets: Array<string>;
     /**
-     * 
+     * The concurrent task limit
      * @type {number}
      * @memberof DnsResolutionRequest
      */
     concurrentLimit: number;
     /**
-     * 
+     * The workspace to execute the attack in
      * @type {string}
      * @memberof DnsResolutionRequest
      */

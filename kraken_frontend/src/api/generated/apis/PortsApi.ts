@@ -18,6 +18,7 @@ import type {
   ApiErrorResponse,
   CreatePortRequest,
   FullPort,
+  GetAllPortsQuery,
   PortResultsPage,
   UpdatePortRequest,
   UuidResponse,
@@ -29,6 +30,8 @@ import {
     CreatePortRequestToJSON,
     FullPortFromJSON,
     FullPortToJSON,
+    GetAllPortsQueryFromJSON,
+    GetAllPortsQueryToJSON,
     PortResultsPageFromJSON,
     PortResultsPageToJSON,
     UpdatePortRequestFromJSON,
@@ -44,9 +47,7 @@ export interface CreatePortOperationRequest {
 
 export interface GetAllPortsRequest {
     uuid: string;
-    limit: number;
-    offset: number;
-    host?: string | null;
+    getAllPortsQuery: GetAllPortsQuery;
 }
 
 export interface GetPortRequest {
@@ -113,35 +114,22 @@ export class PortsApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getAllPorts.');
         }
 
-        if (requestParameters.limit === null || requestParameters.limit === undefined) {
-            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getAllPorts.');
-        }
-
-        if (requestParameters.offset === null || requestParameters.offset === undefined) {
-            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getAllPorts.');
+        if (requestParameters.getAllPortsQuery === null || requestParameters.getAllPortsQuery === undefined) {
+            throw new runtime.RequiredError('getAllPortsQuery','Required parameter requestParameters.getAllPortsQuery was null or undefined when calling getAllPorts.');
         }
 
         const queryParameters: any = {};
 
-        if (requestParameters.limit !== undefined) {
-            queryParameters['limit'] = requestParameters.limit;
-        }
-
-        if (requestParameters.offset !== undefined) {
-            queryParameters['offset'] = requestParameters.offset;
-        }
-
-        if (requestParameters.host !== undefined) {
-            queryParameters['host'] = requestParameters.host;
-        }
-
         const headerParameters: runtime.HTTPHeaders = {};
 
+        headerParameters['Content-Type'] = 'application/json';
+
         const response = await this.request({
-            path: `/api/v1/workspaces/{uuid}/ports`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
-            method: 'GET',
+            path: `/api/v1/workspaces/{uuid}/ports/all`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+            body: GetAllPortsQueryToJSON(requestParameters.getAllPortsQuery),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => PortResultsPageFromJSON(jsonValue));

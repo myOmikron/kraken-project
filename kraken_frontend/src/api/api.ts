@@ -218,8 +218,13 @@ export const Api = {
                 handleError(workspaces.retractInvitation({ wUuid, iUuid: invitation })),
         },
         hosts: {
-            all: (workspaceUuid: UUID, limit: number, offset: number) =>
-                handleError(hosts.getAllHosts({ uuid: workspaceUuid, limit, offset })),
+            all: (
+                workspaceUuid: UUID,
+                limit: number,
+                offset: number,
+                filter: { host?: UUID; globalFilter?: string; hostFilter?: string } = {},
+            ) =>
+                handleError(hosts.getAllHosts({ uuid: workspaceUuid, getAllHostsQuery: { limit, offset, ...filter } })),
             get: (workspaceUuid: UUID, hostUuid: UUID) =>
                 handleError(hosts.getHost({ wUuid: workspaceUuid, hUuid: hostUuid })),
             update: (workspaceUuid: UUID, hostUuid: UUID, updateHostRequest: UpdateHostRequest) =>
@@ -228,8 +233,13 @@ export const Api = {
                 handleError(hosts.createHost({ uuid: workspaceUuid, createHostRequest })),
         },
         ports: {
-            all: (workspaceUuid: UUID, limit: number, offset: number, filter: { host?: UUID } = {}) =>
-                handleError(ports.getAllPorts({ uuid: workspaceUuid, limit, offset, ...filter })),
+            all: (
+                workspaceUuid: UUID,
+                limit: number,
+                offset: number,
+                filter: { host?: UUID; globalFilter?: string; portFilter?: string } = {},
+            ) =>
+                handleError(ports.getAllPorts({ uuid: workspaceUuid, getAllPortsQuery: { limit, offset, ...filter } })),
             get: (workspaceUuid: UUID, portUuid: UUID) =>
                 handleError(ports.getPort({ wUuid: workspaceUuid, pUuid: portUuid })),
             update: (workspaceUuid: UUID, portUuid: UUID, updatePortRequest: UpdatePortRequest) =>
@@ -238,8 +248,15 @@ export const Api = {
                 handleError(ports.createPort({ uuid: workspaceUuid, createPortRequest })),
         },
         domains: {
-            all: (workspaceUuid: UUID, limit: number, offset: number, filter: { host?: UUID } = {}) =>
-                handleError(domains.getAllDomains({ uuid: workspaceUuid, limit, offset, ...filter })),
+            all: (
+                workspaceUuid: UUID,
+                limit: number,
+                offset: number,
+                filter: { host?: UUID; globalFilter?: string; domainFilter?: string } = {},
+            ) =>
+                handleError(
+                    domains.getAllDomains({ uuid: workspaceUuid, getAllDomainsQuery: { limit, offset, ...filter } }),
+                ),
             get: (workspaceUuid: UUID, domainUuid: UUID) =>
                 handleError(domains.getDomain({ wUuid: workspaceUuid, dUuid: domainUuid })),
             update: (workspaceUuid: UUID, domainUuid: UUID, updateDomainRequest: UpdateDomainRequest) =>
@@ -248,8 +265,15 @@ export const Api = {
                 handleError(domains.createDomain({ uuid: workspaceUuid, createDomainRequest })),
         },
         services: {
-            all: (workspaceUuid: UUID, limit: number, offset: number, filter: { host?: UUID } = {}) =>
-                handleError(services.getAllServices({ uuid: workspaceUuid, limit, offset, ...filter })),
+            all: (
+                workspaceUuid: UUID,
+                limit: number,
+                offset: number,
+                filter: { host?: UUID; globalFilter?: string; serviceFilter?: string } = {},
+            ) =>
+                handleError(
+                    services.getAllServices({ uuid: workspaceUuid, getAllServicesQuery: { limit, offset, ...filter } }),
+                ),
             get: (workspaceUuid: UUID, serviceUuid: UUID) =>
                 handleError(services.getService({ wUuid: workspaceUuid, sUuid: serviceUuid })),
             update: (workspaceUuid: UUID, serviceUuid: UUID, updateServiceRequest: UpdateServiceRequest) =>

@@ -20,31 +20,36 @@ import { exists, mapValues } from '../runtime';
  */
 export interface ServiceDetectionRequest {
     /**
-     * If missing - a random leech is chosen
+     * The leech to use
+     * 
+     * Leave empty to use a random leech
      * @type {string}
      * @memberof ServiceDetectionRequest
      */
     leechUuid?: string | null;
     /**
-     * 
+     * The ip address the service listens on
      * @type {string}
      * @memberof ServiceDetectionRequest
      */
     address: string;
     /**
-     * 
+     * The port the service listens on
      * @type {number}
      * @memberof ServiceDetectionRequest
      */
     port: number;
     /**
+     * Time to wait for a response after sending the payload
+     * (or after establishing a connection, if not payload is to be sent)
      * 
+     * The timeout is specified in milliseconds.
      * @type {number}
      * @memberof ServiceDetectionRequest
      */
     timeout: number;
     /**
-     * 
+     * The workspace to execute the attack in
      * @type {string}
      * @memberof ServiceDetectionRequest
      */

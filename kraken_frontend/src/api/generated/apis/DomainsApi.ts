@@ -19,6 +19,7 @@ import type {
   CreateDomainRequest,
   DomainResultsPage,
   FullDomain,
+  GetAllDomainsQuery,
   UpdateDomainRequest,
   UuidResponse,
 } from '../models';
@@ -31,6 +32,8 @@ import {
     DomainResultsPageToJSON,
     FullDomainFromJSON,
     FullDomainToJSON,
+    GetAllDomainsQueryFromJSON,
+    GetAllDomainsQueryToJSON,
     UpdateDomainRequestFromJSON,
     UpdateDomainRequestToJSON,
     UuidResponseFromJSON,
@@ -44,9 +47,7 @@ export interface CreateDomainOperationRequest {
 
 export interface GetAllDomainsRequest {
     uuid: string;
-    limit: number;
-    offset: number;
-    host?: string | null;
+    getAllDomainsQuery: GetAllDomainsQuery;
 }
 
 export interface GetDomainRequest {
@@ -113,35 +114,22 @@ export class DomainsApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getAllDomains.');
         }
 
-        if (requestParameters.limit === null || requestParameters.limit === undefined) {
-            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getAllDomains.');
-        }
-
-        if (requestParameters.offset === null || requestParameters.offset === undefined) {
-            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getAllDomains.');
+        if (requestParameters.getAllDomainsQuery === null || requestParameters.getAllDomainsQuery === undefined) {
+            throw new runtime.RequiredError('getAllDomainsQuery','Required parameter requestParameters.getAllDomainsQuery was null or undefined when calling getAllDomains.');
         }
 
         const queryParameters: any = {};
 
-        if (requestParameters.limit !== undefined) {
-            queryParameters['limit'] = requestParameters.limit;
-        }
-
-        if (requestParameters.offset !== undefined) {
-            queryParameters['offset'] = requestParameters.offset;
-        }
-
-        if (requestParameters.host !== undefined) {
-            queryParameters['host'] = requestParameters.host;
-        }
-
         const headerParameters: runtime.HTTPHeaders = {};
 
+        headerParameters['Content-Type'] = 'application/json';
+
         const response = await this.request({
-            path: `/api/v1/workspaces/{uuid}/domains`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
-            method: 'GET',
+            path: `/api/v1/workspaces/{uuid}/domains/all`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+            body: GetAllDomainsQueryToJSON(requestParameters.getAllDomainsQuery),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => DomainResultsPageFromJSON(jsonValue));

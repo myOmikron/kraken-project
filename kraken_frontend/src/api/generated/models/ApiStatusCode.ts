@@ -51,6 +51,7 @@ export const ApiStatusCode = {
     NUMBER_1027: 1027,
     NUMBER_1028: 1028,
     NUMBER_1029: 1029,
+    NUMBER_1030: 1030,
     NUMBER_2000: 2000,
     NUMBER_2001: 2001,
     NUMBER_2002: 2002,

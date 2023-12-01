@@ -18,6 +18,7 @@ import type {
   ApiErrorResponse,
   CreateHostRequest,
   FullHost,
+  GetAllHostsQuery,
   HostResultsPage,
   UpdateHostRequest,
   UuidResponse,
@@ -29,6 +30,8 @@ import {
     CreateHostRequestToJSON,
     FullHostFromJSON,
     FullHostToJSON,
+    GetAllHostsQueryFromJSON,
+    GetAllHostsQueryToJSON,
     HostResultsPageFromJSON,
     HostResultsPageToJSON,
     UpdateHostRequestFromJSON,
@@ -44,8 +47,7 @@ export interface CreateHostOperationRequest {
 
 export interface GetAllHostsRequest {
     uuid: string;
-    limit: number;
-    offset: number;
+    getAllHostsQuery: GetAllHostsQuery;
 }
 
 export interface GetHostRequest {
@@ -112,31 +114,22 @@ export class HostsApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getAllHosts.');
         }
 
-        if (requestParameters.limit === null || requestParameters.limit === undefined) {
-            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getAllHosts.');
-        }
-
-        if (requestParameters.offset === null || requestParameters.offset === undefined) {
-            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getAllHosts.');
+        if (requestParameters.getAllHostsQuery === null || requestParameters.getAllHostsQuery === undefined) {
+            throw new runtime.RequiredError('getAllHostsQuery','Required parameter requestParameters.getAllHostsQuery was null or undefined when calling getAllHosts.');
         }
 
         const queryParameters: any = {};
 
-        if (requestParameters.limit !== undefined) {
-            queryParameters['limit'] = requestParameters.limit;
-        }
-
-        if (requestParameters.offset !== undefined) {
-            queryParameters['offset'] = requestParameters.offset;
-        }
-
         const headerParameters: runtime.HTTPHeaders = {};
 
+        headerParameters['Content-Type'] = 'application/json';
+
         const response = await this.request({
-            path: `/api/v1/workspaces/{uuid}/hosts`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
-            method: 'GET',
+            path: `/api/v1/workspaces/{uuid}/hosts/all`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+            body: GetAllHostsQueryToJSON(requestParameters.getAllHostsQuery),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => HostResultsPageFromJSON(jsonValue));

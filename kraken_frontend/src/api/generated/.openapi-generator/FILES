@@ -61,7 +61,15 @@ models/FullWordlist.ts
 models/FullWorkspace.ts
 models/FullWorkspaceInvitation.ts
 models/FullWorkspaceTag.ts
+models/GetAllDomainsQuery.ts
+models/GetAllDomainsQueryAllOf.ts
+models/GetAllHostsQuery.ts
+models/GetAllHostsQueryAllOf.ts
 models/GetAllLeechesResponse.ts
+models/GetAllPortsQuery.ts
+models/GetAllPortsQueryAllOf.ts
+models/GetAllServicesQuery.ts
+models/GetAllServicesQueryAllOf.ts
 models/GetAllUsersResponse.ts
 models/GetAllWordlistsAdminResponse.ts
 models/GetAllWordlistsResponse.ts
@@ -88,6 +96,7 @@ models/ManualPortCertainty.ts
 models/ManualServiceCertainty.ts
 models/OpenRequestInfo.ts
 models/OsType.ts
+models/PageParams.ts
 models/PortCertainty.ts
 models/PortOrRange.ts
 models/PortProtocol.ts

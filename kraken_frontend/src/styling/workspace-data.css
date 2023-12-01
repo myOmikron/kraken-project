@@ -2,13 +2,20 @@
     grid-area: 2 / 1 / span 1 / span 1;
     display: grid;
     grid-template-columns: 8fr 3fr;
-    grid-template-rows: 3.5em calc(100% - 1em - 3.5em);
+    grid-template-rows: 2.75em 3.5em calc(100% - 1em - 2.75em - 1em - 3.5em);
     gap: 1em;
     animation: yourAnimation 0.3s step-End 0.4s 1 normal backwards;
 }
 
+.workspace-data-filter {
+    padding: 0.5em;
+}
+
+.workspace-data-filter > form {
+    display: contents;
+}
+
 .workspace-data-selector {
-    grid-area: 1 / 1 / span 1 / span 1;
     display: grid;
     width: 100%;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
