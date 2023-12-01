@@ -3,22 +3,34 @@ use std::fmt::Debug;
 /// Port AST
 #[derive(Default, Debug)]
 pub struct PortAST {
+    /// Filter ports by tags
     pub tags: Option<Or<String>>,
+
+    /// Filter ports by port numbers
     pub ports: Option<Or<MaybeRange<u16>>>,
 }
 
 /// OR expression
 #[derive(Debug, Clone)]
-pub struct Or<T>(pub Vec<And<T>>);
+pub struct Or<T>(
+    /// List of expressions to be `or`ed
+    pub Vec<And<T>>,
+);
 
 /// AND expression
 #[derive(Debug, Clone)]
-pub struct And<T>(pub Vec<Not<T>>);
+pub struct And<T>(
+    /// List of expressions to be `and`ed
+    pub Vec<Not<T>>,
+);
 
 /// Potentially negated expression
 #[derive(Debug, Clone)]
 pub struct Not<T> {
+    /// Should the value be negated
     pub is_negated: bool,
+
+    /// The leaf's value
     pub value: T,
 }
 

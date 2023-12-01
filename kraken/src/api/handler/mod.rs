@@ -33,6 +33,7 @@ use crate::api::handler::ports::FullPort;
 use crate::api::handler::services::FullService;
 use crate::api::handler::workspaces::{SearchEntry, SearchResultEntry};
 use crate::models::{AggregationSource, AggregationTable, Color, SourceType};
+use crate::modules::syntax::ParseError;
 
 pub mod api_keys;
 pub mod attack_results;
@@ -69,7 +70,7 @@ pub struct PathUuid {
 }
 
 /// Query parameters for paginated data
-#[derive(Deserialize, IntoParams)]
+#[derive(Copy, Clone, Deserialize, IntoParams, ToSchema)]
 pub struct PageParams {
     /// Number of items to retrieve
     #[param(example = 50, minimum = 1)]
@@ -231,6 +232,8 @@ pub enum ApiStatusCode {
     InvalidInvitation = 1028,
     /// The search term was invalid
     InvalidSearch = 1029,
+    /// The filter string is invalid
+    InvalidFilter = 1030,
 
     /// Internal server error
     InternalServerError = 2000,
@@ -361,6 +364,9 @@ pub enum ApiError {
     /// The search term was invalid
     #[error("The search term was invalid")]
     InvalidSearch,
+    /// The filter string is invalid
+    #[error("Failed to parse filter string: {0}")]
+    InvalidFilter(#[from] ParseError),
 
     /// An internal server error occurred
     #[error("Internal server error")]
@@ -612,6 +618,10 @@ impl actix_web::ResponseError for ApiError {
             )),
             ApiError::InvalidInvitation => HttpResponse::BadRequest().json(ApiErrorResponse::new(
                 ApiStatusCode::InvalidInvitation,
+                self.to_string(),
+            )),
+            ApiError::InvalidFilter(_) => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::InvalidFilter,
                 self.to_string(),
             )),
         }

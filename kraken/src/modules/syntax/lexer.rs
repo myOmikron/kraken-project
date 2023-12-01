@@ -66,9 +66,13 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, UnexpectedCharacter> {
     Ok(tokens)
 }
 
+/// Error when the lexer failed at an unexpected character
 #[derive(Error, Debug, Copy, Clone)]
 #[error("Got unexpected character '{}' at position {}", .character, .position)]
 pub struct UnexpectedCharacter {
+    /// The character's position (0-indexed, counting unicode codepoints)
     pub position: usize,
+
+    /// The unexpected character
     pub character: char,
 }

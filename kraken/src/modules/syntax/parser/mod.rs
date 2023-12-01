@@ -9,25 +9,40 @@ use self::cursor::Cursor;
 use self::value_parser::{parse_from_str, parse_string, wrap_maybe_range, ValueParser};
 use super::{tokenize, And, Not, Or, PortAST, Token, UnexpectedCharacter};
 
+/// An error encountered while parsing a filter ast
 #[derive(Debug, Error)]
 pub enum ParseError {
+    /// The lexer encountered an unexpected character
     #[error("{0}")]
     UnexpectedCharacter(#[from] UnexpectedCharacter),
 
+    /// A value couldn't be parsed
     #[error("Failed to parse value type: {0}")]
     ParseValue(Box<dyn StdError>),
 
+    /// Unexpected end of string
     #[error("Unexpected end of string")]
     UnexpectedEnd,
 
+    /// An unexpected token was encountered
     #[error("Unexpected token: {}", .got.displayable_type())]
-    UnexpectedToken { got: Token, exp: Token },
+    UnexpectedToken {
+        /// The token which was encountered
+        got: Token,
 
+        /// The token variant which was expected
+        ///
+        /// (only the variant carries meaning, its data might be empty)
+        exp: Token,
+    },
+
+    /// An unknown column was encountered
     #[error("Unknown column: {0}")]
     UnknownColumn(String),
 }
 
 impl PortAST {
+    /// Parse a string into a [`PortAST`]
     pub fn parse(input: &str) -> Result<Self, ParseError> {
         parse_ast(input, |ast: &mut PortAST, column, tokens| match column {
             "tags" => {

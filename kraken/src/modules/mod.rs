@@ -6,6 +6,7 @@ pub mod attack_results;
 pub mod attacks;
 pub mod cache;
 pub mod oauth;
+pub mod raw_query;
 pub mod syntax;
 pub mod tls;
 pub mod uri;

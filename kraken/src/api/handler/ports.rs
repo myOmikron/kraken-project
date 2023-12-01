@@ -7,7 +7,8 @@ use actix_web::{get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use ipnetwork::IpNetwork;
-use rorm::conditions::{BoxedCondition, Condition, DynamicCollection};
+use rorm::conditions::DynamicCollection;
+use rorm::db::sql::value::Value;
 use rorm::prelude::ForeignModelByField;
 use rorm::{and, insert, query, update, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
@@ -25,13 +26,25 @@ use crate::models::{
     AggregationSource, AggregationTable, GlobalTag, Host, ManualPort, ManualPortCertainty, Port,
     PortGlobalTag, PortProtocol, PortWorkspaceTag, Workspace, WorkspaceTag,
 };
+use crate::modules::raw_query::RawQueryBuilder;
+use crate::modules::syntax::PortAST;
 use crate::query_tags;
 
 /// Query parameters for filtering the ports to get
-#[derive(Deserialize, IntoParams)]
+#[derive(Deserialize, ToSchema)]
 pub struct GetAllPortsQuery {
+    /// The parameters controlling the page to query
+    #[serde(flatten)]
+    pub page: PageParams,
+
     /// Only get ports associated with a specific host
     pub host: Option<Uuid>,
+
+    /// An optional general filter to apply
+    pub global_filter: Option<String>,
+
+    /// An optional port specific filter to apply
+    pub port_filter: Option<String>,
 }
 
 /// The simple representation of a port
@@ -87,15 +100,14 @@ pub struct FullPort {
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    params(PathUuid, PageParams, GetAllPortsQuery),
+    request_body = GetAllPortsQuery,
+    params(PathUuid),
     security(("api_key" = []))
 )]
-#[get("/workspaces/{uuid}/ports")]
+#[post("/workspaces/{uuid}/ports/all")]
 pub async fn get_all_ports(
     path: Path<PathUuid>,
-    page_params: Query<PageParams>,
-    filter_params: Query<GetAllPortsQuery>,
-
+    params: Json<GetAllPortsQuery>,
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<PortResultsPage>> {
     let path = path.into_inner();
@@ -106,42 +118,45 @@ pub async fn get_all_ports(
         return Err(ApiError::MissingPrivileges);
     }
 
-    let (limit, offset) = get_page_params(page_params).await?;
+    let (limit, offset) = get_page_params(Query(params.page)).await?;
 
-    fn build_condition(workspace: Uuid, filter_params: &GetAllPortsQuery) -> BoxedCondition<'_> {
-        match filter_params {
-            GetAllPortsQuery { host: Some(host) } => and![
-                Port::F.workspace.equals(workspace),
-                Port::F.host.equals(*host)
-            ]
-            .boxed(),
-            GetAllPortsQuery { host: None } => Port::F.workspace.equals(workspace).boxed(),
-        }
+    let mut count_query = RawQueryBuilder::new((Port::F.uuid.count(),));
+    let mut select_query = RawQueryBuilder::new((
+        Port::F.uuid,
+        Port::F.port,
+        Port::F.protocol,
+        Port::F.comment,
+        Port::F.created_at,
+        Port::F.host.select_as::<Host>(),
+        Port::F.workspace,
+    ));
+
+    let port_filter = params
+        .port_filter
+        .as_deref()
+        .map(PortAST::parse)
+        .transpose()?;
+
+    if let Some(ast) = port_filter.as_ref() {
+        count_query.append_join(|sql, _values| ast.sql_join(sql));
+        select_query.append_join(|sql, _values| ast.sql_join(sql));
+        count_query.append_condition(|sql, values| ast.sql_condition(sql, values));
+        select_query.append_condition(|sql, values| ast.sql_condition(sql, values));
     }
 
-    let (total,) = query!(&mut tx, (Port::F.uuid.count(),))
-        .condition(build_condition(path.uuid, &filter_params))
-        .one()
-        .await?;
+    count_query.append_eq_condition(Port::F.workspace, Value::Uuid(path.uuid));
+    select_query.append_eq_condition(Port::F.workspace, Value::Uuid(path.uuid));
 
-    let ports: Vec<_> = query!(
-        &mut tx,
-        (
-            Port::F.uuid,
-            Port::F.port,
-            Port::F.protocol,
-            Port::F.comment,
-            Port::F.created_at,
-            Port::F.host as Host,
-            Port::F.workspace
-        )
-    )
-    .condition(build_condition(path.uuid, &filter_params))
-    .order_desc(Port::F.created_at)
-    .limit(limit)
-    .offset(offset)
-    .all()
-    .await?;
+    if let Some(host_uuid) = params.host {
+        count_query.append_eq_condition(Port::F.host, Value::Uuid(host_uuid));
+        select_query.append_eq_condition(Port::F.host, Value::Uuid(host_uuid));
+    }
+
+    select_query.order_desc(Port::F.created_at);
+    select_query.limit_offset(limit, offset);
+
+    let (total,) = count_query.one(&mut tx).await?;
+    let ports: Vec<_> = select_query.stream(&mut tx).try_collect().await?;
 
     let mut tags = HashMap::new();
 
