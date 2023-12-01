@@ -8,7 +8,6 @@ use std::sync::TryLockError;
 
 use actix_toolbox::tb_middleware::actix_session;
 use actix_web::body::BoxBody;
-use actix_web::web::Query;
 use actix_web::HttpResponse;
 use futures::TryStreamExt;
 use log::{debug, error, info, trace, warn};
@@ -130,9 +129,8 @@ mod utoipa_fix {
 
 const QUERY_LIMIT_MAX: u64 = 1000;
 
-pub(crate) async fn get_page_params(query: Query<PageParams>) -> Result<(u64, u64), ApiError> {
-    let PageParams { limit, offset } = query.into_inner();
-
+pub(crate) async fn get_page_params(query: PageParams) -> Result<(u64, u64), ApiError> {
+    let PageParams { limit, offset } = query;
     if limit > QUERY_LIMIT_MAX || limit == 0 {
         Err(ApiError::InvalidQueryLimit)
     } else {

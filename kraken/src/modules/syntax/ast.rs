@@ -1,6 +1,27 @@
 use std::fmt::Debug;
 
-/// Port AST
+/// AST for global filter
+#[derive(Default, Debug)]
+pub struct GlobalAST {
+    /// Filter by tags
+    pub tags: Option<Or<String>>,
+}
+
+/// AST for domain specific filter
+#[derive(Default, Debug)]
+pub struct DomainAST {
+    /// Filter by tags
+    pub tags: Option<Or<String>>,
+}
+
+/// AST for host specific filter
+#[derive(Default, Debug)]
+pub struct HostAST {
+    /// Filter by tags
+    pub tags: Option<Or<String>>,
+}
+
+/// AST for port specific filter
 #[derive(Default, Debug)]
 pub struct PortAST {
     /// Filter ports by tags
@@ -8,6 +29,13 @@ pub struct PortAST {
 
     /// Filter ports by port numbers
     pub ports: Option<Or<MaybeRange<u16>>>,
+}
+
+/// AST for service specific filter
+#[derive(Default, Debug)]
+pub struct ServiceAST {
+    /// Filter by tags
+    pub tags: Option<Or<String>>,
 }
 
 /// OR expression

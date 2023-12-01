@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use actix_web::web::{Json, Path, Query};
+use actix_web::web::{Json, Path};
 use actix_web::{get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
@@ -27,7 +27,7 @@ use crate::models::{
     PortGlobalTag, PortProtocol, PortWorkspaceTag, Workspace, WorkspaceTag,
 };
 use crate::modules::raw_query::RawQueryBuilder;
-use crate::modules::syntax::PortAST;
+use crate::modules::syntax::{GlobalAST, PortAST};
 use crate::query_tags;
 
 /// Query parameters for filtering the ports to get
@@ -118,7 +118,19 @@ pub async fn get_all_ports(
         return Err(ApiError::MissingPrivileges);
     }
 
-    let (limit, offset) = get_page_params(Query(params.page)).await?;
+    let (limit, offset) = get_page_params(params.page).await?;
+
+    let global_filter = params
+        .global_filter
+        .as_deref()
+        .map(GlobalAST::parse)
+        .transpose()?;
+
+    let port_filter = params
+        .port_filter
+        .as_deref()
+        .map(PortAST::parse)
+        .transpose()?;
 
     let mut count_query = RawQueryBuilder::new((Port::F.uuid.count(),));
     let mut select_query = RawQueryBuilder::new((
@@ -130,12 +142,6 @@ pub async fn get_all_ports(
         Port::F.host.select_as::<Host>(),
         Port::F.workspace,
     ));
-
-    let port_filter = params
-        .port_filter
-        .as_deref()
-        .map(PortAST::parse)
-        .transpose()?;
 
     if let Some(ast) = port_filter.as_ref() {
         count_query.append_join(|sql, _values| ast.sql_join(sql));

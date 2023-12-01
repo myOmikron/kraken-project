@@ -7,7 +7,10 @@ use thiserror::Error;
 
 use self::cursor::Cursor;
 use self::value_parser::{parse_from_str, parse_string, wrap_maybe_range, ValueParser};
-use super::{tokenize, And, Not, Or, PortAST, Token, UnexpectedCharacter};
+use super::{
+    tokenize, And, DomainAST, GlobalAST, HostAST, Not, Or, PortAST, ServiceAST, Token,
+    UnexpectedCharacter,
+};
 
 /// An error encountered while parsing a filter ast
 #[derive(Debug, Error)]
@@ -41,6 +44,54 @@ pub enum ParseError {
     UnknownColumn(String),
 }
 
+impl GlobalAST {
+    /// Parse a string into a [`GlobalAST`]
+    pub fn parse(input: &str) -> Result<Self, ParseError> {
+        parse_ast(input, |ast: &mut GlobalAST, column, tokens| match column {
+            "tags" => {
+                ast.tags
+                    .get_or_insert(Or(Vec::new()))
+                    .0
+                    .extend(parse_or(tokens, parse_string)?.0);
+                Ok(())
+            }
+            _ => Err(ParseError::UnknownColumn(column.to_string())),
+        })
+    }
+}
+
+impl DomainAST {
+    /// Parse a string into a [`DomainAST`]
+    pub fn parse(input: &str) -> Result<Self, ParseError> {
+        parse_ast(input, |ast: &mut DomainAST, column, tokens| match column {
+            "tags" => {
+                ast.tags
+                    .get_or_insert(Or(Vec::new()))
+                    .0
+                    .extend(parse_or(tokens, parse_string)?.0);
+                Ok(())
+            }
+            _ => Err(ParseError::UnknownColumn(column.to_string())),
+        })
+    }
+}
+
+impl HostAST {
+    /// Parse a string into a [`HostAST`]
+    pub fn parse(input: &str) -> Result<Self, ParseError> {
+        parse_ast(input, |ast: &mut HostAST, column, tokens| match column {
+            "tags" => {
+                ast.tags
+                    .get_or_insert(Or(Vec::new()))
+                    .0
+                    .extend(parse_or(tokens, parse_string)?.0);
+                Ok(())
+            }
+            _ => Err(ParseError::UnknownColumn(column.to_string())),
+        })
+    }
+}
+
 impl PortAST {
     /// Parse a string into a [`PortAST`]
     pub fn parse(input: &str) -> Result<Self, ParseError> {
@@ -57,6 +108,22 @@ impl PortAST {
                     .get_or_insert(Or(Vec::new()))
                     .0
                     .extend(parse_or(tokens, wrap_maybe_range(parse_from_str::<u16>))?.0);
+                Ok(())
+            }
+            _ => Err(ParseError::UnknownColumn(column.to_string())),
+        })
+    }
+}
+
+impl ServiceAST {
+    /// Parse a string into a [`ServiceAST`]
+    pub fn parse(input: &str) -> Result<Self, ParseError> {
+        parse_ast(input, |ast: &mut ServiceAST, column, tokens| match column {
+            "tags" => {
+                ast.tags
+                    .get_or_insert(Or(Vec::new()))
+                    .0
+                    .extend(parse_or(tokens, parse_string)?.0);
                 Ok(())
             }
             _ => Err(ParseError::UnknownColumn(column.to_string())),

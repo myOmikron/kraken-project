@@ -2,12 +2,14 @@
 
 use std::collections::HashMap;
 
-use actix_web::web::{Json, Path, Query};
+use actix_web::web::{Json, Path};
 use actix_web::{get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use ipnetwork::IpNetwork;
 use rorm::conditions::DynamicCollection;
+use rorm::db::sql::value::Value;
+use rorm::model::PatchSelector;
 use rorm::prelude::*;
 use rorm::{and, insert, query, update};
 use serde::{Deserialize, Serialize};
@@ -24,7 +26,23 @@ use crate::models::{
     AggregationSource, AggregationTable, GlobalTag, Host, HostGlobalTag, HostWorkspaceTag,
     ManualHost, ManualHostCertainty, OsType, Workspace, WorkspaceTag,
 };
+use crate::modules::raw_query::RawQueryBuilder;
+use crate::modules::syntax::{GlobalAST, HostAST};
 use crate::query_tags;
+
+/// Query parameters for filtering the hosts to get
+#[derive(Deserialize, ToSchema)]
+pub struct GetAllHostsQuery {
+    /// The parameters controlling the page to query
+    #[serde(flatten)]
+    pub page: PageParams,
+
+    /// An optional general filter to apply
+    pub global_filter: Option<String>,
+
+    /// An optional host specific filter to apply
+    pub host_filter: Option<String>,
+}
 
 /// The simple representation of a host
 #[derive(Serialize, Debug, ToSchema)]
@@ -78,13 +96,14 @@ pub struct FullHost {
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    params(PathUuid, PageParams),
+    request_body = GetAllHostsQuery,
+    params(PathUuid),
     security(("api_key" = []))
 )]
-#[get("/workspaces/{uuid}/hosts")]
+#[post("/workspaces/{uuid}/hosts/all")]
 pub(crate) async fn get_all_hosts(
     path: Path<PathUuid>,
-    query: Query<PageParams>,
+    params: Json<GetAllHostsQuery>,
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<HostResultsPage>> {
     let path = path.into_inner();
@@ -95,20 +114,38 @@ pub(crate) async fn get_all_hosts(
         return Err(ApiError::MissingPrivileges);
     }
 
-    let (limit, offset) = get_page_params(query).await?;
+    let (limit, offset) = get_page_params(params.page).await?;
 
-    let (total,) = query!(&mut tx, (Host::F.uuid.count()))
-        .condition(Host::F.workspace.equals(path.uuid))
-        .one()
-        .await?;
+    let global_filter = params
+        .global_filter
+        .as_deref()
+        .map(GlobalAST::parse)
+        .transpose()?;
 
-    let hosts = query!(&mut tx, Host)
-        .condition(Host::F.workspace.equals(path.uuid))
-        .order_desc(Host::F.created_at)
-        .limit(limit)
-        .offset(offset)
-        .all()
-        .await?;
+    let host_filter = params
+        .host_filter
+        .as_deref()
+        .map(HostAST::parse)
+        .transpose()?;
+
+    let mut count_query = RawQueryBuilder::new((Host::F.uuid.count(),));
+    let mut select_query = RawQueryBuilder::new(PatchSelector::<Host>::new());
+
+    if let Some(ast) = host_filter.as_ref() {
+        count_query.append_join(|sql, _values| ast.sql_join(sql));
+        select_query.append_join(|sql, _values| ast.sql_join(sql));
+        count_query.append_condition(|sql, values| ast.sql_condition(sql, values));
+        select_query.append_condition(|sql, values| ast.sql_condition(sql, values));
+    }
+
+    count_query.append_eq_condition(Host::F.workspace, Value::Uuid(path.uuid));
+    select_query.append_eq_condition(Host::F.workspace, Value::Uuid(path.uuid));
+
+    select_query.order_desc(Host::F.created_at);
+    select_query.limit_offset(limit, offset);
+
+    let (total,) = count_query.one(&mut tx).await?;
+    let hosts: Vec<_> = select_query.stream(&mut tx).try_collect().await?;
 
     let mut tags = HashMap::new();
     query_tags!(

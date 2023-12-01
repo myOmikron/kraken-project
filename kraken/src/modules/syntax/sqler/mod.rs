@@ -7,10 +7,76 @@ use rorm::db::sql::value::Value;
 use rorm::internal::field::Field;
 use rorm::prelude::*;
 
-use crate::models::{Port, PortGlobalTag, PortWorkspaceTag};
+use crate::models::{
+    Domain, DomainGlobalTag, DomainWorkspaceTag, Host, HostGlobalTag, HostWorkspaceTag, Port,
+    PortGlobalTag, PortWorkspaceTag, Service, ServiceGlobalTag, ServiceWorkspaceTag,
+};
 use crate::modules::syntax::sqler::value_sqler::{sql_ports, sql_tags, ValueSqler};
-use crate::modules::syntax::{And, Not, Or, PortAST};
+use crate::modules::syntax::{And, DomainAST, HostAST, Not, Or, PortAST, ServiceAST};
+impl DomainAST {
+    /// Write additional joins required for the conditions to a string
+    pub fn sql_join(&self, sql: &mut String) -> fmt::Result {
+        const DOMAIN: &str = Domain::TABLE;
+        const DOMAIN_UUID: &str = <field!(Domain::F.uuid)>::NAME;
 
+        if self.tags.is_some() {
+            write!(
+                sql,
+                r#" JOIN ({}) AS "tags" ON "{DOMAIN}"."{DOMAIN_UUID}" = "tags"."{DOMAIN_UUID}""#,
+                crate::tags_table!(Domain, w: DomainWorkspaceTag::F.domain, g: DomainGlobalTag::F.domain)
+            )?;
+        }
+        Ok(())
+    }
+
+    /// Write the conditions to a string
+    pub fn sql_condition<'a>(
+        &'a self,
+        sql: &mut String,
+        values: &mut Vec<Value<'a>>,
+    ) -> fmt::Result {
+        write!(sql, "true")?;
+
+        if let Some(tags) = self.tags.as_ref() {
+            write!(sql, " AND ")?;
+            sql_or(tags, &mut *sql, &mut *values, sql_tags)?;
+        }
+
+        Ok(())
+    }
+}
+impl HostAST {
+    /// Write additional joins required for the conditions to a string
+    pub fn sql_join(&self, sql: &mut String) -> fmt::Result {
+        const HOST: &str = Host::TABLE;
+        const HOST_UUID: &str = <field!(Host::F.uuid)>::NAME;
+
+        if self.tags.is_some() {
+            write!(
+                sql,
+                r#" JOIN ({}) AS "tags" ON "{HOST}"."{HOST_UUID}" = "tags"."{HOST_UUID}""#,
+                crate::tags_table!(Host, w: HostWorkspaceTag::F.host, g: HostGlobalTag::F.host)
+            )?;
+        }
+        Ok(())
+    }
+
+    /// Write the conditions to a string
+    pub fn sql_condition<'a>(
+        &'a self,
+        sql: &mut String,
+        values: &mut Vec<Value<'a>>,
+    ) -> fmt::Result {
+        write!(sql, "true")?;
+
+        if let Some(tags) = self.tags.as_ref() {
+            write!(sql, " AND ")?;
+            sql_or(tags, &mut *sql, &mut *values, sql_tags)?;
+        }
+
+        Ok(())
+    }
+}
 impl PortAST {
     /// Write additional joins required for the conditions to a string
     pub fn sql_join(&self, sql: &mut String) -> fmt::Result {
@@ -33,9 +99,8 @@ impl PortAST {
         sql: &mut String,
         values: &mut Vec<Value<'a>>,
     ) -> fmt::Result {
-        let len = sql.len();
-
         write!(sql, "true")?;
+
         if let Some(tags) = self.tags.as_ref() {
             write!(sql, " AND ")?;
             sql_or(tags, &mut *sql, &mut *values, sql_tags)?;
@@ -45,9 +110,38 @@ impl PortAST {
             sql_or(ports, &mut *sql, &mut *values, sql_ports)?;
         }
 
-        if len == sql.len() {
-            write!(sql, "true")?;
+        Ok(())
+    }
+}
+impl ServiceAST {
+    /// Write additional joins required for the conditions to a string
+    pub fn sql_join(&self, sql: &mut String) -> fmt::Result {
+        const SERVICE: &str = Service::TABLE;
+        const SERVICE_UUID: &str = <field!(Service::F.uuid)>::NAME;
+
+        if self.tags.is_some() {
+            write!(
+                sql,
+                r#" JOIN ({}) AS "tags" ON "{SERVICE}"."{SERVICE_UUID}" = "tags"."{SERVICE_UUID}""#,
+                crate::tags_table!(Service, w: ServiceWorkspaceTag::F.service, g: ServiceGlobalTag::F.service)
+            )?;
         }
+        Ok(())
+    }
+
+    /// Write the conditions to a string
+    pub fn sql_condition<'a>(
+        &'a self,
+        sql: &mut String,
+        values: &mut Vec<Value<'a>>,
+    ) -> fmt::Result {
+        write!(sql, "true")?;
+
+        if let Some(tags) = self.tags.as_ref() {
+            write!(sql, " AND ")?;
+            sql_or(tags, &mut *sql, &mut *values, sql_tags)?;
+        }
+
         Ok(())
     }
 }
