@@ -202,7 +202,7 @@ pub async fn resolve(
 
                             if let Some(RData::CNAME(target)) = record.data() {
                                 let mut target = target.to_string();
-                                if target.ends_with(',') {
+                                if target.ends_with('.') {
                                     target.pop();
                                 }
                                 let res = BruteforceSubdomainResult::Cname {
