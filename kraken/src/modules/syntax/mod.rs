@@ -1,8 +1,9 @@
 //! This module holds all the code for lexing & parsing the filter syntax
 
-pub use ast::*;
-pub use lexer::*;
-pub use parser::ParseError;
+pub use self::ast::*;
+pub use self::lexer::*;
+pub use self::parser::ParseError;
+pub use self::sqler::JoinTags;
 
 mod ast;
 mod lexer;

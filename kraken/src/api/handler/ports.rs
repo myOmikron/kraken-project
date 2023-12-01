@@ -27,7 +27,7 @@ use crate::models::{
     PortGlobalTag, PortProtocol, PortWorkspaceTag, Workspace, WorkspaceTag,
 };
 use crate::modules::raw_query::RawQueryBuilder;
-use crate::modules::syntax::{GlobalAST, PortAST};
+use crate::modules::syntax::{GlobalAST, JoinTags, PortAST};
 use crate::query_tags;
 
 /// Query parameters for filtering the ports to get
@@ -125,12 +125,14 @@ pub async fn get_all_ports(
         .as_deref()
         .map(GlobalAST::parse)
         .transpose()?;
+    let global_filter = global_filter.as_ref();
 
     let port_filter = params
         .port_filter
         .as_deref()
         .map(PortAST::parse)
         .transpose()?;
+    let port_filter = port_filter.as_ref();
 
     let mut count_query = RawQueryBuilder::new((Port::F.uuid.count(),));
     let mut select_query = RawQueryBuilder::new((
@@ -143,9 +145,20 @@ pub async fn get_all_ports(
         Port::F.workspace,
     ));
 
-    if let Some(ast) = port_filter.as_ref() {
-        count_query.append_join(|sql, _values| ast.sql_join(sql));
-        select_query.append_join(|sql, _values| ast.sql_join(sql));
+    if global_filter
+        .and_then(|ast| ast.tags.as_ref())
+        .or(port_filter.and_then(|ast| ast.tags.as_ref()))
+        .is_some()
+    {
+        count_query.append_join(JoinTags::port());
+        select_query.append_join(JoinTags::port());
+    }
+
+    if let Some(ast) = global_filter {
+        count_query.append_condition(|sql, values| ast.sql_condition(sql, values));
+        select_query.append_condition(|sql, values| ast.sql_condition(sql, values));
+    }
+    if let Some(ast) = port_filter {
         count_query.append_condition(|sql, values| ast.sql_condition(sql, values));
         select_query.append_condition(|sql, values| ast.sql_condition(sql, values));
     }

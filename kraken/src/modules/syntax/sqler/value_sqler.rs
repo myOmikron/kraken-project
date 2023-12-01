@@ -18,15 +18,6 @@ impl<T, F: for<'a> Fn(&'a T, &mut String, &mut Vec<Value<'a>>) -> fmt::Result + 
 {
 }
 
-pub fn sql_tags<'a>(tag: &'a String, sql: &mut String, values: &mut Vec<Value<'a>>) -> fmt::Result {
-    values.push(Value::String(tag));
-    write!(
-        sql,
-        r#"(ARRAY[${i}]::VARCHAR[] <@ "tags"."tags")"#,
-        i = values.len()
-    )
-}
-
 pub fn sql_ports<'a>(
     port: &'a MaybeRange<u16>,
     sql: &mut String,

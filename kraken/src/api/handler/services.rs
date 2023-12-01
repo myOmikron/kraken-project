@@ -29,7 +29,7 @@ use crate::models::{
     WorkspaceTag,
 };
 use crate::modules::raw_query::RawQueryBuilder;
-use crate::modules::syntax::{GlobalAST, ServiceAST};
+use crate::modules::syntax::{GlobalAST, JoinTags, ServiceAST};
 use crate::query_tags;
 
 /// Query parameters for filtering the services to get
@@ -130,12 +130,14 @@ pub async fn get_all_services(
         .as_deref()
         .map(GlobalAST::parse)
         .transpose()?;
+    let global_filter = global_filter.as_ref();
 
     let service_filter = params
         .service_filter
         .as_deref()
         .map(ServiceAST::parse)
         .transpose()?;
+    let service_filter = service_filter.as_ref();
 
     let mut count_query = RawQueryBuilder::new((Service::F.uuid.count(),));
     let mut select_query = RawQueryBuilder::new((
@@ -150,9 +152,20 @@ pub async fn get_all_services(
         Service::F.workspace,
     ));
 
-    if let Some(ast) = service_filter.as_ref() {
-        count_query.append_join(|sql, _values| ast.sql_join(sql));
-        select_query.append_join(|sql, _values| ast.sql_join(sql));
+    if global_filter
+        .and_then(|ast| ast.tags.as_ref())
+        .or(service_filter.and_then(|ast| ast.tags.as_ref()))
+        .is_some()
+    {
+        count_query.append_join(JoinTags::service());
+        select_query.append_join(JoinTags::service());
+    }
+
+    if let Some(ast) = global_filter {
+        count_query.append_condition(|sql, values| ast.sql_condition(sql, values));
+        select_query.append_condition(|sql, values| ast.sql_condition(sql, values));
+    }
+    if let Some(ast) = service_filter {
         count_query.append_condition(|sql, values| ast.sql_condition(sql, values));
         select_query.append_condition(|sql, values| ast.sql_condition(sql, values));
     }

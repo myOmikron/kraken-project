@@ -85,13 +85,10 @@ impl<'a, S: Selector> RawQueryBuilder<'a, S> {
     /// ```ignore
     /// query.append_join(|sql, _| write!(sql, " JOIN table ON some_condition"));
     /// ```
-    pub fn append_join(
-        &mut self,
-        append: impl FnOnce(&mut String, &mut Vec<Value<'a>>) -> fmt::Result,
-    ) {
+    pub fn append_join(&mut self, join: impl RawJoin<'a>) {
         assert!(self.position <= QueryBuilderPosition::Join);
 
-        handle_fmt(|| append(&mut self.sql, &mut self.values));
+        handle_fmt(move || join.append(&mut self.sql, &mut self.values));
     }
 
     /// Append a condition to the `WHERE` clause.
@@ -223,6 +220,17 @@ impl<'a, S: Selector> RawQueryBuilder<'a, S> {
         executor
             .execute::<executor::Stream>(self.sql, self.values)
             .map(move |result| self.decoder.by_name(&result?))
+    }
+}
+
+/// Some type which represents a raw join
+pub trait RawJoin<'a> {
+    /// Append the sql for the join
+    fn append(self, sql: &mut String, values: &mut Vec<Value<'a>>) -> fmt::Result;
+}
+impl<'a, F: FnOnce(&mut String, &mut Vec<Value<'a>>) -> fmt::Result> RawJoin<'a> for F {
+    fn append(self, sql: &mut String, values: &mut Vec<Value<'a>>) -> fmt::Result {
+        self(sql, values)
     }
 }
 
