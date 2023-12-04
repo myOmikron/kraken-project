@@ -26,8 +26,8 @@ use crate::models::{
     AggregationSource, AggregationTable, GlobalTag, Host, ManualPort, ManualPortCertainty, Port,
     PortGlobalTag, PortProtocol, PortWorkspaceTag, Workspace, WorkspaceTag,
 };
+use crate::modules::filter::{GlobalAST, PortAST};
 use crate::modules::raw_query::RawQueryBuilder;
-use crate::modules::syntax::{GlobalAST, PortAST};
 use crate::query_tags;
 
 /// Query parameters for filtering the ports to get

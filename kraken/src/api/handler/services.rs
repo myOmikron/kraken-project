@@ -28,8 +28,8 @@ use crate::models::{
     Port, Service, ServiceCertainty, ServiceGlobalTag, ServiceWorkspaceTag, Workspace,
     WorkspaceTag,
 };
+use crate::modules::filter::{GlobalAST, ServiceAST};
 use crate::modules::raw_query::RawQueryBuilder;
-use crate::modules::syntax::{GlobalAST, ServiceAST};
 use crate::query_tags;
 
 /// Query parameters for filtering the services to get

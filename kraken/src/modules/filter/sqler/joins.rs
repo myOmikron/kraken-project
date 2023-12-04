@@ -60,7 +60,7 @@ macro_rules! join_tags {
             $GlobalModel, $TargetModel, $WorkspaceModel, GlobalTag, WorkspaceTag,
         };
 
-        $crate::modules::syntax::sqler::joins::JoinTags {
+        $crate::modules::filter::sqler::joins::JoinTags {
             target: $TargetModel::TABLE,
             target_uuid: <field!($TargetModel::F.uuid)>::NAME,
 

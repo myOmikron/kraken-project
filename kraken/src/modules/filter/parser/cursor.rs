@@ -1,9 +1,13 @@
 use std::iter::Peekable;
 use std::slice;
 
-use super::super::Token;
-use super::ParseError;
+use crate::modules::filter::lexer::Token;
+use crate::modules::filter::ParseError;
 
+/// An iterator over [`Token`] specialized for our parser
+///
+/// 1. methods don't return `Option<_>` but `Result<_, ParseError>`
+/// 2. use `next_value` as shorthand for `next_token` with the additional check
 #[derive(Clone)]
 pub struct Cursor<'a>(Peekable<slice::Iter<'a, Token>>);
 

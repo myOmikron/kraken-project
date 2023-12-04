@@ -2,10 +2,10 @@ use std::str::FromStr;
 
 use serde::de::StdError;
 
-use super::super::{MaybeRange, Range, Token};
-use super::cursor::Cursor;
-use super::ParseError;
 use crate::models::PortProtocol;
+use crate::modules::filter::lexer::Token;
+use crate::modules::filter::parser::cursor::Cursor;
+use crate::modules::filter::{MaybeRange, ParseError, Range};
 
 /// Trait alias for `Fn(&mut Cursor) -> Result<T, ParseError>` and `Copy`
 pub trait ValueParser<T>: Fn(&mut Cursor) -> Result<T, ParseError> + Copy {}
@@ -27,6 +27,7 @@ where
         .map_err(|error| ParseError::ParseValue(Box::new(error)))
 }
 
+/// Parse a single [`PortProtocol`]
 pub fn parse_port_protocol(tokens: &mut Cursor) -> Result<PortProtocol, ParseError> {
     let string = tokens.next_value()?;
     if string.eq_ignore_ascii_case("tcp") {

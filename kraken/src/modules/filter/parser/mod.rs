@@ -1,51 +1,16 @@
 mod cursor;
 mod value_parser;
 
-use std::error::Error as StdError;
-
 use chrono::{DateTime, Utc};
 use ipnetwork::IpNetwork;
-use thiserror::Error;
 
 use self::cursor::Cursor;
 use self::value_parser::{parse_from_str, parse_string, wrap_maybe_range, ValueParser};
-use super::{
-    tokenize, And, DomainAST, GlobalAST, HostAST, Not, Or, PortAST, ServiceAST, Token,
-    UnexpectedCharacter,
+use crate::modules::filter::lexer::{tokenize, Token};
+use crate::modules::filter::parser::value_parser::{parse_port_protocol, wrap_range};
+use crate::modules::filter::{
+    And, DomainAST, GlobalAST, HostAST, Not, Or, ParseError, PortAST, ServiceAST,
 };
-use crate::modules::syntax::parser::value_parser::{parse_port_protocol, wrap_range};
-
-/// An error encountered while parsing a filter ast
-#[derive(Debug, Error)]
-pub enum ParseError {
-    /// The lexer encountered an unexpected character
-    #[error("{0}")]
-    UnexpectedCharacter(#[from] UnexpectedCharacter),
-
-    /// A value couldn't be parsed
-    #[error("Failed to parse value type: {0}")]
-    ParseValue(Box<dyn StdError>),
-
-    /// Unexpected end of string
-    #[error("Unexpected end of string")]
-    UnexpectedEnd,
-
-    /// An unexpected token was encountered
-    #[error("Unexpected token: {}", .got.displayable_type())]
-    UnexpectedToken {
-        /// The token which was encountered
-        got: Token,
-
-        /// The token variant which was expected
-        ///
-        /// (only the variant carries meaning, its data might be empty)
-        exp: Token,
-    },
-
-    /// An unknown column was encountered
-    #[error("Unknown column: {0}")]
-    UnknownColumn(String),
-}
 
 impl GlobalAST {
     /// Parse a string into a [`GlobalAST`]
@@ -173,6 +138,12 @@ impl ServiceAST {
     }
 }
 
+/// Helper function to be called from `...AST::parse`
+///
+/// ## Arguments
+/// - `input` is the source string to parse
+/// - `parse_column` is a callback which is invoked with each column which is encountered.
+///     Its arguments are the ast being constructed, the column's name and the cursor to parse the column's expression.
 pub fn parse_ast<A: Default>(
     input: &str,
     parse_column: impl Fn(&mut A, &str, &mut Cursor) -> Result<(), ParseError>,
@@ -195,6 +166,10 @@ pub fn parse_ast<A: Default>(
     Ok(ast)
 }
 
+/// Helper function to be called in `parse_ast`'s callback.
+///
+/// It parses an expression using a [`ValueParser`] to parse the leaves
+/// and adds the result to the ast under construction.
 pub fn parse_ast_field<T>(
     ast_field: &mut Option<Or<T>>,
     tokens: &mut Cursor,
@@ -207,6 +182,7 @@ pub fn parse_ast_field<T>(
     Ok(())
 }
 
+/// Parse an [`Or`] expression using a [`ValueParser`] to parse the leaves
 pub fn parse_or<T>(
     tokens: &mut Cursor,
     parse_value: impl ValueParser<T>,
@@ -219,6 +195,7 @@ pub fn parse_or<T>(
     Ok(Or(list))
 }
 
+/// Parse an [`And`] expression using a [`ValueParser`] to parse the leaves
 pub fn parse_and<T>(
     tokens: &mut Cursor,
     parse_value: impl ValueParser<T>,
@@ -231,6 +208,7 @@ pub fn parse_and<T>(
     Ok(And(list))
 }
 
+/// Parse a [`Not`] expression using a [`ValueParser`] to parse the potentially negated value
 pub fn parse_not<T>(
     tokens: &mut Cursor,
     parse_value: impl ValueParser<T>,

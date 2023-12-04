@@ -26,8 +26,8 @@ use crate::models::{
     AggregationSource, AggregationTable, GlobalTag, Host, HostGlobalTag, HostWorkspaceTag,
     ManualHost, ManualHostCertainty, OsType, Workspace, WorkspaceTag,
 };
+use crate::modules::filter::{GlobalAST, HostAST};
 use crate::modules::raw_query::RawQueryBuilder;
-use crate::modules::syntax::{GlobalAST, HostAST};
 use crate::query_tags;
 
 /// Query parameters for filtering the hosts to get

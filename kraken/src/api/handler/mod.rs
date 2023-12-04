@@ -32,7 +32,7 @@ use crate::api::handler::ports::FullPort;
 use crate::api::handler::services::FullService;
 use crate::api::handler::workspaces::{SearchEntry, SearchResultEntry};
 use crate::models::{AggregationSource, AggregationTable, Color, SourceType};
-use crate::modules::syntax::ParseError;
+use crate::modules::filter::ParseError;
 
 pub mod api_keys;
 pub mod attack_results;

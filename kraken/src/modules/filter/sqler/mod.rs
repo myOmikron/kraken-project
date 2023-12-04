@@ -9,15 +9,18 @@ use rorm::db::sql::value::Value;
 use rorm::prelude::*;
 
 use crate::models::{Domain, Host, Port, Service};
-use crate::modules::raw_query::RawQueryBuilder;
-use crate::modules::syntax::sqler::joins::{JoinPorts, JoinTags};
-use crate::modules::syntax::sqler::value_sqler::{
+use crate::modules::filter::sqler::joins::{JoinPorts, JoinTags};
+use crate::modules::filter::sqler::value_sqler::{
     CreatedAtSqler, IpSqler, NullablePortSqler, PortProtocolSqler, PortSqler, StringEqSqler,
     TagSqler, ValueSqler,
 };
-use crate::modules::syntax::{And, DomainAST, GlobalAST, HostAST, Not, Or, PortAST, ServiceAST};
+use crate::modules::filter::{And, DomainAST, GlobalAST, HostAST, Not, Or, PortAST, ServiceAST};
+use crate::modules::raw_query::RawQueryBuilder;
 
 impl DomainAST {
+    /// Apply the domain specific ast as well as the global ast to a query builder.
+    ///
+    /// The query builder has to be in its `join` position and might end in its `where` position.
     pub fn apply_to_query<'a>(
         &'a self,
         global: &'a GlobalAST,
@@ -43,6 +46,9 @@ impl DomainAST {
     }
 }
 impl HostAST {
+    /// Apply the host specific ast as well as the global ast to a query builder.
+    ///
+    /// The query builder has to be in its `join` position and might end in its `where` position.
     pub fn apply_to_query<'a>(
         &'a self,
         global: &'a GlobalAST,
@@ -67,6 +73,9 @@ impl HostAST {
     }
 }
 impl PortAST {
+    /// Apply the port specific ast as well as the global ast to a query builder.
+    ///
+    /// The query builder has to be in its `join` position and might end in its `where` position.
     pub fn apply_to_query<'a>(
         &'a self,
         global: &'a GlobalAST,
@@ -95,6 +104,9 @@ impl PortAST {
     }
 }
 impl ServiceAST {
+    /// Apply the service specific ast as well as the global ast to a query builder.
+    ///
+    /// The query builder has to be in its `join` position and might end in its `where` position.
     pub fn apply_to_query<'a>(
         &'a self,
         global: &'a GlobalAST,
@@ -130,6 +142,9 @@ impl ServiceAST {
     }
 }
 
+/// Helper function to be called from `...AST::apply_to_query`
+///
+/// It checks a field to be `Some` and appends it to the query builder
 pub fn add_ast_field<'a, T>(
     query_builder: &mut RawQueryBuilder<'a, impl Selector>,
     field: &'a Option<Or<T>>,
@@ -140,6 +155,7 @@ pub fn add_ast_field<'a, T>(
     }
 }
 
+/// Write an [`Or`] expression to sql using a [`ValueSqler`] to write the leaves
 pub fn sql_or<'a, T>(
     or: &'a Or<T>,
     sql: &mut String,
@@ -162,6 +178,7 @@ pub fn sql_or<'a, T>(
     }
 }
 
+/// Write an [`And`] expression to sql using a [`ValueSqler`] to write the leaves
 pub fn sql_and<'a, T>(
     and: &'a And<T>,
     sql: &mut String,
@@ -184,6 +201,7 @@ pub fn sql_and<'a, T>(
     }
 }
 
+/// Write a [`Not`] to sql expression using a [`ValueSqler`] to write the potentially negated value
 pub fn sql_not<'a, T>(
     not: &'a Not<T>,
     sql: &mut String,

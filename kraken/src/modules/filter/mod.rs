@@ -1,9 +1,18 @@
+//! This module holds all the code for lexing & parsing the filter syntax
+
+mod lexer;
+mod parser;
+mod sqler;
+
+use std::error::Error as StdError;
 use std::fmt::Debug;
 
 use chrono::{DateTime, Utc};
 use ipnetwork::IpNetwork;
+use thiserror::Error;
 
 use crate::models::PortProtocol;
+use crate::modules::filter::lexer::{Token, UnexpectedCharacter};
 
 /// AST for global filter
 #[derive(Default, Debug)]
@@ -77,6 +86,38 @@ pub struct ServiceAST {
 
     /// Filter by service name
     pub names: Option<Or<String>>,
+}
+
+/// An error encountered while parsing a filter ast
+#[derive(Debug, Error)]
+pub enum ParseError {
+    /// The lexer encountered an unexpected character
+    #[error("{0}")]
+    UnexpectedCharacter(#[from] UnexpectedCharacter),
+
+    /// A value couldn't be parsed
+    #[error("Failed to parse value type: {0}")]
+    ParseValue(Box<dyn StdError>),
+
+    /// Unexpected end of string
+    #[error("Unexpected end of string")]
+    UnexpectedEnd,
+
+    /// An unexpected token was encountered
+    #[error("Unexpected token: {}", .got.displayable_type())]
+    UnexpectedToken {
+        /// The token which was encountered
+        got: Token,
+
+        /// The token variant which was expected
+        ///
+        /// (only the variant carries meaning, its data might be empty)
+        exp: Token,
+    },
+
+    /// An unknown column was encountered
+    #[error("Unknown column: {0}")]
+    UnknownColumn(String),
 }
 
 /// OR expression

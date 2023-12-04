@@ -11,7 +11,11 @@ use rorm::prelude::*;
 use super::super::{MaybeRange, Range};
 use crate::models::PortProtocol;
 
+/// Controls how values are written to sql
+///
+/// "Value" in this context means some comparison for a queried table to match the given value
 pub trait ValueSqler<T> {
+    /// Write a value to sql
     fn sql_value<'a>(
         &self,
         value: &'a T,
@@ -20,7 +24,9 @@ pub trait ValueSqler<T> {
     ) -> fmt::Result;
 }
 
-// This sqler requires the [`JoinTags`]
+/// Checks whether a tag is set on the aggregated model
+///
+/// Requires the [`JoinTags`] to be applied.
 pub struct TagSqler;
 impl<T: AsRef<str>> ValueSqler<T> for TagSqler {
     fn sql_value<'a>(
@@ -38,6 +44,7 @@ impl<T: AsRef<str>> ValueSqler<T> for TagSqler {
     }
 }
 
+/// Checks the `created_at` column to lie in a certain range
 pub struct CreatedAtSqler {
     table: &'static str,
     column: &'static str,
@@ -104,6 +111,7 @@ impl ValueSqler<Range<DateTime<Utc>>> for CreatedAtSqler {
     }
 }
 
+/// Checks the `port` column to lie in a certain range or be a specific port
 pub struct PortSqler {
     table: &'static str,
     column: &'static str,
@@ -175,6 +183,12 @@ impl ValueSqler<MaybeRange<u16>> for PortSqler {
         }
     }
 }
+
+/// Like [`PortSqler`] but it handles `NULL` values:
+///
+/// A `NULL` never lies in a range and is not a specific port.
+/// The difference to [`PortSqler`] is that
+/// in sql `port = ?` and `NOT port = ?` both evaluate to `false`, if `port` is `NULL`.
 pub struct NullablePortSqler(pub PortSqler);
 impl ValueSqler<MaybeRange<u16>> for NullablePortSqler {
     fn sql_value<'a>(
@@ -190,6 +204,7 @@ impl ValueSqler<MaybeRange<u16>> for NullablePortSqler {
     }
 }
 
+/// Checks the `ip_addr` column to lie in a certain ip network
 pub struct IpSqler {
     table: &'static str,
     column: &'static str,
@@ -215,6 +230,7 @@ impl ValueSqler<IpNetwork> for IpSqler {
     }
 }
 
+/// Checks a string column to be equal to a certain value
 pub struct StringEqSqler {
     table: &'static str,
     column: &'static str,
@@ -240,6 +256,7 @@ impl<T: AsRef<str>> ValueSqler<T> for StringEqSqler {
     }
 }
 
+/// Checks a [`PortProtocol`] column to be equal to a certain value
 pub struct PortProtocolSqler {
     table: &'static str,
     column: &'static str,

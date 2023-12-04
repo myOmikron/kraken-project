@@ -28,8 +28,8 @@ use crate::models::{
     AggregationSource, AggregationTable, Domain, DomainGlobalTag, DomainHostRelation,
     DomainWorkspaceTag, GlobalTag, ManualDomain, Workspace, WorkspaceTag,
 };
+use crate::modules::filter::{DomainAST, GlobalAST};
 use crate::modules::raw_query::RawQueryBuilder;
-use crate::modules::syntax::{DomainAST, GlobalAST};
 use crate::query_tags;
 
 /// Query parameters for filtering the domains to get
