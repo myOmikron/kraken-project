@@ -6,9 +6,10 @@ use rorm::prelude::*;
 use rorm::{insert, query};
 use uuid::Uuid;
 
+use crate::chan::GLOBAL;
 use crate::models::{
-    AggregationSource, AggregationTable, Attack, DnsRecordType, DnsResolutionResultInsert, Domain,
-    DomainCertainty, DomainDomainRelation, DomainHostRelation, Host, HostCertainty, SourceType,
+    AggregationSource, AggregationTable, Attack, DnsRecordType, DnsResolutionResultInsert,
+    DomainCertainty, DomainDomainRelation, DomainHostRelation, HostCertainty, SourceType,
 };
 
 /// Store a dns resolution's result and update the aggregated domains and hosts
@@ -41,24 +42,26 @@ pub async fn store_dns_resolution_result(
         })
         .await?;
 
-    let source_uuid = Domain::aggregate(
-        &mut *tx,
-        workspace_uuid,
-        &source,
-        DomainCertainty::Verified, // we just queried this domain
-        user_uuid,
-    )
-    .await?;
+    let source_uuid = GLOBAL
+        .aggregator
+        .aggregate_domain(
+            workspace_uuid,
+            &source,
+            DomainCertainty::Verified, // we just queried this domain
+            user_uuid,
+        )
+        .await?;
 
     let destination = match dns_record_type {
         DnsRecordType::A | DnsRecordType::Aaaa => {
-            let host_uuid = Host::aggregate(
-                &mut *tx,
-                workspace_uuid,
-                IpNetwork::from_str(&destination).unwrap(),
-                HostCertainty::SupposedTo, // there is a current dns record to it
-            )
-            .await?;
+            let host_uuid = GLOBAL
+                .aggregator
+                .aggregate_host(
+                    workspace_uuid,
+                    IpNetwork::from_str(&destination).unwrap(),
+                    HostCertainty::SupposedTo, // there is a current dns record to it
+                )
+                .await?;
 
             DomainHostRelation::insert_if_missing(
                 &mut *tx,
@@ -72,14 +75,15 @@ pub async fn store_dns_resolution_result(
             Some((AggregationTable::Host, host_uuid))
         }
         DnsRecordType::Cname => {
-            let destination_uuid = Domain::aggregate(
-                &mut *tx,
-                workspace_uuid,
-                &destination,
-                DomainCertainty::Unverified, // we haven't queried this domain yet
-                user_uuid,
-            )
-            .await?;
+            let destination_uuid = GLOBAL
+                .aggregator
+                .aggregate_domain(
+                    workspace_uuid,
+                    &destination,
+                    DomainCertainty::Unverified, // we haven't queried this domain yet
+                    user_uuid,
+                )
+                .await?;
 
             DomainDomainRelation::insert_if_missing(
                 &mut *tx,

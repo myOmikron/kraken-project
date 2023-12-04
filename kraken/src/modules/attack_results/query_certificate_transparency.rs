@@ -4,9 +4,10 @@ use rorm::prelude::*;
 use rorm::{insert, query};
 use uuid::Uuid;
 
+use crate::chan::GLOBAL;
 use crate::models::{
     AggregationSource, AggregationTable, Attack, CertificateTransparencyResultInsert,
-    CertificateTransparencyValueNameInsert, Domain, DomainCertainty, SourceType,
+    CertificateTransparencyValueNameInsert, DomainCertainty, SourceType,
 };
 use crate::rpc::rpc_definitions::shared::CertEntry;
 
@@ -64,25 +65,27 @@ pub async fn store_query_certificate_transparency_result(
 
     let mut domains = Vec::new();
     domains.push(
-        Domain::aggregate(
-            &mut *tx,
-            workspace_uuid,
-            &entry.common_name,
-            DomainCertainty::Unverified,
-            user_uuid,
-        )
-        .await?,
-    );
-    for value in &entry.value_names {
-        domains.push(
-            Domain::aggregate(
-                &mut *tx,
+        GLOBAL
+            .aggregator
+            .aggregate_domain(
                 workspace_uuid,
-                value,
+                &entry.common_name,
                 DomainCertainty::Unverified,
                 user_uuid,
             )
             .await?,
+    );
+    for value in &entry.value_names {
+        domains.push(
+            GLOBAL
+                .aggregator
+                .aggregate_domain(
+                    workspace_uuid,
+                    value,
+                    DomainCertainty::Unverified,
+                    user_uuid,
+                )
+                .await?,
         );
     }
 

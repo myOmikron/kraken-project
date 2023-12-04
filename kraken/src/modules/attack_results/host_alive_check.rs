@@ -4,8 +4,9 @@ use rorm::insert;
 use rorm::prelude::*;
 use uuid::Uuid;
 
+use crate::chan::GLOBAL;
 use crate::models::{
-    AggregationSource, AggregationTable, Host, HostAliveResultInsert, HostCertainty, SourceType,
+    AggregationSource, AggregationTable, HostAliveResultInsert, HostCertainty, SourceType,
 };
 
 /// Store a host alive check's result and update the aggregated hosts
@@ -27,8 +28,10 @@ pub async fn store_host_alive_check_result(
         })
         .await?;
 
-    let host_uuid =
-        Host::aggregate(&mut *tx, workspace_uuid, ip_addr, HostCertainty::Verified).await?;
+    let host_uuid = GLOBAL
+        .aggregator
+        .aggregate_host(workspace_uuid, ip_addr, HostCertainty::Verified)
+        .await?;
 
     insert!(&mut *tx, AggregationSource)
         .return_nothing()

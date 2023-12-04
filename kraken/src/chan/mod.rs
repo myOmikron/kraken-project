@@ -10,6 +10,7 @@ use rorm::Database;
 pub use settings_manager::*;
 pub use ws_manager::*;
 
+use crate::modules::aggregator::Aggregator;
 use crate::modules::cache::WorkspaceCache;
 use crate::modules::tls::TlsManager;
 
@@ -34,16 +35,22 @@ pub struct GlobalChan {
     pub ws: WsManagerChan,
 
     /// Settings which may change without restarting the server
-    pub settings: Arc<SettingsManagerChan>,
+    pub settings: SettingsManagerChan,
 
     /// Scheduler for performing rate-limited dehashed requests
-    pub dehashed: Arc<RwLock<Option<Scheduler>>>,
+    pub dehashed: RwLock<Option<Scheduler>>,
 
     /// Kraken's CA and certificate
+    ///
+    /// It is is wrapped by an `Arc` as we may want to make future changes in `TlsManager`
+    /// that would required the `Arc`
     pub tls: Arc<TlsManager>,
 
     /// The caching layer for workspace members
-    pub workspace_cache: Arc<WorkspaceCache>,
+    pub workspace_cache: WorkspaceCache,
+
+    /// Scheduler for inserting or updating any aggregation model in the database
+    pub aggregator: Aggregator,
 }
 
 /// Simple [`OnceLock`] which panics in case of error.
