@@ -1,0 +1,74 @@
+use rorm::prelude::{ForeignModel, ForeignModelByField};
+use rorm::{and, insert, query, update, FieldAccess, Model, Patch};
+use tokio::sync::{mpsc, oneshot};
+use uuid::Uuid;
+
+use crate::chan::GLOBAL;
+use crate::models::{Host, Port, PortCertainty, PortProtocol, Workspace};
+use crate::modules::aggregator::PortAggregationData;
+
+pub async fn run_port_aggregator(
+    mut rx: mpsc::Receiver<(
+        PortAggregationData,
+        oneshot::Sender<Result<Uuid, rorm::Error>>,
+    )>,
+) {
+    while let Some((data, tx)) = rx.recv().await {
+        let _ = tx.send(aggregate(data).await);
+    }
+}
+
+#[derive(Patch)]
+#[rorm(model = "Port")]
+struct PortInsert {
+    uuid: Uuid,
+    port: i16,
+    protocol: PortProtocol,
+    certainty: PortCertainty,
+    host: ForeignModel<Host>,
+    comment: String,
+    workspace: ForeignModel<Workspace>,
+}
+
+async fn aggregate(data: PortAggregationData) -> Result<Uuid, rorm::Error> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    let port_uuid = if let Some((port_uuid, old_certainty)) =
+        query!(&mut tx, (Port::F.uuid, Port::F.certainty))
+            .condition(and![
+                Port::F
+                    .port
+                    .equals(i16::from_ne_bytes(data.port.to_ne_bytes())),
+                Port::F.protocol.equals(data.protocol),
+                Port::F.host.equals(data.host),
+                Port::F.workspace.equals(data.workspace),
+            ])
+            .optional()
+            .await?
+    {
+        if old_certainty < data.certainty {
+            update!(&mut tx, Port)
+                .set(Port::F.certainty, data.certainty)
+                .condition(Port::F.uuid.equals(data.host))
+                .await?;
+        }
+        port_uuid
+    } else {
+        insert!(&mut tx, Port)
+            .return_primary_key()
+            .single(&PortInsert {
+                uuid: Uuid::new_v4(),
+                port: i16::from_ne_bytes(data.port.to_ne_bytes()),
+                protocol: data.protocol,
+                certainty: data.certainty,
+                host: ForeignModelByField::Key(data.host),
+                comment: String::new(),
+                workspace: ForeignModelByField::Key(data.workspace),
+            })
+            .await?
+    };
+
+    tx.commit().await?;
+
+    Ok(port_uuid)
+}

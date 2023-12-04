@@ -9,7 +9,7 @@
 //! ## Leeches
 //! Leeches are the workers of kraken.
 //! Kraken for it self, does not collect any data.
-#![warn(missing_docs)]
+#![warn(missing_docs, clippy::unwrap_used, clippy::expect_used)]
 #![cfg_attr(
     feature = "rorm-main",
     allow(dead_code, unused_variables, unused_imports)
@@ -31,6 +31,7 @@ use crate::api::server;
 use crate::chan::{GlobalChan, LeechManager, GLOBAL};
 use crate::config::Config;
 use crate::models::{User, UserPermission};
+use crate::modules::aggregator::Aggregator;
 use crate::modules::cache::WorkspaceCache;
 use crate::modules::tls::TlsManager;
 use crate::rpc::server::start_rpc_server;
@@ -104,26 +105,26 @@ async fn main() -> Result<(), String> {
         Command::Start => {
             let db = get_db(&config).await?;
 
-            let settings = Arc::new(
-                chan::start_settings_manager(&db)
-                    .await
-                    .map_err(|e| e.to_string())?,
-            );
-            let dehashed = Arc::new(RwLock::new(
-                chan::start_dehashed_manager(settings.clone()).await?,
-            ));
+            let settings = chan::start_settings_manager(&db)
+                .await
+                .map_err(|e| e.to_string())?;
+
+            let dehashed = RwLock::new(chan::start_dehashed_manager(&settings).await?);
 
             let tls = Arc::new(
                 TlsManager::load("/var/lib/kraken")
                     .map_err(|e| format!("Failed to initialize tls: {e}"))?,
             );
+
             let leeches = LeechManager::start(db.clone(), tls.clone())
                 .await
                 .map_err(|e| format!("Failed to query initial leeches: {e}"))?;
 
             let ws = chan::start_ws_manager().await;
 
-            let workspace_cache = Arc::new(WorkspaceCache::new());
+            let workspace_cache = WorkspaceCache::new();
+
+            let aggregator = Aggregator::default();
 
             GLOBAL.init(GlobalChan {
                 db,
@@ -133,6 +134,7 @@ async fn main() -> Result<(), String> {
                 dehashed,
                 tls,
                 workspace_cache,
+                aggregator,
             });
 
             start_rpc_server(&config);

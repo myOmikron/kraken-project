@@ -4,9 +4,10 @@ use rorm::insert;
 use rorm::prelude::ForeignModelByField;
 use uuid::Uuid;
 
+use crate::chan::GLOBAL;
 use crate::models::{
-    AggregationSource, AggregationTable, Host, HostCertainty, Port, PortCertainty, PortProtocol,
-    Service, ServiceCertainty, ServiceDetectionName, ServiceDetectionResultInsert, SourceType,
+    AggregationSource, AggregationTable, HostCertainty, PortCertainty, PortProtocol,
+    ServiceCertainty, ServiceDetectionName, ServiceDetectionResultInsert, SourceType,
 };
 
 /// Store a service detection's result and update the aggregated hosts, ports and services
@@ -41,30 +42,34 @@ pub async fn store_service_detection_result(
         }))
         .await?;
 
-    let host_uuid =
-        Host::aggregate(&mut *tx, workspace_uuid, host, HostCertainty::Verified).await?;
-    let port_uuid = Port::aggregate(
-        &mut *tx,
-        workspace_uuid,
-        host_uuid,
-        port,
-        PortProtocol::Tcp,
-        PortCertainty::Verified,
-    )
-    .await?;
+    let host_uuid = GLOBAL
+        .aggregator
+        .aggregate_host(workspace_uuid, host, HostCertainty::Verified)
+        .await?;
+    let port_uuid = GLOBAL
+        .aggregator
+        .aggregate_port(
+            workspace_uuid,
+            host_uuid,
+            port,
+            PortProtocol::Tcp,
+            PortCertainty::Verified,
+        )
+        .await?;
 
     let mut service_uuids = Vec::new();
     for service in service_names {
         service_uuids.push(
-            Service::aggregate(
-                &mut *tx,
-                workspace_uuid,
-                host_uuid,
-                Some(port_uuid),
-                service,
-                certainty,
-            )
-            .await?,
+            GLOBAL
+                .aggregator
+                .aggregate_service(
+                    workspace_uuid,
+                    host_uuid,
+                    Some(port_uuid),
+                    service,
+                    certainty,
+                )
+                .await?,
         );
     }
 

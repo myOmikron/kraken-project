@@ -4,9 +4,10 @@ use rorm::insert;
 use rorm::prelude::*;
 use uuid::Uuid;
 
+use crate::chan::GLOBAL;
 use crate::models::{
-    AggregationSource, AggregationTable, Host, HostCertainty, Port, PortCertainty, PortProtocol,
-    SourceType, TcpPortScanResultInsert,
+    AggregationSource, AggregationTable, HostCertainty, PortCertainty, PortProtocol, SourceType,
+    TcpPortScanResultInsert,
 };
 
 /// Store a tcp port scan's result and update the aggregated hosts and ports
@@ -30,18 +31,21 @@ pub async fn store_tcp_port_scan_result(
         })
         .await?;
 
-    let host_uuid =
-        Host::aggregate(&mut *tx, workspace_uuid, ip_addr, HostCertainty::Verified).await?;
+    let host_uuid = GLOBAL
+        .aggregator
+        .aggregate_host(workspace_uuid, ip_addr, HostCertainty::Verified)
+        .await?;
 
-    let port_uuid = Port::aggregate(
-        &mut *tx,
-        workspace_uuid,
-        host_uuid,
-        port_num,
-        PortProtocol::Tcp,
-        PortCertainty::Verified,
-    )
-    .await?;
+    let port_uuid = GLOBAL
+        .aggregator
+        .aggregate_port(
+            workspace_uuid,
+            host_uuid,
+            port_num,
+            PortProtocol::Tcp,
+            PortCertainty::Verified,
+        )
+        .await?;
 
     insert!(&mut *tx, AggregationSource)
         .return_nothing()

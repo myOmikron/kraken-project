@@ -4,11 +4,11 @@ use rorm::insert;
 use rorm::prelude::*;
 use uuid::Uuid;
 
+use crate::chan::GLOBAL;
 use crate::models::{
-    AggregationSource, AggregationTable, Domain, DomainCertainty, Host, HostCertainty,
-    ManualDomain, ManualHost, ManualHostCertainty, ManualPort, ManualPortCertainty, ManualService,
-    ManualServiceCertainty, OsType, Port, PortCertainty, PortProtocol, Service, ServiceCertainty,
-    SourceType, User, Workspace,
+    AggregationSource, AggregationTable, DomainCertainty, HostCertainty, ManualDomain, ManualHost,
+    ManualHostCertainty, ManualPort, ManualPortCertainty, ManualService, ManualServiceCertainty,
+    OsType, PortCertainty, PortProtocol, ServiceCertainty, SourceType, User, Workspace,
 };
 
 #[derive(Patch)]
@@ -46,14 +46,10 @@ impl ManualDomain {
             })
             .await?;
 
-        let domain_uuid = Domain::aggregate(
-            &mut *tx,
-            workspace,
-            &domain,
-            DomainCertainty::Unverified,
-            user,
-        )
-        .await?;
+        let domain_uuid = GLOBAL
+            .aggregator
+            .aggregate_domain(workspace, &domain, DomainCertainty::Unverified, user)
+            .await?;
 
         insert!(&mut *tx, AggregationSource)
             .single(&AggregationSource {
@@ -111,16 +107,17 @@ impl ManualHost {
             })
             .await?;
 
-        let host_uuid = Host::aggregate(
-            &mut *tx,
-            workspace,
-            ip_addr,
-            match certainty {
-                ManualHostCertainty::Historical => HostCertainty::Historical,
-                ManualHostCertainty::SupposedTo => HostCertainty::SupposedTo,
-            },
-        )
-        .await?;
+        let host_uuid = GLOBAL
+            .aggregator
+            .aggregate_host(
+                workspace,
+                ip_addr,
+                match certainty {
+                    ManualHostCertainty::Historical => HostCertainty::Historical,
+                    ManualHostCertainty::SupposedTo => HostCertainty::SupposedTo,
+                },
+            )
+            .await?;
 
         insert!(&mut *tx, AggregationSource)
             .single(&AggregationSource {
@@ -182,29 +179,31 @@ impl ManualPort {
             })
             .await?;
 
-        let host_uuid = Host::aggregate(
-            &mut *tx,
-            workspace,
-            ip_addr,
-            match certainty {
-                ManualPortCertainty::Historical => HostCertainty::Historical,
-                ManualPortCertainty::SupposedTo => HostCertainty::SupposedTo,
-            },
-        )
-        .await?;
+        let host_uuid = GLOBAL
+            .aggregator
+            .aggregate_host(
+                workspace,
+                ip_addr,
+                match certainty {
+                    ManualPortCertainty::Historical => HostCertainty::Historical,
+                    ManualPortCertainty::SupposedTo => HostCertainty::SupposedTo,
+                },
+            )
+            .await?;
 
-        let port_uuid = Port::aggregate(
-            &mut *tx,
-            workspace,
-            host_uuid,
-            port,
-            protocol,
-            match certainty {
-                ManualPortCertainty::Historical => PortCertainty::Historical,
-                ManualPortCertainty::SupposedTo => PortCertainty::SupposedTo,
-            },
-        )
-        .await?;
+        let port_uuid = GLOBAL
+            .aggregator
+            .aggregate_port(
+                workspace,
+                host_uuid,
+                port,
+                protocol,
+                match certainty {
+                    ManualPortCertainty::Historical => PortCertainty::Historical,
+                    ManualPortCertainty::SupposedTo => PortCertainty::SupposedTo,
+                },
+            )
+            .await?;
 
         insert!(&mut *tx, AggregationSource)
             .bulk([
@@ -278,48 +277,51 @@ impl ManualService {
             })
             .await?;
 
-        let host_uuid = Host::aggregate(
-            &mut *tx,
-            workspace,
-            host,
-            match certainty {
-                ManualServiceCertainty::Historical => HostCertainty::Historical,
-                ManualServiceCertainty::SupposedTo => HostCertainty::SupposedTo,
-            },
-        )
-        .await?;
+        let host_uuid = GLOBAL
+            .aggregator
+            .aggregate_host(
+                workspace,
+                host,
+                match certainty {
+                    ManualServiceCertainty::Historical => HostCertainty::Historical,
+                    ManualServiceCertainty::SupposedTo => HostCertainty::SupposedTo,
+                },
+            )
+            .await?;
 
         let port_uuid = if let Some(port) = port {
             Some(
-                Port::aggregate(
-                    &mut *tx,
-                    workspace,
-                    host_uuid,
-                    port,
-                    PortProtocol::Tcp,
-                    match certainty {
-                        ManualServiceCertainty::Historical => PortCertainty::Historical,
-                        ManualServiceCertainty::SupposedTo => PortCertainty::SupposedTo,
-                    },
-                )
-                .await?,
+                GLOBAL
+                    .aggregator
+                    .aggregate_port(
+                        workspace,
+                        host_uuid,
+                        port,
+                        PortProtocol::Tcp,
+                        match certainty {
+                            ManualServiceCertainty::Historical => PortCertainty::Historical,
+                            ManualServiceCertainty::SupposedTo => PortCertainty::SupposedTo,
+                        },
+                    )
+                    .await?,
             )
         } else {
             None
         };
 
-        let service_uuid = Service::aggregate(
-            &mut *tx,
-            workspace,
-            host_uuid,
-            port_uuid,
-            &name,
-            match certainty {
-                ManualServiceCertainty::Historical => ServiceCertainty::Historical,
-                ManualServiceCertainty::SupposedTo => ServiceCertainty::SupposedTo,
-            },
-        )
-        .await?;
+        let service_uuid = GLOBAL
+            .aggregator
+            .aggregate_service(
+                workspace,
+                host_uuid,
+                port_uuid,
+                &name,
+                match certainty {
+                    ManualServiceCertainty::Historical => ServiceCertainty::Historical,
+                    ManualServiceCertainty::SupposedTo => ServiceCertainty::SupposedTo,
+                },
+            )
+            .await?;
 
         insert!(&mut *tx, AggregationSource)
             .bulk(

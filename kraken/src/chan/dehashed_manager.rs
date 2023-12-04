@@ -1,12 +1,10 @@
-use std::sync::Arc;
-
 use dehashed_rs::{DehashedApi, Scheduler};
 
 use crate::chan::SettingsManagerChan;
 
 /// Start the dehashed manager
 pub async fn start_dehashed_manager(
-    settings: Arc<SettingsManagerChan>,
+    settings: &SettingsManagerChan,
 ) -> Result<Option<Scheduler>, String> {
     let settings = settings.get_settings();
 
