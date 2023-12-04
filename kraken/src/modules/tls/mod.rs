@@ -152,8 +152,6 @@ impl TlsManager {
     /// Get tonic's tls config to use when listening for leeches' connections
     pub fn tonic_server(&self) -> ServerTlsConfig {
         ServerTlsConfig::new().identity(self.server.clone())
-        //.client_auth_optional(false)
-        //.client_ca_root(self.tonic_ca.clone())
     }
 }
 
