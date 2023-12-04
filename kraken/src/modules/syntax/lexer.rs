@@ -35,33 +35,43 @@ impl Token {
 /// Split an input string into tokens
 pub fn tokenize(input: &str) -> Result<Vec<Token>, UnexpectedCharacter> {
     let mut tokens = Vec::new();
-    let mut current_string = String::new();
-    for (position, character) in input.chars().enumerate() {
-        if matches!(character, ' ' | ',' | '&' | '!' | '-' | ':') && current_string.len() > 0 {
-            tokens.push(Token::Value(current_string.to_string()));
-            current_string.clear();
-        }
-
+    let mut iter = input.chars().enumerate().peekable();
+    while let Some((position, character)) = iter.next() {
         match character {
             ',' => tokens.push(Token::LogicalOr),
             '&' => tokens.push(Token::LogicalAnd),
             '!' => tokens.push(Token::LogicalNot),
             '-' => tokens.push(Token::RangeOperator),
             ':' => {
-                let Some(Token::Value(string)) = tokens.pop() else {
+                if let Some(Token::Value(string)) = tokens.pop() {
+                    tokens.push(Token::Column(string));
+                } else {
                     return Err(UnexpectedCharacter {
                         position,
                         character,
                     });
-                };
-                tokens.push(Token::Column(string));
+                }
             }
             ' ' => {}
-            _ => current_string.push(character),
+            '"' => {
+                // This impl doesn't support escaping " inside the
+                tokens.push(Token::Value(String::from_iter(
+                    iter.by_ref()
+                        .map(|(_, character)| character)
+                        .take_while(|character| *character != '"'),
+                )));
+            }
+            _ => {
+                let mut string = String::new();
+                string.push(character);
+                while let Some((_, character)) = iter.next_if(|(_, character)| {
+                    !matches!(*character, ' ' | ',' | '&' | '!' | '-' | ':')
+                }) {
+                    string.push(character);
+                }
+                tokens.push(Token::Value(string));
+            }
         }
-    }
-    if current_string.len() > 0 {
-        tokens.push(Token::Value(current_string.trim().to_string()));
     }
     Ok(tokens)
 }
