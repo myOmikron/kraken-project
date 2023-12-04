@@ -1,6 +1,7 @@
 use std::fmt;
 use std::fmt::Write;
 
+use chrono::{DateTime, Utc};
 use ipnetwork::IpNetwork;
 use rorm::db::sql::value::Value;
 use rorm::internal::field::Field;
@@ -17,6 +18,90 @@ pub trait ValueSqler<T> {
         sql: &mut String,
         values: &mut Vec<Value<'a>>,
     ) -> fmt::Result;
+}
+
+// This sqler requires the [`JoinTags`]
+pub struct TagSqler;
+impl<T: AsRef<str>> ValueSqler<T> for TagSqler {
+    fn sql_value<'a>(
+        &self,
+        value: &'a T,
+        sql: &mut String,
+        values: &mut Vec<Value<'a>>,
+    ) -> fmt::Result {
+        values.push(Value::String(value.as_ref()));
+        write!(
+            sql,
+            r#"(ARRAY[${i}]::VARCHAR[] <@ "tags"."tags")"#,
+            i = values.len()
+        )
+    }
+}
+
+pub struct CreatedAtSqler {
+    table: &'static str,
+    column: &'static str,
+}
+impl CreatedAtSqler {
+    pub fn new<A: FieldAccess>(_: A) -> Self {
+        Self {
+            table: A::Path::ALIAS,
+            column: A::Field::NAME,
+        }
+    }
+}
+impl ValueSqler<Range<DateTime<Utc>>> for CreatedAtSqler {
+    fn sql_value<'a>(
+        &self,
+        value: &'a Range<DateTime<Utc>>,
+        sql: &mut String,
+        values: &mut Vec<Value<'a>>,
+    ) -> fmt::Result {
+        let Self { table, column } = *self;
+        match value {
+            Range {
+                start: None,
+                end: None,
+            } => {
+                write!(sql, "true")
+            }
+            Range {
+                start: Some(start),
+                end: None,
+            } => {
+                values.push(Value::ChronoDateTime(*start));
+                write!(
+                    sql,
+                    r#"("{table}"."{column}" >= ${start})"#,
+                    start = values.len()
+                )
+            }
+            Range {
+                start: None,
+                end: Some(end),
+            } => {
+                values.push(Value::ChronoDateTime(*end));
+                write!(
+                    sql,
+                    r#"("{table}"."{column}" <= ${end})"#,
+                    end = values.len()
+                )
+            }
+            Range {
+                start: Some(start),
+                end: Some(end),
+            } => {
+                values.push(Value::ChronoDateTime(*start));
+                values.push(Value::ChronoDateTime(*end));
+                write!(
+                    sql,
+                    r#"("{table}"."{column}" >= ${start} AND "{table}"."{column}" <= ${end})"#,
+                    start = values.len() - 1,
+                    end = values.len(),
+                )
+            }
+        }
+    }
 }
 
 pub struct PortSqler {
@@ -127,23 +212,6 @@ impl ValueSqler<IpNetwork> for IpSqler {
         let Self { table, column } = *self;
         values.push(Value::IpNetwork(*value));
         write!(sql, r#"("{table}"."{column}" <<= ${i})"#, i = values.len())
-    }
-}
-
-pub struct TagSqler;
-impl<T: AsRef<str>> ValueSqler<T> for TagSqler {
-    fn sql_value<'a>(
-        &self,
-        value: &'a T,
-        sql: &mut String,
-        values: &mut Vec<Value<'a>>,
-    ) -> fmt::Result {
-        values.push(Value::String(value.as_ref()));
-        write!(
-            sql,
-            r#"(ARRAY[${i}]::VARCHAR[] <@ "tags"."tags")"#,
-            i = values.len()
-        )
     }
 }
 

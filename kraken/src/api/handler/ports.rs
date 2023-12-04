@@ -27,7 +27,7 @@ use crate::models::{
     PortGlobalTag, PortProtocol, PortWorkspaceTag, Workspace, WorkspaceTag,
 };
 use crate::modules::raw_query::RawQueryBuilder;
-use crate::modules::syntax::{GlobalAST, JoinTags, PortAST};
+use crate::modules::syntax::{GlobalAST, PortAST};
 use crate::query_tags;
 
 /// Query parameters for filtering the ports to get
@@ -124,15 +124,15 @@ pub async fn get_all_ports(
         .global_filter
         .as_deref()
         .map(GlobalAST::parse)
-        .transpose()?;
-    let global_filter = global_filter.as_ref();
+        .transpose()?
+        .unwrap_or_default();
 
     let port_filter = params
         .port_filter
         .as_deref()
         .map(PortAST::parse)
-        .transpose()?;
-    let port_filter = port_filter.as_ref();
+        .transpose()?
+        .unwrap_or_default();
 
     // Count host's uuid instead of directly service's to force the implicit join required by the conditions
     let mut count_query = RawQueryBuilder::new((Port::F.host.uuid.count(),));
@@ -146,23 +146,8 @@ pub async fn get_all_ports(
         Port::F.workspace,
     ));
 
-    if global_filter
-        .and_then(|ast| ast.tags.as_ref())
-        .or(port_filter.and_then(|ast| ast.tags.as_ref()))
-        .is_some()
-    {
-        count_query.append_join(JoinTags::port());
-        select_query.append_join(JoinTags::port());
-    }
-
-    if let Some(ast) = global_filter {
-        count_query.append_condition(|sql, values| ast.sql_condition(sql, values));
-        select_query.append_condition(|sql, values| ast.sql_condition(sql, values));
-    }
-    if let Some(ast) = port_filter {
-        count_query.append_condition(|sql, values| ast.sql_condition(sql, values));
-        select_query.append_condition(|sql, values| ast.sql_condition(sql, values));
-    }
+    port_filter.apply_to_query(&global_filter, &mut count_query);
+    port_filter.apply_to_query(&global_filter, &mut select_query);
 
     count_query.append_eq_condition(Port::F.workspace, Value::Uuid(path.uuid));
     select_query.append_eq_condition(Port::F.workspace, Value::Uuid(path.uuid));

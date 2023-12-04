@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 
+use chrono::{DateTime, Utc};
 use ipnetwork::IpNetwork;
 
 use crate::models::PortProtocol;
@@ -9,6 +10,9 @@ use crate::models::PortProtocol;
 pub struct GlobalAST {
     /// Filter by tags
     pub tags: Option<Or<String>>,
+
+    /// Filter by creation time
+    pub created_at: Option<Or<Range<DateTime<Utc>>>>,
 }
 
 /// AST for domain specific filter
@@ -16,6 +20,9 @@ pub struct GlobalAST {
 pub struct DomainAST {
     /// Filter by tags
     pub tags: Option<Or<String>>,
+
+    /// Filter by creation time
+    pub created_at: Option<Or<Range<DateTime<Utc>>>>,
 
     /// Filter by domain name
     pub domains: Option<Or<String>>,
@@ -27,6 +34,9 @@ pub struct HostAST {
     /// Filter by tags
     pub tags: Option<Or<String>>,
 
+    /// Filter by creation time
+    pub created_at: Option<Or<Range<DateTime<Utc>>>>,
+
     /// Filter by ip address
     pub ips: Option<Or<IpNetwork>>,
 }
@@ -36,6 +46,9 @@ pub struct HostAST {
 pub struct PortAST {
     /// Filter ports by tags
     pub tags: Option<Or<String>>,
+
+    /// Filter by creation time
+    pub created_at: Option<Or<Range<DateTime<Utc>>>>,
 
     /// Filter ports by port numbers
     pub ports: Option<Or<MaybeRange<u16>>>,
@@ -52,6 +65,9 @@ pub struct PortAST {
 pub struct ServiceAST {
     /// Filter by tags
     pub tags: Option<Or<String>>,
+
+    /// Filter by creation time
+    pub created_at: Option<Or<Range<DateTime<Utc>>>>,
 
     /// Filter by ip address
     pub ips: Option<Or<IpNetwork>>,

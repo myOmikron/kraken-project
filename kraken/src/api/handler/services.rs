@@ -29,7 +29,7 @@ use crate::models::{
     WorkspaceTag,
 };
 use crate::modules::raw_query::RawQueryBuilder;
-use crate::modules::syntax::{GlobalAST, JoinPorts, JoinTags, ServiceAST};
+use crate::modules::syntax::{GlobalAST, ServiceAST};
 use crate::query_tags;
 
 /// Query parameters for filtering the services to get
@@ -129,15 +129,15 @@ pub async fn get_all_services(
         .global_filter
         .as_deref()
         .map(GlobalAST::parse)
-        .transpose()?;
-    let global_filter = global_filter.as_ref();
+        .transpose()?
+        .unwrap_or_default();
 
     let service_filter = params
         .service_filter
         .as_deref()
         .map(ServiceAST::parse)
-        .transpose()?;
-    let service_filter = service_filter.as_ref();
+        .transpose()?
+        .unwrap_or_default();
 
     // Count host's uuid instead of directly service's to force the implicit join required by the conditions
     let mut count_query = RawQueryBuilder::new((Service::F.host.uuid.count(),));
@@ -153,30 +153,8 @@ pub async fn get_all_services(
         Service::F.workspace,
     ));
 
-    if global_filter
-        .and_then(|ast| ast.tags.as_ref())
-        .or(service_filter.and_then(|ast| ast.tags.as_ref()))
-        .is_some()
-    {
-        count_query.append_join(JoinTags::service());
-        select_query.append_join(JoinTags::service());
-    }
-    if service_filter
-        .map(|ast| ast.ports.is_some())
-        .unwrap_or(false)
-    {
-        count_query.append_join(JoinPorts);
-        select_query.append_join(JoinPorts);
-    }
-
-    if let Some(ast) = global_filter {
-        count_query.append_condition(|sql, values| ast.sql_condition(sql, values));
-        select_query.append_condition(|sql, values| ast.sql_condition(sql, values));
-    }
-    if let Some(ast) = service_filter {
-        count_query.append_condition(|sql, values| ast.sql_condition(sql, values));
-        select_query.append_condition(|sql, values| ast.sql_condition(sql, values));
-    }
+    service_filter.apply_to_query(&global_filter, &mut count_query);
+    service_filter.apply_to_query(&global_filter, &mut select_query);
 
     count_query.append_eq_condition(Service::F.workspace, Value::Uuid(path.uuid));
     select_query.append_eq_condition(Service::F.workspace, Value::Uuid(path.uuid));

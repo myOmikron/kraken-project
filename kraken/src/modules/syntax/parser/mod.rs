@@ -3,6 +3,7 @@ mod value_parser;
 
 use std::error::Error as StdError;
 
+use chrono::{DateTime, Utc};
 use ipnetwork::IpNetwork;
 use thiserror::Error;
 
@@ -12,7 +13,7 @@ use super::{
     tokenize, And, DomainAST, GlobalAST, HostAST, Not, Or, PortAST, ServiceAST, Token,
     UnexpectedCharacter,
 };
-use crate::modules::syntax::parser::value_parser::parse_port_protocol;
+use crate::modules::syntax::parser::value_parser::{parse_port_protocol, wrap_range};
 
 /// An error encountered while parsing a filter ast
 #[derive(Debug, Error)]
@@ -49,10 +50,18 @@ pub enum ParseError {
 impl GlobalAST {
     /// Parse a string into a [`GlobalAST`]
     pub fn parse(input: &str) -> Result<Self, ParseError> {
-        parse_ast(input, |GlobalAST { tags }, column, tokens| match column {
-            "tags" => parse_ast_field(tags, tokens, parse_string),
-            _ => Err(ParseError::UnknownColumn(column.to_string())),
-        })
+        parse_ast(
+            input,
+            |GlobalAST { tags, created_at }, column, tokens| match column {
+                "tags" => parse_ast_field(tags, tokens, parse_string),
+                "created_at" => parse_ast_field(
+                    created_at,
+                    tokens,
+                    wrap_range(parse_from_str::<DateTime<Utc>>),
+                ),
+                _ => Err(ParseError::UnknownColumn(column.to_string())),
+            },
+        )
     }
 }
 
@@ -61,8 +70,19 @@ impl DomainAST {
     pub fn parse(input: &str) -> Result<Self, ParseError> {
         parse_ast(
             input,
-            |DomainAST { tags, domains }, column, tokens| match column {
+            |DomainAST {
+                 tags,
+                 domains,
+                 created_at,
+             },
+             column,
+             tokens| match column {
                 "tags" => parse_ast_field(tags, tokens, parse_string),
+                "created_at" => parse_ast_field(
+                    created_at,
+                    tokens,
+                    wrap_range(parse_from_str::<DateTime<Utc>>),
+                ),
                 "domains" => parse_ast_field(domains, tokens, parse_string),
                 _ => Err(ParseError::UnknownColumn(column.to_string())),
             },
@@ -75,8 +95,19 @@ impl HostAST {
     pub fn parse(input: &str) -> Result<Self, ParseError> {
         parse_ast(
             input,
-            |HostAST { tags, ips }, column, tokens| match column {
+            |HostAST {
+                 tags,
+                 ips,
+                 created_at,
+             },
+             column,
+             tokens| match column {
                 "tags" => parse_ast_field(tags, tokens, parse_string),
+                "created_at" => parse_ast_field(
+                    created_at,
+                    tokens,
+                    wrap_range(parse_from_str::<DateTime<Utc>>),
+                ),
                 "ips" => parse_ast_field(ips, tokens, parse_from_str::<IpNetwork>),
                 _ => Err(ParseError::UnknownColumn(column.to_string())),
             },
@@ -94,10 +125,16 @@ impl PortAST {
                  ports,
                  ips,
                  protocols,
+                 created_at,
              },
              column,
              tokens| match column {
                 "tags" => parse_ast_field(tags, tokens, parse_string),
+                "created_at" => parse_ast_field(
+                    created_at,
+                    tokens,
+                    wrap_range(parse_from_str::<DateTime<Utc>>),
+                ),
                 "ports" => parse_ast_field(ports, tokens, wrap_maybe_range(parse_from_str::<u16>)),
                 "ips" => parse_ast_field(ips, tokens, parse_from_str::<IpNetwork>),
                 "protocols" => parse_ast_field(protocols, tokens, parse_port_protocol),
@@ -114,6 +151,7 @@ impl ServiceAST {
             input,
             |ServiceAST {
                  tags,
+                 created_at,
                  ips,
                  names,
                  ports,
@@ -121,6 +159,11 @@ impl ServiceAST {
              column,
              tokens| match column {
                 "tags" => parse_ast_field(tags, tokens, parse_string),
+                "created_at" => parse_ast_field(
+                    created_at,
+                    tokens,
+                    wrap_range(parse_from_str::<DateTime<Utc>>),
+                ),
                 "ips" => parse_ast_field(ips, tokens, parse_from_str::<IpNetwork>),
                 "names" => parse_ast_field(names, tokens, parse_string),
                 "ports" => parse_ast_field(ports, tokens, wrap_maybe_range(parse_from_str::<u16>)),

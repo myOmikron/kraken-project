@@ -24,6 +24,12 @@ impl<'a> RawJoin<'a> for JoinPorts {
     }
 }
 
+/// Joins a subquery which retrieves an object's tags in a postgres array.
+///
+/// I.e. after applying this join, there is a column `"tags"."tags"` whose type is an array of strings.
+///
+/// Use the constructors [`JoinTags::domain`], [`JoinTags::host`], [`JoinTags::port`] and [`JoinTags::service`]
+/// to select the base table this join is applied to.
 #[derive(Copy, Clone)]
 pub struct JoinTags {
     target: &'static str,
@@ -46,12 +52,6 @@ pub struct JoinTags {
     m2m_globaltag_target: &'static str,
 }
 
-/// Constructs a [`JoinTags`] instance
-///
-/// ## Example
-/// ```ignore
-/// join_tags!(Port, w: PortWorkspaceTag::F.port, g: PortGlobalTag::F.port)
-/// ```
 macro_rules! join_tags {
     ($TargetModel:ident, w: $WorkspaceModel:ident::F.$workspace_field:ident, g: $GlobalModel:ident::F.$global_field:ident) => {{
         use rorm::internal::field::Field;
@@ -84,15 +84,22 @@ macro_rules! join_tags {
 }
 
 impl JoinTags {
+    /// Get a join which retrieves a domain's tags in a postgres array.
     pub fn domain() -> Self {
         join_tags!(Domain, w: DomainWorkspaceTag::F.domain, g: DomainGlobalTag::F.domain)
     }
+
+    /// Get a join which retrieves a host's tags in a postgres array.
     pub fn host() -> Self {
         join_tags!(Host, w: HostWorkspaceTag::F.host, g: HostGlobalTag::F.host)
     }
+
+    /// Get a join which retrieves a port's tags in a postgres array.
     pub fn port() -> Self {
         join_tags!(Port, w: PortWorkspaceTag::F.port, g: PortGlobalTag::F.port)
     }
+
+    /// Get a join which retrieves a service's tags in a postgres array.
     pub fn service() -> Self {
         join_tags!(Service, w: ServiceWorkspaceTag::F.service, g: ServiceGlobalTag::F.service)
     }

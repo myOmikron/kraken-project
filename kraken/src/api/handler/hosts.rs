@@ -27,7 +27,7 @@ use crate::models::{
     ManualHost, ManualHostCertainty, OsType, Workspace, WorkspaceTag,
 };
 use crate::modules::raw_query::RawQueryBuilder;
-use crate::modules::syntax::{GlobalAST, HostAST, JoinTags};
+use crate::modules::syntax::{GlobalAST, HostAST};
 use crate::query_tags;
 
 /// Query parameters for filtering the hosts to get
@@ -120,36 +120,21 @@ pub(crate) async fn get_all_hosts(
         .global_filter
         .as_deref()
         .map(GlobalAST::parse)
-        .transpose()?;
-    let global_filter = global_filter.as_ref();
+        .transpose()?
+        .unwrap_or_default();
 
     let host_filter = params
         .host_filter
         .as_deref()
         .map(HostAST::parse)
-        .transpose()?;
-    let host_filter = host_filter.as_ref();
+        .transpose()?
+        .unwrap_or_default();
 
     let mut count_query = RawQueryBuilder::new((Host::F.uuid.count(),));
     let mut select_query = RawQueryBuilder::new(PatchSelector::<Host>::new());
 
-    if global_filter
-        .and_then(|ast| ast.tags.as_ref())
-        .or(host_filter.and_then(|ast| ast.tags.as_ref()))
-        .is_some()
-    {
-        count_query.append_join(JoinTags::host());
-        select_query.append_join(JoinTags::host());
-    }
-
-    if let Some(ast) = global_filter {
-        count_query.append_condition(|sql, values| ast.sql_condition(sql, values));
-        select_query.append_condition(|sql, values| ast.sql_condition(sql, values));
-    }
-    if let Some(ast) = host_filter {
-        count_query.append_condition(|sql, values| ast.sql_condition(sql, values));
-        select_query.append_condition(|sql, values| ast.sql_condition(sql, values));
-    }
+    host_filter.apply_to_query(&global_filter, &mut count_query);
+    host_filter.apply_to_query(&global_filter, &mut select_query);
 
     count_query.append_eq_condition(Host::F.workspace, Value::Uuid(path.uuid));
     select_query.append_eq_condition(Host::F.workspace, Value::Uuid(path.uuid));

@@ -4,181 +4,139 @@ mod value_sqler;
 use std::fmt;
 use std::fmt::Write;
 
+use rorm::crud::selector::Selector;
 use rorm::db::sql::value::Value;
 use rorm::prelude::*;
 
-pub use self::joins::*;
 use crate::models::{Domain, Host, Port, Service};
+use crate::modules::raw_query::RawQueryBuilder;
+use crate::modules::syntax::sqler::joins::{JoinPorts, JoinTags};
 use crate::modules::syntax::sqler::value_sqler::{
-    IpSqler, NullablePortSqler, PortProtocolSqler, PortSqler, StringEqSqler, TagSqler, ValueSqler,
+    CreatedAtSqler, IpSqler, NullablePortSqler, PortProtocolSqler, PortSqler, StringEqSqler,
+    TagSqler, ValueSqler,
 };
 use crate::modules::syntax::{And, DomainAST, GlobalAST, HostAST, Not, Or, PortAST, ServiceAST};
 
-impl GlobalAST {
-    /// Write the conditions to a string
-    pub fn sql_condition<'a>(
-        &'a self,
-        sql: &mut String,
-        values: &mut Vec<Value<'a>>,
-    ) -> fmt::Result {
-        let Self { tags } = self;
-
-        write!(sql, "true")?;
-
-        if let Some(tags) = tags.as_ref() {
-            write!(sql, " AND ")?;
-            sql_or(tags, &mut *sql, &mut *values, TagSqler)?;
-        }
-
-        Ok(())
-    }
-}
 impl DomainAST {
-    /// Write the conditions to a string
-    pub fn sql_condition<'a>(
+    pub fn apply_to_query<'a>(
         &'a self,
-        sql: &mut String,
-        values: &mut Vec<Value<'a>>,
-    ) -> fmt::Result {
-        let Self { tags, domains } = self;
-
-        write!(sql, "true")?;
-
-        if let Some(tags) = tags.as_ref() {
-            write!(sql, " AND ")?;
-            sql_or(tags, &mut *sql, &mut *values, TagSqler)?;
-        }
-        if let Some(domains) = domains.as_ref() {
-            write!(sql, " AND ")?;
-            sql_or(
-                domains,
-                &mut *sql,
-                &mut *values,
-                StringEqSqler::new(Domain::F.domain),
-            )?;
+        global: &'a GlobalAST,
+        sql: &mut RawQueryBuilder<'a, impl Selector>,
+    ) {
+        if self.tags.is_some() || global.tags.is_some() {
+            sql.append_join(JoinTags::domain());
         }
 
-        Ok(())
+        let DomainAST {
+            tags,
+            created_at,
+            domains,
+        } = self;
+        add_ast_field(sql, tags, TagSqler);
+        add_ast_field(sql, tags, TagSqler);
+        add_ast_field(sql, created_at, CreatedAtSqler::new(Domain::F.created_at));
+        add_ast_field(sql, domains, StringEqSqler::new(Domain::F.domain));
+
+        let GlobalAST { tags, created_at } = global;
+        add_ast_field(sql, tags, TagSqler);
+        add_ast_field(sql, created_at, CreatedAtSqler::new(Domain::F.created_at));
     }
 }
 impl HostAST {
-    /// Write the conditions to a string
-    pub fn sql_condition<'a>(
+    pub fn apply_to_query<'a>(
         &'a self,
-        sql: &mut String,
-        values: &mut Vec<Value<'a>>,
-    ) -> fmt::Result {
-        let Self { tags, ips } = self;
-
-        write!(sql, "true")?;
-
-        if let Some(tags) = tags.as_ref() {
-            write!(sql, " AND ")?;
-            sql_or(tags, &mut *sql, &mut *values, TagSqler)?;
-        }
-        if let Some(ips) = ips.as_ref() {
-            write!(sql, " AND ")?;
-            sql_or(ips, &mut *sql, &mut *values, IpSqler::new(Host::F.ip_addr))?;
+        global: &'a GlobalAST,
+        sql: &mut RawQueryBuilder<'a, impl Selector>,
+    ) {
+        if self.tags.is_some() || global.tags.is_some() {
+            sql.append_join(JoinTags::host());
         }
 
-        Ok(())
+        let HostAST {
+            tags,
+            created_at,
+            ips,
+        } = self;
+        add_ast_field(sql, tags, TagSqler);
+        add_ast_field(sql, created_at, CreatedAtSqler::new(Host::F.created_at));
+        add_ast_field(sql, ips, IpSqler::new(Host::F.ip_addr));
+
+        let GlobalAST { tags, created_at } = global;
+        add_ast_field(sql, tags, TagSqler);
+        add_ast_field(sql, created_at, CreatedAtSqler::new(Host::F.created_at));
     }
 }
 impl PortAST {
-    /// Write the conditions to a string
-    pub fn sql_condition<'a>(
+    pub fn apply_to_query<'a>(
         &'a self,
-        sql: &mut String,
-        values: &mut Vec<Value<'a>>,
-    ) -> fmt::Result {
-        let Self {
+        global: &'a GlobalAST,
+        sql: &mut RawQueryBuilder<'a, impl Selector>,
+    ) {
+        if self.tags.is_some() || global.tags.is_some() {
+            sql.append_join(JoinTags::port());
+        }
+
+        let PortAST {
             tags,
+            created_at,
             ports,
             ips,
             protocols,
         } = self;
+        add_ast_field(sql, tags, TagSqler);
+        add_ast_field(sql, created_at, CreatedAtSqler::new(Port::F.created_at));
+        add_ast_field(sql, ports, PortSqler::new(Port::F.port));
+        add_ast_field(sql, ips, IpSqler::new(Port::F.host.ip_addr));
+        add_ast_field(sql, protocols, PortProtocolSqler::new(Port::F.protocol));
 
-        write!(sql, "true")?;
-
-        if let Some(tags) = tags.as_ref() {
-            write!(sql, " AND ")?;
-            sql_or(tags, &mut *sql, &mut *values, TagSqler)?;
-        }
-        if let Some(ports) = ports.as_ref() {
-            write!(sql, " AND ")?;
-            sql_or(ports, &mut *sql, &mut *values, PortSqler::new(Port::F.port))?;
-        }
-        if let Some(ips) = ips.as_ref() {
-            write!(sql, " AND ")?;
-            sql_or(
-                ips,
-                &mut *sql,
-                &mut *values,
-                IpSqler::new(Port::F.host.ip_addr),
-            )?;
-        }
-        if let Some(protocols) = protocols.as_ref() {
-            write!(sql, " AND ")?;
-            sql_or(
-                protocols,
-                &mut *sql,
-                &mut *values,
-                PortProtocolSqler::new(Port::F.protocol),
-            )?;
-        }
-
-        Ok(())
+        let GlobalAST { tags, created_at } = global;
+        add_ast_field(sql, tags, TagSqler);
+        add_ast_field(sql, created_at, CreatedAtSqler::new(Port::F.created_at));
     }
 }
 impl ServiceAST {
-    /// Write the conditions to a string
-    pub fn sql_condition<'a>(
+    pub fn apply_to_query<'a>(
         &'a self,
-        sql: &mut String,
-        values: &mut Vec<Value<'a>>,
-    ) -> fmt::Result {
-        let Self {
+        global: &'a GlobalAST,
+        sql: &mut RawQueryBuilder<'a, impl Selector>,
+    ) {
+        if self.tags.is_some() || global.tags.is_some() {
+            sql.append_join(JoinTags::service());
+        }
+        if self.ports.is_some() {
+            sql.append_join(JoinPorts);
+        }
+
+        let ServiceAST {
             tags,
+            created_at,
             ips,
             names,
             ports,
         } = self;
+        add_ast_field(sql, tags, TagSqler);
+        add_ast_field(sql, created_at, CreatedAtSqler::new(Service::F.created_at));
+        add_ast_field(sql, ips, IpSqler::new(Service::F.host.ip_addr));
+        add_ast_field(sql, names, StringEqSqler::new(Service::F.name));
+        add_ast_field(
+            sql,
+            ports,
+            NullablePortSqler(PortSqler::new(Port::F.port)), // This table is joined manually
+        );
 
-        write!(sql, "true")?;
+        let GlobalAST { tags, created_at } = global;
+        add_ast_field(sql, tags, TagSqler);
+        add_ast_field(sql, created_at, CreatedAtSqler::new(Service::F.created_at));
+    }
+}
 
-        if let Some(tags) = tags.as_ref() {
-            write!(sql, " AND ")?;
-            sql_or(tags, &mut *sql, &mut *values, TagSqler)?;
-        }
-        if let Some(ips) = ips.as_ref() {
-            write!(sql, " AND ")?;
-            sql_or(
-                ips,
-                &mut *sql,
-                &mut *values,
-                IpSqler::new(Service::F.host.ip_addr),
-            )?;
-        }
-        if let Some(names) = names.as_ref() {
-            write!(sql, " AND ")?;
-            sql_or(
-                names,
-                &mut *sql,
-                &mut *values,
-                StringEqSqler::new(Service::F.name),
-            )?;
-        }
-        if let Some(ports) = ports.as_ref() {
-            write!(sql, " AND ")?;
-            sql_or(
-                ports,
-                &mut *sql,
-                &mut *values,
-                NullablePortSqler(PortSqler::new(Port::F.port)), // This table is joined manually
-            )?;
-        }
-
-        Ok(())
+pub fn add_ast_field<'a, T>(
+    query_builder: &mut RawQueryBuilder<'a, impl Selector>,
+    field: &'a Option<Or<T>>,
+    sql_value: impl ValueSqler<T>,
+) {
+    if let Some(field) = field {
+        query_builder.append_condition(|sql, values| sql_or(field, sql, values, sql_value))
     }
 }
 

@@ -29,7 +29,7 @@ use crate::models::{
     DomainWorkspaceTag, GlobalTag, ManualDomain, Workspace, WorkspaceTag,
 };
 use crate::modules::raw_query::RawQueryBuilder;
-use crate::modules::syntax::{DomainAST, GlobalAST, JoinTags};
+use crate::modules::syntax::{DomainAST, GlobalAST};
 use crate::query_tags;
 
 /// Query parameters for filtering the domains to get
@@ -119,36 +119,21 @@ pub async fn get_all_domains(
         .global_filter
         .as_deref()
         .map(GlobalAST::parse)
-        .transpose()?;
-    let global_filter = global_filter.as_ref();
+        .transpose()?
+        .unwrap_or_default();
 
     let domain_filter = params
         .domain_filter
         .as_deref()
         .map(DomainAST::parse)
-        .transpose()?;
-    let domain_filter = domain_filter.as_ref();
+        .transpose()?
+        .unwrap_or_default();
 
     let mut count_query = RawQueryBuilder::new((Domain::F.uuid.count(),));
     let mut select_query = RawQueryBuilder::new(PatchSelector::<Domain>::new());
 
-    if global_filter
-        .and_then(|ast| ast.tags.as_ref())
-        .or(domain_filter.and_then(|ast| ast.tags.as_ref()))
-        .is_some()
-    {
-        count_query.append_join(JoinTags::domain());
-        select_query.append_join(JoinTags::domain());
-    }
-
-    if let Some(ast) = global_filter {
-        count_query.append_condition(|sql, values| ast.sql_condition(sql, values));
-        select_query.append_condition(|sql, values| ast.sql_condition(sql, values));
-    }
-    if let Some(ast) = domain_filter {
-        count_query.append_condition(|sql, values| ast.sql_condition(sql, values));
-        select_query.append_condition(|sql, values| ast.sql_condition(sql, values));
-    }
+    domain_filter.apply_to_query(&global_filter, &mut count_query);
+    domain_filter.apply_to_query(&global_filter, &mut select_query);
 
     count_query.append_eq_condition(Domain::F.workspace, Value::Uuid(path.uuid));
     select_query.append_eq_condition(Domain::F.workspace, Value::Uuid(path.uuid));
