@@ -1,5 +1,9 @@
 use std::fmt::Debug;
 
+use ipnetwork::IpNetwork;
+
+use crate::models::PortProtocol;
+
 /// AST for global filter
 #[derive(Default, Debug)]
 pub struct GlobalAST {
@@ -12,6 +16,9 @@ pub struct GlobalAST {
 pub struct DomainAST {
     /// Filter by tags
     pub tags: Option<Or<String>>,
+
+    /// Filter by domain name
+    pub domains: Option<Or<String>>,
 }
 
 /// AST for host specific filter
@@ -19,6 +26,9 @@ pub struct DomainAST {
 pub struct HostAST {
     /// Filter by tags
     pub tags: Option<Or<String>>,
+
+    /// Filter by ip address
+    pub ips: Option<Or<IpNetwork>>,
 }
 
 /// AST for port specific filter
@@ -29,6 +39,12 @@ pub struct PortAST {
 
     /// Filter ports by port numbers
     pub ports: Option<Or<MaybeRange<u16>>>,
+
+    /// Filter by ip address
+    pub ips: Option<Or<IpNetwork>>,
+
+    /// Filter by protocols
+    pub protocols: Option<Or<PortProtocol>>,
 }
 
 /// AST for service specific filter
@@ -36,6 +52,15 @@ pub struct PortAST {
 pub struct ServiceAST {
     /// Filter by tags
     pub tags: Option<Or<String>>,
+
+    /// Filter by ip address
+    pub ips: Option<Or<IpNetwork>>,
+
+    /// Filter by ports
+    pub ports: Option<Or<MaybeRange<u16>>>,
+
+    /// Filter by service name
+    pub names: Option<Or<String>>,
 }
 
 /// OR expression

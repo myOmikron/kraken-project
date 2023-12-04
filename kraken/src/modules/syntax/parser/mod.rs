@@ -3,6 +3,7 @@ mod value_parser;
 
 use std::error::Error as StdError;
 
+use ipnetwork::IpNetwork;
 use thiserror::Error;
 
 use self::cursor::Cursor;
@@ -11,6 +12,7 @@ use super::{
     tokenize, And, DomainAST, GlobalAST, HostAST, Not, Or, PortAST, ServiceAST, Token,
     UnexpectedCharacter,
 };
+use crate::modules::syntax::parser::value_parser::parse_port_protocol;
 
 /// An error encountered while parsing a filter ast
 #[derive(Debug, Error)]
@@ -47,14 +49,8 @@ pub enum ParseError {
 impl GlobalAST {
     /// Parse a string into a [`GlobalAST`]
     pub fn parse(input: &str) -> Result<Self, ParseError> {
-        parse_ast(input, |ast: &mut GlobalAST, column, tokens| match column {
-            "tags" => {
-                ast.tags
-                    .get_or_insert(Or(Vec::new()))
-                    .0
-                    .extend(parse_or(tokens, parse_string)?.0);
-                Ok(())
-            }
+        parse_ast(input, |GlobalAST { tags }, column, tokens| match column {
+            "tags" => parse_ast_field(tags, tokens, parse_string),
             _ => Err(ParseError::UnknownColumn(column.to_string())),
         })
     }
@@ -63,71 +59,74 @@ impl GlobalAST {
 impl DomainAST {
     /// Parse a string into a [`DomainAST`]
     pub fn parse(input: &str) -> Result<Self, ParseError> {
-        parse_ast(input, |ast: &mut DomainAST, column, tokens| match column {
-            "tags" => {
-                ast.tags
-                    .get_or_insert(Or(Vec::new()))
-                    .0
-                    .extend(parse_or(tokens, parse_string)?.0);
-                Ok(())
-            }
-            _ => Err(ParseError::UnknownColumn(column.to_string())),
-        })
+        parse_ast(
+            input,
+            |DomainAST { tags, domains }, column, tokens| match column {
+                "tags" => parse_ast_field(tags, tokens, parse_string),
+                "domains" => parse_ast_field(domains, tokens, parse_string),
+                _ => Err(ParseError::UnknownColumn(column.to_string())),
+            },
+        )
     }
 }
 
 impl HostAST {
     /// Parse a string into a [`HostAST`]
     pub fn parse(input: &str) -> Result<Self, ParseError> {
-        parse_ast(input, |ast: &mut HostAST, column, tokens| match column {
-            "tags" => {
-                ast.tags
-                    .get_or_insert(Or(Vec::new()))
-                    .0
-                    .extend(parse_or(tokens, parse_string)?.0);
-                Ok(())
-            }
-            _ => Err(ParseError::UnknownColumn(column.to_string())),
-        })
+        parse_ast(
+            input,
+            |HostAST { tags, ips }, column, tokens| match column {
+                "tags" => parse_ast_field(tags, tokens, parse_string),
+                "ips" => parse_ast_field(ips, tokens, parse_from_str::<IpNetwork>),
+                _ => Err(ParseError::UnknownColumn(column.to_string())),
+            },
+        )
     }
 }
 
 impl PortAST {
     /// Parse a string into a [`PortAST`]
     pub fn parse(input: &str) -> Result<Self, ParseError> {
-        parse_ast(input, |ast: &mut PortAST, column, tokens| match column {
-            "tags" => {
-                ast.tags
-                    .get_or_insert(Or(Vec::new()))
-                    .0
-                    .extend(parse_or(tokens, parse_string)?.0);
-                Ok(())
-            }
-            "ports" => {
-                ast.ports
-                    .get_or_insert(Or(Vec::new()))
-                    .0
-                    .extend(parse_or(tokens, wrap_maybe_range(parse_from_str::<u16>))?.0);
-                Ok(())
-            }
-            _ => Err(ParseError::UnknownColumn(column.to_string())),
-        })
+        parse_ast(
+            input,
+            |PortAST {
+                 tags,
+                 ports,
+                 ips,
+                 protocols,
+             },
+             column,
+             tokens| match column {
+                "tags" => parse_ast_field(tags, tokens, parse_string),
+                "ports" => parse_ast_field(ports, tokens, wrap_maybe_range(parse_from_str::<u16>)),
+                "ips" => parse_ast_field(ips, tokens, parse_from_str::<IpNetwork>),
+                "protocols" => parse_ast_field(protocols, tokens, parse_port_protocol),
+                _ => Err(ParseError::UnknownColumn(column.to_string())),
+            },
+        )
     }
 }
 
 impl ServiceAST {
     /// Parse a string into a [`ServiceAST`]
     pub fn parse(input: &str) -> Result<Self, ParseError> {
-        parse_ast(input, |ast: &mut ServiceAST, column, tokens| match column {
-            "tags" => {
-                ast.tags
-                    .get_or_insert(Or(Vec::new()))
-                    .0
-                    .extend(parse_or(tokens, parse_string)?.0);
-                Ok(())
-            }
-            _ => Err(ParseError::UnknownColumn(column.to_string())),
-        })
+        parse_ast(
+            input,
+            |ServiceAST {
+                 tags,
+                 ips,
+                 names,
+                 ports,
+             },
+             column,
+             tokens| match column {
+                "tags" => parse_ast_field(tags, tokens, parse_string),
+                "ips" => parse_ast_field(ips, tokens, parse_from_str::<IpNetwork>),
+                "names" => parse_ast_field(names, tokens, parse_string),
+                "ports" => parse_ast_field(ports, tokens, wrap_maybe_range(parse_from_str::<u16>)),
+                _ => Err(ParseError::UnknownColumn(column.to_string())),
+            },
+        )
     }
 }
 
@@ -151,6 +150,18 @@ pub fn parse_ast<A: Default>(
         }
     }
     Ok(ast)
+}
+
+pub fn parse_ast_field<T>(
+    ast_field: &mut Option<Or<T>>,
+    tokens: &mut Cursor,
+    parse_value: impl ValueParser<T>,
+) -> Result<(), ParseError> {
+    ast_field
+        .get_or_insert(Or(Vec::new()))
+        .0
+        .extend(parse_or(tokens, parse_value)?.0);
+    Ok(())
 }
 
 pub fn parse_or<T>(

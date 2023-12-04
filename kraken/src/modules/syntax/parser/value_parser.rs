@@ -5,6 +5,7 @@ use serde::de::StdError;
 use super::super::{MaybeRange, Range, Token};
 use super::cursor::Cursor;
 use super::ParseError;
+use crate::models::PortProtocol;
 
 /// Trait alias for `Fn(&mut Cursor) -> Result<T, ParseError>` and `Copy`
 pub trait ValueParser<T>: Fn(&mut Cursor) -> Result<T, ParseError> + Copy {}
@@ -24,6 +25,23 @@ where
         .next_value()?
         .parse()
         .map_err(|error| ParseError::ParseValue(Box::new(error)))
+}
+
+pub fn parse_port_protocol(tokens: &mut Cursor) -> Result<PortProtocol, ParseError> {
+    let string = tokens.next_value()?;
+    if string.eq_ignore_ascii_case("tcp") {
+        Ok(PortProtocol::Tcp)
+    } else if string.eq_ignore_ascii_case("ucp") {
+        Ok(PortProtocol::Udp)
+    } else if string.eq_ignore_ascii_case("sctp") {
+        Ok(PortProtocol::Sctp)
+    } else if string.eq_ignore_ascii_case("unknown") {
+        Ok(PortProtocol::Unknown)
+    } else {
+        Err(ParseError::ParseValue(
+            format!("Unknown port protocol: {string}").into(),
+        ))
+    }
 }
 
 /// Wraps a [`ValueParser<T>`] to produce a [`ValueParser<MaybeRange<T>>`]

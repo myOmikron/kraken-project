@@ -29,7 +29,7 @@ use crate::models::{
     WorkspaceTag,
 };
 use crate::modules::raw_query::RawQueryBuilder;
-use crate::modules::syntax::{GlobalAST, JoinTags, ServiceAST};
+use crate::modules::syntax::{GlobalAST, JoinPorts, JoinTags, ServiceAST};
 use crate::query_tags;
 
 /// Query parameters for filtering the services to get
@@ -139,7 +139,8 @@ pub async fn get_all_services(
         .transpose()?;
     let service_filter = service_filter.as_ref();
 
-    let mut count_query = RawQueryBuilder::new((Service::F.uuid.count(),));
+    // Count host's uuid instead of directly service's to force the implicit join required by the conditions
+    let mut count_query = RawQueryBuilder::new((Service::F.host.uuid.count(),));
     let mut select_query = RawQueryBuilder::new((
         Service::F.uuid,
         Service::F.name,
@@ -159,6 +160,13 @@ pub async fn get_all_services(
     {
         count_query.append_join(JoinTags::service());
         select_query.append_join(JoinTags::service());
+    }
+    if service_filter
+        .map(|ast| ast.ports.is_some())
+        .unwrap_or(false)
+    {
+        count_query.append_join(JoinPorts);
+        select_query.append_join(JoinPorts);
     }
 
     if let Some(ast) = global_filter {

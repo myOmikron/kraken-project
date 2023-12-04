@@ -3,7 +3,7 @@
 pub use self::ast::*;
 pub use self::lexer::*;
 pub use self::parser::ParseError;
-pub use self::sqler::JoinTags;
+pub use self::sqler::{JoinPorts, JoinTags};
 
 mod ast;
 mod lexer;

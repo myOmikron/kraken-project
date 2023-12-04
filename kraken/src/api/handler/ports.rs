@@ -134,7 +134,8 @@ pub async fn get_all_ports(
         .transpose()?;
     let port_filter = port_filter.as_ref();
 
-    let mut count_query = RawQueryBuilder::new((Port::F.uuid.count(),));
+    // Count host's uuid instead of directly service's to force the implicit join required by the conditions
+    let mut count_query = RawQueryBuilder::new((Port::F.host.uuid.count(),));
     let mut select_query = RawQueryBuilder::new((
         Port::F.uuid,
         Port::F.port,

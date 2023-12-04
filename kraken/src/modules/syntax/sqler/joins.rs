@@ -2,16 +2,26 @@ use std::fmt;
 use std::fmt::Write;
 
 use rorm::db::sql::value::Value;
+use rorm::internal::field::Field;
+use rorm::prelude::*;
 
+use crate::models::{Port, Service};
 use crate::modules::raw_query::RawJoin;
 
-pub fn sql_tags<'a>(tag: &'a String, sql: &mut String, values: &mut Vec<Value<'a>>) -> fmt::Result {
-    values.push(Value::String(tag));
-    write!(
-        sql,
-        r#"(ARRAY[${i}]::VARCHAR[] <@ "tags"."tags")"#,
-        i = values.len()
-    )
+/// Joins ports to the services table
+pub struct JoinPorts;
+
+impl<'a> RawJoin<'a> for JoinPorts {
+    fn append(self, sql: &mut String, _values: &mut Vec<Value<'a>>) -> fmt::Result {
+        const SERVICE: &str = Service::TABLE;
+        const SERVICE_PORT: &str = <field!(Service::F.port)>::NAME;
+        const PORT: &str = Port::TABLE;
+        const PORT_UUID: &str = <field!(Port::F.uuid)>::NAME;
+        write!(
+            sql,
+            r#"LEFT JOIN "{PORT}" ON "{SERVICE}"."{SERVICE_PORT}" = "{PORT}"."{PORT_UUID}""#
+        )
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -50,7 +60,7 @@ macro_rules! join_tags {
             $GlobalModel, $TargetModel, $WorkspaceModel, GlobalTag, WorkspaceTag,
         };
 
-        $crate::modules::syntax::sqler::tags::JoinTags {
+        $crate::modules::syntax::sqler::joins::JoinTags {
             target: $TargetModel::TABLE,
             target_uuid: <field!($TargetModel::F.uuid)>::NAME,
 
