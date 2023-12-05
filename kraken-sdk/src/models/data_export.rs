@@ -37,6 +37,9 @@ pub struct AggregatedHost {
     /// The type of OS of this host
     pub os_type: OsType,
 
+    /// The certainty of the host
+    pub certainty: HostCertainty,
+
     /// Response time in ms
     pub response_time: Option<i32>,
 
@@ -78,6 +81,9 @@ pub struct AggregatedPort {
     /// The services that link to this port
     pub services: Vec<Uuid>,
 
+    /// The certainty of the port
+    pub certainty: PortCertainty,
+
     /// A comment to the port
     pub comment: String,
 
@@ -111,7 +117,7 @@ pub struct AggregatedService {
     pub comment: String,
 
     /// The certainty the service was detected
-    pub certainty: Certainty,
+    pub certainty: ServiceCertainty,
 
     /// Set of global and local tags
     #[serde(flatten)]
@@ -138,6 +144,9 @@ pub struct AggregatedDomain {
 
     /// Uuids to [`AggregatedRelation::DomainDomain`] where this domain is the `source`
     pub destinations: Vec<Uuid>,
+
+    /// The certainty of the domain
+    pub certainty: DomainCertainty,
 
     /// A comment to the domain
     pub comment: String,
@@ -217,13 +226,46 @@ pub enum PortProtocol {
     Sctp,
 }
 
+/// The certainty of a host
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+pub enum HostCertainty {
+    /// 3rd party historical data
+    Historical = 0,
+    /// 3rd party data
+    SupposedTo = 1,
+    /// The host has responded either by HostAlive, Port or Service Detection or something similar
+    Verified = 2,
+}
+
+/// The certainty states of a port
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+pub enum PortCertainty {
+    /// 3rd party historical data
+    Historical = 0,
+    /// 3rd party data
+    SupposedTo = 1,
+    /// The host has responded either by HostAlive, Port or Service Detection or something similar
+    Verified = 2,
+}
+
 /// The certainty a service is detected
-#[derive(Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub enum Certainty {
-    /// Service is not detected
-    Unknown,
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+pub enum ServiceCertainty {
+    /// 3rd party historical data
+    Historical = 0,
+    /// 3rd party data
+    SupposedTo = 1,
     /// May be a certain service
-    Maybe,
+    MaybeVerified = 2,
     /// Service is definitely correct
-    Definitely,
+    DefinitelyVerified = 3,
+}
+
+/// The certainty of a domain
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+pub enum DomainCertainty {
+    /// The domain was not found through DNS
+    Unverified = 0,
+    /// Domain was verified through DNS
+    Verified = 1,
 }
