@@ -134,7 +134,7 @@ impl ValueSqler<MaybeRange<u16>> for PortSqler {
         let Self { table, column } = *self;
         match value {
             MaybeRange::Single(value) => {
-                values.push(Value::I16(i16::from_ne_bytes(value.to_ne_bytes())));
+                values.push(Value::I32(*value as i32));
                 write!(sql, r#"("{table}"."{column}" = ${i})"#, i = values.len())
             }
             MaybeRange::Range(range) => match range {
@@ -148,7 +148,7 @@ impl ValueSqler<MaybeRange<u16>> for PortSqler {
                     start: Some(start),
                     end: None,
                 } => {
-                    values.push(Value::I16(i16::from_ne_bytes(start.to_ne_bytes())));
+                    values.push(Value::I32(*start as i32));
                     write!(
                         sql,
                         r#"("{table}"."{column}" >= ${start})"#,
@@ -159,7 +159,7 @@ impl ValueSqler<MaybeRange<u16>> for PortSqler {
                     start: None,
                     end: Some(end),
                 } => {
-                    values.push(Value::I16(i16::from_ne_bytes(end.to_ne_bytes())));
+                    values.push(Value::I32(*end as i32));
                     write!(
                         sql,
                         r#"("{table}"."{column}" <= ${end})"#,
@@ -170,8 +170,8 @@ impl ValueSqler<MaybeRange<u16>> for PortSqler {
                     start: Some(start),
                     end: Some(end),
                 } => {
-                    values.push(Value::I16(i16::from_ne_bytes(start.to_ne_bytes())));
-                    values.push(Value::I16(i16::from_ne_bytes(end.to_ne_bytes())));
+                    values.push(Value::I32(*start as i32));
+                    values.push(Value::I32(*end as i32));
                     write!(
                         sql,
                         r#"("{table}"."{column}" >= ${start} AND "{table}"."{column}" <= ${end})"#,
