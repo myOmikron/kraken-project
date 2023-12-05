@@ -44,6 +44,7 @@ serde_urlencoded = { version = "~0.7" } # required for oauth
 chrono = { version = ">=0.4.20", default-features = false, features = ["serde"] }
 # Bytes abstractions for network usage
 bytes = { version = "~1" }
+bytestring = { version = "~1" }
 # Base64 decoder and encoder
 base64 = { version = "~0.21" }
 # ip networks

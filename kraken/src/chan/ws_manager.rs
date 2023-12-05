@@ -3,6 +3,7 @@ use std::net::IpAddr;
 
 use actix_toolbox::ws;
 use actix_toolbox::ws::Message;
+use bytestring::ByteString;
 use chrono::{DateTime, Utc};
 use log::{debug, error};
 use serde::{Deserialize, Serialize};
@@ -132,7 +133,13 @@ impl WsManagerChan {
 
     /// Send a message to a user
     pub async fn message(&self, uuid: Uuid, msg: WsMessage) {
-        self.send(WsManagerEvent::Message(uuid, msg)).await;
+        match serde_json::to_string(&msg) {
+            Ok(string) => {
+                self.send(WsManagerEvent::Message(uuid, string.into()))
+                    .await
+            }
+            Err(err) => error!("Error serializing WsMessage: {err}"),
+        }
     }
 
     /// Close all websocket's owned by a user
@@ -155,12 +162,13 @@ pub(crate) async fn start_ws_manager() -> WsManagerChan {
 
 enum WsManagerEvent {
     Add(Uuid, ws::Sender),
-    Message(Uuid, WsMessage),
+    /// The [`ByteString`] contains the serialized form of [`WsMessage`]
+    Message(Uuid, ByteString),
     CloseAll(Uuid),
 }
 
 async fn run_ws_manager(mut receiver: mpsc::Receiver<WsManagerEvent>) {
-    let mut sockets: HashMap<Uuid, Vec<mpsc::Sender<WsMessage>>> = HashMap::new();
+    let mut sockets: HashMap<Uuid, Vec<mpsc::Sender<ByteString>>> = HashMap::new();
 
     while let Some(event) = receiver.recv().await {
         match event {
@@ -192,7 +200,7 @@ async fn run_ws_manager(mut receiver: mpsc::Receiver<WsManagerEvent>) {
     }
 }
 
-async fn run_single_socket(actor_chan: ws::Sender, mut manager_chan: mpsc::Receiver<WsMessage>) {
+async fn run_single_socket(actor_chan: ws::Sender, mut manager_chan: mpsc::Receiver<ByteString>) {
     loop {
         // Receive
         let Some(msg) = manager_chan.recv().await else {
@@ -202,17 +210,8 @@ async fn run_single_socket(actor_chan: ws::Sender, mut manager_chan: mpsc::Recei
             return;
         };
 
-        // Convert
-        let txt = match serde_json::to_string(&msg) {
-            Ok(v) => v,
-            Err(err) => {
-                error!("Error serializing WsMessage: {err}");
-                continue;
-            }
-        };
-
         // Send
-        let Ok(_) = actor_chan.send(Message::Text(txt.into())).await else {
+        let Ok(_) = actor_chan.send(Message::Text(msg)).await else {
             debug!("Couldn't send to websocket, because it is closed");
             manager_chan.close();
             return;

@@ -1878,6 +1878,7 @@ dependencies = [
  "argon2",
  "base64 0.21.5",
  "bytes",
+ "bytestring",
  "chrono",
  "clap",
  "dehashed-rs",
