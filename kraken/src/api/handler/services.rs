@@ -2,12 +2,13 @@
 
 use std::collections::HashMap;
 
-use actix_web::web::{Json, Path, Query};
+use actix_web::web::{Json, Path};
 use actix_web::{get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use ipnetwork::IpNetwork;
-use rorm::conditions::{BoxedCondition, Condition, DynamicCollection};
+use rorm::conditions::DynamicCollection;
+use rorm::db::sql::value::Value;
 use rorm::prelude::ForeignModelByField;
 use rorm::{and, insert, query, update, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
@@ -27,13 +28,25 @@ use crate::models::{
     Port, Service, ServiceCertainty, ServiceGlobalTag, ServiceWorkspaceTag, Workspace,
     WorkspaceTag,
 };
+use crate::modules::filter::{GlobalAST, ServiceAST};
+use crate::modules::raw_query::RawQueryBuilder;
 use crate::query_tags;
 
 /// Query parameters for filtering the services to get
-#[derive(Deserialize, IntoParams)]
+#[derive(Deserialize, ToSchema)]
 pub struct GetAllServicesQuery {
+    /// The parameters controlling the page to query
+    #[serde(flatten)]
+    pub page: PageParams,
+
     /// Only get services associated with a specific host
     pub host: Option<Uuid>,
+
+    /// An optional general filter to apply
+    pub global_filter: Option<String>,
+
+    /// An optional service specific filter to apply
+    pub service_filter: Option<String>,
 }
 
 /// A simple representation of a service
@@ -92,14 +105,14 @@ pub struct FullService {
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    params(PathUuid, PageParams, GetAllServicesQuery),
+    request_body = GetAllServicesQuery,
+    params(PathUuid),
     security(("api_key" = []))
 )]
-#[get("/workspaces/{uuid}/services")]
+#[post("/workspaces/{uuid}/services/all")]
 pub async fn get_all_services(
     path: Path<PathUuid>,
-    page_params: Query<PageParams>,
-    filter_params: Query<GetAllServicesQuery>,
+    params: Json<GetAllServicesQuery>,
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<ServiceResultsPage>> {
     let path = path.into_inner();
@@ -110,44 +123,52 @@ pub async fn get_all_services(
         return Err(ApiError::MissingPrivileges);
     }
 
-    let (limit, offset) = get_page_params(page_params).await?;
+    let (limit, offset) = get_page_params(params.page).await?;
 
-    fn build_condition(workspace: Uuid, filter_params: &GetAllServicesQuery) -> BoxedCondition<'_> {
-        match filter_params {
-            GetAllServicesQuery { host: Some(host) } => and![
-                Service::F.workspace.equals(workspace),
-                Service::F.host.equals(*host)
-            ]
-            .boxed(),
-            GetAllServicesQuery { host: None } => Service::F.workspace.equals(workspace).boxed(),
-        }
+    let global_filter = params
+        .global_filter
+        .as_deref()
+        .map(GlobalAST::parse)
+        .transpose()?
+        .unwrap_or_default();
+
+    let service_filter = params
+        .service_filter
+        .as_deref()
+        .map(ServiceAST::parse)
+        .transpose()?
+        .unwrap_or_default();
+
+    // Count host's uuid instead of directly service's to force the implicit join required by the conditions
+    let mut count_query = RawQueryBuilder::new((Service::F.host.uuid.count(),));
+    let mut select_query = RawQueryBuilder::new((
+        Service::F.uuid,
+        Service::F.name,
+        Service::F.version,
+        Service::F.certainty,
+        Service::F.comment,
+        Service::F.created_at,
+        Service::F.host.select_as::<Host>(),
+        Service::F.port,
+        Service::F.workspace,
+    ));
+
+    service_filter.apply_to_query(&global_filter, &mut count_query);
+    service_filter.apply_to_query(&global_filter, &mut select_query);
+
+    count_query.append_eq_condition(Service::F.workspace, Value::Uuid(path.uuid));
+    select_query.append_eq_condition(Service::F.workspace, Value::Uuid(path.uuid));
+
+    if let Some(host_uuid) = params.host {
+        count_query.append_eq_condition(Service::F.host, Value::Uuid(host_uuid));
+        select_query.append_eq_condition(Service::F.host, Value::Uuid(host_uuid));
     }
 
-    let (total,) = query!(&mut tx, (Service::F.uuid.count()))
-        .condition(build_condition(path.uuid, &filter_params))
-        .one()
-        .await?;
+    select_query.order_desc(Service::F.created_at);
+    select_query.limit_offset(limit, offset);
 
-    let services = query!(
-        &mut tx,
-        (
-            Service::F.uuid,
-            Service::F.name,
-            Service::F.version,
-            Service::F.certainty,
-            Service::F.comment,
-            Service::F.created_at,
-            Service::F.host as Host,
-            Service::F.port,
-            Service::F.workspace,
-        )
-    )
-    .condition(build_condition(path.uuid, &filter_params))
-    .order_desc(Service::F.created_at)
-    .limit(limit)
-    .offset(offset)
-    .all()
-    .await?;
+    let (total,) = count_query.one(&mut tx).await?;
+    let services: Vec<_> = select_query.stream(&mut tx).try_collect().await?;
 
     let mut ports = HashMap::new();
     let p: Vec<_> = services

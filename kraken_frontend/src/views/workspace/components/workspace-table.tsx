@@ -12,6 +12,8 @@ import ArrowFirstIcon from "../../../svg/arrow-first";
 import ArrowLastIcon from "../../../svg/arrow-last";
 import PlusIcon from "../../../svg/plus";
 import Popup from "reactjs-popup";
+import FilterInput from "./filter-input";
+import { toast } from "react-toastify";
 
 export type WorkspaceDataTableProps<T> = {
     /** Method used to query a page */
@@ -66,6 +68,9 @@ export default function WorkspaceTable<T extends { uuid: string }>(props: Worksp
         children: [header, items.map(renderItem)],
         columnsTemplate,
         onAdd,
+        applyFilter() {
+            toast.warn("Not implemented yet");
+        },
     });
 }
 
@@ -80,6 +85,8 @@ export type StatelessWorkspaceTableProps = {
     /** The number of items in the pages before the current one */
     offset: number;
     setOffset: (offset: number) => void;
+
+    applyFilter: (filter: string) => void;
 
     /** The table's header row and body rows*/
     children: [React.ReactNode, Array<React.ReactNode>];
@@ -101,6 +108,7 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
         setLimit,
         offset,
         setOffset: setRawOffset,
+        applyFilter,
         children: [header, body],
         columnsTemplate,
         onAdd,
@@ -122,7 +130,7 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
     return (
         <div className={"workspace-table pane"} style={style}>
             <div className={"workspace-table-pre-header"}>
-                <Input className={"input"} placeholder={"Filter..."} value={""} onChange={console.log} />
+                <FilterInput placeholder={"Filter..."} applyFilter={applyFilter} />
                 {onAdd === undefined ? null : (
                     <button className={"button"} type={"button"} onClick={onAdd}>
                         <PlusIcon />
@@ -184,6 +192,7 @@ export function useTable<T extends { uuid: string }>(
     const [offset, setOffset] = React.useState(0);
     const [total, setTotal] = React.useState(0);
     const [items, setItems] = React.useState<Array<T>>([]);
+    const [filter, setFilter] = React.useState("");
 
     const [reload, setReload] = React.useState(0);
 
@@ -206,6 +215,11 @@ export function useTable<T extends { uuid: string }>(
         offset,
         /** Set the index of the first item of the current page i.e. changing the shown page */
         setOffset,
+
+        /** The filter <input/>'s value */
+        filter,
+        /** Set filter <input/>'s value */
+        setFilter,
 
         /** The total number of items found by the query */
         total,

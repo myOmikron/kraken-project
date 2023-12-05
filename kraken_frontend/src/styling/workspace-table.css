@@ -12,7 +12,11 @@
     margin: 0 1em 1.5em;
 }
 
-.workspace-table-pre-header > input {
+.workspace-table-pre-header form {
+    display: contents;
+}
+
+.workspace-table-pre-header input {
     flex-grow: 1;
 }
 

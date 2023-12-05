@@ -20,31 +20,33 @@ import { exists, mapValues } from '../runtime';
  */
 export interface QueryCertificateTransparencyRequest {
     /**
-     * 
+     * Domain to query certificates for
      * @type {string}
      * @memberof QueryCertificateTransparencyRequest
      */
     target: string;
     /**
-     * 
+     * Should expired certificates be included as well
      * @type {boolean}
      * @memberof QueryCertificateTransparencyRequest
      */
     includeExpired: boolean;
     /**
-     * 
+     * The number of times the query should be retried if it failed.
      * @type {number}
      * @memberof QueryCertificateTransparencyRequest
      */
     maxRetries: number;
     /**
+     * The interval that should be waited between retries.
      * 
+     * The interval is specified in milliseconds.
      * @type {number}
      * @memberof QueryCertificateTransparencyRequest
      */
     retryInterval: number;
     /**
-     * 
+     * The workspace to execute the attack in
      * @type {string}
      * @memberof QueryCertificateTransparencyRequest
      */

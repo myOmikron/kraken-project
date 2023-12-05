@@ -1,21 +1,8 @@
-import React, { useContext } from "react";
+import React from "react";
 import "../../styling/workspace-data.css";
 import { StatelessWorkspaceTable, useTable } from "./components/workspace-table";
 import { Api } from "../../api/api";
-import Tag from "../../components/tag";
-import {
-    FullDomain,
-    FullHost,
-    FullPort,
-    FullService,
-    instanceOfPortResultsPage,
-    ManualHostCertainty,
-    ManualPortCertainty,
-    ManualServiceCertainty,
-    PortProtocol,
-    SimpleAggregationSource,
-    SimpleTag,
-} from "../../api/generated";
+import { FullDomain, FullHost, FullPort, FullService } from "../../api/generated";
 import { WorkspaceDataHostDetails } from "./workspace-data/workspace-data-host-details";
 import { WorkspaceDataServiceDetails } from "./workspace-data/workspace-data-service-details";
 import { WorkspaceDataPortDetails } from "./workspace-data/workspace-data-port-details";
@@ -23,11 +10,6 @@ import { WorkspaceDataDomainDetails } from "./workspace-data/workspace-data-doma
 import SourcesList from "./components/sources-list";
 import TagList from "./components/tag-list";
 import Popup from "reactjs-popup";
-import Input from "../../components/input";
-import Select, { SingleValue } from "react-select";
-import { selectStyles } from "../../components/select-menu";
-import { handleApiError } from "../../utils/helper";
-import { toast } from "react-toastify";
 import { CreateDomainForm } from "./workspace-data/workspace-data-create-domain";
 import { CreateHostForm } from "./workspace-data/workspace-data-create-host";
 import { CreatePortForm } from "./workspace-data/workspace-data-create-port";
@@ -35,6 +17,7 @@ import { CreateServiceForm } from "./workspace-data/workspace-data-create-servic
 import { WORKSPACE_CONTEXT } from "./workspace";
 import { ROUTES } from "../../routes";
 import AttackIcon from "../../svg/attack";
+import FilterInput from "./components/filter-input";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations" };
@@ -44,28 +27,34 @@ type WorkspaceDataProps = {};
 export default function WorkspaceData(props: WorkspaceDataProps) {
     const {
         workspace: { uuid: workspace },
-    } = useContext(WORKSPACE_CONTEXT);
+    } = React.useContext(WORKSPACE_CONTEXT);
 
     const [tab, setTab] = React.useState<keyof typeof TABS>("hosts");
     const [detailTab, setDetailTab] = React.useState<keyof typeof DETAILS_TAB>("general");
     const [selected, setSelected] = React.useState<{ type: keyof typeof TABS; uuid: string } | null>(null);
     const [createForm, setCreateForm] = React.useState<keyof typeof TABS | null>(null);
 
+    const [globalFilter, setGlobalFilter] = React.useState("");
+    const [domainFilter, setDomainFilter] = React.useState("");
+    const [hostFilter, setHostFilter] = React.useState("");
+    const [portFilter, setPortFilter] = React.useState("");
+    const [serviceFilter, setServiceFilter] = React.useState("");
+
     const { items: domains, ...domainsTable } = useTable<FullDomain>(
-        (limit, offset) => Api.workspaces.domains.all(workspace, limit, offset),
-        [workspace]
+        (limit, offset) => Api.workspaces.domains.all(workspace, limit, offset, { globalFilter, domainFilter }),
+        [workspace, globalFilter, domainFilter],
     );
     const { items: hosts, ...hostsTable } = useTable<FullHost>(
-        (limit, offset) => Api.workspaces.hosts.all(workspace, limit, offset),
-        [workspace]
+        (limit, offset) => Api.workspaces.hosts.all(workspace, limit, offset, { globalFilter, hostFilter }),
+        [workspace, globalFilter, hostFilter],
     );
     const { items: ports, ...portsTable } = useTable<FullPort>(
-        (limit, offset) => Api.workspaces.ports.all(workspace, limit, offset),
-        [workspace]
+        (limit, offset) => Api.workspaces.ports.all(workspace, limit, offset, { globalFilter, portFilter }),
+        [workspace, globalFilter, portFilter],
     );
     const { items: services, ...servicesTable } = useTable<FullService>(
-        (limit, offset) => Api.workspaces.services.all(workspace, limit, offset),
-        [workspace]
+        (limit, offset) => Api.workspaces.services.all(workspace, limit, offset, { globalFilter, serviceFilter }),
+        [workspace, globalFilter, serviceFilter],
     );
 
     const tableElement = (() => {
@@ -76,6 +65,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {...domainsTable}
                         columnsTemplate={"1fr 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("domains")}
+                        applyFilter={setDomainFilter}
                     >
                         <div className={"workspace-table-header"}>
                             <span>Name</span>
@@ -113,6 +103,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {...hostsTable}
                         columnsTemplate={"39ch 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("hosts")}
+                        applyFilter={setHostFilter}
                     >
                         <div className={"workspace-table-header"}>
                             <span>IP</span>
@@ -146,6 +137,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {...portsTable}
                         columnsTemplate={"5ch 8ch 39ch 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("ports")}
+                        applyFilter={setPortFilter}
                     >
                         <div className={"workspace-table-header"}>
                             <span>Port</span>
@@ -183,6 +175,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {...servicesTable}
                         columnsTemplate={"1fr 39ch 5ch 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("services")}
+                        applyFilter={setServiceFilter}
                     >
                         <div className={"workspace-table-header"}>
                             <span>Name</span>
@@ -302,6 +295,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
     return (
         <>
             <div className={"workspace-data-container"}>
+                <div className={"workspace-data-filter pane"}>
+                    <FilterInput placeholder={"Global Filter..."} applyFilter={setGlobalFilter} />
+                </div>
                 <div className={"workspace-data-selector"}>
                     {Object.entries(TABS).map(([key, displayName]) => (
                         <div

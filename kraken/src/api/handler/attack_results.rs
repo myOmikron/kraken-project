@@ -73,7 +73,7 @@ pub async fn get_bruteforce_subdomains_results(
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
-    let (limit, offset) = get_page_params(page_params).await?;
+    let (limit, offset) = get_page_params(page_params.0).await?;
 
     if !Attack::has_access(&mut tx, attack_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
@@ -151,7 +151,7 @@ pub async fn get_tcp_port_scan_results(
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     let uuid = path.uuid;
-    let (limit, offset) = get_page_params(page_params).await?;
+    let (limit, offset) = get_page_params(page_params.0).await?;
 
     if !Attack::has_access(&mut tx, uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
@@ -239,7 +239,7 @@ pub async fn get_query_certificate_transparency_results(
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
-    let (limit, offset) = get_page_params(page_params).await?;
+    let (limit, offset) = get_page_params(page_params.0).await?;
 
     if !Attack::has_access(&mut tx, attack_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
@@ -368,7 +368,7 @@ pub async fn get_query_unhashed_results(
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
-    let (limit, offset) = get_page_params(page_params).await?;
+    let (limit, offset) = get_page_params(page_params.0).await?;
 
     if !Attack::has_access(&mut tx, attack_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
@@ -451,7 +451,7 @@ pub async fn get_host_alive_results(
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
-    let (limit, offset) = get_page_params(page_params).await?;
+    let (limit, offset) = get_page_params(page_params.0).await?;
 
     if !Attack::has_access(&mut tx, attack_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
@@ -534,7 +534,7 @@ pub async fn get_service_detection_results(
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
-    let (limit, offset) = get_page_params(page_params).await?;
+    let (limit, offset) = get_page_params(page_params.0).await?;
 
     if !Attack::has_access(&mut tx, attack_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
@@ -664,7 +664,7 @@ pub async fn get_dns_resolution_results(
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
-    let (limit, offset) = get_page_params(page_params).await?;
+    let (limit, offset) = get_page_params(page_params.0).await?;
 
     if !Attack::has_access(&mut tx, attack_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);

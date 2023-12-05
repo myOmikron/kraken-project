@@ -20,31 +20,35 @@ import { exists, mapValues } from '../runtime';
  */
 export interface HostsAliveRequest {
     /**
+     * The leech to use
      * 
+     * Leave empty to use a random leech
      * @type {string}
      * @memberof HostsAliveRequest
      */
     leechUuid?: string | null;
     /**
-     * 
+     * The ip addresses / networks to scan
      * @type {Array<string>}
      * @memberof HostsAliveRequest
      */
     targets: Array<string>;
     /**
+     * The time to wait until a host is considered down.
      * 
+     * The timeout is specified in milliseconds.
      * @type {number}
      * @memberof HostsAliveRequest
      */
     timeout: number;
     /**
-     * 
+     * The concurrent task limit
      * @type {number}
      * @memberof HostsAliveRequest
      */
     concurrentLimit: number;
     /**
-     * 
+     * The workspace to execute the attack in
      * @type {string}
      * @memberof HostsAliveRequest
      */

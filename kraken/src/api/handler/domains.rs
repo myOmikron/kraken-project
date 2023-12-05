@@ -1,14 +1,19 @@
 //! The handlers for the aggregated data of domains are located here
 
 use std::collections::HashMap;
+use std::fmt;
+use std::fmt::Write;
 
-use actix_web::web::{Json, Path, Query};
+use actix_web::web::{Json, Path};
 use actix_web::{get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use rorm::conditions::DynamicCollection;
+use rorm::db::sql::value::Value;
+use rorm::internal::field::Field;
+use rorm::model::PatchSelector;
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, insert, query, update, FieldAccess, Model};
+use rorm::{and, field, insert, query, update, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -21,17 +26,29 @@ use crate::api::handler::{
 use crate::chan::GLOBAL;
 use crate::models::{
     AggregationSource, AggregationTable, Domain, DomainGlobalTag, DomainHostRelation,
-    DomainWorkspaceTag, GlobalTag, Host, ManualDomain, Workspace, WorkspaceTag,
+    DomainWorkspaceTag, GlobalTag, ManualDomain, Workspace, WorkspaceTag,
 };
+use crate::modules::filter::{DomainAST, GlobalAST};
+use crate::modules::raw_query::RawQueryBuilder;
 use crate::query_tags;
 
 /// Query parameters for filtering the domains to get
-#[derive(Deserialize, IntoParams)]
+#[derive(Deserialize, ToSchema)]
 pub struct GetAllDomainsQuery {
+    /// The parameters controlling the page to query
+    #[serde(flatten)]
+    pub page: PageParams,
+
     /// Only get domains pointing to a specific host
     ///
     /// This includes domains which point to another domain which points to this host.
     pub host: Option<Uuid>,
+
+    /// An optional general filter to apply
+    pub global_filter: Option<String>,
+
+    /// An optional domain specific filter to apply
+    pub domain_filter: Option<String>,
 }
 
 /// A simple representation of a domain in a workspace
@@ -76,14 +93,14 @@ pub struct FullDomain {
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
-    params(PathUuid, PageParams, GetAllDomainsQuery),
+    request_body = GetAllDomainsQuery,
+    params(PathUuid),
     security(("api_key" = []))
 )]
-#[get("/workspaces/{uuid}/domains")]
+#[post("/workspaces/{uuid}/domains/all")]
 pub async fn get_all_domains(
     path: Path<PathUuid>,
-    page_params: Query<PageParams>,
-    filter_params: Query<GetAllDomainsQuery>,
+    params: Json<GetAllDomainsQuery>,
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<DomainResultsPage>> {
     let path = path.into_inner();
@@ -96,139 +113,99 @@ pub async fn get_all_domains(
         return Err(ApiError::MissingPrivileges);
     }
 
-    let (limit, offset) = get_page_params(page_params).await?;
+    let (limit, offset) = get_page_params(params.page).await?;
 
-    match filter_params.into_inner().host {
-        None => {
-            let (total,) = query!(&mut tx, (Domain::F.uuid.count()))
-                .condition(Domain::F.workspace.equals(path.uuid))
-                .one()
-                .await?;
+    let global_filter = params
+        .global_filter
+        .as_deref()
+        .map(GlobalAST::parse)
+        .transpose()?
+        .unwrap_or_default();
 
-            let domains = query!(&mut tx, Domain)
-                .condition(Domain::F.workspace.equals(path.uuid))
-                .order_desc(Domain::F.created_at)
-                .limit(limit)
-                .offset(offset)
-                .all()
-                .await?;
+    let domain_filter = params
+        .domain_filter
+        .as_deref()
+        .map(DomainAST::parse)
+        .transpose()?
+        .unwrap_or_default();
 
-            query_tags!(
-                tags,
-                tx,
-                (
-                    DomainWorkspaceTag::F.workspace_tag as WorkspaceTag,
-                    DomainWorkspaceTag::F.domain
-                ),
-                DomainWorkspaceTag::F.domain,
-                (
-                    DomainGlobalTag::F.global_tag as GlobalTag,
-                    DomainGlobalTag::F.domain
-                ),
-                DomainGlobalTag::F.domain,
-                domains.iter().map(|x| x.uuid)
-            );
+    let mut count_query = RawQueryBuilder::new((Domain::F.uuid.count(),));
+    let mut select_query = RawQueryBuilder::new(PatchSelector::<Domain>::new());
 
-            let mut sources = SimpleAggregationSource::query(
-                &mut tx,
-                path.uuid,
-                AggregationTable::Domain,
-                domains.iter().map(|x| x.uuid),
+    domain_filter.apply_to_query(&global_filter, &mut count_query);
+    domain_filter.apply_to_query(&global_filter, &mut select_query);
+
+    count_query.append_eq_condition(Domain::F.workspace, Value::Uuid(path.uuid));
+    select_query.append_eq_condition(Domain::F.workspace, Value::Uuid(path.uuid));
+
+    if let Some(host_uuid) = params.host {
+        fn append(sql: &mut String, values: &mut Vec<Value>, uuid: Uuid) -> fmt::Result {
+            const DOMAIN_TABLE: &str = Domain::TABLE;
+            const DOMAIN_UUID: &str = <field!(DomainHostRelation::F.uuid)>::NAME;
+            const M2M_TABLE: &str = DomainHostRelation::TABLE;
+            const M2M_DOMAIN: &str = <field!(DomainHostRelation::F.domain)>::NAME;
+            const M2M_HOST: &str = <field!(DomainHostRelation::F.host)>::NAME;
+            values.push(Value::Uuid(uuid));
+            write!(
+                sql,
+                r#""{DOMAIN_TABLE}"."{DOMAIN_UUID}" IN (SELECT "{M2M_TABLE}"."{M2M_DOMAIN}" FROM "{M2M_TABLE}" WHERE "{M2M_TABLE}"."{M2M_HOST}" = ${})"#,
+                values.len()
             )
-            .await?;
-
-            let items = domains
-                .into_iter()
-                .map(|x| FullDomain {
-                    uuid: x.uuid,
-                    domain: x.domain,
-                    comment: x.comment,
-                    workspace: *x.workspace.key(),
-                    tags: tags.remove(&x.uuid).unwrap_or_default(),
-                    sources: sources.remove(&x.uuid).unwrap_or_default(),
-                    created_at: x.created_at,
-                })
-                .collect();
-
-            tx.commit().await?;
-            Ok(Json(DomainResultsPage {
-                items,
-                limit,
-                offset,
-                total: total as u64,
-            }))
         }
-        Some(host_uuid) => {
-            query!(&mut tx, (Host::F.uuid,))
-                .condition(and![
-                    Host::F.workspace.equals(path.uuid),
-                    Host::F.uuid.equals(host_uuid)
-                ])
-                .optional()
-                .await?
-                .ok_or(ApiError::InvalidUuid)?;
-
-            let (total,) = query!(&mut tx, (DomainHostRelation::F.uuid.count()))
-                .condition(DomainHostRelation::F.host.equals(host_uuid))
-                .one()
-                .await?;
-
-            let domains: Vec<Domain> = query!(&mut tx, (DomainHostRelation::F.domain as Domain,))
-                .condition(DomainHostRelation::F.host.equals(host_uuid))
-                .order_desc(DomainHostRelation::F.domain.created_at)
-                .limit(limit)
-                .offset(offset)
-                .stream()
-                .map_ok(|x| x.0)
-                .try_collect()
-                .await?;
-
-            query_tags!(
-                tags,
-                tx,
-                (
-                    DomainWorkspaceTag::F.workspace_tag as WorkspaceTag,
-                    DomainWorkspaceTag::F.domain
-                ),
-                DomainWorkspaceTag::F.domain,
-                (
-                    DomainGlobalTag::F.global_tag as GlobalTag,
-                    DomainGlobalTag::F.domain
-                ),
-                DomainGlobalTag::F.domain,
-                domains.iter().map(|x| x.uuid)
-            );
-
-            let mut sources = SimpleAggregationSource::query(
-                &mut tx,
-                path.uuid,
-                AggregationTable::Domain,
-                domains.iter().map(|x| x.uuid),
-            )
-            .await?;
-
-            let items = domains
-                .into_iter()
-                .map(|x| FullDomain {
-                    uuid: x.uuid,
-                    domain: x.domain,
-                    comment: x.comment,
-                    workspace: *x.workspace.key(),
-                    tags: tags.remove(&x.uuid).unwrap_or_default(),
-                    sources: sources.remove(&x.uuid).unwrap_or_default(),
-                    created_at: x.created_at,
-                })
-                .collect();
-
-            tx.commit().await?;
-            Ok(Json(DomainResultsPage {
-                items,
-                limit,
-                offset,
-                total: total as u64,
-            }))
-        }
+        count_query.append_condition(|sql, values| append(sql, values, host_uuid));
+        select_query.append_condition(|sql, values| append(sql, values, host_uuid));
     }
+
+    select_query.order_desc(Domain::F.created_at);
+    select_query.limit_offset(limit, offset);
+
+    let (total,) = count_query.one(&mut tx).await?;
+    let domains: Vec<_> = select_query.stream(&mut tx).try_collect().await?;
+
+    query_tags!(
+        tags,
+        tx,
+        (
+            DomainWorkspaceTag::F.workspace_tag as WorkspaceTag,
+            DomainWorkspaceTag::F.domain
+        ),
+        DomainWorkspaceTag::F.domain,
+        (
+            DomainGlobalTag::F.global_tag as GlobalTag,
+            DomainGlobalTag::F.domain
+        ),
+        DomainGlobalTag::F.domain,
+        domains.iter().map(|x| x.uuid)
+    );
+
+    let mut sources = SimpleAggregationSource::query(
+        &mut tx,
+        path.uuid,
+        AggregationTable::Domain,
+        domains.iter().map(|x| x.uuid),
+    )
+    .await?;
+
+    let items = domains
+        .into_iter()
+        .map(|x| FullDomain {
+            uuid: x.uuid,
+            domain: x.domain,
+            comment: x.comment,
+            workspace: *x.workspace.key(),
+            tags: tags.remove(&x.uuid).unwrap_or_default(),
+            sources: sources.remove(&x.uuid).unwrap_or_default(),
+            created_at: x.created_at,
+        })
+        .collect();
+
+    tx.commit().await?;
+    Ok(Json(DomainResultsPage {
+        items,
+        limit,
+        offset,
+        total: total as u64,
+    }))
 }
 
 /// The path parameter of a domain

@@ -33,7 +33,7 @@ export interface QueryDehashedRequest {
      */
     query: Query;
     /**
-     * 
+     * The workspace to execute the attack in
      * @type {string}
      * @memberof QueryDehashedRequest
      */
