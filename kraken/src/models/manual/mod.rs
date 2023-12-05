@@ -60,7 +60,7 @@ pub struct ManualService {
 
     pub host: IpNetwork,
 
-    pub port: Option<i16>,
+    pub port: Option<i32>,
 
     /// The user which added the host
     pub user: ForeignModel<User>,

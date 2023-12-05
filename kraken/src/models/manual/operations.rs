@@ -239,7 +239,7 @@ struct InsertManualService {
     version: Option<String>,
     certainty: ManualServiceCertainty,
     host: IpNetwork,
-    port: Option<i16>,
+    port: Option<i32>,
     user: ForeignModel<User>,
     workspace: ForeignModel<Workspace>,
 }
@@ -271,7 +271,7 @@ impl ManualService {
                 version: None,
                 certainty,
                 host,
-                port: port.map(u16::to_ne_bytes).map(i16::from_ne_bytes),
+                port: port.map(i32::from),
                 user: ForeignModelByField::Key(user),
                 workspace: ForeignModelByField::Key(workspace),
             })
