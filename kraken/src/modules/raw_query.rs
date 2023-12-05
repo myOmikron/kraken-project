@@ -19,6 +19,9 @@ use rorm::internal::relation_path::Path;
 use rorm::Model;
 
 fn handle_fmt(block: impl FnOnce() -> fmt::Result) {
+    // This function functions as the single consumer of fmt::Result which is produce by writing raw sql to a string
+    // If we can't write to a string, we can just abort everything
+    #[allow(clippy::expect_used)]
     block().expect("Formatting a string shouldn't fail");
 }
 
@@ -178,7 +181,7 @@ impl<'a, S: Selector> RawQueryBuilder<'a, S> {
                 "\"{table}\".\"{column}\" {direction}",
                 table = P::ALIAS,
                 column = F::NAME,
-                direction = asc.then_some("ASC").unwrap_or("DESC"),
+                direction = if asc { "ASC" } else { "DESC" },
             )
         });
     }
@@ -290,7 +293,7 @@ fn build_select_column(column: &ColumnSelector<'_>, sql: &mut String) -> fmt::Re
 
     Ok(())
 }
-fn build_join<'a>(join: &JoinTable, sql: &mut String) -> fmt::Result {
+fn build_join(join: &JoinTable, sql: &mut String) -> fmt::Result {
     let JoinTable {
         join_type,
         table_name,
