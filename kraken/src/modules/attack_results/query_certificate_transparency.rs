@@ -1,4 +1,3 @@
-use chrono::{NaiveDateTime, TimeZone, Utc};
 use rorm::db::Executor;
 use rorm::prelude::*;
 use rorm::{insert, query};
@@ -9,6 +8,7 @@ use crate::models::{
     AggregationSource, AggregationTable, Attack, CertificateTransparencyResultInsert,
     CertificateTransparencyValueNameInsert, DomainCertainty, SourceType,
 };
+use crate::modules::utc::utc_from_seconds;
 use crate::rpc::rpc_definitions::shared::CertEntry;
 
 /// Store a query certificate transparency's result and update the aggregated domains and hosts
@@ -36,16 +36,8 @@ pub async fn store_query_certificate_transparency_result(
             issuer_name: entry.issuer_name,
             serial_number: entry.serial_number,
             common_name: entry.common_name.clone(),
-            not_before: entry.not_before.clone().map(|x| {
-                Utc.from_utc_datetime(
-                    &NaiveDateTime::from_timestamp_millis(x.seconds * 1000).unwrap(),
-                )
-            }),
-            not_after: entry.not_after.clone().map(|x| {
-                Utc.from_utc_datetime(
-                    &NaiveDateTime::from_timestamp_millis(x.seconds * 1000).unwrap(),
-                )
-            }),
+            not_before: entry.not_before.map(|x| utc_from_seconds(x.seconds)),
+            not_after: entry.not_after.map(|x| utc_from_seconds(x.seconds)),
         })
         .await?;
 

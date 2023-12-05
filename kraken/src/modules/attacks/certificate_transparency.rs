@@ -1,8 +1,7 @@
-use chrono::{NaiveDateTime, TimeZone, Utc};
-
 use crate::chan::{CertificateTransparencyEntry, LeechClient, WsMessage, GLOBAL};
 use crate::modules::attack_results::store_query_certificate_transparency_result;
 use crate::modules::attacks::{AttackContext, AttackError, CertificateTransparencyParams};
+use crate::modules::utc::utc_from_seconds;
 use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
 
 impl AttackContext {
@@ -43,18 +42,8 @@ impl AttackContext {
                     issuer_name: e.issuer_name,
                     common_name: e.common_name,
                     value_names: e.value_names,
-                    not_before: e.not_before.map(|ts| {
-                        Utc.from_utc_datetime(
-                            &NaiveDateTime::from_timestamp_opt(ts.seconds, ts.nanos as u32)
-                                .unwrap(),
-                        )
-                    }),
-                    not_after: e.not_after.map(|ts| {
-                        Utc.from_utc_datetime(
-                            &NaiveDateTime::from_timestamp_opt(ts.seconds, ts.nanos as u32)
-                                .unwrap(),
-                        )
-                    }),
+                    not_before: e.not_before.map(|ts| utc_from_seconds(ts.seconds)),
+                    not_after: e.not_after.map(|ts| utc_from_seconds(ts.seconds)),
                 })
                 .collect(),
         })
