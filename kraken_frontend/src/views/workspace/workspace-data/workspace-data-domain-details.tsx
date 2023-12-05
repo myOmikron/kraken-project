@@ -10,10 +10,11 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 export type WorkspaceDataDomainDetailsProps = {
     domain: string;
     updateDomain?: (uuid: string, update: Partial<FullDomain>) => void;
+    tab: "general" | "results" | "relations";
 };
 
 export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProps) {
-    const { domain: uuid, updateDomain: signalUpdate } = props;
+    const { domain: uuid, updateDomain: signalUpdate, tab: tab } = props;
     const {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
@@ -36,38 +37,46 @@ export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProp
                 handleApiError(() => {
                     if (msg !== undefined) toast.success(msg);
                     if (signalUpdate !== undefined) signalUpdate(uuid, update);
-                }),
+                })
             );
     }
 
     if (domain === null) return null;
     return (
         <>
-            <div className={"pane"}>
-                <h3 className={"sub-heading"}>Domain</h3>
-                {domain.domain}
-            </div>
-            <div className={"pane"}>
-                <h3 className={"sub-heading"}>Comment</h3>
-                <Textarea value={domain.comment} onChange={(comment) => setDomain({ ...domain, comment })} />
-                <button
-                    className={"button"}
-                    onClick={() => domain && update(domain.uuid, { comment: domain.comment }, "Updated comment")}
-                >
-                    Update
-                </button>
-            </div>
-            <div className={"pane"}>
-                <h3 className={"sub-heading"}>Tags</h3>
-                <EditableTags
-                    workspace={workspace}
-                    tags={domain.tags}
-                    onChange={(tags) => {
-                        setDomain((host) => host && { ...host, tags });
-                        update(domain.uuid, { tags });
-                    }}
-                />
-            </div>
+            {tab === "general" ? (
+                <>
+                    <div className={"pane"}>
+                        <h3 className={"sub-heading"}>Domain</h3>
+                        {domain.domain}
+                    </div>
+                    <div className={"pane"}>
+                        <h3 className={"sub-heading"}>Comment</h3>
+                        <Textarea value={domain.comment} onChange={(comment) => setDomain({ ...domain, comment })} />
+                        <button
+                            className={"button"}
+                            onClick={() =>
+                                domain && update(domain.uuid, { comment: domain.comment }, "Updated comment")
+                            }
+                        >
+                            Update
+                        </button>
+                    </div>
+                    <div className={"pane"}>
+                        <h3 className={"sub-heading"}>Tags</h3>
+                        <EditableTags
+                            workspace={workspace}
+                            tags={domain.tags}
+                            onChange={(tags) => {
+                                setDomain((host) => host && { ...host, tags });
+                                update(domain.uuid, { tags });
+                            }}
+                        />
+                    </div>
+                </>
+            ) : (
+                <>{tab === "results" ? <div> domain results</div> : <div> domain relations</div>}</>
+            )}
         </>
     );
 }

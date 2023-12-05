@@ -37,6 +37,7 @@ import { ROUTES } from "../../routes";
 import AttackIcon from "../../svg/attack";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
+const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations" };
 
 type WorkspaceDataProps = {};
 
@@ -46,6 +47,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
     } = useContext(WORKSPACE_CONTEXT);
 
     const [tab, setTab] = React.useState<keyof typeof TABS>("hosts");
+    const [detailTab, setDetailTab] = React.useState<keyof typeof DETAILS_TAB>("general");
     const [selected, setSelected] = React.useState<{ type: keyof typeof TABS; uuid: string } | null>(null);
     const [createForm, setCreateForm] = React.useState<keyof typeof TABS | null>(null);
 
@@ -85,7 +87,12 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {domains.map((domain) => (
                             <div
                                 className={"workspace-table-row"}
-                                onClick={() => setSelected({ type: "domains", uuid: domain.uuid })}
+                                onClick={() => {
+                                    if (selected?.type !== "domains") {
+                                        setDetailTab("general");
+                                    }
+                                    setSelected({ type: "domains", uuid: domain.uuid });
+                                }}
                             >
                                 <span>{domain.domain}</span>
                                 <TagList tags={domain.tags} />
@@ -117,7 +124,12 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {hosts.map((host) => (
                             <div
                                 className={"workspace-table-row"}
-                                onClick={() => setSelected({ type: "hosts", uuid: host.uuid })}
+                                onClick={() => {
+                                    if (selected?.type !== "hosts") {
+                                        setDetailTab("general");
+                                    }
+                                    setSelected({ type: "hosts", uuid: host.uuid });
+                                }}
                             >
                                 <span>{host.ipAddr}</span>
                                 <TagList tags={host.tags} />
@@ -147,7 +159,12 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {ports.map((port) => (
                             <div
                                 className={"workspace-table-row"}
-                                onClick={() => setSelected({ type: "ports", uuid: port.uuid })}
+                                onClick={() => {
+                                    if (selected?.type !== "ports") {
+                                        setDetailTab("general");
+                                    }
+                                    setSelected({ type: "ports", uuid: port.uuid });
+                                }}
                             >
                                 <span>{port.port}</span>
                                 <span>{port.protocol.toUpperCase()}</span>
@@ -179,7 +196,12 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {services.map((service) => (
                             <div
                                 className={"workspace-table-row"}
-                                onClick={() => setSelected({ type: "services", uuid: service.uuid })}
+                                onClick={() => {
+                                    if (selected?.type !== "services") {
+                                        setDetailTab("general");
+                                    }
+                                    setSelected({ type: "services", uuid: service.uuid });
+                                }}
                             >
                                 <span>{service.name}</span>
                                 <span>{service.host.ipAddr}</span>
@@ -203,13 +225,29 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
     const detailsElement = (() => {
         switch (selected?.type) {
             case "domains":
-                return <WorkspaceDataDomainDetails domain={selected.uuid} updateDomain={domainsTable.updateItem} />;
+                return (
+                    <WorkspaceDataDomainDetails
+                        domain={selected.uuid}
+                        updateDomain={domainsTable.updateItem}
+                        tab={detailTab}
+                    />
+                );
             case "hosts":
-                return <WorkspaceDataHostDetails host={selected.uuid} updateHost={hostsTable.updateItem} />;
+                return (
+                    <WorkspaceDataHostDetails host={selected.uuid} updateHost={hostsTable.updateItem} tab={detailTab} />
+                );
             case "ports":
-                return <WorkspaceDataPortDetails port={selected.uuid} updatePort={portsTable.updateItem} />;
+                return (
+                    <WorkspaceDataPortDetails port={selected.uuid} updatePort={portsTable.updateItem} tab={detailTab} />
+                );
             case "services":
-                return <WorkspaceDataServiceDetails service={selected.uuid} updateService={servicesTable.updateItem} />;
+                return (
+                    <WorkspaceDataServiceDetails
+                        service={selected.uuid}
+                        updateService={servicesTable.updateItem}
+                        tab={detailTab}
+                    />
+                );
             case undefined:
                 return null;
             default:
@@ -277,7 +315,24 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 {tableElement}
                 <div className={"workspace-data-details pane"}>
                     <h2 className={"sub-heading"}>Details</h2>
-                    {detailsElement}
+                    {selected ? (
+                        <>
+                            <div className={"workspace-data-details-selector"}>
+                                {Object.entries(DETAILS_TAB).map(([key, displayName]) => (
+                                    <h3
+                                        className={
+                                            "heading " +
+                                            (detailTab !== key ? "" : "workspace-data-details-selected-tab")
+                                        }
+                                        onClick={() => setDetailTab(key as keyof typeof DETAILS_TAB)}
+                                    >
+                                        {displayName}
+                                    </h3>
+                                ))}
+                            </div>
+                            {detailsElement}
+                        </>
+                    ) : undefined}
                 </div>
             </div>
             <Popup nested modal open={createForm !== null} onClose={() => setCreateForm(null)}>

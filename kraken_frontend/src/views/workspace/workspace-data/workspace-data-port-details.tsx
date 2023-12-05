@@ -10,10 +10,11 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 export type WorkspaceDataPortDetailsProps = {
     port: string;
     updatePort?: (uuid: string, update: Partial<FullPort>) => void;
+    tab: "general" | "results" | "relations";
 };
 
 export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
-    const { port: uuid, updatePort: signalUpdate } = props;
+    const { port: uuid, updatePort: signalUpdate, tab: tab } = props;
     const {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
@@ -37,38 +38,44 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
                 handleApiError(() => {
                     if (msg !== undefined) toast.success(msg);
                     if (signalUpdate !== undefined) signalUpdate(uuid, update);
-                }),
+                })
             );
     }
 
     if (port === null) return null;
     return (
         <>
-            <div className={"pane"}>
-                <h3 className={"sub-heading"}>Port</h3>
-                {`${port.port} open on ${port.host.ipAddr}`}
-            </div>
-            <div className={"pane"}>
-                <h3 className={"sub-heading"}>Comment</h3>
-                <Textarea value={port.comment} onChange={(comment) => setPort({ ...port, comment })} />
-                <button
-                    className={"button"}
-                    onClick={() => port && update(port.uuid, { comment: port.comment }, "Updated comment")}
-                >
-                    Update
-                </button>
-            </div>
-            <div className={"pane"}>
-                <h3 className={"sub-heading"}>Tags</h3>
-                <EditableTags
-                    workspace={workspace}
-                    tags={port.tags}
-                    onChange={(tags) => {
-                        setPort((port) => port && { ...port, tags });
-                        update(port.uuid, { tags });
-                    }}
-                />
-            </div>
+            {tab === "general" ? (
+                <>
+                    <div className={"pane"}>
+                        <h3 className={"sub-heading"}>Port</h3>
+                        {`${port.port} open on ${port.host.ipAddr}`}
+                    </div>
+                    <div className={"pane"}>
+                        <h3 className={"sub-heading"}>Comment</h3>
+                        <Textarea value={port.comment} onChange={(comment) => setPort({ ...port, comment })} />
+                        <button
+                            className={"button"}
+                            onClick={() => port && update(port.uuid, { comment: port.comment }, "Updated comment")}
+                        >
+                            Update
+                        </button>
+                    </div>
+                    <div className={"pane"}>
+                        <h3 className={"sub-heading"}>Tags</h3>
+                        <EditableTags
+                            workspace={workspace}
+                            tags={port.tags}
+                            onChange={(tags) => {
+                                setPort((port) => port && { ...port, tags });
+                                update(port.uuid, { tags });
+                            }}
+                        />
+                    </div>
+                </>
+            ) : (
+                <>{tab === "results" ? <div> port results</div> : <div> port relations</div>}</>
+            )}
         </>
     );
 }

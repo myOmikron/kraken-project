@@ -10,10 +10,11 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 export type WorkspaceDataServiceDetailsProps = {
     service: string;
     updateService?: (uuid: string, update: Partial<FullService>) => void;
+    tab: "general" | "results" | "relations";
 };
 
 export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsProps) {
-    const { service: uuid, updateService: signalUpdate } = props;
+    const { service: uuid, updateService: signalUpdate, tab: tab } = props;
     const {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
@@ -37,39 +38,47 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
                 handleApiError(() => {
                     if (msg !== undefined) toast.success(msg);
                     if (signalUpdate !== undefined) signalUpdate(uuid, update);
-                }),
+                })
             );
     }
 
     if (service === null) return null;
     return (
         <>
-            <div className={"pane"}>
-                <h3 className={"sub-heading"}>Service</h3>
-                {`${service.name} running on ${service.host.ipAddr}`}
-                {!service.port ? "" : ` (Port ${service.port.port})`}
-            </div>
-            <div className={"pane"}>
-                <h3 className={"sub-heading"}>Comment</h3>
-                <Textarea value={service.comment} onChange={(comment) => setService({ ...service, comment })} />
-                <button
-                    className={"button"}
-                    onClick={() => service && update(service.uuid, { comment: service.comment }, "Updated comment")}
-                >
-                    Update
-                </button>
-            </div>
-            <div className={"pane"}>
-                <h3 className={"sub-heading"}>Tags</h3>
-                <EditableTags
-                    workspace={workspace}
-                    tags={service.tags}
-                    onChange={(tags) => {
-                        setService((service) => service && { ...service, tags });
-                        update(service.uuid, { tags });
-                    }}
-                />
-            </div>
+            {tab === "general" ? (
+                <>
+                    <div className={"pane"}>
+                        <h3 className={"sub-heading"}>Service</h3>
+                        {`${service.name} running on ${service.host.ipAddr}`}
+                        {!service.port ? "" : ` (Port ${service.port.port})`}
+                    </div>
+                    <div className={"pane"}>
+                        <h3 className={"sub-heading"}>Comment</h3>
+                        <Textarea value={service.comment} onChange={(comment) => setService({ ...service, comment })} />
+                        <button
+                            className={"button"}
+                            onClick={() =>
+                                service && update(service.uuid, { comment: service.comment }, "Updated comment")
+                            }
+                        >
+                            Update
+                        </button>
+                    </div>
+                    <div className={"pane"}>
+                        <h3 className={"sub-heading"}>Tags</h3>
+                        <EditableTags
+                            workspace={workspace}
+                            tags={service.tags}
+                            onChange={(tags) => {
+                                setService((service) => service && { ...service, tags });
+                                update(service.uuid, { tags });
+                            }}
+                        />
+                    </div>
+                </>
+            ) : (
+                <>{tab === "results" ? <div> service results</div> : <div> service relations</div>}</>
+            )}
         </>
     );
 }
