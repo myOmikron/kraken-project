@@ -22,7 +22,7 @@ pub async fn run_port_aggregator(
 #[rorm(model = "Port")]
 struct PortInsert {
     uuid: Uuid,
-    port: i16,
+    port: i32,
     protocol: PortProtocol,
     certainty: PortCertainty,
     host: ForeignModel<Host>,
@@ -36,9 +36,7 @@ async fn aggregate(data: PortAggregationData) -> Result<Uuid, rorm::Error> {
     let port_uuid = if let Some((port_uuid, old_certainty)) =
         query!(&mut tx, (Port::F.uuid, Port::F.certainty))
             .condition(and![
-                Port::F
-                    .port
-                    .equals(i16::from_ne_bytes(data.port.to_ne_bytes())),
+                Port::F.port.equals(data.port as i32),
                 Port::F.protocol.equals(data.protocol),
                 Port::F.host.equals(data.host),
                 Port::F.workspace.equals(data.workspace),
@@ -58,7 +56,7 @@ async fn aggregate(data: PortAggregationData) -> Result<Uuid, rorm::Error> {
             .return_primary_key()
             .single(&PortInsert {
                 uuid: Uuid::new_v4(),
-                port: i16::from_ne_bytes(data.port.to_ne_bytes()),
+                port: data.port as i32,
                 protocol: data.protocol,
                 certainty: data.certainty,
                 host: ForeignModelByField::Key(data.host),

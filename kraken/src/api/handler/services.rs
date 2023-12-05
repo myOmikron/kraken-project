@@ -165,7 +165,7 @@ pub async fn get_all_services(
                 port.uuid,
                 SimplePort {
                     uuid: port.uuid,
-                    port: u16::from_ne_bytes(port.port.to_ne_bytes()),
+                    port: port.port as u16,
                     protocol: port.protocol,
                     comment: port.comment,
                     created_at: port.created_at,
@@ -359,7 +359,7 @@ pub async fn get_service(
         },
         port: port.map(|port| SimplePort {
             uuid: port.uuid,
-            port: u16::from_ne_bytes(port.port.to_ne_bytes()),
+            port: port.port as u16,
             protocol: port.protocol,
             host: host.uuid,
             comment: port.comment,

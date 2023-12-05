@@ -83,5 +83,5 @@ pub(crate) struct ServiceDetectionResultInsert {
     pub(crate) attack: ForeignModel<Attack>,
     pub(crate) certainty: ServiceCertainty,
     pub(crate) host: IpNetwork,
-    pub(crate) port: i16,
+    pub(crate) port: i32,
 }

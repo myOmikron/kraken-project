@@ -174,7 +174,7 @@ pub async fn get_all_ports(
         .map(
             |(uuid, port, protocol, comment, created_at, host, workspace)| FullPort {
                 uuid,
-                port: u16::from_ne_bytes(port.to_ne_bytes()),
+                port: port as u16,
                 protocol,
                 comment,
                 host: SimpleHost {
@@ -290,7 +290,7 @@ pub async fn get_port(
 
     Ok(Json(FullPort {
         uuid: port.uuid,
-        port: u16::from_ne_bytes(port.port.to_ne_bytes()),
+        port: port.port as u16,
         protocol: port.protocol,
         host: SimpleHost {
             uuid: host.uuid,

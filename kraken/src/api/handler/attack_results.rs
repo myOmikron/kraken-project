@@ -510,7 +510,7 @@ pub struct FullServiceDetectionResult {
     pub host: IpNetwork,
 
     /// Port number
-    pub port: i16,
+    pub port: u16,
 }
 
 /// Retrieve a detect service's results by the attack's id
@@ -604,7 +604,7 @@ pub async fn get_service_detection_results(
                     _ => vec![],
                 },
                 host: x.host,
-                port: x.port,
+                port: x.port as u16,
             })
         })
         .try_collect()

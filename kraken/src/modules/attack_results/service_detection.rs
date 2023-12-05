@@ -30,7 +30,7 @@ pub async fn store_service_detection_result(
             attack: ForeignModelByField::Key(attack_uuid),
             certainty,
             host,
-            port: i16::from_ne_bytes(port.to_ne_bytes()),
+            port: port as i32,
         })
         .await?;
     insert!(&mut *tx, ServiceDetectionName)

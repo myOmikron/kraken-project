@@ -435,7 +435,7 @@ impl From<Port> for AggregatedPort {
 
         Self {
             uuid,
-            port: u16::from_ne_bytes(port.to_ne_bytes()),
+            port: port as u16,
             protocol,
             host: *host.key(),
             services: Vec::new(),

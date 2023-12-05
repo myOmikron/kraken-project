@@ -246,10 +246,8 @@ pub struct Port {
     pub uuid: Uuid,
 
     /// Port number
-    ///
-    /// Reinterpret as u16 with to_ne_bytes and from_ne_bytes
     #[rorm(index)]
-    pub port: i16,
+    pub port: i32,
 
     /// Port protocol
     pub protocol: PortProtocol,
