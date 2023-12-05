@@ -222,7 +222,12 @@ pub async fn get_all_services(
                         workspace: *host.workspace.key(),
                         created_at: host.created_at,
                     },
-                    port: port.map(|y| ports.remove(y.key()).unwrap()),
+                    port: port.map(|y| {
+                        // There is an entry with the key y.key(), as y.key() was used to construct
+                        // the values in the HashMap
+                        #[allow(clippy::unwrap_used)]
+                        ports.remove(y.key()).unwrap()
+                    }),
                     workspace: *workspace.key(),
                     tags: tags.remove(&uuid).unwrap_or_default(),
                     sources: sources.remove(&uuid).unwrap_or_default(),

@@ -43,9 +43,14 @@ impl AttackResultsService for Results {
         let attack_info = req
             .attack_info
             .ok_or(Status::new(Code::Unknown, "Missing attack_info"))?;
-        let workspace_uuid = Uuid::try_parse(&attack_info.workspace_uuid).unwrap();
+        let workspace_uuid = Uuid::try_parse(&attack_info.workspace_uuid)
+            .map_err(|_| Status::new(Code::Internal, "Invalid UUID supplied"))?;
 
-        let mut tx = GLOBAL.db.start_transaction().await.unwrap();
+        let mut tx = GLOBAL
+            .db
+            .start_transaction()
+            .await
+            .map_err(status_from_database)?;
 
         // Check api key and get user
         let (user,) = query!(&mut tx, (LeechApiKey::F.user,))

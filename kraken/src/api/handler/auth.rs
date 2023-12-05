@@ -260,6 +260,8 @@ pub async fn start_register(
         .populate(&mut tx, &mut local_user)
         .await?;
 
+    // Populate fills cached, so it will be always Some()
+    #[allow(clippy::unwrap_used)]
     if !local_user.user_keys.cached.unwrap().is_empty()
         && !session.get("2fa")?.ok_or(ApiError::Missing2FA)?
     {
