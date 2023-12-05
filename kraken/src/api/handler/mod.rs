@@ -773,6 +773,13 @@ impl SimpleAggregationSource {
             SourceType::HostAlive => self.host_alive += 1,
             SourceType::ServiceDetection => self.service_detection += 1,
             SourceType::DnsResolution => self.dns_resolution += 1,
+            SourceType::UdpPortScan
+            | SourceType::ForcedBrowsing
+            | SourceType::OSDetection
+            | SourceType::VersionDetection
+            | SourceType::AntiPortScanningDetection => {
+                error!("Encountered unimplemented source types");
+            }
             SourceType::ManualDomain
             | SourceType::ManualHost
             | SourceType::ManualPort

@@ -33,6 +33,16 @@ pub enum AttackType {
     ServiceDetection,
     /// Resolve domain names
     DnsResolution,
+    /// Scan udp ports
+    UdpPortScan,
+    /// Bruteforce your way through an http service
+    ForcedBrowsing,
+    /// Detect a host's OS
+    OSDetection,
+    /// Detect a service's version
+    VersionDetection,
+    /// Detect an anti port scan system
+    AntiPortScanningDetection,
 }
 
 /// Representation of an attack

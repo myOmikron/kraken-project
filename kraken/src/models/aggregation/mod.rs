@@ -520,6 +520,16 @@ pub enum SourceType {
     ServiceDetection,
     /// The [`DnsResolutionResult`] table
     DnsResolution,
+    /// The table for the not yet implemented [`AttackType::UdpPortScan`] results
+    UdpPortScan,
+    /// The table for the not yet implemented [`AttackType::ForcedBrowsing`] results
+    ForcedBrowsing,
+    /// The table for the not yet implemented [`AttackType::OSDetection`] results
+    OSDetection,
+    /// The table for the not yet implemented [`AttackType::VersionDetection`] results
+    VersionDetection,
+    /// The table for the not yet implemented [`AttackType::AntiPortScanningDetection`] results
+    AntiPortScanningDetection,
     /// The [`ManualDomain`] table
     ManualDomain,
     /// The [`ManualHost`] table
