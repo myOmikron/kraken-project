@@ -1,14 +1,26 @@
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 pub mod rpc_definitions {
-    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
-    use ipnetwork::IpNetwork;
     use thiserror::Error;
 
+    #[allow(clippy::unwrap_used, clippy::expect_used)]
     pub mod shared {
         tonic::include_proto!("attacks.shared");
     }
 
     tonic::include_proto!("attacks");
+
+    #[derive(Debug, Error)]
+    #[error("Address was None")]
+    pub struct AddressConvError;
+}
+
+mod impls {
+    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+
+    use ipnetwork::IpNetwork;
+
+    use crate::rpc::rpc_definitions::{shared, AddressConvError};
 
     impl From<shared::Ipv4> for Ipv4Addr {
         fn from(value: shared::Ipv4) -> Self {
@@ -52,10 +64,6 @@ pub mod rpc_definitions {
             }
         }
     }
-
-    #[derive(Debug, Error)]
-    #[error("Address was None")]
-    pub struct AddressConvError;
 
     impl TryFrom<shared::Address> for IpAddr {
         type Error = AddressConvError;

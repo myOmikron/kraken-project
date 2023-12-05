@@ -96,7 +96,12 @@ impl TlsManager {
                     .sample_iter(&mut thread_rng())
                     .take(32),
             );
-            domain = String::from_utf8(bytes).expect("[a-z]{32} should be a valid utf8 string");
+
+            // Attributes on expressions are experimental, so we annotate this way
+            #[allow(clippy::expect_used)]
+            {
+                domain = String::from_utf8(bytes).expect("[a-z]{32} should be a valid utf8 string");
+            }
             ca = cert::CA.build()?;
             server = cert::Kraken {
                 domain: domain.clone(),

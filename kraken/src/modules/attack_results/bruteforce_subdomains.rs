@@ -58,6 +58,8 @@ pub async fn store_bruteforce_subdomains_result(
                 .aggregator
                 .aggregate_host(
                     workspace_uuid,
+                    // Unwrap is okay, as A and AAAA result in valid IP addresses
+                    #[allow(clippy::unwrap_used)]
                     IpNetwork::from_str(&destination).unwrap(),
                     HostCertainty::SupposedTo, // there is a current dns record to it
                 )

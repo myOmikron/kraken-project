@@ -46,8 +46,7 @@ pub(crate) async fn start_server(config: &Config) -> Result<(), StartServerError
         WebauthnBuilder::new(
             rp_origin.domain().ok_or(StartServerError::InvalidOrigin)?,
             &rp_origin,
-        )
-        .unwrap()
+        )?
         .rp_name(ORIGIN_NAME)
         .build()?,
     );

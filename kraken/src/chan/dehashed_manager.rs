@@ -8,15 +8,15 @@ pub async fn start_dehashed_manager(
 ) -> Result<Option<Scheduler>, String> {
     let settings = settings.get_settings();
 
-    if settings.dehashed_email.is_none() || settings.dehashed_api_key.is_none() {
+    let Some(email) = settings.dehashed_email else {
         return Ok(None);
-    }
+    };
+    let Some(api_key) = settings.dehashed_api_key else {
+        return Ok(None);
+    };
 
-    let api = DehashedApi::new(
-        settings.dehashed_email.unwrap(),
-        settings.dehashed_api_key.unwrap(),
-    )
-    .map_err(|e| format!("Error starting dehashed api: {e}"))?;
+    let api = DehashedApi::new(email, api_key)
+        .map_err(|e| format!("Error starting dehashed api: {e}"))?;
 
     let scheduler = api.start_scheduler();
 

@@ -80,8 +80,9 @@ impl<T> Deref for GlobalOnceCell<T> {
     /// ## Panics
     /// If called before [`GlobalOnceCell::init`]
     fn deref(&self) -> &Self::Target {
+        #[allow(clippy::expect_used)]
         self.0
             .get()
-            .expect("`GlobalLock.init` has not been called yet")
+            .expect("`GlobalLock.init` has not been called yet. Please open an issues.")
     }
 }

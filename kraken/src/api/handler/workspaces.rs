@@ -34,9 +34,7 @@ use crate::api::handler::{
     de_optional, ApiError, ApiResult, Page, PageParams, PathUuid, SearchResultPage,
     SearchesResultPage, UuidResponse,
 };
-use crate::chan::WsMessage;
-use crate::chan::GLOBAL;
-use crate::models;
+use crate::chan::{WsMessage, GLOBAL};
 use crate::models::{
     Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
     DnsResolutionResult, Domain, Host, HostAliveResult, ModelType, Port, Search, SearchInsert,
@@ -986,8 +984,7 @@ pub async fn get_search_results(
                 let data = query!(&mut tx, Host)
                     .condition(Host::F.uuid.equals(item.ref_key))
                     .one()
-                    .await
-                    .unwrap();
+                    .await?;
 
                 SearchResultEntry::HostEntry(SimpleHost {
                     uuid: data.uuid,
@@ -1002,14 +999,9 @@ pub async fn get_search_results(
                 let data = query!(&mut tx, Service)
                     .condition(Service::F.uuid.equals(item.ref_key))
                     .one()
-                    .await
-                    .unwrap();
+                    .await?;
 
-                let port = if data.port.is_some() {
-                    Some(*data.port.unwrap().key())
-                } else {
-                    None
-                };
+                let port = data.port.map(|x| *x.key());
 
                 SearchResultEntry::ServiceEntry(SimpleService {
                     uuid: data.uuid,
@@ -1026,8 +1018,7 @@ pub async fn get_search_results(
                 let data = query!(&mut tx, Port)
                     .condition(Port::F.uuid.equals(item.ref_key))
                     .one()
-                    .await
-                    .unwrap();
+                    .await?;
 
                 SearchResultEntry::PortEntry(SimplePort {
                     uuid: data.uuid,
@@ -1043,8 +1034,7 @@ pub async fn get_search_results(
                 let data = query!(&mut tx, Domain)
                     .condition(Domain::F.uuid.equals(item.ref_key))
                     .one()
-                    .await
-                    .unwrap();
+                    .await?;
 
                 SearchResultEntry::DomainEntry(SimpleDomain {
                     uuid: data.uuid,
@@ -1058,8 +1048,7 @@ pub async fn get_search_results(
                 let data = query!(&mut tx, DnsResolutionResult)
                     .condition(DnsResolutionResult::F.uuid.equals(item.ref_key))
                     .one()
-                    .await
-                    .unwrap();
+                    .await?;
 
                 SearchResultEntry::DnsRecordResultEntry(SimpleDnsResolutionResult {
                     uuid: data.uuid,
@@ -1074,8 +1063,7 @@ pub async fn get_search_results(
                 let data = query!(&mut tx, TcpPortScanResult)
                     .condition(TcpPortScanResult::F.uuid.equals(item.ref_key))
                     .one()
-                    .await
-                    .unwrap();
+                    .await?;
 
                 SearchResultEntry::TcpPortScanResultEntry(SimpleTcpPortScanResult {
                     uuid: data.uuid,
@@ -1089,8 +1077,7 @@ pub async fn get_search_results(
                 let data = query!(&mut tx, DehashedQueryResult)
                     .condition(DehashedQueryResult::F.uuid.equals(item.ref_key))
                     .one()
-                    .await
-                    .unwrap();
+                    .await?;
 
                 SearchResultEntry::DehashedQueryResultEntry(SimpleQueryUnhashedResult {
                     uuid: data.uuid,
@@ -1113,8 +1100,7 @@ pub async fn get_search_results(
                 let mut data = query!(&mut tx, CertificateTransparencyResult)
                     .condition(CertificateTransparencyResult::F.uuid.equals(item.ref_key))
                     .one()
-                    .await
-                    .unwrap();
+                    .await?;
 
                 if CertificateTransparencyResult::F
                     .value_names
@@ -1143,11 +1129,10 @@ pub async fn get_search_results(
                 )
             }
             ModelType::HostAliveResult => {
-                let data = query!(&mut tx, models::HostAliveResult)
-                    .condition(models::HostAliveResult::F.uuid.equals(item.ref_key))
+                let data = query!(&mut tx, HostAliveResult)
+                    .condition(HostAliveResult::F.uuid.equals(item.ref_key))
                     .one()
-                    .await
-                    .unwrap();
+                    .await?;
 
                 SearchResultEntry::HostAliveResult(SimpleHostAliveResult {
                     uuid: data.uuid,
@@ -1160,8 +1145,7 @@ pub async fn get_search_results(
                 let data = query!(&mut tx, HostAliveResult)
                     .condition(HostAliveResult::F.uuid.equals(item.ref_key))
                     .one()
-                    .await
-                    .unwrap();
+                    .await?;
 
                 SearchResultEntry::HostAliveResult(SimpleHostAliveResult {
                     uuid: data.uuid,

@@ -122,7 +122,7 @@ async fn main() -> Result<(), String> {
 
             let ws = chan::start_ws_manager().await;
 
-            let workspace_cache = WorkspaceCache::new();
+            let workspace_cache = WorkspaceCache::default();
 
             let aggregator = Aggregator::default();
 
@@ -137,7 +137,7 @@ async fn main() -> Result<(), String> {
                 aggregator,
             });
 
-            start_rpc_server(&config);
+            start_rpc_server(&config).map_err(|e| format!("RPC listen address is invalid: {e}"))?;
 
             server::start_server(&config).await?;
 
@@ -162,6 +162,7 @@ async fn main() -> Result<(), String> {
 ///
 /// **Parameter**:
 /// - `db`: [Database]
+// Unwrap is okay, as no handling of errors is possible if we can't communicate with stdin / stdout
 async fn create_user(db: Database) -> Result<(), String> {
     let stdin = io::stdin();
     let mut stdout = io::stdout();
@@ -170,14 +171,19 @@ async fn create_user(db: Database) -> Result<(), String> {
     let mut display_name = String::new();
 
     print!("Enter a username: ");
+    #[allow(clippy::unwrap_used)]
     stdout.flush().unwrap();
+    #[allow(clippy::unwrap_used)]
     stdin.read_line(&mut username).unwrap();
     let username = username.trim();
 
     print!("Enter a display name: ");
+    #[allow(clippy::unwrap_used)]
     stdout.flush().unwrap();
+    #[allow(clippy::unwrap_used)]
     stdin.read_line(&mut display_name).unwrap();
 
+    #[allow(clippy::unwrap_used)]
     let password = rpassword::prompt_password("Enter password: ").unwrap();
 
     User::insert_local_user(

@@ -1,6 +1,6 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::net::{AddrParseError, IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::str::FromStr;
 
 use ipnetwork::{IpNetwork, Ipv4Network, Ipv6Network};
@@ -330,13 +330,17 @@ pub async fn auth_leech<T>(db: &Database, request: &Request<T>) -> Result<(), St
 ///
 /// **Parameter**:
 /// - `config`: Reference to [Config]
-pub fn start_rpc_server(config: &Config) {
-    let listen_address = config.server.rpc_listen_address.parse().unwrap();
+///
+/// Returns an error if the rpc listen address is invalid
+pub fn start_rpc_server(config: &Config) -> Result<(), AddrParseError> {
+    let listen_address = config.server.rpc_listen_address.parse()?;
     let listen_port = config.server.rpc_listen_port;
     let tls_config = GLOBAL.tls.tonic_server();
 
     tokio::spawn(async move {
         info!("Starting gRPC server");
+        // TLS config should be valid is it is constructed by our TLS manager
+        #[allow(clippy::expect_used)]
         if let Err(err) = Server::builder()
             .tls_config(tls_config)
             .expect("The tls config should be valid")
@@ -349,6 +353,8 @@ pub fn start_rpc_server(config: &Config) {
             error!("Error running gRPC server: {err}");
         }
     });
+
+    Ok(())
 }
 
 /// Convert [`rorm::Error`] to [`tonic::Status`]

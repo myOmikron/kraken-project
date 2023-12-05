@@ -24,16 +24,10 @@ pub struct WorkspaceCache {
 }
 
 impl WorkspaceCache {
-    /// Create a new workspace cache
-    pub fn new() -> Self {
-        Self {
-            cache: Default::default(),
-        }
-    }
-
     /// Trigger a manual refresh of the users of a specific workspace
     pub async fn refresh_users(&self, workspace: Uuid) -> Result<Option<Vec<Uuid>>, rorm::Error> {
         {
+            #[allow(clippy::expect_used)]
             let guard = self.cache.read().expect(
                 "If you ever encounter this error, please open an issue with the stacktrace",
             );
@@ -66,6 +60,7 @@ impl WorkspaceCache {
         }
 
         tx.commit().await?;
+        #[allow(clippy::expect_used)]
         let mut guard = self
             .cache
             .write()
@@ -89,6 +84,7 @@ impl WorkspaceCache {
 
         let mut users: Option<Vec<Uuid>> = None;
         let entry = {
+            #[allow(clippy::expect_used)]
             let guard = self.cache.read().expect(
                 "If you ever encounter this error, please open an issue with the stacktrace",
             );
@@ -114,6 +110,7 @@ impl WorkspaceCache {
             {
                 self.refresh_users(workspace).await?;
 
+                #[allow(clippy::expect_used)]
                 let guard = self.cache.read().expect(
                     "If you ever encounter this error, please open an issue with the stacktrace",
                 );
