@@ -6,13 +6,18 @@ export type InputProps = {
     autoFocus?: boolean;
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "autoFocus">;
 
-export default function Input(props: InputProps) {
+const Input = React.forwardRef<HTMLInputElement, InputProps>(function (props, ref) {
     const { value, onChange, autoFocus, ...passThrough } = props;
 
-    const callback = React.useCallback((element: HTMLInputElement) => {
-        if (element && autoFocus) {
+    const internalRef = React.createRef<HTMLInputElement>();
+    React.useImperativeHandle<HTMLInputElement | null, HTMLInputElement | null>(ref, () => internalRef.current, [
+        internalRef.current,
+    ]);
+
+    React.useEffect(() => {
+        if (autoFocus) {
             setTimeout(function () {
-                element.focus();
+                if (internalRef.current !== null) internalRef.current.focus();
             }, 10);
         } // eslint-disable-next-line
     }, []);
@@ -24,8 +29,9 @@ export default function Input(props: InputProps) {
             onChange={(e) => {
                 onChange(e.target.value);
             }}
-            ref={callback}
+            ref={internalRef}
             {...passThrough}
         />
     );
-}
+});
+export default Input;

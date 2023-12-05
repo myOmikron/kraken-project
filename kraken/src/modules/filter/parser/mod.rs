@@ -215,7 +215,7 @@ pub fn parse_not<T>(
 ) -> Result<Not<T>, ParseError> {
     let mut is_negated = false;
     if matches!(tokens.peek_token()?, Token::LogicalNot) {
-        let _ = tokens.next_token(); // Consume the '&'
+        let _ = tokens.next_token(); // Consume the '!'
         is_negated = true;
     }
     Ok(Not {
