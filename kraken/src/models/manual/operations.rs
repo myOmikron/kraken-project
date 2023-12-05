@@ -139,7 +139,7 @@ impl ManualHost {
 #[rorm(model = "ManualPort")]
 pub struct InsertManualPort {
     uuid: Uuid,
-    port: i16,
+    port: i32,
     protocol: PortProtocol,
     certainty: ManualPortCertainty,
     host: IpNetwork,
@@ -170,7 +170,7 @@ impl ManualPort {
             .return_primary_key()
             .single(&InsertManualPort {
                 uuid: Uuid::new_v4(),
-                port: i16::from_ne_bytes(port.to_ne_bytes()),
+                port: port as i32,
                 protocol,
                 certainty,
                 host: ip_addr,

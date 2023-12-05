@@ -89,7 +89,7 @@ pub struct ManualPort {
     pub uuid: Uuid,
 
     #[rorm(index)]
-    pub port: i16,
+    pub port: i32,
 
     pub protocol: PortProtocol,
 

@@ -297,9 +297,7 @@ pub struct ServiceDetectionResult {
     pub host: IpNetwork,
 
     /// Port number
-    ///
-    /// Reinterpret as u16 with to_ne_bytes and from_ne_bytes
-    pub port: i16,
+    pub port: i32,
 
     /// The found names of the service
     pub service_names: BackRef<field!(ServiceDetectionName::F.result)>,
