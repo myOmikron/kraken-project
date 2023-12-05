@@ -3,16 +3,15 @@
 use actix_web::web::{Json, Path, Query};
 use actix_web::{delete, get, post, put, HttpResponse};
 use chrono::{DateTime, Utc};
-use futures::{StreamExt, TryStreamExt};
+use futures::TryStreamExt;
 use log::{debug, error, info};
 use rorm::db::executor::Stream;
 use rorm::db::sql::value::Value;
 use rorm::db::transaction::Transaction;
 use rorm::db::Executor;
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, insert, query, update, Error, FieldAccess, Model};
+use rorm::{and, insert, query, update, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
-use tokio::sync::mpsc;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -727,70 +726,24 @@ pub async fn search(
 
     db_trx.commit().await.map_err(ApiError::DatabaseError)?;
 
-    let (result_tx, mut result_rx) = mpsc::channel::<Result<SearchResult, Error>>(16);
-
     tokio::spawn({
-        let mut db_trx = GLOBAL
-            .db
-            .start_transaction()
-            .await
-            .map_err(ApiError::DatabaseError)?;
-
         let search_term = search_term.clone();
-
         async move {
-            let mut finished_successful = true;
-            while let Some(result) = result_rx.recv().await {
-                match result {
-                    Err(err) => {
-                        debug!("received search error, stopping search");
-                        if update!(&mut db_trx, Search)
-                            .condition(Search::F.uuid.equals(search_uuid))
-                            .set(Search::F.error, Some(err.to_string()))
-                            .await
-                            .is_err()
-                        {
-                            error!("could not insert error msg into database");
-                        }
-
-                        finished_successful = false;
-                    }
-                    Ok(result) => {
-                        debug!("received search result with key: {:?}", result.ref_key);
-                        let Ok(result_uuid) = insert!(&mut db_trx, SearchResult)
-                            .return_primary_key()
-                            .single(&result)
-                            .await
-                        else {
-                            error!("could not insert data into database");
-                            continue;
-                        };
-
-                        GLOBAL
-                            .ws
-                            .message(
-                                user_uuid,
-                                WsMessage::SearchNotify {
-                                    search_uuid,
-                                    result_uuid,
-                                },
-                            )
-                            .await;
-                    }
-                }
-            }
-
-            if update!(&mut db_trx, Search)
-                .condition(Search::F.uuid.equals(search_uuid))
-                .set(Search::F.finished_at, Some(Utc::now()))
-                .await
-                .is_err()
+            let finished_successful = if let Err(error) =
+                run_search(&search_term, path.uuid, search_uuid, user_uuid).await
             {
-                error!("could not update Search result");
-            }
-
-            if let Err(err) = db_trx.commit().await {
-                error!("could not commit changes to database: {err}");
+                if update!(&GLOBAL.db, Search)
+                    .condition(Search::F.uuid.equals(search_uuid))
+                    .set(Search::F.error, Some(error.to_string()))
+                    .set(Search::F.finished_at, Some(Utc::now()))
+                    .await
+                    .is_err()
+                {
+                    error!("could not insert error msg into database");
+                }
+                false
+            } else {
+                true
             };
 
             GLOBAL
@@ -804,31 +757,7 @@ pub async fn search(
                 )
                 .await;
 
-            info!("Finished workspace search for: '{}'", search_term);
-        }
-    });
-
-    tokio::spawn({
-        let mut db_trx = GLOBAL
-            .db
-            .start_transaction()
-            .await
-            .map_err(ApiError::DatabaseError)?;
-        async move {
-            let search_term = format!("%{search_term}%");
-            let params = vec![Value::Uuid(path.uuid), Value::String(&search_term)];
-
-            for entry in build_query_list().await {
-                search_tables(
-                    &mut db_trx,
-                    search_uuid,
-                    entry.0,
-                    params.clone(),
-                    entry.1,
-                    result_tx.clone(),
-                )
-                .await;
-            }
+            info!("Finished workspace search for: '{search_term}'");
         }
     });
 
@@ -1167,7 +1096,7 @@ pub async fn get_search_results(
     }))
 }
 
-async fn build_query_list() -> Vec<(String, ModelType)> {
+fn build_query_list() -> Vec<(String, ModelType)> {
     let table_names_no_ref_to_ws = vec![
         ModelType::DnsRecordResult,
         ModelType::TcpPortScanResult,
@@ -1218,42 +1147,54 @@ async fn build_query_list() -> Vec<(String, ModelType)> {
     data
 }
 
-async fn search_tables(
-    executor: impl Executor<'_>,
+async fn run_search(
+    search_term: &str,
+    workspace_uuid: Uuid,
     search_uuid: Uuid,
-    sql: String,
-    params: Vec<Value<'_>>,
-    model_type: ModelType,
-    result_chan: mpsc::Sender<Result<SearchResult, Error>>,
-) {
-    debug!("search sql: {sql}");
+    user_uuid: Uuid,
+) -> Result<(), rorm::Error> {
+    let search_term = format!("%{search_term}%");
 
-    let mut stream = executor.execute::<Stream>(sql, params);
+    for (sql, model_type) in build_query_list() {
+        debug!("search sql: {sql}");
+        let mut stream = GLOBAL.db.execute::<Stream>(
+            sql,
+            vec![Value::Uuid(workspace_uuid), Value::String(&search_term)],
+        );
 
-    while let Some(result) = stream.next().await {
-        match result {
-            Ok(row) => {
-                let ref_key = row.get::<Uuid, usize>(0).unwrap();
-                let data = Ok(SearchResult {
+        while let Some(row) = stream.try_next().await? {
+            let ref_key: Uuid = row.get(0)?;
+
+            debug!("received search result with key: {ref_key:?}");
+            let result_uuid = insert!(&GLOBAL.db, SearchResult)
+                .return_primary_key()
+                .single(&SearchResult {
                     uuid: Uuid::new_v4(),
                     ref_key,
                     ref_type: model_type,
                     search: ForeignModelByField::Key(search_uuid),
-                });
-                if let Err(err) = result_chan.send(data).await {
-                    error!("error sending result row: {err}");
-                    return;
-                };
-            }
-            Err(err) => {
-                let data = Err(err);
-                if let Err(err) = result_chan.send(data).await {
-                    error!("error sending error: {err}");
-                };
-                return;
-            }
-        };
+                })
+                .await?;
+
+            GLOBAL
+                .ws
+                .message(
+                    user_uuid,
+                    WsMessage::SearchNotify {
+                        search_uuid,
+                        result_uuid,
+                    },
+                )
+                .await;
+        }
     }
+
+    update!(&GLOBAL.db, Search)
+        .condition(Search::F.uuid.equals(search_uuid))
+        .set(Search::F.finished_at, Some(Utc::now()))
+        .await?;
+
+    Ok(())
 }
 
 /// Get a [`FullWorkspace`] by its uuid without permission checks
