@@ -2,8 +2,9 @@
 
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-use std::sync::Mutex;
+use std::sync::{Mutex, MutexGuard};
 
+use log::error;
 use uuid::Uuid;
 
 pub mod schemas;
@@ -30,7 +31,7 @@ struct OauthManagerInner {
 impl OauthManager {
     /// Insert an open request
     pub fn insert_open(&self, request: OAuthRequest) -> Uuid {
-        let mut inner = self.0.lock().unwrap();
+        let mut inner = self.lock();
         loop {
             let uuid = Uuid::new_v4();
             if let Entry::Vacant(entry) = inner.open.entry(uuid) {
@@ -42,7 +43,7 @@ impl OauthManager {
 
     /// Insert an accepted request
     pub fn insert_accepted(&self, request: OAuthRequest) -> Uuid {
-        let mut inner = self.0.lock().unwrap();
+        let mut inner = self.lock();
         loop {
             let uuid = Uuid::new_v4();
             if let Entry::Vacant(entry) = inner.accepted.entry(uuid) {
@@ -54,13 +55,13 @@ impl OauthManager {
 
     /// Get an open request
     pub fn get_open(&self, code: Uuid) -> Option<OAuthRequest> {
-        let inner = self.0.lock().unwrap();
+        let inner = self.lock();
         inner.open.get(&code).cloned()
     }
 
     /// Get an accepted request
     pub fn get_accepted(&self, code: Uuid) -> Option<OAuthRequest> {
-        let inner = self.0.lock().unwrap();
+        let inner = self.lock();
         inner.accepted.get(&code).cloned()
     }
 
@@ -70,7 +71,7 @@ impl OauthManager {
         code: Uuid,
         check: impl FnOnce(&OAuthRequest) -> bool,
     ) -> Result<OAuthRequest, OpenIfError> {
-        let mut inner = self.0.lock().unwrap();
+        let mut inner = self.lock();
         match inner.open.entry(code) {
             Entry::Vacant(_) => Err(OpenIfError::NotFound),
             Entry::Occupied(entry) => {
@@ -79,6 +80,16 @@ impl OauthManager {
                 } else {
                     Err(OpenIfError::FailedCheck)
                 }
+            }
+        }
+    }
+
+    fn lock(&self) -> MutexGuard<OauthManagerInner> {
+        match self.0.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => {
+                error!("The OauthManagers lock has been poisoned. This should never happen!");
+                poisoned.into_inner()
             }
         }
     }
