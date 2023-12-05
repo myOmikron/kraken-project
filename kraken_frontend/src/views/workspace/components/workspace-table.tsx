@@ -12,6 +12,8 @@ import ArrowFirstIcon from "../../../svg/arrow-first";
 import ArrowLastIcon from "../../../svg/arrow-last";
 import PlusIcon from "../../../svg/plus";
 import Popup from "reactjs-popup";
+import FilterInput from "./filter-input";
+import { toast } from "react-toastify";
 
 export type WorkspaceDataTableProps<T> = {
     /** Method used to query a page */
@@ -66,9 +68,9 @@ export default function WorkspaceTable<T extends { uuid: string }>(props: Worksp
         children: [header, items.map(renderItem)],
         columnsTemplate,
         onAdd,
-        filter: "",
-        setFilter() {},
-        applyFilter() {},
+        applyFilter() {
+            toast.warn("Not implemented yet");
+        },
     });
 }
 
@@ -84,10 +86,7 @@ export type StatelessWorkspaceTableProps = {
     offset: number;
     setOffset: (offset: number) => void;
 
-    /** The filter <input/>'s value */
-    filter: string;
-    setFilter: (filter: string) => void;
-    applyFilter: () => void;
+    applyFilter: (filter: string) => void;
 
     /** The table's header row and body rows*/
     children: [React.ReactNode, Array<React.ReactNode>];
@@ -109,8 +108,6 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
         setLimit,
         offset,
         setOffset: setRawOffset,
-        filter,
-        setFilter,
         applyFilter,
         children: [header, body],
         columnsTemplate,
@@ -133,14 +130,7 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
     return (
         <div className={"workspace-table pane"} style={style}>
             <div className={"workspace-table-pre-header"}>
-                <form
-                    onSubmit={(event) => {
-                        event.preventDefault();
-                        applyFilter();
-                    }}
-                >
-                    <Input className={"input"} placeholder={"Filter..."} value={filter} onChange={setFilter} />
-                </form>
+                <FilterInput placeholder={"Filter..."} applyFilter={applyFilter} />
                 {onAdd === undefined ? null : (
                     <button className={"button"} type={"button"} onClick={onAdd}>
                         <PlusIcon />

@@ -17,7 +17,7 @@ import { CreateServiceForm } from "./workspace-data/workspace-data-create-servic
 import { WORKSPACE_CONTEXT } from "./workspace";
 import { ROUTES } from "../../routes";
 import AttackIcon from "../../svg/attack";
-import Input from "../../components/input";
+import FilterInput from "./components/filter-input";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 
@@ -40,19 +40,19 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
 
     const { items: domains, ...domainsTable } = useTable<FullDomain>(
         (limit, offset) => Api.workspaces.domains.all(workspace, limit, offset, { globalFilter, domainFilter }),
-        [workspace],
+        [workspace, globalFilter, domainFilter],
     );
     const { items: hosts, ...hostsTable } = useTable<FullHost>(
         (limit, offset) => Api.workspaces.hosts.all(workspace, limit, offset, { globalFilter, hostFilter }),
-        [workspace],
+        [workspace, globalFilter, hostFilter],
     );
     const { items: ports, ...portsTable } = useTable<FullPort>(
         (limit, offset) => Api.workspaces.ports.all(workspace, limit, offset, { globalFilter, portFilter }),
-        [workspace],
+        [workspace, globalFilter, portFilter],
     );
     const { items: services, ...servicesTable } = useTable<FullService>(
         (limit, offset) => Api.workspaces.services.all(workspace, limit, offset, { globalFilter, serviceFilter }),
-        [workspace],
+        [workspace, globalFilter, serviceFilter],
     );
 
     const tableElement = (() => {
@@ -63,9 +63,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {...domainsTable}
                         columnsTemplate={"1fr 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("domains")}
-                        filter={domainFilter}
-                        setFilter={setDomainFilter}
-                        applyFilter={domainsTable.reload}
+                        applyFilter={setDomainFilter}
                     >
                         <div className={"workspace-table-header"}>
                             <span>Name</span>
@@ -98,9 +96,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {...hostsTable}
                         columnsTemplate={"39ch 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("hosts")}
-                        filter={hostFilter}
-                        setFilter={setHostFilter}
-                        applyFilter={hostsTable.reload}
+                        applyFilter={setHostFilter}
                     >
                         <div className={"workspace-table-header"}>
                             <span>IP</span>
@@ -129,9 +125,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {...portsTable}
                         columnsTemplate={"5ch 8ch 39ch 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("ports")}
-                        filter={portFilter}
-                        setFilter={setPortFilter}
-                        applyFilter={portsTable.reload}
+                        applyFilter={setPortFilter}
                     >
                         <div className={"workspace-table-header"}>
                             <span>Port</span>
@@ -164,9 +158,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {...servicesTable}
                         columnsTemplate={"1fr 39ch 5ch 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("services")}
-                        filter={serviceFilter}
-                        setFilter={setServiceFilter}
-                        applyFilter={servicesTable.reload}
+                        applyFilter={setServiceFilter}
                     >
                         <div className={"workspace-table-header"}>
                             <span>Name</span>
@@ -266,22 +258,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
         <>
             <div className={"workspace-data-container"}>
                 <div className={"workspace-data-filter pane"}>
-                    <form
-                        onSubmit={(event) => {
-                            event.preventDefault();
-                            domainsTable.reload();
-                            hostsTable.reload();
-                            portsTable.reload();
-                            servicesTable.reload();
-                        }}
-                    >
-                        <Input
-                            className={"input"}
-                            placeholder={"Global Filter..."}
-                            value={globalFilter}
-                            onChange={setGlobalFilter}
-                        />
-                    </form>
+                    <FilterInput placeholder={"Global Filter..."} applyFilter={setGlobalFilter} />
                 </div>
                 <div className={"workspace-data-selector"}>
                     {Object.entries(TABS).map(([key, displayName]) => (

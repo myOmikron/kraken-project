@@ -8,11 +8,22 @@
 }
 
 .workspace-data-filter {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5em;
     padding: 0.5em;
 }
 
-.workspace-data-filter > form {
+.workspace-data-filter form {
     display: contents;
+}
+
+.workspace-data-filter input {
+    flex-grow: 1;
+}
+
+.workspace-data-filter .icon {
+    width: 1.4em;
 }
 
 .workspace-data-selector {
