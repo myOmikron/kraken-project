@@ -114,7 +114,7 @@ export function parsePortAST(input: string): PortAST {
  * @throws ParserError
  */
 export function parseServiceAST(input: string): ServiceAST {
-    const ast: ServiceAST = { tags: [], createdAt: [], ports: [], ips: [], names: [] };
+    const ast: ServiceAST = { tags: [], createdAt: [], ports: [], ips: [], services: [] };
     parseAst(input, (column, cursor) => {
         switch (column) {
             case "tags":
@@ -129,8 +129,8 @@ export function parseServiceAST(input: string): ServiceAST {
             case "ips":
                 ast.ips.push(parseOr(cursor, parseString));
                 break;
-            case "names":
-                ast.names.push(parseOr(cursor, parseString));
+            case "services":
+                ast.services.push(parseOr(cursor, parseString));
                 break;
             default:
                 throw new ParserError({ type: "unknownColumn", column });

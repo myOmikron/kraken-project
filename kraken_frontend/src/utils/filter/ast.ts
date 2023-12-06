@@ -30,7 +30,7 @@ export type ServiceAST = {
     createdAt: Array<Expr.Or<Expr.Range<Date>>>;
     ips: Array<Expr.Or<string>>;
     ports: Array<Expr.Or<Expr.MaybeRange<number>>>;
-    names: Array<Expr.Or<string>>;
+    services: Array<Expr.Or<string>>;
 };
 
 export type Expr<T> = Expr.Or<T>;

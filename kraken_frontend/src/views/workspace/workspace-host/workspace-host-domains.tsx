@@ -23,7 +23,7 @@ export function WorkspaceHostDomains(props: WorkspaceDataDomainsProps) {
             columnsTemplate={"1fr 1fr 1fr 1fr"}
         >
             <div className={"workspace-table-header"}>
-                <span>Name</span>
+                <span>Domain</span>
                 <span>Tags</span>
                 <span>Comment</span>
                 <span>Attacks</span>

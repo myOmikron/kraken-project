@@ -85,7 +85,7 @@ pub struct ServiceAST {
     pub ports: Option<Or<MaybeRange<u16>>>,
 
     /// Filter by service name
-    pub names: Option<Or<String>>,
+    pub services: Option<Or<String>>,
 }
 
 /// An error encountered while parsing a filter ast
