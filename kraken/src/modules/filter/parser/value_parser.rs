@@ -62,19 +62,20 @@ pub fn wrap_maybe_range<T>(parse_value: impl ValueParser<T>) -> impl ValueParser
 /// Wraps a [`ValueParser<T>`] to produce a [`ValueParser<Range<T>>`]
 pub fn wrap_range<T>(parse_value: impl ValueParser<T>) -> impl ValueParser<Range<T>> {
     move |tokens: &mut Cursor| {
-        let start = if matches!(tokens.peek_token()?, Token::RangeOperator) {
+        let start = if matches!(tokens.peek_token(), Some(Token::RangeOperator)) {
             None
         } else {
             Some(parse_value(tokens)?)
         };
-        match tokens.next_token()? {
-            Token::RangeOperator => {}
-            token => {
+        match tokens.next_token() {
+            Some(Token::RangeOperator) => {}
+            Some(token) => {
                 return Err(ParseError::UnexpectedToken {
                     got: token.clone(),
                     exp: Token::RangeOperator,
                 })
             }
+            None => return Err(ParseError::UnexpectedEnd),
         }
 
         let mut tokens_clone = tokens.clone();

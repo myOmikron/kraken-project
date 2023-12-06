@@ -12,7 +12,7 @@ import ArrowFirstIcon from "../../../svg/arrow-first";
 import ArrowLastIcon from "../../../svg/arrow-last";
 import PlusIcon from "../../../svg/plus";
 import Popup from "reactjs-popup";
-import FilterInput from "./filter-input";
+import FilterInput, { FilterInputProps } from "./filter-input";
 import { toast } from "react-toastify";
 
 export type WorkspaceDataTableProps<T> = {
@@ -71,6 +71,7 @@ export default function WorkspaceTable<T extends { uuid: string }>(props: Worksp
         applyFilter() {
             toast.warn("Not implemented yet");
         },
+        filterTarget: "global",
     });
 }
 
@@ -100,6 +101,8 @@ export type StatelessWorkspaceTableProps = {
      * When this callback is omitted, the button is as well.
      */
     onAdd?: () => void;
+
+    filterTarget: FilterInputProps["target"];
 };
 export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
     const {
@@ -112,6 +115,7 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
         children: [header, body],
         columnsTemplate,
         onAdd,
+        filterTarget,
     } = props;
 
     const lastOffset = Math.floor(total / limit) * limit;
@@ -130,7 +134,7 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
     return (
         <div className={"workspace-table pane"} style={style}>
             <div className={"workspace-table-pre-header"}>
-                <FilterInput placeholder={"Filter..."} applyFilter={applyFilter} />
+                <FilterInput placeholder={"Filter..."} applyFilter={applyFilter} target={filterTarget} />
                 {onAdd === undefined ? null : (
                     <button className={"button"} type={"button"} onClick={onAdd}>
                         <PlusIcon />

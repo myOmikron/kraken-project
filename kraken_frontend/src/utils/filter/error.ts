@@ -1,11 +1,20 @@
 import { Token } from "./lexer";
 
+/** The different types of {@link ParserError} and their unique data */
 export type ErrorData =
     | { type: "lexer"; position: number; remaining: string }
+    | { type: "parseValue"; msg: string }
     | { type: "unexpectedEnd" }
     | { type: "unexpectedToken"; got: Token; exp: Token["type"] }
     | { type: "unknownColumn"; column: string };
+
+/**
+ * An error encountered while parsing a filter ast
+ *
+ * @member data The different types of {@link ParserError} and their unique data
+ */
 export default class ParserError extends Error {
+    /** The different types of {@link ParserError} and their unique data */
     data: ErrorData;
 
     constructor(data: ErrorData) {

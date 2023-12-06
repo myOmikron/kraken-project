@@ -152,9 +152,9 @@ pub fn parse_ast<A: Default>(
     let mut tokens = Cursor::new(&tokens);
 
     let mut ast = A::default();
-    while let Ok(token) = tokens.next_token() {
+    while let Some(token) = tokens.next_token() {
         match token {
-            Token::Column(column) => parse_column(&mut ast, column, &mut tokens)?,
+            Token::Column(column) => parse_column(&mut ast, &column, &mut tokens)?,
             token => {
                 return Err(ParseError::UnexpectedToken {
                     got: token.clone(),
@@ -188,7 +188,7 @@ pub fn parse_or<T>(
     parse_value: impl ValueParser<T>,
 ) -> Result<Or<T>, ParseError> {
     let mut list = vec![parse_and(tokens, parse_value)?];
-    while matches!(tokens.peek_token(), Ok(Token::LogicalOr)) {
+    while matches!(tokens.peek_token(), Some(Token::LogicalOr)) {
         let _ = tokens.next_token(); // Consume the ','
         list.push(parse_and(tokens, parse_value)?);
     }
@@ -201,7 +201,7 @@ pub fn parse_and<T>(
     parse_value: impl ValueParser<T>,
 ) -> Result<And<T>, ParseError> {
     let mut list = vec![parse_not(tokens, parse_value)?];
-    while matches!(tokens.peek_token(), Ok(Token::LogicalAnd)) {
+    while matches!(tokens.peek_token(), Some(Token::LogicalAnd)) {
         let _ = tokens.next_token(); // Consume the '&'
         list.push(parse_not(tokens, parse_value)?);
     }
@@ -214,7 +214,7 @@ pub fn parse_not<T>(
     parse_value: impl ValueParser<T>,
 ) -> Result<Not<T>, ParseError> {
     let mut is_negated = false;
-    if matches!(tokens.peek_token()?, Token::LogicalNot) {
+    if matches!(tokens.peek_token(), Some(Token::LogicalNot)) {
         let _ = tokens.next_token(); // Consume the '!'
         is_negated = true;
     }

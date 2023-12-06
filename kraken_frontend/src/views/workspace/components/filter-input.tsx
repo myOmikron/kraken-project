@@ -3,13 +3,24 @@ import React from "react";
 import SettingsIcon from "../../../svg/settings";
 import SearchIcon from "../../../svg/search";
 import CheckmarkIcon from "../../../svg/checkmark";
-import ParserError from "../../../utils/filter-ast/error";
-import { tokenize } from "../../../utils/filter-ast/lexer";
+import ParserError from "../../../utils/filter/error";
+import { tokenize } from "../../../utils/filter/lexer";
 import { toast } from "react-toastify";
+import {
+    parseDomainAST,
+    parseGlobalAST,
+    parseHostAST,
+    parsePortAST,
+    parseServiceAST,
+} from "../../../utils/filter/parser";
 
-type FilterInputProps = { placeholder?: string; applyFilter: (filter: string) => void };
+export type FilterInputProps = {
+    placeholder?: string;
+    applyFilter: (filter: string) => void;
+    target: "global" | "domain" | "host" | "port" | "service";
+};
 export default function FilterInput(props: FilterInputProps) {
-    const { placeholder, applyFilter } = props;
+    const { placeholder, applyFilter, target } = props;
 
     const inputRef = React.useRef() as React.RefObject<HTMLInputElement>;
     const [changed, setChanged] = React.useState(false);
@@ -42,7 +53,27 @@ export default function FilterInput(props: FilterInputProps) {
                     const input = inputRef.current;
                     if (input !== null)
                         try {
-                            tokenize(newValue);
+                            switch (target) {
+                                case "global":
+                                    parseGlobalAST(newValue);
+                                    break;
+                                case "domain":
+                                    parseDomainAST(newValue);
+                                    break;
+                                case "host":
+                                    parseHostAST(newValue);
+                                    break;
+                                case "port":
+                                    parsePortAST(newValue);
+                                    break;
+                                case "service":
+                                    parseServiceAST(newValue);
+                                    break;
+                                default:
+                                    tokenize(newValue);
+                                    console.warn(`filter target not implemented: ${target}`);
+                                    return;
+                            }
                             input.setCustomValidity("");
                         } catch (e) {
                             if (e instanceof ParserError) {
