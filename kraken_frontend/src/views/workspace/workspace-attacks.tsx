@@ -206,9 +206,7 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
         if ("targetType" in this.props) {
             if (this.props.targetType === "domain") {
                 disabled.service_detection = true;
-                disabled.tcp_con = true;
                 disabled.whois = true;
-                disabled.host_alive = true;
             } else {
                 disabled.bruteforce_subdomains = true;
                 disabled.certificate_transparency = true;

@@ -2,6 +2,7 @@ use log::warn;
 use rorm::prelude::{ForeignModel, ForeignModelByField};
 use rorm::{and, insert, query, update, FieldAccess, Model, Patch};
 use tokio::sync::{mpsc, oneshot};
+use tokio::task::JoinHandle;
 use uuid::Uuid;
 
 use crate::chan::GLOBAL;
@@ -16,7 +17,21 @@ pub async fn run_domain_aggregator(
     )>,
 ) {
     while let Some((data, tx)) = rx.recv().await {
-        let _ = tx.send(aggregate(data).await);
+        match aggregate(data).await {
+            Ok((uuid, None)) => {
+                let _ = tx.send(Ok(uuid));
+            }
+            Ok((uuid, Some(attack))) => {
+                // Await the attack in a new task to avoid blocking the aggregator
+                tokio::spawn(async move {
+                    let _ = attack.await;
+                    let _ = tx.send(Ok(uuid));
+                });
+            }
+            Err(error) => {
+                let _ = tx.send(Err(error));
+            }
+        }
     }
 }
 
@@ -30,9 +45,12 @@ struct DomainInsert {
     workspace: ForeignModel<Workspace>,
 }
 
-async fn aggregate(data: DomainAggregationData) -> Result<Uuid, rorm::Error> {
+async fn aggregate(
+    data: DomainAggregationData,
+) -> Result<(Uuid, Option<JoinHandle<()>>), rorm::Error> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
+    let mut attack_handle = None;
     let uuid = if let Some((uuid, old_certainty)) =
         query!(&mut tx, (Domain::F.uuid, Domain::F.certainty))
             .condition(and![
@@ -62,7 +80,7 @@ async fn aggregate(data: DomainAggregationData) -> Result<Uuid, rorm::Error> {
             .await?;
 
         if let Ok(leech) = GLOBAL.leeches.random_leech() {
-            start_dns_resolution(
+            let (_, handle) = start_dns_resolution(
                 data.workspace,
                 data.user,
                 leech,
@@ -78,6 +96,7 @@ async fn aggregate(data: DomainAggregationData) -> Result<Uuid, rorm::Error> {
                     unreachable!("Workspace already used above")
                 }
             })?;
+            attack_handle = Some(handle);
         } else {
             warn!(
                 "Couldn't resolve new domain \"{domain}\" automatically: No leech",
@@ -88,6 +107,5 @@ async fn aggregate(data: DomainAggregationData) -> Result<Uuid, rorm::Error> {
     };
 
     tx.commit().await?;
-
-    Ok(uuid)
+    Ok((uuid, attack_handle))
 }

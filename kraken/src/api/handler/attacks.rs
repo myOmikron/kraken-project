@@ -7,7 +7,6 @@ use actix_web::web::{Json, Path};
 use actix_web::{delete, get, post, HttpResponse};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
-use ipnetwork::IpNetwork;
 use log::debug;
 use rorm::conditions::{Condition, DynamicCollection};
 use rorm::prelude::*;
@@ -27,7 +26,8 @@ use crate::modules::attacks::{
     start_bruteforce_subdomains, start_certificate_transparency, start_dehashed_query,
     start_dns_resolution, start_host_alive, start_service_detection, start_tcp_port_scan,
     BruteforceSubdomainsParams, CertificateTransparencyParams, DehashedQueryParams,
-    DnsResolutionParams, HostAliveParams, ServiceDetectionParams, TcpPortScanParams,
+    DnsResolutionParams, DomainOrNetwork, HostAliveParams, ServiceDetectionParams,
+    TcpPortScanParams,
 };
 
 /// The settings of a subdomain bruteforce request
@@ -116,9 +116,9 @@ pub struct ScanTcpPortsRequest {
     /// Leave empty to use a random leech
     pub leech_uuid: Option<Uuid>,
 
-    /// The ip addresses / networks to scan
-    #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.2", "10.13.37.0/24"]))]
-    pub targets: Vec<IpNetwork>,
+    /// The ip addresses / networks or domains to scan
+    #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.0/24", "google.com"]))]
+    pub targets: Vec<DomainOrNetwork>,
 
     /// List of single ports and port ranges
     ///
@@ -249,9 +249,9 @@ pub struct HostsAliveRequest {
     /// Leave empty to use a random leech
     pub leech_uuid: Option<Uuid>,
 
-    /// The ip addresses / networks to scan
-    #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.2", "10.13.37.0/24"]))]
-    pub targets: Vec<IpNetwork>,
+    /// The ip addresses / networks or domains to scan
+    #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.0/24", "google.com"]))]
+    pub targets: Vec<DomainOrNetwork>,
 
     /// The time to wait until a host is considered down.
     ///
