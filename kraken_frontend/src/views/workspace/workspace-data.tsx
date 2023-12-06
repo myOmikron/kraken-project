@@ -70,7 +70,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         filterTarget={"domain"}
                     >
                         <div className={"workspace-table-header"}>
-                            <span>Name</span>
+                            <span>Domain</span>
                             <span>Tags</span>
                             <span>Comment</span>
                             <span>Attacks</span>
@@ -148,7 +148,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         <div className={"workspace-table-header"}>
                             <span>Port</span>
                             <span>Protocol</span>
-                            <span>Host</span>
+                            <span>IP</span>
                             <span>Tags</span>
                             <span>Comment</span>
                             <span>Attacks</span>
@@ -186,8 +186,8 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         filterTarget={"service"}
                     >
                         <div className={"workspace-table-header"}>
-                            <span>Name</span>
-                            <span>Host</span>
+                            <span>Service</span>
+                            <span>IP</span>
                             <span>Port</span>
                             <span>Tags</span>
                             <span>Comment</span>

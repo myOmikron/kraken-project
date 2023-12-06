@@ -123,13 +123,13 @@ impl ServiceAST {
             tags,
             created_at,
             ips,
-            names,
+            services,
             ports,
         } = self;
         add_ast_field(sql, tags, TagSqler);
         add_ast_field(sql, created_at, CreatedAtSqler::new(Service::F.created_at));
         add_ast_field(sql, ips, IpSqler::new(Service::F.host.ip_addr));
-        add_ast_field(sql, names, StringEqSqler::new(Service::F.name));
+        add_ast_field(sql, services, StringEqSqler::new(Service::F.name));
         add_ast_field(
             sql,
             ports,

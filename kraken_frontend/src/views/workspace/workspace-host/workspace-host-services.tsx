@@ -23,7 +23,7 @@ export function WorkspaceHostServices(props: WorkspaceDataServicesProps) {
             columnsTemplate={"1fr 5ch 1fr 1fr 1fr"}
         >
             <div className={"workspace-table-header"}>
-                <span>Name</span>
+                <span>Service</span>
                 <span>Port</span>
                 <span>Tags</span>
                 <span>Comment</span>
