@@ -10,3 +10,6 @@ npx @openapitools/openapi-generator-cli generate -i "../kraken_frontend/openapi.
   --git-repo-id="kraken-project" \
   --git-user-id="myOmikron" \
   --additional-properties="library=asyncio,projectName=kraken-sdk,packageName=kraken_sdk,packageVersion=$PACKAGE_VERSION"
+
+rm -rf "./python-sdk/.github"
+
