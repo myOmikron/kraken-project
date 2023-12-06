@@ -60,11 +60,11 @@ const RULES: Array<TokenRule> = [
         then: () => null,
     },
     {
-        regex: /^[^ ,&!-:]+ *:/,
+        regex: /^[^ ,&!:-]+ *:/,
         then: (text, span) => ({ type: "column", value: text.substring(0, text.length - 1), span }),
     },
     {
-        regex: /^[^ ,&!-:]+/,
+        regex: /^[^ ,&!:-]+/,
         then: (text, span) => ({ type: "value", value: text, span }),
     },
     {

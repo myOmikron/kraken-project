@@ -154,7 +154,7 @@ pub fn parse_ast<A: Default>(
     let mut ast = A::default();
     while let Some(token) = tokens.next_token() {
         match token {
-            Token::Column(column) => parse_column(&mut ast, &column, &mut tokens)?,
+            Token::Column(column) => parse_column(&mut ast, column, &mut tokens)?,
             token => {
                 return Err(ParseError::UnexpectedToken {
                     got: token.clone(),
