@@ -15,6 +15,7 @@ export function parseGlobalAST(input: string): GlobalAST {
     parseAst(input, (column, cursor) => {
         switch (column) {
             case "tags":
+            case "tag":
                 ast.tags.push(parseOr(cursor, parseString));
                 break;
             case "created_at":
@@ -37,12 +38,14 @@ export function parseDomainAST(input: string): DomainAST {
     parseAst(input, (column, cursor) => {
         switch (column) {
             case "tags":
+            case "tag":
                 ast.tags.push(parseOr(cursor, parseString));
                 break;
             case "created_at":
                 ast.createdAt.push(parseOr(cursor, wrapRange(parseDate)));
                 break;
             case "domains":
+            case "domain":
                 ast.domains.push(parseOr(cursor, parseString));
                 break;
             default:
@@ -62,12 +65,14 @@ export function parseHostAST(input: string): HostAST {
     parseAst(input, (column, cursor) => {
         switch (column) {
             case "tags":
+            case "tag":
                 ast.tags.push(parseOr(cursor, parseString));
                 break;
             case "created_at":
                 ast.createdAt.push(parseOr(cursor, wrapRange(parseDate)));
                 break;
             case "ips":
+            case "ip":
                 ast.ips.push(parseOr(cursor, parseString));
                 break;
             default:
@@ -87,18 +92,22 @@ export function parsePortAST(input: string): PortAST {
     parseAst(input, (column, cursor) => {
         switch (column) {
             case "tags":
+            case "tag":
                 ast.tags.push(parseOr(cursor, parseString));
                 break;
             case "created_at":
                 ast.createdAt.push(parseOr(cursor, wrapRange(parseDate)));
                 break;
             case "ports":
+            case "port":
                 ast.ports.push(parseOr(cursor, wrapMaybeRange(parsePort)));
                 break;
             case "ips":
+            case "ip":
                 ast.ips.push(parseOr(cursor, parseString));
                 break;
             case "protocols":
+            case "protocol":
                 ast.protocols.push(parseOr(cursor, parsePortProtocol));
                 break;
             default:
@@ -118,18 +127,22 @@ export function parseServiceAST(input: string): ServiceAST {
     parseAst(input, (column, cursor) => {
         switch (column) {
             case "tags":
+            case "tag":
                 ast.tags.push(parseOr(cursor, parseString));
                 break;
             case "created_at":
                 ast.createdAt.push(parseOr(cursor, wrapRange(parseDate)));
                 break;
             case "ports":
+            case "port":
                 ast.ports.push(parseOr(cursor, wrapMaybeRange(parsePort)));
                 break;
             case "ips":
+            case "ip":
                 ast.ips.push(parseOr(cursor, parseString));
                 break;
             case "services":
+            case "service":
                 ast.services.push(parseOr(cursor, parseString));
                 break;
             default:

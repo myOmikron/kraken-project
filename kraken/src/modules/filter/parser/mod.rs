@@ -18,7 +18,7 @@ impl GlobalAST {
         parse_ast(
             input,
             |GlobalAST { tags, created_at }, column, tokens| match column {
-                "tags" => parse_ast_field(tags, tokens, parse_string),
+                "tags" | "tag" => parse_ast_field(tags, tokens, parse_string),
                 "created_at" => parse_ast_field(
                     created_at,
                     tokens,
@@ -42,13 +42,13 @@ impl DomainAST {
              },
              column,
              tokens| match column {
-                "tags" => parse_ast_field(tags, tokens, parse_string),
+                "tags" | "tag" => parse_ast_field(tags, tokens, parse_string),
                 "created_at" => parse_ast_field(
                     created_at,
                     tokens,
                     wrap_range(parse_from_str::<DateTime<Utc>>),
                 ),
-                "domains" => parse_ast_field(domains, tokens, parse_string),
+                "domains" | "domain" => parse_ast_field(domains, tokens, parse_string),
                 _ => Err(ParseError::UnknownColumn(column.to_string())),
             },
         )
@@ -67,13 +67,13 @@ impl HostAST {
              },
              column,
              tokens| match column {
-                "tags" => parse_ast_field(tags, tokens, parse_string),
+                "tags" | "tag" => parse_ast_field(tags, tokens, parse_string),
                 "created_at" => parse_ast_field(
                     created_at,
                     tokens,
                     wrap_range(parse_from_str::<DateTime<Utc>>),
                 ),
-                "ips" => parse_ast_field(ips, tokens, parse_from_str::<IpNetwork>),
+                "ips" | "ip" => parse_ast_field(ips, tokens, parse_from_str::<IpNetwork>),
                 _ => Err(ParseError::UnknownColumn(column.to_string())),
             },
         )
@@ -94,15 +94,17 @@ impl PortAST {
              },
              column,
              tokens| match column {
-                "tags" => parse_ast_field(tags, tokens, parse_string),
+                "tags" | "tag" => parse_ast_field(tags, tokens, parse_string),
                 "created_at" => parse_ast_field(
                     created_at,
                     tokens,
                     wrap_range(parse_from_str::<DateTime<Utc>>),
                 ),
-                "ports" => parse_ast_field(ports, tokens, wrap_maybe_range(parse_from_str::<u16>)),
-                "ips" => parse_ast_field(ips, tokens, parse_from_str::<IpNetwork>),
-                "protocols" => parse_ast_field(protocols, tokens, parse_port_protocol),
+                "ports" | "port" => {
+                    parse_ast_field(ports, tokens, wrap_maybe_range(parse_from_str::<u16>))
+                }
+                "ips" | "ip" => parse_ast_field(ips, tokens, parse_from_str::<IpNetwork>),
+                "protocols" | "protocol" => parse_ast_field(protocols, tokens, parse_port_protocol),
                 _ => Err(ParseError::UnknownColumn(column.to_string())),
             },
         )
@@ -123,15 +125,17 @@ impl ServiceAST {
              },
              column,
              tokens| match column {
-                "tags" => parse_ast_field(tags, tokens, parse_string),
+                "tags" | "tag" => parse_ast_field(tags, tokens, parse_string),
                 "created_at" => parse_ast_field(
                     created_at,
                     tokens,
                     wrap_range(parse_from_str::<DateTime<Utc>>),
                 ),
-                "ips" => parse_ast_field(ips, tokens, parse_from_str::<IpNetwork>),
-                "services" => parse_ast_field(services, tokens, parse_string),
-                "ports" => parse_ast_field(ports, tokens, wrap_maybe_range(parse_from_str::<u16>)),
+                "ips" | "ip" => parse_ast_field(ips, tokens, parse_from_str::<IpNetwork>),
+                "services" | "service" => parse_ast_field(services, tokens, parse_string),
+                "ports" | "port" => {
+                    parse_ast_field(ports, tokens, wrap_maybe_range(parse_from_str::<u16>))
+                }
                 _ => Err(ParseError::UnknownColumn(column.to_string())),
             },
         )
