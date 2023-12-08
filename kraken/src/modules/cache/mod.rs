@@ -6,7 +6,7 @@ use std::sync::RwLock;
 
 use chrono::{DateTime, Duration, Utc};
 use futures::TryStreamExt;
-use log::{debug, trace};
+use log::trace;
 use rorm::db::Executor;
 use rorm::{query, FieldAccess, Model};
 use uuid::Uuid;
@@ -98,7 +98,7 @@ impl WorkspaceCache {
                 last_refresh,
             }) = guard.get(&workspace)
             {
-                if last_refresh.add(refresh_period) >= now {
+                if last_refresh.add(refresh_period) <= now {
                     None
                 } else {
                     Some(users.clone())
@@ -111,7 +111,7 @@ impl WorkspaceCache {
         // If the key does not exists or the last refresh time
         // is more than `refresh_period` ago, update the entry
         if entry.is_none() {
-            debug!("Refreshing users");
+            trace!("Refreshing users");
             users = self.refresh_users(workspace, tx).await?;
         } else if let Some(u) = entry {
             users = u;
