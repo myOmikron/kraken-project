@@ -7,14 +7,13 @@ use utoipa::{Modify, OpenApi};
 
 use crate::api::handler;
 use crate::api::handler::{
-    api_keys, attack_results, attacks, auth, data_export, domains, global_tags, hosts, leeches,
-    oauth, oauth_applications, oauth_decisions, ports, services, settings, users, websocket,
-    wordlists, workspace_invitations, workspace_tags, workspaces,
+    aggregation_source, api_keys, attack_results, attacks, auth, data_export, domains, global_tags,
+    hosts, leeches, oauth, oauth_applications, oauth_decisions, ports, services, settings, users,
+    websocket, wordlists, workspace_invitations, workspace_tags, workspaces,
 };
-use crate::modules;
 use crate::modules::oauth::schemas as oauth_schemas;
 use crate::modules::tls;
-use crate::{chan, models};
+use crate::{chan, models, modules};
 
 struct SecurityAddon;
 impl Modify for SecurityAddon {
@@ -125,18 +124,22 @@ impl Modify for SecurityAddon2 {
         hosts::get_host,
         hosts::create_host,
         hosts::update_host,
+        hosts::get_host_sources,
         ports::get_all_ports,
         ports::get_port,
         ports::create_port,
         ports::update_port,
+        ports::get_port_sources,
         services::get_all_services,
         services::get_service,
         services::create_service,
         services::update_service,
+        services::get_service_sources,
         domains::get_all_domains,
         domains::get_domain,
         domains::create_domain,
         domains::update_domain,
+        domains::get_domain_sources,
         wordlists::get_all_wordlists,
         wordlists::create_wordlist_admin,
         wordlists::get_all_wordlists_admin,
@@ -152,8 +155,11 @@ impl Modify for SecurityAddon2 {
         handler::UuidResponse,
         handler::SimpleTag,
         handler::TagType,
-        handler::SimpleAggregationSource,
         handler::PageParams,
+        aggregation_source::SimpleAggregationSource,
+        aggregation_source::FullAggregationSource,
+        aggregation_source::SourceAttack,
+        aggregation_source::SourceAttackResult,
         auth::LoginRequest,
         auth::FinishRegisterRequest,
         leeches::CreateLeechRequest,

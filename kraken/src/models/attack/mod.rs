@@ -15,7 +15,7 @@ mod operations;
 mod patches;
 
 /// The type of an attack
-#[derive(Copy, Clone, DbEnum, ToSchema, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, DbEnum, ToSchema, Serialize, Deserialize)]
 pub enum AttackType {
     /// First variant to be mapped for 0
     Undefined,

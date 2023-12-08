@@ -17,9 +17,10 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
+use crate::api::handler::aggregation_source::{FullAggregationSource, SimpleAggregationSource};
 use crate::api::handler::{
-    get_page_params, ApiError, ApiResult, HostResultsPage, PageParams, PathUuid,
-    SimpleAggregationSource, SimpleTag, TagType, UuidResponse,
+    get_page_params, ApiError, ApiResult, HostResultsPage, PageParams, PathUuid, SimpleTag,
+    TagType, UuidResponse,
 };
 use crate::chan::GLOBAL;
 use crate::models::{
@@ -434,4 +435,32 @@ pub async fn update_host(
     tx.commit().await?;
 
     Ok(HttpResponse::Ok().finish())
+}
+
+/// Get all data sources which referenced this host
+#[utoipa::path(
+    tag = "Hosts",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The host's sources", body = FullAggregationSource),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathHost),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/hosts/{h_uuid}/sources")]
+pub async fn get_host_sources(
+    path: Path<PathHost>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<Json<FullAggregationSource>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+    let source =
+        FullAggregationSource::query(&mut tx, path.w_uuid, AggregationTable::Host, path.h_uuid)
+            .await?;
+    tx.commit().await?;
+    Ok(Json(source))
 }

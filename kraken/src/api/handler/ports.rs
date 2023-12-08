@@ -16,10 +16,11 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
+use crate::api::handler::aggregation_source::{FullAggregationSource, SimpleAggregationSource};
 use crate::api::handler::hosts::SimpleHost;
 use crate::api::handler::{
-    get_page_params, ApiError, ApiResult, PageParams, PathUuid, PortResultsPage,
-    SimpleAggregationSource, SimpleTag, TagType, UuidResponse,
+    get_page_params, ApiError, ApiResult, PageParams, PathUuid, PortResultsPage, SimpleTag,
+    TagType, UuidResponse,
 };
 use crate::chan::GLOBAL;
 use crate::models::{
@@ -493,4 +494,32 @@ pub async fn update_port(
     tx.commit().await?;
 
     Ok(HttpResponse::Ok().finish())
+}
+
+/// Get all data sources which referenced this port
+#[utoipa::path(
+    tag = "Ports",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The port's sources", body = FullAggregationSource),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathPort),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/ports/{p_uuid}/sources")]
+pub async fn get_port_sources(
+    path: Path<PathPort>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<Json<FullAggregationSource>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+    let source =
+        FullAggregationSource::query(&mut tx, path.w_uuid, AggregationTable::Port, path.p_uuid)
+            .await?;
+    tx.commit().await?;
+    Ok(Json(source))
 }

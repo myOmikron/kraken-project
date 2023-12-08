@@ -502,7 +502,7 @@ pub struct AggregationSource {
 }
 
 /// Enum used in [`AggregationSource`] to identify which table it points to
-#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug, Eq, PartialEq, Hash)]
 pub enum SourceType {
     /// The [`BruteforceSubdomainsResult`] table
     BruteforceSubdomains,

@@ -19,9 +19,10 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
+use crate::api::handler::aggregation_source::{FullAggregationSource, SimpleAggregationSource};
 use crate::api::handler::{
-    get_page_params, ApiError, ApiResult, DomainResultsPage, PageParams, PathUuid,
-    SimpleAggregationSource, SimpleTag, TagType, UuidResponse,
+    get_page_params, ApiError, ApiResult, DomainResultsPage, PageParams, PathUuid, SimpleTag,
+    TagType, UuidResponse,
 };
 use crate::chan::GLOBAL;
 use crate::models::{
@@ -445,4 +446,32 @@ pub async fn update_domain(
     tx.commit().await?;
 
     Ok(HttpResponse::Ok().finish())
+}
+
+/// Get all data sources which referenced this domain
+#[utoipa::path(
+    tag = "Domains",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The domain's sources", body = FullAggregationSource),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathDomain),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/domains/{d_uuid}/sources")]
+pub async fn get_domain_sources(
+    path: Path<PathDomain>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<Json<FullAggregationSource>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, path.w_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+    let source =
+        FullAggregationSource::query(&mut tx, path.w_uuid, AggregationTable::Domain, path.d_uuid)
+            .await?;
+    tx.commit().await?;
+    Ok(Json(source))
 }

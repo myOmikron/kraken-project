@@ -3,17 +3,12 @@
 //! This module also contains common types, such as [ApiError], [PathUuid] and the complete
 //! error implementation
 
-use std::collections::HashMap;
 use std::sync::TryLockError;
 
 use actix_toolbox::tb_middleware::actix_session;
 use actix_web::body::BoxBody;
 use actix_web::HttpResponse;
-use futures::TryStreamExt;
 use log::{debug, error, info, trace, warn};
-use rorm::conditions::DynamicCollection;
-use rorm::db::transaction::Transaction;
-use rorm::{and, query, FieldAccess, Model};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_repr::Serialize_repr;
 use thiserror::Error;
@@ -31,9 +26,10 @@ use crate::api::handler::hosts::FullHost;
 use crate::api::handler::ports::FullPort;
 use crate::api::handler::services::FullService;
 use crate::api::handler::workspaces::{SearchEntry, SearchResultEntry};
-use crate::models::{AggregationSource, AggregationTable, Color, SourceType};
+use crate::models::Color;
 use crate::modules::filter::ParseError;
 
+pub mod aggregation_source;
 pub mod api_keys;
 pub mod attack_results;
 pub mod attacks;
@@ -709,107 +705,4 @@ macro_rules! query_tags {
             }
         }
     }};
-}
-
-/// Numbers how many attacks of a certain kind found an aggregated model
-#[derive(Copy, Clone, Serialize, ToSchema, Debug, Default)]
-pub struct SimpleAggregationSource {
-    /// Bruteforce subdomains via DNS requests
-    bruteforce_subdomains: usize,
-    /// Scan tcp ports
-    tcp_port_scan: usize,
-    /// Query certificate transparency
-    query_certificate_transparency: usize,
-    /// Query the dehashed API
-    query_dehashed: usize,
-    /// Check if a host is reachable via icmp
-    host_alive: usize,
-    /// Detect the service that is running on a port
-    service_detection: usize,
-    /// Resolve domain names
-    dns_resolution: usize,
-    /// Perform forced browsing
-    forced_browsing: usize,
-    /// Detect the OS of the target
-    os_detection: usize,
-    /// Detect if anti-port scanning techniques are in place
-    anti_port_scanning_detection: usize,
-    /// Scan udp ports
-    udp_port_scan: usize,
-    /// Perform version detection
-    version_detection: usize,
-    /// Manually inserted
-    manual: bool,
-}
-
-impl SimpleAggregationSource {
-    /// Queries the [`SimpleAggregationSource`] for a list of aggregated models
-    pub async fn query(
-        tx: &mut Transaction,
-        workspace: Uuid,
-        aggregated_table: AggregationTable,
-        aggregated_uuids: impl IntoIterator<Item = Uuid>,
-    ) -> Result<HashMap<Uuid, Self>, rorm::Error> {
-        let aggregated_uuids: Vec<_> = aggregated_uuids
-            .into_iter()
-            .map(|uuid| AggregationSource::F.aggregated_uuid.equals(uuid))
-            .collect();
-
-        if aggregated_uuids.is_empty() {
-            return Ok(HashMap::new());
-        }
-
-        let mut stream = query!(
-            tx,
-            (
-                AggregationSource::F.aggregated_uuid,
-                AggregationSource::F.source_type
-            )
-        )
-        .condition(and![
-            AggregationSource::F.workspace.equals(workspace),
-            AggregationSource::F
-                .aggregated_table
-                .equals(aggregated_table),
-            DynamicCollection::or(aggregated_uuids)
-        ])
-        .stream();
-
-        let mut sources: HashMap<Uuid, SimpleAggregationSource> = HashMap::new();
-        while let Some((uuid, source_type)) = stream.try_next().await? {
-            sources.entry(uuid).or_default().add(source_type);
-        }
-        Ok(sources)
-    }
-
-    fn add(&mut self, source_type: SourceType) {
-        match source_type {
-            SourceType::BruteforceSubdomains => self.bruteforce_subdomains += 1,
-            SourceType::TcpPortScan => self.tcp_port_scan += 1,
-            SourceType::QueryCertificateTransparency => self.query_certificate_transparency += 1,
-            SourceType::QueryDehashed => self.query_dehashed += 1,
-            SourceType::HostAlive => self.host_alive += 1,
-            SourceType::ServiceDetection => self.service_detection += 1,
-            SourceType::DnsResolution => self.dns_resolution += 1,
-            SourceType::UdpPortScan
-            | SourceType::ForcedBrowsing
-            | SourceType::OSDetection
-            | SourceType::VersionDetection
-            | SourceType::AntiPortScanningDetection => {
-                error!("Encountered unimplemented source types");
-            }
-            SourceType::ManualDomain
-            | SourceType::ManualHost
-            | SourceType::ManualPort
-            | SourceType::ManualService => self.manual = true,
-        }
-    }
-}
-
-impl Extend<SourceType> for SimpleAggregationSource {
-    fn extend<T: IntoIterator<Item = SourceType>>(&mut self, iter: T) {
-        for result_type in iter {
-            self.add(result_type)
-        }
-    }
 }
