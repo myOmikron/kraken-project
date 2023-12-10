@@ -6,7 +6,7 @@ The settings to configure a tcp port scan
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **leech_uuid** | **str** | The leech to use  Leave empty to use a random leech | [optional] 
-**targets** | **List[str]** | The ip addresses / networks to scan | 
+**targets** | **List[str]** | The ip addresses / networks or domains to scan | 
 **ports** | [**List[PortOrRange]**](PortOrRange.md) | List of single ports and port ranges  If no values are supplied, 1-65535 is used as default | [optional] 
 **retry_interval** | **int** | The interval that should be wait between retries on a port.  The interval is specified in milliseconds. | 
 **max_retries** | **int** | The number of times the connection should be retried if it failed. | 

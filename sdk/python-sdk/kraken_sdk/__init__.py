@@ -75,6 +75,7 @@ from kraken_sdk.models.create_workspace_tag_request import CreateWorkspaceTagReq
 from kraken_sdk.models.dns_resolution_request import DnsResolutionRequest
 from kraken_sdk.models.dns_resolution_results_page import DnsResolutionResultsPage
 from kraken_sdk.models.domain_certainty import DomainCertainty
+from kraken_sdk.models.domain_or_network import DomainOrNetwork
 from kraken_sdk.models.domain_results_page import DomainResultsPage
 from kraken_sdk.models.finish_register_request import FinishRegisterRequest
 from kraken_sdk.models.full_api_key import FullApiKey

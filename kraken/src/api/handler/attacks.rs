@@ -61,7 +61,7 @@ pub struct BruteforceSubdomainsRequest {
     tag = "Attacks",
     context_path = "/api/v1",
     responses(
-        (status = 200, description = "Attack scheduled", body = UuidResponse),
+        (status = 202, description = "Attack scheduled", body = UuidResponse),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse)
     ),

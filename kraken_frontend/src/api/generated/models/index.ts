@@ -22,6 +22,7 @@ export * from './CreateWorkspaceTagRequest';
 export * from './DnsResolutionRequest';
 export * from './DnsResolutionResultsPage';
 export * from './DomainCertainty';
+export * from './DomainOrNetwork';
 export * from './DomainResultsPage';
 export * from './FinishRegisterRequest';
 export * from './FinishRegisterRequestAllOf';

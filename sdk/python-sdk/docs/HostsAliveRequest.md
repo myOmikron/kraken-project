@@ -6,7 +6,7 @@ Host Alive check request
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **leech_uuid** | **str** | The leech to use  Leave empty to use a random leech | [optional] 
-**targets** | **List[str]** | The ip addresses / networks to scan | 
+**targets** | **List[str]** | The ip addresses / networks or domains to scan | 
 **timeout** | **int** | The time to wait until a host is considered down.  The timeout is specified in milliseconds. | 
 **concurrent_limit** | **int** | The concurrent task limit | 
 **workspace_uuid** | **str** | The workspace to execute the attack in | 

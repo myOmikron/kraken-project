@@ -20,8 +20,9 @@ import json
 
 from datetime import datetime
 from typing import Any, ClassVar, Dict, List
-from pydantic import BaseModel, StrictInt, StrictStr, field_validator
+from pydantic import BaseModel, StrictStr, field_validator
 from pydantic import Field
+from typing_extensions import Annotated
 try:
     from typing import Self
 except ImportError:
@@ -37,7 +38,7 @@ class FullServiceDetectionResult(BaseModel):
     certainty: StrictStr = Field(description="The certainty a service is detected")
     service_names: List[StrictStr] = Field(description="The found names of the service")
     host: StrictStr = Field(description="The ip address a port was found on")
-    port: StrictInt = Field(description="Port number")
+    port: Annotated[int, Field(strict=True, ge=0)] = Field(description="Port number")
     __properties: ClassVar[List[str]] = ["uuid", "attack", "created_at", "certainty", "service_names", "host", "port"]
 
     @field_validator('certainty')

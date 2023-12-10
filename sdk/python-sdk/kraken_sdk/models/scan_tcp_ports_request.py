@@ -34,7 +34,7 @@ class ScanTcpPortsRequest(BaseModel):
     The settings to configure a tcp port scan
     """ # noqa: E501
     leech_uuid: Optional[StrictStr] = Field(default=None, description="The leech to use  Leave empty to use a random leech")
-    targets: List[StrictStr] = Field(description="The ip addresses / networks to scan")
+    targets: List[StrictStr] = Field(description="The ip addresses / networks or domains to scan")
     ports: Optional[List[PortOrRange]] = Field(default=None, description="List of single ports and port ranges  If no values are supplied, 1-65535 is used as default")
     retry_interval: Annotated[int, Field(strict=True, ge=0)] = Field(description="The interval that should be wait between retries on a port.  The interval is specified in milliseconds.")
     max_retries: Annotated[int, Field(strict=True, ge=0)] = Field(description="The number of times the connection should be retried if it failed.")

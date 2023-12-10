@@ -33,7 +33,7 @@ class HostsAliveRequest(BaseModel):
     Host Alive check request
     """ # noqa: E501
     leech_uuid: Optional[StrictStr] = Field(default=None, description="The leech to use  Leave empty to use a random leech")
-    targets: List[StrictStr] = Field(description="The ip addresses / networks to scan")
+    targets: List[StrictStr] = Field(description="The ip addresses / networks or domains to scan")
     timeout: Annotated[int, Field(strict=True, ge=0)] = Field(description="The time to wait until a host is considered down.  The timeout is specified in milliseconds.")
     concurrent_limit: Annotated[int, Field(strict=True, ge=0)] = Field(description="The concurrent task limit")
     workspace_uuid: StrictStr = Field(description="The workspace to execute the attack in")

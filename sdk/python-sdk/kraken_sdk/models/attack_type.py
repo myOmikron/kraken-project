@@ -43,6 +43,11 @@ class AttackType(str, Enum):
     HOSTALIVE = 'HostAlive'
     SERVICEDETECTION = 'ServiceDetection'
     DNSRESOLUTION = 'DnsResolution'
+    UDPPORTSCAN = 'UdpPortScan'
+    FORCEDBROWSING = 'ForcedBrowsing'
+    OSDETECTION = 'OSDetection'
+    VERSIONDETECTION = 'VersionDetection'
+    ANTIPORTSCANNINGDETECTION = 'AntiPortScanningDetection'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:

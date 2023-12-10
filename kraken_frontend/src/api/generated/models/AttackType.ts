@@ -25,7 +25,12 @@ export const AttackType = {
     QueryUnhashed: 'QueryUnhashed',
     HostAlive: 'HostAlive',
     ServiceDetection: 'ServiceDetection',
-    DnsResolution: 'DnsResolution'
+    DnsResolution: 'DnsResolution',
+    UdpPortScan: 'UdpPortScan',
+    ForcedBrowsing: 'ForcedBrowsing',
+    OsDetection: 'OSDetection',
+    VersionDetection: 'VersionDetection',
+    AntiPortScanningDetection: 'AntiPortScanningDetection'
 } as const;
 export type AttackType = typeof AttackType[keyof typeof AttackType];
 

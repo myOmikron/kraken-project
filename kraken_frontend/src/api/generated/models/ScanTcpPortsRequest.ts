@@ -35,7 +35,7 @@ export interface ScanTcpPortsRequest {
      */
     leechUuid?: string | null;
     /**
-     * The ip addresses / networks to scan
+     * The ip addresses / networks or domains to scan
      * @type {Array<string>}
      * @memberof ScanTcpPortsRequest
      */

@@ -222,6 +222,7 @@ Class | Method | HTTP request | Description
  - [DnsResolutionRequest](docs/DnsResolutionRequest.md)
  - [DnsResolutionResultsPage](docs/DnsResolutionResultsPage.md)
  - [DomainCertainty](docs/DomainCertainty.md)
+ - [DomainOrNetwork](docs/DomainOrNetwork.md)
  - [DomainResultsPage](docs/DomainResultsPage.md)
  - [FinishRegisterRequest](docs/FinishRegisterRequest.md)
  - [FullApiKey](docs/FullApiKey.md)

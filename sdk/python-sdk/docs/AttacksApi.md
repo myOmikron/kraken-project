@@ -99,7 +99,7 @@ Name | Type | Description  | Notes
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-**200** | Attack scheduled |  -  |
+**202** | Attack scheduled |  -  |
 **400** | Client error |  -  |
 **500** | Server error |  -  |
 

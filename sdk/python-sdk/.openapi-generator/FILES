@@ -30,6 +30,7 @@ docs/CreateWorkspaceTagRequest.md
 docs/DnsResolutionRequest.md
 docs/DnsResolutionResultsPage.md
 docs/DomainCertainty.md
+docs/DomainOrNetwork.md
 docs/DomainResultsPage.md
 docs/DomainsApi.md
 docs/FinishRegisterRequest.md
@@ -242,6 +243,7 @@ kraken_sdk/models/create_workspace_tag_request.py
 kraken_sdk/models/dns_resolution_request.py
 kraken_sdk/models/dns_resolution_results_page.py
 kraken_sdk/models/domain_certainty.py
+kraken_sdk/models/domain_or_network.py
 kraken_sdk/models/domain_results_page.py
 kraken_sdk/models/finish_register_request.py
 kraken_sdk/models/full_api_key.py
@@ -418,6 +420,7 @@ test/test_create_workspace_tag_request.py
 test/test_dns_resolution_request.py
 test/test_dns_resolution_results_page.py
 test/test_domain_certainty.py
+test/test_domain_or_network.py
 test/test_domain_results_page.py
 test/test_domains_api.py
 test/test_finish_register_request.py

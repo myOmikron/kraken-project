@@ -118,7 +118,7 @@ class AttacksApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "UuidResponse",
+            '202': "UuidResponse",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -188,7 +188,7 @@ class AttacksApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "UuidResponse",
+            '202': "UuidResponse",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -258,7 +258,7 @@ class AttacksApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "UuidResponse",
+            '202': "UuidResponse",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
