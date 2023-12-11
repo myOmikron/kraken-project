@@ -66,7 +66,10 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {...domainsTable}
                         columnsTemplate={"1fr 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("domains")}
-                        applyFilter={setDomainFilter}
+                        applyFilter={(value) => {
+                            setDomainFilter(value);
+                            domainsTable.setOffset(0);
+                        }}
                         filterTarget={"domain"}
                     >
                         <div className={"workspace-table-header"}>
@@ -105,8 +108,10 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         key={"host-table"}
                         {...hostsTable}
                         columnsTemplate={"39ch 1fr 1fr 1fr min-content"}
-                        onAdd={() => setCreateForm("hosts")}
-                        applyFilter={setHostFilter}
+                        applyFilter={(value) => {
+                            setHostFilter(value);
+                            hostsTable.setOffset(0);
+                        }}
                         filterTarget={"host"}
                     >
                         <div className={"workspace-table-header"}>
@@ -142,7 +147,10 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {...portsTable}
                         columnsTemplate={"5ch 8ch 39ch 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("ports")}
-                        applyFilter={setPortFilter}
+                        applyFilter={(value) => {
+                            setPortFilter(value);
+                            portsTable.setOffset(0);
+                        }}
                         filterTarget={"port"}
                     >
                         <div className={"workspace-table-header"}>
@@ -182,7 +190,10 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {...servicesTable}
                         columnsTemplate={"1fr 39ch 5ch 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("services")}
-                        applyFilter={setServiceFilter}
+                        applyFilter={(value) => {
+                            setServiceFilter(value);
+                            servicesTable.setOffset(0);
+                        }}
                         filterTarget={"service"}
                     >
                         <div className={"workspace-table-header"}>
@@ -304,7 +315,17 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
         <>
             <div className={"workspace-data-container"}>
                 <div className={"workspace-data-filter pane"}>
-                    <FilterInput placeholder={"Global Filter..."} applyFilter={setGlobalFilter} target={"global"} />
+                    <FilterInput
+                        placeholder={"Global Filter..."}
+                        applyFilter={(value) => {
+                            setGlobalFilter(value);
+                            domainsTable.setOffset(0);
+                            hostsTable.setOffset(0);
+                            portsTable.setOffset(0);
+                            servicesTable.setOffset(0);
+                        }}
+                        target={"global"}
+                    />
                 </div>
                 <div className={"workspace-data-selector"}>
                     {Object.entries(TABS).map(([key, displayName]) => (
