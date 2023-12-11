@@ -1,12 +1,12 @@
 # WsMessageOneOf2
 
-A notification about a finished attack
+A notification about a started attack
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**attack_uuid** | **str** | The corresponding id of the attack | 
-**finished_successful** | **bool** | Whether the attack was finished successful | 
+**attack** | [**SimpleAttack**](SimpleAttack.md) |  | 
+**workspace** | [**SimpleWorkspace**](SimpleWorkspace.md) |  | 
 **type** | **str** |  | 
 
 ## Example

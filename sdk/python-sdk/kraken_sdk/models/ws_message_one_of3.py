@@ -20,8 +20,9 @@ import json
 
 
 from typing import Any, ClassVar, Dict, List
-from pydantic import BaseModel, StrictBool, StrictStr, field_validator
-from pydantic import Field
+from pydantic import BaseModel, StrictStr, field_validator
+from kraken_sdk.models.simple_attack import SimpleAttack
+from kraken_sdk.models.simple_workspace import SimpleWorkspace
 try:
     from typing import Self
 except ImportError:
@@ -29,18 +30,18 @@ except ImportError:
 
 class WsMessageOneOf3(BaseModel):
     """
-    A notification about a finished search
+    A notification about a finished attack
     """ # noqa: E501
-    search_uuid: StrictStr = Field(description="The corresponding id of the search")
-    finished_successful: StrictBool = Field(description="Whether the search was finished successfully")
+    attack: SimpleAttack
+    workspace: SimpleWorkspace
     type: StrictStr
-    __properties: ClassVar[List[str]] = ["search_uuid", "finished_successful", "type"]
+    __properties: ClassVar[List[str]] = ["attack", "workspace", "type"]
 
     @field_validator('type')
     def type_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in ('SearchFinished'):
-            raise ValueError("must be one of enum values ('SearchFinished')")
+        if value not in ('AttackFinished'):
+            raise ValueError("must be one of enum values ('AttackFinished')")
         return value
 
     model_config = {
@@ -79,6 +80,12 @@ class WsMessageOneOf3(BaseModel):
             },
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of attack
+        if self.attack:
+            _dict['attack'] = self.attack.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of workspace
+        if self.workspace:
+            _dict['workspace'] = self.workspace.to_dict()
         return _dict
 
     @classmethod
@@ -91,8 +98,8 @@ class WsMessageOneOf3(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "search_uuid": obj.get("search_uuid"),
-            "finished_successful": obj.get("finished_successful"),
+            "attack": SimpleAttack.from_dict(obj.get("attack")) if obj.get("attack") is not None else None,
+            "workspace": SimpleWorkspace.from_dict(obj.get("workspace")) if obj.get("workspace") is not None else None,
             "type": obj.get("type")
         })
         return _obj

@@ -21,27 +21,27 @@ import json
 
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr, field_validator
-from kraken_sdk.models.simple_attack import SimpleAttack
-from kraken_sdk.models.simple_workspace import SimpleWorkspace
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class WsMessageOneOf2(BaseModel):
+class WsMessageOneOf11(BaseModel):
     """
-    A notification about a started attack
+    A result for a DNS resolution requests
     """ # noqa: E501
-    attack: SimpleAttack
-    workspace: SimpleWorkspace
+    attack_uuid: StrictStr = Field(description="The corresponding id of the attack")
+    source: StrictStr = Field(description="The source address that was queried")
+    destination: StrictStr = Field(description="The destination address that was returned")
     type: StrictStr
-    __properties: ClassVar[List[str]] = ["attack", "workspace", "type"]
+    __properties: ClassVar[List[str]] = ["attack_uuid", "source", "destination", "type"]
 
     @field_validator('type')
     def type_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in ('AttackStarted'):
-            raise ValueError("must be one of enum values ('AttackStarted')")
+        if value not in ('DnsResolutionResult'):
+            raise ValueError("must be one of enum values ('DnsResolutionResult')")
         return value
 
     model_config = {
@@ -61,7 +61,7 @@ class WsMessageOneOf2(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of WsMessageOneOf2 from a JSON string"""
+        """Create an instance of WsMessageOneOf11 from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -80,17 +80,11 @@ class WsMessageOneOf2(BaseModel):
             },
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of attack
-        if self.attack:
-            _dict['attack'] = self.attack.to_dict()
-        # override the default output from pydantic by calling `to_dict()` of workspace
-        if self.workspace:
-            _dict['workspace'] = self.workspace.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of WsMessageOneOf2 from a dict"""
+        """Create an instance of WsMessageOneOf11 from a dict"""
         if obj is None:
             return None
 
@@ -98,8 +92,9 @@ class WsMessageOneOf2(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "attack": SimpleAttack.from_dict(obj.get("attack")) if obj.get("attack") is not None else None,
-            "workspace": SimpleWorkspace.from_dict(obj.get("workspace")) if obj.get("workspace") is not None else None,
+            "attack_uuid": obj.get("attack_uuid"),
+            "source": obj.get("source"),
+            "destination": obj.get("destination"),
             "type": obj.get("type")
         })
         return _obj

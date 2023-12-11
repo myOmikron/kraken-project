@@ -22,6 +22,7 @@ import json
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr, field_validator
 from pydantic import Field
+from kraken_sdk.models.certificate_transparency_entry import CertificateTransparencyEntry
 try:
     from typing import Self
 except ImportError:
@@ -29,18 +30,18 @@ except ImportError:
 
 class WsMessageOneOf9(BaseModel):
     """
-    A result to service detection request
+    A result to a certificate transparency request
     """ # noqa: E501
     attack_uuid: StrictStr = Field(description="The corresponding id of the attack")
-    service: StrictStr = Field(description="Name of the service")
+    entries: List[CertificateTransparencyEntry] = Field(description="The entries of the result")
     type: StrictStr
-    __properties: ClassVar[List[str]] = ["attack_uuid", "service", "type"]
+    __properties: ClassVar[List[str]] = ["attack_uuid", "entries", "type"]
 
     @field_validator('type')
     def type_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in ('ServiceDetectionResult'):
-            raise ValueError("must be one of enum values ('ServiceDetectionResult')")
+        if value not in ('CertificateTransparencyResult'):
+            raise ValueError("must be one of enum values ('CertificateTransparencyResult')")
         return value
 
     model_config = {
@@ -79,6 +80,13 @@ class WsMessageOneOf9(BaseModel):
             },
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of each item in entries (list)
+        _items = []
+        if self.entries:
+            for _item in self.entries:
+                if _item:
+                    _items.append(_item.to_dict())
+            _dict['entries'] = _items
         return _dict
 
     @classmethod
@@ -92,7 +100,7 @@ class WsMessageOneOf9(BaseModel):
 
         _obj = cls.model_validate({
             "attack_uuid": obj.get("attack_uuid"),
-            "service": obj.get("service"),
+            "entries": [CertificateTransparencyEntry.from_dict(_item) for _item in obj.get("entries")] if obj.get("entries") is not None else None,
             "type": obj.get("type")
         })
         return _obj

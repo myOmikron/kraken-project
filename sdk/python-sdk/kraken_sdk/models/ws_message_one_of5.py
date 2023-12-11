@@ -29,19 +29,18 @@ except ImportError:
 
 class WsMessageOneOf5(BaseModel):
     """
-    A result for a subdomain enumeration using bruteforce DNS requests
+    A notification about a search result
     """ # noqa: E501
-    attack_uuid: StrictStr = Field(description="The corresponding id of the attack")
-    source: StrictStr = Field(description="The source address that was queried")
-    destination: StrictStr = Field(description="The destination address that was returned")
+    search_uuid: StrictStr = Field(description="The corresponding id of the search results")
+    result_uuid: StrictStr = Field(description="A result entry")
     type: StrictStr
-    __properties: ClassVar[List[str]] = ["attack_uuid", "source", "destination", "type"]
+    __properties: ClassVar[List[str]] = ["search_uuid", "result_uuid", "type"]
 
     @field_validator('type')
     def type_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in ('BruteforceSubdomainsResult'):
-            raise ValueError("must be one of enum values ('BruteforceSubdomainsResult')")
+        if value not in ('SearchNotify'):
+            raise ValueError("must be one of enum values ('SearchNotify')")
         return value
 
     model_config = {
@@ -92,9 +91,8 @@ class WsMessageOneOf5(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "attack_uuid": obj.get("attack_uuid"),
-            "source": obj.get("source"),
-            "destination": obj.get("destination"),
+            "search_uuid": obj.get("search_uuid"),
+            "result_uuid": obj.get("result_uuid"),
             "type": obj.get("type")
         })
         return _obj

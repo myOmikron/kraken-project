@@ -183,6 +183,7 @@ docs/WsMessage.md
 docs/WsMessageOneOf.md
 docs/WsMessageOneOf1.md
 docs/WsMessageOneOf10.md
+docs/WsMessageOneOf11.md
 docs/WsMessageOneOf2.md
 docs/WsMessageOneOf3.md
 docs/WsMessageOneOf4.md
@@ -378,6 +379,7 @@ kraken_sdk/models/ws_message.py
 kraken_sdk/models/ws_message_one_of.py
 kraken_sdk/models/ws_message_one_of1.py
 kraken_sdk/models/ws_message_one_of10.py
+kraken_sdk/models/ws_message_one_of11.py
 kraken_sdk/models/ws_message_one_of2.py
 kraken_sdk/models/ws_message_one_of3.py
 kraken_sdk/models/ws_message_one_of4.py
@@ -573,6 +575,7 @@ test/test_ws_message.py
 test/test_ws_message_one_of.py
 test/test_ws_message_one_of1.py
 test/test_ws_message_one_of10.py
+test/test_ws_message_one_of11.py
 test/test_ws_message_one_of2.py
 test/test_ws_message_one_of3.py
 test/test_ws_message_one_of4.py

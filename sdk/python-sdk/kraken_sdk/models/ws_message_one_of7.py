@@ -22,7 +22,6 @@ import json
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr, field_validator
 from pydantic import Field
-from typing_extensions import Annotated
 try:
     from typing import Self
 except ImportError:
@@ -30,19 +29,18 @@ except ImportError:
 
 class WsMessageOneOf7(BaseModel):
     """
-    A result for a tcp scan
+    A result for hosts alive check
     """ # noqa: E501
     attack_uuid: StrictStr = Field(description="The corresponding id of the attack")
-    address: StrictStr = Field(description="The address of the result")
-    port: Annotated[int, Field(strict=True, ge=0)] = Field(description="The port of the result")
+    host: StrictStr = Field(description="A host which could be reached")
     type: StrictStr
-    __properties: ClassVar[List[str]] = ["attack_uuid", "address", "port", "type"]
+    __properties: ClassVar[List[str]] = ["attack_uuid", "host", "type"]
 
     @field_validator('type')
     def type_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in ('ScanTcpPortsResult'):
-            raise ValueError("must be one of enum values ('ScanTcpPortsResult')")
+        if value not in ('HostsAliveCheck'):
+            raise ValueError("must be one of enum values ('HostsAliveCheck')")
         return value
 
     model_config = {
@@ -94,8 +92,7 @@ class WsMessageOneOf7(BaseModel):
 
         _obj = cls.model_validate({
             "attack_uuid": obj.get("attack_uuid"),
-            "address": obj.get("address"),
-            "port": obj.get("port"),
+            "host": obj.get("host"),
             "type": obj.get("type")
         })
         return _obj

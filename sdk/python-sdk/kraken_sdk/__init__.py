@@ -210,6 +210,7 @@ from kraken_sdk.models.ws_message import WsMessage
 from kraken_sdk.models.ws_message_one_of import WsMessageOneOf
 from kraken_sdk.models.ws_message_one_of1 import WsMessageOneOf1
 from kraken_sdk.models.ws_message_one_of10 import WsMessageOneOf10
+from kraken_sdk.models.ws_message_one_of11 import WsMessageOneOf11
 from kraken_sdk.models.ws_message_one_of2 import WsMessageOneOf2
 from kraken_sdk.models.ws_message_one_of3 import WsMessageOneOf3
 from kraken_sdk.models.ws_message_one_of4 import WsMessageOneOf4

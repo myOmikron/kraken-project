@@ -13,6 +13,19 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { SimpleAttack } from './SimpleAttack';
+import {
+    SimpleAttackFromJSON,
+    SimpleAttackFromJSONTyped,
+    SimpleAttackToJSON,
+} from './SimpleAttack';
+import type { SimpleWorkspace } from './SimpleWorkspace';
+import {
+    SimpleWorkspaceFromJSON,
+    SimpleWorkspaceFromJSONTyped,
+    SimpleWorkspaceToJSON,
+} from './SimpleWorkspace';
+
 /**
  * A notification about a finished attack
  * @export
@@ -20,17 +33,17 @@ import { exists, mapValues } from '../runtime';
  */
 export interface WsMessageOneOf3 {
     /**
-     * The corresponding id of the attack
-     * @type {string}
+     * 
+     * @type {SimpleAttack}
      * @memberof WsMessageOneOf3
      */
-    attackUuid: string;
+    attack: SimpleAttack;
     /**
-     * Whether the attack was finished successful
-     * @type {boolean}
+     * 
+     * @type {SimpleWorkspace}
      * @memberof WsMessageOneOf3
      */
-    finishedSuccessful: boolean;
+    workspace: SimpleWorkspace;
     /**
      * 
      * @type {string}
@@ -54,8 +67,8 @@ export type WsMessageOneOf3TypeEnum = typeof WsMessageOneOf3TypeEnum[keyof typeo
  */
 export function instanceOfWsMessageOneOf3(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "attackUuid" in value;
-    isInstance = isInstance && "finishedSuccessful" in value;
+    isInstance = isInstance && "attack" in value;
+    isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -71,8 +84,8 @@ export function WsMessageOneOf3FromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'attackUuid': json['attack_uuid'],
-        'finishedSuccessful': json['finished_successful'],
+        'attack': SimpleAttackFromJSON(json['attack']),
+        'workspace': SimpleWorkspaceFromJSON(json['workspace']),
         'type': json['type'],
     };
 }
@@ -86,8 +99,8 @@ export function WsMessageOneOf3ToJSON(value?: WsMessageOneOf3 | null): any {
     }
     return {
         
-        'attack_uuid': value.attackUuid,
-        'finished_successful': value.finishedSuccessful,
+        'attack': SimpleAttackToJSON(value.attack),
+        'workspace': SimpleWorkspaceToJSON(value.workspace),
         'type': value.type,
     };
 }

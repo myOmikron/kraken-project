@@ -1,12 +1,12 @@
 # WsMessageOneOf9
 
-A result to service detection request
+A result to a certificate transparency request
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **attack_uuid** | **str** | The corresponding id of the attack | 
-**service** | **str** | Name of the service | 
+**entries** | [**List[CertificateTransparencyEntry]**](CertificateTransparencyEntry.md) | The entries of the result | 
 **type** | **str** |  | 
 
 ## Example

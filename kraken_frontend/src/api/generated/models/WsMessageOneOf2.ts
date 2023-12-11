@@ -13,6 +13,19 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { SimpleAttack } from './SimpleAttack';
+import {
+    SimpleAttackFromJSON,
+    SimpleAttackFromJSONTyped,
+    SimpleAttackToJSON,
+} from './SimpleAttack';
+import type { SimpleWorkspace } from './SimpleWorkspace';
+import {
+    SimpleWorkspaceFromJSON,
+    SimpleWorkspaceFromJSONTyped,
+    SimpleWorkspaceToJSON,
+} from './SimpleWorkspace';
+
 /**
  * A notification about a started attack
  * @export
@@ -20,17 +33,17 @@ import { exists, mapValues } from '../runtime';
  */
 export interface WsMessageOneOf2 {
     /**
-     * The corresponding id of the attack
-     * @type {string}
+     * 
+     * @type {SimpleAttack}
      * @memberof WsMessageOneOf2
      */
-    attackUuid: string;
+    attack: SimpleAttack;
     /**
-     * The corresponding id of the workspace
-     * @type {string}
+     * 
+     * @type {SimpleWorkspace}
      * @memberof WsMessageOneOf2
      */
-    workspaceUuid: string;
+    workspace: SimpleWorkspace;
     /**
      * 
      * @type {string}
@@ -54,8 +67,8 @@ export type WsMessageOneOf2TypeEnum = typeof WsMessageOneOf2TypeEnum[keyof typeo
  */
 export function instanceOfWsMessageOneOf2(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "attackUuid" in value;
-    isInstance = isInstance && "workspaceUuid" in value;
+    isInstance = isInstance && "attack" in value;
+    isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -71,8 +84,8 @@ export function WsMessageOneOf2FromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'attackUuid': json['attack_uuid'],
-        'workspaceUuid': json['workspace_uuid'],
+        'attack': SimpleAttackFromJSON(json['attack']),
+        'workspace': SimpleWorkspaceFromJSON(json['workspace']),
         'type': json['type'],
     };
 }
@@ -86,8 +99,8 @@ export function WsMessageOneOf2ToJSON(value?: WsMessageOneOf2 | null): any {
     }
     return {
         
-        'attack_uuid': value.attackUuid,
-        'workspace_uuid': value.workspaceUuid,
+        'attack': SimpleAttackToJSON(value.attack),
+        'workspace': SimpleWorkspaceToJSON(value.workspace),
         'type': value.type,
     };
 }

@@ -1,12 +1,12 @@
 # WsMessageOneOf4
 
-A notification about a search result
+A notification about a finished search
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**search_uuid** | **str** | The corresponding id of the search results | 
-**result_uuid** | **str** | A result entry | 
+**search_uuid** | **str** | The corresponding id of the search | 
+**finished_successful** | **bool** | Whether the search was finished successfully | 
 **type** | **str** |  | 
 
 ## Example

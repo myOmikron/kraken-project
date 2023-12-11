@@ -1,12 +1,12 @@
 # WsMessageOneOf3
 
-A notification about a finished search
+A notification about a finished attack
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**search_uuid** | **str** | The corresponding id of the search | 
-**finished_successful** | **bool** | Whether the search was finished successfully | 
+**attack** | [**SimpleAttack**](SimpleAttack.md) |  | 
+**workspace** | [**SimpleWorkspace**](SimpleWorkspace.md) |  | 
 **type** | **str** |  | 
 
 ## Example

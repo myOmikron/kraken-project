@@ -1,13 +1,12 @@
 # WsMessageOneOf7
 
-A result for a tcp scan
+A result for hosts alive check
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **attack_uuid** | **str** | The corresponding id of the attack | 
-**address** | **str** | The address of the result | 
-**port** | **int** | The port of the result | 
+**host** | **str** | A host which could be reached | 
 **type** | **str** |  | 
 
 ## Example

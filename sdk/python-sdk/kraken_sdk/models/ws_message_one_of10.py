@@ -29,19 +29,18 @@ except ImportError:
 
 class WsMessageOneOf10(BaseModel):
     """
-    A result for a DNS resolution requests
+    A result to service detection request
     """ # noqa: E501
     attack_uuid: StrictStr = Field(description="The corresponding id of the attack")
-    source: StrictStr = Field(description="The source address that was queried")
-    destination: StrictStr = Field(description="The destination address that was returned")
+    service: StrictStr = Field(description="Name of the service")
     type: StrictStr
-    __properties: ClassVar[List[str]] = ["attack_uuid", "source", "destination", "type"]
+    __properties: ClassVar[List[str]] = ["attack_uuid", "service", "type"]
 
     @field_validator('type')
     def type_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in ('DnsResolutionResult'):
-            raise ValueError("must be one of enum values ('DnsResolutionResult')")
+        if value not in ('ServiceDetectionResult'):
+            raise ValueError("must be one of enum values ('ServiceDetectionResult')")
         return value
 
     model_config = {
@@ -93,8 +92,7 @@ class WsMessageOneOf10(BaseModel):
 
         _obj = cls.model_validate({
             "attack_uuid": obj.get("attack_uuid"),
-            "source": obj.get("source"),
-            "destination": obj.get("destination"),
+            "service": obj.get("service"),
             "type": obj.get("type")
         })
         return _obj

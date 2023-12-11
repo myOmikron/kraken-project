@@ -9,10 +9,11 @@ Name | Type | Description | Notes
 **invitation_uuid** | **str** | The uuid of the invitation | 
 **workspace** | [**SimpleWorkspace**](SimpleWorkspace.md) |  | 
 **var_from** | [**SimpleUser**](SimpleUser.md) |  | 
-**attack_uuid** | **str** | The corresponding id of the attack | 
-**finished_successful** | **bool** | Whether the search was finished successfully | 
+**attack** | [**SimpleAttack**](SimpleAttack.md) |  | 
 **search_uuid** | **str** | The corresponding id of the search results | 
+**finished_successful** | **bool** | Whether the search was finished successfully | 
 **result_uuid** | **str** | A result entry | 
+**attack_uuid** | **str** | The corresponding id of the attack | 
 **source** | **str** | The source address that was queried | 
 **destination** | **str** | The destination address that was returned | 
 **host** | **str** | A host which could be reached | 

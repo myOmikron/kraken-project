@@ -1,13 +1,12 @@
 # WsMessageOneOf10
 
-A result for a DNS resolution requests
+A result to service detection request
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **attack_uuid** | **str** | The corresponding id of the attack | 
-**source** | **str** | The source address that was queried | 
-**destination** | **str** | The destination address that was returned | 
+**service** | **str** | Name of the service | 
 **type** | **str** |  | 
 
 ## Example

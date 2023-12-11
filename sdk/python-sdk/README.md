@@ -357,6 +357,7 @@ Class | Method | HTTP request | Description
  - [WsMessageOneOf](docs/WsMessageOneOf.md)
  - [WsMessageOneOf1](docs/WsMessageOneOf1.md)
  - [WsMessageOneOf10](docs/WsMessageOneOf10.md)
+ - [WsMessageOneOf11](docs/WsMessageOneOf11.md)
  - [WsMessageOneOf2](docs/WsMessageOneOf2.md)
  - [WsMessageOneOf3](docs/WsMessageOneOf3.md)
  - [WsMessageOneOf4](docs/WsMessageOneOf4.md)

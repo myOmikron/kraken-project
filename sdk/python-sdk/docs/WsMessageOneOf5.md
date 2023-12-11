@@ -1,13 +1,12 @@
 # WsMessageOneOf5
 
-A result for a subdomain enumeration using bruteforce DNS requests
+A notification about a search result
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**attack_uuid** | **str** | The corresponding id of the attack | 
-**source** | **str** | The source address that was queried | 
-**destination** | **str** | The destination address that was returned | 
+**search_uuid** | **str** | The corresponding id of the search results | 
+**result_uuid** | **str** | A result entry | 
 **type** | **str** |  | 
 
 ## Example

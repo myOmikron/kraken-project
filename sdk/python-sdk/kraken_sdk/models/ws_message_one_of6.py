@@ -29,18 +29,19 @@ except ImportError:
 
 class WsMessageOneOf6(BaseModel):
     """
-    A result for hosts alive check
+    A result for a subdomain enumeration using bruteforce DNS requests
     """ # noqa: E501
     attack_uuid: StrictStr = Field(description="The corresponding id of the attack")
-    host: StrictStr = Field(description="A host which could be reached")
+    source: StrictStr = Field(description="The source address that was queried")
+    destination: StrictStr = Field(description="The destination address that was returned")
     type: StrictStr
-    __properties: ClassVar[List[str]] = ["attack_uuid", "host", "type"]
+    __properties: ClassVar[List[str]] = ["attack_uuid", "source", "destination", "type"]
 
     @field_validator('type')
     def type_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in ('HostsAliveCheck'):
-            raise ValueError("must be one of enum values ('HostsAliveCheck')")
+        if value not in ('BruteforceSubdomainsResult'):
+            raise ValueError("must be one of enum values ('BruteforceSubdomainsResult')")
         return value
 
     model_config = {
@@ -92,7 +93,8 @@ class WsMessageOneOf6(BaseModel):
 
         _obj = cls.model_validate({
             "attack_uuid": obj.get("attack_uuid"),
-            "host": obj.get("host"),
+            "source": obj.get("source"),
+            "destination": obj.get("destination"),
             "type": obj.get("type")
         })
         return _obj

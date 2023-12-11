@@ -20,7 +20,7 @@ import json
 
 
 from typing import Any, ClassVar, Dict, List
-from pydantic import BaseModel, StrictStr, field_validator
+from pydantic import BaseModel, StrictBool, StrictStr, field_validator
 from pydantic import Field
 try:
     from typing import Self
@@ -29,18 +29,18 @@ except ImportError:
 
 class WsMessageOneOf4(BaseModel):
     """
-    A notification about a search result
+    A notification about a finished search
     """ # noqa: E501
-    search_uuid: StrictStr = Field(description="The corresponding id of the search results")
-    result_uuid: StrictStr = Field(description="A result entry")
+    search_uuid: StrictStr = Field(description="The corresponding id of the search")
+    finished_successful: StrictBool = Field(description="Whether the search was finished successfully")
     type: StrictStr
-    __properties: ClassVar[List[str]] = ["search_uuid", "result_uuid", "type"]
+    __properties: ClassVar[List[str]] = ["search_uuid", "finished_successful", "type"]
 
     @field_validator('type')
     def type_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in ('SearchNotify'):
-            raise ValueError("must be one of enum values ('SearchNotify')")
+        if value not in ('SearchFinished'):
+            raise ValueError("must be one of enum values ('SearchFinished')")
         return value
 
     model_config = {
@@ -92,7 +92,7 @@ class WsMessageOneOf4(BaseModel):
 
         _obj = cls.model_validate({
             "search_uuid": obj.get("search_uuid"),
-            "result_uuid": obj.get("result_uuid"),
+            "finished_successful": obj.get("finished_successful"),
             "type": obj.get("type")
         })
         return _obj

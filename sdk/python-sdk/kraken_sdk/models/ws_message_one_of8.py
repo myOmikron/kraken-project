@@ -22,7 +22,7 @@ import json
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr, field_validator
 from pydantic import Field
-from kraken_sdk.models.certificate_transparency_entry import CertificateTransparencyEntry
+from typing_extensions import Annotated
 try:
     from typing import Self
 except ImportError:
@@ -30,18 +30,19 @@ except ImportError:
 
 class WsMessageOneOf8(BaseModel):
     """
-    A result to a certificate transparency request
+    A result for a tcp scan
     """ # noqa: E501
     attack_uuid: StrictStr = Field(description="The corresponding id of the attack")
-    entries: List[CertificateTransparencyEntry] = Field(description="The entries of the result")
+    address: StrictStr = Field(description="The address of the result")
+    port: Annotated[int, Field(strict=True, ge=0)] = Field(description="The port of the result")
     type: StrictStr
-    __properties: ClassVar[List[str]] = ["attack_uuid", "entries", "type"]
+    __properties: ClassVar[List[str]] = ["attack_uuid", "address", "port", "type"]
 
     @field_validator('type')
     def type_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in ('CertificateTransparencyResult'):
-            raise ValueError("must be one of enum values ('CertificateTransparencyResult')")
+        if value not in ('ScanTcpPortsResult'):
+            raise ValueError("must be one of enum values ('ScanTcpPortsResult')")
         return value
 
     model_config = {
@@ -80,13 +81,6 @@ class WsMessageOneOf8(BaseModel):
             },
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of each item in entries (list)
-        _items = []
-        if self.entries:
-            for _item in self.entries:
-                if _item:
-                    _items.append(_item.to_dict())
-            _dict['entries'] = _items
         return _dict
 
     @classmethod
@@ -100,7 +94,8 @@ class WsMessageOneOf8(BaseModel):
 
         _obj = cls.model_validate({
             "attack_uuid": obj.get("attack_uuid"),
-            "entries": [CertificateTransparencyEntry.from_dict(_item) for _item in obj.get("entries")] if obj.get("entries") is not None else None,
+            "address": obj.get("address"),
+            "port": obj.get("port"),
             "type": obj.get("type")
         })
         return _obj

@@ -1,12 +1,13 @@
 # WsMessageOneOf8
 
-A result to a certificate transparency request
+A result for a tcp scan
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **attack_uuid** | **str** | The corresponding id of the attack | 
-**entries** | [**List[CertificateTransparencyEntry]**](CertificateTransparencyEntry.md) | The entries of the result | 
+**address** | **str** | The address of the result | 
+**port** | **int** | The port of the result | 
 **type** | **str** |  | 
 
 ## Example
