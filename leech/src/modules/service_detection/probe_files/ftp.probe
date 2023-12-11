@@ -1,0 +1,21 @@
+service: ftp
+prevalence: often
+probes:
+  - protocol: TCP
+    regex: FTP
+    #exact form of response may vary depending on the implementation and configuration of the FTP server. General convention is not strictly defined by FTP standards
+    sub_regex:
+      #ProFTPD
+      - ^\d\d\d ProFTPD (\d+.\d+.\d+\w* )?Server
+      #Pure-FTPD
+      - ^\d\d\d(-*) Welcome to Pure-FTPd \[privsep\] \[TLS\] (-*)\r\n\d\d\d(-*)You are user number \d+ of \d+ allowed.
+      #vsftpd
+      - ^\d\d\d \((vsFTPd \d+\.\d+\.\d+)\)
+      - ^\d\d\d (Welcome to vsftpd version \d+\.\d+\.\d+)
+      - ^\d\d\d (ProFTPD \d+\.\d+\.\d+ Server \(vsFTPd)\)
+      #FileZilla
+      - ^\d\d\d ?-?FileZilla Server (version )?\d+\.\d+\.\d+ beta
+      #Cerberus
+      - ^\d\d\d-? ?(Welcome to )?Cerberus FTP Server( ready)?( \d+\.\d+\.\d+\.\d+)?
+      #Microsoft FTP
+      - ^\d\d\d-? ?(Welcome to )?Microsoft FTP Service(, /(Version \d+\.\d+))?
