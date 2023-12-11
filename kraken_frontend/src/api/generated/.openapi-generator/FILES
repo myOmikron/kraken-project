@@ -48,6 +48,7 @@ models/DomainOrNetwork.ts
 models/DomainResultsPage.ts
 models/FinishRegisterRequest.ts
 models/FinishRegisterRequestAllOf.ts
+models/FullAggregationSource.ts
 models/FullApiKey.ts
 models/FullDecision.ts
 models/FullDomain.ts
@@ -93,6 +94,11 @@ models/LeechTlsConfig.ts
 models/ListAttacks.ts
 models/LoginRequest.ts
 models/ManualHostCertainty.ts
+models/ManualInsert.ts
+models/ManualInsertOneOf.ts
+models/ManualInsertOneOf1.ts
+models/ManualInsertOneOf2.ts
+models/ManualInsertOneOf3.ts
 models/ManualPortCertainty.ts
 models/ManualServiceCertainty.ts
 models/OpenRequestInfo.ts
@@ -162,6 +168,16 @@ models/SimpleTcpPortScanResult.ts
 models/SimpleUser.ts
 models/SimpleWordlist.ts
 models/SimpleWorkspace.ts
+models/SourceAttack.ts
+models/SourceAttackAllOf.ts
+models/SourceAttackResult.ts
+models/SourceAttackResultOneOf.ts
+models/SourceAttackResultOneOf1.ts
+models/SourceAttackResultOneOf2.ts
+models/SourceAttackResultOneOf3.ts
+models/SourceAttackResultOneOf4.ts
+models/SourceAttackResultOneOf5.ts
+models/SourceAttackResultOneOf6.ts
 models/TagType.ts
 models/TcpPortScanResultsPage.ts
 models/TransferWorkspaceRequest.ts

@@ -18,6 +18,7 @@ import type {
   ApiErrorResponse,
   CreateDomainRequest,
   DomainResultsPage,
+  FullAggregationSource,
   FullDomain,
   GetAllDomainsQuery,
   UpdateDomainRequest,
@@ -30,6 +31,8 @@ import {
     CreateDomainRequestToJSON,
     DomainResultsPageFromJSON,
     DomainResultsPageToJSON,
+    FullAggregationSourceFromJSON,
+    FullAggregationSourceToJSON,
     FullDomainFromJSON,
     FullDomainToJSON,
     GetAllDomainsQueryFromJSON,
@@ -51,6 +54,11 @@ export interface GetAllDomainsRequest {
 }
 
 export interface GetDomainRequest {
+    wUuid: string;
+    dUuid: string;
+}
+
+export interface GetDomainSourcesRequest {
     wUuid: string;
     dUuid: string;
 }
@@ -177,6 +185,42 @@ export class DomainsApi extends runtime.BaseAPI {
      */
     async getDomain(requestParameters: GetDomainRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullDomain> {
         const response = await this.getDomainRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get all data sources which referenced this domain
+     * Get all data sources which referenced this domain
+     */
+    async getDomainSourcesRaw(requestParameters: GetDomainSourcesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FullAggregationSource>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling getDomainSources.');
+        }
+
+        if (requestParameters.dUuid === null || requestParameters.dUuid === undefined) {
+            throw new runtime.RequiredError('dUuid','Required parameter requestParameters.dUuid was null or undefined when calling getDomainSources.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/domains/{d_uuid}/sources`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"d_uuid"}}`, encodeURIComponent(String(requestParameters.dUuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FullAggregationSourceFromJSON(jsonValue));
+    }
+
+    /**
+     * Get all data sources which referenced this domain
+     * Get all data sources which referenced this domain
+     */
+    async getDomainSources(requestParameters: GetDomainSourcesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullAggregationSource> {
+        const response = await this.getDomainSourcesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

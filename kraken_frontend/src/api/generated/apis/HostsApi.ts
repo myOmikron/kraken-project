@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   CreateHostRequest,
+  FullAggregationSource,
   FullHost,
   GetAllHostsQuery,
   HostResultsPage,
@@ -28,6 +29,8 @@ import {
     ApiErrorResponseToJSON,
     CreateHostRequestFromJSON,
     CreateHostRequestToJSON,
+    FullAggregationSourceFromJSON,
+    FullAggregationSourceToJSON,
     FullHostFromJSON,
     FullHostToJSON,
     GetAllHostsQueryFromJSON,
@@ -51,6 +54,11 @@ export interface GetAllHostsRequest {
 }
 
 export interface GetHostRequest {
+    wUuid: string;
+    hUuid: string;
+}
+
+export interface GetHostSourcesRequest {
     wUuid: string;
     hUuid: string;
 }
@@ -177,6 +185,42 @@ export class HostsApi extends runtime.BaseAPI {
      */
     async getHost(requestParameters: GetHostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullHost> {
         const response = await this.getHostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get all data sources which referenced this host
+     * Get all data sources which referenced this host
+     */
+    async getHostSourcesRaw(requestParameters: GetHostSourcesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FullAggregationSource>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling getHostSources.');
+        }
+
+        if (requestParameters.hUuid === null || requestParameters.hUuid === undefined) {
+            throw new runtime.RequiredError('hUuid','Required parameter requestParameters.hUuid was null or undefined when calling getHostSources.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/hosts/{h_uuid}/sources`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"h_uuid"}}`, encodeURIComponent(String(requestParameters.hUuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FullAggregationSourceFromJSON(jsonValue));
+    }
+
+    /**
+     * Get all data sources which referenced this host
+     * Get all data sources which referenced this host
+     */
+    async getHostSources(requestParameters: GetHostSourcesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullAggregationSource> {
+        const response = await this.getHostSourcesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

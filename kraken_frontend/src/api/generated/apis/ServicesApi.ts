@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   CreateServiceRequest,
+  FullAggregationSource,
   FullService,
   GetAllServicesQuery,
   ServiceResultsPage,
@@ -28,6 +29,8 @@ import {
     ApiErrorResponseToJSON,
     CreateServiceRequestFromJSON,
     CreateServiceRequestToJSON,
+    FullAggregationSourceFromJSON,
+    FullAggregationSourceToJSON,
     FullServiceFromJSON,
     FullServiceToJSON,
     GetAllServicesQueryFromJSON,
@@ -51,6 +54,11 @@ export interface GetAllServicesRequest {
 }
 
 export interface GetServiceRequest {
+    wUuid: string;
+    sUuid: string;
+}
+
+export interface GetServiceSourcesRequest {
     wUuid: string;
     sUuid: string;
 }
@@ -177,6 +185,42 @@ export class ServicesApi extends runtime.BaseAPI {
      */
     async getService(requestParameters: GetServiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullService> {
         const response = await this.getServiceRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get all data sources which referenced this service
+     * Get all data sources which referenced this service
+     */
+    async getServiceSourcesRaw(requestParameters: GetServiceSourcesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FullAggregationSource>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling getServiceSources.');
+        }
+
+        if (requestParameters.sUuid === null || requestParameters.sUuid === undefined) {
+            throw new runtime.RequiredError('sUuid','Required parameter requestParameters.sUuid was null or undefined when calling getServiceSources.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/services/{s_uuid}/sources`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"s_uuid"}}`, encodeURIComponent(String(requestParameters.sUuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FullAggregationSourceFromJSON(jsonValue));
+    }
+
+    /**
+     * Get all data sources which referenced this service
+     * Get all data sources which referenced this service
+     */
+    async getServiceSources(requestParameters: GetServiceSourcesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullAggregationSource> {
+        const response = await this.getServiceSourcesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

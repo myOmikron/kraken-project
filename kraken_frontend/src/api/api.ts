@@ -231,6 +231,8 @@ export const Api = {
                 handleError(hosts.updateHost({ wUuid: workspaceUuid, hUuid: hostUuid, updateHostRequest })),
             create: (workspaceUuid: UUID, createHostRequest: CreateHostRequest) =>
                 handleError(hosts.createHost({ uuid: workspaceUuid, createHostRequest })),
+            sources: (workspaceUuid: UUID, hostUuid: UUID) =>
+                handleError(hosts.getHostSources({ wUuid: workspaceUuid, hUuid: hostUuid })),
         },
         ports: {
             all: (
@@ -246,6 +248,8 @@ export const Api = {
                 handleError(ports.updatePort({ wUuid: workspaceUuid, pUuid: portUuid, updatePortRequest })),
             create: (workspaceUuid: UUID, createPortRequest: CreatePortRequest) =>
                 handleError(ports.createPort({ uuid: workspaceUuid, createPortRequest })),
+            sources: (workspaceUuid: UUID, portUuid: UUID) =>
+                handleError(ports.getPortSources({ wUuid: workspaceUuid, pUuid: portUuid })),
         },
         domains: {
             all: (
@@ -263,6 +267,8 @@ export const Api = {
                 handleError(domains.updateDomain({ wUuid: workspaceUuid, dUuid: domainUuid, updateDomainRequest })),
             create: (workspaceUuid: UUID, createDomainRequest: CreateDomainRequest) =>
                 handleError(domains.createDomain({ uuid: workspaceUuid, createDomainRequest })),
+            sources: (workspaceUuid: UUID, domainUuid: UUID) =>
+                handleError(domains.getDomainSources({ wUuid: workspaceUuid, dUuid: domainUuid })),
         },
         services: {
             all: (
@@ -280,6 +286,8 @@ export const Api = {
                 handleError(services.updateService({ wUuid: workspaceUuid, sUuid: serviceUuid, updateServiceRequest })),
             create: (workspaceUuid: UUID, createServiceRequest: CreateServiceRequest) =>
                 handleError(services.createService({ uuid: workspaceUuid, createServiceRequest })),
+            sources: (workspaceUuid: UUID, serviceUuid: UUID) =>
+                handleError(services.getServiceSources({ wUuid: workspaceUuid, sUuid: serviceUuid })),
         },
         tags: {
             all: (workspaceUuid: UUID) => handleError(workspaceTags.getAllWorkspaceTags({ uuid: workspaceUuid })),
