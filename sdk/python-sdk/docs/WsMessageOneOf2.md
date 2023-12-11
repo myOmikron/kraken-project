@@ -6,7 +6,6 @@ A notification about a started attack
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **attack** | [**SimpleAttack**](SimpleAttack.md) |  | 
-**workspace** | [**SimpleWorkspace**](SimpleWorkspace.md) |  | 
 **type** | **str** |  | 
 
 ## Example

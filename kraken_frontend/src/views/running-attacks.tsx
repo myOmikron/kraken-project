@@ -6,7 +6,7 @@ import SuccessIcon from "../svg/success";
 import FailedIcon from "../svg/failed";
 import WS from "../api/websocket";
 import { Api, UUID } from "../api/api";
-import { AttackType } from "../api/generated";
+import { AttackType, SimpleAttack, SimpleWorkspace } from "../api/generated";
 import { toast } from "react-toastify";
 import { ATTACKS } from "../utils/attack-resolver";
 
@@ -16,15 +16,8 @@ type RunningAttacksState = {
 };
 
 interface AttackDictionary {
-    [Key: UUID]: Array<Attack>;
+    [Key: UUID]: Array<SimpleAttack>;
 }
-
-type Attack = {
-    attack: UUID;
-    attack_type: AttackType;
-    finishedSuccessful: boolean | null;
-    error: null | string;
-};
 
 export default class RunningAttacks extends React.Component<RunningAttacksProps, RunningAttacksState> {
     constructor(props: RunningAttacksProps) {
@@ -41,17 +34,10 @@ export default class RunningAttacks extends React.Component<RunningAttacksProps,
                 (attacks) => {
                     let runningAttacks: AttackDictionary = {};
                     for (const attack of attacks.attacks) {
-                        const a = {
-                            attack: attack.uuid,
-                            attack_type: attack.attackType,
-                            error: attack.error !== undefined ? attack.error : null,
-                            finishedSuccessful:
-                                attack.finishedAt !== undefined && attack.finishedAt !== null ? true : null,
-                        };
-                        if (runningAttacks[attack.workspaceUuid] !== null) {
-                            runningAttacks[attack.workspaceUuid] = [a];
+                        if (runningAttacks[attack.workspace.uuid] !== null) {
+                            runningAttacks[attack.workspace.uuid] = [attack];
                         } else {
-                            runningAttacks[attack.workspaceUuid].push(a);
+                            runningAttacks[attack.workspace.uuid].push(attack);
                         }
                     }
                     this.setState({ runningAttacks });
@@ -59,32 +45,25 @@ export default class RunningAttacks extends React.Component<RunningAttacksProps,
                 (err) => toast.error(err.message)
             )
         );
-        WS.addEventListener("message.AttackStarted", (attack) => {
-            const a = {
-                attack: attack.attackUuid,
-                attack_type: attack.attackType,
-                error: null,
-                finishedSuccessful: null,
-            };
-
+        WS.addEventListener("message.AttackStarted", (msg) => {
             let runningAttacks = this.state.runningAttacks;
-            if (runningAttacks[attack.workspaceUuid] === null) {
-                runningAttacks[attack.workspaceUuid] = [a];
+            if (runningAttacks[msg.attack.workspace.uuid] === null) {
+                runningAttacks[msg.attack.workspace.uuid] = [msg.attack];
             } else {
-                runningAttacks[attack.workspaceUuid] = [a, ...runningAttacks[attack.workspaceUuid]];
+                runningAttacks[msg.attack.workspace.uuid] = [msg.attack, ...runningAttacks[msg.attack.workspace.uuid]];
             }
 
             this.setState({ runningAttacks });
         });
-        WS.addEventListener("message.AttackFinished", (attack) => {
+        WS.addEventListener("message.AttackFinished", (msg) => {
             let runningAttacks = this.state.runningAttacks;
-            if (runningAttacks[attack.workspaceUuid] === null) {
+            if (runningAttacks[msg.attack.workspace.uuid] === null) {
             } else {
-                let workspaceAttacks = runningAttacks[attack.workspaceUuid];
+                let workspaceAttacks = runningAttacks[msg.attack.workspace.uuid];
                 for (let workspaceAttack of workspaceAttacks) {
-                    if (workspaceAttack.attack === attack.attackUuid) {
-                        workspaceAttack.error = attack.error === undefined ? null : attack.error;
-                        workspaceAttack.finishedSuccessful = attack.finishedSuccessful;
+                    if (workspaceAttack.uuid === msg.attack.uuid) {
+                        workspaceAttack.error = msg.attack.error === undefined ? null : msg.attack.error;
+                        workspaceAttack.finishedAt = msg.attack.finishedAt;
                     }
                 }
             }
@@ -108,14 +87,18 @@ export default class RunningAttacks extends React.Component<RunningAttacksProps,
                                     trigger={
                                         <div className={"running-attacks-attack"}>
                                             <RunningAttackIcon />
-                                            {attack.finishedSuccessful === null ? (
+                                            {attack.finishedAt === null ? (
                                                 <span className={"running-attacks-inner neon"}>
-                                                    {ATTACKS[attack.attack_type].abbreviation}
+                                                    {ATTACKS[attack.attackType].abbreviation}
                                                 </span>
                                             ) : (
                                                 <span className={"running-attacks-inner stopped neon"}>
-                                                    <span>{ATTACKS[attack.attack_type].abbreviation}</span>
-                                                    {attack.finishedSuccessful ? <SuccessIcon /> : <FailedIcon />}
+                                                    <span>{ATTACKS[attack.attackType].abbreviation}</span>
+                                                    {attack.error === null || attack.error === undefined ? (
+                                                        <SuccessIcon />
+                                                    ) : (
+                                                        <FailedIcon />
+                                                    )}
                                                 </span>
                                             )}
                                         </div>
@@ -125,11 +108,13 @@ export default class RunningAttacks extends React.Component<RunningAttacksProps,
                                     arrow={true}
                                 >
                                     <div className={"pane-thin"}>
-                                        <h2 className={"sub-heading"}>{ATTACKS[attack.attack_type].long}</h2>
-                                        {attack.error !== null ? <span>Error: {attack.error}</span> : undefined}
-                                        <span>Workspace: pst-test</span>
-                                        <span>Started by: Omikron</span>
-                                        <span>Started at: 2023-11-15 17:30:00 +1:00</span>
+                                        <h2 className={"sub-heading"}>{ATTACKS[attack.attackType].long}</h2>
+                                        {attack.error !== null && attack.error !== undefined ? (
+                                            <span>Error: {attack.error}</span>
+                                        ) : undefined}
+                                        <span>Workspace: {attack.workspace.name}</span>
+                                        <span>Started by: {attack.startedBy.displayName}</span>
+                                        <span>Started at: {attack.finishedAt?.toLocaleString()}</span>
                                     </div>
                                 </Popup>
                             ))}

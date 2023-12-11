@@ -17,6 +17,7 @@ use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::users::SimpleUser;
+use crate::api::handler::workspaces::SimpleWorkspace;
 use crate::api::handler::{ApiError, ApiResult, PathUuid, UuidResponse};
 use crate::chan::GLOBAL;
 use crate::models::{
@@ -597,7 +598,7 @@ pub struct SimpleAttack {
     /// The identifier of the attack
     pub uuid: Uuid,
     /// The workspace this attack is attached to
-    pub workspace_uuid: Uuid,
+    pub workspace: SimpleWorkspace,
     /// The type of attack
     pub attack_type: AttackType,
     /// The user that has started the attack
@@ -634,7 +635,11 @@ pub async fn get_attack(
         &mut tx,
         (
             Attack::F.uuid,
-            Attack::F.workspace,
+            Attack::F.workspace.uuid,
+            Attack::F.workspace.name,
+            Attack::F.workspace.description,
+            Attack::F.workspace.owner as SimpleUser,
+            Attack::F.workspace.created_at,
             Attack::F.attack_type,
             Attack::F.finished_at,
             Attack::F.created_at,
@@ -648,10 +653,28 @@ pub async fn get_attack(
     .ok_or(ApiError::InvalidUuid)?;
 
     let attack = if Attack::has_access(&mut tx, req.uuid, user_uuid).await? {
-        let (uuid, workspace, attack_type, finished_at, created_at, started_by, error) = attack;
+        let (
+            uuid,
+            w_uuid,
+            w_name,
+            w_description,
+            w_owner,
+            w_created_at,
+            attack_type,
+            finished_at,
+            created_at,
+            started_by,
+            error,
+        ) = attack;
         Ok(SimpleAttack {
             uuid,
-            workspace_uuid: *workspace.key(),
+            workspace: SimpleWorkspace {
+                uuid: w_uuid,
+                name: w_name,
+                description: w_description,
+                owner: w_owner,
+                created_at: w_created_at,
+            },
             attack_type,
             started_by,
             finished_at,
@@ -715,21 +738,43 @@ pub async fn get_all_attacks(
             Attack::F.error,
             Attack::F.created_at,
             Attack::F.finished_at,
-            Attack::F.workspace,
-            Attack::F.started_by as SimpleUser
+            Attack::F.started_by as SimpleUser,
+            Attack::F.workspace.uuid,
+            Attack::F.workspace.name,
+            Attack::F.workspace.description,
+            Attack::F.workspace.created_at,
+            Attack::F.workspace.owner as SimpleUser
         )
     )
     .condition(DynamicCollection::or(workspaces))
     .stream()
     .map_ok(
-        |(uuid, attack_type, error, created_at, finished_at, workspace, started_by)| SimpleAttack {
+        |(
             uuid,
             attack_type,
             error,
             created_at,
             finished_at,
             started_by,
-            workspace_uuid: *workspace.key(),
+            w_uuid,
+            w_name,
+            w_description,
+            w_created_at,
+            w_owner,
+        )| SimpleAttack {
+            uuid,
+            attack_type,
+            error,
+            created_at,
+            finished_at,
+            started_by,
+            workspace: SimpleWorkspace {
+                uuid: w_uuid,
+                name: w_name,
+                description: w_description,
+                created_at: w_created_at,
+                owner: w_owner,
+            },
         },
     )
     .try_collect()
@@ -774,7 +819,12 @@ pub async fn get_workspace_attacks(
             Attack::F.error,
             Attack::F.created_at,
             Attack::F.finished_at,
-            Attack::F.started_by as SimpleUser
+            Attack::F.started_by as SimpleUser,
+            Attack::F.workspace.uuid,
+            Attack::F.workspace.name,
+            Attack::F.workspace.description,
+            Attack::F.workspace.created_at,
+            Attack::F.workspace.owner as SimpleUser
         )
     )
     .condition(Attack::F.workspace.equals(workspace))
@@ -782,14 +832,32 @@ pub async fn get_workspace_attacks(
     .await?
     .into_iter()
     .map(
-        |(uuid, attack_type, error, created_at, finished_at, started_by)| SimpleAttack {
+        |(
+            uuid,
+            attack_type,
+            error,
+            created_at,
+            finished_at,
+            started_by,
+            w_uuid,
+            w_name,
+            w_description,
+            w_created_at,
+            w_owner,
+        )| SimpleAttack {
             uuid,
             attack_type,
             started_by,
             created_at,
             finished_at,
             error,
-            workspace_uuid: workspace,
+            workspace: SimpleWorkspace {
+                uuid: w_uuid,
+                name: w_name,
+                description: w_description,
+                created_at: w_created_at,
+                owner: w_owner,
+            },
         },
     )
     .collect::<Vec<_>>();

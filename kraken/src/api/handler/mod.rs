@@ -728,6 +728,16 @@ pub struct SimpleAggregationSource {
     service_detection: usize,
     /// Resolve domain names
     dns_resolution: usize,
+    /// Perform forced browsing
+    forced_browsing: usize,
+    /// Detect the OS of the target
+    os_detection: usize,
+    /// Detect if anti-port scanning techniques are in place
+    anti_port_scanning_detection: usize,
+    /// Scan udp ports
+    udp_port_scan: usize,
+    /// Perform version detection
+    version_detection: usize,
     /// Manually inserted
     manual: bool,
 }

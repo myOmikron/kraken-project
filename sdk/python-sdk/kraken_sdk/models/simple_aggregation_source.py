@@ -39,8 +39,13 @@ class SimpleAggregationSource(BaseModel):
     host_alive: Annotated[int, Field(strict=True, ge=0)] = Field(description="Check if a host is reachable via icmp")
     service_detection: Annotated[int, Field(strict=True, ge=0)] = Field(description="Detect the service that is running on a port")
     dns_resolution: Annotated[int, Field(strict=True, ge=0)] = Field(description="Resolve domain names")
+    forced_browsing: Annotated[int, Field(strict=True, ge=0)] = Field(description="Perform forced browsing")
+    os_detection: Annotated[int, Field(strict=True, ge=0)] = Field(description="Detect the OS of the target")
+    anti_port_scanning_detection: Annotated[int, Field(strict=True, ge=0)] = Field(description="Detect if anti-port scanning techniques are in place")
+    udp_port_scan: Annotated[int, Field(strict=True, ge=0)] = Field(description="Scan udp ports")
+    version_detection: Annotated[int, Field(strict=True, ge=0)] = Field(description="Perform version detection")
     manual: StrictBool = Field(description="Manually inserted")
-    __properties: ClassVar[List[str]] = ["bruteforce_subdomains", "tcp_port_scan", "query_certificate_transparency", "query_dehashed", "host_alive", "service_detection", "dns_resolution", "manual"]
+    __properties: ClassVar[List[str]] = ["bruteforce_subdomains", "tcp_port_scan", "query_certificate_transparency", "query_dehashed", "host_alive", "service_detection", "dns_resolution", "forced_browsing", "os_detection", "anti_port_scanning_detection", "udp_port_scan", "version_detection", "manual"]
 
     model_config = {
         "populate_by_name": True,
@@ -97,6 +102,11 @@ class SimpleAggregationSource(BaseModel):
             "host_alive": obj.get("host_alive"),
             "service_detection": obj.get("service_detection"),
             "dns_resolution": obj.get("dns_resolution"),
+            "forced_browsing": obj.get("forced_browsing"),
+            "os_detection": obj.get("os_detection"),
+            "anti_port_scanning_detection": obj.get("anti_port_scanning_detection"),
+            "udp_port_scan": obj.get("udp_port_scan"),
+            "version_detection": obj.get("version_detection"),
             "manual": obj.get("manual")
         })
         return _obj

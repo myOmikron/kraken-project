@@ -62,6 +62,36 @@ export interface SimpleAggregationSource {
      */
     dnsResolution: number;
     /**
+     * Perform forced browsing
+     * @type {number}
+     * @memberof SimpleAggregationSource
+     */
+    forcedBrowsing: number;
+    /**
+     * Detect the OS of the target
+     * @type {number}
+     * @memberof SimpleAggregationSource
+     */
+    osDetection: number;
+    /**
+     * Detect if anti-port scanning techniques are in place
+     * @type {number}
+     * @memberof SimpleAggregationSource
+     */
+    antiPortScanningDetection: number;
+    /**
+     * Scan udp ports
+     * @type {number}
+     * @memberof SimpleAggregationSource
+     */
+    udpPortScan: number;
+    /**
+     * Perform version detection
+     * @type {number}
+     * @memberof SimpleAggregationSource
+     */
+    versionDetection: number;
+    /**
      * Manually inserted
      * @type {boolean}
      * @memberof SimpleAggregationSource
@@ -81,6 +111,11 @@ export function instanceOfSimpleAggregationSource(value: object): boolean {
     isInstance = isInstance && "hostAlive" in value;
     isInstance = isInstance && "serviceDetection" in value;
     isInstance = isInstance && "dnsResolution" in value;
+    isInstance = isInstance && "forcedBrowsing" in value;
+    isInstance = isInstance && "osDetection" in value;
+    isInstance = isInstance && "antiPortScanningDetection" in value;
+    isInstance = isInstance && "udpPortScan" in value;
+    isInstance = isInstance && "versionDetection" in value;
     isInstance = isInstance && "manual" in value;
 
     return isInstance;
@@ -103,6 +138,11 @@ export function SimpleAggregationSourceFromJSONTyped(json: any, ignoreDiscrimina
         'hostAlive': json['host_alive'],
         'serviceDetection': json['service_detection'],
         'dnsResolution': json['dns_resolution'],
+        'forcedBrowsing': json['forced_browsing'],
+        'osDetection': json['os_detection'],
+        'antiPortScanningDetection': json['anti_port_scanning_detection'],
+        'udpPortScan': json['udp_port_scan'],
+        'versionDetection': json['version_detection'],
         'manual': json['manual'],
     };
 }
@@ -123,6 +163,11 @@ export function SimpleAggregationSourceToJSON(value?: SimpleAggregationSource | 
         'host_alive': value.hostAlive,
         'service_detection': value.serviceDetection,
         'dns_resolution': value.dnsResolution,
+        'forced_browsing': value.forcedBrowsing,
+        'os_detection': value.osDetection,
+        'anti_port_scanning_detection': value.antiPortScanningDetection,
+        'udp_port_scan': value.udpPortScan,
+        'version_detection': value.versionDetection,
         'manual': value.manual,
     };
 }

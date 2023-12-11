@@ -54,15 +54,11 @@ pub enum WsMessage {
     AttackStarted {
         /// The corresponding attack
         attack: SimpleAttack,
-        /// The workspace this attack was started in
-        workspace: SimpleWorkspace,
     },
     /// A notification about a finished attack
     AttackFinished {
         /// The corresponding attack
         attack: SimpleAttack,
-        /// The workspace this attack was started in
-        workspace: SimpleWorkspace,
     },
     // TODO: TaskFinished as generic result
     /// A notification about a finished search

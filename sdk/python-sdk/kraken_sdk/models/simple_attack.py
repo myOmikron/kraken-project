@@ -24,6 +24,7 @@ from pydantic import BaseModel, StrictStr
 from pydantic import Field
 from kraken_sdk.models.attack_type import AttackType
 from kraken_sdk.models.simple_user import SimpleUser
+from kraken_sdk.models.simple_workspace import SimpleWorkspace
 try:
     from typing import Self
 except ImportError:
@@ -34,13 +35,13 @@ class SimpleAttack(BaseModel):
     A simple version of an attack
     """ # noqa: E501
     uuid: StrictStr = Field(description="The identifier of the attack")
-    workspace_uuid: StrictStr = Field(description="The workspace this attack is attached to")
+    workspace: SimpleWorkspace
     attack_type: AttackType
     started_by: SimpleUser
     finished_at: Optional[datetime] = Field(default=None, description="If this is None, the attack is still running")
     error: Optional[StrictStr] = Field(default=None, description="If this field is set, the attack has finished with an error")
     created_at: datetime = Field(description="The point in time this attack was started")
-    __properties: ClassVar[List[str]] = ["uuid", "workspace_uuid", "attack_type", "started_by", "finished_at", "error", "created_at"]
+    __properties: ClassVar[List[str]] = ["uuid", "workspace", "attack_type", "started_by", "finished_at", "error", "created_at"]
 
     model_config = {
         "populate_by_name": True,
@@ -78,6 +79,9 @@ class SimpleAttack(BaseModel):
             },
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of workspace
+        if self.workspace:
+            _dict['workspace'] = self.workspace.to_dict()
         # override the default output from pydantic by calling `to_dict()` of started_by
         if self.started_by:
             _dict['started_by'] = self.started_by.to_dict()
@@ -104,7 +108,7 @@ class SimpleAttack(BaseModel):
 
         _obj = cls.model_validate({
             "uuid": obj.get("uuid"),
-            "workspace_uuid": obj.get("workspace_uuid"),
+            "workspace": SimpleWorkspace.from_dict(obj.get("workspace")) if obj.get("workspace") is not None else None,
             "attack_type": obj.get("attack_type"),
             "started_by": SimpleUser.from_dict(obj.get("started_by")) if obj.get("started_by") is not None else None,
             "finished_at": obj.get("finished_at"),

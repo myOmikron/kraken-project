@@ -19,12 +19,6 @@ import {
     SimpleAttackFromJSONTyped,
     SimpleAttackToJSON,
 } from './SimpleAttack';
-import type { SimpleWorkspace } from './SimpleWorkspace';
-import {
-    SimpleWorkspaceFromJSON,
-    SimpleWorkspaceFromJSONTyped,
-    SimpleWorkspaceToJSON,
-} from './SimpleWorkspace';
 
 /**
  * A notification about a finished attack
@@ -38,12 +32,6 @@ export interface WsMessageOneOf3 {
      * @memberof WsMessageOneOf3
      */
     attack: SimpleAttack;
-    /**
-     * 
-     * @type {SimpleWorkspace}
-     * @memberof WsMessageOneOf3
-     */
-    workspace: SimpleWorkspace;
     /**
      * 
      * @type {string}
@@ -68,7 +56,6 @@ export type WsMessageOneOf3TypeEnum = typeof WsMessageOneOf3TypeEnum[keyof typeo
 export function instanceOfWsMessageOneOf3(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "attack" in value;
-    isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -85,7 +72,6 @@ export function WsMessageOneOf3FromJSONTyped(json: any, ignoreDiscriminator: boo
     return {
         
         'attack': SimpleAttackFromJSON(json['attack']),
-        'workspace': SimpleWorkspaceFromJSON(json['workspace']),
         'type': json['type'],
     };
 }
@@ -100,7 +86,6 @@ export function WsMessageOneOf3ToJSON(value?: WsMessageOneOf3 | null): any {
     return {
         
         'attack': SimpleAttackToJSON(value.attack),
-        'workspace': SimpleWorkspaceToJSON(value.workspace),
         'type': value.type,
     };
 }

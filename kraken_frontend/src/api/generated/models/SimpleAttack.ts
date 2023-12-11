@@ -25,6 +25,12 @@ import {
     SimpleUserFromJSONTyped,
     SimpleUserToJSON,
 } from './SimpleUser';
+import type { SimpleWorkspace } from './SimpleWorkspace';
+import {
+    SimpleWorkspaceFromJSON,
+    SimpleWorkspaceFromJSONTyped,
+    SimpleWorkspaceToJSON,
+} from './SimpleWorkspace';
 
 /**
  * A simple version of an attack
@@ -39,11 +45,11 @@ export interface SimpleAttack {
      */
     uuid: string;
     /**
-     * The workspace this attack is attached to
-     * @type {string}
+     * 
+     * @type {SimpleWorkspace}
      * @memberof SimpleAttack
      */
-    workspaceUuid: string;
+    workspace: SimpleWorkspace;
     /**
      * 
      * @type {AttackType}
@@ -82,7 +88,7 @@ export interface SimpleAttack {
 export function instanceOfSimpleAttack(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "uuid" in value;
-    isInstance = isInstance && "workspaceUuid" in value;
+    isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "attackType" in value;
     isInstance = isInstance && "startedBy" in value;
     isInstance = isInstance && "createdAt" in value;
@@ -101,7 +107,7 @@ export function SimpleAttackFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return {
         
         'uuid': json['uuid'],
-        'workspaceUuid': json['workspace_uuid'],
+        'workspace': SimpleWorkspaceFromJSON(json['workspace']),
         'attackType': AttackTypeFromJSON(json['attack_type']),
         'startedBy': SimpleUserFromJSON(json['started_by']),
         'finishedAt': !exists(json, 'finished_at') ? undefined : (json['finished_at'] === null ? null : new Date(json['finished_at'])),
@@ -120,7 +126,7 @@ export function SimpleAttackToJSON(value?: SimpleAttack | null): any {
     return {
         
         'uuid': value.uuid,
-        'workspace_uuid': value.workspaceUuid,
+        'workspace': SimpleWorkspaceToJSON(value.workspace),
         'attack_type': AttackTypeToJSON(value.attackType),
         'started_by': SimpleUserToJSON(value.startedBy),
         'finished_at': value.finishedAt === undefined ? undefined : (value.finishedAt === null ? null : value.finishedAt.toISOString()),

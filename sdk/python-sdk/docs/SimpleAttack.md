@@ -6,7 +6,7 @@ A simple version of an attack
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **uuid** | **str** | The identifier of the attack | 
-**workspace_uuid** | **str** | The workspace this attack is attached to | 
+**workspace** | [**SimpleWorkspace**](SimpleWorkspace.md) |  | 
 **attack_type** | [**AttackType**](AttackType.md) |  | 
 **started_by** | [**SimpleUser**](SimpleUser.md) |  | 
 **finished_at** | **datetime** | If this is None, the attack is still running | [optional] 

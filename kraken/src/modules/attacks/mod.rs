@@ -340,14 +340,13 @@ impl AttackContext {
         self.send_ws(WsMessage::AttackStarted {
             attack: SimpleAttack {
                 uuid: self.attack_uuid,
-                workspace_uuid: self.workspace.uuid,
+                workspace: self.workspace.clone(),
                 attack_type: self.attack_type,
                 started_by: self.user.clone(),
                 created_at: self.created_at,
                 error: None,
                 finished_at: None,
             },
-            workspace: self.workspace.clone(),
         })
         .await;
     }
@@ -359,14 +358,13 @@ impl AttackContext {
         self.send_ws(WsMessage::AttackFinished {
             attack: SimpleAttack {
                 uuid: self.attack_uuid,
-                workspace_uuid: self.workspace.uuid,
+                workspace: self.workspace.clone(),
                 attack_type: self.attack_type,
                 created_at: self.created_at,
-                finished_at: Some(now.clone()),
+                finished_at: Some(now),
                 error: result.as_ref().err().map(|x| x.to_string()),
                 started_by: self.user.clone(),
             },
-            workspace: self.workspace.clone(),
         })
         .await;
 

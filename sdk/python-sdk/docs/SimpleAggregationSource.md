@@ -12,6 +12,11 @@ Name | Type | Description | Notes
 **host_alive** | **int** | Check if a host is reachable via icmp | 
 **service_detection** | **int** | Detect the service that is running on a port | 
 **dns_resolution** | **int** | Resolve domain names | 
+**forced_browsing** | **int** | Perform forced browsing | 
+**os_detection** | **int** | Detect the OS of the target | 
+**anti_port_scanning_detection** | **int** | Detect if anti-port scanning techniques are in place | 
+**udp_port_scan** | **int** | Scan udp ports | 
+**version_detection** | **int** | Perform version detection | 
 **manual** | **bool** | Manually inserted | 
 
 ## Example

@@ -1205,7 +1205,7 @@ async fn get_workspace_unchecked(uuid: Uuid, tx: &mut Transaction) -> ApiResult<
         .await?
         .ok_or(ApiError::InvalidUuid)?;
 
-    let owner = query!(&mut *tx, User)
+    let owner = query!(&mut *tx, SimpleUser)
         .condition(User::F.uuid.equals(*workspace.owner.key()))
         .one()
         .await?;
@@ -1228,7 +1228,13 @@ async fn get_workspace_unchecked(uuid: Uuid, tx: &mut Transaction) -> ApiResult<
     .map(
         |(attack_uuid, attack_type, finished_at, created_at, started_by, error)| SimpleAttack {
             uuid: attack_uuid,
-            workspace_uuid: uuid,
+            workspace: SimpleWorkspace {
+                uuid: workspace.uuid,
+                name: workspace.name.clone(),
+                description: workspace.description.clone(),
+                created_at: workspace.created_at,
+                owner: owner.clone(),
+            },
             attack_type,
             started_by,
             finished_at,
@@ -1261,11 +1267,7 @@ async fn get_workspace_unchecked(uuid: Uuid, tx: &mut Transaction) -> ApiResult<
         uuid: workspace.uuid,
         name: workspace.name,
         description: workspace.description,
-        owner: SimpleUser {
-            uuid: owner.uuid,
-            username: owner.username,
-            display_name: owner.display_name,
-        },
+        owner,
         attacks,
         members,
         created_at: workspace.created_at,

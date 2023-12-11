@@ -22,7 +22,6 @@ import json
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr, field_validator
 from kraken_sdk.models.simple_attack import SimpleAttack
-from kraken_sdk.models.simple_workspace import SimpleWorkspace
 try:
     from typing import Self
 except ImportError:
@@ -33,9 +32,8 @@ class WsMessageOneOf2(BaseModel):
     A notification about a started attack
     """ # noqa: E501
     attack: SimpleAttack
-    workspace: SimpleWorkspace
     type: StrictStr
-    __properties: ClassVar[List[str]] = ["attack", "workspace", "type"]
+    __properties: ClassVar[List[str]] = ["attack", "type"]
 
     @field_validator('type')
     def type_validate_enum(cls, value):
@@ -83,9 +81,6 @@ class WsMessageOneOf2(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of attack
         if self.attack:
             _dict['attack'] = self.attack.to_dict()
-        # override the default output from pydantic by calling `to_dict()` of workspace
-        if self.workspace:
-            _dict['workspace'] = self.workspace.to_dict()
         return _dict
 
     @classmethod
@@ -99,7 +94,6 @@ class WsMessageOneOf2(BaseModel):
 
         _obj = cls.model_validate({
             "attack": SimpleAttack.from_dict(obj.get("attack")) if obj.get("attack") is not None else None,
-            "workspace": SimpleWorkspace.from_dict(obj.get("workspace")) if obj.get("workspace") is not None else None,
             "type": obj.get("type")
         })
         return _obj
