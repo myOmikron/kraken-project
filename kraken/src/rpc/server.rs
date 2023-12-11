@@ -70,7 +70,7 @@ impl AttackResultsService for Results {
             ));
         }
 
-        let attack_uuid = Attack::insert(
+        let attack = Attack::insert(
             &mut tx,
             AttackType::QueryCertificateTransparency,
             user_uuid,
@@ -80,12 +80,13 @@ impl AttackResultsService for Results {
         .map_err(|e| match e {
             InsertAttackError::DatabaseError(x) => status_from_database(x),
             InsertAttackError::WorkspaceInvalid => Status::internal("Workspace does not exist"),
+            InsertAttackError::UserInvalid => unreachable!("User was queried beforehand"),
         })?;
 
         for cert_entry in req.entries {
             store_query_certificate_transparency_result(
                 &mut tx,
-                attack_uuid,
+                attack.uuid,
                 workspace_uuid,
                 cert_entry,
             )

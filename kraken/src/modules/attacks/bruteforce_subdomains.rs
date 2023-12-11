@@ -75,7 +75,7 @@ impl AttackContext {
                 store_bruteforce_subdomains_result(
                     &GLOBAL.db,
                     self.attack_uuid,
-                    self.workspace_uuid,
+                    self.workspace.uuid,
                     source,
                     destination,
                     dns_record_type,

@@ -11,7 +11,7 @@ impl AttackContext {
         params: HostAliveParams,
     ) -> Result<(), AttackError> {
         let targets =
-            DomainOrNetwork::resolve(self.workspace_uuid, self.user_uuid, &leech, &params.targets)
+            DomainOrNetwork::resolve(self.workspace.uuid, self.user.uuid, &leech, &params.targets)
                 .await?;
         let request = HostsAliveRequest {
             attack_uuid: self.attack_uuid.to_string(),
@@ -36,7 +36,7 @@ impl AttackContext {
                 store_host_alive_check_result(
                     &GLOBAL.db,
                     self.attack_uuid,
-                    self.workspace_uuid,
+                    self.workspace.uuid,
                     host.into(),
                 )
                 .await?;

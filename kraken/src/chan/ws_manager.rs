@@ -11,6 +11,7 @@ use tokio::sync::mpsc;
 use utoipa::ToSchema;
 use webauthn_rs::prelude::Uuid;
 
+use crate::api::handler::attacks::SimpleAttack;
 use crate::api::handler::users::SimpleUser;
 use crate::api::handler::workspaces::SimpleWorkspace;
 use crate::chan::GLOBAL;
@@ -51,17 +52,17 @@ pub enum WsMessage {
     },
     /// A notification about a started attack
     AttackStarted {
-        /// The corresponding id of the attack
-        attack_uuid: Uuid,
-        /// The corresponding id of the workspace
-        workspace_uuid: Uuid,
+        /// The corresponding attack
+        attack: SimpleAttack,
+        /// The workspace this attack was started in
+        workspace: SimpleWorkspace,
     },
     /// A notification about a finished attack
     AttackFinished {
-        /// The corresponding id of the attack
-        attack_uuid: Uuid,
-        /// Whether the attack was finished successful
-        finished_successful: bool,
+        /// The corresponding attack
+        attack: SimpleAttack,
+        /// The workspace this attack was started in
+        workspace: SimpleWorkspace,
     },
     // TODO: TaskFinished as generic result
     /// A notification about a finished search

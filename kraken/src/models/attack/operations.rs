@@ -27,6 +27,9 @@ pub enum InsertAttackError {
     /// The given workspace is not valid
     #[error("The given workspace is not valid")]
     WorkspaceInvalid,
+    /// The given user is not valid
+    #[error("The given user is not valid")]
+    UserInvalid,
 }
 
 impl From<InsertAttackError> for ApiError {
@@ -34,6 +37,7 @@ impl From<InsertAttackError> for ApiError {
         match value {
             InsertAttackError::DatabaseError(x) => ApiError::DatabaseError(x),
             InsertAttackError::WorkspaceInvalid => ApiError::InvalidWorkspace,
+            InsertAttackError::UserInvalid => ApiError::InternalServerError,
         }
     }
 }
@@ -80,7 +84,7 @@ impl Attack {
         attack_type: AttackType,
         started_by: Uuid,
         workspace: Uuid,
-    ) -> Result<Uuid, InsertAttackError> {
+    ) -> Result<Attack, InsertAttackError> {
         let mut guard = executor.ensure_transaction().await?;
         let tx = guard.get_transaction();
 
@@ -88,11 +92,10 @@ impl Attack {
             return Err(InsertAttackError::WorkspaceInvalid);
         }
 
-        let uuid = Uuid::new_v4();
-        insert!(&mut *tx, AttackInsert)
-            .return_nothing()
+        let attack = insert!(&mut *tx, AttackInsert)
+            .return_patch()
             .single(&AttackInsert {
-                uuid,
+                uuid: Uuid::new_v4(),
                 attack_type,
                 started_by: ForeignModelByField::Key(started_by),
                 workspace: ForeignModelByField::Key(workspace),
@@ -101,6 +104,6 @@ impl Attack {
             .await?;
 
         guard.commit().await?;
-        Ok(uuid)
+        Ok(attack)
     }
 }

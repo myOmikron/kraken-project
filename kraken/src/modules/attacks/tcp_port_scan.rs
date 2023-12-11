@@ -18,7 +18,7 @@ impl AttackContext {
         params: TcpPortScanParams,
     ) -> Result<(), AttackError> {
         let targets =
-            DomainOrNetwork::resolve(self.workspace_uuid, self.user_uuid, &leech, &params.targets)
+            DomainOrNetwork::resolve(self.workspace.uuid, self.user.uuid, &leech, &params.targets)
                 .await?;
         let request = TcpPortScanRequest {
             attack_uuid: self.attack_uuid.to_string(),
@@ -78,7 +78,7 @@ impl AttackContext {
                 store_tcp_port_scan_result(
                     &GLOBAL.db,
                     self.attack_uuid,
-                    self.workspace_uuid,
+                    self.workspace.uuid,
                     IpNetwork::from(address),
                     port,
                 )

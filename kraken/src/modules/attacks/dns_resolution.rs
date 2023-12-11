@@ -104,7 +104,7 @@ impl AttackContext {
                     store_dns_resolution_result(
                         &GLOBAL.db,
                         self.attack_uuid,
-                        self.workspace_uuid,
+                        self.workspace.uuid,
                         source,
                         destination,
                         dns_record_type,

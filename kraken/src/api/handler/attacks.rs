@@ -592,7 +592,7 @@ pub async fn dns_resolution(
 }
 
 /// A simple version of an attack
-#[derive(Clone, Serialize, ToSchema)]
+#[derive(Clone, Serialize, Deserialize, ToSchema)]
 pub struct SimpleAttack {
     /// The identifier of the attack
     pub uuid: Uuid,

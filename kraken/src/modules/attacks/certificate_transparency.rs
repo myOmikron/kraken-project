@@ -27,7 +27,7 @@ impl AttackContext {
             store_query_certificate_transparency_result(
                 &GLOBAL.db,
                 self.attack_uuid,
-                self.workspace_uuid,
+                self.workspace.uuid,
                 entry.clone(),
             )
             .await?;

@@ -1,22 +1,14 @@
 //! This module implements all attacks
 
-mod bruteforce_subdomains;
-mod certificate_transparency;
-mod dehashed_query;
-mod dns_resolution;
-mod host_alive;
-mod service_detection;
-mod tcp_port_scan;
-
 use std::collections::HashSet;
 use std::error::Error as StdError;
 use std::net::IpAddr;
 
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use dehashed_rs::{Query, ScheduledRequest};
 use futures::{TryFuture, TryStreamExt};
 use ipnetwork::IpNetwork;
-use log::{debug, error};
+use log::error;
 use rorm::prelude::*;
 use rorm::{and, query, update};
 use serde::Deserialize;
@@ -27,11 +19,23 @@ use tonic::{Response, Status, Streaming};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::attacks::PortOrRange;
+use crate::api::handler::attacks::{PortOrRange, SimpleAttack};
+use crate::api::handler::users::SimpleUser;
+use crate::api::handler::workspaces::SimpleWorkspace;
 use crate::chan::{LeechClient, WsMessage, GLOBAL};
-use crate::models::{Attack, AttackType, DomainHostRelation, InsertAttackError};
-use crate::models::{Domain, DomainCertainty};
+use crate::models::{
+    Attack, AttackType, Domain, DomainCertainty, DomainHostRelation, InsertAttackError, User,
+    Workspace,
+};
 use crate::rpc::rpc_definitions::AddressConvError;
+
+mod bruteforce_subdomains;
+mod certificate_transparency;
+mod dehashed_query;
+mod dns_resolution;
+mod host_alive;
+mod service_detection;
+mod tcp_port_scan;
 
 /// The parameters of a "bruteforce subdomains" attack
 pub struct BruteforceSubdomainsParams {
@@ -55,6 +59,7 @@ pub async fn start_bruteforce_subdomains(
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
+            ctx.set_started().await;
             let result = ctx.bruteforce_subdomains(leech, params).await;
             ctx.set_finished(result).await;
         }),
@@ -80,6 +85,7 @@ pub async fn start_dns_resolution(
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
+            ctx.set_started().await;
             let result = ctx.dns_resolution(leech, params).await;
             ctx.set_finished(result).await;
         }),
@@ -110,7 +116,7 @@ pub async fn start_host_alive(
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
-            debug!("{:#?}", params.targets);
+            ctx.set_started().await;
             let result = ctx.host_alive(leech, params).await;
             ctx.set_finished(result).await;
         }),
@@ -144,6 +150,7 @@ pub async fn start_certificate_transparency(
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
+            ctx.set_started().await;
             let result = ctx.certificate_transparency(leech, params).await;
             ctx.set_finished(result).await;
         }),
@@ -166,6 +173,7 @@ pub async fn start_dehashed_query(
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
+            ctx.set_started().await;
             let result = ctx.dehashed_query(sender, params).await;
             ctx.set_finished(result).await;
         }),
@@ -197,6 +205,7 @@ pub async fn start_service_detection(
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
+            ctx.set_started().await;
             let result = ctx.service_detection(leech, params).await;
             ctx.set_finished(result).await;
         }),
@@ -243,6 +252,7 @@ pub async fn start_tcp_port_scan(
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
+            ctx.set_started().await;
             let result = ctx.tcp_port_scan(leech, params).await;
             ctx.set_finished(result).await;
         }),
@@ -253,13 +263,19 @@ pub async fn start_tcp_port_scan(
 #[derive(Clone)]
 struct AttackContext {
     /// The user who started the attack
-    user_uuid: Uuid,
+    user: SimpleUser,
 
     /// The workspace the attack was started in
-    workspace_uuid: Uuid,
+    workspace: SimpleWorkspace,
 
     /// The attack's uuid
     attack_uuid: Uuid,
+
+    /// The point in time when this attack was created
+    created_at: DateTime<Utc>,
+
+    /// The type of the attack
+    attack_type: AttackType,
 }
 
 impl AttackContext {
@@ -269,32 +285,88 @@ impl AttackContext {
         user_uuid: Uuid,
         attack_type: AttackType,
     ) -> Result<Self, InsertAttackError> {
+        let mut tx = GLOBAL.db.start_transaction().await?;
+
+        let user = query!(&mut tx, SimpleUser)
+            .condition(User::F.uuid.equals(user_uuid))
+            .optional()
+            .await?
+            .ok_or(InsertAttackError::UserInvalid)?;
+        let (name, description, created_at, owner) = query!(
+            &mut tx,
+            (
+                Workspace::F.name,
+                Workspace::F.description,
+                Workspace::F.created_at,
+                Workspace::F.owner as SimpleUser
+            )
+        )
+        .condition(Workspace::F.uuid.equals(workspace_uuid))
+        .optional()
+        .await?
+        .ok_or(InsertAttackError::WorkspaceInvalid)?;
+
+        tx.commit().await?;
+
+        let workspace = SimpleWorkspace {
+            uuid: workspace_uuid,
+            name,
+            description,
+            created_at,
+            owner,
+        };
+
+        let attack = Attack::insert(&GLOBAL.db, attack_type, user_uuid, workspace_uuid).await?;
+
         Ok(Self {
-            user_uuid,
-            workspace_uuid,
-            attack_uuid: Attack::insert(&GLOBAL.db, attack_type, user_uuid, workspace_uuid).await?,
+            user,
+            attack_type,
+            workspace,
+            attack_uuid: attack.uuid,
+            created_at: attack.created_at,
         })
     }
 
     /// Send a websocket message and log the error
     async fn send_ws(&self, message: WsMessage) {
-        GLOBAL.ws.message_workspace(self.user_uuid, message).await;
+        GLOBAL
+            .ws
+            .message_workspace(self.workspace.uuid, message)
+            .await;
     }
 
     /// Send the user a notification
     async fn set_started(&self) {
         self.send_ws(WsMessage::AttackStarted {
-            attack_uuid: self.attack_uuid,
-            workspace_uuid: self.workspace_uuid,
+            attack: SimpleAttack {
+                uuid: self.attack_uuid,
+                workspace_uuid: self.workspace.uuid,
+                attack_type: self.attack_type,
+                started_by: self.user.clone(),
+                created_at: self.created_at,
+                error: None,
+                finished_at: None,
+            },
+            workspace: self.workspace.clone(),
         })
         .await;
     }
 
     /// Send the user a notification and update the [`Attack`] model
     async fn set_finished(self, result: Result<(), AttackError>) {
+        let now = Utc::now();
+
         self.send_ws(WsMessage::AttackFinished {
-            attack_uuid: self.attack_uuid,
-            finished_successful: result.is_ok(),
+            attack: SimpleAttack {
+                uuid: self.attack_uuid,
+                workspace_uuid: self.workspace.uuid,
+                attack_type: self.attack_type,
+                created_at: self.created_at,
+                finished_at: Some(now.clone()),
+                error: result.as_ref().err().map(|x| x.to_string()),
+                started_by: self.user.clone(),
+            },
+            workspace: self.workspace.clone(),
         })
         .await;
 
@@ -307,7 +379,7 @@ impl AttackContext {
 
         if let Err(err) = update!(&GLOBAL.db, Attack)
             .condition(Attack::F.uuid.equals(self.attack_uuid))
-            .set(Attack::F.finished_at, Some(Utc::now()))
+            .set(Attack::F.finished_at, Some(now))
             .set(
                 Attack::F.error,
                 result.err().map(|err| {
@@ -377,6 +449,7 @@ impl From<InsertAttackError> for AttackError {
         match value {
             InsertAttackError::DatabaseError(error) => Self::Database(error),
             InsertAttackError::WorkspaceInvalid => Self::Custom(Box::new(value)),
+            InsertAttackError::UserInvalid => Self::Custom(Box::new(value)),
         }
     }
 }

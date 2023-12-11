@@ -33,7 +33,7 @@ impl AttackContext {
         store_service_detection_result(
             &GLOBAL.db,
             self.attack_uuid,
-            self.workspace_uuid,
+            self.workspace.uuid,
             &services,
             certainty,
             params.target.into(),

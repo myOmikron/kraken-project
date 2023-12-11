@@ -92,9 +92,8 @@ async fn aggregate(
             .await
             .map_err(|err| match err {
                 InsertAttackError::DatabaseError(err) => err,
-                InsertAttackError::WorkspaceInvalid => {
-                    unreachable!("Workspace already used above")
-                }
+                InsertAttackError::WorkspaceInvalid => unreachable!("Workspace already used above"),
+                InsertAttackError::UserInvalid => unreachable!("User already used above"),
             })?;
             attack_handle = Some(handle);
         } else {
