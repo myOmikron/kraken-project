@@ -8,9 +8,10 @@ use log::{debug, error, info};
 use rorm::db::executor::Stream;
 use rorm::db::sql::value::Value;
 use rorm::db::transaction::Transaction;
-use rorm::db::Executor;
+use rorm::db::{executor, Executor};
+use rorm::internal::field::Field;
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, insert, query, update, FieldAccess, Model};
+use rorm::{and, field, insert, query, update, FieldAccess, Model};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -113,6 +114,19 @@ pub async fn delete_workspace(
             workspace.uuid, executing_user.username
         );
 
+        const ATTACK_TABLE: &str = Attack::TABLE;
+        const ATTACK_UUID: &str = <field!(Attack::F.uuid)>::NAME;
+        const ATTACK_WORKSPACE: &str = <field!(Attack::F.workspace)>::NAME;
+        const RESULT_TABLE: &str = CertificateTransparencyResult::TABLE;
+        const RESULT_UUID: &str = <field!(CertificateTransparencyResult::F.uuid)>::NAME;
+        const RESULT_ATTACK: &str = <field!(CertificateTransparencyResult::F.attack)>::NAME;
+        const VALUE_TABLE: &str = CertificateTransparencyValueName::TABLE;
+        const VALUE_RESULT: &str = <field!(CertificateTransparencyValueName::F.ct_result)>::NAME;
+        tx.execute::<executor::AffectedRows>(
+            format!(r#"DELETE FROM "{VALUE_TABLE}" USING "{RESULT_TABLE}", "{ATTACK_TABLE}" WHERE "{VALUE_TABLE}"."{VALUE_RESULT}" = "{RESULT_TABLE}"."{RESULT_UUID}" AND "{RESULT_TABLE}"."{RESULT_ATTACK}" = "{ATTACK_TABLE}"."{ATTACK_UUID}" AND "{ATTACK_TABLE}"."{ATTACK_WORKSPACE}" = $1;"#),
+            vec![Value::Uuid(workspace.uuid)],
+        )
+        .await?;
         rorm::delete!(&mut tx, Workspace).single(&workspace).await?;
     } else {
         debug!(
