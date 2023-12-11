@@ -1,3 +1,5 @@
+//! Declaration of [`SimpleAggregationSource`], [`FullAggregationSource`] and the implementation to query them
+
 use std::collections::HashMap;
 
 use chrono::{DateTime, Utc};
@@ -22,8 +24,9 @@ use crate::api::handler::users::SimpleUser;
 use crate::models::{
     AggregationSource, AggregationTable, Attack, AttackType, BruteforceSubdomainsResult,
     CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
-    DnsResolutionResult, HostAliveResult, ServiceDetectionName, ServiceDetectionResult, SourceType,
-    TcpPortScanResult,
+    DnsResolutionResult, HostAliveResult, ManualDomain, ManualHost, ManualHostCertainty,
+    ManualPort, ManualPortCertainty, ManualService, ManualServiceCertainty, OsType, PortProtocol,
+    ServiceDetectionName, ServiceDetectionResult, SourceType, TcpPortScanResult,
 };
 /// Numbers how many attacks of a certain kind found an aggregated model
 #[derive(Copy, Clone, Serialize, ToSchema, Debug, Default)]
@@ -131,7 +134,9 @@ impl Extend<SourceType> for SimpleAggregationSource {
 pub struct FullAggregationSource {
     /// All attack which contributed to an aggregated model
     attacks: Vec<SourceAttack>,
-    // TODO manual inserts
+
+    /// All manual inserts which contributed to an aggregated model
+    manual_insert: Vec<ManualInsert>,
 }
 /// Copy of [`SimpleAttack`](crate::api::handler::attacks::SimpleAttack) with an added `results` field
 #[derive(Serialize, ToSchema)]
@@ -153,16 +158,95 @@ pub struct SourceAttack {
     pub results: SourceAttackResult,
 }
 
+/// The different types of attack and their results
 #[derive(Serialize, ToSchema)]
 #[serde(tag = "attack_type", content = "results")]
 pub enum SourceAttackResult {
+    /// The [`AttackType::BruteforceSubdomains`] and its results
     BruteforceSubdomains(Vec<SimpleBruteforceSubdomainsResult>),
+    /// The [`AttackType::TcpPortScan`] and its results
     TcpPortScan(Vec<SimpleTcpPortScanResult>),
+    /// The [`AttackType::QueryCertificateTransparency`] and its results
     QueryCertificateTransparency(Vec<FullQueryCertificateTransparencyResult>),
+    /// The [`AttackType::QueryUnhashed`] and its results
     QueryDehashed(Vec<SimpleQueryUnhashedResult>),
+    /// The [`AttackType::HostAlive`] and its results
     HostAlive(Vec<SimpleHostAliveResult>),
+    /// The [`AttackType::ServiceDetection`] and its results
     ServiceDetection(Vec<FullServiceDetectionResult>),
+    /// The [`AttackType::DnsResolution`] and its results
     DnsResolution(Vec<SimpleDnsResolutionResult>),
+}
+
+/// The different types of manual inserts
+#[derive(Serialize, ToSchema)]
+#[serde(tag = "type")]
+pub enum ManualInsert {
+    /// A manually inserted domain
+    Domain {
+        /// The inserted domain
+        domain: String,
+        /// The user which inserted the domain
+        user: SimpleUser,
+        /// The workspace the domain was inserted to
+        workspace: Uuid,
+        /// The point in time, the domain was inserted
+        created_at: DateTime<Utc>,
+    },
+    /// A manually inserted host
+    Host {
+        /// The host's ip address
+        #[schema(example = "172.0.0.1")]
+        ip_addr: String,
+        /// The host's os type
+        os_type: OsType,
+        /// The inserted data's certainty
+        certainty: ManualHostCertainty,
+        /// The user which inserted the host
+        user: SimpleUser,
+        /// The workspace the host was inserted to
+        workspace: Uuid,
+        /// The point in time, the host was inserted
+        created_at: DateTime<Utc>,
+    },
+    /// A manually inserted port
+    Port {
+        /// The inserted port
+        port: u16,
+        /// The port's protocol
+        protocol: PortProtocol,
+        /// The inserted data's certainty
+        certainty: ManualPortCertainty,
+        /// The host's ip address
+        #[schema(example = "172.0.0.1")]
+        host: String,
+        /// The user which inserted the port
+        user: SimpleUser,
+        /// The workspace the port was inserted to
+        workspace: Uuid,
+        /// The point in time, the port was inserted
+        created_at: DateTime<Utc>,
+    },
+    /// A manually inserted service
+    Service {
+        /// The inserted service
+        name: String,
+        /// The service's version
+        version: Option<String>,
+        /// The inserted data's certainty
+        certainty: ManualServiceCertainty,
+        /// The service's port
+        port: Option<u16>,
+        /// The host's ip address
+        #[schema(example = "172.0.0.1")]
+        host: String,
+        /// The user which inserted the service
+        user: SimpleUser,
+        /// The workspace the service was inserted to
+        workspace: Uuid,
+        /// The point in time, the service was inserted
+        created_at: DateTime<Utc>,
+    },
 }
 
 impl FullAggregationSource {
@@ -204,6 +288,7 @@ impl FullAggregationSource {
         let mut host_alive: Results<SimpleHostAliveResult> = Results::new();
         let mut service_detection: Results<FullServiceDetectionResult> = Results::new();
         let mut dns_resolution: Results<SimpleDnsResolutionResult> = Results::new();
+        let mut manual_insert = Vec::new();
         for (source_type, uuids) in sources {
             if uuids.is_empty() {
                 continue;
@@ -384,10 +469,115 @@ impl FullAggregationSource {
                 | SourceType::AntiPortScanningDetection => {
                     error!("source type unimplemented: {source_type:?}")
                 }
-                SourceType::ManualDomain
-                | SourceType::ManualHost
-                | SourceType::ManualPort
-                | SourceType::ManualService => todo!(),
+                SourceType::ManualDomain => {
+                    let mut stream = query!(
+                        &mut *tx,
+                        (
+                            ManualDomain::F.domain,
+                            ManualDomain::F.user as SimpleUser,
+                            ManualDomain::F.workspace,
+                            ManualDomain::F.created_at,
+                        )
+                    )
+                    .condition(field_in(ManualDomain::F.uuid, uuids))
+                    .stream();
+                    while let Some((domain, user, workspace, created_at)) =
+                        stream.try_next().await?
+                    {
+                        manual_insert.push(ManualInsert::Domain {
+                            domain,
+                            user,
+                            workspace: *workspace.key(),
+                            created_at,
+                        });
+                    }
+                }
+                SourceType::ManualHost => {
+                    let mut stream = query!(
+                        &mut *tx,
+                        (
+                            ManualHost::F.ip_addr,
+                            ManualHost::F.os_type,
+                            ManualHost::F.certainty,
+                            ManualHost::F.user as SimpleUser,
+                            ManualHost::F.workspace,
+                            ManualHost::F.created_at,
+                        )
+                    )
+                    .condition(field_in(ManualHost::F.uuid, uuids))
+                    .stream();
+                    while let Some((ip_addr, os_type, certainty, user, workspace, created_at)) =
+                        stream.try_next().await?
+                    {
+                        manual_insert.push(ManualInsert::Host {
+                            ip_addr: ip_addr.ip().to_string(),
+                            os_type,
+                            certainty,
+                            user,
+                            workspace: *workspace.key(),
+                            created_at,
+                        });
+                    }
+                }
+                SourceType::ManualPort => {
+                    let mut stream = query!(
+                        &mut *tx,
+                        (
+                            ManualPort::F.port,
+                            ManualPort::F.protocol,
+                            ManualPort::F.certainty,
+                            ManualPort::F.host,
+                            ManualPort::F.user as SimpleUser,
+                            ManualPort::F.workspace,
+                            ManualPort::F.created_at,
+                        )
+                    )
+                    .condition(field_in(ManualPort::F.uuid, uuids))
+                    .stream();
+                    while let Some((port, protocol, certainty, host, user, workspace, created_at)) =
+                        stream.try_next().await?
+                    {
+                        manual_insert.push(ManualInsert::Port {
+                            port: port as u16,
+                            protocol,
+                            certainty,
+                            host: host.ip().to_string(),
+                            user,
+                            workspace: *workspace.key(),
+                            created_at,
+                        });
+                    }
+                }
+                SourceType::ManualService => {
+                    let mut stream = query!(
+                        &mut *tx,
+                        (
+                            ManualService::F.name,
+                            ManualService::F.port,
+                            ManualService::F.certainty,
+                            ManualService::F.host,
+                            ManualService::F.user as SimpleUser,
+                            ManualService::F.workspace,
+                            ManualService::F.created_at,
+                        )
+                    )
+                    .condition(field_in(ManualService::F.uuid, uuids))
+                    .stream();
+                    while let Some((name, port, certainty, host, user, workspace, created_at)) =
+                        stream.try_next().await?
+                    {
+                        manual_insert.push(ManualInsert::Service {
+                            name,
+                            port: port.map(|p| p as u16),
+                            certainty,
+                            host: host.ip().to_string(),
+                            user,
+                            workspace: *workspace.key(),
+                            created_at,
+                            version: None,
+                        });
+                    }
+                }
             }
         }
 
@@ -477,7 +667,10 @@ impl FullAggregationSource {
             }
         }
 
-        Ok(Self { attacks })
+        Ok(Self {
+            attacks,
+            manual_insert,
+        })
     }
 }
 

@@ -158,6 +158,7 @@ impl Modify for SecurityAddon2 {
         handler::PageParams,
         aggregation_source::SimpleAggregationSource,
         aggregation_source::FullAggregationSource,
+        aggregation_source::ManualInsert,
         aggregation_source::SourceAttack,
         aggregation_source::SourceAttackResult,
         auth::LoginRequest,
