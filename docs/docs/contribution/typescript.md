@@ -41,6 +41,6 @@ in combination with the [`?` operator](https://developer.mozilla.org/en-US/docs/
 
 ### Rational
 1. Flexible: Can be scaled to any number of conditions
-2. First-class javascript features: This approach uses basic language features without any library api to learn
+2. First-class JavaScript features: This approach uses basic language features without any library API to learn
 3. JetBrains IDE support: The IDE understands that the template string will produce class names
-    and allows quick-navigation to the css class declarations.
+    and allows quick-navigation to the CSS class declarations.
