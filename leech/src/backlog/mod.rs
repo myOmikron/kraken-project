@@ -298,7 +298,7 @@ pub async fn start_backlog(
                     if let Err(e) = db_trx.commit().await {
                         error!("error committing changes to database: {e}");
                     }
-                    info!("database committed");
+                    debug!("database committed");
                 }
 
                 tokio::time::sleep(DB_QUERY_INTERVAL).await;
