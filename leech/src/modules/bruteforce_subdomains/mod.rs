@@ -10,7 +10,7 @@ use std::time::Duration;
 use std::{fs, panic};
 
 use itertools::Itertools;
-use log::{debug, error, info, trace};
+use log::{debug, error, info, trace, warn};
 use rand::distributions::{Alphanumeric, DistString};
 use rand::thread_rng;
 use tokio::sync::mpsc;
@@ -88,6 +88,7 @@ pub async fn bruteforce_subdomains(
     let mut opts = ResolverOpts::default();
     opts.ip_strategy = LookupIpStrategy::Ipv4AndIpv6;
     opts.preserve_intermediates = true;
+    opts.shuffle_dns_servers = true;
     let resolver = TokioAsyncResolver::tokio(ResolverConfig::cloudflare_https(), opts);
 
     let wordlist = fs::read_to_string(&settings.wordlist_path)
@@ -171,20 +172,32 @@ pub async fn resolve(
 ) -> Result<(), BruteforceSubdomainError> {
     for _ in 0..RETRY {
         match resolver.lookup_ip(search).await {
-            Err(err) => match err.kind() {
-                ResolveErrorKind::NoRecordsFound { .. } => {
-                    trace!("No record found: {search}");
-                    return Ok(());
+            Err(err) => {
+                match err.kind() {
+                    ResolveErrorKind::NoRecordsFound { .. } => {
+                        trace!("No record found: {search}");
+                        return Ok(());
+                    }
+                    ResolveErrorKind::Proto(err) => {
+                        if err
+                            .to_string()
+                            .contains("Label contains invalid characters")
+                        {
+                            debug!("Skipping search: {search} as invalid characters were found");
+                            return Ok(());
+                        }
+                    }
+                    _ => {}
                 }
-                _ => {
-                    debug!(
-                        "Failed to resolve {search:?}: {err}. Retrying in {}ms",
-                        RETRY_INTERVAL.as_millis()
-                    );
-                    sleep(RETRY_INTERVAL).await;
-                    continue;
-                }
-            },
+
+                warn!(
+                    "Failed to resolve {search:?}: {:?} {err}. Retrying in {}ms",
+                    err.kind(),
+                    RETRY_INTERVAL.as_millis()
+                );
+                sleep(RETRY_INTERVAL).await;
+                continue;
+            }
             Ok(answer) => {
                 for record in answer.as_lookup().records() {
                     let domain = record
