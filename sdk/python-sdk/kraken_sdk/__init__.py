@@ -78,6 +78,7 @@ from kraken_sdk.models.domain_certainty import DomainCertainty
 from kraken_sdk.models.domain_or_network import DomainOrNetwork
 from kraken_sdk.models.domain_results_page import DomainResultsPage
 from kraken_sdk.models.finish_register_request import FinishRegisterRequest
+from kraken_sdk.models.full_aggregation_source import FullAggregationSource
 from kraken_sdk.models.full_api_key import FullApiKey
 from kraken_sdk.models.full_decision import FullDecision
 from kraken_sdk.models.full_domain import FullDomain
@@ -118,6 +119,11 @@ from kraken_sdk.models.leech_tls_config import LeechTlsConfig
 from kraken_sdk.models.list_attacks import ListAttacks
 from kraken_sdk.models.login_request import LoginRequest
 from kraken_sdk.models.manual_host_certainty import ManualHostCertainty
+from kraken_sdk.models.manual_insert import ManualInsert
+from kraken_sdk.models.manual_insert_one_of import ManualInsertOneOf
+from kraken_sdk.models.manual_insert_one_of1 import ManualInsertOneOf1
+from kraken_sdk.models.manual_insert_one_of2 import ManualInsertOneOf2
+from kraken_sdk.models.manual_insert_one_of3 import ManualInsertOneOf3
 from kraken_sdk.models.manual_port_certainty import ManualPortCertainty
 from kraken_sdk.models.manual_service_certainty import ManualServiceCertainty
 from kraken_sdk.models.open_request_info import OpenRequestInfo
@@ -187,6 +193,15 @@ from kraken_sdk.models.simple_tcp_port_scan_result import SimpleTcpPortScanResul
 from kraken_sdk.models.simple_user import SimpleUser
 from kraken_sdk.models.simple_wordlist import SimpleWordlist
 from kraken_sdk.models.simple_workspace import SimpleWorkspace
+from kraken_sdk.models.source_attack import SourceAttack
+from kraken_sdk.models.source_attack_result import SourceAttackResult
+from kraken_sdk.models.source_attack_result_one_of import SourceAttackResultOneOf
+from kraken_sdk.models.source_attack_result_one_of1 import SourceAttackResultOneOf1
+from kraken_sdk.models.source_attack_result_one_of2 import SourceAttackResultOneOf2
+from kraken_sdk.models.source_attack_result_one_of3 import SourceAttackResultOneOf3
+from kraken_sdk.models.source_attack_result_one_of4 import SourceAttackResultOneOf4
+from kraken_sdk.models.source_attack_result_one_of5 import SourceAttackResultOneOf5
+from kraken_sdk.models.source_attack_result_one_of6 import SourceAttackResultOneOf6
 from kraken_sdk.models.tag_type import TagType
 from kraken_sdk.models.tcp_port_scan_results_page import TcpPortScanResultsPage
 from kraken_sdk.models.transfer_workspace_request import TransferWorkspaceRequest

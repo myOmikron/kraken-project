@@ -128,6 +128,7 @@ Class | Method | HTTP request | Description
 *DomainsApi* | [**create_domain**](docs/DomainsApi.md#create_domain) | **POST** /api/v1/workspaces/{uuid}/domains | Manually add a domain
 *DomainsApi* | [**get_all_domains**](docs/DomainsApi.md#get_all_domains) | **POST** /api/v1/workspaces/{uuid}/domains/all | Retrieve all domains of a specific workspace
 *DomainsApi* | [**get_domain**](docs/DomainsApi.md#get_domain) | **GET** /api/v1/workspaces/{w_uuid}/domains/{d_uuid} | Retrieve all information about a single domain
+*DomainsApi* | [**get_domain_sources**](docs/DomainsApi.md#get_domain_sources) | **GET** /api/v1/workspaces/{w_uuid}/domains/{d_uuid}/sources | Get all data sources which referenced this domain
 *DomainsApi* | [**update_domain**](docs/DomainsApi.md#update_domain) | **PUT** /api/v1/workspaces/{w_uuid}/domains/{d_uuid} | Update a domain
 *GlobalTagsApi* | [**create_global_tag**](docs/GlobalTagsApi.md#create_global_tag) | **POST** /api/v1/admin/globalTags | Create a global tag.
 *GlobalTagsApi* | [**delete_global_tag**](docs/GlobalTagsApi.md#delete_global_tag) | **DELETE** /api/v1/admin/globalTags/{uuid} | Delete a global tag
@@ -136,6 +137,7 @@ Class | Method | HTTP request | Description
 *HostsApi* | [**create_host**](docs/HostsApi.md#create_host) | **POST** /api/v1/workspaces/{uuid}/hosts | Manually add a host
 *HostsApi* | [**get_all_hosts**](docs/HostsApi.md#get_all_hosts) | **POST** /api/v1/workspaces/{uuid}/hosts/all | Retrieve all hosts.
 *HostsApi* | [**get_host**](docs/HostsApi.md#get_host) | **GET** /api/v1/workspaces/{w_uuid}/hosts/{h_uuid} | Retrieve all information about a single host
+*HostsApi* | [**get_host_sources**](docs/HostsApi.md#get_host_sources) | **GET** /api/v1/workspaces/{w_uuid}/hosts/{h_uuid}/sources | Get all data sources which referenced this host
 *HostsApi* | [**update_host**](docs/HostsApi.md#update_host) | **PUT** /api/v1/workspaces/{w_uuid}/hosts/{h_uuid} | Update a host
 *LeechManagementApi* | [**create_leech**](docs/LeechManagementApi.md#create_leech) | **POST** /api/v1/admin/leeches | Create a leech
 *LeechManagementApi* | [**delete_leech**](docs/LeechManagementApi.md#delete_leech) | **DELETE** /api/v1/admin/leeches/{uuid} | Delete a leech by its uuid
@@ -156,10 +158,12 @@ Class | Method | HTTP request | Description
 *PortsApi* | [**create_port**](docs/PortsApi.md#create_port) | **POST** /api/v1/workspaces/{uuid}/ports | Manually add a port
 *PortsApi* | [**get_all_ports**](docs/PortsApi.md#get_all_ports) | **POST** /api/v1/workspaces/{uuid}/ports/all | List the ports of a workspace
 *PortsApi* | [**get_port**](docs/PortsApi.md#get_port) | **GET** /api/v1/workspaces/{w_uuid}/ports/{p_uuid} | Retrieve all information about a single port
+*PortsApi* | [**get_port_sources**](docs/PortsApi.md#get_port_sources) | **GET** /api/v1/workspaces/{w_uuid}/ports/{p_uuid}/sources | Get all data sources which referenced this port
 *PortsApi* | [**update_port**](docs/PortsApi.md#update_port) | **PUT** /api/v1/workspaces/{w_uuid}/ports/{p_uuid} | Update a port
 *ServicesApi* | [**create_service**](docs/ServicesApi.md#create_service) | **POST** /api/v1/workspaces/{uuid}/services | Manually add a service
 *ServicesApi* | [**get_all_services**](docs/ServicesApi.md#get_all_services) | **POST** /api/v1/workspaces/{uuid}/services/all | List the services of a workspace
 *ServicesApi* | [**get_service**](docs/ServicesApi.md#get_service) | **GET** /api/v1/workspaces/{w_uuid}/services/{s_uuid} | Retrieve all information about a single service
+*ServicesApi* | [**get_service_sources**](docs/ServicesApi.md#get_service_sources) | **GET** /api/v1/workspaces/{w_uuid}/services/{s_uuid}/sources | Get all data sources which referenced this service
 *ServicesApi* | [**update_service**](docs/ServicesApi.md#update_service) | **PUT** /api/v1/workspaces/{w_uuid}/services/{s_uuid} | Update a service
 *SettingsManagementApi* | [**get_settings**](docs/SettingsManagementApi.md#get_settings) | **GET** /api/v1/admin/settings | Retrieve the currently active settings
 *SettingsManagementApi* | [**update_settings**](docs/SettingsManagementApi.md#update_settings) | **PUT** /api/v1/admin/settings | Update the settings
@@ -225,6 +229,7 @@ Class | Method | HTTP request | Description
  - [DomainOrNetwork](docs/DomainOrNetwork.md)
  - [DomainResultsPage](docs/DomainResultsPage.md)
  - [FinishRegisterRequest](docs/FinishRegisterRequest.md)
+ - [FullAggregationSource](docs/FullAggregationSource.md)
  - [FullApiKey](docs/FullApiKey.md)
  - [FullDecision](docs/FullDecision.md)
  - [FullDomain](docs/FullDomain.md)
@@ -265,6 +270,11 @@ Class | Method | HTTP request | Description
  - [ListAttacks](docs/ListAttacks.md)
  - [LoginRequest](docs/LoginRequest.md)
  - [ManualHostCertainty](docs/ManualHostCertainty.md)
+ - [ManualInsert](docs/ManualInsert.md)
+ - [ManualInsertOneOf](docs/ManualInsertOneOf.md)
+ - [ManualInsertOneOf1](docs/ManualInsertOneOf1.md)
+ - [ManualInsertOneOf2](docs/ManualInsertOneOf2.md)
+ - [ManualInsertOneOf3](docs/ManualInsertOneOf3.md)
  - [ManualPortCertainty](docs/ManualPortCertainty.md)
  - [ManualServiceCertainty](docs/ManualServiceCertainty.md)
  - [OpenRequestInfo](docs/OpenRequestInfo.md)
@@ -334,6 +344,15 @@ Class | Method | HTTP request | Description
  - [SimpleUser](docs/SimpleUser.md)
  - [SimpleWordlist](docs/SimpleWordlist.md)
  - [SimpleWorkspace](docs/SimpleWorkspace.md)
+ - [SourceAttack](docs/SourceAttack.md)
+ - [SourceAttackResult](docs/SourceAttackResult.md)
+ - [SourceAttackResultOneOf](docs/SourceAttackResultOneOf.md)
+ - [SourceAttackResultOneOf1](docs/SourceAttackResultOneOf1.md)
+ - [SourceAttackResultOneOf2](docs/SourceAttackResultOneOf2.md)
+ - [SourceAttackResultOneOf3](docs/SourceAttackResultOneOf3.md)
+ - [SourceAttackResultOneOf4](docs/SourceAttackResultOneOf4.md)
+ - [SourceAttackResultOneOf5](docs/SourceAttackResultOneOf5.md)
+ - [SourceAttackResultOneOf6](docs/SourceAttackResultOneOf6.md)
  - [TagType](docs/TagType.md)
  - [TcpPortScanResultsPage](docs/TcpPortScanResultsPage.md)
  - [TransferWorkspaceRequest](docs/TransferWorkspaceRequest.md)

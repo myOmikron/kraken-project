@@ -15,6 +15,6 @@ npx @openapitools/openapi-generator-cli generate -i "../kraken_frontend/openapi.
   --additional-properties="library=asyncio,projectName=kraken-sdk,packageName=kraken_sdk,packageVersion=$PACKAGE_VERSION"
 
 rm -rf "./python-sdk/test"
-
+rm -rf "./python-sdk/docs"
 rm -rf "./python-sdk/.github"
 
