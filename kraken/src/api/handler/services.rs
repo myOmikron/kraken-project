@@ -510,7 +510,7 @@ pub async fn update_service(
                 .return_nothing()
                 .bulk(
                     &global_tags
-                        .into_iter()
+                        .iter()
                         .map(|x| ServiceGlobalTag {
                             uuid: Uuid::new_v4(),
                             service: ForeignModelByField::Key(path.s_uuid),
@@ -536,7 +536,7 @@ pub async fn update_service(
                 .return_nothing()
                 .bulk(
                     &workspace_tags
-                        .into_iter()
+                        .iter()
                         .map(|x| ServiceWorkspaceTag {
                             uuid: Uuid::new_v4(),
                             service: ForeignModelByField::Key(path.s_uuid),

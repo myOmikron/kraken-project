@@ -386,7 +386,7 @@ pub async fn update_host(
                 .return_nothing()
                 .bulk(
                     &global_tags
-                        .into_iter()
+                        .iter()
                         .map(|x| HostGlobalTag {
                             uuid: Uuid::new_v4(),
                             host: ForeignModelByField::Key(path.h_uuid),
@@ -412,7 +412,7 @@ pub async fn update_host(
                 .return_nothing()
                 .bulk(
                     &workspace_tags
-                        .into_iter()
+                        .iter()
                         .map(|x| HostWorkspaceTag {
                             uuid: Uuid::new_v4(),
                             host: ForeignModelByField::Key(path.h_uuid),

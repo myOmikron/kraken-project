@@ -445,7 +445,7 @@ pub async fn update_port(
                 .return_nothing()
                 .bulk(
                     &global_tags
-                        .into_iter()
+                        .iter()
                         .map(|x| PortGlobalTag {
                             uuid: Uuid::new_v4(),
                             port: ForeignModelByField::Key(path.p_uuid),
@@ -471,7 +471,7 @@ pub async fn update_port(
                 .return_nothing()
                 .bulk(
                     &workspace_tags
-                        .into_iter()
+                        .iter()
                         .map(|x| PortWorkspaceTag {
                             uuid: Uuid::new_v4(),
                             port: ForeignModelByField::Key(path.p_uuid),

@@ -397,7 +397,7 @@ pub async fn update_domain(
                 .return_nothing()
                 .bulk(
                     &global_tags
-                        .into_iter()
+                        .iter()
                         .map(|x| DomainGlobalTag {
                             uuid: Uuid::new_v4(),
                             domain: ForeignModelByField::Key(path.d_uuid),
