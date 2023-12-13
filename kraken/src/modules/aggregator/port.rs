@@ -3,7 +3,8 @@ use rorm::{and, insert, query, update, FieldAccess, Model, Patch};
 use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;
 
-use crate::chan::GLOBAL;
+use crate::api::handler::ports::SimplePort;
+use crate::chan::{WsMessage, GLOBAL};
 use crate::models::{Host, Port, PortCertainty, PortProtocol, Workspace};
 use crate::modules::aggregator::PortAggregationData;
 
@@ -52,8 +53,7 @@ async fn aggregate(data: PortAggregationData) -> Result<Uuid, rorm::Error> {
         }
         port_uuid
     } else {
-        insert!(&mut tx, Port)
-            .return_primary_key()
+        let port = insert!(&mut tx, Port)
             .single(&PortInsert {
                 uuid: Uuid::new_v4(),
                 port: data.port as i32,
@@ -63,7 +63,28 @@ async fn aggregate(data: PortAggregationData) -> Result<Uuid, rorm::Error> {
                 comment: String::new(),
                 workspace: ForeignModelByField::Key(data.workspace),
             })
-            .await?
+            .await?;
+
+        GLOBAL
+            .ws
+            .message_workspace(
+                data.workspace,
+                WsMessage::NewPort {
+                    workspace: data.workspace,
+                    port: SimplePort {
+                        uuid: port.uuid,
+                        port: data.port,
+                        protocol: data.protocol,
+                        host: data.host,
+                        comment: String::new(),
+                        workspace: data.workspace,
+                        created_at: port.created_at,
+                    },
+                },
+            )
+            .await;
+
+        port.uuid
     };
 
     tx.commit().await?;

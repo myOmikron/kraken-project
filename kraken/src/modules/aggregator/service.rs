@@ -4,7 +4,8 @@ use rorm::{and, insert, query, update, FieldAccess, Model, Patch};
 use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;
 
-use crate::chan::GLOBAL;
+use crate::api::handler::services::SimpleService;
+use crate::chan::{WsMessage, GLOBAL};
 use crate::models::{Host, Port, Service, ServiceCertainty, Workspace};
 use crate::modules::aggregator::ServiceAggregationData;
 
@@ -59,8 +60,7 @@ async fn aggregate(data: ServiceAggregationData) -> Result<Uuid, rorm::Error> {
         }
         service_uuid
     } else {
-        insert!(&mut tx, Service)
-            .return_primary_key()
+        let service = insert!(&mut tx, Service)
             .single(&ServiceInsert {
                 uuid: Uuid::new_v4(),
                 name: data.name,
@@ -71,7 +71,29 @@ async fn aggregate(data: ServiceAggregationData) -> Result<Uuid, rorm::Error> {
                 port: data.port.map(ForeignModelByField::Key),
                 certainty: data.certainty,
             })
-            .await?
+            .await?;
+
+        GLOBAL
+            .ws
+            .message_workspace(
+                data.workspace,
+                WsMessage::NewService {
+                    workspace: data.workspace,
+                    service: SimpleService {
+                        workspace: data.workspace,
+                        port: data.port,
+                        host: data.host,
+                        uuid: service.uuid,
+                        name: service.name,
+                        comment: String::new(),
+                        version: None,
+                        created_at: service.created_at,
+                    },
+                },
+            )
+            .await;
+
+        service.uuid
     };
 
     tx.commit().await?;

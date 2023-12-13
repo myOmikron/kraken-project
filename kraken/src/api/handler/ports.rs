@@ -49,7 +49,7 @@ pub struct GetAllPortsQuery {
 }
 
 /// The simple representation of a port
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct SimplePort {
     /// Uuid of the port
     pub uuid: Uuid,

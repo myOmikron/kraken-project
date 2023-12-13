@@ -5,7 +5,8 @@ use tokio::sync::{mpsc, oneshot};
 use tokio::task::JoinHandle;
 use uuid::Uuid;
 
-use crate::chan::GLOBAL;
+use crate::api::handler::domains::SimpleDomain;
+use crate::chan::{WsMessage, GLOBAL};
 use crate::models::{Domain, DomainCertainty, InsertAttackError, Workspace};
 use crate::modules::aggregator::DomainAggregationData;
 use crate::modules::attacks::{start_dns_resolution, DnsResolutionParams};
@@ -68,8 +69,7 @@ async fn aggregate(
         }
         uuid
     } else {
-        let domain_uuid = insert!(&mut tx, Domain)
-            .return_primary_key()
+        let domain = insert!(&mut tx, Domain)
             .single(&DomainInsert {
                 uuid: Uuid::new_v4(),
                 domain: data.domain.clone(),
@@ -78,6 +78,23 @@ async fn aggregate(
                 workspace: ForeignModelByField::Key(data.workspace),
             })
             .await?;
+
+        GLOBAL
+            .ws
+            .message_workspace(
+                data.workspace,
+                WsMessage::NewDomain {
+                    workspace: data.workspace,
+                    domain: SimpleDomain {
+                        uuid: domain.uuid,
+                        domain: domain.domain,
+                        comment: domain.comment,
+                        workspace: *domain.workspace.key(),
+                        created_at: domain.created_at,
+                    },
+                },
+            )
+            .await;
 
         if let Ok(leech) = GLOBAL.leeches.random_leech() {
             let (_, handle) = start_dns_resolution(
@@ -102,7 +119,7 @@ async fn aggregate(
                 domain = data.domain
             );
         }
-        domain_uuid
+        domain.uuid
     };
 
     tx.commit().await?;

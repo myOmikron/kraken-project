@@ -4,7 +4,8 @@ use rorm::{and, insert, query, update, FieldAccess, Model, Patch};
 use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;
 
-use crate::chan::GLOBAL;
+use crate::api::handler::hosts::SimpleHost;
+use crate::chan::{WsMessage, GLOBAL};
 use crate::models::{Host, HostCertainty, OsType, Workspace};
 use crate::modules::aggregator::HostAggregationData;
 
@@ -50,8 +51,7 @@ async fn aggregate(data: HostAggregationData) -> Result<Uuid, rorm::Error> {
         }
         uuid
     } else {
-        insert!(&mut tx, HostInsert)
-            .return_primary_key()
+        let host = insert!(&mut tx, HostInsert)
             .single(&HostInsert {
                 uuid: Uuid::new_v4(),
                 ip_addr: data.ip_addr,
@@ -61,7 +61,27 @@ async fn aggregate(data: HostAggregationData) -> Result<Uuid, rorm::Error> {
                 certainty: HostCertainty::Verified,
                 workspace: ForeignModelByField::Key(data.workspace),
             })
-            .await?
+            .await?;
+
+        GLOBAL
+            .ws
+            .message_workspace(
+                data.workspace,
+                WsMessage::NewHost {
+                    workspace: data.workspace,
+                    host: SimpleHost {
+                        uuid: host.uuid,
+                        ip_addr: host.ip_addr.ip().to_string(),
+                        os_type: host.os_type,
+                        comment: host.comment,
+                        workspace: *host.workspace.key(),
+                        created_at: host.created_at,
+                    },
+                },
+            )
+            .await;
+
+        host.uuid
     };
 
     tx.commit().await?;

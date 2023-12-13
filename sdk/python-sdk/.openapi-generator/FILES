@@ -199,6 +199,10 @@ docs/WsMessageOneOf.md
 docs/WsMessageOneOf1.md
 docs/WsMessageOneOf10.md
 docs/WsMessageOneOf11.md
+docs/WsMessageOneOf12.md
+docs/WsMessageOneOf13.md
+docs/WsMessageOneOf14.md
+docs/WsMessageOneOf15.md
 docs/WsMessageOneOf2.md
 docs/WsMessageOneOf3.md
 docs/WsMessageOneOf4.md
@@ -410,6 +414,10 @@ kraken_sdk/models/ws_message_one_of.py
 kraken_sdk/models/ws_message_one_of1.py
 kraken_sdk/models/ws_message_one_of10.py
 kraken_sdk/models/ws_message_one_of11.py
+kraken_sdk/models/ws_message_one_of12.py
+kraken_sdk/models/ws_message_one_of13.py
+kraken_sdk/models/ws_message_one_of14.py
+kraken_sdk/models/ws_message_one_of15.py
 kraken_sdk/models/ws_message_one_of2.py
 kraken_sdk/models/ws_message_one_of3.py
 kraken_sdk/models/ws_message_one_of4.py
@@ -621,6 +629,10 @@ test/test_ws_message_one_of.py
 test/test_ws_message_one_of1.py
 test/test_ws_message_one_of10.py
 test/test_ws_message_one_of11.py
+test/test_ws_message_one_of12.py
+test/test_ws_message_one_of13.py
+test/test_ws_message_one_of14.py
+test/test_ws_message_one_of15.py
 test/test_ws_message_one_of2.py
 test/test_ws_message_one_of3.py
 test/test_ws_message_one_of4.py

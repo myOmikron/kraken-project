@@ -12,6 +12,10 @@ use utoipa::ToSchema;
 use webauthn_rs::prelude::Uuid;
 
 use crate::api::handler::attacks::SimpleAttack;
+use crate::api::handler::domains::SimpleDomain;
+use crate::api::handler::hosts::SimpleHost;
+use crate::api::handler::ports::SimplePort;
+use crate::api::handler::services::SimpleService;
 use crate::api::handler::users::SimpleUser;
 use crate::api::handler::workspaces::SimpleWorkspace;
 use crate::chan::GLOBAL;
@@ -123,6 +127,34 @@ pub enum WsMessage {
         source: String,
         /// The destination address that was returned
         destination: String,
+    },
+    /// A new domain was found
+    NewDomain {
+        /// The workspace this domain is related to
+        workspace: Uuid,
+        /// The domain that was inserted
+        domain: SimpleDomain,
+    },
+    /// A new host was found
+    NewHost {
+        /// The workspace this host is related to
+        workspace: Uuid,
+        /// The host that was inserted
+        host: SimpleHost,
+    },
+    /// A new port was found
+    NewPort {
+        /// The workspace this port is related to
+        workspace: Uuid,
+        /// The port that was inserted
+        port: SimplePort,
+    },
+    /// A new service was found
+    NewService {
+        /// The workspace this service is related to
+        workspace: Uuid,
+        /// The service that was inserted
+        service: SimpleService,
     },
 }
 

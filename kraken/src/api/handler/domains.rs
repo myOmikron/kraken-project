@@ -53,7 +53,7 @@ pub struct GetAllDomainsQuery {
 }
 
 /// A simple representation of a domain in a workspace
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct SimpleDomain {
     pub(crate) uuid: Uuid,
     #[schema(example = "example.com")]

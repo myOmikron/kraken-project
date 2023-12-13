@@ -46,7 +46,7 @@ pub struct GetAllHostsQuery {
 }
 
 /// The simple representation of a host
-#[derive(Serialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct SimpleHost {
     /// The primary key of the host
     pub uuid: Uuid,

@@ -51,7 +51,7 @@ pub struct GetAllServicesQuery {
 }
 
 /// A simple representation of a service
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct SimpleService {
     pub(crate) uuid: Uuid,
     #[schema(example = "postgresql")]

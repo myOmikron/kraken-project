@@ -13,7 +13,7 @@ use crate::models::{GlobalTag, Workspace, WorkspaceTag};
 mod operations;
 
 /// A representation of an OS type
-#[derive(DbEnum, Copy, Clone, Debug, ToSchema, Serialize)]
+#[derive(DbEnum, Copy, Clone, Debug, ToSchema, Serialize, Deserialize)]
 pub enum OsType {
     /// The OS type is currently unknown
     Unknown,
