@@ -44,6 +44,7 @@ nav:
   - User guide: user/index.md
   - Contribution:
     - General information: contribution/index.md
+    - Development Enviornment: contribution/dev_setup.md
     - Style guidelines:
       - Rust: contribution/rust.md
       - Typescript: contribution/typescript.md
