@@ -1,3 +1,4 @@
+# --8<-- [start:sample]
 ---
 - kraken_db_name: "kraken"
   kraken_db_user: "kraken"
@@ -8,7 +9,7 @@
   leech_db_name: "leech"
   leech_db_user: "leech"
   leech_db_password: ""
-  leech_token: ""
+# --8<-- [end:sample]
   generated_leech_conf: |
     KrakenSni = "..."
     KrakenCa = """

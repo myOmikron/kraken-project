@@ -9,23 +9,13 @@ The easiest way to get kraken running locally is using Vagrant and the provided 
 Copy the `example.vars.yml` to `vars.yml` in the vagrant folder and set test values for the tokens, names and passwords. A sample vars.yml might start like this:
 
 ```yml
----
-- kraken_db_name: "kraken"
-  kraken_db_user: "kraken"
-  kraken_db_password: "krakendbpw"
-  kraken_secret_key: ""
-  origin_uri: "https://kraken.localhost"
-  server_name: "kraken.localhost"
-  leech_db_name: "leech"
-  leech_db_user: "leech"
-  leech_db_password: "leechdbpw"
-  leech_token: ""
+--8<-- "example.vars.yml:sample"
   ...
 ```
 
 The server will only listen to requests on the `origin_uri` URL. For this example, you can add `127.0.0.1   kraken.localhost` to your `/etc/hosts` file.
 
-The `kraken_secret_key`, `leech_token` and `generated_leech_conf` blocks can first be left as-is and need to be filled with generated information after the first startup.
+The `kraken_secret_key` and `generated_leech_conf` blocks can first be left as-is and need to be filled with generated information after the first startup.
 
 ### Creating VMs
 

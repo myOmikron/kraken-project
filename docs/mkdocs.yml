@@ -27,7 +27,9 @@ markdown_extensions:
       anchor_linenums: true
       line_spans: __span
   - pymdownx.inlinehilite
-  - pymdownx.snippets
+  - pymdownx.snippets:
+      base_path:
+      - "../vagrant/example.vars.yml"
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
