@@ -730,55 +730,59 @@ pub async fn get_all_attacks(
         .await?;
     workspaces.extend(workspace_members);
 
-    let attacks = query!(
-        &mut tx,
-        (
-            Attack::F.uuid,
-            Attack::F.attack_type,
-            Attack::F.error,
-            Attack::F.created_at,
-            Attack::F.finished_at,
-            Attack::F.started_by as SimpleUser,
-            Attack::F.workspace.uuid,
-            Attack::F.workspace.name,
-            Attack::F.workspace.description,
-            Attack::F.workspace.created_at,
-            Attack::F.workspace.owner as SimpleUser
+    let attacks = if workspaces.is_empty() {
+        vec![]
+    } else {
+        query!(
+            &mut tx,
+            (
+                Attack::F.uuid,
+                Attack::F.attack_type,
+                Attack::F.error,
+                Attack::F.created_at,
+                Attack::F.finished_at,
+                Attack::F.started_by as SimpleUser,
+                Attack::F.workspace.uuid,
+                Attack::F.workspace.name,
+                Attack::F.workspace.description,
+                Attack::F.workspace.created_at,
+                Attack::F.workspace.owner as SimpleUser
+            )
         )
-    )
-    .condition(DynamicCollection::or(workspaces))
-    .stream()
-    .map_ok(
-        |(
-            uuid,
-            attack_type,
-            error,
-            created_at,
-            finished_at,
-            started_by,
-            w_uuid,
-            w_name,
-            w_description,
-            w_created_at,
-            w_owner,
-        )| SimpleAttack {
-            uuid,
-            attack_type,
-            error,
-            created_at,
-            finished_at,
-            started_by,
-            workspace: SimpleWorkspace {
-                uuid: w_uuid,
-                name: w_name,
-                description: w_description,
-                created_at: w_created_at,
-                owner: w_owner,
+        .condition(DynamicCollection::or(workspaces))
+        .stream()
+        .map_ok(
+            |(
+                uuid,
+                attack_type,
+                error,
+                created_at,
+                finished_at,
+                started_by,
+                w_uuid,
+                w_name,
+                w_description,
+                w_created_at,
+                w_owner,
+            )| SimpleAttack {
+                uuid,
+                attack_type,
+                error,
+                created_at,
+                finished_at,
+                started_by,
+                workspace: SimpleWorkspace {
+                    uuid: w_uuid,
+                    name: w_name,
+                    description: w_description,
+                    created_at: w_created_at,
+                    owner: w_owner,
+                },
             },
-        },
-    )
-    .try_collect()
-    .await?;
+        )
+        .try_collect()
+        .await?
+    };
 
     tx.commit().await?;
 
