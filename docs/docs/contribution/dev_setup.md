@@ -14,8 +14,8 @@ Copy the `example.vars.yml` to `vars.yml` in the vagrant folder and set test val
   kraken_db_user: "kraken"
   kraken_db_password: "krakendbpw"
   kraken_secret_key: ""
-  origin_uri: "https://kraken.test"
-  server_name: "kraken.test"
+  origin_uri: "https://kraken.localhost"
+  server_name: "kraken.localhost"
   leech_db_name: "leech"
   leech_db_user: "leech"
   leech_db_password: "leechdbpw"
@@ -23,7 +23,7 @@ Copy the `example.vars.yml` to `vars.yml` in the vagrant folder and set test val
   ...
 ```
 
-The server will only listen to requests on the `origin_uri` URL. For this example, you can add `127.0.0.1   kraken.test` to your `/etc/hosts` file.
+The server will only listen to requests on the `origin_uri` URL. For this example, you can add `127.0.0.1   kraken.localhost` to your `/etc/hosts` file.
 
 The `kraken_secret_key`, `leech_token` and `generated_leech_conf` blocks can first be left as-is and need to be filled with generated information after the first startup.
 
@@ -37,7 +37,7 @@ Now, initialize the VMs and perform a first compilation using
 $ vagrant up
 ```
 
-If you access http://kraken.test:8081 now, you should see a broken black page saying "Loading..." as well as showing errors.
+If you access http://kraken.localhost:8081 now, you should see a broken black page saying "Loading..." as well as showing errors.
 
 ### Setup admin user and kraken key
 
@@ -75,7 +75,7 @@ Now exit the shell with Ctrl-D and since we edited vars.yml you need to re-provi
 $ vagrant provision kraken
 ```
 
-Now reload the Kraken webpage (http://kraken.test:8081) and login using the credentials that you have entered previously.
+Now reload the Kraken webpage (http://kraken.localhost:8081) and login using the credentials that you have entered previously.
 
 ## First-time configuration
 
