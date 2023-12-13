@@ -5,6 +5,7 @@
 .travis.yml
 README.md
 docs/AdminWorkspacesApi.md
+docs/AggregationType.md
 docs/ApiErrorResponse.md
 docs/ApiKeysApi.md
 docs/ApiStatusCode.md
@@ -203,6 +204,8 @@ docs/WsMessageOneOf12.md
 docs/WsMessageOneOf13.md
 docs/WsMessageOneOf14.md
 docs/WsMessageOneOf15.md
+docs/WsMessageOneOf16.md
+docs/WsMessageOneOf17.md
 docs/WsMessageOneOf2.md
 docs/WsMessageOneOf3.md
 docs/WsMessageOneOf4.md
@@ -241,6 +244,7 @@ kraken_sdk/api_response.py
 kraken_sdk/configuration.py
 kraken_sdk/exceptions.py
 kraken_sdk/models/__init__.py
+kraken_sdk/models/aggregation_type.py
 kraken_sdk/models/api_error_response.py
 kraken_sdk/models/api_status_code.py
 kraken_sdk/models/attack_type.py
@@ -418,6 +422,8 @@ kraken_sdk/models/ws_message_one_of12.py
 kraken_sdk/models/ws_message_one_of13.py
 kraken_sdk/models/ws_message_one_of14.py
 kraken_sdk/models/ws_message_one_of15.py
+kraken_sdk/models/ws_message_one_of16.py
+kraken_sdk/models/ws_message_one_of17.py
 kraken_sdk/models/ws_message_one_of2.py
 kraken_sdk/models/ws_message_one_of3.py
 kraken_sdk/models/ws_message_one_of4.py
@@ -435,6 +441,7 @@ setup.py
 test-requirements.txt
 test/__init__.py
 test/test_admin_workspaces_api.py
+test/test_aggregation_type.py
 test/test_api_error_response.py
 test/test_api_keys_api.py
 test/test_api_status_code.py
@@ -633,6 +640,8 @@ test/test_ws_message_one_of12.py
 test/test_ws_message_one_of13.py
 test/test_ws_message_one_of14.py
 test/test_ws_message_one_of15.py
+test/test_ws_message_one_of16.py
+test/test_ws_message_one_of17.py
 test/test_ws_message_one_of2.py
 test/test_ws_message_one_of3.py
 test/test_ws_message_one_of4.py

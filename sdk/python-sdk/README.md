@@ -204,6 +204,7 @@ Class | Method | HTTP request | Description
 
 ## Documentation For Models
 
+ - [AggregationType](docs/AggregationType.md)
  - [ApiErrorResponse](docs/ApiErrorResponse.md)
  - [ApiStatusCode](docs/ApiStatusCode.md)
  - [AttackType](docs/AttackType.md)
@@ -381,6 +382,8 @@ Class | Method | HTTP request | Description
  - [WsMessageOneOf13](docs/WsMessageOneOf13.md)
  - [WsMessageOneOf14](docs/WsMessageOneOf14.md)
  - [WsMessageOneOf15](docs/WsMessageOneOf15.md)
+ - [WsMessageOneOf16](docs/WsMessageOneOf16.md)
+ - [WsMessageOneOf17](docs/WsMessageOneOf17.md)
  - [WsMessageOneOf2](docs/WsMessageOneOf2.md)
  - [WsMessageOneOf3](docs/WsMessageOneOf3.md)
  - [WsMessageOneOf4](docs/WsMessageOneOf4.md)

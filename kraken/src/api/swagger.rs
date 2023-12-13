@@ -274,6 +274,7 @@ impl Modify for SecurityAddon2 {
         workspace_invitations::FullWorkspaceInvitation,
         workspace_invitations::WorkspaceInvitationList,
         chan::WsMessage,
+        chan::AggregationType,
         chan::CertificateTransparencyEntry,
         modules::attacks::DomainOrNetwork,
     )),

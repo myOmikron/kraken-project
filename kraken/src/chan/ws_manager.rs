@@ -156,6 +156,41 @@ pub enum WsMessage {
         /// The service that was inserted
         service: SimpleService,
     },
+    /// Global tags were updated on an aggregation
+    UpdatedGlobalTags {
+        /// The workspace the aggregation is related to
+        workspace: Uuid,
+        /// The type of the aggregation
+        aggregation: AggregationType,
+        /// The uuid of the model
+        uuid: Uuid,
+        /// The updated list of tags
+        tags: Vec<Uuid>,
+    },
+    /// Workspace tags were updated on an aggregation
+    UpdatedWorkspaceTags {
+        /// The workspace the aggregation is related to
+        workspace: Uuid,
+        /// The type of the aggregation
+        aggregation: AggregationType,
+        /// The uuid of the model
+        uuid: Uuid,
+        /// The updated list of tags
+        tags: Vec<Uuid>,
+    },
+}
+
+/// The different types of aggregations
+#[derive(ToSchema, Serialize, Deserialize, Debug, Clone)]
+pub enum AggregationType {
+    /// The domain model
+    Domain,
+    /// The host model
+    Host,
+    /// The service model
+    Service,
+    /// The port model
+    Port,
 }
 
 /// A channel to send events to the ws manager

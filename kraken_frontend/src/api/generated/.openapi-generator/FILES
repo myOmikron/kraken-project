@@ -22,6 +22,7 @@ apis/WorkspaceTagsApi.ts
 apis/WorkspacesApi.ts
 apis/index.ts
 index.ts
+models/AggregationType.ts
 models/ApiErrorResponse.ts
 models/ApiStatusCode.ts
 models/AttackType.ts
@@ -206,6 +207,8 @@ models/WsMessageOneOf12.ts
 models/WsMessageOneOf13.ts
 models/WsMessageOneOf14.ts
 models/WsMessageOneOf15.ts
+models/WsMessageOneOf16.ts
+models/WsMessageOneOf17.ts
 models/WsMessageOneOf2.ts
 models/WsMessageOneOf3.ts
 models/WsMessageOneOf4.ts

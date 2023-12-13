@@ -22,7 +22,7 @@ use crate::api::handler::{
     get_page_params, ApiError, ApiResult, HostResultsPage, PageParams, PathUuid, SimpleTag,
     TagType, UuidResponse,
 };
-use crate::chan::GLOBAL;
+use crate::chan::{AggregationType, WsMessage, GLOBAL};
 use crate::models::{
     AggregationSource, AggregationTable, GlobalTag, Host, HostGlobalTag, HostWorkspaceTag,
     ManualHost, ManualHostCertainty, OsType, Workspace, WorkspaceTag,
@@ -372,7 +372,7 @@ pub async fn update_host(
         .await?
         .ok_or(ApiError::InvalidUuid)?;
 
-    if let Some(global_tags) = req.global_tags {
+    if let Some(global_tags) = &req.global_tags {
         GlobalTag::exist_all(&mut tx, global_tags.iter().copied())
             .await?
             .ok_or(ApiError::InvalidUuid)?;
@@ -390,7 +390,7 @@ pub async fn update_host(
                         .map(|x| HostGlobalTag {
                             uuid: Uuid::new_v4(),
                             host: ForeignModelByField::Key(path.h_uuid),
-                            global_tag: ForeignModelByField::Key(x),
+                            global_tag: ForeignModelByField::Key(*x),
                         })
                         .collect::<Vec<_>>(),
                 )
@@ -398,7 +398,7 @@ pub async fn update_host(
         }
     }
 
-    if let Some(workspace_tags) = req.workspace_tags {
+    if let Some(workspace_tags) = &req.workspace_tags {
         WorkspaceTag::exist_all(&mut tx, workspace_tags.iter().copied())
             .await?
             .ok_or(ApiError::InvalidUuid)?;
@@ -416,7 +416,7 @@ pub async fn update_host(
                         .map(|x| HostWorkspaceTag {
                             uuid: Uuid::new_v4(),
                             host: ForeignModelByField::Key(path.h_uuid),
-                            workspace_tag: ForeignModelByField::Key(x),
+                            workspace_tag: ForeignModelByField::Key(*x),
                         })
                         .collect::<Vec<_>>(),
                 )
@@ -433,6 +433,36 @@ pub async fn update_host(
     }
 
     tx.commit().await?;
+
+    // Send WS messages
+    if let Some(tags) = req.workspace_tags {
+        GLOBAL
+            .ws
+            .message_workspace(
+                path.w_uuid,
+                WsMessage::UpdatedWorkspaceTags {
+                    uuid: path.h_uuid,
+                    workspace: path.w_uuid,
+                    aggregation: AggregationType::Host,
+                    tags,
+                },
+            )
+            .await;
+    }
+    if let Some(tags) = req.global_tags {
+        GLOBAL
+            .ws
+            .message_workspace(
+                path.w_uuid,
+                WsMessage::UpdatedGlobalTags {
+                    uuid: path.h_uuid,
+                    workspace: path.w_uuid,
+                    aggregation: AggregationType::Host,
+                    tags,
+                },
+            )
+            .await;
+    }
 
     Ok(HttpResponse::Ok().finish())
 }

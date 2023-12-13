@@ -9,6 +9,14 @@ description = "The core component of kraken-project"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+path = "./src/main.rs"
+name = "kraken"
+
+[lib]
+path = "./src/lib.rs"
+name = "kraken"
+
 [dependencies]
 # Webframework
 actix-web = { version = "~4" }

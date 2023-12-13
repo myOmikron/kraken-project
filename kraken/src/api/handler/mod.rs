@@ -144,7 +144,7 @@ pub enum TagType {
 }
 
 /// A simple tag
-#[derive(Deserialize, Serialize, Debug, ToSchema)]
+#[derive(Deserialize, Serialize, Debug, ToSchema, Clone)]
 pub struct SimpleTag {
     pub(crate) uuid: Uuid,
     pub(crate) name: String,

@@ -53,6 +53,7 @@ from kraken_sdk.exceptions import ApiAttributeError
 from kraken_sdk.exceptions import ApiException
 
 # import models into sdk package
+from kraken_sdk.models.aggregation_type import AggregationType
 from kraken_sdk.models.api_error_response import ApiErrorResponse
 from kraken_sdk.models.api_status_code import ApiStatusCode
 from kraken_sdk.models.attack_type import AttackType
@@ -230,6 +231,8 @@ from kraken_sdk.models.ws_message_one_of12 import WsMessageOneOf12
 from kraken_sdk.models.ws_message_one_of13 import WsMessageOneOf13
 from kraken_sdk.models.ws_message_one_of14 import WsMessageOneOf14
 from kraken_sdk.models.ws_message_one_of15 import WsMessageOneOf15
+from kraken_sdk.models.ws_message_one_of16 import WsMessageOneOf16
+from kraken_sdk.models.ws_message_one_of17 import WsMessageOneOf17
 from kraken_sdk.models.ws_message_one_of2 import WsMessageOneOf2
 from kraken_sdk.models.ws_message_one_of3 import WsMessageOneOf3
 from kraken_sdk.models.ws_message_one_of4 import WsMessageOneOf4

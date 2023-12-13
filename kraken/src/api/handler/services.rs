@@ -23,7 +23,7 @@ use crate::api::handler::{
     get_page_params, ApiError, ApiResult, PageParams, PathUuid, ServiceResultsPage, SimpleTag,
     TagType, UuidResponse,
 };
-use crate::chan::GLOBAL;
+use crate::chan::{AggregationType, WsMessage, GLOBAL};
 use crate::models::{
     AggregationSource, AggregationTable, GlobalTag, Host, ManualService, ManualServiceCertainty,
     Port, Service, ServiceCertainty, ServiceGlobalTag, ServiceWorkspaceTag, Workspace,
@@ -496,7 +496,7 @@ pub async fn update_service(
         .await?
         .ok_or(ApiError::InvalidUuid)?;
 
-    if let Some(global_tags) = req.global_tags {
+    if let Some(global_tags) = &req.global_tags {
         GlobalTag::exist_all(&mut tx, global_tags.iter().copied())
             .await?
             .ok_or(ApiError::InvalidUuid)?;
@@ -514,7 +514,7 @@ pub async fn update_service(
                         .map(|x| ServiceGlobalTag {
                             uuid: Uuid::new_v4(),
                             service: ForeignModelByField::Key(path.s_uuid),
-                            global_tag: ForeignModelByField::Key(x),
+                            global_tag: ForeignModelByField::Key(*x),
                         })
                         .collect::<Vec<_>>(),
                 )
@@ -522,7 +522,7 @@ pub async fn update_service(
         }
     }
 
-    if let Some(workspace_tags) = req.workspace_tags {
+    if let Some(workspace_tags) = &req.workspace_tags {
         WorkspaceTag::exist_all(&mut tx, workspace_tags.iter().copied())
             .await?
             .ok_or(ApiError::InvalidUuid)?;
@@ -540,7 +540,7 @@ pub async fn update_service(
                         .map(|x| ServiceWorkspaceTag {
                             uuid: Uuid::new_v4(),
                             service: ForeignModelByField::Key(path.s_uuid),
-                            workspace_tag: ForeignModelByField::Key(x),
+                            workspace_tag: ForeignModelByField::Key(*x),
                         })
                         .collect::<Vec<_>>(),
                 )
@@ -557,6 +557,36 @@ pub async fn update_service(
     }
 
     tx.commit().await?;
+
+    // Send WS messages
+    if let Some(tags) = req.workspace_tags {
+        GLOBAL
+            .ws
+            .message_workspace(
+                path.w_uuid,
+                WsMessage::UpdatedWorkspaceTags {
+                    uuid: path.s_uuid,
+                    workspace: path.w_uuid,
+                    aggregation: AggregationType::Service,
+                    tags,
+                },
+            )
+            .await;
+    }
+    if let Some(tags) = req.global_tags {
+        GLOBAL
+            .ws
+            .message_workspace(
+                path.w_uuid,
+                WsMessage::UpdatedGlobalTags {
+                    uuid: path.s_uuid,
+                    workspace: path.w_uuid,
+                    aggregation: AggregationType::Service,
+                    tags,
+                },
+            )
+            .await;
+    }
 
     Ok(HttpResponse::Ok().finish())
 }

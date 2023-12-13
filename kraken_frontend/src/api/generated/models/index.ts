@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './AggregationType';
 export * from './ApiErrorResponse';
 export * from './ApiStatusCode';
 export * from './AttackType';
@@ -184,6 +185,8 @@ export * from './WsMessageOneOf12';
 export * from './WsMessageOneOf13';
 export * from './WsMessageOneOf14';
 export * from './WsMessageOneOf15';
+export * from './WsMessageOneOf16';
+export * from './WsMessageOneOf17';
 export * from './WsMessageOneOf2';
 export * from './WsMessageOneOf3';
 export * from './WsMessageOneOf4';

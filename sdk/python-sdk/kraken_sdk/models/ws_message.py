@@ -29,6 +29,8 @@ from kraken_sdk.models.ws_message_one_of12 import WsMessageOneOf12
 from kraken_sdk.models.ws_message_one_of13 import WsMessageOneOf13
 from kraken_sdk.models.ws_message_one_of14 import WsMessageOneOf14
 from kraken_sdk.models.ws_message_one_of15 import WsMessageOneOf15
+from kraken_sdk.models.ws_message_one_of16 import WsMessageOneOf16
+from kraken_sdk.models.ws_message_one_of17 import WsMessageOneOf17
 from kraken_sdk.models.ws_message_one_of2 import WsMessageOneOf2
 from kraken_sdk.models.ws_message_one_of3 import WsMessageOneOf3
 from kraken_sdk.models.ws_message_one_of4 import WsMessageOneOf4
@@ -45,7 +47,7 @@ try:
 except ImportError:
     from typing_extensions import Self
 
-WSMESSAGE_ONE_OF_SCHEMAS = ["WsMessageOneOf", "WsMessageOneOf1", "WsMessageOneOf10", "WsMessageOneOf11", "WsMessageOneOf12", "WsMessageOneOf13", "WsMessageOneOf14", "WsMessageOneOf15", "WsMessageOneOf2", "WsMessageOneOf3", "WsMessageOneOf4", "WsMessageOneOf5", "WsMessageOneOf6", "WsMessageOneOf7", "WsMessageOneOf8", "WsMessageOneOf9"]
+WSMESSAGE_ONE_OF_SCHEMAS = ["WsMessageOneOf", "WsMessageOneOf1", "WsMessageOneOf10", "WsMessageOneOf11", "WsMessageOneOf12", "WsMessageOneOf13", "WsMessageOneOf14", "WsMessageOneOf15", "WsMessageOneOf16", "WsMessageOneOf17", "WsMessageOneOf2", "WsMessageOneOf3", "WsMessageOneOf4", "WsMessageOneOf5", "WsMessageOneOf6", "WsMessageOneOf7", "WsMessageOneOf8", "WsMessageOneOf9"]
 
 class WsMessage(BaseModel):
     """
@@ -83,8 +85,12 @@ class WsMessage(BaseModel):
     oneof_schema_15_validator: Optional[WsMessageOneOf14] = None
     # data type: WsMessageOneOf15
     oneof_schema_16_validator: Optional[WsMessageOneOf15] = None
-    actual_instance: Optional[Union[WsMessageOneOf, WsMessageOneOf1, WsMessageOneOf10, WsMessageOneOf11, WsMessageOneOf12, WsMessageOneOf13, WsMessageOneOf14, WsMessageOneOf15, WsMessageOneOf2, WsMessageOneOf3, WsMessageOneOf4, WsMessageOneOf5, WsMessageOneOf6, WsMessageOneOf7, WsMessageOneOf8, WsMessageOneOf9]] = None
-    one_of_schemas: List[str] = Literal["WsMessageOneOf", "WsMessageOneOf1", "WsMessageOneOf10", "WsMessageOneOf11", "WsMessageOneOf12", "WsMessageOneOf13", "WsMessageOneOf14", "WsMessageOneOf15", "WsMessageOneOf2", "WsMessageOneOf3", "WsMessageOneOf4", "WsMessageOneOf5", "WsMessageOneOf6", "WsMessageOneOf7", "WsMessageOneOf8", "WsMessageOneOf9"]
+    # data type: WsMessageOneOf16
+    oneof_schema_17_validator: Optional[WsMessageOneOf16] = None
+    # data type: WsMessageOneOf17
+    oneof_schema_18_validator: Optional[WsMessageOneOf17] = None
+    actual_instance: Optional[Union[WsMessageOneOf, WsMessageOneOf1, WsMessageOneOf10, WsMessageOneOf11, WsMessageOneOf12, WsMessageOneOf13, WsMessageOneOf14, WsMessageOneOf15, WsMessageOneOf16, WsMessageOneOf17, WsMessageOneOf2, WsMessageOneOf3, WsMessageOneOf4, WsMessageOneOf5, WsMessageOneOf6, WsMessageOneOf7, WsMessageOneOf8, WsMessageOneOf9]] = None
+    one_of_schemas: List[str] = Literal["WsMessageOneOf", "WsMessageOneOf1", "WsMessageOneOf10", "WsMessageOneOf11", "WsMessageOneOf12", "WsMessageOneOf13", "WsMessageOneOf14", "WsMessageOneOf15", "WsMessageOneOf16", "WsMessageOneOf17", "WsMessageOneOf2", "WsMessageOneOf3", "WsMessageOneOf4", "WsMessageOneOf5", "WsMessageOneOf6", "WsMessageOneOf7", "WsMessageOneOf8", "WsMessageOneOf9"]
 
     model_config = {
         "validate_assignment": True
@@ -189,12 +195,22 @@ class WsMessage(BaseModel):
             error_messages.append(f"Error! Input type `{type(v)}` is not `WsMessageOneOf15`")
         else:
             match += 1
+        # validate data type: WsMessageOneOf16
+        if not isinstance(v, WsMessageOneOf16):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `WsMessageOneOf16`")
+        else:
+            match += 1
+        # validate data type: WsMessageOneOf17
+        if not isinstance(v, WsMessageOneOf17):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `WsMessageOneOf17`")
+        else:
+            match += 1
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when setting `actual_instance` in WsMessage with oneOf schemas: WsMessageOneOf, WsMessageOneOf1, WsMessageOneOf10, WsMessageOneOf11, WsMessageOneOf12, WsMessageOneOf13, WsMessageOneOf14, WsMessageOneOf15, WsMessageOneOf2, WsMessageOneOf3, WsMessageOneOf4, WsMessageOneOf5, WsMessageOneOf6, WsMessageOneOf7, WsMessageOneOf8, WsMessageOneOf9. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when setting `actual_instance` in WsMessage with oneOf schemas: WsMessageOneOf, WsMessageOneOf1, WsMessageOneOf10, WsMessageOneOf11, WsMessageOneOf12, WsMessageOneOf13, WsMessageOneOf14, WsMessageOneOf15, WsMessageOneOf16, WsMessageOneOf17, WsMessageOneOf2, WsMessageOneOf3, WsMessageOneOf4, WsMessageOneOf5, WsMessageOneOf6, WsMessageOneOf7, WsMessageOneOf8, WsMessageOneOf9. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when setting `actual_instance` in WsMessage with oneOf schemas: WsMessageOneOf, WsMessageOneOf1, WsMessageOneOf10, WsMessageOneOf11, WsMessageOneOf12, WsMessageOneOf13, WsMessageOneOf14, WsMessageOneOf15, WsMessageOneOf2, WsMessageOneOf3, WsMessageOneOf4, WsMessageOneOf5, WsMessageOneOf6, WsMessageOneOf7, WsMessageOneOf8, WsMessageOneOf9. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting `actual_instance` in WsMessage with oneOf schemas: WsMessageOneOf, WsMessageOneOf1, WsMessageOneOf10, WsMessageOneOf11, WsMessageOneOf12, WsMessageOneOf13, WsMessageOneOf14, WsMessageOneOf15, WsMessageOneOf16, WsMessageOneOf17, WsMessageOneOf2, WsMessageOneOf3, WsMessageOneOf4, WsMessageOneOf5, WsMessageOneOf6, WsMessageOneOf7, WsMessageOneOf8, WsMessageOneOf9. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -305,13 +321,25 @@ class WsMessage(BaseModel):
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
+        # deserialize data into WsMessageOneOf16
+        try:
+            instance.actual_instance = WsMessageOneOf16.from_json(json_str)
+            match += 1
+        except (ValidationError, ValueError) as e:
+            error_messages.append(str(e))
+        # deserialize data into WsMessageOneOf17
+        try:
+            instance.actual_instance = WsMessageOneOf17.from_json(json_str)
+            match += 1
+        except (ValidationError, ValueError) as e:
+            error_messages.append(str(e))
 
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when deserializing the JSON string into WsMessage with oneOf schemas: WsMessageOneOf, WsMessageOneOf1, WsMessageOneOf10, WsMessageOneOf11, WsMessageOneOf12, WsMessageOneOf13, WsMessageOneOf14, WsMessageOneOf15, WsMessageOneOf2, WsMessageOneOf3, WsMessageOneOf4, WsMessageOneOf5, WsMessageOneOf6, WsMessageOneOf7, WsMessageOneOf8, WsMessageOneOf9. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when deserializing the JSON string into WsMessage with oneOf schemas: WsMessageOneOf, WsMessageOneOf1, WsMessageOneOf10, WsMessageOneOf11, WsMessageOneOf12, WsMessageOneOf13, WsMessageOneOf14, WsMessageOneOf15, WsMessageOneOf16, WsMessageOneOf17, WsMessageOneOf2, WsMessageOneOf3, WsMessageOneOf4, WsMessageOneOf5, WsMessageOneOf6, WsMessageOneOf7, WsMessageOneOf8, WsMessageOneOf9. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into WsMessage with oneOf schemas: WsMessageOneOf, WsMessageOneOf1, WsMessageOneOf10, WsMessageOneOf11, WsMessageOneOf12, WsMessageOneOf13, WsMessageOneOf14, WsMessageOneOf15, WsMessageOneOf2, WsMessageOneOf3, WsMessageOneOf4, WsMessageOneOf5, WsMessageOneOf6, WsMessageOneOf7, WsMessageOneOf8, WsMessageOneOf9. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into WsMessage with oneOf schemas: WsMessageOneOf, WsMessageOneOf1, WsMessageOneOf10, WsMessageOneOf11, WsMessageOneOf12, WsMessageOneOf13, WsMessageOneOf14, WsMessageOneOf15, WsMessageOneOf16, WsMessageOneOf17, WsMessageOneOf2, WsMessageOneOf3, WsMessageOneOf4, WsMessageOneOf5, WsMessageOneOf6, WsMessageOneOf7, WsMessageOneOf8, WsMessageOneOf9. Details: " + ", ".join(error_messages))
         else:
             return instance
 

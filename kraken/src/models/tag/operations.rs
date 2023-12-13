@@ -11,7 +11,7 @@ use super::{GlobalTag, Workspace, WorkspaceTag};
 use crate::api::handler::ApiError;
 
 /// Color value
-#[derive(Deserialize, Serialize, Debug, ToSchema)]
+#[derive(Deserialize, Serialize, Debug, ToSchema, Copy, Clone)]
 pub struct Color {
     /// Red value
     pub r: u8,
