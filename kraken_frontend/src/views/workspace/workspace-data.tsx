@@ -2,7 +2,7 @@ import React from "react";
 import "../../styling/workspace-data.css";
 import { StatelessWorkspaceTable, useTable } from "./components/workspace-table";
 import { Api } from "../../api/api";
-import { FullDomain, FullHost, FullPort, FullService } from "../../api/generated";
+import { FullDomain, FullHost, FullPort, FullService, SimpleTag, TagType } from "../../api/generated";
 import { WorkspaceDataHostDetails } from "./workspace-data/workspace-data-host-details";
 import { WorkspaceDataServiceDetails } from "./workspace-data/workspace-data-service-details";
 import { WorkspaceDataPortDetails } from "./workspace-data/workspace-data-port-details";
@@ -18,8 +18,10 @@ import { WORKSPACE_CONTEXT } from "./workspace";
 import { ROUTES } from "../../routes";
 import AttackIcon from "../../svg/attack";
 import FilterInput from "./components/filter-input";
-import { ObjectFns } from "../../utils/helper";
+import { handleApiError, ObjectFns } from "../../utils/helper";
 import Checkbox from "../../components/checkbox";
+import EditableTags from "./components/editable-tags";
+import { toast } from "react-toastify";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations" };
@@ -468,6 +470,15 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                           Unselect all services
                                       </button>,
                                   ]}
+                            <MultiTagger
+                                selectedUuids={selectedUuids}
+                                onUpdate={() => {
+                                    if (!ObjectFns.isEmpty(selectedUuids.domains)) domainsTable.reload();
+                                    if (!ObjectFns.isEmpty(selectedUuids.hosts)) hostsTable.reload();
+                                    if (!ObjectFns.isEmpty(selectedUuids.ports)) portsTable.reload();
+                                    if (!ObjectFns.isEmpty(selectedUuids.services)) servicesTable.reload();
+                                }}
+                            />
                         </div>
                     )}
                 </div>
@@ -532,4 +543,96 @@ export function SelectButton(props: SelectButtonProps) {
             }}
         />
     );
+}
+
+type MultiTaggerProps = {
+    selectedUuids: SelectedUuids;
+    onUpdate: () => void;
+};
+export function MultiTagger(props: MultiTaggerProps) {
+    const { selectedUuids, onUpdate } = props;
+    const {
+        workspace: { uuid: workspace },
+    } = React.useContext(WORKSPACE_CONTEXT);
+    const [newTags, setNewTags] = React.useState<Array<SimpleTag>>([]);
+    return (
+        <div>
+            <EditableTags workspace={workspace} tags={newTags} onChange={setNewTags} />
+            <button
+                type={"button"}
+                className={"button"}
+                onClick={async () => {
+                    await Promise.all(
+                        Object.keys(selectedUuids.domains).map((uuid) =>
+                            Api.workspaces.domains.get(workspace, uuid).then((result) => {
+                                let promise = null;
+                                handleApiError(result, ({ tags }) => {
+                                    promise = Api.workspaces.domains
+                                        .update(workspace, uuid, constructUpdate(tags, newTags))
+                                        .then(handleApiError);
+                                });
+                                return promise;
+                            }),
+                        ),
+                    );
+                    await Promise.all(
+                        Object.keys(selectedUuids.hosts).map((uuid) =>
+                            Api.workspaces.hosts.get(workspace, uuid).then((result) => {
+                                let promise = null;
+                                handleApiError(result, ({ tags }) => {
+                                    promise = Api.workspaces.hosts
+                                        .update(workspace, uuid, constructUpdate(tags, newTags))
+                                        .then(handleApiError);
+                                });
+                                return promise;
+                            }),
+                        ),
+                    );
+                    await Promise.all(
+                        Object.keys(selectedUuids.ports).map((uuid) =>
+                            Api.workspaces.ports.get(workspace, uuid).then((result) => {
+                                let promise = null;
+                                handleApiError(result, ({ tags }) => {
+                                    promise = Api.workspaces.ports
+                                        .update(workspace, uuid, constructUpdate(tags, newTags))
+                                        .then(handleApiError);
+                                });
+                                return promise;
+                            }),
+                        ),
+                    );
+                    await Promise.all(
+                        Object.keys(selectedUuids.services).map((uuid) =>
+                            Api.workspaces.services.get(workspace, uuid).then((result) => {
+                                let promise = null;
+                                handleApiError(result, ({ tags }) => {
+                                    promise = Api.workspaces.services
+                                        .update(workspace, uuid, constructUpdate(tags, newTags))
+                                        .then(handleApiError);
+                                });
+                                return promise;
+                            }),
+                        ),
+                    );
+                    onUpdate();
+                }}
+            >
+                Add tags
+            </button>
+        </div>
+    );
+}
+
+function constructUpdate(tags: Array<SimpleTag>, newTags: Array<SimpleTag>) {
+    const workspaceTags = [
+        ...new Set( // Use Set to eliminate duplicates
+            [...tags, ...newTags].filter(({ tagType }) => tagType === TagType.Workspace).map(({ uuid }) => uuid),
+        ).keys(),
+    ];
+    const globalTags = [
+        ...new Set( // Use Set to eliminate duplicates
+            [...tags, ...newTags].filter(({ tagType }) => tagType === TagType.Global).map(({ uuid }) => uuid),
+        ).keys(),
+    ];
+    return { workspaceTags, globalTags };
 }
