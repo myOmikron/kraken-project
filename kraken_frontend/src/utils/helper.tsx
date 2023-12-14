@@ -23,6 +23,21 @@ export namespace ObjectFns {
         // @ts-ignore
         return Object.entries(obj);
     }
+
+    export function isEmpty(obj: Record<string, any>): boolean {
+        for (const key in obj) {
+            return false;
+        }
+        return true;
+    }
+
+    export function len(obj: Record<string, any>): number {
+        let len = 0;
+        for (const _ in obj) {
+            len += 1;
+        }
+        return len;
+    }
 }
 
 /**
