@@ -1,10 +1,11 @@
 use rorm::prelude::*;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::{User, Workspace};
 
+#[cfg(feature = "bin")]
 mod operations;
 
 /// An registered application which may perform oauth requests
@@ -51,11 +52,10 @@ pub struct OAuthDecision {
 }
 
 /// Action what to do with new oauth requests
-#[derive(DbEnum, ToSchema, Serialize)]
+#[derive(DbEnum, ToSchema, Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum OAuthDecisionAction {
     /// Auto accept new requests
     Accept,
-
     /// Auto deny new requests
     Deny,
 }

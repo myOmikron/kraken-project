@@ -3,8 +3,8 @@ use rorm::prelude::*;
 use rorm::{and, insert, query};
 use thiserror::Error;
 use uuid::Uuid;
+use crate::api::handler::common::error::ApiError;
 
-use crate::api::handler::ApiError;
 use crate::models::{OAuthDecision, OAuthDecisionAction, Workspace};
 use crate::modules::oauth::OAuthScope;
 

@@ -6,8 +6,8 @@ use futures::future::LocalBoxFuture;
 use rorm::{query, FieldAccess, Model};
 use uuid::Uuid;
 
-use crate::api::handler::ApiError;
-use crate::chan::GLOBAL;
+use crate::api::handler::common::error::ApiError;
+use crate::chan::global::GLOBAL;
 use crate::models::LocalUserKey;
 
 pub(crate) struct AuthenticationRequired;

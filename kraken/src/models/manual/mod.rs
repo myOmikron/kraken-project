@@ -11,6 +11,7 @@ use uuid::Uuid;
 
 use crate::models::{OsType, PortProtocol, User, Workspace};
 
+#[cfg(feature = "bin")]
 mod operations;
 
 #[derive(Model)]

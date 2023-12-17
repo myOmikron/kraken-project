@@ -6,6 +6,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 use webauthn_rs::prelude::Passkey;
 
+#[cfg(feature = "bin")]
 mod operations;
 
 /// The permission of a user

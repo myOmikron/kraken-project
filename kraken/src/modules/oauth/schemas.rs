@@ -9,7 +9,7 @@ use uuid::Uuid;
 /// The client constructs the request URI by adding the following
 /// parameters to the query component of the authorization endpoint URI
 /// using the "application/x-www-form-urlencoded" format
-#[derive(Deserialize, IntoParams)]
+#[derive(Deserialize, Serialize, IntoParams, Debug, Clone)]
 pub struct AuthRequest {
     /// Value MUST be set to "code".
     pub response_type: String,
@@ -44,7 +44,7 @@ pub struct AuthRequest {
 }
 
 /// The method of the code challenge
-#[derive(Deserialize, Default, Copy, Clone, Debug, ToSchema)]
+#[derive(Deserialize, Serialize, ToSchema, Debug, Default, Copy, Clone)]
 pub enum CodeChallengeMethod {
     /// Sha256
     #[default]
@@ -55,14 +55,14 @@ pub enum CodeChallengeMethod {
     Plain,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub(crate) struct AuthError {
     pub error: AuthErrorType,
     pub state: Option<String>,
     pub error_description: Option<&'static str>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
 #[serde(rename_all = "snake_case")]
 pub(crate) enum AuthErrorType {
     /// The request is missing a required parameter, includes an

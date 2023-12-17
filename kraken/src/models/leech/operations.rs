@@ -4,9 +4,10 @@ use rorm::db::Executor;
 use rorm::prelude::*;
 use rorm::{insert, query};
 use thiserror::Error;
+use url::Url;
 use uuid::Uuid;
 
-use crate::api::handler::ApiError;
+use crate::api::handler::common::error::ApiError;
 use crate::models::Leech;
 use crate::modules::uri::check_leech_address;
 
@@ -53,7 +54,7 @@ impl Leech {
     pub async fn insert(
         executor: impl Executor<'_>,
         name: String,
-        address: String,
+        address: Url,
         description: Option<String>,
     ) -> Result<Uuid, InsertLeechError> {
         let mut guard = executor.ensure_transaction().await?;
@@ -63,6 +64,9 @@ impl Leech {
         if !check_leech_address(&address) {
             return Err(InsertLeechError::InvalidAddress);
         }
+
+        // Convert address to string
+        let address = address.to_string();
 
         if query!(guard.get_transaction(), Leech)
             .condition(Leech::F.address.equals(&address))

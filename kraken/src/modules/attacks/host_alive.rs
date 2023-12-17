@@ -1,4 +1,6 @@
-use crate::chan::{LeechClient, WsMessage, GLOBAL};
+use crate::chan::global::GLOBAL;
+use crate::chan::leech_manager::LeechClient;
+use crate::chan::ws_manager::schema::WsMessage;
 use crate::modules::attack_results::store_host_alive_check_result;
 use crate::modules::attacks::{AttackContext, AttackError, DomainOrNetwork, HostAliveParams};
 use crate::rpc::rpc_definitions::{HostsAliveRequest, HostsAliveResponse};

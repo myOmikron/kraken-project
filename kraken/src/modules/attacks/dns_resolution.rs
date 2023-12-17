@@ -1,7 +1,9 @@
 use std::future::Future;
 use std::net::{Ipv4Addr, Ipv6Addr};
 
-use crate::chan::{LeechClient, WsMessage, GLOBAL};
+use crate::chan::global::GLOBAL;
+use crate::chan::leech_manager::LeechClient;
+use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::DnsRecordType;
 use crate::modules::attack_results::store_dns_resolution_result;
 use crate::modules::attacks::{AttackContext, AttackError, DnsResolutionParams};

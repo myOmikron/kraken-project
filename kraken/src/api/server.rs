@@ -1,4 +1,3 @@
-use std::fmt::{Display, Formatter};
 use std::io;
 
 use actix_toolbox::tb_middleware::{
@@ -12,6 +11,7 @@ use actix_web::web::{scope, Data, JsonConfig, PayloadConfig};
 use actix_web::{App, HttpServer};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
+use thiserror::Error;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 use webauthn_rs::prelude::{Url, WebauthnError};
@@ -26,13 +26,14 @@ use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
 };
 use crate::api::swagger::{ExternalApi, FrontendApi};
-use crate::chan::GLOBAL;
+use crate::chan::global::GLOBAL;
 use crate::config::Config;
 use crate::modules::oauth::OauthManager;
 
 const ORIGIN_NAME: &str = "Kraken";
 
-pub(crate) async fn start_server(config: &Config) -> Result<(), StartServerError> {
+/// Start the web server
+pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
     let key = Key::try_from(
         BASE64_STANDARD
             .decode(&config.server.secret_key)?
@@ -82,124 +83,124 @@ pub(crate) async fn start_server(config: &Config) -> Result<(), StartServerError
             ]))
             .service(
                 scope("/api/v1/auth")
-                    .service(auth::test)
-                    .service(auth::login)
-                    .service(auth::logout)
-                    .service(auth::start_register)
-                    .service(auth::finish_register)
-                    .service(auth::start_auth)
-                    .service(auth::finish_auth),
+                    .service(auth::handler::test)
+                    .service(auth::handler::login)
+                    .service(auth::handler::logout)
+                    .service(auth::handler::start_register)
+                    .service(auth::handler::finish_register)
+                    .service(auth::handler::start_auth)
+                    .service(auth::handler::finish_auth),
             )
             .service(
                 scope("/api/v1/oauth")
-                    .service(oauth::info)
-                    .service(oauth::auth)
-                    .service(oauth::accept)
-                    .service(oauth::deny),
+                    .service(oauth::handler::info)
+                    .service(oauth::handler::auth)
+                    .service(oauth::handler::accept)
+                    .service(oauth::handler::deny),
             )
-            .service(scope("/api/v1/oauth-server").service(oauth::token))
-            .service(scope("/api/v1/export").service(data_export::export_workspace))
+            .service(scope("/api/v1/oauth-server").service(oauth::handler::token))
+            .service(scope("/api/v1/export").service(data_export::handler::export_workspace))
             .service(
                 scope("/api/v1/admin")
                     .wrap(AdminRequired)
-                    .service(leeches::get_leech)
-                    .service(leeches::get_all_leeches)
-                    .service(leeches::create_leech)
-                    .service(leeches::delete_leech)
-                    .service(leeches::update_leech)
-                    .service(leeches::gen_leech_config)
-                    .service(users::create_user)
-                    .service(users::delete_user)
-                    .service(users::get_user)
-                    .service(users::get_all_users_admin)
-                    .service(workspaces::get_workspace_admin)
-                    .service(workspaces::get_all_workspaces_admin)
-                    .service(oauth_applications::create_oauth_app)
-                    .service(oauth_applications::get_all_oauth_apps)
-                    .service(oauth_applications::get_oauth_app)
-                    .service(oauth_applications::update_oauth_app)
-                    .service(oauth_applications::delete_oauth_app)
-                    .service(settings::get_settings)
-                    .service(settings::update_settings)
-                    .service(global_tags::create_global_tag)
-                    .service(global_tags::update_global_tag)
-                    .service(global_tags::delete_global_tag)
-                    .service(wordlists::create_wordlist_admin)
-                    .service(wordlists::get_all_wordlists_admin)
-                    .service(wordlists::update_wordlist_admin)
-                    .service(wordlists::delete_wordlist_admin),
+                    .service(leeches::handler_admin::get_leech)
+                    .service(leeches::handler_admin::get_all_leeches)
+                    .service(leeches::handler_admin::create_leech)
+                    .service(leeches::handler_admin::delete_leech)
+                    .service(leeches::handler_admin::update_leech)
+                    .service(leeches::handler_admin::gen_leech_config)
+                    .service(users::handler_admin::create_user)
+                    .service(users::handler_admin::delete_user)
+                    .service(users::handler_admin::get_user)
+                    .service(users::handler_admin::get_all_users_admin)
+                    .service(workspaces::handler_admin::get_workspace_admin)
+                    .service(workspaces::handler_admin::get_all_workspaces_admin)
+                    .service(oauth_applications::handler_admin::create_oauth_app)
+                    .service(oauth_applications::handler_admin::get_all_oauth_apps)
+                    .service(oauth_applications::handler_admin::get_oauth_app)
+                    .service(oauth_applications::handler_admin::update_oauth_app)
+                    .service(oauth_applications::handler_admin::delete_oauth_app)
+                    .service(settings::handler_admin::get_settings)
+                    .service(settings::handler_admin::update_settings)
+                    .service(global_tags::handler_admin::create_global_tag)
+                    .service(global_tags::handler_admin::update_global_tag)
+                    .service(global_tags::handler_admin::delete_global_tag)
+                    .service(wordlists::handler_admin::create_wordlist_admin)
+                    .service(wordlists::handler_admin::get_all_wordlists_admin)
+                    .service(wordlists::handler_admin::update_wordlist_admin)
+                    .service(wordlists::handler_admin::delete_wordlist_admin),
             )
             .service(
                 scope("/api/v1")
                     .wrap(AuthenticationRequired)
                     .service(websocket::websocket)
-                    .service(users::get_me)
-                    .service(users::update_me)
-                    .service(users::set_password)
-                    .service(users::get_all_users)
-                    .service(workspaces::get_workspace)
-                    .service(workspaces::get_all_workspaces)
-                    .service(workspaces::create_workspace)
-                    .service(workspaces::delete_workspace)
-                    .service(workspaces::update_workspace)
-                    .service(workspaces::transfer_ownership)
-                    .service(workspaces::create_invitation)
-                    .service(workspaces::retract_invitation)
-                    .service(workspaces::get_all_workspace_invitations)
-                    .service(workspaces::search)
-                    .service(workspaces::get_search_results)
-                    .service(workspaces::get_searches)
-                    .service(attacks::bruteforce_subdomains)
-                    .service(attacks::scan_tcp_ports)
-                    .service(attacks::query_certificate_transparency)
-                    .service(attacks::delete_attack)
-                    .service(attacks::get_attack)
-                    .service(attacks::get_workspace_attacks)
-                    .service(attacks::get_all_attacks)
-                    .service(attacks::hosts_alive_check)
-                    .service(attacks::query_dehashed)
-                    .service(attacks::service_detection)
-                    .service(attacks::dns_resolution)
-                    .service(attack_results::get_bruteforce_subdomains_results)
-                    .service(attack_results::get_tcp_port_scan_results)
-                    .service(attack_results::get_query_certificate_transparency_results)
-                    .service(attack_results::get_query_unhashed_results)
-                    .service(attack_results::get_host_alive_results)
-                    .service(attack_results::get_service_detection_results)
-                    .service(attack_results::get_dns_resolution_results)
-                    .service(api_keys::create_api_key)
-                    .service(api_keys::get_api_keys)
-                    .service(api_keys::update_api_key)
-                    .service(api_keys::delete_api_key)
-                    .service(global_tags::get_all_global_tags)
-                    .service(workspace_tags::create_workspace_tag)
-                    .service(workspace_tags::get_all_workspace_tags)
-                    .service(workspace_tags::update_workspace_tag)
-                    .service(workspace_tags::delete_workspace_tag)
-                    .service(hosts::get_all_hosts)
-                    .service(hosts::get_host)
-                    .service(hosts::create_host)
-                    .service(hosts::update_host)
-                    .service(hosts::get_host_sources)
-                    .service(ports::get_all_ports)
-                    .service(ports::get_port)
-                    .service(ports::create_port)
-                    .service(ports::update_port)
-                    .service(ports::get_port_sources)
-                    .service(services::get_all_services)
-                    .service(services::get_service)
-                    .service(services::create_service)
-                    .service(services::update_service)
-                    .service(services::get_service_sources)
-                    .service(domains::get_all_domains)
-                    .service(domains::get_domain)
-                    .service(domains::create_domain)
-                    .service(domains::update_domain)
-                    .service(domains::get_domain_sources)
-                    .service(wordlists::get_all_wordlists)
-                    .service(workspace_invitations::get_all_invitations)
-                    .service(workspace_invitations::accept_invitation)
-                    .service(workspace_invitations::decline_invitation),
+                    .service(users::handler::get_me)
+                    .service(users::handler::update_me)
+                    .service(users::handler::set_password)
+                    .service(users::handler::get_all_users)
+                    .service(workspaces::handler::get_workspace)
+                    .service(workspaces::handler::get_all_workspaces)
+                    .service(workspaces::handler::create_workspace)
+                    .service(workspaces::handler::delete_workspace)
+                    .service(workspaces::handler::update_workspace)
+                    .service(workspaces::handler::transfer_ownership)
+                    .service(workspaces::handler::create_invitation)
+                    .service(workspaces::handler::retract_invitation)
+                    .service(workspaces::handler::get_all_workspace_invitations)
+                    .service(workspaces::handler::search)
+                    .service(workspaces::handler::get_search_results)
+                    .service(workspaces::handler::get_searches)
+                    .service(attacks::handler::bruteforce_subdomains)
+                    .service(attacks::handler::scan_tcp_ports)
+                    .service(attacks::handler::query_certificate_transparency)
+                    .service(attacks::handler::delete_attack)
+                    .service(attacks::handler::get_attack)
+                    .service(attacks::handler::get_workspace_attacks)
+                    .service(attacks::handler::get_all_attacks)
+                    .service(attacks::handler::hosts_alive_check)
+                    .service(attacks::handler::query_dehashed)
+                    .service(attacks::handler::service_detection)
+                    .service(attacks::handler::dns_resolution)
+                    .service(attack_results::handler::get_bruteforce_subdomains_results)
+                    .service(attack_results::handler::get_tcp_port_scan_results)
+                    .service(attack_results::handler::get_query_certificate_transparency_results)
+                    .service(attack_results::handler::get_query_unhashed_results)
+                    .service(attack_results::handler::get_host_alive_results)
+                    .service(attack_results::handler::get_service_detection_results)
+                    .service(attack_results::handler::get_dns_resolution_results)
+                    .service(api_keys::handler::create_api_key)
+                    .service(api_keys::handler::get_api_keys)
+                    .service(api_keys::handler::update_api_key)
+                    .service(api_keys::handler::delete_api_key)
+                    .service(global_tags::handler::get_all_global_tags)
+                    .service(workspace_tags::handler::create_workspace_tag)
+                    .service(workspace_tags::handler::get_all_workspace_tags)
+                    .service(workspace_tags::handler::update_workspace_tag)
+                    .service(workspace_tags::handler::delete_workspace_tag)
+                    .service(hosts::handler::get_all_hosts)
+                    .service(hosts::handler::get_host)
+                    .service(hosts::handler::create_host)
+                    .service(hosts::handler::update_host)
+                    .service(hosts::handler::get_host_sources)
+                    .service(ports::handler::get_all_ports)
+                    .service(ports::handler::get_port)
+                    .service(ports::handler::create_port)
+                    .service(ports::handler::update_port)
+                    .service(ports::handler::get_port_sources)
+                    .service(services::handler::get_all_services)
+                    .service(services::handler::get_service)
+                    .service(services::handler::create_service)
+                    .service(services::handler::update_service)
+                    .service(services::handler::get_service_sources)
+                    .service(domains::handler::get_all_domains)
+                    .service(domains::handler::get_domain)
+                    .service(domains::handler::create_domain)
+                    .service(domains::handler::update_domain)
+                    .service(domains::handler::get_domain_sources)
+                    .service(wordlists::handler::get_all_wordlists)
+                    .service(workspace_invitations::handler::get_all_invitations)
+                    .service(workspace_invitations::handler::accept_invitation)
+                    .service(workspace_invitations::handler::decline_invitation),
             )
     })
     .bind((
@@ -212,35 +213,17 @@ pub(crate) async fn start_server(config: &Config) -> Result<(), StartServerError
     Ok(())
 }
 
-#[derive(Debug)]
-pub(crate) enum StartServerError {
-    IO(io::Error),
-    Webauthn(WebauthnError),
+#[derive(Debug, Error)]
+pub enum StartServerError {
+    #[error("Error starting server: {0}")]
+    IO(#[from] io::Error),
+    #[error("Error while constructing Webauthn: {0}")]
+    Webauthn(#[from] WebauthnError),
+    #[error("Invalid parameter SecretKey.\nConsider using the subcommand keygen and update your configuration file")]
+    #[from(base64::DecodeError)]
     InvalidSecretKey,
+    #[error("invalid origin specified")]
     InvalidOrigin,
-}
-
-impl Display for StartServerError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            StartServerError::IO(err) => write!(f, "Error starting server: {err}"),
-            StartServerError::Webauthn(err) => {
-                write!(f, "Error while constructing Webauthn: {err}")
-            }
-            StartServerError::InvalidSecretKey => write!(
-                f,
-                "Invalid parameter SecretKey.\
-                    Consider using the subcommand keygen and update your configuration file"
-            ),
-            StartServerError::InvalidOrigin => write!(f, "invalid origin specified"),
-        }
-    }
-}
-
-impl From<io::Error> for StartServerError {
-    fn from(value: io::Error) -> Self {
-        Self::IO(value)
-    }
 }
 
 impl From<base64::DecodeError> for StartServerError {
@@ -249,20 +232,8 @@ impl From<base64::DecodeError> for StartServerError {
     }
 }
 
-impl From<WebauthnError> for StartServerError {
-    fn from(value: WebauthnError) -> Self {
-        Self::Webauthn(value)
-    }
-}
-
 impl From<KeyError> for StartServerError {
     fn from(_value: KeyError) -> Self {
         Self::InvalidSecretKey
-    }
-}
-
-impl From<StartServerError> for String {
-    fn from(value: StartServerError) -> Self {
-        value.to_string()
     }
 }

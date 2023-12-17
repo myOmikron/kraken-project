@@ -11,7 +11,7 @@ use tonic::transport::Server;
 use tonic::{Code, Request, Response, Status, Streaming};
 use uuid::Uuid;
 
-use crate::chan::GLOBAL;
+use crate::chan::global::GLOBAL;
 use crate::config::Config;
 use crate::models::{
     Attack, AttackType, DnsRecordType, InsertAttackError, Leech, LeechApiKey, Workspace,

@@ -4,7 +4,7 @@ use rorm::insert;
 use rorm::prelude::*;
 use uuid::Uuid;
 
-use crate::chan::GLOBAL;
+use crate::chan::global::GLOBAL;
 use crate::models::{
     AggregationSource, AggregationTable, HostCertainty, PortCertainty, PortProtocol, SourceType,
     TcpPortScanResultInsert,

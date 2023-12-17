@@ -4,8 +4,9 @@ use rorm::{and, insert, query, update, FieldAccess, Model, Patch};
 use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;
 
-use crate::api::handler::services::SimpleService;
-use crate::chan::{WsMessage, GLOBAL};
+use crate::api::handler::services::schema::SimpleService;
+use crate::chan::global::GLOBAL;
+use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::{Host, Port, Service, ServiceCertainty, Workspace};
 use crate::modules::aggregator::ServiceAggregationData;
 

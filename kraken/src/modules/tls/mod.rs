@@ -9,15 +9,14 @@ use log::error;
 use rand::distributions::{Distribution, Uniform};
 use rand::thread_rng;
 use rcgen::{Certificate, CertificateParams, KeyPair, RcgenError};
-use serde::Serialize;
 use thiserror::Error;
 use tonic::transport::{
     Certificate as TonicCertificate, ClientTlsConfig, Identity, ServerTlsConfig,
 };
 use url::Url;
-use utoipa::ToSchema;
 
-use crate::api::handler::ApiError;
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::leeches::schema::LeechTlsConfig;
 use crate::modules::tls::cert::CertificateBuilder;
 
 mod cert;
@@ -35,22 +34,6 @@ pub struct TlsManager {
 
     /// The randomly generated fake domain for the kraken to be used for sni
     domain: String,
-}
-
-/// The tls related part of a leech's config
-#[derive(Debug, ToSchema, Serialize)]
-pub struct LeechTlsConfig {
-    /// PEM encoded CA managed by kraken
-    pub ca: String,
-
-    /// PEM encoded certificate
-    pub cert: String,
-
-    /// PEM encoded private key for the certificate
-    pub key: String,
-
-    /// The randomly generated fake domain for the kraken to be used for sni
-    pub sni: String,
 }
 
 impl TlsManager {

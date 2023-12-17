@@ -1,0 +1,682 @@
+use actix_web::web::{Json, Path};
+use actix_web::{delete, get, post, HttpResponse};
+use futures::TryStreamExt;
+use log::debug;
+use rorm::conditions::{Condition, DynamicCollection};
+use rorm::{query, FieldAccess, Model};
+
+use crate::api::extractors::SessionUser;
+use crate::api::handler::attacks::schema::{
+    BruteforceSubdomainsRequest, DnsResolutionRequest, HostsAliveRequest, ListAttacks,
+    QueryCertificateTransparencyRequest, QueryDehashedRequest, ScanTcpPortsRequest,
+    ServiceDetectionRequest, SimpleAttack,
+};
+use crate::api::handler::common::error::{ApiError, ApiResult};
+use crate::api::handler::common::schema::{PathUuid, UuidResponse};
+use crate::api::handler::users::schema::SimpleUser;
+use crate::api::handler::workspaces::schema::SimpleWorkspace;
+use crate::chan::global::GLOBAL;
+use crate::models::{Attack, User, UserPermission, WordList, Workspace, WorkspaceMember};
+use crate::modules::attacks::{
+    start_bruteforce_subdomains, start_certificate_transparency, start_dehashed_query,
+    start_dns_resolution, start_host_alive, start_service_detection, start_tcp_port_scan,
+    BruteforceSubdomainsParams, CertificateTransparencyParams, DehashedQueryParams,
+    DnsResolutionParams, HostAliveParams, ServiceDetectionParams, TcpPortScanParams,
+};
+
+/// Bruteforce subdomains through a DNS wordlist attack
+///
+/// Enumerate possible subdomains by querying a DNS server with constructed domains.
+/// See [OWASP](https://owasp.org/www-community/attacks/Brute_force_attack) for further information.
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 202, description = "Attack scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = BruteforceSubdomainsRequest,
+    security(("api_key" = []))
+)]
+#[post("/attacks/bruteforceSubdomains")]
+pub async fn bruteforce_subdomains(
+    req: Json<BruteforceSubdomainsRequest>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let BruteforceSubdomainsRequest {
+        leech_uuid,
+        domain,
+        wordlist_uuid,
+        concurrent_limit,
+        workspace_uuid,
+    } = req.into_inner();
+
+    let (wordlist_path,) = query!(&GLOBAL.db, (WordList::F.path,))
+        .condition(WordList::F.uuid.equals(wordlist_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    let client = if let Some(leech_uuid) = leech_uuid {
+        GLOBAL.leeches.get_leech(&leech_uuid)?
+    } else {
+        GLOBAL.leeches.random_leech()?
+    };
+
+    let (attack_uuid, _) = start_bruteforce_subdomains(
+        workspace_uuid,
+        user_uuid,
+        client,
+        BruteforceSubdomainsParams {
+            target: domain,
+            wordlist_path,
+            concurrent_limit,
+        },
+    )
+    .await?;
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
+}
+
+/// Start a tcp port scan
+///
+/// `exclude` accepts a list of ip networks in CIDR notation.
+///
+/// All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.
+///
+/// Set `max_retries` to 0 if you don't want to try a port more than 1 time.
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 202, description = "Attack scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = ScanTcpPortsRequest,
+    security(("api_key" = []))
+)]
+#[post("/attacks/scanTcpPorts")]
+pub async fn scan_tcp_ports(
+    req: Json<ScanTcpPortsRequest>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let ScanTcpPortsRequest {
+        leech_uuid,
+        targets,
+        ports,
+        retry_interval,
+        max_retries,
+        timeout,
+        concurrent_limit,
+        skip_icmp_check,
+        workspace_uuid,
+    } = req.into_inner();
+
+    let client = if let Some(leech_uuid) = leech_uuid {
+        GLOBAL.leeches.get_leech(&leech_uuid)?
+    } else {
+        GLOBAL.leeches.random_leech()?
+    };
+
+    let (attack_uuid, _) = start_tcp_port_scan(
+        workspace_uuid,
+        user_uuid,
+        client,
+        TcpPortScanParams {
+            targets,
+            ports,
+            timeout,
+            concurrent_limit,
+            max_retries,
+            retry_interval,
+            skip_icmp_check,
+        },
+    )
+    .await?;
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
+}
+
+/// Check if hosts are reachable
+///
+/// Just an ICMP scan for now to see which targets respond.
+///
+/// All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 202, description = "Attack scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = HostsAliveRequest,
+    security(("api_key" = []))
+)]
+#[post("/attacks/hostsAlive")]
+pub async fn hosts_alive_check(
+    req: Json<HostsAliveRequest>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let HostsAliveRequest {
+        leech_uuid,
+        targets,
+        timeout,
+        concurrent_limit,
+        workspace_uuid,
+    } = req.into_inner();
+
+    let leech = if let Some(leech_uuid) = leech_uuid {
+        GLOBAL.leeches.get_leech(&leech_uuid)?
+    } else {
+        GLOBAL.leeches.random_leech()?
+    };
+
+    let (attack_uuid, _) = start_host_alive(
+        workspace_uuid,
+        user_uuid,
+        leech,
+        HostAliveParams {
+            targets,
+            timeout,
+            concurrent_limit,
+        },
+    )
+    .await?;
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
+}
+
+/// Query a certificate transparency log collector.
+///
+/// For further information, see [the explanation](https://certificate.transparency.dev/).
+///
+/// Certificate transparency can be used to find subdomains or related domains.
+///
+/// `retry_interval` is specified in milliseconds.
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 202, description = "Attack scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = QueryCertificateTransparencyRequest,
+    security(("api_key" = []))
+)]
+#[post("/attacks/queryCertificateTransparency")]
+pub async fn query_certificate_transparency(
+    req: Json<QueryCertificateTransparencyRequest>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let QueryCertificateTransparencyRequest {
+        target,
+        include_expired,
+        max_retries,
+        retry_interval,
+        workspace_uuid,
+    } = req.into_inner();
+
+    let client = GLOBAL.leeches.random_leech()?;
+
+    let (attack_uuid, _) = start_certificate_transparency(
+        workspace_uuid,
+        user_uuid,
+        client,
+        CertificateTransparencyParams {
+            target,
+            include_expired,
+            max_retries,
+            retry_interval,
+        },
+    )
+    .await?;
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
+}
+
+/// Query the [dehashed](https://dehashed.com/) API.
+/// It provides email, password, credit cards and other types of information from leak-databases.
+///
+/// Note that you are only able to query the API if you have bought access and have a running
+/// subscription saved in kraken.
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 202, description = "Attack scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = QueryDehashedRequest,
+    security(("api_key" = []))
+)]
+#[post("/attacks/queryDehashed")]
+pub async fn query_dehashed(
+    req: Json<QueryDehashedRequest>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let QueryDehashedRequest {
+        query,
+        workspace_uuid,
+    } = req.into_inner();
+
+    let sender = {
+        match GLOBAL.dehashed.try_read()?.as_ref() {
+            None => return Err(ApiError::DehashedNotAvailable),
+            Some(scheduler) => scheduler.retrieve_sender(),
+        }
+    };
+
+    let (attack_uuid, _) = start_dehashed_query(
+        workspace_uuid,
+        user_uuid,
+        sender,
+        DehashedQueryParams { query },
+    )
+    .await?;
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
+}
+
+/// Perform service detection on a ip and port combination
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 202, description = "Attack scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = ServiceDetectionRequest,
+    security(("api_key" = []))
+)]
+#[post("/attacks/serviceDetection")]
+pub async fn service_detection(
+    req: Json<ServiceDetectionRequest>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let ServiceDetectionRequest {
+        leech_uuid,
+        address,
+        port,
+        timeout,
+        workspace_uuid,
+    } = req.into_inner();
+
+    if port == 0 {
+        return Err(ApiError::InvalidPort);
+    }
+
+    let client = if let Some(leech_uuid) = leech_uuid {
+        GLOBAL.leeches.get_leech(&leech_uuid)?
+    } else {
+        GLOBAL.leeches.random_leech()?
+    };
+
+    let (attack_uuid, _) = start_service_detection(
+        workspace_uuid,
+        user_uuid,
+        client,
+        ServiceDetectionParams {
+            target: address,
+            port,
+            timeout,
+        },
+    )
+    .await?;
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
+}
+
+/// Perform domain name resolution
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 202, description = "Attack scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = DnsResolutionRequest,
+    security(("api_key" = []))
+)]
+#[post("/attacks/dnsResolution")]
+pub async fn dns_resolution(
+    req: Json<DnsResolutionRequest>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let DnsResolutionRequest {
+        leech_uuid,
+        targets,
+        concurrent_limit,
+        workspace_uuid,
+    } = req.into_inner();
+
+    if targets.is_empty() {
+        return Err(ApiError::EmptyTargets);
+    }
+
+    let client = if let Some(leech_uuid) = leech_uuid {
+        GLOBAL.leeches.get_leech(&leech_uuid)?
+    } else {
+        GLOBAL.leeches.random_leech()?
+    };
+
+    let (attack_uuid, _) = start_dns_resolution(
+        workspace_uuid,
+        user_uuid,
+        client,
+        DnsResolutionParams {
+            targets,
+            concurrent_limit,
+        },
+    )
+    .await?;
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
+}
+
+/// Retrieve an attack by id
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Returns the attack", body = SimpleAttack),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid),
+    security(("api_key" = []))
+)]
+#[get("/attacks/{uuid}")]
+pub async fn get_attack(
+    req: Path<PathUuid>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<Json<SimpleAttack>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    let attack = query!(
+        &mut tx,
+        (
+            Attack::F.uuid,
+            Attack::F.workspace.uuid,
+            Attack::F.workspace.name,
+            Attack::F.workspace.description,
+            Attack::F.workspace.owner as SimpleUser,
+            Attack::F.workspace.created_at,
+            Attack::F.attack_type,
+            Attack::F.finished_at,
+            Attack::F.created_at,
+            Attack::F.started_by as SimpleUser,
+            Attack::F.error,
+        )
+    )
+    .condition(Attack::F.uuid.equals(req.uuid))
+    .optional()
+    .await?
+    .ok_or(ApiError::InvalidUuid)?;
+
+    let attack = if Attack::has_access(&mut tx, req.uuid, user_uuid).await? {
+        let (
+            uuid,
+            w_uuid,
+            w_name,
+            w_description,
+            w_owner,
+            w_created_at,
+            attack_type,
+            finished_at,
+            created_at,
+            started_by,
+            error,
+        ) = attack;
+        Ok(SimpleAttack {
+            uuid,
+            workspace: SimpleWorkspace {
+                uuid: w_uuid,
+                name: w_name,
+                description: w_description,
+                owner: w_owner,
+                created_at: w_created_at,
+            },
+            attack_type,
+            started_by,
+            finished_at,
+            created_at,
+            error,
+        })
+    } else {
+        Err(ApiError::MissingPrivileges)
+    };
+
+    tx.commit().await?;
+
+    Ok(Json(attack?))
+}
+
+/// Retrieve all attacks the user has access to
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Retrieve a list of all attacks the user has access to", body = ListAttacks),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    security(("api_key" = []))
+)]
+#[get("/attacks")]
+pub async fn get_all_attacks(
+    SessionUser(session_user): SessionUser,
+) -> ApiResult<Json<ListAttacks>> {
+    let db = &GLOBAL.db;
+
+    let mut tx = db.start_transaction().await?;
+
+    let mut workspaces: Vec<_> = query!(&mut tx, (Workspace::F.uuid,))
+        .condition(Workspace::F.owner.equals(session_user))
+        .stream()
+        .map_ok(|(x,)| Attack::F.workspace.equals(x).boxed())
+        .try_collect()
+        .await?;
+    let workspace_members: Vec<_> = query!(&mut tx, (WorkspaceMember::F.workspace,))
+        .condition(WorkspaceMember::F.member.equals(session_user))
+        .stream()
+        .map_ok(|(x,)| Attack::F.workspace.equals(*x.key()).boxed())
+        .try_collect()
+        .await?;
+    workspaces.extend(workspace_members);
+
+    let attacks = if workspaces.is_empty() {
+        vec![]
+    } else {
+        query!(
+            &mut tx,
+            (
+                Attack::F.uuid,
+                Attack::F.attack_type,
+                Attack::F.error,
+                Attack::F.created_at,
+                Attack::F.finished_at,
+                Attack::F.started_by as SimpleUser,
+                Attack::F.workspace.uuid,
+                Attack::F.workspace.name,
+                Attack::F.workspace.description,
+                Attack::F.workspace.created_at,
+                Attack::F.workspace.owner as SimpleUser
+            )
+        )
+        .condition(DynamicCollection::or(workspaces))
+        .stream()
+        .map_ok(
+            |(
+                uuid,
+                attack_type,
+                error,
+                created_at,
+                finished_at,
+                started_by,
+                w_uuid,
+                w_name,
+                w_description,
+                w_created_at,
+                w_owner,
+            )| SimpleAttack {
+                uuid,
+                attack_type,
+                error,
+                created_at,
+                finished_at,
+                started_by,
+                workspace: SimpleWorkspace {
+                    uuid: w_uuid,
+                    name: w_name,
+                    description: w_description,
+                    created_at: w_created_at,
+                    owner: w_owner,
+                },
+            },
+        )
+        .try_collect()
+        .await?
+    };
+
+    tx.commit().await?;
+
+    Ok(Json(ListAttacks { attacks }))
+}
+
+/// Query all attacks of a workspace
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Retrieve a list of all attacks of a workspace", body = ListAttacks),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    params(PathUuid),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{uuid}/attacks")]
+pub async fn get_workspace_attacks(
+    path: Path<PathUuid>,
+
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<Json<ListAttacks>> {
+    let workspace = path.uuid;
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut tx, workspace, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    let attacks = query!(
+        &mut tx,
+        (
+            Attack::F.uuid,
+            Attack::F.attack_type,
+            Attack::F.error,
+            Attack::F.created_at,
+            Attack::F.finished_at,
+            Attack::F.started_by as SimpleUser,
+            Attack::F.workspace.uuid,
+            Attack::F.workspace.name,
+            Attack::F.workspace.description,
+            Attack::F.workspace.created_at,
+            Attack::F.workspace.owner as SimpleUser
+        )
+    )
+    .condition(Attack::F.workspace.equals(workspace))
+    .all()
+    .await?
+    .into_iter()
+    .map(
+        |(
+            uuid,
+            attack_type,
+            error,
+            created_at,
+            finished_at,
+            started_by,
+            w_uuid,
+            w_name,
+            w_description,
+            w_created_at,
+            w_owner,
+        )| SimpleAttack {
+            uuid,
+            attack_type,
+            started_by,
+            created_at,
+            finished_at,
+            error,
+            workspace: SimpleWorkspace {
+                uuid: w_uuid,
+                name: w_name,
+                description: w_description,
+                created_at: w_created_at,
+                owner: w_owner,
+            },
+        },
+    )
+    .collect::<Vec<_>>();
+
+    tx.commit().await?;
+
+    Ok(Json(ListAttacks { attacks }))
+}
+
+/// Delete an attack and its results
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Attack was deleted"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    params(PathUuid),
+    security(("api_key" = []))
+)]
+#[delete("/attacks/{uuid}")]
+pub async fn delete_attack(
+    req: Path<PathUuid>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    let user = query!(&mut tx, User)
+        .condition(User::F.uuid.equals(user_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::SessionCorrupt)?;
+
+    let attack = query!(&mut tx, Attack)
+        .condition(Attack::F.uuid.equals(req.uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    if user.permission == UserPermission::Admin || *attack.started_by.key() == user.uuid {
+        debug!("Attack {} got deleted by {}", attack.uuid, user.username);
+
+        rorm::delete!(&mut tx, Attack).single(&attack).await?;
+    } else {
+        debug!(
+            "User {} does not has the privileges to delete the attack {}",
+            user.username, attack.uuid
+        );
+
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
+}

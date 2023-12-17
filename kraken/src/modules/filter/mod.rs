@@ -1,9 +1,5 @@
 //! This module holds all the code for lexing & parsing the filter syntax
 
-mod lexer;
-mod parser;
-mod sqler;
-
 use std::error::Error as StdError;
 use std::fmt::Debug;
 
@@ -13,6 +9,10 @@ use thiserror::Error;
 
 use crate::models::PortProtocol;
 use crate::modules::filter::lexer::{Token, UnexpectedCharacter};
+
+mod lexer;
+mod parser;
+mod sqler;
 
 /// AST for global filter
 #[derive(Default, Debug)]

@@ -1,4 +1,6 @@
-use crate::chan::{CertificateTransparencyEntry, LeechClient, WsMessage, GLOBAL};
+use crate::chan::global::GLOBAL;
+use crate::chan::leech_manager::LeechClient;
+use crate::chan::ws_manager::schema::{CertificateTransparencyEntry, WsMessage};
 use crate::modules::attack_results::store_query_certificate_transparency_result;
 use crate::modules::attacks::{AttackContext, AttackError, CertificateTransparencyParams};
 use crate::modules::utc::utc_from_seconds;

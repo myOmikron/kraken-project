@@ -1,6 +1,6 @@
 use dehashed_rs::{DehashedApi, Scheduler};
 
-use crate::chan::SettingsManagerChan;
+use crate::chan::settings_manager::SettingsManagerChan;
 
 /// Start the dehashed manager
 pub async fn start_dehashed_manager(

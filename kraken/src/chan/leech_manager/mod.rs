@@ -1,7 +1,5 @@
 //! This modules manages the grpc connections to the leeches
 
-mod errors;
-
 use std::collections::HashMap;
 use std::convert::Infallible;
 use std::str::FromStr;
@@ -25,6 +23,8 @@ pub use self::errors::*;
 use crate::models::Leech;
 use crate::modules::tls::TlsManager;
 use crate::rpc::rpc_definitions::req_attack_service_client::ReqAttackServiceClient;
+
+mod errors;
 
 /// Handle for interacting with the leech manager
 #[derive(Debug)]

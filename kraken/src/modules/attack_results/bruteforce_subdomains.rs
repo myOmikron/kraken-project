@@ -6,7 +6,7 @@ use rorm::prelude::*;
 use rorm::{insert, query};
 use uuid::Uuid;
 
-use crate::chan::GLOBAL;
+use crate::chan::global::GLOBAL;
 use crate::models::{
     AggregationSource, AggregationTable, Attack, BruteforceSubdomainsResultInsert, DnsRecordType,
     DomainCertainty, DomainDomainRelation, DomainHostRelation, HostCertainty, SourceType,

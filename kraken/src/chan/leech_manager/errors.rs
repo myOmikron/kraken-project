@@ -2,7 +2,7 @@ use std::fmt;
 
 use thiserror::Error;
 
-use crate::api::handler::ApiError;
+use crate::api::handler::common::error::ApiError;
 
 /// The error returned by [`LeechClients::random_leech`] which can be converted into [`ApiError::NoLeechAvailable`]
 #[derive(Debug, Error)]

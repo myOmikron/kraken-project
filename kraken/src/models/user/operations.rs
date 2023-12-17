@@ -10,7 +10,7 @@ use uuid::Uuid;
 use webauthn_rs::prelude::Passkey;
 
 use super::{LocalUser, LocalUserKey, User};
-use crate::api::handler::ApiError;
+use crate::api::handler::common::error::ApiError;
 use crate::models::UserPermission;
 
 #[derive(Patch)]

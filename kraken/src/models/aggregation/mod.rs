@@ -10,6 +10,7 @@ use uuid::Uuid;
 
 use crate::models::{GlobalTag, Workspace, WorkspaceTag};
 
+#[cfg(feature = "bin")]
 mod operations;
 
 /// A representation of an OS type

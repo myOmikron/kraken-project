@@ -25,23 +25,19 @@ use actix_web::cookie::Key;
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use clap::{Parser, Subcommand};
+use kraken::api::server;
+use kraken::chan::dehashed_manager::start_dehashed_manager;
+use kraken::chan::global::{GlobalChan, GLOBAL};
+use kraken::chan::leech_manager::LeechManager;
+use kraken::chan::settings_manager::start_settings_manager;
+use kraken::chan::ws_manager::chan::start_ws_manager;
+use kraken::config::Config;
+use kraken::models::{User, UserPermission};
+use kraken::modules::aggregator::Aggregator;
+use kraken::modules::cache::WorkspaceCache;
+use kraken::modules::tls::TlsManager;
+use kraken::rpc::server::start_rpc_server;
 use rorm::{cli, Database, DatabaseConfiguration, DatabaseDriver};
-
-use crate::api::server;
-use crate::chan::{GlobalChan, LeechManager, GLOBAL};
-use crate::config::Config;
-use crate::models::{User, UserPermission};
-use crate::modules::aggregator::Aggregator;
-use crate::modules::cache::WorkspaceCache;
-use crate::modules::tls::TlsManager;
-use crate::rpc::server::start_rpc_server;
-
-pub mod api;
-pub mod chan;
-pub mod config;
-pub mod models;
-pub mod modules;
-pub(crate) mod rpc;
 
 /// The subcommands of kraken
 #[derive(Subcommand)]
@@ -74,7 +70,7 @@ pub struct Cli {
 
 #[rorm::rorm_main]
 #[tokio::main]
-async fn main() -> Result<(), String> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     let config_content =
@@ -105,11 +101,11 @@ async fn main() -> Result<(), String> {
         Command::Start => {
             let db = get_db(&config).await?;
 
-            let settings = chan::start_settings_manager(&db)
+            let settings = start_settings_manager(&db)
                 .await
                 .map_err(|e| e.to_string())?;
 
-            let dehashed = RwLock::new(chan::start_dehashed_manager(&settings).await?);
+            let dehashed = RwLock::new(start_dehashed_manager(&settings).await?);
 
             let tls = Arc::new(
                 TlsManager::load("/var/lib/kraken")
@@ -120,7 +116,7 @@ async fn main() -> Result<(), String> {
                 .await
                 .map_err(|e| format!("Failed to query initial leeches: {e}"))?;
 
-            let ws = chan::start_ws_manager().await;
+            let ws = start_ws_manager().await;
 
             let workspace_cache = WorkspaceCache::default();
 

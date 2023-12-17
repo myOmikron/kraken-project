@@ -9,6 +9,8 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::{Attack, OauthClient, User};
+
+#[cfg(feature = "bin")]
 mod operations;
 
 /// The permission of a member in a workspace

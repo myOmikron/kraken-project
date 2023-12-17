@@ -2,8 +2,10 @@ use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
 
-use crate::api::handler::attacks::PortOrRange;
-use crate::chan::{LeechClient, WsMessage, GLOBAL};
+use crate::api::handler::attacks::schema::PortOrRange;
+use crate::chan::global::GLOBAL;
+use crate::chan::leech_manager::LeechClient;
+use crate::chan::ws_manager::schema::WsMessage;
 use crate::modules::attack_results::store_tcp_port_scan_result;
 use crate::modules::attacks::{AttackContext, AttackError, DomainOrNetwork, TcpPortScanParams};
 use crate::rpc::rpc_definitions;

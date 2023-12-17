@@ -1,8 +1,7 @@
 use rorm::prelude::*;
 use uuid::Uuid;
 
-pub use self::operations::*;
-
+#[cfg(feature = "bin")]
 mod operations;
 
 /// The data collectors of kraken

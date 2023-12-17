@@ -5,7 +5,7 @@ use rorm::{and, insert, query};
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::api::handler::ApiError;
+use crate::api::handler::common::error::ApiError;
 use crate::models::{Attack, AttackType, User, Workspace, WorkspaceMember};
 
 #[derive(Patch)]

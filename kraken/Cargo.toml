@@ -12,6 +12,7 @@ description = "The core component of kraken-project"
 [[bin]]
 path = "./src/main.rs"
 name = "kraken"
+required-features = ["bin"]
 
 [lib]
 path = "./src/lib.rs"
@@ -19,25 +20,25 @@ name = "kraken"
 
 [dependencies]
 # Webframework
-actix-web = { version = "~4" }
+actix-web = { version = "~4", optional = true }
 # Extensions for actix-web
-actix-toolbox = { version = "~0.13", features = ["ws", "logging", "session-postgres-only"] }
+actix-toolbox = { version = "~0.13", features = ["ws", "logging", "session-postgres-only"], optional = true }
 # Webauthn library
 webauthn-rs = { version = "~0.4", features = ["danger-allow-state-serialisation"] }
 
 # openapi swagger
-utoipa = { version = "~4", features = ["actix_extras", "repr", "chrono", "uuid", "openapi_extensions", "preserve_order"] }
+utoipa = { version = "~4", features = ["actix_extras", "repr", "chrono", "uuid", "openapi_extensions", "preserve_order"]}
 # openapi swagger boilerplat generation
-utoipa-swagger-ui = { version = "~5", features = ["actix-web"] }
+utoipa-swagger-ui = { version = "~5", features = ["actix-web"], optional = true }
 
 # Hashing
-argon2 = { version = "~0.5", features = ["std"] }
-sha2 = { version = "~0.10" } # Required in oauth for pkce
+argon2 = { version = "~0.5", features = ["std"], optional = true }
+sha2 = { version = "~0.10", optional = true } # Required in oauth for pkce
 
 # Cli parser
-clap = { version = "~4", features = ["derive"] }
+clap = { version = "~4", features = ["derive"], optional = true }
 # Read passwords from cli
-rpassword = { version = "~7" }
+rpassword = { version = "~7", optional = true }
 
 # Logging facade
 log = { version = "~0.4" }
@@ -61,18 +62,18 @@ ipnet = { version = "~2", features = ["serde"] }
 uuid = { version = "~1", features = ["serde", "v4"] }
 
 # Async runtime
-tokio = { version = ">=1.23.1", features = ["rt-multi-thread", "sync", "macros"] }
+tokio = { version = ">=1.23.1", features = ["rt-multi-thread", "sync", "macros"], optional = true }
 # Async abstractions
-futures = { version = "~0.3" }
+futures = { version = "~0.3", optional = true }
 
 # Utilities for RNG
-rand = { version = "~0.8" }
+rand = { version = "~0.8", optional = true }
 
 # gRPC implementation
-tonic = { version = "~0.10", features = ["transport", "tls"] }
+tonic = { version = "~0.10", features = ["transport", "tls"], optional = true }
 # codegenerator
-prost = { version = "~0.12" }
-prost-types = { version = "~0.12" }
+prost = { version = "~0.12", optional = true }
+prost-types = { version = "~0.12", optional = true }
 
 # error management
 thiserror = { version = "~1" }
@@ -85,11 +86,27 @@ ipnetwork = { version = "~0.20", features = ["serde"] }
 dehashed-rs = { version = "~0.4", features = ["tokio", "utoipa"] }
 
 # TLS
-rcgen = { version = "~0.11", features = ["x509-parser"] }
-url = { version = "~2" } # Parsing ip / domain when filling subject_alt_names
+rcgen = { version = "~0.11", features = ["x509-parser"], optional = true }
+url = { version = "~2", features = ["serde"] } # Parsing ip / domain when filling subject_alt_names
 
 [build-dependencies]
 tonic-build = { version = "~0.10" }
 
 [features]
 rorm-main = []
+bin = [
+    "dep:actix-web",
+    "dep:actix-toolbox",
+    "dep:utoipa-swagger-ui",
+    "dep:argon2",
+    "dep:sha2",
+    "dep:clap",
+    "dep:rpassword",
+    "dep:tokio",
+    "dep:futures",
+    "dep:rand",
+    "dep:tonic",
+    "dep:prost",
+    "dep:prost-types",
+    "dep:rcgen",
+]

@@ -1,5 +1,3 @@
-mod patches;
-
 use std::fmt::{Display, Formatter};
 
 use chrono::{DateTime, Utc};
@@ -7,8 +5,11 @@ use rorm::prelude::*;
 use uuid::Uuid;
 
 use crate::models;
+#[cfg(feature = "bin")]
 pub(crate) use crate::models::search::patches::*;
 use crate::models::{User, Workspace};
+#[cfg(feature = "bin")]
+mod patches;
 
 /// Saves the search parameters
 #[derive(Model)]

@@ -5,8 +5,8 @@ use rorm::{and, insert, query};
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::api::handler::ApiError;
-use crate::chan::GLOBAL;
+use crate::api::handler::common::error::ApiError;
+use crate::chan::global::GLOBAL;
 use crate::models::{
     OauthClient, User, Workspace, WorkspaceAccessToken, WorkspaceInvitation, WorkspaceMember,
     WorkspaceMemberPermission,

@@ -1,4 +1,5 @@
-use crate::chan::{LeechClient, GLOBAL};
+use crate::chan::global::GLOBAL;
+use crate::chan::leech_manager::LeechClient;
 use crate::models::ServiceCertainty;
 use crate::modules::attack_results::store_service_detection_result;
 use crate::modules::attacks::{AttackContext, AttackError, ServiceDetectionParams};

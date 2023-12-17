@@ -2,9 +2,9 @@ use chrono::{DateTime, Utc};
 use rorm::prelude::*;
 use uuid::Uuid;
 
-pub(crate) use crate::models::settings::operations::*;
+#[cfg(feature = "bin")]
+pub(crate) use self::operations::*;
 use crate::models::UserPermission;
-
 mod operations;
 
 /// The settings of kraken

@@ -1,7 +1,8 @@
-mod operations;
-
 use rorm::prelude::*;
 use uuid::Uuid;
+
+#[cfg(feature = "bin")]
+mod operations;
 
 /// A file deployed on every leech used for the bruteforce subdomains attack
 #[derive(Model)]

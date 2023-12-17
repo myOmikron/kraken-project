@@ -1,7 +1,7 @@
 use actix_web::middleware::ErrorHandlerResponse;
 use actix_web::{dev, ResponseError};
 
-use crate::api::handler::ApiError;
+use crate::api::handler::common::error::ApiError;
 
 pub(crate) fn handle_not_found<B>(
     res: dev::ServiceResponse<B>,

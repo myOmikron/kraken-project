@@ -5,7 +5,7 @@ use rorm::prelude::*;
 use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;
 
-use crate::chan::GLOBAL;
+use crate::chan::global::GLOBAL;
 use crate::models::DehashedQueryResultInsert;
 use crate::modules::attacks::{AttackContext, AttackError, DehashedQueryParams};
 

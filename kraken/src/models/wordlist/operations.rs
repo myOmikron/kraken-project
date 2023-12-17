@@ -4,7 +4,7 @@ use rorm::{insert, or, query, update};
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::api::handler::ApiError;
+use crate::api::handler::common::error::ApiError;
 use crate::models::WordList;
 
 impl WordList {

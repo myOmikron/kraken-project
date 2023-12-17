@@ -11,18 +11,18 @@ use ipnetwork::IpNetwork;
 use log::error;
 use rorm::prelude::*;
 use rorm::{and, query, update};
-use serde::Deserialize;
 use thiserror::Error;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tonic::{Response, Status, Streaming};
-use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::attacks::{PortOrRange, SimpleAttack};
-use crate::api::handler::users::SimpleUser;
-use crate::api::handler::workspaces::SimpleWorkspace;
-use crate::chan::{LeechClient, WsMessage, GLOBAL};
+use crate::api::handler::attacks::schema::{DomainOrNetwork, PortOrRange, SimpleAttack};
+use crate::api::handler::users::schema::SimpleUser;
+use crate::api::handler::workspaces::schema::SimpleWorkspace;
+use crate::chan::global::GLOBAL;
+use crate::chan::leech_manager::LeechClient;
+use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::{
     Attack, AttackType, Domain, DomainCertainty, DomainHostRelation, InsertAttackError, User,
     Workspace,
@@ -452,18 +452,6 @@ impl From<InsertAttackError> for AttackError {
     }
 }
 
-/// Either an ip address / network or a domain name
-#[derive(Debug, Clone, Deserialize, ToSchema)]
-#[serde(untagged)]
-pub enum DomainOrNetwork {
-    /// A ip address / network
-    #[schema(value_type = String, example = "10.13.37.10")]
-    Network(IpNetwork),
-
-    /// A domain name
-    #[schema(value_type = String, example = "kraken.test")]
-    Domain(String),
-}
 impl DomainOrNetwork {
     /// Takes a list of [`DomainOrNetwork`] and produces it into a list of [`IpNetwork`]
     /// by resolving the domains in a given workspace and starting implicit attacks if necessary.

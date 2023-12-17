@@ -9,7 +9,7 @@ use actix_web::{FromRequest, HttpRequest};
 use futures::future::{ready, Ready};
 use uuid::Uuid;
 
-use crate::api::handler::{ApiError, ApiResult};
+use crate::api::handler::common::error::{ApiError, ApiResult};
 
 /// Extractor for the `Session`'s `"uuid"` field
 pub struct SessionUser(pub Uuid);

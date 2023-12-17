@@ -2,26 +2,12 @@ use rorm::conditions::DynamicCollection;
 use rorm::db::Executor;
 use rorm::prelude::*;
 use rorm::{and, insert, query};
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::{GlobalTag, Workspace, WorkspaceTag};
-use crate::api::handler::ApiError;
-
-/// Color value
-#[derive(Deserialize, Serialize, Debug, ToSchema, Copy, Clone)]
-pub struct Color {
-    /// Red value
-    pub r: u8,
-    /// Green value
-    pub g: u8,
-    /// Blue value
-    pub b: u8,
-    /// Alpha value
-    pub a: u8,
-}
+use crate::api::handler::common::error::ApiError;
+use crate::models::Color;
 
 impl From<Color> for i32 {
     fn from(value: Color) -> Self {

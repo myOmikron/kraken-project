@@ -4,8 +4,9 @@ use rorm::{and, insert, query, update, FieldAccess, Model, Patch};
 use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;
 
-use crate::api::handler::hosts::SimpleHost;
-use crate::chan::{WsMessage, GLOBAL};
+use crate::api::handler::hosts::schema::SimpleHost;
+use crate::chan::global::GLOBAL;
+use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::{Host, HostCertainty, OsType, Workspace};
 use crate::modules::aggregator::HostAggregationData;
 

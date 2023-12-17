@@ -5,8 +5,9 @@ use tokio::sync::{mpsc, oneshot};
 use tokio::task::JoinHandle;
 use uuid::Uuid;
 
-use crate::api::handler::domains::SimpleDomain;
-use crate::chan::{WsMessage, GLOBAL};
+use crate::api::handler::domains::schema::SimpleDomain;
+use crate::chan::global::GLOBAL;
+use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::{Domain, DomainCertainty, InsertAttackError, Workspace};
 use crate::modules::aggregator::DomainAggregationData;
 use crate::modules::attacks::{start_dns_resolution, DnsResolutionParams};

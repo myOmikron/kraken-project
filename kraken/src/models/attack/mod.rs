@@ -3,15 +3,20 @@
 use chrono::{DateTime, Utc};
 use ipnetwork::IpNetwork;
 use rorm::prelude::*;
+use rorm::Model;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-pub use crate::models::attack::operations::*;
+#[cfg(feature = "bin")]
+pub(crate) use crate::models::attack::operations::*;
+#[cfg(feature = "bin")]
 pub(crate) use crate::models::attack::patches::*;
 use crate::models::{ServiceCertainty, User, Workspace};
 
+#[cfg(feature = "bin")]
 mod operations;
+#[cfg(feature = "bin")]
 mod patches;
 
 /// The type of an attack
@@ -78,7 +83,7 @@ pub struct Attack {
 }
 
 /// The type of DNS Record
-#[derive(Copy, Clone, DbEnum, Serialize, ToSchema)]
+#[derive(Copy, Clone, Debug, DbEnum, Deserialize, Serialize, ToSchema)]
 pub enum DnsRecordType {
     /// [A](crate::rpc::rpc_definitions::shared::dns_record::Record::A) record type
     A,
