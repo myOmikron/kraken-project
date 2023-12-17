@@ -7,7 +7,7 @@ import Input from "../components/input";
 import { check, handleApiError } from "../utils/helper";
 import USER_CONTEXT, { resetUser } from "../context/user";
 import UserSettingsIcon from "../svg/user_settings";
-import { FullApiKey, GetUser, UserPermission } from "../api/generated";
+import { FullApiKey, FullUser, UserPermission } from "../api/generated";
 import CopyIcon from "../svg/copy";
 import CloseIcon from "../svg/close";
 import { CrossIcon } from "react-select/dist/declarations/src/components/indicators";
@@ -29,7 +29,7 @@ type MeState = {
     apiKeyName: string;
 
     apiKeys: Array<FullApiKey>;
-    user: GetUser;
+    user: FullUser;
 };
 
 export default class Me extends React.Component<MeProps, MeState> {
@@ -70,7 +70,7 @@ export default class Me extends React.Component<MeProps, MeState> {
                 toast.success("Created api key");
                 this.setState({ apiKeyName: "" });
                 await this.retrieveApiKeys();
-            }),
+            })
         );
     }
 
@@ -78,7 +78,7 @@ export default class Me extends React.Component<MeProps, MeState> {
         await Api.user.apiKeys.all().then(
             handleApiError((keys) => {
                 this.setState({ apiKeys: keys.keys });
-            }),
+            })
         );
     }
 
@@ -87,7 +87,7 @@ export default class Me extends React.Component<MeProps, MeState> {
             handleApiError(async (_) => {
                 toast.success("Deleted api key");
                 await this.retrieveApiKeys();
-            }),
+            })
         );
     }
 
@@ -119,7 +119,7 @@ export default class Me extends React.Component<MeProps, MeState> {
                 user.username = username;
                 this.setState({ user });
                 toast.success("Account data updated");
-            }),
+            })
         );
     }
 
@@ -137,7 +137,7 @@ export default class Me extends React.Component<MeProps, MeState> {
             handleApiError(() => {
                 toast.success("Changed password successfully");
                 resetUser();
-            }),
+            })
         );
     }
 

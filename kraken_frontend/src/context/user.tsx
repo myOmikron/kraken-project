@@ -1,5 +1,5 @@
 import React from "react";
-import { GetUser, UserPermission } from "../api/generated/models";
+import { FullUser, UserPermission } from "../api/generated/models";
 import { Api } from "../api/api";
 import Loading from "../components/loading";
 import { ApiError, StatusCode } from "../api/error";
@@ -11,10 +11,10 @@ let USER_PROVIDER: UserProvider | null = null;
 
 /** Data provided by the {@link USER_CONTEXT} */
 export type UserContext = {
-    user: GetUser;
+    user: FullUser;
 };
 
-/** {@link React.Context Context} to access {@link GetUser user information} */
+/** {@link React.Context Context} to access {@link FullUser user information} */
 const USER_CONTEXT = React.createContext<UserContext>({
     user: {
         username: "",
@@ -32,7 +32,7 @@ type UserProviderProps = {
     children?: React.ReactNode;
 };
 type UserProviderState = {
-    user: GetUser | "unauthenticated" | null;
+    user: FullUser | "unauthenticated" | null;
 };
 
 /**
@@ -57,8 +57,8 @@ export class UserProvider extends React.Component<UserProviderProps, UserProvide
                                 toast.error(error.message);
                                 break;
                         }
-                    },
-                ),
+                    }
+                )
             );
     }
 

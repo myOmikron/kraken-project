@@ -1,7 +1,7 @@
 import React from "react";
 import { Api } from "../../api/api";
 import { toast } from "react-toastify";
-import { GetUser, UserPermission } from "../../api/generated/models";
+import { FullUser, UserPermission } from "../../api/generated/models";
 import Loading from "../../components/loading";
 import Popup from "reactjs-popup";
 import Input from "../../components/input";
@@ -10,13 +10,13 @@ import { check, handleApiError } from "../../utils/helper";
 type AdminUsersProps = {};
 type AdminUsersState = {
     /** Store a user to ask for confirmation before deleting him */
-    confirmDelete: GetUser | null;
+    confirmDelete: FullUser | null;
 
     /** Toggle the modal form for creating new users*/
     createNew: boolean;
 
     // queried data
-    users?: Array<GetUser>;
+    users?: Array<FullUser>;
 
     // controlled state
     /** New user's display name */
@@ -49,8 +49,8 @@ export default class AdminUsers extends React.Component<AdminUsersProps, AdminUs
             handleApiError(({ users }) =>
                 this.setState({
                     users,
-                }),
-            ),
+                })
+            )
         );
     }
 
@@ -163,7 +163,7 @@ export default class AdminUsers extends React.Component<AdminUsersProps, AdminUs
                 toast.success("Deleted user");
                 this.setState({ confirmDelete: null });
                 this.fetchState();
-            }),
+            })
         );
     }
 
@@ -191,7 +191,7 @@ export default class AdminUsers extends React.Component<AdminUsersProps, AdminUs
                     toast.success("Created user");
                     this.setState({ createNew: false, newName: "", newDisplay: "", newPwd: "" });
                     this.fetchState();
-                }),
+                })
             );
     }
 }
