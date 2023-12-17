@@ -20,19 +20,19 @@ import { exists, mapValues } from '../runtime';
  */
 export interface SimpleOauthClient {
     /**
-     * 
+     * The uuid of the client
      * @type {string}
      * @memberof SimpleOauthClient
      */
     uuid: string;
     /**
-     * 
+     * The name of the client
      * @type {string}
      * @memberof SimpleOauthClient
      */
     name: string;
     /**
-     * 
+     * The redirect url of the client
      * @type {string}
      * @memberof SimpleOauthClient
      */

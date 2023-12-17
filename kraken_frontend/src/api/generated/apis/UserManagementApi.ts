@@ -16,18 +16,18 @@
 import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
-  GetAllUsersResponse,
-  GetUser,
+  FullUser,
+  ListUsers,
   SetPasswordRequest,
   UpdateMeRequest,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
-    GetAllUsersResponseFromJSON,
-    GetAllUsersResponseToJSON,
-    GetUserFromJSON,
-    GetUserToJSON,
+    FullUserFromJSON,
+    FullUserToJSON,
+    ListUsersFromJSON,
+    ListUsersToJSON,
     SetPasswordRequestFromJSON,
     SetPasswordRequestToJSON,
     UpdateMeRequestFromJSON,
@@ -51,7 +51,7 @@ export class UserManagementApi extends runtime.BaseAPI {
      * Request all users  This may be used to create invitations for workspaces
      * Request all users
      */
-    async getAllUsersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAllUsersResponse>> {
+    async getAllUsersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListUsers>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -63,14 +63,14 @@ export class UserManagementApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetAllUsersResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListUsersFromJSON(jsonValue));
     }
 
     /**
      * Request all users  This may be used to create invitations for workspaces
      * Request all users
      */
-    async getAllUsers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAllUsersResponse> {
+    async getAllUsers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListUsers> {
         const response = await this.getAllUsersRaw(initOverrides);
         return await response.value();
     }
@@ -79,7 +79,7 @@ export class UserManagementApi extends runtime.BaseAPI {
      * Retrieve the own user
      * Retrieve the own user
      */
-    async getMeRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetUser>> {
+    async getMeRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FullUser>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -91,14 +91,14 @@ export class UserManagementApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetUserFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => FullUserFromJSON(jsonValue));
     }
 
     /**
      * Retrieve the own user
      * Retrieve the own user
      */
-    async getMe(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetUser> {
+    async getMe(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullUser> {
         const response = await this.getMeRaw(initOverrides);
         return await response.value();
     }

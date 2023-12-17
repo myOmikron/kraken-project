@@ -20,13 +20,13 @@ import { exists, mapValues } from '../runtime';
  */
 export interface CreateWorkspaceRequest {
     /**
-     * 
+     * The name of the workspace
      * @type {string}
      * @memberof CreateWorkspaceRequest
      */
     name: string;
     /**
-     * 
+     * The description of the workspace
      * @type {string}
      * @memberof CreateWorkspaceRequest
      */

@@ -14,19 +14,19 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * 
+ * Update an oauth application
  * @export
  * @interface UpdateAppRequest
  */
 export interface UpdateAppRequest {
     /**
-     * 
+     * The name of the application
      * @type {string}
      * @memberof UpdateAppRequest
      */
     name?: string | null;
     /**
-     * 
+     * The redirect url of the application
      * @type {string}
      * @memberof UpdateAppRequest
      */

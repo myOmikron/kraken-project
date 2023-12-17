@@ -20,7 +20,7 @@ import { exists, mapValues } from '../runtime';
  */
 export interface FinishRegisterRequestAllOf {
     /**
-     * 
+     * Name of the key
      * @type {string}
      * @memberof FinishRegisterRequestAllOf
      */

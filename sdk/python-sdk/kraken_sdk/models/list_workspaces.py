@@ -21,18 +21,19 @@ import json
 
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel
-from kraken_sdk.models.full_global_tag import FullGlobalTag
+from pydantic import Field
+from kraken_sdk.models.simple_workspace import SimpleWorkspace
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class GetGlobalTagsResponse(BaseModel):
+class ListWorkspaces(BaseModel):
     """
-    The response to a request to retrieve all global tags
+    The response to retrieve a list of workspaces
     """ # noqa: E501
-    global_tags: List[FullGlobalTag]
-    __properties: ClassVar[List[str]] = ["global_tags"]
+    workspaces: List[SimpleWorkspace] = Field(description="The list of workspaces")
+    __properties: ClassVar[List[str]] = ["workspaces"]
 
     model_config = {
         "populate_by_name": True,
@@ -51,7 +52,7 @@ class GetGlobalTagsResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of GetGlobalTagsResponse from a JSON string"""
+        """Create an instance of ListWorkspaces from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -70,18 +71,18 @@ class GetGlobalTagsResponse(BaseModel):
             },
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of each item in global_tags (list)
+        # override the default output from pydantic by calling `to_dict()` of each item in workspaces (list)
         _items = []
-        if self.global_tags:
-            for _item in self.global_tags:
+        if self.workspaces:
+            for _item in self.workspaces:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['global_tags'] = _items
+            _dict['workspaces'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of GetGlobalTagsResponse from a dict"""
+        """Create an instance of ListWorkspaces from a dict"""
         if obj is None:
             return None
 
@@ -89,7 +90,7 @@ class GetGlobalTagsResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "global_tags": [FullGlobalTag.from_dict(_item) for _item in obj.get("global_tags")] if obj.get("global_tags") is not None else None
+            "workspaces": [SimpleWorkspace.from_dict(_item) for _item in obj.get("workspaces")] if obj.get("workspaces") is not None else None
         })
         return _obj
 

@@ -30,8 +30,8 @@ from pydantic import StrictStr
 
 from kraken_sdk.models.create_workspace_request import CreateWorkspaceRequest
 from kraken_sdk.models.full_workspace import FullWorkspace
-from kraken_sdk.models.get_all_workspaces_response import GetAllWorkspacesResponse
-from kraken_sdk.models.invite_to_workspace import InviteToWorkspace
+from kraken_sdk.models.invite_to_workspace_request import InviteToWorkspaceRequest
+from kraken_sdk.models.list_workspaces import ListWorkspaces
 from kraken_sdk.models.search_result_page import SearchResultPage
 from kraken_sdk.models.search_workspace_request import SearchWorkspaceRequest
 from kraken_sdk.models.searches_result_page import SearchesResultPage
@@ -61,8 +61,8 @@ class WorkspacesApi:
     @validate_call
     async def create_invitation(
         self,
-        uuid: StrictStr,
-        invite_to_workspace: InviteToWorkspace,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
+        invite_to_workspace_request: InviteToWorkspaceRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -80,10 +80,10 @@ class WorkspacesApi:
 
         Invite a user to the workspace  This action can only be invoked by the owner of a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
-        :param invite_to_workspace: (required)
-        :type invite_to_workspace: InviteToWorkspace
+        :param invite_to_workspace_request: (required)
+        :type invite_to_workspace_request: InviteToWorkspaceRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -108,7 +108,7 @@ class WorkspacesApi:
 
         _param = self._create_invitation_serialize(
             uuid=uuid,
-            invite_to_workspace=invite_to_workspace,
+            invite_to_workspace_request=invite_to_workspace_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -132,8 +132,8 @@ class WorkspacesApi:
     @validate_call
     async def create_invitation_with_http_info(
         self,
-        uuid: StrictStr,
-        invite_to_workspace: InviteToWorkspace,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
+        invite_to_workspace_request: InviteToWorkspaceRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -151,10 +151,10 @@ class WorkspacesApi:
 
         Invite a user to the workspace  This action can only be invoked by the owner of a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
-        :param invite_to_workspace: (required)
-        :type invite_to_workspace: InviteToWorkspace
+        :param invite_to_workspace_request: (required)
+        :type invite_to_workspace_request: InviteToWorkspaceRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -179,7 +179,7 @@ class WorkspacesApi:
 
         _param = self._create_invitation_serialize(
             uuid=uuid,
-            invite_to_workspace=invite_to_workspace,
+            invite_to_workspace_request=invite_to_workspace_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -203,8 +203,8 @@ class WorkspacesApi:
     @validate_call
     async def create_invitation_without_preload_content(
         self,
-        uuid: StrictStr,
-        invite_to_workspace: InviteToWorkspace,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
+        invite_to_workspace_request: InviteToWorkspaceRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -222,10 +222,10 @@ class WorkspacesApi:
 
         Invite a user to the workspace  This action can only be invoked by the owner of a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
-        :param invite_to_workspace: (required)
-        :type invite_to_workspace: InviteToWorkspace
+        :param invite_to_workspace_request: (required)
+        :type invite_to_workspace_request: InviteToWorkspaceRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -250,7 +250,7 @@ class WorkspacesApi:
 
         _param = self._create_invitation_serialize(
             uuid=uuid,
-            invite_to_workspace=invite_to_workspace,
+            invite_to_workspace_request=invite_to_workspace_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -270,7 +270,7 @@ class WorkspacesApi:
     def _create_invitation_serialize(
         self,
         uuid,
-        invite_to_workspace,
+        invite_to_workspace_request,
         _request_auth,
         _content_type,
         _headers,
@@ -297,8 +297,8 @@ class WorkspacesApi:
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if invite_to_workspace is not None:
-            _body_params = invite_to_workspace
+        if invite_to_workspace_request is not None:
+            _body_params = invite_to_workspace_request
 
 
         # set the HTTP header `Accept`
@@ -629,7 +629,7 @@ class WorkspacesApi:
     @validate_call
     async def delete_workspace(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -647,7 +647,7 @@ class WorkspacesApi:
 
         Delete a workspace by its id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -696,7 +696,7 @@ class WorkspacesApi:
     @validate_call
     async def delete_workspace_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -714,7 +714,7 @@ class WorkspacesApi:
 
         Delete a workspace by its id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -763,7 +763,7 @@ class WorkspacesApi:
     @validate_call
     async def delete_workspace_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -781,7 +781,7 @@ class WorkspacesApi:
 
         Delete a workspace by its id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -888,7 +888,7 @@ class WorkspacesApi:
     @validate_call
     async def get_all_workspace_invitations(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -906,7 +906,7 @@ class WorkspacesApi:
 
         Query all open invitations to a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -958,7 +958,7 @@ class WorkspacesApi:
     @validate_call
     async def get_all_workspace_invitations_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -976,7 +976,7 @@ class WorkspacesApi:
 
         Query all open invitations to a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -1028,7 +1028,7 @@ class WorkspacesApi:
     @validate_call
     async def get_all_workspace_invitations_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1046,7 +1046,7 @@ class WorkspacesApi:
 
         Query all open invitations to a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -1168,7 +1168,7 @@ class WorkspacesApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetAllWorkspacesResponse:
+    ) -> ListWorkspaces:
         """Retrieve all workspaces that the executing user has access to
 
         Retrieve all workspaces that the executing user has access to  For administration access, look at the `/admin/workspaces` endpoint.
@@ -1203,7 +1203,7 @@ class WorkspacesApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllWorkspacesResponse",
+            '200': "ListWorkspaces",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -1234,7 +1234,7 @@ class WorkspacesApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetAllWorkspacesResponse]:
+    ) -> ApiResponse[ListWorkspaces]:
         """Retrieve all workspaces that the executing user has access to
 
         Retrieve all workspaces that the executing user has access to  For administration access, look at the `/admin/workspaces` endpoint.
@@ -1269,7 +1269,7 @@ class WorkspacesApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllWorkspacesResponse",
+            '200': "ListWorkspaces",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -1335,7 +1335,7 @@ class WorkspacesApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllWorkspacesResponse",
+            '200': "ListWorkspaces",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -1726,7 +1726,7 @@ class WorkspacesApi:
     @validate_call
     async def get_searches(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -1746,7 +1746,7 @@ class WorkspacesApi:
 
         Query all searches
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -1804,7 +1804,7 @@ class WorkspacesApi:
     @validate_call
     async def get_searches_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -1824,7 +1824,7 @@ class WorkspacesApi:
 
         Query all searches
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -1882,7 +1882,7 @@ class WorkspacesApi:
     @validate_call
     async def get_searches_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -1902,7 +1902,7 @@ class WorkspacesApi:
 
         Query all searches
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -2028,7 +2028,7 @@ class WorkspacesApi:
     @validate_call
     async def get_workspace(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2046,7 +2046,7 @@ class WorkspacesApi:
 
         Retrieve a workspace by id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -2098,7 +2098,7 @@ class WorkspacesApi:
     @validate_call
     async def get_workspace_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2116,7 +2116,7 @@ class WorkspacesApi:
 
         Retrieve a workspace by id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -2168,7 +2168,7 @@ class WorkspacesApi:
     @validate_call
     async def get_workspace_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2186,7 +2186,7 @@ class WorkspacesApi:
 
         Retrieve a workspace by id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -2570,7 +2570,7 @@ class WorkspacesApi:
     @validate_call
     async def search(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         search_workspace_request: SearchWorkspaceRequest,
         _request_timeout: Union[
             None,
@@ -2589,7 +2589,7 @@ class WorkspacesApi:
 
         Search through a workspaces' data
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param search_workspace_request: (required)
         :type search_workspace_request: SearchWorkspaceRequest
@@ -2644,7 +2644,7 @@ class WorkspacesApi:
     @validate_call
     async def search_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         search_workspace_request: SearchWorkspaceRequest,
         _request_timeout: Union[
             None,
@@ -2663,7 +2663,7 @@ class WorkspacesApi:
 
         Search through a workspaces' data
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param search_workspace_request: (required)
         :type search_workspace_request: SearchWorkspaceRequest
@@ -2718,7 +2718,7 @@ class WorkspacesApi:
     @validate_call
     async def search_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         search_workspace_request: SearchWorkspaceRequest,
         _request_timeout: Union[
             None,
@@ -2737,7 +2737,7 @@ class WorkspacesApi:
 
         Search through a workspaces' data
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param search_workspace_request: (required)
         :type search_workspace_request: SearchWorkspaceRequest
@@ -2866,7 +2866,7 @@ class WorkspacesApi:
     @validate_call
     async def transfer_ownership(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         transfer_workspace_request: TransferWorkspaceRequest,
         _request_timeout: Union[
             None,
@@ -2885,7 +2885,7 @@ class WorkspacesApi:
 
         Transfer ownership to another account  You will loose access to the workspace.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param transfer_workspace_request:  (required)
         :type transfer_workspace_request: TransferWorkspaceRequest
@@ -2937,7 +2937,7 @@ class WorkspacesApi:
     @validate_call
     async def transfer_ownership_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         transfer_workspace_request: TransferWorkspaceRequest,
         _request_timeout: Union[
             None,
@@ -2956,7 +2956,7 @@ class WorkspacesApi:
 
         Transfer ownership to another account  You will loose access to the workspace.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param transfer_workspace_request:  (required)
         :type transfer_workspace_request: TransferWorkspaceRequest
@@ -3008,7 +3008,7 @@ class WorkspacesApi:
     @validate_call
     async def transfer_ownership_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         transfer_workspace_request: TransferWorkspaceRequest,
         _request_timeout: Union[
             None,
@@ -3027,7 +3027,7 @@ class WorkspacesApi:
 
         Transfer ownership to another account  You will loose access to the workspace.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param transfer_workspace_request:  (required)
         :type transfer_workspace_request: TransferWorkspaceRequest
@@ -3153,7 +3153,7 @@ class WorkspacesApi:
     @validate_call
     async def update_workspace(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         update_workspace_request: UpdateWorkspaceRequest,
         _request_timeout: Union[
             None,
@@ -3172,7 +3172,7 @@ class WorkspacesApi:
 
         Updates a workspace by its id  All parameter are optional, but at least one of them must be specified.  `name` must not be empty.  You can set `description` to null to remove the description from the database. If you leave the parameter out, the description will remain unchanged.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param update_workspace_request: (required)
         :type update_workspace_request: UpdateWorkspaceRequest
@@ -3224,7 +3224,7 @@ class WorkspacesApi:
     @validate_call
     async def update_workspace_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         update_workspace_request: UpdateWorkspaceRequest,
         _request_timeout: Union[
             None,
@@ -3243,7 +3243,7 @@ class WorkspacesApi:
 
         Updates a workspace by its id  All parameter are optional, but at least one of them must be specified.  `name` must not be empty.  You can set `description` to null to remove the description from the database. If you leave the parameter out, the description will remain unchanged.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param update_workspace_request: (required)
         :type update_workspace_request: UpdateWorkspaceRequest
@@ -3295,7 +3295,7 @@ class WorkspacesApi:
     @validate_call
     async def update_workspace_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         update_workspace_request: UpdateWorkspaceRequest,
         _request_timeout: Union[
             None,
@@ -3314,7 +3314,7 @@ class WorkspacesApi:
 
         Updates a workspace by its id  All parameter are optional, but at least one of them must be specified.  `name` must not be empty.  You can set `description` to null to remove the description from the database. If you leave the parameter out, the description will remain unchanged.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param update_workspace_request: (required)
         :type update_workspace_request: UpdateWorkspaceRequest

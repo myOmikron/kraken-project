@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
@@ -30,8 +31,8 @@ class LoginRequest(BaseModel):
     """
     The request to login
     """ # noqa: E501
-    username: StrictStr
-    password: StrictStr
+    username: StrictStr = Field(description="The username that should be used for login")
+    password: StrictStr = Field(description="The password that should be used for login")
     __properties: ClassVar[List[str]] = ["username", "password"]
 
     model_config = {

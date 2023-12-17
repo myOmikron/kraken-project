@@ -22,18 +22,18 @@ import json
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel
 from pydantic import Field
-from kraken_sdk.models.simple_wordlist import SimpleWordlist
+from kraken_sdk.models.full_workspace_tag import FullWorkspaceTag
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class GetAllWordlistsResponse(BaseModel):
+class ListWorkspaceTags(BaseModel):
     """
-    Response containing all wordlists
+    The response to a request to retrieve all workspace tags
     """ # noqa: E501
-    wordlists: List[SimpleWordlist] = Field(description="List of all wordlists")
-    __properties: ClassVar[List[str]] = ["wordlists"]
+    workspace_tags: List[FullWorkspaceTag] = Field(description="Workspace tags")
+    __properties: ClassVar[List[str]] = ["workspace_tags"]
 
     model_config = {
         "populate_by_name": True,
@@ -52,7 +52,7 @@ class GetAllWordlistsResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of GetAllWordlistsResponse from a JSON string"""
+        """Create an instance of ListWorkspaceTags from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -71,18 +71,18 @@ class GetAllWordlistsResponse(BaseModel):
             },
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of each item in wordlists (list)
+        # override the default output from pydantic by calling `to_dict()` of each item in workspace_tags (list)
         _items = []
-        if self.wordlists:
-            for _item in self.wordlists:
+        if self.workspace_tags:
+            for _item in self.workspace_tags:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['wordlists'] = _items
+            _dict['workspace_tags'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of GetAllWordlistsResponse from a dict"""
+        """Create an instance of ListWorkspaceTags from a dict"""
         if obj is None:
             return None
 
@@ -90,7 +90,7 @@ class GetAllWordlistsResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "wordlists": [SimpleWordlist.from_dict(_item) for _item in obj.get("wordlists")] if obj.get("wordlists") is not None else None
+            "workspace_tags": [FullWorkspaceTag.from_dict(_item) for _item in obj.get("workspace_tags")] if obj.get("workspace_tags") is not None else None
         })
         return _obj
 

@@ -85,7 +85,7 @@ import {
 
 /**
  * @type SearchResultEntry
- * Dynamic result
+ * Dynamic result of a search
  * @export
  */
 export type SearchResultEntry = SearchResultEntryOneOf | SearchResultEntryOneOf1 | SearchResultEntryOneOf2 | SearchResultEntryOneOf3 | SearchResultEntryOneOf4 | SearchResultEntryOneOf5 | SearchResultEntryOneOf6 | SearchResultEntryOneOf7 | SearchResultEntryOneOf8 | SearchResultEntryOneOf9;

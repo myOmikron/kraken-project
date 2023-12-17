@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
@@ -30,8 +31,8 @@ class UpdateMeRequest(BaseModel):
     """
     The request to update the own user  At least one of the options must be set
     """ # noqa: E501
-    username: Optional[StrictStr] = None
-    display_name: Optional[StrictStr] = None
+    username: Optional[StrictStr] = Field(default=None, description="The username")
+    display_name: Optional[StrictStr] = Field(default=None, description="The displayname")
     __properties: ClassVar[List[str]] = ["username", "display_name"]
 
     model_config = {

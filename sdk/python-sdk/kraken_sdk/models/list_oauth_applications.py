@@ -21,18 +21,19 @@ import json
 
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel
-from kraken_sdk.models.full_api_key import FullApiKey
+from pydantic import Field
+from kraken_sdk.models.full_oauth_client import FullOauthClient
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class GetApiKeysResponse(BaseModel):
+class ListOauthApplications(BaseModel):
     """
-    The response that contains all api keys
+    List all oauth applications
     """ # noqa: E501
-    keys: List[FullApiKey]
-    __properties: ClassVar[List[str]] = ["keys"]
+    apps: List[FullOauthClient] = Field(description="The list of applications")
+    __properties: ClassVar[List[str]] = ["apps"]
 
     model_config = {
         "populate_by_name": True,
@@ -51,7 +52,7 @@ class GetApiKeysResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of GetApiKeysResponse from a JSON string"""
+        """Create an instance of ListOauthApplications from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -70,18 +71,18 @@ class GetApiKeysResponse(BaseModel):
             },
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of each item in keys (list)
+        # override the default output from pydantic by calling `to_dict()` of each item in apps (list)
         _items = []
-        if self.keys:
-            for _item in self.keys:
+        if self.apps:
+            for _item in self.apps:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['keys'] = _items
+            _dict['apps'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of GetApiKeysResponse from a dict"""
+        """Create an instance of ListOauthApplications from a dict"""
         if obj is None:
             return None
 
@@ -89,7 +90,7 @@ class GetApiKeysResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "keys": [FullApiKey.from_dict(_item) for _item in obj.get("keys")] if obj.get("keys") is not None else None
+            "apps": [FullOauthClient.from_dict(_item) for _item in obj.get("apps")] if obj.get("apps") is not None else None
         })
         return _obj
 

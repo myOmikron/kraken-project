@@ -23,32 +23,32 @@ import {
 /**
  * The response with all users
  * @export
- * @interface GetAllUsersResponse
+ * @interface ListUsers
  */
-export interface GetAllUsersResponse {
+export interface ListUsers {
     /**
-     * 
+     * List of users
      * @type {Array<SimpleUser>}
-     * @memberof GetAllUsersResponse
+     * @memberof ListUsers
      */
     users: Array<SimpleUser>;
 }
 
 /**
- * Check if a given object implements the GetAllUsersResponse interface.
+ * Check if a given object implements the ListUsers interface.
  */
-export function instanceOfGetAllUsersResponse(value: object): boolean {
+export function instanceOfListUsers(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "users" in value;
 
     return isInstance;
 }
 
-export function GetAllUsersResponseFromJSON(json: any): GetAllUsersResponse {
-    return GetAllUsersResponseFromJSONTyped(json, false);
+export function ListUsersFromJSON(json: any): ListUsers {
+    return ListUsersFromJSONTyped(json, false);
 }
 
-export function GetAllUsersResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetAllUsersResponse {
+export function ListUsersFromJSONTyped(json: any, ignoreDiscriminator: boolean): ListUsers {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -58,7 +58,7 @@ export function GetAllUsersResponseFromJSONTyped(json: any, ignoreDiscriminator:
     };
 }
 
-export function GetAllUsersResponseToJSON(value?: GetAllUsersResponse | null): any {
+export function ListUsersToJSON(value?: ListUsers | null): any {
     if (value === undefined) {
         return undefined;
     }

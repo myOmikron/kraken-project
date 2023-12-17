@@ -24,11 +24,13 @@ try:
 except ImportError:
     from typing_extensions import Annotated
 
+from pydantic import Field
+from typing_extensions import Annotated
 from pydantic import StrictStr
 
 from kraken_sdk.models.create_user_request import CreateUserRequest
-from kraken_sdk.models.get_user import GetUser
-from kraken_sdk.models.get_user_response import GetUserResponse
+from kraken_sdk.models.full_user import FullUser
+from kraken_sdk.models.list_full_users import ListFullUsers
 from kraken_sdk.models.uuid_response import UuidResponse
 
 from kraken_sdk.api_client import ApiClient
@@ -333,7 +335,7 @@ class UserAdminManagementApi:
     @validate_call
     async def delete_user(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -351,7 +353,7 @@ class UserAdminManagementApi:
 
         Delete a user by its uuid
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -400,7 +402,7 @@ class UserAdminManagementApi:
     @validate_call
     async def delete_user_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -418,7 +420,7 @@ class UserAdminManagementApi:
 
         Delete a user by its uuid
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -467,7 +469,7 @@ class UserAdminManagementApi:
     @validate_call
     async def delete_user_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -485,7 +487,7 @@ class UserAdminManagementApi:
 
         Delete a user by its uuid
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -604,7 +606,7 @@ class UserAdminManagementApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetUserResponse:
+    ) -> ListFullUsers:
         """Retrieve all users
 
         Retrieve all users
@@ -639,7 +641,7 @@ class UserAdminManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetUserResponse",
+            '200': "ListFullUsers",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -670,7 +672,7 @@ class UserAdminManagementApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetUserResponse]:
+    ) -> ApiResponse[ListFullUsers]:
         """Retrieve all users
 
         Retrieve all users
@@ -705,7 +707,7 @@ class UserAdminManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetUserResponse",
+            '200': "ListFullUsers",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -771,7 +773,7 @@ class UserAdminManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetUserResponse",
+            '200': "ListFullUsers",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -845,7 +847,7 @@ class UserAdminManagementApi:
     @validate_call
     async def get_user(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -858,12 +860,12 @@ class UserAdminManagementApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetUser:
+    ) -> FullUser:
         """Retrieve a user by its uuid
 
         Retrieve a user by its uuid
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -896,7 +898,7 @@ class UserAdminManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetUser",
+            '200': "FullUser",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -915,7 +917,7 @@ class UserAdminManagementApi:
     @validate_call
     async def get_user_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -928,12 +930,12 @@ class UserAdminManagementApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetUser]:
+    ) -> ApiResponse[FullUser]:
         """Retrieve a user by its uuid
 
         Retrieve a user by its uuid
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -966,7 +968,7 @@ class UserAdminManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetUser",
+            '200': "FullUser",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -985,7 +987,7 @@ class UserAdminManagementApi:
     @validate_call
     async def get_user_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1003,7 +1005,7 @@ class UserAdminManagementApi:
 
         Retrieve a user by its uuid
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -1036,7 +1038,7 @@ class UserAdminManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetUser",
+            '200': "FullUser",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             

@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
@@ -30,8 +31,8 @@ class SetPasswordRequest(BaseModel):
     """
     The request to set a new password for a user
     """ # noqa: E501
-    current_password: StrictStr
-    new_password: StrictStr
+    current_password: StrictStr = Field(description="The current password")
+    new_password: StrictStr = Field(description="The new password")
     __properties: ClassVar[List[str]] = ["current_password", "new_password"]
 
     model_config = {

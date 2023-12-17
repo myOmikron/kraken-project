@@ -20,19 +20,19 @@ import { exists, mapValues } from '../runtime';
  */
 export interface UpdateHostRequest {
     /**
-     * 
+     * The comment of a host
      * @type {string}
      * @memberof UpdateHostRequest
      */
     comment?: string | null;
     /**
-     * 
+     * The global tags of a host
      * @type {Array<string>}
      * @memberof UpdateHostRequest
      */
     globalTags?: Array<string> | null;
     /**
-     * 
+     * The workspace tags of a host
      * @type {Array<string>}
      * @memberof UpdateHostRequest
      */

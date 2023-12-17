@@ -20,13 +20,13 @@ import { exists, mapValues } from '../runtime';
  */
 export interface LoginRequest {
     /**
-     * 
+     * The username that should be used for login
      * @type {string}
      * @memberof LoginRequest
      */
     username: string;
     /**
-     * 
+     * The password that should be used for login
      * @type {string}
      * @memberof LoginRequest
      */

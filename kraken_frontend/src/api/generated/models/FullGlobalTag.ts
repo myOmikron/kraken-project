@@ -27,13 +27,13 @@ import {
  */
 export interface FullGlobalTag {
     /**
-     * 
+     * The uuid of the tag
      * @type {string}
      * @memberof FullGlobalTag
      */
     uuid: string;
     /**
-     * 
+     * The name of the tag
      * @type {string}
      * @memberof FullGlobalTag
      */

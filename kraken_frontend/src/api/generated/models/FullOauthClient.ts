@@ -20,25 +20,25 @@ import { exists, mapValues } from '../runtime';
  */
 export interface FullOauthClient {
     /**
-     * 
+     * The uuid of the client
      * @type {string}
      * @memberof FullOauthClient
      */
     uuid: string;
     /**
-     * 
+     * The name of the client
      * @type {string}
      * @memberof FullOauthClient
      */
     name: string;
     /**
-     * 
+     * The redirect url of the client
      * @type {string}
      * @memberof FullOauthClient
      */
     redirectUri: string;
     /**
-     * 
+     * The secret of the client
      * @type {string}
      * @memberof FullOauthClient
      */

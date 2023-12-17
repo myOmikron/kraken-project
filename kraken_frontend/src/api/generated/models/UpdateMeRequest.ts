@@ -22,13 +22,13 @@ import { exists, mapValues } from '../runtime';
  */
 export interface UpdateMeRequest {
     /**
-     * 
+     * The username
      * @type {string}
      * @memberof UpdateMeRequest
      */
     username?: string | null;
     /**
-     * 
+     * The displayname
      * @type {string}
      * @memberof UpdateMeRequest
      */

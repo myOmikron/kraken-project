@@ -57,7 +57,7 @@ class DomainsApi:
     @validate_call
     async def create_domain(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         create_domain_request: CreateDomainRequest,
         _request_timeout: Union[
             None,
@@ -76,7 +76,7 @@ class DomainsApi:
 
         Manually add a domain
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param create_domain_request: (required)
         :type create_domain_request: CreateDomainRequest
@@ -131,7 +131,7 @@ class DomainsApi:
     @validate_call
     async def create_domain_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         create_domain_request: CreateDomainRequest,
         _request_timeout: Union[
             None,
@@ -150,7 +150,7 @@ class DomainsApi:
 
         Manually add a domain
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param create_domain_request: (required)
         :type create_domain_request: CreateDomainRequest
@@ -205,7 +205,7 @@ class DomainsApi:
     @validate_call
     async def create_domain_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         create_domain_request: CreateDomainRequest,
         _request_timeout: Union[
             None,
@@ -224,7 +224,7 @@ class DomainsApi:
 
         Manually add a domain
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param create_domain_request: (required)
         :type create_domain_request: CreateDomainRequest
@@ -353,7 +353,7 @@ class DomainsApi:
     @validate_call
     async def get_all_domains(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         get_all_domains_query: GetAllDomainsQuery,
         _request_timeout: Union[
             None,
@@ -372,7 +372,7 @@ class DomainsApi:
 
         Retrieve all domains of a specific workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param get_all_domains_query: (required)
         :type get_all_domains_query: GetAllDomainsQuery
@@ -427,7 +427,7 @@ class DomainsApi:
     @validate_call
     async def get_all_domains_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         get_all_domains_query: GetAllDomainsQuery,
         _request_timeout: Union[
             None,
@@ -446,7 +446,7 @@ class DomainsApi:
 
         Retrieve all domains of a specific workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param get_all_domains_query: (required)
         :type get_all_domains_query: GetAllDomainsQuery
@@ -501,7 +501,7 @@ class DomainsApi:
     @validate_call
     async def get_all_domains_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         get_all_domains_query: GetAllDomainsQuery,
         _request_timeout: Union[
             None,
@@ -520,7 +520,7 @@ class DomainsApi:
 
         Retrieve all domains of a specific workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param get_all_domains_query: (required)
         :type get_all_domains_query: GetAllDomainsQuery

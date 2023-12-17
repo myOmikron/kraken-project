@@ -21,18 +21,19 @@ import json
 
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel
-from kraken_sdk.models.get_user import GetUser
+from pydantic import Field
+from kraken_sdk.models.full_api_key import FullApiKey
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class GetUserResponse(BaseModel):
+class ListApiKeys(BaseModel):
     """
-    The response of all users
+    The response that contains all api keys
     """ # noqa: E501
-    users: List[GetUser]
-    __properties: ClassVar[List[str]] = ["users"]
+    keys: List[FullApiKey] = Field(description="The list of api keys")
+    __properties: ClassVar[List[str]] = ["keys"]
 
     model_config = {
         "populate_by_name": True,
@@ -51,7 +52,7 @@ class GetUserResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of GetUserResponse from a JSON string"""
+        """Create an instance of ListApiKeys from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -70,18 +71,18 @@ class GetUserResponse(BaseModel):
             },
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of each item in users (list)
+        # override the default output from pydantic by calling `to_dict()` of each item in keys (list)
         _items = []
-        if self.users:
-            for _item in self.users:
+        if self.keys:
+            for _item in self.keys:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['users'] = _items
+            _dict['keys'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of GetUserResponse from a dict"""
+        """Create an instance of ListApiKeys from a dict"""
         if obj is None:
             return None
 
@@ -89,7 +90,7 @@ class GetUserResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "users": [GetUser.from_dict(_item) for _item in obj.get("users")] if obj.get("users") is not None else None
+            "keys": [FullApiKey.from_dict(_item) for _item in obj.get("keys")] if obj.get("keys") is not None else None
         })
         return _obj
 

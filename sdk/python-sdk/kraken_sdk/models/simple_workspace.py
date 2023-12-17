@@ -21,6 +21,7 @@ import json
 from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 from kraken_sdk.models.simple_user import SimpleUser
 try:
     from typing import Self
@@ -31,11 +32,11 @@ class SimpleWorkspace(BaseModel):
     """
     A simple version of a workspace
     """ # noqa: E501
-    uuid: StrictStr
-    name: StrictStr
-    description: Optional[StrictStr] = None
+    uuid: StrictStr = Field(description="The uuid of the workspace")
+    name: StrictStr = Field(description="The name of the workspace")
+    description: Optional[StrictStr] = Field(default=None, description="The description of the workspace")
     owner: SimpleUser
-    created_at: datetime
+    created_at: datetime = Field(description="The point in time the workspace was created")
     __properties: ClassVar[List[str]] = ["uuid", "name", "description", "owner", "created_at"]
 
     model_config = {

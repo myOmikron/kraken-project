@@ -17,8 +17,8 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   CreateUserRequest,
-  GetUser,
-  GetUserResponse,
+  FullUser,
+  ListFullUsers,
   UuidResponse,
 } from '../models';
 import {
@@ -26,10 +26,10 @@ import {
     ApiErrorResponseToJSON,
     CreateUserRequestFromJSON,
     CreateUserRequestToJSON,
-    GetUserFromJSON,
-    GetUserToJSON,
-    GetUserResponseFromJSON,
-    GetUserResponseToJSON,
+    FullUserFromJSON,
+    FullUserToJSON,
+    ListFullUsersFromJSON,
+    ListFullUsersToJSON,
     UuidResponseFromJSON,
     UuidResponseToJSON,
 } from '../models';
@@ -121,7 +121,7 @@ export class UserAdminManagementApi extends runtime.BaseAPI {
      * Retrieve all users
      * Retrieve all users
      */
-    async getAllUsersAdminRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetUserResponse>> {
+    async getAllUsersAdminRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListFullUsers>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -133,14 +133,14 @@ export class UserAdminManagementApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetUserResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListFullUsersFromJSON(jsonValue));
     }
 
     /**
      * Retrieve all users
      * Retrieve all users
      */
-    async getAllUsersAdmin(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetUserResponse> {
+    async getAllUsersAdmin(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListFullUsers> {
         const response = await this.getAllUsersAdminRaw(initOverrides);
         return await response.value();
     }
@@ -149,7 +149,7 @@ export class UserAdminManagementApi extends runtime.BaseAPI {
      * Retrieve a user by its uuid
      * Retrieve a user by its uuid
      */
-    async getUserRaw(requestParameters: GetUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetUser>> {
+    async getUserRaw(requestParameters: GetUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FullUser>> {
         if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
             throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getUser.');
         }
@@ -165,14 +165,14 @@ export class UserAdminManagementApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetUserFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => FullUserFromJSON(jsonValue));
     }
 
     /**
      * Retrieve a user by its uuid
      * Retrieve a user by its uuid
      */
-    async getUser(requestParameters: GetUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetUser> {
+    async getUser(requestParameters: GetUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullUser> {
         const response = await this.getUserRaw(requestParameters, initOverrides);
         return await response.value();
     }

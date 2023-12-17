@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
@@ -30,7 +31,7 @@ class FinishRegisterRequest(BaseModel):
     """
     The request to finish the registration of a security key
     """ # noqa: E501
-    name: StrictStr
+    name: StrictStr = Field(description="Name of the key")
     __properties: ClassVar[List[str]] = ["name"]
 
     model_config = {

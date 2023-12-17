@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 from kraken_sdk.models.color import Color
 try:
     from typing import Self
@@ -31,10 +32,10 @@ class FullWorkspaceTag(BaseModel):
     """
     The full representation of a full workspace tag
     """ # noqa: E501
-    uuid: StrictStr
-    name: StrictStr
+    uuid: StrictStr = Field(description="The uuid of the workspace tag")
+    name: StrictStr = Field(description="The name of the tag")
     color: Color
-    workspace: StrictStr
+    workspace: StrictStr = Field(description="The workspace this tag is linked to")
     __properties: ClassVar[List[str]] = ["uuid", "name", "color", "workspace"]
 
     model_config = {

@@ -24,7 +24,7 @@ try:
 except ImportError:
     from typing_extensions import Annotated
 
-from kraken_sdk.models.get_all_wordlists_response import GetAllWordlistsResponse
+from kraken_sdk.models.list_wordlists import ListWordlists
 
 from kraken_sdk.api_client import ApiClient
 from kraken_sdk.api_response import ApiResponse
@@ -59,7 +59,7 @@ class WordlistApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetAllWordlistsResponse:
+    ) -> ListWordlists:
         """Get a list of all wordlist for the user to select from when starting an bruteforce subdomains attack
 
         Get a list of all wordlist for the user to select from when starting an bruteforce subdomains attack
@@ -94,7 +94,7 @@ class WordlistApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllWordlistsResponse",
+            '200': "ListWordlists",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -125,7 +125,7 @@ class WordlistApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetAllWordlistsResponse]:
+    ) -> ApiResponse[ListWordlists]:
         """Get a list of all wordlist for the user to select from when starting an bruteforce subdomains attack
 
         Get a list of all wordlist for the user to select from when starting an bruteforce subdomains attack
@@ -160,7 +160,7 @@ class WordlistApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllWordlistsResponse",
+            '200': "ListWordlists",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -226,7 +226,7 @@ class WordlistApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllWordlistsResponse",
+            '200': "ListWordlists",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             

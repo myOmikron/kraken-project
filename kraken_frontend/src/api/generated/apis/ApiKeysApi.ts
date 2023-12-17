@@ -17,7 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   CreateApiKeyRequest,
-  GetApiKeysResponse,
+  ListApiKeys,
   UpdateApiKeyRequest,
   UuidResponse,
 } from '../models';
@@ -26,8 +26,8 @@ import {
     ApiErrorResponseToJSON,
     CreateApiKeyRequestFromJSON,
     CreateApiKeyRequestToJSON,
-    GetApiKeysResponseFromJSON,
-    GetApiKeysResponseToJSON,
+    ListApiKeysFromJSON,
+    ListApiKeysToJSON,
     UpdateApiKeyRequestFromJSON,
     UpdateApiKeyRequestToJSON,
     UuidResponseFromJSON,
@@ -122,7 +122,7 @@ export class ApiKeysApi extends runtime.BaseAPI {
      * Retrieve all api keys
      * Retrieve all api keys
      */
-    async getApiKeysRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetApiKeysResponse>> {
+    async getApiKeysRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListApiKeys>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -134,14 +134,14 @@ export class ApiKeysApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetApiKeysResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListApiKeysFromJSON(jsonValue));
     }
 
     /**
      * Retrieve all api keys
      * Retrieve all api keys
      */
-    async getApiKeys(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetApiKeysResponse> {
+    async getApiKeys(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListApiKeys> {
         const response = await this.getApiKeysRaw(initOverrides);
         return await response.value();
     }

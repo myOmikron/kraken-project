@@ -24,10 +24,12 @@ try:
 except ImportError:
     from typing_extensions import Annotated
 
+from pydantic import Field
+from typing_extensions import Annotated
 from pydantic import StrictStr
 
 from kraken_sdk.models.create_wordlist_request import CreateWordlistRequest
-from kraken_sdk.models.get_all_wordlists_admin_response import GetAllWordlistsAdminResponse
+from kraken_sdk.models.list_wordlists_admin import ListWordlistsAdmin
 from kraken_sdk.models.update_wordlist_request import UpdateWordlistRequest
 from kraken_sdk.models.uuid_response import UuidResponse
 
@@ -333,7 +335,7 @@ class WordlistManagementApi:
     @validate_call
     async def delete_wordlist_admin(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -351,7 +353,7 @@ class WordlistManagementApi:
 
         Delete an existing wordlist
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -400,7 +402,7 @@ class WordlistManagementApi:
     @validate_call
     async def delete_wordlist_admin_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -418,7 +420,7 @@ class WordlistManagementApi:
 
         Delete an existing wordlist
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -467,7 +469,7 @@ class WordlistManagementApi:
     @validate_call
     async def delete_wordlist_admin_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -485,7 +487,7 @@ class WordlistManagementApi:
 
         Delete an existing wordlist
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -604,7 +606,7 @@ class WordlistManagementApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetAllWordlistsAdminResponse:
+    ) -> ListWordlistsAdmin:
         """Get a list of all wordlists including their paths
 
         Get a list of all wordlists including their paths
@@ -639,7 +641,7 @@ class WordlistManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllWordlistsAdminResponse",
+            '200': "ListWordlistsAdmin",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -670,7 +672,7 @@ class WordlistManagementApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetAllWordlistsAdminResponse]:
+    ) -> ApiResponse[ListWordlistsAdmin]:
         """Get a list of all wordlists including their paths
 
         Get a list of all wordlists including their paths
@@ -705,7 +707,7 @@ class WordlistManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllWordlistsAdminResponse",
+            '200': "ListWordlistsAdmin",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -771,7 +773,7 @@ class WordlistManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllWordlistsAdminResponse",
+            '200': "ListWordlistsAdmin",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -845,7 +847,7 @@ class WordlistManagementApi:
     @validate_call
     async def update_wordlist_admin(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         update_wordlist_request: UpdateWordlistRequest,
         _request_timeout: Union[
             None,
@@ -864,7 +866,7 @@ class WordlistManagementApi:
 
         Update an existing wordlist
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param update_wordlist_request: (required)
         :type update_wordlist_request: UpdateWordlistRequest
@@ -916,7 +918,7 @@ class WordlistManagementApi:
     @validate_call
     async def update_wordlist_admin_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         update_wordlist_request: UpdateWordlistRequest,
         _request_timeout: Union[
             None,
@@ -935,7 +937,7 @@ class WordlistManagementApi:
 
         Update an existing wordlist
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param update_wordlist_request: (required)
         :type update_wordlist_request: UpdateWordlistRequest
@@ -987,7 +989,7 @@ class WordlistManagementApi:
     @validate_call
     async def update_wordlist_admin_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         update_wordlist_request: UpdateWordlistRequest,
         _request_timeout: Union[
             None,
@@ -1006,7 +1008,7 @@ class WordlistManagementApi:
 
         Update an existing wordlist
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param update_wordlist_request: (required)
         :type update_wordlist_request: UpdateWordlistRequest

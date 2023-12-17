@@ -57,7 +57,7 @@ class PortsApi:
     @validate_call
     async def create_port(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         create_port_request: CreatePortRequest,
         _request_timeout: Union[
             None,
@@ -76,7 +76,7 @@ class PortsApi:
 
         Manually add a port
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param create_port_request: (required)
         :type create_port_request: CreatePortRequest
@@ -131,7 +131,7 @@ class PortsApi:
     @validate_call
     async def create_port_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         create_port_request: CreatePortRequest,
         _request_timeout: Union[
             None,
@@ -150,7 +150,7 @@ class PortsApi:
 
         Manually add a port
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param create_port_request: (required)
         :type create_port_request: CreatePortRequest
@@ -205,7 +205,7 @@ class PortsApi:
     @validate_call
     async def create_port_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         create_port_request: CreatePortRequest,
         _request_timeout: Union[
             None,
@@ -224,7 +224,7 @@ class PortsApi:
 
         Manually add a port
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param create_port_request: (required)
         :type create_port_request: CreatePortRequest
@@ -353,7 +353,7 @@ class PortsApi:
     @validate_call
     async def get_all_ports(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         get_all_ports_query: GetAllPortsQuery,
         _request_timeout: Union[
             None,
@@ -372,7 +372,7 @@ class PortsApi:
 
         List the ports of a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param get_all_ports_query: (required)
         :type get_all_ports_query: GetAllPortsQuery
@@ -427,7 +427,7 @@ class PortsApi:
     @validate_call
     async def get_all_ports_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         get_all_ports_query: GetAllPortsQuery,
         _request_timeout: Union[
             None,
@@ -446,7 +446,7 @@ class PortsApi:
 
         List the ports of a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param get_all_ports_query: (required)
         :type get_all_ports_query: GetAllPortsQuery
@@ -501,7 +501,7 @@ class PortsApi:
     @validate_call
     async def get_all_ports_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         get_all_ports_query: GetAllPortsQuery,
         _request_timeout: Union[
             None,
@@ -520,7 +520,7 @@ class PortsApi:
 
         List the ports of a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param get_all_ports_query: (required)
         :type get_all_ports_query: GetAllPortsQuery

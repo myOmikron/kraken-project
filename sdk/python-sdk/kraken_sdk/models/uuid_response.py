@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
@@ -30,7 +31,7 @@ class UuidResponse(BaseModel):
     """
     A common response that contains a single uuid
     """ # noqa: E501
-    uuid: StrictStr
+    uuid: StrictStr = Field(description="The uuid")
     __properties: ClassVar[List[str]] = ["uuid"]
 
     model_config = {

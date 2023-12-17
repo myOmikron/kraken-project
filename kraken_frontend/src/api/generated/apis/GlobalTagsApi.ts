@@ -17,7 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   CreateGlobalTagRequest,
-  GetGlobalTagsResponse,
+  ListGlobalTags,
   UpdateGlobalTag,
   UuidResponse,
 } from '../models';
@@ -26,8 +26,8 @@ import {
     ApiErrorResponseToJSON,
     CreateGlobalTagRequestFromJSON,
     CreateGlobalTagRequestToJSON,
-    GetGlobalTagsResponseFromJSON,
-    GetGlobalTagsResponseToJSON,
+    ListGlobalTagsFromJSON,
+    ListGlobalTagsToJSON,
     UpdateGlobalTagFromJSON,
     UpdateGlobalTagToJSON,
     UuidResponseFromJSON,
@@ -122,7 +122,7 @@ export class GlobalTagsApi extends runtime.BaseAPI {
      * Retrieve all global tags
      * Retrieve all global tags
      */
-    async getAllGlobalTagsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetGlobalTagsResponse>> {
+    async getAllGlobalTagsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListGlobalTags>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -134,14 +134,14 @@ export class GlobalTagsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetGlobalTagsResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListGlobalTagsFromJSON(jsonValue));
     }
 
     /**
      * Retrieve all global tags
      * Retrieve all global tags
      */
-    async getAllGlobalTags(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetGlobalTagsResponse> {
+    async getAllGlobalTags(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListGlobalTags> {
         const response = await this.getAllGlobalTagsRaw(initOverrides);
         return await response.value();
     }

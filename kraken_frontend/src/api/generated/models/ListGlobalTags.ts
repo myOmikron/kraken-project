@@ -23,32 +23,32 @@ import {
 /**
  * The response to a request to retrieve all global tags
  * @export
- * @interface GetGlobalTagsResponse
+ * @interface ListGlobalTags
  */
-export interface GetGlobalTagsResponse {
+export interface ListGlobalTags {
     /**
-     * 
+     * List of global tags
      * @type {Array<FullGlobalTag>}
-     * @memberof GetGlobalTagsResponse
+     * @memberof ListGlobalTags
      */
     globalTags: Array<FullGlobalTag>;
 }
 
 /**
- * Check if a given object implements the GetGlobalTagsResponse interface.
+ * Check if a given object implements the ListGlobalTags interface.
  */
-export function instanceOfGetGlobalTagsResponse(value: object): boolean {
+export function instanceOfListGlobalTags(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "globalTags" in value;
 
     return isInstance;
 }
 
-export function GetGlobalTagsResponseFromJSON(json: any): GetGlobalTagsResponse {
-    return GetGlobalTagsResponseFromJSONTyped(json, false);
+export function ListGlobalTagsFromJSON(json: any): ListGlobalTags {
+    return ListGlobalTagsFromJSONTyped(json, false);
 }
 
-export function GetGlobalTagsResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetGlobalTagsResponse {
+export function ListGlobalTagsFromJSONTyped(json: any, ignoreDiscriminator: boolean): ListGlobalTags {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -58,7 +58,7 @@ export function GetGlobalTagsResponseFromJSONTyped(json: any, ignoreDiscriminato
     };
 }
 
-export function GetGlobalTagsResponseToJSON(value?: GetGlobalTagsResponse | null): any {
+export function ListGlobalTagsToJSON(value?: ListGlobalTags | null): any {
     if (value === undefined) {
         return undefined;
     }

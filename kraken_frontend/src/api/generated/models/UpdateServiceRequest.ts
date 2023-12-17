@@ -20,19 +20,19 @@ import { exists, mapValues } from '../runtime';
  */
 export interface UpdateServiceRequest {
     /**
-     * 
+     * The comment of the service
      * @type {string}
      * @memberof UpdateServiceRequest
      */
     comment?: string | null;
     /**
-     * 
+     * The global tags that are attached to the service
      * @type {Array<string>}
      * @memberof UpdateServiceRequest
      */
     globalTags?: Array<string> | null;
     /**
-     * 
+     * The workspace tags that are attached to the service
      * @type {Array<string>}
      * @memberof UpdateServiceRequest
      */

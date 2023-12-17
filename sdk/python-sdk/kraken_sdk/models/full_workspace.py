@@ -21,6 +21,7 @@ import json
 from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 from kraken_sdk.models.simple_attack import SimpleAttack
 from kraken_sdk.models.simple_user import SimpleUser
 try:
@@ -32,13 +33,13 @@ class FullWorkspace(BaseModel):
     """
     A full version of a workspace
     """ # noqa: E501
-    uuid: StrictStr
-    name: StrictStr
-    description: Optional[StrictStr] = None
+    uuid: StrictStr = Field(description="The uuid of the workspace")
+    name: StrictStr = Field(description="The name of the workspace")
+    description: Optional[StrictStr] = Field(default=None, description="The description of the workspace")
     owner: SimpleUser
-    attacks: List[SimpleAttack]
-    members: List[SimpleUser]
-    created_at: datetime
+    attacks: List[SimpleAttack] = Field(description="The attacks linked to this workspace")
+    members: List[SimpleUser] = Field(description="The member of the workspace")
+    created_at: datetime = Field(description="The point in time the workspace was created")
     __properties: ClassVar[List[str]] = ["uuid", "name", "description", "owner", "attacks", "members", "created_at"]
 
     model_config = {

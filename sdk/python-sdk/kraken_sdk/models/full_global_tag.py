@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 from kraken_sdk.models.color import Color
 try:
     from typing import Self
@@ -31,8 +32,8 @@ class FullGlobalTag(BaseModel):
     """
     The full representation of a full
     """ # noqa: E501
-    uuid: StrictStr
-    name: StrictStr
+    uuid: StrictStr = Field(description="The uuid of the tag")
+    name: StrictStr = Field(description="The name of the tag")
     color: Color
     __properties: ClassVar[List[str]] = ["uuid", "name", "color"]
 

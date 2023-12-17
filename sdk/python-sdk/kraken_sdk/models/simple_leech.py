@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
@@ -30,9 +31,9 @@ class SimpleLeech(BaseModel):
     """
     The simple representation of a leech
     """ # noqa: E501
-    uuid: StrictStr
-    name: StrictStr
-    address: StrictStr
+    uuid: StrictStr = Field(description="uuid of the leech")
+    name: StrictStr = Field(description="Name of the leech")
+    address: StrictStr = Field(description="Address of the leech")
     __properties: ClassVar[List[str]] = ["uuid", "name", "address"]
 
     model_config = {

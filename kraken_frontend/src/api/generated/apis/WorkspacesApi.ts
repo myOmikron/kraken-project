@@ -18,8 +18,8 @@ import type {
   ApiErrorResponse,
   CreateWorkspaceRequest,
   FullWorkspace,
-  GetAllWorkspacesResponse,
-  InviteToWorkspace,
+  InviteToWorkspaceRequest,
+  ListWorkspaces,
   SearchResultPage,
   SearchWorkspaceRequest,
   SearchesResultPage,
@@ -35,10 +35,10 @@ import {
     CreateWorkspaceRequestToJSON,
     FullWorkspaceFromJSON,
     FullWorkspaceToJSON,
-    GetAllWorkspacesResponseFromJSON,
-    GetAllWorkspacesResponseToJSON,
-    InviteToWorkspaceFromJSON,
-    InviteToWorkspaceToJSON,
+    InviteToWorkspaceRequestFromJSON,
+    InviteToWorkspaceRequestToJSON,
+    ListWorkspacesFromJSON,
+    ListWorkspacesToJSON,
     SearchResultPageFromJSON,
     SearchResultPageToJSON,
     SearchWorkspaceRequestFromJSON,
@@ -57,7 +57,7 @@ import {
 
 export interface CreateInvitationRequest {
     uuid: string;
-    inviteToWorkspace: InviteToWorkspace;
+    inviteToWorkspaceRequest: InviteToWorkspaceRequest;
 }
 
 export interface CreateWorkspaceOperationRequest {
@@ -123,8 +123,8 @@ export class WorkspacesApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling createInvitation.');
         }
 
-        if (requestParameters.inviteToWorkspace === null || requestParameters.inviteToWorkspace === undefined) {
-            throw new runtime.RequiredError('inviteToWorkspace','Required parameter requestParameters.inviteToWorkspace was null or undefined when calling createInvitation.');
+        if (requestParameters.inviteToWorkspaceRequest === null || requestParameters.inviteToWorkspaceRequest === undefined) {
+            throw new runtime.RequiredError('inviteToWorkspaceRequest','Required parameter requestParameters.inviteToWorkspaceRequest was null or undefined when calling createInvitation.');
         }
 
         const queryParameters: any = {};
@@ -138,7 +138,7 @@ export class WorkspacesApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: InviteToWorkspaceToJSON(requestParameters.inviteToWorkspace),
+            body: InviteToWorkspaceRequestToJSON(requestParameters.inviteToWorkspaceRequest),
         }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
@@ -254,7 +254,7 @@ export class WorkspacesApi extends runtime.BaseAPI {
      * Retrieve all workspaces that the executing user has access to  For administration access, look at the `/admin/workspaces` endpoint.
      * Retrieve all workspaces that the executing user has access to
      */
-    async getAllWorkspacesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAllWorkspacesResponse>> {
+    async getAllWorkspacesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListWorkspaces>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -266,14 +266,14 @@ export class WorkspacesApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetAllWorkspacesResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListWorkspacesFromJSON(jsonValue));
     }
 
     /**
      * Retrieve all workspaces that the executing user has access to  For administration access, look at the `/admin/workspaces` endpoint.
      * Retrieve all workspaces that the executing user has access to
      */
-    async getAllWorkspaces(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAllWorkspacesResponse> {
+    async getAllWorkspaces(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListWorkspaces> {
         const response = await this.getAllWorkspacesRaw(initOverrides);
         return await response.value();
     }

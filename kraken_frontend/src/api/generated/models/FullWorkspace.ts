@@ -33,19 +33,19 @@ import {
  */
 export interface FullWorkspace {
     /**
-     * 
+     * The uuid of the workspace
      * @type {string}
      * @memberof FullWorkspace
      */
     uuid: string;
     /**
-     * 
+     * The name of the workspace
      * @type {string}
      * @memberof FullWorkspace
      */
     name: string;
     /**
-     * 
+     * The description of the workspace
      * @type {string}
      * @memberof FullWorkspace
      */
@@ -57,19 +57,19 @@ export interface FullWorkspace {
      */
     owner: SimpleUser;
     /**
-     * 
+     * The attacks linked to this workspace
      * @type {Array<SimpleAttack>}
      * @memberof FullWorkspace
      */
     attacks: Array<SimpleAttack>;
     /**
-     * 
+     * The member of the workspace
      * @type {Array<SimpleUser>}
      * @memberof FullWorkspace
      */
     members: Array<SimpleUser>;
     /**
-     * 
+     * The point in time the workspace was created
      * @type {Date}
      * @memberof FullWorkspace
      */

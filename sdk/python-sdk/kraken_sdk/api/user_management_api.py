@@ -24,8 +24,8 @@ try:
 except ImportError:
     from typing_extensions import Annotated
 
-from kraken_sdk.models.get_all_users_response import GetAllUsersResponse
-from kraken_sdk.models.get_user import GetUser
+from kraken_sdk.models.full_user import FullUser
+from kraken_sdk.models.list_users import ListUsers
 from kraken_sdk.models.set_password_request import SetPasswordRequest
 from kraken_sdk.models.update_me_request import UpdateMeRequest
 
@@ -62,7 +62,7 @@ class UserManagementApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetAllUsersResponse:
+    ) -> ListUsers:
         """Request all users
 
         Request all users  This may be used to create invitations for workspaces
@@ -97,7 +97,7 @@ class UserManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllUsersResponse",
+            '200': "ListUsers",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -128,7 +128,7 @@ class UserManagementApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetAllUsersResponse]:
+    ) -> ApiResponse[ListUsers]:
         """Request all users
 
         Request all users  This may be used to create invitations for workspaces
@@ -163,7 +163,7 @@ class UserManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllUsersResponse",
+            '200': "ListUsers",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -229,7 +229,7 @@ class UserManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllUsersResponse",
+            '200': "ListUsers",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -315,7 +315,7 @@ class UserManagementApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetUser:
+    ) -> FullUser:
         """Retrieve the own user
 
         Retrieve the own user
@@ -350,7 +350,7 @@ class UserManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetUser",
+            '200': "FullUser",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -381,7 +381,7 @@ class UserManagementApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetUser]:
+    ) -> ApiResponse[FullUser]:
         """Retrieve the own user
 
         Retrieve the own user
@@ -416,7 +416,7 @@ class UserManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetUser",
+            '200': "FullUser",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -482,7 +482,7 @@ class UserManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetUser",
+            '200': "FullUser",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             

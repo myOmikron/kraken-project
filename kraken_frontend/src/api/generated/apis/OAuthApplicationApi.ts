@@ -18,7 +18,7 @@ import type {
   ApiErrorResponse,
   CreateAppRequest,
   FullOauthClient,
-  GetAppsResponse,
+  ListOauthApplications,
   UpdateAppRequest,
   UuidResponse,
 } from '../models';
@@ -29,8 +29,8 @@ import {
     CreateAppRequestToJSON,
     FullOauthClientFromJSON,
     FullOauthClientToJSON,
-    GetAppsResponseFromJSON,
-    GetAppsResponseToJSON,
+    ListOauthApplicationsFromJSON,
+    ListOauthApplicationsToJSON,
     UpdateAppRequestFromJSON,
     UpdateAppRequestToJSON,
     UuidResponseFromJSON,
@@ -127,7 +127,7 @@ export class OAuthApplicationApi extends runtime.BaseAPI {
 
     /**
      */
-    async getAllOauthAppsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAppsResponse>> {
+    async getAllOauthAppsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListOauthApplications>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -139,12 +139,12 @@ export class OAuthApplicationApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetAppsResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListOauthApplicationsFromJSON(jsonValue));
     }
 
     /**
      */
-    async getAllOauthApps(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAppsResponse> {
+    async getAllOauthApps(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListOauthApplications> {
         const response = await this.getAllOauthAppsRaw(initOverrides);
         return await response.value();
     }

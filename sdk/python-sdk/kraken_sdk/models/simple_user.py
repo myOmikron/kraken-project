@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
@@ -30,9 +31,9 @@ class SimpleUser(BaseModel):
     """
     This struct holds the user information.  Note that `username` is unique, but as it is changeable, identify the user by its `uuid`
     """ # noqa: E501
-    uuid: StrictStr
-    username: StrictStr
-    display_name: StrictStr
+    uuid: StrictStr = Field(description="The uuid of the user")
+    username: StrictStr = Field(description="The username of the user")
+    display_name: StrictStr = Field(description="The displayname of the user")
     __properties: ClassVar[List[str]] = ["uuid", "username", "display_name"]
 
     model_config = {

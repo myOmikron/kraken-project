@@ -24,10 +24,12 @@ try:
 except ImportError:
     from typing_extensions import Annotated
 
+from pydantic import Field
+from typing_extensions import Annotated
 from pydantic import StrictStr
 
 from kraken_sdk.models.create_global_tag_request import CreateGlobalTagRequest
-from kraken_sdk.models.get_global_tags_response import GetGlobalTagsResponse
+from kraken_sdk.models.list_global_tags import ListGlobalTags
 from kraken_sdk.models.update_global_tag import UpdateGlobalTag
 from kraken_sdk.models.uuid_response import UuidResponse
 
@@ -333,7 +335,7 @@ class GlobalTagsApi:
     @validate_call
     async def delete_global_tag(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -351,7 +353,7 @@ class GlobalTagsApi:
 
         Delete a global tag  Requires admin privileges.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -400,7 +402,7 @@ class GlobalTagsApi:
     @validate_call
     async def delete_global_tag_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -418,7 +420,7 @@ class GlobalTagsApi:
 
         Delete a global tag  Requires admin privileges.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -467,7 +469,7 @@ class GlobalTagsApi:
     @validate_call
     async def delete_global_tag_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -485,7 +487,7 @@ class GlobalTagsApi:
 
         Delete a global tag  Requires admin privileges.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -604,7 +606,7 @@ class GlobalTagsApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetGlobalTagsResponse:
+    ) -> ListGlobalTags:
         """Retrieve all global tags
 
         Retrieve all global tags
@@ -639,7 +641,7 @@ class GlobalTagsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetGlobalTagsResponse",
+            '200': "ListGlobalTags",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -670,7 +672,7 @@ class GlobalTagsApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetGlobalTagsResponse]:
+    ) -> ApiResponse[ListGlobalTags]:
         """Retrieve all global tags
 
         Retrieve all global tags
@@ -705,7 +707,7 @@ class GlobalTagsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetGlobalTagsResponse",
+            '200': "ListGlobalTags",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -771,7 +773,7 @@ class GlobalTagsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetGlobalTagsResponse",
+            '200': "ListGlobalTags",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -845,7 +847,7 @@ class GlobalTagsApi:
     @validate_call
     async def update_global_tag(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         update_global_tag: UpdateGlobalTag,
         _request_timeout: Union[
             None,
@@ -864,7 +866,7 @@ class GlobalTagsApi:
 
         Update a global tag  One of the options must be set  Requires admin privileges.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param update_global_tag: (required)
         :type update_global_tag: UpdateGlobalTag
@@ -916,7 +918,7 @@ class GlobalTagsApi:
     @validate_call
     async def update_global_tag_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         update_global_tag: UpdateGlobalTag,
         _request_timeout: Union[
             None,
@@ -935,7 +937,7 @@ class GlobalTagsApi:
 
         Update a global tag  One of the options must be set  Requires admin privileges.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param update_global_tag: (required)
         :type update_global_tag: UpdateGlobalTag
@@ -987,7 +989,7 @@ class GlobalTagsApi:
     @validate_call
     async def update_global_tag_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         update_global_tag: UpdateGlobalTag,
         _request_timeout: Union[
             None,
@@ -1006,7 +1008,7 @@ class GlobalTagsApi:
 
         Update a global tag  One of the options must be set  Requires admin privileges.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param update_global_tag: (required)
         :type update_global_tag: UpdateGlobalTag

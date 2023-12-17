@@ -43,7 +43,7 @@ SEARCHRESULTENTRY_ONE_OF_SCHEMAS = ["SearchResultEntryOneOf", "SearchResultEntry
 
 class SearchResultEntry(BaseModel):
     """
-    Dynamic result
+    Dynamic result of a search
     """
     # data type: SearchResultEntryOneOf
     oneof_schema_1_validator: Optional[SearchResultEntryOneOf] = None

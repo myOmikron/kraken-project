@@ -24,11 +24,13 @@ try:
 except ImportError:
     from typing_extensions import Annotated
 
+from pydantic import Field
+from typing_extensions import Annotated
 from pydantic import StrictStr
 
 from kraken_sdk.models.create_app_request import CreateAppRequest
 from kraken_sdk.models.full_oauth_client import FullOauthClient
-from kraken_sdk.models.get_apps_response import GetAppsResponse
+from kraken_sdk.models.list_oauth_applications import ListOauthApplications
 from kraken_sdk.models.update_app_request import UpdateAppRequest
 from kraken_sdk.models.uuid_response import UuidResponse
 
@@ -334,7 +336,7 @@ class OAuthApplicationApi:
     @validate_call
     async def delete_oauth_app(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -352,7 +354,7 @@ class OAuthApplicationApi:
 
         Delete an application
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -401,7 +403,7 @@ class OAuthApplicationApi:
     @validate_call
     async def delete_oauth_app_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -419,7 +421,7 @@ class OAuthApplicationApi:
 
         Delete an application
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -468,7 +470,7 @@ class OAuthApplicationApi:
     @validate_call
     async def delete_oauth_app_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -486,7 +488,7 @@ class OAuthApplicationApi:
 
         Delete an application
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -605,7 +607,7 @@ class OAuthApplicationApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetAppsResponse:
+    ) -> ListOauthApplications:
         """get_all_oauth_apps
 
 
@@ -639,7 +641,7 @@ class OAuthApplicationApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAppsResponse",
+            '200': "ListOauthApplications",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -670,7 +672,7 @@ class OAuthApplicationApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetAppsResponse]:
+    ) -> ApiResponse[ListOauthApplications]:
         """get_all_oauth_apps
 
 
@@ -704,7 +706,7 @@ class OAuthApplicationApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAppsResponse",
+            '200': "ListOauthApplications",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -769,7 +771,7 @@ class OAuthApplicationApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAppsResponse",
+            '200': "ListOauthApplications",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -843,7 +845,7 @@ class OAuthApplicationApi:
     @validate_call
     async def get_oauth_app(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -860,7 +862,7 @@ class OAuthApplicationApi:
         """get_oauth_app
 
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -912,7 +914,7 @@ class OAuthApplicationApi:
     @validate_call
     async def get_oauth_app_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -929,7 +931,7 @@ class OAuthApplicationApi:
         """get_oauth_app
 
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -981,7 +983,7 @@ class OAuthApplicationApi:
     @validate_call
     async def get_oauth_app_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -998,7 +1000,7 @@ class OAuthApplicationApi:
         """get_oauth_app
 
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -1108,7 +1110,7 @@ class OAuthApplicationApi:
     @validate_call
     async def update_oauth_app(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         update_app_request: UpdateAppRequest,
         _request_timeout: Union[
             None,
@@ -1127,7 +1129,7 @@ class OAuthApplicationApi:
 
         Update an application
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param update_app_request: (required)
         :type update_app_request: UpdateAppRequest
@@ -1179,7 +1181,7 @@ class OAuthApplicationApi:
     @validate_call
     async def update_oauth_app_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         update_app_request: UpdateAppRequest,
         _request_timeout: Union[
             None,
@@ -1198,7 +1200,7 @@ class OAuthApplicationApi:
 
         Update an application
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param update_app_request: (required)
         :type update_app_request: UpdateAppRequest
@@ -1250,7 +1252,7 @@ class OAuthApplicationApi:
     @validate_call
     async def update_oauth_app_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         update_app_request: UpdateAppRequest,
         _request_timeout: Union[
             None,
@@ -1269,7 +1271,7 @@ class OAuthApplicationApi:
 
         Update an application
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param update_app_request: (required)
         :type update_app_request: UpdateAppRequest

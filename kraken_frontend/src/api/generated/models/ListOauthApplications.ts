@@ -21,34 +21,34 @@ import {
 } from './FullOauthClient';
 
 /**
- * 
+ * List all oauth applications
  * @export
- * @interface GetAppsResponse
+ * @interface ListOauthApplications
  */
-export interface GetAppsResponse {
+export interface ListOauthApplications {
     /**
-     * 
+     * The list of applications
      * @type {Array<FullOauthClient>}
-     * @memberof GetAppsResponse
+     * @memberof ListOauthApplications
      */
     apps: Array<FullOauthClient>;
 }
 
 /**
- * Check if a given object implements the GetAppsResponse interface.
+ * Check if a given object implements the ListOauthApplications interface.
  */
-export function instanceOfGetAppsResponse(value: object): boolean {
+export function instanceOfListOauthApplications(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "apps" in value;
 
     return isInstance;
 }
 
-export function GetAppsResponseFromJSON(json: any): GetAppsResponse {
-    return GetAppsResponseFromJSONTyped(json, false);
+export function ListOauthApplicationsFromJSON(json: any): ListOauthApplications {
+    return ListOauthApplicationsFromJSONTyped(json, false);
 }
 
-export function GetAppsResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetAppsResponse {
+export function ListOauthApplicationsFromJSONTyped(json: any, ignoreDiscriminator: boolean): ListOauthApplications {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -58,7 +58,7 @@ export function GetAppsResponseFromJSONTyped(json: any, ignoreDiscriminator: boo
     };
 }
 
-export function GetAppsResponseToJSON(value?: GetAppsResponse | null): any {
+export function ListOauthApplicationsToJSON(value?: ListOauthApplications | null): any {
     if (value === undefined) {
         return undefined;
     }

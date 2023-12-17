@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
@@ -30,9 +31,9 @@ class SimpleOauthClient(BaseModel):
     """
     A simple (secret-less) version of a workspace
     """ # noqa: E501
-    uuid: StrictStr
-    name: StrictStr
-    redirect_uri: StrictStr
+    uuid: StrictStr = Field(description="The uuid of the client")
+    name: StrictStr = Field(description="The name of the client")
+    redirect_uri: StrictStr = Field(description="The redirect url of the client")
     __properties: ClassVar[List[str]] = ["uuid", "name", "redirect_uri"]
 
     model_config = {

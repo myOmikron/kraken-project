@@ -23,32 +23,32 @@ import {
 /**
  * The response that contains all api keys
  * @export
- * @interface GetApiKeysResponse
+ * @interface ListApiKeys
  */
-export interface GetApiKeysResponse {
+export interface ListApiKeys {
     /**
-     * 
+     * The list of api keys
      * @type {Array<FullApiKey>}
-     * @memberof GetApiKeysResponse
+     * @memberof ListApiKeys
      */
     keys: Array<FullApiKey>;
 }
 
 /**
- * Check if a given object implements the GetApiKeysResponse interface.
+ * Check if a given object implements the ListApiKeys interface.
  */
-export function instanceOfGetApiKeysResponse(value: object): boolean {
+export function instanceOfListApiKeys(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "keys" in value;
 
     return isInstance;
 }
 
-export function GetApiKeysResponseFromJSON(json: any): GetApiKeysResponse {
-    return GetApiKeysResponseFromJSONTyped(json, false);
+export function ListApiKeysFromJSON(json: any): ListApiKeys {
+    return ListApiKeysFromJSONTyped(json, false);
 }
 
-export function GetApiKeysResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetApiKeysResponse {
+export function ListApiKeysFromJSONTyped(json: any, ignoreDiscriminator: boolean): ListApiKeys {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -58,7 +58,7 @@ export function GetApiKeysResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     };
 }
 
-export function GetApiKeysResponseToJSON(value?: GetApiKeysResponse | null): any {
+export function ListApiKeysToJSON(value?: ListApiKeys | null): any {
     if (value === undefined) {
         return undefined;
     }

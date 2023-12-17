@@ -57,7 +57,7 @@ class ServicesApi:
     @validate_call
     async def create_service(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         create_service_request: CreateServiceRequest,
         _request_timeout: Union[
             None,
@@ -76,7 +76,7 @@ class ServicesApi:
 
         Manually add a service
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param create_service_request: (required)
         :type create_service_request: CreateServiceRequest
@@ -131,7 +131,7 @@ class ServicesApi:
     @validate_call
     async def create_service_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         create_service_request: CreateServiceRequest,
         _request_timeout: Union[
             None,
@@ -150,7 +150,7 @@ class ServicesApi:
 
         Manually add a service
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param create_service_request: (required)
         :type create_service_request: CreateServiceRequest
@@ -205,7 +205,7 @@ class ServicesApi:
     @validate_call
     async def create_service_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         create_service_request: CreateServiceRequest,
         _request_timeout: Union[
             None,
@@ -224,7 +224,7 @@ class ServicesApi:
 
         Manually add a service
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param create_service_request: (required)
         :type create_service_request: CreateServiceRequest
@@ -353,7 +353,7 @@ class ServicesApi:
     @validate_call
     async def get_all_services(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         get_all_services_query: GetAllServicesQuery,
         _request_timeout: Union[
             None,
@@ -372,7 +372,7 @@ class ServicesApi:
 
         List the services of a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param get_all_services_query: (required)
         :type get_all_services_query: GetAllServicesQuery
@@ -427,7 +427,7 @@ class ServicesApi:
     @validate_call
     async def get_all_services_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         get_all_services_query: GetAllServicesQuery,
         _request_timeout: Union[
             None,
@@ -446,7 +446,7 @@ class ServicesApi:
 
         List the services of a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param get_all_services_query: (required)
         :type get_all_services_query: GetAllServicesQuery
@@ -501,7 +501,7 @@ class ServicesApi:
     @validate_call
     async def get_all_services_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         get_all_services_query: GetAllServicesQuery,
         _request_timeout: Union[
             None,
@@ -520,7 +520,7 @@ class ServicesApi:
 
         List the services of a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param get_all_services_query: (required)
         :type get_all_services_query: GetAllServicesQuery

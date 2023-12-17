@@ -20,19 +20,19 @@ import { exists, mapValues } from '../runtime';
  */
 export interface UpdateLeechRequest {
     /**
-     * 
+     * Name of the leech
      * @type {string}
      * @memberof UpdateLeechRequest
      */
     name?: string | null;
     /**
-     * 
+     * Address of the leech
      * @type {string}
      * @memberof UpdateLeechRequest
      */
-    address?: string | null;
+    address: string;
     /**
-     * 
+     * Description of the leech
      * @type {string}
      * @memberof UpdateLeechRequest
      */
@@ -44,6 +44,7 @@ export interface UpdateLeechRequest {
  */
 export function instanceOfUpdateLeechRequest(value: object): boolean {
     let isInstance = true;
+    isInstance = isInstance && "address" in value;
 
     return isInstance;
 }
@@ -59,7 +60,7 @@ export function UpdateLeechRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'name': !exists(json, 'name') ? undefined : json['name'],
-        'address': !exists(json, 'address') ? undefined : json['address'],
+        'address': json['address'],
         'description': !exists(json, 'description') ? undefined : json['description'],
     };
 }

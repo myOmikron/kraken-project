@@ -14,19 +14,19 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * 
+ * Create a new oauth application
  * @export
  * @interface CreateAppRequest
  */
 export interface CreateAppRequest {
     /**
-     * 
+     * The name of the application
      * @type {string}
      * @memberof CreateAppRequest
      */
     name: string;
     /**
-     * 
+     * The redirect url of the application
      * @type {string}
      * @memberof CreateAppRequest
      */

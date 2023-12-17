@@ -21,6 +21,7 @@ import json
 from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
@@ -30,10 +31,10 @@ class SearchEntry(BaseModel):
     """
     Searched entry
     """ # noqa: E501
-    uuid: StrictStr
-    created_at: datetime
-    finished_at: Optional[datetime] = None
-    search_term: StrictStr
+    uuid: StrictStr = Field(description="The uuid of the search")
+    created_at: datetime = Field(description="The point in time this search was created")
+    finished_at: Optional[datetime] = Field(default=None, description="The point in time this search was finished")
+    search_term: StrictStr = Field(description="The search term that was used")
     __properties: ClassVar[List[str]] = ["uuid", "created_at", "finished_at", "search_term"]
 
     model_config = {

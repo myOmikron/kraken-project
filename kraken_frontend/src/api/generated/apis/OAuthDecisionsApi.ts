@@ -16,13 +16,13 @@
 import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
-  GetMyDecisionsResponse,
+  ListOauthDecisions,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
-    GetMyDecisionsResponseFromJSON,
-    GetMyDecisionsResponseToJSON,
+    ListOauthDecisionsFromJSON,
+    ListOauthDecisionsToJSON,
 } from '../models';
 
 export interface RevokeDecisionRequest {
@@ -38,7 +38,7 @@ export class OAuthDecisionsApi extends runtime.BaseAPI {
      * Retrieve a user\'s remembered oauth decisions
      * Retrieve a user\'s remembered oauth decisions
      */
-    async getDecisionsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetMyDecisionsResponse>> {
+    async getDecisionsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListOauthDecisions>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -50,14 +50,14 @@ export class OAuthDecisionsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetMyDecisionsResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListOauthDecisionsFromJSON(jsonValue));
     }
 
     /**
      * Retrieve a user\'s remembered oauth decisions
      * Retrieve a user\'s remembered oauth decisions
      */
-    async getDecisions(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetMyDecisionsResponse> {
+    async getDecisions(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListOauthDecisions> {
         const response = await this.getDecisionsRaw(initOverrides);
         return await response.value();
     }

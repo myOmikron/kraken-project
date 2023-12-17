@@ -17,7 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   CreateWorkspaceTagRequest,
-  GetWorkspaceTagsResponse,
+  ListWorkspaceTags,
   UpdateWorkspaceTag,
   UuidResponse,
 } from '../models';
@@ -26,8 +26,8 @@ import {
     ApiErrorResponseToJSON,
     CreateWorkspaceTagRequestFromJSON,
     CreateWorkspaceTagRequestToJSON,
-    GetWorkspaceTagsResponseFromJSON,
-    GetWorkspaceTagsResponseToJSON,
+    ListWorkspaceTagsFromJSON,
+    ListWorkspaceTagsToJSON,
     UpdateWorkspaceTagFromJSON,
     UpdateWorkspaceTagToJSON,
     UuidResponseFromJSON,
@@ -137,7 +137,7 @@ export class WorkspaceTagsApi extends runtime.BaseAPI {
      * Retrieve all workspace tags
      * Retrieve all workspace tags
      */
-    async getAllWorkspaceTagsRaw(requestParameters: GetAllWorkspaceTagsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetWorkspaceTagsResponse>> {
+    async getAllWorkspaceTagsRaw(requestParameters: GetAllWorkspaceTagsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListWorkspaceTags>> {
         if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
             throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getAllWorkspaceTags.');
         }
@@ -153,14 +153,14 @@ export class WorkspaceTagsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetWorkspaceTagsResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListWorkspaceTagsFromJSON(jsonValue));
     }
 
     /**
      * Retrieve all workspace tags
      * Retrieve all workspace tags
      */
-    async getAllWorkspaceTags(requestParameters: GetAllWorkspaceTagsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetWorkspaceTagsResponse> {
+    async getAllWorkspaceTags(requestParameters: GetAllWorkspaceTagsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListWorkspaceTags> {
         const response = await this.getAllWorkspaceTagsRaw(requestParameters, initOverrides);
         return await response.value();
     }

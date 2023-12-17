@@ -53,7 +53,7 @@ class OAuthApi:
     @validate_call
     async def accept(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         remember: Annotated[Optional[StrictBool], Field(description="Should kraken remember this decision?")] = None,
         _request_timeout: Union[
             None,
@@ -72,7 +72,7 @@ class OAuthApi:
 
         Endpoint visited by user to grant a requesting application access
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param remember: Should kraken remember this decision?
         :type remember: bool
@@ -124,7 +124,7 @@ class OAuthApi:
     @validate_call
     async def accept_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         remember: Annotated[Optional[StrictBool], Field(description="Should kraken remember this decision?")] = None,
         _request_timeout: Union[
             None,
@@ -143,7 +143,7 @@ class OAuthApi:
 
         Endpoint visited by user to grant a requesting application access
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param remember: Should kraken remember this decision?
         :type remember: bool
@@ -195,7 +195,7 @@ class OAuthApi:
     @validate_call
     async def accept_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         remember: Annotated[Optional[StrictBool], Field(description="Should kraken remember this decision?")] = None,
         _request_timeout: Union[
             None,
@@ -214,7 +214,7 @@ class OAuthApi:
 
         Endpoint visited by user to grant a requesting application access
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param remember: Should kraken remember this decision?
         :type remember: bool
@@ -329,7 +329,7 @@ class OAuthApi:
     @validate_call
     async def deny(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         remember: Annotated[Optional[StrictBool], Field(description="Should kraken remember this decision?")] = None,
         _request_timeout: Union[
             None,
@@ -348,7 +348,7 @@ class OAuthApi:
 
         Endpoint visited by user to deny a requesting application access
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param remember: Should kraken remember this decision?
         :type remember: bool
@@ -400,7 +400,7 @@ class OAuthApi:
     @validate_call
     async def deny_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         remember: Annotated[Optional[StrictBool], Field(description="Should kraken remember this decision?")] = None,
         _request_timeout: Union[
             None,
@@ -419,7 +419,7 @@ class OAuthApi:
 
         Endpoint visited by user to deny a requesting application access
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param remember: Should kraken remember this decision?
         :type remember: bool
@@ -471,7 +471,7 @@ class OAuthApi:
     @validate_call
     async def deny_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         remember: Annotated[Optional[StrictBool], Field(description="Should kraken remember this decision?")] = None,
         _request_timeout: Union[
             None,
@@ -490,7 +490,7 @@ class OAuthApi:
 
         Endpoint visited by user to deny a requesting application access
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param remember: Should kraken remember this decision?
         :type remember: bool
@@ -605,7 +605,7 @@ class OAuthApi:
     @validate_call
     async def info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -623,7 +623,7 @@ class OAuthApi:
 
         Queried by the frontend to display information about the oauth request to the user
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -675,7 +675,7 @@ class OAuthApi:
     @validate_call
     async def info_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -693,7 +693,7 @@ class OAuthApi:
 
         Queried by the frontend to display information about the oauth request to the user
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -745,7 +745,7 @@ class OAuthApi:
     @validate_call
     async def info_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -763,7 +763,7 @@ class OAuthApi:
 
         Queried by the frontend to display information about the oauth request to the user
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request

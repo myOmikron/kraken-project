@@ -44,7 +44,7 @@ export interface LeechConfig {
      */
     sni: string;
     /**
-     * 
+     * The secret of the leech
      * @type {string}
      * @memberof LeechConfig
      */

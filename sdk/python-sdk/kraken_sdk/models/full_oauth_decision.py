@@ -20,19 +20,30 @@ import json
 
 
 from typing import Any, ClassVar, Dict, List
-from pydantic import BaseModel, StrictStr
+from pydantic import BaseModel, StrictStr, field_validator
 from pydantic import Field
+from kraken_sdk.models.simple_workspace import SimpleWorkspace
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class InviteToWorkspace(BaseModel):
+class FullOauthDecision(BaseModel):
     """
-    The request to invite a user to the workspace
+    A user's remembered oauth decision
     """ # noqa: E501
-    user: StrictStr = Field(description="The user to invite")
-    __properties: ClassVar[List[str]] = ["user"]
+    uuid: StrictStr = Field(description="The primary key")
+    app: StrictStr = Field(description="The application the decision was made for")
+    workspace: SimpleWorkspace
+    action: StrictStr = Field(description="Action what to do with new oauth requests")
+    __properties: ClassVar[List[str]] = ["uuid", "app", "workspace", "action"]
+
+    @field_validator('action')
+    def action_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in ('Accept', 'Deny'):
+            raise ValueError("must be one of enum values ('Accept', 'Deny')")
+        return value
 
     model_config = {
         "populate_by_name": True,
@@ -51,7 +62,7 @@ class InviteToWorkspace(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of InviteToWorkspace from a JSON string"""
+        """Create an instance of FullOauthDecision from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -70,11 +81,14 @@ class InviteToWorkspace(BaseModel):
             },
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of workspace
+        if self.workspace:
+            _dict['workspace'] = self.workspace.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of InviteToWorkspace from a dict"""
+        """Create an instance of FullOauthDecision from a dict"""
         if obj is None:
             return None
 
@@ -82,7 +96,10 @@ class InviteToWorkspace(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "user": obj.get("user")
+            "uuid": obj.get("uuid"),
+            "app": obj.get("app"),
+            "workspace": SimpleWorkspace.from_dict(obj.get("workspace")) if obj.get("workspace") is not None else None,
+            "action": obj.get("action")
         })
         return _obj
 

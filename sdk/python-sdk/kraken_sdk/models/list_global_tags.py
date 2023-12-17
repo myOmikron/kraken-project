@@ -21,18 +21,19 @@ import json
 
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel
-from kraken_sdk.models.simple_user import SimpleUser
+from pydantic import Field
+from kraken_sdk.models.full_global_tag import FullGlobalTag
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class GetAllUsersResponse(BaseModel):
+class ListGlobalTags(BaseModel):
     """
-    The response with all users
+    The response to a request to retrieve all global tags
     """ # noqa: E501
-    users: List[SimpleUser]
-    __properties: ClassVar[List[str]] = ["users"]
+    global_tags: List[FullGlobalTag] = Field(description="List of global tags")
+    __properties: ClassVar[List[str]] = ["global_tags"]
 
     model_config = {
         "populate_by_name": True,
@@ -51,7 +52,7 @@ class GetAllUsersResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of GetAllUsersResponse from a JSON string"""
+        """Create an instance of ListGlobalTags from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -70,18 +71,18 @@ class GetAllUsersResponse(BaseModel):
             },
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of each item in users (list)
+        # override the default output from pydantic by calling `to_dict()` of each item in global_tags (list)
         _items = []
-        if self.users:
-            for _item in self.users:
+        if self.global_tags:
+            for _item in self.global_tags:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['users'] = _items
+            _dict['global_tags'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of GetAllUsersResponse from a dict"""
+        """Create an instance of ListGlobalTags from a dict"""
         if obj is None:
             return None
 
@@ -89,7 +90,7 @@ class GetAllUsersResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "users": [SimpleUser.from_dict(_item) for _item in obj.get("users")] if obj.get("users") is not None else None
+            "global_tags": [FullGlobalTag.from_dict(_item) for _item in obj.get("global_tags")] if obj.get("global_tags") is not None else None
         })
         return _obj
 

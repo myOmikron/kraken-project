@@ -20,43 +20,43 @@ import { exists, mapValues } from '../runtime';
  */
 export interface SimpleService {
     /**
-     * 
+     * The uuid of the service
      * @type {string}
      * @memberof SimpleService
      */
     uuid: string;
     /**
-     * 
+     * The name of the service
      * @type {string}
      * @memberof SimpleService
      */
     name: string;
     /**
-     * 
+     * The version of the service
      * @type {string}
      * @memberof SimpleService
      */
     version?: string | null;
     /**
-     * 
+     * The host this service is linked to
      * @type {string}
      * @memberof SimpleService
      */
     host: string;
     /**
-     * 
+     * The port this service may linked to
      * @type {string}
      * @memberof SimpleService
      */
     port?: string | null;
     /**
-     * 
+     * The comment attached to the service
      * @type {string}
      * @memberof SimpleService
      */
     comment: string;
     /**
-     * 
+     * The workspace is service is linked to
      * @type {string}
      * @memberof SimpleService
      */

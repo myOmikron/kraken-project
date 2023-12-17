@@ -17,8 +17,8 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   CreateLeechRequest,
-  GetAllLeechesResponse,
   LeechConfig,
+  ListLeeches,
   SimpleLeech,
   UpdateLeechRequest,
   UuidResponse,
@@ -28,10 +28,10 @@ import {
     ApiErrorResponseToJSON,
     CreateLeechRequestFromJSON,
     CreateLeechRequestToJSON,
-    GetAllLeechesResponseFromJSON,
-    GetAllLeechesResponseToJSON,
     LeechConfigFromJSON,
     LeechConfigToJSON,
+    ListLeechesFromJSON,
+    ListLeechesToJSON,
     SimpleLeechFromJSON,
     SimpleLeechToJSON,
     UpdateLeechRequestFromJSON,
@@ -168,7 +168,7 @@ export class LeechManagementApi extends runtime.BaseAPI {
      * Retrieve all leeches
      * Retrieve all leeches
      */
-    async getAllLeechesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAllLeechesResponse>> {
+    async getAllLeechesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListLeeches>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -180,14 +180,14 @@ export class LeechManagementApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetAllLeechesResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListLeechesFromJSON(jsonValue));
     }
 
     /**
      * Retrieve all leeches
      * Retrieve all leeches
      */
-    async getAllLeeches(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAllLeechesResponse> {
+    async getAllLeeches(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListLeeches> {
         const response = await this.getAllLeechesRaw(initOverrides);
         return await response.value();
     }

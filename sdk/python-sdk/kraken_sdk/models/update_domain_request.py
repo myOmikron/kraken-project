@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
@@ -30,9 +31,9 @@ class UpdateDomainRequest(BaseModel):
     """
     The request to update a domain
     """ # noqa: E501
-    comment: Optional[StrictStr] = None
-    global_tags: Optional[List[StrictStr]] = None
-    workspace_tags: Optional[List[StrictStr]] = None
+    comment: Optional[StrictStr] = Field(default=None, description="The comment of the domain")
+    global_tags: Optional[List[StrictStr]] = Field(default=None, description="Global tags that are linked to the domain")
+    workspace_tags: Optional[List[StrictStr]] = Field(default=None, description="Workspace tags that are linked to the domain")
     __properties: ClassVar[List[str]] = ["comment", "global_tags", "workspace_tags"]
 
     model_config = {

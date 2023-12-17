@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
@@ -28,10 +29,10 @@ except ImportError:
 
 class CreateAppRequest(BaseModel):
     """
-    CreateAppRequest
+    Create a new oauth application
     """ # noqa: E501
-    name: StrictStr
-    redirect_uri: StrictStr
+    name: StrictStr = Field(description="The name of the application")
+    redirect_uri: StrictStr = Field(description="The redirect url of the application")
     __properties: ClassVar[List[str]] = ["name", "redirect_uri"]
 
     model_config = {

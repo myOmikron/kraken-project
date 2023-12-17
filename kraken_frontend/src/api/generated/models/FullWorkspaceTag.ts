@@ -27,13 +27,13 @@ import {
  */
 export interface FullWorkspaceTag {
     /**
-     * 
+     * The uuid of the workspace tag
      * @type {string}
      * @memberof FullWorkspaceTag
      */
     uuid: string;
     /**
-     * 
+     * The name of the tag
      * @type {string}
      * @memberof FullWorkspaceTag
      */
@@ -45,7 +45,7 @@ export interface FullWorkspaceTag {
      */
     color: Color;
     /**
-     * 
+     * The workspace this tag is linked to
      * @type {string}
      * @memberof FullWorkspaceTag
      */

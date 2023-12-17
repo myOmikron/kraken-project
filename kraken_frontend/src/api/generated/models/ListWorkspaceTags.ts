@@ -23,32 +23,32 @@ import {
 /**
  * The response to a request to retrieve all workspace tags
  * @export
- * @interface GetWorkspaceTagsResponse
+ * @interface ListWorkspaceTags
  */
-export interface GetWorkspaceTagsResponse {
+export interface ListWorkspaceTags {
     /**
-     * 
+     * Workspace tags
      * @type {Array<FullWorkspaceTag>}
-     * @memberof GetWorkspaceTagsResponse
+     * @memberof ListWorkspaceTags
      */
     workspaceTags: Array<FullWorkspaceTag>;
 }
 
 /**
- * Check if a given object implements the GetWorkspaceTagsResponse interface.
+ * Check if a given object implements the ListWorkspaceTags interface.
  */
-export function instanceOfGetWorkspaceTagsResponse(value: object): boolean {
+export function instanceOfListWorkspaceTags(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "workspaceTags" in value;
 
     return isInstance;
 }
 
-export function GetWorkspaceTagsResponseFromJSON(json: any): GetWorkspaceTagsResponse {
-    return GetWorkspaceTagsResponseFromJSONTyped(json, false);
+export function ListWorkspaceTagsFromJSON(json: any): ListWorkspaceTags {
+    return ListWorkspaceTagsFromJSONTyped(json, false);
 }
 
-export function GetWorkspaceTagsResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetWorkspaceTagsResponse {
+export function ListWorkspaceTagsFromJSONTyped(json: any, ignoreDiscriminator: boolean): ListWorkspaceTags {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -58,7 +58,7 @@ export function GetWorkspaceTagsResponseFromJSONTyped(json: any, ignoreDiscrimin
     };
 }
 
-export function GetWorkspaceTagsResponseToJSON(value?: GetWorkspaceTagsResponse | null): any {
+export function ListWorkspaceTagsToJSON(value?: ListWorkspaceTags | null): any {
     if (value === undefined) {
         return undefined;
     }

@@ -20,7 +20,7 @@ import { exists, mapValues } from '../runtime';
  */
 export interface UuidResponse {
     /**
-     * 
+     * The uuid
      * @type {string}
      * @memberof UuidResponse
      */

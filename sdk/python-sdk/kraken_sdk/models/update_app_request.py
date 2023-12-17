@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
@@ -28,10 +29,10 @@ except ImportError:
 
 class UpdateAppRequest(BaseModel):
     """
-    UpdateAppRequest
+    Update an oauth application
     """ # noqa: E501
-    name: Optional[StrictStr] = None
-    redirect_uri: Optional[StrictStr] = None
+    name: Optional[StrictStr] = Field(default=None, description="The name of the application")
+    redirect_uri: Optional[StrictStr] = Field(default=None, description="The redirect url of the application")
     __properties: ClassVar[List[str]] = ["name", "redirect_uri"]
 
     model_config = {

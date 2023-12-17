@@ -24,6 +24,8 @@ try:
 except ImportError:
     from typing_extensions import Annotated
 
+from pydantic import Field
+from typing_extensions import Annotated
 from pydantic import StrictStr
 
 from kraken_sdk.models.create_host_request import CreateHostRequest
@@ -55,7 +57,7 @@ class HostsApi:
     @validate_call
     async def create_host(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         create_host_request: CreateHostRequest,
         _request_timeout: Union[
             None,
@@ -74,7 +76,7 @@ class HostsApi:
 
         Manually add a host
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param create_host_request: (required)
         :type create_host_request: CreateHostRequest
@@ -129,7 +131,7 @@ class HostsApi:
     @validate_call
     async def create_host_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         create_host_request: CreateHostRequest,
         _request_timeout: Union[
             None,
@@ -148,7 +150,7 @@ class HostsApi:
 
         Manually add a host
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param create_host_request: (required)
         :type create_host_request: CreateHostRequest
@@ -203,7 +205,7 @@ class HostsApi:
     @validate_call
     async def create_host_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         create_host_request: CreateHostRequest,
         _request_timeout: Union[
             None,
@@ -222,7 +224,7 @@ class HostsApi:
 
         Manually add a host
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param create_host_request: (required)
         :type create_host_request: CreateHostRequest
@@ -351,7 +353,7 @@ class HostsApi:
     @validate_call
     async def get_all_hosts(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         get_all_hosts_query: GetAllHostsQuery,
         _request_timeout: Union[
             None,
@@ -370,7 +372,7 @@ class HostsApi:
 
         Retrieve all hosts.  Hosts are created out of aggregating data or by user input. They represent a single host and can be created by providing an IP address
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param get_all_hosts_query: (required)
         :type get_all_hosts_query: GetAllHostsQuery
@@ -425,7 +427,7 @@ class HostsApi:
     @validate_call
     async def get_all_hosts_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         get_all_hosts_query: GetAllHostsQuery,
         _request_timeout: Union[
             None,
@@ -444,7 +446,7 @@ class HostsApi:
 
         Retrieve all hosts.  Hosts are created out of aggregating data or by user input. They represent a single host and can be created by providing an IP address
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param get_all_hosts_query: (required)
         :type get_all_hosts_query: GetAllHostsQuery
@@ -499,7 +501,7 @@ class HostsApi:
     @validate_call
     async def get_all_hosts_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         get_all_hosts_query: GetAllHostsQuery,
         _request_timeout: Union[
             None,
@@ -518,7 +520,7 @@ class HostsApi:
 
         Retrieve all hosts.  Hosts are created out of aggregating data or by user input. They represent a single host and can be created by providing an IP address
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param get_all_hosts_query: (required)
         :type get_all_hosts_query: GetAllHostsQuery
@@ -647,8 +649,8 @@ class HostsApi:
     @validate_call
     async def get_host(
         self,
-        w_uuid: StrictStr,
-        h_uuid: StrictStr,
+        w_uuid: Annotated[StrictStr, Field(description="Workspace uuid")],
+        h_uuid: Annotated[StrictStr, Field(description="Host uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -666,9 +668,9 @@ class HostsApi:
 
         Retrieve all information about a single host
 
-        :param w_uuid: (required)
+        :param w_uuid: Workspace uuid (required)
         :type w_uuid: str
-        :param h_uuid: (required)
+        :param h_uuid: Host uuid (required)
         :type h_uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -721,8 +723,8 @@ class HostsApi:
     @validate_call
     async def get_host_with_http_info(
         self,
-        w_uuid: StrictStr,
-        h_uuid: StrictStr,
+        w_uuid: Annotated[StrictStr, Field(description="Workspace uuid")],
+        h_uuid: Annotated[StrictStr, Field(description="Host uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -740,9 +742,9 @@ class HostsApi:
 
         Retrieve all information about a single host
 
-        :param w_uuid: (required)
+        :param w_uuid: Workspace uuid (required)
         :type w_uuid: str
-        :param h_uuid: (required)
+        :param h_uuid: Host uuid (required)
         :type h_uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -795,8 +797,8 @@ class HostsApi:
     @validate_call
     async def get_host_without_preload_content(
         self,
-        w_uuid: StrictStr,
-        h_uuid: StrictStr,
+        w_uuid: Annotated[StrictStr, Field(description="Workspace uuid")],
+        h_uuid: Annotated[StrictStr, Field(description="Host uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -814,9 +816,9 @@ class HostsApi:
 
         Retrieve all information about a single host
 
-        :param w_uuid: (required)
+        :param w_uuid: Workspace uuid (required)
         :type w_uuid: str
-        :param h_uuid: (required)
+        :param h_uuid: Host uuid (required)
         :type h_uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -930,8 +932,8 @@ class HostsApi:
     @validate_call
     async def get_host_sources(
         self,
-        w_uuid: StrictStr,
-        h_uuid: StrictStr,
+        w_uuid: Annotated[StrictStr, Field(description="Workspace uuid")],
+        h_uuid: Annotated[StrictStr, Field(description="Host uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -949,9 +951,9 @@ class HostsApi:
 
         Get all data sources which referenced this host
 
-        :param w_uuid: (required)
+        :param w_uuid: Workspace uuid (required)
         :type w_uuid: str
-        :param h_uuid: (required)
+        :param h_uuid: Host uuid (required)
         :type h_uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -1004,8 +1006,8 @@ class HostsApi:
     @validate_call
     async def get_host_sources_with_http_info(
         self,
-        w_uuid: StrictStr,
-        h_uuid: StrictStr,
+        w_uuid: Annotated[StrictStr, Field(description="Workspace uuid")],
+        h_uuid: Annotated[StrictStr, Field(description="Host uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1023,9 +1025,9 @@ class HostsApi:
 
         Get all data sources which referenced this host
 
-        :param w_uuid: (required)
+        :param w_uuid: Workspace uuid (required)
         :type w_uuid: str
-        :param h_uuid: (required)
+        :param h_uuid: Host uuid (required)
         :type h_uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -1078,8 +1080,8 @@ class HostsApi:
     @validate_call
     async def get_host_sources_without_preload_content(
         self,
-        w_uuid: StrictStr,
-        h_uuid: StrictStr,
+        w_uuid: Annotated[StrictStr, Field(description="Workspace uuid")],
+        h_uuid: Annotated[StrictStr, Field(description="Host uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1097,9 +1099,9 @@ class HostsApi:
 
         Get all data sources which referenced this host
 
-        :param w_uuid: (required)
+        :param w_uuid: Workspace uuid (required)
         :type w_uuid: str
-        :param h_uuid: (required)
+        :param h_uuid: Host uuid (required)
         :type h_uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -1213,8 +1215,8 @@ class HostsApi:
     @validate_call
     async def update_host(
         self,
-        w_uuid: StrictStr,
-        h_uuid: StrictStr,
+        w_uuid: Annotated[StrictStr, Field(description="Workspace uuid")],
+        h_uuid: Annotated[StrictStr, Field(description="Host uuid")],
         update_host_request: UpdateHostRequest,
         _request_timeout: Union[
             None,
@@ -1233,9 +1235,9 @@ class HostsApi:
 
         Update a host  You must include at least on parameter
 
-        :param w_uuid: (required)
+        :param w_uuid: Workspace uuid (required)
         :type w_uuid: str
-        :param h_uuid: (required)
+        :param h_uuid: Host uuid (required)
         :type h_uuid: str
         :param update_host_request: (required)
         :type update_host_request: UpdateHostRequest
@@ -1288,8 +1290,8 @@ class HostsApi:
     @validate_call
     async def update_host_with_http_info(
         self,
-        w_uuid: StrictStr,
-        h_uuid: StrictStr,
+        w_uuid: Annotated[StrictStr, Field(description="Workspace uuid")],
+        h_uuid: Annotated[StrictStr, Field(description="Host uuid")],
         update_host_request: UpdateHostRequest,
         _request_timeout: Union[
             None,
@@ -1308,9 +1310,9 @@ class HostsApi:
 
         Update a host  You must include at least on parameter
 
-        :param w_uuid: (required)
+        :param w_uuid: Workspace uuid (required)
         :type w_uuid: str
-        :param h_uuid: (required)
+        :param h_uuid: Host uuid (required)
         :type h_uuid: str
         :param update_host_request: (required)
         :type update_host_request: UpdateHostRequest
@@ -1363,8 +1365,8 @@ class HostsApi:
     @validate_call
     async def update_host_without_preload_content(
         self,
-        w_uuid: StrictStr,
-        h_uuid: StrictStr,
+        w_uuid: Annotated[StrictStr, Field(description="Workspace uuid")],
+        h_uuid: Annotated[StrictStr, Field(description="Host uuid")],
         update_host_request: UpdateHostRequest,
         _request_timeout: Union[
             None,
@@ -1383,9 +1385,9 @@ class HostsApi:
 
         Update a host  You must include at least on parameter
 
-        :param w_uuid: (required)
+        :param w_uuid: Workspace uuid (required)
         :type w_uuid: str
-        :param h_uuid: (required)
+        :param h_uuid: Host uuid (required)
         :type h_uuid: str
         :param update_host_request: (required)
         :type update_host_request: UpdateHostRequest

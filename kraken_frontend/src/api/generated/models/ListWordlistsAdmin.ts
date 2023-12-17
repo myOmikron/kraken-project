@@ -23,32 +23,32 @@ import {
 /**
  * Response containing all wordlists including their `path` fields
  * @export
- * @interface GetAllWordlistsAdminResponse
+ * @interface ListWordlistsAdmin
  */
-export interface GetAllWordlistsAdminResponse {
+export interface ListWordlistsAdmin {
     /**
      * List of all wordlists including their `path` fields
      * @type {Array<FullWordlist>}
-     * @memberof GetAllWordlistsAdminResponse
+     * @memberof ListWordlistsAdmin
      */
     wordlists: Array<FullWordlist>;
 }
 
 /**
- * Check if a given object implements the GetAllWordlistsAdminResponse interface.
+ * Check if a given object implements the ListWordlistsAdmin interface.
  */
-export function instanceOfGetAllWordlistsAdminResponse(value: object): boolean {
+export function instanceOfListWordlistsAdmin(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "wordlists" in value;
 
     return isInstance;
 }
 
-export function GetAllWordlistsAdminResponseFromJSON(json: any): GetAllWordlistsAdminResponse {
-    return GetAllWordlistsAdminResponseFromJSONTyped(json, false);
+export function ListWordlistsAdminFromJSON(json: any): ListWordlistsAdmin {
+    return ListWordlistsAdminFromJSONTyped(json, false);
 }
 
-export function GetAllWordlistsAdminResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetAllWordlistsAdminResponse {
+export function ListWordlistsAdminFromJSONTyped(json: any, ignoreDiscriminator: boolean): ListWordlistsAdmin {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -58,7 +58,7 @@ export function GetAllWordlistsAdminResponseFromJSONTyped(json: any, ignoreDiscr
     };
 }
 
-export function GetAllWordlistsAdminResponseToJSON(value?: GetAllWordlistsAdminResponse | null): any {
+export function ListWordlistsAdminToJSON(value?: ListWordlistsAdmin | null): any {
     if (value === undefined) {
         return undefined;
     }

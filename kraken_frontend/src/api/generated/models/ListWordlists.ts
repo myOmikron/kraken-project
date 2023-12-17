@@ -23,32 +23,32 @@ import {
 /**
  * Response containing all wordlists
  * @export
- * @interface GetAllWordlistsResponse
+ * @interface ListWordlists
  */
-export interface GetAllWordlistsResponse {
+export interface ListWordlists {
     /**
      * List of all wordlists
      * @type {Array<SimpleWordlist>}
-     * @memberof GetAllWordlistsResponse
+     * @memberof ListWordlists
      */
     wordlists: Array<SimpleWordlist>;
 }
 
 /**
- * Check if a given object implements the GetAllWordlistsResponse interface.
+ * Check if a given object implements the ListWordlists interface.
  */
-export function instanceOfGetAllWordlistsResponse(value: object): boolean {
+export function instanceOfListWordlists(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "wordlists" in value;
 
     return isInstance;
 }
 
-export function GetAllWordlistsResponseFromJSON(json: any): GetAllWordlistsResponse {
-    return GetAllWordlistsResponseFromJSONTyped(json, false);
+export function ListWordlistsFromJSON(json: any): ListWordlists {
+    return ListWordlistsFromJSONTyped(json, false);
 }
 
-export function GetAllWordlistsResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetAllWordlistsResponse {
+export function ListWordlistsFromJSONTyped(json: any, ignoreDiscriminator: boolean): ListWordlists {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -58,7 +58,7 @@ export function GetAllWordlistsResponseFromJSONTyped(json: any, ignoreDiscrimina
     };
 }
 
-export function GetAllWordlistsResponseToJSON(value?: GetAllWordlistsResponse | null): any {
+export function ListWordlistsToJSON(value?: ListWordlists | null): any {
     if (value === undefined) {
         return undefined;
     }

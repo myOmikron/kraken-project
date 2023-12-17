@@ -27,7 +27,7 @@ import {
  */
 export interface UpdateWorkspaceTag {
     /**
-     * 
+     * Name of the tag
      * @type {string}
      * @memberof UpdateWorkspaceTag
      */

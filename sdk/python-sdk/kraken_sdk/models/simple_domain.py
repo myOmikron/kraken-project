@@ -21,6 +21,7 @@ import json
 from datetime import datetime
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
@@ -30,11 +31,11 @@ class SimpleDomain(BaseModel):
     """
     A simple representation of a domain in a workspace
     """ # noqa: E501
-    uuid: StrictStr
-    domain: StrictStr
-    comment: StrictStr
-    workspace: StrictStr
-    created_at: datetime
+    uuid: StrictStr = Field(description="The uuid of the domain")
+    domain: StrictStr = Field(description="The domain name")
+    comment: StrictStr = Field(description="The comment to the domain")
+    workspace: StrictStr = Field(description="The workspace this domain is linked to")
+    created_at: datetime = Field(description="The point in time this domain was created")
     __properties: ClassVar[List[str]] = ["uuid", "domain", "comment", "workspace", "created_at"]
 
     model_config = {

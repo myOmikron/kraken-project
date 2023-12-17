@@ -24,6 +24,8 @@ try:
 except ImportError:
     from typing_extensions import Annotated
 
+from pydantic import Field
+from typing_extensions import Annotated
 from pydantic import StrictStr
 
 from kraken_sdk.models.workspace_invitation_list import WorkspaceInvitationList
@@ -49,7 +51,7 @@ class WorkspaceInvitationsApi:
     @validate_call
     async def accept_invitation(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -67,7 +69,7 @@ class WorkspaceInvitationsApi:
 
         Accept an invitation to a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -116,7 +118,7 @@ class WorkspaceInvitationsApi:
     @validate_call
     async def accept_invitation_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -134,7 +136,7 @@ class WorkspaceInvitationsApi:
 
         Accept an invitation to a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -183,7 +185,7 @@ class WorkspaceInvitationsApi:
     @validate_call
     async def accept_invitation_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -201,7 +203,7 @@ class WorkspaceInvitationsApi:
 
         Accept an invitation to a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -308,7 +310,7 @@ class WorkspaceInvitationsApi:
     @validate_call
     async def decline_invitation(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -326,7 +328,7 @@ class WorkspaceInvitationsApi:
 
         Decline an invitation to a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -375,7 +377,7 @@ class WorkspaceInvitationsApi:
     @validate_call
     async def decline_invitation_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -393,7 +395,7 @@ class WorkspaceInvitationsApi:
 
         Decline an invitation to a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -442,7 +444,7 @@ class WorkspaceInvitationsApi:
     @validate_call
     async def decline_invitation_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -460,7 +462,7 @@ class WorkspaceInvitationsApi:
 
         Decline an invitation to a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request

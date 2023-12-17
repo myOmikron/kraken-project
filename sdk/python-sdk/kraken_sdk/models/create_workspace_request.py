@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
@@ -30,8 +31,8 @@ class CreateWorkspaceRequest(BaseModel):
     """
     The request to create a new workspace
     """ # noqa: E501
-    name: StrictStr
-    description: Optional[StrictStr] = None
+    name: StrictStr = Field(description="The name of the workspace")
+    description: Optional[StrictStr] = Field(default=None, description="The description of the workspace")
     __properties: ClassVar[List[str]] = ["name", "description"]
 
     model_config = {

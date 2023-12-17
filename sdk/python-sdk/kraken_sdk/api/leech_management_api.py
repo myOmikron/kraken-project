@@ -24,11 +24,13 @@ try:
 except ImportError:
     from typing_extensions import Annotated
 
+from pydantic import Field
+from typing_extensions import Annotated
 from pydantic import StrictStr
 
 from kraken_sdk.models.create_leech_request import CreateLeechRequest
-from kraken_sdk.models.get_all_leeches_response import GetAllLeechesResponse
 from kraken_sdk.models.leech_config import LeechConfig
+from kraken_sdk.models.list_leeches import ListLeeches
 from kraken_sdk.models.simple_leech import SimpleLeech
 from kraken_sdk.models.update_leech_request import UpdateLeechRequest
 from kraken_sdk.models.uuid_response import UuidResponse
@@ -335,7 +337,7 @@ class LeechManagementApi:
     @validate_call
     async def delete_leech(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -353,7 +355,7 @@ class LeechManagementApi:
 
         Delete a leech by its uuid
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -402,7 +404,7 @@ class LeechManagementApi:
     @validate_call
     async def delete_leech_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -420,7 +422,7 @@ class LeechManagementApi:
 
         Delete a leech by its uuid
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -469,7 +471,7 @@ class LeechManagementApi:
     @validate_call
     async def delete_leech_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -487,7 +489,7 @@ class LeechManagementApi:
 
         Delete a leech by its uuid
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -594,7 +596,7 @@ class LeechManagementApi:
     @validate_call
     async def gen_leech_config(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -612,7 +614,7 @@ class LeechManagementApi:
 
         Generate a new config for the leech
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -664,7 +666,7 @@ class LeechManagementApi:
     @validate_call
     async def gen_leech_config_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -682,7 +684,7 @@ class LeechManagementApi:
 
         Generate a new config for the leech
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -734,7 +736,7 @@ class LeechManagementApi:
     @validate_call
     async def gen_leech_config_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -752,7 +754,7 @@ class LeechManagementApi:
 
         Generate a new config for the leech
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -874,7 +876,7 @@ class LeechManagementApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetAllLeechesResponse:
+    ) -> ListLeeches:
         """Retrieve all leeches
 
         Retrieve all leeches
@@ -909,7 +911,7 @@ class LeechManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllLeechesResponse",
+            '200': "ListLeeches",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -940,7 +942,7 @@ class LeechManagementApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetAllLeechesResponse]:
+    ) -> ApiResponse[ListLeeches]:
         """Retrieve all leeches
 
         Retrieve all leeches
@@ -975,7 +977,7 @@ class LeechManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllLeechesResponse",
+            '200': "ListLeeches",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -1041,7 +1043,7 @@ class LeechManagementApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllLeechesResponse",
+            '200': "ListLeeches",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -1115,7 +1117,7 @@ class LeechManagementApi:
     @validate_call
     async def get_leech(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1133,7 +1135,7 @@ class LeechManagementApi:
 
         Retrieve a leech by its id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -1185,7 +1187,7 @@ class LeechManagementApi:
     @validate_call
     async def get_leech_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1203,7 +1205,7 @@ class LeechManagementApi:
 
         Retrieve a leech by its id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -1255,7 +1257,7 @@ class LeechManagementApi:
     @validate_call
     async def get_leech_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1273,7 +1275,7 @@ class LeechManagementApi:
 
         Retrieve a leech by its id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -1383,7 +1385,7 @@ class LeechManagementApi:
     @validate_call
     async def update_leech(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         update_leech_request: UpdateLeechRequest,
         _request_timeout: Union[
             None,
@@ -1402,7 +1404,7 @@ class LeechManagementApi:
 
         Update a leech by its id  All parameter are optional, but at least one of them must be specified.  `address` must be a valid address including a scheme and port. Currently only https and http are supported as scheme.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param update_leech_request: (required)
         :type update_leech_request: UpdateLeechRequest
@@ -1454,7 +1456,7 @@ class LeechManagementApi:
     @validate_call
     async def update_leech_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         update_leech_request: UpdateLeechRequest,
         _request_timeout: Union[
             None,
@@ -1473,7 +1475,7 @@ class LeechManagementApi:
 
         Update a leech by its id  All parameter are optional, but at least one of them must be specified.  `address` must be a valid address including a scheme and port. Currently only https and http are supported as scheme.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param update_leech_request: (required)
         :type update_leech_request: UpdateLeechRequest
@@ -1525,7 +1527,7 @@ class LeechManagementApi:
     @validate_call
     async def update_leech_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         update_leech_request: UpdateLeechRequest,
         _request_timeout: Union[
             None,
@@ -1544,7 +1546,7 @@ class LeechManagementApi:
 
         Update a leech by its id  All parameter are optional, but at least one of them must be specified.  `address` must be a valid address including a scheme and port. Currently only https and http are supported as scheme.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param update_leech_request: (required)
         :type update_leech_request: UpdateLeechRequest

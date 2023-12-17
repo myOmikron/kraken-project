@@ -35,7 +35,7 @@ class LeechConfig(BaseModel):
     cert: StrictStr = Field(description="PEM encoded certificate")
     key: StrictStr = Field(description="PEM encoded private key for the certificate")
     sni: StrictStr = Field(description="The randomly generated fake domain for the kraken to be used for sni")
-    secret: StrictStr
+    secret: StrictStr = Field(description="The secret of the leech")
     __properties: ClassVar[List[str]] = ["ca", "cert", "key", "sni", "secret"]
 
     model_config = {

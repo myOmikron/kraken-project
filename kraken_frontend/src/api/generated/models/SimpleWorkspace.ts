@@ -27,19 +27,19 @@ import {
  */
 export interface SimpleWorkspace {
     /**
-     * 
+     * The uuid of the workspace
      * @type {string}
      * @memberof SimpleWorkspace
      */
     uuid: string;
     /**
-     * 
+     * The name of the workspace
      * @type {string}
      * @memberof SimpleWorkspace
      */
     name: string;
     /**
-     * 
+     * The description of the workspace
      * @type {string}
      * @memberof SimpleWorkspace
      */
@@ -51,7 +51,7 @@ export interface SimpleWorkspace {
      */
     owner: SimpleUser;
     /**
-     * 
+     * The point in time the workspace was created
      * @type {Date}
      * @memberof SimpleWorkspace
      */

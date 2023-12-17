@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
@@ -30,9 +31,9 @@ class CreateLeechRequest(BaseModel):
     """
     The request to create a new leech
     """ # noqa: E501
-    name: StrictStr
-    address: StrictStr
-    description: Optional[StrictStr] = None
+    name: StrictStr = Field(description="Name of the leech")
+    address: StrictStr = Field(description="Address of the leech with schema")
+    description: Optional[StrictStr] = Field(default=None, description="Description of the leech")
     __properties: ClassVar[List[str]] = ["name", "address", "description"]
 
     model_config = {

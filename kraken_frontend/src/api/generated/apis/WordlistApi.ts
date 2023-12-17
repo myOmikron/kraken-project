@@ -16,13 +16,13 @@
 import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
-  GetAllWordlistsResponse,
+  ListWordlists,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
-    GetAllWordlistsResponseFromJSON,
-    GetAllWordlistsResponseToJSON,
+    ListWordlistsFromJSON,
+    ListWordlistsToJSON,
 } from '../models';
 
 /**
@@ -34,7 +34,7 @@ export class WordlistApi extends runtime.BaseAPI {
      * Get a list of all wordlist for the user to select from when starting an bruteforce subdomains attack
      * Get a list of all wordlist for the user to select from when starting an bruteforce subdomains attack
      */
-    async getAllWordlistsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAllWordlistsResponse>> {
+    async getAllWordlistsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListWordlists>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -46,14 +46,14 @@ export class WordlistApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetAllWordlistsResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListWordlistsFromJSON(jsonValue));
     }
 
     /**
      * Get a list of all wordlist for the user to select from when starting an bruteforce subdomains attack
      * Get a list of all wordlist for the user to select from when starting an bruteforce subdomains attack
      */
-    async getAllWordlists(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAllWordlistsResponse> {
+    async getAllWordlists(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListWordlists> {
         const response = await this.getAllWordlistsRaw(initOverrides);
         return await response.value();
     }

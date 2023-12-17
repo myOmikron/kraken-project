@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 from kraken_sdk.models.color import Color
 try:
     from typing import Self
@@ -31,7 +32,7 @@ class UpdateGlobalTag(BaseModel):
     """
     The request to update a global tag
     """ # noqa: E501
-    name: Optional[StrictStr] = None
+    name: Optional[StrictStr] = Field(default=None, description="Name of the global tag")
     color: Optional[Color] = None
     __properties: ClassVar[List[str]] = ["name", "color"]
 

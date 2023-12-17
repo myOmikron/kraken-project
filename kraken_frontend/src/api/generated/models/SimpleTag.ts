@@ -33,13 +33,13 @@ import {
  */
 export interface SimpleTag {
     /**
-     * 
+     * The uuid of the tag
      * @type {string}
      * @memberof SimpleTag
      */
     uuid: string;
     /**
-     * 
+     * The name of the tag
      * @type {string}
      * @memberof SimpleTag
      */

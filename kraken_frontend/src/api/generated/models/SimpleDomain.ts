@@ -20,31 +20,31 @@ import { exists, mapValues } from '../runtime';
  */
 export interface SimpleDomain {
     /**
-     * 
+     * The uuid of the domain
      * @type {string}
      * @memberof SimpleDomain
      */
     uuid: string;
     /**
-     * 
+     * The domain name
      * @type {string}
      * @memberof SimpleDomain
      */
     domain: string;
     /**
-     * 
+     * The comment to the domain
      * @type {string}
      * @memberof SimpleDomain
      */
     comment: string;
     /**
-     * 
+     * The workspace this domain is linked to
      * @type {string}
      * @memberof SimpleDomain
      */
     workspace: string;
     /**
-     * 
+     * The point in time this domain was created
      * @type {Date}
      * @memberof SimpleDomain
      */

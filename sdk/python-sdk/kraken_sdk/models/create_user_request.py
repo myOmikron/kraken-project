@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 from kraken_sdk.models.user_permission import UserPermission
 try:
     from typing import Self
@@ -31,9 +32,9 @@ class CreateUserRequest(BaseModel):
     """
     The request to create a user
     """ # noqa: E501
-    username: StrictStr
-    display_name: StrictStr
-    password: StrictStr
+    username: StrictStr = Field(description="The username")
+    display_name: StrictStr = Field(description="The displayname")
+    password: StrictStr = Field(description="The password that should be set")
     permission: UserPermission
     __properties: ClassVar[List[str]] = ["username", "display_name", "password", "permission"]
 

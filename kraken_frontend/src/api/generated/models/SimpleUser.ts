@@ -23,19 +23,19 @@ import { exists, mapValues } from '../runtime';
  */
 export interface SimpleUser {
     /**
-     * 
+     * The uuid of the user
      * @type {string}
      * @memberof SimpleUser
      */
     uuid: string;
     /**
-     * 
+     * The username of the user
      * @type {string}
      * @memberof SimpleUser
      */
     username: string;
     /**
-     * 
+     * The displayname of the user
      * @type {string}
      * @memberof SimpleUser
      */

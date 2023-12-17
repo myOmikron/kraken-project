@@ -20,19 +20,19 @@ import { exists, mapValues } from '../runtime';
  */
 export interface UpdateDomainRequest {
     /**
-     * 
+     * The comment of the domain
      * @type {string}
      * @memberof UpdateDomainRequest
      */
     comment?: string | null;
     /**
-     * 
+     * Global tags that are linked to the domain
      * @type {Array<string>}
      * @memberof UpdateDomainRequest
      */
     globalTags?: Array<string> | null;
     /**
-     * 
+     * Workspace tags that are linked to the domain
      * @type {Array<string>}
      * @memberof UpdateDomainRequest
      */

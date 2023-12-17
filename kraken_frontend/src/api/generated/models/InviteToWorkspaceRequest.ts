@@ -16,32 +16,32 @@ import { exists, mapValues } from '../runtime';
 /**
  * The request to invite a user to the workspace
  * @export
- * @interface InviteToWorkspace
+ * @interface InviteToWorkspaceRequest
  */
-export interface InviteToWorkspace {
+export interface InviteToWorkspaceRequest {
     /**
      * The user to invite
      * @type {string}
-     * @memberof InviteToWorkspace
+     * @memberof InviteToWorkspaceRequest
      */
     user: string;
 }
 
 /**
- * Check if a given object implements the InviteToWorkspace interface.
+ * Check if a given object implements the InviteToWorkspaceRequest interface.
  */
-export function instanceOfInviteToWorkspace(value: object): boolean {
+export function instanceOfInviteToWorkspaceRequest(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "user" in value;
 
     return isInstance;
 }
 
-export function InviteToWorkspaceFromJSON(json: any): InviteToWorkspace {
-    return InviteToWorkspaceFromJSONTyped(json, false);
+export function InviteToWorkspaceRequestFromJSON(json: any): InviteToWorkspaceRequest {
+    return InviteToWorkspaceRequestFromJSONTyped(json, false);
 }
 
-export function InviteToWorkspaceFromJSONTyped(json: any, ignoreDiscriminator: boolean): InviteToWorkspace {
+export function InviteToWorkspaceRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean): InviteToWorkspaceRequest {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -51,7 +51,7 @@ export function InviteToWorkspaceFromJSONTyped(json: any, ignoreDiscriminator: b
     };
 }
 
-export function InviteToWorkspaceToJSON(value?: InviteToWorkspace | null): any {
+export function InviteToWorkspaceRequestToJSON(value?: InviteToWorkspaceRequest | null): any {
     if (value === undefined) {
         return undefined;
     }

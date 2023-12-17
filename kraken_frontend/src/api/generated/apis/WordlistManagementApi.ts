@@ -17,7 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   CreateWordlistRequest,
-  GetAllWordlistsAdminResponse,
+  ListWordlistsAdmin,
   UpdateWordlistRequest,
   UuidResponse,
 } from '../models';
@@ -26,8 +26,8 @@ import {
     ApiErrorResponseToJSON,
     CreateWordlistRequestFromJSON,
     CreateWordlistRequestToJSON,
-    GetAllWordlistsAdminResponseFromJSON,
-    GetAllWordlistsAdminResponseToJSON,
+    ListWordlistsAdminFromJSON,
+    ListWordlistsAdminToJSON,
     UpdateWordlistRequestFromJSON,
     UpdateWordlistRequestToJSON,
     UuidResponseFromJSON,
@@ -122,7 +122,7 @@ export class WordlistManagementApi extends runtime.BaseAPI {
      * Get a list of all wordlists including their paths
      * Get a list of all wordlists including their paths
      */
-    async getAllWordlistsAdminRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAllWordlistsAdminResponse>> {
+    async getAllWordlistsAdminRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListWordlistsAdmin>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -134,14 +134,14 @@ export class WordlistManagementApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetAllWordlistsAdminResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListWordlistsAdminFromJSON(jsonValue));
     }
 
     /**
      * Get a list of all wordlists including their paths
      * Get a list of all wordlists including their paths
      */
-    async getAllWordlistsAdmin(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAllWordlistsAdminResponse> {
+    async getAllWordlistsAdmin(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListWordlistsAdmin> {
         const response = await this.getAllWordlistsAdminRaw(initOverrides);
         return await response.value();
     }

@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
@@ -30,8 +31,8 @@ class UpdateWorkspaceRequest(BaseModel):
     """
     The request type to update a workspace  All parameter are optional, but at least one of them must be specified
     """ # noqa: E501
-    name: Optional[StrictStr] = None
-    description: Optional[StrictStr] = None
+    name: Optional[StrictStr] = Field(default=None, description="Name of the workspace")
+    description: Optional[StrictStr] = Field(default=None, description="Description of the workspace")
     __properties: ClassVar[List[str]] = ["name", "description"]
 
     model_config = {

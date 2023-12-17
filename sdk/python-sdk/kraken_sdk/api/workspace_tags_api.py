@@ -24,10 +24,12 @@ try:
 except ImportError:
     from typing_extensions import Annotated
 
+from pydantic import Field
+from typing_extensions import Annotated
 from pydantic import StrictStr
 
 from kraken_sdk.models.create_workspace_tag_request import CreateWorkspaceTagRequest
-from kraken_sdk.models.get_workspace_tags_response import GetWorkspaceTagsResponse
+from kraken_sdk.models.list_workspace_tags import ListWorkspaceTags
 from kraken_sdk.models.update_workspace_tag import UpdateWorkspaceTag
 from kraken_sdk.models.uuid_response import UuidResponse
 
@@ -52,7 +54,7 @@ class WorkspaceTagsApi:
     @validate_call
     async def create_workspace_tag(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         create_workspace_tag_request: CreateWorkspaceTagRequest,
         _request_timeout: Union[
             None,
@@ -71,7 +73,7 @@ class WorkspaceTagsApi:
 
         Create a workspace tag.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param create_workspace_tag_request: (required)
         :type create_workspace_tag_request: CreateWorkspaceTagRequest
@@ -126,7 +128,7 @@ class WorkspaceTagsApi:
     @validate_call
     async def create_workspace_tag_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         create_workspace_tag_request: CreateWorkspaceTagRequest,
         _request_timeout: Union[
             None,
@@ -145,7 +147,7 @@ class WorkspaceTagsApi:
 
         Create a workspace tag.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param create_workspace_tag_request: (required)
         :type create_workspace_tag_request: CreateWorkspaceTagRequest
@@ -200,7 +202,7 @@ class WorkspaceTagsApi:
     @validate_call
     async def create_workspace_tag_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         create_workspace_tag_request: CreateWorkspaceTagRequest,
         _request_timeout: Union[
             None,
@@ -219,7 +221,7 @@ class WorkspaceTagsApi:
 
         Create a workspace tag.
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param create_workspace_tag_request: (required)
         :type create_workspace_tag_request: CreateWorkspaceTagRequest
@@ -348,8 +350,8 @@ class WorkspaceTagsApi:
     @validate_call
     async def delete_workspace_tag(
         self,
-        w_uuid: StrictStr,
-        t_uuid: StrictStr,
+        w_uuid: Annotated[StrictStr, Field(description="Workspace uuid")],
+        t_uuid: Annotated[StrictStr, Field(description="Tag uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -367,9 +369,9 @@ class WorkspaceTagsApi:
 
         Delete a workspace tag  Requires privileges to access the workspace this tag belongs to.
 
-        :param w_uuid: (required)
+        :param w_uuid: Workspace uuid (required)
         :type w_uuid: str
-        :param t_uuid: (required)
+        :param t_uuid: Tag uuid (required)
         :type t_uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -419,8 +421,8 @@ class WorkspaceTagsApi:
     @validate_call
     async def delete_workspace_tag_with_http_info(
         self,
-        w_uuid: StrictStr,
-        t_uuid: StrictStr,
+        w_uuid: Annotated[StrictStr, Field(description="Workspace uuid")],
+        t_uuid: Annotated[StrictStr, Field(description="Tag uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -438,9 +440,9 @@ class WorkspaceTagsApi:
 
         Delete a workspace tag  Requires privileges to access the workspace this tag belongs to.
 
-        :param w_uuid: (required)
+        :param w_uuid: Workspace uuid (required)
         :type w_uuid: str
-        :param t_uuid: (required)
+        :param t_uuid: Tag uuid (required)
         :type t_uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -490,8 +492,8 @@ class WorkspaceTagsApi:
     @validate_call
     async def delete_workspace_tag_without_preload_content(
         self,
-        w_uuid: StrictStr,
-        t_uuid: StrictStr,
+        w_uuid: Annotated[StrictStr, Field(description="Workspace uuid")],
+        t_uuid: Annotated[StrictStr, Field(description="Tag uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -509,9 +511,9 @@ class WorkspaceTagsApi:
 
         Delete a workspace tag  Requires privileges to access the workspace this tag belongs to.
 
-        :param w_uuid: (required)
+        :param w_uuid: Workspace uuid (required)
         :type w_uuid: str
-        :param t_uuid: (required)
+        :param t_uuid: Tag uuid (required)
         :type t_uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -622,7 +624,7 @@ class WorkspaceTagsApi:
     @validate_call
     async def get_all_workspace_tags(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -635,12 +637,12 @@ class WorkspaceTagsApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetWorkspaceTagsResponse:
+    ) -> ListWorkspaceTags:
         """Retrieve all workspace tags
 
         Retrieve all workspace tags
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -673,7 +675,7 @@ class WorkspaceTagsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkspaceTagsResponse",
+            '200': "ListWorkspaceTags",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -692,7 +694,7 @@ class WorkspaceTagsApi:
     @validate_call
     async def get_all_workspace_tags_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -705,12 +707,12 @@ class WorkspaceTagsApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetWorkspaceTagsResponse]:
+    ) -> ApiResponse[ListWorkspaceTags]:
         """Retrieve all workspace tags
 
         Retrieve all workspace tags
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -743,7 +745,7 @@ class WorkspaceTagsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkspaceTagsResponse",
+            '200': "ListWorkspaceTags",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -762,7 +764,7 @@ class WorkspaceTagsApi:
     @validate_call
     async def get_all_workspace_tags_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -780,7 +782,7 @@ class WorkspaceTagsApi:
 
         Retrieve all workspace tags
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -813,7 +815,7 @@ class WorkspaceTagsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkspaceTagsResponse",
+            '200': "ListWorkspaceTags",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -890,8 +892,8 @@ class WorkspaceTagsApi:
     @validate_call
     async def update_workspace_tag(
         self,
-        w_uuid: StrictStr,
-        t_uuid: StrictStr,
+        w_uuid: Annotated[StrictStr, Field(description="Workspace uuid")],
+        t_uuid: Annotated[StrictStr, Field(description="Tag uuid")],
         update_workspace_tag: UpdateWorkspaceTag,
         _request_timeout: Union[
             None,
@@ -910,9 +912,9 @@ class WorkspaceTagsApi:
 
         Update a workspace tag  One of the options must be set  Requires privileges to access the workspace this tags belongs to.
 
-        :param w_uuid: (required)
+        :param w_uuid: Workspace uuid (required)
         :type w_uuid: str
-        :param t_uuid: (required)
+        :param t_uuid: Tag uuid (required)
         :type t_uuid: str
         :param update_workspace_tag: (required)
         :type update_workspace_tag: UpdateWorkspaceTag
@@ -965,8 +967,8 @@ class WorkspaceTagsApi:
     @validate_call
     async def update_workspace_tag_with_http_info(
         self,
-        w_uuid: StrictStr,
-        t_uuid: StrictStr,
+        w_uuid: Annotated[StrictStr, Field(description="Workspace uuid")],
+        t_uuid: Annotated[StrictStr, Field(description="Tag uuid")],
         update_workspace_tag: UpdateWorkspaceTag,
         _request_timeout: Union[
             None,
@@ -985,9 +987,9 @@ class WorkspaceTagsApi:
 
         Update a workspace tag  One of the options must be set  Requires privileges to access the workspace this tags belongs to.
 
-        :param w_uuid: (required)
+        :param w_uuid: Workspace uuid (required)
         :type w_uuid: str
-        :param t_uuid: (required)
+        :param t_uuid: Tag uuid (required)
         :type t_uuid: str
         :param update_workspace_tag: (required)
         :type update_workspace_tag: UpdateWorkspaceTag
@@ -1040,8 +1042,8 @@ class WorkspaceTagsApi:
     @validate_call
     async def update_workspace_tag_without_preload_content(
         self,
-        w_uuid: StrictStr,
-        t_uuid: StrictStr,
+        w_uuid: Annotated[StrictStr, Field(description="Workspace uuid")],
+        t_uuid: Annotated[StrictStr, Field(description="Tag uuid")],
         update_workspace_tag: UpdateWorkspaceTag,
         _request_timeout: Union[
             None,
@@ -1060,9 +1062,9 @@ class WorkspaceTagsApi:
 
         Update a workspace tag  One of the options must be set  Requires privileges to access the workspace this tags belongs to.
 
-        :param w_uuid: (required)
+        :param w_uuid: Workspace uuid (required)
         :type w_uuid: str
-        :param t_uuid: (required)
+        :param t_uuid: Tag uuid (required)
         :type t_uuid: str
         :param update_workspace_tag: (required)
         :type update_workspace_tag: UpdateWorkspaceTag

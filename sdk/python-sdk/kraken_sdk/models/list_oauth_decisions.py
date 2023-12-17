@@ -22,17 +22,17 @@ import json
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel
 from pydantic import Field
-from kraken_sdk.models.full_decision import FullDecision
+from kraken_sdk.models.full_oauth_decision import FullOauthDecision
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class GetMyDecisionsResponse(BaseModel):
+class ListOauthDecisions(BaseModel):
     """
     Response holding a user's oauth decisions
     """ # noqa: E501
-    decisions: List[FullDecision] = Field(description="A user's oauth decisions")
+    decisions: List[FullOauthDecision] = Field(description="A user's oauth decisions")
     __properties: ClassVar[List[str]] = ["decisions"]
 
     model_config = {
@@ -52,7 +52,7 @@ class GetMyDecisionsResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of GetMyDecisionsResponse from a JSON string"""
+        """Create an instance of ListOauthDecisions from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -82,7 +82,7 @@ class GetMyDecisionsResponse(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of GetMyDecisionsResponse from a dict"""
+        """Create an instance of ListOauthDecisions from a dict"""
         if obj is None:
             return None
 
@@ -90,7 +90,7 @@ class GetMyDecisionsResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "decisions": [FullDecision.from_dict(_item) for _item in obj.get("decisions")] if obj.get("decisions") is not None else None
+            "decisions": [FullOauthDecision.from_dict(_item) for _item in obj.get("decisions")] if obj.get("decisions") is not None else None
         })
         return _obj
 

@@ -20,19 +20,19 @@ import { exists, mapValues } from '../runtime';
  */
 export interface UpdatePortRequest {
     /**
-     * 
+     * The comment of the port
      * @type {string}
      * @memberof UpdatePortRequest
      */
     comment?: string | null;
     /**
-     * 
+     * Global tags that are linked to the port
      * @type {Array<string>}
      * @memberof UpdatePortRequest
      */
     globalTags?: Array<string> | null;
     /**
-     * 
+     * Workspace tags that are linked to the port
      * @type {Array<string>}
      * @memberof UpdatePortRequest
      */

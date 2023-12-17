@@ -24,10 +24,12 @@ try:
 except ImportError:
     from typing_extensions import Annotated
 
+from pydantic import Field
+from typing_extensions import Annotated
 from pydantic import StrictStr
 
 from kraken_sdk.models.full_workspace import FullWorkspace
-from kraken_sdk.models.get_all_workspaces_response import GetAllWorkspacesResponse
+from kraken_sdk.models.list_workspaces import ListWorkspaces
 
 from kraken_sdk.api_client import ApiClient
 from kraken_sdk.api_response import ApiResponse
@@ -62,7 +64,7 @@ class AdminWorkspacesApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetAllWorkspacesResponse:
+    ) -> ListWorkspaces:
         """Retrieve all workspaces
 
         Retrieve all workspaces
@@ -97,7 +99,7 @@ class AdminWorkspacesApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllWorkspacesResponse",
+            '200': "ListWorkspaces",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -128,7 +130,7 @@ class AdminWorkspacesApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetAllWorkspacesResponse]:
+    ) -> ApiResponse[ListWorkspaces]:
         """Retrieve all workspaces
 
         Retrieve all workspaces
@@ -163,7 +165,7 @@ class AdminWorkspacesApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllWorkspacesResponse",
+            '200': "ListWorkspaces",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -229,7 +231,7 @@ class AdminWorkspacesApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAllWorkspacesResponse",
+            '200': "ListWorkspaces",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -303,7 +305,7 @@ class AdminWorkspacesApi:
     @validate_call
     async def get_workspace_admin(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -321,7 +323,7 @@ class AdminWorkspacesApi:
 
         Retrieve a workspace by id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -373,7 +375,7 @@ class AdminWorkspacesApi:
     @validate_call
     async def get_workspace_admin_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -391,7 +393,7 @@ class AdminWorkspacesApi:
 
         Retrieve a workspace by id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -443,7 +445,7 @@ class AdminWorkspacesApi:
     @validate_call
     async def get_workspace_admin_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -461,7 +463,7 @@ class AdminWorkspacesApi:
 
         Retrieve a workspace by id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request

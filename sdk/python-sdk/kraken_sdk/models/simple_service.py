@@ -31,13 +31,13 @@ class SimpleService(BaseModel):
     """
     A simple representation of a service
     """ # noqa: E501
-    uuid: StrictStr
-    name: StrictStr
-    version: Optional[StrictStr] = None
-    host: StrictStr
-    port: Optional[StrictStr] = None
-    comment: StrictStr
-    workspace: StrictStr
+    uuid: StrictStr = Field(description="The uuid of the service")
+    name: StrictStr = Field(description="The name of the service")
+    version: Optional[StrictStr] = Field(default=None, description="The version of the service")
+    host: StrictStr = Field(description="The host this service is linked to")
+    port: Optional[StrictStr] = Field(default=None, description="The port this service may linked to")
+    comment: StrictStr = Field(description="The comment attached to the service")
+    workspace: StrictStr = Field(description="The workspace is service is linked to")
     created_at: datetime = Field(description="The point in time, the record was created")
     __properties: ClassVar[List[str]] = ["uuid", "name", "version", "host", "port", "comment", "workspace", "created_at"]
 

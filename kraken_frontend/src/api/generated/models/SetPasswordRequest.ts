@@ -20,13 +20,13 @@ import { exists, mapValues } from '../runtime';
  */
 export interface SetPasswordRequest {
     /**
-     * 
+     * The current password
      * @type {string}
      * @memberof SetPasswordRequest
      */
     currentPassword: string;
     /**
-     * 
+     * The new password
      * @type {string}
      * @memberof SetPasswordRequest
      */

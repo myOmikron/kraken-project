@@ -18,21 +18,27 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Any, ClassVar, Dict, List
-from pydantic import BaseModel
-from kraken_sdk.models.full_workspace_tag import FullWorkspaceTag
+from datetime import datetime
+from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, StrictStr
+from pydantic import Field
+from kraken_sdk.models.user_permission import UserPermission
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class GetWorkspaceTagsResponse(BaseModel):
+class FullUser(BaseModel):
     """
-    The response to a request to retrieve all workspace tags
+    A single user representation
     """ # noqa: E501
-    workspace_tags: List[FullWorkspaceTag]
-    __properties: ClassVar[List[str]] = ["workspace_tags"]
+    uuid: StrictStr = Field(description="The uuid of the user")
+    username: StrictStr = Field(description="The username of the user")
+    display_name: StrictStr = Field(description="The displayname of the user")
+    permission: UserPermission
+    created_at: datetime = Field(description="The point in time this user was created")
+    last_login: Optional[datetime] = Field(default=None, description="The last point in time when the user has logged in")
+    __properties: ClassVar[List[str]] = ["uuid", "username", "display_name", "permission", "created_at", "last_login"]
 
     model_config = {
         "populate_by_name": True,
@@ -51,7 +57,7 @@ class GetWorkspaceTagsResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of GetWorkspaceTagsResponse from a JSON string"""
+        """Create an instance of FullUser from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -70,18 +76,16 @@ class GetWorkspaceTagsResponse(BaseModel):
             },
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of each item in workspace_tags (list)
-        _items = []
-        if self.workspace_tags:
-            for _item in self.workspace_tags:
-                if _item:
-                    _items.append(_item.to_dict())
-            _dict['workspace_tags'] = _items
+        # set to None if last_login (nullable) is None
+        # and model_fields_set contains the field
+        if self.last_login is None and "last_login" in self.model_fields_set:
+            _dict['last_login'] = None
+
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of GetWorkspaceTagsResponse from a dict"""
+        """Create an instance of FullUser from a dict"""
         if obj is None:
             return None
 
@@ -89,7 +93,12 @@ class GetWorkspaceTagsResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "workspace_tags": [FullWorkspaceTag.from_dict(_item) for _item in obj.get("workspace_tags")] if obj.get("workspace_tags") is not None else None
+            "uuid": obj.get("uuid"),
+            "username": obj.get("username"),
+            "display_name": obj.get("display_name"),
+            "permission": obj.get("permission"),
+            "created_at": obj.get("created_at"),
+            "last_login": obj.get("last_login")
         })
         return _obj
 

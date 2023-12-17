@@ -21,6 +21,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
@@ -30,9 +31,9 @@ class UpdateLeechRequest(BaseModel):
     """
     The request to update a leech
     """ # noqa: E501
-    name: Optional[StrictStr] = None
-    address: Optional[StrictStr] = None
-    description: Optional[StrictStr] = None
+    name: Optional[StrictStr] = Field(default=None, description="Name of the leech")
+    address: StrictStr = Field(description="Address of the leech")
+    description: Optional[StrictStr] = Field(default=None, description="Description of the leech")
     __properties: ClassVar[List[str]] = ["name", "address", "description"]
 
     model_config = {
@@ -75,11 +76,6 @@ class UpdateLeechRequest(BaseModel):
         # and model_fields_set contains the field
         if self.name is None and "name" in self.model_fields_set:
             _dict['name'] = None
-
-        # set to None if address (nullable) is None
-        # and model_fields_set contains the field
-        if self.address is None and "address" in self.model_fields_set:
-            _dict['address'] = None
 
         # set to None if description (nullable) is None
         # and model_fields_set contains the field

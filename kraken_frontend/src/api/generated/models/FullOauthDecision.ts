@@ -23,50 +23,50 @@ import {
 /**
  * A user's remembered oauth decision
  * @export
- * @interface FullDecision
+ * @interface FullOauthDecision
  */
-export interface FullDecision {
+export interface FullOauthDecision {
     /**
      * The primary key
      * @type {string}
-     * @memberof FullDecision
+     * @memberof FullOauthDecision
      */
     uuid: string;
     /**
      * The application the decision was made for
      * @type {string}
-     * @memberof FullDecision
+     * @memberof FullOauthDecision
      */
     app: string;
     /**
      * 
      * @type {SimpleWorkspace}
-     * @memberof FullDecision
+     * @memberof FullOauthDecision
      */
     workspace: SimpleWorkspace;
     /**
      * Action what to do with new oauth requests
      * @type {string}
-     * @memberof FullDecision
+     * @memberof FullOauthDecision
      */
-    action: FullDecisionActionEnum;
+    action: FullOauthDecisionActionEnum;
 }
 
 
 /**
  * @export
  */
-export const FullDecisionActionEnum = {
+export const FullOauthDecisionActionEnum = {
     Accept: 'Accept',
     Deny: 'Deny'
 } as const;
-export type FullDecisionActionEnum = typeof FullDecisionActionEnum[keyof typeof FullDecisionActionEnum];
+export type FullOauthDecisionActionEnum = typeof FullOauthDecisionActionEnum[keyof typeof FullOauthDecisionActionEnum];
 
 
 /**
- * Check if a given object implements the FullDecision interface.
+ * Check if a given object implements the FullOauthDecision interface.
  */
-export function instanceOfFullDecision(value: object): boolean {
+export function instanceOfFullOauthDecision(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "app" in value;
@@ -76,11 +76,11 @@ export function instanceOfFullDecision(value: object): boolean {
     return isInstance;
 }
 
-export function FullDecisionFromJSON(json: any): FullDecision {
-    return FullDecisionFromJSONTyped(json, false);
+export function FullOauthDecisionFromJSON(json: any): FullOauthDecision {
+    return FullOauthDecisionFromJSONTyped(json, false);
 }
 
-export function FullDecisionFromJSONTyped(json: any, ignoreDiscriminator: boolean): FullDecision {
+export function FullOauthDecisionFromJSONTyped(json: any, ignoreDiscriminator: boolean): FullOauthDecision {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -93,7 +93,7 @@ export function FullDecisionFromJSONTyped(json: any, ignoreDiscriminator: boolea
     };
 }
 
-export function FullDecisionToJSON(value?: FullDecision | null): any {
+export function FullOauthDecisionToJSON(value?: FullOauthDecision | null): any {
     if (value === undefined) {
         return undefined;
     }

@@ -20,7 +20,7 @@ import { exists, mapValues } from '../runtime';
  */
 export interface LeechConfigAllOf {
     /**
-     * 
+     * The secret of the leech
      * @type {string}
      * @memberof LeechConfigAllOf
      */

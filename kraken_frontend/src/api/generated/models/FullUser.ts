@@ -23,51 +23,51 @@ import {
 /**
  * A single user representation
  * @export
- * @interface GetUser
+ * @interface FullUser
  */
-export interface GetUser {
+export interface FullUser {
     /**
-     * 
+     * The uuid of the user
      * @type {string}
-     * @memberof GetUser
+     * @memberof FullUser
      */
     uuid: string;
     /**
-     * 
+     * The username of the user
      * @type {string}
-     * @memberof GetUser
+     * @memberof FullUser
      */
     username: string;
     /**
-     * 
+     * The displayname of the user
      * @type {string}
-     * @memberof GetUser
+     * @memberof FullUser
      */
     displayName: string;
     /**
      * 
      * @type {UserPermission}
-     * @memberof GetUser
+     * @memberof FullUser
      */
     permission: UserPermission;
     /**
-     * 
+     * The point in time this user was created
      * @type {Date}
-     * @memberof GetUser
+     * @memberof FullUser
      */
     createdAt: Date;
     /**
-     * 
+     * The last point in time when the user has logged in
      * @type {Date}
-     * @memberof GetUser
+     * @memberof FullUser
      */
     lastLogin?: Date | null;
 }
 
 /**
- * Check if a given object implements the GetUser interface.
+ * Check if a given object implements the FullUser interface.
  */
-export function instanceOfGetUser(value: object): boolean {
+export function instanceOfFullUser(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "username" in value;
@@ -78,11 +78,11 @@ export function instanceOfGetUser(value: object): boolean {
     return isInstance;
 }
 
-export function GetUserFromJSON(json: any): GetUser {
-    return GetUserFromJSONTyped(json, false);
+export function FullUserFromJSON(json: any): FullUser {
+    return FullUserFromJSONTyped(json, false);
 }
 
-export function GetUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetUser {
+export function FullUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): FullUser {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -97,7 +97,7 @@ export function GetUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): G
     };
 }
 
-export function GetUserToJSON(value?: GetUser | null): any {
+export function FullUserToJSON(value?: FullUser | null): any {
     if (value === undefined) {
         return undefined;
     }

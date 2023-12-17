@@ -18,26 +18,21 @@ import pprint
 import re  # noqa: F401
 import json
 
-from datetime import datetime
-from typing import Any, ClassVar, Dict, List, Optional
+
+from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr
-from kraken_sdk.models.user_permission import UserPermission
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class GetUser(BaseModel):
+class InviteToWorkspaceRequest(BaseModel):
     """
-    A single user representation
+    The request to invite a user to the workspace
     """ # noqa: E501
-    uuid: StrictStr
-    username: StrictStr
-    display_name: StrictStr
-    permission: UserPermission
-    created_at: datetime
-    last_login: Optional[datetime] = None
-    __properties: ClassVar[List[str]] = ["uuid", "username", "display_name", "permission", "created_at", "last_login"]
+    user: StrictStr = Field(description="The user to invite")
+    __properties: ClassVar[List[str]] = ["user"]
 
     model_config = {
         "populate_by_name": True,
@@ -56,7 +51,7 @@ class GetUser(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of GetUser from a JSON string"""
+        """Create an instance of InviteToWorkspaceRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -75,16 +70,11 @@ class GetUser(BaseModel):
             },
             exclude_none=True,
         )
-        # set to None if last_login (nullable) is None
-        # and model_fields_set contains the field
-        if self.last_login is None and "last_login" in self.model_fields_set:
-            _dict['last_login'] = None
-
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of GetUser from a dict"""
+        """Create an instance of InviteToWorkspaceRequest from a dict"""
         if obj is None:
             return None
 
@@ -92,12 +82,7 @@ class GetUser(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "uuid": obj.get("uuid"),
-            "username": obj.get("username"),
-            "display_name": obj.get("display_name"),
-            "permission": obj.get("permission"),
-            "created_at": obj.get("created_at"),
-            "last_login": obj.get("last_login")
+            "user": obj.get("user")
         })
         return _obj
 

@@ -20,19 +20,19 @@ import { exists, mapValues } from '../runtime';
  */
 export interface SimpleLeech {
     /**
-     * 
+     * uuid of the leech
      * @type {string}
      * @memberof SimpleLeech
      */
     uuid: string;
     /**
-     * 
+     * Name of the leech
      * @type {string}
      * @memberof SimpleLeech
      */
     name: string;
     /**
-     * 
+     * Address of the leech
      * @type {string}
      * @memberof SimpleLeech
      */

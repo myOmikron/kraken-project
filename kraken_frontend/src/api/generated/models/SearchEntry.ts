@@ -20,25 +20,25 @@ import { exists, mapValues } from '../runtime';
  */
 export interface SearchEntry {
     /**
-     * 
+     * The uuid of the search
      * @type {string}
      * @memberof SearchEntry
      */
     uuid: string;
     /**
-     * 
+     * The point in time this search was created
      * @type {Date}
      * @memberof SearchEntry
      */
     createdAt: Date;
     /**
-     * 
+     * The point in time this search was finished
      * @type {Date}
      * @memberof SearchEntry
      */
     finishedAt?: Date | null;
     /**
-     * 
+     * The search term that was used
      * @type {string}
      * @memberof SearchEntry
      */

@@ -20,19 +20,19 @@ import { exists, mapValues } from '../runtime';
  */
 export interface CreateLeechRequest {
     /**
-     * 
+     * Name of the leech
      * @type {string}
      * @memberof CreateLeechRequest
      */
     name: string;
     /**
-     * 
+     * Address of the leech with schema
      * @type {string}
      * @memberof CreateLeechRequest
      */
     address: string;
     /**
-     * 
+     * Description of the leech
      * @type {string}
      * @memberof CreateLeechRequest
      */

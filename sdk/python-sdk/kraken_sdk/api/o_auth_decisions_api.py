@@ -24,9 +24,11 @@ try:
 except ImportError:
     from typing_extensions import Annotated
 
+from pydantic import Field
+from typing_extensions import Annotated
 from pydantic import StrictStr
 
-from kraken_sdk.models.get_my_decisions_response import GetMyDecisionsResponse
+from kraken_sdk.models.list_oauth_decisions import ListOauthDecisions
 
 from kraken_sdk.api_client import ApiClient
 from kraken_sdk.api_response import ApiResponse
@@ -61,7 +63,7 @@ class OAuthDecisionsApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetMyDecisionsResponse:
+    ) -> ListOauthDecisions:
         """Retrieve a user's remembered oauth decisions
 
         Retrieve a user's remembered oauth decisions
@@ -96,7 +98,7 @@ class OAuthDecisionsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetMyDecisionsResponse",
+            '200': "ListOauthDecisions",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -127,7 +129,7 @@ class OAuthDecisionsApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetMyDecisionsResponse]:
+    ) -> ApiResponse[ListOauthDecisions]:
         """Retrieve a user's remembered oauth decisions
 
         Retrieve a user's remembered oauth decisions
@@ -162,7 +164,7 @@ class OAuthDecisionsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetMyDecisionsResponse",
+            '200': "ListOauthDecisions",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -228,7 +230,7 @@ class OAuthDecisionsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetMyDecisionsResponse",
+            '200': "ListOauthDecisions",
             '400': "ApiErrorResponse",
             '500': "ApiErrorResponse"
             
@@ -302,7 +304,7 @@ class OAuthDecisionsApi:
     @validate_call
     async def revoke_decision(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -320,7 +322,7 @@ class OAuthDecisionsApi:
 
         Revoke a user's remembered oauth decision
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -369,7 +371,7 @@ class OAuthDecisionsApi:
     @validate_call
     async def revoke_decision_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -387,7 +389,7 @@ class OAuthDecisionsApi:
 
         Revoke a user's remembered oauth decision
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -436,7 +438,7 @@ class OAuthDecisionsApi:
     @validate_call
     async def revoke_decision_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -454,7 +456,7 @@ class OAuthDecisionsApi:
 
         Revoke a user's remembered oauth decision
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request

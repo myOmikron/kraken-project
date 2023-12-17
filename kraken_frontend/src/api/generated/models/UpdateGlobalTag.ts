@@ -27,7 +27,7 @@ import {
  */
 export interface UpdateGlobalTag {
     /**
-     * 
+     * Name of the global tag
      * @type {string}
      * @memberof UpdateGlobalTag
      */

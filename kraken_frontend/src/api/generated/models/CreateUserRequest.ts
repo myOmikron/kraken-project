@@ -27,19 +27,19 @@ import {
  */
 export interface CreateUserRequest {
     /**
-     * 
+     * The username
      * @type {string}
      * @memberof CreateUserRequest
      */
     username: string;
     /**
-     * 
+     * The displayname
      * @type {string}
      * @memberof CreateUserRequest
      */
     displayName: string;
     /**
-     * 
+     * The password that should be set
      * @type {string}
      * @memberof CreateUserRequest
      */

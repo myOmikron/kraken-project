@@ -23,32 +23,32 @@ import {
 /**
  * The response that hold all leeches
  * @export
- * @interface GetAllLeechesResponse
+ * @interface ListLeeches
  */
-export interface GetAllLeechesResponse {
+export interface ListLeeches {
     /**
-     * 
+     * The list of leeches
      * @type {Array<SimpleLeech>}
-     * @memberof GetAllLeechesResponse
+     * @memberof ListLeeches
      */
     leeches: Array<SimpleLeech>;
 }
 
 /**
- * Check if a given object implements the GetAllLeechesResponse interface.
+ * Check if a given object implements the ListLeeches interface.
  */
-export function instanceOfGetAllLeechesResponse(value: object): boolean {
+export function instanceOfListLeeches(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "leeches" in value;
 
     return isInstance;
 }
 
-export function GetAllLeechesResponseFromJSON(json: any): GetAllLeechesResponse {
-    return GetAllLeechesResponseFromJSONTyped(json, false);
+export function ListLeechesFromJSON(json: any): ListLeeches {
+    return ListLeechesFromJSONTyped(json, false);
 }
 
-export function GetAllLeechesResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetAllLeechesResponse {
+export function ListLeechesFromJSONTyped(json: any, ignoreDiscriminator: boolean): ListLeeches {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -58,7 +58,7 @@ export function GetAllLeechesResponseFromJSONTyped(json: any, ignoreDiscriminato
     };
 }
 
-export function GetAllLeechesResponseToJSON(value?: GetAllLeechesResponse | null): any {
+export function ListLeechesToJSON(value?: ListLeeches | null): any {
     if (value === undefined) {
         return undefined;
     }

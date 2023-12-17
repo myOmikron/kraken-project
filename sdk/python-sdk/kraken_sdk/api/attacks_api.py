@@ -348,7 +348,7 @@ class AttacksApi:
     @validate_call
     async def delete_attack(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -366,7 +366,7 @@ class AttacksApi:
 
         Delete an attack and its results
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -415,7 +415,7 @@ class AttacksApi:
     @validate_call
     async def delete_attack_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -433,7 +433,7 @@ class AttacksApi:
 
         Delete an attack and its results
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -482,7 +482,7 @@ class AttacksApi:
     @validate_call
     async def delete_attack_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -500,7 +500,7 @@ class AttacksApi:
 
         Delete an attack and its results
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -1141,7 +1141,7 @@ class AttacksApi:
     @validate_call
     async def get_attack(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1159,7 +1159,7 @@ class AttacksApi:
 
         Retrieve an attack by id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -1211,7 +1211,7 @@ class AttacksApi:
     @validate_call
     async def get_attack_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1229,7 +1229,7 @@ class AttacksApi:
 
         Retrieve an attack by id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -1281,7 +1281,7 @@ class AttacksApi:
     @validate_call
     async def get_attack_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1299,7 +1299,7 @@ class AttacksApi:
 
         Retrieve an attack by id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -1409,7 +1409,7 @@ class AttacksApi:
     @validate_call
     async def get_bruteforce_subdomains_results(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -1429,7 +1429,7 @@ class AttacksApi:
 
         Retrieve a bruteforce subdomains' results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -1487,7 +1487,7 @@ class AttacksApi:
     @validate_call
     async def get_bruteforce_subdomains_results_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -1507,7 +1507,7 @@ class AttacksApi:
 
         Retrieve a bruteforce subdomains' results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -1565,7 +1565,7 @@ class AttacksApi:
     @validate_call
     async def get_bruteforce_subdomains_results_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -1585,7 +1585,7 @@ class AttacksApi:
 
         Retrieve a bruteforce subdomains' results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -1711,7 +1711,7 @@ class AttacksApi:
     @validate_call
     async def get_dns_resolution_results(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -1731,7 +1731,7 @@ class AttacksApi:
 
         Retrieve a dns resolution's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -1789,7 +1789,7 @@ class AttacksApi:
     @validate_call
     async def get_dns_resolution_results_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -1809,7 +1809,7 @@ class AttacksApi:
 
         Retrieve a dns resolution's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -1867,7 +1867,7 @@ class AttacksApi:
     @validate_call
     async def get_dns_resolution_results_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -1887,7 +1887,7 @@ class AttacksApi:
 
         Retrieve a dns resolution's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -2013,7 +2013,7 @@ class AttacksApi:
     @validate_call
     async def get_host_alive_results(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -2033,7 +2033,7 @@ class AttacksApi:
 
         Retrieve a host alive's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -2091,7 +2091,7 @@ class AttacksApi:
     @validate_call
     async def get_host_alive_results_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -2111,7 +2111,7 @@ class AttacksApi:
 
         Retrieve a host alive's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -2169,7 +2169,7 @@ class AttacksApi:
     @validate_call
     async def get_host_alive_results_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -2189,7 +2189,7 @@ class AttacksApi:
 
         Retrieve a host alive's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -2315,7 +2315,7 @@ class AttacksApi:
     @validate_call
     async def get_query_certificate_transparency_results(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -2335,7 +2335,7 @@ class AttacksApi:
 
         Retrieve a query certificate transparency's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -2393,7 +2393,7 @@ class AttacksApi:
     @validate_call
     async def get_query_certificate_transparency_results_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -2413,7 +2413,7 @@ class AttacksApi:
 
         Retrieve a query certificate transparency's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -2471,7 +2471,7 @@ class AttacksApi:
     @validate_call
     async def get_query_certificate_transparency_results_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -2491,7 +2491,7 @@ class AttacksApi:
 
         Retrieve a query certificate transparency's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -2617,7 +2617,7 @@ class AttacksApi:
     @validate_call
     async def get_query_unhashed_results(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -2637,7 +2637,7 @@ class AttacksApi:
 
         Retrieve a query dehashed's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -2695,7 +2695,7 @@ class AttacksApi:
     @validate_call
     async def get_query_unhashed_results_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -2715,7 +2715,7 @@ class AttacksApi:
 
         Retrieve a query dehashed's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -2773,7 +2773,7 @@ class AttacksApi:
     @validate_call
     async def get_query_unhashed_results_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -2793,7 +2793,7 @@ class AttacksApi:
 
         Retrieve a query dehashed's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -2919,7 +2919,7 @@ class AttacksApi:
     @validate_call
     async def get_service_detection_results(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -2939,7 +2939,7 @@ class AttacksApi:
 
         Retrieve a detect service's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -2997,7 +2997,7 @@ class AttacksApi:
     @validate_call
     async def get_service_detection_results_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -3017,7 +3017,7 @@ class AttacksApi:
 
         Retrieve a detect service's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -3075,7 +3075,7 @@ class AttacksApi:
     @validate_call
     async def get_service_detection_results_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -3095,7 +3095,7 @@ class AttacksApi:
 
         Retrieve a detect service's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -3221,7 +3221,7 @@ class AttacksApi:
     @validate_call
     async def get_tcp_port_scan_results(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -3241,7 +3241,7 @@ class AttacksApi:
 
         Retrieve a tcp port scan's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -3299,7 +3299,7 @@ class AttacksApi:
     @validate_call
     async def get_tcp_port_scan_results_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -3319,7 +3319,7 @@ class AttacksApi:
 
         Retrieve a tcp port scan's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -3377,7 +3377,7 @@ class AttacksApi:
     @validate_call
     async def get_tcp_port_scan_results_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         limit: Annotated[int, Field(strict=True, ge=1, description="Number of items to retrieve")],
         offset: Annotated[int, Field(strict=True, ge=0, description="Position in the whole list to start retrieving from")],
         _request_timeout: Union[
@@ -3397,7 +3397,7 @@ class AttacksApi:
 
         Retrieve a tcp port scan's results by the attack's id
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param limit: Number of items to retrieve (required)
         :type limit: int
@@ -3523,7 +3523,7 @@ class AttacksApi:
     @validate_call
     async def get_workspace_attacks(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3541,7 +3541,7 @@ class AttacksApi:
 
         Query all attacks of a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -3593,7 +3593,7 @@ class AttacksApi:
     @validate_call
     async def get_workspace_attacks_with_http_info(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3611,7 +3611,7 @@ class AttacksApi:
 
         Query all attacks of a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -3663,7 +3663,7 @@ class AttacksApi:
     @validate_call
     async def get_workspace_attacks_without_preload_content(
         self,
-        uuid: StrictStr,
+        uuid: Annotated[StrictStr, Field(description="The uuid")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3681,7 +3681,7 @@ class AttacksApi:
 
         Query all attacks of a workspace
 
-        :param uuid: (required)
+        :param uuid: The uuid (required)
         :type uuid: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
