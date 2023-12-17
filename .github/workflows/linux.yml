@@ -54,7 +54,7 @@ jobs:
         run: cargo build --bin kraken --features bin
 
       - name: Build kraken library
-        run: cargo build --lib kraken
+        run: cargo build -p kraken --lib
 
       - name: Build leech
         run: cargo build -p leech
