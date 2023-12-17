@@ -94,7 +94,7 @@
       become_user: vagrant
       ansible.builtin.command:
         chdir: /vagrant
-        cmd: "/home/vagrant/.cargo/bin/cargo build -r -p kraken"
+        cmd: "/home/vagrant/.cargo/bin/cargo build -r --bin kraken --features bin"
     - name: Copy to /usr/local/bin
       copy:
         remote_src: yes

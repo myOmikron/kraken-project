@@ -51,7 +51,13 @@ jobs:
           sudo apt-get install protobuf-compiler
 
       - name: Build kraken
-        run: cargo build -p kraken -p leech
+        run: cargo build --bin kraken --features bin
+
+      - name: Build kraken library
+        run: cargo build --lib kraken
+
+      - name: Build leech
+        run: cargo build -p leech
 
       - name: Run cargo-deny
         run: cargo deny check --hide-inclusion-graph
