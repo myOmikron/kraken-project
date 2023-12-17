@@ -4,7 +4,7 @@ use std::net::IpAddr;
 
 use rcgen::{
     BasicConstraints, Certificate, CertificateParams, DnType, ExtendedKeyUsagePurpose, IsCa,
-    KeyUsagePurpose, RcgenError, SanType, PKCS_ECDSA_P256_SHA256,
+    KeyUsagePurpose, SanType, PKCS_ECDSA_P256_SHA256,
 };
 use url::{Host, Url};
 
@@ -90,7 +90,7 @@ pub trait CertificateBuilder: Sized {
     fn params(self, params: &mut CertificateParams);
 
     /// Consume the builder and create a [`Certificate`]
-    fn build(self) -> Result<Certificate, RcgenError> {
+    fn build(self) -> Result<Certificate, rcgen::Error> {
         let mut params = CertificateParams::default();
         self.params(&mut params);
         Certificate::from_params(params)

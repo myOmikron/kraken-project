@@ -8,7 +8,7 @@ use std::{fmt, fs, io};
 use log::error;
 use rand::distributions::{Distribution, Uniform};
 use rand::thread_rng;
-use rcgen::{Certificate, CertificateParams, KeyPair, RcgenError};
+use rcgen::{Certificate, CertificateParams, KeyPair};
 use thiserror::Error;
 use tonic::transport::{
     Certificate as TonicCertificate, ClientTlsConfig, Identity, ServerTlsConfig,
@@ -148,7 +148,7 @@ impl TlsManager {
 pub enum TlsManagerError {
     /// Failed to generate x509 related data
     #[error("{0}")]
-    Rcgen(#[from] RcgenError),
+    Rcgen(#[from] rcgen::Error),
 
     /// Failed to access the file system
     #[error("{0}")]
