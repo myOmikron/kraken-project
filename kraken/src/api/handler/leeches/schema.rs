@@ -12,7 +12,7 @@ pub struct CreateLeechRequest {
     #[schema(example = "leech-01")]
     pub name: String,
     /// Address of the leech with schema
-    #[schema(example = "https://10.13.37:8081")]
+    #[schema(value_type = String, example = "https://10.13.37:8081")]
     pub address: Url,
     /// Description of the leech
     #[schema(example = "The first leech in a private net")]
@@ -26,7 +26,7 @@ pub struct UpdateLeechRequest {
     #[schema(example = "leech-01")]
     pub name: Option<String>,
     /// Address of the leech
-    #[schema(example = "https://10.13.37.1:8081")]
+    #[schema(value_type = String, example = "https://10.13.37.1:8081")]
     pub address: Option<Url>,
     /// Description of the leech
     #[schema(example = "First leech in a private network")]
@@ -44,7 +44,7 @@ pub struct SimpleLeech {
     #[schema(example = "leech-01")]
     pub name: String,
     /// Address of the leech
-    #[schema(example = "https://10.13.37.1:8081")]
+    #[schema(value_type = String, example = "https://10.13.37.1:8081")]
     pub address: Url,
 }
 
