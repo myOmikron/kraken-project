@@ -62,7 +62,7 @@ pub async fn delete_user(req: Path<PathUuid>) -> ApiResult<HttpResponse> {
     tag = "User Admin Management",
     context_path = "/api/v1/admin",
     responses(
-        (status = 200, description = "Returns the user", body = GetUser),
+        (status = 200, description = "Returns the user", body = FullUser),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),

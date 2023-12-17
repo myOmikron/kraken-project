@@ -171,6 +171,7 @@ impl Modify for SecurityAddon2 {
         users::schema::CreateUserRequest,
         users::schema::SimpleUser,
         users::schema::FullUser,
+        users::schema::ListFullUsers,
         users::schema::UpdateMeRequest,
         users::schema::SetPasswordRequest,
         users::schema::SimpleUser,
