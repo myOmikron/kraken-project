@@ -1,0 +1,10 @@
+service: smtp
+prevalence: often
+probes:
+  - protocol: TCP
+    # https://datatracker.ietf.org/doc/html/rfc5321
+    # initial greeting
+    # 220 or 220- (Domain / address-literal)
+    # 554 response MAY be given in the initial opening message instead of 220
+    # MAY include identification of software and version information
+    regex: ^\d\d\d(-)*? (\w*[.|-])*?(\w*[.|-])*?(\w*[.|-])*?\w* (ESMTP)*?

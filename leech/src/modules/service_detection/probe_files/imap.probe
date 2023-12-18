@@ -1,0 +1,10 @@
+service: imap
+prevalence: often
+probes:
+  - protocol: TCP
+    # https://datatracker.ietf.org/doc/html/rfc9051#name-server-responses-generic-st
+    # initial greeting from server (OK or PREAUTH or BYE)
+    # prefixed with token *
+    # optional response code
+    regex: ^(\*) (OK)*?(PREAUTH)*?(BYE)*? (\[)(\w*)*?
+

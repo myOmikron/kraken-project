@@ -1,0 +1,9 @@
+service: pop3
+prevalence: often
+probes:
+  - protocol: TCP
+    # https://datatracker.ietf.org/doc/html/rfc2449
+    # initial greeting
+    # status indicator +OK or -ERR
+    # server must send status indicator in upper case
+    regex: ^(\+|\-)(OK|ERR)( POP3)*
