@@ -6,7 +6,7 @@ The easiest way to get kraken running locally is using Vagrant and the provided 
 
 ### `vagrant/vars.yml`
 
-Copy the `example.vars.yml` to `vars.yml` in the vagrant folder and set test values for the tokens, names and passwords. A sample vars.yml might start like this:
+Copy the `example.vars.yml` to `vars.yml` in the vagrant folder and set test values for the tokens, names and passwords. A sample `vars.yml` might start like this:
 
 ```yml
 --8<-- "example.vars.yml:sample"
@@ -27,7 +27,7 @@ Now, initialize the VMs and perform a first compilation using
 $ vagrant up
 ```
 
-If you access http://kraken.localhost:8081 now, you should see a broken black page saying "Loading..." as well as showing errors.
+If you access <http://kraken.localhost:8081> now, you should see a broken black page saying "Loading..." as well as showing errors.
 
 ### Setup admin user and kraken key
 
@@ -59,13 +59,13 @@ uRi7GQJkXSSM9oeYvOunX5X0izMSLOq5CItHC...
 
 Copy the key that is output from this command and put it into `kraken_secret_key` inside your `vars.yml` file.
 
-Now exit the shell with Ctrl-D and since we edited vars.yml you need to re-provision the VM:
+Now exit the shell with ++ctrl+d++ and since we edited `vars.yml` you need to re-provision the VM:
 
 ```
 $ vagrant provision kraken
 ```
 
-Now reload the Kraken webpage (http://kraken.localhost:8081) and login using the credentials that you have entered previously.
+Now reload the Kraken webpage (<http://kraken.localhost:8081>) and login using the credentials that you have entered previously.
 
 ## First-time configuration
 
@@ -81,7 +81,7 @@ When added to the list, click on "Gen tls config"
 
 The TLS config will be copied to clipboard (KrakenSni, KrakenCa, etc.). Paste this configuration inside your `vars.yml` as value for the `generated_leech_conf` field. (note that you need to indent the string to avoid YAML syntax errors)
 
-Now since vars.yml has been modified, you need to re-provision the leech VM again:
+Now since `vars.yml` has been modified, you need to re-provision the leech VM again:
 
 ```
 $ vagrant provision leech
