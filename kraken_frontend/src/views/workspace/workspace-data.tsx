@@ -390,13 +390,13 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 </div>
                 {tableElement}
                 <div className={"workspace-data-details pane"}>
-                    <h2 className={"sub-heading"}>Details</h2>
                     {ObjectFns.isEmpty(selectedUuids.domains) &&
                     ObjectFns.isEmpty(selectedUuids.hosts) &&
                     ObjectFns.isEmpty(selectedUuids.ports) &&
                     ObjectFns.isEmpty(selectedUuids.services) ? (
                         selected ? (
                             <>
+                                <h2 className={"sub-heading"}>Details</h2>
                                 <div className={"workspace-data-details-selector"}>
                                     {Object.entries(DETAILS_TAB).map(([key, displayName]) => (
                                         <h3
@@ -414,72 +414,16 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             </>
                         ) : null
                     ) : (
-                        <div>
-                            <button
-                                type={"button"}
-                                className={"button"}
-                                onClick={() => setSelectedUuids({ domains: {}, hosts: {}, ports: {}, services: {} })}
-                            >
-                                Unselect all
-                            </button>
-                            {ObjectFns.isEmpty(selectedUuids.domains)
-                                ? null
-                                : [
-                                      <h2>Selected {ObjectFns.len(selectedUuids.domains)} domains</h2>,
-                                      <button
-                                          type={"button"}
-                                          className={"button"}
-                                          onClick={() => setSelectedUuids({ ...selectedUuids, domains: {} })}
-                                      >
-                                          Unselect all domains
-                                      </button>,
-                                  ]}
-                            {ObjectFns.isEmpty(selectedUuids.hosts)
-                                ? null
-                                : [
-                                      <h2>Selected {ObjectFns.len(selectedUuids.hosts)} hosts</h2>,
-                                      <button
-                                          type={"button"}
-                                          className={"button"}
-                                          onClick={() => setSelectedUuids({ ...selectedUuids, hosts: {} })}
-                                      >
-                                          Unselect all hosts
-                                      </button>,
-                                  ]}
-                            {ObjectFns.isEmpty(selectedUuids.ports)
-                                ? null
-                                : [
-                                      <h2>Selected {ObjectFns.len(selectedUuids.ports)} ports</h2>,
-                                      <button
-                                          type={"button"}
-                                          className={"button"}
-                                          onClick={() => setSelectedUuids({ ...selectedUuids, ports: {} })}
-                                      >
-                                          Unselect all ports
-                                      </button>,
-                                  ]}
-                            {ObjectFns.isEmpty(selectedUuids.services)
-                                ? null
-                                : [
-                                      <h2>Selected {ObjectFns.len(selectedUuids.services)} ports</h2>,
-                                      <button
-                                          type={"button"}
-                                          className={"button"}
-                                          onClick={() => setSelectedUuids({ ...selectedUuids, services: {} })}
-                                      >
-                                          Unselect all services
-                                      </button>,
-                                  ]}
-                            <MultiTagger
-                                selectedUuids={selectedUuids}
-                                onUpdate={() => {
-                                    if (!ObjectFns.isEmpty(selectedUuids.domains)) domainsTable.reload();
-                                    if (!ObjectFns.isEmpty(selectedUuids.hosts)) hostsTable.reload();
-                                    if (!ObjectFns.isEmpty(selectedUuids.ports)) portsTable.reload();
-                                    if (!ObjectFns.isEmpty(selectedUuids.services)) servicesTable.reload();
-                                }}
-                            />
-                        </div>
+                        <MultiSelectMenu
+                            selectedUuids={selectedUuids}
+                            setSelectedUuids={setSelectedUuids}
+                            onUpdate={() => {
+                                if (!ObjectFns.isEmpty(selectedUuids.domains)) domainsTable.reload();
+                                if (!ObjectFns.isEmpty(selectedUuids.hosts)) hostsTable.reload();
+                                if (!ObjectFns.isEmpty(selectedUuids.ports)) portsTable.reload();
+                                if (!ObjectFns.isEmpty(selectedUuids.services)) servicesTable.reload();
+                            }}
+                        />
                     )}
                 </div>
             </div>
@@ -495,6 +439,139 @@ export function AttackButton(props: Parameters<typeof ROUTES.WORKSPACE_TARGETED_
         <button className={"icon-button"} type={"button"} {...ROUTES.WORKSPACE_TARGETED_ATTACKS.clickHandler(props)}>
             <AttackIcon />
         </button>
+    );
+}
+
+type MultiSelectMenuProps = {
+    selectedUuids: SelectedUuids;
+    setSelectedUuids: React.Dispatch<React.SetStateAction<SelectedUuids>>;
+    onUpdate: () => void;
+};
+export function MultiSelectMenu(props: MultiSelectMenuProps) {
+    const { selectedUuids, setSelectedUuids, onUpdate } = props;
+    const {
+        workspace: { uuid: workspace },
+    } = React.useContext(WORKSPACE_CONTEXT);
+
+    const [newTags, setNewTags] = React.useState<Array<SimpleTag>>([]);
+
+    const domainsLen = ObjectFns.len(selectedUuids.domains);
+    const hostsLen = ObjectFns.len(selectedUuids.hosts);
+    const portsLen = ObjectFns.len(selectedUuids.ports);
+    const servicesLen = ObjectFns.len(selectedUuids.services);
+    const totalLen = domainsLen + hostsLen + portsLen + servicesLen;
+
+    return (
+        <>
+            <h2 className={"sub-heading"}>Selection</h2>
+            <div className={"workspace-data-multi-select-table"}>
+                {domainsLen === 0
+                    ? null
+                    : [
+                          <span>Domains</span>,
+                          <span>{domainsLen}</span>,
+                          <button
+                              type={"button"}
+                              className={"button"}
+                              onClick={() => setSelectedUuids({ ...selectedUuids, domains: {} })}
+                          >
+                              Unselect all domains
+                          </button>,
+                      ]}
+                {hostsLen === 0
+                    ? null
+                    : [
+                          <span>Hosts</span>,
+                          <span>{hostsLen}</span>,
+                          <button
+                              type={"button"}
+                              className={"button"}
+                              onClick={() => setSelectedUuids({ ...selectedUuids, hosts: {} })}
+                          >
+                              Unselect all hosts
+                          </button>,
+                      ]}
+                {portsLen === 0
+                    ? null
+                    : [
+                          <span>Ports</span>,
+                          <span>{portsLen}</span>,
+                          <button
+                              type={"button"}
+                              className={"button"}
+                              onClick={() => setSelectedUuids({ ...selectedUuids, ports: {} })}
+                          >
+                              Unselect all ports
+                          </button>,
+                      ]}
+                {servicesLen === 0
+                    ? null
+                    : [
+                          <span>Services</span>,
+                          <span>{servicesLen}</span>,
+                          <button
+                              type={"button"}
+                              className={"button"}
+                              onClick={() => setSelectedUuids({ ...selectedUuids, services: {} })}
+                          >
+                              Unselect all services
+                          </button>,
+                      ]}
+                <span className={"workspace-data-multi-select-total"}>Total</span>
+                <span className={"workspace-data-multi-select-total"}>{totalLen}</span>
+                <button
+                    type={"button"}
+                    className={"button workspace-data-multi-select-total"}
+                    onClick={() => setSelectedUuids({ domains: {}, hosts: {}, ports: {}, services: {} })}
+                >
+                    Unselect all
+                </button>
+            </div>
+
+            <h2 className={"sub-heading"}>Modify tags</h2>
+            <EditableTags workspace={workspace} tags={newTags} onChange={setNewTags} />
+            <div className={"workspace-data-multi-select-tag-buttons"}>
+                <button
+                    type={"button"}
+                    className={"button"}
+                    onClick={() => {
+                        updateTags(workspace, selectedUuids, addStrategy, newTags).then(() => {
+                            toast.success("Added tags for selected items");
+                            setNewTags([]);
+                            onUpdate();
+                        });
+                    }}
+                >
+                    Add tags
+                </button>
+                <button
+                    type={"button"}
+                    className={"button"}
+                    onClick={() => {
+                        updateTags(workspace, selectedUuids, overwriteStrategy, newTags).then(() => {
+                            toast.success("Overwrote tags for selected items");
+                            setNewTags([]);
+                            onUpdate();
+                        });
+                    }}
+                >
+                    Overwrite tags
+                </button>
+                <button
+                    type={"button"}
+                    className={"button"}
+                    onClick={() => {
+                        updateTags(workspace, selectedUuids, removeStrategy, newTags).then(() => {
+                            toast.success("Removed tags for selected items");
+                            setNewTags([]);
+                            onUpdate();
+                        });
+                    }}
+                >
+                    Remove tags
+                </button>
+            </div>
+        </>
     );
 }
 
@@ -545,94 +622,93 @@ export function SelectButton(props: SelectButtonProps) {
     );
 }
 
-type MultiTaggerProps = {
-    selectedUuids: SelectedUuids;
-    onUpdate: () => void;
-};
-export function MultiTagger(props: MultiTaggerProps) {
-    const { selectedUuids, onUpdate } = props;
-    const {
-        workspace: { uuid: workspace },
-    } = React.useContext(WORKSPACE_CONTEXT);
-    const [newTags, setNewTags] = React.useState<Array<SimpleTag>>([]);
-    return (
-        <div>
-            <EditableTags workspace={workspace} tags={newTags} onChange={setNewTags} />
-            <button
-                type={"button"}
-                className={"button"}
-                onClick={async () => {
-                    await Promise.all(
-                        Object.keys(selectedUuids.domains).map((uuid) =>
-                            Api.workspaces.domains.get(workspace, uuid).then((result) => {
-                                let promise = null;
-                                handleApiError(result, ({ tags }) => {
-                                    promise = Api.workspaces.domains
-                                        .update(workspace, uuid, constructUpdate(tags, newTags))
-                                        .then(handleApiError);
-                                });
-                                return promise;
-                            }),
-                        ),
-                    );
-                    await Promise.all(
-                        Object.keys(selectedUuids.hosts).map((uuid) =>
-                            Api.workspaces.hosts.get(workspace, uuid).then((result) => {
-                                let promise = null;
-                                handleApiError(result, ({ tags }) => {
-                                    promise = Api.workspaces.hosts
-                                        .update(workspace, uuid, constructUpdate(tags, newTags))
-                                        .then(handleApiError);
-                                });
-                                return promise;
-                            }),
-                        ),
-                    );
-                    await Promise.all(
-                        Object.keys(selectedUuids.ports).map((uuid) =>
-                            Api.workspaces.ports.get(workspace, uuid).then((result) => {
-                                let promise = null;
-                                handleApiError(result, ({ tags }) => {
-                                    promise = Api.workspaces.ports
-                                        .update(workspace, uuid, constructUpdate(tags, newTags))
-                                        .then(handleApiError);
-                                });
-                                return promise;
-                            }),
-                        ),
-                    );
-                    await Promise.all(
-                        Object.keys(selectedUuids.services).map((uuid) =>
-                            Api.workspaces.services.get(workspace, uuid).then((result) => {
-                                let promise = null;
-                                handleApiError(result, ({ tags }) => {
-                                    promise = Api.workspaces.services
-                                        .update(workspace, uuid, constructUpdate(tags, newTags))
-                                        .then(handleApiError);
-                                });
-                                return promise;
-                            }),
-                        ),
-                    );
-                    onUpdate();
-                }}
-            >
-                Add tags
-            </button>
-        </div>
+type UpdateStrategy = (
+    curTags: Array<SimpleTag>,
+    newTags: Array<SimpleTag>,
+) => { workspaceTags: Array<string>; globalTags: Array<string> };
+
+async function updateTags(workspace: string, uuids: SelectedUuids, strategy: UpdateStrategy, tags: Array<SimpleTag>) {
+    await Promise.all(
+        Object.keys(uuids.domains).map((uuid) =>
+            Api.workspaces.domains.get(workspace, uuid).then((result) => {
+                let promise = null;
+                handleApiError(result, ({ tags: curTags }) => {
+                    promise = Api.workspaces.domains
+                        .update(workspace, uuid, strategy(curTags, tags))
+                        .then(handleApiError);
+                });
+                return promise;
+            }),
+        ),
+    );
+    await Promise.all(
+        Object.keys(uuids.hosts).map((uuid) =>
+            Api.workspaces.hosts.get(workspace, uuid).then((result) => {
+                let promise = null;
+                handleApiError(result, ({ tags: curTags }) => {
+                    promise = Api.workspaces.hosts
+                        .update(workspace, uuid, strategy(curTags, tags))
+                        .then(handleApiError);
+                });
+                return promise;
+            }),
+        ),
+    );
+    await Promise.all(
+        Object.keys(uuids.ports).map((uuid) =>
+            Api.workspaces.ports.get(workspace, uuid).then((result) => {
+                let promise = null;
+                handleApiError(result, ({ tags: curTags }) => {
+                    promise = Api.workspaces.ports
+                        .update(workspace, uuid, strategy(curTags, tags))
+                        .then(handleApiError);
+                });
+                return promise;
+            }),
+        ),
+    );
+    await Promise.all(
+        Object.keys(uuids.services).map((uuid) =>
+            Api.workspaces.services.get(workspace, uuid).then((result) => {
+                let promise = null;
+                handleApiError(result, ({ tags: curTags }) => {
+                    promise = Api.workspaces.services
+                        .update(workspace, uuid, strategy(curTags, tags))
+                        .then(handleApiError);
+                });
+                return promise;
+            }),
+        ),
     );
 }
 
-function constructUpdate(tags: Array<SimpleTag>, newTags: Array<SimpleTag>) {
+function addStrategy(curTags: Array<SimpleTag>, newTags: Array<SimpleTag>) {
     const workspaceTags = [
         ...new Set( // Use Set to eliminate duplicates
-            [...tags, ...newTags].filter(({ tagType }) => tagType === TagType.Workspace).map(({ uuid }) => uuid),
+            [...curTags, ...newTags].filter(({ tagType }) => tagType === TagType.Workspace).map(({ uuid }) => uuid),
         ).keys(),
     ];
     const globalTags = [
         ...new Set( // Use Set to eliminate duplicates
-            [...tags, ...newTags].filter(({ tagType }) => tagType === TagType.Global).map(({ uuid }) => uuid),
+            [...curTags, ...newTags].filter(({ tagType }) => tagType === TagType.Global).map(({ uuid }) => uuid),
         ).keys(),
     ];
+    return { workspaceTags, globalTags };
+}
+
+function overwriteStrategy(_curTags: Array<SimpleTag>, newTags: Array<SimpleTag>) {
+    const workspaceTags = newTags.filter(({ tagType }) => tagType === TagType.Workspace).map(({ uuid }) => uuid);
+    const globalTags = newTags.filter(({ tagType }) => tagType === TagType.Global).map(({ uuid }) => uuid);
+    return { workspaceTags, globalTags };
+}
+
+function removeStrategy(curTags: Array<SimpleTag>, newTags: Array<SimpleTag>) {
+    const removedTags = Object.fromEntries(newTags.map(({ uuid }) => [uuid, null]));
+    const workspaceTags = curTags
+        .filter(({ uuid, tagType }) => tagType === TagType.Workspace && !(uuid in removedTags))
+        .map(({ uuid }) => uuid);
+    const globalTags = curTags
+        .filter(({ uuid, tagType }) => tagType === TagType.Global && !(uuid in removedTags))
+        .map(({ uuid }) => uuid);
     return { workspaceTags, globalTags };
 }
