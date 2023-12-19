@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::attacks::deserialize_port_range;
 use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::models::AttackType;
@@ -241,4 +240,18 @@ pub enum DomainOrNetwork {
     /// A domain name
     #[schema(value_type = String, example = "kraken.test")]
     Domain(String),
+}
+
+/// Deserializes a string and parses it as `{start}-{end}` where `start` and `end` are both `u16`
+pub fn deserialize_port_range<'de, D>(deserializer: D) -> Result<RangeInclusive<u16>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = String::deserialize(deserializer)?;
+    value
+        .split_once('-')
+        .and_then(|(start, end)| Some((start.parse::<u16>().ok()?)..=(end.parse::<u16>().ok()?)))
+        .ok_or_else(|| {
+            <D::Error as serde::de::Error>::invalid_value(serde::de::Unexpected::Str(&value), &"")
+        })
 }

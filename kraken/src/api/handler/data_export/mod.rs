@@ -5,4 +5,6 @@
 
 #[cfg(feature = "bin")]
 pub(crate) mod handler;
+
+/// This module holds schemas for the data export of a workspace
 pub mod schema;

@@ -1,9 +1,10 @@
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use utoipa::{IntoParams, ToSchema};
-pub use utoipa_fix::{
+pub use utoipa_fix::Page;
+pub(crate) use utoipa_fix::{
     BruteforceSubdomainsResultsPage, DnsResolutionResultsPage, DomainResultsPage,
-    HostAliveResultsPage, HostResultsPage, Page, PortResultsPage,
+    HostAliveResultsPage, HostResultsPage, PortResultsPage,
     QueryCertificateTransparencyResultsPage, QueryUnhashedResultsPage, SearchResultPage,
     SearchesResultPage, ServiceDetectionResultsPage, ServiceResultsPage, TcpPortScanResultsPage,
 };

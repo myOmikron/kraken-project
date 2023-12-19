@@ -4,12 +4,15 @@
 use serde::{Deserialize, Deserializer};
 
 #[cfg(feature = "bin")]
-pub mod error;
-pub mod schema;
-#[cfg(feature = "bin")]
-pub mod utils;
+pub(crate) mod error;
 
-/// Custom serializer to enable the distinction of missing keys vs null values in JSON requests
+/// This module contains common schemas such as [`UuidResponse`] or [`ApiErrorResponse`]
+pub mod schema;
+
+#[cfg(feature = "bin")]
+pub(crate) mod utils;
+
+/// Custom deserializer to enable the distinction of missing keys vs null values in JSON requests
 ///
 /// # Example
 /// ```rust

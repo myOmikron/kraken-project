@@ -1,3 +1,5 @@
+//! Central storage of settings which are allowed to change during operation
+
 use rorm::{insert, query, Database, Model};
 use thiserror::Error;
 use tokio::sync::watch;

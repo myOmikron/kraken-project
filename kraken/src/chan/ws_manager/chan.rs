@@ -1,3 +1,5 @@
+//! The implementation of the ws manager
+
 use std::collections::HashMap;
 
 use actix_toolbox::ws;

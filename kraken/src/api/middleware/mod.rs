@@ -1,3 +1,5 @@
+//! All self written middlewares used by kraken
+
 pub(crate) use admin_required::AdminRequired;
 pub(crate) use authentication_required::AuthenticationRequired;
 pub(crate) use json_extractor_error::json_extractor_error;

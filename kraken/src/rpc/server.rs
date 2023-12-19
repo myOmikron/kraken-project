@@ -1,3 +1,7 @@
+//! Implementation of the [`AttackResultsService`] and [`BacklogService`]
+//!
+//! As well as the [`start_rpc_server`] starting both.
+
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::net::{AddrParseError, IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};

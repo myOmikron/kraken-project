@@ -1,3 +1,5 @@
+//! Start the dehashed manager
+
 use dehashed_rs::{DehashedApi, Scheduler};
 
 use crate::chan::settings_manager::SettingsManagerChan;

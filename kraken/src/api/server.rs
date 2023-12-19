@@ -1,3 +1,5 @@
+//! [`start_server`] which build and runs the actix server
+
 use std::io;
 
 use actix_toolbox::tb_middleware::{
@@ -213,15 +215,23 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
     Ok(())
 }
 
+/// Error type produced by [`start_server`]
 #[derive(Debug, Error)]
 pub enum StartServerError {
+    /// An [`io::Error`]
     #[error("Error starting server: {0}")]
     IO(#[from] io::Error),
+
+    /// A [`WebauthnError`]
     #[error("Error while constructing Webauthn: {0}")]
     Webauthn(#[from] WebauthnError),
+
+    /// Config contains an invalid secret key
     #[error("Invalid parameter SecretKey.\nConsider using the subcommand keygen and update your configuration file")]
     #[from(base64::DecodeError)]
     InvalidSecretKey,
+
+    /// Config contains an invalid origin
     #[error("invalid origin specified")]
     InvalidOrigin,
 }

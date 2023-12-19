@@ -5,8 +5,6 @@ pub mod dehashed_manager;
 #[cfg(feature = "bin")]
 pub mod global;
 #[cfg(feature = "bin")]
-pub mod health_manager;
-#[cfg(feature = "bin")]
 pub mod leech_manager;
 #[cfg(feature = "bin")]
 pub mod settings_manager;

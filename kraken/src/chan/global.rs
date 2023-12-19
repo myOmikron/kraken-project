@@ -1,3 +1,5 @@
+//! Set of global managers and handles
+
 use std::ops::Deref;
 use std::sync::{Arc, OnceLock, RwLock};
 
