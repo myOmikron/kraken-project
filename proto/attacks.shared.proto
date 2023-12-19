@@ -5,72 +5,96 @@ import "google/protobuf/timestamp.proto";
 
 // Representation of an ipv4 address
 message Ipv4 {
+  // The address's 4 bytes stored in little endian
   sfixed32 address = 1;
 }
 
 // Representation of an ip4 net
 message Ipv4Net {
+  // The networks address
   Ipv4 address = 1;
+  // The netmask's 4 bytes stored in little endian
   sfixed32 netmask = 2;
 }
 
 // Representation of an ipv6 address
 message Ipv6 {
+  // The address's first 8 bytes stored in little endian
   sfixed64 part0 = 1;
+  // The address's last 8 bytes stored in little endian
   sfixed64 part1 = 2;
 }
 
 // Representation of an ipv6 net
 message Ipv6Net {
+  // The networks address
   Ipv6 address = 1;
+  // The netmask's first 8 bytes stored in little endian
   sfixed64 netmask0 = 2;
+  // The netmask's last 8 bytes stored in little endian
   sfixed64 netmask1 = 3;
 }
 
 // Enum of addresses
 message Address {
+  // Workaround field to store a `oneof`
   oneof address {
+    // An ipv4 address
     Ipv4 ipv4 = 1;
+    // An ipv6 address
     Ipv6 ipv6 = 2;
   }
 }
 
 // Enum of nets
 message Net {
+  // Workaround field to store a `oneof`
   oneof net {
+    // An ipv4 network
     Ipv4Net ipv4net = 1;
+    // An ipv6 network
     Ipv6Net ipv6net = 2;
   }
 }
 
 // A net or address
 message NetOrAddress {
+  // Workaround field to store a `oneof`
   oneof net_or_address {
+    // An address
     Address address = 1;
+    // A network
     Net net = 2;
   }
 }
 
 // A record representation
 message A {
+  // The source domain
   string source = 1;
+  // The destination ip address
   Ipv4 to = 2;
 }
 
 // AAAA record representation
 message AAAA {
+  // The source domain
   string source = 1;
+  // The destination ip address
   Ipv6 to = 2;
 }
 
 // GenericRecord record representation
 message GenericRecord {
+  // The source domain
   string source = 1;
+  // The destination whatever
   string to = 2;
 }
 
 // Generic DNS record representation
 message DNSRecord {
+  // Workaround field to store a `oneof`
   oneof record {
     // IPv4 address
     A a = 1;

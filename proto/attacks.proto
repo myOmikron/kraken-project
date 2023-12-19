@@ -6,6 +6,8 @@ import "attacks.shared.proto";
 /*
 -- BruteforceSubdomain
  */
+
+// Request for starting a bruteforce subdomain attack
 message BruteforceSubdomainRequest {
   // A unique id that identifies the attack
   string attack_uuid = 1;
@@ -21,6 +23,7 @@ message BruteforceSubdomainRequest {
   uint32 concurrent_limit = 4;
 }
 
+// Response streamed by an bruteforce subdomain attack
 message BruteforceSubdomainResponse {
   // Found record
   shared.DNSRecord record = 1;
@@ -30,6 +33,7 @@ message BruteforceSubdomainResponse {
 -- TcpPortScan
  */
 
+// Request for starting a tcp port scan attack
 message TcpPortScanRequest {
   // A unique id that identifier the attack
   string attack_uuid = 1;
@@ -67,13 +71,17 @@ message PortRange {
 
 // Either a single port or a range of them
 message PortOrRange {
+  // Workaround field to store a `oneof`
   oneof port_or_range {
+    // A single port
     uint32 single = 1;
+
+    // An (inclusive) range of ports
     PortRange range = 2;
   }
 }
 
-// Response of a tcp port scan request
+// Response streamed by an tcp port scan attack
 message TcpPortScanResponse {
   // Address
   attacks.shared.Address address = 1;
@@ -126,10 +134,13 @@ message ServiceDetectionRequest {
 
 // Response to a service detection request
 message ServiceDetectionResponse {
+  // Indicates how many services are given and how they are to be interpreted
   ServiceDetectionResponseType responseType = 1;
+  // List of services, the interpretation of this field depends on the `responseType`
   repeated string services = 2;
 }
 
+// Indicates how many services are returned in a ServiceDetectionResponse and how they are to be interpreted
 enum ServiceDetectionResponseType {
   // The service is unknown
   UNKNOWN = 0;
@@ -175,6 +186,7 @@ message DnsResolutionRequest {
   uint32 concurrent_limit = 3;
 }
 
+// Response streamed by a dns resolution attack
 message DnsResolutionResponse {
   // Found record
   shared.DNSRecord record = 1;
@@ -249,6 +261,7 @@ message BacklogDnsResult{
 
 // multiple dns results
 message BacklogDnsRequest {
+  /// the results
   repeated BacklogDnsResult entries = 1;
 }
 
@@ -264,6 +277,7 @@ message BacklogTcpPortScanResult {
 
 // multiple tcp port scan results
 message BacklogTcpPortScanRequest {
+  /// the results
   repeated BacklogTcpPortScanResult entries = 1;
 }
 
@@ -277,6 +291,7 @@ message BacklogHostAliveResult {
 
 // multiple host alive results
 message BacklogHostAliveRequest {
+  /// the results
   repeated BacklogHostAliveResult entries = 1;
 }
 
