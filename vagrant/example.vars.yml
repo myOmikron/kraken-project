@@ -1,14 +1,15 @@
+# --8<-- [start:sample]
 ---
 - kraken_db_name: "kraken"
   kraken_db_user: "kraken"
   kraken_db_password: ""
   kraken_secret_key: ""
-  origin_uri: "https://kraken.test"
-  server_name: "kraken.test"
+  origin_uri: "https://kraken.localhost"
+  server_name: "kraken.localhost"
   leech_db_name: "leech"
   leech_db_user: "leech"
   leech_db_password: ""
-  leech_token: ""
+# --8<-- [end:sample]
   generated_leech_conf: |
     KrakenSni = "..."
     KrakenCa = """
