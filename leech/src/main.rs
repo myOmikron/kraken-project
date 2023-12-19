@@ -44,7 +44,8 @@ use crate::modules::certificate_transparency::{query_ct_api, CertificateTranspar
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::modules::service_detection::DetectServiceSettings;
-use crate::modules::{dehashed, service_detection, whois};
+use crate::modules::testssl::TestSSLSettings;
+use crate::modules::{dehashed, service_detection, testssl, whois};
 use crate::rpc::rpc_attacks::attack_results_service_client::AttackResultsServiceClient;
 use crate::rpc::rpc_attacks::shared::CertEntry;
 use crate::rpc::rpc_attacks::{CertificateTransparencyResult, MetaAttackInfo};
@@ -176,6 +177,11 @@ pub enum RunCommand {
         /// When this flag is enabled it will always run all checks producing their logs before returning the first match.
         #[clap(long)]
         dont_stop_on_match: bool,
+    },
+    /// Run `testssl.sh`
+    TestSSL {
+        /// Domain to scan
+        uri: String,
     },
 }
 
@@ -524,6 +530,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         })
                         .await;
                         println!("{result:?}");
+                    }
+                    RunCommand::TestSSL { uri } => {
+                        let json = testssl::run_testssl(TestSSLSettings {
+                            binary_path: None,
+                            uri,
+                        })
+                        .await?;
+                        println!("{}", serde_json::to_string_pretty(&json)?);
                     }
                 }
             }
