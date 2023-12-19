@@ -3,19 +3,9 @@ prevalence: often
 probes:
   - protocol: TCP
     regex: [Ff][tT][Pp]
-    #exact form of response may vary depending on the implementation and configuration of the FTP server. General convention is not strictly defined by FTP standards
+    # https://datatracker.ietf.org/doc/html/rfc959
+    # greeting message
+    # exact form of response vary depending on the FTP server
     sub_regex:
-      #ProFTPD
-      - ^\d\d\d ProFTPD (\d+.\d+.\d+\w* )?Server
-      #Pure-FTPD
-      - ^\d\d\d(-*) Welcome to Pure-FTPd \[privsep\] \[TLS\] (-*)\r\n\d\d\d(-*)You are user number \d+ of \d+ allowed.
-      #vsftpd
-      - ^\d\d\d \((vsFTPd \d+\.\d+\.\d+)\)
-      - ^\d\d\d (Welcome to vsftpd version \d+\.\d+\.\d+)
-      - ^\d\d\d (ProFTPD \d+\.\d+\.\d+ Server \(vsFTPd)\)
-      #FileZilla
-      - ^\d\d\d ?-?FileZilla Server (version )?\d+\.\d+\.\d+ beta
-      #Cerberus
-      - ^\d\d\d-? ?(Welcome to )?Cerberus FTP Server( ready)?( \d+\.\d+\.\d+\.\d+)?
-      #Microsoft FTP
-      - ^\d\d\d-? ?(Welcome to )?Microsoft FTP Service(, /(Version \d+\.\d+))?
+      # includes ProFTPD, Pure-FTPD, vsftpd, FileZilla, Cerberus, Microsoft FTP, FTP
+      - ^\d\d\d( )*(-)*(ProFTPD)*( )*(Welcome to )*(Pure-[Ff][Tt][Pp][Dd])*(FileZilla)*(Cerberus FTP)*(Microsoft FTP)*(\([Vv][Ss][Ff][Tt][Pp][Dd] \d+\.\d+\.\d+\))*(FTP)*
