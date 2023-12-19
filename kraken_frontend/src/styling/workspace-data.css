@@ -102,6 +102,9 @@
     margin: 0;
     text-align: center;
 }
+.workspace-data-details > h2:not(:first-child) {
+    margin-top: 2em;
+}
 
 .workspace-data-details > .pane {
     gap: 0.5em;
@@ -126,4 +129,22 @@
 }
 .workspace-data-create-form > button {
     grid-column: 1 / span 2;
+}
+
+.workspace-data-multi-select-table {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.5em;
+    margin-bottom: 0.5em;
+}
+.workspace-data-multi-select-total {
+    font-weight: bold;
+}
+.workspace-data-multi-select-tag-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5em;
+}
+.workspace-data-multi-select-tag-buttons > button {
+    flex-grow: 1;
 }
