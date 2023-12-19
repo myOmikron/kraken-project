@@ -119,3 +119,10 @@ pub struct PathService {
     /// The service's uuid
     pub s_uuid: Uuid,
 }
+
+/// A service's direct relations
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+pub struct ServiceRelations {
+    pub port: Option<SimplePort>,
+    pub host: SimpleHost,
+}

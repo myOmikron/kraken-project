@@ -7,6 +7,7 @@ use uuid::Uuid;
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
 use crate::api::handler::common::schema::{PageParams, SimpleTag};
 use crate::api::handler::hosts::schema::SimpleHost;
+use crate::api::handler::services::schema::SimpleService;
 use crate::models::{ManualPortCertainty, PortProtocol};
 
 /// The request to manually add a port
@@ -107,4 +108,14 @@ pub struct PathPort {
     pub w_uuid: Uuid,
     /// The port's uuid
     pub p_uuid: Uuid,
+}
+
+/// A port's direct relations
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
+pub struct PortRelations {
+    /// The host this port is assigned to
+    pub host: SimpleHost,
+
+    /// Services listening on this port
+    pub services: Vec<SimpleService>,
 }

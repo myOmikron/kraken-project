@@ -6,6 +6,9 @@ use uuid::Uuid;
 
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
 use crate::api::handler::common::schema::{PageParams, SimpleTag};
+use crate::api::handler::domains::schema::SimpleDomain;
+use crate::api::handler::ports::schema::SimplePort;
+use crate::api::handler::services::schema::SimpleService;
 use crate::models::{ManualHostCertainty, OsType};
 
 /// The request to manually add a host
@@ -91,4 +94,20 @@ pub struct PathHost {
     pub w_uuid: Uuid,
     /// Host uuid
     pub h_uuid: Uuid,
+}
+
+/// A host's direct relations
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
+pub struct HostRelations {
+    /// This host's ports
+    pub ports: Vec<SimplePort>,
+
+    /// This host's services
+    pub services: Vec<SimpleService>,
+
+    /// Domains pointing to this host via a direct `A` or `AAAA` record
+    pub direct_domains: Vec<SimpleDomain>,
+
+    /// Domains pointing to this host via a `CNAME` record which eventually resolves to the host
+    pub indirect_domains: Vec<SimpleDomain>,
 }

@@ -10,7 +10,7 @@ use rorm::db::sql::value::Value;
 use rorm::internal::field::Field;
 use rorm::model::PatchSelector;
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, field, insert, query, update, FieldAccess, Model};
+use rorm::{and, field, insert, or, query, update, FieldAccess, Model};
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
@@ -23,13 +23,15 @@ use crate::api::handler::common::schema::{
 };
 use crate::api::handler::common::utils::get_page_params;
 use crate::api::handler::domains::schema::{
-    CreateDomainRequest, FullDomain, GetAllDomainsQuery, PathDomain, UpdateDomainRequest,
+    CreateDomainRequest, DomainRelations, FullDomain, GetAllDomainsQuery, PathDomain, SimpleDomain,
+    UpdateDomainRequest,
 };
+use crate::api::handler::hosts::schema::SimpleHost;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::{AggregationType, WsMessage};
 use crate::models::{
-    AggregationSource, AggregationTable, Domain, DomainGlobalTag, DomainHostRelation,
-    DomainWorkspaceTag, GlobalTag, ManualDomain, Workspace, WorkspaceTag,
+    AggregationSource, AggregationTable, Domain, DomainDomainRelation, DomainGlobalTag,
+    DomainHostRelation, DomainWorkspaceTag, GlobalTag, Host, ManualDomain, Workspace, WorkspaceTag,
 };
 use crate::modules::filter::{DomainAST, GlobalAST};
 use crate::modules::raw_query::RawQueryBuilder;
@@ -429,4 +431,94 @@ pub async fn get_domain_sources(
             .await?;
     tx.commit().await?;
     Ok(Json(source))
+}
+
+/// Get a host's direct relations
+#[utoipa::path(
+    tag = "Domains",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The domain's relations", body = DomainRelations),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathDomain),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/domains/{d_uuid}/relations")]
+pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<DomainRelations>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    let mut source_domains = Vec::new();
+    let mut target_domains = Vec::new();
+    {
+        let mut stream = query!(
+            &mut tx,
+            (
+                DomainDomainRelation::F.source as Domain,
+                DomainDomainRelation::F.destination as Domain,
+            )
+        )
+        .condition(or![
+            DomainDomainRelation::F.source.equals(path.d_uuid),
+            DomainDomainRelation::F.destination.equals(path.d_uuid)
+        ])
+        .stream();
+        while let Some((source, target)) = stream.try_next().await? {
+            let vec;
+            let d;
+            if source.uuid == path.d_uuid {
+                vec = &mut target_domains;
+                d = target;
+            } else {
+                vec = &mut source_domains;
+                d = source;
+            }
+            vec.push(SimpleDomain {
+                uuid: d.uuid,
+                domain: d.domain,
+                comment: d.comment,
+                workspace: *d.workspace.key(),
+                created_at: d.created_at,
+            })
+        }
+    }
+
+    let mut direct_hosts = Vec::new();
+    let mut indirect_hosts = Vec::new();
+    {
+        let mut stream = query!(
+            &mut tx,
+            (
+                DomainHostRelation::F.host as Host,
+                DomainHostRelation::F.is_direct,
+            )
+        )
+        .condition(DomainHostRelation::F.domain.equals(path.d_uuid))
+        .stream();
+        while let Some((h, is_direct)) = stream.try_next().await? {
+            (if is_direct {
+                &mut direct_hosts
+            } else {
+                &mut indirect_hosts
+            })
+            .push(SimpleHost {
+                uuid: h.uuid,
+                ip_addr: h.ip_addr.ip().to_string(),
+                os_type: h.os_type,
+                comment: h.comment,
+                workspace: *h.workspace.key(),
+                created_at: h.created_at,
+            });
+        }
+    }
+
+    tx.commit().await?;
+
+    Ok(Json(DomainRelations {
+        source_domains,
+        target_domains,
+        direct_hosts,
+        indirect_hosts,
+    }))
 }

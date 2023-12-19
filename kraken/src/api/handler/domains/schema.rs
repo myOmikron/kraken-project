@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
 use crate::api::handler::common::schema::{PageParams, SimpleTag};
+use crate::api::handler::hosts::schema::SimpleHost;
 
 /// The request to update a domain
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -86,4 +87,20 @@ pub struct CreateDomainRequest {
     /// The domain to add
     #[schema(example = "kraken.test")]
     pub domain: String,
+}
+
+/// A domain's direct relations
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct DomainRelations {
+    /// All domains which contain a `CNAME` record with this domain
+    pub source_domains: Vec<SimpleDomain>,
+
+    /// All domains this domain has `CNAME` records to
+    pub target_domains: Vec<SimpleDomain>,
+
+    /// All hosts this domain has an `A` or `AAAA` record for
+    pub direct_hosts: Vec<SimpleHost>,
+
+    /// All hosts any `target_domains` resolves to
+    pub indirect_hosts: Vec<SimpleHost>,
 }

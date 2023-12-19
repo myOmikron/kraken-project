@@ -19,14 +19,17 @@ use crate::api::handler::common::schema::{
     HostResultsPage, PathUuid, SimpleTag, TagType, UuidResponse,
 };
 use crate::api::handler::common::utils::get_page_params;
+use crate::api::handler::domains::schema::SimpleDomain;
 use crate::api::handler::hosts::schema::{
-    CreateHostRequest, FullHost, GetAllHostsQuery, PathHost, UpdateHostRequest,
+    CreateHostRequest, FullHost, GetAllHostsQuery, HostRelations, PathHost, UpdateHostRequest,
 };
+use crate::api::handler::ports::schema::SimplePort;
+use crate::api::handler::services::schema::SimpleService;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::{AggregationType, WsMessage};
 use crate::models::{
-    AggregationSource, AggregationTable, GlobalTag, Host, HostGlobalTag, HostWorkspaceTag,
-    ManualHost, Workspace, WorkspaceTag,
+    AggregationSource, AggregationTable, Domain, DomainHostRelation, GlobalTag, Host,
+    HostGlobalTag, HostWorkspaceTag, ManualHost, Port, Service, Workspace, WorkspaceTag,
 };
 use crate::modules::filter::{GlobalAST, HostAST};
 use crate::modules::raw_query::RawQueryBuilder;
@@ -411,4 +414,89 @@ pub async fn get_host_sources(
             .await?;
     tx.commit().await?;
     Ok(Json(source))
+}
+
+/// Get a host's direct relations
+#[utoipa::path(
+    tag = "Hosts",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The host's relations", body = HostRelations),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathHost),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/hosts/{h_uuid}/relations")]
+pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRelations>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    let ports = query!(&mut tx, Port)
+        .condition(Port::F.host.equals(path.h_uuid))
+        .stream()
+        .map_ok(|p| SimplePort {
+            uuid: p.uuid,
+            port: p.port as u16,
+            protocol: p.protocol,
+            host: *p.host.key(),
+            comment: p.comment,
+            workspace: *p.workspace.key(),
+            created_at: p.created_at,
+        })
+        .try_collect()
+        .await?;
+
+    let services = query!(&mut tx, Service)
+        .condition(Service::F.host.equals(path.h_uuid))
+        .stream()
+        .map_ok(|s| SimpleService {
+            uuid: s.uuid,
+            name: s.name,
+            version: s.version,
+            host: *s.host.key(),
+            port: s.port.map(|x| *x.key()),
+            comment: s.comment,
+            workspace: *s.workspace.key(),
+            created_at: s.created_at,
+        })
+        .try_collect()
+        .await?;
+
+    let mut direct_domains = Vec::new();
+    let mut indirect_domains = Vec::new();
+    {
+        let mut stream = query!(
+            &mut tx,
+            (
+                DomainHostRelation::F.domain as Domain,
+                DomainHostRelation::F.is_direct,
+            )
+        )
+        .condition(DomainHostRelation::F.host.equals(path.h_uuid))
+        .stream();
+        while let Some((d, is_direct)) = stream.try_next().await? {
+            (if is_direct {
+                &mut direct_domains
+            } else {
+                &mut indirect_domains
+            })
+            .push(SimpleDomain {
+                uuid: d.uuid,
+                domain: d.domain,
+                comment: d.comment,
+                workspace: *d.workspace.key(),
+                created_at: d.created_at,
+            });
+        }
+    }
+
+    tx.commit().await?;
+
+    Ok(Json(HostRelations {
+        ports,
+        services,
+        direct_domains,
+        indirect_domains,
+    }))
 }
