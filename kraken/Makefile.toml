@@ -5,7 +5,7 @@ workspace = false
 
 [tasks.genmodels]
 command = "cargo"
-args = ["run", "-p", "kraken", "-F rorm-main"]
+args = ["run", "-p", "kraken", "-F rorm-main", "-F bin"]
 dependencies = ["cleanmodels"]
 workspace = false
 
@@ -22,8 +22,8 @@ workspace = false
 
 [tasks.build]
 command = "cargo"
-args = ["build", "-p", "kraken"]
+args = ["build", "-p", "kraken", "-F bin"]
 
 [tasks.run]
 command = "cargo"
-args = ["run", "-p", "kraken"]
+args = ["run", "-p", "kraken", "-F bin"]
