@@ -1,11 +1,14 @@
 import { Api } from "../../../api/api";
-import React from "react";
-import { FullHost, FullPort, TagType } from "../../../api/generated";
+import React, { useState } from "react";
+import { FullAggregationSource, FullHost, FullPort, TagType } from "../../../api/generated";
 import { handleApiError } from "../../../utils/helper";
 import Textarea from "../../../components/textarea";
 import { toast } from "react-toastify";
 import EditableTags from "../components/editable-tags";
 import { WORKSPACE_CONTEXT } from "../workspace";
+import WorkspaceDataDetailsResults from "./workspace-data-details-results";
+import ArrowLeftIcon from "../../../svg/arrow-left";
+import ArrowRightIcon from "../../../svg/arrow-right";
 
 export type WorkspaceDataPortDetailsProps = {
     port: string;
@@ -18,11 +21,22 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
     const {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
-
+    const [attacks, setAttacks] = useState({} as FullAggregationSource);
+    const [limit, setLimit] = useState(0);
+    const [page, setPage] = useState(0);
     const [port, setPort] = React.useState<FullPort | null>(null);
     React.useEffect(() => {
         Api.workspaces.ports.get(workspace, uuid).then(handleApiError(setPort));
+        Api.workspaces.ports.sources(workspace, uuid).then(
+            handleApiError((x) => {
+                setAttacks(x);
+                setLimit(x.attacks.length - 1);
+            })
+        );
     }, [workspace, uuid]);
+    React.useEffect(() => {
+        setPage(0);
+    }, [uuid]);
 
     /** Send an update to the server and parent component */
     function update(uuid: string, update: Partial<FullPort>, msg?: string) {
@@ -47,11 +61,11 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
         <>
             {tab === "general" ? (
                 <>
-                    <div className={"pane"}>
+                    <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Port</h3>
                         {`${port.port} open on ${port.host.ipAddr}`}
                     </div>
-                    <div className={"pane"}>
+                    <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Comment</h3>
                         <Textarea value={port.comment} onChange={(comment) => setPort({ ...port, comment })} />
                         <button
@@ -61,7 +75,7 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
                             Update
                         </button>
                     </div>
-                    <div className={"pane"}>
+                    <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Tags</h3>
                         <EditableTags
                             workspace={workspace}
@@ -74,7 +88,42 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
                     </div>
                 </>
             ) : (
-                <>{tab === "results" ? <div> port results</div> : <div> port relations</div>}</>
+                <>
+                    {tab === "results" ? (
+                        <div className="workspace-data-details-flex">
+                            <WorkspaceDataDetailsResults attack={attacks.attacks[page]} />
+                            <div className="workspace-data-details-table-controls">
+                                <div className="workspace-data-details-controls-container">
+                                    <button
+                                        className={"workspace-table-button"}
+                                        disabled={page === 0}
+                                        onClick={() => {
+                                            setPage(page - 1);
+                                        }}
+                                    >
+                                        <ArrowLeftIcon />
+                                    </button>
+                                    <div className="workspace-table-controls-page-container">
+                                        <span>
+                                            {page + 1} of {limit + 1}
+                                        </span>
+                                    </div>
+                                    <button
+                                        className={"workspace-table-button"}
+                                        disabled={page === limit}
+                                        onClick={() => {
+                                            setPage(page + 1);
+                                        }}
+                                    >
+                                        <ArrowRightIcon />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div> port relations</div>
+                    )}
+                </>
             )}
         </>
     );
