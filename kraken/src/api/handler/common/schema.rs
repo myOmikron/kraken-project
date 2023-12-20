@@ -56,19 +56,19 @@ mod utoipa_fix {
     /// Response containing paginated data
     #[derive(Serialize, ToSchema)]
     #[aliases(
-    DomainResultsPage = Page<FullDomain>,
-    HostResultsPage = Page<FullHost>,
-    ServiceResultsPage = Page<FullService>,
-    PortResultsPage = Page<FullPort>,
-    BruteforceSubdomainsResultsPage = Page<SimpleBruteforceSubdomainsResult>,
-    TcpPortScanResultsPage = Page<SimpleTcpPortScanResult>,
-    QueryCertificateTransparencyResultsPage = Page<FullQueryCertificateTransparencyResult>,
-    QueryUnhashedResultsPage = Page<SimpleQueryUnhashedResult>,
-    HostAliveResultsPage = Page<SimpleHostAliveResult>,
-    ServiceDetectionResultsPage = Page<FullServiceDetectionResult>,
-    DnsResolutionResultsPage = Page<SimpleDnsResolutionResult>,
-    SearchResultPage = Page<SearchResultEntry>,
-    SearchesResultPage = Page<SearchEntry>,
+        DomainResultsPage = Page<FullDomain>,
+        HostResultsPage = Page<FullHost>,
+        ServiceResultsPage = Page<FullService>,
+        PortResultsPage = Page<FullPort>,
+        BruteforceSubdomainsResultsPage = Page<SimpleBruteforceSubdomainsResult>,
+        TcpPortScanResultsPage = Page<SimpleTcpPortScanResult>,
+        QueryCertificateTransparencyResultsPage = Page<FullQueryCertificateTransparencyResult>,
+        QueryUnhashedResultsPage = Page<SimpleQueryUnhashedResult>,
+        HostAliveResultsPage = Page<SimpleHostAliveResult>,
+        ServiceDetectionResultsPage = Page<FullServiceDetectionResult>,
+        DnsResolutionResultsPage = Page<SimpleDnsResolutionResult>,
+        SearchResultPage = Page<SearchResultEntry>,
+        SearchesResultPage = Page<SearchEntry>,
     )]
     pub struct Page<T> {
         /// The page's items
