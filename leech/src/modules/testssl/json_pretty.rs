@@ -54,25 +54,48 @@ pub struct ScanResult {
     #[serde(default)]
     pub pretest: Vec<Finding>,
     #[serde(default)]
-    pub single_cipher: Vec<Finding>,
+    pub single_cipher: Vec<Finding>, //
+
+    /// Which tls protocols are supported
     #[serde(default)]
     pub protocols: Vec<Finding>,
+
+    /// Server implementation bugs and [GREASE](https://www.ietf.org/archive/id/draft-ietf-tls-grease-01.txt)
     #[serde(default)]
     pub grease: Vec<Finding>,
+
+    /// Which cipher suites are supported
     #[serde(default)]
     pub ciphers: Vec<Finding>,
+
+    /// Checks robust (perfect) forward secrecy key exchange
     #[serde(default)]
     pub pfs: Vec<Finding>,
+
+    /// The server's preferences
     #[serde(default)]
     pub server_preferences: Vec<Finding>,
+
+    /// The server's defaults
     #[serde(default)]
     pub server_defaults: Vec<Finding>,
+
+    /// The http header set by the server
     #[serde(default)]
     pub header_response: Vec<Finding>,
+
+    /// List of several vulnerabilities
     #[serde(default)]
     pub vulnerabilities: Vec<Finding>,
+
+    /// Which concrete ciphers are supported
+    ///
+    /// Depending on the option `testssl` is invoked with,
+    /// this is either a list of all ciphers or a list of all cipher per tls protocol.
     #[serde(default)]
     pub cipher_tests: Vec<Finding>,
+
+    /// Which browser is able to establish a connection
     #[serde(default)]
     pub browser_simulations: Vec<Finding>,
 }

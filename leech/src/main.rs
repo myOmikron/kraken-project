@@ -533,8 +533,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     }
                     RunCommand::TestSSL { uri } => {
                         let json = testssl::run_testssl(TestSSLSettings {
-                            binary_path: None,
                             uri,
+                            ..Default::default()
                         })
                         .await?;
                         println!("{}", serde_json::to_string_pretty(&json)?);
