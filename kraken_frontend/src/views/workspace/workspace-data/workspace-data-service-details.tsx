@@ -94,7 +94,7 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
                 <>
                     {tab === "results" ? (
                         <div className="workspace-data-details-flex">
-                            <WorkspaceDataDetailsResults attack={attacks.attacks[page]} />
+                            <WorkspaceDataDetailsResults attack={attacks.attacks[page]} uuid={service.uuid} />
                             <div className="workspace-data-details-table-controls">
                                 <div className="workspace-data-details-controls-container">
                                     <button

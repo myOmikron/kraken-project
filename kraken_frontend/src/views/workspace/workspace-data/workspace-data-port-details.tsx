@@ -91,7 +91,7 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
                 <>
                     {tab === "results" ? (
                         <div className="workspace-data-details-flex">
-                            <WorkspaceDataDetailsResults attack={attacks.attacks[page]} />
+                            <WorkspaceDataDetailsResults attack={attacks.attacks[page]} uuid={port.uuid} />
                             <div className="workspace-data-details-table-controls">
                                 <div className="workspace-data-details-controls-container">
                                     <button

@@ -8,6 +8,7 @@ import { copyToClipboard } from "../../../utils/helper";
 
 type WorkspaceDataDetailsResultsProps = {
     attack: SourceAttack;
+    uuid: string;
 };
 type WorkspaceDataDetailsResultsState = {
     page: number;
@@ -30,7 +31,7 @@ export default class WorkspaceDataDetailsResults extends React.Component<
         prevState: Readonly<WorkspaceDataDetailsResultsState>,
         snapshot?: any
     ) {
-        if (prevProps.attack.uuid !== this.props.attack.uuid) {
+        if (prevProps.attack.uuid !== this.props.attack.uuid || prevProps.uuid !== this.props.uuid) {
             this.setState({ page: 0 });
         }
     }
@@ -467,6 +468,7 @@ export default class WorkspaceDataDetailsResults extends React.Component<
                     return "Unimplemented";
             }
         })();
+        console.log(this.state.page);
         if (this.state.page < this.props.attack.results.length) {
             let uuid = this.props.attack.results[this.state.page].uuid;
             return (
