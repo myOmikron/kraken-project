@@ -1,0 +1,123 @@
+.workspace-data-details-flex{
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    height: 100%;
+}
+
+.workspace-data-details-result-container{
+    padding-top: 1em;
+    border-radius: 0.5em;
+    border: 1px solid var(--primary-op);
+    background-color: #00ccff10 ;
+    height: 0;
+    flex-grow: 1;
+    flex-shrink: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.workspace-data-details-pane{
+    display: flex;
+    padding: 2em;
+    flex-direction: column;
+    border-radius: 0.5em;
+    border: 1px solid var(--primary-op);
+    background-color: #00ccff10 ;
+    gap: 0.5em;
+}
+
+.workspace-data-details-container{
+    overflow-y: auto;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    margin: 1em;
+}
+
+.workspace-data-details-result-control{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.workspace-data-details-container .workspace-data-details-pane{
+    gap: 0.5em;
+}
+
+.workspace-data-details-list{
+    display: flex;
+    flex-direction: row;
+    gap: 1.5em;
+}
+
+.workspace-data-details-list-elements{
+    display: flex;
+    flex-direction: column;
+    gap: 0.25em;
+}
+
+.workspace-data-details-text-wrap{
+    width: 14em;
+    overflow-wrap: break-word;
+}
+
+.workspace-data-details-pane-layout{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1em;
+}
+
+.workspace-data-details-table-elements{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.workspace-data-details-table-heading{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--primary-op);
+    margin-bottom: 0.2em;
+    padding-bottom: 0.2em;
+}
+
+.workspace-data-details-table{
+    display: flex;
+    flex-direction: column;
+    gap: 0.3em;
+}
+
+.workspace-data-details-page-container{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 2em;
+}
+
+.workspace-data-details-table-controls{
+    align-self: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: center;
+    width: 100%;
+}
+
+.workspace-data-details-controls-container{
+    grid-column-start: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.workspace-data-details-uuid{
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    gap: 1em;
+    align-items: center;
+    padding-bottom: 1em;
+    opacity: 0.8;
+}
