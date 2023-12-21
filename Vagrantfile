@@ -4,7 +4,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.define "kraken", primary: true do |kraken|
     kraken.vm.hostname = "kraken"
-    kraken.vm.box = "generic/debian11"
+    kraken.vm.box = "generic/debian12"
     kraken.vm.network "forwarded_port", guest: 80, host: 8081
     kraken.vm.network :private_network, :ip => '10.13.37.10'
     kraken.vm.provider "libvirt" do |vb|
@@ -20,7 +20,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.define "leech" do |leech|
     leech.vm.hostname = "leech"
-    leech.vm.box = "generic/debian11"
+    leech.vm.box = "generic/debian12"
     leech.vm.network :private_network, :ip => '10.13.37.11'
     leech.vm.provider "libvirt" do |vb|
         vb.default_prefix = "myomikron_kraken"

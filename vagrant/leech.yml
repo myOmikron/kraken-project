@@ -10,9 +10,11 @@
       apt:
         update_cache: yes
         name:
+          - build-essential
           - postgresql
           - gnupg2
           - libssl-dev
+          - pkg-config
           - nginx
           - protobuf-compiler
           # Required for ansible

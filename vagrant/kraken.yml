@@ -10,11 +10,13 @@
       apt:
         update_cache: yes
         name:
+          - build-essential
           - nginx
           - postgresql
           - protobuf-compiler
           - libprotobuf-dev
           - gnupg2
+          - pkg-config
           - libssl-dev
           # Required for ansible
           - acl
@@ -26,7 +28,7 @@
         url: "https://deb.nodesource.com/gpgkey/nodesource.gpg.key"
     - name: node repository
       ansible.builtin.apt_repository:
-        repo: "deb https://deb.nodesource.com/node_18.x bullseye main"
+        repo: "deb https://deb.nodesource.com/node_18.x bookworm main"
     - name: Install node
       ansible.builtin.apt:
         state: latest
