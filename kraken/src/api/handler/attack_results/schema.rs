@@ -193,3 +193,9 @@ pub struct SimpleDnsResolutionResult {
     #[schema(inline)]
     pub dns_record_type: DnsRecordType,
 }
+
+/// A simple representation of a testssl result
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct SimpleTestSSLResult {
+    // TODO
+}

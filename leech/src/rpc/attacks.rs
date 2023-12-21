@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use chrono::{Datelike, Timelike};
 use futures::Stream;
-use log::error;
+use log::{debug, error};
 use prost_types::Timestamp;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
@@ -20,13 +20,16 @@ use crate::modules::dns::{dns_resolution, DnsRecordResult, DnsResolutionSettings
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::modules::service_detection::{detect_service, DetectServiceSettings, Service};
+use crate::modules::testssl::{run_testssl, StartTLSProtocol, TestSSLScans, TestSSLSettings};
 use crate::rpc::rpc_attacks::req_attack_service_server::ReqAttackService;
 use crate::rpc::rpc_attacks::shared::CertEntry;
+use crate::rpc::rpc_attacks::test_ssl_scans::TestsslScans;
 use crate::rpc::rpc_attacks::{
     BruteforceSubdomainRequest, BruteforceSubdomainResponse, CertificateTransparencyRequest,
     CertificateTransparencyResponse, DnsResolutionRequest, DnsResolutionResponse,
     HostsAliveRequest, HostsAliveResponse, ServiceDetectionRequest, ServiceDetectionResponse,
-    ServiceDetectionResponseType, TcpPortScanRequest, TcpPortScanResponse,
+    ServiceDetectionResponseType, StartTlsProtocol, TcpPortScanRequest, TcpPortScanResponse,
+    TestSslRequest, TestSslResponse,
 };
 use crate::rpc::utils::stream_attack;
 
@@ -298,5 +301,77 @@ impl ReqAttackService for Attacks {
                 }
             },
         )
+    }
+
+    async fn test_ssl(
+        &self,
+        request: Request<TestSslRequest>,
+    ) -> Result<Response<TestSslResponse>, Status> {
+        let TestSslRequest {
+            attack_uuid,
+            uri,
+            connect_timeout,
+            openssl_timeout,
+            v6,
+            basic_auth,
+            starttls,
+            scans,
+        } = request.into_inner();
+        let settings = TestSSLSettings {
+            uri,
+            connect_timeout,
+            openssl_timeout,
+            v6: v6.unwrap_or(false),
+            basic_auth: basic_auth.map(|x| (x.username, x.password)),
+            starttls: starttls
+                .map(|x| {
+                    StartTlsProtocol::try_from(x).map_err(|_| {
+                        Status::invalid_argument(format!(
+                            "Invalid enum value {x} for StartTlsProtocol"
+                        ))
+                    })
+                })
+                .transpose()?
+                .map(|x| match x {
+                    StartTlsProtocol::Ftp => StartTLSProtocol::FTP,
+                    StartTlsProtocol::Smtp => StartTLSProtocol::SMTP,
+                    StartTlsProtocol::Pop3 => StartTLSProtocol::POP3,
+                    StartTlsProtocol::Imap => StartTLSProtocol::IMAP,
+                    StartTlsProtocol::Xmpp => StartTLSProtocol::XMPP,
+                    StartTlsProtocol::Lmtp => StartTLSProtocol::LMTP,
+                    StartTlsProtocol::Nntp => StartTLSProtocol::NNTP,
+                    StartTlsProtocol::Postgres => StartTLSProtocol::Postgres,
+                    StartTlsProtocol::MySql => StartTLSProtocol::MySQL,
+                }),
+            scans: scans
+                .and_then(|x| x.testssl_scans)
+                .map(|x| match x {
+                    TestsslScans::All(true) => TestSSLScans::All,
+                    TestsslScans::All(false) => TestSSLScans::Default,
+                    TestsslScans::Manual(x) => TestSSLScans::Manual {
+                        protocols: x.protocols,
+                        grease: x.grease,
+                        ciphers: x.ciphers,
+                        pfs: x.pfs,
+                        server_preferences: x.server_preferences,
+                        server_defaults: x.server_defaults,
+                        header_response: x.header_response,
+                        vulnerabilities: x.vulnerabilities,
+                        cipher_tests_all: x.cipher_tests_all,
+                        cipher_tests_per_proto: x.cipher_tests_per_proto,
+                        browser_simulations: x.browser_simulations,
+                    },
+                })
+                .unwrap_or_default(),
+        };
+
+        let results = run_testssl(settings).await.map_err(|err| {
+            error!("testssl failed: {err:?}");
+            Status::internal("testssl failed. See logs")
+        })?;
+
+        // TODO
+        debug!("{results:#?}");
+        Ok(Response::new(TestSslResponse {}))
     }
 }

@@ -38,6 +38,8 @@ pub struct TestSSLSettings {
 }
 
 /// Protocols to select from when using `--starttls`
+#[derive(Debug)]
+#[allow(missing_docs)] // The names are pretty unambiguous
 pub enum StartTLSProtocol {
     FTP,
     SMTP,
@@ -121,7 +123,6 @@ pub async fn run_testssl(settings: TestSSLSettings) -> Result<json_pretty::File,
 
     // Declare json output
     cmd.arg("--jsonfile-pretty").arg(&json_path);
-    use std::borrow::Cow;
 
     // Don't wait for user confirmation when encountering problems
     cmd.arg("--warnings").arg("batch");
@@ -147,18 +148,17 @@ pub async fn run_testssl(settings: TestSSLSettings) -> Result<json_pretty::File,
 
     // Enable STARTTLS
     if let Some(protocol) = starttls {
-        cmd.arg("--starttls");
-        match protocol {
-            StartTLSProtocol::FTP => cmd.arg("ftp"),
-            StartTLSProtocol::SMTP => cmd.arg("smtp"),
-            StartTLSProtocol::POP3 => cmd.arg("pop3"),
-            StartTLSProtocol::IMAP => cmd.arg("imap"),
-            StartTLSProtocol::XMPP => cmd.arg("xmpp"),
-            StartTLSProtocol::LMTP => cmd.arg("lmtp"),
-            StartTLSProtocol::NNTP => cmd.arg("nntp"),
-            StartTLSProtocol::Postgres => cmd.arg("postgres"),
-            StartTLSProtocol::MySQL => cmd.arg("mysql"),
-        }
+        cmd.arg("--starttls").arg(match protocol {
+            StartTLSProtocol::FTP => "ftp",
+            StartTLSProtocol::SMTP => "smtp",
+            StartTLSProtocol::POP3 => "pop3",
+            StartTLSProtocol::IMAP => "imap",
+            StartTLSProtocol::XMPP => "xmpp",
+            StartTLSProtocol::LMTP => "lmtp",
+            StartTLSProtocol::NNTP => "nntp",
+            StartTLSProtocol::Postgres => "postgres",
+            StartTLSProtocol::MySQL => "mysql",
+        });
     }
 
     // https://github.com/drwetter/testssl.sh/blob/68dec54cc5aedf856a83425cb4cd475a3766fad5/testssl.sh#L20277

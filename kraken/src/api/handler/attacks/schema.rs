@@ -203,6 +203,33 @@ pub struct DnsResolutionRequest {
     pub workspace_uuid: Uuid,
 }
 
+/// Request to run testssl
+#[derive(Deserialize, ToSchema)]
+pub struct TestSSLRequest {
+    /// The leech to use
+    ///
+    /// Leave empty to use a random leech
+    pub leech_uuid: Option<Uuid>,
+
+    /// The workspace to execute the attack in
+    pub workspace_uuid: Uuid,
+
+    /// The domain to scan
+    pub uri: String,
+
+    /// Timeout for TCP handshakes in seconds
+    pub connect_timeout: Option<u64>,
+
+    /// Timeout for `openssl` connections in seconds
+    pub openssl_timeout: Option<u64>,
+
+    /// Set the `BASICAUTH` header when checking http headers
+    pub basic_auth: Option<[String; 2]>,
+
+    /// Run against a STARTTLS enabled protocol
+    pub starttls: Option<StartTLSProtocol>,
+}
+
 /// A simple version of an attack
 #[derive(Clone, Serialize, Deserialize, ToSchema, Debug)]
 pub struct SimpleAttack {
@@ -240,6 +267,24 @@ pub enum DomainOrNetwork {
     /// A domain name
     #[schema(value_type = String, example = "kraken.test")]
     Domain(String),
+}
+
+/// Protocols to select from when using `--starttls`
+#[derive(Serialize, Deserialize, ToSchema, Debug, Copy, Clone)]
+#[allow(missing_docs)] // The names are pretty unambiguous
+pub enum StartTLSProtocol {
+    FTP,
+    SMTP,
+    POP3,
+    IMAP,
+    XMPP,
+    // Telnet, // WIP
+    // LDAP,   // Requires `--ssl-native` which is less precise
+    // IRC,    // WIP
+    LMTP,
+    NNTP,
+    Postgres,
+    MySQL,
 }
 
 /// Deserializes a string and parses it as `{start}-{end}` where `start` and `end` are both `u16`

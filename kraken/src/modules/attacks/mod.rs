@@ -17,7 +17,9 @@ use tokio::task::JoinHandle;
 use tonic::{Response, Status, Streaming};
 use uuid::Uuid;
 
-use crate::api::handler::attacks::schema::{DomainOrNetwork, PortOrRange, SimpleAttack};
+use crate::api::handler::attacks::schema::{
+    DomainOrNetwork, PortOrRange, SimpleAttack, StartTLSProtocol,
+};
 use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::chan::global::GLOBAL;
@@ -36,6 +38,7 @@ mod dns_resolution;
 mod host_alive;
 mod service_detection;
 mod tcp_port_scan;
+mod testssl;
 
 /// The parameters of a "bruteforce subdomains" attack
 pub struct BruteforceSubdomainsParams {
@@ -254,6 +257,41 @@ pub async fn start_tcp_port_scan(
         tokio::spawn(async move {
             ctx.set_started().await;
             let result = ctx.tcp_port_scan(leech, params).await;
+            ctx.set_finished(result).await;
+        }),
+    ))
+}
+
+/// The parameters of a "testssl" attack
+pub struct TestSSLParams {
+    /// The domain to scan
+    pub uri: String,
+
+    /// Timeout for TCP handshakes in seconds
+    pub connect_timeout: Option<u64>,
+
+    /// Timeout for `openssl` connections in seconds
+    pub openssl_timeout: Option<u64>,
+
+    /// Set the `BASICAUTH` header when checking http headers
+    pub basic_auth: Option<[String; 2]>,
+
+    /// Run against a STARTTLS enabled protocol
+    pub starttls: Option<StartTLSProtocol>,
+}
+/// Start a "testssl" attack
+pub async fn start_testssl(
+    workspace: Uuid,
+    user: Uuid,
+    leech: LeechClient,
+    params: TestSSLParams,
+) -> Result<(Uuid, JoinHandle<()>), InsertAttackError> {
+    let ctx = AttackContext::new(workspace, user, AttackType::TestSSL).await?;
+    Ok((
+        ctx.attack_uuid,
+        tokio::spawn(async move {
+            ctx.set_started().await;
+            let result = ctx.testssl(leech, params).await;
             ctx.set_finished(result).await;
         }),
     ))

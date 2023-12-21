@@ -15,14 +15,14 @@ use crate::api::handler::aggregation_source::schema::{
 use crate::api::handler::attack_results::schema::{
     FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
     SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
-    SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+    SimpleQueryUnhashedResult, SimpleTcpPortScanResult, SimpleTestSSLResult,
 };
 use crate::api::handler::users::schema::SimpleUser;
 use crate::models::{
     AggregationSource, AggregationTable, Attack, AttackType, BruteforceSubdomainsResult,
     CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
     DnsResolutionResult, HostAliveResult, ManualDomain, ManualHost, ManualPort, ManualService,
-    ServiceDetectionName, ServiceDetectionResult, SourceType, TcpPortScanResult,
+    ServiceDetectionName, ServiceDetectionResult, SourceType, TcpPortScanResult, TestSSLResult,
 };
 
 fn field_in<'a, T, F, P, Any>(
@@ -108,6 +108,7 @@ impl SimpleAggregationSource {
             SourceType::OSDetection => self.os_detection += 1,
             SourceType::VersionDetection => self.version_detection += 1,
             SourceType::AntiPortScanningDetection => self.anti_port_scanning_detection += 1,
+            SourceType::TestSSL => self.test_ssl += 1,
             SourceType::ManualDomain
             | SourceType::ManualHost
             | SourceType::ManualPort
@@ -163,6 +164,7 @@ impl FullAggregationSource {
         let mut host_alive: Results<SimpleHostAliveResult> = Results::new();
         let mut service_detection: Results<FullServiceDetectionResult> = Results::new();
         let mut dns_resolution: Results<SimpleDnsResolutionResult> = Results::new();
+        let mut testssl: Results<SimpleTestSSLResult> = Results::new();
         let mut manual_insert = Vec::new();
         for (source_type, uuids) in sources {
             if uuids.is_empty() {
@@ -337,6 +339,17 @@ impl FullAggregationSource {
                             });
                     }
                 }
+                SourceType::TestSSL => {
+                    let mut stream = query!(&mut *tx, TestSSLResult)
+                        .condition(field_in(TestSSLResult::F.uuid, uuids))
+                        .stream();
+                    while let Some(result) = stream.try_next().await? {
+                        testssl
+                            .entry(*result.attack.key())
+                            .or_default()
+                            .push(SimpleTestSSLResult {});
+                    }
+                }
                 SourceType::UdpPortScan
                 | SourceType::ForcedBrowsing
                 | SourceType::OSDetection
@@ -480,6 +493,7 @@ impl FullAggregationSource {
                     .chain(host_alive.keys())
                     .chain(service_detection.keys())
                     .chain(dns_resolution.keys())
+                    .chain(testssl.keys())
                     .copied(),
             ))
             .stream();
@@ -521,6 +535,9 @@ impl FullAggregationSource {
                     AttackType::DnsResolution => SourceAttackResult::DnsResolution(
                         dns_resolution.remove(&uuid).unwrap_or_default(),
                     ),
+                    AttackType::TestSSL => {
+                        SourceAttackResult::TestSSL(testssl.remove(&uuid).unwrap_or_default())
+                    }
                     AttackType::UdpPortScan
                     | AttackType::ForcedBrowsing
                     | AttackType::OSDetection

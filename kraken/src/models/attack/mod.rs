@@ -48,6 +48,8 @@ pub enum AttackType {
     VersionDetection,
     /// Detect an anti port scan system
     AntiPortScanningDetection,
+    /// Run `testssl.sh` to check a servers TLS configuration
+    TestSSL,
 }
 
 /// Representation of an attack
@@ -316,4 +318,17 @@ pub struct ServiceDetectionResult {
 
     /// The found names of the service
     pub service_names: BackRef<field!(ServiceDetectionName::F.result)>,
+}
+
+/// Representation of a [TestSSL](AttackType::TestSSL) attack's result
+#[derive(Model)]
+pub struct TestSSLResult {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The [attack](Attack) which produced this result
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub attack: ForeignModel<Attack>,
+    // TODO
 }

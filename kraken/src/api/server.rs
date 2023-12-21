@@ -163,6 +163,7 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(attacks::handler::query_dehashed)
                     .service(attacks::handler::service_detection)
                     .service(attacks::handler::dns_resolution)
+                    .service(attacks::handler::testssl)
                     .service(attack_results::handler::get_bruteforce_subdomains_results)
                     .service(attack_results::handler::get_tcp_port_scan_results)
                     .service(attack_results::handler::get_query_certificate_transparency_results)

@@ -192,6 +192,115 @@ message DnsResolutionResponse {
   shared.DNSRecord record = 1;
 }
 
+/*
+ * testssl.sh
+ */
+
+// Request for running testssl.sh
+message TestSSLRequest {
+  // A unique id that identifier the attack
+  string attack_uuid = 1;
+  // The domain to scan
+  string uri = 2;
+  // Timeout for TCP handshakes in seconds
+  optional uint64 connect_timeout = 3;
+  // Timeout for `openssl` connections in seconds
+  optional uint64 openssl_timeout = 4;
+  // Enable ip v6
+  optional bool v6 = 5;
+  // Set the `BASICAUTH` header when checking http headers
+  optional BasicAuth basic_auth = 6;
+  // Run against a STARTTLS enabled protocol
+  optional StartTLSProtocol starttls = 7;
+  // Which scans `testssl.sh` should run
+  optional TestSSLScans scans = 8;
+}
+
+// The `BASICAUTH` header
+message BasicAuth {
+  // The username
+  string username = 1;
+  // The password
+  string password = 2;
+}
+
+// Protocols to select from when using `testssl.sh`'s `--starttls` option
+enum StartTLSProtocol {
+  // FTP
+  FTP      = 0;
+  // SMTP
+  SMTP     = 1;
+  // POP3
+  POP3     = 2;
+  // IMAP
+  IMAP     = 3;
+  // XMPP
+  XMPP     = 4;
+  // LMTP
+  LMTP     = 5;
+  // NNTP
+  NNTP     = 6;
+  // Postgres
+  Postgres = 7;
+  // MySQL
+  MySQL    = 8;
+}
+
+/// Config option which scans `testssl.sh` should run
+message TestSSLScans {
+  // Workaround field to store a `oneof`
+  oneof testssl_scans {
+    // Either run all scans or just the default ones
+    bool all = 1;
+
+    // Select the scans to run manually
+    TestSSLScansManual manual = 2;
+  }
+}
+
+// Select the scans to run manually
+//
+// Each field (except `cipher_tests_...`) correspond directly to a section in `testssl.sh`'s output
+message TestSSLScansManual {
+  /// Enables [`ScanResult`]'s `protocols` section
+  bool protocols = 1;
+
+  /// Enables [`ScanResult`]'s `grease` section
+  bool grease = 2;
+
+  /// Enables [`ScanResult`]'s `ciphers` section
+  bool ciphers = 3;
+
+  /// Enables [`ScanResult`]'s `pfs` section
+  bool pfs = 4;
+
+  /// Enables [`ScanResult`]'s `server_preferences` section
+  bool server_preferences = 5;
+
+  /// Enables [`ScanResult`]'s `server_defaults` section
+  bool server_defaults = 6;
+
+  /// Enables [`ScanResult`]'s `header_response` section
+  bool header_response = 7;
+
+  /// Enables [`ScanResult`]'s `vulnerabilities` section
+  bool vulnerabilities = 8;
+
+  /// Enables [`ScanResult`]'s `cipher_tests` section
+  bool cipher_tests_all = 9;
+
+  /// Enables [`ScanResult`]'s `cipher_tests` section
+  bool cipher_tests_per_proto = 10;
+
+  /// Enables [`ScanResult`]'s `browser_simulations` section
+  bool browser_simulations = 11;
+}
+
+// Response to a test ssl request
+message TestSSLResponse {
+  // TODO
+}
+
 // Implemented by leech; allows kraken to request attack from a leech
 service ReqAttackService {
   rpc BruteforceSubdomains(BruteforceSubdomainRequest) returns (stream BruteforceSubdomainResponse);
@@ -200,6 +309,7 @@ service ReqAttackService {
   rpc ServiceDetection(ServiceDetectionRequest) returns (ServiceDetectionResponse);
   rpc HostsAliveCheck(HostsAliveRequest) returns (stream HostsAliveResponse);
   rpc DnsResolution(DnsResolutionRequest) returns (stream DnsResolutionResponse);
+  rpc TestSSL(TestSSLRequest) returns (TestSSLResponse);
 }
 
 /*
