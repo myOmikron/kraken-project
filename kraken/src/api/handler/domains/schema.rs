@@ -7,6 +7,14 @@ use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
 use crate::api::handler::common::schema::{PageParams, SimpleTag};
 use crate::api::handler::hosts::schema::SimpleHost;
 
+/// The request to manually add a domain
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct CreateDomainRequest {
+    /// The domain to add
+    #[schema(example = "kraken.test")]
+    pub domain: String,
+}
+
 /// The request to update a domain
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct UpdateDomainRequest {
@@ -79,14 +87,6 @@ pub struct PathDomain {
     pub w_uuid: Uuid,
     /// The domain's uuid
     pub d_uuid: Uuid,
-}
-
-/// The request to manually add a domain
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
-pub struct CreateDomainRequest {
-    /// The domain to add
-    #[schema(example = "kraken.test")]
-    pub domain: String,
 }
 
 /// A domain's direct relations

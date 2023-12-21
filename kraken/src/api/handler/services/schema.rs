@@ -123,6 +123,9 @@ pub struct PathService {
 /// A service's direct relations
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct ServiceRelations {
+    /// The port a service listens on
     pub port: Option<SimplePort>,
+
+    /// The host a service runs on
     pub host: SimpleHost,
 }

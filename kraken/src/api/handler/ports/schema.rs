@@ -102,7 +102,7 @@ pub struct FullPort {
 }
 
 /// The path parameter of a port
-#[derive(Serialize, Deserialize, IntoParams, Debug, Clone)]
+#[derive(Serialize, Deserialize, IntoParams, Debug, Copy, Clone)]
 pub struct PathPort {
     /// The workspace's uuid
     pub w_uuid: Uuid,
@@ -111,7 +111,7 @@ pub struct PathPort {
 }
 
 /// A port's direct relations
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct PortRelations {
     /// The host this port is assigned to
     pub host: SimpleHost,
