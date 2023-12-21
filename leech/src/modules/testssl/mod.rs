@@ -119,7 +119,7 @@ pub async fn run_testssl(settings: TestSSLSettings) -> Result<json_pretty::File,
     let (json_file, json_path) = NamedTempFile::new()?.into_parts();
     let mut json_file = TokioFile::from_std(json_file);
 
-    let cmd = &mut Command::new("testssl");
+    let cmd = &mut Command::new("testssl-fix");
 
     // Declare json output
     cmd.arg("--jsonfile-pretty").arg(&json_path);
