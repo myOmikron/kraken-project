@@ -248,56 +248,35 @@ service AttackResultsService {
 ------------------------ Backlog -------------------------------
  */
 
-// Empty response
-message EmptyResponse {}
+message BacklogRequest {
+  repeated AnyAttackResponse responses = 1;
+}
 
-// Dns result (applies to 'bruteforce subdomains' as well as 'dns resolution')
-message BacklogDnsResult{
-  // the attack that produced the result
+message BacklogResponse {}
+
+// union of all messages which might be returned as response to any attack request
+message AnyAttackResponse {
+  // the attack that produced the response
   string attack_uuid = 1;
-  // the dns record
-  shared.DNSRecord record = 2;
-}
 
-// multiple dns results
-message BacklogDnsRequest {
-  /// the results
-  repeated BacklogDnsResult entries = 1;
-}
-
-// Result of tcp port scan
-message BacklogTcpPortScanResult {
-  // the attack that produced the result
-  string attack_uuid = 1;
-  // the ip address
-  attacks.shared.Address address = 2;
-  // the port
-  uint32 port = 3;
-}
-
-// multiple tcp port scan results
-message BacklogTcpPortScanRequest {
-  /// the results
-  repeated BacklogTcpPortScanResult entries = 1;
-}
-
-// result of host alive check request
-message BacklogHostAliveResult {
-  // the attack that produced the result
-  string attack_uuid = 1;
-  // the hosts that responded
-  attacks.shared.Address host = 2;
-}
-
-// multiple host alive results
-message BacklogHostAliveRequest {
-  /// the results
-  repeated BacklogHostAliveResult entries = 1;
+  // union of all messages which might be returned as response to any attack request
+  oneof response {
+    // Response streamed by an bruteforce subdomain attack
+    BruteforceSubdomainResponse bruteforce_subdomain = 2;
+    // Response streamed by an tcp port scan attack
+    TcpPortScanResponse tcp_port_scan = 3;
+    // Response to a certificate transparency request
+    CertificateTransparencyResponse certificate_transparency = 4;
+    // Response to a service detection request
+    ServiceDetectionResponse service_detection = 5;
+    // Response for checking which hosts are alive
+    HostsAliveResponse hosts_alive = 6;
+    // Response streamed by a dns resolution attack
+    DnsResolutionResponse dns_resolution = 7;
+  }
 }
 
 // Implemented by kraken; allows leeches to upload results that failed to upload previously
 service BacklogService {
-  rpc DnsResults(BacklogDnsRequest) returns (EmptyResponse);
-  rpc TcpPortScan(BacklogTcpPortScanRequest) returns (EmptyResponse);
-  rpc HostAliveCheck(BacklogHostAliveRequest) returns (EmptyResponse);
+  rpc SubmitBacklog(BacklogRequest) returns (BacklogResponse);
 }

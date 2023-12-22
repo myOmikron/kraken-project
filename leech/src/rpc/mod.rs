@@ -25,12 +25,10 @@ mod utils;
 pub mod rpc_attacks {
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
     use std::ops::RangeInclusive;
-    use std::str::FromStr;
 
     use ipnetwork::{IpNetwork, Ipv4Network, Ipv6Network};
     use tonic::Status;
 
-    use crate::models::{DnsRecordType, DnsResult, HostAliveResult, TcpPortScanResult};
     use crate::modules::bruteforce_subdomains::BruteforceSubdomainResult;
     use crate::modules::dns::DnsRecordResult;
     use crate::rpc::rpc_attacks::shared::dns_record::Record;
@@ -257,128 +255,6 @@ pub mod rpc_attacks {
                     }
                 }
             }
-        }
-    }
-
-    impl From<DnsResult> for BacklogDnsResult {
-        fn from(value: DnsResult) -> Self {
-            Self {
-                attack_uuid: value.attack.to_string(),
-                record: match value.dns_record_type {
-                    DnsRecordType::A => Some(DnsRecord {
-                        record: Some(Record::A(A {
-                            source: value.source,
-                            to: Some(Ipv4Addr::from_str(&value.destination).unwrap().into()),
-                        })),
-                    }),
-                    DnsRecordType::Aaaa => Some(DnsRecord {
-                        record: Some(Record::Aaaa(Aaaa {
-                            source: value.source,
-                            to: Some(Ipv6Addr::from_str(&value.destination).unwrap().into()),
-                        })),
-                    }),
-                    DnsRecordType::Cname => Some(DnsRecord {
-                        record: Some(Record::Cname(GenericRecord {
-                            source: value.source,
-                            to: value.destination,
-                        })),
-                    }),
-                    DnsRecordType::Caa => Some(DnsRecord {
-                        record: Some(Record::Caa(GenericRecord {
-                            source: value.source,
-                            to: value.destination,
-                        })),
-                    }),
-                    DnsRecordType::Mx => Some(DnsRecord {
-                        record: Some(Record::Mx(GenericRecord {
-                            source: value.source,
-                            to: value.destination,
-                        })),
-                    }),
-                    DnsRecordType::Tlsa => Some(DnsRecord {
-                        record: Some(Record::Tlsa(GenericRecord {
-                            source: value.source,
-                            to: value.destination,
-                        })),
-                    }),
-                    DnsRecordType::Txt => Some(DnsRecord {
-                        record: Some(Record::Txt(GenericRecord {
-                            source: value.source,
-                            to: value.destination,
-                        })),
-                    }),
-                },
-            }
-        }
-    }
-
-    impl From<Vec<DnsResult>> for BacklogDnsRequest {
-        fn from(value: Vec<DnsResult>) -> Self {
-            let mut entries: Vec<BacklogDnsResult> = Vec::with_capacity(value.len());
-
-            for e in value {
-                entries.push(e.into());
-            }
-
-            Self { entries }
-        }
-    }
-
-    impl From<TcpPortScanResult> for BacklogTcpPortScanResult {
-        fn from(value: TcpPortScanResult) -> Self {
-            let address = match value.address {
-                IpNetwork::V4(v) => Address {
-                    address: Some(shared::address::Address::Ipv4((v.ip()).into())),
-                },
-                IpNetwork::V6(v) => Address {
-                    address: Some(shared::address::Address::Ipv6((v.ip()).into())),
-                },
-            };
-
-            Self {
-                attack_uuid: value.attack.to_string(),
-                address: Some(address),
-                port: value.port as u32, // TODO
-            }
-        }
-    }
-
-    impl From<Vec<TcpPortScanResult>> for BacklogTcpPortScanRequest {
-        fn from(value: Vec<TcpPortScanResult>) -> Self {
-            let mut entries: Vec<BacklogTcpPortScanResult> = Vec::with_capacity(value.len());
-
-            for e in value {
-                entries.push(e.into());
-            }
-            Self { entries }
-        }
-    }
-
-    impl From<HostAliveResult> for BacklogHostAliveResult {
-        fn from(value: HostAliveResult) -> Self {
-            let address = match value.host {
-                IpNetwork::V4(v) => Address {
-                    address: Some(shared::address::Address::Ipv4((v.ip()).into())),
-                },
-                IpNetwork::V6(v) => Address {
-                    address: Some(shared::address::Address::Ipv6((v.ip()).into())),
-                },
-            };
-            Self {
-                attack_uuid: value.attack.to_string(),
-                host: Some(address),
-            }
-        }
-    }
-
-    impl From<Vec<HostAliveResult>> for BacklogHostAliveRequest {
-        fn from(value: Vec<HostAliveResult>) -> Self {
-            let mut entries: Vec<BacklogHostAliveResult> = Vec::with_capacity(value.len());
-
-            for e in value {
-                entries.push(e.into());
-            }
-            Self { entries }
         }
     }
 }

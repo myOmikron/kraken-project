@@ -4,43 +4,31 @@ use futures::stream::BoxStream;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{Response, Status};
+use uuid::Uuid;
+
+use crate::backlog::Backlog;
+use crate::rpc::rpc_attacks::any_attack_response;
 
 /// Perform an attack which streams its results
 ///
 /// It manages the communication between the attacking task, the grpc output stream and the backlog.
 ///
-/// ## Arguments
-/// - **1st** `perform_attack` is an async closure (called once) which performs the actual attack.
+/// The `perform_attack` argument is an async closure (called once) which performs the actual attack.
+/// It receives a [`mpsc::Sender<Item>`] to stream its results
+/// and is expected to produce a [`Result<(), Status>`](Status).
 ///
-///     It receives a [`mpsc::Sender<Item>`] to stream its results
-///     and is expected to produce a [`Result<(), Status>`](Status).
-///
-/// - **2nd** `write_backlog` is an async closure which is used
-///     if the stream disconnects unexpectedly to store remaining results to the database.
-///
-///     It receives the `Item` to store as argument.
-///
-///     Due to limitations in current rust the produced future has to own its [`Backlog`] instance.
-///     Therefore this closure will likely be of the shape:
-///     ```no-run
-///     # let backlog: Backlog = todo!();
-///     move |item| {
-///         let backlog = backlog.clone();
-///         async move {
-///             // backlog.store_...(item).await;
-///         }
-///     }
-///     ```
-pub(crate) fn stream_attack<Item, GrpcItem, AttackFut, BacklogFut>(
+/// The [`From`] implementations for the trait bound `GrpcItem: Into<any_attack_response::Response>`
+/// are located in `backlog/mod.rs`.
+pub(crate) fn stream_attack<Item, GrpcItem, AttackFut>(
     perform_attack: impl FnOnce(mpsc::Sender<Item>) -> AttackFut,
-    write_backlog: impl Fn(Item) -> BacklogFut + Send + Sync + 'static,
+    backlog: Backlog,
+    attack_uuid: Uuid,
 ) -> Result<Response<BoxStream<'static, Result<GrpcItem, Status>>>, Status>
 where
-    Item: Clone + Send + 'static,
-    GrpcItem: From<Item> + Send + 'static,
+    Item: Send + 'static,
+    GrpcItem: From<Item> + Into<any_attack_response::Response> + Send + 'static,
     AttackFut: Future<Output = Result<(), Status>> + Send + 'static,
     AttackFut::Output: Send + 'static,
-    BacklogFut: Future + Send,
 {
     let (from_attack, mut to_middleware) = mpsc::channel::<Item>(16);
     let (from_middleware, to_stream) = mpsc::channel::<Result<GrpcItem, Status>>(1);
@@ -58,19 +46,24 @@ where
     tokio::spawn({
         async move {
             while let Some(item) = to_middleware.recv().await {
-                let grpc_item = item.clone().into();
+                let grpc_item: GrpcItem = item.into();
 
                 // Try sending the item over the rpc stream
                 let result = from_middleware.send(Ok(grpc_item)).await;
 
                 // Failure means the receiver i.e. outgoing stream has been closed and dropped
-                if result.is_err() {
+                if let Err(error) = result {
+                    let Ok(grpc_item) = error.0 else {
+                        unreachable!("We tried to send an `Ok(_)` above");
+                    };
+
                     // Save this item to the backlog
-                    write_backlog(item).await;
+                    backlog.store(attack_uuid, grpc_item).await;
 
                     // Drain all remaining items into the backlog, because the stream is gone
                     while let Some(item) = to_middleware.recv().await {
-                        write_backlog(item).await;
+                        let grpc_item: GrpcItem = item.into();
+                        backlog.store(attack_uuid, grpc_item).await;
                     }
                     return;
                 }

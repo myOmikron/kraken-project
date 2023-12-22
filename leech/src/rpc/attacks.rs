@@ -12,11 +12,9 @@ use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
 use crate::backlog::Backlog;
-use crate::modules::bruteforce_subdomains::{
-    bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
-};
+use crate::modules::bruteforce_subdomains::{bruteforce_subdomains, BruteforceSubdomainsSettings};
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
-use crate::modules::dns::{dns_resolution, DnsRecordResult, DnsResolutionSettings};
+use crate::modules::dns::{dns_resolution, DnsResolutionSettings};
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::modules::service_detection::{detect_service, DetectServiceSettings, Service};
@@ -63,17 +61,8 @@ impl ReqAttackService for Attacks {
                         .map_err(|err| Status::unknown(err.to_string()))
                 }
             },
-            {
-                let backlog = self.backlog.clone();
-                move |item: BruteforceSubdomainResult| {
-                    let backlog = backlog.clone();
-                    async move {
-                        backlog
-                            .store_bruteforce_subdomains(attack_uuid, item.into())
-                            .await;
-                    }
-                }
-            },
+            self.backlog.clone(),
+            attack_uuid,
         )
     }
 
@@ -116,15 +105,8 @@ impl ReqAttackService for Attacks {
                         .map_err(|err| Status::unknown(err.to_string()))
                 }
             },
-            {
-                let backlog = self.backlog.clone();
-                move |item| {
-                    let backlog = backlog.clone();
-                    async move {
-                        backlog.store_tcp_port_scans(attack_uuid, item).await;
-                    }
-                }
-            },
+            self.backlog.clone(),
+            attack_uuid,
         )
     }
 
@@ -251,13 +233,8 @@ impl ReqAttackService for Attacks {
                     .await
                     .map_err(|err| Status::unknown(err.to_string()))
             },
-            {
-                let backlog = self.backlog.clone();
-                move |item| {
-                    let backlog = backlog.clone();
-                    async move { backlog.store_hosts_alive_check(attack_uuid, item).await }
-                }
-            },
+            self.backlog.clone(),
+            attack_uuid,
         )
     }
 
@@ -288,15 +265,8 @@ impl ReqAttackService for Attacks {
                     .await
                     .map_err(|err| Status::unknown(err.to_string()))
             },
-            {
-                let backlog = self.backlog.clone();
-                move |item: DnsRecordResult| {
-                    let backlog = backlog.clone();
-                    async move {
-                        backlog.store_dns_resolution(attack_uuid, item.into()).await;
-                    }
-                }
-            },
+            self.backlog.clone(),
+            attack_uuid,
         )
     }
 }
