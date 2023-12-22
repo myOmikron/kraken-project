@@ -330,5 +330,27 @@ pub struct TestSSLResult {
     /// The [attack](Attack) which produced this result
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub attack: ForeignModel<Attack>,
+
+    /// The point in time, this result was produced
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
+
+    /// The original user target this result belongs to
+    #[rorm(max_length = 255)]
+    pub target_host: String,
+
+    /// The scanned ip address
+    pub ip: IpNetwork,
+
+    /// The scanned port
+    pub port: i32,
+
+    /// The ip address' rDNS name
+    #[rorm(max_length = 255)]
+    pub rdns: String,
+
+    /// The detected service
+    #[rorm(max_length = 255)]
+    pub service: String,
     // TODO
 }

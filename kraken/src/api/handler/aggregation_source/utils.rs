@@ -344,10 +344,18 @@ impl FullAggregationSource {
                         .condition(field_in(TestSSLResult::F.uuid, uuids))
                         .stream();
                     while let Some(result) = stream.try_next().await? {
-                        testssl
-                            .entry(*result.attack.key())
-                            .or_default()
-                            .push(SimpleTestSSLResult {});
+                        testssl.entry(*result.attack.key()).or_default().push(
+                            SimpleTestSSLResult {
+                                uuid: result.uuid,
+                                attack: *result.attack.key(),
+                                created_at: result.created_at,
+                                target_host: result.target_host,
+                                ip: result.ip.ip().to_string(),
+                                port: result.port as u16,
+                                rdns: result.rdns,
+                                service: result.service,
+                            },
+                        );
                     }
                 }
                 SourceType::UdpPortScan

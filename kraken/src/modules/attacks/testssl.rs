@@ -47,7 +47,13 @@ impl AttackContext {
         for service in response.services {
             if let Some(test_ssl_service::TestsslService::Result(result)) = service.testssl_service
             {
-                store_testssl_result(self.attack_uuid, self.workspace.uuid, result).await?;
+                store_testssl_result(
+                    self.attack_uuid,
+                    self.workspace.uuid,
+                    self.user.uuid,
+                    result,
+                )
+                .await?;
             }
         }
 

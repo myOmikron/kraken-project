@@ -197,5 +197,28 @@ pub struct SimpleDnsResolutionResult {
 /// A simple representation of a testssl result
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct SimpleTestSSLResult {
+    /// The primary key
+    pub uuid: Uuid,
+
+    /// The attack which produced this result
+    pub attack: Uuid,
+
+    /// The point in time, this result was produced
+    pub created_at: DateTime<Utc>,
+
+    /// The original user target this result belongs to
+    pub target_host: String,
+
+    /// The scanned ip address
+    pub ip: String,
+
+    /// The scanned port
+    pub port: u16,
+
+    /// The ip address' rDNS name
+    pub rdns: String,
+
+    /// The detected service
+    pub service: String,
     // TODO
 }

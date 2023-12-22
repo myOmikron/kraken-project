@@ -2,14 +2,14 @@ use std::str::FromStr;
 
 use ipnetwork::IpNetwork;
 use log::error;
-use rorm::prelude::{ForeignModel, ForeignModelByField};
-use rorm::{insert, Patch};
+use rorm::insert;
+use rorm::prelude::ForeignModelByField;
 use uuid::Uuid;
 
 use crate::chan::global::GLOBAL;
 use crate::models::{
-    AggregationSource, AggregationTable, Attack, HostCertainty, PortCertainty, PortProtocol,
-    ServiceCertainty, SourceType, TestSSLResult,
+    AggregationSource, AggregationTable, DomainCertainty, HostCertainty, PortCertainty,
+    PortProtocol, ServiceCertainty, SourceType, TestSSLResult, TestSSLResultInsert,
 };
 use crate::rpc::rpc_definitions::TestSslScanResult;
 
@@ -17,6 +17,7 @@ use crate::rpc::rpc_definitions::TestSslScanResult;
 pub async fn store_testssl_result(
     attack_uuid: Uuid,
     workspace_uuid: Uuid,
+    user_uuid: Uuid,
     result: TestSslScanResult,
 ) -> Result<(), rorm::Error> {
     // TODO
@@ -58,6 +59,20 @@ pub async fn store_testssl_result(
         }
     };
 
+    let mut domain = rdns.clone();
+    if domain.ends_with('.') {
+        domain.pop();
+    }
+    let domain_uuid = GLOBAL
+        .aggregator
+        .aggregate_domain(
+            workspace_uuid,
+            &domain,
+            DomainCertainty::Unverified,
+            user_uuid,
+        )
+        .await?;
+
     let host_uuid = GLOBAL
         .aggregator
         .aggregate_host(workspace_uuid, ip, HostCertainty::Verified)
@@ -87,15 +102,28 @@ pub async fn store_testssl_result(
 
     let source_uuid = insert!(&mut tx, TestSSLResult)
         .return_primary_key()
-        .single(&InsertTestSSLResult {
+        .single(&TestSSLResultInsert {
             uuid: Uuid::new_v4(),
             attack: ForeignModelByField::Key(attack_uuid),
+            target_host,
+            ip,
+            port: port as i32,
+            rdns,
+            service,
         })
         .await?;
 
     insert!(&mut tx, AggregationSource)
         .return_nothing()
         .bulk([
+            AggregationSource {
+                uuid: Uuid::new_v4(),
+                workspace: ForeignModelByField::Key(workspace_uuid),
+                source_type: SourceType::TestSSL,
+                source_uuid,
+                aggregated_table: AggregationTable::Domain,
+                aggregated_uuid: domain_uuid,
+            },
             AggregationSource {
                 uuid: Uuid::new_v4(),
                 workspace: ForeignModelByField::Key(workspace_uuid),
@@ -124,11 +152,4 @@ pub async fn store_testssl_result(
         .await?;
 
     tx.commit().await
-}
-
-#[derive(Patch)]
-#[rorm(model = "TestSSLResult")]
-struct InsertTestSSLResult {
-    uuid: Uuid,
-    attack: ForeignModel<Attack>,
 }

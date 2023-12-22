@@ -206,6 +206,7 @@ impl Modify for SecurityAddon2 {
         attack_results::schema::SimpleHostAliveResult,
         attack_results::schema::FullServiceDetectionResult,
         attack_results::schema::SimpleDnsResolutionResult,
+        attack_results::schema::SimpleTestSSLResult,
         dehashed_rs::Query,
         dehashed_rs::SearchType,
         attacks::schema::QueryDehashedRequest,

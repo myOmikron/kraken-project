@@ -1,0 +1,72 @@
+[Migration]
+Hash = "14978321572218628097"
+Initial = false
+Dependency = 1
+Replaces = []
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "testsslresult"
+
+[Migration.Operations.Field]
+Name = "target_host"
+Type = "varchar"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "testsslresult"
+
+[Migration.Operations.Field]
+Name = "ip"
+Type = "ipnetwork"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "testsslresult"
+
+[Migration.Operations.Field]
+Name = "port"
+Type = "int32"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "testsslresult"
+
+[Migration.Operations.Field]
+Name = "rdns"
+Type = "varchar"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "testsslresult"
+
+[Migration.Operations.Field]
+Name = "service"
+Type = "varchar"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
