@@ -32,29 +32,58 @@ pub struct File {
     pub start_time: String,
 
     /// List of scans
-    pub scan_result: Vec<ScanResult>,
+    pub scan_result: Vec<Service>,
 
     /// Time it took to scan in seconds
     pub scan_time: ScanTime,
 }
 
+/// A service's scan results or an error
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(untagged)]
+pub enum Service {
+    /// A service's scan results
+    Result(ScanResult),
+
+    /// Some error prevented a service from being scanned
+    Error(Finding),
+}
+
+/// A service's scan results
+///
 /// Header: https://github.com/drwetter/testssl.sh/blob/68dec54cc5aedf856a83425cb4cd475a3766fad5/testssl.sh#L863
 /// Sections: https://github.com/drwetter/testssl.sh/blob/68dec54cc5aedf856a83425cb4cd475a3766fad5/testssl.sh#L783
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ScanResult {
+    /// The original user target this result belongs to
     pub target_host: String,
+
+    /// The scanned ip address
     pub ip: String,
+
+    /// The scanned port
     pub port: String,
+
+    /// The ip address' rDNS name
     #[serde(rename = "rDNS")]
     pub rdns: String,
+
+    /// The detected service
     pub service: String,
+
+    /// TODO: not found yet in the wild
     pub hostname: Option<String>,
 
+    /// Some sanity checks which can't be disabled
     #[serde(default)]
     pub pretest: Vec<Finding>,
+
+    /// The results of a single cipher check
+    ///
+    /// [`run_testssl`](super::run_testssl) doesn't expose the necessary option.
     #[serde(default)]
-    pub single_cipher: Vec<Finding>, //
+    pub single_cipher: Vec<Finding>,
 
     /// Which tls protocols are supported
     #[serde(default)]
@@ -100,35 +129,62 @@ pub struct ScanResult {
     pub browser_simulations: Vec<Finding>,
 }
 
+/// Either a test's result or a log message
+///
+/// Which one it is might be determined by the [`Severity`]
+///
 /// This struct's fields are found in [`fileout_json_finding`].
 ///
 /// [`fileout_json_finding`]: https://github.com/drwetter/testssl.sh/blob/68dec54cc5aedf856a83425cb4cd475a3766fad5/testssl.sh#L873
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Finding {
+    /// The test's id
     pub id: String,
+
+    /// The test result's severity or the log message's log level
     pub severity: Severity,
+
+    /// The test result or a log message
     pub finding: String,
 
+    /// An CVE associated with the test
     pub cve: Option<String>,
+
+    /// An CWE associated with the test
     pub cwe: Option<String>,
+
+    /// An hint on how to fix the problem
+    ///
+    /// Not completely implemented yet in `testssl.sh`
     pub hint: Option<String>,
 }
 
+/// Either a test result's severity or a log message's log level
+///
 /// Different levels has been taken from [`show_finding`]
 ///
 /// [`show_finding`]: https://github.com/drwetter/testssl.sh/blob/68dec54cc5aedf856a83425cb4cd475a3766fad5/testssl.sh#L473
 #[derive(Serialize, Deserialize, Debug, Copy, Clone)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum Severity {
+    /// A debug level log message
     Debug,
+    /// An info level log message
     Info,
+    /// A warning level log message
     Warn,
+    /// An error level log message
     Fatal,
 
+    /// The test's result doesn't pose an issue
     Ok,
+    /// The test's result pose a low priority issue
     Low,
+    /// The test's result pose a medium priority issue
     Medium,
+    /// The test's result pose a high priority issue
     High,
+    /// The test's result pose a critical priority issue
     Critical,
 }
 

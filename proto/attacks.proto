@@ -298,8 +298,117 @@ message TestSSLScansManual {
 
 // Response to a test ssl request
 message TestSSLResponse {
-  // TODO
+  // The services' scan results or their errors
+  repeated TestSSLService services = 1;
 }
+
+// A service's scan results or an error
+message TestSSLService {
+  // Workaround field to store a `oneof`
+  oneof testssl_service {
+    // The result from scanning a service
+    TestSSLScanResult result = 1;
+
+    // Some error prevented a service from being scanned
+    TestSSLFinding error = 2;
+  }
+}
+
+// A service's scan results
+message TestSSLScanResult {
+  // The original user target this result belongs to
+  string target_host = 1;
+
+  // The scanned ip address
+  string ip = 2;
+
+  // The scanned port
+  string port = 3;
+
+  // The ip address' rDNS name
+  string rdns = 4;
+
+  // The detected service
+  string service = 5;
+
+  // TODO: not found yet in the wild
+  // optional string hostname = 6;
+
+  // Some sanity checks which can't be disabled
+  repeated TestSSLFinding pretest = 7;
+
+  // Which tls protocols are supported
+  repeated TestSSLFinding protocols = 8;
+
+  // Server implementation bugs and [GREASE](https://www.ietf.org/archive/id/draft-ietf-tls-grease-01.txt)
+  repeated TestSSLFinding grease = 9;
+
+  // Which cipher suites are supported
+  repeated TestSSLFinding ciphers = 10;
+
+  // Checks robust (perfect) forward secrecy key exchange
+  repeated TestSSLFinding pfs = 11;
+
+  // The server's preferences
+  repeated TestSSLFinding server_preferences = 12;
+
+  // The server's defaults
+  repeated TestSSLFinding server_defaults = 13;
+
+  // The http header set by the server
+  repeated TestSSLFinding header_response = 14;
+
+  // List of several vulnerabilities
+  repeated TestSSLFinding vulnerabilities = 15;
+
+  // Which concrete ciphers are supported
+  //
+  // Depending on the option `testssl` is invoked with,
+  // this is either a list of all ciphers or a list of all cipher per tls protocol.
+  repeated TestSSLFinding cipher_tests = 16;
+
+  // Which browser is able to establish a connection
+  repeated TestSSLFinding browser_simulations = 17;
+}
+
+// A single test's result or testssl log message
+message TestSSLFinding {
+  // The test's id
+  string id = 1;
+  // The result's severity
+  TestSSLSeverity severity = 2;
+  // The test's result
+  string finding = 3;
+
+  // The associated CVE
+  optional string cve = 4;
+  // The associated CWE
+  optional string cwe = 5;
+}
+
+// A TestSSLFinding's severity
+enum TestSSLSeverity {
+  // A debug level log message
+  Debug    = 0;
+  // An info level log message
+  Info     = 1;
+  // A warning level log message
+  Warn     = 2;
+  // An error level log message
+  Fatal    = 3;
+
+  // The test's result doesn't pose an issue
+  Ok       = 4;
+  // The test's result pose a low priority issue
+  Low      = 5;
+  // The test's result pose a medium priority issue
+  Medium   = 6;
+  // The test's result pose a high priority issue
+  High     = 7;
+  // The test's result pose a critical priority issue
+  Critical = 8;
+}
+
 
 // Implemented by leech; allows kraken to request attack from a leech
 service ReqAttackService {

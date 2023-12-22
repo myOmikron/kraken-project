@@ -1,10 +1,11 @@
+use log::debug;
+
 use crate::api::handler::attacks::schema::StartTLSProtocol;
-use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::modules::attack_results::store_testssl_result;
 use crate::modules::attacks::{AttackContext, AttackError, TestSSLParams};
 use crate::rpc::rpc_definitions::{
-    test_ssl_scans, BasicAuth, StartTlsProtocol, TestSslRequest, TestSslScans,
+    test_ssl_scans, test_ssl_service, BasicAuth, StartTlsProtocol, TestSslRequest, TestSslScans,
 };
 
 impl AttackContext {
@@ -42,7 +43,13 @@ impl AttackContext {
             }),
         };
         let response = leech.test_ssl(request).await?.into_inner();
-        store_testssl_result(&GLOBAL.db, self.attack_uuid, self.workspace.uuid, response).await?;
+        debug!("{response:#?}");
+        for service in response.services {
+            if let Some(test_ssl_service::TestsslService::Result(result)) = service.testssl_service
+            {
+                store_testssl_result(self.attack_uuid, self.workspace.uuid, result).await?;
+            }
+        }
 
         Ok(())
     }

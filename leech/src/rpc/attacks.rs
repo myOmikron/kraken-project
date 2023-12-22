@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use chrono::{Datelike, Timelike};
 use futures::Stream;
-use log::{debug, error};
+use log::error;
 use prost_types::Timestamp;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
@@ -20,16 +20,16 @@ use crate::modules::dns::{dns_resolution, DnsRecordResult, DnsResolutionSettings
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::modules::service_detection::{detect_service, DetectServiceSettings, Service};
-use crate::modules::testssl::{run_testssl, StartTLSProtocol, TestSSLScans, TestSSLSettings};
+use crate::modules::testssl::{self, run_testssl};
 use crate::rpc::rpc_attacks::req_attack_service_server::ReqAttackService;
 use crate::rpc::rpc_attacks::shared::CertEntry;
-use crate::rpc::rpc_attacks::test_ssl_scans::TestsslScans;
 use crate::rpc::rpc_attacks::{
-    BruteforceSubdomainRequest, BruteforceSubdomainResponse, CertificateTransparencyRequest,
-    CertificateTransparencyResponse, DnsResolutionRequest, DnsResolutionResponse,
-    HostsAliveRequest, HostsAliveResponse, ServiceDetectionRequest, ServiceDetectionResponse,
-    ServiceDetectionResponseType, StartTlsProtocol, TcpPortScanRequest, TcpPortScanResponse,
-    TestSslRequest, TestSslResponse,
+    test_ssl_scans, test_ssl_service, BruteforceSubdomainRequest, BruteforceSubdomainResponse,
+    CertificateTransparencyRequest, CertificateTransparencyResponse, DnsResolutionRequest,
+    DnsResolutionResponse, HostsAliveRequest, HostsAliveResponse, ServiceDetectionRequest,
+    ServiceDetectionResponse, ServiceDetectionResponseType, StartTlsProtocol, TcpPortScanRequest,
+    TcpPortScanResponse, TestSslFinding, TestSslRequest, TestSslResponse, TestSslScanResult,
+    TestSslService, TestSslSeverity,
 };
 use crate::rpc::utils::stream_attack;
 
@@ -317,7 +317,7 @@ impl ReqAttackService for Attacks {
             starttls,
             scans,
         } = request.into_inner();
-        let settings = TestSSLSettings {
+        let settings = testssl::TestSSLSettings {
             uri,
             connect_timeout,
             openssl_timeout,
@@ -333,22 +333,22 @@ impl ReqAttackService for Attacks {
                 })
                 .transpose()?
                 .map(|x| match x {
-                    StartTlsProtocol::Ftp => StartTLSProtocol::FTP,
-                    StartTlsProtocol::Smtp => StartTLSProtocol::SMTP,
-                    StartTlsProtocol::Pop3 => StartTLSProtocol::POP3,
-                    StartTlsProtocol::Imap => StartTLSProtocol::IMAP,
-                    StartTlsProtocol::Xmpp => StartTLSProtocol::XMPP,
-                    StartTlsProtocol::Lmtp => StartTLSProtocol::LMTP,
-                    StartTlsProtocol::Nntp => StartTLSProtocol::NNTP,
-                    StartTlsProtocol::Postgres => StartTLSProtocol::Postgres,
-                    StartTlsProtocol::MySql => StartTLSProtocol::MySQL,
+                    StartTlsProtocol::Ftp => testssl::StartTLSProtocol::FTP,
+                    StartTlsProtocol::Smtp => testssl::StartTLSProtocol::SMTP,
+                    StartTlsProtocol::Pop3 => testssl::StartTLSProtocol::POP3,
+                    StartTlsProtocol::Imap => testssl::StartTLSProtocol::IMAP,
+                    StartTlsProtocol::Xmpp => testssl::StartTLSProtocol::XMPP,
+                    StartTlsProtocol::Lmtp => testssl::StartTLSProtocol::LMTP,
+                    StartTlsProtocol::Nntp => testssl::StartTLSProtocol::NNTP,
+                    StartTlsProtocol::Postgres => testssl::StartTLSProtocol::Postgres,
+                    StartTlsProtocol::MySql => testssl::StartTLSProtocol::MySQL,
                 }),
             scans: scans
                 .and_then(|x| x.testssl_scans)
                 .map(|x| match x {
-                    TestsslScans::All(true) => TestSSLScans::All,
-                    TestsslScans::All(false) => TestSSLScans::Default,
-                    TestsslScans::Manual(x) => TestSSLScans::Manual {
+                    test_ssl_scans::TestsslScans::All(true) => testssl::TestSSLScans::All,
+                    test_ssl_scans::TestsslScans::All(false) => testssl::TestSSLScans::Default,
+                    test_ssl_scans::TestsslScans::Manual(x) => testssl::TestSSLScans::Manual {
                         protocols: x.protocols,
                         grease: x.grease,
                         ciphers: x.ciphers,
@@ -365,13 +365,69 @@ impl ReqAttackService for Attacks {
                 .unwrap_or_default(),
         };
 
-        let results = run_testssl(settings).await.map_err(|err| {
-            error!("testssl failed: {err:?}");
-            Status::internal("testssl failed. See logs")
-        })?;
+        let services = run_testssl(settings)
+            .await
+            .map_err(|err| {
+                error!("testssl failed: {err:?}");
+                Status::internal("testssl failed. See logs")
+            })?
+            .scan_result;
 
-        // TODO
-        debug!("{results:#?}");
-        Ok(Response::new(TestSslResponse {}))
+        fn conv_finding(finding: testssl::Finding) -> TestSslFinding {
+            TestSslFinding {
+                id: finding.id,
+                severity: match finding.severity {
+                    testssl::Severity::Debug => TestSslSeverity::Debug,
+                    testssl::Severity::Info => TestSslSeverity::Info,
+                    testssl::Severity::Warn => TestSslSeverity::Warn,
+                    testssl::Severity::Fatal => TestSslSeverity::Fatal,
+                    testssl::Severity::Ok => TestSslSeverity::Ok,
+                    testssl::Severity::Low => TestSslSeverity::Low,
+                    testssl::Severity::Medium => TestSslSeverity::Medium,
+                    testssl::Severity::High => TestSslSeverity::High,
+                    testssl::Severity::Critical => TestSslSeverity::Critical,
+                }
+                .into(),
+                finding: finding.finding,
+                cve: finding.cve,
+                cwe: finding.cwe,
+            }
+        }
+        fn conv_findings(findings: Vec<testssl::Finding>) -> Vec<TestSslFinding> {
+            findings.into_iter().map(conv_finding).collect()
+        }
+
+        Ok(Response::new(TestSslResponse {
+            services: services
+                .into_iter()
+                .map(|service| TestSslService {
+                    testssl_service: Some(match service {
+                        testssl::Service::Result(service) => {
+                            test_ssl_service::TestsslService::Result(TestSslScanResult {
+                                target_host: service.target_host,
+                                ip: service.ip,
+                                port: service.port,
+                                rdns: service.rdns,
+                                service: service.service,
+                                pretest: conv_findings(service.pretest),
+                                protocols: conv_findings(service.protocols),
+                                grease: conv_findings(service.grease),
+                                ciphers: conv_findings(service.ciphers),
+                                pfs: conv_findings(service.pfs),
+                                server_preferences: conv_findings(service.server_preferences),
+                                server_defaults: conv_findings(service.server_defaults),
+                                header_response: conv_findings(service.header_response),
+                                vulnerabilities: conv_findings(service.vulnerabilities),
+                                cipher_tests: conv_findings(service.cipher_tests),
+                                browser_simulations: conv_findings(service.browser_simulations),
+                            })
+                        }
+                        testssl::Service::Error(finding) => {
+                            test_ssl_service::TestsslService::Error(conv_finding(finding))
+                        }
+                    }),
+                })
+                .collect(),
+        }))
     }
 }

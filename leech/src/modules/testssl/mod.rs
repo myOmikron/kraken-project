@@ -12,6 +12,8 @@ use tokio::process::Command;
 mod json;
 mod json_pretty;
 
+pub use self::json_pretty::*;
+
 /// The settings of a `testssl.sh` invocation
 #[derive(Default, Debug)]
 pub struct TestSSLSettings {
