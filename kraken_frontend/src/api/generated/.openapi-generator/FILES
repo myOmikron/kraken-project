@@ -166,6 +166,7 @@ models/SimpleQueryUnhashedResult.ts
 models/SimpleService.ts
 models/SimpleTag.ts
 models/SimpleTcpPortScanResult.ts
+models/SimpleTestSSLResult.ts
 models/SimpleUser.ts
 models/SimpleWordlist.ts
 models/SimpleWorkspace.ts
@@ -179,8 +180,11 @@ models/SourceAttackResultOneOf3.ts
 models/SourceAttackResultOneOf4.ts
 models/SourceAttackResultOneOf5.ts
 models/SourceAttackResultOneOf6.ts
+models/SourceAttackResultOneOf7.ts
+models/StartTLSProtocol.ts
 models/TagType.ts
 models/TcpPortScanResultsPage.ts
+models/TestSSLRequest.ts
 models/TransferWorkspaceRequest.ts
 models/UpdateApiKeyRequest.ts
 models/UpdateAppRequest.ts

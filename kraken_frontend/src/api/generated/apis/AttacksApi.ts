@@ -32,6 +32,7 @@ import type {
   ServiceDetectionResultsPage,
   SimpleAttack,
   TcpPortScanResultsPage,
+  TestSSLRequest,
   UuidResponse,
 } from '../models';
 import {
@@ -69,6 +70,8 @@ import {
     SimpleAttackToJSON,
     TcpPortScanResultsPageFromJSON,
     TcpPortScanResultsPageToJSON,
+    TestSSLRequestFromJSON,
+    TestSSLRequestToJSON,
     UuidResponseFromJSON,
     UuidResponseToJSON,
 } from '../models';
@@ -153,6 +156,10 @@ export interface ScanTcpPortsOperationRequest {
 
 export interface ServiceDetectionOperationRequest {
     serviceDetectionRequest: ServiceDetectionRequest;
+}
+
+export interface TestsslRequest {
+    testSSLRequest: TestSSLRequest;
 }
 
 /**
@@ -861,6 +868,41 @@ export class AttacksApi extends runtime.BaseAPI {
      */
     async serviceDetection(requestParameters: ServiceDetectionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
         const response = await this.serviceDetectionRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Run testssl
+     * Run testssl
+     */
+    async testsslRaw(requestParameters: TestsslRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
+        if (requestParameters.testSSLRequest === null || requestParameters.testSSLRequest === undefined) {
+            throw new runtime.RequiredError('testSSLRequest','Required parameter requestParameters.testSSLRequest was null or undefined when calling testssl.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/attacks/testssl`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TestSSLRequestToJSON(requestParameters.testSSLRequest),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Run testssl
+     * Run testssl
+     */
+    async testssl(requestParameters: TestsslRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
+        const response = await this.testsslRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

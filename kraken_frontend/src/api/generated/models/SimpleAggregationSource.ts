@@ -92,6 +92,12 @@ export interface SimpleAggregationSource {
      */
     versionDetection: number;
     /**
+     * Ran `testssl.sh`
+     * @type {number}
+     * @memberof SimpleAggregationSource
+     */
+    testSsl: number;
+    /**
      * Manually inserted
      * @type {boolean}
      * @memberof SimpleAggregationSource
@@ -116,6 +122,7 @@ export function instanceOfSimpleAggregationSource(value: object): boolean {
     isInstance = isInstance && "antiPortScanningDetection" in value;
     isInstance = isInstance && "udpPortScan" in value;
     isInstance = isInstance && "versionDetection" in value;
+    isInstance = isInstance && "testSsl" in value;
     isInstance = isInstance && "manual" in value;
 
     return isInstance;
@@ -143,6 +150,7 @@ export function SimpleAggregationSourceFromJSONTyped(json: any, ignoreDiscrimina
         'antiPortScanningDetection': json['anti_port_scanning_detection'],
         'udpPortScan': json['udp_port_scan'],
         'versionDetection': json['version_detection'],
+        'testSsl': json['test_ssl'],
         'manual': json['manual'],
     };
 }
@@ -168,6 +176,7 @@ export function SimpleAggregationSourceToJSON(value?: SimpleAggregationSource | 
         'anti_port_scanning_detection': value.antiPortScanningDetection,
         'udp_port_scan': value.udpPortScan,
         'version_detection': value.versionDetection,
+        'test_ssl': value.testSsl,
         'manual': value.manual,
     };
 }
