@@ -46,7 +46,7 @@
 .settings-oauth-applications-row {
     display: grid;
     align-items: center;
-    grid-template-columns: 1fr 2fr 5em 5em 5em;
+    grid-template-columns: 1fr 2fr 3em 3em 3em 3em;
     gap: 1em;
     border-radius: 0.5em;
     border: 1px solid var(--text);

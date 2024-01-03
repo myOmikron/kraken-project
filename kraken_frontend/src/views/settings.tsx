@@ -1,13 +1,15 @@
 import React from "react";
-import "../styling/settings.css";
-import Input from "../components/input";
-import { Api } from "../api/api";
 import { toast } from "react-toastify";
+import { Api } from "../api/api";
 import { FullOauthClient, FullWordlist, SettingsFull } from "../api/generated";
-import CopyIcon from "../svg/copy";
-import CloseIcon from "../svg/close";
-import { copyToClipboard, handleApiError } from "../utils/helper";
+import { alertReact, alertText, promptInput } from "../components/dialog";
+import Input from "../components/input";
 import Textarea from "../components/textarea";
+import "../styling/settings.css";
+import AnonymousIcon from "../svg/anonymous";
+import CloseIcon from "../svg/close";
+import CopyIcon from "../svg/copy";
+import { copyToClipboard, handleApiError } from "../utils/helper";
 
 type SettingsProps = {};
 type SettingsState = {
@@ -248,6 +250,7 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
                             <div className={"settings-oauth-applications-row"}>
                                 <div>Name</div>
                                 <div>Redirect URL</div>
+                                <div>Debug Flow</div>
                                 <div>Client ID</div>
                                 <div>Secret Key</div>
                                 <div>Delete</div>
@@ -257,6 +260,48 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
                                 <div key={x.uuid} className={"settings-oauth-applications-row"}>
                                     <div>{x.name}</div>
                                     <span>{x.redirectUri}</span>
+                                    <button
+                                        className={"icon-button"}
+                                        onClick={async () => {
+                                            try {
+                                                await alertText("Info", "This function allows to test out the OAuth login flow and get a temporary OAuth token for use with the external API.");
+                                                let workspaceUuid = await promptInput("Enter allowed workspace UUID");
+                                                if (!workspaceUuid)
+                                                    return;
+                                                await alertText("Info", "A new tab will open now that prompts to authenticate for this app. After allowing access, copy the ID from the URL and paste it here.");
+                                                window.open("/api/v1/oauth/auth?response_type=code"
+                                                    + "&client_id=" + encodeURIComponent(x.uuid)
+                                                    + "&scope=" + encodeURIComponent("workspace/" + workspaceUuid.trim())
+                                                    + "&redirect_uri=" + encodeURIComponent(x.redirectUri)
+                                                    + "&state=1"
+                                                    // DON'T copy this for production OAuth login, this is only for testing!
+                                                    + "&code_challenge=-4cf-Mzo_qg9-uq0F4QwWhRh4AjcAqNx7SbYVsdmyQM"
+                                                    + "&code_challenge_method=S256",
+                                                    "_blank");
+                                                let oauthId = await promptInput("Enter OAuth ID from URL");
+                                                if (!oauthId)
+                                                    return;
+                                                let res = await fetch("/api/v1/oauth-server/token", {
+                                                    headers: {
+                                                        "Content-Type": "application/x-www-form-urlencoded"
+                                                    },
+                                                    method: "POST",
+                                                    body: "grant_type=authorization_code"
+                                                        + "&code=" + encodeURIComponent(oauthId.trim())
+                                                        + "&redirect_uri=" + encodeURIComponent(x.redirectUri)
+                                                        + "&client_id=" + encodeURIComponent(x.uuid)
+                                                        + "&client_secret=" + encodeURIComponent(x.secret)
+                                                        + "&code_verifier=01234567890123456789012345678901234567890123456789"
+                                                });
+                                                await alertReact("OAuth Result", (<pre>{JSON.stringify(await res.json(), null, "  ")}</pre>));
+                                            } catch (e) {
+                                                alertText("Failed", "" + e);
+                                                console.error(e);
+                                            }
+                                        }}
+                                    >
+                                        <AnonymousIcon />
+                                    </button>
                                     <button
                                         className={"icon-button"}
                                         onClick={async () => {
