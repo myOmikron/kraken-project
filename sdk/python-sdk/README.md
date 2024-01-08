@@ -128,6 +128,7 @@ Class | Method | HTTP request | Description
 *DomainsApi* | [**create_domain**](docs/DomainsApi.md#create_domain) | **POST** /api/v1/workspaces/{uuid}/domains | Manually add a domain
 *DomainsApi* | [**get_all_domains**](docs/DomainsApi.md#get_all_domains) | **POST** /api/v1/workspaces/{uuid}/domains/all | Retrieve all domains of a specific workspace
 *DomainsApi* | [**get_domain**](docs/DomainsApi.md#get_domain) | **GET** /api/v1/workspaces/{w_uuid}/domains/{d_uuid} | Retrieve all information about a single domain
+*DomainsApi* | [**get_domain_relations**](docs/DomainsApi.md#get_domain_relations) | **GET** /api/v1/workspaces/{w_uuid}/domains/{d_uuid}/relations | Get a host&#39;s direct relations
 *DomainsApi* | [**get_domain_sources**](docs/DomainsApi.md#get_domain_sources) | **GET** /api/v1/workspaces/{w_uuid}/domains/{d_uuid}/sources | Get all data sources which referenced this domain
 *DomainsApi* | [**update_domain**](docs/DomainsApi.md#update_domain) | **PUT** /api/v1/workspaces/{w_uuid}/domains/{d_uuid} | Update a domain
 *GlobalTagsApi* | [**create_global_tag**](docs/GlobalTagsApi.md#create_global_tag) | **POST** /api/v1/admin/globalTags | Create a global tag.
@@ -137,6 +138,7 @@ Class | Method | HTTP request | Description
 *HostsApi* | [**create_host**](docs/HostsApi.md#create_host) | **POST** /api/v1/workspaces/{uuid}/hosts | Manually add a host
 *HostsApi* | [**get_all_hosts**](docs/HostsApi.md#get_all_hosts) | **POST** /api/v1/workspaces/{uuid}/hosts/all | Retrieve all hosts.
 *HostsApi* | [**get_host**](docs/HostsApi.md#get_host) | **GET** /api/v1/workspaces/{w_uuid}/hosts/{h_uuid} | Retrieve all information about a single host
+*HostsApi* | [**get_host_relations**](docs/HostsApi.md#get_host_relations) | **GET** /api/v1/workspaces/{w_uuid}/hosts/{h_uuid}/relations | Get a host&#39;s direct relations
 *HostsApi* | [**get_host_sources**](docs/HostsApi.md#get_host_sources) | **GET** /api/v1/workspaces/{w_uuid}/hosts/{h_uuid}/sources | Get all data sources which referenced this host
 *HostsApi* | [**update_host**](docs/HostsApi.md#update_host) | **PUT** /api/v1/workspaces/{w_uuid}/hosts/{h_uuid} | Update a host
 *LeechManagementApi* | [**create_leech**](docs/LeechManagementApi.md#create_leech) | **POST** /api/v1/admin/leeches | Create a leech
@@ -158,11 +160,13 @@ Class | Method | HTTP request | Description
 *PortsApi* | [**create_port**](docs/PortsApi.md#create_port) | **POST** /api/v1/workspaces/{uuid}/ports | Manually add a port
 *PortsApi* | [**get_all_ports**](docs/PortsApi.md#get_all_ports) | **POST** /api/v1/workspaces/{uuid}/ports/all | List the ports of a workspace
 *PortsApi* | [**get_port**](docs/PortsApi.md#get_port) | **GET** /api/v1/workspaces/{w_uuid}/ports/{p_uuid} | Retrieve all information about a single port
+*PortsApi* | [**get_port_relations**](docs/PortsApi.md#get_port_relations) | **GET** /api/v1/workspaces/{w_uuid}/ports/{p_uuid}/relations | Get a port&#39;s direct relations
 *PortsApi* | [**get_port_sources**](docs/PortsApi.md#get_port_sources) | **GET** /api/v1/workspaces/{w_uuid}/ports/{p_uuid}/sources | Get all data sources which referenced this port
 *PortsApi* | [**update_port**](docs/PortsApi.md#update_port) | **PUT** /api/v1/workspaces/{w_uuid}/ports/{p_uuid} | Update a port
 *ServicesApi* | [**create_service**](docs/ServicesApi.md#create_service) | **POST** /api/v1/workspaces/{uuid}/services | Manually add a service
 *ServicesApi* | [**get_all_services**](docs/ServicesApi.md#get_all_services) | **POST** /api/v1/workspaces/{uuid}/services/all | List the services of a workspace
 *ServicesApi* | [**get_service**](docs/ServicesApi.md#get_service) | **GET** /api/v1/workspaces/{w_uuid}/services/{s_uuid} | Retrieve all information about a single service
+*ServicesApi* | [**get_service_relations**](docs/ServicesApi.md#get_service_relations) | **GET** /api/v1/workspaces/{w_uuid}/services/{s_uuid}/relations | Get a service&#39;s direct relations
 *ServicesApi* | [**get_service_sources**](docs/ServicesApi.md#get_service_sources) | **GET** /api/v1/workspaces/{w_uuid}/services/{s_uuid}/sources | Get all data sources which referenced this service
 *ServicesApi* | [**update_service**](docs/ServicesApi.md#update_service) | **PUT** /api/v1/workspaces/{w_uuid}/services/{s_uuid} | Update a service
 *SettingsManagementApi* | [**get_settings**](docs/SettingsManagementApi.md#get_settings) | **GET** /api/v1/admin/settings | Retrieve the currently active settings
@@ -228,6 +232,7 @@ Class | Method | HTTP request | Description
  - [DnsResolutionResultsPage](docs/DnsResolutionResultsPage.md)
  - [DomainCertainty](docs/DomainCertainty.md)
  - [DomainOrNetwork](docs/DomainOrNetwork.md)
+ - [DomainRelations](docs/DomainRelations.md)
  - [DomainResultsPage](docs/DomainResultsPage.md)
  - [FinishRegisterRequest](docs/FinishRegisterRequest.md)
  - [FullAggregationSource](docs/FullAggregationSource.md)
@@ -252,6 +257,7 @@ Class | Method | HTTP request | Description
  - [GetAllServicesQuery](docs/GetAllServicesQuery.md)
  - [HostAliveResultsPage](docs/HostAliveResultsPage.md)
  - [HostCertainty](docs/HostCertainty.md)
+ - [HostRelations](docs/HostRelations.md)
  - [HostResultsPage](docs/HostResultsPage.md)
  - [HostsAliveRequest](docs/HostsAliveRequest.md)
  - [InviteToWorkspaceRequest](docs/InviteToWorkspaceRequest.md)
@@ -284,6 +290,7 @@ Class | Method | HTTP request | Description
  - [PortCertainty](docs/PortCertainty.md)
  - [PortOrRange](docs/PortOrRange.md)
  - [PortProtocol](docs/PortProtocol.md)
+ - [PortRelations](docs/PortRelations.md)
  - [PortResultsPage](docs/PortResultsPage.md)
  - [Query](docs/Query.md)
  - [QueryCertificateTransparencyRequest](docs/QueryCertificateTransparencyRequest.md)
@@ -325,6 +332,7 @@ Class | Method | HTTP request | Description
  - [ServiceCertainty](docs/ServiceCertainty.md)
  - [ServiceDetectionRequest](docs/ServiceDetectionRequest.md)
  - [ServiceDetectionResultsPage](docs/ServiceDetectionResultsPage.md)
+ - [ServiceRelations](docs/ServiceRelations.md)
  - [ServiceResultsPage](docs/ServiceResultsPage.md)
  - [SetPasswordRequest](docs/SetPasswordRequest.md)
  - [SettingsFull](docs/SettingsFull.md)
