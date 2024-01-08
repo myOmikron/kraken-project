@@ -15,15 +15,15 @@ use uuid::Uuid;
 
 use crate::chan::global::GLOBAL;
 use crate::config::Config;
-use crate::models::{Attack, AttackType, InsertAttackError, Leech, LeechApiKey, Workspace};
-use crate::modules::attack_results::store_query_certificate_transparency_result;
+use crate::models::{AttackType, InsertAttackError, Leech, LeechApiKey, Workspace};
 use crate::modules::attacks::{AttackContext, HandleAttackResponse};
 use crate::rpc::definitions::rpc_definitions::attack_results_service_server::AttackResultsService;
 use crate::rpc::rpc_definitions::attack_results_service_server::AttackResultsServiceServer;
 use crate::rpc::rpc_definitions::backlog_service_server::{BacklogService, BacklogServiceServer};
 use crate::rpc::rpc_definitions::{
     any_attack_response, AnyAttackResponse, BacklogRequest, BacklogResponse,
-    CertificateTransparencyResult, ResultResponse, SubdomainEnumerationResult,
+    CertificateTransparencyResponse, CertificateTransparencyResult, ResultResponse,
+    SubdomainEnumerationResult,
 };
 
 /// Helper type to implement result handler to
@@ -66,11 +66,10 @@ impl AttackResultsService for Results {
             ));
         }
 
-        let attack = Attack::insert(
-            &mut tx,
-            AttackType::QueryCertificateTransparency,
-            user_uuid,
+        let attack = AttackContext::new(
             workspace_uuid,
+            user_uuid,
+            AttackType::QueryCertificateTransparency,
         )
         .await
         .map_err(|e| match e {
@@ -79,18 +78,12 @@ impl AttackResultsService for Results {
             InsertAttackError::UserInvalid => unreachable!("User was queried beforehand"),
         })?;
 
-        for cert_entry in req.entries {
-            store_query_certificate_transparency_result(
-                &mut tx,
-                attack.uuid,
-                workspace_uuid,
-                cert_entry,
-            )
-            .await
-            .map_err(status_from_database)?
-        }
-
-        tx.commit().await.map_err(status_from_database)?;
+        let result = attack
+            .handle_response(CertificateTransparencyResponse {
+                entries: req.entries,
+            })
+            .await;
+        attack.set_finished(result).await;
 
         Ok(Response::new(ResultResponse {
             uuid: Uuid::new_v4().to_string(),
@@ -156,8 +149,10 @@ impl BacklogService for Results {
                 any_attack_response::Response::BruteforceSubdomain(response) => {
                     attack_context.handle_response(response).await
                 }
-                any_attack_response::Response::ServiceDetection(_)
-                | any_attack_response::Response::CertificateTransparency(_) => {
+                any_attack_response::Response::CertificateTransparency(response) => {
+                    attack_context.handle_response(response).await
+                }
+                any_attack_response::Response::ServiceDetection(_) => {
                     return Err(Status::unimplemented("Attack type is not implemented yet"));
                 }
             };

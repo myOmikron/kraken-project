@@ -281,7 +281,7 @@ pub(crate) struct AttackContext {
 
 impl AttackContext {
     /// Insert a new attack in the database and bundle all uuids together in one struct
-    async fn new(
+    pub(crate) async fn new(
         workspace_uuid: Uuid,
         user_uuid: Uuid,
         attack_type: AttackType,
@@ -391,7 +391,7 @@ impl AttackContext {
     }
 
     /// Send the user a notification and update the [`Attack`] model
-    async fn set_finished(self, result: Result<(), AttackError>) {
+    pub(crate) async fn set_finished(self, result: Result<(), AttackError>) {
         let now = Utc::now();
 
         self.send_ws(WsMessage::AttackFinished {

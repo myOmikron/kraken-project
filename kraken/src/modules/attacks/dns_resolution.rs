@@ -1,11 +1,19 @@
 use std::future::Future;
 use std::net::{Ipv4Addr, Ipv6Addr};
+use std::str::FromStr;
+
+use ipnetwork::IpNetwork;
+use rorm::insert;
+use rorm::prelude::*;
+use uuid::Uuid;
 
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
-use crate::models::DnsRecordType;
-use crate::modules::attack_results::store_dns_resolution_result;
+use crate::models::{
+    AggregationSource, AggregationTable, DnsRecordType, DnsResolutionResultInsert, DomainCertainty,
+    DomainDomainRelation, DomainHostRelation, HostCertainty, SourceType,
+};
 use crate::modules::attacks::{
     AttackContext, AttackError, DnsResolutionParams, HandleAttackResponse,
 };
@@ -108,15 +116,103 @@ impl HandleAttackResponse<DnsResolutionResponse> for AttackContext {
         })
         .await;
 
-        store_dns_resolution_result(
-            &GLOBAL.db,
-            self.attack_uuid,
-            self.workspace.uuid,
-            source,
-            destination,
-            dns_record_type,
-        )
-        .await?;
+        let mut tx = GLOBAL.db.start_transaction().await?;
+
+        let result_uuid = insert!(&mut tx, DnsResolutionResultInsert)
+            .return_primary_key()
+            .single(&DnsResolutionResultInsert {
+                uuid: Uuid::new_v4(),
+                attack: ForeignModelByField::Key(self.attack_uuid),
+                dns_record_type,
+                source: source.clone(),
+                destination: destination.clone(),
+            })
+            .await?;
+
+        let source_uuid = GLOBAL
+            .aggregator
+            .aggregate_domain(
+                self.workspace.uuid,
+                &source,
+                DomainCertainty::Verified, // we just queried this domain
+                self.user.uuid,
+            )
+            .await?;
+
+        let destination = match dns_record_type {
+            DnsRecordType::A | DnsRecordType::Aaaa => {
+                let host_uuid = GLOBAL
+                    .aggregator
+                    .aggregate_host(
+                        self.workspace.uuid,
+                        // Unwrap is okay, as A and AAAA result in valid IP addresses
+                        #[allow(clippy::unwrap_used)]
+                        IpNetwork::from_str(&destination).unwrap(),
+                        HostCertainty::SupposedTo, // there is a current dns record to it
+                    )
+                    .await?;
+
+                DomainHostRelation::insert_if_missing(
+                    &mut tx,
+                    self.workspace.uuid,
+                    source_uuid,
+                    host_uuid,
+                    true,
+                )
+                .await?;
+
+                Some((AggregationTable::Host, host_uuid))
+            }
+            DnsRecordType::Cname => {
+                let destination_uuid = GLOBAL
+                    .aggregator
+                    .aggregate_domain(
+                        self.workspace.uuid,
+                        &destination,
+                        DomainCertainty::Unverified, // we haven't queried this domain yet
+                        self.user.uuid,
+                    )
+                    .await?;
+
+                DomainDomainRelation::insert_if_missing(
+                    &mut tx,
+                    self.workspace.uuid,
+                    source_uuid,
+                    destination_uuid,
+                )
+                .await?;
+
+                Some((AggregationTable::Domain, destination_uuid))
+            }
+            _ => None,
+        };
+
+        insert!(&mut tx, AggregationSource)
+            .return_nothing()
+            .bulk(
+                [AggregationSource {
+                    uuid: Uuid::new_v4(),
+                    workspace: ForeignModelByField::Key(self.workspace.uuid),
+                    source_type: SourceType::DnsResolution,
+                    source_uuid: result_uuid,
+                    aggregated_table: AggregationTable::Domain,
+                    aggregated_uuid: source_uuid,
+                }]
+                .into_iter()
+                .chain(
+                    destination.map(|(aggregated_table, aggregated_uuid)| AggregationSource {
+                        uuid: Uuid::new_v4(),
+                        workspace: ForeignModelByField::Key(self.workspace.uuid),
+                        source_type: SourceType::DnsResolution,
+                        source_uuid: result_uuid,
+                        aggregated_table,
+                        aggregated_uuid,
+                    }),
+                ),
+            )
+            .await?;
+
+        tx.commit().await?;
 
         Ok(())
     }
