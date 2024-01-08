@@ -2,11 +2,12 @@
 
 use std::collections::HashSet;
 use std::error::Error as StdError;
+use std::future::Future;
 use std::net::IpAddr;
 
 use chrono::{DateTime, Utc};
 use dehashed_rs::{Query, ScheduledRequest};
-use futures::{TryFuture, TryStreamExt};
+use futures::TryStreamExt;
 use ipnetwork::IpNetwork;
 use log::error;
 use rorm::prelude::*;
@@ -260,8 +261,8 @@ pub async fn start_tcp_port_scan(
 }
 
 /// Collection of uuids required for a running attack
-#[derive(Clone)]
-struct AttackContext {
+#[derive(Debug, Clone)]
+pub(crate) struct AttackContext {
     /// The user who started the attack
     user: SimpleUser,
 
@@ -325,6 +326,44 @@ impl AttackContext {
             attack_uuid: attack.uuid,
             created_at: attack.created_at,
         })
+    }
+
+    /// Query the context for an existing attack
+    pub(crate) async fn existing(attack_uuid: Uuid) -> Result<Option<Self>, rorm::Error> {
+        let Some((attack_type, started_at, user, uuid, name, description, created_at, owner)) =
+            query!(
+                &GLOBAL.db,
+                (
+                    Attack::F.attack_type,
+                    Attack::F.created_at,
+                    Attack::F.started_by as SimpleUser,
+                    Attack::F.workspace.uuid,
+                    Attack::F.workspace.name,
+                    Attack::F.workspace.description,
+                    Attack::F.workspace.created_at,
+                    Attack::F.workspace.owner as SimpleUser
+                )
+            )
+            .condition(Attack::F.uuid.equals(attack_uuid))
+            .optional()
+            .await?
+        else {
+            return Ok(None);
+        };
+
+        Ok(Some(Self {
+            user,
+            workspace: SimpleWorkspace {
+                uuid,
+                name,
+                description,
+                created_at,
+                owner,
+            },
+            attack_uuid,
+            created_at: started_at,
+            attack_type,
+        }))
     }
 
     /// Send a websocket message and log the error
@@ -400,19 +439,20 @@ impl AttackContext {
             );
         }
     }
+}
 
-    async fn handle_streamed_response<T, Fut>(
-        streamed_response: Result<Response<Streaming<T>>, Status>,
-        handler: impl FnMut(T) -> Fut,
-    ) -> Result<(), AttackError>
-    where
-        Fut: TryFuture<Ok = (), Error = AttackError>,
-    {
-        let stream = streamed_response?.into_inner();
+pub(crate) trait HandleAttackResponse<T> {
+    async fn handle_response(&self, response: T) -> Result<(), AttackError>;
+
+    async fn handle_streamed_response(
+        &self,
+        streamed_response: impl Future<Output = Result<Response<Streaming<T>>, Status>>,
+    ) -> Result<(), AttackError> {
+        let stream = streamed_response.await?.into_inner();
 
         stream
             .map_err(AttackError::from)
-            .try_for_each(handler)
+            .try_for_each(|response| self.handle_response(response))
             .await
     }
 }

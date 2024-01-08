@@ -4,23 +4,20 @@
 
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-use std::net::{AddrParseError, IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::net::{AddrParseError, SocketAddr};
 use std::str::FromStr;
 
-use ipnetwork::{IpNetwork, Ipv4Network, Ipv6Network};
 use log::{error, info, warn};
-use rorm::db::Executor;
-use rorm::{query, Database, FieldAccess, Model};
+use rorm::{query, FieldAccess, Model};
 use tonic::transport::Server;
 use tonic::{Code, Request, Response, Status, Streaming};
 use uuid::Uuid;
 
 use crate::chan::global::GLOBAL;
 use crate::config::Config;
-use crate::models::{
-    Attack, AttackType, DnsRecordType, InsertAttackError, Leech, LeechApiKey, Workspace,
-};
+use crate::models::{Attack, AttackType, InsertAttackError, Leech, LeechApiKey, Workspace};
 use crate::modules::attack_results::store_query_certificate_transparency_result;
+use crate::modules::attacks::{AttackContext, HandleAttackResponse};
 use crate::rpc::definitions::rpc_definitions::attack_results_service_server::AttackResultsService;
 use crate::rpc::rpc_definitions::attack_results_service_server::AttackResultsServiceServer;
 use crate::rpc::rpc_definitions::backlog_service_server::{BacklogService, BacklogServiceServer};
@@ -116,7 +113,7 @@ impl BacklogService for Results {
     ) -> Result<Response<BacklogResponse>, Status> {
         auth_leech(&request).await?;
 
-        let mut workspaces = WorkspaceCache::default();
+        let mut attack_cache = HashMap::new();
 
         let entries = request.into_inner().responses;
         for entry in entries {
@@ -133,25 +130,40 @@ impl BacklogService for Results {
                 continue;
             };
 
-            let Some(workspace_uuid) = workspaces
-                .get(&GLOBAL.db, attack_uuid)
-                .await
-                .map_err(status_from_database)?
-            else {
+            let Some(attack_context) = (match attack_cache.entry(attack_uuid) {
+                Entry::Occupied(entry) => entry.into_mut(),
+                Entry::Vacant(entry) => entry.insert(
+                    AttackContext::existing(attack_uuid)
+                        .await
+                        .map_err(status_from_database)?,
+                ),
+            })
+            .as_ref() else {
                 warn!("Unknown attack uuid: {attack_uuid}");
                 continue;
             };
 
-            match response {
-                any_attack_response::Response::DnsResolution(_)
-                | any_attack_response::Response::HostsAlive(_)
-                | any_attack_response::Response::TcpPortScan(_)
-                | any_attack_response::Response::BruteforceSubdomain(_)
-                | any_attack_response::Response::ServiceDetection(_)
-                | any_attack_response::Response::CertificateTransparency(_) => {
-                    // TODO
-                    return Err(Status::unimplemented("Backlog is not implemented yet"));
+            let result: Result<(), _> = match response {
+                any_attack_response::Response::DnsResolution(response) => {
+                    attack_context.handle_response(response).await
                 }
+                any_attack_response::Response::HostsAlive(response) => {
+                    attack_context.handle_response(response).await
+                }
+                any_attack_response::Response::TcpPortScan(response) => {
+                    attack_context.handle_response(response).await
+                }
+                any_attack_response::Response::BruteforceSubdomain(response) => {
+                    attack_context.handle_response(response).await
+                }
+                any_attack_response::Response::ServiceDetection(_)
+                | any_attack_response::Response::CertificateTransparency(_) => {
+                    return Err(Status::unimplemented("Attack type is not implemented yet"));
+                }
+            };
+
+            if let Err(error) = result {
+                error!("Backlog entry failed: {error}");
             }
         }
 
@@ -212,31 +224,4 @@ pub fn start_rpc_server(config: &Config) -> Result<(), AddrParseError> {
 fn status_from_database(err: rorm::Error) -> Status {
     error!("Database error in rpc endpoint: {err}");
     Status::new(Code::Internal, "Database error")
-}
-
-/// Helper for retrieving an attack's workspace
-#[derive(Debug, Default)]
-pub struct WorkspaceCache(HashMap<Uuid, Option<Uuid>>);
-impl WorkspaceCache {
-    /// Get the workspace uuid for a given attack uuid
-    ///
-    /// Returns `Ok(None)` if the attack does not exist.
-    pub async fn get(
-        &mut self,
-        executor: impl Executor<'_>,
-        attack: Uuid,
-    ) -> Result<Option<Uuid>, rorm::Error> {
-        Ok(match self.0.entry(attack) {
-            Entry::Occupied(entry) => *entry.get(),
-            Entry::Vacant(entry) => {
-                let workspace_uuid = query!(executor, (Attack::F.workspace))
-                    .condition(Attack::F.uuid.equals(attack))
-                    .optional()
-                    .await?
-                    .map(|(foreign,)| *foreign.key());
-                entry.insert(workspace_uuid);
-                workspace_uuid
-            }
-        })
-    }
 }
