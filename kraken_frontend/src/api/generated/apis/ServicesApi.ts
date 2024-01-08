@@ -20,6 +20,7 @@ import type {
   FullAggregationSource,
   FullService,
   GetAllServicesQuery,
+  ServiceRelations,
   ServiceResultsPage,
   UpdateServiceRequest,
   UuidResponse,
@@ -35,6 +36,8 @@ import {
     FullServiceToJSON,
     GetAllServicesQueryFromJSON,
     GetAllServicesQueryToJSON,
+    ServiceRelationsFromJSON,
+    ServiceRelationsToJSON,
     ServiceResultsPageFromJSON,
     ServiceResultsPageToJSON,
     UpdateServiceRequestFromJSON,
@@ -54,6 +57,11 @@ export interface GetAllServicesRequest {
 }
 
 export interface GetServiceRequest {
+    wUuid: string;
+    sUuid: string;
+}
+
+export interface GetServiceRelationsRequest {
     wUuid: string;
     sUuid: string;
 }
@@ -185,6 +193,42 @@ export class ServicesApi extends runtime.BaseAPI {
      */
     async getService(requestParameters: GetServiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullService> {
         const response = await this.getServiceRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get a service\'s direct relations
+     * Get a service\'s direct relations
+     */
+    async getServiceRelationsRaw(requestParameters: GetServiceRelationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceRelations>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling getServiceRelations.');
+        }
+
+        if (requestParameters.sUuid === null || requestParameters.sUuid === undefined) {
+            throw new runtime.RequiredError('sUuid','Required parameter requestParameters.sUuid was null or undefined when calling getServiceRelations.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/services/{s_uuid}/relations`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"s_uuid"}}`, encodeURIComponent(String(requestParameters.sUuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ServiceRelationsFromJSON(jsonValue));
+    }
+
+    /**
+     * Get a service\'s direct relations
+     * Get a service\'s direct relations
+     */
+    async getServiceRelations(requestParameters: GetServiceRelationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceRelations> {
+        const response = await this.getServiceRelationsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

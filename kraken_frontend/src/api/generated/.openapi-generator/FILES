@@ -46,6 +46,7 @@ models/DnsResolutionRequest.ts
 models/DnsResolutionResultsPage.ts
 models/DomainCertainty.ts
 models/DomainOrNetwork.ts
+models/DomainRelations.ts
 models/DomainResultsPage.ts
 models/FinishRegisterRequest.ts
 models/FinishRegisterRequestAllOf.ts
@@ -75,6 +76,7 @@ models/GetAllServicesQuery.ts
 models/GetAllServicesQueryAllOf.ts
 models/HostAliveResultsPage.ts
 models/HostCertainty.ts
+models/HostRelations.ts
 models/HostResultsPage.ts
 models/HostsAliveRequest.ts
 models/InviteToWorkspaceRequest.ts
@@ -108,6 +110,7 @@ models/PageParams.ts
 models/PortCertainty.ts
 models/PortOrRange.ts
 models/PortProtocol.ts
+models/PortRelations.ts
 models/PortResultsPage.ts
 models/Query.ts
 models/QueryCertificateTransparencyRequest.ts
@@ -149,6 +152,7 @@ models/SearchesResultPage.ts
 models/ServiceCertainty.ts
 models/ServiceDetectionRequest.ts
 models/ServiceDetectionResultsPage.ts
+models/ServiceRelations.ts
 models/ServiceResultsPage.ts
 models/SetPasswordRequest.ts
 models/SettingsFull.ts

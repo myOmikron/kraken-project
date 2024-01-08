@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
   CreateDomainRequest,
+  DomainRelations,
   DomainResultsPage,
   FullAggregationSource,
   FullDomain,
@@ -29,6 +30,8 @@ import {
     ApiErrorResponseToJSON,
     CreateDomainRequestFromJSON,
     CreateDomainRequestToJSON,
+    DomainRelationsFromJSON,
+    DomainRelationsToJSON,
     DomainResultsPageFromJSON,
     DomainResultsPageToJSON,
     FullAggregationSourceFromJSON,
@@ -54,6 +57,11 @@ export interface GetAllDomainsRequest {
 }
 
 export interface GetDomainRequest {
+    wUuid: string;
+    dUuid: string;
+}
+
+export interface GetDomainRelationsRequest {
     wUuid: string;
     dUuid: string;
 }
@@ -185,6 +193,42 @@ export class DomainsApi extends runtime.BaseAPI {
      */
     async getDomain(requestParameters: GetDomainRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullDomain> {
         const response = await this.getDomainRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get a host\'s direct relations
+     * Get a host\'s direct relations
+     */
+    async getDomainRelationsRaw(requestParameters: GetDomainRelationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DomainRelations>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling getDomainRelations.');
+        }
+
+        if (requestParameters.dUuid === null || requestParameters.dUuid === undefined) {
+            throw new runtime.RequiredError('dUuid','Required parameter requestParameters.dUuid was null or undefined when calling getDomainRelations.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/domains/{d_uuid}/relations`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"d_uuid"}}`, encodeURIComponent(String(requestParameters.dUuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => DomainRelationsFromJSON(jsonValue));
+    }
+
+    /**
+     * Get a host\'s direct relations
+     * Get a host\'s direct relations
+     */
+    async getDomainRelations(requestParameters: GetDomainRelationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DomainRelations> {
+        const response = await this.getDomainRelationsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
