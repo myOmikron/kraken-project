@@ -6,10 +6,13 @@ use uuid::Uuid;
 
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
 use crate::api::handler::common::schema::{PageParams, SimpleTag};
+use crate::api::handler::domains::schema::SimpleDomain;
+use crate::api::handler::ports::schema::SimplePort;
+use crate::api::handler::services::schema::SimpleService;
 use crate::models::{ManualHostCertainty, OsType};
 
 /// The request to manually add a host
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct CreateHostRequest {
     /// The host's ip address
     #[schema(value_type = String, example = "127.0.0.1")]
@@ -20,7 +23,7 @@ pub struct CreateHostRequest {
 }
 
 /// The request to update a host
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct UpdateHostRequest {
     /// The comment of a host
     pub comment: Option<String>,
@@ -31,7 +34,7 @@ pub struct UpdateHostRequest {
 }
 
 /// Query parameters for filtering the hosts to get
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct GetAllHostsQuery {
     /// The parameters controlling the page to query
     #[serde(flatten)]
@@ -45,7 +48,7 @@ pub struct GetAllHostsQuery {
 }
 
 /// The simple representation of a host
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct SimpleHost {
     /// The primary key of the host
     pub uuid: Uuid,
@@ -63,7 +66,7 @@ pub struct SimpleHost {
 }
 
 /// The full representation of a host
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct FullHost {
     /// The primary key of the host
     pub uuid: Uuid,
@@ -85,10 +88,26 @@ pub struct FullHost {
 }
 
 /// The path parameter of a host
-#[derive(Deserialize, Serialize, IntoParams, Debug, Copy, Clone)]
+#[derive(Serialize, Deserialize, IntoParams, Debug, Copy, Clone)]
 pub struct PathHost {
     /// Workspace uuid
     pub w_uuid: Uuid,
     /// Host uuid
     pub h_uuid: Uuid,
+}
+
+/// A host's direct relations
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct HostRelations {
+    /// This host's ports
+    pub ports: Vec<SimplePort>,
+
+    /// This host's services
+    pub services: Vec<SimpleService>,
+
+    /// Domains pointing to this host via a direct `A` or `AAAA` record
+    pub direct_domains: Vec<SimpleDomain>,
+
+    /// Domains pointing to this host via a `CNAME` record which eventually resolves to the host
+    pub indirect_domains: Vec<SimpleDomain>,
 }
