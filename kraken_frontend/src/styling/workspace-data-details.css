@@ -121,3 +121,121 @@
     padding-bottom: 1em;
     opacity: 0.8;
 }
+
+.workspace-data-details-filter{
+    display: flex;
+    flex-direction: row;
+}
+
+.workspace-data-details-filter span{
+  width: 2em;
+}
+
+.workspace-data-details-overflow{
+    overflow: hidden;
+}
+
+.workspace-data-details-relations-container{
+   display: flex;
+    flex-direction: column;
+    justify-items: center;
+    background-color: #00ccff10;
+    border-radius: 0.5em;
+    border: 1px solid var(--primary-op);
+    width: 100%;
+    max-height: 100%;
+}
+
+.workspace-data-details-relations-header{
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr;
+    justify-items: center;
+    align-items: center;
+}
+
+.workspace-data-details-relations-header div{
+    margin: 1em;
+}
+
+.workspace-data-details-relations-heading{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5em;
+    width: 100%;
+    height: 100%;
+    background-color: #00ccff10 ;
+}
+
+.workspace-data-details-relations-heading div{
+    margin: 0;
+}
+
+.workspace-data-details-relations-body{
+    width: 100%;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr;
+    justify-items: center;
+    align-items: center;
+    margin: 1.5em 0;
+    row-gap: 1em;
+}
+
+.workspace-data-details-relations-body span{
+    text-align: center;
+    padding: 0 0.5em;
+}
+
+.workspace-data-details-relations-body > div{
+    width: 100%;
+ }
+
+.workspace-data-details-relations-body div{
+    width: 2em;
+    height: 2em;
+}
+
+.indirect div{
+    width: 4em;
+    overflow: hidden;
+    position: relative;
+    left: -1em;
+}
+
+.workspace-data-details-relations-footer{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #00ccff10 ;
+    font-weight: bold;
+    transition: ease-in-out 500ms;
+
+}
+
+.workspace-data-details-relations-footer:hover{
+    cursor: pointer;
+    filter: drop-shadow(0 0 0.5em var(--primary));
+    transition: ease-in-out 500ms;
+}
+
+.workspace-data-details-relations-footer > div{
+    width: 1.5em;
+    padding: 1em;
+}
+
+.workspace-data-details-link{
+  border-bottom: var(--text) 1px solid ;
+    transition: all ease-in-out 0.2s;
+}
+
+.workspace-data-details-link:hover{
+    cursor: pointer;
+}
+
+.workspace-data-details-link:active{
+    transform: translate(0.1em, 0.1em);
+}
