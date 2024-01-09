@@ -1,0 +1,8 @@
+service: openldap
+prevalence: often
+probes:
+  - protocol: TCP
+    # https://raw.githubusercontent.com/nmap/nmap/master/nmap-service-probes
+    # Ldap bind request, version 2, null DN, AUTH_TYPE simple, null password
+    payload_str: \x30\x0c\x02\x01\x01\x60\x07\x02\x01\x02\x04\x00\x80\0x00
+    regex: \x02\x01\x01a(?s).*?\x01.\x04\x00\x04|(:[Oo][Pp][Ee][Nn])?LDAP(:v[23])?
