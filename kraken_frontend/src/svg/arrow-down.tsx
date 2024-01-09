@@ -1,10 +1,15 @@
 import React from "react";
 
-export default function ArrowDownIcon(props: React.HTMLAttributes<HTMLDivElement>) {
+type ArrowDownIconProps = {
+    inverted?: boolean;
+};
+
+export default function ArrowDownIcon(props: ArrowDownIconProps) {
+    const { inverted } = props;
     return (
         <div className={"icon"} {...props}>
             <svg
-                className={"neon"}
+                className={inverted !== null && inverted ? "inverted neon" : "neon"}
                 fill="none"
                 height="24"
                 strokeWidth="1.5"
