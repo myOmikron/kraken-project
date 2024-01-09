@@ -203,44 +203,61 @@ service ReqAttackService {
 }
 
 /*
------------------------- Results -------------------------------
+------------------------ PushAttack -------------------------------
  */
 
-// The response to submitting a result
-message ResultResponse {
-  // The attack uuid assigned by kraken
-  string uuid = 1;
-}
-
-// Metainfos about the attack
-message MetaAttackInfo {
+message PushAttackRequest {
   // The uuid of a workspace
   string workspace_uuid = 1;
 
   // The user's api key
   string api_key = 2;
+
+  oneof response {
+    // Response streamed by an bruteforce subdomain attack
+    RepeatedBruteforceSubdomainResponse bruteforce_subdomain = 3;
+    // Response streamed by an tcp port scan attack
+    RepeatedTcpPortScanResponse tcp_port_scan = 4;
+    // Response to a certificate transparency request
+    CertificateTransparencyResponse certificate_transparency = 5;
+    // Response to a service detection request
+    ServiceDetectionResponse service_detection = 6;
+    // Response for checking which hosts are alive
+    RepeatedHostsAliveResponse hosts_alive = 7;
+    // Response streamed by a dns resolution attack
+    RepeatedDnsResolutionResponse dns_resolution = 8;
+  }
 }
 
-// Result of a certificate transparency request
-message CertificateTransparencyResult {
-  // Information about the attack
-  MetaAttackInfo attack_info = 1;
-  // List of cert entries
-  repeated attacks.shared.CertEntry entries = 2;
+// Thin wrapper to have a `repeated BruteforceSubdomainResponse` in a `oneof`
+message RepeatedBruteforceSubdomainResponse {
+  // repeated BruteforceSubdomainResponse
+  repeated BruteforceSubdomainResponse responses = 1;
+}
+// Thin wrapper to have a `repeated TcpPortScanResponse` in a `oneof`
+message RepeatedTcpPortScanResponse {
+  // repeated TcpPortScanResponse
+  repeated TcpPortScanResponse responses = 1;
+}
+// Thin wrapper to have a `repeated HostsAliveResponse` in a `oneof`
+message RepeatedHostsAliveResponse {
+  // repeated HostsAliveResponse
+  repeated HostsAliveResponse responses = 1;
+}
+// Thin wrapper to have a `repeated DnsResolutionResponse` in a `oneof`
+message RepeatedDnsResolutionResponse {
+  // repeated DnsResolutionResponse
+  repeated DnsResolutionResponse responses = 1;
 }
 
-// Result of a subdomain enumeration request
-message SubdomainEnumerationResult {
-  // Information about the attack
-  MetaAttackInfo attack_info = 1;
-  // Found record
-  shared.DNSRecord record = 2;
+message PushAttackResponse {
+  // The attack uuid assigned by kraken
+  string uuid = 1;
 }
 
-// Implemented by kraken; allows leeches to push manual scan results via cli
-service AttackResultsService {
-  rpc CertificateTransparency(CertificateTransparencyResult) returns (ResultResponse);
-  rpc SubdomainEnumeration(stream SubdomainEnumerationResult) returns (ResultResponse);
+// Implemented by kraken; allows leeches to push manual attacks via cli
+service PushAttackService {
+  rpc PushAttack(PushAttackRequest) returns (PushAttackResponse);
 }
 
 

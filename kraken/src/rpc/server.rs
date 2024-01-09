@@ -10,37 +10,38 @@ use std::str::FromStr;
 use log::{error, info, warn};
 use rorm::{query, FieldAccess, Model};
 use tonic::transport::Server;
-use tonic::{Code, Request, Response, Status, Streaming};
+use tonic::{Code, Request, Response, Status};
 use uuid::Uuid;
 
 use crate::chan::global::GLOBAL;
 use crate::config::Config;
 use crate::models::{AttackType, InsertAttackError, Leech, LeechApiKey, Workspace};
 use crate::modules::attacks::{AttackContext, HandleAttackResponse};
-use crate::rpc::definitions::rpc_definitions::attack_results_service_server::AttackResultsService;
-use crate::rpc::rpc_definitions::attack_results_service_server::AttackResultsServiceServer;
 use crate::rpc::rpc_definitions::backlog_service_server::{BacklogService, BacklogServiceServer};
+use crate::rpc::rpc_definitions::push_attack_service_server::{
+    PushAttackService, PushAttackServiceServer,
+};
 use crate::rpc::rpc_definitions::{
-    any_attack_response, AnyAttackResponse, BacklogRequest, BacklogResponse,
-    CertificateTransparencyResponse, CertificateTransparencyResult, ResultResponse,
-    SubdomainEnumerationResult,
+    any_attack_response, push_attack_request, AnyAttackResponse, BacklogRequest, BacklogResponse,
+    PushAttackRequest, PushAttackResponse,
 };
 
 /// Helper type to implement result handler to
 pub struct Results;
 
 #[tonic::async_trait]
-impl AttackResultsService for Results {
-    async fn certificate_transparency(
+impl PushAttackService for Results {
+    async fn push_attack(
         &self,
-        request: Request<CertificateTransparencyResult>,
-    ) -> Result<Response<ResultResponse>, Status> {
-        let req = request.into_inner();
-        let attack_info = req
-            .attack_info
-            .ok_or(Status::new(Code::Unknown, "Missing attack_info"))?;
-        let workspace_uuid = Uuid::try_parse(&attack_info.workspace_uuid)
-            .map_err(|_| Status::new(Code::Internal, "Invalid UUID supplied"))?;
+        request: Request<PushAttackRequest>,
+    ) -> Result<Response<PushAttackResponse>, Status> {
+        let PushAttackRequest {
+            workspace_uuid,
+            api_key,
+            response,
+        } = request.into_inner();
+        let workspace_uuid = Uuid::try_parse(&workspace_uuid)
+            .map_err(|_| Status::invalid_argument("Invalid UUID supplied"))?;
 
         let mut tx = GLOBAL
             .db
@@ -50,7 +51,7 @@ impl AttackResultsService for Results {
 
         // Check api key and get user
         let (user,) = query!(&mut tx, (LeechApiKey::F.user,))
-            .condition(LeechApiKey::F.key.equals(attack_info.api_key))
+            .condition(LeechApiKey::F.key.equals(api_key))
             .optional()
             .await
             .map_err(status_from_database)?
@@ -66,6 +67,8 @@ impl AttackResultsService for Results {
             ));
         }
 
+        tx.commit().await.map_err(status_from_database)?;
+
         let attack = AttackContext::new(
             workspace_uuid,
             user_uuid,
@@ -78,23 +81,32 @@ impl AttackResultsService for Results {
             InsertAttackError::UserInvalid => unreachable!("User was queried beforehand"),
         })?;
 
-        let result = attack
-            .handle_response(CertificateTransparencyResponse {
-                entries: req.entries,
-            })
-            .await;
+        let result = match response {
+            Some(push_attack_request::Response::DnsResolution(repeated)) => {
+                attack.handle_vec_response(repeated.responses).await
+            }
+            Some(push_attack_request::Response::HostsAlive(repeated)) => {
+                attack.handle_vec_response(repeated.responses).await
+            }
+            Some(push_attack_request::Response::TcpPortScan(repeated)) => {
+                attack.handle_vec_response(repeated.responses).await
+            }
+            Some(push_attack_request::Response::BruteforceSubdomain(repeated)) => {
+                attack.handle_vec_response(repeated.responses).await
+            }
+            Some(push_attack_request::Response::CertificateTransparency(response)) => {
+                attack.handle_response(response).await
+            }
+            Some(push_attack_request::Response::ServiceDetection(response)) => {
+                attack.handle_response(response).await
+            }
+            None => return Err(Status::invalid_argument("Missing attack response")),
+        };
         attack.set_finished(result).await;
 
-        Ok(Response::new(ResultResponse {
-            uuid: Uuid::new_v4().to_string(),
+        Ok(Response::new(PushAttackResponse {
+            uuid: attack.uuid().to_string(),
         }))
-    }
-
-    async fn subdomain_enumeration(
-        &self,
-        _request: Request<Streaming<SubdomainEnumerationResult>>,
-    ) -> Result<Response<ResultResponse>, Status> {
-        Err(Status::unimplemented("TODO"))
     }
 }
 
@@ -202,7 +214,7 @@ pub fn start_rpc_server(config: &Config) -> Result<(), AddrParseError> {
         if let Err(err) = Server::builder()
             .tls_config(tls_config)
             .expect("The tls config should be valid")
-            .add_service(AttackResultsServiceServer::new(Results))
+            .add_service(PushAttackServiceServer::new(Results))
             .add_service(BacklogServiceServer::new(Results))
             .serve(SocketAddr::new(listen_address, listen_port))
             .await

@@ -7,7 +7,7 @@ use std::net::IpAddr;
 
 use chrono::{DateTime, Utc};
 use dehashed_rs::{Query, ScheduledRequest};
-use futures::TryStreamExt;
+use futures::{stream, TryStreamExt};
 use ipnetwork::IpNetwork;
 use log::error;
 use rorm::prelude::*;
@@ -15,6 +15,7 @@ use rorm::{and, query, update};
 use thiserror::Error;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
+use tonic::codegen::tokio_stream::StreamExt;
 use tonic::{Response, Status, Streaming};
 use uuid::Uuid;
 
@@ -439,6 +440,11 @@ impl AttackContext {
             );
         }
     }
+
+    /// Read-only access to the attack's uuid
+    pub fn uuid(&self) -> Uuid {
+        self.attack_uuid
+    }
 }
 
 pub(crate) trait HandleAttackResponse<T> {
@@ -454,6 +460,13 @@ pub(crate) trait HandleAttackResponse<T> {
             .map_err(AttackError::from)
             .try_for_each(|response| self.handle_response(response))
             .await
+    }
+
+    async fn handle_vec_response(&self, vec_response: Vec<T>) -> Result<(), AttackError> {
+        for response in vec_response {
+            self.handle_response(response)?;
+        }
+        Ok(())
     }
 }
 
