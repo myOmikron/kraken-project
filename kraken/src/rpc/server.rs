@@ -102,10 +102,9 @@ impl PushAttackService for Results {
             }
             None => return Err(Status::invalid_argument("Missing attack response")),
         };
-        attack.set_finished(result).await;
 
         Ok(Response::new(PushAttackResponse {
-            uuid: attack.uuid().to_string(),
+            uuid: attack.set_finished(result).await.to_string(),
         }))
     }
 }
@@ -164,8 +163,8 @@ impl BacklogService for Results {
                 any_attack_response::Response::CertificateTransparency(response) => {
                     attack_context.handle_response(response).await
                 }
-                any_attack_response::Response::ServiceDetection(_) => {
-                    return Err(Status::unimplemented("Attack type is not implemented yet"));
+                any_attack_response::Response::ServiceDetection(response) => {
+                    attack_context.handle_response(response).await
                 }
             };
 

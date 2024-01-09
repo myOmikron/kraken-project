@@ -1,3 +1,5 @@
+use std::net::IpAddr;
+
 use ipnetwork::IpNetwork;
 use rorm::insert;
 use rorm::prelude::ForeignModelByField;
@@ -9,7 +11,9 @@ use crate::models::{
     AggregationSource, AggregationTable, HostCertainty, PortCertainty, PortProtocol,
     ServiceCertainty, ServiceDetectionName, ServiceDetectionResultInsert, SourceType,
 };
-use crate::modules::attacks::{AttackContext, AttackError, ServiceDetectionParams};
+use crate::modules::attacks::{
+    AttackContext, AttackError, HandleAttackResponse, ServiceDetectionParams,
+};
 use crate::rpc::rpc_definitions::{ServiceDetectionRequest, ServiceDetectionResponse};
 
 impl AttackContext {
@@ -25,10 +29,23 @@ impl AttackContext {
             port: params.port as u32,
             timeout: params.timeout,
         };
+        self.handle_response(leech.service_detection(request).await?.into_inner())
+            .await
+    }
+}
+impl HandleAttackResponse<ServiceDetectionResponse> for AttackContext {
+    async fn handle_response(&self, response: ServiceDetectionResponse) -> Result<(), AttackError> {
         let ServiceDetectionResponse {
             services,
             response_type,
-        } = leech.service_detection(request).await?.into_inner();
+            address: Some(address),
+            port,
+        } = response
+        else {
+            return Err(AttackError::Malformed("Missing `address`"));
+        };
+        let address = IpAddr::try_from(address)?;
+        let host = IpNetwork::from(address);
 
         let certainty = match response_type {
             1 => ServiceCertainty::MaybeVerified,
@@ -46,8 +63,8 @@ impl AttackContext {
                 uuid: Uuid::new_v4(),
                 attack: ForeignModelByField::Key(self.attack_uuid),
                 certainty,
-                host: IpNetwork::from(params.target),
-                port: params.port as i32,
+                host,
+                port: port as i32,
             })
             .await?;
         insert!(&mut tx, ServiceDetectionName)
@@ -61,18 +78,14 @@ impl AttackContext {
 
         let host_uuid = GLOBAL
             .aggregator
-            .aggregate_host(
-                self.workspace.uuid,
-                IpNetwork::from(params.target),
-                HostCertainty::Verified,
-            )
+            .aggregate_host(self.workspace.uuid, host, HostCertainty::Verified)
             .await?;
         let port_uuid = GLOBAL
             .aggregator
             .aggregate_port(
                 self.workspace.uuid,
                 host_uuid,
-                params.port as u16,
+                port as u16,
                 PortProtocol::Tcp,
                 PortCertainty::Verified,
             )

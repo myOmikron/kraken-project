@@ -7,7 +7,7 @@ use std::net::IpAddr;
 
 use chrono::{DateTime, Utc};
 use dehashed_rs::{Query, ScheduledRequest};
-use futures::{stream, TryStreamExt};
+use futures::TryStreamExt;
 use ipnetwork::IpNetwork;
 use log::error;
 use rorm::prelude::*;
@@ -15,7 +15,6 @@ use rorm::{and, query, update};
 use thiserror::Error;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
-use tonic::codegen::tokio_stream::StreamExt;
 use tonic::{Response, Status, Streaming};
 use uuid::Uuid;
 
@@ -392,7 +391,9 @@ impl AttackContext {
     }
 
     /// Send the user a notification and update the [`Attack`] model
-    pub(crate) async fn set_finished(self, result: Result<(), AttackError>) {
+    ///
+    /// Returns the attack's uuid
+    pub(crate) async fn set_finished(self, result: Result<(), AttackError>) -> Uuid {
         let now = Utc::now();
 
         self.send_ws(WsMessage::AttackFinished {
@@ -439,10 +440,7 @@ impl AttackContext {
                 attack_uuid = self.attack_uuid
             );
         }
-    }
 
-    /// Read-only access to the attack's uuid
-    pub fn uuid(&self) -> Uuid {
         self.attack_uuid
     }
 }
@@ -464,7 +462,7 @@ pub(crate) trait HandleAttackResponse<T> {
 
     async fn handle_vec_response(&self, vec_response: Vec<T>) -> Result<(), AttackError> {
         for response in vec_response {
-            self.handle_response(response)?;
+            self.handle_response(response).await?;
         }
         Ok(())
     }

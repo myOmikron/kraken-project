@@ -173,6 +173,7 @@ impl ReqAttackService for Attacks {
             socket: SocketAddr::new(
                 request
                     .address
+                    .clone()
                     .ok_or(Status::invalid_argument("Missing address"))?
                     .into(),
                 request
@@ -193,14 +194,20 @@ impl ReqAttackService for Attacks {
             Service::Unknown => ServiceDetectionResponse {
                 response_type: ServiceDetectionResponseType::Unknown as _,
                 services: Vec::new(),
+                address: request.address,
+                port: request.port,
             },
             Service::Maybe(services) => ServiceDetectionResponse {
                 response_type: ServiceDetectionResponseType::Maybe as _,
                 services: services.iter().map(|s| s.to_string()).collect(),
+                address: request.address,
+                port: request.port,
             },
             Service::Definitely(service) => ServiceDetectionResponse {
                 response_type: ServiceDetectionResponseType::Definitely as _,
                 services: vec![service.to_string()],
+                address: request.address,
+                port: request.port,
             },
         }))
     }

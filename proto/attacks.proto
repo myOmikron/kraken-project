@@ -134,6 +134,10 @@ message ServiceDetectionRequest {
 
 // Response to a service detection request
 message ServiceDetectionResponse {
+  // The ip address the service was found on
+  attacks.shared.Address address = 3;
+  // The port the service was found on
+  uint32 port = 4;
   // Indicates how many services are given and how they are to be interpreted
   ServiceDetectionResponseType responseType = 1;
   // List of services, the interpretation of this field depends on the `responseType`
@@ -206,6 +210,7 @@ service ReqAttackService {
 ------------------------ PushAttack -------------------------------
  */
 
+// Request to push an attack which has been started manually through the leech's cli
 message PushAttackRequest {
   // The uuid of a workspace
   string workspace_uuid = 1;
@@ -213,6 +218,7 @@ message PushAttackRequest {
   // The user's api key
   string api_key = 2;
 
+  // The attack's type as well as its response
   oneof response {
     // Response streamed by an bruteforce subdomain attack
     RepeatedBruteforceSubdomainResponse bruteforce_subdomain = 3;
@@ -250,6 +256,7 @@ message RepeatedDnsResolutionResponse {
   repeated DnsResolutionResponse responses = 1;
 }
 
+// Response to a manually pushed attack
 message PushAttackResponse {
   // The attack uuid assigned by kraken
   string uuid = 1;
@@ -265,10 +272,16 @@ service PushAttackService {
 ------------------------ Backlog -------------------------------
  */
 
+// Request for a chunk of responses to be processed
 message BacklogRequest {
+  // Responses left from some previous attacks
   repeated AnyAttackResponse responses = 1;
 }
 
+// Response to a backlog request
+//
+// Might contain additional information in the future:
+// What did go wrong (custom error type)? Which responses could be processed?
 message BacklogResponse {}
 
 // union of all messages which might be returned as response to any attack request
