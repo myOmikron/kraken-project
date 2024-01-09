@@ -38,8 +38,11 @@ impl PushAttackService for Results {
         let PushAttackRequest {
             workspace_uuid,
             api_key,
-            response,
-        } = request.into_inner();
+            response: Some(response),
+        } = request.into_inner()
+        else {
+            return Err(Status::invalid_argument("Missing attack response"));
+        };
         let workspace_uuid = Uuid::try_parse(&workspace_uuid)
             .map_err(|_| Status::invalid_argument("Invalid UUID supplied"))?;
 
@@ -72,7 +75,18 @@ impl PushAttackService for Results {
         let attack = AttackContext::new(
             workspace_uuid,
             user_uuid,
-            AttackType::QueryCertificateTransparency,
+            match &response {
+                push_attack_request::Response::DnsResolution(_) => AttackType::DnsResolution,
+                push_attack_request::Response::HostsAlive(_) => AttackType::HostAlive,
+                push_attack_request::Response::TcpPortScan(_) => AttackType::TcpPortScan,
+                push_attack_request::Response::BruteforceSubdomain(_) => {
+                    AttackType::BruteforceSubdomains
+                }
+                push_attack_request::Response::CertificateTransparency(_) => {
+                    AttackType::QueryCertificateTransparency
+                }
+                push_attack_request::Response::ServiceDetection(_) => AttackType::ServiceDetection,
+            },
         )
         .await
         .map_err(|e| match e {
@@ -82,25 +96,24 @@ impl PushAttackService for Results {
         })?;
 
         let result = match response {
-            Some(push_attack_request::Response::DnsResolution(repeated)) => {
+            push_attack_request::Response::DnsResolution(repeated) => {
                 attack.handle_vec_response(repeated.responses).await
             }
-            Some(push_attack_request::Response::HostsAlive(repeated)) => {
+            push_attack_request::Response::HostsAlive(repeated) => {
                 attack.handle_vec_response(repeated.responses).await
             }
-            Some(push_attack_request::Response::TcpPortScan(repeated)) => {
+            push_attack_request::Response::TcpPortScan(repeated) => {
                 attack.handle_vec_response(repeated.responses).await
             }
-            Some(push_attack_request::Response::BruteforceSubdomain(repeated)) => {
+            push_attack_request::Response::BruteforceSubdomain(repeated) => {
                 attack.handle_vec_response(repeated.responses).await
             }
-            Some(push_attack_request::Response::CertificateTransparency(response)) => {
+            push_attack_request::Response::CertificateTransparency(response) => {
                 attack.handle_response(response).await
             }
-            Some(push_attack_request::Response::ServiceDetection(response)) => {
+            push_attack_request::Response::ServiceDetection(response) => {
                 attack.handle_response(response).await
             }
-            None => return Err(Status::invalid_argument("Missing attack response")),
         };
 
         Ok(Response::new(PushAttackResponse {
