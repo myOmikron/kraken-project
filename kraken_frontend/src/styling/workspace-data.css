@@ -133,7 +133,7 @@
 
 .workspace-data-multi-select-table {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 2fr;
     gap: 0.5em;
     margin-bottom: 0.5em;
 }
@@ -147,4 +147,41 @@
 }
 .workspace-data-multi-select-tag-buttons > button {
     flex-grow: 1;
+}
+
+.workspace-data-pane{
+    display: flex;
+    padding: 2em;
+    flex-direction: column;
+    border-radius: 0.5em;
+    border: 1px solid var(--primary-op);
+    background-color: #00ccff10 ;
+    gap: 1em;
+    align-items: center;
+}
+
+.workspace-data-pane > div {
+    width: 100%;
+}
+
+.workspace-data-danger-pane{
+    display: flex;
+    padding: 2em;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 0.5em;
+    border: 1px solid rgb(112, 0, 0);
+    background-color: rgba(89, 0, 0, 0.25);
+    gap: 1em;
+}
+
+.workspace-data-danger-pane > button{
+    width: 100%;
+}
+
+.workspace-data-popup{
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    background-color: rgba(89, 0, 0, 0.25);
 }
