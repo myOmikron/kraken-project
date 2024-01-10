@@ -132,7 +132,7 @@ pub(crate) async fn export_workspace(
         }
     }
     for port in ports.values() {
-        if let Some(host) = hosts.get_mut(&port.uuid) {
+        if let Some(host) = hosts.get_mut(&port.host) {
             host.ports.push(port.uuid);
         }
     }
