@@ -17,10 +17,7 @@ use uuid::Uuid;
 use crate::config::KrakenConfig;
 use crate::models::{BacklogEntry, Proto};
 use crate::rpc::rpc_attacks::backlog_service_client::BacklogServiceClient;
-use crate::rpc::rpc_attacks::{
-    any_attack_response, AnyAttackResponse, BacklogRequest, BruteforceSubdomainResponse,
-    DnsResolutionResponse, HostsAliveResponse, TcpPortScanResponse,
-};
+use crate::rpc::rpc_attacks::{any_attack_response, AnyAttackResponse, BacklogRequest};
 use crate::utils::kraken_endpoint;
 
 /// The main struct for the Backlog,
@@ -33,11 +30,7 @@ pub struct Backlog {
 
 impl Backlog {
     /// Store any attack's response to the backlog
-    pub(crate) async fn store(
-        &self,
-        attack_uuid: Uuid,
-        response: impl Into<any_attack_response::Response>,
-    ) {
+    pub(crate) async fn store(&self, attack_uuid: Uuid, response: any_attack_response::Response) {
         let result = insert!(&self.db, BacklogEntry)
             .return_nothing()
             .single(&BacklogEntry {
@@ -45,7 +38,7 @@ impl Backlog {
                 attack_uuid,
                 response: Proto(AnyAttackResponse {
                     attack_uuid: attack_uuid.to_string(),
-                    response: Some(response.into()),
+                    response: Some(response),
                 }),
             })
             .await;
@@ -141,26 +134,5 @@ async fn run_backlog(
         // After receiving the first notification, wait a short duration
         // because it is likely for multiple backlog entries to be stored in a short period of time.
         tokio::time::sleep(DB_QUERY_PAUSE).await;
-    }
-}
-
-impl From<BruteforceSubdomainResponse> for any_attack_response::Response {
-    fn from(value: BruteforceSubdomainResponse) -> Self {
-        Self::BruteforceSubdomain(value)
-    }
-}
-impl From<TcpPortScanResponse> for any_attack_response::Response {
-    fn from(value: TcpPortScanResponse) -> Self {
-        Self::TcpPortScan(value)
-    }
-}
-impl From<HostsAliveResponse> for any_attack_response::Response {
-    fn from(value: HostsAliveResponse) -> Self {
-        Self::HostsAlive(value)
-    }
-}
-impl From<DnsResolutionResponse> for any_attack_response::Response {
-    fn from(value: DnsResolutionResponse) -> Self {
-        Self::DnsResolution(value)
     }
 }

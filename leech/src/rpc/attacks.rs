@@ -1,32 +1,39 @@
 //! In this module is the definition of the gRPC services
 
+use std::future::Future;
 use std::net::SocketAddr;
 use std::pin::Pin;
 use std::time::Duration;
 
 use chrono::{Datelike, Timelike};
+use futures::stream::BoxStream;
 use futures::Stream;
 use log::error;
 use prost_types::Timestamp;
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::ReceiverStream;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
 use crate::backlog::Backlog;
-use crate::modules::bruteforce_subdomains::{bruteforce_subdomains, BruteforceSubdomainsSettings};
+use crate::modules::bruteforce_subdomains::{
+    bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
+};
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
-use crate::modules::dns::{dns_resolution, DnsResolutionSettings};
+use crate::modules::dns::{dns_resolution, DnsRecordResult, DnsResolutionSettings};
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::modules::service_detection::{detect_service, DetectServiceSettings, Service};
 use crate::rpc::rpc_attacks::req_attack_service_server::ReqAttackService;
-use crate::rpc::rpc_attacks::shared::CertEntry;
+use crate::rpc::rpc_attacks::shared::dns_record::Record;
+use crate::rpc::rpc_attacks::shared::{Aaaa, Address, CertEntry, DnsRecord, GenericRecord, A};
 use crate::rpc::rpc_attacks::{
-    BruteforceSubdomainRequest, BruteforceSubdomainResponse, CertificateTransparencyRequest,
-    CertificateTransparencyResponse, DnsResolutionRequest, DnsResolutionResponse,
-    HostsAliveRequest, HostsAliveResponse, ServiceDetectionRequest, ServiceDetectionResponse,
-    ServiceDetectionResponseType, TcpPortScanRequest, TcpPortScanResponse,
+    any_attack_response, shared, BruteforceSubdomainRequest, BruteforceSubdomainResponse,
+    CertificateTransparencyRequest, CertificateTransparencyResponse, DnsResolutionRequest,
+    DnsResolutionResponse, HostsAliveRequest, HostsAliveResponse, ServiceDetectionRequest,
+    ServiceDetectionResponse, ServiceDetectionResponseType, TcpPortScanRequest,
+    TcpPortScanResponse,
 };
-use crate::rpc::utils::stream_attack;
 
 /// The Attack service
 pub struct Attacks {
@@ -53,7 +60,8 @@ impl ReqAttackService for Attacks {
             concurrent_limit: req.concurrent_limit,
         };
 
-        stream_attack(
+        self.stream_attack(
+            attack_uuid,
             {
                 |tx| async move {
                     bruteforce_subdomains(settings, tx)
@@ -61,8 +69,26 @@ impl ReqAttackService for Attacks {
                         .map_err(|err| Status::unknown(err.to_string()))
                 }
             },
-            self.backlog.clone(),
-            attack_uuid,
+            |value| BruteforceSubdomainResponse {
+                record: Some(match value {
+                    BruteforceSubdomainResult::A { source, target } => DnsRecord {
+                        record: Some(Record::A(A {
+                            source,
+                            to: Some(target.into()),
+                        })),
+                    },
+                    BruteforceSubdomainResult::Aaaa { source, target } => DnsRecord {
+                        record: Some(Record::Aaaa(Aaaa {
+                            source,
+                            to: Some(target.into()),
+                        })),
+                    },
+                    BruteforceSubdomainResult::Cname { source, target } => DnsRecord {
+                        record: Some(Record::Cname(GenericRecord { source, to: target })),
+                    },
+                }),
+            },
+            any_attack_response::Response::BruteforceSubdomain,
         )
     }
 
@@ -97,7 +123,8 @@ impl ReqAttackService for Attacks {
             skip_icmp_check: req.skip_icmp_check,
         };
 
-        stream_attack(
+        self.stream_attack(
+            attack_uuid,
             {
                 |tx| async move {
                     start_tcp_con_port_scan(settings, tx)
@@ -105,8 +132,22 @@ impl ReqAttackService for Attacks {
                         .map_err(|err| Status::unknown(err.to_string()))
                 }
             },
-            self.backlog.clone(),
-            attack_uuid,
+            |value| {
+                let address = match value {
+                    SocketAddr::V4(v) => Address {
+                        address: Some(shared::address::Address::Ipv4((*v.ip()).into())),
+                    },
+                    SocketAddr::V6(v) => Address {
+                        address: Some(shared::address::Address::Ipv6((*v.ip()).into())),
+                    },
+                };
+
+                TcpPortScanResponse {
+                    address: Some(address),
+                    port: value.port() as u32,
+                }
+            },
+            any_attack_response::Response::TcpPortScan,
         )
     }
 
@@ -234,14 +275,17 @@ impl ReqAttackService for Attacks {
             addresses: req.targets.into_iter().map(|el| el.into()).collect(),
         };
 
-        stream_attack(
+        self.stream_attack(
+            attack_uuid,
             |tx| async move {
                 start_icmp_scan(settings, tx)
                     .await
                     .map_err(|err| Status::unknown(err.to_string()))
             },
-            self.backlog.clone(),
-            attack_uuid,
+            |value| HostsAliveResponse {
+                host: Some(value.into()),
+            },
+            any_attack_response::Response::HostsAlive,
         )
     }
 
@@ -266,14 +310,114 @@ impl ReqAttackService for Attacks {
             concurrent_limit: req.concurrent_limit,
         };
 
-        stream_attack(
+        self.stream_attack(
+            attack_uuid,
             |tx| async move {
                 dns_resolution(settings, tx)
                     .await
                     .map_err(|err| Status::unknown(err.to_string()))
             },
-            self.backlog.clone(),
-            attack_uuid,
+            |value| DnsResolutionResponse {
+                record: Some(match value {
+                    DnsRecordResult::A { source, target } => DnsRecord {
+                        record: Some(Record::A(A {
+                            source,
+                            to: Some(target.into()),
+                        })),
+                    },
+                    DnsRecordResult::Aaaa { source, target } => DnsRecord {
+                        record: Some(Record::Aaaa(Aaaa {
+                            source,
+                            to: Some(target.into()),
+                        })),
+                    },
+                    DnsRecordResult::CAA { source, target } => DnsRecord {
+                        record: Some(Record::Caa(GenericRecord { source, to: target })),
+                    },
+                    DnsRecordResult::Cname { source, target } => DnsRecord {
+                        record: Some(Record::Cname(GenericRecord { source, to: target })),
+                    },
+                    DnsRecordResult::Mx { source, target } => DnsRecord {
+                        record: Some(Record::Mx(GenericRecord { source, to: target })),
+                    },
+                    DnsRecordResult::Tlsa { source, target } => DnsRecord {
+                        record: Some(Record::Tlsa(GenericRecord { source, to: target })),
+                    },
+                    DnsRecordResult::Txt { source, target } => DnsRecord {
+                        record: Some(Record::Txt(GenericRecord { source, to: target })),
+                    },
+                }),
+            },
+            any_attack_response::Response::DnsResolution,
         )
+    }
+}
+
+impl Attacks {
+    /// Perform an attack which streams its results
+    ///
+    /// It manages the communication between the attacking task, the grpc output stream and the backlog.
+    ///
+    /// The `perform_attack` argument is an async closure (called once) which performs the actual attack.
+    /// It receives a [`mpsc::Sender<Item>`] to stream its results
+    /// and is expected to produce a [`Result<(), Status>`](Status).
+    fn stream_attack<Item, GrpcItem, AttackFut>(
+        &self,
+        attack_uuid: Uuid,
+        perform_attack: impl FnOnce(mpsc::Sender<Item>) -> AttackFut,
+        convert_result: impl Fn(Item) -> GrpcItem + Send + 'static,
+        backlog_wrapper: impl Fn(GrpcItem) -> any_attack_response::Response + Send + 'static,
+    ) -> Result<Response<BoxStream<'static, Result<GrpcItem, Status>>>, Status>
+    where
+        Item: Send + 'static,
+        GrpcItem: Send + 'static,
+        AttackFut: Future<Output = Result<(), Status>> + Send + 'static,
+        AttackFut::Output: Send + 'static,
+    {
+        let (from_attack, mut to_middleware) = mpsc::channel::<Item>(16);
+        let (from_middleware, to_stream) = mpsc::channel::<Result<GrpcItem, Status>>(1);
+
+        // Spawn attack
+        let attack = perform_attack(from_attack);
+        let error_from_attack = from_middleware.clone();
+        tokio::spawn(async move {
+            if let Err(err) = attack.await {
+                let _ = error_from_attack.send(Err(err)).await;
+            }
+        });
+
+        let backlog = self.backlog.clone();
+
+        // Spawn middleware
+        tokio::spawn({
+            async move {
+                while let Some(item) = to_middleware.recv().await {
+                    let grpc_item: GrpcItem = convert_result(item);
+
+                    // Try sending the item over the rpc stream
+                    let result = from_middleware.send(Ok(grpc_item)).await;
+
+                    // Failure means the receiver i.e. outgoing stream has been closed and dropped
+                    if let Err(error) = result {
+                        let Ok(grpc_item) = error.0 else {
+                            unreachable!("We tried to send an `Ok(_)` above");
+                        };
+
+                        // Save this item to the backlog
+                        backlog.store(attack_uuid, backlog_wrapper(grpc_item)).await;
+
+                        // Drain all remaining items into the backlog, because the stream is gone
+                        while let Some(item) = to_middleware.recv().await {
+                            let grpc_item: GrpcItem = convert_result(item);
+                            backlog.store(attack_uuid, backlog_wrapper(grpc_item)).await;
+                        }
+                        return;
+                    }
+                }
+            }
+        });
+
+        // Return stream
+        Ok(Response::new(Box::pin(ReceiverStream::new(to_stream))))
     }
 }
