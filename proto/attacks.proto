@@ -134,6 +134,10 @@ message ServiceDetectionRequest {
 
 // Response to a service detection request
 message ServiceDetectionResponse {
+  // The ip address the service was found on
+  attacks.shared.Address address = 3;
+  // The port the service was found on
+  uint32 port = 4;
   // Indicates how many services are given and how they are to be interpreted
   ServiceDetectionResponseType responseType = 1;
   // List of services, the interpretation of this field depends on the `responseType`
@@ -203,44 +207,64 @@ service ReqAttackService {
 }
 
 /*
------------------------- Results -------------------------------
+------------------------ PushAttack -------------------------------
  */
 
-// The response to submitting a result
-message ResultResponse {
-  // The attack uuid assigned by kraken
-  string uuid = 1;
-}
-
-// Metainfos about the attack
-message MetaAttackInfo {
+// Request to push an attack which has been started manually through the leech's cli
+message PushAttackRequest {
   // The uuid of a workspace
   string workspace_uuid = 1;
 
   // The user's api key
   string api_key = 2;
+
+  // The attack's type as well as its response
+  oneof response {
+    // Response streamed by an bruteforce subdomain attack
+    RepeatedBruteforceSubdomainResponse bruteforce_subdomain = 3;
+    // Response streamed by an tcp port scan attack
+    RepeatedTcpPortScanResponse tcp_port_scan = 4;
+    // Response to a certificate transparency request
+    CertificateTransparencyResponse certificate_transparency = 5;
+    // Response to a service detection request
+    ServiceDetectionResponse service_detection = 6;
+    // Response for checking which hosts are alive
+    RepeatedHostsAliveResponse hosts_alive = 7;
+    // Response streamed by a dns resolution attack
+    RepeatedDnsResolutionResponse dns_resolution = 8;
+  }
 }
 
-// Result of a certificate transparency request
-message CertificateTransparencyResult {
-  // Information about the attack
-  MetaAttackInfo attack_info = 1;
-  // List of cert entries
-  repeated attacks.shared.CertEntry entries = 2;
+// Thin wrapper to have a `repeated BruteforceSubdomainResponse` in a `oneof`
+message RepeatedBruteforceSubdomainResponse {
+  // repeated BruteforceSubdomainResponse
+  repeated BruteforceSubdomainResponse responses = 1;
+}
+// Thin wrapper to have a `repeated TcpPortScanResponse` in a `oneof`
+message RepeatedTcpPortScanResponse {
+  // repeated TcpPortScanResponse
+  repeated TcpPortScanResponse responses = 1;
+}
+// Thin wrapper to have a `repeated HostsAliveResponse` in a `oneof`
+message RepeatedHostsAliveResponse {
+  // repeated HostsAliveResponse
+  repeated HostsAliveResponse responses = 1;
+}
+// Thin wrapper to have a `repeated DnsResolutionResponse` in a `oneof`
+message RepeatedDnsResolutionResponse {
+  // repeated DnsResolutionResponse
+  repeated DnsResolutionResponse responses = 1;
 }
 
-// Result of a subdomain enumeration request
-message SubdomainEnumerationResult {
-  // Information about the attack
-  MetaAttackInfo attack_info = 1;
-  // Found record
-  shared.DNSRecord record = 2;
+// Response to a manually pushed attack
+message PushAttackResponse {
+  // The attack uuid assigned by kraken
+  string uuid = 1;
 }
 
-// Implemented by kraken; allows leeches to push manual scan results via cli
-service AttackResultsService {
-  rpc CertificateTransparency(CertificateTransparencyResult) returns (ResultResponse);
-  rpc SubdomainEnumeration(stream SubdomainEnumerationResult) returns (ResultResponse);
+// Implemented by kraken; allows leeches to push manual attacks via cli
+service PushAttackService {
+  rpc PushAttack(PushAttackRequest) returns (PushAttackResponse);
 }
 
 
@@ -248,56 +272,41 @@ service AttackResultsService {
 ------------------------ Backlog -------------------------------
  */
 
-// Empty response
-message EmptyResponse {}
+// Request for a chunk of responses to be processed
+message BacklogRequest {
+  // Responses left from some previous attacks
+  repeated AnyAttackResponse responses = 1;
+}
 
-// Dns result (applies to 'bruteforce subdomains' as well as 'dns resolution')
-message BacklogDnsResult{
-  // the attack that produced the result
+// Response to a backlog request
+//
+// Might contain additional information in the future:
+// What did go wrong (custom error type)? Which responses could be processed?
+message BacklogResponse {}
+
+// union of all messages which might be returned as response to any attack request
+message AnyAttackResponse {
+  // the attack that produced the response
   string attack_uuid = 1;
-  // the dns record
-  shared.DNSRecord record = 2;
-}
 
-// multiple dns results
-message BacklogDnsRequest {
-  /// the results
-  repeated BacklogDnsResult entries = 1;
-}
-
-// Result of tcp port scan
-message BacklogTcpPortScanResult {
-  // the attack that produced the result
-  string attack_uuid = 1;
-  // the ip address
-  attacks.shared.Address address = 2;
-  // the port
-  uint32 port = 3;
-}
-
-// multiple tcp port scan results
-message BacklogTcpPortScanRequest {
-  /// the results
-  repeated BacklogTcpPortScanResult entries = 1;
-}
-
-// result of host alive check request
-message BacklogHostAliveResult {
-  // the attack that produced the result
-  string attack_uuid = 1;
-  // the hosts that responded
-  attacks.shared.Address host = 2;
-}
-
-// multiple host alive results
-message BacklogHostAliveRequest {
-  /// the results
-  repeated BacklogHostAliveResult entries = 1;
+  // union of all messages which might be returned as response to any attack request
+  oneof response {
+    // Response streamed by an bruteforce subdomain attack
+    BruteforceSubdomainResponse bruteforce_subdomain = 2;
+    // Response streamed by an tcp port scan attack
+    TcpPortScanResponse tcp_port_scan = 3;
+    // Response to a certificate transparency request
+    CertificateTransparencyResponse certificate_transparency = 4;
+    // Response to a service detection request
+    ServiceDetectionResponse service_detection = 5;
+    // Response for checking which hosts are alive
+    HostsAliveResponse hosts_alive = 6;
+    // Response streamed by a dns resolution attack
+    DnsResolutionResponse dns_resolution = 7;
+  }
 }
 
 // Implemented by kraken; allows leeches to upload results that failed to upload previously
 service BacklogService {
-  rpc DnsResults(BacklogDnsRequest) returns (EmptyResponse);
-  rpc TcpPortScan(BacklogTcpPortScanRequest) returns (EmptyResponse);
-  rpc HostAliveCheck(BacklogHostAliveRequest) returns (EmptyResponse);
+  rpc SubmitBacklog(BacklogRequest) returns (BacklogResponse);
 }

@@ -1,0 +1,38 @@
+[Migration]
+Hash = "8270295281854940387"
+Initial = false
+Dependency = 1
+Replaces = []
+
+[[Migration.Operations]]
+Type = "CreateModel"
+Name = "backlogentry"
+
+[[Migration.Operations.Fields]]
+Name = "uuid"
+Type = "uuid"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "primary_key"
+
+[[Migration.Operations.Fields]]
+Name = "attack_uuid"
+Type = "uuid"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations.Fields]]
+Name = "response"
+Type = "binary"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "DeleteModel"
+Name = "dnsresult"
+
+[[Migration.Operations]]
+Type = "DeleteModel"
+Name = "tcpportscanresult"

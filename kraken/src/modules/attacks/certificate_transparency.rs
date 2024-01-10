@@ -1,10 +1,21 @@
+use rorm::prelude::*;
+use rorm::{insert, query};
+use uuid::Uuid;
+
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::{CertificateTransparencyEntry, WsMessage};
-use crate::modules::attack_results::store_query_certificate_transparency_result;
-use crate::modules::attacks::{AttackContext, AttackError, CertificateTransparencyParams};
+use crate::models::{
+    AggregationSource, AggregationTable, Attack, CertificateTransparencyResultInsert,
+    CertificateTransparencyValueNameInsert, DomainCertainty, SourceType,
+};
+use crate::modules::attacks::{
+    AttackContext, AttackError, CertificateTransparencyParams, HandleAttackResponse,
+};
 use crate::modules::utc::utc_from_seconds;
-use crate::rpc::rpc_definitions::CertificateTransparencyRequest;
+use crate::rpc::rpc_definitions::{
+    CertificateTransparencyRequest, CertificateTransparencyResponse,
+};
 
 impl AttackContext {
     /// Executes the "certificate transparency" attack
@@ -20,19 +31,96 @@ impl AttackContext {
             max_retries: params.max_retries,
             retry_interval: params.retry_interval,
         };
-        let response = leech
-            .query_certificate_transparency(request)
-            .await?
-            .into_inner();
+        self.handle_response(
+            leech
+                .query_certificate_transparency(request)
+                .await?
+                .into_inner(),
+        )
+        .await
+    }
+}
+impl HandleAttackResponse<CertificateTransparencyResponse> for AttackContext {
+    async fn handle_response(
+        &self,
+        response: CertificateTransparencyResponse,
+    ) -> Result<(), AttackError> {
+        for entry in response.entries.clone() {
+            let mut tx = GLOBAL.db.start_transaction().await?;
 
-        for entry in &response.entries {
-            store_query_certificate_transparency_result(
-                &GLOBAL.db,
-                self.attack_uuid,
-                self.workspace.uuid,
-                entry.clone(),
-            )
-            .await?;
+            let user_uuid = *query!(&mut tx, (Attack::F.started_by,))
+                .condition(Attack::F.uuid.equals(self.attack_uuid))
+                .one()
+                .await?
+                .0
+                .key();
+
+            let result_uuid = insert!(&mut tx, CertificateTransparencyResultInsert)
+                .return_primary_key()
+                .single(&CertificateTransparencyResultInsert {
+                    uuid: Uuid::new_v4(),
+                    attack: ForeignModelByField::Key(self.attack_uuid),
+                    issuer_name: entry.issuer_name,
+                    serial_number: entry.serial_number,
+                    common_name: entry.common_name.clone(),
+                    not_before: entry.not_before.map(|x| utc_from_seconds(x.seconds)),
+                    not_after: entry.not_after.map(|x| utc_from_seconds(x.seconds)),
+                })
+                .await?;
+
+            insert!(&mut tx, CertificateTransparencyValueNameInsert)
+                .return_nothing()
+                .bulk(
+                    entry
+                        .value_names
+                        .iter()
+                        .map(|x| CertificateTransparencyValueNameInsert {
+                            uuid: Uuid::new_v4(),
+                            value_name: x.to_string(),
+                            ct_result: ForeignModelByField::Key(result_uuid),
+                        }),
+                )
+                .await?;
+
+            let mut domains = Vec::new();
+            domains.push(
+                GLOBAL
+                    .aggregator
+                    .aggregate_domain(
+                        self.workspace.uuid,
+                        &entry.common_name,
+                        DomainCertainty::Unverified,
+                        user_uuid,
+                    )
+                    .await?,
+            );
+            for value in &entry.value_names {
+                domains.push(
+                    GLOBAL
+                        .aggregator
+                        .aggregate_domain(
+                            self.workspace.uuid,
+                            value,
+                            DomainCertainty::Unverified,
+                            user_uuid,
+                        )
+                        .await?,
+                );
+            }
+
+            insert!(&mut tx, AggregationSource)
+                .return_nothing()
+                .bulk(domains.into_iter().map(|domain_uuid| AggregationSource {
+                    uuid: Uuid::new_v4(),
+                    workspace: ForeignModelByField::Key(self.workspace.uuid),
+                    source_type: SourceType::QueryCertificateTransparency,
+                    source_uuid: result_uuid,
+                    aggregated_table: AggregationTable::Domain,
+                    aggregated_uuid: domain_uuid,
+                }))
+                .await?;
+
+            tx.commit().await?;
         }
         self.send_ws(WsMessage::CertificateTransparencyResult {
             attack_uuid: self.attack_uuid,
@@ -50,6 +138,7 @@ impl AttackContext {
                 .collect(),
         })
         .await;
+
         Ok(())
     }
 }
