@@ -5,6 +5,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use futures::TryStreamExt;
+use kraken_proto::backlog_service_client::BacklogServiceClient;
+use kraken_proto::{any_attack_response, AnyAttackResponse, BacklogRequest};
 use log::{debug, error, info};
 use rorm::prelude::*;
 use rorm::{delete, insert, query, Database};
@@ -16,8 +18,6 @@ use uuid::Uuid;
 
 use crate::config::KrakenConfig;
 use crate::models::{BacklogEntry, Proto};
-use crate::rpc::rpc_attacks::backlog_service_client::BacklogServiceClient;
-use crate::rpc::rpc_attacks::{any_attack_response, AnyAttackResponse, BacklogRequest};
 use crate::utils::kraken_endpoint;
 
 /// The main struct for the Backlog,

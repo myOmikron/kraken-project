@@ -7,6 +7,12 @@ use std::collections::HashMap;
 use std::net::{AddrParseError, SocketAddr};
 use std::str::FromStr;
 
+use kraken_proto::backlog_service_server::{BacklogService, BacklogServiceServer};
+use kraken_proto::push_attack_service_server::{PushAttackService, PushAttackServiceServer};
+use kraken_proto::{
+    any_attack_response, push_attack_request, AnyAttackResponse, BacklogRequest, BacklogResponse,
+    PushAttackRequest, PushAttackResponse,
+};
 use log::{error, info, warn};
 use rorm::{query, FieldAccess, Model};
 use tonic::transport::Server;
@@ -17,14 +23,6 @@ use crate::chan::global::GLOBAL;
 use crate::config::Config;
 use crate::models::{AttackType, InsertAttackError, Leech, LeechApiKey, Workspace};
 use crate::modules::attacks::{AttackContext, HandleAttackResponse};
-use crate::rpc::rpc_definitions::backlog_service_server::{BacklogService, BacklogServiceServer};
-use crate::rpc::rpc_definitions::push_attack_service_server::{
-    PushAttackService, PushAttackServiceServer,
-};
-use crate::rpc::rpc_definitions::{
-    any_attack_response, push_attack_request, AnyAttackResponse, BacklogRequest, BacklogResponse,
-    PushAttackRequest, PushAttackResponse,
-};
 
 /// Helper type to implement result handler to
 pub struct Results;

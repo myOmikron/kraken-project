@@ -45,7 +45,7 @@ pub struct TcpPortScannerSettings {
 ///
 /// **Parameter**:
 /// - settings: [TcpPortScannerSettings]
-/// - `tx`: [Sender] of [SocketAddr]
+/// - `tx`: [Sender] of [TcpPortScanResult]
 pub async fn start_tcp_con_port_scan(
     settings: TcpPortScannerSettings,
     tx: Sender<SocketAddr>,

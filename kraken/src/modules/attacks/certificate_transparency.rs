@@ -1,3 +1,4 @@
+use kraken_proto::{CertificateTransparencyRequest, CertificateTransparencyResponse};
 use rorm::prelude::*;
 use rorm::{insert, query};
 use uuid::Uuid;
@@ -13,9 +14,6 @@ use crate::modules::attacks::{
     AttackContext, AttackError, CertificateTransparencyParams, HandleAttackResponse,
 };
 use crate::modules::utc::utc_from_seconds;
-use crate::rpc::rpc_definitions::{
-    CertificateTransparencyRequest, CertificateTransparencyResponse,
-};
 
 impl AttackContext {
     /// Executes the "certificate transparency" attack

@@ -27,6 +27,9 @@ use clap::{ArgAction, Parser, Subcommand, ValueEnum};
 use dehashed_rs::SearchType;
 use ipnetwork::IpNetwork;
 use itertools::Itertools;
+use kraken_proto::push_attack_service_client::PushAttackServiceClient;
+use kraken_proto::shared::CertEntry;
+use kraken_proto::{push_attack_request, CertificateTransparencyResponse, PushAttackRequest};
 use log::{error, info, warn};
 use prost_types::Timestamp;
 use rorm::{cli, Database, DatabaseConfiguration, DatabaseDriver};
@@ -45,11 +48,6 @@ use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::modules::service_detection::DetectServiceSettings;
 use crate::modules::{dehashed, service_detection, whois};
-use crate::rpc::rpc_attacks::push_attack_service_client::PushAttackServiceClient;
-use crate::rpc::rpc_attacks::shared::CertEntry;
-use crate::rpc::rpc_attacks::{
-    push_attack_request, CertificateTransparencyResponse, PushAttackRequest,
-};
 use crate::rpc::start_rpc_server;
 use crate::utils::{input, kraken_endpoint};
 

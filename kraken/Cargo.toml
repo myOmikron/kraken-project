@@ -19,6 +19,8 @@ path = "./src/lib.rs"
 name = "kraken"
 
 [dependencies]
+kraken-proto = { path = "../kraken-proto" }
+
 # Webframework
 actix-web = { version = "~4", optional = true }
 # Extensions for actix-web
@@ -88,9 +90,6 @@ dehashed-rs = { version = "~0.4", features = ["tokio", "utoipa"] }
 # TLS
 rcgen = { version = "~0.12", features = ["x509-parser"], optional = true }
 url = { version = "~2", features = ["serde"] } # Parsing ip / domain when filling subject_alt_names
-
-[build-dependencies]
-tonic-build = { version = "~0.10" }
 
 [features]
 rorm-main = []

@@ -9,6 +9,7 @@ use chrono::{DateTime, Utc};
 use dehashed_rs::{Query, ScheduledRequest};
 use futures::TryStreamExt;
 use ipnetwork::IpNetwork;
+use kraken_proto::InvalidArgumentError;
 use log::error;
 use rorm::prelude::*;
 use rorm::{and, query, update};
@@ -28,7 +29,6 @@ use crate::models::{
     Attack, AttackType, Domain, DomainCertainty, DomainHostRelation, InsertAttackError, User,
     Workspace,
 };
-use crate::rpc::rpc_definitions::AddressConvError;
 
 mod bruteforce_subdomains;
 mod certificate_transparency;
@@ -485,9 +485,9 @@ pub enum AttackError {
     #[error("Malformed response: {0}")]
     Malformed(&'static str),
 
-    /// An error produced by address conversion
-    #[error("Error during address conversion:  {0}")]
-    AddressConv(#[from] AddressConvError),
+    /// A malformed grpc message
+    #[error("Invalid argument: {0}")]
+    InvalidArgument(#[from] InvalidArgumentError),
 
     /// Catch all variant for everything else
     #[error("{0}")]

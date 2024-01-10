@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use kraken_proto::AnyAttackResponse;
 use prost::Message;
 use rorm::conditions::Value;
 use rorm::fields::traits::FieldType;
@@ -11,8 +12,6 @@ use rorm::internal::hmr::db_type::{Binary, DbType};
 use rorm::internal::hmr::AsImr;
 use rorm::{imr, new_converting_decoder, Model};
 use uuid::Uuid;
-
-use crate::rpc::rpc_attacks::AnyAttackResponse;
 
 /// A response and its associated attack which couldn't be sent
 #[derive(Model)]

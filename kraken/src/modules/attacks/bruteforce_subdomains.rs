@@ -2,6 +2,8 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 use std::str::FromStr;
 
 use ipnetwork::IpNetwork;
+use kraken_proto::shared::dns_record::Record;
+use kraken_proto::{shared, BruteforceSubdomainRequest, BruteforceSubdomainResponse};
 use rorm::insert;
 use rorm::prelude::ForeignModelByField;
 use uuid::Uuid;
@@ -15,10 +17,6 @@ use crate::models::{
 };
 use crate::modules::attacks::{
     AttackContext, AttackError, BruteforceSubdomainsParams, HandleAttackResponse,
-};
-use crate::rpc::rpc_definitions::shared::dns_record::Record;
-use crate::rpc::rpc_definitions::{
-    shared, BruteforceSubdomainRequest, BruteforceSubdomainResponse,
 };
 
 impl AttackContext {

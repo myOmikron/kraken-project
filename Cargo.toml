@@ -5,4 +5,5 @@ members = [
     "./sdk/rust-kraken-sdk",
     "./leech",
     "./leech/probe-config",
+    "./kraken-proto",
 ]

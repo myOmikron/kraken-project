@@ -1,6 +1,7 @@
 use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
+use kraken_proto::{shared, ServiceDetectionRequest, ServiceDetectionResponse};
 use rorm::insert;
 use rorm::prelude::ForeignModelByField;
 use uuid::Uuid;
@@ -14,7 +15,6 @@ use crate::models::{
 use crate::modules::attacks::{
     AttackContext, AttackError, HandleAttackResponse, ServiceDetectionParams,
 };
-use crate::rpc::rpc_definitions::{ServiceDetectionRequest, ServiceDetectionResponse};
 
 impl AttackContext {
     /// Executes the "service detection" attack
@@ -25,7 +25,7 @@ impl AttackContext {
     ) -> Result<(), AttackError> {
         let request = ServiceDetectionRequest {
             attack_uuid: self.attack_uuid.to_string(),
-            address: Some(params.target.into()),
+            address: Some(shared::Address::from(params.target)),
             port: params.port as u32,
             timeout: params.timeout,
         };

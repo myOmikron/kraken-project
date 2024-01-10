@@ -1,11 +1,14 @@
 use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
+use kraken_proto::{
+    port_or_range, shared, PortOrRange, PortRange, TcpPortScanRequest, TcpPortScanResponse,
+};
 use rorm::insert;
 use rorm::prelude::ForeignModelByField;
 use uuid::Uuid;
 
-use crate::api::handler::attacks::schema::PortOrRange;
+use crate::api::handler::attacks::schema;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
@@ -16,9 +19,6 @@ use crate::models::{
 use crate::modules::attacks::{
     AttackContext, AttackError, DomainOrNetwork, HandleAttackResponse, TcpPortScanParams,
 };
-use crate::rpc::rpc_definitions;
-use crate::rpc::rpc_definitions::shared::address::Address;
-use crate::rpc::rpc_definitions::{shared, TcpPortScanRequest, TcpPortScanResponse};
 
 impl AttackContext {
     /// Executes the "tcp port scan" attack
@@ -32,22 +32,23 @@ impl AttackContext {
                 .await?;
         let request = TcpPortScanRequest {
             attack_uuid: self.attack_uuid.to_string(),
-            targets: targets.into_iter().map(From::from).collect(),
+            targets: targets
+                .into_iter()
+                .map(shared::NetOrAddress::from)
+                .collect(),
             ports: params
                 .ports
                 .into_iter()
-                .map(|x| rpc_definitions::PortOrRange {
+                .map(|x| PortOrRange {
                     port_or_range: Some(match x {
-                        PortOrRange::Port(port) => {
-                            rpc_definitions::port_or_range::PortOrRange::Single(port as u32)
+                        schema::PortOrRange::Port(port) => {
+                            port_or_range::PortOrRange::Single(port as u32)
                         }
-                        PortOrRange::Range(range) => {
-                            rpc_definitions::port_or_range::PortOrRange::Range(
-                                rpc_definitions::PortRange {
-                                    start: *range.start() as u32,
-                                    end: *range.end() as u32,
-                                },
-                            )
+                        schema::PortOrRange::Range(range) => {
+                            port_or_range::PortOrRange::Range(PortRange {
+                                start: *range.start() as u32,
+                                end: *range.end() as u32,
+                            })
                         }
                     }),
                 })
@@ -65,19 +66,14 @@ impl AttackContext {
 impl HandleAttackResponse<TcpPortScanResponse> for AttackContext {
     async fn handle_response(&self, response: TcpPortScanResponse) -> Result<(), AttackError> {
         let TcpPortScanResponse {
-            address: Some(shared::Address {
-                address: Some(addr),
-            }),
+            address: Some(address),
             port,
         } = response
         else {
             return Err(AttackError::Malformed("Missing `address`"));
         };
 
-        let address = match addr {
-            Address::Ipv4(addr) => IpAddr::V4(addr.into()),
-            Address::Ipv6(addr) => IpAddr::V6(addr.into()),
-        };
+        let address = IpAddr::try_from(address)?;
 
         self.send_ws(WsMessage::ScanTcpPortsResult {
             attack_uuid: self.attack_uuid,

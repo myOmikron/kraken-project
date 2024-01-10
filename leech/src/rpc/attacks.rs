@@ -1,13 +1,25 @@
 //! In this module is the definition of the gRPC services
 
 use std::future::Future;
-use std::net::SocketAddr;
+use std::net::{IpAddr, SocketAddr};
+use std::ops::RangeInclusive;
 use std::pin::Pin;
 use std::time::Duration;
 
 use chrono::{Datelike, Timelike};
 use futures::stream::BoxStream;
 use futures::Stream;
+use ipnetwork::IpNetwork;
+use kraken_proto::req_attack_service_server::ReqAttackService;
+use kraken_proto::shared::dns_record::Record;
+use kraken_proto::shared::{Aaaa, Address, CertEntry, DnsRecord, GenericRecord, A};
+use kraken_proto::{
+    any_attack_response, shared, BruteforceSubdomainRequest, BruteforceSubdomainResponse,
+    CertificateTransparencyRequest, CertificateTransparencyResponse, DnsResolutionRequest,
+    DnsResolutionResponse, HostsAliveRequest, HostsAliveResponse, ServiceDetectionRequest,
+    ServiceDetectionResponse, ServiceDetectionResponseType, TcpPortScanRequest,
+    TcpPortScanResponse,
+};
 use log::error;
 use prost_types::Timestamp;
 use tokio::sync::mpsc;
@@ -24,16 +36,6 @@ use crate::modules::dns::{dns_resolution, DnsRecordResult, DnsResolutionSettings
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::modules::service_detection::{detect_service, DetectServiceSettings, Service};
-use crate::rpc::rpc_attacks::req_attack_service_server::ReqAttackService;
-use crate::rpc::rpc_attacks::shared::dns_record::Record;
-use crate::rpc::rpc_attacks::shared::{Aaaa, Address, CertEntry, DnsRecord, GenericRecord, A};
-use crate::rpc::rpc_attacks::{
-    any_attack_response, shared, BruteforceSubdomainRequest, BruteforceSubdomainResponse,
-    CertificateTransparencyRequest, CertificateTransparencyResponse, DnsResolutionRequest,
-    DnsResolutionResponse, HostsAliveRequest, HostsAliveResponse, ServiceDetectionRequest,
-    ServiceDetectionResponse, ServiceDetectionResponseType, TcpPortScanRequest,
-    TcpPortScanResponse,
-};
 
 /// The Attack service
 pub struct Attacks {
@@ -74,13 +76,13 @@ impl ReqAttackService for Attacks {
                     BruteforceSubdomainResult::A { source, target } => DnsRecord {
                         record: Some(Record::A(A {
                             source,
-                            to: Some(target.into()),
+                            to: Some(shared::Ipv4::from(target)),
                         })),
                     },
                     BruteforceSubdomainResult::Aaaa { source, target } => DnsRecord {
                         record: Some(Record::Aaaa(Aaaa {
                             source,
-                            to: Some(target.into()),
+                            to: Some(shared::Ipv6::from(target)),
                         })),
                     },
                     BruteforceSubdomainResult::Cname { source, target } => DnsRecord {
@@ -107,14 +109,18 @@ impl ReqAttackService for Attacks {
         let mut ports = req
             .ports
             .into_iter()
-            .map(TryFrom::try_from)
+            .map(RangeInclusive::try_from)
             .collect::<Result<Vec<_>, _>>()?;
         if ports.is_empty() {
             ports.push(1..=u16::MAX);
         }
 
         let settings = TcpPortScannerSettings {
-            addresses: req.targets.into_iter().map(|addr| addr.into()).collect(),
+            addresses: req
+                .targets
+                .into_iter()
+                .map(IpNetwork::try_from)
+                .collect::<Result<_, _>>()?,
             ports,
             timeout: Duration::from_millis(req.timeout),
             max_retries: req.max_retries,
@@ -132,20 +138,9 @@ impl ReqAttackService for Attacks {
                         .map_err(|err| Status::unknown(err.to_string()))
                 }
             },
-            |value| {
-                let address = match value {
-                    SocketAddr::V4(v) => Address {
-                        address: Some(shared::address::Address::Ipv4((*v.ip()).into())),
-                    },
-                    SocketAddr::V6(v) => Address {
-                        address: Some(shared::address::Address::Ipv6((*v.ip()).into())),
-                    },
-                };
-
-                TcpPortScanResponse {
-                    address: Some(address),
-                    port: value.port() as u32,
-                }
+            |value| TcpPortScanResponse {
+                address: Some(Address::from(value.ip())),
+                port: value.port() as u32,
             },
             any_attack_response::Response::TcpPortScan,
         )
@@ -212,11 +207,12 @@ impl ReqAttackService for Attacks {
         let request = request.into_inner();
         let settings = DetectServiceSettings {
             socket: SocketAddr::new(
-                request
-                    .address
-                    .clone()
-                    .ok_or(Status::invalid_argument("Missing address"))?
-                    .into(),
+                IpAddr::try_from(
+                    request
+                        .address
+                        .clone()
+                        .ok_or(Status::invalid_argument("Missing address"))?,
+                )?,
                 request
                     .port
                     .try_into()
@@ -272,7 +268,11 @@ impl ReqAttackService for Attacks {
         let settings = IcmpScanSettings {
             concurrent_limit: req.concurrent_limit,
             timeout: Duration::from_millis(req.timeout),
-            addresses: req.targets.into_iter().map(|el| el.into()).collect(),
+            addresses: req
+                .targets
+                .into_iter()
+                .map(IpNetwork::try_from)
+                .collect::<Result<_, _>>()?,
         };
 
         self.stream_attack(
@@ -283,7 +283,7 @@ impl ReqAttackService for Attacks {
                     .map_err(|err| Status::unknown(err.to_string()))
             },
             |value| HostsAliveResponse {
-                host: Some(value.into()),
+                host: Some(Address::from(value)),
             },
             any_attack_response::Response::HostsAlive,
         )
@@ -322,13 +322,13 @@ impl ReqAttackService for Attacks {
                     DnsRecordResult::A { source, target } => DnsRecord {
                         record: Some(Record::A(A {
                             source,
-                            to: Some(target.into()),
+                            to: Some(shared::Ipv4::from(target)),
                         })),
                     },
                     DnsRecordResult::Aaaa { source, target } => DnsRecord {
                         record: Some(Record::Aaaa(Aaaa {
                             source,
-                            to: Some(target.into()),
+                            to: Some(shared::Ipv6::from(target)),
                         })),
                     },
                     DnsRecordResult::CAA { source, target } => DnsRecord {

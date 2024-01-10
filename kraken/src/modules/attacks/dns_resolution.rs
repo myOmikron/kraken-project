@@ -3,6 +3,8 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 use std::str::FromStr;
 
 use ipnetwork::IpNetwork;
+use kraken_proto::shared::dns_record::Record;
+use kraken_proto::{shared, DnsResolutionRequest, DnsResolutionResponse};
 use rorm::insert;
 use rorm::prelude::*;
 use uuid::Uuid;
@@ -17,8 +19,6 @@ use crate::models::{
 use crate::modules::attacks::{
     AttackContext, AttackError, DnsResolutionParams, HandleAttackResponse,
 };
-use crate::rpc::rpc_definitions::shared::dns_record::Record;
-use crate::rpc::rpc_definitions::{shared, DnsResolutionRequest, DnsResolutionResponse};
 
 impl AttackContext {
     // What's up with this signature?

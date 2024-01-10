@@ -1,4 +1,7 @@
+use std::net::IpAddr;
+
 use ipnetwork::IpNetwork;
+use kraken_proto::{shared, HostsAliveRequest, HostsAliveResponse};
 use rorm::insert;
 use rorm::prelude::ForeignModelByField;
 use uuid::Uuid;
@@ -12,7 +15,6 @@ use crate::models::{
 use crate::modules::attacks::{
     AttackContext, AttackError, DomainOrNetwork, HandleAttackResponse, HostAliveParams,
 };
-use crate::rpc::rpc_definitions::{HostsAliveRequest, HostsAliveResponse};
 
 impl AttackContext {
     /// Executes the "host alive" attack
@@ -26,7 +28,10 @@ impl AttackContext {
                 .await?;
         let request = HostsAliveRequest {
             attack_uuid: self.attack_uuid.to_string(),
-            targets: targets.into_iter().map(From::from).collect(),
+            targets: targets
+                .into_iter()
+                .map(shared::NetOrAddress::from)
+                .collect(),
             timeout: params.timeout,
             concurrent_limit: params.concurrent_limit,
         };
@@ -40,7 +45,7 @@ impl HandleAttackResponse<HostsAliveResponse> for AttackContext {
             return Err(AttackError::Malformed("Missing `host`"));
         };
 
-        let host = host.try_into()?;
+        let host = IpAddr::try_from(host)?;
         self.send_ws(WsMessage::HostsAliveCheck {
             host,
             attack_uuid: self.attack_uuid,
