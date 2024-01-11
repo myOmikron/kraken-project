@@ -42,7 +42,7 @@ It is then followed by a list of probes using 2 spaces per indentation level.
 - `protocol` MUST be one of `TCP`, `UDP`, `TLS` and defines the transport protocol to use for the connection
 - `alpn` MAY be set to request an application protocol during the tls handshake (ignored for non-`TLS`)
 - `payload_str` MAY be set to a string to be sent upon establishing a connection (conflicts with `payload_b64`)
-- `payload_b64` MAY be set to base64 encoded binary to be sent upon establishing a connection (conflicts with `payload_b64`)
+- `payload_b64` MAY be set to base64 encoded binary to be sent upon establishing a connection (conflicts with `payload_str`)
 - `regex` MUST be a regex, the servers response is matched against
 - `sub_regex` MAY be a list of regexes, which is checked after the initial `regex` matched
 
