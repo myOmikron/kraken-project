@@ -139,19 +139,55 @@ message ServiceDetectionResponse {
   // The port the service was found on
   uint32 port = 4;
   // Indicates how many services are given and how they are to be interpreted
-  ServiceDetectionResponseType responseType = 1;
+  ServiceCertainty responseType = 1;
   // List of services, the interpretation of this field depends on the `responseType`
   repeated string services = 2;
 }
 
-// Indicates how many services are returned in a ServiceDetectionResponse and how they are to be interpreted
-enum ServiceDetectionResponseType {
+// Indicates how many services are returned in a ServiceCertainty and how they are to be interpreted
+enum ServiceCertainty {
   // The service is unknown
   UNKNOWN = 0;
   // The service might be one of the list
   MAYBE = 1;
   // The service has been identified
   DEFINITELY = 2;
+}
+
+// Service detection request for all specified ports
+message UdpServiceDetectionRequest {
+  // A unique id that identifier the attack
+  string attack_uuid = 1;
+  // The ip address to connect to
+  attacks.shared.Address address = 2;
+  // List of single ports and port ranges
+  //
+  // If no values are supplied, 1-65535 is used as default
+  repeated PortOrRange ports = 3;
+  // The concurrent task limit
+  uint32 concurrent_limit = 4;
+  // The number of times the packet sending should be retried if no response was received.
+  uint32 max_retries = 5;
+  // The interval that should be wait between retries on a port.
+  //
+  // The interval is specified in milliseconds.
+  uint64 retry_interval = 6;
+  // The time to wait until a connection is considered failed.
+  //
+  // The timeout is specified in milliseconds.
+  uint64 timeout = 7;
+}
+
+// Response to a service detection request
+message UdpServiceDetectionResponse {
+  // The ip address the service was found on
+  attacks.shared.Address address = 1;
+  // Port value
+  uint32 port = 2;
+  // Indicates how many services are given and how they are to be interpreted
+  ServiceCertainty certainty = 3;
+  // List of services, the interpretation of this field depends on the `certainty`
+  repeated string services = 4;
 }
 
 /*
@@ -202,6 +238,7 @@ service ReqAttackService {
   rpc RunTcpPortScan(TcpPortScanRequest) returns (stream TcpPortScanResponse);
   rpc QueryCertificateTransparency(CertificateTransparencyRequest) returns (CertificateTransparencyResponse);
   rpc ServiceDetection(ServiceDetectionRequest) returns (ServiceDetectionResponse);
+  rpc UdpServiceDetection(UdpServiceDetectionRequest) returns (stream UdpServiceDetectionResponse);
   rpc HostsAliveCheck(HostsAliveRequest) returns (stream HostsAliveResponse);
   rpc DnsResolution(DnsResolutionRequest) returns (stream DnsResolutionResponse);
 }
@@ -232,6 +269,8 @@ message PushAttackRequest {
     RepeatedHostsAliveResponse hosts_alive = 7;
     // Response streamed by a dns resolution attack
     RepeatedDnsResolutionResponse dns_resolution = 8;
+    // Response streamed by a dns resolution attack
+    RepeatedUdpServiceDetectionResponse udp_service_detection = 9;
   }
 }
 
@@ -254,6 +293,11 @@ message RepeatedHostsAliveResponse {
 message RepeatedDnsResolutionResponse {
   // repeated DnsResolutionResponse
   repeated DnsResolutionResponse responses = 1;
+}
+// Thin wrapper to have a `repeated UdpServiceDetectionResponse` in a `oneof`
+message RepeatedUdpServiceDetectionResponse {
+  // repeated UdpServiceDetectionResponse
+  repeated UdpServiceDetectionResponse responses = 1;
 }
 
 // Response to a manually pushed attack
@@ -303,6 +347,8 @@ message AnyAttackResponse {
     HostsAliveResponse hosts_alive = 6;
     // Response streamed by a dns resolution attack
     DnsResolutionResponse dns_resolution = 7;
+    // Response streamed by a dns resolution attack
+    UdpServiceDetectionResponse udp_service_detection = 8;
   }
 }
 

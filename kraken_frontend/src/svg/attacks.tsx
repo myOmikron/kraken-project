@@ -65,10 +65,17 @@ export default function AttacksIcon(params: AttacksParams) {
                 }`}
                 transform="matrix(.23193 0 0 .23193 129.444 15.441)"
             />
-            {/* services 2 */}
+            {/* UDP service detection */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                className={"kraken-attacks-hex-unavailable kraken-attacks-hex"}
+                {...mouseHandler(AttackType.UdpServiceDetection)}
+                className={`kraken-attacks-hex ${
+                    activeAttack === AttackType.UdpServiceDetection ? "kraken-attacks-hex-selected" : ""
+                } ${
+                    !disabled[AttackType.UdpServiceDetection]
+                        ? "kraken-attacks-clickable"
+                        : "kraken-attacks-hex-unavailable"
+                }`}
                 transform="matrix(.23193 0 0 .23193 139.54 -1.983)"
             />
             {/* services 3 */}

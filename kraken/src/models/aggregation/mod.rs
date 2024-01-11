@@ -517,6 +517,8 @@ pub enum SourceType {
     HostAlive,
     /// The [`ServiceDetectionResult`] table
     ServiceDetection,
+    /// The [`UdpServiceDetectionResult`] table
+    UdpServiceDetection,
     /// The [`DnsResolutionResult`] table
     DnsResolution,
     /// The table for the not yet implemented [`AttackType::UdpPortScan`] results

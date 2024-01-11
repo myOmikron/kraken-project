@@ -171,6 +171,33 @@ pub struct FullServiceDetectionResult {
     pub port: u16,
 }
 
+/// A simple representation of a service detection result
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct FullUdpServiceDetectionResult {
+    /// The primary key
+    pub uuid: Uuid,
+
+    /// The attack which produced this result
+    pub attack: Uuid,
+
+    /// The point in time, this result was produced
+    pub created_at: DateTime<Utc>,
+
+    /// The certainty of the result
+    #[schema(inline)]
+    pub certainty: ServiceCertainty,
+
+    /// The found names of the service
+    pub service_names: Vec<String>,
+
+    /// The ip address a port was found on
+    #[schema(value_type = String, example = "127.0.0.1")]
+    pub host: IpNetwork,
+
+    /// Port number
+    pub port: u16,
+}
+
 /// A simple representation of a dns resolution result
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct SimpleDnsResolutionResult {

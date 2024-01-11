@@ -28,6 +28,7 @@ import {
     ResponseError,
     ScanTcpPortsRequest,
     ServiceDetectionRequest,
+    UdpServiceDetectionRequest,
     ServicesApi,
     SettingsManagementApi,
     UpdateAppRequest,
@@ -152,6 +153,8 @@ export const Api = {
             handleError(attacks.scanTcpPorts({ scanTcpPortsRequest: attack })),
         serviceDetection: (attack: ServiceDetectionRequest) =>
             handleError(attacks.serviceDetection({ serviceDetectionRequest: attack })),
+        udpServiceDetection: (attack: UdpServiceDetectionRequest) =>
+            handleError(attacks.udpServiceDetection({ udpServiceDetectionRequest: attack })),
         queryDehashed: (uuid: UUID, query: Query) =>
             handleError(attacks.queryDehashed({ queryDehashedRequest: { workspaceUuid: uuid, query } })),
         dnsResolution: (attack: DnsResolutionRequest) =>
@@ -172,6 +175,8 @@ export const Api = {
                 handleError(attacks.getQueryUnhashedResults({ uuid, limit, offset })),
             getServiceDetectionResults: (uuid: UUID, limit: number, offset: number) =>
                 handleError(attacks.getServiceDetectionResults({ uuid, limit, offset })),
+            getUdpServiceDetectionResults: (uuid: UUID, limit: number, offset: number) =>
+                handleError(attacks.getUdpServiceDetectionResults({ uuid, limit, offset })),
             getTcpPortScanResults: (uuid: UUID, limit: number, offset: number) =>
                 handleError(attacks.getTcpPortScanResults({ uuid, limit, offset })),
         },

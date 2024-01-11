@@ -5,4 +5,5 @@
 //! If you want to use the leech as cli utility and push results to kraken, it will start a
 //! rpc client and connect to the rpc server of kraken
 
+mod convert;
 pub mod server;

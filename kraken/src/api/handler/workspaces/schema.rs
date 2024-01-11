@@ -6,8 +6,9 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::api::handler::attack_results::schema::{
-    FullQueryCertificateTransparencyResult, FullServiceDetectionResult, SimpleDnsResolutionResult,
-    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+    FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
+    FullUdpServiceDetectionResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
+    SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
 };
 use crate::api::handler::attacks::schema::SimpleAttack;
 use crate::api::handler::common::de_optional;
@@ -149,6 +150,8 @@ pub enum SearchResultEntry {
     HostAliveResult(SimpleHostAliveResult),
     /// Service Detection Result
     ServiceDetectionResult(FullServiceDetectionResult),
+    /// UDP Service Detection Result
+    UdpServiceDetectionResult(FullUdpServiceDetectionResult),
 }
 
 /// Searched entry
