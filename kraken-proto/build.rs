@@ -1,4 +1,6 @@
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tonic_build::configure().compile(&["./proto/attacks.proto"], &["./proto/"])?;
+    tonic_build::configure()
+        .protoc_arg("--experimental_allow_proto3_optional")
+        .compile(&["./proto/attacks.proto"], &["./proto/"])?;
     Ok(())
 }
