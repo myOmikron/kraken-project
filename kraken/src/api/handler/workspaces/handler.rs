@@ -8,7 +8,6 @@ use rorm::db::{executor, Executor};
 use rorm::internal::field::Field;
 use rorm::prelude::ForeignModelByField;
 use rorm::{and, field, insert, query, update, FieldAccess, Model};
-use tonic::codegen::tokio_stream::StreamExt;
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
@@ -876,7 +875,7 @@ pub async fn get_search_results(
                 })
             }
             ModelType::ServiceDetectionResult => {
-                let mut data = query!(&mut tx, ServiceDetectionResult)
+                let data = query!(&mut tx, ServiceDetectionResult)
                     .condition(ServiceDetectionResult::F.uuid.equals(item.ref_key))
                     .one()
                     .await?;

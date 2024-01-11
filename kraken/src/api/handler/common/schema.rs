@@ -37,6 +37,7 @@ pub struct PageParams {
     pub offset: u64,
 }
 
+#[allow(missing_docs)]
 mod utoipa_fix {
     use serde::{Deserialize, Serialize};
     use utoipa::ToSchema;
