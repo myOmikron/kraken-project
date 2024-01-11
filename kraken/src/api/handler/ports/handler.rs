@@ -20,13 +20,14 @@ use crate::api::handler::common::schema::{
 use crate::api::handler::common::utils::get_page_params;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::{
-    CreatePortRequest, FullPort, GetAllPortsQuery, PathPort, UpdatePortRequest,
+    CreatePortRequest, FullPort, GetAllPortsQuery, PathPort, PortRelations, UpdatePortRequest,
 };
+use crate::api::handler::services::schema::SimpleService;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::{AggregationType, WsMessage};
 use crate::models::{
     AggregationSource, AggregationTable, GlobalTag, Host, ManualPort, Port, PortGlobalTag,
-    PortWorkspaceTag, Workspace, WorkspaceTag,
+    PortWorkspaceTag, Service, Workspace, WorkspaceTag,
 };
 use crate::modules::filter::{GlobalAST, PortAST};
 use crate::modules::raw_query::RawQueryBuilder;
@@ -455,4 +456,57 @@ pub async fn get_port_sources(
             .await?;
     tx.commit().await?;
     Ok(Json(source))
+}
+
+/// Get a port's direct relations
+#[utoipa::path(
+    tag = "Ports",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The port's relations", body = PortRelations),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathPort),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/ports/{p_uuid}/relations")]
+pub async fn get_port_relations(path: Path<PathPort>) -> ApiResult<Json<PortRelations>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    let services = query!(&mut tx, Service)
+        .condition(Service::F.port.equals(path.p_uuid))
+        .stream()
+        .map_ok(|s| SimpleService {
+            uuid: s.uuid,
+            name: s.name,
+            version: s.version,
+            host: *s.host.key(),
+            port: s.port.map(|x| *x.key()),
+            comment: s.comment,
+            workspace: *s.workspace.key(),
+            created_at: s.created_at,
+        })
+        .try_collect()
+        .await?;
+
+    let (host,) = query!(&mut tx, (Port::F.host as Host,))
+        .condition(Port::F.uuid.equals(path.p_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    tx.commit().await?;
+
+    Ok(Json(PortRelations {
+        host: SimpleHost {
+            uuid: host.uuid,
+            ip_addr: host.ip_addr.ip().to_string(),
+            os_type: host.os_type,
+            comment: host.comment,
+            workspace: *host.workspace.key(),
+            created_at: host.created_at,
+        },
+        services,
+    }))
 }

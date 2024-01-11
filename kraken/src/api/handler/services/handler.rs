@@ -21,7 +21,8 @@ use crate::api::handler::common::utils::get_page_params;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::{
-    CreateServiceRequest, FullService, GetAllServicesQuery, PathService, UpdateServiceRequest,
+    CreateServiceRequest, FullService, GetAllServicesQuery, PathService, ServiceRelations,
+    UpdateServiceRequest,
 };
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::{AggregationType, WsMessage};
@@ -514,4 +515,59 @@ pub async fn get_service_sources(
             .await?;
     tx.commit().await?;
     Ok(Json(source))
+}
+
+/// Get a service's direct relations
+#[utoipa::path(
+    tag = "Services",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The service's relations", body = ServiceRelations),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathService),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/services/{s_uuid}/relations")]
+pub async fn get_service_relations(path: Path<PathService>) -> ApiResult<Json<ServiceRelations>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    let (host, port) = query!(&mut tx, (Service::F.host as Host, Service::F.port,))
+        .condition(Service::F.uuid.equals(path.s_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    let port = if let Some(port) = port {
+        let p = query!(&mut tx, Port)
+            .condition(Port::F.uuid.equals(*port.key()))
+            .one()
+            .await?;
+        Some(SimplePort {
+            uuid: p.uuid,
+            port: p.port as u16,
+            protocol: p.protocol,
+            host: *p.host.key(),
+            comment: p.comment,
+            workspace: *p.workspace.key(),
+            created_at: p.created_at,
+        })
+    } else {
+        None
+    };
+
+    tx.commit().await?;
+
+    Ok(Json(ServiceRelations {
+        host: SimpleHost {
+            uuid: host.uuid,
+            ip_addr: host.ip_addr.ip().to_string(),
+            os_type: host.os_type,
+            comment: host.comment,
+            workspace: *host.workspace.key(),
+            created_at: host.created_at,
+        },
+        port,
+    }))
 }

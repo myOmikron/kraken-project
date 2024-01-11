@@ -10,6 +10,8 @@ description = "The worker component of kraken-project"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+kraken-proto = { path = "../kraken-proto" }
+
 # Cli parser
 clap = { version = "~4", features = ["derive"] }
 # regex library
@@ -86,7 +88,6 @@ probe-config = { path = "probe-config" }
 tempfile = "~3"
 
 [build-dependencies]
-tonic-build = { version = "~0.10" }
 probe-config = { path = "probe-config" }
 
 [features]

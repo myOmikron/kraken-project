@@ -2,12 +2,14 @@
 
 use std::collections::HashSet;
 use std::error::Error as StdError;
+use std::future::Future;
 use std::net::IpAddr;
 
 use chrono::{DateTime, Utc};
 use dehashed_rs::{Query, ScheduledRequest};
-use futures::{TryFuture, TryStreamExt};
+use futures::TryStreamExt;
 use ipnetwork::IpNetwork;
+use kraken_proto::InvalidArgumentError;
 use log::error;
 use rorm::prelude::*;
 use rorm::{and, query, update};
@@ -29,7 +31,6 @@ use crate::models::{
     Attack, AttackType, Domain, DomainCertainty, DomainHostRelation, InsertAttackError, User,
     Workspace,
 };
-use crate::rpc::rpc_definitions::AddressConvError;
 
 mod bruteforce_subdomains;
 mod certificate_transparency;
@@ -298,8 +299,8 @@ pub async fn start_testssl(
 }
 
 /// Collection of uuids required for a running attack
-#[derive(Clone)]
-struct AttackContext {
+#[derive(Debug, Clone)]
+pub(crate) struct AttackContext {
     /// The user who started the attack
     user: SimpleUser,
 
@@ -318,7 +319,7 @@ struct AttackContext {
 
 impl AttackContext {
     /// Insert a new attack in the database and bundle all uuids together in one struct
-    async fn new(
+    pub(crate) async fn new(
         workspace_uuid: Uuid,
         user_uuid: Uuid,
         attack_type: AttackType,
@@ -365,6 +366,44 @@ impl AttackContext {
         })
     }
 
+    /// Query the context for an existing attack
+    pub(crate) async fn existing(attack_uuid: Uuid) -> Result<Option<Self>, rorm::Error> {
+        let Some((attack_type, started_at, user, uuid, name, description, created_at, owner)) =
+            query!(
+                &GLOBAL.db,
+                (
+                    Attack::F.attack_type,
+                    Attack::F.created_at,
+                    Attack::F.started_by as SimpleUser,
+                    Attack::F.workspace.uuid,
+                    Attack::F.workspace.name,
+                    Attack::F.workspace.description,
+                    Attack::F.workspace.created_at,
+                    Attack::F.workspace.owner as SimpleUser
+                )
+            )
+            .condition(Attack::F.uuid.equals(attack_uuid))
+            .optional()
+            .await?
+        else {
+            return Ok(None);
+        };
+
+        Ok(Some(Self {
+            user,
+            workspace: SimpleWorkspace {
+                uuid,
+                name,
+                description,
+                created_at,
+                owner,
+            },
+            attack_uuid,
+            created_at: started_at,
+            attack_type,
+        }))
+    }
+
     /// Send a websocket message and log the error
     async fn send_ws(&self, message: WsMessage) {
         GLOBAL
@@ -390,7 +429,9 @@ impl AttackContext {
     }
 
     /// Send the user a notification and update the [`Attack`] model
-    async fn set_finished(self, result: Result<(), AttackError>) {
+    ///
+    /// Returns the attack's uuid
+    pub(crate) async fn set_finished(self, result: Result<(), AttackError>) -> Uuid {
         let now = Utc::now();
 
         self.send_ws(WsMessage::AttackFinished {
@@ -437,21 +478,31 @@ impl AttackContext {
                 attack_uuid = self.attack_uuid
             );
         }
-    }
 
-    async fn handle_streamed_response<T, Fut>(
-        streamed_response: Result<Response<Streaming<T>>, Status>,
-        handler: impl FnMut(T) -> Fut,
-    ) -> Result<(), AttackError>
-    where
-        Fut: TryFuture<Ok = (), Error = AttackError>,
-    {
-        let stream = streamed_response?.into_inner();
+        self.attack_uuid
+    }
+}
+
+pub(crate) trait HandleAttackResponse<T> {
+    async fn handle_response(&self, response: T) -> Result<(), AttackError>;
+
+    async fn handle_streamed_response(
+        &self,
+        streamed_response: impl Future<Output = Result<Response<Streaming<T>>, Status>>,
+    ) -> Result<(), AttackError> {
+        let stream = streamed_response.await?.into_inner();
 
         stream
             .map_err(AttackError::from)
-            .try_for_each(handler)
+            .try_for_each(|response| self.handle_response(response))
             .await
+    }
+
+    async fn handle_vec_response(&self, vec_response: Vec<T>) -> Result<(), AttackError> {
+        for response in vec_response {
+            self.handle_response(response).await?;
+        }
+        Ok(())
     }
 }
 
@@ -472,9 +523,9 @@ pub enum AttackError {
     #[error("Malformed response: {0}")]
     Malformed(&'static str),
 
-    /// An error produced by address conversion
-    #[error("Error during address conversion:  {0}")]
-    AddressConv(#[from] AddressConvError),
+    /// A malformed grpc message
+    #[error("Invalid argument: {0}")]
+    InvalidArgument(#[from] InvalidArgumentError),
 
     /// Catch all variant for everything else
     #[error("{0}")]

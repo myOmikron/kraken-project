@@ -1,6 +1,6 @@
 import { Api } from "../../../api/api";
 import React from "react";
-import { FullAggregationSource, FullHost, TagType } from "../../../api/generated";
+import { FullAggregationSource, FullHost, HostRelations, TagType } from "../../../api/generated";
 import { handleApiError } from "../../../utils/helper";
 import Textarea from "../../../components/textarea";
 import { toast } from "react-toastify";
@@ -11,14 +11,15 @@ import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 import ArrowLeftIcon from "../../../svg/arrow-left";
 import ArrowRightIcon from "../../../svg/arrow-right";
 import { useState } from "react";
+import RelationRightIcon from "../../../svg/relation-right";
+import RelationIndirectIcon from "../../../svg/relation-indirect";
+import RelationLeftIcon from "../../../svg/relation-left";
 
 export type WorkspaceDataHostDetailsProps = {
     host: string;
     updateHost?: (uuid: string, update: Partial<FullHost>) => void;
     tab: "general" | "results" | "relations";
 };
-
-type WorkspaceDataHostDetailsState = {};
 
 export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
     const { host: uuid, updateHost: signalUpdate, tab: tab } = props;
@@ -29,8 +30,10 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
     const [limit, setLimit] = useState(0);
     const [page, setPage] = useState(0);
     const [host, setHost] = React.useState<FullHost | null>(null);
+    const [relations, setRelations] = React.useState<HostRelations | null>(null);
     React.useEffect(() => {
         Api.workspaces.hosts.get(workspace, uuid).then(handleApiError(setHost));
+        Api.workspaces.hosts.relations(workspace, uuid).then(handleApiError(setRelations));
         Api.workspaces.hosts.sources(workspace, uuid).then(
             handleApiError((x) => {
                 setAttacks(x);
@@ -125,7 +128,61 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
                             </div>
                         </div>
                     ) : (
-                        <div> hosts relations</div>
+                        <div className="workspace-data-details-overflow">
+                            <div className="workspace-data-details-relations-container">
+                                <div className="workspace-data-details-relations-header">
+                                    <div className="workspace-data-details-relations-heading">Connection</div>
+                                    <div className="workspace-data-details-relations-heading">Type</div>
+                                    <div className="workspace-data-details-relations-heading">To</div>
+                                </div>
+                                <div className="workspace-data-details-relations-body">
+                                    {relations?.directDomains.map((d) => {
+                                        return (
+                                            <>
+                                                <div title={"Direct"}>
+                                                    <RelationLeftIcon />
+                                                </div>
+                                                <span>Domain</span>
+                                                <span>{d.domain} </span>
+                                            </>
+                                        );
+                                    })}
+                                    {relations?.indirectDomains.map((d) => {
+                                        return (
+                                            <>
+                                                <div className="indirect" title={"Indirect"}>
+                                                    <RelationIndirectIcon />
+                                                </div>
+                                                <span>Domain</span>
+                                                <span>{d.domain} </span>
+                                            </>
+                                        );
+                                    })}
+                                    {relations?.ports.map((p) => {
+                                        return (
+                                            <>
+                                                <div title={"Direct"}>
+                                                    <RelationRightIcon />
+                                                </div>
+                                                <span>Port</span>
+                                                <span>{p.port} </span>
+                                            </>
+                                        );
+                                    })}
+                                    {relations?.services.map((s) => {
+                                        return (
+                                            <>
+                                                <div title={"Direct"}>
+                                                    <RelationRightIcon />
+                                                </div>
+                                                <span>Service</span>
+                                                <span>{s.name} </span>
+                                            </>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </>
             )}

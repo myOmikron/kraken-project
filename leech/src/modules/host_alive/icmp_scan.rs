@@ -31,7 +31,7 @@ pub struct IcmpScanSettings {
 ///
 /// **Parameter**:
 /// - `settings`: [IcmpScanSettings]
-/// - `tx`: [Sender] of [IpAddr]
+/// - `tx`: [Sender] of [IcmpScanResult]
 pub async fn start_icmp_scan(
     settings: IcmpScanSettings,
     tx: Sender<IpAddr>,

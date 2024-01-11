@@ -6,6 +6,7 @@ use std::str::FromStr;
 use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use std::time::Duration;
 
+use kraken_proto::req_attack_service_client::ReqAttackServiceClient;
 use log::{debug, error, warn};
 use rand::prelude::IteratorRandom;
 use rand::thread_rng;
@@ -22,7 +23,6 @@ use uuid::Uuid;
 pub use self::errors::*;
 use crate::models::Leech;
 use crate::modules::tls::TlsManager;
-use crate::rpc::rpc_definitions::req_attack_service_client::ReqAttackServiceClient;
 
 mod errors;
 

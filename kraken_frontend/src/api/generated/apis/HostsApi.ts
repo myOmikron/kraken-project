@@ -20,6 +20,7 @@ import type {
   FullAggregationSource,
   FullHost,
   GetAllHostsQuery,
+  HostRelations,
   HostResultsPage,
   UpdateHostRequest,
   UuidResponse,
@@ -35,6 +36,8 @@ import {
     FullHostToJSON,
     GetAllHostsQueryFromJSON,
     GetAllHostsQueryToJSON,
+    HostRelationsFromJSON,
+    HostRelationsToJSON,
     HostResultsPageFromJSON,
     HostResultsPageToJSON,
     UpdateHostRequestFromJSON,
@@ -54,6 +57,11 @@ export interface GetAllHostsRequest {
 }
 
 export interface GetHostRequest {
+    wUuid: string;
+    hUuid: string;
+}
+
+export interface GetHostRelationsRequest {
     wUuid: string;
     hUuid: string;
 }
@@ -185,6 +193,42 @@ export class HostsApi extends runtime.BaseAPI {
      */
     async getHost(requestParameters: GetHostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullHost> {
         const response = await this.getHostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get a host\'s direct relations
+     * Get a host\'s direct relations
+     */
+    async getHostRelationsRaw(requestParameters: GetHostRelationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<HostRelations>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling getHostRelations.');
+        }
+
+        if (requestParameters.hUuid === null || requestParameters.hUuid === undefined) {
+            throw new runtime.RequiredError('hUuid','Required parameter requestParameters.hUuid was null or undefined when calling getHostRelations.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/hosts/{h_uuid}/relations`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"h_uuid"}}`, encodeURIComponent(String(requestParameters.hUuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => HostRelationsFromJSON(jsonValue));
+    }
+
+    /**
+     * Get a host\'s direct relations
+     * Get a host\'s direct relations
+     */
+    async getHostRelations(requestParameters: GetHostRelationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<HostRelations> {
+        const response = await this.getHostRelationsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

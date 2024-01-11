@@ -13,8 +13,8 @@ message Ipv4 {
 message Ipv4Net {
   // The networks address
   Ipv4 address = 1;
-  // The netmask's 4 bytes stored in little endian
-  sfixed32 netmask = 2;
+  // Number of bits determining the network (<= 32)
+  uint32 prefix = 2;
 }
 
 // Representation of an ipv6 address
@@ -29,10 +29,8 @@ message Ipv6 {
 message Ipv6Net {
   // The networks address
   Ipv6 address = 1;
-  // The netmask's first 8 bytes stored in little endian
-  sfixed64 netmask0 = 2;
-  // The netmask's last 8 bytes stored in little endian
-  sfixed64 netmask1 = 3;
+  // Number of bits determining the network (<= 128)
+  uint32 prefix = 2;
 }
 
 // Enum of addresses

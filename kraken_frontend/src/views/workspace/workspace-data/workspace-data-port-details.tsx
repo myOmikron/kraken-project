@@ -1,6 +1,6 @@
 import { Api } from "../../../api/api";
 import React, { useState } from "react";
-import { FullAggregationSource, FullHost, FullPort, TagType } from "../../../api/generated";
+import { FullAggregationSource, FullPort, PortRelations, TagType } from "../../../api/generated";
 import { handleApiError } from "../../../utils/helper";
 import Textarea from "../../../components/textarea";
 import { toast } from "react-toastify";
@@ -9,6 +9,8 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 import ArrowLeftIcon from "../../../svg/arrow-left";
 import ArrowRightIcon from "../../../svg/arrow-right";
+import RelationRightIcon from "../../../svg/relation-right";
+import RelationLeftIcon from "../../../svg/relation-left";
 
 export type WorkspaceDataPortDetailsProps = {
     port: string;
@@ -25,8 +27,10 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
     const [limit, setLimit] = useState(0);
     const [page, setPage] = useState(0);
     const [port, setPort] = React.useState<FullPort | null>(null);
+    const [relations, setRelations] = React.useState<PortRelations | null>(null);
     React.useEffect(() => {
         Api.workspaces.ports.get(workspace, uuid).then(handleApiError(setPort));
+        Api.workspaces.ports.relations(workspace, uuid).then(handleApiError(setRelations));
         Api.workspaces.ports.sources(workspace, uuid).then(
             handleApiError((x) => {
                 setAttacks(x);
@@ -121,7 +125,37 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
                             </div>
                         </div>
                     ) : (
-                        <div> port relations</div>
+                        <div className="workspace-data-details-overflow">
+                            <div className="workspace-data-details-relations-container">
+                                <div className="workspace-data-details-relations-header">
+                                    <div className="workspace-data-details-relations-heading">Connection</div>
+                                    <div className="workspace-data-details-relations-heading">Type</div>
+                                    <div className="workspace-data-details-relations-heading">To</div>
+                                </div>
+                                <div className="workspace-data-details-relations-body">
+                                    {relations?.host !== null && relations?.host !== undefined ? (
+                                        <>
+                                            <div title={"Direct"}>
+                                                <RelationLeftIcon />
+                                            </div>
+                                            <span>Host</span>
+                                            <span>{relations.host.ipAddr} </span>
+                                        </>
+                                    ) : undefined}
+                                    {relations?.services.map((s) => {
+                                        return (
+                                            <>
+                                                <div title={"Direct"}>
+                                                    <RelationRightIcon />
+                                                </div>
+                                                <span>Service</span>
+                                                <span>{s.name} </span>
+                                            </>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </>
             )}

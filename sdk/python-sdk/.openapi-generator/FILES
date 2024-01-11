@@ -32,6 +32,7 @@ docs/DnsResolutionRequest.md
 docs/DnsResolutionResultsPage.md
 docs/DomainCertainty.md
 docs/DomainOrNetwork.md
+docs/DomainRelations.md
 docs/DomainResultsPage.md
 docs/DomainsApi.md
 docs/FinishRegisterRequest.md
@@ -58,6 +59,7 @@ docs/GetAllServicesQuery.md
 docs/GlobalTagsApi.md
 docs/HostAliveResultsPage.md
 docs/HostCertainty.md
+docs/HostRelations.md
 docs/HostResultsPage.md
 docs/HostsAliveRequest.md
 docs/HostsApi.md
@@ -95,6 +97,7 @@ docs/PageParams.md
 docs/PortCertainty.md
 docs/PortOrRange.md
 docs/PortProtocol.md
+docs/PortRelations.md
 docs/PortResultsPage.md
 docs/PortsApi.md
 docs/Query.md
@@ -137,6 +140,7 @@ docs/SearchesResultPage.md
 docs/ServiceCertainty.md
 docs/ServiceDetectionRequest.md
 docs/ServiceDetectionResultsPage.md
+docs/ServiceRelations.md
 docs/ServiceResultsPage.md
 docs/ServicesApi.md
 docs/SetPasswordRequest.md
@@ -268,6 +272,7 @@ kraken_sdk/models/dns_resolution_request.py
 kraken_sdk/models/dns_resolution_results_page.py
 kraken_sdk/models/domain_certainty.py
 kraken_sdk/models/domain_or_network.py
+kraken_sdk/models/domain_relations.py
 kraken_sdk/models/domain_results_page.py
 kraken_sdk/models/finish_register_request.py
 kraken_sdk/models/full_aggregation_source.py
@@ -292,6 +297,7 @@ kraken_sdk/models/get_all_ports_query.py
 kraken_sdk/models/get_all_services_query.py
 kraken_sdk/models/host_alive_results_page.py
 kraken_sdk/models/host_certainty.py
+kraken_sdk/models/host_relations.py
 kraken_sdk/models/host_results_page.py
 kraken_sdk/models/hosts_alive_request.py
 kraken_sdk/models/invite_to_workspace_request.py
@@ -324,6 +330,7 @@ kraken_sdk/models/page_params.py
 kraken_sdk/models/port_certainty.py
 kraken_sdk/models/port_or_range.py
 kraken_sdk/models/port_protocol.py
+kraken_sdk/models/port_relations.py
 kraken_sdk/models/port_results_page.py
 kraken_sdk/models/query.py
 kraken_sdk/models/query_certificate_transparency_request.py
@@ -365,6 +372,7 @@ kraken_sdk/models/searches_result_page.py
 kraken_sdk/models/service_certainty.py
 kraken_sdk/models/service_detection_request.py
 kraken_sdk/models/service_detection_results_page.py
+kraken_sdk/models/service_relations.py
 kraken_sdk/models/service_results_page.py
 kraken_sdk/models/set_password_request.py
 kraken_sdk/models/settings_full.py
@@ -468,6 +476,7 @@ test/test_dns_resolution_request.py
 test/test_dns_resolution_results_page.py
 test/test_domain_certainty.py
 test/test_domain_or_network.py
+test/test_domain_relations.py
 test/test_domain_results_page.py
 test/test_domains_api.py
 test/test_finish_register_request.py
@@ -494,6 +503,7 @@ test/test_get_all_services_query.py
 test/test_global_tags_api.py
 test/test_host_alive_results_page.py
 test/test_host_certainty.py
+test/test_host_relations.py
 test/test_host_results_page.py
 test/test_hosts_alive_request.py
 test/test_hosts_api.py
@@ -531,6 +541,7 @@ test/test_page_params.py
 test/test_port_certainty.py
 test/test_port_or_range.py
 test/test_port_protocol.py
+test/test_port_relations.py
 test/test_port_results_page.py
 test/test_ports_api.py
 test/test_query.py
@@ -573,6 +584,7 @@ test/test_searches_result_page.py
 test/test_service_certainty.py
 test/test_service_detection_request.py
 test/test_service_detection_results_page.py
+test/test_service_relations.py
 test/test_service_results_page.py
 test/test_services_api.py
 test/test_set_password_request.py

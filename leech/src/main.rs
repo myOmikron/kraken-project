@@ -27,6 +27,9 @@ use clap::{ArgAction, Parser, Subcommand, ValueEnum};
 use dehashed_rs::SearchType;
 use ipnetwork::IpNetwork;
 use itertools::Itertools;
+use kraken_proto::push_attack_service_client::PushAttackServiceClient;
+use kraken_proto::shared::CertEntry;
+use kraken_proto::{push_attack_request, CertificateTransparencyResponse, PushAttackRequest};
 use log::{error, info, warn};
 use prost_types::Timestamp;
 use rorm::{cli, Database, DatabaseConfiguration, DatabaseDriver};
@@ -46,9 +49,6 @@ use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScan
 use crate::modules::service_detection::DetectServiceSettings;
 use crate::modules::testssl::TestSSLSettings;
 use crate::modules::{dehashed, service_detection, testssl, whois};
-use crate::rpc::rpc_attacks::attack_results_service_client::AttackResultsServiceClient;
-use crate::rpc::rpc_attacks::shared::CertEntry;
-use crate::rpc::rpc_attacks::{CertificateTransparencyResult, MetaAttackInfo};
 use crate::rpc::start_rpc_server;
 use crate::utils::{input, kraken_endpoint};
 
@@ -307,46 +307,50 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         let endpoint = kraken_endpoint(&config.kraken)?;
                         let chan = endpoint.connect().await.unwrap();
 
-                        let mut client = AttackResultsServiceClient::new(chan);
+                        let mut client = PushAttackServiceClient::new(chan);
                         client
-                            .certificate_transparency(CertificateTransparencyResult {
-                                entries: entries
-                                    .into_iter()
-                                    .map(|x| CertEntry {
-                                        value_names: x.name_value,
-                                        common_name: x.common_name,
-                                        serial_number: x.serial_number,
-                                        not_after: x.not_after.map(|ts| {
-                                            Timestamp::date_time_nanos(
-                                                ts.year() as i64,
-                                                ts.month() as u8,
-                                                ts.day() as u8,
-                                                ts.hour() as u8,
-                                                ts.minute() as u8,
-                                                ts.second() as u8,
-                                                ts.nanosecond(),
-                                            )
-                                            .unwrap()
-                                        }),
-                                        not_before: x.not_before.map(|ts| {
-                                            Timestamp::date_time_nanos(
-                                                ts.year() as i64,
-                                                ts.month() as u8,
-                                                ts.day() as u8,
-                                                ts.hour() as u8,
-                                                ts.minute() as u8,
-                                                ts.second() as u8,
-                                                ts.nanosecond(),
-                                            )
-                                            .unwrap()
-                                        }),
-                                        issuer_name: x.issuer_name,
-                                    })
-                                    .collect(),
-                                attack_info: Some(MetaAttackInfo {
-                                    workspace_uuid: workspace.to_string(),
-                                    api_key,
-                                }),
+                            .push_attack(PushAttackRequest {
+                                workspace_uuid: workspace.to_string(),
+                                api_key,
+                                response: Some(
+                                    push_attack_request::Response::CertificateTransparency(
+                                        CertificateTransparencyResponse {
+                                            entries: entries
+                                                .into_iter()
+                                                .map(|x| CertEntry {
+                                                    value_names: x.name_value,
+                                                    common_name: x.common_name,
+                                                    serial_number: x.serial_number,
+                                                    not_after: x.not_after.map(|ts| {
+                                                        Timestamp::date_time_nanos(
+                                                            ts.year() as i64,
+                                                            ts.month() as u8,
+                                                            ts.day() as u8,
+                                                            ts.hour() as u8,
+                                                            ts.minute() as u8,
+                                                            ts.second() as u8,
+                                                            ts.nanosecond(),
+                                                        )
+                                                        .unwrap()
+                                                    }),
+                                                    not_before: x.not_before.map(|ts| {
+                                                        Timestamp::date_time_nanos(
+                                                            ts.year() as i64,
+                                                            ts.month() as u8,
+                                                            ts.day() as u8,
+                                                            ts.hour() as u8,
+                                                            ts.minute() as u8,
+                                                            ts.second() as u8,
+                                                            ts.nanosecond(),
+                                                        )
+                                                        .unwrap()
+                                                    }),
+                                                    issuer_name: x.issuer_name,
+                                                })
+                                                .collect(),
+                                        },
+                                    ),
+                                ),
                             })
                             .await
                             .unwrap();

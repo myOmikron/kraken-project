@@ -77,6 +77,7 @@ from kraken_sdk.models.dns_resolution_request import DnsResolutionRequest
 from kraken_sdk.models.dns_resolution_results_page import DnsResolutionResultsPage
 from kraken_sdk.models.domain_certainty import DomainCertainty
 from kraken_sdk.models.domain_or_network import DomainOrNetwork
+from kraken_sdk.models.domain_relations import DomainRelations
 from kraken_sdk.models.domain_results_page import DomainResultsPage
 from kraken_sdk.models.finish_register_request import FinishRegisterRequest
 from kraken_sdk.models.full_aggregation_source import FullAggregationSource
@@ -101,6 +102,7 @@ from kraken_sdk.models.get_all_ports_query import GetAllPortsQuery
 from kraken_sdk.models.get_all_services_query import GetAllServicesQuery
 from kraken_sdk.models.host_alive_results_page import HostAliveResultsPage
 from kraken_sdk.models.host_certainty import HostCertainty
+from kraken_sdk.models.host_relations import HostRelations
 from kraken_sdk.models.host_results_page import HostResultsPage
 from kraken_sdk.models.hosts_alive_request import HostsAliveRequest
 from kraken_sdk.models.invite_to_workspace_request import InviteToWorkspaceRequest
@@ -133,6 +135,7 @@ from kraken_sdk.models.page_params import PageParams
 from kraken_sdk.models.port_certainty import PortCertainty
 from kraken_sdk.models.port_or_range import PortOrRange
 from kraken_sdk.models.port_protocol import PortProtocol
+from kraken_sdk.models.port_relations import PortRelations
 from kraken_sdk.models.port_results_page import PortResultsPage
 from kraken_sdk.models.query import Query
 from kraken_sdk.models.query_certificate_transparency_request import QueryCertificateTransparencyRequest
@@ -174,6 +177,7 @@ from kraken_sdk.models.searches_result_page import SearchesResultPage
 from kraken_sdk.models.service_certainty import ServiceCertainty
 from kraken_sdk.models.service_detection_request import ServiceDetectionRequest
 from kraken_sdk.models.service_detection_results_page import ServiceDetectionResultsPage
+from kraken_sdk.models.service_relations import ServiceRelations
 from kraken_sdk.models.service_results_page import ServiceResultsPage
 from kraken_sdk.models.set_password_request import SetPasswordRequest
 from kraken_sdk.models.settings_full import SettingsFull
