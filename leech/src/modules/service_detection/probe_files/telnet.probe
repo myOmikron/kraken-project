@@ -2,8 +2,9 @@ service: telnet
 prevalence: often
 probes:
   - protocol: TCP
-    # pattern should be 0xff (IAC) <DO | DON'T | WILL | WON'T > < COMMAND >, repeat
-    # may end in `" `
-    #
-    # DO (0xfd), DON'T (0xfe), WILL (0xfb), WON'T (0xfc)
-    regex: [(?-u:\xff)[(?-u:\xfd|\xfe|\xfb|\xfc)].]*|[Tt][Ee][Ll][Nn][Ee][Tt]
+    # pattern should be:
+    # IAC => 0xff
+    # COMMAND => DO (0xfd) | DON'T (0xfe) | WILL (0xfb) | WON'T (0xfc)
+    # Option => 0 -> 0xff
+    # repeat
+    regex: ^(?-u:\xff[\xfb-\xfe)])(?s).
