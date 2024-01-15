@@ -8,6 +8,7 @@ use uuid::Uuid;
 
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
+use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::{
     AggregationSource, AggregationTable, HostCertainty, PortCertainty, PortProtocol,
     ServiceCertainty, SourceType, UdpServiceDetectionName, UdpServiceDetectionResultInsert,
@@ -62,7 +63,13 @@ impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
             }
         };
 
-        // TODO: send_ws
+        self.send_ws(WsMessage::UdpServiceDetectionResult {
+            attack_uuid: self.attack_uuid,
+            address: address.to_string(),
+            port: port as u16,
+            services: services.clone(),
+        })
+        .await;
 
         let mut tx = GLOBAL.db.start_transaction().await?;
 
