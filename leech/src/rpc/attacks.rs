@@ -280,7 +280,7 @@ impl ReqAttackService for Attacks {
                     .clone()
                     .ok_or(Status::invalid_argument("Missing address"))?,
             )?,
-            ports: ports,
+            ports,
             concurrent_limit: request.concurrent_limit,
             max_retries: request.max_retries,
             retry_interval: Duration::from_millis(request.retry_interval),

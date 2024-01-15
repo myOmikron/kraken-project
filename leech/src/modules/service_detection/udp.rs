@@ -1,22 +1,18 @@
-use std::{
-    net::{IpAddr, SocketAddr},
-    ops::RangeInclusive,
-    time::Duration,
-};
+use std::net::{IpAddr, SocketAddr};
+use std::ops::RangeInclusive;
+use std::time::Duration;
 
 use futures::{stream, TryStreamExt};
 use log::{debug, info};
 use probe_config::generated::Match;
-use tokio::{
-    net::UdpSocket,
-    sync::mpsc::Sender,
-    task::JoinSet,
-    time::{sleep, timeout},
-};
+use tokio::net::UdpSocket;
+use tokio::sync::mpsc::Sender;
+use tokio::task::JoinSet;
+use tokio::time::{sleep, timeout};
 
+use super::error::UdpServiceScanError;
+use super::Service;
 use crate::modules::service_detection::generated;
-
-use super::{error::UdpServiceScanError, Service};
 
 /// Settings for a service detection
 #[derive(Clone)]
@@ -57,7 +53,7 @@ impl UdpServiceDetectionSettings {
         let mut set = JoinSet::new();
 
         for i in 0..=self.max_retries {
-            let offset = self.retry_interval.saturating_mul(i.into());
+            let offset = self.retry_interval.saturating_mul(i);
             set.spawn(timeout(
                 self.timeout.saturating_add(offset),
                 single_probe_udp(offset, addr, payload.to_vec()),
@@ -79,7 +75,7 @@ impl UdpServiceDetectionSettings {
             }
         }
 
-        return Ok(None);
+        Ok(None)
     }
 }
 
@@ -98,9 +94,9 @@ async fn single_probe_udp(
     // TODO: it's possible the server might respond with ICMP Destination/port unreachable (could handle that here)
     let err = sock.recv(&mut buf).await;
     match err {
-        Ok(n) => return Ok(Some(buf[0..n].to_vec())),
+        Ok(n) => Ok(Some(buf[0..n].to_vec())),
         // TODO: certain I/O errors should probably just return None here
-        Err(e) => return Err(UdpServiceScanError::IoError(e)),
+        Err(e) => Err(UdpServiceScanError::IoError(e)),
     }
 }
 
@@ -160,12 +156,12 @@ pub async fn start_udp_service_detection(
                 .await?;
             }
 
-            return Ok(());
+            Ok(())
         }
     })
     .await?;
 
     info!("Finished UDP service detection");
 
-    return Ok(());
+    Ok(())
 }
