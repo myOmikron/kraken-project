@@ -1,20 +1,24 @@
 import React from "react";
-import { Api, UUID } from "../../../api/api";
-import StartAttack from "../components/start-attack";
-import "../../../styling/workspace-attacks-svd.css";
+import { toast } from "react-toastify";
+import { Api } from "../../../api/api";
 import Input from "../../../components/input";
+import "../../../styling/workspace-attacks-svd.css";
 import CollapseIcon from "../../../svg/collapse";
 import ExpandIcon from "../../../svg/expand";
-import { toast } from "react-toastify";
+import { handleApiError } from "../../../utils/helper";
+import { parseUserPorts } from "../../../utils/ports";
+import StartAttack from "../components/start-attack";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import { PrefilledAttackParams } from "../workspace-attacks";
-import { handleApiError } from "../../../utils/helper";
 
 type WorkspaceAttacksUdpServiceDetectionProps = { prefilled: PrefilledAttackParams };
 type WorkspaceAttacksUdpServiceDetectionState = {
     address: string;
-    port: string;
+    ports: string;
     timeout: number;
+    maxRetries: number;
+    retryInterval: number;
+    concurrentLimit: number;
 
     showAdvanced: boolean;
 };
@@ -31,8 +35,11 @@ export default class WorkspaceAttacksUdpServiceDetection extends React.Component
 
         this.state = {
             address: this.props.prefilled.ipAddr || "",
-            port: (this.props.prefilled.port && String(this.props.prefilled.port)) || "",
-            timeout: 500,
+            ports: (this.props.prefilled.port && String(this.props.prefilled.port)) || "1-65535",
+            timeout: 1000,
+            maxRetries: 5,
+            retryInterval: 200,
+            concurrentLimit: 1024,
             showAdvanced: false,
         };
     }
@@ -41,29 +48,27 @@ export default class WorkspaceAttacksUdpServiceDetection extends React.Component
         if (this.props.prefilled.ipAddr !== undefined && this.props.prefilled.ipAddr !== prevProps.prefilled.ipAddr)
             this.setState({ address: this.props.prefilled.ipAddr });
         if (this.props.prefilled.port !== undefined && this.props.prefilled.port !== prevProps.prefilled.port)
-            this.setState({ port: String(this.props.prefilled.port) });
+            this.setState({ ports: String(this.props.prefilled.port) });
     }
 
     startAttack() {
-        const { address, port, timeout } = this.state;
+        const { address, ports, timeout, retryInterval, concurrentLimit, maxRetries } = this.state;
 
-        const p = Number(port);
-        if (p === null || !Number.isSafeInteger(p) || (p <= 0 && p <= 65535)) {
-            toast.error("Port is invalid");
-            return;
-        }
-
-        Api.attacks
-            .udpServiceDetection({
-                workspaceUuid: this.context.workspace.uuid,
-                address,
-                ports: [p],
-                timeout,
-                retryInterval: 100, // TODO
-                concurrentLimit: 8, // TODO
-                maxRetries: 3, // TODO
-            })
-            .then(handleApiError((_) => toast.success("Attack started")));
+        parseUserPorts(ports).match((ports) => {
+            Api.attacks
+                .udpServiceDetection({
+                    workspaceUuid: this.context.workspace.uuid,
+                    address,
+                    ports,
+                    timeout,
+                    retryInterval,
+                    concurrentLimit,
+                    maxRetries,
+                })
+                .then(handleApiError((_) => toast.success("Attack started")));
+        }, (portError) => {
+            toast.error("Port is invalid: " + portError);
+        });
     }
 
     render() {
@@ -85,13 +90,13 @@ export default class WorkspaceAttacksUdpServiceDetection extends React.Component
                         value={this.state.address}
                         onChange={(v) => this.setState({ address: v })}
                     />
-                    <label htmlFor={"port"}>Port</label>
+                    <label htmlFor={"ports"}>Ports</label>
                     <Input
-                        id={"port"}
+                        id={"ports"}
                         required
-                        placeholder={"Port"}
-                        value={this.state.port}
-                        onChange={(v) => this.setState({ port: v })}
+                        placeholder={"Ports"}
+                        value={this.state.ports}
+                        onChange={(v) => this.setState({ ports: v })}
                     />
                     <span
                         className={"neon workspace-attacks-svd-advanced-button"}
@@ -121,6 +126,48 @@ export default class WorkspaceAttacksUdpServiceDetection extends React.Component
                                 }
 
                                 this.setState({ timeout: n });
+                            }}
+                        />
+                        <label htmlFor={"maxRetries"}>Maximum Retries</label>
+                        <Input
+                            id={"maxRetries"}
+                            placeholder={"maxRetries"}
+                            value={this.state.maxRetries.toString()}
+                            onChange={(maxRetries) => {
+                                const n = Number(maxRetries);
+                                if (n === null || !Number.isSafeInteger(n) || n < 0) {
+                                    return;
+                                }
+
+                                this.setState({ maxRetries: n });
+                            }}
+                        />
+                        <label htmlFor={"retryInterval"}>Retry interval (in ms)</label>
+                        <Input
+                            id={"retryInterval"}
+                            placeholder={"Retry interval in ms"}
+                            value={this.state.retryInterval.toString()}
+                            onChange={(retryInterval) => {
+                                const n = Number(retryInterval);
+                                if (n === null || !Number.isSafeInteger(n) || n <= 0) {
+                                    return;
+                                }
+
+                                this.setState({ retryInterval: n });
+                            }}
+                        />
+                        <label htmlFor={"task-limit"}>Task limit</label>
+                        <Input
+                            id={"task-limit"}
+                            placeholder={"task limit"}
+                            value={this.state.concurrentLimit.toString()}
+                            onChange={(concurrentLimit) => {
+                                const n = Number(concurrentLimit);
+                                if (n === null || !Number.isSafeInteger(n) || n <= 0) {
+                                    return;
+                                }
+
+                                this.setState({ concurrentLimit: n });
                             }}
                         />
                     </div>

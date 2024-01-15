@@ -26,11 +26,23 @@ export interface WsMessageOneOf11 {
      */
     attackUuid: string;
     /**
-     * Name of the service
+     * The address of the result
      * @type {string}
      * @memberof WsMessageOneOf11
      */
-    service: string;
+    address: string;
+    /**
+     * The port of the result
+     * @type {number}
+     * @memberof WsMessageOneOf11
+     */
+    port: number;
+    /**
+     * Name of the service(s)
+     * @type {Array<string>}
+     * @memberof WsMessageOneOf11
+     */
+    services: Array<string>;
     /**
      * 
      * @type {string}
@@ -55,7 +67,9 @@ export type WsMessageOneOf11TypeEnum = typeof WsMessageOneOf11TypeEnum[keyof typ
 export function instanceOfWsMessageOneOf11(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "attackUuid" in value;
-    isInstance = isInstance && "service" in value;
+    isInstance = isInstance && "address" in value;
+    isInstance = isInstance && "port" in value;
+    isInstance = isInstance && "services" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -72,7 +86,9 @@ export function WsMessageOneOf11FromJSONTyped(json: any, ignoreDiscriminator: bo
     return {
         
         'attackUuid': json['attack_uuid'],
-        'service': json['service'],
+        'address': json['address'],
+        'port': json['port'],
+        'services': json['services'],
         'type': json['type'],
     };
 }
@@ -87,7 +103,9 @@ export function WsMessageOneOf11ToJSON(value?: WsMessageOneOf11 | null): any {
     return {
         
         'attack_uuid': value.attackUuid,
-        'service': value.service,
+        'address': value.address,
+        'port': value.port,
+        'services': value.services,
         'type': value.type,
     };
 }

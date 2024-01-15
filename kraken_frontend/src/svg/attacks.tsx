@@ -253,6 +253,9 @@ export default function AttacksIcon(params: AttacksParams) {
             <text xmlSpace="preserve" x={133} y={31} className={"kraken-attacks-hex-text"}>
                 {"SvD"}
             </text>
+            <text xmlSpace="preserve" x={143.5} y={14} className={"kraken-attacks-hex-text"}>
+                {"UDP"}
+            </text>
             <text xmlSpace="preserve" x={5} y={94} className={"kraken-attacks-hex-text"}>
                 {"HA"}
             </text>
