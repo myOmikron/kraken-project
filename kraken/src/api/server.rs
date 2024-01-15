@@ -2,6 +2,7 @@
 
 use std::io;
 
+use actix_toolbox::tb_middleware::actix_session::config::TtlExtensionPolicy;
 use actix_toolbox::tb_middleware::{
     setup_logging_mw, DBSessionStore, LoggingMiddlewareConfig, PersistentSession, SessionMiddleware,
 };
@@ -65,10 +66,13 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
             .wrap(setup_logging_mw(LoggingMiddlewareConfig::default()))
             .wrap(
                 SessionMiddleware::builder(DBSessionStore::new(GLOBAL.db.clone()), key.clone())
-                    .session_lifecycle(PersistentSession::session_ttl(
-                        PersistentSession::default(),
-                        Duration::hours(1),
-                    ))
+                    .session_lifecycle(
+                        PersistentSession::session_ttl(
+                            PersistentSession::default(),
+                            Duration::hours(1),
+                        )
+                        .session_ttl_extension_policy(TtlExtensionPolicy::OnEveryRequest),
+                    )
                     .build(),
             )
             .wrap(Compress::default())

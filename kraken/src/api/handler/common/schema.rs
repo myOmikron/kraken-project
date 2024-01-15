@@ -1,10 +1,9 @@
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use utoipa::{IntoParams, ToSchema};
-pub use utoipa_fix::Page;
-pub(crate) use utoipa_fix::{
+pub use utoipa_fix::{
     BruteforceSubdomainsResultsPage, DnsResolutionResultsPage, DomainResultsPage,
-    HostAliveResultsPage, HostResultsPage, PortResultsPage,
+    HostAliveResultsPage, HostResultsPage, Page, PortResultsPage,
     QueryCertificateTransparencyResultsPage, QueryUnhashedResultsPage, SearchResultPage,
     SearchesResultPage, ServiceDetectionResultsPage, ServiceResultsPage, TcpPortScanResultsPage,
 };
@@ -38,8 +37,9 @@ pub struct PageParams {
     pub offset: u64,
 }
 
+#[allow(missing_docs)]
 mod utoipa_fix {
-    use serde::Serialize;
+    use serde::{Deserialize, Serialize};
     use utoipa::ToSchema;
 
     use crate::api::handler::attack_results::schema::{
@@ -54,7 +54,7 @@ mod utoipa_fix {
     use crate::api::handler::workspaces::schema::{SearchEntry, SearchResultEntry};
 
     /// Response containing paginated data
-    #[derive(Serialize, ToSchema)]
+    #[derive(Serialize, Deserialize, Default, ToSchema, Clone)]
     #[aliases(
         DomainResultsPage = Page<FullDomain>,
         HostResultsPage = Page<FullHost>,
@@ -113,7 +113,7 @@ pub struct SimpleTag {
 ///
 /// Numbers between 1000 and 1999 (inclusive) are client errors that can be handled by the client.
 /// Numbers between 2000 and 2999 (inclusive) are server errors.
-#[derive(Serialize_repr, Deserialize_repr, ToSchema, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, ToSchema, Debug, PartialOrd, PartialEq)]
 #[repr(u16)]
 #[schema(default = 1000, example = 1000)]
 pub enum ApiStatusCode {
@@ -202,9 +202,11 @@ pub enum ApiStatusCode {
 /// `status_code` holds the error code, `message` a human readable description of the error
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct ApiErrorResponse {
-    status_code: ApiStatusCode,
+    /// The error code
+    pub status_code: ApiStatusCode,
+    /// A human readable description of the error
     #[schema(example = "Error message will be here")]
-    message: String,
+    pub message: String,
 }
 
 impl ApiErrorResponse {

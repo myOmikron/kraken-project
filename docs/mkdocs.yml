@@ -51,3 +51,5 @@ nav:
       - Style guidelines:
           - Rust: contribution/rust.md
           - Typescript: contribution/typescript.md
+      - Guides:
+          - New attack: contribution/new_attack.md

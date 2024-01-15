@@ -1,0 +1,21 @@
+service: ldap
+prevalence: often
+probes:
+  - protocol: TCP
+    # https://datatracker.ietf.org/doc/html/rfc4511
+    # message format: https://datatracker.ietf.org/doc/html/rfc4511#section-4.2
+    # encoding: https://ldap.com/ldapv3-wire-protocol-reference-asn1-ber
+    # \x30 => Sequence.
+    # \x0c => bytes after this
+    # \x02\x01\xff => encoded int with value 0xff
+    # \x60 => Bind Request Protocol Op
+    # \x07 => bytes after this,
+    # \x02\x01\x03 => encoded int with value 3 (LDAPv3)
+    # \x04 => Octet String Values
+    #    -> \x00 => zero length
+    # \x80 => context choice 0
+    #   -> \x00 => value zero
+    payload_str: \x30\x0c\x02\x01\xff\x60\x07\x02\x01\x03\x04\x00\x80\x00
+    # sequence, length, integer => request frame number as above, Bind Response Protocol Op, integer response LDAPResult
+    # Octet String Values (matchedDN = null), Octet String Values (diagnosticMessage)
+    regex: \x30(?s).\x02\x01(?-u:\xff)\x61\x07\x0a\x01(?s).\x04\x00\x04
