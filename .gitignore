@@ -1,5 +1,7 @@
 .idea/
 .vagrant/
+venv/
+__pycache__/
 
 vagrant/vars.yml
 .models.json
