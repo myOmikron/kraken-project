@@ -122,6 +122,7 @@ impl Modify for SecurityAddon2 {
         hosts::handler::get_host,
         hosts::handler::create_host,
         hosts::handler::update_host,
+        hosts::handler::delete_host,
         hosts::handler::get_host_sources,
         hosts::handler::get_host_relations,
         ports::handler::get_all_ports,

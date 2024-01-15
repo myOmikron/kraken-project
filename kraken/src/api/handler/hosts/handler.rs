@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use actix_web::web::{Json, Path};
-use actix_web::{get, post, put, HttpResponse};
+use actix_web::{delete, get, post, put, HttpResponse};
 use futures::TryStreamExt;
 use rorm::conditions::DynamicCollection;
 use rorm::db::sql::value::Value;
@@ -384,6 +384,52 @@ pub async fn update_host(
             )
             .await;
     }
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+/// Delete the host
+///
+/// This only deletes the aggregation. The raw results are still in place
+#[utoipa::path(
+    tag = "Hosts",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Host was deleted"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathHost),
+    security(("api_key" = []))
+)]
+#[delete("/workspaces/{w_uuid}/hosts/{h_uuid}")]
+pub async fn delete_host(
+    path: Path<PathHost>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let PathHost { w_uuid, h_uuid } = path.into_inner();
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut tx, w_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    query!(&mut tx, (Host::F.uuid,))
+        .condition(and!(
+            Host::F.uuid.equals(h_uuid),
+            Host::F.workspace.equals(w_uuid)
+        ))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    rorm::delete!(&mut tx, Host)
+        // We can omit the check if the workspace is the same as we have already checked it in the query before
+        .condition(Host::F.uuid.equals(h_uuid))
+        .await?;
+
+    tx.commit().await?;
 
     Ok(HttpResponse::Ok().finish())
 }

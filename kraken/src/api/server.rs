@@ -187,6 +187,7 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(hosts::handler::get_host)
                     .service(hosts::handler::create_host)
                     .service(hosts::handler::update_host)
+                    .service(hosts::handler::delete_host)
                     .service(hosts::handler::get_host_sources)
                     .service(hosts::handler::get_host_relations)
                     .service(ports::handler::get_all_ports)
