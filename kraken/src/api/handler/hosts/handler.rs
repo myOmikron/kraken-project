@@ -40,16 +40,16 @@ use crate::query_tags;
 /// Hosts are created out of aggregating data or by user input.
 /// They represent a single host and can be created by providing an IP address
 #[utoipa::path(
-tag = "Hosts",
-context_path = "/api/v1",
-responses(
-(status = 200, description = "All hosts in the workspace", body = HostResultsPage),
-(status = 400, description = "Client error", body = ApiErrorResponse),
-(status = 500, description = "Server error", body = ApiErrorResponse),
-),
-request_body = GetAllHostsQuery,
-params(PathUuid),
-security(("api_key" = []))
+    tag = "Hosts",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "All hosts in the workspace", body = HostResultsPage),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    request_body = GetAllHostsQuery,
+    params(PathUuid),
+    security(("api_key" = []))
 )]
 #[post("/workspaces/{uuid}/hosts/all")]
 pub(crate) async fn get_all_hosts(
