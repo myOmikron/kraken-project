@@ -129,6 +129,7 @@ impl Modify for SecurityAddon2 {
         ports::handler::get_port,
         ports::handler::create_port,
         ports::handler::update_port,
+        ports::handler::delete_port,
         ports::handler::get_port_sources,
         ports::handler::get_port_relations,
         services::handler::get_all_services,

@@ -194,6 +194,7 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(ports::handler::get_port)
                     .service(ports::handler::create_port)
                     .service(ports::handler::update_port)
+                    .service(ports::handler::delete_port)
                     .service(ports::handler::get_port_sources)
                     .service(ports::handler::get_port_relations)
                     .service(services::handler::get_all_services)
