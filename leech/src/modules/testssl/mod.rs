@@ -9,6 +9,7 @@ use tokio::fs::File as TokioFile;
 use tokio::io::AsyncReadExt;
 use tokio::process::Command;
 
+pub mod finding_id;
 mod json;
 mod json_pretty;
 mod mitre;

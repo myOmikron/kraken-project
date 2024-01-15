@@ -129,6 +129,47 @@ pub struct ScanResult {
     pub browser_simulations: Vec<Finding>,
 }
 
+impl ScanResult {
+    /// Iterate over all sections
+    pub fn iter(&self) -> impl Iterator<Item = (&'static str, &[Finding])> {
+        let Self {
+            target_host: _,
+            ip: _,
+            port: _,
+            rdns: _,
+            service: _,
+            hostname: _,
+            pretest,
+            single_cipher,
+            protocols,
+            grease,
+            ciphers,
+            pfs,
+            server_preferences,
+            server_defaults,
+            header_response,
+            vulnerabilities,
+            cipher_tests,
+            browser_simulations,
+        } = self;
+        [
+            ("pretest", pretest.as_slice()),
+            ("single_cipher", single_cipher.as_slice()),
+            ("protocols", protocols.as_slice()),
+            ("grease", grease.as_slice()),
+            ("ciphers", ciphers.as_slice()),
+            ("pfs", pfs.as_slice()),
+            ("server_preferences", server_preferences.as_slice()),
+            ("server_defaults", server_defaults.as_slice()),
+            ("header_response", header_response.as_slice()),
+            ("vulnerabilities", vulnerabilities.as_slice()),
+            ("cipher_tests", cipher_tests.as_slice()),
+            ("browser_simulations", browser_simulations.as_slice()),
+        ]
+        .into_iter()
+    }
+}
+
 /// Either a test's result or a log message
 ///
 /// Which one it is might be determined by the [`Severity`]

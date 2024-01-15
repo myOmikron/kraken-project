@@ -541,6 +541,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
                             ..Default::default()
                         })
                         .await?;
+                        for result in &json.scan_result {
+                            if let testssl::Service::Result(service) = result {
+                                for (_section, findings) in service.iter() {
+                                    for finding in findings {
+                                        let finding_id = testssl::finding_id::FindingId::from(
+                                            finding.id.as_str(),
+                                        );
+                                        if let testssl::finding_id::FindingId::Unknown(id) =
+                                            finding_id
+                                        {
+                                            warn!("Unknown finding_id: {id}");
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         println!("{}", serde_json::to_string_pretty(&json)?);
                     }
                 }
