@@ -1,5 +1,7 @@
+//! Enums representing the tactics and techniques from [Mitre ATT&CK](https://attack.mitre.org/)
 use crate::InvalidArgumentError;
 use crate::shared::AttackTechnique;
+/// An entry in the [Mitre ATT&CK table](https://attack.mitre.org/)
 pub enum Tactic {
     /// [Credential Access](https://attack.mitre.org/tactics/TA0006)
     ///
@@ -71,8 +73,8 @@ pub enum Tactic {
     /// The adversary is trying to get into your network.
     InitialAccess(InitialAccess),
 
-    Other,
 }
+/// [Credential Access](https://attack.mitre.org/tactics/TA0006)'s techniques
 pub enum CredentialAccess {
     /// [Adversary-in-the-Middle](https://attack.mitre.org/techniques/T1557)
     ///
@@ -159,8 +161,8 @@ pub enum CredentialAccess {
     /// Adversaries may modify authentication mechanisms and processes to access user credentials or enable otherwise unwarranted access to accounts. The authentication process is handled by mechanisms, such as the Local Security Authentication Server (LSASS) process and the Security Accounts Manager (SAM) on Windows, pluggable authentication modules (PAM) on Unix-based systems, and authorization plugins on MacOS systems, responsible for gathering, storing, and validating credentials. By modifying an authentication process, an adversary may be able to authenticate to a service or system without using [Valid Accounts](https://attack.mitre.org/techniques/T1078).
     ModifyAuthenticationProcess,
 
-	Other,
 }
+/// [Execution](https://attack.mitre.org/tactics/TA0002)'s techniques
 pub enum Execution {
     /// [Windows Management Instrumentation](https://attack.mitre.org/techniques/T1047)
     ///
@@ -232,8 +234,8 @@ pub enum Execution {
     /// Adversaries may abuse serverless computing, integration, and automation services to execute arbitrary code in cloud environments. Many cloud providers offer a variety of serverless resources, including compute engines, application integration services, and web servers. 
     ServerlessExecution,
 
-	Other,
 }
+/// [Impact](https://attack.mitre.org/tactics/TA0040)'s techniques
 pub enum Impact {
     /// [Disk Wipe](https://attack.mitre.org/techniques/T1561)
     ///
@@ -305,8 +307,8 @@ pub enum Impact {
     /// Adversaries may shutdown/reboot systems to interrupt access to, or aid in the destruction of, those systems. Operating systems may contain commands to initiate a shutdown/reboot of a machine or network device. In some cases, these commands may also be used to initiate a shutdown/reboot of a remote computer or network device via [Network Device CLI](https://attack.mitre.org/techniques/T1059/008) (e.g. <code>reload</code>).(Citation: Microsoft Shutdown Oct 2017)(Citation: alert_TA18_106A)
     SystemShutdownReboot,
 
-	Other,
 }
+/// [Persistence](https://attack.mitre.org/tactics/TA0003)'s techniques
 pub enum Persistence {
     /// [Boot or Logon Initialization Scripts](https://attack.mitre.org/techniques/T1037)
     ///
@@ -408,8 +410,8 @@ pub enum Persistence {
     /// Adversaries may modify authentication mechanisms and processes to access user credentials or enable otherwise unwarranted access to accounts. The authentication process is handled by mechanisms, such as the Local Security Authentication Server (LSASS) process and the Security Accounts Manager (SAM) on Windows, pluggable authentication modules (PAM) on Unix-based systems, and authorization plugins on MacOS systems, responsible for gathering, storing, and validating credentials. By modifying an authentication process, an adversary may be able to authenticate to a service or system without using [Valid Accounts](https://attack.mitre.org/techniques/T1078).
     ModifyAuthenticationProcess,
 
-	Other,
 }
+/// [Privilege Escalation](https://attack.mitre.org/tactics/TA0004)'s techniques
 pub enum PrivilegeEscalation {
     /// [Boot or Logon Initialization Scripts](https://attack.mitre.org/techniques/T1037)
     ///
@@ -481,8 +483,8 @@ pub enum PrivilegeEscalation {
     /// Adversaries may modify the configuration settings of a domain to evade defenses and/or escalate privileges in domain environments. Domains provide a centralized means of managing how computer resources (ex: computers, user accounts) can act, and interact with each other, on a network. The policy of the domain also includes configuration settings that may apply between domains in a multi-domain/forest environment. Modifications to domain settings may include altering domain Group Policy Objects (GPOs) or changing trust settings for domains, including federation trusts.
     DomainPolicyModification,
 
-	Other,
 }
+/// [Lateral Movement](https://attack.mitre.org/tactics/TA0008)'s techniques
 pub enum LateralMovement {
     /// [Taint Shared Content](https://attack.mitre.org/techniques/T1080)
     ///
@@ -529,8 +531,8 @@ pub enum LateralMovement {
     /// Adversaries may transfer tools or other files between systems in a compromised environment. Once brought into the victim environment (i.e., [Ingress Tool Transfer](https://attack.mitre.org/techniques/T1105)) files may then be copied from one system to another to stage adversary tools or other files over the course of an operation.
     LateralToolTransfer,
 
-	Other,
 }
+/// [Defense Evasion](https://attack.mitre.org/tactics/TA0005)'s techniques
 pub enum DefenseEvasion {
     /// [Direct Volume Access](https://attack.mitre.org/techniques/T1006)
     ///
@@ -747,8 +749,8 @@ pub enum DefenseEvasion {
     /// Adversaries may take advantage of trusted developer utilities to proxy execution of malicious payloads. There are many utilities used for software development related tasks that can be used to execute code in various forms to assist in development, debugging, and reverse engineering.(Citation: engima0x3 DNX Bypass)(Citation: engima0x3 RCSI Bypass)(Citation: Exploit Monday WinDbg)(Citation: LOLBAS Tracker) These utilities may often be signed with legitimate certificates that allow them to execute on a system and proxy execution of malicious code through a trusted process that effectively bypasses application control solutions.
     TrustedDeveloperUtilitiesProxyExecution,
 
-	Other,
 }
+/// [Exfiltration](https://attack.mitre.org/tactics/TA0010)'s techniques
 pub enum Exfiltration {
     /// [Exfiltration Over Web Service](https://attack.mitre.org/techniques/T1567)
     ///
@@ -795,8 +797,8 @@ pub enum Exfiltration {
     /// Adversaries may attempt to exfiltrate data via a physical medium, such as a removable drive. In certain circumstances, such as an air-gapped network compromise, exfiltration could occur via a physical medium or device introduced by a user. Such media could be an external hard drive, USB drive, cellular phone, MP3 player, or other removable storage and processing device. The physical medium or device could be used as the final exfiltration point or to hop between otherwise disconnected systems.
     ExfiltrationOverPhysicalMedium,
 
-	Other,
 }
+/// [Discovery](https://attack.mitre.org/tactics/TA0007)'s techniques
 pub enum Discovery {
     /// [System Owner/User Discovery](https://attack.mitre.org/techniques/T1033)
     ///
@@ -958,8 +960,8 @@ pub enum Discovery {
     /// An adversary may gather the system time and/or time zone from a local or remote system. The system time is set and stored by the Windows Time Service within a domain to maintain time synchronization between systems and services in an enterprise network. (Citation: MSDN System Time)(Citation: Technet Windows Time Service)
     SystemTimeDiscovery,
 
-	Other,
 }
+/// [Collection](https://attack.mitre.org/tactics/TA0009)'s techniques
 pub enum Collection {
     /// [Screen Capture](https://attack.mitre.org/techniques/T1113)
     ///
@@ -1046,8 +1048,8 @@ pub enum Collection {
     /// Adversaries may leverage information repositories to mine valuable information. Information repositories are tools that allow for storage of information, typically to facilitate collaboration or information sharing between users, and can store a wide variety of data that may aid adversaries in further objectives, or direct access to the target information. Adversaries may also abuse external sharing features to share sensitive documents with recipients outside of the organization. 
     DataFromInformationRepositories,
 
-	Other,
 }
+/// [Resource Development](https://attack.mitre.org/tactics/TA0042)'s techniques
 pub enum ResourceDevelopment {
     /// [Acquire Infrastructure](https://attack.mitre.org/techniques/T1583)
     ///
@@ -1089,8 +1091,8 @@ pub enum ResourceDevelopment {
     /// Adversaries may build capabilities that can be used during targeting. Rather than purchasing, freely downloading, or stealing capabilities, adversaries may develop their own capabilities in-house. This is the process of identifying development requirements and building solutions such as malware, exploits, and self-signed certificates. Adversaries may develop capabilities to support their operations throughout numerous phases of the adversary lifecycle.(Citation: Mandiant APT1)(Citation: Kaspersky Sofacy)(Citation: Bitdefender StrongPity June 2020)(Citation: Talos Promethium June 2020)
     DevelopCapabilities,
 
-	Other,
 }
+/// [Reconnaissance](https://attack.mitre.org/tactics/TA0043)'s techniques
 pub enum Reconnaissance {
     /// [Gather Victim Host Information](https://attack.mitre.org/techniques/T1592)
     ///
@@ -1142,8 +1144,8 @@ pub enum Reconnaissance {
     /// Adversaries may send phishing messages to elicit sensitive information that can be used during targeting. Phishing for information is an attempt to trick targets into divulging information, frequently credentials or other actionable information. Phishing for information is different from [Phishing](https://attack.mitre.org/techniques/T1566) in that the objective is gathering data from the victim rather than executing malicious code.
     PhishingForInformation,
 
-	Other,
 }
+/// [Command and Control](https://attack.mitre.org/tactics/TA0011)'s techniques
 pub enum CommandAndControl {
     /// [Application Layer Protocol](https://attack.mitre.org/techniques/T1071)
     ///
@@ -1230,8 +1232,8 @@ pub enum CommandAndControl {
     /// Adversaries may use fallback or alternate communication channels if the primary channel is compromised or inaccessible in order to maintain reliable command and control and to avoid data transfer thresholds.
     FallbackChannels,
 
-	Other,
 }
+/// [Initial Access](https://attack.mitre.org/tactics/TA0001)'s techniques
 pub enum InitialAccess {
     /// [External Remote Services](https://attack.mitre.org/techniques/T1133)
     ///
@@ -1283,12 +1285,11 @@ pub enum InitialAccess {
     /// Adversaries may gain access to a system through a user visiting a website over the normal course of browsing. With this technique, the user's web browser is typically targeted for exploitation, but adversaries may also use compromised websites for non-exploitation behavior such as acquiring [Application Access Token](https://attack.mitre.org/techniques/T1550/001).
     DriveByCompromise,
 
-	Other,
 }
 impl TryFrom<AttackTechnique> for Tactic {
     type Error = InvalidArgumentError;
     fn try_from(value: AttackTechnique) -> Result<Self, Self::Error> {
-        let AttackTechnique { tactic: Some(tactic), technique } = value else { return Ok(Self::Other); };
+        let AttackTechnique { tactic, technique } = value;
         Ok(match tactic {
             0006 => Self::CredentialAccess(CredentialAccess::try_from(technique)?),
             0002 => Self::Execution(Execution::try_from(technique)?),
@@ -1308,11 +1309,10 @@ impl TryFrom<AttackTechnique> for Tactic {
         })
     }
 }
-impl TryFrom<Option<u32>> for CredentialAccess {
+impl TryFrom<u32> for CredentialAccess {
     type Error = InvalidArgumentError;
-    fn try_from(value: Option<u32>) -> Result<Self, Self::Error> {
-        let Some(technique) = value else { return Ok(Self::Other); };
-        Ok(match technique {
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(match value {
             1557 => Self::AdversaryInTheMiddle,
             1003 => Self::OsCredentialDumping,
             1539 => Self::StealWebSessionCookie,
@@ -1330,15 +1330,14 @@ impl TryFrom<Option<u32>> for CredentialAccess {
             1056 => Self::InputCapture,
             1111 => Self::MultiFactorAuthenticationInterception,
             1556 => Self::ModifyAuthenticationProcess,
-            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0006, technique)),
+            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0006, value)),
         })
     }
 }
-impl TryFrom<Option<u32>> for Execution {
+impl TryFrom<u32> for Execution {
     type Error = InvalidArgumentError;
-    fn try_from(value: Option<u32>) -> Result<Self, Self::Error> {
-        let Some(technique) = value else { return Ok(Self::Other); };
-        Ok(match technique {
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(match value {
             1047 => Self::WindowsManagementInstrumentation,
             1129 => Self::SharedModules,
             1053 => Self::ScheduledTaskJob,
@@ -1353,15 +1352,14 @@ impl TryFrom<Option<u32>> for Execution {
             1569 => Self::SystemServices,
             1651 => Self::CloudAdministrationCommand,
             1648 => Self::ServerlessExecution,
-            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0002, technique)),
+            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0002, value)),
         })
     }
 }
-impl TryFrom<Option<u32>> for Impact {
+impl TryFrom<u32> for Impact {
     type Error = InvalidArgumentError;
-    fn try_from(value: Option<u32>) -> Result<Self, Self::Error> {
-        let Some(technique) = value else { return Ok(Self::Other); };
-        Ok(match technique {
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(match value {
             1561 => Self::DiskWipe,
             1489 => Self::ServiceStop,
             1491 => Self::Defacement,
@@ -1376,15 +1374,14 @@ impl TryFrom<Option<u32>> for Impact {
             1495 => Self::FirmwareCorruption,
             1490 => Self::InhibitSystemRecovery,
             1529 => Self::SystemShutdownReboot,
-            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0040, technique)),
+            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0040, value)),
         })
     }
 }
-impl TryFrom<Option<u32>> for Persistence {
+impl TryFrom<u32> for Persistence {
     type Error = InvalidArgumentError;
-    fn try_from(value: Option<u32>) -> Result<Self, Self::Error> {
-        let Some(technique) = value else { return Ok(Self::Other); };
-        Ok(match technique {
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(match value {
             1037 => Self::BootOrLogonInitializationScripts,
             1543 => Self::CreateOrModifySystemProcess,
             1133 => Self::ExternalRemoteServices,
@@ -1405,15 +1402,14 @@ impl TryFrom<Option<u32>> for Persistence {
             1136 => Self::CreateAccount,
             1653 => Self::PowerSettings,
             1556 => Self::ModifyAuthenticationProcess,
-            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0003, technique)),
+            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0003, value)),
         })
     }
 }
-impl TryFrom<Option<u32>> for PrivilegeEscalation {
+impl TryFrom<u32> for PrivilegeEscalation {
     type Error = InvalidArgumentError;
-    fn try_from(value: Option<u32>) -> Result<Self, Self::Error> {
-        let Some(technique) = value else { return Ok(Self::Other); };
-        Ok(match technique {
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(match value {
             1037 => Self::BootOrLogonInitializationScripts,
             1543 => Self::CreateOrModifySystemProcess,
             1547 => Self::BootOrLogonAutostartExecution,
@@ -1428,15 +1424,14 @@ impl TryFrom<Option<u32>> for PrivilegeEscalation {
             1546 => Self::EventTriggeredExecution,
             1134 => Self::AccessTokenManipulation,
             1484 => Self::DomainPolicyModification,
-            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0004, technique)),
+            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0004, value)),
         })
     }
 }
-impl TryFrom<Option<u32>> for LateralMovement {
+impl TryFrom<u32> for LateralMovement {
     type Error = InvalidArgumentError;
-    fn try_from(value: Option<u32>) -> Result<Self, Self::Error> {
-        let Some(technique) = value else { return Ok(Self::Other); };
-        Ok(match technique {
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(match value {
             1080 => Self::TaintSharedContent,
             1091 => Self::ReplicationThroughRemovableMedia,
             1550 => Self::UseAlternateAuthenticationMaterial,
@@ -1446,15 +1441,14 @@ impl TryFrom<Option<u32>> for LateralMovement {
             1210 => Self::ExploitationOfRemoteServices,
             1534 => Self::InternalSpearphishing,
             1570 => Self::LateralToolTransfer,
-            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0008, technique)),
+            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0008, value)),
         })
     }
 }
-impl TryFrom<Option<u32>> for DefenseEvasion {
+impl TryFrom<u32> for DefenseEvasion {
     type Error = InvalidArgumentError;
-    fn try_from(value: Option<u32>) -> Result<Self, Self::Error> {
-        let Some(technique) = value else { return Ok(Self::Other); };
-        Ok(match technique {
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(match value {
             1006 => Self::DirectVolumeAccess,
             1014 => Self::Rootkit,
             1578 => Self::ModifyCloudComputeInfrastructure,
@@ -1498,15 +1492,14 @@ impl TryFrom<Option<u32>> for DefenseEvasion {
             1216 => Self::SystemScriptProxyExecution,
             1211 => Self::ExploitationForDefenseEvasion,
             1127 => Self::TrustedDeveloperUtilitiesProxyExecution,
-            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0005, technique)),
+            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0005, value)),
         })
     }
 }
-impl TryFrom<Option<u32>> for Exfiltration {
+impl TryFrom<u32> for Exfiltration {
     type Error = InvalidArgumentError;
-    fn try_from(value: Option<u32>) -> Result<Self, Self::Error> {
-        let Some(technique) = value else { return Ok(Self::Other); };
-        Ok(match technique {
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(match value {
             1567 => Self::ExfiltrationOverWebService,
             1029 => Self::ScheduledTransfer,
             1011 => Self::ExfiltrationOverOtherNetworkMedium,
@@ -1516,15 +1509,14 @@ impl TryFrom<Option<u32>> for Exfiltration {
             1030 => Self::DataTransferSizeLimits,
             1537 => Self::TransferDataToCloudAccount,
             1052 => Self::ExfiltrationOverPhysicalMedium,
-            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0010, technique)),
+            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0010, value)),
         })
     }
 }
-impl TryFrom<Option<u32>> for Discovery {
+impl TryFrom<u32> for Discovery {
     type Error = InvalidArgumentError;
-    fn try_from(value: Option<u32>) -> Result<Self, Self::Error> {
-        let Some(technique) = value else { return Ok(Self::Other); };
-        Ok(match technique {
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(match value {
             1033 => Self::SystemOwnerUserDiscovery,
             1613 => Self::ContainerAndResourceDiscovery,
             1069 => Self::PermissionGroupsDiscovery,
@@ -1557,15 +1549,14 @@ impl TryFrom<Option<u32>> for Discovery {
             1538 => Self::CloudServiceDashboard,
             1622 => Self::DebuggerEvasion,
             1124 => Self::SystemTimeDiscovery,
-            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0007, technique)),
+            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0007, value)),
         })
     }
 }
-impl TryFrom<Option<u32>> for Collection {
+impl TryFrom<u32> for Collection {
     type Error = InvalidArgumentError;
-    fn try_from(value: Option<u32>) -> Result<Self, Self::Error> {
-        let Some(technique) = value else { return Ok(Self::Other); };
-        Ok(match technique {
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(match value {
             1113 => Self::ScreenCapture,
             1557 => Self::AdversaryInTheMiddle,
             1602 => Self::DataFromConfigurationRepository,
@@ -1583,15 +1574,14 @@ impl TryFrom<Option<u32>> for Collection {
             1039 => Self::DataFromNetworkSharedDrive,
             1056 => Self::InputCapture,
             1213 => Self::DataFromInformationRepositories,
-            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0009, technique)),
+            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0009, value)),
         })
     }
 }
-impl TryFrom<Option<u32>> for ResourceDevelopment {
+impl TryFrom<u32> for ResourceDevelopment {
     type Error = InvalidArgumentError;
-    fn try_from(value: Option<u32>) -> Result<Self, Self::Error> {
-        let Some(technique) = value else { return Ok(Self::Other); };
-        Ok(match technique {
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(match value {
             1583 => Self::AcquireInfrastructure,
             1584 => Self::CompromiseInfrastructure,
             1586 => Self::CompromiseAccounts,
@@ -1600,15 +1590,14 @@ impl TryFrom<Option<u32>> for ResourceDevelopment {
             1588 => Self::ObtainCapabilities,
             1650 => Self::AcquireAccess,
             1587 => Self::DevelopCapabilities,
-            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0042, technique)),
+            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0042, value)),
         })
     }
 }
-impl TryFrom<Option<u32>> for Reconnaissance {
+impl TryFrom<u32> for Reconnaissance {
     type Error = InvalidArgumentError;
-    fn try_from(value: Option<u32>) -> Result<Self, Self::Error> {
-        let Some(technique) = value else { return Ok(Self::Other); };
-        Ok(match technique {
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(match value {
             1592 => Self::GatherVictimHostInformation,
             1594 => Self::SearchVictimOwnedWebsites,
             1589 => Self::GatherVictimIdentityInformation,
@@ -1619,15 +1608,14 @@ impl TryFrom<Option<u32>> for Reconnaissance {
             1593 => Self::SearchOpenWebsitesDomains,
             1597 => Self::SearchClosedSources,
             1598 => Self::PhishingForInformation,
-            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0043, technique)),
+            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0043, value)),
         })
     }
 }
-impl TryFrom<Option<u32>> for CommandAndControl {
+impl TryFrom<u32> for CommandAndControl {
     type Error = InvalidArgumentError;
-    fn try_from(value: Option<u32>) -> Result<Self, Self::Error> {
-        let Some(technique) = value else { return Ok(Self::Other); };
-        Ok(match technique {
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(match value {
             1071 => Self::ApplicationLayerProtocol,
             1219 => Self::RemoteAccessSoftware,
             1659 => Self::ContentInjection,
@@ -1645,15 +1633,14 @@ impl TryFrom<Option<u32>> for CommandAndControl {
             1132 => Self::DataEncoding,
             1105 => Self::IngressToolTransfer,
             1008 => Self::FallbackChannels,
-            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0011, technique)),
+            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0011, value)),
         })
     }
 }
-impl TryFrom<Option<u32>> for InitialAccess {
+impl TryFrom<u32> for InitialAccess {
     type Error = InvalidArgumentError;
-    fn try_from(value: Option<u32>) -> Result<Self, Self::Error> {
-        let Some(technique) = value else { return Ok(Self::Other); };
-        Ok(match technique {
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(match value {
             1133 => Self::ExternalRemoteServices,
             1091 => Self::ReplicationThroughRemovableMedia,
             1195 => Self::SupplyChainCompromise,
@@ -1664,361 +1651,346 @@ impl TryFrom<Option<u32>> for InitialAccess {
             1078 => Self::ValidAccounts,
             1200 => Self::HardwareAdditions,
             1189 => Self::DriveByCompromise,
-            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0001, technique)),
+            _ => return Err(InvalidArgumentError::InvalidMitreTechnique(0001, value)),
         })
     }
 }
 impl From<Tactic> for AttackTechnique {
     fn from(value: Tactic) -> Self {
         let (tactic, technique) = match value {
-            Tactic::CredentialAccess(technique) => (Some(0006), technique.into()),
-            Tactic::Execution(technique) => (Some(0002), technique.into()),
-            Tactic::Impact(technique) => (Some(0040), technique.into()),
-            Tactic::Persistence(technique) => (Some(0003), technique.into()),
-            Tactic::PrivilegeEscalation(technique) => (Some(0004), technique.into()),
-            Tactic::LateralMovement(technique) => (Some(0008), technique.into()),
-            Tactic::DefenseEvasion(technique) => (Some(0005), technique.into()),
-            Tactic::Exfiltration(technique) => (Some(0010), technique.into()),
-            Tactic::Discovery(technique) => (Some(0007), technique.into()),
-            Tactic::Collection(technique) => (Some(0009), technique.into()),
-            Tactic::ResourceDevelopment(technique) => (Some(0042), technique.into()),
-            Tactic::Reconnaissance(technique) => (Some(0043), technique.into()),
-            Tactic::CommandAndControl(technique) => (Some(0011), technique.into()),
-            Tactic::InitialAccess(technique) => (Some(0001), technique.into()),
-            Tactic::Other => (None, None),
+            Tactic::CredentialAccess(technique) => (0006, technique.into()),
+            Tactic::Execution(technique) => (0002, technique.into()),
+            Tactic::Impact(technique) => (0040, technique.into()),
+            Tactic::Persistence(technique) => (0003, technique.into()),
+            Tactic::PrivilegeEscalation(technique) => (0004, technique.into()),
+            Tactic::LateralMovement(technique) => (0008, technique.into()),
+            Tactic::DefenseEvasion(technique) => (0005, technique.into()),
+            Tactic::Exfiltration(technique) => (0010, technique.into()),
+            Tactic::Discovery(technique) => (0007, technique.into()),
+            Tactic::Collection(technique) => (0009, technique.into()),
+            Tactic::ResourceDevelopment(technique) => (0042, technique.into()),
+            Tactic::Reconnaissance(technique) => (0043, technique.into()),
+            Tactic::CommandAndControl(technique) => (0011, technique.into()),
+            Tactic::InitialAccess(technique) => (0001, technique.into()),
         };
         AttackTechnique { tactic, technique }
     }
 }
-impl From<CredentialAccess> for Option<u32> {
+impl From<CredentialAccess> for u32 {
     fn from(value: CredentialAccess) -> Self {
         match value {
-            CredentialAccess::AdversaryInTheMiddle => Some(1557),
-            CredentialAccess::OsCredentialDumping => Some(1003),
-            CredentialAccess::StealWebSessionCookie => Some(1539),
-            CredentialAccess::NetworkSniffing => Some(1040),
-            CredentialAccess::StealOrForgeKerberosTickets => Some(1558),
-            CredentialAccess::CredentialsFromPasswordStores => Some(1555),
-            CredentialAccess::UnsecuredCredentials => Some(1552),
-            CredentialAccess::StealOrForgeAuthenticationCertificates => Some(1649),
-            CredentialAccess::StealApplicationAccessToken => Some(1528),
-            CredentialAccess::ForgeWebCredentials => Some(1606),
-            CredentialAccess::MultiFactorAuthenticationRequestGeneration => Some(1621),
-            CredentialAccess::ExploitationForCredentialAccess => Some(1212),
-            CredentialAccess::BruteForce => Some(1110),
-            CredentialAccess::ForcedAuthentication => Some(1187),
-            CredentialAccess::InputCapture => Some(1056),
-            CredentialAccess::MultiFactorAuthenticationInterception => Some(1111),
-            CredentialAccess::ModifyAuthenticationProcess => Some(1556),
-            CredentialAccess::Other => None,
+            CredentialAccess::AdversaryInTheMiddle => 1557,
+            CredentialAccess::OsCredentialDumping => 1003,
+            CredentialAccess::StealWebSessionCookie => 1539,
+            CredentialAccess::NetworkSniffing => 1040,
+            CredentialAccess::StealOrForgeKerberosTickets => 1558,
+            CredentialAccess::CredentialsFromPasswordStores => 1555,
+            CredentialAccess::UnsecuredCredentials => 1552,
+            CredentialAccess::StealOrForgeAuthenticationCertificates => 1649,
+            CredentialAccess::StealApplicationAccessToken => 1528,
+            CredentialAccess::ForgeWebCredentials => 1606,
+            CredentialAccess::MultiFactorAuthenticationRequestGeneration => 1621,
+            CredentialAccess::ExploitationForCredentialAccess => 1212,
+            CredentialAccess::BruteForce => 1110,
+            CredentialAccess::ForcedAuthentication => 1187,
+            CredentialAccess::InputCapture => 1056,
+            CredentialAccess::MultiFactorAuthenticationInterception => 1111,
+            CredentialAccess::ModifyAuthenticationProcess => 1556,
         }
     }
 }
-impl From<Execution> for Option<u32> {
+impl From<Execution> for u32 {
     fn from(value: Execution) -> Self {
         match value {
-            Execution::WindowsManagementInstrumentation => Some(1047),
-            Execution::SharedModules => Some(1129),
-            Execution::ScheduledTaskJob => Some(1053),
-            Execution::NativeApi => Some(1106),
-            Execution::DeployContainer => Some(1610),
-            Execution::CommandAndScriptingInterpreter => Some(1059),
-            Execution::ContainerAdministrationCommand => Some(1609),
-            Execution::UserExecution => Some(1204),
-            Execution::SoftwareDeploymentTools => Some(1072),
-            Execution::InterProcessCommunication => Some(1559),
-            Execution::ExploitationForClientExecution => Some(1203),
-            Execution::SystemServices => Some(1569),
-            Execution::CloudAdministrationCommand => Some(1651),
-            Execution::ServerlessExecution => Some(1648),
-            Execution::Other => None,
+            Execution::WindowsManagementInstrumentation => 1047,
+            Execution::SharedModules => 1129,
+            Execution::ScheduledTaskJob => 1053,
+            Execution::NativeApi => 1106,
+            Execution::DeployContainer => 1610,
+            Execution::CommandAndScriptingInterpreter => 1059,
+            Execution::ContainerAdministrationCommand => 1609,
+            Execution::UserExecution => 1204,
+            Execution::SoftwareDeploymentTools => 1072,
+            Execution::InterProcessCommunication => 1559,
+            Execution::ExploitationForClientExecution => 1203,
+            Execution::SystemServices => 1569,
+            Execution::CloudAdministrationCommand => 1651,
+            Execution::ServerlessExecution => 1648,
         }
     }
 }
-impl From<Impact> for Option<u32> {
+impl From<Impact> for u32 {
     fn from(value: Impact) -> Self {
         match value {
-            Impact::DiskWipe => Some(1561),
-            Impact::ServiceStop => Some(1489),
-            Impact::Defacement => Some(1491),
-            Impact::FinancialTheft => Some(1657),
-            Impact::DataManipulation => Some(1565),
-            Impact::AccountAccessRemoval => Some(1531),
-            Impact::DataEncryptedForImpact => Some(1486),
-            Impact::EndpointDenialOfService => Some(1499),
-            Impact::ResourceHijacking => Some(1496),
-            Impact::DataDestruction => Some(1485),
-            Impact::NetworkDenialOfService => Some(1498),
-            Impact::FirmwareCorruption => Some(1495),
-            Impact::InhibitSystemRecovery => Some(1490),
-            Impact::SystemShutdownReboot => Some(1529),
-            Impact::Other => None,
+            Impact::DiskWipe => 1561,
+            Impact::ServiceStop => 1489,
+            Impact::Defacement => 1491,
+            Impact::FinancialTheft => 1657,
+            Impact::DataManipulation => 1565,
+            Impact::AccountAccessRemoval => 1531,
+            Impact::DataEncryptedForImpact => 1486,
+            Impact::EndpointDenialOfService => 1499,
+            Impact::ResourceHijacking => 1496,
+            Impact::DataDestruction => 1485,
+            Impact::NetworkDenialOfService => 1498,
+            Impact::FirmwareCorruption => 1495,
+            Impact::InhibitSystemRecovery => 1490,
+            Impact::SystemShutdownReboot => 1529,
         }
     }
 }
-impl From<Persistence> for Option<u32> {
+impl From<Persistence> for u32 {
     fn from(value: Persistence) -> Self {
         match value {
-            Persistence::BootOrLogonInitializationScripts => Some(1037),
-            Persistence::CreateOrModifySystemProcess => Some(1543),
-            Persistence::ExternalRemoteServices => Some(1133),
-            Persistence::BootOrLogonAutostartExecution => Some(1547),
-            Persistence::OfficeApplicationStartup => Some(1137),
-            Persistence::ScheduledTaskJob => Some(1053),
-            Persistence::BrowserExtensions => Some(1176),
-            Persistence::TrafficSignaling => Some(1205),
-            Persistence::ImplantInternalImage => Some(1525),
-            Persistence::PreOsBoot => Some(1542),
-            Persistence::CompromiseClientSoftwareBinary => Some(1554),
-            Persistence::AccountManipulation => Some(1098),
-            Persistence::HijackExecutionFlow => Some(1574),
-            Persistence::ValidAccounts => Some(1078),
-            Persistence::EventTriggeredExecution => Some(1546),
-            Persistence::BitsJobs => Some(1197),
-            Persistence::ServerSoftwareComponent => Some(1505),
-            Persistence::CreateAccount => Some(1136),
-            Persistence::PowerSettings => Some(1653),
-            Persistence::ModifyAuthenticationProcess => Some(1556),
-            Persistence::Other => None,
+            Persistence::BootOrLogonInitializationScripts => 1037,
+            Persistence::CreateOrModifySystemProcess => 1543,
+            Persistence::ExternalRemoteServices => 1133,
+            Persistence::BootOrLogonAutostartExecution => 1547,
+            Persistence::OfficeApplicationStartup => 1137,
+            Persistence::ScheduledTaskJob => 1053,
+            Persistence::BrowserExtensions => 1176,
+            Persistence::TrafficSignaling => 1205,
+            Persistence::ImplantInternalImage => 1525,
+            Persistence::PreOsBoot => 1542,
+            Persistence::CompromiseClientSoftwareBinary => 1554,
+            Persistence::AccountManipulation => 1098,
+            Persistence::HijackExecutionFlow => 1574,
+            Persistence::ValidAccounts => 1078,
+            Persistence::EventTriggeredExecution => 1546,
+            Persistence::BitsJobs => 1197,
+            Persistence::ServerSoftwareComponent => 1505,
+            Persistence::CreateAccount => 1136,
+            Persistence::PowerSettings => 1653,
+            Persistence::ModifyAuthenticationProcess => 1556,
         }
     }
 }
-impl From<PrivilegeEscalation> for Option<u32> {
+impl From<PrivilegeEscalation> for u32 {
     fn from(value: PrivilegeEscalation) -> Self {
         match value {
-            PrivilegeEscalation::BootOrLogonInitializationScripts => Some(1037),
-            PrivilegeEscalation::CreateOrModifySystemProcess => Some(1543),
-            PrivilegeEscalation::BootOrLogonAutostartExecution => Some(1547),
-            PrivilegeEscalation::ScheduledTaskJob => Some(1053),
-            PrivilegeEscalation::ProcessInjection => Some(1055),
-            PrivilegeEscalation::EscapeToHost => Some(1611),
-            PrivilegeEscalation::AbuseElevationControlMechanism => Some(1548),
-            PrivilegeEscalation::AccountManipulation => Some(1098),
-            PrivilegeEscalation::HijackExecutionFlow => Some(1574),
-            PrivilegeEscalation::ValidAccounts => Some(1078),
-            PrivilegeEscalation::ExploitationForPrivilegeEscalation => Some(1068),
-            PrivilegeEscalation::EventTriggeredExecution => Some(1546),
-            PrivilegeEscalation::AccessTokenManipulation => Some(1134),
-            PrivilegeEscalation::DomainPolicyModification => Some(1484),
-            PrivilegeEscalation::Other => None,
+            PrivilegeEscalation::BootOrLogonInitializationScripts => 1037,
+            PrivilegeEscalation::CreateOrModifySystemProcess => 1543,
+            PrivilegeEscalation::BootOrLogonAutostartExecution => 1547,
+            PrivilegeEscalation::ScheduledTaskJob => 1053,
+            PrivilegeEscalation::ProcessInjection => 1055,
+            PrivilegeEscalation::EscapeToHost => 1611,
+            PrivilegeEscalation::AbuseElevationControlMechanism => 1548,
+            PrivilegeEscalation::AccountManipulation => 1098,
+            PrivilegeEscalation::HijackExecutionFlow => 1574,
+            PrivilegeEscalation::ValidAccounts => 1078,
+            PrivilegeEscalation::ExploitationForPrivilegeEscalation => 1068,
+            PrivilegeEscalation::EventTriggeredExecution => 1546,
+            PrivilegeEscalation::AccessTokenManipulation => 1134,
+            PrivilegeEscalation::DomainPolicyModification => 1484,
         }
     }
 }
-impl From<LateralMovement> for Option<u32> {
+impl From<LateralMovement> for u32 {
     fn from(value: LateralMovement) -> Self {
         match value {
-            LateralMovement::TaintSharedContent => Some(1080),
-            LateralMovement::ReplicationThroughRemovableMedia => Some(1091),
-            LateralMovement::UseAlternateAuthenticationMaterial => Some(1550),
-            LateralMovement::RemoteServices => Some(1021),
-            LateralMovement::RemoteServiceSessionHijacking => Some(1563),
-            LateralMovement::SoftwareDeploymentTools => Some(1072),
-            LateralMovement::ExploitationOfRemoteServices => Some(1210),
-            LateralMovement::InternalSpearphishing => Some(1534),
-            LateralMovement::LateralToolTransfer => Some(1570),
-            LateralMovement::Other => None,
+            LateralMovement::TaintSharedContent => 1080,
+            LateralMovement::ReplicationThroughRemovableMedia => 1091,
+            LateralMovement::UseAlternateAuthenticationMaterial => 1550,
+            LateralMovement::RemoteServices => 1021,
+            LateralMovement::RemoteServiceSessionHijacking => 1563,
+            LateralMovement::SoftwareDeploymentTools => 1072,
+            LateralMovement::ExploitationOfRemoteServices => 1210,
+            LateralMovement::InternalSpearphishing => 1534,
+            LateralMovement::LateralToolTransfer => 1570,
         }
     }
 }
-impl From<DefenseEvasion> for Option<u32> {
+impl From<DefenseEvasion> for u32 {
     fn from(value: DefenseEvasion) -> Self {
         match value {
-            DefenseEvasion::DirectVolumeAccess => Some(1006),
-            DefenseEvasion::Rootkit => Some(1014),
-            DefenseEvasion::ModifyCloudComputeInfrastructure => Some(1578),
-            DefenseEvasion::WeakenEncryption => Some(1600),
-            DefenseEvasion::HideArtifacts => Some(1564),
-            DefenseEvasion::IndirectCommandExecution => Some(1202),
-            DefenseEvasion::DeobfuscateDecodeFilesOrInformation => Some(1140),
-            DefenseEvasion::ImpairDefenses => Some(1562),
-            DefenseEvasion::Masquerading => Some(1036),
-            DefenseEvasion::ProcessInjection => Some(1055),
-            DefenseEvasion::TrafficSignaling => Some(1205),
-            DefenseEvasion::SystemBinaryProxyExecution => Some(1218),
-            DefenseEvasion::ReflectiveCodeLoading => Some(1620),
-            DefenseEvasion::UseAlternateAuthenticationMaterial => Some(1550),
-            DefenseEvasion::RogueDomainController => Some(1207),
-            DefenseEvasion::DeployContainer => Some(1610),
-            DefenseEvasion::ModifyRegistry => Some(1112),
-            DefenseEvasion::UnusedUnsupportedCloudRegions => Some(1535),
-            DefenseEvasion::FileAndDirectoryPermissionsModification => Some(1222),
-            DefenseEvasion::AbuseElevationControlMechanism => Some(1548),
-            DefenseEvasion::IndicatorRemoval => Some(1070),
-            DefenseEvasion::PlistFileModification => Some(1647),
-            DefenseEvasion::PreOsBoot => Some(1542),
-            DefenseEvasion::BuildImageOnHost => Some(1612),
-            DefenseEvasion::VirtualizationSandboxEvasion => Some(1497),
-            DefenseEvasion::ExecutionGuardrails => Some(1480),
-            DefenseEvasion::ModifySystemImage => Some(1601),
-            DefenseEvasion::HijackExecutionFlow => Some(1574),
-            DefenseEvasion::ValidAccounts => Some(1078),
-            DefenseEvasion::ObfuscatedFilesOrInformation => Some(1027),
-            DefenseEvasion::NetworkBoundaryBridging => Some(1599),
-            DefenseEvasion::SubvertTrustControls => Some(1553),
-            DefenseEvasion::BitsJobs => Some(1197),
-            DefenseEvasion::Impersonation => Some(1656),
-            DefenseEvasion::TemplateInjection => Some(1221),
-            DefenseEvasion::AccessTokenManipulation => Some(1134),
-            DefenseEvasion::DebuggerEvasion => Some(1622),
-            DefenseEvasion::DomainPolicyModification => Some(1484),
-            DefenseEvasion::XslScriptProcessing => Some(1220),
-            DefenseEvasion::ModifyAuthenticationProcess => Some(1556),
-            DefenseEvasion::SystemScriptProxyExecution => Some(1216),
-            DefenseEvasion::ExploitationForDefenseEvasion => Some(1211),
-            DefenseEvasion::TrustedDeveloperUtilitiesProxyExecution => Some(1127),
-            DefenseEvasion::Other => None,
+            DefenseEvasion::DirectVolumeAccess => 1006,
+            DefenseEvasion::Rootkit => 1014,
+            DefenseEvasion::ModifyCloudComputeInfrastructure => 1578,
+            DefenseEvasion::WeakenEncryption => 1600,
+            DefenseEvasion::HideArtifacts => 1564,
+            DefenseEvasion::IndirectCommandExecution => 1202,
+            DefenseEvasion::DeobfuscateDecodeFilesOrInformation => 1140,
+            DefenseEvasion::ImpairDefenses => 1562,
+            DefenseEvasion::Masquerading => 1036,
+            DefenseEvasion::ProcessInjection => 1055,
+            DefenseEvasion::TrafficSignaling => 1205,
+            DefenseEvasion::SystemBinaryProxyExecution => 1218,
+            DefenseEvasion::ReflectiveCodeLoading => 1620,
+            DefenseEvasion::UseAlternateAuthenticationMaterial => 1550,
+            DefenseEvasion::RogueDomainController => 1207,
+            DefenseEvasion::DeployContainer => 1610,
+            DefenseEvasion::ModifyRegistry => 1112,
+            DefenseEvasion::UnusedUnsupportedCloudRegions => 1535,
+            DefenseEvasion::FileAndDirectoryPermissionsModification => 1222,
+            DefenseEvasion::AbuseElevationControlMechanism => 1548,
+            DefenseEvasion::IndicatorRemoval => 1070,
+            DefenseEvasion::PlistFileModification => 1647,
+            DefenseEvasion::PreOsBoot => 1542,
+            DefenseEvasion::BuildImageOnHost => 1612,
+            DefenseEvasion::VirtualizationSandboxEvasion => 1497,
+            DefenseEvasion::ExecutionGuardrails => 1480,
+            DefenseEvasion::ModifySystemImage => 1601,
+            DefenseEvasion::HijackExecutionFlow => 1574,
+            DefenseEvasion::ValidAccounts => 1078,
+            DefenseEvasion::ObfuscatedFilesOrInformation => 1027,
+            DefenseEvasion::NetworkBoundaryBridging => 1599,
+            DefenseEvasion::SubvertTrustControls => 1553,
+            DefenseEvasion::BitsJobs => 1197,
+            DefenseEvasion::Impersonation => 1656,
+            DefenseEvasion::TemplateInjection => 1221,
+            DefenseEvasion::AccessTokenManipulation => 1134,
+            DefenseEvasion::DebuggerEvasion => 1622,
+            DefenseEvasion::DomainPolicyModification => 1484,
+            DefenseEvasion::XslScriptProcessing => 1220,
+            DefenseEvasion::ModifyAuthenticationProcess => 1556,
+            DefenseEvasion::SystemScriptProxyExecution => 1216,
+            DefenseEvasion::ExploitationForDefenseEvasion => 1211,
+            DefenseEvasion::TrustedDeveloperUtilitiesProxyExecution => 1127,
         }
     }
 }
-impl From<Exfiltration> for Option<u32> {
+impl From<Exfiltration> for u32 {
     fn from(value: Exfiltration) -> Self {
         match value {
-            Exfiltration::ExfiltrationOverWebService => Some(1567),
-            Exfiltration::ScheduledTransfer => Some(1029),
-            Exfiltration::ExfiltrationOverOtherNetworkMedium => Some(1011),
-            Exfiltration::AutomatedExfiltration => Some(1020),
-            Exfiltration::ExfiltrationOverC2Channel => Some(1041),
-            Exfiltration::ExfiltrationOverAlternativeProtocol => Some(1048),
-            Exfiltration::DataTransferSizeLimits => Some(1030),
-            Exfiltration::TransferDataToCloudAccount => Some(1537),
-            Exfiltration::ExfiltrationOverPhysicalMedium => Some(1052),
-            Exfiltration::Other => None,
+            Exfiltration::ExfiltrationOverWebService => 1567,
+            Exfiltration::ScheduledTransfer => 1029,
+            Exfiltration::ExfiltrationOverOtherNetworkMedium => 1011,
+            Exfiltration::AutomatedExfiltration => 1020,
+            Exfiltration::ExfiltrationOverC2Channel => 1041,
+            Exfiltration::ExfiltrationOverAlternativeProtocol => 1048,
+            Exfiltration::DataTransferSizeLimits => 1030,
+            Exfiltration::TransferDataToCloudAccount => 1537,
+            Exfiltration::ExfiltrationOverPhysicalMedium => 1052,
         }
     }
 }
-impl From<Discovery> for Option<u32> {
+impl From<Discovery> for u32 {
     fn from(value: Discovery) -> Self {
         match value {
-            Discovery::SystemOwnerUserDiscovery => Some(1033),
-            Discovery::ContainerAndResourceDiscovery => Some(1613),
-            Discovery::PermissionGroupsDiscovery => Some(1069),
-            Discovery::GroupPolicyDiscovery => Some(1615),
-            Discovery::DeviceDriverDiscovery => Some(1652),
-            Discovery::SystemServiceDiscovery => Some(1007),
-            Discovery::NetworkSniffing => Some(1040),
-            Discovery::NetworkShareDiscovery => Some(1135),
-            Discovery::PeripheralDeviceDiscovery => Some(1120),
-            Discovery::SystemInformationDiscovery => Some(1082),
-            Discovery::ApplicationWindowDiscovery => Some(1010),
-            Discovery::CloudInfrastructureDiscovery => Some(1580),
-            Discovery::BrowserInformationDiscovery => Some(1217),
-            Discovery::SystemNetworkConfigurationDiscovery => Some(1016),
-            Discovery::AccountDiscovery => Some(1087),
-            Discovery::DomainTrustDiscovery => Some(1482),
-            Discovery::FileAndDirectoryDiscovery => Some(1083),
-            Discovery::SystemNetworkConnectionsDiscovery => Some(1049),
-            Discovery::VirtualizationSandboxEvasion => Some(1497),
-            Discovery::CloudStorageObjectDiscovery => Some(1619),
-            Discovery::LogEnumeration => Some(1654),
-            Discovery::ProcessDiscovery => Some(1057),
-            Discovery::PasswordPolicyDiscovery => Some(1201),
-            Discovery::QueryRegistry => Some(1012),
-            Discovery::SystemLocationDiscovery => Some(1614),
-            Discovery::CloudServiceDiscovery => Some(1526),
-            Discovery::RemoteSystemDiscovery => Some(1018),
-            Discovery::NetworkServiceDiscovery => Some(1046),
-            Discovery::SoftwareDiscovery => Some(1518),
-            Discovery::CloudServiceDashboard => Some(1538),
-            Discovery::DebuggerEvasion => Some(1622),
-            Discovery::SystemTimeDiscovery => Some(1124),
-            Discovery::Other => None,
+            Discovery::SystemOwnerUserDiscovery => 1033,
+            Discovery::ContainerAndResourceDiscovery => 1613,
+            Discovery::PermissionGroupsDiscovery => 1069,
+            Discovery::GroupPolicyDiscovery => 1615,
+            Discovery::DeviceDriverDiscovery => 1652,
+            Discovery::SystemServiceDiscovery => 1007,
+            Discovery::NetworkSniffing => 1040,
+            Discovery::NetworkShareDiscovery => 1135,
+            Discovery::PeripheralDeviceDiscovery => 1120,
+            Discovery::SystemInformationDiscovery => 1082,
+            Discovery::ApplicationWindowDiscovery => 1010,
+            Discovery::CloudInfrastructureDiscovery => 1580,
+            Discovery::BrowserInformationDiscovery => 1217,
+            Discovery::SystemNetworkConfigurationDiscovery => 1016,
+            Discovery::AccountDiscovery => 1087,
+            Discovery::DomainTrustDiscovery => 1482,
+            Discovery::FileAndDirectoryDiscovery => 1083,
+            Discovery::SystemNetworkConnectionsDiscovery => 1049,
+            Discovery::VirtualizationSandboxEvasion => 1497,
+            Discovery::CloudStorageObjectDiscovery => 1619,
+            Discovery::LogEnumeration => 1654,
+            Discovery::ProcessDiscovery => 1057,
+            Discovery::PasswordPolicyDiscovery => 1201,
+            Discovery::QueryRegistry => 1012,
+            Discovery::SystemLocationDiscovery => 1614,
+            Discovery::CloudServiceDiscovery => 1526,
+            Discovery::RemoteSystemDiscovery => 1018,
+            Discovery::NetworkServiceDiscovery => 1046,
+            Discovery::SoftwareDiscovery => 1518,
+            Discovery::CloudServiceDashboard => 1538,
+            Discovery::DebuggerEvasion => 1622,
+            Discovery::SystemTimeDiscovery => 1124,
         }
     }
 }
-impl From<Collection> for Option<u32> {
+impl From<Collection> for u32 {
     fn from(value: Collection) -> Self {
         match value {
-            Collection::ScreenCapture => Some(1113),
-            Collection::AdversaryInTheMiddle => Some(1557),
-            Collection::DataFromConfigurationRepository => Some(1602),
-            Collection::AudioCapture => Some(1123),
-            Collection::EmailCollection => Some(1114),
-            Collection::DataFromRemovableMedia => Some(1025),
-            Collection::AutomatedCollection => Some(1119),
-            Collection::ClipboardData => Some(1115),
-            Collection::DataFromCloudStorage => Some(1530),
-            Collection::DataFromLocalSystem => Some(1005),
-            Collection::ArchiveCollectedData => Some(1560),
-            Collection::BrowserSessionHijacking => Some(1185),
-            Collection::VideoCapture => Some(1125),
-            Collection::DataStaged => Some(1074),
-            Collection::DataFromNetworkSharedDrive => Some(1039),
-            Collection::InputCapture => Some(1056),
-            Collection::DataFromInformationRepositories => Some(1213),
-            Collection::Other => None,
+            Collection::ScreenCapture => 1113,
+            Collection::AdversaryInTheMiddle => 1557,
+            Collection::DataFromConfigurationRepository => 1602,
+            Collection::AudioCapture => 1123,
+            Collection::EmailCollection => 1114,
+            Collection::DataFromRemovableMedia => 1025,
+            Collection::AutomatedCollection => 1119,
+            Collection::ClipboardData => 1115,
+            Collection::DataFromCloudStorage => 1530,
+            Collection::DataFromLocalSystem => 1005,
+            Collection::ArchiveCollectedData => 1560,
+            Collection::BrowserSessionHijacking => 1185,
+            Collection::VideoCapture => 1125,
+            Collection::DataStaged => 1074,
+            Collection::DataFromNetworkSharedDrive => 1039,
+            Collection::InputCapture => 1056,
+            Collection::DataFromInformationRepositories => 1213,
         }
     }
 }
-impl From<ResourceDevelopment> for Option<u32> {
+impl From<ResourceDevelopment> for u32 {
     fn from(value: ResourceDevelopment) -> Self {
         match value {
-            ResourceDevelopment::AcquireInfrastructure => Some(1583),
-            ResourceDevelopment::CompromiseInfrastructure => Some(1584),
-            ResourceDevelopment::CompromiseAccounts => Some(1586),
-            ResourceDevelopment::StageCapabilities => Some(1608),
-            ResourceDevelopment::EstablishAccounts => Some(1585),
-            ResourceDevelopment::ObtainCapabilities => Some(1588),
-            ResourceDevelopment::AcquireAccess => Some(1650),
-            ResourceDevelopment::DevelopCapabilities => Some(1587),
-            ResourceDevelopment::Other => None,
+            ResourceDevelopment::AcquireInfrastructure => 1583,
+            ResourceDevelopment::CompromiseInfrastructure => 1584,
+            ResourceDevelopment::CompromiseAccounts => 1586,
+            ResourceDevelopment::StageCapabilities => 1608,
+            ResourceDevelopment::EstablishAccounts => 1585,
+            ResourceDevelopment::ObtainCapabilities => 1588,
+            ResourceDevelopment::AcquireAccess => 1650,
+            ResourceDevelopment::DevelopCapabilities => 1587,
         }
     }
 }
-impl From<Reconnaissance> for Option<u32> {
+impl From<Reconnaissance> for u32 {
     fn from(value: Reconnaissance) -> Self {
         match value {
-            Reconnaissance::GatherVictimHostInformation => Some(1592),
-            Reconnaissance::SearchVictimOwnedWebsites => Some(1594),
-            Reconnaissance::GatherVictimIdentityInformation => Some(1589),
-            Reconnaissance::SearchOpenTechnicalDatabases => Some(1596),
-            Reconnaissance::ActiveScanning => Some(1595),
-            Reconnaissance::GatherVictimOrgInformation => Some(1591),
-            Reconnaissance::GatherVictimNetworkInformation => Some(1590),
-            Reconnaissance::SearchOpenWebsitesDomains => Some(1593),
-            Reconnaissance::SearchClosedSources => Some(1597),
-            Reconnaissance::PhishingForInformation => Some(1598),
-            Reconnaissance::Other => None,
+            Reconnaissance::GatherVictimHostInformation => 1592,
+            Reconnaissance::SearchVictimOwnedWebsites => 1594,
+            Reconnaissance::GatherVictimIdentityInformation => 1589,
+            Reconnaissance::SearchOpenTechnicalDatabases => 1596,
+            Reconnaissance::ActiveScanning => 1595,
+            Reconnaissance::GatherVictimOrgInformation => 1591,
+            Reconnaissance::GatherVictimNetworkInformation => 1590,
+            Reconnaissance::SearchOpenWebsitesDomains => 1593,
+            Reconnaissance::SearchClosedSources => 1597,
+            Reconnaissance::PhishingForInformation => 1598,
         }
     }
 }
-impl From<CommandAndControl> for Option<u32> {
+impl From<CommandAndControl> for u32 {
     fn from(value: CommandAndControl) -> Self {
         match value {
-            CommandAndControl::ApplicationLayerProtocol => Some(1071),
-            CommandAndControl::RemoteAccessSoftware => Some(1219),
-            CommandAndControl::ContentInjection => Some(1659),
-            CommandAndControl::TrafficSignaling => Some(1205),
-            CommandAndControl::ProtocolTunneling => Some(1572),
-            CommandAndControl::CommunicationThroughRemovableMedia => Some(1092),
-            CommandAndControl::Proxy => Some(1090),
-            CommandAndControl::DynamicResolution => Some(1568),
-            CommandAndControl::WebService => Some(1102),
-            CommandAndControl::MultiStageChannels => Some(1104),
-            CommandAndControl::DataObfuscation => Some(1001),
-            CommandAndControl::NonStandardPort => Some(1571),
-            CommandAndControl::EncryptedChannel => Some(1573),
-            CommandAndControl::NonApplicationLayerProtocol => Some(1095),
-            CommandAndControl::DataEncoding => Some(1132),
-            CommandAndControl::IngressToolTransfer => Some(1105),
-            CommandAndControl::FallbackChannels => Some(1008),
-            CommandAndControl::Other => None,
+            CommandAndControl::ApplicationLayerProtocol => 1071,
+            CommandAndControl::RemoteAccessSoftware => 1219,
+            CommandAndControl::ContentInjection => 1659,
+            CommandAndControl::TrafficSignaling => 1205,
+            CommandAndControl::ProtocolTunneling => 1572,
+            CommandAndControl::CommunicationThroughRemovableMedia => 1092,
+            CommandAndControl::Proxy => 1090,
+            CommandAndControl::DynamicResolution => 1568,
+            CommandAndControl::WebService => 1102,
+            CommandAndControl::MultiStageChannels => 1104,
+            CommandAndControl::DataObfuscation => 1001,
+            CommandAndControl::NonStandardPort => 1571,
+            CommandAndControl::EncryptedChannel => 1573,
+            CommandAndControl::NonApplicationLayerProtocol => 1095,
+            CommandAndControl::DataEncoding => 1132,
+            CommandAndControl::IngressToolTransfer => 1105,
+            CommandAndControl::FallbackChannels => 1008,
         }
     }
 }
-impl From<InitialAccess> for Option<u32> {
+impl From<InitialAccess> for u32 {
     fn from(value: InitialAccess) -> Self {
         match value {
-            InitialAccess::ExternalRemoteServices => Some(1133),
-            InitialAccess::ReplicationThroughRemovableMedia => Some(1091),
-            InitialAccess::SupplyChainCompromise => Some(1195),
-            InitialAccess::ExploitPublicFacingApplication => Some(1190),
-            InitialAccess::ContentInjection => Some(1659),
-            InitialAccess::TrustedRelationship => Some(1199),
-            InitialAccess::Phishing => Some(1566),
-            InitialAccess::ValidAccounts => Some(1078),
-            InitialAccess::HardwareAdditions => Some(1200),
-            InitialAccess::DriveByCompromise => Some(1189),
-            InitialAccess::Other => None,
+            InitialAccess::ExternalRemoteServices => 1133,
+            InitialAccess::ReplicationThroughRemovableMedia => 1091,
+            InitialAccess::SupplyChainCompromise => 1195,
+            InitialAccess::ExploitPublicFacingApplication => 1190,
+            InitialAccess::ContentInjection => 1659,
+            InitialAccess::TrustedRelationship => 1199,
+            InitialAccess::Phishing => 1566,
+            InitialAccess::ValidAccounts => 1078,
+            InitialAccess::HardwareAdditions => 1200,
+            InitialAccess::DriveByCompromise => 1189,
         }
     }
 }

@@ -131,8 +131,8 @@ message CertEntry {
 // A mitre ATT&CK tactic and technique
 message AttackTechnique {
   // The tactic's id i.e. TA00xx
-  optional uint32 tactic = 1;
+  uint32 tactic = 1;
 
   // The technique's id i.e. Txxxx
-  optional uint32 technique = 2;
+  uint32 technique = 2;
 }
