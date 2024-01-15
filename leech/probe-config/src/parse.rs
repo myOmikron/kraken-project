@@ -1,3 +1,4 @@
+use base64::prelude::*;
 use std::str::FromStr;
 
 #[derive(Debug)]
@@ -26,7 +27,7 @@ pub struct Probe {
 pub enum Payload {
     Empty,
     String(String),
-    Base64(String),
+    Binary(Vec<u8>),
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -59,8 +60,10 @@ pub enum ParseError {
     /// An unknown probe
     UnknownValue(usize),
 
-    /// Both `payload_str` and `payload_b64` are specified
+    /// More than one `payload_str`, `payload_b64` or `payload_hex` are specified
     ConflictingPayload { probe_line: usize },
+    /// Format errors for `payload_b64` or `payload_hex`
+    InvalidPayload { probe_line: usize },
 
     /// The sub regex must be the last key in any probe
     ValueAfterSubRegex(usize),
@@ -107,6 +110,9 @@ impl std::fmt::Display for ParseError {
                     f,
                     "The probe started in line {probe_line} has two conflicting payloads"
                 )
+            }
+            ParseError::InvalidPayload { probe_line } => {
+                write!(f, "Invalid payload format in line {probe_line}")
             }
             ParseError::ValueAfterSubRegex(line) => {
                 write!(
@@ -223,6 +229,7 @@ struct ProbeBuilder {
     alpn: Option<String>,
     payload_str: Option<String>,
     payload_b64: Option<String>,
+    payload_hex: Option<String>,
     regex: Option<String>,
     sub_regex: Option<Vec<String>>,
 }
@@ -260,6 +267,13 @@ impl ProbeBuilder {
                 ParseError::DuplicateValue("payload_b64", number),
             );
         }
+        if let Some(value) = line.strip_prefix("payload_hex: ") {
+            return set_or_err(
+                &mut self.payload_hex,
+                Ok(value.to_string()),
+                ParseError::DuplicateValue("payload_hex", number),
+            );
+        }
         if let Some(value) = line.strip_prefix("regex: ") {
             return set_or_err(
                 &mut self.regex,
@@ -293,11 +307,24 @@ impl ProbeBuilder {
                 });
             }
         }
-        let payload = match (self.payload_str, self.payload_b64) {
-            (None, None) => Payload::Empty,
-            (Some(string), None) => Payload::String(string),
-            (None, Some(base64)) => Payload::Base64(base64),
-            (Some(_), Some(_)) => {
+        let payload = match (self.payload_str, self.payload_b64, self.payload_hex) {
+            (None, None, None) => Payload::Empty,
+            (Some(string), None, None) => Payload::String(string),
+            (None, Some(base64), None) => {
+                Payload::Binary(BASE64_STANDARD.decode(base64).map_err(|_| {
+                    ParseError::InvalidPayload {
+                        probe_line: self.start_line,
+                    }
+                })?)
+            }
+            (None, None, Some(hex_string)) => {
+                Payload::Binary(hex::decode(hex_string).map_err(|_| {
+                    ParseError::InvalidPayload {
+                        probe_line: self.start_line,
+                    }
+                })?)
+            }
+            (_, _, _) => {
                 return Err(ParseError::ConflictingPayload {
                     probe_line: self.start_line,
                 })
