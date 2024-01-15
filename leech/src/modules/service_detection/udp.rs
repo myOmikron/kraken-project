@@ -87,7 +87,11 @@ async fn single_probe_udp(
     payload: Vec<u8>,
 ) -> Result<Option<Vec<u8>>, UdpServiceScanError> {
     sleep(wait_before).await;
-    let sock = UdpSocket::bind("0.0.0.0:0").await?;
+    let sock = UdpSocket::bind(match addr {
+        SocketAddr::V4(_) => "0.0.0.0:0",
+        SocketAddr::V6(_) => "[::]:0",
+    })
+    .await?;
     let mut buf = [0; 4096];
     sock.connect(addr).await?;
     sock.send(&payload).await?;
