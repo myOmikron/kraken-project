@@ -5,6 +5,7 @@ pub use convert::InvalidArgumentError;
 pub use generated::*;
 
 mod convert;
+pub mod mitre;
 
 #[allow(clippy::unwrap_used, clippy::expect_used)]
 mod generated {

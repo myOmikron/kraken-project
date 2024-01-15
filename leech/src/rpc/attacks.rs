@@ -12,7 +12,9 @@ use futures::Stream;
 use ipnetwork::IpNetwork;
 use kraken_proto::req_attack_service_server::ReqAttackService;
 use kraken_proto::shared::dns_record::Record;
-use kraken_proto::shared::{Aaaa, Address, CertEntry, DnsRecord, GenericRecord, A};
+use kraken_proto::shared::{
+    Aaaa, Address, AttackTechnique, CertEntry, DnsRecord, GenericRecord, A,
+};
 use kraken_proto::{
     any_attack_response, shared, test_ssl_scans, test_ssl_service, BruteforceSubdomainRequest,
     BruteforceSubdomainResponse, CertificateTransparencyRequest, CertificateTransparencyResponse,
@@ -425,6 +427,7 @@ impl ReqAttackService for Attacks {
             .scan_result;
 
         fn conv_finding(finding: testssl::Finding) -> TestSslFinding {
+            let mitre = testssl::categorize(&finding);
             TestSslFinding {
                 id: finding.id,
                 severity: match finding.severity {
@@ -442,6 +445,7 @@ impl ReqAttackService for Attacks {
                 finding: finding.finding,
                 cve: finding.cve,
                 cwe: finding.cwe,
+                mitre: mitre.map(AttackTechnique::from),
             }
         }
         fn conv_findings(findings: Vec<testssl::Finding>) -> Vec<TestSslFinding> {

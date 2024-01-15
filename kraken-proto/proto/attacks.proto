@@ -388,6 +388,8 @@ message TestSSLFinding {
   optional string cve = 4;
   // The associated CWE
   optional string cwe = 5;
+  // The MITRE ATT&CK tactic and technique associated with this weakness
+  optional shared.AttackTechnique mitre = 6;
 }
 
 // A TestSSLFinding's severity

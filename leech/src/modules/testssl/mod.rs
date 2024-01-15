@@ -11,8 +11,9 @@ use tokio::process::Command;
 
 mod json;
 mod json_pretty;
-
+mod mitre;
 pub use self::json_pretty::*;
+pub use self::mitre::categorize;
 
 /// The settings of a `testssl.sh` invocation
 #[derive(Default, Debug)]
