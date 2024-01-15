@@ -141,6 +141,7 @@ impl Modify for SecurityAddon2 {
         domains::handler::get_domain,
         domains::handler::create_domain,
         domains::handler::update_domain,
+        domains::handler::delete_domain,
         domains::handler::get_domain_sources,
         domains::handler::get_domain_relations,
         wordlists::handler::get_all_wordlists,

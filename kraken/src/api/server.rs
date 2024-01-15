@@ -206,6 +206,7 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(domains::handler::get_domain)
                     .service(domains::handler::create_domain)
                     .service(domains::handler::update_domain)
+                    .service(domains::handler::delete_domain)
                     .service(domains::handler::get_domain_sources)
                     .service(domains::handler::get_domain_relations)
                     .service(wordlists::handler::get_all_wordlists)
