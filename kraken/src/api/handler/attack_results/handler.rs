@@ -25,7 +25,7 @@ use crate::models::{
     Attack, BruteforceSubdomainsResult, CertificateTransparencyResult,
     CertificateTransparencyValueName, DehashedQueryResult, DnsResolutionResult, HostAliveResult,
     ServiceCertainty, ServiceDetectionName, ServiceDetectionResult, TcpPortScanResult,
-    UdpServiceDetectionResult,
+    UdpServiceDetectionName, UdpServiceDetectionResult,
 };
 
 /// Retrieve a bruteforce subdomains' results by the attack's id
@@ -489,9 +489,9 @@ pub async fn get_udp_service_detection_results(
     let mut names: HashMap<Uuid, Vec<String>> = HashMap::new();
     query!(
         &mut tx,
-        (ServiceDetectionName::F.result, ServiceDetectionName::F.name)
+        (UdpServiceDetectionName::F.result, UdpServiceDetectionName::F.name)
     )
-    .condition(ServiceDetectionName::F.result.attack.equals(attack_uuid))
+    .condition(UdpServiceDetectionName::F.result.attack.equals(attack_uuid))
     .stream()
     .try_for_each(|(result, name)| {
         names.entry(*result.key()).or_default().push(name);

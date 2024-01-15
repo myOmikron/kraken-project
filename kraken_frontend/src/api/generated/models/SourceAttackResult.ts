@@ -44,6 +44,12 @@ import {
     SourceAttackResultOneOf6FromJSONTyped,
     SourceAttackResultOneOf6ToJSON,
 } from './SourceAttackResultOneOf6';
+import {
+    SourceAttackResultOneOf7,
+    SourceAttackResultOneOf7AttackTypeEnum,
+    SourceAttackResultOneOf7FromJSONTyped,
+    SourceAttackResultOneOf7ToJSON,
+} from './SourceAttackResultOneOf7';
 
 /**
  * @type SourceAttackResult
@@ -56,7 +62,8 @@ export type SourceAttackResult =
   | SourceAttackResultOneOf3
   | SourceAttackResultOneOf4
   | SourceAttackResultOneOf5
-  | SourceAttackResultOneOf6;
+  | SourceAttackResultOneOf6
+  | SourceAttackResultOneOf7;
 
 function enumToString<T extends string>(obj: Record<T, T>): T {
     // @ts-ignore
@@ -70,6 +77,7 @@ const SourceAttackResultOneOf3AttackType = enumToString(SourceAttackResultOneOf3
 const SourceAttackResultOneOf4AttackType = enumToString(SourceAttackResultOneOf4AttackTypeEnum);
 const SourceAttackResultOneOf5AttackType = enumToString(SourceAttackResultOneOf5AttackTypeEnum);
 const SourceAttackResultOneOf6AttackType = enumToString(SourceAttackResultOneOf6AttackTypeEnum);
+const SourceAttackResultOneOf7AttackType = enumToString(SourceAttackResultOneOf7AttackTypeEnum);
 
 export function SourceAttackResultFromJSON(json: any): SourceAttackResult {
     return SourceAttackResultFromJSONTyped(json, false);
@@ -95,6 +103,8 @@ export function SourceAttackResultFromJSONTyped(json: any, ignoreDiscriminator: 
             return SourceAttackResultOneOf5FromJSONTyped(json, ignoreDiscriminator);
         case SourceAttackResultOneOf6AttackType:
             return SourceAttackResultOneOf6FromJSONTyped(json, ignoreDiscriminator);
+        case SourceAttackResultOneOf7AttackType:
+            return SourceAttackResultOneOf7FromJSONTyped(json, ignoreDiscriminator);
         default:
             throw new Error("No variant of SourceAttackResult exists with 'attackType=" + json["attack_type"] + "'");
     }
@@ -123,6 +133,8 @@ export function SourceAttackResultToJSON(value?: SourceAttackResult | null): any
             return SourceAttackResultOneOf5ToJSON(value);
         case SourceAttackResultOneOf6AttackType:
             return SourceAttackResultOneOf6ToJSON(value);
+        case SourceAttackResultOneOf7AttackType:
+            return SourceAttackResultOneOf7ToJSON(value);
         default:
             throw new Error("No variant of SourceAttackResult exists with 'attackType=" + value["attackType"] + "'");
     }

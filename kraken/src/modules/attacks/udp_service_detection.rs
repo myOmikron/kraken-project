@@ -10,7 +10,7 @@ use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::models::{
     AggregationSource, AggregationTable, HostCertainty, PortCertainty, PortProtocol,
-    ServiceCertainty, ServiceDetectionName, SourceType, UdpServiceDetectionResultInsert,
+    ServiceCertainty, SourceType, UdpServiceDetectionName, UdpServiceDetectionResultInsert,
 };
 use crate::modules::attacks::{
     AttackContext, AttackError, HandleAttackResponse, UdpServiceDetectionParams,
@@ -76,9 +76,9 @@ impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
                 port: port as i32,
             })
             .await?;
-        insert!(&mut tx, ServiceDetectionName)
+        insert!(&mut tx, UdpServiceDetectionName)
             .return_nothing()
-            .bulk(services.iter().map(|x| ServiceDetectionName {
+            .bulk(services.iter().map(|x| UdpServiceDetectionName {
                 uuid: Uuid::new_v4(),
                 name: x.to_string(),
                 result: ForeignModelByField::Key(result_uuid),
@@ -95,7 +95,7 @@ impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
                 self.workspace.uuid,
                 host_uuid,
                 port as u16,
-                PortProtocol::Tcp,
+                PortProtocol::Udp,
                 PortCertainty::Verified,
             )
             .await?;

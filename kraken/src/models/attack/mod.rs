@@ -320,6 +320,22 @@ pub struct ServiceDetectionResult {
     pub service_names: BackRef<field!(ServiceDetectionName::F.result)>,
 }
 
+/// The name of a result of a service that was found during a service detection
+#[derive(Model)]
+pub struct UdpServiceDetectionName {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The name of found service
+    #[rorm(max_length = 255)]
+    pub name: String,
+
+    /// The result this service name is linked to
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub result: ForeignModel<UdpServiceDetectionResult>,
+}
+
 /// Representation of a [UDP Service Detection](AttackType::UdpServiceDetection) attack's result
 #[derive(Model)]
 pub struct UdpServiceDetectionResult {
@@ -345,5 +361,5 @@ pub struct UdpServiceDetectionResult {
     pub certainty: ServiceCertainty,
 
     /// The found names of the service
-    pub service_names: BackRef<field!(ServiceDetectionName::F.result)>,
+    pub service_names: BackRef<field!(UdpServiceDetectionName::F.result)>,
 }

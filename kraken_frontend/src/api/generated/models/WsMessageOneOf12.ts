@@ -13,31 +13,30 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleDomain } from './SimpleDomain';
-import {
-    SimpleDomainFromJSON,
-    SimpleDomainFromJSONTyped,
-    SimpleDomainToJSON,
-} from './SimpleDomain';
-
 /**
- * A new domain was found
+ * A result for a DNS resolution requests
  * @export
  * @interface WsMessageOneOf12
  */
 export interface WsMessageOneOf12 {
     /**
-     * The workspace this domain is related to
+     * The corresponding id of the attack
      * @type {string}
      * @memberof WsMessageOneOf12
      */
-    workspace: string;
+    attackUuid: string;
     /**
-     * 
-     * @type {SimpleDomain}
+     * The source address that was queried
+     * @type {string}
      * @memberof WsMessageOneOf12
      */
-    domain: SimpleDomain;
+    source: string;
+    /**
+     * The destination address that was returned
+     * @type {string}
+     * @memberof WsMessageOneOf12
+     */
+    destination: string;
     /**
      * 
      * @type {string}
@@ -51,7 +50,7 @@ export interface WsMessageOneOf12 {
  * @export
  */
 export const WsMessageOneOf12TypeEnum = {
-    NewDomain: 'NewDomain'
+    DnsResolutionResult: 'DnsResolutionResult'
 } as const;
 export type WsMessageOneOf12TypeEnum = typeof WsMessageOneOf12TypeEnum[keyof typeof WsMessageOneOf12TypeEnum];
 
@@ -61,8 +60,9 @@ export type WsMessageOneOf12TypeEnum = typeof WsMessageOneOf12TypeEnum[keyof typ
  */
 export function instanceOfWsMessageOneOf12(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "workspace" in value;
-    isInstance = isInstance && "domain" in value;
+    isInstance = isInstance && "attackUuid" in value;
+    isInstance = isInstance && "source" in value;
+    isInstance = isInstance && "destination" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -78,8 +78,9 @@ export function WsMessageOneOf12FromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'workspace': json['workspace'],
-        'domain': SimpleDomainFromJSON(json['domain']),
+        'attackUuid': json['attack_uuid'],
+        'source': json['source'],
+        'destination': json['destination'],
         'type': json['type'],
     };
 }
@@ -93,8 +94,9 @@ export function WsMessageOneOf12ToJSON(value?: WsMessageOneOf12 | null): any {
     }
     return {
         
-        'workspace': value.workspace,
-        'domain': SimpleDomainToJSON(value.domain),
+        'attack_uuid': value.attackUuid,
+        'source': value.source,
+        'destination': value.destination,
         'type': value.type,
     };
 }

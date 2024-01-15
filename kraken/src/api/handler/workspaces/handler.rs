@@ -40,8 +40,8 @@ use crate::models::{
     Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
     DnsResolutionResult, Domain, Host, HostAliveResult, ModelType, Port, Search, SearchInsert,
     SearchResult, Service, ServiceDetectionName, ServiceDetectionResult, TcpPortScanResult,
-    UdpServiceDetectionResult, User, UserPermission, Workspace, WorkspaceInvitation,
-    WorkspaceMember,
+    UdpServiceDetectionName, UdpServiceDetectionResult, User, UserPermission, Workspace,
+    WorkspaceInvitation, WorkspaceMember,
 };
 
 /// Create a new workspace
@@ -905,8 +905,8 @@ pub async fn get_search_results(
                     .one()
                     .await?;
 
-                let service_names = query!(&mut tx, (ServiceDetectionName::F.name,))
-                    .condition(ServiceDetectionName::F.result.equals(item.ref_key))
+                let service_names = query!(&mut tx, (UdpServiceDetectionName::F.name,))
+                    .condition(UdpServiceDetectionName::F.result.equals(item.ref_key))
                     .stream()
                     .map_ok(|x| x.0)
                     .try_collect()

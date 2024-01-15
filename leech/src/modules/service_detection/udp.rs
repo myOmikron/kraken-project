@@ -136,6 +136,7 @@ pub async fn start_udp_service_detection(
                                 partial_matches.push(probe.service);
                             }
                             Match::Exact => {
+                                debug!("Found exact UDP service {} on port {port}", probe.service);
                                 tx.send(UdpServiceDetectionResult {
                                     port,
                                     service: Service::Definitely(probe.service),
@@ -149,6 +150,7 @@ pub async fn start_udp_service_detection(
             }
 
             if !partial_matches.is_empty() {
+                debug!("Found maybe UDP services {partial_matches:?} on port {port}");
                 tx.send(UdpServiceDetectionResult {
                     port,
                     service: Service::Maybe(partial_matches),

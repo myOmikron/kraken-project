@@ -23,7 +23,7 @@ use crate::models::{
     CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
     DnsResolutionResult, HostAliveResult, ManualDomain, ManualHost, ManualPort, ManualService,
     ServiceDetectionName, ServiceDetectionResult, SourceType, TcpPortScanResult,
-    UdpServiceDetectionResult,
+    UdpServiceDetectionName, UdpServiceDetectionResult,
 };
 
 fn field_in<'a, T, F, P, Any>(
@@ -327,10 +327,13 @@ impl FullAggregationSource {
                     {
                         let mut stream = query!(
                             &mut *tx,
-                            (ServiceDetectionName::F.result, ServiceDetectionName::F.name)
+                            (
+                                UdpServiceDetectionName::F.result,
+                                UdpServiceDetectionName::F.name
+                            )
                         )
                         .condition(field_in(
-                            ServiceDetectionName::F.result,
+                            UdpServiceDetectionName::F.result,
                             uuids.iter().copied(),
                         ))
                         .stream();
