@@ -1,5 +1,7 @@
-use base64::prelude::*;
+use std::path::Path;
 use std::str::FromStr;
+
+use base64::prelude::*;
 
 #[derive(Debug)]
 pub struct Service {
@@ -9,8 +11,8 @@ pub struct Service {
 }
 
 impl Service {
-    pub fn from_file(file: &str) -> Result<Self, ParseError> {
-        parse_file(file)
+    pub fn from_file(file: &str, content: &str) -> Result<Self, ParseError> {
+        parse_file(file, content)
     }
 }
 
@@ -42,6 +44,15 @@ pub enum Prevalence {
     Often,
     Average,
     Obscure,
+}
+
+/// The directory name a probe file must be in.
+#[derive(Debug, PartialEq)]
+pub enum ProbeFileDirectory {
+    /// Allows TCP and TLS - directory name: `"tcp"`
+    Tcp,
+    /// Allows UDP only - directory name: `"udp"`
+    Udp,
 }
 
 #[derive(Debug)]
@@ -76,6 +87,15 @@ pub enum ParseError {
     InvalidProtocol(usize),
     /// Invalid value for `prevalence: `
     InvalidPrevalence(usize),
+    /// Value for `protocol: ` doesn't match folder name it's in.
+    ProtocolMismatch {
+        expected: ProbeFileDirectory,
+        actual: ProbeFileDirectory,
+    },
+    /// Probe file not in a valid folder name
+    UnimplementedFolder(String),
+    /// Some other error occured from trying to parse the path (very unlikely error)
+    FilenameError(String),
 }
 
 impl std::fmt::Display for ParseError {
@@ -136,14 +156,40 @@ impl std::fmt::Display for ParseError {
             ParseError::InvalidPrevalence(line) => {
                 write!(f, "Invalid prevalence in line {line}")
             }
+            ParseError::FilenameError(filename) => {
+                write!(
+                    f,
+                    "Unable to resolve information from filename `{filename}`."
+                )
+            }
+            ParseError::UnimplementedFolder(folder) => {
+                write!(f, "Unrecognized probe folder `{folder}`.")
+            }
+            ParseError::ProtocolMismatch { actual, expected } => {
+                write!(f, "File specified protocol {actual:?} but is expected to be {expected:?}, since it's in that folder.")
+            }
         }
     }
 }
 impl std::error::Error for ParseError {}
 
-fn parse_file(file: &str) -> Result<Service, ParseError> {
+fn parse_file(filename: &str, content: &str) -> Result<Service, ParseError> {
+    // bunch of unwraps, since this is a build script and errors here would mean misconfiguration of the glob / pattern matcher
+    let actual_dir = match Path::new(&filename)
+        .parent()
+        .ok_or(ParseError::FilenameError(String::from(filename)))?
+        .file_name()
+        .ok_or(ParseError::FilenameError(String::from(filename)))?
+        .to_str()
+        .ok_or(ParseError::FilenameError(String::from(filename)))?
+    {
+        "tcp" => ProbeFileDirectory::Tcp,
+        "udp" => ProbeFileDirectory::Udp,
+        v => return Err(ParseError::UnimplementedFolder(String::from(v))),
+    };
+
     // Iterator over lines with their numbers excluding empty lines and comment lines
-    let mut lines = file
+    let mut lines = content
         .lines()
         .enumerate()
         .filter(|(_, line)| !(line.is_empty() || line.trim_start().starts_with('#')))
@@ -200,7 +246,23 @@ fn parse_file(file: &str) -> Result<Service, ParseError> {
             continue;
         }
     }
-    probes.push(builder.finish()?);
+
+    let probe = builder.finish()?;
+
+    let expected_dir = match probe.protocol {
+        Protocol::Udp => ProbeFileDirectory::Udp,
+        Protocol::Tcp => ProbeFileDirectory::Tcp,
+        Protocol::Tls => ProbeFileDirectory::Tcp,
+    };
+
+    if actual_dir != expected_dir {
+        return Err(ParseError::ProtocolMismatch {
+            actual: actual_dir,
+            expected: expected_dir,
+        });
+    }
+
+    probes.push(probe);
 
     Ok(Service {
         name,
