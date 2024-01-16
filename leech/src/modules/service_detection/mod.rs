@@ -234,11 +234,13 @@ impl DetectServiceSettings {
         sleep(self.timeout).await;
 
         // Read and Close
-        tls.shutdown().await.context("TlsStream::shutdown")?;
+        if let Err(err) = tls.shutdown().await {
+            debug!(target: "tls", "TLS shutdown failed: {err}");
+        }
         let mut data = Vec::new();
-        tls.read_to_end(&mut data)
-            .await
-            .context("TlsStream::read_to_end")?;
+        if let Err(err) = tls.read_to_end(&mut data).await {
+            debug!(target: "tls", "TLS read failed: {err}");
+        }
 
         // Log and Return
         trace!(target: "tls", "Received data: {:?}", DebuggableBytes(&data));
