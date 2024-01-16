@@ -2,21 +2,41 @@
 name = "kraken-sdk"
 version = "0.1.0"
 authors = ["git@omikron.dev"]
-description = "The core component of kraken-project"
+description = "The SDK for kraken"
 license = "AGPL-3.0"
 edition = "2018"
 
+[[example]]
+path = "examples/everything.rs"
+name = "everything"
+
 [dependencies]
-# Serialization
-serde = "~1"
-serde_derive = "~1"
-serde_json = "~1"
+# Async runtime
+tokio = { version = ">=1.23.1", features = ["sync"] }
+# Async and stream helpers
+futures = { version = "~0.3" }
 
-# Datatypes
-url = "~2"
+# Tokio websockets
+tokio-tungstenite = { version = "~0.21" }
+
+# HTTP client library
+reqwest = { version = "~0.11", features = ["cookies", "json"] }
+
+# Serialization library
+serde = { version = "~1" }
+serde_json = { version = "~1" }
 uuid = { version = "~1", features = ["serde", "v4"] }
-ipnetwork = { version = "~0.20", features = ["serde"] }
-chrono = { version = ">=0.4.20", default-features = false, features = ["serde"] }
+ipnetwork = { version = "~0.20" }
 
-# Request library
-reqwest = { version = "~0.11", features = ["json", "multipart"] }
+# Error management
+thiserror = { version = "~1" }
+
+# Kraken datatypes
+kraken = { version = "*", path = "../../kraken" }
+
+# Logging framework
+log = { version = "~0.4" }
+
+[dev-dependencies]
+tokio = { version = ">=1.23.1", features = ["sync", "rt-multi-thread", "macros"] }
+env_logger = { version = "~0.10" }
