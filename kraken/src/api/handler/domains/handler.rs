@@ -448,6 +448,12 @@ pub async fn delete_domain(
 
     tx.commit().await?;
 
+    let msg = WsMessage::DeletedDomain {
+        workspace: w_uuid,
+        domain: d_uuid,
+    };
+    GLOBAL.ws.message_workspace(w_uuid, msg).await;
+
     Ok(HttpResponse::Ok().finish())
 }
 

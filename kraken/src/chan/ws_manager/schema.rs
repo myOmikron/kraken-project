@@ -151,6 +151,34 @@ pub enum WsMessage {
         /// The service that was inserted
         service: SimpleService,
     },
+    /// A domain was deleted
+    DeletedDomain {
+        /// The workspace this domain is related to
+        workspace: Uuid,
+        /// The uuid of the deleted domain
+        domain: Uuid,
+    },
+    /// A host was deleted
+    DeletedHost {
+        /// The workspace this host is related to
+        workspace: Uuid,
+        /// The uuid of the deleted host
+        host: Uuid,
+    },
+    /// A port was deleted
+    DeletedPort {
+        /// The workspace this port is related to
+        workspace: Uuid,
+        /// The uuid of the deleted port
+        port: Uuid,
+    },
+    /// A service was deleted
+    DeletedService {
+        /// The workspace this service is related to
+        workspace: Uuid,
+        /// The uuid of the deleted service
+        service: Uuid,
+    },
     /// Global tags were updated on an aggregation
     UpdatedGlobalTags {
         /// The workspace the aggregation is related to

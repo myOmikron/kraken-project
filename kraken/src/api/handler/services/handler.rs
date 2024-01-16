@@ -532,6 +532,12 @@ pub async fn delete_service(
 
     tx.commit().await?;
 
+    let msg = WsMessage::DeletedService {
+        workspace: w_uuid,
+        service: s_uuid,
+    };
+    GLOBAL.ws.message_workspace(w_uuid, msg).await;
+
     Ok(HttpResponse::Ok().finish())
 }
 

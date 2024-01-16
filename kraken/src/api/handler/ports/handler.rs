@@ -473,6 +473,12 @@ pub async fn delete_port(
 
     tx.commit().await?;
 
+    let msg = WsMessage::DeletedPort {
+        workspace: w_uuid,
+        port: p_uuid,
+    };
+    GLOBAL.ws.message_workspace(w_uuid, msg).await;
+
     Ok(HttpResponse::Ok().finish())
 }
 

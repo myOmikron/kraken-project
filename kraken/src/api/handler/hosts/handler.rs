@@ -431,6 +431,12 @@ pub async fn delete_host(
 
     tx.commit().await?;
 
+    let msg = WsMessage::DeletedHost {
+        workspace: w_uuid,
+        host: h_uuid,
+    };
+    GLOBAL.ws.message_workspace(w_uuid, msg).await;
+
     Ok(HttpResponse::Ok().finish())
 }
 
