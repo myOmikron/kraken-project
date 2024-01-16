@@ -136,6 +136,7 @@ impl Modify for SecurityAddon2 {
         services::handler::get_service,
         services::handler::create_service,
         services::handler::update_service,
+        services::handler::delete_service,
         services::handler::get_service_sources,
         services::handler::get_service_relations,
         domains::handler::get_all_domains,

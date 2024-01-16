@@ -201,6 +201,7 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(services::handler::get_service)
                     .service(services::handler::create_service)
                     .service(services::handler::update_service)
+                    .service(services::handler::delete_service)
                     .service(services::handler::get_service_sources)
                     .service(services::handler::get_service_relations)
                     .service(domains::handler::get_all_domains)
