@@ -51,6 +51,11 @@ export interface CreateServiceOperationRequest {
     createServiceRequest: CreateServiceRequest;
 }
 
+export interface DeleteServiceRequest {
+    wUuid: string;
+    sUuid: string;
+}
+
 export interface GetAllServicesRequest {
     uuid: string;
     getAllServicesQuery: GetAllServicesQuery;
@@ -119,6 +124,41 @@ export class ServicesApi extends runtime.BaseAPI {
     async createService(requestParameters: CreateServiceOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
         const response = await this.createServiceRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Delete the service  This only deletes the aggregation. The raw results are still in place
+     * Delete the service
+     */
+    async deleteServiceRaw(requestParameters: DeleteServiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling deleteService.');
+        }
+
+        if (requestParameters.sUuid === null || requestParameters.sUuid === undefined) {
+            throw new runtime.RequiredError('sUuid','Required parameter requestParameters.sUuid was null or undefined when calling deleteService.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/services/{s_uuid}`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"s_uuid"}}`, encodeURIComponent(String(requestParameters.sUuid))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Delete the service  This only deletes the aggregation. The raw results are still in place
+     * Delete the service
+     */
+    async deleteService(requestParameters: DeleteServiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteServiceRaw(requestParameters, initOverrides);
     }
 
     /**

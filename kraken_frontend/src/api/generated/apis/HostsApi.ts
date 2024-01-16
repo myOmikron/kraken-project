@@ -51,6 +51,11 @@ export interface CreateHostOperationRequest {
     createHostRequest: CreateHostRequest;
 }
 
+export interface DeleteHostRequest {
+    wUuid: string;
+    hUuid: string;
+}
+
 export interface GetAllHostsRequest {
     uuid: string;
     getAllHostsQuery: GetAllHostsQuery;
@@ -119,6 +124,41 @@ export class HostsApi extends runtime.BaseAPI {
     async createHost(requestParameters: CreateHostOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
         const response = await this.createHostRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Delete the host  This only deletes the aggregation. The raw results are still in place
+     * Delete the host
+     */
+    async deleteHostRaw(requestParameters: DeleteHostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling deleteHost.');
+        }
+
+        if (requestParameters.hUuid === null || requestParameters.hUuid === undefined) {
+            throw new runtime.RequiredError('hUuid','Required parameter requestParameters.hUuid was null or undefined when calling deleteHost.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/hosts/{h_uuid}`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"h_uuid"}}`, encodeURIComponent(String(requestParameters.hUuid))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Delete the host  This only deletes the aggregation. The raw results are still in place
+     * Delete the host
+     */
+    async deleteHost(requestParameters: DeleteHostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteHostRaw(requestParameters, initOverrides);
     }
 
     /**

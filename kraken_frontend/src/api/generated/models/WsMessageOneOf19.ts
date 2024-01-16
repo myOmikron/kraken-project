@@ -14,70 +14,70 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * A host was deleted
+ * A service was deleted
  * @export
- * @interface WsMessageOneOf17
+ * @interface WsMessageOneOf19
  */
-export interface WsMessageOneOf17 {
+export interface WsMessageOneOf19 {
     /**
-     * The workspace this host is related to
+     * The workspace this service is related to
      * @type {string}
-     * @memberof WsMessageOneOf17
+     * @memberof WsMessageOneOf19
      */
     workspace: string;
     /**
-     * The uuid of the deleted host
+     * The uuid of the deleted service
      * @type {string}
-     * @memberof WsMessageOneOf17
+     * @memberof WsMessageOneOf19
      */
-    host: string;
+    service: string;
     /**
      * 
      * @type {string}
-     * @memberof WsMessageOneOf17
+     * @memberof WsMessageOneOf19
      */
-    type: WsMessageOneOf17TypeEnum;
+    type: WsMessageOneOf19TypeEnum;
 }
 
 
 /**
  * @export
  */
-export const WsMessageOneOf17TypeEnum = {
-    DeletedHost: 'DeletedHost'
+export const WsMessageOneOf19TypeEnum = {
+    DeletedService: 'DeletedService'
 } as const;
-export type WsMessageOneOf17TypeEnum = typeof WsMessageOneOf17TypeEnum[keyof typeof WsMessageOneOf17TypeEnum];
+export type WsMessageOneOf19TypeEnum = typeof WsMessageOneOf19TypeEnum[keyof typeof WsMessageOneOf19TypeEnum];
 
 
 /**
- * Check if a given object implements the WsMessageOneOf17 interface.
+ * Check if a given object implements the WsMessageOneOf19 interface.
  */
-export function instanceOfWsMessageOneOf17(value: object): boolean {
+export function instanceOfWsMessageOneOf19(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "workspace" in value;
-    isInstance = isInstance && "host" in value;
+    isInstance = isInstance && "service" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
 }
 
-export function WsMessageOneOf17FromJSON(json: any): WsMessageOneOf17 {
-    return WsMessageOneOf17FromJSONTyped(json, false);
+export function WsMessageOneOf19FromJSON(json: any): WsMessageOneOf19 {
+    return WsMessageOneOf19FromJSONTyped(json, false);
 }
 
-export function WsMessageOneOf17FromJSONTyped(json: any, ignoreDiscriminator: boolean): WsMessageOneOf17 {
+export function WsMessageOneOf19FromJSONTyped(json: any, ignoreDiscriminator: boolean): WsMessageOneOf19 {
     if ((json === undefined) || (json === null)) {
         return json;
     }
     return {
         
         'workspace': json['workspace'],
-        'host': json['host'],
+        'service': json['service'],
         'type': json['type'],
     };
 }
 
-export function WsMessageOneOf17ToJSON(value?: WsMessageOneOf17 | null): any {
+export function WsMessageOneOf19ToJSON(value?: WsMessageOneOf19 | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -87,7 +87,7 @@ export function WsMessageOneOf17ToJSON(value?: WsMessageOneOf17 | null): any {
     return {
         
         'workspace': value.workspace,
-        'host': value.host,
+        'service': value.service,
         'type': value.type,
     };
 }

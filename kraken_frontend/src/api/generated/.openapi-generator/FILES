@@ -213,7 +213,11 @@ models/WsMessageOneOf14.ts
 models/WsMessageOneOf15.ts
 models/WsMessageOneOf16.ts
 models/WsMessageOneOf17.ts
+models/WsMessageOneOf18.ts
+models/WsMessageOneOf19.ts
 models/WsMessageOneOf2.ts
+models/WsMessageOneOf20.ts
+models/WsMessageOneOf21.ts
 models/WsMessageOneOf3.ts
 models/WsMessageOneOf4.ts
 models/WsMessageOneOf5.ts
