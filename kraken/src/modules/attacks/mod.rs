@@ -37,6 +37,7 @@ mod dns_resolution;
 mod host_alive;
 mod service_detection;
 mod tcp_port_scan;
+mod udp_service_detection;
 
 /// The parameters of a "bruteforce subdomains" attack
 pub struct BruteforceSubdomainsParams {
@@ -208,6 +209,49 @@ pub async fn start_service_detection(
         tokio::spawn(async move {
             ctx.set_started().await;
             let result = ctx.service_detection(leech, params).await;
+            ctx.set_finished(result).await;
+        }),
+    ))
+}
+
+/// The parameters of a "service detection" attack
+pub struct UdpServiceDetectionParams {
+    /// The ip address the service listens on
+    pub target: IpAddr,
+
+    /// List of single ports and port ranges
+    pub ports: Vec<PortOrRange>,
+
+    /// Time to wait for a response after sending the payload
+    /// (or after establishing a connection, if not payload is to be sent)
+    ///
+    /// The timeout is specified in milliseconds.
+    pub timeout: u64,
+
+    /// The concurrent task limit
+    pub concurrent_limit: u32,
+
+    /// The number of times the connection should be retried if it failed.
+    pub max_retries: u32,
+
+    /// The interval that should be wait between retries on a port.
+    ///
+    /// The interval is specified in milliseconds.
+    pub retry_interval: u64,
+}
+/// Start a "service detection" attack
+pub async fn start_udp_service_detection(
+    workspace: Uuid,
+    user: Uuid,
+    leech: LeechClient,
+    params: UdpServiceDetectionParams,
+) -> Result<(Uuid, JoinHandle<()>), InsertAttackError> {
+    let ctx = AttackContext::new(workspace, user, AttackType::UdpServiceDetection).await?;
+    Ok((
+        ctx.attack_uuid,
+        tokio::spawn(async move {
+            ctx.set_started().await;
+            let result = ctx.udp_service_detection(leech, params).await;
             ctx.set_finished(result).await;
         }),
     ))

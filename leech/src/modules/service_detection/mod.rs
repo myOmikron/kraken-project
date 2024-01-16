@@ -16,6 +16,9 @@ mod generated {
 mod error;
 mod postgres;
 
+/// UDP service detection & port scanning.
+pub mod udp;
+
 use self::error::{Extended, ResultExt};
 
 type DynError = Box<dyn std::error::Error + Send + Sync + 'static>;
@@ -37,7 +40,7 @@ pub struct DetectServiceSettings {
 }
 
 /// The detected service or a list of possible candidates
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Service {
     /// The service is unknown
     Unknown,

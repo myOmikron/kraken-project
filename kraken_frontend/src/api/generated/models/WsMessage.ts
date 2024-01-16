@@ -93,6 +93,12 @@ import {
     WsMessageOneOf21ToJSON,
 } from './WsMessageOneOf21';
 import {
+    WsMessageOneOf22,
+    WsMessageOneOf22TypeEnum,
+    WsMessageOneOf22FromJSONTyped,
+    WsMessageOneOf22ToJSON,
+} from './WsMessageOneOf22';
+import {
     WsMessageOneOf3,
     WsMessageOneOf3TypeEnum,
     WsMessageOneOf3FromJSONTyped,
@@ -156,6 +162,7 @@ export type WsMessage =
   | WsMessageOneOf2
   | WsMessageOneOf20
   | WsMessageOneOf21
+  | WsMessageOneOf22
   | WsMessageOneOf3
   | WsMessageOneOf4
   | WsMessageOneOf5
@@ -184,6 +191,7 @@ const WsMessageOneOf19Type = enumToString(WsMessageOneOf19TypeEnum);
 const WsMessageOneOf2Type = enumToString(WsMessageOneOf2TypeEnum);
 const WsMessageOneOf20Type = enumToString(WsMessageOneOf20TypeEnum);
 const WsMessageOneOf21Type = enumToString(WsMessageOneOf21TypeEnum);
+const WsMessageOneOf22Type = enumToString(WsMessageOneOf22TypeEnum);
 const WsMessageOneOf3Type = enumToString(WsMessageOneOf3TypeEnum);
 const WsMessageOneOf4Type = enumToString(WsMessageOneOf4TypeEnum);
 const WsMessageOneOf5Type = enumToString(WsMessageOneOf5TypeEnum);
@@ -232,6 +240,8 @@ export function WsMessageFromJSONTyped(json: any, ignoreDiscriminator: boolean):
             return WsMessageOneOf20FromJSONTyped(json, ignoreDiscriminator);
         case WsMessageOneOf21Type:
             return WsMessageOneOf21FromJSONTyped(json, ignoreDiscriminator);
+        case WsMessageOneOf22Type:
+            return WsMessageOneOf22FromJSONTyped(json, ignoreDiscriminator);
         case WsMessageOneOf3Type:
             return WsMessageOneOf3FromJSONTyped(json, ignoreDiscriminator);
         case WsMessageOneOf4Type:
@@ -290,6 +300,8 @@ export function WsMessageToJSON(value?: WsMessage | null): any {
             return WsMessageOneOf20ToJSON(value);
         case WsMessageOneOf21Type:
             return WsMessageOneOf21ToJSON(value);
+        case WsMessageOneOf22Type:
+            return WsMessageOneOf22ToJSON(value);
         case WsMessageOneOf3Type:
             return WsMessageOneOf3ToJSON(value);
         case WsMessageOneOf4Type:

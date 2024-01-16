@@ -13,31 +13,31 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimplePort } from './SimplePort';
+import type { SimpleHost } from './SimpleHost';
 import {
-    SimplePortFromJSON,
-    SimplePortFromJSONTyped,
-    SimplePortToJSON,
-} from './SimplePort';
+    SimpleHostFromJSON,
+    SimpleHostFromJSONTyped,
+    SimpleHostToJSON,
+} from './SimpleHost';
 
 /**
- * A new port was found
+ * A new host was found
  * @export
  * @interface WsMessageOneOf14
  */
 export interface WsMessageOneOf14 {
     /**
-     * The workspace this port is related to
+     * The workspace this host is related to
      * @type {string}
      * @memberof WsMessageOneOf14
      */
     workspace: string;
     /**
      * 
-     * @type {SimplePort}
+     * @type {SimpleHost}
      * @memberof WsMessageOneOf14
      */
-    port: SimplePort;
+    host: SimpleHost;
     /**
      * 
      * @type {string}
@@ -51,7 +51,7 @@ export interface WsMessageOneOf14 {
  * @export
  */
 export const WsMessageOneOf14TypeEnum = {
-    NewPort: 'NewPort'
+    NewHost: 'NewHost'
 } as const;
 export type WsMessageOneOf14TypeEnum = typeof WsMessageOneOf14TypeEnum[keyof typeof WsMessageOneOf14TypeEnum];
 
@@ -62,7 +62,7 @@ export type WsMessageOneOf14TypeEnum = typeof WsMessageOneOf14TypeEnum[keyof typ
 export function instanceOfWsMessageOneOf14(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "workspace" in value;
-    isInstance = isInstance && "port" in value;
+    isInstance = isInstance && "host" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -79,7 +79,7 @@ export function WsMessageOneOf14FromJSONTyped(json: any, ignoreDiscriminator: bo
     return {
         
         'workspace': json['workspace'],
-        'port': SimplePortFromJSON(json['port']),
+        'host': SimpleHostFromJSON(json['host']),
         'type': json['type'],
     };
 }
@@ -94,7 +94,7 @@ export function WsMessageOneOf14ToJSON(value?: WsMessageOneOf14 | null): any {
     return {
         
         'workspace': value.workspace,
-        'port': SimplePortToJSON(value.port),
+        'host': SimpleHostToJSON(value.host),
         'type': value.type,
     };
 }

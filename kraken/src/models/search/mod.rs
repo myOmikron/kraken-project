@@ -87,6 +87,8 @@ pub enum ModelType {
     HostAliveResult,
     /// [ServiceDetectionResult](models::ServiceDetectionResult) type
     ServiceDetectionResult,
+    /// [UdpServiceDetectionResult](models::UdpServiceDetectionResult) type
+    UdpServiceDetectionResult,
 }
 
 impl Display for ModelType {
@@ -121,6 +123,9 @@ impl Display for ModelType {
             }
             ModelType::ServiceDetectionResult => {
                 write!(f, "{}", models::ServiceDetectionResult::TABLE)
+            }
+            ModelType::UdpServiceDetectionResult => {
+                write!(f, "{}", models::UdpServiceDetectionResult::TABLE)
             }
         }
     }

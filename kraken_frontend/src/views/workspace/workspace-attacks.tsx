@@ -7,6 +7,7 @@ import WorkspaceAttacksPortScanTcp from "./attacks/workspace-attacks-port-scan-t
 import WorkspaceAttacksCT from "./attacks/workspace-attacks-certificate-transparency";
 import WorkspaceAttacksHostAlive from "./attacks/workspace-attacks-host-alive";
 import WorkspaceAttacksServiceDetection from "./attacks/workspace-attacks-service-detection";
+import WorkspaceAttacksUdpServiceDetection from "./attacks/workspace-attacks-udp-service-detection";
 import WorkspaceAttacksBruteforceSubdomains from "./attacks/workspace-attacks-bsd";
 import { WORKSPACE_CONTEXT } from "./workspace";
 import { Api } from "../../api/api";
@@ -28,6 +29,7 @@ export enum AttackType {
     CertificateTransparency = "certificate_transparency",
     HostAlive = "host_alive",
     ServiceDetection = "service_detection",
+    UdpServiceDetection = "udp_service_detection",
     Whois = "whois",
     BruteforceSubdomains = "bruteforce_subdomains",
     TcpCon = "tcp_con",
@@ -90,6 +92,12 @@ const ATTACKS: Record<
         description: `Try to determine which service is running on a specific port.`,
         category: AttackCategory.Services,
         form: WorkspaceAttacksServiceDetection,
+    },
+    udp_service_detection: {
+        name: "UDP Service Detection",
+        description: `Try to determine which UDP service is running on a host on the given ports.`,
+        category: AttackCategory.Services,
+        form: WorkspaceAttacksUdpServiceDetection,
     },
     dehashed: {
         name: "Dehashed",
@@ -206,6 +214,7 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
         if ("targetType" in this.props) {
             if (this.props.targetType === "domain") {
                 disabled.service_detection = true;
+                disabled.udp_service_detection = true;
                 disabled.whois = true;
             } else {
                 disabled.bruteforce_subdomains = true;

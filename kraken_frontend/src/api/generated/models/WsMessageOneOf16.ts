@@ -13,24 +13,31 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { SimpleService } from './SimpleService';
+import {
+    SimpleServiceFromJSON,
+    SimpleServiceFromJSONTyped,
+    SimpleServiceToJSON,
+} from './SimpleService';
+
 /**
- * A domain was deleted
+ * A new service was found
  * @export
  * @interface WsMessageOneOf16
  */
 export interface WsMessageOneOf16 {
     /**
-     * The workspace this domain is related to
+     * The workspace this service is related to
      * @type {string}
      * @memberof WsMessageOneOf16
      */
     workspace: string;
     /**
-     * The uuid of the deleted domain
-     * @type {string}
+     * 
+     * @type {SimpleService}
      * @memberof WsMessageOneOf16
      */
-    domain: string;
+    service: SimpleService;
     /**
      * 
      * @type {string}
@@ -44,7 +51,7 @@ export interface WsMessageOneOf16 {
  * @export
  */
 export const WsMessageOneOf16TypeEnum = {
-    DeletedDomain: 'DeletedDomain'
+    NewService: 'NewService'
 } as const;
 export type WsMessageOneOf16TypeEnum = typeof WsMessageOneOf16TypeEnum[keyof typeof WsMessageOneOf16TypeEnum];
 
@@ -55,7 +62,7 @@ export type WsMessageOneOf16TypeEnum = typeof WsMessageOneOf16TypeEnum[keyof typ
 export function instanceOfWsMessageOneOf16(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "workspace" in value;
-    isInstance = isInstance && "domain" in value;
+    isInstance = isInstance && "service" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -72,7 +79,7 @@ export function WsMessageOneOf16FromJSONTyped(json: any, ignoreDiscriminator: bo
     return {
         
         'workspace': json['workspace'],
-        'domain': json['domain'],
+        'service': SimpleServiceFromJSON(json['service']),
         'type': json['type'],
     };
 }
@@ -87,7 +94,7 @@ export function WsMessageOneOf16ToJSON(value?: WsMessageOneOf16 | null): any {
     return {
         
         'workspace': value.workspace,
-        'domain': value.domain,
+        'service': SimpleServiceToJSON(value.service),
         'type': value.type,
     };
 }

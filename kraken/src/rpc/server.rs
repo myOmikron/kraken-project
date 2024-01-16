@@ -84,6 +84,9 @@ impl PushAttackService for Results {
                     AttackType::QueryCertificateTransparency
                 }
                 push_attack_request::Response::ServiceDetection(_) => AttackType::ServiceDetection,
+                push_attack_request::Response::UdpServiceDetection(_) => {
+                    AttackType::UdpServiceDetection
+                }
             },
         )
         .await
@@ -111,6 +114,9 @@ impl PushAttackService for Results {
             }
             push_attack_request::Response::ServiceDetection(response) => {
                 attack.handle_response(response).await
+            }
+            push_attack_request::Response::UdpServiceDetection(repeated) => {
+                attack.handle_vec_response(repeated.responses).await
             }
         };
 
@@ -175,6 +181,9 @@ impl BacklogService for Results {
                     attack_context.handle_response(response).await
                 }
                 any_attack_response::Response::ServiceDetection(response) => {
+                    attack_context.handle_response(response).await
+                }
+                any_attack_response::Response::UdpServiceDetection(response) => {
                     attack_context.handle_response(response).await
                 }
             };

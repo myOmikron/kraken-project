@@ -111,8 +111,23 @@ pub enum WsMessage {
     ServiceDetectionResult {
         /// The corresponding id of the attack
         attack_uuid: Uuid,
-        /// Name of the service
-        service: String,
+        /// The address of the result
+        address: String,
+        /// The port of the result
+        port: u16,
+        /// Name of the service(s)
+        services: Vec<String>,
+    },
+    /// A result to UDP service detection request
+    UdpServiceDetectionResult {
+        /// The corresponding id of the attack
+        attack_uuid: Uuid,
+        /// The address of the result
+        address: String,
+        /// The port of the result
+        port: u16,
+        /// Name of the service(s)
+        services: Vec<String>,
     },
     /// A result for a DNS resolution requests
     DnsResolutionResult {
