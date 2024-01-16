@@ -37,11 +37,9 @@ impl KrakenClient {
         do_not_verify_certs: bool,
     ) -> Result<Self, KrakenError> {
         let jar = Arc::new(Jar::default());
-        let mut client = ClientBuilder::new().cookie_provider(jar.clone());
-
-        if do_not_verify_certs {
-            client = client.danger_accept_invalid_certs(true);
-        }
+        let client = ClientBuilder::new()
+            .danger_accept_invalid_certs(do_not_verify_certs)
+            .cookie_provider(jar.clone());
 
         Ok(Self {
             base_url,

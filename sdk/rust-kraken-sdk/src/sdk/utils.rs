@@ -1,3 +1,7 @@
+// This annotation exists as the code for queries was unused at the time of writing this.
+// It may be useful in the future, so I don't delete it
+#![allow(dead_code)]
+
 use std::any::TypeId;
 
 use kraken::api::handler::common::schema::{ApiErrorResponse, ApiStatusCode};
