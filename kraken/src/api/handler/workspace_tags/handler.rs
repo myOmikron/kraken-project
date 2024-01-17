@@ -155,7 +155,7 @@ pub async fn delete_workspace_tag(
         .ok_or(ApiError::InvalidUuid)?;
 
     rorm::delete!(&mut tx, WorkspaceTag)
-        .condition(GlobalTag::F.uuid.equals(path.t_uuid))
+        .condition(WorkspaceTag::F.uuid.equals(path.t_uuid))
         .await?;
 
     tx.commit().await?;
