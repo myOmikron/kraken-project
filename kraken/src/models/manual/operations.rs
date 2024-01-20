@@ -252,6 +252,7 @@ impl ManualService {
     /// and add it to the aggregations.
     ///
     /// The [`Service`]'s uuid will be returned.
+    #[allow(clippy::too_many_arguments)]
     pub async fn insert(
         executor: impl Executor<'_>,
         workspace: Uuid,
