@@ -347,11 +347,19 @@ pub async fn create_service(
         certainty,
         host,
         port,
+        protocol,
     } = req.into_inner();
     let PathUuid { uuid: workspace } = path.into_inner();
+
+    if port.is_some() && protocol.is_none() || port.is_none() && protocol.is_some() {
+        return Err(ApiError::InvalidPort);
+    }
+
     Ok(Json(UuidResponse {
-        uuid: ManualService::insert(&GLOBAL.db, workspace, user, name, host, port, certainty)
-            .await?,
+        uuid: ManualService::insert(
+            &GLOBAL.db, workspace, user, name, host, port, protocol, certainty,
+        )
+        .await?,
     }))
 }
 
