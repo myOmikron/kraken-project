@@ -126,30 +126,30 @@ export default class WorkspaceDataDetailsResults extends React.Component<
                                 <div className={"workspace-data-details-pane-layout"}>
                                     <div className={"workspace-data-details-pane"}>
                                         <h3 className={"sub-heading"}>{txtResult.txtType}</h3>
-                                        <span className={"workspace-data-details-text-wrap"}>
-                                            {txtResult.rule}
-                                        </span>
+                                        <span className={"workspace-data-details-text-wrap"}>{txtResult.rule}</span>
                                     </div>
                                     <div className={"workspace-data-details-pane"}>
                                         <h3 className={"sub-heading"}>Date</h3>
                                         <span>{txtResult.createdAt.toISOString()}</span>
                                     </div>
-                                    {
-                                        txtResult.spfDomain &&
+                                    {txtResult.spfDomain && (
                                         <div className={"workspace-data-details-pane"}>
                                             <h3 className={"sub-heading"}>SPF Domain</h3>
                                             <span>{txtResult.spfDomain}</span>
-                                            <span>{txtResult.spfDomainIpv4Cidr && ("/" + txtResult.spfDomainIpv4Cidr)}</span>
-                                            <span>{txtResult.spfDomainIpv6Cidr && ("//" + txtResult.spfDomainIpv6Cidr)}</span>
+                                            <span>
+                                                {txtResult.spfDomainIpv4Cidr && "/" + txtResult.spfDomainIpv4Cidr}
+                                            </span>
+                                            <span>
+                                                {txtResult.spfDomainIpv6Cidr && "//" + txtResult.spfDomainIpv6Cidr}
+                                            </span>
                                         </div>
-                                    }
-                                    {
-                                        txtResult.spfIp &&
+                                    )}
+                                    {txtResult.spfIp && (
                                         <div className={"workspace-data-details-pane"}>
                                             <h3 className={"sub-heading"}>SPF IP</h3>
                                             <span>{txtResult.spfIp}</span>
                                         </div>
-                                    }
+                                    )}
                                 </div>
                             </div>
                         );
@@ -257,7 +257,7 @@ export default class WorkspaceDataDetailsResults extends React.Component<
                                     <h3 className={"sub-heading"}>DNS</h3>
                                     <div className={"workspace-data-details-list"}>
                                         <div className="workspace-data-details-list-elements">
-                                            <span>{bsResult.dnsRecordType}A</span>
+                                            <span>{bsResult.dnsRecordType.toUpperCase()}</span>
                                         </div>
                                         <div className="workspace-data-details-list-elements">
                                             <span>{bsResult.destination}</span>
