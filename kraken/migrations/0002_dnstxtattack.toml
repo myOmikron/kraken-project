@@ -1,5 +1,5 @@
 [Migration]
-Hash = "7259822431145752846"
+Hash = ""
 Initial = false
 Dependency = 1
 Replaces = []
@@ -125,3 +125,26 @@ OnUpdate = "Cascade"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TYPE _attack_attack_type ADD VALUE 'DnsTxtScan' AFTER 'DnsResolution';"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TYPE _aggregationsource_source_type ADD VALUE 'DnsTxtScan' AFTER 'DnsResolution';"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TYPE _searchresult_ref_type ADD VALUE 'DnsTxtScanResult' AFTER 'DnsRecordResult';"
+
+
