@@ -113,7 +113,8 @@ pub struct UdpServiceDetectionResult {
     pub service: Service,
 }
 
-/// Detect the service behind a socket by talking to it
+/// Detects the UDP service behind a socket by sending it known probes or trying `\r\n\r\n` in case there are no
+/// matching probes.
 pub async fn start_udp_service_detection(
     settings: &UdpServiceDetectionSettings,
     tx: Sender<UdpServiceDetectionResult>,
@@ -153,7 +154,17 @@ pub async fn start_udp_service_detection(
                 }
             }
 
-            if !partial_matches.is_empty() {
+            if partial_matches.is_empty() {
+                let payload = b"\r\n\r\n";
+                if let Some(_data) = settings.probe_udp(port, payload).await? {
+                    debug!("Generic CRLF probe on port {port} matched");
+                    tx.send(UdpServiceDetectionResult {
+                        port,
+                        service: Service::Unknown,
+                    })
+                    .await?;
+                }
+            } else {
                 debug!("Found maybe UDP services {partial_matches:?} on port {port}");
                 tx.send(UdpServiceDetectionResult {
                     port,
