@@ -1,6 +1,9 @@
+//! Parse and group the finding ids reported by `testssl`
+
 use std::num::NonZeroUsize;
 use std::str::FromStr;
 
+/// Enum representing the finding ids `testssl` uses in its json output in a structured way
 pub enum FindingId {
     /// Issues with your testssl installation
     ScanIssues(ScanIssues),
@@ -43,7 +46,7 @@ pub enum FindingId {
     /// `cipher_order` | `cipher_order_...` | `cipherorder_...`: Ordered list of ciphers use by each protocol
     CipherOrder(Option<Protocol>),
 
-    /// `cert_...`: Information about the used certificate(s)
+    /// Information about the used certificate(s)
     ///
     /// They will be numbered if the server uses more than one certificate.
     ///
@@ -79,6 +82,9 @@ pub enum FindingId {
     /// Test of known vulnerabilities
     Vulnerabilities(Vulnerabilities),
 
+    /// Testing individual ciphers identified by hexcode
+    ///
+    /// Might be tested per (and then grouped by) [`Protocol`]
     Cipher(Option<Protocol>, String),
 
     /// Tls clients simulated by testssl
@@ -91,6 +97,7 @@ pub enum FindingId {
     Unknown(String),
 }
 
+/// Perfect Forward Secrecy
 pub enum Pfs {
     /// `PFS_ciphers`: Offered ciphers
     Ciphers,
@@ -223,44 +230,75 @@ pub enum CipherList {
 
 /// Protocol used to secure a connection
 pub enum Protocol {
-    /// `SSL v2`
+    /// `SSLv2`
     SSL2,
-    /// `SSL v3`
+    /// `SSLv3`
     SSL3,
-    /// `TLS v1`
+    /// `TLS1`
     TLS1,
-    /// `TLS v1.1`
+    /// `TLS1_1`
     TLS11,
-    /// `TLS v1.2`
+    /// `TLS1_2`
     TLS12,
-    /// `TLS v1.3`
+    /// `TLS1_3`
     TLS13,
 }
 
 /// Known vulnerabilities which are tested
 pub enum Vulnerabilities {
+    /// `heartbleed`: Buffer overflow which allows reading of RAM
     Heartbleed,
+
+    /// `CCS`: Bad "ChangeCipherSpec" implementation allows mitm decoding entire session if hijacked at initiation.
     CCS,
+
+    /// `ticketbleed`: Read 31 uninitialized bytes from a F5 BIG-IP application
     Ticketbleed,
+
+    /// `ROBOT`: Allows breaking RSA on a set of recorded messages with affordable resources
     Robot,
+
+    /// `secure_renego`: Secure Renegotiation (RFC 5746) usually consumes more resources on the server than on the client
     SecRen,
+
+    /// `secure_client_renego`: Denial of service by triggering a resource intensive secure renegotiation from the client
     SecCliRen,
+
+    /// `CRIME_TLS`: Info leak through observable changes in compression
     CRIME,
+
+    /// `BREACH`: Specialized version of [`Vulnerabilities::CRIME`]
     BREACH,
+
+    /// `POODLE_SSL`
     PoodleSsl,
+    /// `POODLE_TLS`
     PoodleTls,
+    /// `fallback_SCSV`
     FallbackSCSV,
+    /// `SWEET32`
     Sweet32,
+    /// `FREAK`
     Freak,
+    /// `DROWN`
     Drown,
+    /// `DROWN_hint`
     DrownHint,
+    /// `LOGJAM`
     LogJam,
+    /// `LOGJAM-common_primes`
     LogJamCommonPrimes,
+    /// `BEAST`
     Beast,
+    /// `BEAST_CBC_SSL3`
     BeastSsl3,
+    /// `BEAST_CBC_TLS1`
     BeastTls1,
+    /// `LUCKY13`
     Lucky13,
+    /// `RC4`
     Rc4,
+    /// `GREASE`
     Grease,
 }
 
@@ -296,6 +334,7 @@ pub enum Hpkp {
     Backup,
 }
 
+/// Information about the used certificate(s)
 pub enum Cert {
     /// `cert`
     Cert,
@@ -367,8 +406,10 @@ pub enum Cert {
 pub enum ScanIssues {
     /// `scanProblem`: an error occurred during the scan
     ScanProblem,
+
     /// `old_fart` | `too_old_openssl`: your openssl version is way too old
     OldOpenssl,
+
     /// `engine_problem`: No engine or GOST support via engine with your openssl
     EngineProblem,
 }
