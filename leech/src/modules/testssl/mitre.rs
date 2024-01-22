@@ -13,6 +13,6 @@ pub fn categorize(finding: &Finding) -> Option<Tactic> {
         return None;
     }
 
-    let id = FindingId::from(finding.id.as_str());
+    let _id = FindingId::from(finding.id.as_str());
     None // TODO
 }

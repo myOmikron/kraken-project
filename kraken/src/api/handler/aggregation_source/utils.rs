@@ -370,8 +370,8 @@ impl FullAggregationSource {
                             ))
                             .stream();
                         while let Some(result) = stream.try_next().await? {
-                            testssl.get_mut(result.attack.key()).unwrap().findings.push(
-                                TestSSLFinding {
+                            if let Some(slot) = testssl.get_mut(result.attack.key()) {
+                                slot.findings.push(TestSSLFinding {
                                     section: result.section,
                                     id: result.key.to_string(),
                                     value: result.value,
@@ -379,8 +379,8 @@ impl FullAggregationSource {
                                     cve: result.cve,
                                     cwe: result.cwe,
                                     issue: (),
-                                },
-                            );
+                                });
+                            }
                         }
                     }
                 }

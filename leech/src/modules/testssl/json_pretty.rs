@@ -41,6 +41,7 @@ pub struct File {
 /// A service's scan results or an error
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(untagged)]
+#[allow(clippy::large_enum_variant)] // the error variant should be the cold path
 pub enum Service {
     /// A service's scan results
     Result(ScanResult),
