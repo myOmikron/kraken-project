@@ -11,7 +11,7 @@ use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::{
     AggregationSource, AggregationTable, DnsTxtScanResultInsert, DnsTxtScanType, DomainCertainty,
-    DomainHostRelation, HostCertainty, SourceType,
+    HostCertainty, SourceType,
 };
 use crate::modules::attacks::{AttackContext, AttackError, DnsTxtScanParams, HandleAttackResponse};
 
