@@ -171,6 +171,7 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(attack_results::handler::get_host_alive_results)
                     .service(attack_results::handler::get_service_detection_results)
                     .service(attack_results::handler::get_dns_resolution_results)
+                    .service(attack_results::handler::get_testssl_results)
                     .service(api_keys::handler::create_api_key)
                     .service(api_keys::handler::get_api_keys)
                     .service(api_keys::handler::update_api_key)

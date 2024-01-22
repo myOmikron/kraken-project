@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{DnsRecordType, ServiceCertainty};
+use crate::models::{DnsRecordType, ServiceCertainty, TestSSLSection, TestSSLSeverity};
 
 /// A simple representation of a bruteforce subdomains result
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -194,9 +194,9 @@ pub struct SimpleDnsResolutionResult {
     pub dns_record_type: DnsRecordType,
 }
 
-/// A simple representation of a testssl result
+/// The results of a `testssl.sh` scan
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
-pub struct SimpleTestSSLResult {
+pub struct FullTestSSLResult {
     /// The primary key
     pub uuid: Uuid,
 
@@ -220,5 +220,36 @@ pub struct SimpleTestSSLResult {
 
     /// The detected service
     pub service: String,
-    // TODO
+
+    /// The scan's findings
+    ///
+    /// This includes, log messages, extracted information (for example cert parameters) and tests for vulnerabilities / bad options.
+    pub findings: Vec<TestSSLFinding>,
+}
+
+/// A single finding reported by `testssl.sh`
+///
+/// This includes, log messages, extracted information (for example cert parameters) and tests for vulnerabilities / bad options.
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct TestSSLFinding {
+    /// The section `testssl.sh` reported this finding under
+    pub section: TestSSLSection,
+
+    /// The finding's id (not db id, but `testssl.sh` id)
+    pub id: String,
+
+    /// The finding's value (the value's semantics are highly dependant on the `id` and `severity`)
+    pub value: String,
+
+    /// The severity reported by `testssl.sh` (this also includes log levels)
+    pub severity: TestSSLSeverity,
+
+    /// An associated cve
+    pub cve: Option<String>,
+
+    /// An associated cwe category
+    pub cwe: Option<String>,
+
+    /// An issue categorized by kraken TODO
+    pub issue: (),
 }

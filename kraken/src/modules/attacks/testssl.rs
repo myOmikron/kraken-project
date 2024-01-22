@@ -3,8 +3,8 @@ use std::str::FromStr;
 use ipnetwork::IpNetwork;
 use kraken_proto::shared::Address;
 use kraken_proto::{
-    test_ssl_scans, test_ssl_service, BasicAuth, StartTlsProtocol, TestSslRequest, TestSslResponse,
-    TestSslScanResult, TestSslScans,
+    mitre, test_ssl_scans, test_ssl_service, BasicAuth, StartTlsProtocol, TestSslRequest,
+    TestSslResponse, TestSslScanResult, TestSslScans, TestSslSeverity,
 };
 use log::error;
 use rorm::insert;
@@ -16,7 +16,8 @@ use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::models::{
     AggregationSource, AggregationTable, DomainCertainty, HostCertainty, PortCertainty,
-    PortProtocol, ServiceCertainty, SourceType, TestSSLResult, TestSSLResultInsert,
+    PortProtocol, Severity, SourceType, TestSSLResultFinding, TestSSLResultFindingInsert,
+    TestSSLResultHeader, TestSSLResultHeaderInsert, TestSSLSection, TestSSLSeverity,
 };
 use crate::modules::attacks::{AttackContext, AttackError, HandleAttackResponse, TestSSLParams};
 
@@ -109,6 +110,59 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                 if domain.ends_with('.') {
                     domain.pop();
                 }
+
+                let findings = [
+                    (pretest, TestSSLSection::Pretest),
+                    (protocols, TestSSLSection::Protocols),
+                    (grease, TestSSLSection::Grease),
+                    (ciphers, TestSSLSection::Ciphers),
+                    (pfs, TestSSLSection::Pfs),
+                    (server_preferences, TestSSLSection::ServerPreferences),
+                    (server_defaults, TestSSLSection::ServerDefaults),
+                    (header_response, TestSSLSection::HeaderResponse),
+                    (vulnerabilities, TestSSLSection::Vulnerabilities),
+                    (cipher_tests, TestSSLSection::CipherTests),
+                    (browser_simulations, TestSSLSection::BrowserSimulations),
+                ]
+                .into_iter()
+                .flat_map(|(findings, section)| {
+                    findings
+                        .into_iter()
+                        .filter(|finding| finding.id != "cert")
+                        .map(move |finding| {
+                            Ok(TestSSLResultFindingInsert {
+                                uuid: Uuid::new_v4(),
+                                attack: ForeignModelByField::Key(self.attack_uuid),
+                                section,
+                                key: finding.id,
+                                value: finding.finding,
+                                testssl_severity: match TestSslSeverity::try_from(finding.severity)
+                                    .map_err(|e| AttackError::Custom(Box::new(e)))?
+                                {
+                                    TestSslSeverity::Debug => TestSSLSeverity::Debug,
+                                    TestSslSeverity::Info => TestSSLSeverity::Info,
+                                    TestSslSeverity::Warn => TestSSLSeverity::Warn,
+                                    TestSslSeverity::Fatal => TestSSLSeverity::Fatal,
+                                    TestSslSeverity::Ok => TestSSLSeverity::Ok,
+                                    TestSslSeverity::Low => TestSSLSeverity::Low,
+                                    TestSslSeverity::Medium => TestSSLSeverity::Medium,
+                                    TestSslSeverity::High => TestSSLSeverity::High,
+                                    TestSslSeverity::Critical => TestSSLSeverity::Critical,
+                                },
+                                cve: finding.cve,
+                                cwe: finding.cwe,
+                                mitre: finding
+                                    .mitre
+                                    .map(mitre::Tactic::try_from)
+                                    .transpose()?
+                                    .as_ref()
+                                    .map(ToString::to_string),
+                                severity: Severity::None,
+                            })
+                        })
+                })
+                .collect::<Result<Vec<_>, AttackError>>()?;
+
                 let domain_uuid = GLOBAL
                     .aggregator
                     .aggregate_domain(
@@ -135,20 +189,9 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                     )
                     .await?;
 
-                let service_uuid = GLOBAL
-                    .aggregator
-                    .aggregate_service(
-                        self.workspace.uuid,
-                        host_uuid,
-                        Some(port_uuid),
-                        &service,
-                        ServiceCertainty::MaybeVerified, // TODO might be DefinitelyVerified?
-                    )
-                    .await?;
-
-                let source_uuid = insert!(&mut tx, TestSSLResult)
+                let source_uuid = insert!(&mut tx, TestSSLResultHeader)
                     .return_primary_key()
-                    .single(&TestSSLResultInsert {
+                    .single(&TestSSLResultHeaderInsert {
                         uuid: Uuid::new_v4(),
                         attack: ForeignModelByField::Key(self.attack_uuid),
                         target_host,
@@ -157,6 +200,11 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                         rdns,
                         service,
                     })
+                    .await?;
+
+                insert!(&mut tx, TestSSLResultFinding)
+                    .return_nothing()
+                    .bulk(&findings)
                     .await?;
 
                 insert!(&mut tx, AggregationSource)
@@ -185,14 +233,6 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                             source_uuid,
                             aggregated_table: AggregationTable::Port,
                             aggregated_uuid: port_uuid,
-                        },
-                        AggregationSource {
-                            uuid: Uuid::new_v4(),
-                            workspace: ForeignModelByField::Key(self.workspace.uuid),
-                            source_type: SourceType::TestSSL,
-                            source_uuid,
-                            aggregated_table: AggregationTable::Service,
-                            aggregated_uuid: service_uuid,
                         },
                     ])
                     .await?;

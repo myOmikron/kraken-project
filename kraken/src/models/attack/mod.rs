@@ -320,9 +320,11 @@ pub struct ServiceDetectionResult {
     pub service_names: BackRef<field!(ServiceDetectionName::F.result)>,
 }
 
-/// Representation of a [TestSSL](AttackType::TestSSL) attack's result
+/// Meta information about a single `testssl.sh` scan's results
+///
+/// The actual results are stored in [`TestSSLResultFinding`].
 #[derive(Model)]
-pub struct TestSSLResult {
+pub struct TestSSLResultHeader {
     /// The primary key
     #[rorm(primary_key)]
     pub uuid: Uuid,
@@ -352,5 +354,134 @@ pub struct TestSSLResult {
     /// The detected service
     #[rorm(max_length = 255)]
     pub service: String,
-    // TODO
+}
+
+/// A single finding reported by `testssl.sh`
+///
+/// This includes, log messages, extracted information (for example cert parameters) and tests for vulnerabilities / bad options.
+#[derive(Model)]
+pub struct TestSSLResultFinding {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The [attack](Attack) which produced this result
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub attack: ForeignModel<Attack>,
+
+    /// The point in time, this result was produced
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
+
+    /// The section `testssl.sh` reported this finding under
+    pub section: TestSSLSection,
+
+    /// The finding's id (not db id, but `testssl.sh` id)
+    #[rorm(max_length = 255)]
+    pub key: String,
+
+    /// The finding's value (the value's semantics are highly dependant on the `key` and `testssl_severity`)
+    #[rorm(max_length = 1024)]
+    pub value: String,
+
+    /// The severity reported by `testssl.sh` (this also includes log levels)
+    pub testssl_severity: TestSSLSeverity,
+
+    /// An associated cve
+    #[rorm(max_length = 255)]
+    pub cve: Option<String>,
+
+    /// An associated cwe category
+    #[rorm(max_length = 255)]
+    pub cwe: Option<String>,
+
+    /// An associated mitre ATT&CK technique
+    #[rorm(max_length = 255)]
+    pub mitre: Option<String>,
+
+    /// An associated severity
+    pub severity: Severity,
+}
+
+/// A [`TestSSLResultFinding`]'s section
+#[derive(
+    Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, DbEnum, Deserialize, Serialize, ToSchema,
+)]
+pub enum TestSSLSection {
+    /// Some sanity checks which can't be disabled
+    Pretest = 0,
+
+    /// Which tls protocols are supported
+    Protocols = 1,
+
+    /// Server implementation bugs and [GREASE](https://www.ietf.org/archive/id/draft-ietf-tls-grease-01.txt)
+    Grease = 2,
+
+    /// Which cipher suites are supported
+    Ciphers = 3,
+
+    /// Checks robust (perfect) forward secrecy key exchange
+    Pfs = 4,
+
+    /// The server's preferences
+    ServerPreferences = 5,
+
+    /// The server's defaults
+    ServerDefaults = 6,
+
+    /// The http header set by the server
+    HeaderResponse = 7,
+
+    /// List of several vulnerabilities
+    Vulnerabilities = 8,
+
+    /// Which concrete ciphers are supported
+    ///
+    /// Depending on the option `testssl` is invoked with,
+    /// this is either a list of all ciphers or a list of all cipher per tls protocol.
+    CipherTests = 9,
+
+    /// Which browser is able to establish a connection
+    BrowserSimulations = 10,
+}
+
+/// A [`TestSSLResultFinding`]'s severity
+#[derive(Copy, Clone, Debug, DbEnum, Deserialize, Serialize, ToSchema)]
+pub enum TestSSLSeverity {
+    /// A debug level log message
+    Debug,
+    /// An info level log message
+    Info,
+    /// A warning level log message
+    Warn,
+    /// An error level log message
+    Fatal,
+
+    /// The test's result doesn't pose an issue
+    Ok,
+    /// The test's result pose a low priority issue
+    Low,
+    /// The test's result pose a medium priority issue
+    Medium,
+    /// The test's result pose a high priority issue
+    High,
+    /// The test's result pose a critical priority issue
+    Critical,
+}
+
+/// A generic attack result's severity
+#[derive(
+    Copy, Clone, Debug, DbEnum, Deserialize, Serialize, ToSchema, Ord, PartialOrd, Eq, PartialEq,
+)]
+pub enum Severity {
+    /// No issue
+    None = 0,
+    /// The test's result pose a low priority issue
+    Low = 1,
+    /// The test's result pose a medium priority issue
+    Medium = 2,
+    /// The test's result pose a high priority issue
+    High = 3,
+    /// The test's result pose a critical priority issue
+    Critical = 4,
 }

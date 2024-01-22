@@ -13,16 +13,17 @@ use crate::api::handler::aggregation_source::schema::{
     FullAggregationSource, ManualInsert, SimpleAggregationSource, SourceAttack, SourceAttackResult,
 };
 use crate::api::handler::attack_results::schema::{
-    FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
+    FullQueryCertificateTransparencyResult, FullServiceDetectionResult, FullTestSSLResult,
     SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
-    SimpleQueryUnhashedResult, SimpleTcpPortScanResult, SimpleTestSSLResult,
+    SimpleQueryUnhashedResult, SimpleTcpPortScanResult, TestSSLFinding,
 };
 use crate::api::handler::users::schema::SimpleUser;
 use crate::models::{
     AggregationSource, AggregationTable, Attack, AttackType, BruteforceSubdomainsResult,
     CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
     DnsResolutionResult, HostAliveResult, ManualDomain, ManualHost, ManualPort, ManualService,
-    ServiceDetectionName, ServiceDetectionResult, SourceType, TcpPortScanResult, TestSSLResult,
+    ServiceDetectionName, ServiceDetectionResult, SourceType, TcpPortScanResult,
+    TestSSLResultFinding, TestSSLResultHeader,
 };
 
 fn field_in<'a, T, F, P, Any>(
@@ -164,7 +165,7 @@ impl FullAggregationSource {
         let mut host_alive: Results<SimpleHostAliveResult> = Results::new();
         let mut service_detection: Results<FullServiceDetectionResult> = Results::new();
         let mut dns_resolution: Results<SimpleDnsResolutionResult> = Results::new();
-        let mut testssl: Results<SimpleTestSSLResult> = Results::new();
+        let mut testssl: HashMap<Uuid, FullTestSSLResult> = HashMap::new();
         let mut manual_insert = Vec::new();
         for (source_type, uuids) in sources {
             if uuids.is_empty() {
@@ -340,22 +341,47 @@ impl FullAggregationSource {
                     }
                 }
                 SourceType::TestSSL => {
-                    let mut stream = query!(&mut *tx, TestSSLResult)
-                        .condition(field_in(TestSSLResult::F.uuid, uuids))
-                        .stream();
-                    while let Some(result) = stream.try_next().await? {
-                        testssl.entry(*result.attack.key()).or_default().push(
-                            SimpleTestSSLResult {
-                                uuid: result.uuid,
-                                attack: *result.attack.key(),
-                                created_at: result.created_at,
-                                target_host: result.target_host,
-                                ip: result.ip.ip().to_string(),
-                                port: result.port as u16,
-                                rdns: result.rdns,
-                                service: result.service,
-                            },
-                        );
+                    {
+                        let mut stream = query!(&mut *tx, TestSSLResultHeader)
+                            .condition(field_in(TestSSLResultHeader::F.uuid, uuids))
+                            .stream();
+                        while let Some(result) = stream.try_next().await? {
+                            testssl.insert(
+                                *result.attack.key(),
+                                FullTestSSLResult {
+                                    uuid: result.uuid,
+                                    attack: *result.attack.key(),
+                                    created_at: result.created_at,
+                                    target_host: result.target_host,
+                                    ip: result.ip.ip().to_string(),
+                                    port: result.port as u16,
+                                    rdns: result.rdns,
+                                    service: result.service,
+                                    findings: Vec::new(),
+                                },
+                            );
+                        }
+                    }
+                    {
+                        let mut stream = query!(&mut *tx, TestSSLResultFinding)
+                            .condition(field_in(
+                                TestSSLResultFinding::F.attack,
+                                testssl.keys().copied(),
+                            ))
+                            .stream();
+                        while let Some(result) = stream.try_next().await? {
+                            testssl.get_mut(result.attack.key()).unwrap().findings.push(
+                                TestSSLFinding {
+                                    section: result.section,
+                                    id: result.key.to_string(),
+                                    value: result.value,
+                                    severity: result.testssl_severity,
+                                    cve: result.cve,
+                                    cwe: result.cwe,
+                                    issue: (),
+                                },
+                            );
+                        }
                     }
                 }
                 SourceType::UdpPortScan
@@ -520,32 +546,29 @@ impl FullAggregationSource {
                         error!("An `AttackType::Undefined` shouldn't have been queried");
                         continue;
                     }
-                    AttackType::BruteforceSubdomains => SourceAttackResult::BruteforceSubdomains(
-                        bruteforce_subdomains.remove(&uuid).unwrap_or_default(),
-                    ),
-                    AttackType::TcpPortScan => SourceAttackResult::TcpPortScan(
-                        tcp_port_scan.remove(&uuid).unwrap_or_default(),
-                    ),
-                    AttackType::QueryCertificateTransparency => {
-                        SourceAttackResult::QueryCertificateTransparency(
-                            certificate_transparency.remove(&uuid).unwrap_or_default(),
-                        )
-                    }
-                    AttackType::QueryUnhashed => SourceAttackResult::QueryDehashed(
-                        query_dehashed.remove(&uuid).unwrap_or_default(),
-                    ),
+                    AttackType::BruteforceSubdomains => bruteforce_subdomains
+                        .remove(&uuid)
+                        .map(SourceAttackResult::BruteforceSubdomains),
+
+                    AttackType::TcpPortScan => tcp_port_scan
+                        .remove(&uuid)
+                        .map(SourceAttackResult::TcpPortScan),
+                    AttackType::QueryCertificateTransparency => certificate_transparency
+                        .remove(&uuid)
+                        .map(SourceAttackResult::QueryCertificateTransparency),
+                    AttackType::QueryUnhashed => query_dehashed
+                        .remove(&uuid)
+                        .map(SourceAttackResult::QueryDehashed),
                     AttackType::HostAlive => {
-                        SourceAttackResult::HostAlive(host_alive.remove(&uuid).unwrap_or_default())
+                        host_alive.remove(&uuid).map(SourceAttackResult::HostAlive)
                     }
-                    AttackType::ServiceDetection => SourceAttackResult::ServiceDetection(
-                        service_detection.remove(&uuid).unwrap_or_default(),
-                    ),
-                    AttackType::DnsResolution => SourceAttackResult::DnsResolution(
-                        dns_resolution.remove(&uuid).unwrap_or_default(),
-                    ),
-                    AttackType::TestSSL => {
-                        SourceAttackResult::TestSSL(testssl.remove(&uuid).unwrap_or_default())
-                    }
+                    AttackType::ServiceDetection => service_detection
+                        .remove(&uuid)
+                        .map(SourceAttackResult::ServiceDetection),
+                    AttackType::DnsResolution => dns_resolution
+                        .remove(&uuid)
+                        .map(SourceAttackResult::DnsResolution),
+                    AttackType::TestSSL => testssl.remove(&uuid).map(SourceAttackResult::TestSSL),
                     AttackType::UdpPortScan
                     | AttackType::ForcedBrowsing
                     | AttackType::OSDetection
@@ -555,15 +578,17 @@ impl FullAggregationSource {
                         continue;
                     }
                 };
-                attacks.push(SourceAttack {
-                    uuid,
-                    workspace_uuid: *workspace.key(),
-                    started_by,
-                    finished_at,
-                    error,
-                    created_at,
-                    results,
-                });
+                if let Some(results) = results {
+                    attacks.push(SourceAttack {
+                        uuid,
+                        workspace_uuid: *workspace.key(),
+                        started_by,
+                        finished_at,
+                        error,
+                        created_at,
+                        results,
+                    });
+                }
             }
         }
 

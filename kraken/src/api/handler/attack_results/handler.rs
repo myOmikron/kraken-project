@@ -9,9 +9,9 @@ use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::attack_results::schema::{
-    FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
+    FullQueryCertificateTransparencyResult, FullServiceDetectionResult, FullTestSSLResult,
     SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
-    SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+    SimpleQueryUnhashedResult, SimpleTcpPortScanResult, TestSSLFinding,
 };
 use crate::api::handler::common::error::{ApiError, ApiResult};
 use crate::api::handler::common::schema::{
@@ -25,6 +25,7 @@ use crate::models::{
     Attack, BruteforceSubdomainsResult, CertificateTransparencyResult,
     CertificateTransparencyValueName, DehashedQueryResult, DnsResolutionResult, HostAliveResult,
     ServiceCertainty, ServiceDetectionName, ServiceDetectionResult, TcpPortScanResult,
+    TestSSLResultFinding, TestSSLResultHeader,
 };
 
 /// Retrieve a bruteforce subdomains' results by the attack's id
@@ -509,4 +510,64 @@ pub async fn get_dns_resolution_results(
         offset,
         total: total as u64,
     }))
+}
+
+/// Retrieve a `testssl.sh`'s results by the attack's id
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Returns attack's results", body = FullTestSSLResult),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid),
+    security(("api_key" = []))
+)]
+#[get("/attacks/{uuid}/testsslResults")]
+pub async fn get_testssl_results(
+    path: Path<PathUuid>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<Json<FullTestSSLResult>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    let attack_uuid = path.uuid;
+
+    if !Attack::has_access(&mut tx, attack_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    let header = query!(&mut tx, TestSSLResultHeader)
+        .condition(TestSSLResultHeader::F.attack.equals(attack_uuid))
+        .one()
+        .await?;
+
+    let result = FullTestSSLResult {
+        uuid: header.uuid,
+        attack: attack_uuid,
+        created_at: header.created_at,
+        target_host: header.target_host,
+        ip: header.ip.ip().to_string(),
+        port: header.port as u16,
+        rdns: header.rdns,
+        service: header.service,
+        findings: query!(&mut tx, TestSSLResultFinding)
+            .condition(TestSSLResultFinding::F.attack.equals(attack_uuid))
+            .stream()
+            .map_ok(|x| TestSSLFinding {
+                section: x.section,
+                id: x.key,
+                value: x.value,
+                severity: x.testssl_severity,
+                cve: x.cve,
+                cwe: x.cwe,
+                issue: (),
+            })
+            .try_collect()
+            .await?,
+    };
+
+    tx.commit().await?;
+
+    Ok(Json(result))
 }
