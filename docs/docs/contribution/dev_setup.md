@@ -8,7 +8,7 @@ The easiest way to get kraken running locally is using Vagrant and the provided 
 
 Copy the `example.vars.yml` to `vars.yml` in the vagrant folder and set test values for the tokens, names and passwords. A sample `vars.yml` might start like this:
 
-```yml
+```yaml
 --8<-- "example.vars.yml:sample"
   ...
 ```
@@ -79,7 +79,12 @@ https://10.13.37.11:31337
 
 When added to the list, click on "Gen tls config"
 
-The TLS config will be copied to clipboard (KrakenSni, KrakenCa, etc.). Paste this configuration inside your `vars.yml` as value for the `generated_leech_conf` field. (note that you need to indent the string to avoid YAML syntax errors)
+The TLS config will be copied to clipboard (KrakenSni, KrakenCa, etc.). Paste this configuration inside your `vars.yml` as value for the `generated_leech_conf` field. Note that the formatting must be all in the same column like this:
+
+```yaml
+...
+--8<-- "example.vars.yml:tls"
+```
 
 Now since `vars.yml` has been modified, you need to re-provision the leech VM again:
 
