@@ -133,6 +133,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         key={"host-table"}
                         {...hostsTable}
                         columnsTemplate={"min-content 39ch 1fr 1fr 1fr min-content"}
+                        onAdd={() => setCreateForm("hosts")}
                         applyFilter={(value) => {
                             setHostFilter(value);
                             hostsTable.setOffset(0);
