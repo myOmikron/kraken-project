@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use actix_web::web::{Json, Path};
-use actix_web::{get, post, put, HttpResponse};
+use actix_web::{delete, get, post, put, HttpResponse};
 use futures::TryStreamExt;
 use rorm::conditions::DynamicCollection;
 use rorm::db::sql::value::Value;
@@ -426,6 +426,58 @@ pub async fn update_port(
             )
             .await;
     }
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+/// Delete the port
+///
+/// This only deletes the aggregation. The raw results are still in place
+#[utoipa::path(
+    tag = "Ports",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Port was deleted"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathPort),
+    security(("api_key" = []))
+)]
+#[delete("/workspaces/{w_uuid}/ports/{p_uuid}")]
+pub async fn delete_port(
+    path: Path<PathPort>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let PathPort { w_uuid, p_uuid } = path.into_inner();
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut tx, w_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    query!(&mut tx, (Port::F.uuid,))
+        .condition(and!(
+            Port::F.uuid.equals(p_uuid),
+            Port::F.workspace.equals(w_uuid)
+        ))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    rorm::delete!(&mut tx, Port)
+        // We can omit the check if the workspace is the same as we have already checked it in the query before
+        .condition(Port::F.uuid.equals(p_uuid))
+        .await?;
+
+    tx.commit().await?;
+
+    let msg = WsMessage::DeletedPort {
+        workspace: w_uuid,
+        port: p_uuid,
+    };
+    GLOBAL.ws.message_workspace(w_uuid, msg).await;
 
     Ok(HttpResponse::Ok().finish())
 }

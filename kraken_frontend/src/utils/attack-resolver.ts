@@ -19,6 +19,7 @@ export const ATTACKS: AttackResolver = {
     QueryUnhashed: { abbreviation: "Dh", long: "Dehashed", key: "queryDehashed" },
     HostAlive: { abbreviation: "HA", long: "Host alive", key: "hostAlive" },
     ServiceDetection: { abbreviation: "SvD", long: "Service Detection", key: "serviceDetection" },
+    UdpServiceDetection: { abbreviation: "UDP", long: "UDP Service Detection", key: "udpServiceDetection" },
     DnsResolution: { abbreviation: "DR", long: "DNS Resolution", key: "dnsResolution" },
     ForcedBrowsing: { abbreviation: "FB", long: "Forced Browsing", key: "forcedBrowsing" },
     OSDetection: { abbreviation: "OS", long: "OS Detection", key: "osDetection" },

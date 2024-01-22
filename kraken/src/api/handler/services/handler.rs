@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use actix_web::web::{Json, Path};
-use actix_web::{get, post, put, HttpResponse};
+use actix_web::{delete, get, post, put, HttpResponse};
 use futures::TryStreamExt;
 use rorm::conditions::DynamicCollection;
 use rorm::db::sql::value::Value;
@@ -347,11 +347,19 @@ pub async fn create_service(
         certainty,
         host,
         port,
+        protocol,
     } = req.into_inner();
     let PathUuid { uuid: workspace } = path.into_inner();
+
+    if port.is_some() && protocol.is_none() || port.is_none() && protocol.is_some() {
+        return Err(ApiError::InvalidPort);
+    }
+
     Ok(Json(UuidResponse {
-        uuid: ManualService::insert(&GLOBAL.db, workspace, user, name, host, port, certainty)
-            .await?,
+        uuid: ManualService::insert(
+            &GLOBAL.db, workspace, user, name, host, port, protocol, certainty,
+        )
+        .await?,
     }))
 }
 
@@ -485,6 +493,58 @@ pub async fn update_service(
             )
             .await;
     }
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+/// Delete the service
+///
+/// This only deletes the aggregation. The raw results are still in place
+#[utoipa::path(
+    tag = "Services",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Service was deleted"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathService),
+    security(("api_key" = []))
+)]
+#[delete("/workspaces/{w_uuid}/services/{s_uuid}")]
+pub async fn delete_service(
+    path: Path<PathService>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let PathService { w_uuid, s_uuid } = path.into_inner();
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut tx, w_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    query!(&mut tx, (Service::F.uuid,))
+        .condition(and!(
+            Service::F.uuid.equals(s_uuid),
+            Service::F.workspace.equals(w_uuid)
+        ))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    rorm::delete!(&mut tx, Service)
+        // We can omit the check if the workspace is the same as we have already checked it in the query before
+        .condition(Service::F.uuid.equals(s_uuid))
+        .await?;
+
+    tx.commit().await?;
+
+    let msg = WsMessage::DeletedService {
+        workspace: w_uuid,
+        service: s_uuid,
+    };
+    GLOBAL.ws.message_workspace(w_uuid, msg).await;
 
     Ok(HttpResponse::Ok().finish())
 }

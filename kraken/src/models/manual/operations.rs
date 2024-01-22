@@ -240,6 +240,7 @@ struct InsertManualService {
     certainty: ManualServiceCertainty,
     host: IpNetwork,
     port: Option<i32>,
+    protocol: PortProtocol,
     user: ForeignModel<User>,
     workspace: ForeignModel<Workspace>,
 }
@@ -251,6 +252,7 @@ impl ManualService {
     /// and add it to the aggregations.
     ///
     /// The [`Service`]'s uuid will be returned.
+    #[allow(clippy::too_many_arguments)]
     pub async fn insert(
         executor: impl Executor<'_>,
         workspace: Uuid,
@@ -258,6 +260,7 @@ impl ManualService {
         name: String,
         host: IpNetwork,
         port: Option<u16>,
+        protocol: Option<PortProtocol>,
         certainty: ManualServiceCertainty,
     ) -> Result<Uuid, rorm::Error> {
         let mut guard = executor.ensure_transaction().await?;
@@ -272,6 +275,7 @@ impl ManualService {
                 certainty,
                 host,
                 port: port.map(i32::from),
+                protocol: protocol.unwrap_or(PortProtocol::Unknown),
                 user: ForeignModelByField::Key(user),
                 workspace: ForeignModelByField::Key(workspace),
             })
@@ -290,21 +294,25 @@ impl ManualService {
             .await?;
 
         let port_uuid = if let Some(port) = port {
-            Some(
-                GLOBAL
-                    .aggregator
-                    .aggregate_port(
-                        workspace,
-                        host_uuid,
-                        port,
-                        PortProtocol::Tcp,
-                        match certainty {
-                            ManualServiceCertainty::Historical => PortCertainty::Historical,
-                            ManualServiceCertainty::SupposedTo => PortCertainty::SupposedTo,
-                        },
-                    )
-                    .await?,
-            )
+            if let Some(protocol) = protocol {
+                Some(
+                    GLOBAL
+                        .aggregator
+                        .aggregate_port(
+                            workspace,
+                            host_uuid,
+                            port,
+                            protocol,
+                            match certainty {
+                                ManualServiceCertainty::Historical => PortCertainty::Historical,
+                                ManualServiceCertainty::SupposedTo => PortCertainty::SupposedTo,
+                            },
+                        )
+                        .await?,
+                )
+            } else {
+                None
+            }
         } else {
             None
         };

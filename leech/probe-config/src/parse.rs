@@ -1,4 +1,7 @@
+use std::path::Path;
 use std::str::FromStr;
+
+use base64::prelude::*;
 
 #[derive(Debug)]
 pub struct Service {
@@ -8,8 +11,8 @@ pub struct Service {
 }
 
 impl Service {
-    pub fn from_file(file: &str) -> Result<Self, ParseError> {
-        parse_file(file)
+    pub fn from_file(file: &str, content: &str) -> Result<Self, ParseError> {
+        parse_file(file, content)
     }
 }
 
@@ -26,7 +29,7 @@ pub struct Probe {
 pub enum Payload {
     Empty,
     String(String),
-    Base64(String),
+    Binary(Vec<u8>),
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -41,6 +44,15 @@ pub enum Prevalence {
     Often,
     Average,
     Obscure,
+}
+
+/// The directory name a probe file must be in.
+#[derive(Debug, PartialEq)]
+pub enum ProbeFileDirectory {
+    /// Allows TCP and TLS - directory name: `"tcp"`
+    Tcp,
+    /// Allows UDP only - directory name: `"udp"`
+    Udp,
 }
 
 #[derive(Debug)]
@@ -59,8 +71,10 @@ pub enum ParseError {
     /// An unknown probe
     UnknownValue(usize),
 
-    /// Both `payload_str` and `payload_b64` are specified
+    /// More than one `payload_str`, `payload_b64` or `payload_hex` are specified
     ConflictingPayload { probe_line: usize },
+    /// Format errors for `payload_b64` or `payload_hex`
+    InvalidPayload { probe_line: usize },
 
     /// The sub regex must be the last key in any probe
     ValueAfterSubRegex(usize),
@@ -73,6 +87,15 @@ pub enum ParseError {
     InvalidProtocol(usize),
     /// Invalid value for `prevalence: `
     InvalidPrevalence(usize),
+    /// Value for `protocol: ` doesn't match folder name it's in.
+    ProtocolMismatch {
+        expected: ProbeFileDirectory,
+        actual: ProbeFileDirectory,
+    },
+    /// Probe file not in a valid folder name
+    UnimplementedFolder(String),
+    /// Some other error occured from trying to parse the path (very unlikely error)
+    FilenameError(String),
 }
 
 impl std::fmt::Display for ParseError {
@@ -108,6 +131,9 @@ impl std::fmt::Display for ParseError {
                     "The probe started in line {probe_line} has two conflicting payloads"
                 )
             }
+            ParseError::InvalidPayload { probe_line } => {
+                write!(f, "Invalid payload format in line {probe_line}")
+            }
             ParseError::ValueAfterSubRegex(line) => {
                 write!(
                     f,
@@ -130,14 +156,40 @@ impl std::fmt::Display for ParseError {
             ParseError::InvalidPrevalence(line) => {
                 write!(f, "Invalid prevalence in line {line}")
             }
+            ParseError::FilenameError(filename) => {
+                write!(
+                    f,
+                    "Unable to resolve information from filename `{filename}`."
+                )
+            }
+            ParseError::UnimplementedFolder(folder) => {
+                write!(f, "Unrecognized probe folder `{folder}`.")
+            }
+            ParseError::ProtocolMismatch { actual, expected } => {
+                write!(f, "File specified protocol {actual:?} but is expected to be {expected:?}, since it's in that folder.")
+            }
         }
     }
 }
 impl std::error::Error for ParseError {}
 
-fn parse_file(file: &str) -> Result<Service, ParseError> {
+fn parse_file(filename: &str, content: &str) -> Result<Service, ParseError> {
+    // bunch of unwraps, since this is a build script and errors here would mean misconfiguration of the glob / pattern matcher
+    let actual_dir = match Path::new(&filename)
+        .parent()
+        .ok_or(ParseError::FilenameError(String::from(filename)))?
+        .file_name()
+        .ok_or(ParseError::FilenameError(String::from(filename)))?
+        .to_str()
+        .ok_or(ParseError::FilenameError(String::from(filename)))?
+    {
+        "tcp" => ProbeFileDirectory::Tcp,
+        "udp" => ProbeFileDirectory::Udp,
+        v => return Err(ParseError::UnimplementedFolder(String::from(v))),
+    };
+
     // Iterator over lines with their numbers excluding empty lines and comment lines
-    let mut lines = file
+    let mut lines = content
         .lines()
         .enumerate()
         .filter(|(_, line)| !(line.is_empty() || line.trim_start().starts_with('#')))
@@ -194,7 +246,23 @@ fn parse_file(file: &str) -> Result<Service, ParseError> {
             continue;
         }
     }
-    probes.push(builder.finish()?);
+
+    let probe = builder.finish()?;
+
+    let expected_dir = match probe.protocol {
+        Protocol::Udp => ProbeFileDirectory::Udp,
+        Protocol::Tcp => ProbeFileDirectory::Tcp,
+        Protocol::Tls => ProbeFileDirectory::Tcp,
+    };
+
+    if actual_dir != expected_dir {
+        return Err(ParseError::ProtocolMismatch {
+            actual: actual_dir,
+            expected: expected_dir,
+        });
+    }
+
+    probes.push(probe);
 
     Ok(Service {
         name,
@@ -223,6 +291,7 @@ struct ProbeBuilder {
     alpn: Option<String>,
     payload_str: Option<String>,
     payload_b64: Option<String>,
+    payload_hex: Option<String>,
     regex: Option<String>,
     sub_regex: Option<Vec<String>>,
 }
@@ -260,6 +329,13 @@ impl ProbeBuilder {
                 ParseError::DuplicateValue("payload_b64", number),
             );
         }
+        if let Some(value) = line.strip_prefix("payload_hex: ") {
+            return set_or_err(
+                &mut self.payload_hex,
+                Ok(value.to_string()),
+                ParseError::DuplicateValue("payload_hex", number),
+            );
+        }
         if let Some(value) = line.strip_prefix("regex: ") {
             return set_or_err(
                 &mut self.regex,
@@ -293,11 +369,24 @@ impl ProbeBuilder {
                 });
             }
         }
-        let payload = match (self.payload_str, self.payload_b64) {
-            (None, None) => Payload::Empty,
-            (Some(string), None) => Payload::String(string),
-            (None, Some(base64)) => Payload::Base64(base64),
-            (Some(_), Some(_)) => {
+        let payload = match (self.payload_str, self.payload_b64, self.payload_hex) {
+            (None, None, None) => Payload::Empty,
+            (Some(string), None, None) => Payload::String(string),
+            (None, Some(base64), None) => {
+                Payload::Binary(BASE64_STANDARD.decode(base64).map_err(|_| {
+                    ParseError::InvalidPayload {
+                        probe_line: self.start_line,
+                    }
+                })?)
+            }
+            (None, None, Some(hex_string)) => {
+                Payload::Binary(hex::decode(hex_string).map_err(|_| {
+                    ParseError::InvalidPayload {
+                        probe_line: self.start_line,
+                    }
+                })?)
+            }
+            (_, _, _) => {
                 return Err(ParseError::ConflictingPayload {
                     probe_line: self.start_line,
                 })

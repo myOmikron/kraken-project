@@ -1,0 +1,6 @@
+service: dns
+prevalence: often
+probes:
+  - protocol: UDP
+    payload_hex: 0c0c10000000000000000000
+    regex: ^\x0c\x0c(?-u:[\x90\x92\x94\x96])(?-u:[\x00-\x0f\x80-\x8f])

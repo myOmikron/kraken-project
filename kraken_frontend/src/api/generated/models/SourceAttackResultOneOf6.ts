@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleDnsResolutionResult } from './SimpleDnsResolutionResult';
+import type { FullUdpServiceDetectionResult } from './FullUdpServiceDetectionResult';
 import {
-    SimpleDnsResolutionResultFromJSON,
-    SimpleDnsResolutionResultFromJSONTyped,
-    SimpleDnsResolutionResultToJSON,
-} from './SimpleDnsResolutionResult';
+    FullUdpServiceDetectionResultFromJSON,
+    FullUdpServiceDetectionResultFromJSONTyped,
+    FullUdpServiceDetectionResultToJSON,
+} from './FullUdpServiceDetectionResult';
 
 /**
  * 
@@ -33,11 +33,11 @@ export interface SourceAttackResultOneOf6 {
      */
     attackType: SourceAttackResultOneOf6AttackTypeEnum;
     /**
-     * The [`AttackType::DnsResolution`] and its results
-     * @type {Array<SimpleDnsResolutionResult>}
+     * The [`AttackType::UdpServiceDetection`] and its results
+     * @type {Array<FullUdpServiceDetectionResult>}
      * @memberof SourceAttackResultOneOf6
      */
-    results: Array<SimpleDnsResolutionResult>;
+    results: Array<FullUdpServiceDetectionResult>;
 }
 
 
@@ -45,7 +45,7 @@ export interface SourceAttackResultOneOf6 {
  * @export
  */
 export const SourceAttackResultOneOf6AttackTypeEnum = {
-    DnsResolution: 'DnsResolution'
+    UdpServiceDetection: 'UdpServiceDetection'
 } as const;
 export type SourceAttackResultOneOf6AttackTypeEnum = typeof SourceAttackResultOneOf6AttackTypeEnum[keyof typeof SourceAttackResultOneOf6AttackTypeEnum];
 
@@ -72,7 +72,7 @@ export function SourceAttackResultOneOf6FromJSONTyped(json: any, ignoreDiscrimin
     return {
         
         'attackType': json['attack_type'],
-        'results': ((json['results'] as Array<any>).map(SimpleDnsResolutionResultFromJSON)),
+        'results': ((json['results'] as Array<any>).map(FullUdpServiceDetectionResultFromJSON)),
     };
 }
 
@@ -86,7 +86,7 @@ export function SourceAttackResultOneOf6ToJSON(value?: SourceAttackResultOneOf6 
     return {
         
         'attack_type': value.attackType,
-        'results': ((value.results as Array<any>).map(SimpleDnsResolutionResultToJSON)),
+        'results': ((value.results as Array<any>).map(FullUdpServiceDetectionResultToJSON)),
     };
 }
 

@@ -9,7 +9,7 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::attacks::schema::{
     BruteforceSubdomainsRequest, DnsResolutionRequest, HostsAliveRequest, ListAttacks,
     QueryCertificateTransparencyRequest, QueryDehashedRequest, ScanTcpPortsRequest,
-    ServiceDetectionRequest, SimpleAttack,
+    ServiceDetectionRequest, SimpleAttack, UdpServiceDetectionRequest,
 };
 use crate::api::handler::common::error::{ApiError, ApiResult};
 use crate::api::handler::common::schema::{PathUuid, UuidResponse};
@@ -20,8 +20,9 @@ use crate::models::{Attack, User, UserPermission, WordList, Workspace, Workspace
 use crate::modules::attacks::{
     start_bruteforce_subdomains, start_certificate_transparency, start_dehashed_query,
     start_dns_resolution, start_host_alive, start_service_detection, start_tcp_port_scan,
-    BruteforceSubdomainsParams, CertificateTransparencyParams, DehashedQueryParams,
-    DnsResolutionParams, HostAliveParams, ServiceDetectionParams, TcpPortScanParams,
+    start_udp_service_detection, BruteforceSubdomainsParams, CertificateTransparencyParams,
+    DehashedQueryParams, DnsResolutionParams, HostAliveParams, ServiceDetectionParams,
+    TcpPortScanParams, UdpServiceDetectionParams,
 };
 
 /// Bruteforce subdomains through a DNS wordlist attack
@@ -325,6 +326,62 @@ pub async fn service_detection(
             target: address,
             port,
             timeout,
+        },
+    )
+    .await?;
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
+}
+
+/// Perform UDP service detection on an ip on a list of ports.
+///
+/// All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.
+///
+/// Set `max_retries` to 0 if you don't want to try a port more than 1 time.
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 202, description = "Attack scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = UdpServiceDetectionRequest,
+    security(("api_key" = []))
+)]
+#[post("/attacks/udpServiceDetection")]
+pub async fn udp_service_detection(
+    req: Json<UdpServiceDetectionRequest>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let UdpServiceDetectionRequest {
+        leech_uuid,
+        address,
+        ports,
+        retry_interval,
+        max_retries,
+        timeout,
+        concurrent_limit,
+        workspace_uuid,
+    } = req.into_inner();
+
+    let client = if let Some(leech_uuid) = leech_uuid {
+        GLOBAL.leeches.get_leech(&leech_uuid)?
+    } else {
+        GLOBAL.leeches.random_leech()?
+    };
+
+    let (attack_uuid, _) = start_udp_service_detection(
+        workspace_uuid,
+        user_uuid,
+        client,
+        UdpServiceDetectionParams {
+            target: address,
+            ports,
+            timeout,
+            concurrent_limit,
+            max_retries,
+            retry_interval,
         },
     )
     .await?;

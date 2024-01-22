@@ -13,31 +13,31 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleHost } from './SimpleHost';
+import type { SimpleDomain } from './SimpleDomain';
 import {
-    SimpleHostFromJSON,
-    SimpleHostFromJSONTyped,
-    SimpleHostToJSON,
-} from './SimpleHost';
+    SimpleDomainFromJSON,
+    SimpleDomainFromJSONTyped,
+    SimpleDomainToJSON,
+} from './SimpleDomain';
 
 /**
- * A new host was found
+ * A new domain was found
  * @export
  * @interface WsMessageOneOf13
  */
 export interface WsMessageOneOf13 {
     /**
-     * The workspace this host is related to
+     * The workspace this domain is related to
      * @type {string}
      * @memberof WsMessageOneOf13
      */
     workspace: string;
     /**
      * 
-     * @type {SimpleHost}
+     * @type {SimpleDomain}
      * @memberof WsMessageOneOf13
      */
-    host: SimpleHost;
+    domain: SimpleDomain;
     /**
      * 
      * @type {string}
@@ -51,7 +51,7 @@ export interface WsMessageOneOf13 {
  * @export
  */
 export const WsMessageOneOf13TypeEnum = {
-    NewHost: 'NewHost'
+    NewDomain: 'NewDomain'
 } as const;
 export type WsMessageOneOf13TypeEnum = typeof WsMessageOneOf13TypeEnum[keyof typeof WsMessageOneOf13TypeEnum];
 
@@ -62,7 +62,7 @@ export type WsMessageOneOf13TypeEnum = typeof WsMessageOneOf13TypeEnum[keyof typ
 export function instanceOfWsMessageOneOf13(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "workspace" in value;
-    isInstance = isInstance && "host" in value;
+    isInstance = isInstance && "domain" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -79,7 +79,7 @@ export function WsMessageOneOf13FromJSONTyped(json: any, ignoreDiscriminator: bo
     return {
         
         'workspace': json['workspace'],
-        'host': SimpleHostFromJSON(json['host']),
+        'domain': SimpleDomainFromJSON(json['domain']),
         'type': json['type'],
     };
 }
@@ -94,7 +94,7 @@ export function WsMessageOneOf13ToJSON(value?: WsMessageOneOf13 | null): any {
     return {
         
         'workspace': value.workspace,
-        'host': SimpleHostToJSON(value.host),
+        'domain': SimpleDomainToJSON(value.domain),
         'type': value.type,
     };
 }

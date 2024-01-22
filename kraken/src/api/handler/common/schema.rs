@@ -6,6 +6,7 @@ pub use utoipa_fix::{
     HostAliveResultsPage, HostResultsPage, Page, PortResultsPage,
     QueryCertificateTransparencyResultsPage, QueryUnhashedResultsPage, SearchResultPage,
     SearchesResultPage, ServiceDetectionResultsPage, ServiceResultsPage, TcpPortScanResultsPage,
+    UdpServiceDetectionResultsPage,
 };
 use uuid::Uuid;
 
@@ -44,8 +45,8 @@ mod utoipa_fix {
 
     use crate::api::handler::attack_results::schema::{
         FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
-        SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
-        SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+        FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
+        SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
     };
     use crate::api::handler::domains::schema::FullDomain;
     use crate::api::handler::hosts::schema::FullHost;
@@ -66,6 +67,7 @@ mod utoipa_fix {
         QueryUnhashedResultsPage = Page<SimpleQueryUnhashedResult>,
         HostAliveResultsPage = Page<SimpleHostAliveResult>,
         ServiceDetectionResultsPage = Page<FullServiceDetectionResult>,
+        UdpServiceDetectionResultsPage = Page<FullUdpServiceDetectionResult>,
         DnsResolutionResultsPage = Page<SimpleDnsResolutionResult>,
         SearchResultPage = Page<SearchResultEntry>,
         SearchesResultPage = Page<SearchEntry>,

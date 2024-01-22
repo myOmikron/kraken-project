@@ -16,6 +16,9 @@ mod generated {
 mod error;
 mod postgres;
 
+/// UDP service detection & port scanning.
+pub mod udp;
+
 use self::error::{Extended, ResultExt};
 
 type DynError = Box<dyn std::error::Error + Send + Sync + 'static>;
@@ -37,7 +40,7 @@ pub struct DetectServiceSettings {
 }
 
 /// The detected service or a list of possible candidates
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Service {
     /// The service is unknown
     Unknown,
@@ -231,11 +234,13 @@ impl DetectServiceSettings {
         sleep(self.timeout).await;
 
         // Read and Close
-        tls.shutdown().await.context("TlsStream::shutdown")?;
+        if let Err(err) = tls.shutdown().await {
+            debug!(target: "tls", "TLS shutdown failed: {err}");
+        }
         let mut data = Vec::new();
-        tls.read_to_end(&mut data)
-            .await
-            .context("TlsStream::read_to_end")?;
+        if let Err(err) = tls.read_to_end(&mut data).await {
+            debug!(target: "tls", "TLS read failed: {err}");
+        }
 
         // Log and Return
         trace!(target: "tls", "Received data: {:?}", DebuggableBytes(&data));

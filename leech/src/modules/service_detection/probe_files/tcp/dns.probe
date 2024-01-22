@@ -4,9 +4,9 @@ probes:
   - protocol: TCP
     # for complete message structure see: https://datatracker.ietf.org/doc/html/rfc1035#section-4.1.1
     # 2 bytes => message length
-    # 16 bit ID => 0
+    # 16 bit ID => ffff
     # 1 bit to specify query (0) or response(1)
     # 4 bit opcode => 0: standard, 1: inverse, 2: server status, 3-15: reserved
     payload_str: \0\x0C\xff\xff\x10\0\0\0\0\0\0\0\0\0
     # 2 byte length, ID must match request, opcode response + potential valid flags, response code + potential valid flags
-    regex: ^..(?-u:\xff\xff[\x90-\x97](?:[\x00-\x0f]|[\x80-\x8f]))
+    regex: ^..(?-u:\xff\xff[\x90\x92\x94\x96](?:[\x00-\x0f]|[\x80-\x8f]))

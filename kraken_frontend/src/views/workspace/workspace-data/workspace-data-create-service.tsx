@@ -1,5 +1,5 @@
 import React from "react";
-import { ManualServiceCertainty } from "../../../api/generated";
+import { ManualServiceCertainty, PortProtocol } from "../../../api/generated";
 import { Api } from "../../../api/api";
 import { handleApiError } from "../../../utils/helper";
 import { toast } from "react-toastify";
@@ -20,6 +20,7 @@ export function CreateServiceForm(props: CreateServiceFormProps) {
     const [name, setName] = React.useState("");
     const [ip, setIp] = React.useState("");
     const [port, setPort] = React.useState("");
+    const [protocol, setProtocol] = React.useState<PortProtocol | null>(null);
     const [certy, setCerty] = React.useState<ManualServiceCertainty>("SupposedTo");
     return (
         <form
@@ -38,13 +39,14 @@ export function CreateServiceForm(props: CreateServiceFormProps) {
                         name,
                         host: ip,
                         port: port.length === 0 ? undefined : Number(port),
+                        protocol: protocol === null ? undefined : protocol,
                         certainty: certy,
                     })
                     .then(
                         handleApiError(() => {
                             toast.success("Added service");
                             onSubmit();
-                        }),
+                        })
                     );
             }}
         >
@@ -60,6 +62,16 @@ export function CreateServiceForm(props: CreateServiceFormProps) {
             <label>
                 Port:
                 <Input value={port} onChange={setPort} />
+            </label>
+            <label>
+                Protocol:
+                <Select<{ value: PortProtocol | null; label: PortProtocol | null }>
+                    isClearable={true}
+                    styles={selectStyles("default")}
+                    options={Object.values(PortProtocol).map((value) => ({ value, label: value }))}
+                    value={{ value: protocol, label: protocol }}
+                    onChange={(v) => setProtocol(v == null ? v : v.value)}
+                />
             </label>
             <label>
                 Certainty:

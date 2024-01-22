@@ -177,6 +177,40 @@ pub enum RunCommand {
         #[clap(long)]
         dont_stop_on_match: bool,
     },
+    /// Detect the services running behind on a given address in the given port range
+    ServiceDetectionUdp {
+        /// The ip address to connect to
+        addr: IpAddr,
+
+        /// A single port, multiple, comma seperated ports or (inclusive) port ranges
+        ///
+        /// If no values are supplied, 1-65535 is used as default
+        #[clap(short = 'p')]
+        ports: Vec<String>,
+
+        /// The interval that should be waited for a response after connecting and sending an optional payload.
+        ///
+        /// The interval is specified in milliseconds.
+        #[clap(long)]
+        #[clap(default_value_t = 10000)]
+        timeout: u64,
+
+        /// The number of times how often to retry sending a UDP packet
+        #[clap(long)]
+        #[clap(default_value_t = 3)]
+        port_retries: u32,
+
+        /// The time between sending UDP packets if a response isn't being heard
+        /// back from in time.
+        #[clap(long)]
+        #[clap(default_value_t = 1000)]
+        retry_interval: u64,
+
+        /// The concurrent task limit
+        #[clap(long)]
+        #[clap(default_value_t = NonZeroU32::new(1000).unwrap())]
+        concurrent_limit: NonZeroU32,
+    },
 }
 
 /// All available subcommands
@@ -528,6 +562,46 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         })
                         .await;
                         println!("{result:?}");
+                    }
+                    RunCommand::ServiceDetectionUdp {
+                        addr,
+                        ports,
+                        timeout,
+                        port_retries,
+                        retry_interval,
+                        concurrent_limit,
+                    } => {
+                        let mut port_range = vec![];
+                        if ports.is_empty() {
+                            port_range.push(1..=u16::MAX);
+                        } else {
+                            utils::parse_ports(&ports, &mut port_range)?;
+                        }
+
+                        let (tx, mut rx) =
+                            mpsc::channel::<service_detection::udp::UdpServiceDetectionResult>(1);
+
+                        task::spawn(async move {
+                            while let Some(result) = rx.recv().await {
+                                info!("detected service on {}: {:?}", result.port, result.service);
+                            }
+                        });
+
+                        if let Err(err) = service_detection::udp::start_udp_service_detection(
+                            &service_detection::udp::UdpServiceDetectionSettings {
+                                ip: addr,
+                                ports: port_range,
+                                max_retries: port_retries,
+                                retry_interval: Duration::from_millis(retry_interval),
+                                timeout: Duration::from_millis(timeout),
+                                concurrent_limit: u32::from(concurrent_limit),
+                            },
+                            tx,
+                        )
+                        .await
+                        {
+                            error!("{err}");
+                        }
                     }
                 }
             }

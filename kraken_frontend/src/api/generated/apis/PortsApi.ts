@@ -51,6 +51,11 @@ export interface CreatePortOperationRequest {
     createPortRequest: CreatePortRequest;
 }
 
+export interface DeletePortRequest {
+    wUuid: string;
+    pUuid: string;
+}
+
 export interface GetAllPortsRequest {
     uuid: string;
     getAllPortsQuery: GetAllPortsQuery;
@@ -119,6 +124,41 @@ export class PortsApi extends runtime.BaseAPI {
     async createPort(requestParameters: CreatePortOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
         const response = await this.createPortRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Delete the port  This only deletes the aggregation. The raw results are still in place
+     * Delete the port
+     */
+    async deletePortRaw(requestParameters: DeletePortRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling deletePort.');
+        }
+
+        if (requestParameters.pUuid === null || requestParameters.pUuid === undefined) {
+            throw new runtime.RequiredError('pUuid','Required parameter requestParameters.pUuid was null or undefined when calling deletePort.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/ports/{p_uuid}`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"p_uuid"}}`, encodeURIComponent(String(requestParameters.pUuid))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Delete the port  This only deletes the aggregation. The raw results are still in place
+     * Delete the port
+     */
+    async deletePort(requestParameters: DeletePortRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deletePortRaw(requestParameters, initOverrides);
     }
 
     /**

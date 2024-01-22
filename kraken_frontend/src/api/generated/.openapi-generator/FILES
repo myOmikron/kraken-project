@@ -61,6 +61,7 @@ models/FullPort.ts
 models/FullQueryCertificateTransparencyResult.ts
 models/FullService.ts
 models/FullServiceDetectionResult.ts
+models/FullUdpServiceDetectionResult.ts
 models/FullUser.ts
 models/FullWordlist.ts
 models/FullWorkspace.ts
@@ -132,6 +133,7 @@ models/SearchEntry.ts
 models/SearchResultEntry.ts
 models/SearchResultEntryOneOf.ts
 models/SearchResultEntryOneOf1.ts
+models/SearchResultEntryOneOf10.ts
 models/SearchResultEntryOneOf2.ts
 models/SearchResultEntryOneOf3.ts
 models/SearchResultEntryOneOf4.ts
@@ -183,9 +185,12 @@ models/SourceAttackResultOneOf3.ts
 models/SourceAttackResultOneOf4.ts
 models/SourceAttackResultOneOf5.ts
 models/SourceAttackResultOneOf6.ts
+models/SourceAttackResultOneOf7.ts
 models/TagType.ts
 models/TcpPortScanResultsPage.ts
 models/TransferWorkspaceRequest.ts
+models/UdpServiceDetectionRequest.ts
+models/UdpServiceDetectionResultsPage.ts
 models/UpdateApiKeyRequest.ts
 models/UpdateAppRequest.ts
 models/UpdateDomainRequest.ts
@@ -213,7 +218,12 @@ models/WsMessageOneOf14.ts
 models/WsMessageOneOf15.ts
 models/WsMessageOneOf16.ts
 models/WsMessageOneOf17.ts
+models/WsMessageOneOf18.ts
+models/WsMessageOneOf19.ts
 models/WsMessageOneOf2.ts
+models/WsMessageOneOf20.ts
+models/WsMessageOneOf21.ts
+models/WsMessageOneOf22.ts
 models/WsMessageOneOf3.ts
 models/WsMessageOneOf4.ts
 models/WsMessageOneOf5.ts

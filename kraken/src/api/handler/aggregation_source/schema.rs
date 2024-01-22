@@ -5,8 +5,8 @@ use uuid::Uuid;
 
 use crate::api::handler::attack_results::schema::{
     FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
-    SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
-    SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+    FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
+    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
 };
 use crate::api::handler::users::schema::SimpleUser;
 use crate::models::{
@@ -28,6 +28,8 @@ pub struct SimpleAggregationSource {
     pub host_alive: usize,
     /// Detect the service that is running on a port
     pub service_detection: usize,
+    /// Detect UDP services on a host on given ports
+    pub udp_service_detection: usize,
     /// Resolve domain names
     pub dns_resolution: usize,
     /// Perform forced browsing
@@ -89,6 +91,8 @@ pub enum SourceAttackResult {
     HostAlive(Vec<SimpleHostAliveResult>),
     /// The [`AttackType::ServiceDetection`] and its results
     ServiceDetection(Vec<FullServiceDetectionResult>),
+    /// The [`AttackType::UdpServiceDetection`] and its results
+    UdpServiceDetection(Vec<FullUdpServiceDetectionResult>),
     /// The [`AttackType::DnsResolution`] and its results
     DnsResolution(Vec<SimpleDnsResolutionResult>),
 }
