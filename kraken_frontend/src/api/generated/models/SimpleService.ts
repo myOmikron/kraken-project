@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { ServiceCertainty } from './ServiceCertainty';
+import {
+    ServiceCertaintyFromJSON,
+    ServiceCertaintyFromJSONTyped,
+    ServiceCertaintyToJSON,
+} from './ServiceCertainty';
+
 /**
  * A simple representation of a service
  * @export
@@ -37,6 +44,12 @@ export interface SimpleService {
      * @memberof SimpleService
      */
     version?: string | null;
+    /**
+     * 
+     * @type {ServiceCertainty}
+     * @memberof SimpleService
+     */
+    certainty: ServiceCertainty;
     /**
      * The host this service is linked to
      * @type {string}
@@ -76,6 +89,7 @@ export function instanceOfSimpleService(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "name" in value;
+    isInstance = isInstance && "certainty" in value;
     isInstance = isInstance && "host" in value;
     isInstance = isInstance && "comment" in value;
     isInstance = isInstance && "workspace" in value;
@@ -97,6 +111,7 @@ export function SimpleServiceFromJSONTyped(json: any, ignoreDiscriminator: boole
         'uuid': json['uuid'],
         'name': json['name'],
         'version': !exists(json, 'version') ? undefined : json['version'],
+        'certainty': ServiceCertaintyFromJSON(json['certainty']),
         'host': json['host'],
         'port': !exists(json, 'port') ? undefined : json['port'],
         'comment': json['comment'],
@@ -117,6 +132,7 @@ export function SimpleServiceToJSON(value?: SimpleService | null): any {
         'uuid': value.uuid,
         'name': value.name,
         'version': value.version,
+        'certainty': ServiceCertaintyToJSON(value.certainty),
         'host': value.host,
         'port': value.port,
         'comment': value.comment,

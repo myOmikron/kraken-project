@@ -71,7 +71,8 @@ export const FullUdpServiceDetectionResultCertaintyEnum = {
     Historical: 'Historical',
     SupposedTo: 'SupposedTo',
     MaybeVerified: 'MaybeVerified',
-    DefinitelyVerified: 'DefinitelyVerified'
+    DefinitelyVerified: 'DefinitelyVerified',
+    UnknownService: 'UnknownService'
 } as const;
 export type FullUdpServiceDetectionResultCertaintyEnum = typeof FullUdpServiceDetectionResultCertaintyEnum[keyof typeof FullUdpServiceDetectionResultCertaintyEnum];
 

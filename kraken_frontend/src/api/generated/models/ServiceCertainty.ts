@@ -21,7 +21,8 @@ export const ServiceCertainty = {
     Historical: 'Historical',
     SupposedTo: 'SupposedTo',
     MaybeVerified: 'MaybeVerified',
-    DefinitelyVerified: 'DefinitelyVerified'
+    DefinitelyVerified: 'DefinitelyVerified',
+    UnknownService: 'UnknownService'
 } as const;
 export type ServiceCertainty = typeof ServiceCertainty[keyof typeof ServiceCertainty];
 

@@ -13,6 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { HostCertainty } from './HostCertainty';
+import {
+    HostCertaintyFromJSON,
+    HostCertaintyFromJSONTyped,
+    HostCertaintyToJSON,
+} from './HostCertainty';
 import type { OsType } from './OsType';
 import {
     OsTypeFromJSON,
@@ -57,6 +63,12 @@ export interface FullHost {
      */
     osType: OsType;
     /**
+     * Response time in ms
+     * @type {number}
+     * @memberof FullHost
+     */
+    responseTime?: number | null;
+    /**
      * A comment
      * @type {string}
      * @memberof FullHost
@@ -86,6 +98,12 @@ export interface FullHost {
      * @memberof FullHost
      */
     createdAt: Date;
+    /**
+     * 
+     * @type {HostCertainty}
+     * @memberof FullHost
+     */
+    certainty: HostCertainty;
 }
 
 /**
@@ -101,6 +119,7 @@ export function instanceOfFullHost(value: object): boolean {
     isInstance = isInstance && "tags" in value;
     isInstance = isInstance && "sources" in value;
     isInstance = isInstance && "createdAt" in value;
+    isInstance = isInstance && "certainty" in value;
 
     return isInstance;
 }
@@ -118,11 +137,13 @@ export function FullHostFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         'uuid': json['uuid'],
         'ipAddr': json['ip_addr'],
         'osType': OsTypeFromJSON(json['os_type']),
+        'responseTime': !exists(json, 'response_time') ? undefined : json['response_time'],
         'comment': json['comment'],
         'workspace': json['workspace'],
         'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
         'sources': SimpleAggregationSourceFromJSON(json['sources']),
         'createdAt': (new Date(json['created_at'])),
+        'certainty': HostCertaintyFromJSON(json['certainty']),
     };
 }
 
@@ -138,11 +159,13 @@ export function FullHostToJSON(value?: FullHost | null): any {
         'uuid': value.uuid,
         'ip_addr': value.ipAddr,
         'os_type': OsTypeToJSON(value.osType),
+        'response_time': value.responseTime,
         'comment': value.comment,
         'workspace': value.workspace,
         'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),
         'sources': SimpleAggregationSourceToJSON(value.sources),
         'created_at': (value.createdAt.toISOString()),
+        'certainty': HostCertaintyToJSON(value.certainty),
     };
 }
 

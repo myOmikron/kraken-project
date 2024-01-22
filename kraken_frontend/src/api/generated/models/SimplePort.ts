@@ -13,6 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { PortCertainty } from './PortCertainty';
+import {
+    PortCertaintyFromJSON,
+    PortCertaintyFromJSONTyped,
+    PortCertaintyToJSON,
+} from './PortCertainty';
 import type { PortProtocol } from './PortProtocol';
 import {
     PortProtocolFromJSON,
@@ -44,6 +50,12 @@ export interface SimplePort {
      * @memberof SimplePort
      */
     protocol: PortProtocol;
+    /**
+     * 
+     * @type {PortCertainty}
+     * @memberof SimplePort
+     */
+    certainty: PortCertainty;
     /**
      * The host this port is assigned to
      * @type {string}
@@ -78,6 +90,7 @@ export function instanceOfSimplePort(value: object): boolean {
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "port" in value;
     isInstance = isInstance && "protocol" in value;
+    isInstance = isInstance && "certainty" in value;
     isInstance = isInstance && "host" in value;
     isInstance = isInstance && "comment" in value;
     isInstance = isInstance && "workspace" in value;
@@ -99,6 +112,7 @@ export function SimplePortFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'uuid': json['uuid'],
         'port': json['port'],
         'protocol': PortProtocolFromJSON(json['protocol']),
+        'certainty': PortCertaintyFromJSON(json['certainty']),
         'host': json['host'],
         'comment': json['comment'],
         'workspace': json['workspace'],
@@ -118,6 +132,7 @@ export function SimplePortToJSON(value?: SimplePort | null): any {
         'uuid': value.uuid,
         'port': value.port,
         'protocol': PortProtocolToJSON(value.protocol),
+        'certainty': PortCertaintyToJSON(value.certainty),
         'host': value.host,
         'comment': value.comment,
         'workspace': value.workspace,

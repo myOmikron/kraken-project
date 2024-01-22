@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { DomainCertainty } from './DomainCertainty';
+import {
+    DomainCertaintyFromJSON,
+    DomainCertaintyFromJSONTyped,
+    DomainCertaintyToJSON,
+} from './DomainCertainty';
+
 /**
  * A simple representation of a domain in a workspace
  * @export
@@ -49,6 +56,12 @@ export interface SimpleDomain {
      * @memberof SimpleDomain
      */
     createdAt: Date;
+    /**
+     * 
+     * @type {DomainCertainty}
+     * @memberof SimpleDomain
+     */
+    certainty: DomainCertainty;
 }
 
 /**
@@ -61,6 +74,7 @@ export function instanceOfSimpleDomain(value: object): boolean {
     isInstance = isInstance && "comment" in value;
     isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "createdAt" in value;
+    isInstance = isInstance && "certainty" in value;
 
     return isInstance;
 }
@@ -80,6 +94,7 @@ export function SimpleDomainFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'comment': json['comment'],
         'workspace': json['workspace'],
         'createdAt': (new Date(json['created_at'])),
+        'certainty': DomainCertaintyFromJSON(json['certainty']),
     };
 }
 
@@ -97,6 +112,7 @@ export function SimpleDomainToJSON(value?: SimpleDomain | null): any {
         'comment': value.comment,
         'workspace': value.workspace,
         'created_at': (value.createdAt.toISOString()),
+        'certainty': DomainCertaintyToJSON(value.certainty),
     };
 }
 
