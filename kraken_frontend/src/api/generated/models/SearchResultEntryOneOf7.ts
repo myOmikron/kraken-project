@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { FullQueryCertificateTransparencyResult } from './FullQueryCertificateTransparencyResult';
+import type { SimpleQueryUnhashedResult } from './SimpleQueryUnhashedResult';
 import {
-    FullQueryCertificateTransparencyResultFromJSON,
-    FullQueryCertificateTransparencyResultFromJSONTyped,
-    FullQueryCertificateTransparencyResultToJSON,
-} from './FullQueryCertificateTransparencyResult';
+    SimpleQueryUnhashedResultFromJSON,
+    SimpleQueryUnhashedResultFromJSONTyped,
+    SimpleQueryUnhashedResultToJSON,
+} from './SimpleQueryUnhashedResult';
 
 /**
  * 
@@ -28,10 +28,10 @@ import {
 export interface SearchResultEntryOneOf7 {
     /**
      * 
-     * @type {FullQueryCertificateTransparencyResult}
+     * @type {SimpleQueryUnhashedResult}
      * @memberof SearchResultEntryOneOf7
      */
-    certificateTransparencyResultEntry: FullQueryCertificateTransparencyResult;
+    dehashedQueryResultEntry: SimpleQueryUnhashedResult;
 }
 
 /**
@@ -39,7 +39,7 @@ export interface SearchResultEntryOneOf7 {
  */
 export function instanceOfSearchResultEntryOneOf7(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "certificateTransparencyResultEntry" in value;
+    isInstance = isInstance && "dehashedQueryResultEntry" in value;
 
     return isInstance;
 }
@@ -54,7 +54,7 @@ export function SearchResultEntryOneOf7FromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'certificateTransparencyResultEntry': FullQueryCertificateTransparencyResultFromJSON(json['CertificateTransparencyResultEntry']),
+        'dehashedQueryResultEntry': SimpleQueryUnhashedResultFromJSON(json['DehashedQueryResultEntry']),
     };
 }
 
@@ -67,7 +67,7 @@ export function SearchResultEntryOneOf7ToJSON(value?: SearchResultEntryOneOf7 | 
     }
     return {
         
-        'CertificateTransparencyResultEntry': FullQueryCertificateTransparencyResultToJSON(value.certificateTransparencyResultEntry),
+        'DehashedQueryResultEntry': SimpleQueryUnhashedResultToJSON(value.dehashedQueryResultEntry),
     };
 }
 

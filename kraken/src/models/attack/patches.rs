@@ -5,8 +5,8 @@ use uuid::Uuid;
 
 use crate::models::{
     Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
-    DnsRecordResult, DnsRecordType, HostAliveResult, ServiceCertainty, ServiceDetectionResult,
-    TcpPortScanResult, UdpServiceDetectionResult,
+    DnsRecordResult, DnsRecordType, DnsTxtScanResult, DnsTxtScanType, HostAliveResult,
+    ServiceCertainty, ServiceDetectionResult, TcpPortScanResult, UdpServiceDetectionResult,
 };
 
 pub(crate) type BruteforceSubdomainsResultInsert = DnsRecordResultInsert;
@@ -21,6 +21,21 @@ pub(crate) struct DnsRecordResultInsert {
     pub(crate) destination: String,
     pub(crate) dns_record_type: DnsRecordType,
 }
+
+#[derive(Patch)]
+#[rorm(model = "DnsTxtScanResult")]
+pub(crate) struct DnsTxtScanResultInsert {
+    pub(crate) uuid: Uuid,
+    pub(crate) attack: ForeignModel<Attack>,
+    pub(crate) domain: String,
+    pub(crate) rule: String,
+    pub(crate) txt_type: DnsTxtScanType,
+    pub(crate) spf_ip: Option<IpNetwork>,
+    pub(crate) spf_domain: Option<String>,
+    pub(crate) spf_domain_ipv4_cidr: Option<i32>,
+    pub(crate) spf_domain_ipv6_cidr: Option<i32>,
+}
+
 #[derive(Patch)]
 #[rorm(model = "TcpPortScanResult")]
 pub(crate) struct TcpPortScanResultInsert {

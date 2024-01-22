@@ -15,14 +15,15 @@ use crate::api::handler::aggregation_source::schema::{
 use crate::api::handler::attack_results::schema::{
     FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
     FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
-    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+    SimpleDnsTxtScanResult, SimpleHostAliveResult, SimpleQueryUnhashedResult,
+    SimpleTcpPortScanResult,
 };
 use crate::api::handler::users::schema::SimpleUser;
 use crate::models::{
     AggregationSource, AggregationTable, Attack, AttackType, BruteforceSubdomainsResult,
     CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
-    DnsResolutionResult, HostAliveResult, ManualDomain, ManualHost, ManualPort, ManualService,
-    ServiceDetectionName, ServiceDetectionResult, SourceType, TcpPortScanResult,
+    DnsResolutionResult, DnsTxtScanResult, HostAliveResult, ManualDomain, ManualHost, ManualPort,
+    ManualService, ServiceDetectionName, ServiceDetectionResult, SourceType, TcpPortScanResult,
     UdpServiceDetectionName, UdpServiceDetectionResult,
 };
 
@@ -105,6 +106,7 @@ impl SimpleAggregationSource {
             SourceType::ServiceDetection => self.service_detection += 1,
             SourceType::UdpServiceDetection => self.udp_service_detection += 1,
             SourceType::DnsResolution => self.dns_resolution += 1,
+            SourceType::DnsTxtScan => self.dns_txt_scan += 1,
             SourceType::UdpPortScan => self.udp_port_scan += 1,
             SourceType::ForcedBrowsing => self.forced_browsing += 1,
             SourceType::OSDetection => self.os_detection += 1,
@@ -166,6 +168,7 @@ impl FullAggregationSource {
         let mut service_detection: Results<FullServiceDetectionResult> = Results::new();
         let mut udp_service_detection: Results<FullUdpServiceDetectionResult> = Results::new();
         let mut dns_resolution: Results<SimpleDnsResolutionResult> = Results::new();
+        let mut dns_txt_scan: Results<SimpleDnsTxtScanResult> = Results::new();
         let mut manual_insert = Vec::new();
         for (source_type, uuids) in sources {
             if uuids.is_empty() {
@@ -378,6 +381,27 @@ impl FullAggregationSource {
                             });
                     }
                 }
+                SourceType::DnsTxtScan => {
+                    let mut stream = query!(&mut *tx, DnsTxtScanResult)
+                        .condition(field_in(DnsTxtScanResult::F.uuid, uuids))
+                        .stream();
+                    while let Some(result) = stream.try_next().await? {
+                        dns_txt_scan.entry(*result.attack.key()).or_default().push(
+                            SimpleDnsTxtScanResult {
+                                uuid: result.uuid,
+                                attack: *result.attack.key(),
+                                domain: result.domain,
+                                rule: result.rule,
+                                txt_type: result.txt_type,
+                                spf_ip: result.spf_ip,
+                                spf_domain: result.spf_domain,
+                                spf_domain_ipv4_cidr: result.spf_domain_ipv4_cidr,
+                                spf_domain_ipv6_cidr: result.spf_domain_ipv6_cidr,
+                                created_at: result.created_at,
+                            },
+                        );
+                    }
+                }
                 SourceType::UdpPortScan
                 | SourceType::ForcedBrowsing
                 | SourceType::OSDetection
@@ -522,6 +546,7 @@ impl FullAggregationSource {
                     .chain(service_detection.keys())
                     .chain(udp_service_detection.keys())
                     .chain(dns_resolution.keys())
+                    .chain(dns_txt_scan.keys())
                     .copied(),
             ))
             .stream();
@@ -565,6 +590,9 @@ impl FullAggregationSource {
                     ),
                     AttackType::DnsResolution => SourceAttackResult::DnsResolution(
                         dns_resolution.remove(&uuid).unwrap_or_default(),
+                    ),
+                    AttackType::DnsTxtScan => SourceAttackResult::DnsTxtScan(
+                        dns_txt_scan.remove(&uuid).unwrap_or_default(),
                     ),
                     AttackType::UdpPortScan
                     | AttackType::ForcedBrowsing

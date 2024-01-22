@@ -13,8 +13,8 @@ use uuid::Uuid;
 use crate::api::extractors::SessionUser;
 use crate::api::handler::attack_results::schema::{
     FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
-    FullUdpServiceDetectionResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
-    SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+    FullUdpServiceDetectionResult, SimpleDnsResolutionResult, SimpleDnsTxtScanResult,
+    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
 };
 use crate::api::handler::common::error::{ApiError, ApiResult};
 use crate::api::handler::common::schema::{
@@ -38,10 +38,10 @@ use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::{
     Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
-    DnsResolutionResult, Domain, Host, HostAliveResult, ModelType, Port, Search, SearchInsert,
-    SearchResult, Service, ServiceDetectionName, ServiceDetectionResult, TcpPortScanResult,
-    UdpServiceDetectionName, UdpServiceDetectionResult, User, UserPermission, Workspace,
-    WorkspaceInvitation, WorkspaceMember,
+    DnsResolutionResult, DnsTxtScanResult, Domain, Host, HostAliveResult, ModelType, Port, Search,
+    SearchInsert, SearchResult, Service, ServiceDetectionName, ServiceDetectionResult,
+    TcpPortScanResult, UdpServiceDetectionName, UdpServiceDetectionResult, User, UserPermission,
+    Workspace, WorkspaceInvitation, WorkspaceMember,
 };
 
 /// Create a new workspace
@@ -797,6 +797,25 @@ pub async fn get_search_results(
                     source: data.source,
                     destination: data.destination,
                     dns_record_type: data.dns_record_type,
+                })
+            }
+            ModelType::DnsTxtScanResult => {
+                let data = query!(&mut tx, DnsTxtScanResult)
+                    .condition(DnsTxtScanResult::F.uuid.equals(item.ref_key))
+                    .one()
+                    .await?;
+
+                SearchResultEntry::DnsTxtScanResultEntry(SimpleDnsTxtScanResult {
+                    uuid: data.uuid,
+                    created_at: data.created_at,
+                    attack: *data.attack.key(),
+                    domain: data.domain,
+                    rule: data.rule,
+                    txt_type: data.txt_type,
+                    spf_ip: data.spf_ip,
+                    spf_domain: data.spf_domain,
+                    spf_domain_ipv4_cidr: data.spf_domain_ipv4_cidr,
+                    spf_domain_ipv6_cidr: data.spf_domain_ipv6_cidr,
                 })
             }
             ModelType::TcpPortScanResult => {

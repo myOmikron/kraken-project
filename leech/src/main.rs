@@ -44,6 +44,7 @@ use crate::modules::bruteforce_subdomains::{
     bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
 };
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
+use crate::modules::dns::txt::{start_dns_txt_scan, DnsTxtScanSettings};
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::modules::service_detection::DetectServiceSettings;
@@ -84,6 +85,11 @@ pub enum RunCommand {
         #[clap(long)]
         #[clap(default_value_t = NonZeroU32::new(100).unwrap())]
         concurrent_limit: NonZeroU32,
+    },
+    /// Parse known TXT DNS entries
+    DnsTxt {
+        /// Valid domain name
+        target: Name,
     },
     /// Retrieve domains through certificate transparency
     CertificateTransparency {
@@ -415,6 +421,32 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 }
                                 BruteforceSubdomainResult::Cname { source, target } => {
                                     info!("Found cname record for {source}: {target}");
+                                }
+                            };
+                        }
+
+                        join_handle.await??;
+                    }
+                    RunCommand::DnsTxt { target } => {
+                        let (tx, mut rx) = mpsc::channel(128);
+
+                        let join_handle = task::spawn(start_dns_txt_scan(
+                            DnsTxtScanSettings {
+                                domains: Vec::from([target.to_string()]),
+                            },
+                            tx,
+                        ));
+
+                        while let Some(res) = rx.recv().await {
+                            match res.info {
+                                modules::dns::txt::TxtScanInfo::SPF { parts } => {
+                                    info!("Found SPF entry for {}:", res.domain);
+                                    for part in parts {
+                                        info!("  {part}");
+                                    }
+                                }
+                                _ => {
+                                    info!("Found txt entry for {}: {}", res.domain, res.info);
                                 }
                             };
                         }

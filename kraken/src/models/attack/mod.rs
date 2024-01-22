@@ -40,6 +40,8 @@ pub enum AttackType {
     UdpServiceDetection,
     /// Resolve domain names
     DnsResolution,
+    /// Resolve domain names
+    DnsTxtScan,
     /// Scan udp ports
     UdpPortScan,
     /// Bruteforce your way through an http service
@@ -130,6 +132,110 @@ pub struct DnsRecordResult {
 
     /// The type of [DNS record type](DnsRecordType)
     pub dns_record_type: DnsRecordType,
+
+    /// The point in time, this result was produced
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
+}
+
+/// The type of DNS TXT scan result
+#[derive(Copy, Clone, Debug, DbEnum, Deserialize, Serialize, ToSchema)]
+pub enum DnsTxtScanType {
+    /// Domain owner might have or use a google account
+    HasGoogleAccount,
+    /// Domain owner might have or use a globalsign account
+    HasGlobalsignAccount,
+    /// Domain owner might have or use globalsign smime email service
+    HasGlobalsignSMime,
+    /// Domain owner might have or use a docusign account
+    HasDocusignAccount,
+    /// Domain owner might have or use a apple account
+    HasAppleAccount,
+    /// Domain owner might have or use a facebook account
+    HasFacebookAccount,
+    /// Domain owner might have or use a hubspot account
+    HasHubspotAccount,
+    /// Domain owner might have or use a microsoft account with MS Dyancmis 365
+    HasMSDynamics365,
+    /// Domain owner might have or use a stripe account
+    HasStripeAccount,
+    /// Domain owner might have or use a onetrust sso
+    HasOneTrustSso,
+    /// Domain owner might have or use a brevo account
+    HasBrevoAccount,
+    /// Can manage Atlassian accounts with emails with this domain
+    OwnsAtlassianAccounts,
+    /// Can manage Zoom accounts with emails with this domain
+    OwnsZoomAccounts,
+    /// E-Mail might be managed by ProtonMail
+    EmailProtonMail,
+    /// SPF part: 'all' directive, no other fields set.
+    SpfAll,
+    /// SPF part: 'include:DOMAIN' directive, sets `DnsTxtScanResult::spf_domain`.
+    /// Directive to tell SPF parsers to lookup the referenced DNS entry.
+    SpfInclude,
+    /// SPF part: 'a[:DOMAIN][/32][//128]' directive, sets `DnsTxtScanResult::spf_domain`.
+    /// Directive that allows the A/AAAA IPs under the specified domain to send mails.
+    SpfA,
+    /// SPF part: 'mx[:DOMAIN][/32][//128]' directive, sets `DnsTxtScanResult::spf_domain`.
+    /// Directive that allows the MX IP under the specified domain to send mails.
+    SpfMx,
+    /// SPF part: 'ptr[:DOMAIN]' directive, sets `DnsTxtScanResult::spf_domain`.
+    /// Deprecated, but may allow PTR IPs under the specified domain to send mails.
+    SpfPtr,
+    /// SPF part: 'ip4:IP' and 'ip6:IP' directive, sets `DnsTxtScanResult::spf_ip`.
+    /// Allows the exact given IPs or networks to send mails.
+    SpfIp,
+    /// SPF part: 'exists:DOMAIN', sets `DnsTxtScanResult::spf_domain`.
+    /// Only allows sending mails if the given DOMAIN resolves to any address.
+    SpfExists,
+    /// SPF modifier: 'redirect=DOMAIN', sets `DnsTxtScanResult::spf_domain`.
+    /// Query the given DOMAIN in case no match rules.
+    SpfRedirect,
+    /// SPF modifier: 'exp=DOMAIN', sets `DnsTxtScanResult::spf_domain`.
+    /// Query the given DOMAIN to see human readable text explaining the SPF rules.
+    SpfExplanation,
+    /// SPF modifier: 'KEY=VALUE'.
+    /// Syntax for future modifiers. Doesn't set domain or ip.
+    SpfModifier,
+}
+
+/// Representation of a [dns txt scan](AttackType::DnsTxtScan) attack's result
+#[derive(Model)]
+pub struct DnsTxtScanResult {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The [attack](Attack) which produced this result
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub attack: ForeignModel<Attack>,
+
+    /// The domain this was found on
+    #[rorm(max_length = 255)]
+    pub domain: String,
+
+    /// The TXT record part that was matched for this scan result
+    #[rorm(max_length = 255)]
+    pub rule: String,
+
+    /// The type of this result part.
+    pub txt_type: DnsTxtScanType,
+
+    /// Set when txt_type is SpfIp, designates allowed / disallowed IPs that may
+    /// send emails. None if this is not an SPF entry.
+    pub spf_ip: Option<IpNetwork>,
+
+    /// A domain to look up more rules in as referenced in the SPF part or that
+    /// may be allowed as sender. None if this is not an SPF entry.
+    #[rorm(max_length = 255)]
+    pub spf_domain: Option<String>,
+
+    /// For SPF domains, the IP prefix / subnet mask length how many of the
+    /// resolved IPs should match. (CIDR)
+    pub spf_domain_ipv4_cidr: Option<i32>,
+    /// ditto
+    pub spf_domain_ipv6_cidr: Option<i32>,
 
     /// The point in time, this result was produced
     #[rorm(auto_create_time)]

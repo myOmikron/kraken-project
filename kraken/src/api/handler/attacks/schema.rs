@@ -245,6 +245,22 @@ pub struct DnsResolutionRequest {
     pub workspace_uuid: Uuid,
 }
 
+/// Request to do DNS TXT scanning & parsing
+#[derive(Deserialize, ToSchema)]
+pub struct DnsTxtScanRequest {
+    /// The leech to use
+    ///
+    /// Leave empty to use a random leech
+    pub leech_uuid: Option<Uuid>,
+
+    /// The domains to resolve
+    #[schema(value_type = Vec<String>, example = json!(["example.com", "example.org"]))]
+    pub targets: Vec<String>,
+
+    /// The workspace to execute the attack in
+    pub workspace_uuid: Uuid,
+}
+
 /// A simple version of an attack
 #[derive(Clone, Serialize, Deserialize, ToSchema, Debug)]
 pub struct SimpleAttack {

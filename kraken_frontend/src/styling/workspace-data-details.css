@@ -67,7 +67,7 @@
 .workspace-data-details-pane-layout{
     display: grid;
     grid-template-columns: 1fr 1fr;
-    column-gap: 1em;
+    gap: 1em;
 }
 
 .workspace-data-details-table-elements{

@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use utoipa::{IntoParams, ToSchema};
 pub use utoipa_fix::{
-    BruteforceSubdomainsResultsPage, DnsResolutionResultsPage, DomainResultsPage,
-    HostAliveResultsPage, HostResultsPage, Page, PortResultsPage,
+    BruteforceSubdomainsResultsPage, DnsResolutionResultsPage, DnsTxtScanResultsPage,
+    DomainResultsPage, HostAliveResultsPage, HostResultsPage, Page, PortResultsPage,
     QueryCertificateTransparencyResultsPage, QueryUnhashedResultsPage, SearchResultPage,
     SearchesResultPage, ServiceDetectionResultsPage, ServiceResultsPage, TcpPortScanResultsPage,
     UdpServiceDetectionResultsPage,
@@ -46,7 +46,8 @@ mod utoipa_fix {
     use crate::api::handler::attack_results::schema::{
         FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
         FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
-        SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+        SimpleDnsTxtScanResult, SimpleHostAliveResult, SimpleQueryUnhashedResult,
+        SimpleTcpPortScanResult,
     };
     use crate::api::handler::domains::schema::FullDomain;
     use crate::api::handler::hosts::schema::FullHost;
@@ -69,6 +70,7 @@ mod utoipa_fix {
         ServiceDetectionResultsPage = Page<FullServiceDetectionResult>,
         UdpServiceDetectionResultsPage = Page<FullUdpServiceDetectionResult>,
         DnsResolutionResultsPage = Page<SimpleDnsResolutionResult>,
+        DnsTxtScanResultsPage = Page<SimpleDnsTxtScanResult>,
         SearchResultPage = Page<SearchResultEntry>,
         SearchesResultPage = Page<SearchEntry>,
     )]

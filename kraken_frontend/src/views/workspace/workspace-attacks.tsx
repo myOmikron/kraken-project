@@ -15,6 +15,7 @@ import { handleApiError } from "../../utils/helper";
 import CloseIcon from "../../svg/close";
 import { ROUTES } from "../../routes";
 import WorkspaceAttacksDnsResolution from "./attacks/workspace-attacks-dns-resolution";
+import WorkspaceAttacksDnsTxtScan from "./attacks/workspace-attacks-dns-txt-scan";
 
 export enum AttackCategory {
     Domains = "domains",
@@ -34,6 +35,7 @@ export enum AttackType {
     BruteforceSubdomains = "bruteforce_subdomains",
     TcpCon = "tcp_con",
     DnsResolution = "dns_resolution",
+    DnsTxtScan = "dns_txt_scan",
 }
 
 const ATTACKS: Record<
@@ -68,6 +70,12 @@ const ATTACKS: Record<
         description: "Query a DNS server to resolve a given domain",
         category: AttackCategory.Domains,
         form: WorkspaceAttacksDnsResolution,
+    },
+    dns_txt_scan: {
+        name: "DNS TXT Scan",
+        description: "Scans the given domain's DNS TXT entries for known patterns",
+        category: AttackCategory.Domains,
+        form: WorkspaceAttacksDnsTxtScan,
     },
     whois: {
         name: "Whois",
@@ -220,6 +228,7 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                 disabled.bruteforce_subdomains = true;
                 disabled.certificate_transparency = true;
                 disabled.dns_resolution = true;
+                disabled.dns_txt_scan = true;
             }
         }
 

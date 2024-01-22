@@ -523,6 +523,8 @@ pub enum SourceType {
     UdpServiceDetection,
     /// The [`DnsResolutionResult`] table
     DnsResolution,
+    /// The [`DnsTxtScanResult`] table
+    DnsTxtScan,
     /// The table for the not yet implemented [`AttackType::UdpPortScan`] results
     UdpPortScan,
     /// The table for the not yet implemented [`AttackType::ForcedBrowsing`] results

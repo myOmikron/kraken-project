@@ -5,7 +5,7 @@ use std::ops::RangeInclusive;
 use std::str::FromStr;
 
 use once_cell::sync::Lazy;
-use regex::Regex;
+use regex::{bytes, Regex};
 use thiserror::Error;
 use tokio::io::{self, stdin, AsyncBufReadExt, BufReader};
 use tonic::transport::{Certificate, ClientTlsConfig, Endpoint};
@@ -14,10 +14,15 @@ use crate::config::KrakenConfig;
 
 pub(crate) struct Regexes {
     pub(crate) ports: Regex,
+    pub(crate) spf_domain_spec: bytes::Regex,
 }
 
-static RE: Lazy<Regexes> = Lazy::new(|| Regexes {
+pub(crate) static RE: Lazy<Regexes> = Lazy::new(|| Regexes {
     ports: Regex::new(r"^(?P<range>\d*-\d*)$|^(?P<single>\d+)$|^$").unwrap(),
+    spf_domain_spec: bytes::Regex::new(
+        r"[\x21-\x7e]*(?:\.(?:\w*[^\W\d]\w*|\w+-[\w-]*\w)\.?|%[\x21-\x7e]+)",
+    )
+    .unwrap(),
 });
 
 /// Error while parsing ports

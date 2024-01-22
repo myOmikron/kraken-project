@@ -11,21 +11,23 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::attack_results::schema::{
     FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
     FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
-    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+    SimpleDnsTxtScanResult, SimpleHostAliveResult, SimpleQueryUnhashedResult,
+    SimpleTcpPortScanResult,
 };
 use crate::api::handler::common::error::{ApiError, ApiResult};
 use crate::api::handler::common::schema::{
-    BruteforceSubdomainsResultsPage, DnsResolutionResultsPage, HostAliveResultsPage, Page,
-    PageParams, PathUuid, QueryCertificateTransparencyResultsPage, QueryUnhashedResultsPage,
-    ServiceDetectionResultsPage, TcpPortScanResultsPage, UdpServiceDetectionResultsPage,
+    BruteforceSubdomainsResultsPage, DnsResolutionResultsPage, DnsTxtScanResultsPage,
+    HostAliveResultsPage, Page, PageParams, PathUuid, QueryCertificateTransparencyResultsPage,
+    QueryUnhashedResultsPage, ServiceDetectionResultsPage, TcpPortScanResultsPage,
+    UdpServiceDetectionResultsPage,
 };
 use crate::api::handler::common::utils::get_page_params;
 use crate::chan::global::GLOBAL;
 use crate::models::{
     Attack, BruteforceSubdomainsResult, CertificateTransparencyResult,
-    CertificateTransparencyValueName, DehashedQueryResult, DnsResolutionResult, HostAliveResult,
-    ServiceCertainty, ServiceDetectionName, ServiceDetectionResult, TcpPortScanResult,
-    UdpServiceDetectionName, UdpServiceDetectionResult,
+    CertificateTransparencyValueName, DehashedQueryResult, DnsResolutionResult, DnsTxtScanResult,
+    HostAliveResult, ServiceCertainty, ServiceDetectionName, ServiceDetectionResult,
+    TcpPortScanResult, UdpServiceDetectionName, UdpServiceDetectionResult,
 };
 
 /// Retrieve a bruteforce subdomains' results by the attack's id
@@ -489,7 +491,10 @@ pub async fn get_udp_service_detection_results(
     let mut names: HashMap<Uuid, Vec<String>> = HashMap::new();
     query!(
         &mut tx,
-        (UdpServiceDetectionName::F.result, UdpServiceDetectionName::F.name)
+        (
+            UdpServiceDetectionName::F.result,
+            UdpServiceDetectionName::F.name
+        )
     )
     .condition(UdpServiceDetectionName::F.result.attack.equals(attack_uuid))
     .stream()
@@ -604,6 +609,68 @@ pub async fn get_dns_resolution_results(
             source: x.source,
             destination: x.destination,
             dns_record_type: x.dns_record_type,
+            created_at: x.created_at,
+        })
+        .try_collect()
+        .await?;
+
+    tx.commit().await?;
+
+    Ok(Json(Page {
+        items,
+        limit,
+        offset,
+        total: total as u64,
+    }))
+}
+
+/// Retrieve a DNS TXT scan's results by the attack's id
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Returns attack's results", body = DnsTxtScanResultsPage),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid, PageParams),
+    security(("api_key" = []))
+)]
+#[get("/attacks/{uuid}/dnsTxtScanResults")]
+pub async fn get_dns_txt_scan_results(
+    path: Path<PathUuid>,
+    page_params: Query<PageParams>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<Json<DnsTxtScanResultsPage>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    let attack_uuid = path.uuid;
+    let (limit, offset) = get_page_params(page_params.0).await?;
+
+    if !Attack::has_access(&mut tx, attack_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    let (total,) = query!(&mut tx, (DnsTxtScanResult::F.uuid.count(),))
+        .condition(DnsTxtScanResult::F.attack.equals(attack_uuid))
+        .one()
+        .await?;
+
+    let items = query!(&mut tx, DnsTxtScanResult)
+        .condition(DnsTxtScanResult::F.attack.equals(attack_uuid))
+        .limit(limit)
+        .offset(offset)
+        .stream()
+        .map_ok(|x| SimpleDnsTxtScanResult {
+            uuid: x.uuid,
+            attack: *x.attack.key(),
+            domain: x.domain,
+            rule: x.rule,
+            txt_type: x.txt_type,
+            spf_ip: x.spf_ip,
+            spf_domain: x.spf_domain,
+            spf_domain_ipv4_cidr: x.spf_domain_ipv4_cidr,
+            spf_domain_ipv6_cidr: x.spf_domain_ipv6_cidr,
             created_at: x.created_at,
         })
         .try_collect()
