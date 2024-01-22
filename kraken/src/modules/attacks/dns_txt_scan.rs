@@ -5,11 +5,13 @@ use rorm::insert;
 use rorm::prelude::*;
 use uuid::Uuid;
 
+use crate::api::handler::attack_results::schema::SimpleDnsTxtScanResult;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
+use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::{
     AggregationSource, AggregationTable, DnsTxtScanResultInsert, DnsTxtScanType, DomainCertainty,
-    HostCertainty, SourceType,
+    DomainHostRelation, HostCertainty, SourceType,
 };
 use crate::modules::attacks::{AttackContext, AttackError, DnsTxtScanParams, HandleAttackResponse};
 
@@ -31,10 +33,6 @@ impl AttackContext {
 
 impl HandleAttackResponse<DnsTxtScanResponse> for AttackContext {
     async fn handle_response(&self, response: DnsTxtScanResponse) -> Result<(), AttackError> {
-        // TODO: websocket synchronization (need to somehow extract what
-        // store_dns_txt_scan_result has generated, since a single
-        // response is split up into multiple data rows)
-
         let DnsTxtScanResponse {
             record: Some(entry),
         } = response
@@ -49,11 +47,25 @@ impl HandleAttackResponse<DnsTxtScanResponse> for AttackContext {
             return Ok(());
         };
 
+        let mut ws_entries = Vec::new();
+
         for row in rows {
-            let result_uuid = insert!(&mut tx, DnsTxtScanResultInsert)
-                .return_primary_key()
+            let result = insert!(&mut tx, DnsTxtScanResultInsert)
                 .single(&row)
                 .await?;
+
+            ws_entries.push(SimpleDnsTxtScanResult {
+                uuid: result.uuid,
+                attack: self.attack_uuid,
+                txt_type: result.txt_type,
+                domain: result.domain.clone(),
+                rule: result.rule.clone(),
+                spf_domain: result.spf_domain.clone(),
+                spf_ip: result.spf_ip.clone(),
+                spf_domain_ipv6_cidr: result.spf_domain_ipv6_cidr,
+                spf_domain_ipv4_cidr: result.spf_domain_ipv4_cidr,
+                created_at: result.created_at,
+            });
 
             let (store_domain, store_ip) = match row.txt_type {
                 // TODO: store these as service? should be a service or some kind of
@@ -84,7 +96,7 @@ impl HandleAttackResponse<DnsTxtScanResponse> for AttackContext {
                             uuid: Uuid::new_v4(),
                             workspace: ForeignModelByField::Key(self.workspace.uuid),
                             source_type: SourceType::DnsTxtScan,
-                            source_uuid: result_uuid,
+                            source_uuid: result.uuid,
                             aggregated_table: AggregationTable::Host,
                             aggregated_uuid: host_uuid,
                         })
@@ -111,7 +123,7 @@ impl HandleAttackResponse<DnsTxtScanResponse> for AttackContext {
                             uuid: Uuid::new_v4(),
                             workspace: ForeignModelByField::Key(self.workspace.uuid),
                             source_type: SourceType::DnsTxtScan,
-                            source_uuid: result_uuid,
+                            source_uuid: result.uuid,
                             aggregated_table: AggregationTable::Domain,
                             aggregated_uuid: domain_uuid,
                         })
@@ -121,6 +133,12 @@ impl HandleAttackResponse<DnsTxtScanResponse> for AttackContext {
         }
 
         tx.commit().await?;
+
+        self.send_ws(WsMessage::DnsTxtScanResult {
+            attack_uuid: self.attack_uuid,
+            entries: ws_entries,
+        })
+        .await;
 
         Ok(())
     }
@@ -165,9 +183,9 @@ fn generate_dns_txt_rows(
             .filter_map(|(spf_rule, part)| {
                 // checked above in `filter`
                 #[allow(clippy::unwrap_used)]
-                let part_unwrapped = part.unwrap();
+                let part = part.unwrap();
                 let (txt_type, spf_ip, spf_domain, spf_domain_ipv4_cidr, spf_domain_ipv6_cidr) =
-                    match part_unwrapped {
+                    match part {
                         spf_part::Part::Directive(directive) => {
                             match directive.mechanism.as_ref()? {
                                 spf_directive::Mechanism::All(_all) => {
