@@ -207,6 +207,7 @@ export * from './WsMessageOneOf2';
 export * from './WsMessageOneOf20';
 export * from './WsMessageOneOf21';
 export * from './WsMessageOneOf22';
+export * from './WsMessageOneOf23';
 export * from './WsMessageOneOf3';
 export * from './WsMessageOneOf4';
 export * from './WsMessageOneOf5';

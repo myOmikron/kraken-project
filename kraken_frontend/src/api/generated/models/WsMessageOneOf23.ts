@@ -21,57 +21,57 @@ import {
 } from './AggregationType';
 
 /**
- * Global tags were updated on an aggregation
+ * Workspace tags were updated on an aggregation
  * @export
- * @interface WsMessageOneOf22
+ * @interface WsMessageOneOf23
  */
-export interface WsMessageOneOf22 {
+export interface WsMessageOneOf23 {
     /**
      * The workspace the aggregation is related to
      * @type {string}
-     * @memberof WsMessageOneOf22
+     * @memberof WsMessageOneOf23
      */
     workspace: string;
     /**
      * 
      * @type {AggregationType}
-     * @memberof WsMessageOneOf22
+     * @memberof WsMessageOneOf23
      */
     aggregation: AggregationType;
     /**
      * The uuid of the model
      * @type {string}
-     * @memberof WsMessageOneOf22
+     * @memberof WsMessageOneOf23
      */
     uuid: string;
     /**
      * The updated list of tags
      * @type {Array<string>}
-     * @memberof WsMessageOneOf22
+     * @memberof WsMessageOneOf23
      */
     tags: Array<string>;
     /**
      * 
      * @type {string}
-     * @memberof WsMessageOneOf22
+     * @memberof WsMessageOneOf23
      */
-    type: WsMessageOneOf22TypeEnum;
+    type: WsMessageOneOf23TypeEnum;
 }
 
 
 /**
  * @export
  */
-export const WsMessageOneOf22TypeEnum = {
-    UpdatedGlobalTags: 'UpdatedGlobalTags'
+export const WsMessageOneOf23TypeEnum = {
+    UpdatedWorkspaceTags: 'UpdatedWorkspaceTags'
 } as const;
-export type WsMessageOneOf22TypeEnum = typeof WsMessageOneOf22TypeEnum[keyof typeof WsMessageOneOf22TypeEnum];
+export type WsMessageOneOf23TypeEnum = typeof WsMessageOneOf23TypeEnum[keyof typeof WsMessageOneOf23TypeEnum];
 
 
 /**
- * Check if a given object implements the WsMessageOneOf22 interface.
+ * Check if a given object implements the WsMessageOneOf23 interface.
  */
-export function instanceOfWsMessageOneOf22(value: object): boolean {
+export function instanceOfWsMessageOneOf23(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "aggregation" in value;
@@ -82,11 +82,11 @@ export function instanceOfWsMessageOneOf22(value: object): boolean {
     return isInstance;
 }
 
-export function WsMessageOneOf22FromJSON(json: any): WsMessageOneOf22 {
-    return WsMessageOneOf22FromJSONTyped(json, false);
+export function WsMessageOneOf23FromJSON(json: any): WsMessageOneOf23 {
+    return WsMessageOneOf23FromJSONTyped(json, false);
 }
 
-export function WsMessageOneOf22FromJSONTyped(json: any, ignoreDiscriminator: boolean): WsMessageOneOf22 {
+export function WsMessageOneOf23FromJSONTyped(json: any, ignoreDiscriminator: boolean): WsMessageOneOf23 {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -100,7 +100,7 @@ export function WsMessageOneOf22FromJSONTyped(json: any, ignoreDiscriminator: bo
     };
 }
 
-export function WsMessageOneOf22ToJSON(value?: WsMessageOneOf22 | null): any {
+export function WsMessageOneOf23ToJSON(value?: WsMessageOneOf23 | null): any {
     if (value === undefined) {
         return undefined;
     }

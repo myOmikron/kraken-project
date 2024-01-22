@@ -13,31 +13,31 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleService } from './SimpleService';
+import type { SimplePort } from './SimplePort';
 import {
-    SimpleServiceFromJSON,
-    SimpleServiceFromJSONTyped,
-    SimpleServiceToJSON,
-} from './SimpleService';
+    SimplePortFromJSON,
+    SimplePortFromJSONTyped,
+    SimplePortToJSON,
+} from './SimplePort';
 
 /**
- * A new service was found
+ * A new port was found
  * @export
  * @interface WsMessageOneOf16
  */
 export interface WsMessageOneOf16 {
     /**
-     * The workspace this service is related to
+     * The workspace this port is related to
      * @type {string}
      * @memberof WsMessageOneOf16
      */
     workspace: string;
     /**
      * 
-     * @type {SimpleService}
+     * @type {SimplePort}
      * @memberof WsMessageOneOf16
      */
-    service: SimpleService;
+    port: SimplePort;
     /**
      * 
      * @type {string}
@@ -51,7 +51,7 @@ export interface WsMessageOneOf16 {
  * @export
  */
 export const WsMessageOneOf16TypeEnum = {
-    NewService: 'NewService'
+    NewPort: 'NewPort'
 } as const;
 export type WsMessageOneOf16TypeEnum = typeof WsMessageOneOf16TypeEnum[keyof typeof WsMessageOneOf16TypeEnum];
 
@@ -62,7 +62,7 @@ export type WsMessageOneOf16TypeEnum = typeof WsMessageOneOf16TypeEnum[keyof typ
 export function instanceOfWsMessageOneOf16(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "workspace" in value;
-    isInstance = isInstance && "service" in value;
+    isInstance = isInstance && "port" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -79,7 +79,7 @@ export function WsMessageOneOf16FromJSONTyped(json: any, ignoreDiscriminator: bo
     return {
         
         'workspace': json['workspace'],
-        'service': SimpleServiceFromJSON(json['service']),
+        'port': SimplePortFromJSON(json['port']),
         'type': json['type'],
     };
 }
@@ -94,7 +94,7 @@ export function WsMessageOneOf16ToJSON(value?: WsMessageOneOf16 | null): any {
     return {
         
         'workspace': value.workspace,
-        'service': SimpleServiceToJSON(value.service),
+        'port': SimplePortToJSON(value.port),
         'type': value.type,
     };
 }

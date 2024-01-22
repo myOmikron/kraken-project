@@ -229,6 +229,7 @@ models/WsMessageOneOf2.ts
 models/WsMessageOneOf20.ts
 models/WsMessageOneOf21.ts
 models/WsMessageOneOf22.ts
+models/WsMessageOneOf23.ts
 models/WsMessageOneOf3.ts
 models/WsMessageOneOf4.ts
 models/WsMessageOneOf5.ts
