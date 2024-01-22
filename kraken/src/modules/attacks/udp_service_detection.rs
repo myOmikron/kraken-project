@@ -56,10 +56,11 @@ impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
         let host = IpNetwork::from(address);
 
         let certainty = match certainty {
+            0 => ServiceCertainty::UnknownService,
             1 => ServiceCertainty::MaybeVerified,
             2 => ServiceCertainty::DefinitelyVerified,
             _ => {
-                return Err(AttackError::Custom("Retrieved certainty Unknown".into()));
+                return Err(AttackError::Custom("Received unknown certainty".into()));
             }
         };
 
@@ -83,14 +84,17 @@ impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
                 port: port as i32,
             })
             .await?;
-        insert!(&mut tx, UdpServiceDetectionName)
-            .return_nothing()
-            .bulk(services.iter().map(|x| UdpServiceDetectionName {
-                uuid: Uuid::new_v4(),
-                name: x.to_string(),
-                result: ForeignModelByField::Key(result_uuid),
-            }))
-            .await?;
+
+        if !services.is_empty() {
+            insert!(&mut tx, UdpServiceDetectionName)
+                .return_nothing()
+                .bulk(services.iter().map(|x| UdpServiceDetectionName {
+                    uuid: Uuid::new_v4(),
+                    name: x.to_string(),
+                    result: ForeignModelByField::Key(result_uuid),
+                }))
+                .await?;
+        }
 
         let host_uuid = GLOBAL
             .aggregator
