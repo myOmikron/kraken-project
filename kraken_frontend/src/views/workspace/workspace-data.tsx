@@ -28,7 +28,7 @@ import { ApiError } from "../../api/error";
 import { Result } from "../../utils/result";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
-const DETAILS_TAB = { general: "General", results: "Results", results2: "Results2", relations: "Relations" };
+const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations" };
 type SelectedUuids = { [Key in keyof typeof TABS]: Record<string, true> };
 
 type WorkspaceDataProps = {};
