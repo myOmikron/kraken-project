@@ -8,7 +8,7 @@ use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
 use crate::api::handler::common::schema::{PageParams, SimpleTag};
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::services::schema::SimpleService;
-use crate::models::{ManualPortCertainty, PortProtocol};
+use crate::models::{ManualPortCertainty, PortCertainty, PortProtocol};
 
 /// The request to manually add a port
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -67,6 +67,8 @@ pub struct SimplePort {
     pub port: u16,
     /// Port protocol
     pub protocol: PortProtocol,
+    /// The certainty of this port
+    pub certainty: PortCertainty,
     /// The host this port is assigned to
     pub host: Uuid,
     /// A comment to the port

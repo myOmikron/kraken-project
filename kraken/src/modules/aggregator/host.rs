@@ -74,6 +74,8 @@ async fn aggregate(data: HostAggregationData) -> Result<Uuid, rorm::Error> {
                         uuid: host.uuid,
                         ip_addr: host.ip_addr.ip().to_string(),
                         os_type: host.os_type,
+                        response_time: host.response_time,
+                        certainty: host.certainty,
                         comment: host.comment,
                         workspace: *host.workspace.key(),
                         created_at: host.created_at,

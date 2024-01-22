@@ -726,6 +726,8 @@ pub async fn get_search_results(
                     workspace: *data.workspace.key(),
                     comment: data.comment,
                     os_type: data.os_type,
+                    response_time: data.response_time,
+                    certainty: data.certainty,
                     ip_addr: data.ip_addr.to_string(),
                     created_at: data.created_at,
                 })
@@ -743,6 +745,7 @@ pub async fn get_search_results(
                     name: data.name,
                     version: data.version,
                     host: *data.host.key(),
+                    certainty: data.certainty,
                     comment: data.comment,
                     workspace: *data.workspace.key(),
                     created_at: data.created_at,
@@ -760,6 +763,7 @@ pub async fn get_search_results(
                     comment: data.comment,
                     workspace: *data.workspace.key(),
                     port: data.port as u16,
+                    certainty: data.certainty,
                     created_at: data.created_at,
                     host: *data.host.key(),
                     protocol: data.protocol,
@@ -777,6 +781,7 @@ pub async fn get_search_results(
                     workspace: *data.workspace.key(),
                     created_at: data.created_at,
                     domain: data.domain,
+                    certainty: data.certainty,
                 })
             }
             ModelType::DnsRecordResult => {

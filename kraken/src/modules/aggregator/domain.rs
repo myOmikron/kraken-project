@@ -89,6 +89,7 @@ async fn aggregate(
                     domain: SimpleDomain {
                         uuid: domain.uuid,
                         domain: domain.domain,
+                        certainty: domain.certainty,
                         comment: domain.comment,
                         workspace: *domain.workspace.key(),
                         created_at: domain.created_at,

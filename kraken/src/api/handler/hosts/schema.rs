@@ -9,7 +9,7 @@ use crate::api::handler::common::schema::{PageParams, SimpleTag};
 use crate::api::handler::domains::schema::SimpleDomain;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
-use crate::models::{ManualHostCertainty, OsType};
+use crate::models::{HostCertainty, ManualHostCertainty, OsType};
 
 /// The request to manually add a host
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -57,12 +57,16 @@ pub struct SimpleHost {
     pub ip_addr: String,
     /// The type of OS
     pub os_type: OsType,
+    /// Response time in ms
+    pub response_time: Option<i32>,
     /// A comment
     pub comment: String,
     /// The workspace this host is in
     pub workspace: Uuid,
     /// The point in time, the record was created
     pub created_at: DateTime<Utc>,
+    /// The certainty of this host
+    pub certainty: HostCertainty,
 }
 
 /// The full representation of a host
@@ -75,6 +79,8 @@ pub struct FullHost {
     pub ip_addr: String,
     /// The type of OS
     pub os_type: OsType,
+    /// Response time in ms
+    pub response_time: Option<i32>,
     /// A comment
     pub comment: String,
     /// The workspace this host is in
@@ -85,6 +91,8 @@ pub struct FullHost {
     pub sources: SimpleAggregationSource,
     /// The point in time, the record was created
     pub created_at: DateTime<Utc>,
+    /// The certainty of this host
+    pub certainty: HostCertainty,
 }
 
 /// The path parameter of a host

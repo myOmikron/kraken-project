@@ -72,6 +72,8 @@ pub struct SimpleService {
     /// The version of the service
     #[schema(example = "13.0.1")]
     pub version: Option<String>,
+    /// The certainty the service is detected correct
+    pub certainty: ServiceCertainty,
     /// The host this service is linked to
     pub host: Uuid,
     /// The port this service may linked to
