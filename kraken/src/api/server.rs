@@ -2,6 +2,7 @@
 
 use std::io;
 
+use actix_toolbox::tb_middleware::actix_session::config::TtlExtensionPolicy;
 use actix_toolbox::tb_middleware::{
     setup_logging_mw, DBSessionStore, LoggingMiddlewareConfig, PersistentSession, SessionMiddleware,
 };
@@ -65,10 +66,13 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
             .wrap(setup_logging_mw(LoggingMiddlewareConfig::default()))
             .wrap(
                 SessionMiddleware::builder(DBSessionStore::new(GLOBAL.db.clone()), key.clone())
-                    .session_lifecycle(PersistentSession::session_ttl(
-                        PersistentSession::default(),
-                        Duration::hours(1),
-                    ))
+                    .session_lifecycle(
+                        PersistentSession::session_ttl(
+                            PersistentSession::default(),
+                            Duration::hours(1),
+                        )
+                        .session_ttl_extension_policy(TtlExtensionPolicy::OnEveryRequest),
+                    )
                     .build(),
             )
             .wrap(Compress::default())
@@ -162,6 +166,7 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(attacks::handler::hosts_alive_check)
                     .service(attacks::handler::query_dehashed)
                     .service(attacks::handler::service_detection)
+                    .service(attacks::handler::udp_service_detection)
                     .service(attacks::handler::dns_resolution)
                     .service(attacks::handler::testssl)
                     .service(attack_results::handler::get_bruteforce_subdomains_results)
@@ -170,6 +175,7 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(attack_results::handler::get_query_unhashed_results)
                     .service(attack_results::handler::get_host_alive_results)
                     .service(attack_results::handler::get_service_detection_results)
+                    .service(attack_results::handler::get_udp_service_detection_results)
                     .service(attack_results::handler::get_dns_resolution_results)
                     .service(attack_results::handler::get_testssl_results)
                     .service(api_keys::handler::create_api_key)
@@ -185,24 +191,28 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(hosts::handler::get_host)
                     .service(hosts::handler::create_host)
                     .service(hosts::handler::update_host)
+                    .service(hosts::handler::delete_host)
                     .service(hosts::handler::get_host_sources)
                     .service(hosts::handler::get_host_relations)
                     .service(ports::handler::get_all_ports)
                     .service(ports::handler::get_port)
                     .service(ports::handler::create_port)
                     .service(ports::handler::update_port)
+                    .service(ports::handler::delete_port)
                     .service(ports::handler::get_port_sources)
                     .service(ports::handler::get_port_relations)
                     .service(services::handler::get_all_services)
                     .service(services::handler::get_service)
                     .service(services::handler::create_service)
                     .service(services::handler::update_service)
+                    .service(services::handler::delete_service)
                     .service(services::handler::get_service_sources)
                     .service(services::handler::get_service_relations)
                     .service(domains::handler::get_all_domains)
                     .service(domains::handler::get_domain)
                     .service(domains::handler::create_domain)
                     .service(domains::handler::update_domain)
+                    .service(domains::handler::delete_domain)
                     .service(domains::handler::get_domain_sources)
                     .service(domains::handler::get_domain_relations)
                     .service(wordlists::handler::get_all_wordlists)

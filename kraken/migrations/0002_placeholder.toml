@@ -1,72 +1,394 @@
 [Migration]
-Hash = "14978321572218628097"
+Hash = "13536009500417516455"
 Initial = false
 Dependency = 1
 Replaces = []
 
 [[Migration.Operations]]
-Type = "CreateField"
-Model = "testsslresult"
+Type = "CreateModel"
+Name = "testsslresultheader"
 
-[Migration.Operations.Field]
+[[Migration.Operations.Fields]]
+Name = "uuid"
+Type = "uuid"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "primary_key"
+
+[[Migration.Operations.Fields]]
+Name = "created_at"
+Type = "datetime"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "auto_create_time"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations.Fields]]
 Name = "target_host"
 Type = "varchar"
 
-[[Migration.Operations.Field.Annotations]]
+[[Migration.Operations.Fields.Annotations]]
 Type = "max_length"
 Value = 255
 
-[[Migration.Operations.Field.Annotations]]
+[[Migration.Operations.Fields.Annotations]]
 Type = "not_null"
 
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "testsslresult"
-
-[Migration.Operations.Field]
+[[Migration.Operations.Fields]]
 Name = "ip"
 Type = "ipnetwork"
 
-[[Migration.Operations.Field.Annotations]]
+[[Migration.Operations.Fields.Annotations]]
 Type = "not_null"
 
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "testsslresult"
-
-[Migration.Operations.Field]
+[[Migration.Operations.Fields]]
 Name = "port"
 Type = "int32"
 
-[[Migration.Operations.Field.Annotations]]
+[[Migration.Operations.Fields.Annotations]]
 Type = "not_null"
 
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "testsslresult"
-
-[Migration.Operations.Field]
+[[Migration.Operations.Fields]]
 Name = "rdns"
 Type = "varchar"
 
-[[Migration.Operations.Field.Annotations]]
+[[Migration.Operations.Fields.Annotations]]
 Type = "max_length"
 Value = 255
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations.Fields]]
+Name = "service"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateModel"
+Name = "testsslresultfinding"
+
+[[Migration.Operations.Fields]]
+Name = "uuid"
+Type = "uuid"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "primary_key"
+
+[[Migration.Operations.Fields]]
+Name = "created_at"
+Type = "datetime"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "auto_create_time"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations.Fields]]
+Name = "section"
+Type = "choices"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "choices"
+Value = [
+    "Pretest",
+    "Protocols",
+    "Grease",
+    "Ciphers",
+    "Pfs",
+    "ServerPreferences",
+    "ServerDefaults",
+    "HeaderResponse",
+    "Vulnerabilities",
+    "CipherTests",
+    "BrowserSimulations",
+]
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations.Fields]]
+Name = "key"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations.Fields]]
+Name = "value"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 1024
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations.Fields]]
+Name = "testssl_severity"
+Type = "choices"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "choices"
+Value = [
+    "Debug",
+    "Info",
+    "Warn",
+    "Fatal",
+    "Ok",
+    "Low",
+    "Medium",
+    "High",
+    "Critical",
+]
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations.Fields]]
+Name = "cve"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Fields]]
+Name = "cwe"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Fields]]
+Name = "mitre"
+Type = "varchar"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Fields]]
+Name = "severity"
+Type = "choices"
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "choices"
+Value = [
+    "None",
+    "Low",
+    "Medium",
+    "High",
+    "Critical",
+]
+
+[[Migration.Operations.Fields.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "testsslresultheader"
+
+[Migration.Operations.Field]
+Name = "attack"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "attack"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "testsslresult"
+Model = "testsslresultfinding"
 
 [Migration.Operations.Field]
-Name = "service"
-Type = "varchar"
+Name = "attack"
+Type = "uuid"
 
 [[Migration.Operations.Field.Annotations]]
-Type = "max_length"
-Value = 255
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "attack"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "DeleteField"
+Model = "servicedetectionresult"
+Name = "certainty"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "servicedetectionresult"
+
+[Migration.Operations.Field]
+Name = "certainty"
+Type = "choices"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "choices"
+Value = [
+    "Historical",
+    "SupposedTo",
+    "MaybeVerified",
+    "DefinitelyVerified",
+    "UnknownService",
+]
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "DeleteField"
+Model = "attack"
+Name = "attack_type"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "attack"
+
+[Migration.Operations.Field]
+Name = "attack_type"
+Type = "choices"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "choices"
+Value = [
+    "Undefined",
+    "BruteforceSubdomains",
+    "TcpPortScan",
+    "QueryCertificateTransparency",
+    "QueryUnhashed",
+    "HostAlive",
+    "ServiceDetection",
+    "UdpServiceDetection",
+    "DnsResolution",
+    "UdpPortScan",
+    "ForcedBrowsing",
+    "OSDetection",
+    "VersionDetection",
+    "AntiPortScanningDetection",
+    "TestSSL",
+]
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "DeleteField"
+Model = "udpservicedetectionresult"
+Name = "certainty"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "udpservicedetectionresult"
+
+[Migration.Operations.Field]
+Name = "certainty"
+Type = "choices"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "choices"
+Value = [
+    "Historical",
+    "SupposedTo",
+    "MaybeVerified",
+    "DefinitelyVerified",
+    "UnknownService",
+]
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "DeleteField"
+Model = "aggregationsource"
+Name = "source_type"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "aggregationsource"
+
+[Migration.Operations.Field]
+Name = "source_type"
+Type = "choices"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "choices"
+Value = [
+    "BruteforceSubdomains",
+    "TcpPortScan",
+    "QueryCertificateTransparency",
+    "QueryDehashed",
+    "HostAlive",
+    "ServiceDetection",
+    "UdpServiceDetection",
+    "DnsResolution",
+    "UdpPortScan",
+    "ForcedBrowsing",
+    "OSDetection",
+    "VersionDetection",
+    "AntiPortScanningDetection",
+    "TestSSL",
+    "ManualDomain",
+    "ManualHost",
+    "ManualPort",
+    "ManualService",
+]
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "DeleteField"
+Model = "service"
+Name = "certainty"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "service"
+
+[Migration.Operations.Field]
+Name = "certainty"
+Type = "choices"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "choices"
+Value = [
+    "Historical",
+    "SupposedTo",
+    "MaybeVerified",
+    "DefinitelyVerified",
+    "UnknownService",
+]
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"

@@ -289,6 +289,7 @@ export default class WorkspaceDataDetailsResults extends React.Component<
                         return null;
                     }
                 case "ServiceDetection":
+                case "UdpServiceDetection":
                     if (this.state.page < this.props.attack.results.length) {
                         let sdResult = this.props.attack.results[this.state.page];
                         return (

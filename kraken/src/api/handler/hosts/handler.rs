@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use actix_web::web::{Json, Path};
-use actix_web::{get, post, put, HttpResponse};
+use actix_web::{delete, get, post, put, HttpResponse};
 use futures::TryStreamExt;
 use rorm::conditions::DynamicCollection;
 use rorm::db::sql::value::Value;
@@ -40,16 +40,16 @@ use crate::query_tags;
 /// Hosts are created out of aggregating data or by user input.
 /// They represent a single host and can be created by providing an IP address
 #[utoipa::path(
-tag = "Hosts",
-context_path = "/api/v1",
-responses(
-(status = 200, description = "All hosts in the workspace", body = HostResultsPage),
-(status = 400, description = "Client error", body = ApiErrorResponse),
-(status = 500, description = "Server error", body = ApiErrorResponse),
-),
-request_body = GetAllHostsQuery,
-params(PathUuid),
-security(("api_key" = []))
+    tag = "Hosts",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "All hosts in the workspace", body = HostResultsPage),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    request_body = GetAllHostsQuery,
+    params(PathUuid),
+    security(("api_key" = []))
 )]
 #[post("/workspaces/{uuid}/hosts/all")]
 pub(crate) async fn get_all_hosts(
@@ -384,6 +384,58 @@ pub async fn update_host(
             )
             .await;
     }
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+/// Delete the host
+///
+/// This only deletes the aggregation. The raw results are still in place
+#[utoipa::path(
+    tag = "Hosts",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Host was deleted"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathHost),
+    security(("api_key" = []))
+)]
+#[delete("/workspaces/{w_uuid}/hosts/{h_uuid}")]
+pub async fn delete_host(
+    path: Path<PathHost>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let PathHost { w_uuid, h_uuid } = path.into_inner();
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut tx, w_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    query!(&mut tx, (Host::F.uuid,))
+        .condition(and!(
+            Host::F.uuid.equals(h_uuid),
+            Host::F.workspace.equals(w_uuid)
+        ))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    rorm::delete!(&mut tx, Host)
+        // We can omit the check if the workspace is the same as we have already checked it in the query before
+        .condition(Host::F.uuid.equals(h_uuid))
+        .await?;
+
+    tx.commit().await?;
+
+    let msg = WsMessage::DeletedHost {
+        workspace: w_uuid,
+        host: h_uuid,
+    };
+    GLOBAL.ws.message_workspace(w_uuid, msg).await;
 
     Ok(HttpResponse::Ok().finish())
 }

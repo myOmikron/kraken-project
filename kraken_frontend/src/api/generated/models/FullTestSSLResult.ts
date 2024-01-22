@@ -13,66 +13,81 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { TestSSLFinding } from './TestSSLFinding';
+import {
+    TestSSLFindingFromJSON,
+    TestSSLFindingFromJSONTyped,
+    TestSSLFindingToJSON,
+} from './TestSSLFinding';
+
 /**
- * A simple representation of a testssl result
+ * The results of a `testssl.sh` scan
  * @export
- * @interface SimpleTestSSLResult
+ * @interface FullTestSSLResult
  */
-export interface SimpleTestSSLResult {
+export interface FullTestSSLResult {
     /**
      * The primary key
      * @type {string}
-     * @memberof SimpleTestSSLResult
+     * @memberof FullTestSSLResult
      */
     uuid: string;
     /**
      * The attack which produced this result
      * @type {string}
-     * @memberof SimpleTestSSLResult
+     * @memberof FullTestSSLResult
      */
     attack: string;
     /**
      * The point in time, this result was produced
      * @type {Date}
-     * @memberof SimpleTestSSLResult
+     * @memberof FullTestSSLResult
      */
     createdAt: Date;
     /**
      * The original user target this result belongs to
      * @type {string}
-     * @memberof SimpleTestSSLResult
+     * @memberof FullTestSSLResult
      */
     targetHost: string;
     /**
      * The scanned ip address
      * @type {string}
-     * @memberof SimpleTestSSLResult
+     * @memberof FullTestSSLResult
      */
     ip: string;
     /**
      * The scanned port
      * @type {number}
-     * @memberof SimpleTestSSLResult
+     * @memberof FullTestSSLResult
      */
     port: number;
     /**
      * The ip address' rDNS name
      * @type {string}
-     * @memberof SimpleTestSSLResult
+     * @memberof FullTestSSLResult
      */
     rdns: string;
     /**
      * The detected service
      * @type {string}
-     * @memberof SimpleTestSSLResult
+     * @memberof FullTestSSLResult
      */
     service: string;
+    /**
+     * The scan's findings
+     * 
+     * This includes, log messages, extracted information (for example cert parameters) and tests for vulnerabilities / bad options.
+     * @type {Array<TestSSLFinding>}
+     * @memberof FullTestSSLResult
+     */
+    findings: Array<TestSSLFinding>;
 }
 
 /**
- * Check if a given object implements the SimpleTestSSLResult interface.
+ * Check if a given object implements the FullTestSSLResult interface.
  */
-export function instanceOfSimpleTestSSLResult(value: object): boolean {
+export function instanceOfFullTestSSLResult(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "attack" in value;
@@ -82,15 +97,16 @@ export function instanceOfSimpleTestSSLResult(value: object): boolean {
     isInstance = isInstance && "port" in value;
     isInstance = isInstance && "rdns" in value;
     isInstance = isInstance && "service" in value;
+    isInstance = isInstance && "findings" in value;
 
     return isInstance;
 }
 
-export function SimpleTestSSLResultFromJSON(json: any): SimpleTestSSLResult {
-    return SimpleTestSSLResultFromJSONTyped(json, false);
+export function FullTestSSLResultFromJSON(json: any): FullTestSSLResult {
+    return FullTestSSLResultFromJSONTyped(json, false);
 }
 
-export function SimpleTestSSLResultFromJSONTyped(json: any, ignoreDiscriminator: boolean): SimpleTestSSLResult {
+export function FullTestSSLResultFromJSONTyped(json: any, ignoreDiscriminator: boolean): FullTestSSLResult {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -104,10 +120,11 @@ export function SimpleTestSSLResultFromJSONTyped(json: any, ignoreDiscriminator:
         'port': json['port'],
         'rdns': json['rdns'],
         'service': json['service'],
+        'findings': ((json['findings'] as Array<any>).map(TestSSLFindingFromJSON)),
     };
 }
 
-export function SimpleTestSSLResultToJSON(value?: SimpleTestSSLResult | null): any {
+export function FullTestSSLResultToJSON(value?: FullTestSSLResult | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -124,6 +141,7 @@ export function SimpleTestSSLResultToJSON(value?: SimpleTestSSLResult | null): a
         'port': value.port,
         'rdns': value.rdns,
         'service': value.service,
+        'findings': ((value.findings as Array<any>).map(TestSSLFindingToJSON)),
     };
 }
 

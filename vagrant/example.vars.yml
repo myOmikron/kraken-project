@@ -10,6 +10,7 @@
   leech_db_user: "leech"
   leech_db_password: ""
 # --8<-- [end:sample]
+# --8<-- [start:tls]
   generated_leech_conf: |
     KrakenSni = "..."
     KrakenCa = """
@@ -28,3 +29,4 @@
     -----END PRIVATE KEY-----
     """
     LeechSecret = "..."
+# --8<-- [end:tls]

@@ -111,8 +111,23 @@ pub enum WsMessage {
     ServiceDetectionResult {
         /// The corresponding id of the attack
         attack_uuid: Uuid,
-        /// Name of the service
-        service: String,
+        /// The address of the result
+        address: String,
+        /// The port of the result
+        port: u16,
+        /// Name of the service(s)
+        services: Vec<String>,
+    },
+    /// A result to UDP service detection request
+    UdpServiceDetectionResult {
+        /// The corresponding id of the attack
+        attack_uuid: Uuid,
+        /// The address of the result
+        address: String,
+        /// The port of the result
+        port: u16,
+        /// Name of the service(s)
+        services: Vec<String>,
     },
     /// A result for a DNS resolution requests
     DnsResolutionResult {
@@ -150,6 +165,34 @@ pub enum WsMessage {
         workspace: Uuid,
         /// The service that was inserted
         service: SimpleService,
+    },
+    /// A domain was deleted
+    DeletedDomain {
+        /// The workspace this domain is related to
+        workspace: Uuid,
+        /// The uuid of the deleted domain
+        domain: Uuid,
+    },
+    /// A host was deleted
+    DeletedHost {
+        /// The workspace this host is related to
+        workspace: Uuid,
+        /// The uuid of the deleted host
+        host: Uuid,
+    },
+    /// A port was deleted
+    DeletedPort {
+        /// The workspace this port is related to
+        workspace: Uuid,
+        /// The uuid of the deleted port
+        port: Uuid,
+    },
+    /// A service was deleted
+    DeletedService {
+        /// The workspace this service is related to
+        workspace: Uuid,
+        /// The uuid of the deleted service
+        service: Uuid,
     },
     /// Global tags were updated on an aggregation
     UpdatedGlobalTags {

@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleTestSSLResult } from './SimpleTestSSLResult';
+import type { FullTestSSLResult } from './FullTestSSLResult';
 import {
-    SimpleTestSSLResultFromJSON,
-    SimpleTestSSLResultFromJSONTyped,
-    SimpleTestSSLResultToJSON,
-} from './SimpleTestSSLResult';
+    FullTestSSLResultFromJSON,
+    FullTestSSLResultFromJSONTyped,
+    FullTestSSLResultToJSON,
+} from './FullTestSSLResult';
 import type { SimpleUser } from './SimpleUser';
 import {
     SimpleUserFromJSON,

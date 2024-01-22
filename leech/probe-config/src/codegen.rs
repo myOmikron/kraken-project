@@ -166,7 +166,7 @@ impl<'a> fmt::Display for PayloadProbe<'a> {
         match payload {
             Payload::Empty => write!(f, "&[]")?,
             Payload::String(string) => write!(f, "b\"{string}\"")?,
-            Payload::Base64(_) => write!(f, "compile_error!(\"TODO\")")?,
+            Payload::Binary(b) => write!(f, "{}", encode_binary_string_literal(b))?,
         }
         write!(f, " }}")
     }
@@ -183,7 +183,7 @@ impl<'a> fmt::Display for TlsProbe<'a> {
         match payload {
             Payload::Empty => write!(f, "&[]")?,
             Payload::String(string) => write!(f, "b\"{string}\"")?,
-            Payload::Base64(_) => write!(f, "compile_error!(\"TODO\")")?,
+            Payload::Binary(b) => write!(f, "{}", encode_binary_string_literal(b))?,
         }
         write!(f, ", alpn: ")?;
         match alpn {
@@ -192,4 +192,25 @@ impl<'a> fmt::Display for TlsProbe<'a> {
         }
         write!(f, " }}")
     }
+}
+
+fn encode_binary_string_literal(bytes: &[u8]) -> String {
+    const ALPHA_HEX: &[u8; 16] = b"0123456789ABCDEF";
+
+    let mut ret = String::from("b\"");
+    for byte in bytes {
+        if *byte == b'"' {
+            ret.push_str("\\\"");
+        } else if *byte == b'\\' {
+            ret.push_str("\\\\");
+        } else if *byte >= 0x21 && *byte <= 0x7E {
+            ret.push(*byte as char);
+        } else {
+            ret.push_str("\\x");
+            ret.push(ALPHA_HEX[(byte >> 4) as usize] as char);
+            ret.push(ALPHA_HEX[(byte & 0xF) as usize] as char);
+        }
+    }
+    ret.push('"');
+    ret
 }

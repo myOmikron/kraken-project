@@ -25,6 +25,7 @@ pub(crate) fn build_query_list() -> Vec<(String, ModelType)> {
         ModelType::CertificateTransparencyResult,
         ModelType::HostAliveResult,
         ModelType::ServiceDetectionResult,
+        ModelType::UdpServiceDetectionResult,
     ];
 
     let table_names_ref_to_ws = vec![

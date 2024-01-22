@@ -14,8 +14,8 @@ use crate::api::handler::aggregation_source::schema::{
 };
 use crate::api::handler::attack_results::schema::{
     FullQueryCertificateTransparencyResult, FullServiceDetectionResult, FullTestSSLResult,
-    SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
-    SimpleQueryUnhashedResult, SimpleTcpPortScanResult, TestSSLFinding,
+    FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
+    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult, TestSSLFinding,
 };
 use crate::api::handler::users::schema::SimpleUser;
 use crate::models::{
@@ -23,7 +23,7 @@ use crate::models::{
     CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
     DnsResolutionResult, HostAliveResult, ManualDomain, ManualHost, ManualPort, ManualService,
     ServiceDetectionName, ServiceDetectionResult, SourceType, TcpPortScanResult,
-    TestSSLResultFinding, TestSSLResultHeader,
+    TestSSLResultFinding, TestSSLResultHeader, UdpServiceDetectionName, UdpServiceDetectionResult,
 };
 
 fn field_in<'a, T, F, P, Any>(
@@ -103,6 +103,7 @@ impl SimpleAggregationSource {
             SourceType::QueryDehashed => self.query_dehashed += 1,
             SourceType::HostAlive => self.host_alive += 1,
             SourceType::ServiceDetection => self.service_detection += 1,
+            SourceType::UdpServiceDetection => self.udp_service_detection += 1,
             SourceType::DnsResolution => self.dns_resolution += 1,
             SourceType::UdpPortScan => self.udp_port_scan += 1,
             SourceType::ForcedBrowsing => self.forced_browsing += 1,
@@ -164,6 +165,7 @@ impl FullAggregationSource {
         let mut query_dehashed: Results<SimpleQueryUnhashedResult> = Results::new();
         let mut host_alive: Results<SimpleHostAliveResult> = Results::new();
         let mut service_detection: Results<FullServiceDetectionResult> = Results::new();
+        let mut udp_service_detection: Results<FullUdpServiceDetectionResult> = Results::new();
         let mut dns_resolution: Results<SimpleDnsResolutionResult> = Results::new();
         let mut testssl: HashMap<Uuid, FullTestSSLResult> = HashMap::new();
         let mut manual_insert = Vec::new();
@@ -312,6 +314,44 @@ impl FullAggregationSource {
                             .entry(*result.attack.key())
                             .or_default()
                             .push(FullServiceDetectionResult {
+                                uuid: result.uuid,
+                                attack: *result.attack.key(),
+                                created_at: result.created_at,
+                                certainty: result.certainty,
+                                service_names: services.remove(&result.uuid).unwrap_or_default(),
+                                host: result.host,
+                                port: result.port as u16,
+                            });
+                    }
+                }
+                SourceType::UdpServiceDetection => {
+                    let mut services: HashMap<Uuid, Vec<String>> = HashMap::new();
+                    {
+                        let mut stream = query!(
+                            &mut *tx,
+                            (
+                                UdpServiceDetectionName::F.result,
+                                UdpServiceDetectionName::F.name
+                            )
+                        )
+                        .condition(field_in(
+                            UdpServiceDetectionName::F.result,
+                            uuids.iter().copied(),
+                        ))
+                        .stream();
+                        while let Some((uuid, value)) = stream.try_next().await? {
+                            services.entry(*uuid.key()).or_default().push(value);
+                        }
+                    }
+
+                    let mut stream = query!(&mut *tx, UdpServiceDetectionResult)
+                        .condition(field_in(UdpServiceDetectionResult::F.uuid, uuids))
+                        .stream();
+                    while let Some(result) = stream.try_next().await? {
+                        udp_service_detection
+                            .entry(*result.attack.key())
+                            .or_default()
+                            .push(FullUdpServiceDetectionResult {
                                 uuid: result.uuid,
                                 attack: *result.attack.key(),
                                 created_at: result.created_at,
@@ -526,6 +566,7 @@ impl FullAggregationSource {
                     .chain(query_dehashed.keys())
                     .chain(host_alive.keys())
                     .chain(service_detection.keys())
+                    .chain(udp_service_detection.keys())
                     .chain(dns_resolution.keys())
                     .chain(testssl.keys())
                     .copied(),
@@ -569,6 +610,9 @@ impl FullAggregationSource {
                         .remove(&uuid)
                         .map(SourceAttackResult::DnsResolution),
                     AttackType::TestSSL => testssl.remove(&uuid).map(SourceAttackResult::TestSSL),
+                    AttackType::UdpServiceDetection => udp_service_detection
+                        .remove(&uuid)
+                        .map(SourceAttackResult::UdpServiceDetection),
                     AttackType::UdpPortScan
                     | AttackType::ForcedBrowsing
                     | AttackType::OSDetection

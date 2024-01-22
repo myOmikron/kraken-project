@@ -13,43 +13,31 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { AggregationType } from './AggregationType';
+import type { SimpleService } from './SimpleService';
 import {
-    AggregationTypeFromJSON,
-    AggregationTypeFromJSONTyped,
-    AggregationTypeToJSON,
-} from './AggregationType';
+    SimpleServiceFromJSON,
+    SimpleServiceFromJSONTyped,
+    SimpleServiceToJSON,
+} from './SimpleService';
 
 /**
- * Global tags were updated on an aggregation
+ * A new service was found
  * @export
  * @interface WsMessageOneOf16
  */
 export interface WsMessageOneOf16 {
     /**
-     * The workspace the aggregation is related to
+     * The workspace this service is related to
      * @type {string}
      * @memberof WsMessageOneOf16
      */
     workspace: string;
     /**
      * 
-     * @type {AggregationType}
+     * @type {SimpleService}
      * @memberof WsMessageOneOf16
      */
-    aggregation: AggregationType;
-    /**
-     * The uuid of the model
-     * @type {string}
-     * @memberof WsMessageOneOf16
-     */
-    uuid: string;
-    /**
-     * The updated list of tags
-     * @type {Array<string>}
-     * @memberof WsMessageOneOf16
-     */
-    tags: Array<string>;
+    service: SimpleService;
     /**
      * 
      * @type {string}
@@ -63,7 +51,7 @@ export interface WsMessageOneOf16 {
  * @export
  */
 export const WsMessageOneOf16TypeEnum = {
-    UpdatedGlobalTags: 'UpdatedGlobalTags'
+    NewService: 'NewService'
 } as const;
 export type WsMessageOneOf16TypeEnum = typeof WsMessageOneOf16TypeEnum[keyof typeof WsMessageOneOf16TypeEnum];
 
@@ -74,9 +62,7 @@ export type WsMessageOneOf16TypeEnum = typeof WsMessageOneOf16TypeEnum[keyof typ
 export function instanceOfWsMessageOneOf16(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "workspace" in value;
-    isInstance = isInstance && "aggregation" in value;
-    isInstance = isInstance && "uuid" in value;
-    isInstance = isInstance && "tags" in value;
+    isInstance = isInstance && "service" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -93,9 +79,7 @@ export function WsMessageOneOf16FromJSONTyped(json: any, ignoreDiscriminator: bo
     return {
         
         'workspace': json['workspace'],
-        'aggregation': AggregationTypeFromJSON(json['aggregation']),
-        'uuid': json['uuid'],
-        'tags': json['tags'],
+        'service': SimpleServiceFromJSON(json['service']),
         'type': json['type'],
     };
 }
@@ -110,9 +94,7 @@ export function WsMessageOneOf16ToJSON(value?: WsMessageOneOf16 | null): any {
     return {
         
         'workspace': value.workspace,
-        'aggregation': AggregationTypeToJSON(value.aggregation),
-        'uuid': value.uuid,
-        'tags': value.tags,
+        'service': SimpleServiceToJSON(value.service),
         'type': value.type,
     };
 }

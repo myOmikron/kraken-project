@@ -7,7 +7,7 @@ use crate::models::{
     Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
     DnsRecordResult, DnsRecordType, HostAliveResult, ServiceCertainty, ServiceDetectionResult,
     Severity, TcpPortScanResult, TestSSLResultFinding, TestSSLResultHeader, TestSSLSection,
-    TestSSLSeverity,
+    TestSSLSeverity, UdpServiceDetectionResult,
 };
 
 pub(crate) type BruteforceSubdomainsResultInsert = DnsRecordResultInsert;
@@ -80,6 +80,16 @@ pub(crate) struct HostAliveResultInsert {
 #[derive(Patch)]
 #[rorm(model = "ServiceDetectionResult")]
 pub(crate) struct ServiceDetectionResultInsert {
+    pub(crate) uuid: Uuid,
+    pub(crate) attack: ForeignModel<Attack>,
+    pub(crate) certainty: ServiceCertainty,
+    pub(crate) host: IpNetwork,
+    pub(crate) port: i32,
+}
+
+#[derive(Patch)]
+#[rorm(model = "UdpServiceDetectionResult")]
+pub(crate) struct UdpServiceDetectionResultInsert {
     pub(crate) uuid: Uuid,
     pub(crate) attack: ForeignModel<Attack>,
     pub(crate) certainty: ServiceCertainty,

@@ -1,5 +1,8 @@
 //! Small library for adding a `context` string to errors similar to anyhow
 
+use thiserror::Error;
+use tokio::task::JoinError;
+
 use std::borrow::Cow;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
@@ -64,4 +67,18 @@ impl<T, E: Error + Sized> ResultExt for Result<T, E> {
             context: msg.into(),
         })
     }
+}
+
+/// Errors for a udp service scan
+#[derive(Debug, Error)]
+pub enum UdpServiceScanError {
+    /// Sending channel
+    #[error("Could not send to channel: {0}")]
+    SendError(#[from] tokio::sync::mpsc::error::SendError<super::udp::UdpServiceDetectionResult>),
+    /// IO error in UDP socket
+    #[error("IO error occurred: {0}")]
+    IoError(#[from] std::io::Error),
+    /// Error joining a task
+    #[error("Error joining task: {0}")]
+    TaskJoin(#[from] JoinError),
 }

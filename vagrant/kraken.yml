@@ -32,7 +32,7 @@
     - name: Install node
       ansible.builtin.apt:
         state: latest
-        name: nodejs
+        name: npm
     - name: Install yarn
       ansible.builtin.command:
         cmd: "npm install -g yarn"

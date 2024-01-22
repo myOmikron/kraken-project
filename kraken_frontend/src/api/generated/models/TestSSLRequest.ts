@@ -47,6 +47,18 @@ export interface TestSSLRequest {
      */
     uri: string;
     /**
+     * The host to scan
+     * @type {string}
+     * @memberof TestSSLRequest
+     */
+    host: string;
+    /**
+     * The port to scan
+     * @type {number}
+     * @memberof TestSSLRequest
+     */
+    port: number;
+    /**
      * Timeout for TCP handshakes in seconds
      * @type {number}
      * @memberof TestSSLRequest
@@ -79,6 +91,8 @@ export function instanceOfTestSSLRequest(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "workspaceUuid" in value;
     isInstance = isInstance && "uri" in value;
+    isInstance = isInstance && "host" in value;
+    isInstance = isInstance && "port" in value;
 
     return isInstance;
 }
@@ -96,6 +110,8 @@ export function TestSSLRequestFromJSONTyped(json: any, ignoreDiscriminator: bool
         'leechUuid': !exists(json, 'leech_uuid') ? undefined : json['leech_uuid'],
         'workspaceUuid': json['workspace_uuid'],
         'uri': json['uri'],
+        'host': json['host'],
+        'port': json['port'],
         'connectTimeout': !exists(json, 'connect_timeout') ? undefined : json['connect_timeout'],
         'opensslTimeout': !exists(json, 'openssl_timeout') ? undefined : json['openssl_timeout'],
         'basicAuth': !exists(json, 'basic_auth') ? undefined : json['basic_auth'],
@@ -115,6 +131,8 @@ export function TestSSLRequestToJSON(value?: TestSSLRequest | null): any {
         'leech_uuid': value.leechUuid,
         'workspace_uuid': value.workspaceUuid,
         'uri': value.uri,
+        'host': value.host,
+        'port': value.port,
         'connect_timeout': value.connectTimeout,
         'openssl_timeout': value.opensslTimeout,
         'basic_auth': value.basicAuth,

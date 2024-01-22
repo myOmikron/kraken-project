@@ -19,6 +19,12 @@ import {
     ManualServiceCertaintyFromJSONTyped,
     ManualServiceCertaintyToJSON,
 } from './ManualServiceCertainty';
+import type { PortProtocol } from './PortProtocol';
+import {
+    PortProtocolFromJSON,
+    PortProtocolFromJSONTyped,
+    PortProtocolToJSON,
+} from './PortProtocol';
 
 /**
  * The request to manually add a service
@@ -46,10 +52,18 @@ export interface CreateServiceRequest {
     host: string;
     /**
      * An optional port the service runs on
+     * 
+     * If set, you must specify protocol
      * @type {number}
      * @memberof CreateServiceRequest
      */
     port?: number | null;
+    /**
+     * 
+     * @type {PortProtocol}
+     * @memberof CreateServiceRequest
+     */
+    protocol?: PortProtocol | null;
 }
 
 /**
@@ -78,6 +92,7 @@ export function CreateServiceRequestFromJSONTyped(json: any, ignoreDiscriminator
         'certainty': ManualServiceCertaintyFromJSON(json['certainty']),
         'host': json['host'],
         'port': !exists(json, 'port') ? undefined : json['port'],
+        'protocol': !exists(json, 'protocol') ? undefined : PortProtocolFromJSON(json['protocol']),
     };
 }
 
@@ -94,6 +109,7 @@ export function CreateServiceRequestToJSON(value?: CreateServiceRequest | null):
         'certainty': ManualServiceCertaintyToJSON(value.certainty),
         'host': value.host,
         'port': value.port,
+        'protocol': PortProtocolToJSON(value.protocol),
     };
 }
 

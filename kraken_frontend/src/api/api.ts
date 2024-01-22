@@ -28,6 +28,7 @@ import {
     ResponseError,
     ScanTcpPortsRequest,
     ServiceDetectionRequest,
+    UdpServiceDetectionRequest,
     ServicesApi,
     SettingsManagementApi,
     UpdateAppRequest,
@@ -152,6 +153,8 @@ export const Api = {
             handleError(attacks.scanTcpPorts({ scanTcpPortsRequest: attack })),
         serviceDetection: (attack: ServiceDetectionRequest) =>
             handleError(attacks.serviceDetection({ serviceDetectionRequest: attack })),
+        udpServiceDetection: (attack: UdpServiceDetectionRequest) =>
+            handleError(attacks.udpServiceDetection({ udpServiceDetectionRequest: attack })),
         queryDehashed: (uuid: UUID, query: Query) =>
             handleError(attacks.queryDehashed({ queryDehashedRequest: { workspaceUuid: uuid, query } })),
         dnsResolution: (attack: DnsResolutionRequest) =>
@@ -172,6 +175,8 @@ export const Api = {
                 handleError(attacks.getQueryUnhashedResults({ uuid, limit, offset })),
             getServiceDetectionResults: (uuid: UUID, limit: number, offset: number) =>
                 handleError(attacks.getServiceDetectionResults({ uuid, limit, offset })),
+            getUdpServiceDetectionResults: (uuid: UUID, limit: number, offset: number) =>
+                handleError(attacks.getUdpServiceDetectionResults({ uuid, limit, offset })),
             getTcpPortScanResults: (uuid: UUID, limit: number, offset: number) =>
                 handleError(attacks.getTcpPortScanResults({ uuid, limit, offset })),
         },
@@ -231,6 +236,8 @@ export const Api = {
                 handleError(hosts.updateHost({ wUuid: workspaceUuid, hUuid: hostUuid, updateHostRequest })),
             create: (workspaceUuid: UUID, createHostRequest: CreateHostRequest) =>
                 handleError(hosts.createHost({ uuid: workspaceUuid, createHostRequest })),
+            delete: (workspaceUuid: UUID, hostUuid: UUID) =>
+                handleError(hosts.deleteHost({ wUuid: workspaceUuid, hUuid: hostUuid })),
             sources: (workspaceUuid: UUID, hostUuid: UUID) =>
                 handleError(hosts.getHostSources({ wUuid: workspaceUuid, hUuid: hostUuid })),
             relations: (workspaceUuid: UUID, hostUuid: UUID) =>
@@ -250,6 +257,8 @@ export const Api = {
                 handleError(ports.updatePort({ wUuid: workspaceUuid, pUuid: portUuid, updatePortRequest })),
             create: (workspaceUuid: UUID, createPortRequest: CreatePortRequest) =>
                 handleError(ports.createPort({ uuid: workspaceUuid, createPortRequest })),
+            delete: (workspaceUuid: UUID, portUuid: UUID) =>
+                handleError(ports.deletePort({ wUuid: workspaceUuid, pUuid: portUuid })),
             sources: (workspaceUuid: UUID, portUuid: UUID) =>
                 handleError(ports.getPortSources({ wUuid: workspaceUuid, pUuid: portUuid })),
             relations: (workspaceUuid: UUID, portUuid: UUID) =>
@@ -271,6 +280,8 @@ export const Api = {
                 handleError(domains.updateDomain({ wUuid: workspaceUuid, dUuid: domainUuid, updateDomainRequest })),
             create: (workspaceUuid: UUID, createDomainRequest: CreateDomainRequest) =>
                 handleError(domains.createDomain({ uuid: workspaceUuid, createDomainRequest })),
+            delete: (workspaceUuid: UUID, domainUuid: UUID) =>
+                handleError(domains.deleteDomain({ wUuid: workspaceUuid, dUuid: domainUuid })),
             sources: (workspaceUuid: UUID, domainUuid: UUID) =>
                 handleError(domains.getDomainSources({ wUuid: workspaceUuid, dUuid: domainUuid })),
             relations: (workspaceUuid: UUID, domainUuid: UUID) =>
@@ -292,6 +303,8 @@ export const Api = {
                 handleError(services.updateService({ wUuid: workspaceUuid, sUuid: serviceUuid, updateServiceRequest })),
             create: (workspaceUuid: UUID, createServiceRequest: CreateServiceRequest) =>
                 handleError(services.createService({ uuid: workspaceUuid, createServiceRequest })),
+            delete: (workspaceUuid: UUID, serviceUuid: UUID) =>
+                handleError(services.deleteService({ wUuid: workspaceUuid, sUuid: serviceUuid })),
             sources: (workspaceUuid: UUID, serviceUuid: UUID) =>
                 handleError(services.getServiceSources({ wUuid: workspaceUuid, sUuid: serviceUuid })),
             relations: (workspaceUuid: UUID, serviceUuid: UUID) =>

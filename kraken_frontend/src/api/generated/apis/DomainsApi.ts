@@ -51,6 +51,11 @@ export interface CreateDomainOperationRequest {
     createDomainRequest: CreateDomainRequest;
 }
 
+export interface DeleteDomainRequest {
+    wUuid: string;
+    dUuid: string;
+}
+
 export interface GetAllDomainsRequest {
     uuid: string;
     getAllDomainsQuery: GetAllDomainsQuery;
@@ -119,6 +124,41 @@ export class DomainsApi extends runtime.BaseAPI {
     async createDomain(requestParameters: CreateDomainOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
         const response = await this.createDomainRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Delete the domain  This only deletes the aggregation. The raw results are still in place
+     * Delete the domain
+     */
+    async deleteDomainRaw(requestParameters: DeleteDomainRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling deleteDomain.');
+        }
+
+        if (requestParameters.dUuid === null || requestParameters.dUuid === undefined) {
+            throw new runtime.RequiredError('dUuid','Required parameter requestParameters.dUuid was null or undefined when calling deleteDomain.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/domains/{d_uuid}`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"d_uuid"}}`, encodeURIComponent(String(requestParameters.dUuid))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Delete the domain  This only deletes the aggregation. The raw results are still in place
+     * Delete the domain
+     */
+    async deleteDomain(requestParameters: DeleteDomainRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteDomainRaw(requestParameters, initOverrides);
     }
 
     /**

@@ -35,7 +35,7 @@ export interface ApiErrorResponse {
      */
     statusCode: ApiStatusCode;
     /**
-     * 
+     * A human readable description of the error
      * @type {string}
      * @memberof ApiErrorResponse
      */

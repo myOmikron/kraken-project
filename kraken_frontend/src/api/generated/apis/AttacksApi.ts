@@ -20,6 +20,7 @@ import type {
   BruteforceSubdomainsResultsPage,
   DnsResolutionRequest,
   DnsResolutionResultsPage,
+  FullTestSSLResult,
   HostAliveResultsPage,
   HostsAliveRequest,
   ListAttacks,
@@ -33,6 +34,8 @@ import type {
   SimpleAttack,
   TcpPortScanResultsPage,
   TestSSLRequest,
+  UdpServiceDetectionRequest,
+  UdpServiceDetectionResultsPage,
   UuidResponse,
 } from '../models';
 import {
@@ -46,6 +49,8 @@ import {
     DnsResolutionRequestToJSON,
     DnsResolutionResultsPageFromJSON,
     DnsResolutionResultsPageToJSON,
+    FullTestSSLResultFromJSON,
+    FullTestSSLResultToJSON,
     HostAliveResultsPageFromJSON,
     HostAliveResultsPageToJSON,
     HostsAliveRequestFromJSON,
@@ -72,6 +77,10 @@ import {
     TcpPortScanResultsPageToJSON,
     TestSSLRequestFromJSON,
     TestSSLRequestToJSON,
+    UdpServiceDetectionRequestFromJSON,
+    UdpServiceDetectionRequestToJSON,
+    UdpServiceDetectionResultsPageFromJSON,
+    UdpServiceDetectionResultsPageToJSON,
     UuidResponseFromJSON,
     UuidResponseToJSON,
 } from '../models';
@@ -134,6 +143,16 @@ export interface GetTcpPortScanResultsRequest {
     offset: number;
 }
 
+export interface GetTestsslResultsRequest {
+    uuid: string;
+}
+
+export interface GetUdpServiceDetectionResultsRequest {
+    uuid: string;
+    limit: number;
+    offset: number;
+}
+
 export interface GetWorkspaceAttacksRequest {
     uuid: string;
 }
@@ -160,6 +179,10 @@ export interface ServiceDetectionOperationRequest {
 
 export interface TestsslRequest {
     testSSLRequest: TestSSLRequest;
+}
+
+export interface UdpServiceDetectionOperationRequest {
+    udpServiceDetectionRequest: UdpServiceDetectionRequest;
 }
 
 /**
@@ -665,6 +688,86 @@ export class AttacksApi extends runtime.BaseAPI {
     }
 
     /**
+     * Retrieve a `testssl.sh`\'s results by the attack\'s id
+     * Retrieve a `testssl.sh`\'s results by the attack\'s id
+     */
+    async getTestsslResultsRaw(requestParameters: GetTestsslResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FullTestSSLResult>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getTestsslResults.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/attacks/{uuid}/testsslResults`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FullTestSSLResultFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve a `testssl.sh`\'s results by the attack\'s id
+     * Retrieve a `testssl.sh`\'s results by the attack\'s id
+     */
+    async getTestsslResults(requestParameters: GetTestsslResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullTestSSLResult> {
+        const response = await this.getTestsslResultsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Retrieve UDP service detection results by the attack\'s id
+     * Retrieve UDP service detection results by the attack\'s id
+     */
+    async getUdpServiceDetectionResultsRaw(requestParameters: GetUdpServiceDetectionResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UdpServiceDetectionResultsPage>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getUdpServiceDetectionResults.');
+        }
+
+        if (requestParameters.limit === null || requestParameters.limit === undefined) {
+            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getUdpServiceDetectionResults.');
+        }
+
+        if (requestParameters.offset === null || requestParameters.offset === undefined) {
+            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getUdpServiceDetectionResults.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.limit !== undefined) {
+            queryParameters['limit'] = requestParameters.limit;
+        }
+
+        if (requestParameters.offset !== undefined) {
+            queryParameters['offset'] = requestParameters.offset;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/attacks/{uuid}/udpServiceDetectionResults`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UdpServiceDetectionResultsPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve UDP service detection results by the attack\'s id
+     * Retrieve UDP service detection results by the attack\'s id
+     */
+    async getUdpServiceDetectionResults(requestParameters: GetUdpServiceDetectionResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UdpServiceDetectionResultsPage> {
+        const response = await this.getUdpServiceDetectionResultsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Query all attacks of a workspace
      * Query all attacks of a workspace
      */
@@ -903,6 +1006,41 @@ export class AttacksApi extends runtime.BaseAPI {
      */
     async testssl(requestParameters: TestsslRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
         const response = await this.testsslRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Perform UDP service detection on an ip on a list of ports.  All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.  Set `max_retries` to 0 if you don\'t want to try a port more than 1 time.
+     * Perform UDP service detection on an ip on a list of ports.
+     */
+    async udpServiceDetectionRaw(requestParameters: UdpServiceDetectionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
+        if (requestParameters.udpServiceDetectionRequest === null || requestParameters.udpServiceDetectionRequest === undefined) {
+            throw new runtime.RequiredError('udpServiceDetectionRequest','Required parameter requestParameters.udpServiceDetectionRequest was null or undefined when calling udpServiceDetection.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/attacks/udpServiceDetection`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UdpServiceDetectionRequestToJSON(requestParameters.udpServiceDetectionRequest),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Perform UDP service detection on an ip on a list of ports.  All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.  Set `max_retries` to 0 if you don\'t want to try a port more than 1 time.
+     * Perform UDP service detection on an ip on a list of ports.
+     */
+    async udpServiceDetection(requestParameters: UdpServiceDetectionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
+        const response = await this.udpServiceDetectionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

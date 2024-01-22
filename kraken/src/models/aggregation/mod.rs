@@ -136,6 +136,8 @@ pub enum ServiceCertainty {
     MaybeVerified = 2,
     /// Service is definitely correct
     DefinitelyVerified = 3,
+    /// No specific service detected, generic fallback payload got a response though
+    UnknownService = 4,
 }
 
 /// A detected service on a host
@@ -517,6 +519,8 @@ pub enum SourceType {
     HostAlive,
     /// The [`ServiceDetectionResult`] table
     ServiceDetection,
+    /// The [`UdpServiceDetectionResult`] table
+    UdpServiceDetection,
     /// The [`DnsResolutionResult`] table
     DnsResolution,
     /// The table for the not yet implemented [`AttackType::UdpPortScan`] results

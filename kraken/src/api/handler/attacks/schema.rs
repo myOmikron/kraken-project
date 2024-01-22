@@ -183,6 +183,48 @@ pub struct ServiceDetectionRequest {
     pub workspace_uuid: Uuid,
 }
 
+/// The request to start a service detection
+#[derive(Debug, ToSchema, Deserialize, Serialize)]
+pub struct UdpServiceDetectionRequest {
+    /// The leech to use
+    ///
+    /// Leave empty to use a random leech
+    pub leech_uuid: Option<Uuid>,
+
+    /// The ip address the service listens on
+    #[schema(value_type = String, example = "10.13.37.1")]
+    pub address: IpAddr,
+
+    /// List of single ports and port ranges
+    ///
+    /// If no values are supplied, 1-65535 is used as default
+    #[serde(default)]
+    pub ports: Vec<PortOrRange>,
+
+    /// The interval that should be wait between retries on a port.
+    ///
+    /// The interval is specified in milliseconds.
+    #[schema(example = 100)]
+    pub retry_interval: u64,
+
+    /// The number of times the connection should be retried if it failed.
+    #[schema(example = 2)]
+    pub max_retries: u32,
+
+    /// The time to wait until a connection is considered failed.
+    ///
+    /// The timeout is specified in milliseconds.
+    #[schema(example = 3000)]
+    pub timeout: u64,
+
+    /// The concurrent task limit
+    #[schema(example = 5000)]
+    pub concurrent_limit: u32,
+
+    /// The workspace to execute the attack in
+    pub workspace_uuid: Uuid,
+}
+
 /// Request to resolve domains
 #[derive(Deserialize, ToSchema)]
 pub struct DnsResolutionRequest {

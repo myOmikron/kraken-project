@@ -12,7 +12,8 @@ use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::attack_results::schema::{
-    FullQueryCertificateTransparencyResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
+    FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
+    FullUdpServiceDetectionResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
     SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
 };
 use crate::api::handler::common::error::{ApiError, ApiResult};
@@ -38,8 +39,9 @@ use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::{
     Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
     DnsResolutionResult, Domain, Host, HostAliveResult, ModelType, Port, Search, SearchInsert,
-    SearchResult, Service, TcpPortScanResult, User, UserPermission, Workspace, WorkspaceInvitation,
-    WorkspaceMember,
+    SearchResult, Service, ServiceDetectionName, ServiceDetectionResult, TcpPortScanResult,
+    UdpServiceDetectionName, UdpServiceDetectionResult, User, UserPermission, Workspace,
+    WorkspaceInvitation, WorkspaceMember,
 };
 
 /// Create a new workspace
@@ -875,16 +877,49 @@ pub async fn get_search_results(
                 })
             }
             ModelType::ServiceDetectionResult => {
-                let data = query!(&mut tx, HostAliveResult)
-                    .condition(HostAliveResult::F.uuid.equals(item.ref_key))
+                let data = query!(&mut tx, ServiceDetectionResult)
+                    .condition(ServiceDetectionResult::F.uuid.equals(item.ref_key))
                     .one()
                     .await?;
 
-                SearchResultEntry::HostAliveResult(SimpleHostAliveResult {
+                let service_names = query!(&mut tx, (ServiceDetectionName::F.name,))
+                    .condition(ServiceDetectionName::F.result.equals(item.ref_key))
+                    .stream()
+                    .map_ok(|x| x.0)
+                    .try_collect()
+                    .await?;
+
+                SearchResultEntry::ServiceDetectionResult(FullServiceDetectionResult {
                     uuid: data.uuid,
                     created_at: data.created_at,
                     attack: *data.attack.key(),
                     host: data.host,
+                    port: data.port as u16,
+                    certainty: data.certainty,
+                    service_names,
+                })
+            }
+            ModelType::UdpServiceDetectionResult => {
+                let data = query!(&mut tx, UdpServiceDetectionResult)
+                    .condition(UdpServiceDetectionResult::F.uuid.equals(item.ref_key))
+                    .one()
+                    .await?;
+
+                let service_names = query!(&mut tx, (UdpServiceDetectionName::F.name,))
+                    .condition(UdpServiceDetectionName::F.result.equals(item.ref_key))
+                    .stream()
+                    .map_ok(|x| x.0)
+                    .try_collect()
+                    .await?;
+
+                SearchResultEntry::UdpServiceDetectionResult(FullUdpServiceDetectionResult {
+                    uuid: data.uuid,
+                    created_at: data.created_at,
+                    attack: *data.attack.key(),
+                    host: data.host,
+                    port: data.port as u16,
+                    certainty: data.certainty,
+                    service_names,
                 })
             }
         })

@@ -31,7 +31,7 @@ webauthn-rs = { version = "~0.4", features = ["danger-allow-state-serialisation"
 # openapi swagger
 utoipa = { version = "~4", features = ["actix_extras", "repr", "chrono", "uuid", "openapi_extensions", "preserve_order"]}
 # openapi swagger boilerplat generation
-utoipa-swagger-ui = { version = "~5", features = ["actix-web"], optional = true }
+utoipa-swagger-ui = { version = "~6", features = ["actix-web"], optional = true }
 
 # Hashing
 argon2 = { version = "~0.5", features = ["std"], optional = true }

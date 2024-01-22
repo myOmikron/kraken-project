@@ -56,6 +56,12 @@ export interface SimpleAggregationSource {
      */
     serviceDetection: number;
     /**
+     * Detect UDP services on a host on given ports
+     * @type {number}
+     * @memberof SimpleAggregationSource
+     */
+    udpServiceDetection: number;
+    /**
      * Resolve domain names
      * @type {number}
      * @memberof SimpleAggregationSource
@@ -116,6 +122,7 @@ export function instanceOfSimpleAggregationSource(value: object): boolean {
     isInstance = isInstance && "queryDehashed" in value;
     isInstance = isInstance && "hostAlive" in value;
     isInstance = isInstance && "serviceDetection" in value;
+    isInstance = isInstance && "udpServiceDetection" in value;
     isInstance = isInstance && "dnsResolution" in value;
     isInstance = isInstance && "forcedBrowsing" in value;
     isInstance = isInstance && "osDetection" in value;
@@ -144,6 +151,7 @@ export function SimpleAggregationSourceFromJSONTyped(json: any, ignoreDiscrimina
         'queryDehashed': json['query_dehashed'],
         'hostAlive': json['host_alive'],
         'serviceDetection': json['service_detection'],
+        'udpServiceDetection': json['udp_service_detection'],
         'dnsResolution': json['dns_resolution'],
         'forcedBrowsing': json['forced_browsing'],
         'osDetection': json['os_detection'],
@@ -170,6 +178,7 @@ export function SimpleAggregationSourceToJSON(value?: SimpleAggregationSource | 
         'query_dehashed': value.queryDehashed,
         'host_alive': value.hostAlive,
         'service_detection': value.serviceDetection,
+        'udp_service_detection': value.udpServiceDetection,
         'dns_resolution': value.dnsResolution,
         'forced_browsing': value.forcedBrowsing,
         'os_detection': value.osDetection,

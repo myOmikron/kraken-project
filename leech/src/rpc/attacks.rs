@@ -19,9 +19,10 @@ use kraken_proto::{
     any_attack_response, shared, test_ssl_scans, test_ssl_service, BruteforceSubdomainRequest,
     BruteforceSubdomainResponse, CertificateTransparencyRequest, CertificateTransparencyResponse,
     DnsResolutionRequest, DnsResolutionResponse, HostsAliveRequest, HostsAliveResponse,
-    ServiceDetectionRequest, ServiceDetectionResponse, ServiceDetectionResponseType,
-    StartTlsProtocol, TcpPortScanRequest, TcpPortScanResponse, TestSslFinding, TestSslRequest,
-    TestSslResponse, TestSslScanResult, TestSslService, TestSslSeverity,
+    ServiceCertainty, ServiceDetectionRequest, ServiceDetectionResponse, StartTlsProtocol,
+    TcpPortScanRequest, TcpPortScanResponse, TestSslFinding, TestSslRequest, TestSslResponse,
+    TestSslScanResult, TestSslService, TestSslSeverity, UdpServiceDetectionRequest,
+    UdpServiceDetectionResponse,
 };
 use log::error;
 use prost_types::Timestamp;
@@ -38,6 +39,9 @@ use crate::modules::certificate_transparency::{query_ct_api, CertificateTranspar
 use crate::modules::dns::{dns_resolution, DnsRecordResult, DnsResolutionSettings};
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
+use crate::modules::service_detection::udp::{
+    start_udp_service_detection, UdpServiceDetectionSettings,
+};
 use crate::modules::service_detection::{detect_service, DetectServiceSettings, Service};
 use crate::modules::testssl::{self, run_testssl};
 
@@ -233,24 +237,86 @@ impl ReqAttackService for Attacks {
 
         Ok(Response::new(match service {
             Service::Unknown => ServiceDetectionResponse {
-                response_type: ServiceDetectionResponseType::Unknown as _,
+                response_type: ServiceCertainty::Unknown as _,
                 services: Vec::new(),
                 address: request.address,
                 port: request.port,
             },
             Service::Maybe(services) => ServiceDetectionResponse {
-                response_type: ServiceDetectionResponseType::Maybe as _,
+                response_type: ServiceCertainty::Maybe as _,
                 services: services.iter().map(|s| s.to_string()).collect(),
                 address: request.address,
                 port: request.port,
             },
             Service::Definitely(service) => ServiceDetectionResponse {
-                response_type: ServiceDetectionResponseType::Definitely as _,
+                response_type: ServiceCertainty::Definitely as _,
                 services: vec![service.to_string()],
                 address: request.address,
                 port: request.port,
             },
         }))
+    }
+
+    type UdpServiceDetectionStream =
+        Pin<Box<dyn Stream<Item = Result<UdpServiceDetectionResponse, Status>> + Send>>;
+
+    async fn udp_service_detection(
+        &self,
+        request: Request<UdpServiceDetectionRequest>,
+    ) -> Result<Response<Self::UdpServiceDetectionStream>, Status> {
+        let request = request.into_inner();
+
+        let attack_uuid = Uuid::parse_str(&request.attack_uuid)
+            .map_err(|_| Status::invalid_argument("attack_uuid has to be an Uuid"))?;
+
+        let mut ports = request
+            .ports
+            .into_iter()
+            .map(RangeInclusive::try_from)
+            .collect::<Result<Vec<_>, _>>()?;
+        if ports.is_empty() {
+            ports.push(1..=u16::MAX);
+        }
+
+        let settings = UdpServiceDetectionSettings {
+            ip: IpAddr::try_from(
+                request
+                    .address
+                    .clone()
+                    .ok_or(Status::invalid_argument("Missing address"))?,
+            )?,
+            ports,
+            concurrent_limit: request.concurrent_limit,
+            max_retries: request.max_retries,
+            retry_interval: Duration::from_millis(request.retry_interval),
+            timeout: Duration::from_millis(request.timeout),
+        };
+
+        self.stream_attack(
+            attack_uuid,
+            {
+                |tx| async move {
+                    start_udp_service_detection(&settings, tx)
+                        .await
+                        .map_err(|err| Status::unknown(err.to_string()))
+                }
+            },
+            move |value| UdpServiceDetectionResponse {
+                address: request.address.clone(),
+                port: value.port as u32,
+                certainty: match value.service {
+                    Service::Unknown => ServiceCertainty::Unknown as _,
+                    Service::Maybe(_) => ServiceCertainty::Maybe as _,
+                    Service::Definitely(_) => ServiceCertainty::Definitely as _,
+                },
+                services: match value.service {
+                    Service::Unknown => Vec::new(),
+                    Service::Maybe(services) => services.iter().map(|s| s.to_string()).collect(),
+                    Service::Definitely(service) => vec![service.to_string()],
+                },
+            },
+            any_attack_response::Response::UdpServiceDetection,
+        )
     }
 
     type HostsAliveCheckStream =

@@ -1,14 +1,11 @@
 use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
-use kraken_proto::{
-    port_or_range, shared, PortOrRange, PortRange, TcpPortScanRequest, TcpPortScanResponse,
-};
+use kraken_proto::{shared, PortOrRange, TcpPortScanRequest, TcpPortScanResponse};
 use rorm::insert;
 use rorm::prelude::ForeignModelByField;
 use uuid::Uuid;
 
-use crate::api::handler::attacks::schema;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
@@ -36,23 +33,7 @@ impl AttackContext {
                 .into_iter()
                 .map(shared::NetOrAddress::from)
                 .collect(),
-            ports: params
-                .ports
-                .into_iter()
-                .map(|x| PortOrRange {
-                    port_or_range: Some(match x {
-                        schema::PortOrRange::Port(port) => {
-                            port_or_range::PortOrRange::Single(port as u32)
-                        }
-                        schema::PortOrRange::Range(range) => {
-                            port_or_range::PortOrRange::Range(PortRange {
-                                start: *range.start() as u32,
-                                end: *range.end() as u32,
-                            })
-                        }
-                    }),
-                })
-                .collect(),
+            ports: params.ports.into_iter().map(PortOrRange::from).collect(),
             timeout: params.timeout,
             concurrent_limit: params.concurrent_limit,
             max_retries: params.max_retries,

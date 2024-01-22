@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleTestSSLResult } from './SimpleTestSSLResult';
+import type { SimpleDnsResolutionResult } from './SimpleDnsResolutionResult';
 import {
-    SimpleTestSSLResultFromJSON,
-    SimpleTestSSLResultFromJSONTyped,
-    SimpleTestSSLResultToJSON,
-} from './SimpleTestSSLResult';
+    SimpleDnsResolutionResultFromJSON,
+    SimpleDnsResolutionResultFromJSONTyped,
+    SimpleDnsResolutionResultToJSON,
+} from './SimpleDnsResolutionResult';
 
 /**
  * 
@@ -33,11 +33,11 @@ export interface SourceAttackResultOneOf7 {
      */
     attackType: SourceAttackResultOneOf7AttackTypeEnum;
     /**
-     * The [`AttackType::TestSSL`] and its results
-     * @type {Array<SimpleTestSSLResult>}
+     * The [`AttackType::DnsResolution`] and its results
+     * @type {Array<SimpleDnsResolutionResult>}
      * @memberof SourceAttackResultOneOf7
      */
-    results: Array<SimpleTestSSLResult>;
+    results: Array<SimpleDnsResolutionResult>;
 }
 
 
@@ -45,7 +45,7 @@ export interface SourceAttackResultOneOf7 {
  * @export
  */
 export const SourceAttackResultOneOf7AttackTypeEnum = {
-    TestSsl: 'TestSSL'
+    DnsResolution: 'DnsResolution'
 } as const;
 export type SourceAttackResultOneOf7AttackTypeEnum = typeof SourceAttackResultOneOf7AttackTypeEnum[keyof typeof SourceAttackResultOneOf7AttackTypeEnum];
 
@@ -72,7 +72,7 @@ export function SourceAttackResultOneOf7FromJSONTyped(json: any, ignoreDiscrimin
     return {
         
         'attackType': json['attack_type'],
-        'results': ((json['results'] as Array<any>).map(SimpleTestSSLResultFromJSON)),
+        'results': ((json['results'] as Array<any>).map(SimpleDnsResolutionResultFromJSON)),
     };
 }
 
@@ -86,7 +86,7 @@ export function SourceAttackResultOneOf7ToJSON(value?: SourceAttackResultOneOf7 
     return {
         
         'attack_type': value.attackType,
-        'results': ((value.results as Array<any>).map(SimpleTestSSLResultToJSON)),
+        'results': ((value.results as Array<any>).map(SimpleDnsResolutionResultToJSON)),
     };
 }
 

@@ -36,6 +36,8 @@ pub enum AttackType {
     HostAlive,
     /// Detect the service that is running on a port
     ServiceDetection,
+    /// Detect UDP services running on a host
+    UdpServiceDetection,
     /// Resolve domain names
     DnsResolution,
     /// Scan udp ports
@@ -320,6 +322,49 @@ pub struct ServiceDetectionResult {
     pub service_names: BackRef<field!(ServiceDetectionName::F.result)>,
 }
 
+/// The name of a result of a service that was found during a service detection
+#[derive(Model)]
+pub struct UdpServiceDetectionName {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The name of found service
+    #[rorm(max_length = 255)]
+    pub name: String,
+
+    /// The result this service name is linked to
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub result: ForeignModel<UdpServiceDetectionResult>,
+}
+
+/// Representation of a [UDP Service Detection](AttackType::UdpServiceDetection) attack's result
+#[derive(Model)]
+pub struct UdpServiceDetectionResult {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The [attack](Attack) which produced this result
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub attack: ForeignModel<Attack>,
+
+    /// The point in time, this result was produced
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
+
+    /// A host that responded
+    pub host: IpNetwork,
+
+    /// Port number
+    pub port: i32,
+
+    /// The certainty of the result
+    pub certainty: ServiceCertainty,
+
+    /// The found names of the service
+    pub service_names: BackRef<field!(UdpServiceDetectionName::F.result)>,
+}
 /// Meta information about a single `testssl.sh` scan's results
 ///
 /// The actual results are stored in [`TestSSLResultFinding`].
@@ -336,7 +381,6 @@ pub struct TestSSLResultHeader {
     /// The point in time, this result was produced
     #[rorm(auto_create_time)]
     pub created_at: DateTime<Utc>,
-
     /// The original user target this result belongs to
     #[rorm(max_length = 255)]
     pub target_host: String,

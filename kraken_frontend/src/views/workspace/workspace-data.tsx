@@ -22,6 +22,10 @@ import { handleApiError, ObjectFns } from "../../utils/helper";
 import Checkbox from "../../components/checkbox";
 import EditableTags from "./components/editable-tags";
 import { toast } from "react-toastify";
+import promise = toast.promise;
+import { Toast } from "react-toastify/dist/components";
+import { ApiError } from "../../api/error";
+import { Result } from "../../utils/result";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations" };
@@ -53,19 +57,19 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
 
     const { items: domains, ...domainsTable } = useTable<FullDomain>(
         (limit, offset) => Api.workspaces.domains.all(workspace, limit, offset, { globalFilter, domainFilter }),
-        [workspace, globalFilter, domainFilter],
+        [workspace, globalFilter, domainFilter]
     );
     const { items: hosts, ...hostsTable } = useTable<FullHost>(
         (limit, offset) => Api.workspaces.hosts.all(workspace, limit, offset, { globalFilter, hostFilter }),
-        [workspace, globalFilter, hostFilter],
+        [workspace, globalFilter, hostFilter]
     );
     const { items: ports, ...portsTable } = useTable<FullPort>(
         (limit, offset) => Api.workspaces.ports.all(workspace, limit, offset, { globalFilter, portFilter }),
-        [workspace, globalFilter, portFilter],
+        [workspace, globalFilter, portFilter]
     );
     const { items: services, ...servicesTable } = useTable<FullService>(
         (limit, offset) => Api.workspaces.services.all(workspace, limit, offset, { globalFilter, serviceFilter }),
-        [workspace, globalFilter, serviceFilter],
+        [workspace, globalFilter, serviceFilter]
     );
 
     const tableElement = (() => {
@@ -129,6 +133,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         key={"host-table"}
                         {...hostsTable}
                         columnsTemplate={"min-content 39ch 1fr 1fr 1fr min-content"}
+                        onAdd={() => setCreateForm("hosts")}
                         applyFilter={(value) => {
                             setHostFilter(value);
                             hostsTable.setOffset(0);
@@ -423,6 +428,13 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 if (!ObjectFns.isEmpty(selectedUuids.ports)) portsTable.reload();
                                 if (!ObjectFns.isEmpty(selectedUuids.services)) servicesTable.reload();
                             }}
+                            onDelete={() => {
+                                domainsTable.reload();
+                                hostsTable.reload();
+                                portsTable.reload();
+                                servicesTable.reload();
+                                setSelected(null);
+                            }}
                         />
                     )}
                 </div>
@@ -446,14 +458,16 @@ type MultiSelectMenuProps = {
     selectedUuids: SelectedUuids;
     setSelectedUuids: React.Dispatch<React.SetStateAction<SelectedUuids>>;
     onUpdate: () => void;
+    onDelete: () => void;
 };
 export function MultiSelectMenu(props: MultiSelectMenuProps) {
-    const { selectedUuids, setSelectedUuids, onUpdate } = props;
+    const { selectedUuids, setSelectedUuids, onUpdate, onDelete } = props;
     const {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
 
     const [newTags, setNewTags] = React.useState<Array<SimpleTag>>([]);
+    const [deleteData, setDeleteData] = React.useState(false);
 
     const domainsLen = ObjectFns.len(selectedUuids.domains);
     const hostsLen = ObjectFns.len(selectedUuids.hosts);
@@ -463,114 +477,235 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
 
     return (
         <>
-            <h2 className={"sub-heading"}>Selection</h2>
-            <div className={"workspace-data-multi-select-table"}>
-                {domainsLen === 0
-                    ? null
-                    : [
-                          <span>Domains</span>,
-                          <span>{domainsLen}</span>,
-                          <button
-                              type={"button"}
-                              className={"button"}
-                              onClick={() => setSelectedUuids({ ...selectedUuids, domains: {} })}
-                          >
-                              Unselect all domains
-                          </button>,
-                      ]}
-                {hostsLen === 0
-                    ? null
-                    : [
-                          <span>Hosts</span>,
-                          <span>{hostsLen}</span>,
-                          <button
-                              type={"button"}
-                              className={"button"}
-                              onClick={() => setSelectedUuids({ ...selectedUuids, hosts: {} })}
-                          >
-                              Unselect all hosts
-                          </button>,
-                      ]}
-                {portsLen === 0
-                    ? null
-                    : [
-                          <span>Ports</span>,
-                          <span>{portsLen}</span>,
-                          <button
-                              type={"button"}
-                              className={"button"}
-                              onClick={() => setSelectedUuids({ ...selectedUuids, ports: {} })}
-                          >
-                              Unselect all ports
-                          </button>,
-                      ]}
-                {servicesLen === 0
-                    ? null
-                    : [
-                          <span>Services</span>,
-                          <span>{servicesLen}</span>,
-                          <button
-                              type={"button"}
-                              className={"button"}
-                              onClick={() => setSelectedUuids({ ...selectedUuids, services: {} })}
-                          >
-                              Unselect all services
-                          </button>,
-                      ]}
-                <span className={"workspace-data-multi-select-total"}>Total</span>
-                <span className={"workspace-data-multi-select-total"}>{totalLen}</span>
-                <button
-                    type={"button"}
-                    className={"button workspace-data-multi-select-total"}
-                    onClick={() => setSelectedUuids({ domains: {}, hosts: {}, ports: {}, services: {} })}
-                >
-                    Unselect all
-                </button>
+            <div className="workspace-data-pane">
+                <h2 className={"sub-heading"}>Selection</h2>
+                <div className={"workspace-data-multi-select-table"}>
+                    {domainsLen === 0
+                        ? null
+                        : [
+                              <span>Domains</span>,
+                              <span>{domainsLen}</span>,
+                              <button
+                                  type={"button"}
+                                  className={"button"}
+                                  onClick={() => setSelectedUuids({ ...selectedUuids, domains: {} })}
+                              >
+                                  Unselect all domains
+                              </button>,
+                          ]}
+                    {hostsLen === 0
+                        ? null
+                        : [
+                              <span>Hosts</span>,
+                              <span>{hostsLen}</span>,
+                              <button
+                                  type={"button"}
+                                  className={"button"}
+                                  onClick={() => setSelectedUuids({ ...selectedUuids, hosts: {} })}
+                              >
+                                  Unselect all hosts
+                              </button>,
+                          ]}
+                    {portsLen === 0
+                        ? null
+                        : [
+                              <span>Ports</span>,
+                              <span>{portsLen}</span>,
+                              <button
+                                  type={"button"}
+                                  className={"button"}
+                                  onClick={() => setSelectedUuids({ ...selectedUuids, ports: {} })}
+                              >
+                                  Unselect all ports
+                              </button>,
+                          ]}
+                    {servicesLen === 0
+                        ? null
+                        : [
+                              <span>Services</span>,
+                              <span>{servicesLen}</span>,
+                              <button
+                                  type={"button"}
+                                  className={"button"}
+                                  onClick={() => setSelectedUuids({ ...selectedUuids, services: {} })}
+                              >
+                                  Unselect all services
+                              </button>,
+                          ]}
+                    <span className={"workspace-data-multi-select-total"}>Total</span>
+                    <span className={"workspace-data-multi-select-total"}>{totalLen}</span>
+                    <button
+                        type={"button"}
+                        className={"button workspace-data-multi-select-total"}
+                        onClick={() => setSelectedUuids({ domains: {}, hosts: {}, ports: {}, services: {} })}
+                    >
+                        Unselect all
+                    </button>
+                </div>
             </div>
 
-            <h2 className={"sub-heading"}>Modify tags</h2>
-            <EditableTags workspace={workspace} tags={newTags} onChange={setNewTags} />
-            <div className={"workspace-data-multi-select-tag-buttons"}>
+            <div className="workspace-data-pane">
+                <h2 className={"sub-heading"}>Modify tags</h2>
+                <EditableTags workspace={workspace} tags={newTags} onChange={setNewTags} />
+                <div className={"workspace-data-multi-select-tag-buttons"}>
+                    <button
+                        type={"button"}
+                        className={"button"}
+                        onClick={() => {
+                            updateTags(workspace, selectedUuids, addStrategy, newTags).then(() => {
+                                toast.success("Added tags for selected items");
+                                setNewTags([]);
+                                onUpdate();
+                            });
+                        }}
+                    >
+                        Add tags
+                    </button>
+                    <button
+                        type={"button"}
+                        className={"button"}
+                        onClick={() => {
+                            updateTags(workspace, selectedUuids, overwriteStrategy, newTags).then(() => {
+                                toast.success("Overwrote tags for selected items");
+                                setNewTags([]);
+                                onUpdate();
+                            });
+                        }}
+                    >
+                        Overwrite tags
+                    </button>
+                    <button
+                        type={"button"}
+                        className={"button"}
+                        onClick={() => {
+                            updateTags(workspace, selectedUuids, removeStrategy, newTags).then(() => {
+                                toast.success("Removed tags for selected items");
+                                setNewTags([]);
+                                onUpdate();
+                            });
+                        }}
+                    >
+                        Remove tags
+                    </button>
+                </div>
+            </div>
+            <div className="workspace-data-danger-pane">
+                <h2 className={"sub-heading"}>Danger Zone</h2>
                 <button
-                    type={"button"}
-                    className={"button"}
                     onClick={() => {
-                        updateTags(workspace, selectedUuids, addStrategy, newTags).then(() => {
-                            toast.success("Added tags for selected items");
-                            setNewTags([]);
-                            onUpdate();
-                        });
+                        setDeleteData(true);
                     }}
+                    className="workspace-settings-red-button button"
                 >
-                    Add tags
-                </button>
-                <button
-                    type={"button"}
-                    className={"button"}
-                    onClick={() => {
-                        updateTags(workspace, selectedUuids, overwriteStrategy, newTags).then(() => {
-                            toast.success("Overwrote tags for selected items");
-                            setNewTags([]);
-                            onUpdate();
-                        });
-                    }}
-                >
-                    Overwrite tags
-                </button>
-                <button
-                    type={"button"}
-                    className={"button"}
-                    onClick={() => {
-                        updateTags(workspace, selectedUuids, removeStrategy, newTags).then(() => {
-                            toast.success("Removed tags for selected items");
-                            setNewTags([]);
-                            onUpdate();
-                        });
-                    }}
-                >
-                    Remove tags
+                    Delete selected data
                 </button>
             </div>
+            <Popup
+                modal={true}
+                nested={true}
+                open={deleteData}
+                onClose={() => {
+                    setDeleteData(false);
+                }}
+            >
+                <div className="pane danger">
+                    <div className="workspace-data-popup">
+                        <h2 className="sub-heading">Are you sure to delete this data?</h2>
+                        <button
+                            className="workspace-settings-red-button button"
+                            onClick={() => {
+                                setDeleteData(false);
+                            }}
+                        >
+                            No
+                        </button>
+                        <button
+                            className="workspace-settings-red-button button"
+                            onClick={() => {
+                                const promises: Array<Promise<void>> = [];
+                                let numOk = 0;
+                                let numErr = 0;
+                                let stillSelected: SelectedUuids = { domains: {}, hosts: {}, ports: {}, services: {} };
+                                if (domainsLen !== 0) {
+                                    Object.keys(selectedUuids.domains).map((u) => {
+                                        promises.push(
+                                            Api.workspaces.domains.delete(workspace, u).then((result) => {
+                                                if (result.is_err()) {
+                                                    numErr += 1;
+                                                    handleApiError(result);
+                                                    stillSelected.domains[u] = true;
+                                                } else if (result.is_ok()) {
+                                                    numOk += 1;
+                                                }
+                                            })
+                                        );
+                                    });
+                                }
+                                if (hostsLen !== 0) {
+                                    Object.keys(selectedUuids.hosts).map((u) => {
+                                        promises.push(
+                                            Api.workspaces.hosts.delete(workspace, u).then((result) => {
+                                                if (result.is_err()) {
+                                                    numErr += 1;
+                                                    handleApiError(result);
+                                                    stillSelected.hosts[u] = true;
+                                                } else if (result.is_ok()) {
+                                                    numOk += 1;
+                                                }
+                                            })
+                                        );
+                                    });
+                                }
+                                if (portsLen !== 0) {
+                                    Object.keys(selectedUuids.ports).map((u) => {
+                                        promises.push(
+                                            Api.workspaces.ports.delete(workspace, u).then((result) => {
+                                                if (result.is_err()) {
+                                                    numErr += 1;
+                                                    handleApiError(result);
+                                                    stillSelected.ports[u] = true;
+                                                } else if (result.is_ok()) {
+                                                    numOk += 1;
+                                                }
+                                            })
+                                        );
+                                    });
+                                }
+                                if (servicesLen !== 0) {
+                                    Object.keys(selectedUuids.services).map((u) => {
+                                        promises.push(
+                                            Api.workspaces.services.delete(workspace, u).then((result) => {
+                                                if (result.is_err()) {
+                                                    numErr += 1;
+                                                    handleApiError(result);
+                                                    stillSelected.services[u] = true;
+                                                } else if (result.is_ok()) {
+                                                    numOk += 1;
+                                                }
+                                            })
+                                        );
+                                    });
+                                }
+                                Promise.all(promises).then(() => {
+                                    if (numErr === 0) {
+                                        toast.success("Deleted successfully");
+                                        onDelete();
+                                        setSelectedUuids(stillSelected);
+                                        setDeleteData(false);
+                                    } else {
+                                        toast.info(`Deleted ${numOk}, failed to delete ${numErr} `);
+                                        onDelete();
+                                        setSelectedUuids(stillSelected);
+                                        setDeleteData(false);
+                                    }
+                                });
+                            }}
+                        >
+                            Yes
+                        </button>
+                    </div>
+                </div>
+            </Popup>
         </>
     );
 }
@@ -580,6 +715,7 @@ type MultiSelectButtonProps = {
     uuids: Record<string, true>;
     setUuids: (uuids: Record<string, true>) => void;
 };
+
 export function MultiSelectButton(props: MultiSelectButtonProps) {
     const { items, uuids, setUuids } = props;
     return (
@@ -624,7 +760,7 @@ export function SelectButton(props: SelectButtonProps) {
 
 type UpdateStrategy = (
     curTags: Array<SimpleTag>,
-    newTags: Array<SimpleTag>,
+    newTags: Array<SimpleTag>
 ) => { workspaceTags: Array<string>; globalTags: Array<string> };
 
 async function updateTags(workspace: string, uuids: SelectedUuids, strategy: UpdateStrategy, tags: Array<SimpleTag>) {
@@ -638,8 +774,8 @@ async function updateTags(workspace: string, uuids: SelectedUuids, strategy: Upd
                         .then(handleApiError);
                 });
                 return promise;
-            }),
-        ),
+            })
+        )
     );
     await Promise.all(
         Object.keys(uuids.hosts).map((uuid) =>
@@ -651,8 +787,8 @@ async function updateTags(workspace: string, uuids: SelectedUuids, strategy: Upd
                         .then(handleApiError);
                 });
                 return promise;
-            }),
-        ),
+            })
+        )
     );
     await Promise.all(
         Object.keys(uuids.ports).map((uuid) =>
@@ -664,8 +800,8 @@ async function updateTags(workspace: string, uuids: SelectedUuids, strategy: Upd
                         .then(handleApiError);
                 });
                 return promise;
-            }),
-        ),
+            })
+        )
     );
     await Promise.all(
         Object.keys(uuids.services).map((uuid) =>
@@ -677,20 +813,20 @@ async function updateTags(workspace: string, uuids: SelectedUuids, strategy: Upd
                         .then(handleApiError);
                 });
                 return promise;
-            }),
-        ),
+            })
+        )
     );
 }
 
 function addStrategy(curTags: Array<SimpleTag>, newTags: Array<SimpleTag>) {
     const workspaceTags = [
         ...new Set( // Use Set to eliminate duplicates
-            [...curTags, ...newTags].filter(({ tagType }) => tagType === TagType.Workspace).map(({ uuid }) => uuid),
+            [...curTags, ...newTags].filter(({ tagType }) => tagType === TagType.Workspace).map(({ uuid }) => uuid)
         ).keys(),
     ];
     const globalTags = [
         ...new Set( // Use Set to eliminate duplicates
-            [...curTags, ...newTags].filter(({ tagType }) => tagType === TagType.Global).map(({ uuid }) => uuid),
+            [...curTags, ...newTags].filter(({ tagType }) => tagType === TagType.Global).map(({ uuid }) => uuid)
         ).keys(),
     ];
     return { workspaceTags, globalTags };

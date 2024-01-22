@@ -10,14 +10,14 @@ use uuid::Uuid;
 use crate::api::extractors::SessionUser;
 use crate::api::handler::attack_results::schema::{
     FullQueryCertificateTransparencyResult, FullServiceDetectionResult, FullTestSSLResult,
-    SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
-    SimpleQueryUnhashedResult, SimpleTcpPortScanResult, TestSSLFinding,
+    FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
+    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult, TestSSLFinding,
 };
 use crate::api::handler::common::error::{ApiError, ApiResult};
 use crate::api::handler::common::schema::{
     BruteforceSubdomainsResultsPage, DnsResolutionResultsPage, HostAliveResultsPage, Page,
     PageParams, PathUuid, QueryCertificateTransparencyResultsPage, QueryUnhashedResultsPage,
-    ServiceDetectionResultsPage, TcpPortScanResultsPage,
+    ServiceDetectionResultsPage, TcpPortScanResultsPage, UdpServiceDetectionResultsPage,
 };
 use crate::api::handler::common::utils::get_page_params;
 use crate::chan::global::GLOBAL;
@@ -25,7 +25,7 @@ use crate::models::{
     Attack, BruteforceSubdomainsResult, CertificateTransparencyResult,
     CertificateTransparencyValueName, DehashedQueryResult, DnsResolutionResult, HostAliveResult,
     ServiceCertainty, ServiceDetectionName, ServiceDetectionResult, TcpPortScanResult,
-    TestSSLResultFinding, TestSSLResultHeader,
+    TestSSLResultFinding, TestSSLResultHeader, UdpServiceDetectionName, UdpServiceDetectionResult,
 };
 
 /// Retrieve a bruteforce subdomains' results by the attack's id
@@ -428,6 +428,116 @@ pub async fn get_service_detection_results(
                                 error!(
                                     "Inconsistent database: ServiceDetectionResult {uuid} has \
                                     Certainty::Definitely but multiple ServiceDetectionNames were found",
+                                    uuid = x.uuid
+                                );
+                                Err(ApiError::InternalServerError)
+                            } else {
+                                Ok(names)
+                            }
+                        })?,
+                    _ => vec![],
+                },
+                host: x.host,
+                port: x.port as u16,
+            })
+        })
+        .try_collect()
+        .await?;
+
+    tx.commit().await?;
+
+    Ok(Json(Page {
+        items,
+        limit,
+        offset,
+        total: total as u64,
+    }))
+}
+
+/// Retrieve UDP service detection results by the attack's id
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Returns attack's results", body = UdpServiceDetectionResultsPage),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid, PageParams),
+    security(("api_key" = []))
+)]
+#[get("/attacks/{uuid}/udpServiceDetectionResults")]
+pub async fn get_udp_service_detection_results(
+    path: Path<PathUuid>,
+    page_params: Query<PageParams>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<Json<UdpServiceDetectionResultsPage>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    let attack_uuid = path.uuid;
+    let (limit, offset) = get_page_params(page_params.0).await?;
+
+    if !Attack::has_access(&mut tx, attack_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    let (total,) = query!(&mut tx, (UdpServiceDetectionResult::F.uuid.count(),))
+        .condition(UdpServiceDetectionResult::F.attack.equals(attack_uuid))
+        .one()
+        .await?;
+
+    let mut names: HashMap<Uuid, Vec<String>> = HashMap::new();
+    query!(
+        &mut tx,
+        (
+            UdpServiceDetectionName::F.result,
+            UdpServiceDetectionName::F.name
+        )
+    )
+    .condition(UdpServiceDetectionName::F.result.attack.equals(attack_uuid))
+    .stream()
+    .try_for_each(|(result, name)| {
+        names.entry(*result.key()).or_default().push(name);
+        async { Ok(()) }
+    })
+    .await?;
+
+    let items = query!(&mut tx, UdpServiceDetectionResult)
+        .condition(UdpServiceDetectionResult::F.attack.equals(attack_uuid))
+        .limit(limit)
+        .offset(offset)
+        .stream()
+        .map(|x| {
+            let x = x?;
+            Ok::<_, ApiError>(FullUdpServiceDetectionResult {
+                uuid: x.uuid,
+                attack: *x.attack.key(),
+                created_at: x.created_at,
+                certainty: x.certainty,
+                service_names: match x.certainty {
+                    ServiceCertainty::MaybeVerified => names.remove(&x.uuid).ok_or_else(|| {
+                        error!(
+                            "Inconsistent database: UdpServiceDetectionResult {uuid} has \
+                            Certainty::Maybe but no UdpServiceDetectionName were found",
+                            uuid = x.uuid
+                        );
+                        ApiError::InternalServerError
+                    })?,
+                    ServiceCertainty::DefinitelyVerified => names
+                        .remove(&x.uuid)
+                        .ok_or_else(|| {
+                            error!(
+                                "Inconsistent database: UdpServiceDetectionResult {uuid} has \
+                                Certainty::Definitely but no UdpServiceDetectionName were found",
+                                uuid = x.uuid
+                            );
+                            ApiError::InternalServerError
+                        })
+                        .and_then(|names| {
+                            if names.len() > 1 {
+                                error!(
+                                    "Inconsistent database: UdpServiceDetectionResult {uuid} has \
+                                    Certainty::Definitely but multiple UdpServiceDetectionNames were found",
                                     uuid = x.uuid
                                 );
                                 Err(ApiError::InternalServerError)

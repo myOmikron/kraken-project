@@ -3,7 +3,7 @@ use std::fmt;
 use std::fmt::Write;
 
 use actix_web::web::{Json, Path};
-use actix_web::{get, post, put, HttpResponse};
+use actix_web::{delete, get, post, put, HttpResponse};
 use futures::TryStreamExt;
 use rorm::conditions::DynamicCollection;
 use rorm::db::sql::value::Value;
@@ -401,6 +401,58 @@ pub async fn update_domain(
             )
             .await;
     }
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+/// Delete the domain
+///
+/// This only deletes the aggregation. The raw results are still in place
+#[utoipa::path(
+    tag = "Domains",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Domain was deleted"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathDomain),
+    security(("api_key" = []))
+)]
+#[delete("/workspaces/{w_uuid}/domains/{d_uuid}")]
+pub async fn delete_domain(
+    path: Path<PathDomain>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let PathDomain { w_uuid, d_uuid } = path.into_inner();
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut tx, w_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    query!(&mut tx, (Domain::F.uuid,))
+        .condition(and!(
+            Domain::F.uuid.equals(d_uuid),
+            Domain::F.workspace.equals(w_uuid)
+        ))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    rorm::delete!(&mut tx, Domain)
+        // We can omit the check if the workspace is the same as we have already checked it in the query before
+        .condition(Domain::F.uuid.equals(d_uuid))
+        .await?;
+
+    tx.commit().await?;
+
+    let msg = WsMessage::DeletedDomain {
+        workspace: w_uuid,
+        domain: d_uuid,
+    };
+    GLOBAL.ws.message_workspace(w_uuid, msg).await;
 
     Ok(HttpResponse::Ok().finish())
 }

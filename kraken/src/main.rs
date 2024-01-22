@@ -178,6 +178,7 @@ async fn create_user(db: Database) -> Result<(), String> {
     stdout.flush().unwrap();
     #[allow(clippy::unwrap_used)]
     stdin.read_line(&mut display_name).unwrap();
+    let display_name = display_name.trim().to_string();
 
     #[allow(clippy::unwrap_used)]
     let password = rpassword::prompt_password("Enter password: ").unwrap();

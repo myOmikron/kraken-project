@@ -25,6 +25,7 @@ export const AttackType = {
     QueryUnhashed: 'QueryUnhashed',
     HostAlive: 'HostAlive',
     ServiceDetection: 'ServiceDetection',
+    UdpServiceDetection: 'UdpServiceDetection',
     DnsResolution: 'DnsResolution',
     UdpPortScan: 'UdpPortScan',
     ForcedBrowsing: 'ForcedBrowsing',
