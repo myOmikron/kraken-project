@@ -363,6 +363,8 @@ impl ReqAttackService for Attacks {
         let TestSslRequest {
             attack_uuid: _,
             uri,
+            ip,
+            port,
             connect_timeout,
             openssl_timeout,
             v6,
@@ -372,6 +374,8 @@ impl ReqAttackService for Attacks {
         } = request.into_inner();
         let settings = testssl::TestSSLSettings {
             uri,
+            ip: IpAddr::try_from(ip.ok_or(Status::invalid_argument("Missing ip"))?)?,
+            port: port as u16,
             connect_timeout,
             openssl_timeout,
             v6: v6.unwrap_or(false),

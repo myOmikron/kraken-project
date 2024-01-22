@@ -401,6 +401,8 @@ pub async fn testssl(
         leech_uuid,
         workspace_uuid,
         uri,
+        host,
+        port,
         connect_timeout,
         openssl_timeout,
         basic_auth,
@@ -419,6 +421,8 @@ pub async fn testssl(
         client,
         TestSSLParams {
             uri,
+            ip: host,
+            port,
             connect_timeout,
             openssl_timeout,
             basic_auth,

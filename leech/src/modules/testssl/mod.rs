@@ -1,8 +1,9 @@
 //! Holds data and code to interact with `testssl.sh`
 
 use std::io;
+use std::net::IpAddr;
 
-use log::error;
+use log::{debug, error, trace};
 use tempfile::NamedTempFile;
 use thiserror::Error;
 use tokio::fs::File as TokioFile;
@@ -17,10 +18,16 @@ pub use self::json_pretty::*;
 pub use self::mitre::categorize;
 
 /// The settings of a `testssl.sh` invocation
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct TestSSLSettings {
     /// The domain to scan
     pub uri: String,
+
+    /// The ip address to scan
+    pub ip: IpAddr,
+
+    /// The port to scan
+    pub port: u16,
 
     /// Timeout for TCP handshakes in seconds
     pub connect_timeout: Option<u64>,
@@ -39,6 +46,21 @@ pub struct TestSSLSettings {
 
     /// Which scans `testssl.sh` should run
     pub scans: TestSSLScans,
+}
+impl Default for TestSSLSettings {
+    fn default() -> Self {
+        Self {
+            uri: "localhost".to_string(),
+            ip: IpAddr::from([127, 0, 0, 1]),
+            port: 443,
+            connect_timeout: None,
+            openssl_timeout: None,
+            v6: true,
+            basic_auth: None,
+            starttls: None,
+            scans: TestSSLScans::default(),
+        }
+    }
 }
 
 /// Protocols to select from when using `--starttls`
@@ -112,6 +134,8 @@ pub enum TestSSLScans {
 pub async fn run_testssl(settings: TestSSLSettings) -> Result<json_pretty::File, TestSSLError> {
     let TestSSLSettings {
         uri,
+        ip,
+        port,
         connect_timeout,
         openssl_timeout,
         v6,
@@ -220,7 +244,12 @@ pub async fn run_testssl(settings: TestSSLSettings) -> Result<json_pretty::File,
         }
     }
 
-    let output = cmd.arg(&uri).output().await?;
+    let cmd = cmd
+        .arg("--ip")
+        .arg(ip.to_string())
+        .arg(format!("{uri}:{port}"));
+    debug!("Starting testssl: {cmd:?}");
+    let output = cmd.output().await?;
 
     if output.status.success() {
         let mut json_output = Vec::new();
@@ -233,8 +262,17 @@ pub async fn run_testssl(settings: TestSSLSettings) -> Result<json_pretty::File,
             output
                 .status
                 .code()
-                .expect("None should have send this process a signal")
+                .expect("No one should have send this process a signal")
         );
+        trace!(
+            "Testssl's stdout: \n{}",
+            String::from_utf8_lossy(&output.stdout)
+        );
+        trace!(
+            "Testssl's stderr: \n{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+
         Err(TestSSLError::NonZeroExitStatus)
     }
 }

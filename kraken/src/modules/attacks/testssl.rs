@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use ipnetwork::IpNetwork;
+use kraken_proto::shared::Address;
 use kraken_proto::{
     test_ssl_scans, test_ssl_service, BasicAuth, StartTlsProtocol, TestSslRequest, TestSslResponse,
     TestSslScanResult, TestSslScans,
@@ -29,6 +30,8 @@ impl AttackContext {
         let request = TestSslRequest {
             attack_uuid: self.attack_uuid.to_string(),
             uri: params.uri,
+            ip: Some(Address::from(params.ip)),
+            port: params.port as u32,
             connect_timeout: params.connect_timeout,
             openssl_timeout: params.openssl_timeout,
             v6: Some(true),

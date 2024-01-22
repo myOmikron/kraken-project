@@ -204,20 +204,24 @@ message DnsResolutionResponse {
 message TestSSLRequest {
   // A unique id that identifier the attack
   string attack_uuid = 1;
-  // The domain to scan
+  // The domain used for SNI and cert validity check
   string uri = 2;
+  // The ip address to scan
+  shared.Address ip = 3;
+  // The port to scan
+  uint32 port = 4;
   // Timeout for TCP handshakes in seconds
-  optional uint64 connect_timeout = 3;
+  optional uint64 connect_timeout = 5;
   // Timeout for `openssl` connections in seconds
-  optional uint64 openssl_timeout = 4;
+  optional uint64 openssl_timeout = 6;
   // Enable ip v6
-  optional bool v6 = 5;
+  optional bool v6 = 7;
   // Set the `BASICAUTH` header when checking http headers
-  optional BasicAuth basic_auth = 6;
+  optional BasicAuth basic_auth = 8;
   // Run against a STARTTLS enabled protocol
-  optional StartTLSProtocol starttls = 7;
+  optional StartTLSProtocol starttls = 9;
   // Which scans `testssl.sh` should run
-  optional TestSSLScans scans = 8;
+  optional TestSSLScans scans = 10;
 }
 
 // The `BASICAUTH` header

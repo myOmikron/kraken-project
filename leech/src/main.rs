@@ -182,6 +182,13 @@ pub enum RunCommand {
     TestSSL {
         /// Domain to scan
         uri: String,
+
+        /// The ip address to scan
+        ip: IpAddr,
+
+        /// The port to scan
+        #[clap(default_value_t = 443)]
+        port: u16,
     },
 }
 
@@ -535,9 +542,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         .await;
                         println!("{result:?}");
                     }
-                    RunCommand::TestSSL { uri } => {
+                    RunCommand::TestSSL { uri, ip, port } => {
                         let json = testssl::run_testssl(TestSSLSettings {
                             uri,
+                            ip,
+                            port,
                             ..Default::default()
                         })
                         .await?;

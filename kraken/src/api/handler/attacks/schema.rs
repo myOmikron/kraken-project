@@ -217,6 +217,13 @@ pub struct TestSSLRequest {
     /// The domain to scan
     pub uri: String,
 
+    /// The host to scan
+    #[schema(value_type = String)]
+    pub host: IpAddr,
+
+    /// The port to scan
+    pub port: u16,
+
     /// Timeout for TCP handshakes in seconds
     pub connect_timeout: Option<u64>,
 

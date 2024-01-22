@@ -265,8 +265,14 @@ pub async fn start_tcp_port_scan(
 
 /// The parameters of a "testssl" attack
 pub struct TestSSLParams {
-    /// The domain to scan
+    /// The domain to use for sni and cert validation
     pub uri: String,
+
+    /// The ip to scan
+    pub ip: IpAddr,
+
+    /// The port to scan
+    pub port: u16,
 
     /// Timeout for TCP handshakes in seconds
     pub connect_timeout: Option<u64>,

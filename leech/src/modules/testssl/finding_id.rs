@@ -259,7 +259,7 @@ pub enum Vulnerabilities {
     Beast,
     BeastSsl3,
     BeastTls1,
-    Lucky32,
+    Lucky13,
     Rc4,
     Grease,
 }
@@ -508,7 +508,7 @@ impl From<&str> for FindingId {
             "BEAST" => v(Vulnerabilities::Beast),
             "BEAST_CBC_SSL3" => v(Vulnerabilities::BeastSsl3),
             "BEAST_CBC_TLS1" => v(Vulnerabilities::BeastTls1),
-            "LUCKY13" => v(Vulnerabilities::Lucky32),
+            "LUCKY13" => v(Vulnerabilities::Lucky13),
             "RC4" => v(Vulnerabilities::Rc4),
             "GREASE" => v(Vulnerabilities::Grease),
             "ROBOT" => v(Vulnerabilities::Robot),
