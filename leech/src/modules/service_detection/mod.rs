@@ -148,7 +148,7 @@ impl DetectServiceSettings {
     ///
     /// Errors when an unrecoverable error occurred.
     /// Returns `Ok(None)` when the service refused to respond to the payload.
-    async fn probe_tcp(&self, payload: &[u8]) -> DynResult<Option<Vec<u8>>> {
+    pub async fn probe_tcp(&self, payload: &[u8]) -> DynResult<Option<Vec<u8>>> {
         match self.raw_probe_tcp(payload).await {
             Ok(data) => Ok(Some(data)),
             Err(error) => match error.kind() {
@@ -197,7 +197,7 @@ impl DetectServiceSettings {
     /// 2. Send `payload`
     /// 3. Wait for the configured amount of time
     /// 4. Return everything which has been received
-    async fn probe_tls(
+    pub async fn probe_tls(
         &self,
         payload: &[u8],
         alpn: Option<&str>,
