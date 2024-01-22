@@ -22,9 +22,13 @@ import { handleApiError, ObjectFns } from "../../utils/helper";
 import Checkbox from "../../components/checkbox";
 import EditableTags from "./components/editable-tags";
 import { toast } from "react-toastify";
+import promise = toast.promise;
+import { Toast } from "react-toastify/dist/components";
+import { ApiError } from "../../api/error";
+import { Result } from "../../utils/result";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
-const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations" };
+const DETAILS_TAB = { general: "General", results: "Results", results2: "Results2", relations: "Relations" };
 type SelectedUuids = { [Key in keyof typeof TABS]: Record<string, true> };
 
 type WorkspaceDataProps = {};
@@ -423,6 +427,13 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 if (!ObjectFns.isEmpty(selectedUuids.ports)) portsTable.reload();
                                 if (!ObjectFns.isEmpty(selectedUuids.services)) servicesTable.reload();
                             }}
+                            onDelete={() => {
+                                domainsTable.reload();
+                                hostsTable.reload();
+                                portsTable.reload();
+                                servicesTable.reload();
+                                setSelected(null);
+                            }}
                         />
                     )}
                 </div>
@@ -446,9 +457,10 @@ type MultiSelectMenuProps = {
     selectedUuids: SelectedUuids;
     setSelectedUuids: React.Dispatch<React.SetStateAction<SelectedUuids>>;
     onUpdate: () => void;
+    onDelete: () => void;
 };
 export function MultiSelectMenu(props: MultiSelectMenuProps) {
-    const { selectedUuids, setSelectedUuids, onUpdate } = props;
+    const { selectedUuids, setSelectedUuids, onUpdate, onDelete } = props;
     const {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
@@ -606,7 +618,90 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                         >
                             No
                         </button>
-                        <button className="workspace-settings-red-button button">Yes</button>
+                        <button
+                            className="workspace-settings-red-button button"
+                            onClick={() => {
+                                const promises: Array<Promise<void>> = [];
+                                let numOk = 0;
+                                let numErr = 0;
+                                let stillSelected: SelectedUuids = { domains: {}, hosts: {}, ports: {}, services: {} };
+                                if (domainsLen !== 0) {
+                                    Object.keys(selectedUuids.domains).map((u) => {
+                                        promises.push(
+                                            Api.workspaces.domains.delete(workspace, u).then((result) => {
+                                                if (result.is_err()) {
+                                                    numErr += 1;
+                                                    handleApiError(result);
+                                                    stillSelected.domains[u] = true;
+                                                } else if (result.is_ok()) {
+                                                    numOk += 1;
+                                                }
+                                            })
+                                        );
+                                    });
+                                }
+                                if (hostsLen !== 0) {
+                                    Object.keys(selectedUuids.hosts).map((u) => {
+                                        promises.push(
+                                            Api.workspaces.hosts.delete(workspace, u).then((result) => {
+                                                if (result.is_err()) {
+                                                    numErr += 1;
+                                                    handleApiError(result);
+                                                    stillSelected.hosts[u] = true;
+                                                } else if (result.is_ok()) {
+                                                    numOk += 1;
+                                                }
+                                            })
+                                        );
+                                    });
+                                }
+                                if (portsLen !== 0) {
+                                    Object.keys(selectedUuids.ports).map((u) => {
+                                        promises.push(
+                                            Api.workspaces.ports.delete(workspace, u).then((result) => {
+                                                if (result.is_err()) {
+                                                    numErr += 1;
+                                                    handleApiError(result);
+                                                    stillSelected.ports[u] = true;
+                                                } else if (result.is_ok()) {
+                                                    numOk += 1;
+                                                }
+                                            })
+                                        );
+                                    });
+                                }
+                                if (servicesLen !== 0) {
+                                    Object.keys(selectedUuids.services).map((u) => {
+                                        promises.push(
+                                            Api.workspaces.services.delete(workspace, u).then((result) => {
+                                                if (result.is_err()) {
+                                                    numErr += 1;
+                                                    handleApiError(result);
+                                                    stillSelected.services[u] = true;
+                                                } else if (result.is_ok()) {
+                                                    numOk += 1;
+                                                }
+                                            })
+                                        );
+                                    });
+                                }
+                                Promise.all(promises).then(() => {
+                                    if (numErr === 0) {
+                                        toast.success("Deleted successfully");
+                                        onDelete();
+                                        setSelectedUuids(stillSelected);
+                                        setDeleteData(false);
+                                    } else {
+                                        toast.info(`Deleted ${numOk}, failed to delete ${numErr} `);
+                                        onDelete();
+                                        setSelectedUuids(stillSelected);
+                                        setDeleteData(false);
+                                    }
+                                });
+                            }}
+                        >
+                            Yes
+                        </button>
                     </div>
                 </div>
             </Popup>
