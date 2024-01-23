@@ -112,7 +112,7 @@ impl Display for ModelType {
                 write!(f, "{}", models::DnsRecordResult::TABLE)
             }
             ModelType::DnsTxtScanResult => {
-                write!(f, "{}", models::DnsTxtScanResult::TABLE)
+                write!(f, "{}", models::DnsTxtScanAttackResult::TABLE)
             }
             ModelType::TcpPortScanResult => {
                 write!(f, "{}", models::TcpPortScanResult::TABLE)

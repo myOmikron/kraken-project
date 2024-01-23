@@ -13,18 +13,19 @@ use crate::api::handler::aggregation_source::schema::{
     FullAggregationSource, ManualInsert, SimpleAggregationSource, SourceAttack, SourceAttackResult,
 };
 use crate::api::handler::attack_results::schema::{
-    FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
-    FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
-    SimpleDnsTxtScanResult, SimpleHostAliveResult, SimpleQueryUnhashedResult,
+    DnsTxtScanEntry, FullDnsTxtScanResult, FullQueryCertificateTransparencyResult,
+    FullServiceDetectionResult, FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult,
+    SimpleDnsResolutionResult, SimpleHostAliveResult, SimpleQueryUnhashedResult,
     SimpleTcpPortScanResult,
 };
 use crate::api::handler::users::schema::SimpleUser;
 use crate::models::{
     AggregationSource, AggregationTable, Attack, AttackType, BruteforceSubdomainsResult,
     CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
-    DnsResolutionResult, DnsTxtScanResult, HostAliveResult, ManualDomain, ManualHost, ManualPort,
-    ManualService, ServiceDetectionName, ServiceDetectionResult, SourceType, TcpPortScanResult,
-    UdpServiceDetectionName, UdpServiceDetectionResult,
+    DnsResolutionResult, DnsTxtScanAttackResult, DnsTxtScanServiceHintEntry, DnsTxtScanSpfEntry,
+    HostAliveResult, ManualDomain, ManualHost, ManualPort, ManualService, ServiceDetectionName,
+    ServiceDetectionResult, SourceType, TcpPortScanResult, UdpServiceDetectionName,
+    UdpServiceDetectionResult,
 };
 
 fn field_in<'a, T, F, P, Any>(
@@ -168,7 +169,7 @@ impl FullAggregationSource {
         let mut service_detection: Results<FullServiceDetectionResult> = Results::new();
         let mut udp_service_detection: Results<FullUdpServiceDetectionResult> = Results::new();
         let mut dns_resolution: Results<SimpleDnsResolutionResult> = Results::new();
-        let mut dns_txt_scan: Results<SimpleDnsTxtScanResult> = Results::new();
+        let mut dns_txt_scan: Results<FullDnsTxtScanResult> = Results::new();
         let mut manual_insert = Vec::new();
         for (source_type, uuids) in sources {
             if uuids.is_empty() {
@@ -382,22 +383,52 @@ impl FullAggregationSource {
                     }
                 }
                 SourceType::DnsTxtScan => {
-                    let mut stream = query!(&mut *tx, DnsTxtScanResult)
-                        .condition(field_in(DnsTxtScanResult::F.uuid, uuids))
+                    let service_hints = query!(&mut *tx, DnsTxtScanServiceHintEntry)
+                        .condition(field_in(
+                            DnsTxtScanServiceHintEntry::F.collection,
+                            uuids.clone(),
+                        ))
+                        .all()
+                        .await?;
+                    let spf = query!(&mut *tx, DnsTxtScanSpfEntry)
+                        .condition(field_in(DnsTxtScanSpfEntry::F.collection, uuids.clone()))
+                        .all()
+                        .await?;
+                    let mut stream = query!(&mut *tx, DnsTxtScanAttackResult)
+                        .condition(field_in(DnsTxtScanAttackResult::F.uuid, uuids.clone()))
                         .stream();
                     while let Some(result) = stream.try_next().await? {
                         dns_txt_scan.entry(*result.attack.key()).or_default().push(
-                            SimpleDnsTxtScanResult {
+                            FullDnsTxtScanResult {
                                 uuid: result.uuid,
                                 attack: *result.attack.key(),
                                 domain: result.domain,
-                                rule: result.rule,
-                                txt_type: result.txt_type,
-                                spf_ip: result.spf_ip,
-                                spf_domain: result.spf_domain,
-                                spf_domain_ipv4_cidr: result.spf_domain_ipv4_cidr,
-                                spf_domain_ipv6_cidr: result.spf_domain_ipv6_cidr,
                                 created_at: result.created_at,
+                                collection_type: result.collection_type,
+                                entries: service_hints
+                                    .iter()
+                                    .filter(|s| *s.collection.key() == result.uuid)
+                                    .map(|s| DnsTxtScanEntry::ServiceHint {
+                                        created_at: s.created_at,
+                                        uuid: s.uuid,
+                                        txt_type: s.txt_type,
+                                        rule: s.rule.clone(),
+                                    })
+                                    .chain(
+                                        spf.iter()
+                                            .filter(|s| *s.collection.key() == result.uuid)
+                                            .map(|s| DnsTxtScanEntry::Spf {
+                                                created_at: s.created_at,
+                                                uuid: s.uuid,
+                                                rule: s.rule.clone(),
+                                                spf_type: s.spf_type,
+                                                spf_ip: s.spf_ip,
+                                                spf_domain: s.spf_domain.clone(),
+                                                spf_domain_ipv4_cidr: s.spf_domain_ipv4_cidr,
+                                                spf_domain_ipv6_cidr: s.spf_domain_ipv6_cidr,
+                                            }),
+                                    )
+                                    .collect(),
                             },
                         );
                     }

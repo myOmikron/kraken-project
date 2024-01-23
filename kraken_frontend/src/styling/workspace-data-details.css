@@ -18,13 +18,30 @@
 }
 
 .workspace-data-details-pane{
+    --pane-padding: 2em;
+    --neg-pane-padding: -2em; /* this must be minus the above! */
+
     display: flex;
-    padding: 2em;
+    padding: var(--pane-padding);
     flex-direction: column;
     border-radius: 0.5em;
     border: 1px solid var(--primary-op);
     background-color: #00ccff10 ;
     gap: 0.5em;
+}
+
+.workspace-data-details-pane.wide {
+    grid-column: 1 / span 2;
+}
+
+.workspace-data-details-pane hr {
+    width: 100%;
+    height: 1px;
+    border: none;
+    background-color: var(--primary-op);
+    margin: 0.5em 0;
+    margin-left: var(--neg-pane-padding);
+    padding: 0 var(--pane-padding);
 }
 
 .workspace-data-details-container{

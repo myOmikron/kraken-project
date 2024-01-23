@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleDnsTxtScanResult } from './SimpleDnsTxtScanResult';
+import type { FullDnsTxtScanResult } from './FullDnsTxtScanResult';
 import {
-    SimpleDnsTxtScanResultFromJSON,
-    SimpleDnsTxtScanResultFromJSONTyped,
-    SimpleDnsTxtScanResultToJSON,
-} from './SimpleDnsTxtScanResult';
+    FullDnsTxtScanResultFromJSON,
+    FullDnsTxtScanResultFromJSONTyped,
+    FullDnsTxtScanResultToJSON,
+} from './FullDnsTxtScanResult';
 
 /**
  * Response containing paginated data
@@ -28,10 +28,10 @@ import {
 export interface DnsTxtScanResultsPage {
     /**
      * The page's items
-     * @type {Array<SimpleDnsTxtScanResult>}
+     * @type {Array<FullDnsTxtScanResult>}
      * @memberof DnsTxtScanResultsPage
      */
-    items: Array<SimpleDnsTxtScanResult>;
+    items: Array<FullDnsTxtScanResult>;
     /**
      * The limit this page was retrieved with
      * @type {number}
@@ -75,7 +75,7 @@ export function DnsTxtScanResultsPageFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'items': ((json['items'] as Array<any>).map(SimpleDnsTxtScanResultFromJSON)),
+        'items': ((json['items'] as Array<any>).map(FullDnsTxtScanResultFromJSON)),
         'limit': json['limit'],
         'offset': json['offset'],
         'total': json['total'],
@@ -91,7 +91,7 @@ export function DnsTxtScanResultsPageToJSON(value?: DnsTxtScanResultsPage | null
     }
     return {
         
-        'items': ((value.items as Array<any>).map(SimpleDnsTxtScanResultToJSON)),
+        'items': ((value.items as Array<any>).map(FullDnsTxtScanResultToJSON)),
         'limit': value.limit,
         'offset': value.offset,
         'total': value.total,

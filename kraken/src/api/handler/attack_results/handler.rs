@@ -9,9 +9,9 @@ use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::attack_results::schema::{
-    FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
-    FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
-    SimpleDnsTxtScanResult, SimpleHostAliveResult, SimpleQueryUnhashedResult,
+    DnsTxtScanEntry, FullDnsTxtScanResult, FullQueryCertificateTransparencyResult,
+    FullServiceDetectionResult, FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult,
+    SimpleDnsResolutionResult, SimpleHostAliveResult, SimpleQueryUnhashedResult,
     SimpleTcpPortScanResult,
 };
 use crate::api::handler::common::error::{ApiError, ApiResult};
@@ -25,9 +25,10 @@ use crate::api::handler::common::utils::get_page_params;
 use crate::chan::global::GLOBAL;
 use crate::models::{
     Attack, BruteforceSubdomainsResult, CertificateTransparencyResult,
-    CertificateTransparencyValueName, DehashedQueryResult, DnsResolutionResult, DnsTxtScanResult,
-    HostAliveResult, ServiceCertainty, ServiceDetectionName, ServiceDetectionResult,
-    TcpPortScanResult, UdpServiceDetectionName, UdpServiceDetectionResult,
+    CertificateTransparencyValueName, DehashedQueryResult, DnsResolutionResult,
+    DnsTxtScanAttackResult, DnsTxtScanServiceHintEntry, DnsTxtScanSpfEntry, HostAliveResult,
+    ServiceCertainty, ServiceDetectionName, ServiceDetectionResult, TcpPortScanResult,
+    UdpServiceDetectionName, UdpServiceDetectionResult,
 };
 
 /// Retrieve a bruteforce subdomains' results by the attack's id
@@ -651,30 +652,61 @@ pub async fn get_dns_txt_scan_results(
         return Err(ApiError::MissingPrivileges);
     }
 
-    let (total,) = query!(&mut tx, (DnsTxtScanResult::F.uuid.count(),))
-        .condition(DnsTxtScanResult::F.attack.equals(attack_uuid))
+    let (total,) = query!(&mut tx, (DnsTxtScanAttackResult::F.uuid.count(),))
+        .condition(DnsTxtScanAttackResult::F.attack.equals(attack_uuid))
         .one()
         .await?;
 
-    let items = query!(&mut tx, DnsTxtScanResult)
-        .condition(DnsTxtScanResult::F.attack.equals(attack_uuid))
+    let mut items: Vec<FullDnsTxtScanResult> = query!(&mut tx, DnsTxtScanAttackResult)
+        .condition(DnsTxtScanAttackResult::F.attack.equals(attack_uuid))
         .limit(limit)
         .offset(offset)
+        // TODO: aggregate / join with ServiceHint and Spf entries
         .stream()
-        .map_ok(|x| SimpleDnsTxtScanResult {
+        .map_ok(|x| FullDnsTxtScanResult {
             uuid: x.uuid,
             attack: *x.attack.key(),
             domain: x.domain,
-            rule: x.rule,
-            txt_type: x.txt_type,
-            spf_ip: x.spf_ip,
-            spf_domain: x.spf_domain,
-            spf_domain_ipv4_cidr: x.spf_domain_ipv4_cidr,
-            spf_domain_ipv6_cidr: x.spf_domain_ipv6_cidr,
             created_at: x.created_at,
+            collection_type: x.collection_type,
+            entries: vec![],
         })
         .try_collect()
         .await?;
+
+    // TODO: this could probably be better represented using a JOIN
+
+    for item in items.iter_mut() {
+        let uuid = item.uuid.clone();
+        let entries1: Vec<DnsTxtScanEntry> = query!(&mut tx, DnsTxtScanServiceHintEntry)
+            .condition(DnsTxtScanServiceHintEntry::F.collection.equals(uuid))
+            .stream()
+            .map_ok(|s| DnsTxtScanEntry::ServiceHint {
+                uuid: s.uuid,
+                created_at: s.created_at,
+                rule: s.rule,
+                txt_type: s.txt_type,
+            })
+            .try_collect()
+            .await?;
+        let entries2: Vec<DnsTxtScanEntry> = query!(&mut tx, DnsTxtScanSpfEntry)
+            .condition(DnsTxtScanSpfEntry::F.collection.equals(uuid))
+            .stream()
+            .map_ok(|s| DnsTxtScanEntry::Spf {
+                uuid: s.uuid,
+                created_at: s.created_at,
+                rule: s.rule,
+                spf_type: s.spf_type,
+                spf_ip: s.spf_ip,
+                spf_domain: s.spf_domain,
+                spf_domain_ipv4_cidr: s.spf_domain_ipv4_cidr,
+                spf_domain_ipv6_cidr: s.spf_domain_ipv6_cidr,
+            })
+            .try_collect()
+            .await?;
+
+        item.entries = [entries1, entries2].concat();
+    }
 
     tx.commit().await?;
 

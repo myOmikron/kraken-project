@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleDnsTxtScanResult } from './SimpleDnsTxtScanResult';
+import type { FullDnsTxtScanResult } from './FullDnsTxtScanResult';
 import {
-    SimpleDnsTxtScanResultFromJSON,
-    SimpleDnsTxtScanResultFromJSONTyped,
-    SimpleDnsTxtScanResultToJSON,
-} from './SimpleDnsTxtScanResult';
+    FullDnsTxtScanResultFromJSON,
+    FullDnsTxtScanResultFromJSONTyped,
+    FullDnsTxtScanResultToJSON,
+} from './FullDnsTxtScanResult';
 
 /**
  * 
@@ -34,10 +34,10 @@ export interface SourceAttackResultOneOf8 {
     attackType: SourceAttackResultOneOf8AttackTypeEnum;
     /**
      * The [`AttackType::DnsTxtScan`] and its results
-     * @type {Array<SimpleDnsTxtScanResult>}
+     * @type {Array<FullDnsTxtScanResult>}
      * @memberof SourceAttackResultOneOf8
      */
-    results: Array<SimpleDnsTxtScanResult>;
+    results: Array<FullDnsTxtScanResult>;
 }
 
 
@@ -72,7 +72,7 @@ export function SourceAttackResultOneOf8FromJSONTyped(json: any, ignoreDiscrimin
     return {
         
         'attackType': json['attack_type'],
-        'results': ((json['results'] as Array<any>).map(SimpleDnsTxtScanResultFromJSON)),
+        'results': ((json['results'] as Array<any>).map(FullDnsTxtScanResultFromJSON)),
     };
 }
 
@@ -86,7 +86,7 @@ export function SourceAttackResultOneOf8ToJSON(value?: SourceAttackResultOneOf8 
     return {
         
         'attack_type': value.attackType,
-        'results': ((value.results as Array<any>).map(SimpleDnsTxtScanResultToJSON)),
+        'results': ((value.results as Array<any>).map(FullDnsTxtScanResultToJSON)),
     };
 }
 
