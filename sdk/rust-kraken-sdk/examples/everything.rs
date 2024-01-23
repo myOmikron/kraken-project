@@ -1,7 +1,10 @@
 use std::env;
 
+use kraken::chan::ws_manager::schema::WsMessage;
 use kraken_sdk::KrakenClient;
 use reqwest::Url;
+use tokio::sync::mpsc;
+use tokio::sync::mpsc::Receiver;
 
 const USERNAME: &str = "omikron";
 const PASSWORD: &str = "Hallo-123";
@@ -13,11 +16,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     env_logger::init();
 
+    let (tx, rx) = mpsc::channel(1);
+    tokio::spawn(async move { handle_ws_msg(rx) });
+
     let client = KrakenClient::new(
         Url::parse("https://kraken.test").unwrap(),
         USERNAME.to_string(),
         PASSWORD.to_string(),
-        None,
+        Some(tx),
         true,
     )?;
     client.login().await?;
@@ -31,4 +37,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+async fn handle_ws_msg(mut rx: Receiver<WsMessage>) {
+    while let Some(msg) = rx.recv().await {
+        println!("{msg:?}")
+    }
 }
