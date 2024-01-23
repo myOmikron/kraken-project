@@ -78,7 +78,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/services/{service}"))
             .expect("Valid Url");
 
-        Ok(self.make_request(KrakenRequest::get(url).build()).await?)
+        self.make_request(KrakenRequest::get(url).build()).await
     }
 
     /// Update a service
