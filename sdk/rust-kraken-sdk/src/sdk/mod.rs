@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
+use kraken::chan::ws_manager::schema::WsMessage;
 use reqwest::cookie::Jar;
 use reqwest::{ClientBuilder, Url};
+use tokio::sync::mpsc::Sender;
 
 use crate::error::KrakenError;
 
@@ -15,6 +17,7 @@ mod services;
 mod utils;
 mod wordlists;
 mod workspaces;
+mod ws;
 
 /// The result that is used throughout the API
 pub type KrakenResult<T> = Result<T, KrakenError>;
@@ -26,6 +29,8 @@ pub struct KrakenClient {
     jar: Arc<Jar>,
     client: reqwest::Client,
     base_url: Url,
+    do_not_verify_certs: bool,
+    user_ws_tx: Option<Sender<WsMessage>>,
 }
 
 impl KrakenClient {
@@ -34,6 +39,7 @@ impl KrakenClient {
         base_url: Url,
         username: String,
         password: String,
+        ws_tx: Option<Sender<WsMessage>>,
         do_not_verify_certs: bool,
     ) -> Result<Self, KrakenError> {
         let jar = Arc::new(Jar::default());
@@ -47,6 +53,8 @@ impl KrakenClient {
             client: client.build()?,
             username,
             password,
+            do_not_verify_certs,
+            user_ws_tx: ws_tx,
         })
     }
 }

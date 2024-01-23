@@ -31,6 +31,9 @@ impl KrakenClient {
         .await?;
 
         info!("Logged in successfully");
+        info!("Starting websocket");
+        self.start_ws().await?;
+        info!("Websocket started");
 
         Ok(())
     }

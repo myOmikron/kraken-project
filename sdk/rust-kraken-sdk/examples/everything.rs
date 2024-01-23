@@ -17,6 +17,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Url::parse("https://kraken.test").unwrap(),
         USERNAME.to_string(),
         PASSWORD.to_string(),
+        None,
         true,
     )?;
     client.login().await?;
