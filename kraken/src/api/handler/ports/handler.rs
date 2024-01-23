@@ -141,7 +141,7 @@ pub async fn get_all_ports(
                 comment,
                 host: SimpleHost {
                     uuid: host.uuid,
-                    ip_addr: host.ip_addr.ip().to_string(),
+                    ip_addr: host.ip_addr.ip(),
                     os_type: host.os_type,
                     response_time: host.response_time,
                     certainty: host.certainty,
@@ -249,7 +249,7 @@ pub async fn get_port(
         protocol: port.protocol,
         host: SimpleHost {
             uuid: host.uuid,
-            ip_addr: host.ip_addr.ip().to_string(),
+            ip_addr: host.ip_addr.ip(),
             os_type: host.os_type,
             response_time: host.response_time,
             certainty: host.certainty,
@@ -558,7 +558,7 @@ pub async fn get_port_relations(path: Path<PathPort>) -> ApiResult<Json<PortRela
     Ok(Json(PortRelations {
         host: SimpleHost {
             uuid: host.uuid,
-            ip_addr: host.ip_addr.ip().to_string(),
+            ip_addr: host.ip_addr.ip(),
             response_time: host.response_time,
             certainty: host.certainty,
             os_type: host.os_type,

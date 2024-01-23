@@ -481,7 +481,7 @@ impl FullAggregationSource {
                         stream.try_next().await?
                     {
                         manual_insert.push(ManualInsert::Host {
-                            ip_addr: ip_addr.ip().to_string(),
+                            ip_addr: ip_addr.ip(),
                             os_type,
                             certainty,
                             user,

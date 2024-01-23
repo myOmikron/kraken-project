@@ -10,7 +10,7 @@ use crate::api::handler::workspace_tags::schema::{
     UpdateWorkspaceTag,
 };
 use crate::chan::global::GLOBAL;
-use crate::models::{GlobalTag, Workspace, WorkspaceTag};
+use crate::models::{Workspace, WorkspaceTag};
 
 /// Create a workspace tag.
 #[utoipa::path(

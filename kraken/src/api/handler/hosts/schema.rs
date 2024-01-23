@@ -1,3 +1,5 @@
+use std::net::IpAddr;
+
 use chrono::{DateTime, Utc};
 use ipnetwork::IpNetwork;
 use serde::{Deserialize, Serialize};
@@ -53,8 +55,8 @@ pub struct SimpleHost {
     /// The primary key of the host
     pub uuid: Uuid,
     /// The ip address of the host
-    #[schema(example = "172.0.0.1")]
-    pub ip_addr: String,
+    #[schema(value_type = String, example = "172.0.0.1")]
+    pub ip_addr: IpAddr,
     /// The type of OS
     pub os_type: OsType,
     /// Response time in ms
@@ -75,8 +77,8 @@ pub struct FullHost {
     /// The primary key of the host
     pub uuid: Uuid,
     /// The ip address of the host
-    #[schema(example = "172.0.0.1")]
-    pub ip_addr: String,
+    #[schema(value_type = String, example = "172.0.0.1")]
+    pub ip_addr: IpAddr,
     /// The type of OS
     pub os_type: OsType,
     /// Response time in ms

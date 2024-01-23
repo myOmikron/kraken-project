@@ -728,7 +728,7 @@ pub async fn get_search_results(
                     os_type: data.os_type,
                     response_time: data.response_time,
                     certainty: data.certainty,
-                    ip_addr: data.ip_addr.to_string(),
+                    ip_addr: data.ip_addr.ip(),
                     created_at: data.created_at,
                 })
             }

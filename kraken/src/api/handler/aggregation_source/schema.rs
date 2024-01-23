@@ -1,3 +1,5 @@
+use std::net::IpAddr;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -119,8 +121,8 @@ pub enum ManualInsert {
     /// A manually inserted host
     Host {
         /// The host's ip address
-        #[schema(example = "172.0.0.1")]
-        ip_addr: String,
+        #[schema(value_type = String, example = "172.0.0.1")]
+        ip_addr: IpAddr,
         /// The host's os type
         os_type: OsType,
         /// The inserted data's certainty

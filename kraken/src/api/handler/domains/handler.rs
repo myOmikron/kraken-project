@@ -559,7 +559,7 @@ pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<Doma
             })
             .push(SimpleHost {
                 uuid: h.uuid,
-                ip_addr: h.ip_addr.ip().to_string(),
+                ip_addr: h.ip_addr.ip(),
                 os_type: h.os_type,
                 comment: h.comment,
                 response_time: h.response_time,

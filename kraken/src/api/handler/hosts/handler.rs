@@ -128,7 +128,7 @@ pub(crate) async fn get_all_hosts(
             .into_iter()
             .map(|x| FullHost {
                 uuid: x.uuid,
-                ip_addr: x.ip_addr.ip().to_string(),
+                ip_addr: x.ip_addr.ip(),
                 comment: x.comment,
                 response_time: x.response_time,
                 certainty: x.certainty,
@@ -219,7 +219,7 @@ pub async fn get_host(
 
     Ok(Json(FullHost {
         uuid: host.uuid,
-        ip_addr: host.ip_addr.ip().to_string(),
+        ip_addr: host.ip_addr.ip(),
         workspace: *host.workspace.key(),
         os_type: host.os_type,
         comment: host.comment,

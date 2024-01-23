@@ -176,7 +176,7 @@ pub async fn get_all_services(
                     comment,
                     host: SimpleHost {
                         uuid: host.uuid,
-                        ip_addr: host.ip_addr.ip().to_string(),
+                        ip_addr: host.ip_addr.ip(),
                         os_type: host.os_type,
                         response_time: host.response_time,
                         certainty: host.certainty,
@@ -303,7 +303,7 @@ pub async fn get_service(
         certainty: service.certainty,
         host: SimpleHost {
             uuid: host.uuid,
-            ip_addr: host.ip_addr.ip().to_string(),
+            ip_addr: host.ip_addr.ip(),
             os_type: host.os_type,
             response_time: host.response_time,
             certainty: host.certainty,
@@ -629,7 +629,7 @@ pub async fn get_service_relations(path: Path<PathService>) -> ApiResult<Json<Se
     Ok(Json(ServiceRelations {
         host: SimpleHost {
             uuid: host.uuid,
-            ip_addr: host.ip_addr.ip().to_string(),
+            ip_addr: host.ip_addr.ip(),
             os_type: host.os_type,
             response_time: host.response_time,
             certainty: host.certainty,
