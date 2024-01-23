@@ -5,6 +5,8 @@
 #![warn(clippy::unwrap_used, clippy::expect_used, missing_docs)]
 #![forbid(unsafe_code)]
 
+pub use kraken;
+
 pub use crate::export::*;
 pub use crate::sdk::*;
 
