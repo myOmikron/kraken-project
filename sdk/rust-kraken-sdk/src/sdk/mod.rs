@@ -7,6 +7,7 @@ use tokio::sync::mpsc::Sender;
 
 use crate::error::KrakenError;
 
+mod attacks;
 mod auth;
 mod domains;
 mod global_tags;
