@@ -56,6 +56,9 @@ jobs:
       - name: Build kraken library
         run: cargo build -p kraken --lib
 
+      - name: Build kraken sdk
+        run: cargo build -p kraken-sdk
+
       - name: Build leech
         run: cargo build -p leech
 
