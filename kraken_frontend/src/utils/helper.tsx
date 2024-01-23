@@ -24,6 +24,12 @@ export namespace ObjectFns {
         return Object.entries(obj);
     }
 
+    /** {@link ObjectConstructor.fromEntries `Object.fromEntries`} which preserves the keys' type */
+    export function fromEntries<Key extends string, Value>(arr: Array<[Key, Value]>): Record<Key, Value> {
+        // @ts-ignore
+        return Object.fromEntries(arr);
+    }
+
     export function isEmpty(obj: Record<string, any>): boolean {
         for (const key in obj) {
             return false;

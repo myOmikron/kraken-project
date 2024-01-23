@@ -236,6 +236,49 @@
     cursor: pointer;
 }
 
-.workspace-data-details-link:active{
+.workspace-data-details-link:active {
     transform: translate(0.1em, 0.1em);
+}
+
+/* Base layout of testssl sections  */
+.workspace-data-details-testssl-section {
+    display: grid;
+    grid-template-columns: min-content auto;
+    column-gap: 1em;
+    row-gap: 0.25em;
+}
+.workspace-data-details-testssl-section > h3 {
+    grid-column: 1 / 3;
+    margin: 0;
+}
+
+/* Set handling of long text based on hover */
+.workspace-data-details-testssl-section > span:hover {
+    overflow-wrap: anywhere;
+ }
+.workspace-data-details-testssl-section > span:not(:hover) {
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Set color based on testssl severity */
+.workspace-data-details-testssl-debug {}
+.workspace-data-details-testssl-info {}
+.workspace-data-details-testssl-warn {}
+.workspace-data-details-testssl-fatal {}
+.workspace-data-details-testssl-ok {
+    color: #008000;
+}
+.workspace-data-details-testssl-low {
+    color: #b4b434;
+}
+.workspace-data-details-testssl-medium {
+    color: #ff7a27;
+}
+.workspace-data-details-testssl-high {
+    color: #ff2828;
+}
+.workspace-data-details-testssl-critical {
+    color: #ff58ca;
 }
