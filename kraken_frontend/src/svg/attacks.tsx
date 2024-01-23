@@ -182,10 +182,13 @@ export default function AttacksIcon(params: AttacksParams) {
                 } ${!disabled[AttackType.TcpCon] ? "kraken-attacks-clickable" : "kraken-attacks-hex-unavailable"}`}
                 transform="matrix(.23193 0 0 .23193 55.05 14.824)"
             />
-            {/* ports 2 */}
+            {/* testssl */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                className={"kraken-attacks-hex-unavailable kraken-attacks-hex"}
+                {...mouseHandler(AttackType.TestSSL)}
+                className={`kraken-attacks-hex ${
+                    activeAttack === AttackType.TestSSL ? "kraken-attacks-hex-selected" : ""
+                } ${!disabled[AttackType.TestSSL] ? "kraken-attacks-clickable" : "kraken-attacks-hex-unavailable"}`}
                 transform="matrix(.23193 0 0 .23193 44.887 -2.266)"
             />
             {/* ports 3 */}
@@ -258,6 +261,9 @@ export default function AttacksIcon(params: AttacksParams) {
             </text>
             <text xmlSpace="preserve" x={5} y={94} className={"kraken-attacks-hex-text"}>
                 {"HA"}
+            </text>
+            <text xmlSpace="preserve" x={50} y={14} className={"kraken-attacks-hex-text"}>
+                {"TS"}
             </text>
         </svg>
     );

@@ -47,6 +47,7 @@ import {
     WordlistManagementApi,
     WorkspaceInvitationsApi,
     WorkspaceTagsApi,
+    TestSSLRequest,
 } from "./generated";
 import { Configuration } from "./generated";
 import {
@@ -159,6 +160,7 @@ export const Api = {
             handleError(attacks.queryDehashed({ queryDehashedRequest: { workspaceUuid: uuid, query } })),
         dnsResolution: (attack: DnsResolutionRequest) =>
             handleError(attacks.dnsResolution({ dnsResolutionRequest: attack })),
+        testssl: (attack: TestSSLRequest) => handleError(attacks.testssl({ testSSLRequest: attack })),
         all: () => handleError(attacks.getAllAttacks()),
         get: (uuid: UUID) => handleError(attacks.getAttack({ uuid })),
         delete: (uuid: UUID) => handleError(attacks.deleteAttack({ uuid })),
