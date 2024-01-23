@@ -131,20 +131,20 @@ Type = "RawSQL"
 StructureSafe = true
 SQLite = "only Postgres databases are supported right now"
 MySQL = "only Postgres databases are supported right now"
-Postgres = "ALTER TYPE _attack_attack_type ADD VALUE 'DnsTxtScan' AFTER 'DnsResolution';"
+Postgres = "ALTER TYPE _attack_attack_type ADD VALUE IF NOT EXISTS 'DnsTxtScan' AFTER 'DnsResolution';"
 
 [[Migration.Operations]]
 Type = "RawSQL"
 StructureSafe = true
 SQLite = "only Postgres databases are supported right now"
 MySQL = "only Postgres databases are supported right now"
-Postgres = "ALTER TYPE _aggregationsource_source_type ADD VALUE 'DnsTxtScan' AFTER 'DnsResolution';"
+Postgres = "ALTER TYPE _aggregationsource_source_type ADD VALUE IF NOT EXISTS 'DnsTxtScan' AFTER 'DnsResolution';"
 
 [[Migration.Operations]]
 Type = "RawSQL"
 StructureSafe = true
 SQLite = "only Postgres databases are supported right now"
 MySQL = "only Postgres databases are supported right now"
-Postgres = "ALTER TYPE _searchresult_ref_type ADD VALUE 'DnsTxtScanResult' AFTER 'DnsRecordResult';"
+Postgres = "ALTER TYPE _searchresult_ref_type ADD VALUE IF NOT EXISTS 'DnsTxtScanResult' AFTER 'DnsRecordResult';"
 
 
