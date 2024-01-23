@@ -100,7 +100,7 @@ impl HandleAttackResponse<DnsTxtScanResponse> for AttackContext {
                 GeneratedRow::ServiceHint(service_hint) => {
                     let r = insert!(&mut tx, DnsTxtScanServiceHintEntryInsert)
                         .single(&service_hint)
-                .await?;
+                        .await?;
                     DnsTxtScanEntry::ServiceHint {
                         uuid: r.uuid,
                         created_at: r.created_at,
@@ -120,56 +120,56 @@ impl HandleAttackResponse<DnsTxtScanResponse> for AttackContext {
                         DnsTxtScanSpfType::Mx => (true, false),
                         DnsTxtScanSpfType::Ptr => (true, false),
                         DnsTxtScanSpfType::Ip => (false, true),
-                _ => (false, false),
-            };
+                        _ => (false, false),
+                    };
 
                     if let Some(ip) = spf.spf_ip {
-                if store_ip {
-                    let host_uuid = GLOBAL
-                        .aggregator
-                        .aggregate_host(self.workspace.uuid, ip, HostCertainty::SupposedTo)
-                        .await?;
+                        if store_ip {
+                            let host_uuid = GLOBAL
+                                .aggregator
+                                .aggregate_host(self.workspace.uuid, ip, HostCertainty::SupposedTo)
+                                .await?;
 
-                    insert!(&mut tx, AggregationSource)
-                        .return_nothing()
-                        .single(&AggregationSource {
-                            uuid: Uuid::new_v4(),
-                            workspace: ForeignModelByField::Key(self.workspace.uuid),
-                            source_type: SourceType::DnsTxtScan,
-                            source_uuid: result.uuid,
-                            aggregated_table: AggregationTable::Host,
-                            aggregated_uuid: host_uuid,
-                        })
-                        .await?;
-                }
-            }
+                            insert!(&mut tx, AggregationSource)
+                                .return_nothing()
+                                .single(&AggregationSource {
+                                    uuid: Uuid::new_v4(),
+                                    workspace: ForeignModelByField::Key(self.workspace.uuid),
+                                    source_type: SourceType::DnsTxtScan,
+                                    source_uuid: result.uuid,
+                                    aggregated_table: AggregationTable::Host,
+                                    aggregated_uuid: host_uuid,
+                                })
+                                .await?;
+                        }
+                    }
 
                     if let Some(ref domain) = spf.spf_domain {
-                if store_domain && !domain.is_empty() {
-                    // TODO: domain CIDR
-                    let domain_uuid = GLOBAL
-                        .aggregator
-                        .aggregate_domain(
-                            self.workspace.uuid,
-                            &domain,
-                            DomainCertainty::Unverified,
-                            self.user.uuid,
-                        )
-                        .await?;
+                        if store_domain && !domain.is_empty() {
+                            // TODO: domain CIDR
+                            let domain_uuid = GLOBAL
+                                .aggregator
+                                .aggregate_domain(
+                                    self.workspace.uuid,
+                                    domain,
+                                    DomainCertainty::Unverified,
+                                    self.user.uuid,
+                                )
+                                .await?;
 
-                    insert!(&mut tx, AggregationSource)
-                        .return_nothing()
-                        .single(&AggregationSource {
-                            uuid: Uuid::new_v4(),
-                            workspace: ForeignModelByField::Key(self.workspace.uuid),
-                            source_type: SourceType::DnsTxtScan,
-                            source_uuid: result.uuid,
-                            aggregated_table: AggregationTable::Domain,
-                            aggregated_uuid: domain_uuid,
-                        })
-                        .await?;
-                }
-            }
+                            insert!(&mut tx, AggregationSource)
+                                .return_nothing()
+                                .single(&AggregationSource {
+                                    uuid: Uuid::new_v4(),
+                                    workspace: ForeignModelByField::Key(self.workspace.uuid),
+                                    source_type: SourceType::DnsTxtScan,
+                                    source_uuid: result.uuid,
+                                    aggregated_table: AggregationTable::Domain,
+                                    aggregated_uuid: domain_uuid,
+                                })
+                                .await?;
+                        }
+                    }
 
                     let r = insert!(&mut tx, DnsTxtScanSpfEntryInsert)
                         .single(&spf)
@@ -213,9 +213,9 @@ fn generate_dns_txt_rows(collection_uuid: Uuid, entry: &DnsTxtScan) -> Option<Ve
             vec![GeneratedRow::ServiceHint(
                 DnsTxtScanServiceHintEntryInsert {
                     collection: ForeignModelByField::Key(collection_uuid),
-            uuid: Uuid::new_v4(),
-            rule: entry.rule.clone(),
-            txt_type: match DnsTxtKnownEntry::try_from(*num).ok()? {
+                    uuid: Uuid::new_v4(),
+                    rule: entry.rule.clone(),
+                    txt_type: match DnsTxtKnownEntry::try_from(*num).ok()? {
                         DnsTxtKnownEntry::HasGoogleAccount => {
                             DnsTxtScanServiceHintType::HasGoogleAccount
                         }

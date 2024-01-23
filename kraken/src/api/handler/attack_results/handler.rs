@@ -677,7 +677,7 @@ pub async fn get_dns_txt_scan_results(
     // TODO: this could probably be better represented using a JOIN
 
     for item in items.iter_mut() {
-        let uuid = item.uuid.clone();
+        let uuid = item.uuid;
         let entries1: Vec<DnsTxtScanEntry> = query!(&mut tx, DnsTxtScanServiceHintEntry)
             .condition(DnsTxtScanServiceHintEntry::F.collection.equals(uuid))
             .stream()
