@@ -21,7 +21,7 @@ impl KrakenClient {
         #[allow(clippy::expect_used)]
         let mut url = self.base_url.join("api/v1/ws").expect("Valid url");
         #[allow(clippy::expect_used)]
-        url.set_scheme("wss").expect("This must work");
+        url.set_scheme("wss").expect("Valid scheme");
         #[allow(clippy::expect_used)]
         let mut req = url.clone().into_client_request().expect("Valid request");
 
@@ -37,15 +37,13 @@ impl KrakenClient {
             )
             .unwrap(),
         );
-        debug!("{url}");
+        debug!("Connection to: {url}");
 
         #[allow(clippy::expect_used)]
-        let sock = TcpStream::connect(format!(
-            "{}:{}",
-            self.base_url.host_str().expect("Host is in self.base"),
-            self.base_url.port().unwrap_or(443)
-        ))
-        .await?;
+        let host = self.base_url.host_str().expect("Host is in self.base");
+        let port = self.base_url.port().unwrap_or(443);
+
+        let sock = TcpStream::connect(format!("{host}:{port}")).await?;
 
         let tls_conn = TlsConnector::from(
             // We are only changing the danger_accept_invalid_certs option, this can not cause a panic
@@ -56,7 +54,7 @@ impl KrakenClient {
                 .unwrap(),
         );
 
-        let conn = tls_conn.connect(url.as_ref(), sock).await?;
+        let conn = tls_conn.connect(host, sock).await?;
         let (ws, _) = tokio_tungstenite::client_async(req, conn).await?;
         let user_tx = self.user_ws_tx.clone();
         tokio::spawn(ws_recv(ws, user_tx));
