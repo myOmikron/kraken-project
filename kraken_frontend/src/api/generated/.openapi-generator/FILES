@@ -44,8 +44,16 @@ models/CreateWorkspaceRequest.ts
 models/CreateWorkspaceTagRequest.ts
 models/DnsResolutionRequest.ts
 models/DnsResolutionResultsPage.ts
+models/DnsTxtScanEntry.ts
+models/DnsTxtScanEntryOneOf.ts
+models/DnsTxtScanEntryOneOf1.ts
+models/DnsTxtScanEntryOneOf1Spf.ts
+models/DnsTxtScanEntryOneOfServiceHint.ts
 models/DnsTxtScanRequest.ts
 models/DnsTxtScanResultsPage.ts
+models/DnsTxtScanServiceHintType.ts
+models/DnsTxtScanSpfType.ts
+models/DnsTxtScanSummaryType.ts
 models/DomainCertainty.ts
 models/DomainOrNetwork.ts
 models/DomainRelations.ts
@@ -54,6 +62,7 @@ models/FinishRegisterRequest.ts
 models/FinishRegisterRequestAllOf.ts
 models/FullAggregationSource.ts
 models/FullApiKey.ts
+models/FullDnsTxtScanResult.ts
 models/FullDomain.ts
 models/FullGlobalTag.ts
 models/FullHost.ts

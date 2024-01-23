@@ -5,8 +5,10 @@ use uuid::Uuid;
 
 use crate::models::{
     Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
-    DnsRecordResult, DnsRecordType, DnsTxtScanResult, DnsTxtScanType, HostAliveResult,
-    ServiceCertainty, ServiceDetectionResult, TcpPortScanResult, UdpServiceDetectionResult,
+    DnsRecordResult, DnsRecordType, DnsTxtScanAttackResult, DnsTxtScanServiceHintEntry,
+    DnsTxtScanServiceHintType, DnsTxtScanSpfEntry, DnsTxtScanSpfType, DnsTxtScanSummaryType,
+    HostAliveResult, ServiceCertainty, ServiceDetectionResult, TcpPortScanResult,
+    UdpServiceDetectionResult,
 };
 
 pub(crate) type BruteforceSubdomainsResultInsert = DnsRecordResultInsert;
@@ -23,13 +25,30 @@ pub(crate) struct DnsRecordResultInsert {
 }
 
 #[derive(Patch)]
-#[rorm(model = "DnsTxtScanResult")]
-pub(crate) struct DnsTxtScanResultInsert {
+#[rorm(model = "DnsTxtScanAttackResult")]
+pub(crate) struct DnsTxtScanAttackResultInsert {
     pub(crate) uuid: Uuid,
     pub(crate) attack: ForeignModel<Attack>,
     pub(crate) domain: String,
+    pub(crate) collection_type: DnsTxtScanSummaryType,
+}
+
+#[derive(Patch)]
+#[rorm(model = "DnsTxtScanServiceHintEntry")]
+pub(crate) struct DnsTxtScanServiceHintEntryInsert {
+    pub(crate) uuid: Uuid,
+    pub(crate) collection: ForeignModel<DnsTxtScanAttackResult>,
     pub(crate) rule: String,
-    pub(crate) txt_type: DnsTxtScanType,
+    pub(crate) txt_type: DnsTxtScanServiceHintType,
+}
+
+#[derive(Patch)]
+#[rorm(model = "DnsTxtScanSpfEntry")]
+pub(crate) struct DnsTxtScanSpfEntryInsert {
+    pub(crate) uuid: Uuid,
+    pub(crate) collection: ForeignModel<DnsTxtScanAttackResult>,
+    pub(crate) rule: String,
+    pub(crate) spf_type: DnsTxtScanSpfType,
     pub(crate) spf_ip: Option<IpNetwork>,
     pub(crate) spf_domain: Option<String>,
     pub(crate) spf_domain_ipv4_cidr: Option<i32>,

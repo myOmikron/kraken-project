@@ -13,6 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { DnsTxtScanEntry } from './DnsTxtScanEntry';
+import {
+    DnsTxtScanEntryFromJSON,
+    DnsTxtScanEntryFromJSONTyped,
+    DnsTxtScanEntryToJSON,
+} from './DnsTxtScanEntry';
 import type { DnsTxtScanSummaryType } from './DnsTxtScanSummaryType';
 import {
     DnsTxtScanSummaryTypeFromJSON,
@@ -21,62 +27,69 @@ import {
 } from './DnsTxtScanSummaryType';
 
 /**
- * A simple representation of a dns txt scan result
+ * The full representation of a dns txt scan result
  * @export
- * @interface SimpleDnsTxtScanResult
+ * @interface FullDnsTxtScanResult
  */
-export interface SimpleDnsTxtScanResult {
+export interface FullDnsTxtScanResult {
     /**
      * The primary key
      * @type {string}
-     * @memberof SimpleDnsTxtScanResult
+     * @memberof FullDnsTxtScanResult
      */
     uuid: string;
     /**
      * The attack which produced this result
      * @type {string}
-     * @memberof SimpleDnsTxtScanResult
+     * @memberof FullDnsTxtScanResult
      */
     attack: string;
     /**
      * The point in time, this result was produced
      * @type {Date}
-     * @memberof SimpleDnsTxtScanResult
+     * @memberof FullDnsTxtScanResult
      */
     createdAt: Date;
     /**
      * The source address
      * @type {string}
-     * @memberof SimpleDnsTxtScanResult
+     * @memberof FullDnsTxtScanResult
      */
     domain: string;
     /**
      * 
      * @type {DnsTxtScanSummaryType}
-     * @memberof SimpleDnsTxtScanResult
+     * @memberof FullDnsTxtScanResult
      */
     collectionType: DnsTxtScanSummaryType;
+    /**
+     * List of result entries. The kind depends on the `collection_type` in this object.
+     * @type {Array<DnsTxtScanEntry>}
+     * @memberof FullDnsTxtScanResult
+     */
+    entries: Array<DnsTxtScanEntry>;
 }
 
 /**
- * Check if a given object implements the SimpleDnsTxtScanResult interface.
+ * Check if a given object implements the FullDnsTxtScanResult interface.
  */
-export function instanceOfSimpleDnsTxtScanResult(value: object): boolean {
+export function instanceOfFullDnsTxtScanResult(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "attack" in value;
     isInstance = isInstance && "createdAt" in value;
     isInstance = isInstance && "domain" in value;
     isInstance = isInstance && "collectionType" in value;
+    isInstance = isInstance && "entries" in value;
 
     return isInstance;
 }
 
-export function SimpleDnsTxtScanResultFromJSON(json: any): SimpleDnsTxtScanResult {
-    return SimpleDnsTxtScanResultFromJSONTyped(json, false);
+export function FullDnsTxtScanResultFromJSON(json: any): FullDnsTxtScanResult {
+    return FullDnsTxtScanResultFromJSONTyped(json, false);
 }
 
-export function SimpleDnsTxtScanResultFromJSONTyped(json: any, ignoreDiscriminator: boolean): SimpleDnsTxtScanResult {
+export function FullDnsTxtScanResultFromJSONTyped(json: any, ignoreDiscriminator: boolean): FullDnsTxtScanResult {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -87,10 +100,11 @@ export function SimpleDnsTxtScanResultFromJSONTyped(json: any, ignoreDiscriminat
         'createdAt': (new Date(json['created_at'])),
         'domain': json['domain'],
         'collectionType': DnsTxtScanSummaryTypeFromJSON(json['collection_type']),
+        'entries': ((json['entries'] as Array<any>).map(DnsTxtScanEntryFromJSON)),
     };
 }
 
-export function SimpleDnsTxtScanResultToJSON(value?: SimpleDnsTxtScanResult | null): any {
+export function FullDnsTxtScanResultToJSON(value?: FullDnsTxtScanResult | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -104,6 +118,7 @@ export function SimpleDnsTxtScanResultToJSON(value?: SimpleDnsTxtScanResult | nu
         'created_at': (value.createdAt.toISOString()),
         'domain': value.domain,
         'collection_type': DnsTxtScanSummaryTypeToJSON(value.collectionType),
+        'entries': ((value.entries as Array<any>).map(DnsTxtScanEntryToJSON)),
     };
 }
 

@@ -44,10 +44,9 @@ mod utoipa_fix {
     use utoipa::ToSchema;
 
     use crate::api::handler::attack_results::schema::{
-        FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
+        FullDnsTxtScanResult, FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
         FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
-        SimpleDnsTxtScanResult, SimpleHostAliveResult, SimpleQueryUnhashedResult,
-        SimpleTcpPortScanResult,
+        SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
     };
     use crate::api::handler::domains::schema::FullDomain;
     use crate::api::handler::hosts::schema::FullHost;
@@ -70,7 +69,7 @@ mod utoipa_fix {
         ServiceDetectionResultsPage = Page<FullServiceDetectionResult>,
         UdpServiceDetectionResultsPage = Page<FullUdpServiceDetectionResult>,
         DnsResolutionResultsPage = Page<SimpleDnsResolutionResult>,
-        DnsTxtScanResultsPage = Page<SimpleDnsTxtScanResult>,
+        DnsTxtScanResultsPage = Page<FullDnsTxtScanResult>,
         SearchResultPage = Page<SearchResultEntry>,
         SearchesResultPage = Page<SearchEntry>,
     )]

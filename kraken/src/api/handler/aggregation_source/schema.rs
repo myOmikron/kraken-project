@@ -4,10 +4,9 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::attack_results::schema::{
-    FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
+    FullDnsTxtScanResult, FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
     FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
-    SimpleDnsTxtScanResult, SimpleHostAliveResult, SimpleQueryUnhashedResult,
-    SimpleTcpPortScanResult,
+    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
 };
 use crate::api::handler::users::schema::SimpleUser;
 use crate::models::{
@@ -99,7 +98,7 @@ pub enum SourceAttackResult {
     /// The [`AttackType::DnsResolution`] and its results
     DnsResolution(Vec<SimpleDnsResolutionResult>),
     /// The [`AttackType::DnsTxtScan`] and its results
-    DnsTxtScan(Vec<SimpleDnsTxtScanResult>),
+    DnsTxtScan(Vec<FullDnsTxtScanResult>),
 }
 
 /// The different types of manual inserts

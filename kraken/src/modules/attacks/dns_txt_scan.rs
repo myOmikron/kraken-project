@@ -1,17 +1,19 @@
 use ipnetwork::IpNetwork;
+use kraken_proto::shared::dns_txt_scan::Info;
 use kraken_proto::shared::{dns_txt_scan, spf_directive, spf_part, DnsTxtKnownEntry, DnsTxtScan};
 use kraken_proto::{DnsTxtScanRequest, DnsTxtScanResponse};
 use rorm::insert;
 use rorm::prelude::*;
 use uuid::Uuid;
 
-use crate::api::handler::attack_results::schema::SimpleDnsTxtScanResult;
+use crate::api::handler::attack_results::schema::{DnsTxtScanEntry, FullDnsTxtScanResult};
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::{
-    AggregationSource, AggregationTable, DnsTxtScanResultInsert, DnsTxtScanType, DomainCertainty,
-    HostCertainty, SourceType,
+    AggregationSource, AggregationTable, DnsTxtScanAttackResultInsert,
+    DnsTxtScanServiceHintEntryInsert, DnsTxtScanServiceHintType, DnsTxtScanSpfEntryInsert,
+    DnsTxtScanSpfType, DnsTxtScanSummaryType, DomainCertainty, HostCertainty, SourceType,
 };
 use crate::modules::attacks::{AttackContext, AttackError, DnsTxtScanParams, HandleAttackResponse};
 
@@ -42,48 +44,86 @@ impl HandleAttackResponse<DnsTxtScanResponse> for AttackContext {
 
         let mut tx = GLOBAL.db.start_transaction().await?;
 
-        let Some(rows) = generate_dns_txt_rows(self.attack_uuid, &entry) else {
+        let result = insert!(&mut tx, DnsTxtScanAttackResultInsert)
+            .single(&DnsTxtScanAttackResultInsert {
+                uuid: Uuid::new_v4(),
+                attack: ForeignModelByField::Key(self.attack_uuid),
+                domain: entry.domain.clone(),
+                collection_type: match entry.info {
+                    None => return Err(AttackError::Malformed("Missing `record.info`")),
+                    Some(ref info) => match info {
+                        Info::WellKnown(_) => DnsTxtScanSummaryType::ServiceHints,
+                        Info::Spf(_) => DnsTxtScanSummaryType::Spf,
+                    },
+                },
+            })
+            .await?;
+
+        let source_uuid = GLOBAL
+            .aggregator
+            .aggregate_domain(
+                self.workspace.uuid,
+                &entry.domain,
+                DomainCertainty::Verified, // we just queried this domain
+                self.user.uuid,
+            )
+            .await?;
+
+        insert!(&mut tx, AggregationSource)
+            .return_nothing()
+            .single(&AggregationSource {
+                uuid: Uuid::new_v4(),
+                workspace: ForeignModelByField::Key(self.workspace.uuid),
+                source_type: SourceType::DnsTxtScan,
+                source_uuid: result.uuid,
+                aggregated_table: AggregationTable::Domain,
+                aggregated_uuid: source_uuid,
+            })
+            .await?;
+
+        let mut ws_result = FullDnsTxtScanResult {
+            uuid: result.uuid,
+            created_at: result.created_at,
+            attack: self.attack_uuid,
+            collection_type: result.collection_type,
+            domain: result.domain.clone(),
+            entries: Vec::new(),
+        };
+
+        let Some(rows) = generate_dns_txt_rows(result.uuid, &entry) else {
             // deserialization failure
             return Ok(());
         };
 
-        let mut ws_entries = Vec::new();
-
         for row in rows {
-            let result = insert!(&mut tx, DnsTxtScanResultInsert)
-                .single(&row)
+            let result = match row {
+                GeneratedRow::ServiceHint(service_hint) => {
+                    let r = insert!(&mut tx, DnsTxtScanServiceHintEntryInsert)
+                        .single(&service_hint)
                 .await?;
-
-            ws_entries.push(SimpleDnsTxtScanResult {
-                uuid: result.uuid,
-                attack: self.attack_uuid,
-                txt_type: result.txt_type,
-                domain: result.domain.clone(),
-                rule: result.rule.clone(),
-                spf_domain: result.spf_domain.clone(),
-                spf_ip: result.spf_ip.clone(),
-                spf_domain_ipv6_cidr: result.spf_domain_ipv6_cidr,
-                spf_domain_ipv4_cidr: result.spf_domain_ipv4_cidr,
-                created_at: result.created_at,
-            });
-
-            let (store_domain, store_ip) = match row.txt_type {
-                // TODO: store these as service? should be a service or some kind of
-                // hint to the user to look at it, since it may just be something
-                // like Microsoft servers, since they are using their service.
-                // Additionally: all the other scan types that are just services.
-                // DnsTxtScanType::SpfInclude
-                // DnsTxtScanType::SpfExists
-                // DnsTxtScanType::SpfRedirect
-                // DnsTxtScanType::SpfExplanation
-                DnsTxtScanType::SpfA => (true, false),
-                DnsTxtScanType::SpfMx => (true, false),
-                DnsTxtScanType::SpfPtr => (true, false),
-                DnsTxtScanType::SpfIp => (false, true),
+                    DnsTxtScanEntry::ServiceHint {
+                        uuid: r.uuid,
+                        created_at: r.created_at,
+                        rule: r.rule.clone(),
+                        txt_type: r.txt_type,
+                    }
+                }
+                GeneratedRow::Spf(spf) => {
+                    // for A/MX/PTR/IP4/IP6 we generate corresponding domain & host entries:
+                    let (store_domain, store_ip) = match spf.spf_type {
+                        // DnsTxtScanSpfType::{Include, Exists, Redirect, Explanation} are excluded since they would
+                        // bloat the results with generic stuff like google.com for gmail users and aren't precise
+                        // enough to tell that the DNS user owns it.
+                        // With A/MX/PTR/IP there is a good chance senders could be impersonated if these servers could
+                        // be compromised.
+                        DnsTxtScanSpfType::A => (true, false),
+                        DnsTxtScanSpfType::Mx => (true, false),
+                        DnsTxtScanSpfType::Ptr => (true, false),
+                        DnsTxtScanSpfType::Ip => (false, true),
                 _ => (false, false),
             };
 
-            if let Some(ip) = row.spf_ip {
+                    if let Some(ip) = spf.spf_ip {
                 if store_ip {
                     let host_uuid = GLOBAL
                         .aggregator
@@ -104,7 +144,7 @@ impl HandleAttackResponse<DnsTxtScanResponse> for AttackContext {
                 }
             }
 
-            if let Some(domain) = row.spf_domain {
+                    if let Some(ref domain) = spf.spf_domain {
                 if store_domain && !domain.is_empty() {
                     // TODO: domain CIDR
                     let domain_uuid = GLOBAL
@@ -130,13 +170,31 @@ impl HandleAttackResponse<DnsTxtScanResponse> for AttackContext {
                         .await?;
                 }
             }
+
+                    let r = insert!(&mut tx, DnsTxtScanSpfEntryInsert)
+                        .single(&spf)
+                        .await?;
+                    DnsTxtScanEntry::Spf {
+                        uuid: r.uuid,
+                        created_at: r.created_at,
+                        rule: r.rule.clone(),
+                        spf_type: r.spf_type,
+                        spf_ip: r.spf_ip,
+                        spf_domain: r.spf_domain.clone(),
+                        spf_domain_ipv4_cidr: r.spf_domain_ipv4_cidr,
+                        spf_domain_ipv6_cidr: r.spf_domain_ipv6_cidr,
+                    }
+                }
+            };
+
+            ws_result.entries.push(result);
         }
 
         tx.commit().await?;
 
         self.send_ws(WsMessage::DnsTxtScanResult {
             attack_uuid: self.attack_uuid,
-            entries: ws_entries,
+            result: ws_result,
         })
         .await;
 
@@ -144,37 +202,66 @@ impl HandleAttackResponse<DnsTxtScanResponse> for AttackContext {
     }
 }
 
-fn generate_dns_txt_rows(
-    attack_uuid: Uuid,
-    entry: &DnsTxtScan,
-) -> Option<Vec<DnsTxtScanResultInsert>> {
+enum GeneratedRow {
+    ServiceHint(DnsTxtScanServiceHintEntryInsert),
+    Spf(DnsTxtScanSpfEntryInsert),
+}
+
+fn generate_dns_txt_rows(collection_uuid: Uuid, entry: &DnsTxtScan) -> Option<Vec<GeneratedRow>> {
     Some(match entry.info.as_ref()? {
-        dns_txt_scan::Info::WellKnown(num) => vec![DnsTxtScanResultInsert {
+        dns_txt_scan::Info::WellKnown(num) => {
+            vec![GeneratedRow::ServiceHint(
+                DnsTxtScanServiceHintEntryInsert {
+                    collection: ForeignModelByField::Key(collection_uuid),
             uuid: Uuid::new_v4(),
-            attack: ForeignModelByField::Key(attack_uuid),
-            domain: entry.domain.clone(),
             rule: entry.rule.clone(),
             txt_type: match DnsTxtKnownEntry::try_from(*num).ok()? {
-                DnsTxtKnownEntry::HasGoogleAccount => DnsTxtScanType::HasGoogleAccount,
-                DnsTxtKnownEntry::HasGlobalsignAccount => DnsTxtScanType::HasGlobalsignAccount,
-                DnsTxtKnownEntry::HasGlobalsignSMime => DnsTxtScanType::HasGlobalsignSMime,
-                DnsTxtKnownEntry::HasDocusignAccount => DnsTxtScanType::HasDocusignAccount,
-                DnsTxtKnownEntry::HasAppleAccount => DnsTxtScanType::HasAppleAccount,
-                DnsTxtKnownEntry::HasFacebookAccount => DnsTxtScanType::HasFacebookAccount,
-                DnsTxtKnownEntry::HasHubspotAccount => DnsTxtScanType::HasHubspotAccount,
-                DnsTxtKnownEntry::HasMsDynamics365 => DnsTxtScanType::HasMSDynamics365,
-                DnsTxtKnownEntry::HasStripeAccount => DnsTxtScanType::HasStripeAccount,
-                DnsTxtKnownEntry::HasOneTrustSso => DnsTxtScanType::HasOneTrustSso,
-                DnsTxtKnownEntry::HasBrevoAccount => DnsTxtScanType::HasBrevoAccount,
-                DnsTxtKnownEntry::OwnsAtlassianAccounts => DnsTxtScanType::OwnsAtlassianAccounts,
-                DnsTxtKnownEntry::OwnsZoomAccounts => DnsTxtScanType::OwnsZoomAccounts,
-                DnsTxtKnownEntry::EmailProtonMail => DnsTxtScanType::EmailProtonMail,
-            },
-            spf_ip: None,
-            spf_domain: None,
-            spf_domain_ipv4_cidr: None,
-            spf_domain_ipv6_cidr: None,
-        }],
+                        DnsTxtKnownEntry::HasGoogleAccount => {
+                            DnsTxtScanServiceHintType::HasGoogleAccount
+                        }
+                        DnsTxtKnownEntry::HasGlobalsignAccount => {
+                            DnsTxtScanServiceHintType::HasGlobalsignAccount
+                        }
+                        DnsTxtKnownEntry::HasGlobalsignSMime => {
+                            DnsTxtScanServiceHintType::HasGlobalsignSMime
+                        }
+                        DnsTxtKnownEntry::HasDocusignAccount => {
+                            DnsTxtScanServiceHintType::HasDocusignAccount
+                        }
+                        DnsTxtKnownEntry::HasAppleAccount => {
+                            DnsTxtScanServiceHintType::HasAppleAccount
+                        }
+                        DnsTxtKnownEntry::HasFacebookAccount => {
+                            DnsTxtScanServiceHintType::HasFacebookAccount
+                        }
+                        DnsTxtKnownEntry::HasHubspotAccount => {
+                            DnsTxtScanServiceHintType::HasHubspotAccount
+                        }
+                        DnsTxtKnownEntry::HasMsDynamics365 => {
+                            DnsTxtScanServiceHintType::HasMSDynamics365
+                        }
+                        DnsTxtKnownEntry::HasStripeAccount => {
+                            DnsTxtScanServiceHintType::HasStripeAccount
+                        }
+                        DnsTxtKnownEntry::HasOneTrustSso => {
+                            DnsTxtScanServiceHintType::HasOneTrustSso
+                        }
+                        DnsTxtKnownEntry::HasBrevoAccount => {
+                            DnsTxtScanServiceHintType::HasBrevoAccount
+                        }
+                        DnsTxtKnownEntry::OwnsAtlassianAccounts => {
+                            DnsTxtScanServiceHintType::OwnsAtlassianAccounts
+                        }
+                        DnsTxtKnownEntry::OwnsZoomAccounts => {
+                            DnsTxtScanServiceHintType::OwnsZoomAccounts
+                        }
+                        DnsTxtKnownEntry::EmailProtonMail => {
+                            DnsTxtScanServiceHintType::EmailProtonMail
+                        }
+                    },
+                },
+            )]
+        }
         dns_txt_scan::Info::Spf(info) => info
             .parts
             .iter()
@@ -184,50 +271,50 @@ fn generate_dns_txt_rows(
                 // checked above in `filter`
                 #[allow(clippy::unwrap_used)]
                 let part = part.unwrap();
-                let (txt_type, spf_ip, spf_domain, spf_domain_ipv4_cidr, spf_domain_ipv6_cidr) =
+                let (spf_type, spf_ip, spf_domain, spf_domain_ipv4_cidr, spf_domain_ipv6_cidr) =
                     match part {
                         spf_part::Part::Directive(directive) => {
                             match directive.mechanism.as_ref()? {
                                 spf_directive::Mechanism::All(_all) => {
-                                    (DnsTxtScanType::SpfAll, None, None, None, None)
+                                    (DnsTxtScanSpfType::All, None, None, None, None)
                                 }
                                 spf_directive::Mechanism::Include(include) => (
-                                    DnsTxtScanType::SpfInclude,
+                                    DnsTxtScanSpfType::Include,
                                     None,
                                     Some(include.domain.clone()),
                                     None,
                                     None,
                                 ),
                                 spf_directive::Mechanism::A(a) => (
-                                    DnsTxtScanType::SpfA,
+                                    DnsTxtScanSpfType::A,
                                     None,
                                     Some(a.domain.clone()),
                                     a.ipv4_cidr,
                                     a.ipv6_cidr,
                                 ),
                                 spf_directive::Mechanism::Mx(mx) => (
-                                    DnsTxtScanType::SpfMx,
+                                    DnsTxtScanSpfType::Mx,
                                     None,
                                     Some(mx.domain.clone()),
                                     mx.ipv4_cidr,
                                     mx.ipv6_cidr,
                                 ),
                                 spf_directive::Mechanism::Ptr(ptr) => (
-                                    DnsTxtScanType::SpfPtr,
+                                    DnsTxtScanSpfType::Ptr,
                                     None,
                                     Some(ptr.domain.clone()),
                                     None,
                                     None,
                                 ),
                                 spf_directive::Mechanism::Ip(ip) => (
-                                    DnsTxtScanType::SpfIp,
+                                    DnsTxtScanSpfType::Ip,
                                     Some(IpNetwork::try_from(ip.ip.clone()?).ok()?),
                                     None,
                                     None,
                                     None,
                                 ),
                                 spf_directive::Mechanism::Exists(exists) => (
-                                    DnsTxtScanType::SpfExists,
+                                    DnsTxtScanSpfType::Exists,
                                     None,
                                     Some(exists.domain.clone()),
                                     None,
@@ -236,34 +323,33 @@ fn generate_dns_txt_rows(
                             }
                         }
                         spf_part::Part::Redirect(redirect) => (
-                            DnsTxtScanType::SpfRedirect,
+                            DnsTxtScanSpfType::Redirect,
                             None,
                             Some(redirect.domain.clone()),
                             None,
                             None,
                         ),
                         spf_part::Part::Explanation(exp) => (
-                            DnsTxtScanType::SpfExplanation,
+                            DnsTxtScanSpfType::Explanation,
                             None,
                             Some(exp.domain.clone()),
                             None,
                             None,
                         ),
                         spf_part::Part::UnknownModifier(_) => {
-                            (DnsTxtScanType::SpfModifier, None, None, None, None)
+                            (DnsTxtScanSpfType::Modifier, None, None, None, None)
                         }
                     };
-                Some(DnsTxtScanResultInsert {
+                Some(GeneratedRow::Spf(DnsTxtScanSpfEntryInsert {
                     uuid: Uuid::new_v4(),
-                    attack: ForeignModelByField::Key(attack_uuid),
-                    domain: entry.domain.clone(),
+                    collection: ForeignModelByField::Key(collection_uuid),
                     rule: spf_rule.clone(),
-                    txt_type,
+                    spf_type,
                     spf_ip,
                     spf_domain,
                     spf_domain_ipv4_cidr,
                     spf_domain_ipv6_cidr,
-                })
+                }))
             })
             .collect(),
     })

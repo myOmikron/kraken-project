@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleDnsTxtScanResult } from './SimpleDnsTxtScanResult';
+import type { FullDnsTxtScanResult } from './FullDnsTxtScanResult';
 import {
-    SimpleDnsTxtScanResultFromJSON,
-    SimpleDnsTxtScanResultFromJSONTyped,
-    SimpleDnsTxtScanResultToJSON,
-} from './SimpleDnsTxtScanResult';
+    FullDnsTxtScanResultFromJSON,
+    FullDnsTxtScanResultFromJSONTyped,
+    FullDnsTxtScanResultToJSON,
+} from './FullDnsTxtScanResult';
 
 /**
  * A result for a DNS TXT scan request
@@ -33,11 +33,11 @@ export interface WsMessageOneOf13 {
      */
     attackUuid: string;
     /**
-     * The destination address that was returned
-     * @type {Array<SimpleDnsTxtScanResult>}
+     * 
+     * @type {FullDnsTxtScanResult}
      * @memberof WsMessageOneOf13
      */
-    entries: Array<SimpleDnsTxtScanResult>;
+    result: FullDnsTxtScanResult;
     /**
      * 
      * @type {string}
@@ -62,7 +62,7 @@ export type WsMessageOneOf13TypeEnum = typeof WsMessageOneOf13TypeEnum[keyof typ
 export function instanceOfWsMessageOneOf13(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "attackUuid" in value;
-    isInstance = isInstance && "entries" in value;
+    isInstance = isInstance && "result" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -79,7 +79,7 @@ export function WsMessageOneOf13FromJSONTyped(json: any, ignoreDiscriminator: bo
     return {
         
         'attackUuid': json['attack_uuid'],
-        'entries': ((json['entries'] as Array<any>).map(SimpleDnsTxtScanResultFromJSON)),
+        'result': FullDnsTxtScanResultFromJSON(json['result']),
         'type': json['type'],
     };
 }
@@ -94,7 +94,7 @@ export function WsMessageOneOf13ToJSON(value?: WsMessageOneOf13 | null): any {
     return {
         
         'attack_uuid': value.attackUuid,
-        'entries': ((value.entries as Array<any>).map(SimpleDnsTxtScanResultToJSON)),
+        'result': FullDnsTxtScanResultToJSON(value.result),
         'type': value.type,
     };
 }
