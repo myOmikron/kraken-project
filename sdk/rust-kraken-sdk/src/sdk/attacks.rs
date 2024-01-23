@@ -1,6 +1,6 @@
 use kraken::api::handler::attacks::schema::{
-    BruteforceSubdomainsRequest, DnsResolutionRequest, HostsAliveRequest, ListAttacks,
-    QueryCertificateTransparencyRequest, ScanTcpPortsRequest, ServiceDetectionRequest,
+    BruteforceSubdomainsRequest, DnsResolutionRequest, DnsTxtScanRequest, HostsAliveRequest,
+    ListAttacks, QueryCertificateTransparencyRequest, ScanTcpPortsRequest, ServiceDetectionRequest,
     SimpleAttack, UdpServiceDetectionRequest,
 };
 use kraken::api::handler::common::schema::UuidResponse;
@@ -117,5 +117,10 @@ impl KrakenClient {
         req: UdpServiceDetectionRequest,
     ) -> KrakenResult<Uuid> {
         self.start_attack("udpServiceDetection", req).await
+    }
+
+    ///
+    pub async fn attack_dns_txt_scan(&self, req: DnsTxtScanRequest) -> KrakenResult<Uuid> {
+        self.start_attack("dnsTxtScan", req).await
     }
 }
