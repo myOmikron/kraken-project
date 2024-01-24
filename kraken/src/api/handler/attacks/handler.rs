@@ -511,6 +511,10 @@ pub async fn testssl(
         starttls,
     } = req.into_inner();
 
+    if port == 0 {
+        return Err(ApiError::InvalidPort);
+    }
+
     let client = if let Some(leech_uuid) = leech_uuid {
         GLOBAL.leeches.get_leech(&leech_uuid)?
     } else {

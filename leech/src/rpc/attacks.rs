@@ -14,11 +14,10 @@ use kraken_proto::req_attack_service_server::ReqAttackService;
 use kraken_proto::shared::dns_record::Record;
 use kraken_proto::shared::dns_txt_scan::Info;
 use kraken_proto::shared::{
-    spf_directive, spf_part, Aaaa, Address, AttackTechnique, CertEntry, DnsRecord,
-    DnsTxtKnownEntry, DnsTxtScan, GenericRecord, Net, SpfDirective, SpfExplanationModifier,
-    SpfInfo, SpfMechanismA, SpfMechanismAll, SpfMechanismExists, SpfMechanismInclude,
-    SpfMechanismIp, SpfMechanismMx, SpfMechanismPtr, SpfPart, SpfQualifier, SpfRedirectModifier,
-    SpfUnknownModifier, A,
+    spf_directive, spf_part, Aaaa, Address, CertEntry, DnsRecord, DnsTxtKnownEntry, DnsTxtScan,
+    GenericRecord, Net, SpfDirective, SpfExplanationModifier, SpfInfo, SpfMechanismA,
+    SpfMechanismAll, SpfMechanismExists, SpfMechanismInclude, SpfMechanismIp, SpfMechanismMx,
+    SpfMechanismPtr, SpfPart, SpfQualifier, SpfRedirectModifier, SpfUnknownModifier, A,
 };
 use kraken_proto::{
     any_attack_response, shared, test_ssl_scans, test_ssl_service, BruteforceSubdomainRequest,
@@ -670,7 +669,6 @@ impl ReqAttackService for Attacks {
             .scan_result;
 
         fn conv_finding(finding: testssl::Finding) -> TestSslFinding {
-            let mitre = testssl::categorize(&finding);
             TestSslFinding {
                 id: finding.id,
                 severity: match finding.severity {
@@ -688,7 +686,6 @@ impl ReqAttackService for Attacks {
                 finding: finding.finding,
                 cve: finding.cve,
                 cwe: finding.cwe,
-                mitre: mitre.map(AttackTechnique::from),
             }
         }
         fn conv_findings(findings: Vec<testssl::Finding>) -> Vec<TestSslFinding> {

@@ -276,7 +276,7 @@ pub struct TestSSLRequest {
     pub uri: String,
 
     /// The host to scan
-    #[schema(value_type = String)]
+    #[schema(value_type = String, example = "127.0.0.1")]
     pub host: IpAddr,
 
     /// The port to scan

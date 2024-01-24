@@ -26,7 +26,7 @@ Type = "auto_create_time"
 Type = "not_null"
 
 [[Migration.Operations.Fields]]
-Name = "target_host"
+Name = "domain"
 Type = "varchar"
 
 [[Migration.Operations.Fields.Annotations]]
@@ -174,31 +174,6 @@ Type = "varchar"
 [[Migration.Operations.Fields.Annotations]]
 Type = "max_length"
 Value = 255
-
-[[Migration.Operations.Fields]]
-Name = "mitre"
-Type = "varchar"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "max_length"
-Value = 255
-
-[[Migration.Operations.Fields]]
-Name = "severity"
-Type = "choices"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "choices"
-Value = [
-    "None",
-    "Low",
-    "Medium",
-    "High",
-    "Critical",
-]
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"

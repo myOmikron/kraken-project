@@ -13,9 +13,7 @@ use tokio::process::Command;
 pub mod finding_id;
 mod json;
 mod json_pretty;
-mod mitre;
 pub use self::json_pretty::*;
-pub use self::mitre::categorize;
 
 /// The settings of a `testssl.sh` invocation
 #[derive(Debug)]
@@ -281,11 +279,11 @@ pub async fn run_testssl(settings: TestSSLSettings) -> Result<json_pretty::File,
 #[derive(Error, Debug)]
 pub enum TestSSLError {
     /// An io error occurred while running the subprocess or interacting with its output file
-    #[error("Io error: {}", .0)]
+    #[error("Io error: {0}")]
     Io(#[from] io::Error),
 
     /// Failed to parse the json output
-    #[error("Json error: {}", .0)]
+    #[error("Json error: {0}")]
     Json(#[from] serde_json::Error),
 
     /// The `testssl` process exited with a non zero status

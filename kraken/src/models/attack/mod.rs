@@ -546,9 +546,10 @@ pub struct TestSSLResultHeader {
     /// The point in time, this result was produced
     #[rorm(auto_create_time)]
     pub created_at: DateTime<Utc>,
-    /// The original user target this result belongs to
+
+    /// The domain which was used for SNI and certificate verification
     #[rorm(max_length = 255)]
-    pub target_host: String,
+    pub domain: String,
 
     /// The scanned ip address
     pub ip: IpNetwork,
@@ -603,13 +604,6 @@ pub struct TestSSLResultFinding {
     /// An associated cwe category
     #[rorm(max_length = 255)]
     pub cwe: Option<String>,
-
-    /// An associated mitre ATT&CK technique
-    #[rorm(max_length = 255)]
-    pub mitre: Option<String>,
-
-    /// An associated severity
-    pub severity: Severity,
 }
 
 /// A [`TestSSLResultFinding`]'s section
@@ -676,21 +670,4 @@ pub enum TestSSLSeverity {
     High,
     /// The test's result pose a critical priority issue
     Critical,
-}
-
-/// A generic attack result's severity
-#[derive(
-    Copy, Clone, Debug, DbEnum, Deserialize, Serialize, ToSchema, Ord, PartialOrd, Eq, PartialEq,
-)]
-pub enum Severity {
-    /// No issue
-    None = 0,
-    /// The test's result pose a low priority issue
-    Low = 1,
-    /// The test's result pose a medium priority issue
-    Medium = 2,
-    /// The test's result pose a high priority issue
-    High = 3,
-    /// The test's result pose a critical priority issue
-    Critical = 4,
 }

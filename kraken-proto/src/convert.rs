@@ -44,14 +44,6 @@ pub enum InvalidArgumentError {
     /// Received an invalid value for a ipv4 network prefix
     #[error("Got invalid network prefix for v6: {}", .0)]
     InvalidV6Prefix(u32),
-
-    /// Received an unknown mitre att&ck tactic
-    #[error("Got unknown mitre att&ck tactic: TA{:04}", .0)]
-    InvalidMitreTactic(u32),
-
-    /// Received an unknown mitre att&ck technique
-    #[error("Got unknown mitre att&ck technique: T{:04} (for TA{:04})", .1, .0)]
-    InvalidMitreTechnique(u32, u32),
 }
 impl From<InvalidArgumentError> for Status {
     fn from(value: InvalidArgumentError) -> Self {

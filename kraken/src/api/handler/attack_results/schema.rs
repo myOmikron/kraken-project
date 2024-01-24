@@ -1,3 +1,5 @@
+use std::net::IpAddr;
+
 use chrono::{DateTime, Utc};
 use ipnetwork::IpNetwork;
 use serde::{Deserialize, Serialize};
@@ -323,11 +325,12 @@ pub struct FullTestSSLResult {
     /// The point in time, this result was produced
     pub created_at: DateTime<Utc>,
 
-    /// The original user target this result belongs to
-    pub target_host: String,
+    /// The domain which was used for SNI and certificate verification
+    pub domain: String,
 
     /// The scanned ip address
-    pub ip: String,
+    #[schema(value_type = String, example = "127.0.0.1")]
+    pub ip: IpAddr,
 
     /// The scanned port
     pub port: u16,

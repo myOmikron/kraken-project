@@ -3,8 +3,8 @@ use std::str::FromStr;
 use ipnetwork::IpNetwork;
 use kraken_proto::shared::Address;
 use kraken_proto::{
-    mitre, test_ssl_scans, test_ssl_service, BasicAuth, StartTlsProtocol, TestSslRequest,
-    TestSslResponse, TestSslScanResult, TestSslScans, TestSslSeverity,
+    test_ssl_scans, test_ssl_service, BasicAuth, StartTlsProtocol, TestSslRequest, TestSslResponse,
+    TestSslScanResult, TestSslScans, TestSslSeverity,
 };
 use log::error;
 use rorm::insert;
@@ -16,7 +16,7 @@ use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::models::{
     AggregationSource, AggregationTable, DomainCertainty, HostCertainty, PortCertainty,
-    PortProtocol, Severity, SourceType, TestSSLResultFinding, TestSSLResultFindingInsert,
+    PortProtocol, SourceType, TestSSLResultFinding, TestSSLResultFindingInsert,
     TestSSLResultHeader, TestSSLResultHeaderInsert, TestSSLSection, TestSSLSeverity,
 };
 use crate::modules::attacks::{AttackContext, AttackError, HandleAttackResponse, TestSSLParams};
@@ -99,7 +99,11 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                 };
 
                 let port = match u16::from_str(&port) {
-                    Ok(port) => port,
+                    Ok(port) if port > 0 => port,
+                    Ok(port) => {
+                        error!("Testssl didn't return a valid port: {port}");
+                        return Ok(());
+                    }
                     Err(err) => {
                         error!("Testssl didn't return a valid port: {err}");
                         return Ok(());
@@ -151,13 +155,6 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                                 },
                                 cve: finding.cve,
                                 cwe: finding.cwe,
-                                mitre: finding
-                                    .mitre
-                                    .map(mitre::Tactic::try_from)
-                                    .transpose()?
-                                    .as_ref()
-                                    .map(ToString::to_string),
-                                severity: Severity::None,
                             })
                         })
                 })
@@ -194,7 +191,7 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                     .single(&TestSSLResultHeaderInsert {
                         uuid: Uuid::new_v4(),
                         attack: ForeignModelByField::Key(self.attack_uuid),
-                        target_host,
+                        domain: target_host,
                         ip,
                         port: port as i32,
                         rdns,
