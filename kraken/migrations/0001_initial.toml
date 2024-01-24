@@ -94,6 +94,7 @@ Value = [
     "OSDetection",
     "VersionDetection",
     "AntiPortScanningDetection",
+    "TestSSL",
 ]
 
 [[Migration.Operations.Fields.Annotations]]
@@ -1335,6 +1336,7 @@ Value = [
     "OSDetection",
     "VersionDetection",
     "AntiPortScanningDetection",
+    "TestSSL",
     "ManualDomain",
     "ManualHost",
     "ManualPort",

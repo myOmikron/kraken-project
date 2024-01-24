@@ -241,78 +241,15 @@ OnUpdate = "Cascade"
 Type = "not_null"
 
 [[Migration.Operations]]
-Type = "DeleteField"
-Model = "aggregationsource"
-Name = "source_type"
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TYPE _attack_attack_type ADD VALUE IF NOT EXISTS 'TestSSL' AFTER 'AntiPortScanningDetection';"
 
 [[Migration.Operations]]
-Type = "CreateField"
-Model = "aggregationsource"
-
-[Migration.Operations.Field]
-Name = "source_type"
-Type = "choices"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "choices"
-Value = [
-    "BruteforceSubdomains",
-    "TcpPortScan",
-    "QueryCertificateTransparency",
-    "QueryDehashed",
-    "HostAlive",
-    "ServiceDetection",
-    "UdpServiceDetection",
-    "DnsResolution",
-    "DnsTxtScan",
-    "UdpPortScan",
-    "ForcedBrowsing",
-    "OSDetection",
-    "VersionDetection",
-    "AntiPortScanningDetection",
-    "TestSSL",
-    "ManualDomain",
-    "ManualHost",
-    "ManualPort",
-    "ManualService",
-]
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "DeleteField"
-Model = "attack"
-Name = "attack_type"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "attack"
-
-[Migration.Operations.Field]
-Name = "attack_type"
-Type = "choices"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "choices"
-Value = [
-    "Undefined",
-    "BruteforceSubdomains",
-    "TcpPortScan",
-    "QueryCertificateTransparency",
-    "QueryUnhashed",
-    "HostAlive",
-    "ServiceDetection",
-    "UdpServiceDetection",
-    "DnsResolution",
-    "DnsTxtScan",
-    "UdpPortScan",
-    "ForcedBrowsing",
-    "OSDetection",
-    "VersionDetection",
-    "AntiPortScanningDetection",
-    "TestSSL",
-]
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TYPE _aggregationsource_source_type ADD VALUE IF NOT EXISTS 'TestSSL' AFTER 'AntiPortScanningDetection';"
