@@ -72,6 +72,7 @@ models/FullPort.ts
 models/FullQueryCertificateTransparencyResult.ts
 models/FullService.ts
 models/FullServiceDetectionResult.ts
+models/FullTestSSLResult.ts
 models/FullUdpServiceDetectionResult.ts
 models/FullUser.ts
 models/FullWordlist.ts
@@ -200,8 +201,14 @@ models/SourceAttackResultOneOf5.ts
 models/SourceAttackResultOneOf6.ts
 models/SourceAttackResultOneOf7.ts
 models/SourceAttackResultOneOf8.ts
+models/SourceAttackResultOneOf9.ts
+models/StartTLSProtocol.ts
 models/TagType.ts
 models/TcpPortScanResultsPage.ts
+models/TestSSLFinding.ts
+models/TestSSLRequest.ts
+models/TestSSLSection.ts
+models/TestSSLSeverity.ts
 models/TransferWorkspaceRequest.ts
 models/UdpServiceDetectionRequest.ts
 models/UdpServiceDetectionResultsPage.ts

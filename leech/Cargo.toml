@@ -29,7 +29,7 @@ uuid = { version = "~1", features = ["v4"] }
 byte-unit = { version = "~5", features = ["serde"] }
 
 # Async runtime
-tokio = { version = ">=1.23.1", features = ["macros", "sync", "rt-multi-thread", "net", "time"] }
+tokio = { version = ">=1.23.1", features = ["macros", "sync", "rt-multi-thread", "net", "time", "process"] }
 # Abstractions for async programming
 futures = { version = "~0.3" }
 # Tokio streams
@@ -84,6 +84,8 @@ dehashed-rs = { version = "~0.4", features = ["tokio"] }
 native-tls = { version = "~0.2", features = ["alpn"] }
 tokio-native-tls = { version = "~0.3" }
 probe-config = { path = "probe-config" }
+
+tempfile = "~3"
 
 [build-dependencies]
 probe-config = { path = "probe-config" }

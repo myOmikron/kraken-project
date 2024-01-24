@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::models::{
     DnsRecordType, DnsTxtScanServiceHintType, DnsTxtScanSpfType, DnsTxtScanSummaryType,
-    ServiceCertainty,
+    ServiceCertainty, TestSSLSection, TestSSLSeverity,
 };
 
 /// A simple representation of a bruteforce subdomains result
@@ -309,4 +309,64 @@ pub enum DnsTxtScanEntry {
         /// If the txt_type is a SPF type that includes a domain, this is its ipv6 CIDR.
         spf_domain_ipv6_cidr: Option<i32>,
     },
+}
+
+/// The results of a `testssl.sh` scan
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct FullTestSSLResult {
+    /// The primary key
+    pub uuid: Uuid,
+
+    /// The attack which produced this result
+    pub attack: Uuid,
+
+    /// The point in time, this result was produced
+    pub created_at: DateTime<Utc>,
+
+    /// The original user target this result belongs to
+    pub target_host: String,
+
+    /// The scanned ip address
+    pub ip: String,
+
+    /// The scanned port
+    pub port: u16,
+
+    /// The ip address' rDNS name
+    pub rdns: String,
+
+    /// The detected service
+    pub service: String,
+
+    /// The scan's findings
+    ///
+    /// This includes, log messages, extracted information (for example cert parameters) and tests for vulnerabilities / bad options.
+    pub findings: Vec<TestSSLFinding>,
+}
+
+/// A single finding reported by `testssl.sh`
+///
+/// This includes, log messages, extracted information (for example cert parameters) and tests for vulnerabilities / bad options.
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct TestSSLFinding {
+    /// The section `testssl.sh` reported this finding under
+    pub section: TestSSLSection,
+
+    /// The finding's id (not db id, but `testssl.sh` id)
+    pub id: String,
+
+    /// The finding's value (the value's semantics are highly dependant on the `id` and `severity`)
+    pub value: String,
+
+    /// The severity reported by `testssl.sh` (this also includes log levels)
+    pub severity: TestSSLSeverity,
+
+    /// An associated cve
+    pub cve: Option<String>,
+
+    /// An associated cwe category
+    pub cwe: Option<String>,
+
+    /// An issue categorized by kraken TODO
+    pub issue: (),
 }

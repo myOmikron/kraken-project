@@ -22,6 +22,7 @@ import type {
   DnsResolutionResultsPage,
   DnsTxtScanRequest,
   DnsTxtScanResultsPage,
+  FullTestSSLResult,
   HostAliveResultsPage,
   HostsAliveRequest,
   ListAttacks,
@@ -34,6 +35,7 @@ import type {
   ServiceDetectionResultsPage,
   SimpleAttack,
   TcpPortScanResultsPage,
+  TestSSLRequest,
   UdpServiceDetectionRequest,
   UdpServiceDetectionResultsPage,
   UuidResponse,
@@ -53,6 +55,8 @@ import {
     DnsTxtScanRequestToJSON,
     DnsTxtScanResultsPageFromJSON,
     DnsTxtScanResultsPageToJSON,
+    FullTestSSLResultFromJSON,
+    FullTestSSLResultToJSON,
     HostAliveResultsPageFromJSON,
     HostAliveResultsPageToJSON,
     HostsAliveRequestFromJSON,
@@ -77,6 +81,8 @@ import {
     SimpleAttackToJSON,
     TcpPortScanResultsPageFromJSON,
     TcpPortScanResultsPageToJSON,
+    TestSSLRequestFromJSON,
+    TestSSLRequestToJSON,
     UdpServiceDetectionRequestFromJSON,
     UdpServiceDetectionRequestToJSON,
     UdpServiceDetectionResultsPageFromJSON,
@@ -153,6 +159,10 @@ export interface GetTcpPortScanResultsRequest {
     offset: number;
 }
 
+export interface GetTestsslResultsRequest {
+    uuid: string;
+}
+
 export interface GetUdpServiceDetectionResultsRequest {
     uuid: string;
     limit: number;
@@ -181,6 +191,10 @@ export interface ScanTcpPortsOperationRequest {
 
 export interface ServiceDetectionOperationRequest {
     serviceDetectionRequest: ServiceDetectionRequest;
+}
+
+export interface TestsslRequest {
+    testSSLRequest: TestSSLRequest;
 }
 
 export interface UdpServiceDetectionOperationRequest {
@@ -773,6 +787,38 @@ export class AttacksApi extends runtime.BaseAPI {
     }
 
     /**
+     * Retrieve a `testssl.sh`\'s results by the attack\'s id
+     * Retrieve a `testssl.sh`\'s results by the attack\'s id
+     */
+    async getTestsslResultsRaw(requestParameters: GetTestsslResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FullTestSSLResult>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getTestsslResults.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/attacks/{uuid}/testsslResults`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FullTestSSLResultFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve a `testssl.sh`\'s results by the attack\'s id
+     * Retrieve a `testssl.sh`\'s results by the attack\'s id
+     */
+    async getTestsslResults(requestParameters: GetTestsslResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullTestSSLResult> {
+        const response = await this.getTestsslResultsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Retrieve UDP service detection results by the attack\'s id
      * Retrieve UDP service detection results by the attack\'s id
      */
@@ -1024,6 +1070,41 @@ export class AttacksApi extends runtime.BaseAPI {
      */
     async serviceDetection(requestParameters: ServiceDetectionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
         const response = await this.serviceDetectionRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Run testssl
+     * Run testssl
+     */
+    async testsslRaw(requestParameters: TestsslRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
+        if (requestParameters.testSSLRequest === null || requestParameters.testSSLRequest === undefined) {
+            throw new runtime.RequiredError('testSSLRequest','Required parameter requestParameters.testSSLRequest was null or undefined when calling testssl.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/attacks/testssl`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TestSSLRequestToJSON(requestParameters.testSSLRequest),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Run testssl
+     * Run testssl
+     */
+    async testssl(requestParameters: TestsslRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
+        const response = await this.testsslRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

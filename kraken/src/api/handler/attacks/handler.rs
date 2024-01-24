@@ -9,7 +9,7 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::attacks::schema::{
     BruteforceSubdomainsRequest, DnsResolutionRequest, DnsTxtScanRequest, HostsAliveRequest,
     ListAttacks, QueryCertificateTransparencyRequest, QueryDehashedRequest, ScanTcpPortsRequest,
-    ServiceDetectionRequest, SimpleAttack, UdpServiceDetectionRequest,
+    ServiceDetectionRequest, SimpleAttack, TestSSLRequest, UdpServiceDetectionRequest,
 };
 use crate::api::handler::common::error::{ApiError, ApiResult};
 use crate::api::handler::common::schema::{PathUuid, UuidResponse};
@@ -20,9 +20,10 @@ use crate::models::{Attack, User, UserPermission, WordList, Workspace, Workspace
 use crate::modules::attacks::{
     start_bruteforce_subdomains, start_certificate_transparency, start_dehashed_query,
     start_dns_resolution, start_dns_txt_scan, start_host_alive, start_service_detection,
-    start_tcp_port_scan, start_udp_service_detection, BruteforceSubdomainsParams,
+    start_tcp_port_scan, start_testssl, start_udp_service_detection, BruteforceSubdomainsParams,
     CertificateTransparencyParams, DehashedQueryParams, DnsResolutionParams, DnsTxtScanParams,
-    HostAliveParams, ServiceDetectionParams, TcpPortScanParams, UdpServiceDetectionParams,
+    HostAliveParams, ServiceDetectionParams, TcpPortScanParams, TestSSLParams,
+    UdpServiceDetectionParams,
 };
 
 /// Bruteforce subdomains through a DNS wordlist attack
@@ -475,6 +476,60 @@ pub async fn dns_txt_scan(
         user_uuid,
         client,
         DnsTxtScanParams { targets },
+    )
+    .await?;
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
+}
+
+/// Run testssl
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 202, description = "Attack scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = TestSSLRequest,
+    security(("api_key" = []))
+)]
+#[post("/attacks/testssl")]
+pub async fn testssl(
+    req: Json<TestSSLRequest>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let TestSSLRequest {
+        leech_uuid,
+        workspace_uuid,
+        uri,
+        host,
+        port,
+        connect_timeout,
+        openssl_timeout,
+        basic_auth,
+        starttls,
+    } = req.into_inner();
+
+    let client = if let Some(leech_uuid) = leech_uuid {
+        GLOBAL.leeches.get_leech(&leech_uuid)?
+    } else {
+        GLOBAL.leeches.random_leech()?
+    };
+
+    let (attack_uuid, _) = start_testssl(
+        workspace_uuid,
+        user_uuid,
+        client,
+        TestSSLParams {
+            uri,
+            ip: host,
+            port,
+            connect_timeout,
+            openssl_timeout,
+            basic_auth,
+            starttls,
+        },
     )
     .await?;
 

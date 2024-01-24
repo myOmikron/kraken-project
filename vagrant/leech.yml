@@ -20,6 +20,8 @@
           # Required for ansible
           - acl
           - python3-psycopg2
+          # Require for attack modules
+          - testssl.sh
 
     - name: Check for rustup
       ansible.builtin.stat:
@@ -93,6 +95,13 @@
         mode: 0755
         owner: root
 
+    - name: Copy testssl-fix
+      copy:
+        src: leech/testssl-fix
+        dest: /usr/local/bin/testssl-fix
+        mode: 0755
+        owner: root
+
     - name: Stop leech.service
       systemd:
         name: leech.service
@@ -110,6 +119,7 @@
         owner: root
     - name: Restart leech
       systemd:
+        daemon_reload: yes
         enabled: yes
         name: leech.service
         state: restarted

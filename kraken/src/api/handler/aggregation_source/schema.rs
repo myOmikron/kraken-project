@@ -7,8 +7,9 @@ use uuid::Uuid;
 
 use crate::api::handler::attack_results::schema::{
     FullDnsTxtScanResult, FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
-    FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
-    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+    FullTestSSLResult, FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult,
+    SimpleDnsResolutionResult, SimpleHostAliveResult, SimpleQueryUnhashedResult,
+    SimpleTcpPortScanResult,
 };
 use crate::api::handler::users::schema::SimpleUser;
 use crate::models::{
@@ -46,6 +47,8 @@ pub struct SimpleAggregationSource {
     pub udp_port_scan: usize,
     /// Perform version detection
     pub version_detection: usize,
+    /// Ran `testssl.sh`
+    pub test_ssl: usize,
     /// Manually inserted
     pub manual: bool,
 }
@@ -101,6 +104,8 @@ pub enum SourceAttackResult {
     DnsResolution(Vec<SimpleDnsResolutionResult>),
     /// The [`AttackType::DnsTxtScan`] and its results
     DnsTxtScan(Vec<FullDnsTxtScanResult>),
+    /// The [`AttackType::TestSSL`] and its results
+    TestSSL(FullTestSSLResult),
 }
 
 /// The different types of manual inserts

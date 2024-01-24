@@ -48,7 +48,8 @@ use crate::modules::dns::txt::{start_dns_txt_scan, DnsTxtScanSettings};
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::modules::service_detection::DetectServiceSettings;
-use crate::modules::{dehashed, service_detection, whois};
+use crate::modules::testssl::TestSSLSettings;
+use crate::modules::{dehashed, service_detection, testssl, whois};
 use crate::rpc::start_rpc_server;
 use crate::utils::{input, kraken_endpoint};
 
@@ -216,6 +217,19 @@ pub enum RunCommand {
         #[clap(long)]
         #[clap(default_value_t = NonZeroU32::new(1000).unwrap())]
         concurrent_limit: NonZeroU32,
+    },
+
+    /// Run `testssl.sh`
+    TestSSL {
+        /// Domain to scan
+        uri: String,
+
+        /// The ip address to scan
+        ip: IpAddr,
+
+        /// The port to scan
+        #[clap(default_value_t = 443)]
+        port: u16,
     },
 }
 
@@ -634,6 +648,32 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         {
                             error!("{err}");
                         }
+                    }
+                    RunCommand::TestSSL { uri, ip, port } => {
+                        let json = testssl::run_testssl(TestSSLSettings {
+                            uri,
+                            ip,
+                            port,
+                            ..Default::default()
+                        })
+                        .await?;
+                        for result in &json.scan_result {
+                            if let testssl::Service::Result(service) = result {
+                                for (_section, findings) in service.iter() {
+                                    for finding in findings {
+                                        let finding_id = testssl::finding_id::FindingId::from(
+                                            finding.id.as_str(),
+                                        );
+                                        if let testssl::finding_id::FindingId::Unknown(id) =
+                                            finding_id
+                                        {
+                                            warn!("Unknown finding_id: {id}");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        println!("{}", serde_json::to_string_pretty(&json)?);
                     }
                 }
             }

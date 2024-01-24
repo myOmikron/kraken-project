@@ -181,7 +181,7 @@ ${IMPORTS}
  */
 export type SourceAttackResult = ${TYPE_DECL};
 
-function enumToString<T extends string>(obj: Record<T, T>): T {
+function enumToString<K extends string, V extends string>(obj: Record<K, V>): V {
     // @ts-ignore
     return Object.values(obj)[0];
 }

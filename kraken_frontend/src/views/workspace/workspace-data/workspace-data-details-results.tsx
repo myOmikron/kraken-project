@@ -1,10 +1,10 @@
 import React from "react";
-import { SourceAttack } from "../../../api/generated";
 import "../../../styling/workspace-data-details.css";
 import ArrowLeftIcon from "../../../svg/arrow-left";
 import ArrowRightIcon from "../../../svg/arrow-right";
+import { SourceAttack, TestSSLFinding, TestSSLSection, TestSSLSeverity } from "../../../api/generated";
+import { copyToClipboard, ObjectFns } from "../../../utils/helper";
 import CopyIcon from "../../../svg/copy";
-import { copyToClipboard } from "../../../utils/helper";
 
 type WorkspaceDataDetailsResultsProps = {
     attack: SourceAttack;
@@ -29,7 +29,7 @@ export default class WorkspaceDataDetailsResults extends React.Component<
     componentDidUpdate(
         prevProps: Readonly<WorkspaceDataDetailsResultsProps>,
         prevState: Readonly<WorkspaceDataDetailsResultsState>,
-        snapshot?: any
+        snapshot?: any,
     ) {
         if (prevProps.attack.uuid !== this.props.attack.uuid || prevProps.uuid !== this.props.uuid) {
             this.setState({ page: 0 });
@@ -124,44 +124,67 @@ export default class WorkspaceDataDetailsResults extends React.Component<
                                     </div>
                                 </div>
                                 <div className={"workspace-data-details-pane-layout"}>
-                                    {txtResult.entries.map(entry => <>
-                                        <div className={"workspace-data-details-pane wide"}>
-                                            {("serviceHint" in entry && entry["serviceHint"]) ? <>
-                                                <h3 className={"sub-heading"}>{entry.serviceHint.txtType}</h3>
-                                                <span className={"workspace-data-details-text-wrap"}>{entry.serviceHint.rule}</span>
-                                            </> : ("spf" in entry && entry["spf"]) ? <>
-                                                <div className={"workspace-data-details-list"}>
-                                                    <h3 className={"sub-heading"}>{entry.spf.spfType}</h3>
-                                                    <span className={"workspace-data-details-text-wrap"}>{entry.spf.rule}</span>
-                                                </div>
-                                                {entry.spf.spfDomain && (<>
-                                                        <hr/>
-                                                        <div className={"workspace-data-details-list"}>
-                                                            <h3 className={"sub-heading"}>parsed{entry.spf.spfDomain && entry.spf.spfIp && " (domain) "}</h3>
-                                                            <div>
-                                                                <span>{entry.spf.spfDomain}</span>
-                                                                <span>
-                                                                    {entry.spf.spfDomainIpv4Cidr && "/" + entry.spf.spfDomainIpv4Cidr}
-                                                                </span>
-                                                                <span>
-                                                                    {entry.spf.spfDomainIpv6Cidr && "//" + entry.spf.spfDomainIpv6Cidr}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </>
-                                                )}
-                                                {entry.spf.spfIp && (
+                                    {txtResult.entries.map((entry) => (
+                                        <>
+                                            <div className={"workspace-data-details-pane wide"}>
+                                                {"serviceHint" in entry && entry["serviceHint"] ? (
                                                     <>
-                                                        <hr/>
-                                                        <div className={"workspace-data-details-list"}>
-                                                            <h3 className={"sub-heading"}>parsed{entry.spf.spfDomain && entry.spf.spfIp && " (ip) "}</h3>
-                                                            <span>{entry.spf.spfIp}</span>
-                                                        </div>
+                                                        <h3 className={"sub-heading"}>{entry.serviceHint.txtType}</h3>
+                                                        <span className={"workspace-data-details-text-wrap"}>
+                                                            {entry.serviceHint.rule}
+                                                        </span>
                                                     </>
-                                                )}
-                                            </> : undefined}
-                                        </div>
-                                    </>)}
+                                                ) : "spf" in entry && entry["spf"] ? (
+                                                    <>
+                                                        <div className={"workspace-data-details-list"}>
+                                                            <h3 className={"sub-heading"}>{entry.spf.spfType}</h3>
+                                                            <span className={"workspace-data-details-text-wrap"}>
+                                                                {entry.spf.rule}
+                                                            </span>
+                                                        </div>
+                                                        {entry.spf.spfDomain && (
+                                                            <>
+                                                                <hr />
+                                                                <div className={"workspace-data-details-list"}>
+                                                                    <h3 className={"sub-heading"}>
+                                                                        parsed
+                                                                        {entry.spf.spfDomain &&
+                                                                            entry.spf.spfIp &&
+                                                                            " (domain) "}
+                                                                    </h3>
+                                                                    <div>
+                                                                        <span>{entry.spf.spfDomain}</span>
+                                                                        <span>
+                                                                            {entry.spf.spfDomainIpv4Cidr &&
+                                                                                "/" + entry.spf.spfDomainIpv4Cidr}
+                                                                        </span>
+                                                                        <span>
+                                                                            {entry.spf.spfDomainIpv6Cidr &&
+                                                                                "//" + entry.spf.spfDomainIpv6Cidr}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                        {entry.spf.spfIp && (
+                                                            <>
+                                                                <hr />
+                                                                <div className={"workspace-data-details-list"}>
+                                                                    <h3 className={"sub-heading"}>
+                                                                        parsed
+                                                                        {entry.spf.spfDomain &&
+                                                                            entry.spf.spfIp &&
+                                                                            " (ip) "}
+                                                                    </h3>
+                                                                    <span>{entry.spf.spfIp}</span>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </>
+                                                ) : undefined}
+                                            </div>
+                                        </>
+                                    ))}
                                 </div>
                             </div>
                         );
@@ -530,6 +553,58 @@ export default class WorkspaceDataDetailsResults extends React.Component<
                     } else {
                         return null;
                     }
+                case "TestSSL":
+                    const result = this.props.attack.results;
+                    const sections = ObjectFns.fromEntries(
+                        Object.values(TestSSLSection).map((s) => [
+                            s,
+                            { worst: TestSSLSeverity.Info as TestSSLSeverity, findings: Array<TestSSLFinding>() },
+                        ]),
+                    );
+                    for (const finding of result.findings) {
+                        const section = sections[finding.section];
+                        if (rateSeverity(finding.severity) > rateSeverity(section.worst))
+                            section.worst = finding.severity;
+                        section.findings.push(finding);
+                    }
+                    return (
+                        <div className={"workspace-data-details-container"}>
+                            <div className={"workspace-data-details-pane"}>
+                                <h3 className={"sub-heading"}>TestSSL</h3>
+                                <div className={"workspace-data-details-list"}>
+                                    <div className="workspace-data-details-list-elements">
+                                        <span>Started by:</span>
+                                        <span>Created:</span>
+                                        <span>Finished:</span>
+                                    </div>
+                                    <div className="workspace-data-details-list-elements">
+                                        <span>{a.startedBy.displayName}</span>
+                                        <span>{this.formateDate(a.createdAt)}</span>
+                                        <span>{this.formateDate(a.finishedAt)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {ObjectFns.entries(sections).map(([section, { worst, findings }]) => (
+                                <div className={"workspace-data-details-pane"}>
+                                    <div className={"workspace-data-details-testssl-section"}>
+                                        <h3 className={`workspace-data-details-testssl-${worst.toLowerCase()}`}>
+                                            {section}
+                                        </h3>
+                                        {findings.map(({ id, value, severity }) => (
+                                            <>
+                                                <strong
+                                                    className={`workspace-data-details-testssl-${severity.toLowerCase()}`}
+                                                >
+                                                    {id}
+                                                </strong>
+                                                <span>{value}</span>
+                                            </>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    );
                 case undefined:
                     return "undefined";
                 default:
@@ -537,7 +612,9 @@ export default class WorkspaceDataDetailsResults extends React.Component<
             }
         })();
         console.log(this.state.page);
-        if (this.state.page < this.props.attack.results.length) {
+        if (!("length" in this.props.attack.results)) {
+            return <div className="workspace-data-details-result-container">{attackElement}</div>;
+        } else if (this.state.page < this.props.attack.results.length) {
             let uuid = this.props.attack.results[this.state.page].uuid;
             return (
                 <div className="workspace-data-details-result-container">
@@ -586,5 +663,28 @@ export default class WorkspaceDataDetailsResults extends React.Component<
         } else {
             return null;
         }
+    }
+}
+
+function rateSeverity(severity: TestSSLSeverity): number {
+    switch (severity) {
+        case "Debug":
+            return -1;
+        case "Info":
+            return -1;
+        case "Warn":
+            return -1;
+        case "Fatal":
+            return -1;
+        case "Ok":
+            return 0;
+        case "Low":
+            return 1;
+        case "Medium":
+            return 2;
+        case "High":
+            return 3;
+        case "Critical":
+            return 4;
     }
 }

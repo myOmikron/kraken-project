@@ -16,6 +16,7 @@ import CloseIcon from "../../svg/close";
 import { ROUTES } from "../../routes";
 import WorkspaceAttacksDnsResolution from "./attacks/workspace-attacks-dns-resolution";
 import WorkspaceAttacksDnsTxtScan from "./attacks/workspace-attacks-dns-txt-scan";
+import WorkspaceAttacksTestssl from "./attacks/workspace-attacks-testssl";
 
 export enum AttackCategory {
     Domains = "domains",
@@ -36,6 +37,7 @@ export enum AttackType {
     TcpCon = "tcp_con",
     DnsResolution = "dns_resolution",
     DnsTxtScan = "dns_txt_scan",
+    TestSSL = "testssl",
 }
 
 const ATTACKS: Record<
@@ -112,6 +114,12 @@ const ATTACKS: Record<
         description: `Dehashed provides an API to retrieve passwords (hashed and clear) and other information when querying a domain or an email.`,
         category: AttackCategory.Other,
         form: WorkspaceAttacksDehashed,
+    },
+    testssl: {
+        name: "Testssl",
+        description: "Run testssl.sh to check a services tls configuration",
+        category: AttackCategory.Ports,
+        form: WorkspaceAttacksTestssl,
     },
 };
 

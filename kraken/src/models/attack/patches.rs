@@ -7,7 +7,8 @@ use crate::models::{
     Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
     DnsRecordResult, DnsRecordType, DnsTxtScanAttackResult, DnsTxtScanServiceHintEntry,
     DnsTxtScanServiceHintType, DnsTxtScanSpfEntry, DnsTxtScanSpfType, DnsTxtScanSummaryType,
-    HostAliveResult, ServiceCertainty, ServiceDetectionResult, TcpPortScanResult,
+    HostAliveResult, ServiceCertainty, ServiceDetectionResult, Severity, TcpPortScanResult,
+    TestSSLResultFinding, TestSSLResultHeader, TestSSLSection, TestSSLSeverity,
     UdpServiceDetectionResult,
 };
 
@@ -128,4 +129,31 @@ pub(crate) struct UdpServiceDetectionResultInsert {
     pub(crate) certainty: ServiceCertainty,
     pub(crate) host: IpNetwork,
     pub(crate) port: i32,
+}
+
+#[derive(Patch)]
+#[rorm(model = "TestSSLResultHeader")]
+pub(crate) struct TestSSLResultHeaderInsert {
+    pub(crate) uuid: Uuid,
+    pub(crate) attack: ForeignModel<Attack>,
+    pub(crate) target_host: String,
+    pub(crate) ip: IpNetwork,
+    pub(crate) port: i32,
+    pub(crate) rdns: String,
+    pub(crate) service: String,
+}
+
+#[derive(Patch)]
+#[rorm(model = "TestSSLResultFinding")]
+pub(crate) struct TestSSLResultFindingInsert {
+    pub(crate) uuid: Uuid,
+    pub(crate) attack: ForeignModel<Attack>,
+    pub(crate) section: TestSSLSection,
+    pub(crate) key: String,
+    pub(crate) value: String,
+    pub(crate) testssl_severity: TestSSLSeverity,
+    pub(crate) cve: Option<String>,
+    pub(crate) cwe: Option<String>,
+    pub(crate) mitre: Option<String>,
+    pub(crate) severity: Severity,
 }

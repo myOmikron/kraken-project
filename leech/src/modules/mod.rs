@@ -8,4 +8,5 @@ pub mod dns;
 pub mod host_alive;
 pub mod port_scanner;
 pub mod service_detection;
+pub mod testssl;
 pub mod whois;

@@ -535,6 +535,8 @@ pub enum SourceType {
     VersionDetection,
     /// The table for the not yet implemented [`AttackType::AntiPortScanningDetection`] results
     AntiPortScanningDetection,
+    /// The [`TestSSLResultHeader`] table
+    TestSSL,
     /// The [`ManualDomain`] table
     ManualDomain,
     /// The [`ManualHost`] table
