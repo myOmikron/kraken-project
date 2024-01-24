@@ -89,6 +89,8 @@ pub struct FullPort {
     pub port: u16,
     /// Port protocol
     pub protocol: PortProtocol,
+    /// The certainty of this port
+    pub certainty: PortCertainty,
     /// The host this port is assigned to
     pub host: SimpleHost,
     /// A comment to the port

@@ -82,6 +82,7 @@ pub async fn get_all_ports(
         Port::F.uuid,
         Port::F.port,
         Port::F.protocol,
+        Port::F.certainty,
         Port::F.comment,
         Port::F.created_at,
         Port::F.host.select_as::<Host>(),
@@ -134,11 +135,12 @@ pub async fn get_all_ports(
     let items = ports
         .into_iter()
         .map(
-            |(uuid, port, protocol, comment, created_at, host, workspace)| FullPort {
+            |(uuid, port, protocol, certainty, comment, created_at, host, workspace)| FullPort {
                 uuid,
                 port: port as u16,
                 protocol,
                 comment,
+                certainty,
                 host: SimpleHost {
                     uuid: host.uuid,
                     ip_addr: host.ip_addr.ip(),
@@ -247,6 +249,7 @@ pub async fn get_port(
         uuid: port.uuid,
         port: port.port as u16,
         protocol: port.protocol,
+        certainty: port.certainty,
         host: SimpleHost {
             uuid: host.uuid,
             ip_addr: host.ip_addr.ip(),
