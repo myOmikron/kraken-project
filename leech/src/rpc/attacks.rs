@@ -14,25 +14,20 @@ use kraken_proto::req_attack_service_server::ReqAttackService;
 use kraken_proto::shared::dns_record::Record;
 use kraken_proto::shared::dns_txt_scan::Info;
 use kraken_proto::shared::{
-    spf_directive, spf_part, Aaaa, Aaaa, Address, Address, AttackTechnique, CertEntry, CertEntry,
-    DnsRecord, DnsRecord, DnsTxtKnownEntry, DnsTxtScan, GenericRecord, GenericRecord, Net,
-    SpfDirective, SpfExplanationModifier, SpfInfo, SpfMechanismA, SpfMechanismAll,
-    SpfMechanismExists, SpfMechanismInclude, SpfMechanismIp, SpfMechanismMx, SpfMechanismPtr,
-    SpfPart, SpfQualifier, SpfRedirectModifier, SpfUnknownModifier, A, A,
+    spf_directive, spf_part, Aaaa, Address, AttackTechnique, CertEntry, DnsRecord,
+    DnsTxtKnownEntry, DnsTxtScan, GenericRecord, Net, SpfDirective, SpfExplanationModifier,
+    SpfInfo, SpfMechanismA, SpfMechanismAll, SpfMechanismExists, SpfMechanismInclude,
+    SpfMechanismIp, SpfMechanismMx, SpfMechanismPtr, SpfPart, SpfQualifier, SpfRedirectModifier,
+    SpfUnknownModifier, A,
 };
 use kraken_proto::{
-    any_attack_response, shared, shared, test_ssl_scans, test_ssl_service,
-    BruteforceSubdomainRequest, BruteforceSubdomainRequest, BruteforceSubdomainResponse,
-    BruteforceSubdomainResponse, CertificateTransparencyRequest, CertificateTransparencyRequest,
-    CertificateTransparencyResponse, CertificateTransparencyResponse, DnsResolutionRequest,
-    DnsResolutionRequest, DnsResolutionResponse, DnsResolutionResponse, DnsTxtScanRequest,
-    DnsTxtScanResponse, HostsAliveRequest, HostsAliveRequest, HostsAliveResponse,
-    HostsAliveResponse, ServiceCertainty, ServiceCertainty, ServiceDetectionRequest,
-    ServiceDetectionRequest, ServiceDetectionResponse, ServiceDetectionResponse, StartTlsProtocol,
-    TcpPortScanRequest, TcpPortScanRequest, TcpPortScanResponse, TcpPortScanResponse,
+    any_attack_response, shared, test_ssl_scans, test_ssl_service, BruteforceSubdomainRequest,
+    BruteforceSubdomainResponse, CertificateTransparencyRequest, CertificateTransparencyResponse,
+    DnsResolutionRequest, DnsResolutionResponse, DnsTxtScanRequest, DnsTxtScanResponse,
+    HostsAliveRequest, HostsAliveResponse, ServiceCertainty, ServiceDetectionRequest,
+    ServiceDetectionResponse, StartTlsProtocol, TcpPortScanRequest, TcpPortScanResponse,
     TestSslFinding, TestSslRequest, TestSslResponse, TestSslScanResult, TestSslService,
-    TestSslSeverity, UdpServiceDetectionRequest, UdpServiceDetectionRequest,
-    UdpServiceDetectionResponse, UdpServiceDetectionResponse,
+    TestSslSeverity, UdpServiceDetectionRequest, UdpServiceDetectionResponse,
 };
 use log::error;
 use prost_types::Timestamp;
