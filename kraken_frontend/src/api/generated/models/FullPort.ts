@@ -13,6 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { PortCertainty } from './PortCertainty';
+import {
+    PortCertaintyFromJSON,
+    PortCertaintyFromJSONTyped,
+    PortCertaintyToJSON,
+} from './PortCertainty';
 import type { PortProtocol } from './PortProtocol';
 import {
     PortProtocolFromJSON,
@@ -64,6 +70,12 @@ export interface FullPort {
     protocol: PortProtocol;
     /**
      * 
+     * @type {PortCertainty}
+     * @memberof FullPort
+     */
+    certainty: PortCertainty;
+    /**
+     * 
      * @type {SimpleHost}
      * @memberof FullPort
      */
@@ -108,6 +120,7 @@ export function instanceOfFullPort(value: object): boolean {
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "port" in value;
     isInstance = isInstance && "protocol" in value;
+    isInstance = isInstance && "certainty" in value;
     isInstance = isInstance && "host" in value;
     isInstance = isInstance && "comment" in value;
     isInstance = isInstance && "tags" in value;
@@ -131,6 +144,7 @@ export function FullPortFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         'uuid': json['uuid'],
         'port': json['port'],
         'protocol': PortProtocolFromJSON(json['protocol']),
+        'certainty': PortCertaintyFromJSON(json['certainty']),
         'host': SimpleHostFromJSON(json['host']),
         'comment': json['comment'],
         'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
@@ -152,6 +166,7 @@ export function FullPortToJSON(value?: FullPort | null): any {
         'uuid': value.uuid,
         'port': value.port,
         'protocol': PortProtocolToJSON(value.protocol),
+        'certainty': PortCertaintyToJSON(value.certainty),
         'host': SimpleHostToJSON(value.host),
         'comment': value.comment,
         'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),
