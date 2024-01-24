@@ -246,7 +246,7 @@ pub struct DnsResolutionRequest {
 }
 
 /// Request to do DNS TXT scanning & parsing
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct DnsTxtScanRequest {
     /// The leech to use
     ///
