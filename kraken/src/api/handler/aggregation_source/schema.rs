@@ -1,12 +1,15 @@
+use std::net::IpAddr;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::attack_results::schema::{
-    FullQueryCertificateTransparencyResult, FullServiceDetectionResult, FullTestSSLResult,
-    FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
-    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+    FullDnsTxtScanResult, FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
+    FullTestSSLResult, FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult,
+    SimpleDnsResolutionResult, SimpleHostAliveResult, SimpleQueryUnhashedResult,
+    SimpleTcpPortScanResult,
 };
 use crate::api::handler::users::schema::SimpleUser;
 use crate::models::{
@@ -32,6 +35,8 @@ pub struct SimpleAggregationSource {
     pub udp_service_detection: usize,
     /// Resolve domain names
     pub dns_resolution: usize,
+    /// DNS TXT scans
+    pub dns_txt_scan: usize,
     /// Perform forced browsing
     pub forced_browsing: usize,
     /// Detect the OS of the target
@@ -97,6 +102,8 @@ pub enum SourceAttackResult {
     UdpServiceDetection(Vec<FullUdpServiceDetectionResult>),
     /// The [`AttackType::DnsResolution`] and its results
     DnsResolution(Vec<SimpleDnsResolutionResult>),
+    /// The [`AttackType::DnsTxtScan`] and its results
+    DnsTxtScan(Vec<FullDnsTxtScanResult>),
     /// The [`AttackType::TestSSL`] and its results
     TestSSL(FullTestSSLResult),
 }
@@ -119,8 +126,8 @@ pub enum ManualInsert {
     /// A manually inserted host
     Host {
         /// The host's ip address
-        #[schema(example = "172.0.0.1")]
-        ip_addr: String,
+        #[schema(value_type = String, example = "172.0.0.1")]
+        ip_addr: IpAddr,
         /// The host's os type
         os_type: OsType,
         /// The inserted data's certainty

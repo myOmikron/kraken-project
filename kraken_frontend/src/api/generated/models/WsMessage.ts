@@ -21,6 +21,12 @@ import {
     WsMessageOneOf13ToJSON,
 } from './WsMessageOneOf13';
 import {
+    WsMessageOneOf23,
+    WsMessageOneOf23TypeEnum,
+    WsMessageOneOf23FromJSONTyped,
+    WsMessageOneOf23ToJSON,
+} from './WsMessageOneOf23';
+import {
     WsMessageOneOf18,
     WsMessageOneOf18TypeEnum,
     WsMessageOneOf18FromJSONTyped,
@@ -150,6 +156,7 @@ export type WsMessage =
   | WsMessageOneOf16
   | WsMessageOneOf8
   | WsMessageOneOf13
+  | WsMessageOneOf23
   | WsMessageOneOf18
   | WsMessageOneOf
   | WsMessageOneOf2
@@ -179,6 +186,7 @@ function enumToString<T extends string>(obj: Record<T, T>): T {
 const WsMessageOneOf16Type = enumToString(WsMessageOneOf16TypeEnum);
 const WsMessageOneOf8Type = enumToString(WsMessageOneOf8TypeEnum);
 const WsMessageOneOf13Type = enumToString(WsMessageOneOf13TypeEnum);
+const WsMessageOneOf23Type = enumToString(WsMessageOneOf23TypeEnum);
 const WsMessageOneOf18Type = enumToString(WsMessageOneOf18TypeEnum);
 const WsMessageOneOfType = enumToString(WsMessageOneOfTypeEnum);
 const WsMessageOneOf2Type = enumToString(WsMessageOneOf2TypeEnum);
@@ -216,6 +224,8 @@ export function WsMessageFromJSONTyped(json: any, ignoreDiscriminator: boolean):
             return WsMessageOneOf8FromJSONTyped(json, ignoreDiscriminator);
         case WsMessageOneOf13Type:
             return WsMessageOneOf13FromJSONTyped(json, ignoreDiscriminator);
+        case WsMessageOneOf23Type:
+            return WsMessageOneOf23FromJSONTyped(json, ignoreDiscriminator);
         case WsMessageOneOf18Type:
             return WsMessageOneOf18FromJSONTyped(json, ignoreDiscriminator);
         case WsMessageOneOfType:
@@ -276,6 +286,8 @@ export function WsMessageToJSON(value?: WsMessage | null): any {
             return WsMessageOneOf8ToJSON(value);
         case WsMessageOneOf13Type:
             return WsMessageOneOf13ToJSON(value);
+        case WsMessageOneOf23Type:
+            return WsMessageOneOf23ToJSON(value);
         case WsMessageOneOf18Type:
             return WsMessageOneOf18ToJSON(value);
         case WsMessageOneOfType:

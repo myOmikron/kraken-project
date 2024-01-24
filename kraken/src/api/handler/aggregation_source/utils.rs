@@ -13,17 +13,19 @@ use crate::api::handler::aggregation_source::schema::{
     FullAggregationSource, ManualInsert, SimpleAggregationSource, SourceAttack, SourceAttackResult,
 };
 use crate::api::handler::attack_results::schema::{
-    FullQueryCertificateTransparencyResult, FullServiceDetectionResult, FullTestSSLResult,
-    FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
-    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult, TestSSLFinding,
+    DnsTxtScanEntry, FullDnsTxtScanResult, FullQueryCertificateTransparencyResult,
+    FullServiceDetectionResult, FullTestSSLResult, FullUdpServiceDetectionResult,
+    SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
+    SimpleQueryUnhashedResult, SimpleTcpPortScanResult, TestSSLFinding,
 };
 use crate::api::handler::users::schema::SimpleUser;
 use crate::models::{
     AggregationSource, AggregationTable, Attack, AttackType, BruteforceSubdomainsResult,
     CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
-    DnsResolutionResult, HostAliveResult, ManualDomain, ManualHost, ManualPort, ManualService,
-    ServiceDetectionName, ServiceDetectionResult, SourceType, TcpPortScanResult,
-    TestSSLResultFinding, TestSSLResultHeader, UdpServiceDetectionName, UdpServiceDetectionResult,
+    DnsResolutionResult, DnsTxtScanAttackResult, DnsTxtScanServiceHintEntry, DnsTxtScanSpfEntry,
+    HostAliveResult, ManualDomain, ManualHost, ManualPort, ManualService, ServiceDetectionName,
+    ServiceDetectionResult, SourceType, TcpPortScanResult, TestSSLResultFinding,
+    TestSSLResultHeader, UdpServiceDetectionName, UdpServiceDetectionResult,
 };
 
 fn field_in<'a, T, F, P, Any>(
@@ -105,6 +107,7 @@ impl SimpleAggregationSource {
             SourceType::ServiceDetection => self.service_detection += 1,
             SourceType::UdpServiceDetection => self.udp_service_detection += 1,
             SourceType::DnsResolution => self.dns_resolution += 1,
+            SourceType::DnsTxtScan => self.dns_txt_scan += 1,
             SourceType::UdpPortScan => self.udp_port_scan += 1,
             SourceType::ForcedBrowsing => self.forced_browsing += 1,
             SourceType::OSDetection => self.os_detection += 1,
@@ -167,6 +170,7 @@ impl FullAggregationSource {
         let mut service_detection: Results<FullServiceDetectionResult> = Results::new();
         let mut udp_service_detection: Results<FullUdpServiceDetectionResult> = Results::new();
         let mut dns_resolution: Results<SimpleDnsResolutionResult> = Results::new();
+        let mut dns_txt_scan: Results<FullDnsTxtScanResult> = Results::new();
         let mut testssl: HashMap<Uuid, FullTestSSLResult> = HashMap::new();
         let mut manual_insert = Vec::new();
         for (source_type, uuids) in sources {
@@ -380,6 +384,57 @@ impl FullAggregationSource {
                             });
                     }
                 }
+                SourceType::DnsTxtScan => {
+                    let service_hints = query!(&mut *tx, DnsTxtScanServiceHintEntry)
+                        .condition(field_in(
+                            DnsTxtScanServiceHintEntry::F.collection,
+                            uuids.clone(),
+                        ))
+                        .all()
+                        .await?;
+                    let spf = query!(&mut *tx, DnsTxtScanSpfEntry)
+                        .condition(field_in(DnsTxtScanSpfEntry::F.collection, uuids.clone()))
+                        .all()
+                        .await?;
+                    let mut stream = query!(&mut *tx, DnsTxtScanAttackResult)
+                        .condition(field_in(DnsTxtScanAttackResult::F.uuid, uuids.clone()))
+                        .stream();
+                    while let Some(result) = stream.try_next().await? {
+                        dns_txt_scan.entry(*result.attack.key()).or_default().push(
+                            FullDnsTxtScanResult {
+                                uuid: result.uuid,
+                                attack: *result.attack.key(),
+                                domain: result.domain,
+                                created_at: result.created_at,
+                                collection_type: result.collection_type,
+                                entries: service_hints
+                                    .iter()
+                                    .filter(|s| *s.collection.key() == result.uuid)
+                                    .map(|s| DnsTxtScanEntry::ServiceHint {
+                                        created_at: s.created_at,
+                                        uuid: s.uuid,
+                                        txt_type: s.txt_type,
+                                        rule: s.rule.clone(),
+                                    })
+                                    .chain(
+                                        spf.iter()
+                                            .filter(|s| *s.collection.key() == result.uuid)
+                                            .map(|s| DnsTxtScanEntry::Spf {
+                                                created_at: s.created_at,
+                                                uuid: s.uuid,
+                                                rule: s.rule.clone(),
+                                                spf_type: s.spf_type,
+                                                spf_ip: s.spf_ip,
+                                                spf_domain: s.spf_domain.clone(),
+                                                spf_domain_ipv4_cidr: s.spf_domain_ipv4_cidr,
+                                                spf_domain_ipv6_cidr: s.spf_domain_ipv6_cidr,
+                                            }),
+                                    )
+                                    .collect(),
+                            },
+                        );
+                    }
+                }
                 SourceType::TestSSL => {
                     {
                         let mut stream = query!(&mut *tx, TestSSLResultHeader)
@@ -472,7 +527,7 @@ impl FullAggregationSource {
                         stream.try_next().await?
                     {
                         manual_insert.push(ManualInsert::Host {
-                            ip_addr: ip_addr.ip().to_string(),
+                            ip_addr: ip_addr.ip(),
                             os_type,
                             certainty,
                             user,
@@ -568,6 +623,7 @@ impl FullAggregationSource {
                     .chain(service_detection.keys())
                     .chain(udp_service_detection.keys())
                     .chain(dns_resolution.keys())
+                    .chain(dns_txt_scan.keys())
                     .chain(testssl.keys())
                     .copied(),
             ))
@@ -606,13 +662,16 @@ impl FullAggregationSource {
                     AttackType::ServiceDetection => service_detection
                         .remove(&uuid)
                         .map(SourceAttackResult::ServiceDetection),
-                    AttackType::DnsResolution => dns_resolution
-                        .remove(&uuid)
-                        .map(SourceAttackResult::DnsResolution),
-                    AttackType::TestSSL => testssl.remove(&uuid).map(SourceAttackResult::TestSSL),
                     AttackType::UdpServiceDetection => udp_service_detection
                         .remove(&uuid)
                         .map(SourceAttackResult::UdpServiceDetection),
+                    AttackType::DnsResolution => dns_resolution
+                        .remove(&uuid)
+                        .map(SourceAttackResult::DnsResolution),
+                    AttackType::DnsTxtScan => dns_txt_scan
+                        .remove(&uuid)
+                        .map(SourceAttackResult::DnsTxtScan),
+                    AttackType::TestSSL => testssl.remove(&uuid).map(SourceAttackResult::TestSSL),
                     AttackType::UdpPortScan
                     | AttackType::ForcedBrowsing
                     | AttackType::OSDetection

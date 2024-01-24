@@ -13,31 +13,31 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleDomain } from './SimpleDomain';
+import type { FullDnsTxtScanResult } from './FullDnsTxtScanResult';
 import {
-    SimpleDomainFromJSON,
-    SimpleDomainFromJSONTyped,
-    SimpleDomainToJSON,
-} from './SimpleDomain';
+    FullDnsTxtScanResultFromJSON,
+    FullDnsTxtScanResultFromJSONTyped,
+    FullDnsTxtScanResultToJSON,
+} from './FullDnsTxtScanResult';
 
 /**
- * A new domain was found
+ * A result for a DNS TXT scan request
  * @export
  * @interface WsMessageOneOf13
  */
 export interface WsMessageOneOf13 {
     /**
-     * The workspace this domain is related to
+     * The corresponding id of the attack
      * @type {string}
      * @memberof WsMessageOneOf13
      */
-    workspace: string;
+    attackUuid: string;
     /**
      * 
-     * @type {SimpleDomain}
+     * @type {FullDnsTxtScanResult}
      * @memberof WsMessageOneOf13
      */
-    domain: SimpleDomain;
+    result: FullDnsTxtScanResult;
     /**
      * 
      * @type {string}
@@ -51,7 +51,7 @@ export interface WsMessageOneOf13 {
  * @export
  */
 export const WsMessageOneOf13TypeEnum = {
-    NewDomain: 'NewDomain'
+    DnsTxtScanResult: 'DnsTxtScanResult'
 } as const;
 export type WsMessageOneOf13TypeEnum = typeof WsMessageOneOf13TypeEnum[keyof typeof WsMessageOneOf13TypeEnum];
 
@@ -61,8 +61,8 @@ export type WsMessageOneOf13TypeEnum = typeof WsMessageOneOf13TypeEnum[keyof typ
  */
 export function instanceOfWsMessageOneOf13(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "workspace" in value;
-    isInstance = isInstance && "domain" in value;
+    isInstance = isInstance && "attackUuid" in value;
+    isInstance = isInstance && "result" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -78,8 +78,8 @@ export function WsMessageOneOf13FromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'workspace': json['workspace'],
-        'domain': SimpleDomainFromJSON(json['domain']),
+        'attackUuid': json['attack_uuid'],
+        'result': FullDnsTxtScanResultFromJSON(json['result']),
         'type': json['type'],
     };
 }
@@ -93,8 +93,8 @@ export function WsMessageOneOf13ToJSON(value?: WsMessageOneOf13 | null): any {
     }
     return {
         
-        'workspace': value.workspace,
-        'domain': SimpleDomainToJSON(value.domain),
+        'attack_uuid': value.attackUuid,
+        'result': FullDnsTxtScanResultToJSON(value.result),
         'type': value.type,
     };
 }

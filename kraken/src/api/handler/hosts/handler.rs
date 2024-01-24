@@ -128,8 +128,10 @@ pub(crate) async fn get_all_hosts(
             .into_iter()
             .map(|x| FullHost {
                 uuid: x.uuid,
-                ip_addr: x.ip_addr.ip().to_string(),
+                ip_addr: x.ip_addr.ip(),
                 comment: x.comment,
+                response_time: x.response_time,
+                certainty: x.certainty,
                 os_type: x.os_type,
                 workspace: *x.workspace.key(),
                 tags: tags.remove(&x.uuid).unwrap_or_default(),
@@ -217,10 +219,12 @@ pub async fn get_host(
 
     Ok(Json(FullHost {
         uuid: host.uuid,
-        ip_addr: host.ip_addr.ip().to_string(),
+        ip_addr: host.ip_addr.ip(),
         workspace: *host.workspace.key(),
         os_type: host.os_type,
         comment: host.comment,
+        response_time: host.response_time,
+        certainty: host.certainty,
         tags,
         sources,
         created_at: host.created_at,
@@ -491,6 +495,7 @@ pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRela
             uuid: p.uuid,
             port: p.port as u16,
             protocol: p.protocol,
+            certainty: p.certainty,
             host: *p.host.key(),
             comment: p.comment,
             workspace: *p.workspace.key(),
@@ -506,6 +511,7 @@ pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRela
             uuid: s.uuid,
             name: s.name,
             version: s.version,
+            certainty: s.certainty,
             host: *s.host.key(),
             port: s.port.map(|x| *x.key()),
             comment: s.comment,
@@ -537,6 +543,7 @@ pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRela
                 uuid: d.uuid,
                 domain: d.domain,
                 comment: d.comment,
+                certainty: d.certainty,
                 workspace: *d.workspace.key(),
                 created_at: d.created_at,
             });

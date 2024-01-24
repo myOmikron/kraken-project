@@ -75,6 +75,7 @@ impl PushAttackService for Results {
             user_uuid,
             match &response {
                 push_attack_request::Response::DnsResolution(_) => AttackType::DnsResolution,
+                push_attack_request::Response::DnsTxtScan(_) => AttackType::DnsTxtScan,
                 push_attack_request::Response::HostsAlive(_) => AttackType::HostAlive,
                 push_attack_request::Response::TcpPortScan(_) => AttackType::TcpPortScan,
                 push_attack_request::Response::BruteforceSubdomain(_) => {
@@ -99,6 +100,9 @@ impl PushAttackService for Results {
 
         let result = match response {
             push_attack_request::Response::DnsResolution(repeated) => {
+                attack.handle_vec_response(repeated.responses).await
+            }
+            push_attack_request::Response::DnsTxtScan(repeated) => {
                 attack.handle_vec_response(repeated.responses).await
             }
             push_attack_request::Response::HostsAlive(repeated) => {
@@ -170,6 +174,9 @@ impl BacklogService for Results {
 
             let result: Result<(), _> = match response {
                 any_attack_response::Response::DnsResolution(response) => {
+                    attack_context.handle_response(response).await
+                }
+                any_attack_response::Response::DnsTxtScan(response) => {
                     attack_context.handle_response(response).await
                 }
                 any_attack_response::Response::HostsAlive(response) => {

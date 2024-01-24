@@ -1,10 +1,10 @@
-import { AttackType } from "../api/generated";
+import { AttackType, SimpleAggregationSource } from "../api/generated";
 
 export type AttackResolver = {
     [Key in AttackType]: {
         abbreviation: string;
         long: string;
-        key: string;
+        key: keyof SimpleAggregationSource | "undefined";
     };
 };
 
@@ -21,6 +21,7 @@ export const ATTACKS: AttackResolver = {
     ServiceDetection: { abbreviation: "SvD", long: "Service Detection", key: "serviceDetection" },
     UdpServiceDetection: { abbreviation: "UDP", long: "UDP Service Detection", key: "udpServiceDetection" },
     DnsResolution: { abbreviation: "DR", long: "DNS Resolution", key: "dnsResolution" },
+    DnsTxtScan: { abbreviation: "Txt", long: "DNS TXT Scan", key: "dnsTxtScan" },
     ForcedBrowsing: { abbreviation: "FB", long: "Forced Browsing", key: "forcedBrowsing" },
     OSDetection: { abbreviation: "OS", long: "OS Detection", key: "osDetection" },
     AntiPortScanningDetection: {

@@ -21,7 +21,7 @@ import {
 } from './AggregationType';
 
 /**
- * Workspace tags were updated on an aggregation
+ * Global tags were updated on an aggregation
  * @export
  * @interface WsMessageOneOf22
  */
@@ -63,7 +63,7 @@ export interface WsMessageOneOf22 {
  * @export
  */
 export const WsMessageOneOf22TypeEnum = {
-    UpdatedWorkspaceTags: 'UpdatedWorkspaceTags'
+    UpdatedGlobalTags: 'UpdatedGlobalTags'
 } as const;
 export type WsMessageOneOf22TypeEnum = typeof WsMessageOneOf22TypeEnum[keyof typeof WsMessageOneOf22TypeEnum];
 

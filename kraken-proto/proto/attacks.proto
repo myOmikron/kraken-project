@@ -233,6 +233,22 @@ message DnsResolutionResponse {
 }
 
 /*
+ * DNS TXT scan
+ */
+ message DnsTxtScanRequest {
+  // A unique id that identifier the attack
+  string attack_uuid = 1;
+  // The domains to resolve
+  repeated string targets = 2;
+}
+
+// DNS TXT scan response
+message DnsTxtScanResponse {
+  // Found record
+  shared.DnsTxtScan record = 1;
+}
+
+/*
  * testssl.sh
  */
 
@@ -455,7 +471,6 @@ enum TestSSLSeverity {
   Critical = 8;
 }
 
-
 // Implemented by leech; allows kraken to request attack from a leech
 service ReqAttackService {
   rpc BruteforceSubdomains(BruteforceSubdomainRequest) returns (stream BruteforceSubdomainResponse);
@@ -465,6 +480,7 @@ service ReqAttackService {
   rpc UdpServiceDetection(UdpServiceDetectionRequest) returns (stream UdpServiceDetectionResponse);
   rpc HostsAliveCheck(HostsAliveRequest) returns (stream HostsAliveResponse);
   rpc DnsResolution(DnsResolutionRequest) returns (stream DnsResolutionResponse);
+  rpc DnsTxtScan(DnsTxtScanRequest) returns (stream DnsTxtScanResponse);
   rpc TestSSL(TestSSLRequest) returns (TestSSLResponse);
 }
 
@@ -496,8 +512,10 @@ message PushAttackRequest {
     RepeatedDnsResolutionResponse dns_resolution = 8;
     // Response streamed by a dns resolution attack
     RepeatedUdpServiceDetectionResponse udp_service_detection = 9;
+    // Response streamed by a dns txt scan attack
+    RepeatedDnsTxtScanResponse dns_txt_scan = 10;
     // Response for running testssl.sh
-    TestSSLResponse testssl = 10;
+    TestSSLResponse testssl = 11;
   }
 }
 
@@ -525,6 +543,11 @@ message RepeatedDnsResolutionResponse {
 message RepeatedUdpServiceDetectionResponse {
   // repeated UdpServiceDetectionResponse
   repeated UdpServiceDetectionResponse responses = 1;
+}
+// Thin wrapper to have a `repeated DnsTxtScanResponse` in a `oneof`
+message RepeatedDnsTxtScanResponse {
+  // repeated DnsTxtScanResponse
+  repeated DnsTxtScanResponse responses = 1;
 }
 
 // Response to a manually pushed attack
@@ -576,8 +599,10 @@ message AnyAttackResponse {
     DnsResolutionResponse dns_resolution = 7;
     // Response streamed by a dns resolution attack
     UdpServiceDetectionResponse udp_service_detection = 8;
+    // Response streamed by a dns txt scan attack
+    DnsTxtScanResponse dns_txt_scan = 9;
     // Response for running testssl.sh
-    TestSSLResponse testssl = 9;
+    TestSSLResponse testssl = 10;
   }
 }
 

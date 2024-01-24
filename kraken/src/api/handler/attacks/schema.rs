@@ -12,7 +12,7 @@ use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::models::AttackType;
 
 /// The settings of a subdomain bruteforce request
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct BruteforceSubdomainsRequest {
     /// The leech to use
     ///
@@ -35,7 +35,7 @@ pub struct BruteforceSubdomainsRequest {
 }
 
 /// The settings to configure a tcp port scan
-#[derive(Deserialize, Serialize, Debug, ToSchema)]
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct ScanTcpPortsRequest {
     /// The leech to use
     ///
@@ -83,7 +83,7 @@ pub struct ScanTcpPortsRequest {
 }
 
 /// Single port or a range of ports
-#[derive(Deserialize, Serialize, ToSchema, Debug)]
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 #[serde(untagged)]
 pub enum PortOrRange {
     /// A single port
@@ -95,7 +95,7 @@ pub enum PortOrRange {
 }
 
 /// Host Alive check request
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct HostsAliveRequest {
     /// The leech to use
     ///
@@ -121,7 +121,7 @@ pub struct HostsAliveRequest {
 }
 
 /// The settings to configure a certificate transparency request
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct QueryCertificateTransparencyRequest {
     /// Domain to query certificates for
     #[schema(example = "example.com")]
@@ -146,7 +146,7 @@ pub struct QueryCertificateTransparencyRequest {
 }
 
 /// The request to query the dehashed API
-#[derive(ToSchema, Deserialize)]
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct QueryDehashedRequest {
     /// The query to send to dehashed
     #[schema(value_type = Query)]
@@ -157,7 +157,7 @@ pub struct QueryDehashedRequest {
 }
 
 /// The request to start a service detection
-#[derive(Debug, ToSchema, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct ServiceDetectionRequest {
     /// The leech to use
     ///
@@ -184,7 +184,7 @@ pub struct ServiceDetectionRequest {
 }
 
 /// The request to start a service detection
-#[derive(Debug, ToSchema, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct UdpServiceDetectionRequest {
     /// The leech to use
     ///
@@ -226,7 +226,7 @@ pub struct UdpServiceDetectionRequest {
 }
 
 /// Request to resolve domains
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct DnsResolutionRequest {
     /// The leech to use
     ///
@@ -240,6 +240,22 @@ pub struct DnsResolutionRequest {
     /// The concurrent task limit
     #[schema(example = 2)]
     pub concurrent_limit: u32,
+
+    /// The workspace to execute the attack in
+    pub workspace_uuid: Uuid,
+}
+
+/// Request to do DNS TXT scanning & parsing
+#[derive(Deserialize, ToSchema)]
+pub struct DnsTxtScanRequest {
+    /// The leech to use
+    ///
+    /// Leave empty to use a random leech
+    pub leech_uuid: Option<Uuid>,
+
+    /// The domains to resolve
+    #[schema(value_type = Vec<String>, example = json!(["example.com", "example.org"]))]
+    pub targets: Vec<String>,
 
     /// The workspace to execute the attack in
     pub workspace_uuid: Uuid,

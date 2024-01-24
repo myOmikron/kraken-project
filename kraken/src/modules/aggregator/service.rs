@@ -85,6 +85,7 @@ async fn aggregate(data: ServiceAggregationData) -> Result<Uuid, rorm::Error> {
                         port: data.port,
                         host: data.host,
                         uuid: service.uuid,
+                        certainty: data.certainty,
                         name: service.name,
                         comment: String::new(),
                         version: None,

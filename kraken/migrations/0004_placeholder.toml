@@ -1,7 +1,7 @@
 [Migration]
-Hash = "13536009500417516455"
+Hash = "15590762970511122895"
 Initial = false
-Dependency = 1
+Dependency = 3
 Replaces = []
 
 [[Migration.Operations]]
@@ -242,25 +242,39 @@ Type = "not_null"
 
 [[Migration.Operations]]
 Type = "DeleteField"
-Model = "servicedetectionresult"
-Name = "certainty"
+Model = "aggregationsource"
+Name = "source_type"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "servicedetectionresult"
+Model = "aggregationsource"
 
 [Migration.Operations.Field]
-Name = "certainty"
+Name = "source_type"
 Type = "choices"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "choices"
 Value = [
-    "Historical",
-    "SupposedTo",
-    "MaybeVerified",
-    "DefinitelyVerified",
-    "UnknownService",
+    "BruteforceSubdomains",
+    "TcpPortScan",
+    "QueryCertificateTransparency",
+    "QueryDehashed",
+    "HostAlive",
+    "ServiceDetection",
+    "UdpServiceDetection",
+    "DnsResolution",
+    "DnsTxtScan",
+    "UdpPortScan",
+    "ForcedBrowsing",
+    "OSDetection",
+    "VersionDetection",
+    "AntiPortScanningDetection",
+    "TestSSL",
+    "ManualDomain",
+    "ManualHost",
+    "ManualPort",
+    "ManualService",
 ]
 
 [[Migration.Operations.Field.Annotations]]
@@ -291,103 +305,13 @@ Value = [
     "ServiceDetection",
     "UdpServiceDetection",
     "DnsResolution",
+    "DnsTxtScan",
     "UdpPortScan",
     "ForcedBrowsing",
     "OSDetection",
     "VersionDetection",
     "AntiPortScanningDetection",
     "TestSSL",
-]
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "DeleteField"
-Model = "udpservicedetectionresult"
-Name = "certainty"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "udpservicedetectionresult"
-
-[Migration.Operations.Field]
-Name = "certainty"
-Type = "choices"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "choices"
-Value = [
-    "Historical",
-    "SupposedTo",
-    "MaybeVerified",
-    "DefinitelyVerified",
-    "UnknownService",
-]
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "DeleteField"
-Model = "aggregationsource"
-Name = "source_type"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "aggregationsource"
-
-[Migration.Operations.Field]
-Name = "source_type"
-Type = "choices"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "choices"
-Value = [
-    "BruteforceSubdomains",
-    "TcpPortScan",
-    "QueryCertificateTransparency",
-    "QueryDehashed",
-    "HostAlive",
-    "ServiceDetection",
-    "UdpServiceDetection",
-    "DnsResolution",
-    "UdpPortScan",
-    "ForcedBrowsing",
-    "OSDetection",
-    "VersionDetection",
-    "AntiPortScanningDetection",
-    "TestSSL",
-    "ManualDomain",
-    "ManualHost",
-    "ManualPort",
-    "ManualService",
-]
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "DeleteField"
-Model = "service"
-Name = "certainty"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "service"
-
-[Migration.Operations.Field]
-Name = "certainty"
-Type = "choices"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "choices"
-Value = [
-    "Historical",
-    "SupposedTo",
-    "MaybeVerified",
-    "DefinitelyVerified",
-    "UnknownService",
 ]
 
 [[Migration.Operations.Field.Annotations]]

@@ -13,8 +13,8 @@ use uuid::Uuid;
 use crate::api::extractors::SessionUser;
 use crate::api::handler::attack_results::schema::{
     FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
-    FullUdpServiceDetectionResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
-    SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+    FullUdpServiceDetectionResult, SimpleDnsResolutionResult, SimpleDnsTxtScanResult,
+    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
 };
 use crate::api::handler::common::error::{ApiError, ApiResult};
 use crate::api::handler::common::schema::{
@@ -38,10 +38,10 @@ use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::{
     Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
-    DnsResolutionResult, Domain, Host, HostAliveResult, ModelType, Port, Search, SearchInsert,
-    SearchResult, Service, ServiceDetectionName, ServiceDetectionResult, TcpPortScanResult,
-    UdpServiceDetectionName, UdpServiceDetectionResult, User, UserPermission, Workspace,
-    WorkspaceInvitation, WorkspaceMember,
+    DnsResolutionResult, DnsTxtScanAttackResult, Domain, Host, HostAliveResult, ModelType, Port,
+    Search, SearchInsert, SearchResult, Service, ServiceDetectionName, ServiceDetectionResult,
+    TcpPortScanResult, UdpServiceDetectionName, UdpServiceDetectionResult, User, UserPermission,
+    Workspace, WorkspaceInvitation, WorkspaceMember,
 };
 
 /// Create a new workspace
@@ -726,7 +726,9 @@ pub async fn get_search_results(
                     workspace: *data.workspace.key(),
                     comment: data.comment,
                     os_type: data.os_type,
-                    ip_addr: data.ip_addr.to_string(),
+                    response_time: data.response_time,
+                    certainty: data.certainty,
+                    ip_addr: data.ip_addr.ip(),
                     created_at: data.created_at,
                 })
             }
@@ -743,6 +745,7 @@ pub async fn get_search_results(
                     name: data.name,
                     version: data.version,
                     host: *data.host.key(),
+                    certainty: data.certainty,
                     comment: data.comment,
                     workspace: *data.workspace.key(),
                     created_at: data.created_at,
@@ -760,6 +763,7 @@ pub async fn get_search_results(
                     comment: data.comment,
                     workspace: *data.workspace.key(),
                     port: data.port as u16,
+                    certainty: data.certainty,
                     created_at: data.created_at,
                     host: *data.host.key(),
                     protocol: data.protocol,
@@ -777,6 +781,7 @@ pub async fn get_search_results(
                     workspace: *data.workspace.key(),
                     created_at: data.created_at,
                     domain: data.domain,
+                    certainty: data.certainty,
                 })
             }
             ModelType::DnsRecordResult => {
@@ -792,6 +797,20 @@ pub async fn get_search_results(
                     source: data.source,
                     destination: data.destination,
                     dns_record_type: data.dns_record_type,
+                })
+            }
+            ModelType::DnsTxtScanResult => {
+                let data = query!(&mut tx, DnsTxtScanAttackResult)
+                    .condition(DnsTxtScanAttackResult::F.uuid.equals(item.ref_key))
+                    .one()
+                    .await?;
+
+                SearchResultEntry::DnsTxtScanResultEntry(SimpleDnsTxtScanResult {
+                    uuid: data.uuid,
+                    created_at: data.created_at,
+                    attack: *data.attack.key(),
+                    domain: data.domain,
+                    collection_type: data.collection_type,
                 })
             }
             ModelType::TcpPortScanResult => {

@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use crate::api::handler::attack_results::schema::FullDnsTxtScanResult;
 use crate::api::handler::attacks::schema::SimpleAttack;
 use crate::api::handler::domains::schema::SimpleDomain;
 use crate::api::handler::hosts::schema::SimpleHost;
@@ -137,6 +138,13 @@ pub enum WsMessage {
         source: String,
         /// The destination address that was returned
         destination: String,
+    },
+    /// A result for a DNS TXT scan request
+    DnsTxtScanResult {
+        /// The corresponding id of the attack
+        attack_uuid: Uuid,
+        /// The destination address that was returned
+        result: FullDnsTxtScanResult,
     },
     /// A new domain was found
     NewDomain {

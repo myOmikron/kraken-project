@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { FullTestSSLResult } from './FullTestSSLResult';
+import type { FullDnsTxtScanResult } from './FullDnsTxtScanResult';
 import {
-    FullTestSSLResultFromJSON,
-    FullTestSSLResultFromJSONTyped,
-    FullTestSSLResultToJSON,
-} from './FullTestSSLResult';
+    FullDnsTxtScanResultFromJSON,
+    FullDnsTxtScanResultFromJSONTyped,
+    FullDnsTxtScanResultToJSON,
+} from './FullDnsTxtScanResult';
 
 /**
  * 
@@ -33,11 +33,11 @@ export interface SourceAttackResultOneOf8 {
      */
     attackType: SourceAttackResultOneOf8AttackTypeEnum;
     /**
-     * 
-     * @type {FullTestSSLResult}
+     * The [`AttackType::DnsTxtScan`] and its results
+     * @type {Array<FullDnsTxtScanResult>}
      * @memberof SourceAttackResultOneOf8
      */
-    results: FullTestSSLResult;
+    results: Array<FullDnsTxtScanResult>;
 }
 
 
@@ -45,7 +45,7 @@ export interface SourceAttackResultOneOf8 {
  * @export
  */
 export const SourceAttackResultOneOf8AttackTypeEnum = {
-    TestSsl: 'TestSSL'
+    DnsTxtScan: 'DnsTxtScan'
 } as const;
 export type SourceAttackResultOneOf8AttackTypeEnum = typeof SourceAttackResultOneOf8AttackTypeEnum[keyof typeof SourceAttackResultOneOf8AttackTypeEnum];
 
@@ -72,7 +72,7 @@ export function SourceAttackResultOneOf8FromJSONTyped(json: any, ignoreDiscrimin
     return {
         
         'attackType': json['attack_type'],
-        'results': FullTestSSLResultFromJSON(json['results']),
+        'results': ((json['results'] as Array<any>).map(FullDnsTxtScanResultFromJSON)),
     };
 }
 
@@ -86,7 +86,7 @@ export function SourceAttackResultOneOf8ToJSON(value?: SourceAttackResultOneOf8 
     return {
         
         'attack_type': value.attackType,
-        'results': FullTestSSLResultToJSON(value.results),
+        'results': ((value.results as Array<any>).map(FullDnsTxtScanResultToJSON)),
     };
 }
 

@@ -13,6 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { DomainCertainty } from './DomainCertainty';
+import {
+    DomainCertaintyFromJSON,
+    DomainCertaintyFromJSONTyped,
+    DomainCertaintyToJSON,
+} from './DomainCertainty';
 import type { SimpleAggregationSource } from './SimpleAggregationSource';
 import {
     SimpleAggregationSourceFromJSON,
@@ -74,6 +80,12 @@ export interface FullDomain {
      * @memberof FullDomain
      */
     createdAt: Date;
+    /**
+     * 
+     * @type {DomainCertainty}
+     * @memberof FullDomain
+     */
+    certainty: DomainCertainty;
 }
 
 /**
@@ -88,6 +100,7 @@ export function instanceOfFullDomain(value: object): boolean {
     isInstance = isInstance && "tags" in value;
     isInstance = isInstance && "sources" in value;
     isInstance = isInstance && "createdAt" in value;
+    isInstance = isInstance && "certainty" in value;
 
     return isInstance;
 }
@@ -109,6 +122,7 @@ export function FullDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
         'sources': SimpleAggregationSourceFromJSON(json['sources']),
         'createdAt': (new Date(json['created_at'])),
+        'certainty': DomainCertaintyFromJSON(json['certainty']),
     };
 }
 
@@ -128,6 +142,7 @@ export function FullDomainToJSON(value?: FullDomain | null): any {
         'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),
         'sources': SimpleAggregationSourceToJSON(value.sources),
         'created_at': (value.createdAt.toISOString()),
+        'certainty': DomainCertaintyToJSON(value.certainty),
     };
 }
 

@@ -7,8 +7,8 @@ use rorm::{query, FieldAccess, Model};
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::attacks::schema::{
-    BruteforceSubdomainsRequest, DnsResolutionRequest, HostsAliveRequest, ListAttacks,
-    QueryCertificateTransparencyRequest, QueryDehashedRequest, ScanTcpPortsRequest,
+    BruteforceSubdomainsRequest, DnsResolutionRequest, DnsTxtScanRequest, HostsAliveRequest,
+    ListAttacks, QueryCertificateTransparencyRequest, QueryDehashedRequest, ScanTcpPortsRequest,
     ServiceDetectionRequest, SimpleAttack, TestSSLRequest, UdpServiceDetectionRequest,
 };
 use crate::api::handler::common::error::{ApiError, ApiResult};
@@ -19,10 +19,11 @@ use crate::chan::global::GLOBAL;
 use crate::models::{Attack, User, UserPermission, WordList, Workspace, WorkspaceMember};
 use crate::modules::attacks::{
     start_bruteforce_subdomains, start_certificate_transparency, start_dehashed_query,
-    start_dns_resolution, start_host_alive, start_service_detection, start_tcp_port_scan,
-    start_testssl, start_udp_service_detection, BruteforceSubdomainsParams,
-    CertificateTransparencyParams, DehashedQueryParams, DnsResolutionParams, HostAliveParams,
-    ServiceDetectionParams, TcpPortScanParams, TestSSLParams, UdpServiceDetectionParams,
+    start_dns_resolution, start_dns_txt_scan, start_host_alive, start_service_detection,
+    start_tcp_port_scan, start_testssl, start_udp_service_detection, BruteforceSubdomainsParams,
+    CertificateTransparencyParams, DehashedQueryParams, DnsResolutionParams, DnsTxtScanParams,
+    HostAliveParams, ServiceDetectionParams, TcpPortScanParams, TestSSLParams,
+    UdpServiceDetectionParams,
 };
 
 /// Bruteforce subdomains through a DNS wordlist attack
@@ -431,6 +432,50 @@ pub async fn dns_resolution(
             targets,
             concurrent_limit,
         },
+    )
+    .await?;
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
+}
+
+/// Perform DNS TXT scanning & parsing
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 202, description = "Attack scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = DnsTxtScanRequest,
+    security(("api_key" = []))
+)]
+#[post("/attacks/dnsTxtScan")]
+pub async fn dns_txt_scan(
+    req: Json<DnsTxtScanRequest>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let DnsTxtScanRequest {
+        leech_uuid,
+        targets,
+        workspace_uuid,
+    } = req.into_inner();
+
+    if targets.is_empty() {
+        return Err(ApiError::EmptyTargets);
+    }
+
+    let client = if let Some(leech_uuid) = leech_uuid {
+        GLOBAL.leeches.get_leech(&leech_uuid)?
+    } else {
+        GLOBAL.leeches.random_leech()?
+    };
+
+    let (attack_uuid, _) = start_dns_txt_scan(
+        workspace_uuid,
+        user_uuid,
+        client,
+        DnsTxtScanParams { targets },
     )
     .await?;
 

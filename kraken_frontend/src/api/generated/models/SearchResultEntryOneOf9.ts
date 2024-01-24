@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { FullServiceDetectionResult } from './FullServiceDetectionResult';
+import type { SimpleHostAliveResult } from './SimpleHostAliveResult';
 import {
-    FullServiceDetectionResultFromJSON,
-    FullServiceDetectionResultFromJSONTyped,
-    FullServiceDetectionResultToJSON,
-} from './FullServiceDetectionResult';
+    SimpleHostAliveResultFromJSON,
+    SimpleHostAliveResultFromJSONTyped,
+    SimpleHostAliveResultToJSON,
+} from './SimpleHostAliveResult';
 
 /**
  * 
@@ -28,10 +28,10 @@ import {
 export interface SearchResultEntryOneOf9 {
     /**
      * 
-     * @type {FullServiceDetectionResult}
+     * @type {SimpleHostAliveResult}
      * @memberof SearchResultEntryOneOf9
      */
-    serviceDetectionResult: FullServiceDetectionResult;
+    hostAliveResult: SimpleHostAliveResult;
 }
 
 /**
@@ -39,7 +39,7 @@ export interface SearchResultEntryOneOf9 {
  */
 export function instanceOfSearchResultEntryOneOf9(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "serviceDetectionResult" in value;
+    isInstance = isInstance && "hostAliveResult" in value;
 
     return isInstance;
 }
@@ -54,7 +54,7 @@ export function SearchResultEntryOneOf9FromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'serviceDetectionResult': FullServiceDetectionResultFromJSON(json['ServiceDetectionResult']),
+        'hostAliveResult': SimpleHostAliveResultFromJSON(json['HostAliveResult']),
     };
 }
 
@@ -67,7 +67,7 @@ export function SearchResultEntryOneOf9ToJSON(value?: SearchResultEntryOneOf9 | 
     }
     return {
         
-        'ServiceDetectionResult': FullServiceDetectionResultToJSON(value.serviceDetectionResult),
+        'HostAliveResult': SimpleHostAliveResultToJSON(value.hostAliveResult),
     };
 }
 

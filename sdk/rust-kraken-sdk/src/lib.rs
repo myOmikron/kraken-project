@@ -1,10 +1,15 @@
-#[macro_use]
-extern crate serde_derive;
+//! # kraken-sdk
+//!
+//! The SDK to [Kraken](https://github.com/myOmikron/kraken-project).
 
-extern crate serde;
-extern crate serde_json;
-extern crate url;
-extern crate reqwest;
+#![warn(clippy::unwrap_used, clippy::expect_used, missing_docs)]
+#![forbid(unsafe_code)]
 
-pub mod apis;
-pub mod models;
+pub use kraken;
+
+pub use crate::export::*;
+pub use crate::sdk::*;
+
+pub mod error;
+mod export;
+mod sdk;

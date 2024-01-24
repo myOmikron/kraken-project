@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { FullUdpServiceDetectionResult } from './FullUdpServiceDetectionResult';
+import type { FullServiceDetectionResult } from './FullServiceDetectionResult';
 import {
-    FullUdpServiceDetectionResultFromJSON,
-    FullUdpServiceDetectionResultFromJSONTyped,
-    FullUdpServiceDetectionResultToJSON,
-} from './FullUdpServiceDetectionResult';
+    FullServiceDetectionResultFromJSON,
+    FullServiceDetectionResultFromJSONTyped,
+    FullServiceDetectionResultToJSON,
+} from './FullServiceDetectionResult';
 
 /**
  * 
@@ -28,10 +28,10 @@ import {
 export interface SearchResultEntryOneOf10 {
     /**
      * 
-     * @type {FullUdpServiceDetectionResult}
+     * @type {FullServiceDetectionResult}
      * @memberof SearchResultEntryOneOf10
      */
-    udpServiceDetectionResult: FullUdpServiceDetectionResult;
+    serviceDetectionResult: FullServiceDetectionResult;
 }
 
 /**
@@ -39,7 +39,7 @@ export interface SearchResultEntryOneOf10 {
  */
 export function instanceOfSearchResultEntryOneOf10(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "udpServiceDetectionResult" in value;
+    isInstance = isInstance && "serviceDetectionResult" in value;
 
     return isInstance;
 }
@@ -54,7 +54,7 @@ export function SearchResultEntryOneOf10FromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'udpServiceDetectionResult': FullUdpServiceDetectionResultFromJSON(json['UdpServiceDetectionResult']),
+        'serviceDetectionResult': FullServiceDetectionResultFromJSON(json['ServiceDetectionResult']),
     };
 }
 
@@ -67,7 +67,7 @@ export function SearchResultEntryOneOf10ToJSON(value?: SearchResultEntryOneOf10 
     }
     return {
         
-        'UdpServiceDetectionResult': FullUdpServiceDetectionResultToJSON(value.udpServiceDetectionResult),
+        'ServiceDetectionResult': FullServiceDetectionResultToJSON(value.serviceDetectionResult),
     };
 }
 

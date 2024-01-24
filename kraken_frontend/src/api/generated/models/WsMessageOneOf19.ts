@@ -14,23 +14,23 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * A port was deleted
+ * A host was deleted
  * @export
  * @interface WsMessageOneOf19
  */
 export interface WsMessageOneOf19 {
     /**
-     * The workspace this port is related to
+     * The workspace this host is related to
      * @type {string}
      * @memberof WsMessageOneOf19
      */
     workspace: string;
     /**
-     * The uuid of the deleted port
+     * The uuid of the deleted host
      * @type {string}
      * @memberof WsMessageOneOf19
      */
-    port: string;
+    host: string;
     /**
      * 
      * @type {string}
@@ -44,7 +44,7 @@ export interface WsMessageOneOf19 {
  * @export
  */
 export const WsMessageOneOf19TypeEnum = {
-    DeletedPort: 'DeletedPort'
+    DeletedHost: 'DeletedHost'
 } as const;
 export type WsMessageOneOf19TypeEnum = typeof WsMessageOneOf19TypeEnum[keyof typeof WsMessageOneOf19TypeEnum];
 
@@ -55,7 +55,7 @@ export type WsMessageOneOf19TypeEnum = typeof WsMessageOneOf19TypeEnum[keyof typ
 export function instanceOfWsMessageOneOf19(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "workspace" in value;
-    isInstance = isInstance && "port" in value;
+    isInstance = isInstance && "host" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -72,7 +72,7 @@ export function WsMessageOneOf19FromJSONTyped(json: any, ignoreDiscriminator: bo
     return {
         
         'workspace': json['workspace'],
-        'port': json['port'],
+        'host': json['host'],
         'type': json['type'],
     };
 }
@@ -87,7 +87,7 @@ export function WsMessageOneOf19ToJSON(value?: WsMessageOneOf19 | null): any {
     return {
         
         'workspace': value.workspace,
-        'port': value.port,
+        'host': value.host,
         'type': value.type,
     };
 }

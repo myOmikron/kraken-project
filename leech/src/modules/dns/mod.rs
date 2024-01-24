@@ -1,6 +1,8 @@
 //! All code for dns resolution resides in this module
 
 pub mod errors;
+pub mod spf;
+pub mod txt;
 
 use std::future::Future;
 use std::net::{Ipv4Addr, Ipv6Addr};

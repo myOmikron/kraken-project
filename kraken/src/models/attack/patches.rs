@@ -5,9 +5,11 @@ use uuid::Uuid;
 
 use crate::models::{
     Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
-    DnsRecordResult, DnsRecordType, HostAliveResult, ServiceCertainty, ServiceDetectionResult,
-    Severity, TcpPortScanResult, TestSSLResultFinding, TestSSLResultHeader, TestSSLSection,
-    TestSSLSeverity, UdpServiceDetectionResult,
+    DnsRecordResult, DnsRecordType, DnsTxtScanAttackResult, DnsTxtScanServiceHintEntry,
+    DnsTxtScanServiceHintType, DnsTxtScanSpfEntry, DnsTxtScanSpfType, DnsTxtScanSummaryType,
+    HostAliveResult, ServiceCertainty, ServiceDetectionResult, Severity, TcpPortScanResult,
+    TestSSLResultFinding, TestSSLResultHeader, TestSSLSection, TestSSLSeverity,
+    UdpServiceDetectionResult,
 };
 
 pub(crate) type BruteforceSubdomainsResultInsert = DnsRecordResultInsert;
@@ -22,6 +24,38 @@ pub(crate) struct DnsRecordResultInsert {
     pub(crate) destination: String,
     pub(crate) dns_record_type: DnsRecordType,
 }
+
+#[derive(Patch)]
+#[rorm(model = "DnsTxtScanAttackResult")]
+pub(crate) struct DnsTxtScanAttackResultInsert {
+    pub(crate) uuid: Uuid,
+    pub(crate) attack: ForeignModel<Attack>,
+    pub(crate) domain: String,
+    pub(crate) collection_type: DnsTxtScanSummaryType,
+}
+
+#[derive(Patch)]
+#[rorm(model = "DnsTxtScanServiceHintEntry")]
+pub(crate) struct DnsTxtScanServiceHintEntryInsert {
+    pub(crate) uuid: Uuid,
+    pub(crate) collection: ForeignModel<DnsTxtScanAttackResult>,
+    pub(crate) rule: String,
+    pub(crate) txt_type: DnsTxtScanServiceHintType,
+}
+
+#[derive(Patch)]
+#[rorm(model = "DnsTxtScanSpfEntry")]
+pub(crate) struct DnsTxtScanSpfEntryInsert {
+    pub(crate) uuid: Uuid,
+    pub(crate) collection: ForeignModel<DnsTxtScanAttackResult>,
+    pub(crate) rule: String,
+    pub(crate) spf_type: DnsTxtScanSpfType,
+    pub(crate) spf_ip: Option<IpNetwork>,
+    pub(crate) spf_domain: Option<String>,
+    pub(crate) spf_domain_ipv4_cidr: Option<i32>,
+    pub(crate) spf_domain_ipv6_cidr: Option<i32>,
+}
+
 #[derive(Patch)]
 #[rorm(model = "TcpPortScanResult")]
 pub(crate) struct TcpPortScanResultInsert {

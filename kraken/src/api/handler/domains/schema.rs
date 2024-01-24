@@ -6,6 +6,7 @@ use uuid::Uuid;
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
 use crate::api::handler::common::schema::{PageParams, SimpleTag};
 use crate::api::handler::hosts::schema::SimpleHost;
+use crate::models::DomainCertainty;
 
 /// The request to manually add a domain
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -57,6 +58,8 @@ pub struct SimpleDomain {
     pub workspace: Uuid,
     /// The point in time this domain was created
     pub created_at: DateTime<Utc>,
+    /// The certainty of this domain entry
+    pub certainty: DomainCertainty,
 }
 
 /// A full representation of a domain in a workspace
@@ -78,6 +81,8 @@ pub struct FullDomain {
     pub sources: SimpleAggregationSource,
     /// The point in time, the record was created
     pub created_at: DateTime<Utc>,
+    /// The certainty of this domain entry
+    pub certainty: DomainCertainty,
 }
 
 /// The path parameter of a domain

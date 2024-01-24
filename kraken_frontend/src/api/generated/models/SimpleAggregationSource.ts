@@ -68,6 +68,12 @@ export interface SimpleAggregationSource {
      */
     dnsResolution: number;
     /**
+     * DNS TXT scans
+     * @type {number}
+     * @memberof SimpleAggregationSource
+     */
+    dnsTxtScan: number;
+    /**
      * Perform forced browsing
      * @type {number}
      * @memberof SimpleAggregationSource
@@ -124,6 +130,7 @@ export function instanceOfSimpleAggregationSource(value: object): boolean {
     isInstance = isInstance && "serviceDetection" in value;
     isInstance = isInstance && "udpServiceDetection" in value;
     isInstance = isInstance && "dnsResolution" in value;
+    isInstance = isInstance && "dnsTxtScan" in value;
     isInstance = isInstance && "forcedBrowsing" in value;
     isInstance = isInstance && "osDetection" in value;
     isInstance = isInstance && "antiPortScanningDetection" in value;
@@ -153,6 +160,7 @@ export function SimpleAggregationSourceFromJSONTyped(json: any, ignoreDiscrimina
         'serviceDetection': json['service_detection'],
         'udpServiceDetection': json['udp_service_detection'],
         'dnsResolution': json['dns_resolution'],
+        'dnsTxtScan': json['dns_txt_scan'],
         'forcedBrowsing': json['forced_browsing'],
         'osDetection': json['os_detection'],
         'antiPortScanningDetection': json['anti_port_scanning_detection'],
@@ -180,6 +188,7 @@ export function SimpleAggregationSourceToJSON(value?: SimpleAggregationSource | 
         'service_detection': value.serviceDetection,
         'udp_service_detection': value.udpServiceDetection,
         'dns_resolution': value.dnsResolution,
+        'dns_txt_scan': value.dnsTxtScan,
         'forced_browsing': value.forcedBrowsing,
         'os_detection': value.osDetection,
         'anti_port_scanning_detection': value.antiPortScanningDetection,

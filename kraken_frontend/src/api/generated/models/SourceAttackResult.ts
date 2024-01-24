@@ -21,6 +21,12 @@ import {
     SourceAttackResultOneOf7ToJSON,
 } from './SourceAttackResultOneOf7';
 import {
+    SourceAttackResultOneOf9,
+    SourceAttackResultOneOf9AttackTypeEnum,
+    SourceAttackResultOneOf9FromJSONTyped,
+    SourceAttackResultOneOf9ToJSON,
+} from './SourceAttackResultOneOf9';
+import {
     SourceAttackResultOneOf5,
     SourceAttackResultOneOf5AttackTypeEnum,
     SourceAttackResultOneOf5FromJSONTyped,
@@ -65,6 +71,7 @@ export type SourceAttackResult =
   | SourceAttackResultOneOf3
   | SourceAttackResultOneOf8
   | SourceAttackResultOneOf7
+  | SourceAttackResultOneOf9
   | SourceAttackResultOneOf5
   | SourceAttackResultOneOf6
   | SourceAttackResultOneOf4
@@ -80,6 +87,7 @@ function enumToString<K extends string, V extends string>(obj: Record<K, V>): V 
 const SourceAttackResultOneOf3AttackType = enumToString(SourceAttackResultOneOf3AttackTypeEnum);
 const SourceAttackResultOneOf8AttackType = enumToString(SourceAttackResultOneOf8AttackTypeEnum);
 const SourceAttackResultOneOf7AttackType = enumToString(SourceAttackResultOneOf7AttackTypeEnum);
+const SourceAttackResultOneOf9AttackType = enumToString(SourceAttackResultOneOf9AttackTypeEnum);
 const SourceAttackResultOneOf5AttackType = enumToString(SourceAttackResultOneOf5AttackTypeEnum);
 const SourceAttackResultOneOf6AttackType = enumToString(SourceAttackResultOneOf6AttackTypeEnum);
 const SourceAttackResultOneOf4AttackType = enumToString(SourceAttackResultOneOf4AttackTypeEnum);
@@ -103,6 +111,8 @@ export function SourceAttackResultFromJSONTyped(json: any, ignoreDiscriminator: 
             return SourceAttackResultOneOf8FromJSONTyped(json, ignoreDiscriminator);
         case SourceAttackResultOneOf7AttackType:
             return SourceAttackResultOneOf7FromJSONTyped(json, ignoreDiscriminator);
+        case SourceAttackResultOneOf9AttackType:
+            return SourceAttackResultOneOf9FromJSONTyped(json, ignoreDiscriminator);
         case SourceAttackResultOneOf5AttackType:
             return SourceAttackResultOneOf5FromJSONTyped(json, ignoreDiscriminator);
         case SourceAttackResultOneOf6AttackType:
@@ -135,6 +145,8 @@ export function SourceAttackResultToJSON(value?: SourceAttackResult | null): any
             return SourceAttackResultOneOf8ToJSON(value);
         case SourceAttackResultOneOf7AttackType:
             return SourceAttackResultOneOf7ToJSON(value);
+        case SourceAttackResultOneOf9AttackType:
+            return SourceAttackResultOneOf9ToJSON(value);
         case SourceAttackResultOneOf5AttackType:
             return SourceAttackResultOneOf5ToJSON(value);
         case SourceAttackResultOneOf6AttackType:

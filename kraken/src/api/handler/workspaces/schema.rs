@@ -7,8 +7,8 @@ use uuid::Uuid;
 
 use crate::api::handler::attack_results::schema::{
     FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
-    FullUdpServiceDetectionResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
-    SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+    FullUdpServiceDetectionResult, SimpleDnsResolutionResult, SimpleDnsTxtScanResult,
+    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
 };
 use crate::api::handler::attacks::schema::SimpleAttack;
 use crate::api::handler::common::de_optional;
@@ -140,6 +140,8 @@ pub enum SearchResultEntry {
     DomainEntry(SimpleDomain),
     /// DNS Record Result
     DnsRecordResultEntry(SimpleDnsResolutionResult),
+    /// DNS TXT Scan Result
+    DnsTxtScanResultEntry(SimpleDnsTxtScanResult),
     /// TCP Port Result
     TcpPortScanResultEntry(SimpleTcpPortScanResult),
     /// Dehashed Query Result

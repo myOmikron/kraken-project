@@ -1,10 +1,10 @@
 import React from "react";
 import "../../../styling/workspace-data-details.css";
-import CopyIcon from "../../../svg/copy";
 import ArrowLeftIcon from "../../../svg/arrow-left";
 import ArrowRightIcon from "../../../svg/arrow-right";
 import { SourceAttack, TestSSLFinding, TestSSLSection, TestSSLSeverity } from "../../../api/generated";
 import { copyToClipboard, ObjectFns } from "../../../utils/helper";
+import CopyIcon from "../../../svg/copy";
 
 type WorkspaceDataDetailsResultsProps = {
     attack: SourceAttack;
@@ -95,6 +95,96 @@ export default class WorkspaceDataDetailsResults extends React.Component<
                                         <h3 className={"sub-heading"}>Date</h3>
                                         <span>{this.formateDate(dnsResult.createdAt)}</span>
                                     </div>
+                                </div>
+                            </div>
+                        );
+                    } else {
+                        return null;
+                    }
+                case "DnsTxtScan":
+                    if (this.state.page < this.props.attack.results.length) {
+                        let txtResult = this.props.attack.results[this.state.page];
+                        return (
+                            <div className="workspace-data-details-container">
+                                <div className={"workspace-data-details-pane"}>
+                                    <h3 className={"sub-heading"}>DNS_TXT::{txtResult.collectionType}</h3>
+                                    <div className={"workspace-data-details-list"}>
+                                        <div className="workspace-data-details-list-elements">
+                                            <span>Domain:</span>
+                                            <span>Started by:</span>
+                                            <span>Created:</span>
+                                            <span>Finished:</span>
+                                        </div>
+                                        <div className="workspace-data-details-list-elements">
+                                            <span>{txtResult.domain}</span>
+                                            <span>{a.startedBy.displayName}</span>
+                                            <span>{this.formateDate(a.createdAt)}</span>
+                                            <span>{this.formateDate(a.finishedAt)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className={"workspace-data-details-pane-layout"}>
+                                    {txtResult.entries.map((entry) => (
+                                        <>
+                                            <div className={"workspace-data-details-pane wide"}>
+                                                {"serviceHint" in entry && entry["serviceHint"] ? (
+                                                    <>
+                                                        <h3 className={"sub-heading"}>{entry.serviceHint.txtType}</h3>
+                                                        <span className={"workspace-data-details-text-wrap"}>
+                                                            {entry.serviceHint.rule}
+                                                        </span>
+                                                    </>
+                                                ) : "spf" in entry && entry["spf"] ? (
+                                                    <>
+                                                        <div className={"workspace-data-details-list"}>
+                                                            <h3 className={"sub-heading"}>{entry.spf.spfType}</h3>
+                                                            <span className={"workspace-data-details-text-wrap"}>
+                                                                {entry.spf.rule}
+                                                            </span>
+                                                        </div>
+                                                        {entry.spf.spfDomain && (
+                                                            <>
+                                                                <hr />
+                                                                <div className={"workspace-data-details-list"}>
+                                                                    <h3 className={"sub-heading"}>
+                                                                        parsed
+                                                                        {entry.spf.spfDomain &&
+                                                                            entry.spf.spfIp &&
+                                                                            " (domain) "}
+                                                                    </h3>
+                                                                    <div>
+                                                                        <span>{entry.spf.spfDomain}</span>
+                                                                        <span>
+                                                                            {entry.spf.spfDomainIpv4Cidr &&
+                                                                                "/" + entry.spf.spfDomainIpv4Cidr}
+                                                                        </span>
+                                                                        <span>
+                                                                            {entry.spf.spfDomainIpv6Cidr &&
+                                                                                "//" + entry.spf.spfDomainIpv6Cidr}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                        {entry.spf.spfIp && (
+                                                            <>
+                                                                <hr />
+                                                                <div className={"workspace-data-details-list"}>
+                                                                    <h3 className={"sub-heading"}>
+                                                                        parsed
+                                                                        {entry.spf.spfDomain &&
+                                                                            entry.spf.spfIp &&
+                                                                            " (ip) "}
+                                                                    </h3>
+                                                                    <span>{entry.spf.spfIp}</span>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </>
+                                                ) : undefined}
+                                            </div>
+                                        </>
+                                    ))}
                                 </div>
                             </div>
                         );
@@ -202,7 +292,7 @@ export default class WorkspaceDataDetailsResults extends React.Component<
                                     <h3 className={"sub-heading"}>DNS</h3>
                                     <div className={"workspace-data-details-list"}>
                                         <div className="workspace-data-details-list-elements">
-                                            <span>{bsResult.dnsRecordType}A</span>
+                                            <span>{bsResult.dnsRecordType.toUpperCase()}</span>
                                         </div>
                                         <div className="workspace-data-details-list-elements">
                                             <span>{bsResult.destination}</span>

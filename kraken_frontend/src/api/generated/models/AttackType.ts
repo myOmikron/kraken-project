@@ -27,6 +27,7 @@ export const AttackType = {
     ServiceDetection: 'ServiceDetection',
     UdpServiceDetection: 'UdpServiceDetection',
     DnsResolution: 'DnsResolution',
+    DnsTxtScan: 'DnsTxtScan',
     UdpPortScan: 'UdpPortScan',
     ForcedBrowsing: 'ForcedBrowsing',
     OsDetection: 'OSDetection',

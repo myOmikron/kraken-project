@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleTcpPortScanResult } from './SimpleTcpPortScanResult';
+import type { SimpleDnsTxtScanResult } from './SimpleDnsTxtScanResult';
 import {
-    SimpleTcpPortScanResultFromJSON,
-    SimpleTcpPortScanResultFromJSONTyped,
-    SimpleTcpPortScanResultToJSON,
-} from './SimpleTcpPortScanResult';
+    SimpleDnsTxtScanResultFromJSON,
+    SimpleDnsTxtScanResultFromJSONTyped,
+    SimpleDnsTxtScanResultToJSON,
+} from './SimpleDnsTxtScanResult';
 
 /**
  * 
@@ -28,10 +28,10 @@ import {
 export interface SearchResultEntryOneOf5 {
     /**
      * 
-     * @type {SimpleTcpPortScanResult}
+     * @type {SimpleDnsTxtScanResult}
      * @memberof SearchResultEntryOneOf5
      */
-    tcpPortScanResultEntry: SimpleTcpPortScanResult;
+    dnsTxtScanResultEntry: SimpleDnsTxtScanResult;
 }
 
 /**
@@ -39,7 +39,7 @@ export interface SearchResultEntryOneOf5 {
  */
 export function instanceOfSearchResultEntryOneOf5(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "tcpPortScanResultEntry" in value;
+    isInstance = isInstance && "dnsTxtScanResultEntry" in value;
 
     return isInstance;
 }
@@ -54,7 +54,7 @@ export function SearchResultEntryOneOf5FromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'tcpPortScanResultEntry': SimpleTcpPortScanResultFromJSON(json['TcpPortScanResultEntry']),
+        'dnsTxtScanResultEntry': SimpleDnsTxtScanResultFromJSON(json['DnsTxtScanResultEntry']),
     };
 }
 
@@ -67,7 +67,7 @@ export function SearchResultEntryOneOf5ToJSON(value?: SearchResultEntryOneOf5 | 
     }
     return {
         
-        'TcpPortScanResultEntry': SimpleTcpPortScanResultToJSON(value.tcpPortScanResultEntry),
+        'DnsTxtScanResultEntry': SimpleDnsTxtScanResultToJSON(value.dnsTxtScanResultEntry),
     };
 }
 

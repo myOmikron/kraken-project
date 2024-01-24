@@ -44,6 +44,16 @@ models/CreateWorkspaceRequest.ts
 models/CreateWorkspaceTagRequest.ts
 models/DnsResolutionRequest.ts
 models/DnsResolutionResultsPage.ts
+models/DnsTxtScanEntry.ts
+models/DnsTxtScanEntryOneOf.ts
+models/DnsTxtScanEntryOneOf1.ts
+models/DnsTxtScanEntryOneOf1Spf.ts
+models/DnsTxtScanEntryOneOfServiceHint.ts
+models/DnsTxtScanRequest.ts
+models/DnsTxtScanResultsPage.ts
+models/DnsTxtScanServiceHintType.ts
+models/DnsTxtScanSpfType.ts
+models/DnsTxtScanSummaryType.ts
 models/DomainCertainty.ts
 models/DomainOrNetwork.ts
 models/DomainRelations.ts
@@ -52,6 +62,7 @@ models/FinishRegisterRequest.ts
 models/FinishRegisterRequestAllOf.ts
 models/FullAggregationSource.ts
 models/FullApiKey.ts
+models/FullDnsTxtScanResult.ts
 models/FullDomain.ts
 models/FullGlobalTag.ts
 models/FullHost.ts
@@ -135,6 +146,7 @@ models/SearchResultEntry.ts
 models/SearchResultEntryOneOf.ts
 models/SearchResultEntryOneOf1.ts
 models/SearchResultEntryOneOf10.ts
+models/SearchResultEntryOneOf11.ts
 models/SearchResultEntryOneOf2.ts
 models/SearchResultEntryOneOf3.ts
 models/SearchResultEntryOneOf4.ts
@@ -163,6 +175,7 @@ models/SimpleAggregationSource.ts
 models/SimpleAttack.ts
 models/SimpleBruteforceSubdomainsResult.ts
 models/SimpleDnsResolutionResult.ts
+models/SimpleDnsTxtScanResult.ts
 models/SimpleDomain.ts
 models/SimpleHost.ts
 models/SimpleHostAliveResult.ts
@@ -188,6 +201,7 @@ models/SourceAttackResultOneOf5.ts
 models/SourceAttackResultOneOf6.ts
 models/SourceAttackResultOneOf7.ts
 models/SourceAttackResultOneOf8.ts
+models/SourceAttackResultOneOf9.ts
 models/StartTLSProtocol.ts
 models/TagType.ts
 models/TcpPortScanResultsPage.ts
@@ -231,6 +245,7 @@ models/WsMessageOneOf2.ts
 models/WsMessageOneOf20.ts
 models/WsMessageOneOf21.ts
 models/WsMessageOneOf22.ts
+models/WsMessageOneOf23.ts
 models/WsMessageOneOf3.ts
 models/WsMessageOneOf4.ts
 models/WsMessageOneOf5.ts

@@ -111,6 +111,174 @@ message DNSRecord {
   }
 }
 
+// basic DNS TXT records that generally indicate third party accounts or
+// authentication refer to leech/src/modules/dns/txt.rs TxtScanInfo for more
+// infos.
+enum DnsTxtKnownEntry {
+  // see leech/src/modules/dns/txt.rs TxtScanInfo
+  HasGoogleAccount = 0;
+  // see leech/src/modules/dns/txt.rs TxtScanInfo
+  HasGlobalsignAccount = 1;
+  // see leech/src/modules/dns/txt.rs TxtScanInfo
+  HasGlobalsignSMime = 2;
+  // see leech/src/modules/dns/txt.rs TxtScanInfo
+  HasDocusignAccount = 3;
+  // see leech/src/modules/dns/txt.rs TxtScanInfo
+  HasAppleAccount = 4;
+  // see leech/src/modules/dns/txt.rs TxtScanInfo
+  HasFacebookAccount = 5;
+  // see leech/src/modules/dns/txt.rs TxtScanInfo
+  HasHubspotAccount = 6;
+  // see leech/src/modules/dns/txt.rs TxtScanInfo
+  HasMSDynamics365 = 7;
+  // see leech/src/modules/dns/txt.rs TxtScanInfo
+  HasStripeAccount = 8;
+  // see leech/src/modules/dns/txt.rs TxtScanInfo
+  HasOneTrustSso = 9;
+  // see leech/src/modules/dns/txt.rs TxtScanInfo
+  HasBrevoAccount = 10;
+  // see leech/src/modules/dns/txt.rs TxtScanInfo
+  OwnsAtlassianAccounts = 11;
+  // see leech/src/modules/dns/txt.rs TxtScanInfo
+  OwnsZoomAccounts = 12;
+  // see leech/src/modules/dns/txt.rs TxtScanInfo
+  EmailProtonMail = 13;
+}
+
+// list of parsed SPF directives and modifiers
+message SpfInfo {
+  // list of parsed SPF directives and modifiers
+  repeated SpfPart parts = 1;
+}
+
+// a single part of SpfInfo
+message SpfPart {
+  // a SPF rule that decodes to this part, may or may not be the same as the input string.
+  string rule = 1;
+  // the part
+  oneof part {
+    // SPF Directive as specified by RFC
+    SpfDirective directive = 2;
+    // SPF redirect= Modifier as specified by RFC
+    SpfRedirectModifier redirect = 3;
+    // SPF exp= Modifier as specified by RFC
+    SpfExplanationModifier explanation = 4;
+    // Unknown modifiers in SPF
+    SpfUnknownModifier unknown_modifier = 5;
+  }
+}
+
+// prefix before mechanisms determining how the mechanism affects the result.
+enum SpfQualifier {
+  // '+' or unset
+  pass = 0;
+  // '-'
+  fail = 1;
+  // '~'
+  soft_fail = 2;
+  // '?'
+  neutral = 3;
+}
+
+// equals to 'all' in SPF
+message SpfMechanismAll {}
+// equals to 'include:DOMAIN' in spf
+message SpfMechanismInclude {
+  // the DOMAIN
+  string domain = 1;
+}
+// equals to 'a[:DOMAIN][/32][//128]' in spf
+message SpfMechanismA {
+  // domain or empty if omitted
+  string domain = 1;
+  // if specified, IPv4 CIDR (prefix length)
+  optional int32 ipv4_cidr = 2;
+  // if specified, IPv6 CIDR (prefix length)
+  optional int32 ipv6_cidr = 3;
+}
+// equals to 'mx[:DOMAIN][/32][//128]' in spf
+message SpfMechanismMX {
+  // domain or empty if omitted
+  string domain = 1;
+  // if specified, IPv4 CIDR (prefix length)
+  optional int32 ipv4_cidr = 2;
+  // if specified, IPv6 CIDR (prefix length)
+  optional int32 ipv6_cidr = 3;
+}
+// equals to 'ptr[:DOMAIN]' in spf
+message SpfMechanismPTR {
+  // domain or empty if omitted
+  string domain = 1;
+}
+// equals to 'ipv4:IP' and 'ipv6:IP' in spf
+message SpfMechanismIP {
+  // the IP
+  Net ip = 1;
+}
+// equals to 'exists:DOMAIN' in spf
+message SpfMechanismExists {
+  // the DOMAIN
+  string domain = 1;
+}
+
+// directive controlling how to handle a matching sender
+message SpfDirective {
+  // specifies how senders matching this directive are handled.
+  SpfQualifier qualifier = 1;
+  // actual directive mechanism
+  oneof mechanism {
+    // see SpfMechanismAll
+    SpfMechanismAll all = 2;
+    // see SpfMechanismInclude
+    SpfMechanismInclude include = 3;
+    // see SpfMechanismA
+    SpfMechanismA a = 4;
+    // see SpfMechanismMX
+    SpfMechanismMX mx = 5;
+    // see SpfMechanismPTR
+    SpfMechanismPTR ptr = 6;
+    // see SpfMechanismIP
+    SpfMechanismIP ip = 7;
+    // see SpfMechanismExists
+    SpfMechanismExists exists = 8;
+  }
+}
+
+// may or may not affect SPF behavior, includes a further domain
+message SpfRedirectModifier {
+  // the DOMAIN
+  string domain = 1;
+}
+
+// may or may not affect SPF behavior, includes a further domain
+message SpfExplanationModifier {
+  // the DOMAIN
+  string domain = 1;
+}
+
+// may or may not affect SPF behavior - unknown or vendor specific extensions
+message SpfUnknownModifier {
+  // key (before equals sign)
+  string name = 1;
+  // value (after equals sign)
+  string value = 2;
+}
+
+// Interpreted DNS entry for TXT records, includes parsing SPF.
+message DnsTxtScan {
+  // domain for which this entry was found
+  string domain = 1;
+  // the full or part of the DNS record that was used for this entry
+  string rule = 2;
+  // detailed information for the result
+  oneof info {
+    // some well-known strings or patterns such as
+    // `google-site-verification=...`
+    DnsTxtKnownEntry well_known = 3;
+    // parsed SPF entries, possibly including more domains and IPs
+    SpfInfo spf = 4;
+  }
+}
 
 // Entry of a certificate transparency response
 message CertEntry {

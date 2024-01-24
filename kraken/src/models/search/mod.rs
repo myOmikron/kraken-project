@@ -77,6 +77,8 @@ pub enum ModelType {
     Domain,
     /// [DnsRecordResult](models::DnsRecordResult) type
     DnsRecordResult,
+    /// [DnsTxtScanResult](models::DnsTxtScanResult) type
+    DnsTxtScanResult,
     /// [TcpPortScanResult](models::TcpPortScanResult) type
     TcpPortScanResult,
     /// [DehashedQueryResult](models::DehashedQueryResult) type
@@ -108,6 +110,9 @@ impl Display for ModelType {
             }
             ModelType::DnsRecordResult => {
                 write!(f, "{}", models::DnsRecordResult::TABLE)
+            }
+            ModelType::DnsTxtScanResult => {
+                write!(f, "{}", models::DnsTxtScanAttackResult::TABLE)
             }
             ModelType::TcpPortScanResult => {
                 write!(f, "{}", models::TcpPortScanResult::TABLE)

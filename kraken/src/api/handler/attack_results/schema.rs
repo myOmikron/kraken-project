@@ -4,7 +4,10 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{DnsRecordType, ServiceCertainty, TestSSLSection, TestSSLSeverity};
+use crate::models::{
+    DnsRecordType, DnsTxtScanServiceHintType, DnsTxtScanSpfType, DnsTxtScanSummaryType,
+    ServiceCertainty, TestSSLSection, TestSSLSeverity,
+};
 
 /// A simple representation of a bruteforce subdomains result
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -219,6 +222,93 @@ pub struct SimpleDnsResolutionResult {
     /// The type of DNS record
     #[schema(inline)]
     pub dns_record_type: DnsRecordType,
+}
+
+/// A simple representation of a dns txt scan result
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct SimpleDnsTxtScanResult {
+    /// The primary key
+    pub uuid: Uuid,
+
+    /// The attack which produced this result
+    pub attack: Uuid,
+
+    /// The point in time, this result was produced
+    pub created_at: DateTime<Utc>,
+
+    /// The source address
+    pub domain: String,
+
+    /// Indicates the kind of items this result entry has (e.g. ServiceHints or SPF)
+    pub collection_type: DnsTxtScanSummaryType,
+}
+
+/// The full representation of a dns txt scan result
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct FullDnsTxtScanResult {
+    /// The primary key
+    pub uuid: Uuid,
+
+    /// The attack which produced this result
+    pub attack: Uuid,
+
+    /// The point in time, this result was produced
+    pub created_at: DateTime<Utc>,
+
+    /// The source address
+    pub domain: String,
+
+    /// Indicates the kind of items this result entry has (e.g. ServiceHints or SPF)
+    pub collection_type: DnsTxtScanSummaryType,
+
+    /// List of result entries. The kind depends on the `collection_type` in this object.
+    pub entries: Vec<DnsTxtScanEntry>,
+}
+
+/// A single detailed entry for a given DNS TXT scan result. May be a hint at service usage / ownership or contain
+/// parsed SPF rules.
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub enum DnsTxtScanEntry {
+    /// Just wraps txt_type, the DNS rule is usually more exact to what is actually written in DNS
+    ServiceHint {
+        /// The primary key
+        uuid: Uuid,
+
+        /// The point in time, this entry was produced
+        created_at: DateTime<Utc>,
+
+        /// The rule that was matched for this scan result, usually the whole TXT record.
+        rule: String,
+
+        /// The type of DNS record
+        txt_type: DnsTxtScanServiceHintType,
+    },
+    /// Wraps a single SPF rule part, the rule is reconstructed from the parsed value
+    Spf {
+        /// The primary key
+        uuid: Uuid,
+
+        /// The point in time, this entry was produced
+        created_at: DateTime<Utc>,
+
+        /// A single SPF rule part that was matched for this object.
+        rule: String,
+
+        /// The type of DNS record
+        spf_type: DnsTxtScanSpfType,
+
+        /// If the txt_type is a SPF type that includes an IP (or whole IP range), it will be set here.
+        #[schema(value_type = String, example = "127.0.0.1/24")]
+        spf_ip: Option<IpNetwork>,
+
+        /// If the txt_type is a SPF type that includes a domain, it will be set here.
+        spf_domain: Option<String>,
+
+        /// If the txt_type is a SPF type that includes a domain, this is its ipv4 CIDR.
+        spf_domain_ipv4_cidr: Option<i32>,
+        /// If the txt_type is a SPF type that includes a domain, this is its ipv6 CIDR.
+        spf_domain_ipv6_cidr: Option<i32>,
+    },
 }
 
 /// The results of a `testssl.sh` scan

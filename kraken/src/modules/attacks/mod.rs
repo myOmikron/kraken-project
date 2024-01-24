@@ -36,6 +36,7 @@ mod bruteforce_subdomains;
 mod certificate_transparency;
 mod dehashed_query;
 mod dns_resolution;
+mod dns_txt_scan;
 mod host_alive;
 mod service_detection;
 mod tcp_port_scan;
@@ -92,6 +93,29 @@ pub async fn start_dns_resolution(
         tokio::spawn(async move {
             ctx.set_started().await;
             let result = ctx.dns_resolution(leech, params).await;
+            ctx.set_finished(result).await;
+        }),
+    ))
+}
+
+/// The parameters of a "dns resolution" attack
+pub struct DnsTxtScanParams {
+    /// The domains to resolve
+    pub targets: Vec<String>,
+}
+/// Start a "dns resolution" attack
+pub async fn start_dns_txt_scan(
+    workspace: Uuid,
+    user: Uuid,
+    leech: LeechClient,
+    params: DnsTxtScanParams,
+) -> Result<(Uuid, JoinHandle<()>), InsertAttackError> {
+    let ctx = AttackContext::new(workspace, user, AttackType::DnsTxtScan).await?;
+    Ok((
+        ctx.attack_uuid,
+        tokio::spawn(async move {
+            ctx.set_started().await;
+            let result = ctx.dns_txt_scan(leech, params).await;
             ctx.set_finished(result).await;
         }),
     ))

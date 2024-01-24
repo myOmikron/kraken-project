@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleHostAliveResult } from './SimpleHostAliveResult';
+import type { FullQueryCertificateTransparencyResult } from './FullQueryCertificateTransparencyResult';
 import {
-    SimpleHostAliveResultFromJSON,
-    SimpleHostAliveResultFromJSONTyped,
-    SimpleHostAliveResultToJSON,
-} from './SimpleHostAliveResult';
+    FullQueryCertificateTransparencyResultFromJSON,
+    FullQueryCertificateTransparencyResultFromJSONTyped,
+    FullQueryCertificateTransparencyResultToJSON,
+} from './FullQueryCertificateTransparencyResult';
 
 /**
  * 
@@ -28,10 +28,10 @@ import {
 export interface SearchResultEntryOneOf8 {
     /**
      * 
-     * @type {SimpleHostAliveResult}
+     * @type {FullQueryCertificateTransparencyResult}
      * @memberof SearchResultEntryOneOf8
      */
-    hostAliveResult: SimpleHostAliveResult;
+    certificateTransparencyResultEntry: FullQueryCertificateTransparencyResult;
 }
 
 /**
@@ -39,7 +39,7 @@ export interface SearchResultEntryOneOf8 {
  */
 export function instanceOfSearchResultEntryOneOf8(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "hostAliveResult" in value;
+    isInstance = isInstance && "certificateTransparencyResultEntry" in value;
 
     return isInstance;
 }
@@ -54,7 +54,7 @@ export function SearchResultEntryOneOf8FromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'hostAliveResult': SimpleHostAliveResultFromJSON(json['HostAliveResult']),
+        'certificateTransparencyResultEntry': FullQueryCertificateTransparencyResultFromJSON(json['CertificateTransparencyResultEntry']),
     };
 }
 
@@ -67,7 +67,7 @@ export function SearchResultEntryOneOf8ToJSON(value?: SearchResultEntryOneOf8 | 
     }
     return {
         
-        'HostAliveResult': SimpleHostAliveResultToJSON(value.hostAliveResult),
+        'CertificateTransparencyResultEntry': FullQueryCertificateTransparencyResultToJSON(value.certificateTransparencyResultEntry),
     };
 }
 

@@ -76,6 +76,7 @@ async fn aggregate(data: PortAggregationData) -> Result<Uuid, rorm::Error> {
                         uuid: port.uuid,
                         port: data.port,
                         protocol: data.protocol,
+                        certainty: data.certainty,
                         host: data.host,
                         comment: String::new(),
                         workspace: data.workspace,

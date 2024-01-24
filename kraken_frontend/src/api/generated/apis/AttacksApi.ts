@@ -20,6 +20,8 @@ import type {
   BruteforceSubdomainsResultsPage,
   DnsResolutionRequest,
   DnsResolutionResultsPage,
+  DnsTxtScanRequest,
+  DnsTxtScanResultsPage,
   FullTestSSLResult,
   HostAliveResultsPage,
   HostsAliveRequest,
@@ -49,6 +51,10 @@ import {
     DnsResolutionRequestToJSON,
     DnsResolutionResultsPageFromJSON,
     DnsResolutionResultsPageToJSON,
+    DnsTxtScanRequestFromJSON,
+    DnsTxtScanRequestToJSON,
+    DnsTxtScanResultsPageFromJSON,
+    DnsTxtScanResultsPageToJSON,
     FullTestSSLResultFromJSON,
     FullTestSSLResultToJSON,
     HostAliveResultsPageFromJSON,
@@ -97,6 +103,10 @@ export interface DnsResolutionOperationRequest {
     dnsResolutionRequest: DnsResolutionRequest;
 }
 
+export interface DnsTxtScanOperationRequest {
+    dnsTxtScanRequest: DnsTxtScanRequest;
+}
+
 export interface GetAttackRequest {
     uuid: string;
 }
@@ -108,6 +118,12 @@ export interface GetBruteforceSubdomainsResultsRequest {
 }
 
 export interface GetDnsResolutionResultsRequest {
+    uuid: string;
+    limit: number;
+    offset: number;
+}
+
+export interface GetDnsTxtScanResultsRequest {
     uuid: string;
     limit: number;
     offset: number;
@@ -292,6 +308,41 @@ export class AttacksApi extends runtime.BaseAPI {
     }
 
     /**
+     * Perform DNS TXT scanning & parsing
+     * Perform DNS TXT scanning & parsing
+     */
+    async dnsTxtScanRaw(requestParameters: DnsTxtScanOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
+        if (requestParameters.dnsTxtScanRequest === null || requestParameters.dnsTxtScanRequest === undefined) {
+            throw new runtime.RequiredError('dnsTxtScanRequest','Required parameter requestParameters.dnsTxtScanRequest was null or undefined when calling dnsTxtScan.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/attacks/dnsTxtScan`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: DnsTxtScanRequestToJSON(requestParameters.dnsTxtScanRequest),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Perform DNS TXT scanning & parsing
+     * Perform DNS TXT scanning & parsing
+     */
+    async dnsTxtScan(requestParameters: DnsTxtScanOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
+        const response = await this.dnsTxtScanRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Retrieve all attacks the user has access to
      * Retrieve all attacks the user has access to
      */
@@ -444,6 +495,54 @@ export class AttacksApi extends runtime.BaseAPI {
      */
     async getDnsResolutionResults(requestParameters: GetDnsResolutionResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DnsResolutionResultsPage> {
         const response = await this.getDnsResolutionResultsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Retrieve a DNS TXT scan\'s results by the attack\'s id
+     * Retrieve a DNS TXT scan\'s results by the attack\'s id
+     */
+    async getDnsTxtScanResultsRaw(requestParameters: GetDnsTxtScanResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DnsTxtScanResultsPage>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getDnsTxtScanResults.');
+        }
+
+        if (requestParameters.limit === null || requestParameters.limit === undefined) {
+            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getDnsTxtScanResults.');
+        }
+
+        if (requestParameters.offset === null || requestParameters.offset === undefined) {
+            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getDnsTxtScanResults.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.limit !== undefined) {
+            queryParameters['limit'] = requestParameters.limit;
+        }
+
+        if (requestParameters.offset !== undefined) {
+            queryParameters['offset'] = requestParameters.offset;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/attacks/{uuid}/dnsTxtScanResults`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => DnsTxtScanResultsPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve a DNS TXT scan\'s results by the attack\'s id
+     * Retrieve a DNS TXT scan\'s results by the attack\'s id
+     */
+    async getDnsTxtScanResults(requestParameters: GetDnsTxtScanResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DnsTxtScanResultsPage> {
+        const response = await this.getDnsTxtScanResultsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

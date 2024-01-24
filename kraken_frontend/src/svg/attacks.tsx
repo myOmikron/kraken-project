@@ -139,6 +139,17 @@ export default function AttacksIcon(params: AttacksParams) {
                 }`}
                 transform="matrix(.23193 0 0 .23193 25.876 157.213)"
             />
+            {/* dns_txt_scan */}
+            <path
+                d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
+                {...mouseHandler(AttackType.DnsTxtScan)}
+                className={`kraken-attacks-hex ${
+                    activeAttack === AttackType.DnsTxtScan ? "kraken-attacks-hex-selected" : ""
+                } ${
+                    !disabled[AttackType.DnsTxtScan] ? "kraken-attacks-clickable" : "kraken-attacks-hex-unavailable"
+                }`}
+                transform="matrix(.23193 0 0 .23193 5.876 157.213)"
+            />
             {/* hosts box */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
@@ -243,6 +254,9 @@ export default function AttacksIcon(params: AttacksParams) {
             </text>
             <text xmlSpace="preserve" x={31} y={173} className={"kraken-attacks-hex-text"}>
                 {"DR"}
+            </text>
+            <text xmlSpace="preserve" x={11} y={173} className={"kraken-attacks-hex-text"}>
+                {"Txt"}
             </text>
             <text xmlSpace="preserve" x={171.25} y={94} className={"kraken-attacks-hex-text"}>
                 {"Dh"}

@@ -9,21 +9,24 @@ use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::attack_results::schema::{
-    FullQueryCertificateTransparencyResult, FullServiceDetectionResult, FullTestSSLResult,
-    FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
-    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult, TestSSLFinding,
+    DnsTxtScanEntry, FullDnsTxtScanResult, FullQueryCertificateTransparencyResult,
+    FullServiceDetectionResult, FullTestSSLResult, FullUdpServiceDetectionResult,
+    SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
+    SimpleQueryUnhashedResult, SimpleTcpPortScanResult, TestSSLFinding,
 };
 use crate::api::handler::common::error::{ApiError, ApiResult};
 use crate::api::handler::common::schema::{
-    BruteforceSubdomainsResultsPage, DnsResolutionResultsPage, HostAliveResultsPage, Page,
-    PageParams, PathUuid, QueryCertificateTransparencyResultsPage, QueryUnhashedResultsPage,
-    ServiceDetectionResultsPage, TcpPortScanResultsPage, UdpServiceDetectionResultsPage,
+    BruteforceSubdomainsResultsPage, DnsResolutionResultsPage, DnsTxtScanResultsPage,
+    HostAliveResultsPage, Page, PageParams, PathUuid, QueryCertificateTransparencyResultsPage,
+    QueryUnhashedResultsPage, ServiceDetectionResultsPage, TcpPortScanResultsPage,
+    UdpServiceDetectionResultsPage,
 };
 use crate::api::handler::common::utils::get_page_params;
 use crate::chan::global::GLOBAL;
 use crate::models::{
     Attack, BruteforceSubdomainsResult, CertificateTransparencyResult,
-    CertificateTransparencyValueName, DehashedQueryResult, DnsResolutionResult, HostAliveResult,
+    CertificateTransparencyValueName, DehashedQueryResult, DnsResolutionResult,
+    DnsTxtScanAttackResult, DnsTxtScanServiceHintEntry, DnsTxtScanSpfEntry, HostAliveResult,
     ServiceCertainty, ServiceDetectionName, ServiceDetectionResult, TcpPortScanResult,
     TestSSLResultFinding, TestSSLResultHeader, UdpServiceDetectionName, UdpServiceDetectionResult,
 };
@@ -611,6 +614,99 @@ pub async fn get_dns_resolution_results(
         })
         .try_collect()
         .await?;
+
+    tx.commit().await?;
+
+    Ok(Json(Page {
+        items,
+        limit,
+        offset,
+        total: total as u64,
+    }))
+}
+
+/// Retrieve a DNS TXT scan's results by the attack's id
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Returns attack's results", body = DnsTxtScanResultsPage),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid, PageParams),
+    security(("api_key" = []))
+)]
+#[get("/attacks/{uuid}/dnsTxtScanResults")]
+pub async fn get_dns_txt_scan_results(
+    path: Path<PathUuid>,
+    page_params: Query<PageParams>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<Json<DnsTxtScanResultsPage>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    let attack_uuid = path.uuid;
+    let (limit, offset) = get_page_params(page_params.0).await?;
+
+    if !Attack::has_access(&mut tx, attack_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    let (total,) = query!(&mut tx, (DnsTxtScanAttackResult::F.uuid.count(),))
+        .condition(DnsTxtScanAttackResult::F.attack.equals(attack_uuid))
+        .one()
+        .await?;
+
+    let mut items: Vec<FullDnsTxtScanResult> = query!(&mut tx, DnsTxtScanAttackResult)
+        .condition(DnsTxtScanAttackResult::F.attack.equals(attack_uuid))
+        .limit(limit)
+        .offset(offset)
+        // TODO: aggregate / join with ServiceHint and Spf entries
+        .stream()
+        .map_ok(|x| FullDnsTxtScanResult {
+            uuid: x.uuid,
+            attack: *x.attack.key(),
+            domain: x.domain,
+            created_at: x.created_at,
+            collection_type: x.collection_type,
+            entries: vec![],
+        })
+        .try_collect()
+        .await?;
+
+    // TODO: this could probably be better represented using a JOIN
+
+    for item in items.iter_mut() {
+        let uuid = item.uuid;
+        let entries1: Vec<DnsTxtScanEntry> = query!(&mut tx, DnsTxtScanServiceHintEntry)
+            .condition(DnsTxtScanServiceHintEntry::F.collection.equals(uuid))
+            .stream()
+            .map_ok(|s| DnsTxtScanEntry::ServiceHint {
+                uuid: s.uuid,
+                created_at: s.created_at,
+                rule: s.rule,
+                txt_type: s.txt_type,
+            })
+            .try_collect()
+            .await?;
+        let entries2: Vec<DnsTxtScanEntry> = query!(&mut tx, DnsTxtScanSpfEntry)
+            .condition(DnsTxtScanSpfEntry::F.collection.equals(uuid))
+            .stream()
+            .map_ok(|s| DnsTxtScanEntry::Spf {
+                uuid: s.uuid,
+                created_at: s.created_at,
+                rule: s.rule,
+                spf_type: s.spf_type,
+                spf_ip: s.spf_ip,
+                spf_domain: s.spf_domain,
+                spf_domain_ipv4_cidr: s.spf_domain_ipv4_cidr,
+                spf_domain_ipv6_cidr: s.spf_domain_ipv6_cidr,
+            })
+            .try_collect()
+            .await?;
+
+        item.entries = [entries1, entries2].concat();
+    }
 
     tx.commit().await?;
 

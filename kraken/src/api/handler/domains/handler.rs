@@ -144,6 +144,7 @@ pub async fn get_all_domains(
         .map(|x| FullDomain {
             uuid: x.uuid,
             domain: x.domain,
+            certainty: x.certainty,
             comment: x.comment,
             workspace: *x.workspace.key(),
             tags: tags.remove(&x.uuid).unwrap_or_default(),
@@ -236,6 +237,7 @@ pub async fn get_domain(
         uuid: path.d_uuid,
         domain: domain.domain,
         comment: domain.comment,
+        certainty: domain.certainty,
         workspace: path.w_uuid,
         tags,
         sources,
@@ -529,6 +531,7 @@ pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<Doma
             vec.push(SimpleDomain {
                 uuid: d.uuid,
                 domain: d.domain,
+                certainty: d.certainty,
                 comment: d.comment,
                 workspace: *d.workspace.key(),
                 created_at: d.created_at,
@@ -556,9 +559,11 @@ pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<Doma
             })
             .push(SimpleHost {
                 uuid: h.uuid,
-                ip_addr: h.ip_addr.ip().to_string(),
+                ip_addr: h.ip_addr.ip(),
                 os_type: h.os_type,
                 comment: h.comment,
+                response_time: h.response_time,
+                certainty: h.certainty,
                 workspace: *h.workspace.key(),
                 created_at: h.created_at,
             });

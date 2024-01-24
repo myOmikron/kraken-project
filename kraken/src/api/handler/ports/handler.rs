@@ -141,8 +141,10 @@ pub async fn get_all_ports(
                 comment,
                 host: SimpleHost {
                     uuid: host.uuid,
-                    ip_addr: host.ip_addr.ip().to_string(),
+                    ip_addr: host.ip_addr.ip(),
                     os_type: host.os_type,
+                    response_time: host.response_time,
+                    certainty: host.certainty,
                     workspace: *host.workspace.key(),
                     comment: host.comment,
                     created_at: host.created_at,
@@ -247,8 +249,10 @@ pub async fn get_port(
         protocol: port.protocol,
         host: SimpleHost {
             uuid: host.uuid,
-            ip_addr: host.ip_addr.ip().to_string(),
+            ip_addr: host.ip_addr.ip(),
             os_type: host.os_type,
+            response_time: host.response_time,
+            certainty: host.certainty,
             comment: host.comment,
             workspace: path.w_uuid,
             created_at: host.created_at,
@@ -533,6 +537,7 @@ pub async fn get_port_relations(path: Path<PathPort>) -> ApiResult<Json<PortRela
             uuid: s.uuid,
             name: s.name,
             version: s.version,
+            certainty: s.certainty,
             host: *s.host.key(),
             port: s.port.map(|x| *x.key()),
             comment: s.comment,
@@ -553,7 +558,9 @@ pub async fn get_port_relations(path: Path<PathPort>) -> ApiResult<Json<PortRela
     Ok(Json(PortRelations {
         host: SimpleHost {
             uuid: host.uuid,
-            ip_addr: host.ip_addr.ip().to_string(),
+            ip_addr: host.ip_addr.ip(),
+            response_time: host.response_time,
+            certainty: host.certainty,
             os_type: host.os_type,
             comment: host.comment,
             workspace: *host.workspace.key(),

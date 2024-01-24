@@ -12,17 +12,27 @@ use futures::Stream;
 use ipnetwork::IpNetwork;
 use kraken_proto::req_attack_service_server::ReqAttackService;
 use kraken_proto::shared::dns_record::Record;
+use kraken_proto::shared::dns_txt_scan::Info;
 use kraken_proto::shared::{
-    Aaaa, Address, AttackTechnique, CertEntry, DnsRecord, GenericRecord, A,
+    spf_directive, spf_part, Aaaa, Aaaa, Address, Address, AttackTechnique, CertEntry, CertEntry,
+    DnsRecord, DnsRecord, DnsTxtKnownEntry, DnsTxtScan, GenericRecord, GenericRecord, Net,
+    SpfDirective, SpfExplanationModifier, SpfInfo, SpfMechanismA, SpfMechanismAll,
+    SpfMechanismExists, SpfMechanismInclude, SpfMechanismIp, SpfMechanismMx, SpfMechanismPtr,
+    SpfPart, SpfQualifier, SpfRedirectModifier, SpfUnknownModifier, A, A,
 };
 use kraken_proto::{
-    any_attack_response, shared, test_ssl_scans, test_ssl_service, BruteforceSubdomainRequest,
-    BruteforceSubdomainResponse, CertificateTransparencyRequest, CertificateTransparencyResponse,
-    DnsResolutionRequest, DnsResolutionResponse, HostsAliveRequest, HostsAliveResponse,
-    ServiceCertainty, ServiceDetectionRequest, ServiceDetectionResponse, StartTlsProtocol,
-    TcpPortScanRequest, TcpPortScanResponse, TestSslFinding, TestSslRequest, TestSslResponse,
-    TestSslScanResult, TestSslService, TestSslSeverity, UdpServiceDetectionRequest,
-    UdpServiceDetectionResponse,
+    any_attack_response, shared, shared, test_ssl_scans, test_ssl_service,
+    BruteforceSubdomainRequest, BruteforceSubdomainRequest, BruteforceSubdomainResponse,
+    BruteforceSubdomainResponse, CertificateTransparencyRequest, CertificateTransparencyRequest,
+    CertificateTransparencyResponse, CertificateTransparencyResponse, DnsResolutionRequest,
+    DnsResolutionRequest, DnsResolutionResponse, DnsResolutionResponse, DnsTxtScanRequest,
+    DnsTxtScanResponse, HostsAliveRequest, HostsAliveRequest, HostsAliveResponse,
+    HostsAliveResponse, ServiceCertainty, ServiceCertainty, ServiceDetectionRequest,
+    ServiceDetectionRequest, ServiceDetectionResponse, ServiceDetectionResponse, StartTlsProtocol,
+    TcpPortScanRequest, TcpPortScanRequest, TcpPortScanResponse, TcpPortScanResponse,
+    TestSslFinding, TestSslRequest, TestSslResponse, TestSslScanResult, TestSslService,
+    TestSslSeverity, UdpServiceDetectionRequest, UdpServiceDetectionRequest,
+    UdpServiceDetectionResponse, UdpServiceDetectionResponse,
 };
 use log::error;
 use prost_types::Timestamp;
@@ -36,6 +46,8 @@ use crate::modules::bruteforce_subdomains::{
     bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
 };
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
+use crate::modules::dns::spf::{SPFMechanism, SPFPart, SPFQualifier};
+use crate::modules::dns::txt::{start_dns_txt_scan, DnsTxtScanSettings, TxtScanInfo};
 use crate::modules::dns::{dns_resolution, DnsRecordResult, DnsResolutionSettings};
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
@@ -419,6 +431,172 @@ impl ReqAttackService for Attacks {
                 }),
             },
             any_attack_response::Response::DnsResolution,
+        )
+    }
+
+    type DnsTxtScanStream = Pin<Box<dyn Stream<Item = Result<DnsTxtScanResponse, Status>> + Send>>;
+
+    async fn dns_txt_scan(
+        &self,
+        request: Request<DnsTxtScanRequest>,
+    ) -> Result<Response<Self::DnsTxtScanStream>, Status> {
+        let req = request.into_inner();
+
+        if req.targets.is_empty() {
+            return Err(Status::invalid_argument("nothing to resolve"));
+        }
+
+        let attack_uuid = Uuid::parse_str(&req.attack_uuid)
+            .map_err(|_| Status::invalid_argument("attack_uuid has to be an Uuid"))?;
+
+        let settings = DnsTxtScanSettings {
+            domains: req.targets,
+        };
+
+        self.stream_attack(
+            attack_uuid,
+            |tx| async move {
+                start_dns_txt_scan(settings, tx)
+                    .await
+                    .map_err(|err| Status::unknown(err.to_string()))
+            },
+            |value| DnsTxtScanResponse {
+                record: Some(DnsTxtScan {
+                    domain: value.domain,
+                    rule: value.rule,
+                    info: Some(match value.info {
+                        TxtScanInfo::HasGoogleAccount => {
+                            Info::WellKnown(DnsTxtKnownEntry::HasGoogleAccount as _)
+                        }
+                        TxtScanInfo::HasDocusignAccount => {
+                            Info::WellKnown(DnsTxtKnownEntry::HasDocusignAccount as _)
+                        }
+                        TxtScanInfo::HasAppleAccount => {
+                            Info::WellKnown(DnsTxtKnownEntry::HasAppleAccount as _)
+                        }
+                        TxtScanInfo::HasFacebookAccount => {
+                            Info::WellKnown(DnsTxtKnownEntry::HasFacebookAccount as _)
+                        }
+                        TxtScanInfo::HasHubspotAccount => {
+                            Info::WellKnown(DnsTxtKnownEntry::HasHubspotAccount as _)
+                        }
+                        TxtScanInfo::HasMsDynamics365 => {
+                            Info::WellKnown(DnsTxtKnownEntry::HasMsDynamics365 as _)
+                        }
+                        TxtScanInfo::HasStripeAccount => {
+                            Info::WellKnown(DnsTxtKnownEntry::HasStripeAccount as _)
+                        }
+                        TxtScanInfo::HasOneTrustSso => {
+                            Info::WellKnown(DnsTxtKnownEntry::HasOneTrustSso as _)
+                        }
+                        TxtScanInfo::HasBrevoAccount => {
+                            Info::WellKnown(DnsTxtKnownEntry::HasBrevoAccount as _)
+                        }
+                        TxtScanInfo::HasGlobalsignAccount => {
+                            Info::WellKnown(DnsTxtKnownEntry::HasGlobalsignAccount as _)
+                        }
+                        TxtScanInfo::HasGlobalsignSMime => {
+                            Info::WellKnown(DnsTxtKnownEntry::HasGlobalsignSMime as _)
+                        }
+                        TxtScanInfo::OwnsAtlassianAccounts => {
+                            Info::WellKnown(DnsTxtKnownEntry::OwnsAtlassianAccounts as _)
+                        }
+                        TxtScanInfo::OwnsZoomAccounts => {
+                            Info::WellKnown(DnsTxtKnownEntry::OwnsZoomAccounts as _)
+                        }
+                        TxtScanInfo::EmailProtonMail => {
+                            Info::WellKnown(DnsTxtKnownEntry::EmailProtonMail as _)
+                        }
+                        TxtScanInfo::SPF { parts } => Info::Spf(SpfInfo {
+                            parts: parts
+                                .iter()
+                                .map(|part| SpfPart {
+                                    rule: part.encode_spf(),
+                                    part: Some(match part {
+                                        SPFPart::Directive {
+                                            qualifier,
+                                            mechanism,
+                                        } => spf_part::Part::Directive(SpfDirective {
+                                            mechanism: Some(match mechanism {
+                                                SPFMechanism::All => spf_directive::Mechanism::All(
+                                                    SpfMechanismAll {},
+                                                ),
+                                                SPFMechanism::Include { domain } => {
+                                                    spf_directive::Mechanism::Include(
+                                                        SpfMechanismInclude {
+                                                            domain: domain.clone(),
+                                                        },
+                                                    )
+                                                }
+                                                SPFMechanism::A {
+                                                    domain,
+                                                    ipv4_cidr,
+                                                    ipv6_cidr,
+                                                } => spf_directive::Mechanism::A(SpfMechanismA {
+                                                    domain: domain.clone(),
+                                                    ipv4_cidr: ipv4_cidr.map(|a| a as _),
+                                                    ipv6_cidr: ipv6_cidr.map(|a| a as _),
+                                                }),
+                                                SPFMechanism::MX {
+                                                    domain,
+                                                    ipv4_cidr,
+                                                    ipv6_cidr,
+                                                } => spf_directive::Mechanism::Mx(SpfMechanismMx {
+                                                    domain: domain.clone(),
+                                                    ipv4_cidr: ipv4_cidr.map(|a| a as _),
+                                                    ipv6_cidr: ipv6_cidr.map(|a| a as _),
+                                                }),
+                                                SPFMechanism::PTR { domain } => {
+                                                    spf_directive::Mechanism::Ptr(SpfMechanismPtr {
+                                                        domain: domain.clone(),
+                                                    })
+                                                }
+                                                SPFMechanism::IP { ipnet } => {
+                                                    spf_directive::Mechanism::Ip(SpfMechanismIp {
+                                                        ip: Some(Net::from(*ipnet)),
+                                                    })
+                                                }
+                                                SPFMechanism::Exists { domain } => {
+                                                    spf_directive::Mechanism::Exists(
+                                                        SpfMechanismExists {
+                                                            domain: domain.clone(),
+                                                        },
+                                                    )
+                                                }
+                                            }),
+                                            qualifier: match qualifier {
+                                                SPFQualifier::Pass => SpfQualifier::Pass as _,
+                                                SPFQualifier::Fail => SpfQualifier::Fail as _,
+                                                SPFQualifier::SoftFail => {
+                                                    SpfQualifier::SoftFail as _
+                                                }
+                                                SPFQualifier::Neutral => SpfQualifier::Neutral as _,
+                                            },
+                                        }),
+                                        SPFPart::RedirectModifier { domain } => {
+                                            spf_part::Part::Redirect(SpfRedirectModifier {
+                                                domain: domain.clone(),
+                                            })
+                                        }
+                                        SPFPart::ExplanationModifier { domain } => {
+                                            spf_part::Part::Explanation(SpfExplanationModifier {
+                                                domain: domain.clone(),
+                                            })
+                                        }
+                                        SPFPart::UnknownModifier { name, value } => {
+                                            spf_part::Part::UnknownModifier(SpfUnknownModifier {
+                                                name: name.clone(),
+                                                value: value.clone(),
+                                            })
+                                        }
+                                    }),
+                                })
+                                .collect(),
+                        }),
+                    }),
+                }),
+            },
+            any_attack_response::Response::DnsTxtScan,
         )
     }
 

@@ -1,3 +1,5 @@
+use std::net::IpAddr;
+
 use chrono::{DateTime, Utc};
 use ipnetwork::IpNetwork;
 use serde::{Deserialize, Serialize};
@@ -9,7 +11,7 @@ use crate::api::handler::common::schema::{PageParams, SimpleTag};
 use crate::api::handler::domains::schema::SimpleDomain;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
-use crate::models::{ManualHostCertainty, OsType};
+use crate::models::{HostCertainty, ManualHostCertainty, OsType};
 
 /// The request to manually add a host
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -53,16 +55,20 @@ pub struct SimpleHost {
     /// The primary key of the host
     pub uuid: Uuid,
     /// The ip address of the host
-    #[schema(example = "172.0.0.1")]
-    pub ip_addr: String,
+    #[schema(value_type = String, example = "172.0.0.1")]
+    pub ip_addr: IpAddr,
     /// The type of OS
     pub os_type: OsType,
+    /// Response time in ms
+    pub response_time: Option<i32>,
     /// A comment
     pub comment: String,
     /// The workspace this host is in
     pub workspace: Uuid,
     /// The point in time, the record was created
     pub created_at: DateTime<Utc>,
+    /// The certainty of this host
+    pub certainty: HostCertainty,
 }
 
 /// The full representation of a host
@@ -71,10 +77,12 @@ pub struct FullHost {
     /// The primary key of the host
     pub uuid: Uuid,
     /// The ip address of the host
-    #[schema(example = "172.0.0.1")]
-    pub ip_addr: String,
+    #[schema(value_type = String, example = "172.0.0.1")]
+    pub ip_addr: IpAddr,
     /// The type of OS
     pub os_type: OsType,
+    /// Response time in ms
+    pub response_time: Option<i32>,
     /// A comment
     pub comment: String,
     /// The workspace this host is in
@@ -85,6 +93,8 @@ pub struct FullHost {
     pub sources: SimpleAggregationSource,
     /// The point in time, the record was created
     pub created_at: DateTime<Utc>,
+    /// The certainty of this host
+    pub certainty: HostCertainty,
 }
 
 /// The path parameter of a host

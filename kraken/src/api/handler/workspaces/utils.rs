@@ -20,6 +20,7 @@ use crate::models::{Attack, ModelType, Search, SearchResult, User, Workspace, Wo
 pub(crate) fn build_query_list() -> Vec<(String, ModelType)> {
     let table_names_no_ref_to_ws = vec![
         ModelType::DnsRecordResult,
+        ModelType::DnsTxtScanResult,
         ModelType::TcpPortScanResult,
         ModelType::DehashedQueryResult,
         ModelType::CertificateTransparencyResult,
