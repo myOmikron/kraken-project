@@ -12,7 +12,7 @@ import ArrowFirstIcon from "../../../svg/arrow-first";
 import ArrowLastIcon from "../../../svg/arrow-last";
 import PlusIcon from "../../../svg/plus";
 import Popup from "reactjs-popup";
-import FilterInput, { FilterInputProps } from "./filter-input";
+import FilterInput, { FilterInputProps, useFilter } from "./filter-input";
 import { toast } from "react-toastify";
 
 export type WorkspaceDataTableProps<T> = {
@@ -62,16 +62,14 @@ export default function WorkspaceTable<T extends { uuid: string }>(props: Worksp
     } = props;
 
     const { items, ...table } = useTable(query, queryDeps);
+    const filter = useFilter("global");
 
     return StatelessWorkspaceTable({
         ...table,
         children: [header, items.map(renderItem)],
         columnsTemplate,
         onAdd,
-        applyFilter() {
-            toast.warn("Not implemented yet");
-        },
-        filterTarget: "global",
+        filter,
     });
 }
 
@@ -87,8 +85,6 @@ export type StatelessWorkspaceTableProps = {
     offset: number;
     setOffset: (offset: number) => void;
 
-    applyFilter: (filter: string) => void;
-
     /** The table's header row and body rows*/
     children: [React.ReactNode, Array<React.ReactNode>];
 
@@ -102,7 +98,7 @@ export type StatelessWorkspaceTableProps = {
      */
     onAdd?: () => void;
 
-    filterTarget: FilterInputProps["target"];
+    filter: FilterInputProps;
 };
 export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
     const {
@@ -111,11 +107,10 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
         setLimit,
         offset,
         setOffset: setRawOffset,
-        applyFilter,
         children: [header, body],
         columnsTemplate,
         onAdd,
-        filterTarget,
+        filter,
     } = props;
 
     const lastOffset = Math.floor(total / limit) * limit;
@@ -134,7 +129,7 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
     return (
         <div className={"workspace-table pane"} style={style}>
             <div className={"workspace-table-pre-header"}>
-                <FilterInput placeholder={"Filter..."} applyFilter={applyFilter} target={filterTarget} />
+                <FilterInput {...filter} />
                 {onAdd === undefined ? null : (
                     <button className={"button"} type={"button"} onClick={onAdd}>
                         <PlusIcon />

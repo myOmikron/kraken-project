@@ -17,7 +17,7 @@ import { CreateServiceForm } from "./workspace-data/workspace-data-create-servic
 import { WORKSPACE_CONTEXT } from "./workspace";
 import { ROUTES } from "../../routes";
 import AttackIcon from "../../svg/attack";
-import FilterInput from "./components/filter-input";
+import FilterInput, { useFilter } from "./components/filter-input";
 import { handleApiError, ObjectFns } from "../../utils/helper";
 import Checkbox from "../../components/checkbox";
 import EditableTags from "./components/editable-tags";
@@ -49,28 +49,56 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
         services: {},
     });
 
-    const [globalFilter, setGlobalFilter] = React.useState("");
-    const [domainFilter, setDomainFilter] = React.useState("");
-    const [hostFilter, setHostFilter] = React.useState("");
-    const [portFilter, setPortFilter] = React.useState("");
-    const [serviceFilter, setServiceFilter] = React.useState("");
+    const globalFilter = useFilter("global");
+    const domainFilter = useFilter("domain");
+    const hostFilter = useFilter("host");
+    const portFilter = useFilter("port");
+    const serviceFilter = useFilter("service");
 
     const { items: domains, ...domainsTable } = useTable<FullDomain>(
-        (limit, offset) => Api.workspaces.domains.all(workspace, limit, offset, { globalFilter, domainFilter }),
-        [workspace, globalFilter, domainFilter]
+        (limit, offset) =>
+            Api.workspaces.domains.all(workspace, limit, offset, {
+                globalFilter: globalFilter.applied,
+                domainFilter: domainFilter.applied,
+            }),
+        [workspace, globalFilter.applied, domainFilter.applied],
     );
     const { items: hosts, ...hostsTable } = useTable<FullHost>(
-        (limit, offset) => Api.workspaces.hosts.all(workspace, limit, offset, { globalFilter, hostFilter }),
-        [workspace, globalFilter, hostFilter]
+        (limit, offset) =>
+            Api.workspaces.hosts.all(workspace, limit, offset, {
+                globalFilter: globalFilter.applied,
+                hostFilter: hostFilter.applied,
+            }),
+        [workspace, globalFilter.applied, hostFilter.applied],
     );
     const { items: ports, ...portsTable } = useTable<FullPort>(
-        (limit, offset) => Api.workspaces.ports.all(workspace, limit, offset, { globalFilter, portFilter }),
-        [workspace, globalFilter, portFilter]
+        (limit, offset) =>
+            Api.workspaces.ports.all(workspace, limit, offset, {
+                globalFilter: globalFilter.applied,
+                portFilter: portFilter.applied,
+            }),
+        [workspace, globalFilter.applied, portFilter.applied],
     );
     const { items: services, ...servicesTable } = useTable<FullService>(
-        (limit, offset) => Api.workspaces.services.all(workspace, limit, offset, { globalFilter, serviceFilter }),
-        [workspace, globalFilter, serviceFilter]
+        (limit, offset) =>
+            Api.workspaces.services.all(workspace, limit, offset, {
+                globalFilter: globalFilter.applied,
+                serviceFilter: serviceFilter.applied,
+            }),
+        [workspace, globalFilter.applied, serviceFilter.applied],
     );
+
+    // Jump to first page if filter changed
+    React.useEffect(() => {
+        domainsTable.setOffset(0);
+        hostsTable.setOffset(0);
+        portsTable.setOffset(0);
+        servicesTable.setOffset(0);
+    }, [globalFilter.applied]);
+    React.useEffect(() => domainsTable.setOffset(0), [domainFilter.applied]);
+    React.useEffect(() => hostsTable.setOffset(0), [hostFilter.applied]);
+    React.useEffect(() => portsTable.setOffset(0), [portFilter.applied]);
+    React.useEffect(() => servicesTable.setOffset(0), [serviceFilter.applied]);
 
     const tableElement = (() => {
         switch (tab) {
@@ -81,11 +109,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {...domainsTable}
                         columnsTemplate={"min-content 1fr 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("domains")}
-                        applyFilter={(value) => {
-                            setDomainFilter(value);
-                            domainsTable.setOffset(0);
-                        }}
-                        filterTarget={"domain"}
+                        filter={domainFilter}
                     >
                         <div className={"workspace-table-header"}>
                             <MultiSelectButton
@@ -134,11 +158,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {...hostsTable}
                         columnsTemplate={"min-content 39ch 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("hosts")}
-                        applyFilter={(value) => {
-                            setHostFilter(value);
-                            hostsTable.setOffset(0);
-                        }}
-                        filterTarget={"host"}
+                        filter={hostFilter}
                     >
                         <div className={"workspace-table-header"}>
                             <MultiSelectButton
@@ -183,11 +203,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {...portsTable}
                         columnsTemplate={"min-content 5ch 8ch 39ch 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("ports")}
-                        applyFilter={(value) => {
-                            setPortFilter(value);
-                            portsTable.setOffset(0);
-                        }}
-                        filterTarget={"port"}
+                        filter={portFilter}
                     >
                         <div className={"workspace-table-header"}>
                             <MultiSelectButton
@@ -236,11 +252,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         {...servicesTable}
                         columnsTemplate={"min-content 1fr 39ch 5ch 1fr 1fr 1fr min-content"}
                         onAdd={() => setCreateForm("services")}
-                        applyFilter={(value) => {
-                            setServiceFilter(value);
-                            servicesTable.setOffset(0);
-                        }}
-                        filterTarget={"service"}
+                        filter={serviceFilter}
                     >
                         <div className={"workspace-table-header"}>
                             <MultiSelectButton
@@ -371,17 +383,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
         <>
             <div className={"workspace-data-container"}>
                 <div className={"workspace-data-filter pane"}>
-                    <FilterInput
-                        placeholder={"Global Filter..."}
-                        applyFilter={(value) => {
-                            setGlobalFilter(value);
-                            domainsTable.setOffset(0);
-                            hostsTable.setOffset(0);
-                            portsTable.setOffset(0);
-                            servicesTable.setOffset(0);
-                        }}
-                        target={"global"}
-                    />
+                    <FilterInput {...globalFilter} />
                 </div>
                 <div className={"workspace-data-selector"}>
                     {Object.entries(TABS).map(([key, displayName]) => (
