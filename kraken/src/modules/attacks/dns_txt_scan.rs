@@ -1,6 +1,5 @@
 use ipnetwork::IpNetwork;
-use kraken_proto::shared::dns_txt_scan::Info;
-use kraken_proto::shared::{dns_txt_scan, spf_directive, spf_part, DnsTxtKnownEntry, DnsTxtScan};
+use kraken_proto::shared::{dns_txt_scan, spf_directive, spf_part, DnsTxtScan, DnsTxtServiceHint};
 use kraken_proto::{DnsTxtScanRequest, DnsTxtScanResponse};
 use rorm::insert;
 use rorm::prelude::*;
@@ -52,8 +51,8 @@ impl HandleAttackResponse<DnsTxtScanResponse> for AttackContext {
                 collection_type: match entry.info {
                     None => return Err(AttackError::Malformed("Missing `record.info`")),
                     Some(ref info) => match info {
-                        Info::WellKnown(_) => DnsTxtScanSummaryType::ServiceHints,
-                        Info::Spf(_) => DnsTxtScanSummaryType::Spf,
+                        dns_txt_scan::Info::WellKnown(_) => DnsTxtScanSummaryType::ServiceHints,
+                        dns_txt_scan::Info::Spf(_) => DnsTxtScanSummaryType::Spf,
                     },
                 },
             })
@@ -209,59 +208,63 @@ enum GeneratedRow {
 
 fn generate_dns_txt_rows(collection_uuid: Uuid, entry: &DnsTxtScan) -> Option<Vec<GeneratedRow>> {
     Some(match entry.info.as_ref()? {
-        dns_txt_scan::Info::WellKnown(num) => {
-            vec![GeneratedRow::ServiceHint(
-                DnsTxtScanServiceHintEntryInsert {
-                    collection: ForeignModelByField::Key(collection_uuid),
-                    uuid: Uuid::new_v4(),
-                    rule: entry.rule.clone(),
-                    txt_type: match DnsTxtKnownEntry::try_from(*num).ok()? {
-                        DnsTxtKnownEntry::HasGoogleAccount => {
-                            DnsTxtScanServiceHintType::HasGoogleAccount
-                        }
-                        DnsTxtKnownEntry::HasGlobalsignAccount => {
-                            DnsTxtScanServiceHintType::HasGlobalsignAccount
-                        }
-                        DnsTxtKnownEntry::HasGlobalsignSMime => {
-                            DnsTxtScanServiceHintType::HasGlobalsignSMime
-                        }
-                        DnsTxtKnownEntry::HasDocusignAccount => {
-                            DnsTxtScanServiceHintType::HasDocusignAccount
-                        }
-                        DnsTxtKnownEntry::HasAppleAccount => {
-                            DnsTxtScanServiceHintType::HasAppleAccount
-                        }
-                        DnsTxtKnownEntry::HasFacebookAccount => {
-                            DnsTxtScanServiceHintType::HasFacebookAccount
-                        }
-                        DnsTxtKnownEntry::HasHubspotAccount => {
-                            DnsTxtScanServiceHintType::HasHubspotAccount
-                        }
-                        DnsTxtKnownEntry::HasMsDynamics365 => {
-                            DnsTxtScanServiceHintType::HasMSDynamics365
-                        }
-                        DnsTxtKnownEntry::HasStripeAccount => {
-                            DnsTxtScanServiceHintType::HasStripeAccount
-                        }
-                        DnsTxtKnownEntry::HasOneTrustSso => {
-                            DnsTxtScanServiceHintType::HasOneTrustSso
-                        }
-                        DnsTxtKnownEntry::HasBrevoAccount => {
-                            DnsTxtScanServiceHintType::HasBrevoAccount
-                        }
-                        DnsTxtKnownEntry::OwnsAtlassianAccounts => {
-                            DnsTxtScanServiceHintType::OwnsAtlassianAccounts
-                        }
-                        DnsTxtKnownEntry::OwnsZoomAccounts => {
-                            DnsTxtScanServiceHintType::OwnsZoomAccounts
-                        }
-                        DnsTxtKnownEntry::EmailProtonMail => {
-                            DnsTxtScanServiceHintType::EmailProtonMail
-                        }
+        dns_txt_scan::Info::WellKnown(list) => list
+            .hints
+            .iter()
+            .filter_map(|hint| {
+                Some(GeneratedRow::ServiceHint(
+                    DnsTxtScanServiceHintEntryInsert {
+                        collection: ForeignModelByField::Key(collection_uuid),
+                        uuid: Uuid::new_v4(),
+                        rule: hint.rule.clone(),
+                        txt_type: match DnsTxtServiceHint::try_from(hint.service).ok()? {
+                            DnsTxtServiceHint::HasGoogleAccount => {
+                                DnsTxtScanServiceHintType::HasGoogleAccount
+                            }
+                            DnsTxtServiceHint::HasGlobalsignAccount => {
+                                DnsTxtScanServiceHintType::HasGlobalsignAccount
+                            }
+                            DnsTxtServiceHint::HasGlobalsignSMime => {
+                                DnsTxtScanServiceHintType::HasGlobalsignSMime
+                            }
+                            DnsTxtServiceHint::HasDocusignAccount => {
+                                DnsTxtScanServiceHintType::HasDocusignAccount
+                            }
+                            DnsTxtServiceHint::HasAppleAccount => {
+                                DnsTxtScanServiceHintType::HasAppleAccount
+                            }
+                            DnsTxtServiceHint::HasFacebookAccount => {
+                                DnsTxtScanServiceHintType::HasFacebookAccount
+                            }
+                            DnsTxtServiceHint::HasHubspotAccount => {
+                                DnsTxtScanServiceHintType::HasHubspotAccount
+                            }
+                            DnsTxtServiceHint::HasMsDynamics365 => {
+                                DnsTxtScanServiceHintType::HasMSDynamics365
+                            }
+                            DnsTxtServiceHint::HasStripeAccount => {
+                                DnsTxtScanServiceHintType::HasStripeAccount
+                            }
+                            DnsTxtServiceHint::HasOneTrustSso => {
+                                DnsTxtScanServiceHintType::HasOneTrustSso
+                            }
+                            DnsTxtServiceHint::HasBrevoAccount => {
+                                DnsTxtScanServiceHintType::HasBrevoAccount
+                            }
+                            DnsTxtServiceHint::OwnsAtlassianAccounts => {
+                                DnsTxtScanServiceHintType::OwnsAtlassianAccounts
+                            }
+                            DnsTxtServiceHint::OwnsZoomAccounts => {
+                                DnsTxtScanServiceHintType::OwnsZoomAccounts
+                            }
+                            DnsTxtServiceHint::EmailProtonMail => {
+                                DnsTxtScanServiceHintType::EmailProtonMail
+                            }
+                        },
                     },
-                },
-            )]
-        }
+                ))
+            })
+            .collect(),
         dns_txt_scan::Info::Spf(info) => info
             .parts
             .iter()

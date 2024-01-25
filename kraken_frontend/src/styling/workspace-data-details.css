@@ -18,8 +18,8 @@
 }
 
 .workspace-data-details-pane{
-    --pane-padding: 2em;
-    --neg-pane-padding: -2em; /* this must be minus the above! */
+    --pane-padding: 1em;
+    --neg-pane-padding: -1em; /* this must be negative the above! */
 
     display: flex;
     padding: var(--pane-padding);

@@ -445,8 +445,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                         info!("  {part}");
                                     }
                                 }
-                                _ => {
-                                    info!("Found txt entry for {}: {}", res.domain, res.info);
+                                modules::dns::txt::TxtScanInfo::ServiceHints { hints } => {
+                                    info!("Found service hints for {}:", res.domain);
+                                    for (_rule, hint) in hints {
+                                        info!("  {hint}");
+                                    }
                                 }
                             };
                         }
