@@ -10,6 +10,12 @@ import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 import ArrowLeftIcon from "../../../svg/arrow-left";
 import ArrowRightIcon from "../../../svg/arrow-right";
 import RelationLeftIcon from "../../../svg/relation-left";
+import VerifiedIcon from "../../../svg/verified";
+import UnverifiedIcon from "../../../svg/unverified";
+import HistoricalIcon from "../../../svg/historical";
+import UnknownIcon from "../../../svg/unknown";
+import Popup from "reactjs-popup";
+import { CertaintyIcon } from "../workspace-data";
 
 export type WorkspaceDataServiceDetailsProps = {
     service: string;
@@ -68,6 +74,20 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
                         <h3 className={"sub-heading"}>Service</h3>
                         {`${service.name} running on ${service.host.ipAddr}`}
                         {!service.port ? "" : ` (Port ${service.port.port})`}
+                    </div>
+                    <div className="workspace-data-details-pane">
+                        <h3 className="sub-heading">Certainty</h3>
+                        <div className="workspace-data-certainty-list">
+                            {service.certainty === "Historical"
+                                ? CertaintyIcon({ certaintyType: "Historical", nameVisible: true })
+                                : service.certainty === "SupposedTo"
+                                ? CertaintyIcon({ certaintyType: "SupposedTo", nameVisible: true })
+                                : service.certainty === "UnknownService"
+                                ? CertaintyIcon({ certaintyType: "UnknownService", nameVisible: true })
+                                : service.certainty === "MaybeVerified"
+                                ? CertaintyIcon({ certaintyType: "MaybeVerified", nameVisible: true })
+                                : CertaintyIcon({ certaintyType: "DefinitelyVerified", nameVisible: true })}
+                        </div>
                     </div>
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Comment</h3>

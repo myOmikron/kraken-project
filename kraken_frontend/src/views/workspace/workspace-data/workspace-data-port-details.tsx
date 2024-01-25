@@ -11,6 +11,10 @@ import ArrowLeftIcon from "../../../svg/arrow-left";
 import ArrowRightIcon from "../../../svg/arrow-right";
 import RelationRightIcon from "../../../svg/relation-right";
 import RelationLeftIcon from "../../../svg/relation-left";
+import VerifiedIcon from "../../../svg/verified";
+import HistoricalIcon from "../../../svg/historical";
+import Popup from "reactjs-popup";
+import { CertaintyIcon } from "../workspace-data";
 
 export type WorkspaceDataPortDetailsProps = {
     port: string;
@@ -68,6 +72,16 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Port</h3>
                         {`${port.port} open on ${port.host.ipAddr}`}
+                    </div>
+                    <div className="workspace-data-details-pane">
+                        <h3 className="sub-heading">Certainty</h3>
+                        <div className="workspace-data-certainty-list">
+                            {port.certainty === "Verified"
+                                ? CertaintyIcon({ certaintyType: "Verified", nameVisible: true })
+                                : port.certainty === "Historical"
+                                ? CertaintyIcon({ certaintyType: "Historical", nameVisible: true })
+                                : CertaintyIcon({ certaintyType: "SupposedTo", nameVisible: true })}
+                        </div>
                     </div>
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Comment</h3>

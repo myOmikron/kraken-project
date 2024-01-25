@@ -14,6 +14,10 @@ import { useState } from "react";
 import RelationRightIcon from "../../../svg/relation-right";
 import RelationIndirectIcon from "../../../svg/relation-indirect";
 import RelationLeftIcon from "../../../svg/relation-left";
+import VerifiedIcon from "../../../svg/verified";
+import HistoricalIcon from "../../../svg/historical";
+import Popup from "reactjs-popup";
+import { CertaintyIcon } from "../workspace-data";
 
 export type WorkspaceDataHostDetailsProps = {
     host: string;
@@ -71,6 +75,16 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
                     <div className="workspace-data-details-pane">
                         <h3 className={"sub-heading"}>Host</h3>
                         {host.ipAddr}
+                    </div>
+                    <div className="workspace-data-details-pane">
+                        <h3 className="sub-heading">Certainty</h3>
+                        <div className="workspace-data-certainty-list">
+                            {host.certainty === "Verified"
+                                ? CertaintyIcon({ certaintyType: "Verified", nameVisible: true })
+                                : host.certainty === "Historical"
+                                ? CertaintyIcon({ certaintyType: "Historical", nameVisible: true })
+                                : CertaintyIcon({ certaintyType: "SupposedTo", nameVisible: true })}
+                        </div>
                     </div>
                     <div className="workspace-data-details-pane">
                         <h3 className={"sub-heading"}>Comment</h3>
