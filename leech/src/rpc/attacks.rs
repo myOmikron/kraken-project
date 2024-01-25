@@ -14,10 +14,11 @@ use kraken_proto::req_attack_service_server::ReqAttackService;
 use kraken_proto::shared::dns_record::Record;
 use kraken_proto::shared::dns_txt_scan::Info;
 use kraken_proto::shared::{
-    spf_directive, spf_part, Aaaa, Address, CertEntry, DnsRecord, DnsTxtKnownEntry, DnsTxtScan,
-    GenericRecord, Net, SpfDirective, SpfExplanationModifier, SpfInfo, SpfMechanismA,
-    SpfMechanismAll, SpfMechanismExists, SpfMechanismInclude, SpfMechanismIp, SpfMechanismMx,
-    SpfMechanismPtr, SpfPart, SpfQualifier, SpfRedirectModifier, SpfUnknownModifier, A,
+    spf_directive, spf_part, Aaaa, Address, CertEntry, DnsRecord, DnsTxtKnownService,
+    DnsTxtKnownServiceList, DnsTxtScan, DnsTxtServiceHint, GenericRecord, Net, SpfDirective,
+    SpfExplanationModifier, SpfInfo, SpfMechanismA, SpfMechanismAll, SpfMechanismExists,
+    SpfMechanismInclude, SpfMechanismIp, SpfMechanismMx, SpfMechanismPtr, SpfPart, SpfQualifier,
+    SpfRedirectModifier, SpfUnknownModifier, A,
 };
 use kraken_proto::{
     any_attack_response, shared, BruteforceSubdomainRequest, BruteforceSubdomainResponse,
@@ -40,7 +41,9 @@ use crate::modules::bruteforce_subdomains::{
 };
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
 use crate::modules::dns::spf::{SPFMechanism, SPFPart, SPFQualifier};
-use crate::modules::dns::txt::{start_dns_txt_scan, DnsTxtScanSettings, TxtScanInfo};
+use crate::modules::dns::txt::{
+    start_dns_txt_scan, DnsTxtScanSettings, TxtScanInfo, TxtServiceHint,
+};
 use crate::modules::dns::{dns_resolution, DnsRecordResult, DnsResolutionSettings};
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
@@ -455,50 +458,7 @@ impl ReqAttackService for Attacks {
             |value| DnsTxtScanResponse {
                 record: Some(DnsTxtScan {
                     domain: value.domain,
-                    rule: value.rule,
                     info: Some(match value.info {
-                        TxtScanInfo::HasGoogleAccount => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasGoogleAccount as _)
-                        }
-                        TxtScanInfo::HasDocusignAccount => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasDocusignAccount as _)
-                        }
-                        TxtScanInfo::HasAppleAccount => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasAppleAccount as _)
-                        }
-                        TxtScanInfo::HasFacebookAccount => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasFacebookAccount as _)
-                        }
-                        TxtScanInfo::HasHubspotAccount => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasHubspotAccount as _)
-                        }
-                        TxtScanInfo::HasMsDynamics365 => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasMsDynamics365 as _)
-                        }
-                        TxtScanInfo::HasStripeAccount => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasStripeAccount as _)
-                        }
-                        TxtScanInfo::HasOneTrustSso => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasOneTrustSso as _)
-                        }
-                        TxtScanInfo::HasBrevoAccount => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasBrevoAccount as _)
-                        }
-                        TxtScanInfo::HasGlobalsignAccount => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasGlobalsignAccount as _)
-                        }
-                        TxtScanInfo::HasGlobalsignSMime => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasGlobalsignSMime as _)
-                        }
-                        TxtScanInfo::OwnsAtlassianAccounts => {
-                            Info::WellKnown(DnsTxtKnownEntry::OwnsAtlassianAccounts as _)
-                        }
-                        TxtScanInfo::OwnsZoomAccounts => {
-                            Info::WellKnown(DnsTxtKnownEntry::OwnsZoomAccounts as _)
-                        }
-                        TxtScanInfo::EmailProtonMail => {
-                            Info::WellKnown(DnsTxtKnownEntry::EmailProtonMail as _)
-                        }
                         TxtScanInfo::SPF { parts } => Info::Spf(SpfInfo {
                             parts: parts
                                 .iter()
@@ -585,6 +545,60 @@ impl ReqAttackService for Attacks {
                                 })
                                 .collect(),
                         }),
+                        TxtScanInfo::ServiceHints { hints } => {
+                            Info::WellKnown(DnsTxtKnownServiceList {
+                                hints: hints
+                                    .into_iter()
+                                    .map(|hint| DnsTxtKnownService {
+                                        rule: hint.0,
+                                        service: match hint.1 {
+                                            TxtServiceHint::HasGoogleAccount => {
+                                                DnsTxtServiceHint::HasGoogleAccount as _
+                                            }
+                                            TxtServiceHint::HasDocusignAccount => {
+                                                DnsTxtServiceHint::HasDocusignAccount as _
+                                            }
+                                            TxtServiceHint::HasAppleAccount => {
+                                                DnsTxtServiceHint::HasAppleAccount as _
+                                            }
+                                            TxtServiceHint::HasFacebookAccount => {
+                                                DnsTxtServiceHint::HasFacebookAccount as _
+                                            }
+                                            TxtServiceHint::HasHubspotAccount => {
+                                                DnsTxtServiceHint::HasHubspotAccount as _
+                                            }
+                                            TxtServiceHint::HasMsDynamics365 => {
+                                                DnsTxtServiceHint::HasMsDynamics365 as _
+                                            }
+                                            TxtServiceHint::HasStripeAccount => {
+                                                DnsTxtServiceHint::HasStripeAccount as _
+                                            }
+                                            TxtServiceHint::HasOneTrustSso => {
+                                                DnsTxtServiceHint::HasOneTrustSso as _
+                                            }
+                                            TxtServiceHint::HasBrevoAccount => {
+                                                DnsTxtServiceHint::HasBrevoAccount as _
+                                            }
+                                            TxtServiceHint::HasGlobalsignAccount => {
+                                                DnsTxtServiceHint::HasGlobalsignAccount as _
+                                            }
+                                            TxtServiceHint::HasGlobalsignSMime => {
+                                                DnsTxtServiceHint::HasGlobalsignSMime as _
+                                            }
+                                            TxtServiceHint::OwnsAtlassianAccounts => {
+                                                DnsTxtServiceHint::OwnsAtlassianAccounts as _
+                                            }
+                                            TxtServiceHint::OwnsZoomAccounts => {
+                                                DnsTxtServiceHint::OwnsZoomAccounts as _
+                                            }
+                                            TxtServiceHint::EmailProtonMail => {
+                                                DnsTxtServiceHint::EmailProtonMail as _
+                                            }
+                                        },
+                                    })
+                                    .collect(),
+                            })
+                        }
                     }),
                 }),
             },
