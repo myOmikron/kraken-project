@@ -72,7 +72,7 @@ pub struct Host {
     pub domains: BackRef<field!(DomainHostRelation::F.host)>,
 
     /// A comment to the host
-    #[rorm(max_length = 255)]
+    #[rorm(max_length = 1024)]
     pub comment: String,
 
     /// The certainty of this host
@@ -167,7 +167,7 @@ pub struct Service {
     pub port: Option<ForeignModel<Port>>,
 
     /// A comment to the service
-    #[rorm(max_length = 255)]
+    #[rorm(max_length = 1024)]
     pub comment: String,
 
     /// Workspace tags of the service
@@ -266,7 +266,7 @@ pub struct Port {
     pub services: BackRef<field!(Service::F.port)>,
 
     /// A comment to the port
-    #[rorm(max_length = 255)]
+    #[rorm(max_length = 1024)]
     pub comment: String,
 
     /// Workspace tags of the port
@@ -340,7 +340,7 @@ pub struct Domain {
     pub certainty: DomainCertainty,
 
     /// A comment to the domain
-    #[rorm(max_length = 255)]
+    #[rorm(max_length = 1024)]
     pub comment: String,
 
     /// Domains resolving to this host

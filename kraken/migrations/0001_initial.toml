@@ -949,7 +949,7 @@ Type = "varchar"
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "max_length"
-Value = 255
+Value = 1024
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "not_null"
@@ -1060,7 +1060,7 @@ Type = "varchar"
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "max_length"
-Value = 255
+Value = 1024
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "not_null"
@@ -1155,7 +1155,7 @@ Type = "varchar"
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "max_length"
-Value = 255
+Value = 1024
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "not_null"
@@ -1237,7 +1237,7 @@ Type = "varchar"
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "max_length"
-Value = 255
+Value = 1024
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "not_null"
