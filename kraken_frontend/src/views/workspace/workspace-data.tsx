@@ -22,10 +22,10 @@ import { handleApiError, ObjectFns } from "../../utils/helper";
 import Checkbox from "../../components/checkbox";
 import EditableTags from "./components/editable-tags";
 import { toast } from "react-toastify";
-import promise = toast.promise;
-import { Toast } from "react-toastify/dist/components";
-import { ApiError } from "../../api/error";
-import { Result } from "../../utils/result";
+import UnverifiedIcon from "../../svg/unverified";
+import VerifiedIcon from "../../svg/verified";
+import HistoricalIcon from "../../svg/historical";
+import UnknownIcon from "../../svg/unknown";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations" };
@@ -107,7 +107,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"domain-table"}
                         {...domainsTable}
-                        columnsTemplate={"min-content 1fr 1fr 1fr 1fr min-content"}
+                        columnsTemplate={"min-content 1fr 1fr 1fr 0.2fr 1fr 0.15fr"}
                         onAdd={() => setCreateForm("domains")}
                         filter={domainFilter}
                     >
@@ -120,12 +120,17 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>Domain</span>
                             <span>Tags</span>
                             <span>Comment</span>
+                            <span>Certainty</span>
                             <span>Attacks</span>
                             <span />
                         </div>
                         {domains.map((domain) => (
                             <div
-                                className={"workspace-table-row"}
+                                className={
+                                    domain.uuid === selected?.uuid
+                                        ? "workspace-table-row workspace-table-row-selected"
+                                        : "workspace-table-row"
+                                }
                                 onClick={() => {
                                     if (selected?.type !== "domains") {
                                         setDetailTab("general");
@@ -141,6 +146,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <span>{domain.domain}</span>
                                 <TagList tags={domain.tags} />
                                 <span>{domain.comment}</span>
+                                {domain.certainty === "Unverified"
+                                    ? CertaintyIcon({ certaintyType: "Unverified" })
+                                    : CertaintyIcon({ certaintyType: "Verified" })}
                                 <SourcesList sources={domain.sources} />
                                 <AttackButton
                                     workspaceUuid={workspace}
@@ -156,7 +164,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"host-table"}
                         {...hostsTable}
-                        columnsTemplate={"min-content 39ch 1fr 1fr 1fr min-content"}
+                        columnsTemplate={"min-content 35ch 1fr 1fr 0.2fr 1fr 0.15fr"}
                         onAdd={() => setCreateForm("hosts")}
                         filter={hostFilter}
                     >
@@ -169,12 +177,17 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>IP</span>
                             <span>Tags</span>
                             <span>Comment</span>
+                            <span>Certainty</span>
                             <span>Attacks</span>
                             <span />
                         </div>
                         {hosts.map((host) => (
                             <div
-                                className={"workspace-table-row"}
+                                className={
+                                    host.uuid === selected?.uuid
+                                        ? "workspace-table-row workspace-table-row-selected"
+                                        : "workspace-table-row"
+                                }
                                 onClick={() => {
                                     if (selected?.type !== "hosts") {
                                         setDetailTab("general");
@@ -190,6 +203,11 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <span>{host.ipAddr}</span>
                                 <TagList tags={host.tags} />
                                 <span>{host.comment}</span>
+                                {host.certainty === "Verified"
+                                    ? CertaintyIcon({ certaintyType: "Verified" })
+                                    : host.certainty === "Historical"
+                                    ? CertaintyIcon({ certaintyType: "Historical" })
+                                    : CertaintyIcon({ certaintyType: "SupposedTo" })}
                                 <SourcesList sources={host.sources} />
                                 <AttackButton workspaceUuid={workspace} targetUuid={host.uuid} targetType={"host"} />
                             </div>
@@ -201,7 +219,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"port-table"}
                         {...portsTable}
-                        columnsTemplate={"min-content 5ch 8ch 39ch 1fr 1fr 1fr min-content"}
+                        columnsTemplate={"min-content 5ch 8ch 35ch 1fr 1fr 0.2fr 1fr 0.15fr"}
                         onAdd={() => setCreateForm("ports")}
                         filter={portFilter}
                     >
@@ -216,12 +234,17 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>IP</span>
                             <span>Tags</span>
                             <span>Comment</span>
+                            <span>Certainty</span>
                             <span>Attacks</span>
                             <span />
                         </div>
                         {ports.map((port) => (
                             <div
-                                className={"workspace-table-row"}
+                                className={
+                                    port.uuid === selected?.uuid
+                                        ? "workspace-table-row workspace-table-row-selected"
+                                        : "workspace-table-row"
+                                }
                                 onClick={() => {
                                     if (selected?.type !== "ports") {
                                         setDetailTab("general");
@@ -239,6 +262,11 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <span>{port.host.ipAddr}</span>
                                 <TagList tags={port.tags} />
                                 <span>{port.comment}</span>
+                                {port.certainty === "Verified"
+                                    ? CertaintyIcon({ certaintyType: "Verified" })
+                                    : port.certainty === "Historical"
+                                    ? CertaintyIcon({ certaintyType: "Historical" })
+                                    : CertaintyIcon({ certaintyType: "SupposedTo" })}
                                 <SourcesList sources={port.sources} />
                                 <AttackButton workspaceUuid={workspace} targetUuid={port.uuid} targetType={"port"} />
                             </div>
@@ -250,7 +278,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"service-table"}
                         {...servicesTable}
-                        columnsTemplate={"min-content 1fr 39ch 5ch 1fr 1fr 1fr min-content"}
+                        columnsTemplate={"min-content 1fr 35ch 5ch 1fr 1fr 0.2fr 1fr 0.15fr"}
                         onAdd={() => setCreateForm("services")}
                         filter={serviceFilter}
                     >
@@ -265,12 +293,17 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>Port</span>
                             <span>Tags</span>
                             <span>Comment</span>
+                            <span>Certainty</span>
                             <span>Attacks</span>
                             <span />
                         </div>
                         {services.map((service) => (
                             <div
-                                className={"workspace-table-row"}
+                                className={
+                                    service.uuid === selected?.uuid
+                                        ? "workspace-table-row workspace-table-row-selected"
+                                        : "workspace-table-row"
+                                }
                                 onClick={() => {
                                     if (selected?.type !== "services") {
                                         setDetailTab("general");
@@ -288,6 +321,15 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <span>{service.port?.port}</span>
                                 <TagList tags={service.tags} />
                                 <span>{service.comment}</span>
+                                {service.certainty === "Historical"
+                                    ? CertaintyIcon({ certaintyType: "Historical" })
+                                    : service.certainty === "SupposedTo"
+                                    ? CertaintyIcon({ certaintyType: "SupposedTo" })
+                                    : service.certainty === "UnknownService"
+                                    ? CertaintyIcon({ certaintyType: "UnknownService" })
+                                    : service.certainty === "MaybeVerified"
+                                    ? CertaintyIcon({ certaintyType: "MaybeVerified" })
+                                    : CertaintyIcon({ certaintyType: "DefinitelyVerified" })}
                                 <SourcesList sources={service.sources} />
                                 <AttackButton
                                     workspaceUuid={workspace}
@@ -403,7 +445,18 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     ObjectFns.isEmpty(selectedUuids.services) ? (
                         selected ? (
                             <>
-                                <h2 className={"sub-heading"}>Details</h2>
+                                <h2 className={"sub-heading"}>
+                                    {selected.type === "domains" ? (
+                                        <span>Domain </span>
+                                    ) : selected.type === "hosts" ? (
+                                        <span>Host </span>
+                                    ) : selected.type === "ports" ? (
+                                        <span>Port </span>
+                                    ) : (
+                                        <span>Service </span>
+                                    )}
+                                    Details
+                                </h2>
                                 <div className={"workspace-data-details-selector"}>
                                     {Object.entries(DETAILS_TAB).map(([key, displayName]) => (
                                         <h3
@@ -454,6 +507,166 @@ export function AttackButton(props: Parameters<typeof ROUTES.WORKSPACE_TARGETED_
             <AttackIcon />
         </button>
     );
+}
+
+type CertaintyIconProps = {
+    certaintyType:
+        | "Verified"
+        | "Unverified"
+        | "SupposedTo"
+        | "MaybeVerified"
+        | "DefinitelyVerified"
+        | "Historical"
+        | "UnknownService";
+    nameVisible?: true | undefined;
+};
+
+export function CertaintyIcon(props: CertaintyIconProps) {
+    const { certaintyType, nameVisible } = props;
+
+    switch (certaintyType) {
+        case "Verified":
+            return (
+                <Popup
+                    trigger={
+                        <span className="workspace-data-certainty-icon">
+                            <VerifiedIcon />
+                            {nameVisible !== undefined && nameVisible ? <span> Verified</span> : undefined}
+                        </span>
+                    }
+                    position={"bottom center"}
+                    on={"hover"}
+                    arrow={true}
+                >
+                    <div className="pane-thin">
+                        <h2 className="sub-heading">Verified</h2>
+                        <span>{/*TODO insert description*/}Description</span>
+                    </div>
+                </Popup>
+            );
+        case "DefinitelyVerified":
+            return (
+                <Popup
+                    trigger={
+                        <span className="workspace-data-certainty-icon">
+                            <div>
+                                <VerifiedIcon />
+                                <span className="workspace-data-certainty-letter">D</span>
+                            </div>
+                            {nameVisible !== undefined && nameVisible ? <span>Definitely Verified</span> : undefined}
+                        </span>
+                    }
+                    position={"bottom center"}
+                    on={"hover"}
+                    arrow={true}
+                >
+                    <div className="pane-thin">
+                        <h2 className="sub-heading">Definitely Verified</h2>
+                        <span>{/*TODO insert description*/}Description</span>
+                    </div>
+                </Popup>
+            );
+        case "MaybeVerified":
+            return (
+                <Popup
+                    trigger={
+                        <span className="workspace-data-certainty-icon">
+                            <div>
+                                <VerifiedIcon />
+                                <span className="workspace-data-certainty-letter">M</span>
+                            </div>
+                            {nameVisible !== undefined && nameVisible ? <span>Maybe Verified</span> : undefined}
+                        </span>
+                    }
+                    position={"bottom center"}
+                    on={"hover"}
+                    arrow={true}
+                >
+                    <div className="pane-thin">
+                        <h2 className="sub-heading">Maybe Verified</h2>
+                        <span>{/*TODO insert description*/}Description</span>
+                    </div>
+                </Popup>
+            );
+        case "Unverified":
+            return (
+                <Popup
+                    trigger={
+                        <span className="workspace-data-certainty-icon">
+                            <UnverifiedIcon />
+                            {nameVisible !== undefined && nameVisible ? <span>Unverified</span> : undefined}
+                        </span>
+                    }
+                    position={"bottom center"}
+                    on={"hover"}
+                    arrow={true}
+                >
+                    <div className="pane-thin">
+                        <h2 className="sub-heading">Unverified</h2>
+                        <span>{/*TODO insert description*/}Description</span>
+                    </div>
+                </Popup>
+            );
+        case "SupposedTo":
+            return (
+                <Popup
+                    trigger={
+                        <span className="workspace-data-certainty-icon">
+                            <span className="workspace-data-certainty-letter">S</span>
+                            {nameVisible !== undefined && nameVisible ? <span>Supposed to</span> : undefined}
+                        </span>
+                    }
+                    position={"bottom center"}
+                    on={"hover"}
+                    arrow={true}
+                >
+                    <div className="pane-thin">
+                        <h2 className="sub-heading">Supposed to</h2>
+                        <span>{/*TODO insert description*/}Description</span>
+                    </div>
+                </Popup>
+            );
+        case "Historical":
+            return (
+                <Popup
+                    trigger={
+                        <span className="workspace-data-certainty-icon">
+                            <HistoricalIcon />
+                            {nameVisible !== undefined && nameVisible ? <span>Historical</span> : undefined}
+                        </span>
+                    }
+                    position={"bottom center"}
+                    on={"hover"}
+                    arrow={true}
+                >
+                    <div className="pane-thin">
+                        <h2 className="sub-heading">Historical</h2>
+                        <span>{/*TODO insert description*/}Description</span>
+                    </div>
+                </Popup>
+            );
+        case "UnknownService":
+            return (
+                <Popup
+                    trigger={
+                        <span className="workspace-data-certainty-icon">
+                            <UnknownIcon />
+                            {nameVisible !== undefined && nameVisible ? <span>Unknown Service</span> : undefined}
+                        </span>
+                    }
+                    position={"bottom center"}
+                    on={"hover"}
+                    arrow={true}
+                >
+                    <div className="pane-thin">
+                        <h2 className="sub-heading">Unknown Service</h2>
+                        <span>{/*TODO insert description*/}Description</span>
+                    </div>
+                </Popup>
+            );
+        default:
+            return "Unimplemented";
+    }
 }
 
 type MultiSelectMenuProps = {

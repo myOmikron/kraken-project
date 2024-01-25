@@ -12,6 +12,10 @@ import ArrowRightIcon from "../../../svg/arrow-right";
 import RelationRightIcon from "../../../svg/relation-right";
 import RelationIndirectIcon from "../../../svg/relation-indirect";
 import RelationLeftIcon from "../../../svg/relation-left";
+import VerifiedIcon from "../../../svg/verified";
+import UnverifiedIcon from "../../../svg/unverified";
+import Popup from "reactjs-popup";
+import { CertaintyIcon } from "../workspace-data";
 
 export type WorkspaceDataDomainDetailsProps = {
     domain: string;
@@ -68,6 +72,14 @@ export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProp
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Domain</h3>
                         {domain.domain}
+                    </div>
+                    <div className="workspace-data-details-pane">
+                        <h3 className="sub-heading">Certainty</h3>
+                        <div className="workspace-data-certainty-list">
+                            {domain.certainty === "Verified"
+                                ? CertaintyIcon({ certaintyType: "Verified", nameVisible: true })
+                                : CertaintyIcon({ certaintyType: "Unverified", nameVisible: true })}
+                        </div>
                     </div>
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Comment</h3>
