@@ -1,0 +1,81 @@
+[Migration]
+Hash = "9395330662278215253"
+Initial = false
+Dependency = 3
+Replaces = []
+
+# BEGIN;
+#
+# ALTER TABLE domaindomainrelation DROP CONSTRAINT domaindomainrelation_destination_fkey;
+# ALTER TABLE domaindomainrelation ADD CONSTRAINT domaindomainrelation_destination_fkey
+#     FOREIGN KEY (destination) REFERENCES domain (uuid) ON UPDATE CASCADE ON DELETE CASCADE;
+#
+# ALTER TABLE domaindomainrelation DROP CONSTRAINT domaindomainrelation_source_fkey;
+# ALTER TABLE domaindomainrelation ADD CONSTRAINT domaindomainrelation_source_fkey
+#     FOREIGN KEY (source) REFERENCES domain (uuid) ON UPDATE CASCADE ON DELETE CASCADE;
+#
+# ALTER TABLE domainhostrelation DROP CONSTRAINT domainhostrelation_domain_fkey;
+# ALTER TABLE domainhostrelation ADD CONSTRAINT domainhostrelation_domain_fkey
+#     FOREIGN KEY (domain) REFERENCES domain (uuid) ON UPDATE CASCADE ON DELETE CASCADE;
+#
+# ALTER TABLE domainhostrelation DROP CONSTRAINT domainhostrelation_host_fkey;
+# ALTER TABLE domainhostrelation ADD CONSTRAINT domainhostrelation_host_fkey
+#     FOREIGN KEY (host) REFERENCES host (uuid) ON UPDATE CASCADE ON DELETE CASCADE;
+#
+# END;
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TABLE domaindomainrelation DROP CONSTRAINT domaindomainrelation_destination_fkey;"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TABLE domaindomainrelation ADD CONSTRAINT domaindomainrelation_destination_fkey FOREIGN KEY (destination) REFERENCES domain (uuid) ON UPDATE CASCADE ON DELETE CASCADE;"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TABLE domaindomainrelation DROP CONSTRAINT domaindomainrelation_source_fkey;"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TABLE domaindomainrelation ADD CONSTRAINT domaindomainrelation_source_fkey FOREIGN KEY (source) REFERENCES domain (uuid) ON UPDATE CASCADE ON DELETE CASCADE;"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TABLE domainhostrelation DROP CONSTRAINT domainhostrelation_domain_fkey;"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TABLE domainhostrelation ADD CONSTRAINT domainhostrelation_domain_fkey FOREIGN KEY (domain) REFERENCES domain (uuid) ON UPDATE CASCADE ON DELETE CASCADE;"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TABLE domainhostrelation DROP CONSTRAINT domainhostrelation_host_fkey;"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TABLE domainhostrelation ADD CONSTRAINT domainhostrelation_host_fkey FOREIGN KEY (host) REFERENCES host (uuid) ON UPDATE CASCADE ON DELETE CASCADE;"

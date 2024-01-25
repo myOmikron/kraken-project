@@ -2659,8 +2659,8 @@ Type = "foreign_key"
 [Migration.Operations.Field.Annotations.Value]
 TableName = "domain"
 ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"
@@ -2679,8 +2679,8 @@ Type = "foreign_key"
 [Migration.Operations.Field.Annotations.Value]
 TableName = "host"
 ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"
@@ -3496,8 +3496,8 @@ Type = "foreign_key"
 [Migration.Operations.Field.Annotations.Value]
 TableName = "domain"
 ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"
@@ -3516,8 +3516,8 @@ Type = "foreign_key"
 [Migration.Operations.Field.Annotations.Value]
 TableName = "domain"
 ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"

@@ -375,9 +375,11 @@ pub struct DomainDomainRelation {
     pub uuid: Uuid,
 
     /// The source address
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub source: ForeignModel<Domain>,
 
     /// The destination address
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub destination: ForeignModel<Domain>,
 
     /// A reference to the workspace for faster querying
@@ -393,9 +395,11 @@ pub struct DomainHostRelation {
     pub uuid: Uuid,
 
     /// The source domain
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub domain: ForeignModel<Domain>,
 
     /// The destination host
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub host: ForeignModel<Host>,
 
     /// Does this relation exist directly as a dns record or is it the result of a chain of `CNAME`s?
