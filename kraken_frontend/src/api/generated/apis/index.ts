@@ -7,6 +7,7 @@ export * from './AuthenticationApi';
 export * from './DomainsApi';
 export * from './GlobalTagsApi';
 export * from './HostsApi';
+export * from './KnowledgeBaseApi';
 export * from './LeechManagementApi';
 export * from './OAuthApi';
 export * from './OAuthApplicationApi';

@@ -7,8 +7,9 @@ use utoipa::{Modify, OpenApi};
 
 use crate::api::handler::{
     aggregation_source, api_keys, attack_results, attacks, auth, common, data_export, domains,
-    global_tags, hosts, leeches, oauth, oauth_applications, oauth_decisions, ports, services,
-    settings, users, websocket, wordlists, workspace_invitations, workspace_tags, workspaces,
+    finding_definitions, global_tags, hosts, leeches, oauth, oauth_applications, oauth_decisions,
+    ports, services, settings, users, websocket, wordlists, workspace_invitations, workspace_tags,
+    workspaces,
 };
 use crate::modules::oauth::schemas as oauth_schemas;
 use crate::{chan, models};
@@ -158,6 +159,9 @@ impl Modify for SecurityAddon2 {
         workspace_invitations::handler::get_all_invitations,
         workspace_invitations::handler::accept_invitation,
         workspace_invitations::handler::decline_invitation,
+        finding_definitions::handler::create_finding_definition,
+        finding_definitions::handler::get_finding_definition,
+        finding_definitions::handler::get_all_finding_definitions,
     ),
     components(schemas(
         common::schema::ApiErrorResponse,
@@ -225,6 +229,7 @@ impl Modify for SecurityAddon2 {
         dehashed_rs::SearchType,
         attacks::schema::QueryDehashedRequest,
         models::AttackType,
+        models::FindingSeverity,
         oauth_applications::schema::CreateAppRequest,
         oauth_applications::schema::SimpleOauthClient,
         oauth_applications::schema::FullOauthClient,
@@ -301,6 +306,10 @@ impl Modify for SecurityAddon2 {
         chan::ws_manager::schema::WsMessage,
         chan::ws_manager::schema::AggregationType,
         chan::ws_manager::schema::CertificateTransparencyEntry,
+        finding_definitions::schema::CreateFindingDefinitionRequest,
+        finding_definitions::schema::FullFindingDefinition,
+        finding_definitions::schema::SimpleFindingDefinition,
+        finding_definitions::schema::ListFindingDefinitions,
     )),
     modifiers(&SecurityAddon)
 )]

@@ -21,9 +21,9 @@ use webauthn_rs::prelude::{Url, WebauthnError};
 use webauthn_rs::WebauthnBuilder;
 
 use crate::api::handler::{
-    api_keys, attack_results, attacks, auth, data_export, domains, global_tags, hosts, leeches,
-    oauth, oauth_applications, ports, services, settings, users, websocket, wordlists,
-    workspace_invitations, workspace_tags, workspaces,
+    api_keys, attack_results, attacks, auth, data_export, domains, finding_definitions,
+    global_tags, hosts, leeches, oauth, oauth_applications, ports, services, settings, users,
+    websocket, wordlists, workspace_invitations, workspace_tags, workspaces,
 };
 use crate::api::middleware::{
     handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
@@ -218,7 +218,10 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(wordlists::handler::get_all_wordlists)
                     .service(workspace_invitations::handler::get_all_invitations)
                     .service(workspace_invitations::handler::accept_invitation)
-                    .service(workspace_invitations::handler::decline_invitation),
+                    .service(workspace_invitations::handler::decline_invitation)
+                    .service(finding_definitions::handler::create_finding_definition)
+                    .service(finding_definitions::handler::get_finding_definition)
+                    .service(finding_definitions::handler::get_all_finding_definitions),
             )
     })
     .bind((

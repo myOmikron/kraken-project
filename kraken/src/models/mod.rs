@@ -1,6 +1,7 @@
 //! This module holds all model definitions for the database
 pub use aggregation::*;
 pub use attack::*;
+pub use finding::*;
 pub use leech::*;
 pub use manual::*;
 pub use oauth::*;
@@ -13,6 +14,7 @@ pub use workspace::*;
 
 mod aggregation;
 mod attack;
+mod finding;
 mod leech;
 mod manual;
 mod oauth;

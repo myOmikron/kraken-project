@@ -48,6 +48,8 @@ import {
     WordlistManagementApi,
     WorkspaceInvitationsApi,
     WorkspaceTagsApi,
+    KnowledgeBaseApi,
+    CreateFindingDefinitionRequest,
 } from "./generated";
 import { Configuration } from "./generated";
 import {
@@ -89,6 +91,7 @@ const services = new ServicesApi(configuration);
 const apiKeys = new ApiKeysApi(configuration);
 const wordlists = new WordlistApi(configuration);
 const wordlistsManagement = new WordlistManagementApi(configuration);
+const knowledgeBase = new KnowledgeBaseApi(configuration);
 
 export const Api = {
     admin: {
@@ -160,8 +163,7 @@ export const Api = {
             handleError(attacks.queryDehashed({ queryDehashedRequest: { workspaceUuid: uuid, query } })),
         dnsResolution: (attack: DnsResolutionRequest) =>
             handleError(attacks.dnsResolution({ dnsResolutionRequest: attack })),
-        dnsTxtScan: (attack: DnsTxtScanRequest) =>
-            handleError(attacks.dnsTxtScan({ dnsTxtScanRequest: attack })),
+        dnsTxtScan: (attack: DnsTxtScanRequest) => handleError(attacks.dnsTxtScan({ dnsTxtScanRequest: attack })),
         all: () => handleError(attacks.getAllAttacks()),
         get: (uuid: UUID) => handleError(attacks.getAttack({ uuid })),
         delete: (uuid: UUID) => handleError(attacks.deleteAttack({ uuid })),
@@ -343,6 +345,15 @@ export const Api = {
         all: () => handleError(workspaceInvitations.getAllInvitations()),
         accept: (uuid: UUID) => handleError(workspaceInvitations.acceptInvitation({ uuid })),
         decline: (uuid: UUID) => handleError(workspaceInvitations.declineInvitation({ uuid })),
+    },
+    knowledgeBase: {
+        findingDefinitions: {
+            all: () => handleError(knowledgeBase.getAllFindingDefinitions()),
+            get: (findingDefinition: UUID) =>
+                handleError(knowledgeBase.getFindingDefinition({ uuid: findingDefinition })),
+            create: (createFindingDefinitionRequest: CreateFindingDefinitionRequest) =>
+                handleError(knowledgeBase.createFindingDefinition({ createFindingDefinitionRequest })),
+        },
     },
 };
 

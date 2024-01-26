@@ -5,6 +5,7 @@ apis/AuthenticationApi.ts
 apis/DomainsApi.ts
 apis/GlobalTagsApi.ts
 apis/HostsApi.ts
+apis/KnowledgeBaseApi.ts
 apis/LeechManagementApi.ts
 apis/OAuthApi.ts
 apis/OAuthApplicationApi.ts
@@ -33,6 +34,7 @@ models/Color.ts
 models/CreateApiKeyRequest.ts
 models/CreateAppRequest.ts
 models/CreateDomainRequest.ts
+models/CreateFindingDefinitionRequest.ts
 models/CreateGlobalTagRequest.ts
 models/CreateHostRequest.ts
 models/CreateLeechRequest.ts
@@ -58,12 +60,14 @@ models/DomainCertainty.ts
 models/DomainOrNetwork.ts
 models/DomainRelations.ts
 models/DomainResultsPage.ts
+models/FindingSeverity.ts
 models/FinishRegisterRequest.ts
 models/FinishRegisterRequestAllOf.ts
 models/FullAggregationSource.ts
 models/FullApiKey.ts
 models/FullDnsTxtScanResult.ts
 models/FullDomain.ts
+models/FullFindingDefinition.ts
 models/FullGlobalTag.ts
 models/FullHost.ts
 models/FullOauthClient.ts
@@ -97,6 +101,7 @@ models/LeechConfigAllOf.ts
 models/LeechTlsConfig.ts
 models/ListApiKeys.ts
 models/ListAttacks.ts
+models/ListFindingDefinitions.ts
 models/ListFullUsers.ts
 models/ListGlobalTags.ts
 models/ListLeeches.ts
@@ -176,6 +181,7 @@ models/SimpleBruteforceSubdomainsResult.ts
 models/SimpleDnsResolutionResult.ts
 models/SimpleDnsTxtScanResult.ts
 models/SimpleDomain.ts
+models/SimpleFindingDefinition.ts
 models/SimpleHost.ts
 models/SimpleHostAliveResult.ts
 models/SimpleLeech.ts

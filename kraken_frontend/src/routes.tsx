@@ -16,6 +16,7 @@ import WorkspaceData from "./views/workspace/workspace-data";
 import WorkspaceAttacks, { TargetType } from "./views/workspace/workspace-attacks";
 import WorkspaceHosts from "./views/workspace/workspace-hosts";
 import WorkspaceHost from "./views/workspace/workspace-host";
+import KnowledgeBase from "./views/knowledge-base";
 
 export const ROUTER = new Router();
 
@@ -124,7 +125,15 @@ export const ROUTES = {
             </ContentWithMenu>
         ),
     }),
-    KNOWLEDGE_BASE: ROUTER.add({ url: "knowledge", parser: {}, render: () => undefined }),
+    KNOWLEDGE_BASE: ROUTER.add({
+        url: "knowledge",
+        parser: {},
+        render: () => (
+            <ContentWithMenu>
+                <KnowledgeBase />
+            </ContentWithMenu>
+        ),
+    }),
 
     OAUTH_REQUEST: ROUTER.add({
         url: "oauth-request/{uuid}",
