@@ -162,6 +162,7 @@ impl Modify for SecurityAddon2 {
         finding_definitions::handler::create_finding_definition,
         finding_definitions::handler::get_finding_definition,
         finding_definitions::handler::get_all_finding_definitions,
+        finding_definitions::handler_admin::delete_finding_definition,
     ),
     components(schemas(
         common::schema::ApiErrorResponse,

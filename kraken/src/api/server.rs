@@ -134,7 +134,8 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(wordlists::handler_admin::create_wordlist_admin)
                     .service(wordlists::handler_admin::get_all_wordlists_admin)
                     .service(wordlists::handler_admin::update_wordlist_admin)
-                    .service(wordlists::handler_admin::delete_wordlist_admin),
+                    .service(wordlists::handler_admin::delete_wordlist_admin)
+                    .service(finding_definitions::handler_admin::delete_finding_definition),
             )
             .service(
                 scope("/api/v1")
