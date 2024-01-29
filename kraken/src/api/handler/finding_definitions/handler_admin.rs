@@ -11,7 +11,7 @@ use crate::models::{FindingDefinition, User, UserPermission};
 /// Delete a finding definition
 #[utoipa::path(
     tag = "Knowledge Base",
-    context_path = "/api/v1",
+    context_path = "/api/v1/admin",
     responses(
         (status = 200, description = "Finding Definition was deleted"),
         (status = 400, description = "Client error", body = ApiErrorResponse),
