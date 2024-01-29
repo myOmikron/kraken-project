@@ -16,7 +16,7 @@ pub(crate) mod utils;
 ///
 /// # Example
 /// ```rust
-/// #[derive(Deserialize)]
+/// #[derive(serde::Deserialize)]
 ///  pub(crate) struct UpdateRequest {
 ///     name: Option<String>,
 ///
