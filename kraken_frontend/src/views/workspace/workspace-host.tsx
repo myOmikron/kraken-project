@@ -13,6 +13,7 @@ import { WorkspaceHostPorts } from "./workspace-host/workspace-host-ports";
 import { WorkspaceHostServices } from "./workspace-host/workspace-host-services";
 import { WORKSPACE_CONTEXT } from "./workspace";
 import { handleApiError } from "../../utils/helper";
+import TagList from "./components/tag-list";
 
 const TABS = { domains: "Domains", ports: "Ports", services: "Services", other: "Other" };
 
@@ -26,7 +27,7 @@ type WorkspaceState = {
     domains: Array<SimpleDomain>;
     ports: Array<SimplePort>;
     services: Array<SimpleService>;
-    hostList: Array<SimpleHost>;
+    hostList: Array<FullHost>;
     searchTerm: string;
     limit: number;
     offset: number;
@@ -59,7 +60,7 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
         await Api.workspaces.hosts.all(this.context.workspace.uuid, 1000, 0).then(
             handleApiError(({ items }) => {
                 this.setState({ hostList: items.filter(({ uuid }) => uuid !== this.props.uuid) });
-            }),
+            })
         );
     }
 
@@ -147,7 +148,7 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
                                     <OsIcon os={host.osType} />
                                     <div className={"workspace-host-hosts-info"}>
                                         <h2 className={"sub-heading"}>{host.ipAddr}</h2>
-                                        <span>{host.comment}</span>
+                                        <span className="workspace-host-comment-overflow">{host.comment}</span>
                                     </div>
                                 </button>
                             );
@@ -162,6 +163,7 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
                                 <h2 className={"heading"}>Host {this.state.host.ipAddr}</h2>
                                 <span>OS: {this.state.host.osType}</span>
                                 <span>Comment: {this.state.host.comment}</span>
+                                <TagList tags={this.state.host.tags} />
                             </div>
                         </>
                     ) : (

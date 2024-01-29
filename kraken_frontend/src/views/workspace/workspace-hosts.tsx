@@ -14,11 +14,12 @@ import Select from "react-select";
 import { selectStyles } from "../../components/select-menu";
 import { WORKSPACE_CONTEXT } from "./workspace";
 import { handleApiError } from "../../utils/helper";
+import TagList from "./components/tag-list";
 
 type WorkspaceHostsProps = {};
 type WorkspaceHostsState = {
     searchTerm: string;
-    hosts: SimpleHost[];
+    hosts: FullHost[];
     total: number;
     limit: number;
     offset: number;
@@ -47,7 +48,7 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
     componentDidUpdate(
         prevProps: Readonly<WorkspaceHostsProps>,
         prevState: Readonly<WorkspaceHostsState>,
-        snapshot?: any,
+        snapshot?: any
     ) {
         if (prevState.offset !== this.state.offset || this.state.limit !== prevState.limit) {
             this.retrieveHosts().then();
@@ -94,6 +95,7 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
                                 <div className={"workspace-hosts-host-info"}>
                                     <h2 className={"sub-heading"}>{host.ipAddr}</h2>
                                     <span>{host.comment}</span>
+                                    <TagList tags={host.tags} />
                                 </div>
                             </div>
                         );
