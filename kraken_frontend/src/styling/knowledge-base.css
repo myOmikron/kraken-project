@@ -1,22 +1,42 @@
-.create-finding-definition {
+.create-finding-definition-container {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 7em calc(100% - 1em - 7em);
     gap: 1em;
     height: 100%;
 }
 
-.create-finding-definition > div {
+.create-finding-definition-container > div:first-child {
+    justify-content: center;
+}
+
+.create-finding-definition-container > div:last-child {
+    display: grid;
+    grid-template-columns: 1fr 1.25fr;
+    gap: 4em;
+    box-sizing: border-box;
+    height: 100%;
+}
+
+/*
+ * Form on the left panel
+ */
+.create-finding-definition-form {
+    height: 100%;
     overflow-y: scroll;
     box-sizing: border-box;
     max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2em;
+    padding-right: 0.1em;
 }
 
-.create-finding-definition > div:first-child .sub-heading {
-    margin-top: 1em;
+.create-finding-definition-form .sub-heading {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 0.25em;
 }
-
-.create-finding-definition .icon {
-    display: inline-block;
+.create-finding-definition-form .sub-heading .icon {
     width: 1.5em;
 }
 
@@ -26,14 +46,60 @@
     column-gap: 1.5em;
 }
 
-.create-finding-definition-section {
+/*
+ * Editor on the right panel
+ */
+.create-finding-definition-editor {
+    display: flex;
+    flex-direction: row;
+}
+
+.knowledge-base-editor-tabs {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0.5em;
+    gap: 0.25em;
+}
+
+.knowledge-base-editor-tab {
+    border: 1px solid var(--primary-op);
+    border-radius: 0.5em 0 0 0.5em;
+    background-color: #00ccff10;
+    border-right: none;
     cursor: pointer;
+    transition: all 0.15s ease-out;
+    backdrop-filter: blur(20px);
+
+    height: 7em;
+    padding: 0 0.5em 1em;
+
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: space-between;
 }
-.create-finding-definition-section:hover {
-    border-color: white;
+
+.knowledge-base-editor-tab .icon {
+    width: 2em;
 }
-.create-finding-definition-section.selected {
-    border-color: white;
+.knowledge-base-editor-tab .user-indicator {
+    position: relative;
+    left: -0.7em;
+}
+.knowledge-base-editor-tab .user-indicator .neon {
+    fill: var(--primary);
+    filter: drop-shadow(0 0 4px var(--primary));
+}
+
+.knowledge-base-editor-tab.selected {
+    padding-right: 0.5em;
+    margin-left: -0.5em;
+    background-color: #00ccff30;
+}
+
+.knowledge-base-editor-tab:hover {
+    padding-right: 0.5em;
+    margin-left: -0.5em;
+    background-color: #00ccff40;
 }
 
 .knowledge-base-container {

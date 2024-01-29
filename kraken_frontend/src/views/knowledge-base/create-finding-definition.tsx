@@ -9,6 +9,7 @@ import LibraryIcon from "../../svg/library";
 import FlameIcon from "../../svg/flame";
 import InformationIcon from "../../svg/information";
 import BookIcon from "../../svg/book";
+import PersonCircleIcon from "../../svg/person-circle";
 
 export type CreateFindingDefinitionProps = {};
 export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
@@ -22,34 +23,36 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
     const [remediation, setRemediation] = React.useState("");
     const [references, setReferences] = React.useState("");
 
+    // Boolean flags if others are editing
+    const [summaryOthers, setSummaryOthers] = React.useState(false);
+    const [descriptionOthers, setDescriptionOthers] = React.useState(false);
+    const [impactOthers, setImpactOthers] = React.useState(false);
+    const [remediationOthers, setRemediationOthers] = React.useState(false);
+    const [referencesOthers, setReferencesOthers] = React.useState(false);
+
     // Lookup used to by the markdown editor to switch between the different markdown sections
     const sections = {
         summary: {
-            name: "Summary",
             value: summary,
             set: setSummary,
             language: "text",
         },
         description: {
-            name: "Description",
             value: description,
             set: setDescription,
             language: "markdown",
         },
         impact: {
-            name: "Impact",
             value: impact,
             set: setImpact,
             language: "markdown",
         },
         remediation: {
-            name: "Remediation",
             value: remediation,
             set: setRemediation,
             language: "markdown",
         },
         references: {
-            name: "Name",
             value: references,
             set: setReferences,
             language: "markdown",
@@ -58,89 +61,145 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
     const [editor, setEditor] = React.useState<keyof typeof sections>("summary");
 
     return (
-        <div className={"create-finding-definition"}>
+        <div className={"create-finding-definition-container"}>
             <div className={"pane"}>
                 <h1 className={"heading"}>New Finding Definition</h1>
-
-                <div className={"create-finding-definition-header"}>
-                    <h2 className={"sub-heading"}>Name</h2>
-                    <h2 className={"sub-heading"}>Severity</h2>
-                    <h2 className={"sub-heading"}>CVE</h2>
-                    <Input maxLength={255} value={name} onChange={setName} />
-                    <SelectPrimitive
-                        value={severity}
-                        options={["Okay", "Low", "Medium", "High", "Critical"]}
-                        onChange={(value) => setSeverity(value || severity)}
-                    />
-                    <Input maxLength={255} value={cve} onChange={setCve} />
-                </div>
-
-                <h2 className={"sub-heading"}>
-                    <InformationIcon />
-                    Summary
-                </h2>
-                <div
-                    className={`nested-pane create-finding-definition-section ${
-                        editor === "summary" ? "selected" : ""
-                    }`}
-                    onClick={() => setEditor("summary")}
-                >
-                    {summary.length === 0 ? null : summary.split("\n\n").map((line) => <p>{line}</p>)}
-                </div>
-
-                <h2 className={"sub-heading"}>
-                    <BookIcon />
-                    Description
-                </h2>
-                <div
-                    className={`nested-pane create-finding-definition-section ${
-                        editor === "description" ? "selected" : ""
-                    }`}
-                    onClick={() => setEditor("description")}
-                >
-                    <GithubMarkdown>{description}</GithubMarkdown>
-                </div>
-
-                <h2 className={"sub-heading"}>
-                    <FlameIcon />
-                    Impact
-                </h2>
-                <div
-                    className={`nested-pane create-finding-definition-section ${editor === "impact" ? "selected" : ""}`}
-                    onClick={() => setEditor("impact")}
-                >
-                    <GithubMarkdown>{impact}</GithubMarkdown>
-                </div>
-
-                <h2 className={"sub-heading"}>
-                    <BandageIcon />
-                    Remediation
-                </h2>
-                <div
-                    className={`nested-pane create-finding-definition-section ${
-                        editor === "remediation" ? "selected" : ""
-                    }`}
-                    onClick={() => setEditor("remediation")}
-                >
-                    <GithubMarkdown>{remediation}</GithubMarkdown>
-                </div>
-
-                <h2 className={"sub-heading"}>
-                    <LibraryIcon />
-                    References
-                </h2>
-                <div
-                    className={`nested-pane create-finding-definition-section ${
-                        editor === "references" ? "selected" : ""
-                    }`}
-                    onClick={() => setEditor("references")}
-                >
-                    <GithubMarkdown>{references}</GithubMarkdown>
-                </div>
             </div>
-            {
-                <div className={"pane"}>
-                    <h2 className={"sub-heading"}>Editing {sections[editor].name}</h2>
+            <div className={"pane"}>
+                <div className={"create-finding-definition-form"}>
+                    <div className={"create-finding-definition-header"}>
+                        <h2 className={"sub-heading"}>Name</h2>
+                        <h2 className={"sub-heading"}>Severity</h2>
+                        <h2 className={"sub-heading"}>CVE</h2>
+                        <Input maxLength={255} value={name} onChange={setName} />
+                        <SelectPrimitive
+                            value={severity}
+                            options={["Okay", "Low", "Medium", "High", "Critical"]}
+                            onChange={(value) => setSeverity(value || severity)}
+                        />
+                        <Input maxLength={255} value={cve} onChange={setCve} />
+                    </div>
+
+                    <div>
+                        <h2 className={"sub-heading"}>
+                            <InformationIcon />
+                            Summary
+                        </h2>
+                        <div className={`nested-pane`}>
+                            {summary.length === 0 ? null : summary.split("\n\n").map((line) => <p>{line}</p>)}
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 className={"sub-heading"}>
+                            <BookIcon />
+                            Description
+                        </h2>
+                        <div className={`nested-pane`}>
+                            <GithubMarkdown>{description}</GithubMarkdown>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 className={"sub-heading"}>
+                            <FlameIcon />
+                            Impact
+                        </h2>
+                        <div className={`nested-pane`}>
+                            <GithubMarkdown>{impact}</GithubMarkdown>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 className={"sub-heading"}>
+                            <BandageIcon />
+                            Remediation
+                        </h2>
+                        <div className={`nested-pane`}>
+                            <GithubMarkdown>{remediation}</GithubMarkdown>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 className={"sub-heading"}>
+                            <LibraryIcon />
+                            References
+                        </h2>
+                        <div className={`nested-pane`}>
+                            <GithubMarkdown>{references}</GithubMarkdown>
+                        </div>
+                    </div>
+
+                    <button className={"button"}>Create</button>
+                </div>
+                <div className={"create-finding-definition-editor"}>
+                    <div className={"knowledge-base-editor-tabs"}>
+                        <button
+                            title={"Summary"}
+                            className={`knowledge-base-editor-tab ${editor === "summary" ? "selected" : ""}`}
+                            onClick={() => setEditor("summary")}
+                        >
+                            <InformationIcon />
+                            {summaryOthers && (
+                                <PersonCircleIcon
+                                    className={"user-indicator icon"}
+                                    title={"Currently edited by someone else"}
+                                />
+                            )}
+                        </button>
+                        <button
+                            title={"Description"}
+                            className={`knowledge-base-editor-tab ${editor === "description" ? "selected" : ""}`}
+                            onClick={() => setEditor("description")}
+                        >
+                            <BookIcon />
+                            {descriptionOthers && (
+                                <PersonCircleIcon
+                                    className={"user-indicator icon"}
+                                    title={"Currently edited by someone else"}
+                                />
+                            )}
+                        </button>
+                        <button
+                            title={"Impact"}
+                            className={`knowledge-base-editor-tab ${editor === "impact" ? "selected" : ""}`}
+                            onClick={() => setEditor("impact")}
+                        >
+                            <FlameIcon />
+                            {impactOthers && (
+                                <PersonCircleIcon
+                                    className={"user-indicator icon"}
+                                    title={"Currently edited by someone else"}
+                                />
+                            )}
+                        </button>
+                        <button
+                            title={"Remediation"}
+                            className={`knowledge-base-editor-tab ${editor === "remediation" ? "selected" : ""}`}
+                            onClick={() => setEditor("remediation")}
+                        >
+                            <BandageIcon />
+                            {remediationOthers && (
+                                <PersonCircleIcon
+                                    className={"user-indicator icon"}
+                                    title={"Currently edited by someone else"}
+                                />
+                            )}
+                        </button>
+                        <button
+                            title={"References"}
+                            className={`knowledge-base-editor-tab ${editor === "references" ? "selected" : ""}`}
+                            onClick={() => setEditor("references")}
+                        >
+                            <LibraryIcon />
+                            {referencesOthers && (
+                                <PersonCircleIcon
+                                    className={"user-indicator icon"}
+                                    title={"Currently edited by someone else"}
+                                />
+                            )}
+                        </button>
+                    </div>
                     <Editor
                         className={"knowledge-base-editor"}
                         theme={"custom"}
@@ -152,7 +211,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                         }}
                     />
                 </div>
-            }
+            </div>
         </div>
     );
 }
