@@ -1,5 +1,5 @@
-ssh-os-windows10:gusztavvargadr/windows-10
-ssh-os-windows-server:gusztavvargadr/windows-server
+ssh-os-windows-server2022:jborean93/WindowsServer2022
+ssh-os-windows-server2012:jborean93/WindowsServer2012R2
 ssh-os-ubuntu16:generic/ubuntu1604
 ssh-os-ubuntu18:generic/ubuntu1804
 ssh-os-ubuntu20:generic/ubuntu2004

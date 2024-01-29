@@ -1,0 +1,4 @@
+
+ssh-os-windows-server2022: debug1: Remote protocol version 2.0, remote software version OpenSSH_for_Windows_9.4
+ssh-os-windows-server2012: debug1: Remote protocol version 2.0, remote software version OpenSSH_for_Windows_9.4
+ssh-os-ubuntu16: debug1: Remote protocol version 2.0, remote software version OpenSSH_7.2p2 Ubuntu-4ubuntu2.10

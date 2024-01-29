@@ -19,10 +19,10 @@ trap cleanup EXIT
 cat > Vagrantfile <<- EOS
 Vagrant.configure("2") do |config|
   config.nfs.functional = false
-  config.vm.provider "virtualbox" do |v|
+  config.vm.provider "libvirt" do |v|
+    v.default_prefix = "$MACHINE_NAME"
     v.memory = 2048
     v.cpus = 2
-    v.name = "$MACHINE_NAME"
   end
   config.vm.define "$MACHINE_NAME", primary: true do |os|
     os.vm.hostname = "$MACHINE_NAME"
@@ -32,4 +32,4 @@ end
 EOS
 vagrant up 1>&2
 echo "machine is up at $(date), running SSH:" >&2
-echo "$MACHINE_NAME: $(vagrant ssh -- -v exit 2>&1 | grep -F 'remote software version')"
+echo "$MACHINE_NAME: $(vagrant ssh -- -oBatchMode=true -v exit 2>&1 | grep -F 'remote software version')"
