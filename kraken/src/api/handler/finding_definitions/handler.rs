@@ -64,7 +64,7 @@ pub async fn create_finding_definition(
     tag = "Knowledge Base",
     context_path = "/api/v1",
     responses(
-        (status = 200, description = "Finding definition was created", body = FullFindingDefinition),
+        (status = 200, description = "Retrieved a specific finding definition", body = FullFindingDefinition),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
@@ -104,7 +104,7 @@ pub async fn get_finding_definition(
     tag = "Knowledge Base",
     context_path = "/api/v1",
     responses(
-        (status = 200, description = "Finding definition was created", body = ListFindingDefinitions),
+        (status = 200, description = "Retrieved a list of all finding definitions", body = ListFindingDefinitions),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
