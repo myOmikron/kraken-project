@@ -1,0 +1,1 @@
+SSH: debug1: Remote protocol version 2.0, remote software version OpenSSH_8.2p1 Ubuntu-4ubuntu0.11

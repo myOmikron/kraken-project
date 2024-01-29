@@ -32,4 +32,4 @@ end
 EOS
 vagrant up 1>&2
 echo "machine is up at $(date), running SSH:" >&2
-echo "$MACHINE_NAME: $(vagrant ssh -- -oBatchMode=true -v exit 2>&1 | grep -F 'remote software version')"
+echo "SSH: $(echo "" | vagrant ssh -- -oBatchMode=true -v exit 2>&1 | grep -F 'remote software version')"
