@@ -1,3 +1,36 @@
+.create-finding-definition {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1em;
+    height: 100%;
+}
+
+.create-finding-definition > div {
+    overflow-y: scroll;
+    box-sizing: border-box;
+    max-height: 100%;
+}
+
+.create-finding-definition > div:first-child .sub-heading {
+    margin-top: 1em;
+}
+
+.create-finding-definition-header {
+    display: grid;
+    grid-template-columns: 3fr 1fr 1fr;
+    column-gap: 1.5em;
+}
+
+.create-finding-definition-section {
+    cursor: pointer;
+}
+.create-finding-definition-section:hover {
+    border-color: white;
+}
+.create-finding-definition-section.selected {
+    border-color: white;
+}
+
 .knowledge-base-container {
     display: flex;
     flex-direction: column;

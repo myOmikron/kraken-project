@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import "../styling/knowledge-base.css";
-import { Remark } from "react-remark";
 import { Editor, Monaco } from "@monaco-editor/react";
 
 type KnowledgeBaseProps = {};
@@ -25,26 +24,20 @@ export default function KnowledgeBase(props: KnowledgeBaseProps) {
                             setUserInput(value !== undefined ? value : "");
                         }}
                         className={"knowledge-base-editor"}
-                        beforeMount={setupThemes}
+                        beforeMount={setupMonaco}
                     />
                 </div>
-                <div>
-                    <Remark
-                        remarkPlugins={[]}
-                        rehypePlugins={[]}
-                        onError={(err) => {
-                            console.error(err);
-                        }}
-                    >
-                        {userInput}
-                    </Remark>
-                </div>
+                <div></div>
             </div>
         </div>
     );
 }
 
-function setupThemes(monaco: Monaco) {
+let setup = false;
+export function setupMonaco(monaco: Monaco) {
+    if (setup) return;
+    setup = true;
+
     monaco.editor.defineTheme("custom", {
         base: "vs-dark",
         inherit: true,

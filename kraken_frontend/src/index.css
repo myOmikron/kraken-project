@@ -71,6 +71,18 @@ body {
     image-rendering: unset;
 }
 
+.nested-pane{
+    --pane-padding: 1em;
+
+    display: flex;
+    padding: var(--pane-padding);
+    flex-direction: column;
+    border-radius: 0.5em;
+    border: 1px solid var(--primary-op);
+    background-color: #00ccff10 ;
+    gap: 0.5em;
+}
+
 .heading {
     font-family: Roboto-Light, sans-serif;
     font-weight: normal;
