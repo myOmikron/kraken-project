@@ -16,7 +16,7 @@
 use std::env;
 use std::error::Error;
 use std::io::Write;
-use std::net::{IpAddr, SocketAddr};
+use std::net::{IpAddr, SocketAddr, SocketAddrV4, SocketAddrV6};
 use std::num::NonZeroU32;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -46,6 +46,7 @@ use crate::modules::bruteforce_subdomains::{
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
 use crate::modules::dns::txt::{start_dns_txt_scan, DnsTxtScanSettings};
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
+use crate::modules::os_detection::tcp_fingerprint::fingerprint_tcp;
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::modules::service_detection::DetectServiceSettings;
 use crate::modules::{dehashed, service_detection, whois};
@@ -216,6 +217,17 @@ pub enum RunCommand {
         #[clap(long)]
         #[clap(default_value_t = NonZeroU32::new(1000).unwrap())]
         concurrent_limit: NonZeroU32,
+    },
+    /// Generate the TCP fingerprint for the specified IP on the specified open and specified closed port.
+    TcpFingerprint {
+        /// The ip to query information for.
+        ip: IpAddr,
+        /// A TCP port that must accept connections for a consistent fingerprint.
+        #[clap(short = 'o')]
+        opened_port: u16,
+        /// A TCP port that must not accept connections for a consistent fingerprint.
+        #[clap(short = 'c')]
+        closed_port: u16,
     },
 }
 
@@ -637,6 +649,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         {
                             error!("{err}");
                         }
+                    }
+                    RunCommand::TcpFingerprint {
+                        ip,
+                        opened_port,
+                        closed_port,
+                    } => {
+                        let fp = fingerprint_tcp(match ip {
+                            IpAddr::V4(v4) => SocketAddr::V4(SocketAddrV4::new(v4, opened_port)),
+                            IpAddr::V6(v6) => {
+                                SocketAddr::V6(SocketAddrV6::new(v6, opened_port, 0, 0))
+                            }
+                        })
+                        .await?;
+                        print!("Fingerprint: {:?}", fp);
                     }
                 }
             }

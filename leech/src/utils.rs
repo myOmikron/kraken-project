@@ -2,12 +2,14 @@
 
 use std::num::NonZeroU16;
 use std::ops::RangeInclusive;
+use std::os::fd::{FromRawFd, IntoRawFd};
 use std::str::FromStr;
 
 use once_cell::sync::Lazy;
 use regex::{bytes, Regex};
 use thiserror::Error;
 use tokio::io::{self, stdin, AsyncBufReadExt, BufReader};
+use tokio::net::UdpSocket;
 use tonic::transport::{Certificate, ClientTlsConfig, Endpoint};
 
 use crate::config::KrakenConfig;
@@ -116,4 +118,29 @@ pub fn kraken_endpoint(config: &KrakenConfig) -> Result<Endpoint, tonic::transpo
             .ca_certificate(Certificate::from_pem(&config.kraken_ca))
             .domain_name(&config.kraken_sni),
     )
+}
+
+/// Creates a TCP stream that you can read and write raw IP/TCP packets from/to.
+///
+/// When using this function you need to manually construct the three-way TCP handshake if you want to establish a
+/// connection.
+///
+/// The return type is a UdpSocket, however it works with TCP streams as well, since TCP streams are made out of TCP
+/// datagrams underneath, which need to be manually implemented.
+///
+/// Note that you need to specify IP headers as well to communicate with other devices.
+///
+/// The returned socket type is a tokio type and works with the standard async features.
+///
+/// Receiving on the socket will read all TCP network traffic, make sure you only process what you want to.
+///
+/// The kernel will still send TCP RST for unknown received SYN/ACKs - you will need to implement a whole lot more if
+/// you want to establish a full TCP connection using raw sockets. See also:
+/// https://stackoverflow.com/questions/48891727/using-socket-af-packet-sock-raw-but-tell-kernel-to-not-send-rst
+pub fn raw_socket(domain: socket2::Domain, protocol: socket2::Protocol) -> io::Result<UdpSocket> {
+    let socket = socket2::Socket::new(domain, socket2::Type::RAW, Some(protocol))?;
+    socket.set_header_included(true)?;
+    socket.set_nonblocking(false)?;
+
+    UdpSocket::from_std(unsafe { std::net::UdpSocket::from_raw_fd(socket.into_raw_fd()) })
 }

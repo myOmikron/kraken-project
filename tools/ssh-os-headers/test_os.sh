@@ -33,3 +33,7 @@ EOS
 vagrant up 1>&2
 echo "machine is up at $(date), running SSH:" >&2
 echo "SSH: $(echo "" | vagrant ssh -- -oBatchMode=true -v exit 2>&1 | grep -F 'remote software version')"
+HOST="$(vagrant ssh-config | grep HostName | cut -d' ' -f4)"
+PORT="$(vagrant ssh-config | grep Port | cut -d' ' -f4)"
+echo "Address: $HOST:$PORT"
+echo "TCP fingerprint: $(../../target/debug/leech execute tcp-fingerprint -o "$PORT" -c 1 "$HOST")"

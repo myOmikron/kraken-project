@@ -10,6 +10,7 @@ use crate::modules::os_detection::errors::OsDetectionError;
 use crate::modules::service_detection::DetectServiceSettings;
 
 pub mod errors;
+pub mod tcp_fingerprint;
 
 /// Contains how many probably OS-specific services have been matched.
 /// If the confidence of a matching probe is high, it adds 10 to its corresponding OS field, if it's low, it adds 1.
