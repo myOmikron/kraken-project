@@ -15,6 +15,11 @@
     margin-top: 1em;
 }
 
+.create-finding-definition .icon {
+    display: inline-block;
+    width: 1.5em;
+}
+
 .create-finding-definition-header {
     display: grid;
     grid-template-columns: 3fr 1fr 1fr;

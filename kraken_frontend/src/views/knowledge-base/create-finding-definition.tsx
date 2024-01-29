@@ -4,6 +4,11 @@ import { SelectPrimitive } from "../../components/select-menu";
 import Editor from "@monaco-editor/react";
 import { setupMonaco } from "../knowledge-base";
 import { GithubMarkdown } from "../../components/github-markdown";
+import BandageIcon from "../../svg/bandage";
+import LibraryIcon from "../../svg/library";
+import FlameIcon from "../../svg/flame";
+import InformationIcon from "../../svg/information";
+import BookIcon from "../../svg/book";
 
 export type CreateFindingDefinitionProps = {};
 export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
@@ -70,7 +75,10 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                     <Input maxLength={255} value={cve} onChange={setCve} />
                 </div>
 
-                <h2 className={"sub-heading"}>Summary</h2>
+                <h2 className={"sub-heading"}>
+                    <InformationIcon />
+                    Summary
+                </h2>
                 <div
                     className={`nested-pane create-finding-definition-section ${
                         editor === "summary" ? "selected" : ""
@@ -80,7 +88,10 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                     {summary.length === 0 ? null : summary.split("\n\n").map((line) => <p>{line}</p>)}
                 </div>
 
-                <h2 className={"sub-heading"}>Description</h2>
+                <h2 className={"sub-heading"}>
+                    <BookIcon />
+                    Description
+                </h2>
                 <div
                     className={`nested-pane create-finding-definition-section ${
                         editor === "description" ? "selected" : ""
@@ -90,7 +101,10 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                     <GithubMarkdown>{description}</GithubMarkdown>
                 </div>
 
-                <h2 className={"sub-heading"}>Impact</h2>
+                <h2 className={"sub-heading"}>
+                    <FlameIcon />
+                    Impact
+                </h2>
                 <div
                     className={`nested-pane create-finding-definition-section ${editor === "impact" ? "selected" : ""}`}
                     onClick={() => setEditor("impact")}
@@ -98,7 +112,10 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                     <GithubMarkdown>{impact}</GithubMarkdown>
                 </div>
 
-                <h2 className={"sub-heading"}>Remediation</h2>
+                <h2 className={"sub-heading"}>
+                    <BandageIcon />
+                    Remediation
+                </h2>
                 <div
                     className={`nested-pane create-finding-definition-section ${
                         editor === "remediation" ? "selected" : ""
@@ -108,7 +125,10 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                     <GithubMarkdown>{remediation}</GithubMarkdown>
                 </div>
 
-                <h2 className={"sub-heading"}>References</h2>
+                <h2 className={"sub-heading"}>
+                    <LibraryIcon />
+                    References
+                </h2>
                 <div
                     className={`nested-pane create-finding-definition-section ${
                         editor === "references" ? "selected" : ""
