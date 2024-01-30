@@ -224,6 +224,11 @@ pub enum WsMessage {
         /// The updated list of tags
         tags: Vec<Uuid>,
     },
+    /// A finding definition was deleted
+    DeletedFindingDefinition {
+        /// The uuid of the finding definition
+        uuid: Uuid,
+    },
 }
 
 /// The different types of aggregations

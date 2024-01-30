@@ -6,6 +6,7 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::common::error::{ApiError, ApiResult};
 use crate::api::handler::common::schema::PathUuid;
 use crate::chan::global::GLOBAL;
+use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::{FindingDefinition, User, UserPermission};
 
 /// Delete a finding definition
@@ -49,6 +50,12 @@ pub async fn delete_finding_definition(
         .await?;
 
     tx.commit().await?;
+
+    // Notify every user about deleted finding definition
+    GLOBAL
+        .ws
+        .message_all(WsMessage::DeletedFindingDefinition { uuid })
+        .await;
 
     Ok(HttpResponse::Ok().finish())
 }
