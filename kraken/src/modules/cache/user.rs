@@ -8,7 +8,7 @@ use log::debug;
 use rorm::{query, Model};
 use uuid::Uuid;
 
-use crate::api::handler::users::schema::SimpleUser;
+use crate::api::handler::users::schema::{FullUser, SimpleUser};
 use crate::chan::global::GLOBAL;
 use crate::models::User;
 
@@ -23,9 +23,8 @@ pub struct UserCache {
 
 #[derive(Default)]
 struct UserCacheData {
-    /// Provides the access from the user uuid to the username
-    /// and display_name via the [SimpleUser]
-    users: HashMap<Uuid, SimpleUser>,
+    /// Provides the access to all [FullUser]
+    users: HashMap<Uuid, FullUser>,
     /// The point in time when the cache was refreshed the last time
     last_refresh: DateTime<Utc>,
 }
@@ -34,25 +33,39 @@ impl UserCache {
     /// Manually refresh the whole cache
     ///
     /// The updated cache is returned
-    pub async fn refresh(&self) -> Result<HashMap<Uuid, SimpleUser>, rorm::Error> {
+    pub async fn refresh(&self) -> Result<HashMap<Uuid, FullUser>, rorm::Error> {
         let now = Utc::now();
 
         let db = &GLOBAL.db;
-        let users: HashMap<Uuid, SimpleUser> =
-            query!(db, (User::F.uuid, User::F.username, User::F.display_name))
-                .stream()
-                .map_ok(|(uuid, username, display_name)| {
-                    (
+        let users: HashMap<Uuid, FullUser> = query!(
+            db,
+            (
+                User::F.uuid,
+                User::F.username,
+                User::F.display_name,
+                User::F.permission,
+                User::F.created_at,
+                User::F.last_login
+            )
+        )
+        .stream()
+        .map_ok(
+            |(uuid, username, display_name, permission, created_at, last_login)| {
+                (
+                    uuid,
+                    FullUser {
                         uuid,
-                        SimpleUser {
-                            uuid,
-                            username,
-                            display_name,
-                        },
-                    )
-                })
-                .try_collect()
-                .await?;
+                        username,
+                        display_name,
+                        permission,
+                        created_at,
+                        last_login,
+                    },
+                )
+            },
+        )
+        .try_collect()
+        .await?;
 
         #[allow(clippy::expect_used)]
         let mut guard = self
@@ -66,15 +79,15 @@ impl UserCache {
         Ok(users)
     }
 
-    /// Retrieve an user from the cache
+    /// Retrieve a [FullUser] from the cache
     ///
     /// If `Ok(None)` is returned, the specified user does not exist
-    pub async fn get_user(&self, uuid: Uuid) -> Result<Option<SimpleUser>, rorm::Error> {
+    pub async fn get_full_user(&self, uuid: Uuid) -> Result<Option<FullUser>, rorm::Error> {
         debug!("Workspace Member Cache was hit");
         let now = Utc::now();
         let refresh_period = Duration::minutes(5);
 
-        let user: Option<SimpleUser> = {
+        let user: Option<FullUser> = {
             #[allow(clippy::expect_used)]
             let guard = self.cache.read().expect(
                 "If you ever encounter this error, please open an issue with the stacktrace",
@@ -94,8 +107,19 @@ impl UserCache {
             Ok(user)
         } else {
             debug!("Refreshing cache");
-            let users = self.refresh().await?;
-            Ok(users.get(&uuid).map(|x| x.to_owned()))
+            let mut users = self.refresh().await?;
+            Ok(users.remove_entry(&uuid).map(|(_, user)| user))
         }
+    }
+
+    /// Retrieve a [SimpleUser] from the cache
+    ///
+    /// If `Ok(None)` is returned, the specified user does not exist
+    pub async fn get_simple_user(&self, uuid: Uuid) -> Result<Option<SimpleUser>, rorm::Error> {
+        Ok(self.get_full_user(uuid).await?.map(|user| SimpleUser {
+            uuid: user.uuid,
+            username: user.username,
+            display_name: user.display_name,
+        }))
     }
 }
