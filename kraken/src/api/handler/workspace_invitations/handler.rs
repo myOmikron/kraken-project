@@ -109,6 +109,12 @@ pub async fn accept_invitation(
         .condition(WorkspaceInvitation::F.uuid.equals(invitation_uuid))
         .await?;
 
+    // Refresh cache
+    GLOBAL
+        .workspace_cache
+        .refresh_users(*invitation.workspace.key(), &mut tx)
+        .await?;
+
     tx.commit().await?;
 
     Ok(HttpResponse::Ok().finish())
