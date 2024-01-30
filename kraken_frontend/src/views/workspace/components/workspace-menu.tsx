@@ -7,6 +7,8 @@ import { ROUTES } from "../../../routes";
 import "../../../styling/workspace-menu.css";
 import HostIcon from "../../../svg/host";
 import { WorkspaceView } from "../workspace";
+import USER_CONTEXT from "../../../context/user";
+import { UserPermission } from "../../../api/generated";
 
 type WorkspaceMenuProps = {
     uuid: string;
@@ -15,6 +17,8 @@ type WorkspaceMenuProps = {
 type WorkspaceMenuState = {};
 
 export default class WorkspaceMenu extends React.Component<WorkspaceMenuProps, WorkspaceMenuState> {
+    static contextType = USER_CONTEXT;
+    declare context: React.ContextType<typeof USER_CONTEXT>;
     render() {
         return (
             <div className={"workspace-menu pane"}>
@@ -46,13 +50,17 @@ export default class WorkspaceMenu extends React.Component<WorkspaceMenuProps, W
                     <HostIcon />
                     <div className={"workspace-menu-hint"}>Hosts</div>
                 </div>
-                <div
-                    className={this.props.active === "settings" ? "workspace-menu-item active" : "workspace-menu-item"}
-                    {...ROUTES.WORKSPACE_SETTINGS.clickHandler({ uuid: this.props.uuid })}
-                >
-                    <SettingsIcon />
-                    <div className={"workspace-menu-hint"}>Workspace Settings</div>
-                </div>
+                {this.context.user.permission === UserPermission.Admin ? (
+                    <div
+                        className={
+                            this.props.active === "settings" ? "workspace-menu-item active" : "workspace-menu-item"
+                        }
+                        {...ROUTES.WORKSPACE_SETTINGS.clickHandler({ uuid: this.props.uuid })}
+                    >
+                        <SettingsIcon />
+                        <div className={"workspace-menu-hint"}>Workspace Settings</div>
+                    </div>
+                ) : null}
             </div>
         );
     }

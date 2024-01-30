@@ -164,7 +164,7 @@
     background-color: #00ccff10;
     border-radius: 0.5em;
     border: 1px solid var(--primary-op);
-    width: 100%;
+    width: calc(100% - 2px);
     max-height: 100%;
 }
 

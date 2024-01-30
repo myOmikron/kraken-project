@@ -1,5 +1,5 @@
 import React, { Context } from "react";
-import { FullWorkspace, FullWorkspaceInvitation, SimpleUser } from "../../api/generated";
+import { FullWorkspace, FullWorkspaceInvitation, SimpleUser, UserPermission } from "../../api/generated";
 import "../../styling/workspace-settings.css";
 import Input from "../../components/input";
 import { Api } from "../../api/api";
@@ -13,6 +13,7 @@ import SelectMenu from "../../components/select-menu";
 import Bubble from "../../components/bubble";
 import Workspace, { WORKSPACE_CONTEXT, WorkspaceContext } from "./workspace";
 import { handleApiError } from "../../utils/helper";
+import USER_CONTEXT from "../../context/user";
 
 type WorkspaceSettingsProps = {};
 type WorkspaceSettingsState = {
@@ -91,10 +92,11 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
         const toastId = toast.loading("Deleting workspace");
         await Api.workspaces.delete(this.context.workspace.uuid).then(
             handleApiError(() => {
-                toast.dismiss(toastId);
                 toast.success("Deleted Workspace");
-            }),
+                ROUTES.WORKSPACES.visit({});
+            })
         );
+        toast.dismiss(toastId);
     }
 
     async createTransferList() {
@@ -108,7 +110,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                         let member = { label: s.displayName + " (" + s.username + ") ", value: s.uuid };
                         this.state.transferList.push(member);
                     });
-            }),
+            })
         );
     }
 
@@ -127,8 +129,12 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                         let member = { label: s.displayName + " (" + s.username + ") ", value: s.uuid };
                         this.state.inviteList.push(member);
                     });
-            }),
+            })
         );
+    }
+
+    async deleteUser() {
+        /*TODO delete member*/
     }
 
     async inviteUser() {
@@ -142,7 +148,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                 toast.success("Invitation was sent");
                 this.setState({ selectedUser: null, invitePopup: false });
                 await this.updateInvitedUsers();
-            }),
+            })
         );
     }
 
@@ -155,13 +161,21 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
             handleApiError(() => {
                 toast.success("Transfer was successful");
                 this.setState({ selectedUser: null, transferOwnershipPopup: false, selected: false });
-            }),
+            })
         );
     }
 
     render() {
         return (
             <>
+                <USER_CONTEXT.Consumer>
+                    {(ctx) => {
+                        if (this.context.workspace.owner.uuid !== ctx.user.uuid) {
+                            ROUTES.WORKSPACE_HOSTS.visit({ uuid: this.context.workspace.uuid });
+                        }
+                        return null;
+                    }}
+                </USER_CONTEXT.Consumer>
                 <div className={"workspace-settings-layout"}>
                     <div className="workspace-settings-row">
                         <form
@@ -283,7 +297,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                                                         handleApiError(async () => {
                                                             toast.success("Invitation retracted");
                                                             await this.updateInvitedUsers();
-                                                        }),
+                                                        })
                                                     );
                                             }}
                                         >
@@ -355,9 +369,10 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                             </button>
                             <button
                                 className="button"
-                                onClick={() => {
+                                onClick={async (x) => {
                                     {
-                                        /*TODO delete member*/
+                                        x.preventDefault();
+                                        await this.deleteUser();
                                     }
                                 }}
                             >
@@ -392,7 +407,6 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                                     {
                                         x.preventDefault();
                                         await this.deleteWorkspace();
-                                        ROUTES.WORKSPACES.visit({});
                                     }
                                 }}
                             >
