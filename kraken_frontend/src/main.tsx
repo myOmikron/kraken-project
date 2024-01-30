@@ -25,9 +25,6 @@ class Router extends React.Component<RouterProps, RouterState> {
     };
 
     componentDidMount() {
-        WS.addEventListener("state.connected", () => toast.success("Websocket has connected", { autoClose: 1000 }));
-        WS.connect(`${window.location.origin.replace("http", "ws")}/api/v1/ws`);
-
         // Update state to match url
         const setPath = () => {
             const rawPath = window.location.hash;

@@ -5,6 +5,7 @@ import Loading from "../components/loading";
 import { ApiError, StatusCode } from "../api/error";
 import { toast } from "react-toastify";
 import Login from "../views/login";
+import WS from "../api/websocket";
 
 /** The global {@link UserProvider} instance */
 let USER_PROVIDER: UserProvider | null = null;
@@ -47,7 +48,10 @@ export class UserProvider extends React.Component<UserProviderProps, UserProvide
         if (this.state.user == null)
             Api.user.get().then((result) =>
                 result.match(
-                    (user) => this.setState({ user }),
+                    (user) => {
+                        WS.connect(`${window.location.origin.replace("http", "ws")}/api/v1/ws`);
+                        this.setState({ user });
+                    },
                     (error) => {
                         switch (error.status_code) {
                             case StatusCode.Unauthenticated:
@@ -63,6 +67,7 @@ export class UserProvider extends React.Component<UserProviderProps, UserProvide
     }
 
     componentDidMount() {
+        WS.addEventListener("state.connected", () => toast.success("Websocket has connected", { autoClose: 1000 }));
         if (USER_PROVIDER === null) USER_PROVIDER = this;
         else if (USER_PROVIDER === this) console.error("UserProvider did mount twice");
         else console.error("Two instances of UserProvider are used");
