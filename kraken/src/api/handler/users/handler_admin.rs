@@ -73,20 +73,14 @@ pub async fn delete_user(req: Path<PathUuid>) -> ApiResult<HttpResponse> {
 )]
 #[get("/users/{uuid}")]
 pub async fn get_user(req: Path<PathUuid>) -> ApiResult<Json<FullUser>> {
-    let user = query!(&GLOBAL.db, User)
-        .condition(User::F.uuid.equals(req.uuid))
-        .optional()
-        .await?
-        .ok_or(ApiError::InvalidUsername)?;
-
-    Ok(Json(FullUser {
-        uuid: user.uuid,
-        username: user.username,
-        display_name: user.display_name,
-        permission: user.permission,
-        created_at: user.created_at,
-        last_login: user.last_login,
-    }))
+    let user_uuid = req.into_inner().uuid;
+    Ok(Json(
+        GLOBAL
+            .user_cache
+            .get_full_user(user_uuid)
+            .await?
+            .ok_or(ApiError::InternalServerError)?,
+    ))
 }
 
 /// Retrieve all users

@@ -40,7 +40,7 @@ use crate::models::{
     Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
     DnsResolutionResult, DnsTxtScanAttackResult, Domain, Host, HostAliveResult, ModelType, Port,
     Search, SearchInsert, SearchResult, Service, ServiceDetectionName, ServiceDetectionResult,
-    TcpPortScanResult, UdpServiceDetectionName, UdpServiceDetectionResult, User, UserPermission,
+    TcpPortScanResult, UdpServiceDetectionName, UdpServiceDetectionResult, UserPermission,
     Workspace, WorkspaceInvitation, WorkspaceMember,
 };
 
@@ -87,9 +87,9 @@ pub async fn delete_workspace(
 ) -> ApiResult<HttpResponse> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
-    let executing_user = query!(&mut tx, User)
-        .condition(User::F.uuid.equals(user_uuid))
-        .optional()
+    let executing_user = GLOBAL
+        .user_cache
+        .get_full_user(user_uuid)
         .await?
         .ok_or(ApiError::SessionCorrupt)?;
 
@@ -184,25 +184,16 @@ pub async fn get_all_workspaces(
 ) -> ApiResult<Json<ListWorkspaces>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
-    let session_user = query!(&mut tx, User)
-        .condition(User::F.uuid.equals(user_uuid))
-        .optional()
+    let session_user = GLOBAL
+        .user_cache
+        .get_simple_user(user_uuid)
         .await?
         .ok_or(ApiError::SessionCorrupt)?;
 
     let mut workspaces: Vec<(Workspace, SimpleUser)> = query!(&mut tx, Workspace)
         .condition(Workspace::F.owner.equals(session_user.uuid))
         .stream()
-        .map_ok(|x| {
-            (
-                x,
-                SimpleUser {
-                    uuid: session_user.uuid,
-                    username: session_user.username.clone(),
-                    display_name: session_user.display_name.clone(),
-                },
-            )
-        })
+        .map_ok(|x| (x, session_user.clone()))
         .try_collect()
         .await?;
 
@@ -333,6 +324,16 @@ pub async fn transfer_ownership(
         return Err(ApiError::MissingPrivileges);
     }
 
+    // Check if the new user exists
+    if GLOBAL
+        .user_cache
+        .get_simple_user(new_owner_uuid)
+        .await?
+        .is_none()
+    {
+        return Err(ApiError::InvalidUuid);
+    }
+
     update!(&mut tx, Workspace)
         .condition(Workspace::F.uuid.equals(workspace_uuid))
         .set(Workspace::F.owner, ForeignModelByField::Key(new_owner_uuid))
@@ -369,9 +370,9 @@ pub async fn create_invitation(
     let workspace_uuid = path.into_inner().uuid;
 
     let mut tx = GLOBAL.db.start_transaction().await?;
-    let session_user = query!(&mut tx, User)
-        .condition(User::F.uuid.equals(user_uuid))
-        .optional()
+    let session_user = GLOBAL
+        .user_cache
+        .get_simple_user(user_uuid)
         .await?
         .ok_or(ApiError::SessionCorrupt)?;
 
@@ -397,11 +398,7 @@ pub async fn create_invitation(
             user,
             WsMessage::InvitationToWorkspace {
                 invitation_uuid,
-                from: SimpleUser {
-                    uuid: session_user.uuid,
-                    username: session_user.username,
-                    display_name: session_user.display_name,
-                },
+                from: session_user,
                 workspace: SimpleWorkspace {
                     uuid: workspace_uuid,
                     name: workspace.name,

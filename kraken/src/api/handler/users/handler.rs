@@ -27,20 +27,13 @@ use crate::models::{LocalUser, User};
 )]
 #[get("/users/me")]
 pub async fn get_me(SessionUser(user_uuid): SessionUser) -> ApiResult<Json<FullUser>> {
-    let user = query!(&GLOBAL.db, User)
-        .condition(User::F.uuid.equals(user_uuid))
-        .optional()
-        .await?
-        .ok_or(ApiError::SessionCorrupt)?;
-
-    Ok(Json(FullUser {
-        uuid: user.uuid,
-        username: user.username,
-        display_name: user.display_name,
-        permission: user.permission,
-        created_at: user.created_at,
-        last_login: user.last_login,
-    }))
+    Ok(Json(
+        GLOBAL
+            .user_cache
+            .get_full_user(user_uuid)
+            .await?
+            .ok_or(ApiError::SessionCorrupt)?,
+    ))
 }
 
 /// Set a new password

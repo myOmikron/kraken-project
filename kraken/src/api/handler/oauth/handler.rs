@@ -20,11 +20,10 @@ use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::oauth::schema::{OAuthDecisionQuery, OpenRequestInfo};
 use crate::api::handler::oauth::utils::build_redirect;
 use crate::api::handler::oauth_applications::schema::SimpleOauthClient;
-use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::chan::global::GLOBAL;
 use crate::models::{
-    OAuthDecision, OAuthDecisionAction, OauthClient, User, Workspace, WorkspaceAccessToken,
+    OAuthDecision, OAuthDecisionAction, OauthClient, Workspace, WorkspaceAccessToken,
 };
 use crate::modules::oauth::schemas::{
     AuthError, AuthErrorType, AuthRequest, CodeChallengeMethod, TokenError, TokenErrorType,
@@ -230,10 +229,11 @@ pub async fn info(
     .one()
     .await?;
 
-    let owner = query!(&GLOBAL.db, User)
-        .condition(User::F.uuid.equals(*owner.key()))
-        .one()
-        .await?;
+    let owner = GLOBAL
+        .user_cache
+        .get_simple_user(*owner.key())
+        .await?
+        .ok_or(ApiError::InternalServerError)?;
 
     Ok(Json(OpenRequestInfo {
         workspace: SimpleWorkspace {
@@ -241,11 +241,7 @@ pub async fn info(
             name,
             description,
             created_at,
-            owner: SimpleUser {
-                display_name: owner.display_name,
-                username: owner.username,
-                uuid: owner.uuid,
-            },
+            owner,
         },
         oauth_application,
     }))

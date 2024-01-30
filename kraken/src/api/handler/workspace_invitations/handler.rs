@@ -5,7 +5,6 @@ use rorm::{query, FieldAccess, Model};
 use crate::api::extractors::SessionUser;
 use crate::api::handler::common::error::{ApiError, ApiResult};
 use crate::api::handler::common::schema::PathUuid;
-use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspace_invitations::schema::{
     FullWorkspaceInvitation, WorkspaceInvitationList,
 };
@@ -38,9 +37,9 @@ pub async fn get_all_invitations(
         (
             WorkspaceInvitation::F.uuid,
             WorkspaceInvitation::F.workspace as Workspace,
-            WorkspaceInvitation::F.from as SimpleUser,
-            WorkspaceInvitation::F.target as SimpleUser,
-            WorkspaceInvitation::F.workspace.owner as SimpleUser,
+            WorkspaceInvitation::F.from,
+            WorkspaceInvitation::F.target,
+            WorkspaceInvitation::F.workspace.owner,
         )
     )
     .condition(WorkspaceInvitation::F.target.equals(session_user))
@@ -53,11 +52,23 @@ pub async fn get_all_invitations(
                 uuid: workspace.uuid,
                 name: workspace.name,
                 description: workspace.description,
-                owner,
+                owner: GLOBAL
+                    .user_cache
+                    .get_simple_user(*owner.key())
+                    .await?
+                    .ok_or(ApiError::InternalServerError)?,
                 created_at: workspace.created_at,
             },
-            target,
-            from,
+            target: GLOBAL
+                .user_cache
+                .get_simple_user(*target.key())
+                .await?
+                .ok_or(ApiError::InternalServerError)?,
+            from: GLOBAL
+                .user_cache
+                .get_simple_user(*from.key())
+                .await?
+                .ok_or(ApiError::InternalServerError)?,
         });
     }
 
