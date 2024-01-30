@@ -61,7 +61,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 globalFilter: globalFilter.applied,
                 domainFilter: domainFilter.applied,
             }),
-        [workspace, globalFilter.applied, domainFilter.applied],
+        [workspace, globalFilter.applied, domainFilter.applied]
     );
     const { items: hosts, ...hostsTable } = useTable<FullHost>(
         (limit, offset) =>
@@ -69,7 +69,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 globalFilter: globalFilter.applied,
                 hostFilter: hostFilter.applied,
             }),
-        [workspace, globalFilter.applied, hostFilter.applied],
+        [workspace, globalFilter.applied, hostFilter.applied]
     );
     const { items: ports, ...portsTable } = useTable<FullPort>(
         (limit, offset) =>
@@ -77,7 +77,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 globalFilter: globalFilter.applied,
                 portFilter: portFilter.applied,
             }),
-        [workspace, globalFilter.applied, portFilter.applied],
+        [workspace, globalFilter.applied, portFilter.applied]
     );
     const { items: services, ...servicesTable } = useTable<FullService>(
         (limit, offset) =>
@@ -85,7 +85,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 globalFilter: globalFilter.applied,
                 serviceFilter: serviceFilter.applied,
             }),
-        [workspace, globalFilter.applied, serviceFilter.applied],
+        [workspace, globalFilter.applied, serviceFilter.applied]
     );
 
     // Jump to first page if filter changed
@@ -278,7 +278,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"service-table"}
                         {...servicesTable}
-                        columnsTemplate={"min-content 1fr 35ch 5ch 1fr 1fr 0.2fr 1fr 0.15fr"}
+                        columnsTemplate={"min-content 1fr 30ch 5ch 10ch 1fr 1fr 0.2fr 1fr 0.15fr"}
                         onAdd={() => setCreateForm("services")}
                         filter={serviceFilter}
                     >
@@ -291,6 +291,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>Service</span>
                             <span>IP</span>
                             <span>Port</span>
+                            <span>Protocol</span>
                             <span>Tags</span>
                             <span>Comment</span>
                             <span>Certainty</span>
@@ -319,6 +320,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <span>{service.name}</span>
                                 <span>{service.host.ipAddr}</span>
                                 <span>{service.port?.port}</span>
+                                <span>{service.port?.protocol}</span>
                                 <TagList tags={service.tags} />
                                 <span>{service.comment}</span>
                                 {service.certainty === "Historical"
