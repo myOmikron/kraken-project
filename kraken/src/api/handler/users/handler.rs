@@ -146,6 +146,8 @@ pub async fn update_me(
 
     tx.commit().await?;
 
+    GLOBAL.user_cache.refresh().await?;
+
     Ok(HttpResponse::Ok().finish())
 }
 

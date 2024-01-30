@@ -4,7 +4,7 @@ use std::sync::RwLock;
 
 use chrono::{DateTime, Duration, Utc};
 use futures::TryStreamExt;
-use log::trace;
+use log::debug;
 use rorm::db::Executor;
 use rorm::{query, FieldAccess, Model};
 use uuid::Uuid;
@@ -80,7 +80,7 @@ impl WorkspaceCache {
         workspace: Uuid,
         tx: impl Executor<'_>,
     ) -> Result<Option<Vec<Uuid>>, rorm::Error> {
-        trace!("Workspace Member Cache was hit");
+        debug!("Workspace Member Cache was hit");
         let now = Utc::now();
         let refresh_period = Duration::minutes(5);
 
@@ -109,7 +109,7 @@ impl WorkspaceCache {
         // If the key does not exists or the last refresh time
         // is more than `refresh_period` ago, update the entry
         if entry.is_none() {
-            trace!("Refreshing users");
+            debug!("Refreshing users");
             users = self.refresh_users(workspace, tx).await?;
         } else if let Some(u) = entry {
             users = u;

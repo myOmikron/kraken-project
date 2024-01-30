@@ -10,7 +10,7 @@ use crate::chan::leech_manager::LeechManager;
 use crate::chan::settings_manager::SettingsManagerChan;
 use crate::chan::ws_manager::chan::WsManagerChan;
 use crate::modules::aggregator::Aggregator;
-use crate::modules::cache::WorkspaceCache;
+use crate::modules::cache::{UserCache, WorkspaceCache};
 use crate::modules::tls::TlsManager;
 
 /// Set of global managers and handles
@@ -41,6 +41,9 @@ pub struct GlobalChan {
 
     /// The caching layer for workspace members
     pub workspace_cache: WorkspaceCache,
+
+    /// The caching layer for users
+    pub user_cache: UserCache,
 
     /// Scheduler for inserting or updating any aggregation model in the database
     pub aggregator: Aggregator,

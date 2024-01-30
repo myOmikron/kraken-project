@@ -34,7 +34,7 @@ use kraken::chan::ws_manager::chan::start_ws_manager;
 use kraken::config::Config;
 use kraken::models::{User, UserPermission};
 use kraken::modules::aggregator::Aggregator;
-use kraken::modules::cache::WorkspaceCache;
+use kraken::modules::cache::{UserCache, WorkspaceCache};
 use kraken::modules::tls::TlsManager;
 use kraken::rpc::server::start_rpc_server;
 use rorm::{cli, Database, DatabaseConfiguration, DatabaseDriver};
@@ -119,6 +119,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let ws = start_ws_manager().await;
 
             let workspace_cache = WorkspaceCache::default();
+            let user_cache = UserCache::default();
 
             let aggregator = Aggregator::default();
 
@@ -130,6 +131,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 dehashed,
                 tls,
                 workspace_cache,
+                user_cache,
                 aggregator,
             });
 

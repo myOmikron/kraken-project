@@ -54,6 +54,8 @@ pub async fn delete_user(req: Path<PathUuid>) -> ApiResult<HttpResponse> {
         .condition(User::F.uuid.equals(req.uuid))
         .await?;
 
+    GLOBAL.user_cache.refresh().await?;
+
     Ok(HttpResponse::Ok().finish())
 }
 
