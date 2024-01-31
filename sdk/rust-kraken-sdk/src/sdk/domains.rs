@@ -60,7 +60,7 @@ impl KrakenClient {
         #[allow(clippy::expect_used)]
         let url = self
             .base_url
-            .join(&format!("api/v1/workspaces{workspace}/domains/{domain}"))
+            .join(&format!("api/v1/workspaces/{workspace}/domains/{domain}"))
             .expect("Valid url");
 
         self.make_request(KrakenRequest::get(url).build()).await
