@@ -4,6 +4,7 @@
 pub mod aggregator;
 pub mod attacks;
 pub mod cache;
+pub mod editor;
 pub mod filter;
 pub mod oauth;
 pub mod raw_query;

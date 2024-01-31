@@ -18,6 +18,7 @@ use crate::models::{FindingDefinition, User, UserPermission};
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
+    params(PathUuid),
     security(("api_key" = []))
 )]
 #[delete("/findingDefinitions/{uuid}")]

@@ -35,6 +35,7 @@ use kraken::config::Config;
 use kraken::models::{User, UserPermission};
 use kraken::modules::aggregator::Aggregator;
 use kraken::modules::cache::{UserCache, WorkspaceCache};
+use kraken::modules::editor::EditorSync;
 use kraken::modules::tls::TlsManager;
 use kraken::rpc::server::start_rpc_server;
 use rorm::{cli, Database, DatabaseConfiguration, DatabaseDriver};
@@ -123,6 +124,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let aggregator = Aggregator::default();
 
+            let editor_sync = EditorSync;
+
             GLOBAL.init(GlobalChan {
                 db,
                 leeches,
@@ -133,6 +136,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 workspace_cache,
                 user_cache,
                 aggregator,
+                editor_sync,
             });
 
             start_rpc_server(&config).map_err(|e| format!("RPC listen address is invalid: {e}"))?;

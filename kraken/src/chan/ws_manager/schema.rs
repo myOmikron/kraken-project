@@ -16,24 +16,38 @@ use crate::api::handler::services::schema::SimpleService;
 use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 
-/// Entry of certificate transparency results
+/// Message that is sent via websocket from the client to the server.
+///
+/// For messages the server is able to send, look at [WsMessage]
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
-pub struct CertificateTransparencyEntry {
-    /// The serial number of the certificate
-    pub serial_number: String,
-    /// The name of the issuer for the certificate
-    pub issuer_name: String,
-    /// The common name of the certificate
-    pub common_name: String,
-    /// The value names of the certificate
-    pub value_names: Vec<String>,
-    /// The point in time after the certificate is valid
-    pub not_before: Option<DateTime<Utc>>,
-    /// The point in time before the certificate is valid
-    pub not_after: Option<DateTime<Utc>>,
+#[serde(tag = "type")]
+pub enum WsClientMessage {
+    /// A finding definition was edited
+    EditFindingDefinition {
+        /// The finding definition
+        finding_definition: Uuid,
+        /// The section of the finding definition that was edited
+        finding_section: FindingSection,
+        /// The changeset
+        change: Change,
+    },
+    /// The cursor position was changed
+    ChangedCursorFindingDefinition {
+        /// The finding definition that is active
+        finding_definition: Uuid,
+        /// The finding section in which the cursor was placed
+        finding_section: FindingSection,
+        /// The line in which the cursor was placed
+        line: u64,
+        /// The column in which the cursor was placed
+        column: u64,
+    },
 }
 
 /// Message that is sent via websocket
+///
+/// These messages are only invoked by the Server.
+/// For messages the client is able to send, look at [WsClientMessage]
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 #[serde(tag = "type")]
 pub enum WsMessage {
@@ -229,6 +243,30 @@ pub enum WsMessage {
         /// The uuid of the finding definition
         uuid: Uuid,
     },
+    /// A finding definition was updated
+    EditFindingDefinition {
+        /// The finding definition in which the change occurred
+        finding_definition: Uuid,
+        /// The section in which the change occurred
+        finding_section: FindingSection,
+        /// The changeset
+        change: Change,
+        /// The user that has done the change
+        user: SimpleUser,
+    },
+    /// A user has changed its cursor position in a finding definition
+    ChangedCursorFindingDefinition {
+        /// The finding definition that is active
+        finding_definition: Uuid,
+        /// The finding section in which the cursor was placed
+        finding_section: FindingSection,
+        /// The line the cursor was placed in
+        line: u64,
+        /// The column the cursor was placed in
+        column: u64,
+        /// The user that changed the position
+        user: SimpleUser,
+    },
 }
 
 /// The different types of aggregations
@@ -242,4 +280,47 @@ pub enum AggregationType {
     Service,
     /// The port model
     Port,
+}
+
+/// The section that was edited
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[allow(missing_docs)]
+pub enum FindingSection {
+    Summary,
+    Description,
+    Impact,
+    Remediation,
+    References,
+}
+
+/// Defines a change
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct Change {
+    /// The text that should be set to the range given by the other values
+    pub text: String,
+    /// Start of the column
+    pub start_column: u64,
+    /// End of the column
+    pub end_column: u64,
+    /// Starting line number
+    pub start_line: u64,
+    /// Ending line number
+    pub end_line: u64,
+}
+
+/// Entry of certificate transparency results
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+pub struct CertificateTransparencyEntry {
+    /// The serial number of the certificate
+    pub serial_number: String,
+    /// The name of the issuer for the certificate
+    pub issuer_name: String,
+    /// The common name of the certificate
+    pub common_name: String,
+    /// The value names of the certificate
+    pub value_names: Vec<String>,
+    /// The point in time after the certificate is valid
+    pub not_before: Option<DateTime<Utc>>,
+    /// The point in time before the certificate is valid
+    pub not_after: Option<DateTime<Utc>>,
 }

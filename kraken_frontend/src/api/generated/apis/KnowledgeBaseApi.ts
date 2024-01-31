@@ -38,6 +38,10 @@ export interface CreateFindingDefinitionOperationRequest {
     createFindingDefinitionRequest: CreateFindingDefinitionRequest;
 }
 
+export interface DeleteFindingDefinitionRequest {
+    uuid: string;
+}
+
 export interface GetFindingDefinitionRequest {
     uuid: string;
 }
@@ -80,6 +84,37 @@ export class KnowledgeBaseApi extends runtime.BaseAPI {
     async createFindingDefinition(requestParameters: CreateFindingDefinitionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
         const response = await this.createFindingDefinitionRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Delete a finding definition
+     * Delete a finding definition
+     */
+    async deleteFindingDefinitionRaw(requestParameters: DeleteFindingDefinitionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling deleteFindingDefinition.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/admin/findingDefinitions/{uuid}`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Delete a finding definition
+     * Delete a finding definition
+     */
+    async deleteFindingDefinition(requestParameters: DeleteFindingDefinitionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteFindingDefinitionRaw(requestParameters, initOverrides);
     }
 
     /**

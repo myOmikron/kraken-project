@@ -105,6 +105,24 @@ import {
     WsMessageOneOf23ToJSON,
 } from './WsMessageOneOf23';
 import {
+    WsMessageOneOf24,
+    WsMessageOneOf24TypeEnum,
+    WsMessageOneOf24FromJSONTyped,
+    WsMessageOneOf24ToJSON,
+} from './WsMessageOneOf24';
+import {
+    WsMessageOneOf25,
+    WsMessageOneOf25TypeEnum,
+    WsMessageOneOf25FromJSONTyped,
+    WsMessageOneOf25ToJSON,
+} from './WsMessageOneOf25';
+import {
+    WsMessageOneOf26,
+    WsMessageOneOf26TypeEnum,
+    WsMessageOneOf26FromJSONTyped,
+    WsMessageOneOf26ToJSON,
+} from './WsMessageOneOf26';
+import {
     WsMessageOneOf3,
     WsMessageOneOf3TypeEnum,
     WsMessageOneOf3FromJSONTyped,
@@ -170,6 +188,9 @@ export type WsMessage =
   | WsMessageOneOf21
   | WsMessageOneOf22
   | WsMessageOneOf23
+  | WsMessageOneOf24
+  | WsMessageOneOf25
+  | WsMessageOneOf26
   | WsMessageOneOf3
   | WsMessageOneOf4
   | WsMessageOneOf5
@@ -200,6 +221,9 @@ const WsMessageOneOf20Type = enumToString(WsMessageOneOf20TypeEnum);
 const WsMessageOneOf21Type = enumToString(WsMessageOneOf21TypeEnum);
 const WsMessageOneOf22Type = enumToString(WsMessageOneOf22TypeEnum);
 const WsMessageOneOf23Type = enumToString(WsMessageOneOf23TypeEnum);
+const WsMessageOneOf24Type = enumToString(WsMessageOneOf24TypeEnum);
+const WsMessageOneOf25Type = enumToString(WsMessageOneOf25TypeEnum);
+const WsMessageOneOf26Type = enumToString(WsMessageOneOf26TypeEnum);
 const WsMessageOneOf3Type = enumToString(WsMessageOneOf3TypeEnum);
 const WsMessageOneOf4Type = enumToString(WsMessageOneOf4TypeEnum);
 const WsMessageOneOf5Type = enumToString(WsMessageOneOf5TypeEnum);
@@ -252,6 +276,12 @@ export function WsMessageFromJSONTyped(json: any, ignoreDiscriminator: boolean):
             return WsMessageOneOf22FromJSONTyped(json, ignoreDiscriminator);
         case WsMessageOneOf23Type:
             return WsMessageOneOf23FromJSONTyped(json, ignoreDiscriminator);
+        case WsMessageOneOf24Type:
+            return WsMessageOneOf24FromJSONTyped(json, ignoreDiscriminator);
+        case WsMessageOneOf25Type:
+            return WsMessageOneOf25FromJSONTyped(json, ignoreDiscriminator);
+        case WsMessageOneOf26Type:
+            return WsMessageOneOf26FromJSONTyped(json, ignoreDiscriminator);
         case WsMessageOneOf3Type:
             return WsMessageOneOf3FromJSONTyped(json, ignoreDiscriminator);
         case WsMessageOneOf4Type:
@@ -314,6 +344,12 @@ export function WsMessageToJSON(value?: WsMessage | null): any {
             return WsMessageOneOf22ToJSON(value);
         case WsMessageOneOf23Type:
             return WsMessageOneOf23ToJSON(value);
+        case WsMessageOneOf24Type:
+            return WsMessageOneOf24ToJSON(value);
+        case WsMessageOneOf25Type:
+            return WsMessageOneOf25ToJSON(value);
+        case WsMessageOneOf26Type:
+            return WsMessageOneOf26ToJSON(value);
         case WsMessageOneOf3Type:
             return WsMessageOneOf3ToJSON(value);
         case WsMessageOneOf4Type:

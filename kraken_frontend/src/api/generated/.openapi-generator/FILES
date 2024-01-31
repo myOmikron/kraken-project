@@ -30,6 +30,7 @@ models/AttackType.ts
 models/BruteforceSubdomainsRequest.ts
 models/BruteforceSubdomainsResultsPage.ts
 models/CertificateTransparencyEntry.ts
+models/Change.ts
 models/Color.ts
 models/CreateApiKeyRequest.ts
 models/CreateAppRequest.ts
@@ -60,6 +61,7 @@ models/DomainCertainty.ts
 models/DomainOrNetwork.ts
 models/DomainRelations.ts
 models/DomainResultsPage.ts
+models/FindingSection.ts
 models/FindingSeverity.ts
 models/FinishRegisterRequest.ts
 models/FinishRegisterRequestAllOf.ts
@@ -227,6 +229,9 @@ models/UpdateWorkspaceTag.ts
 models/UserPermission.ts
 models/UuidResponse.ts
 models/WorkspaceInvitationList.ts
+models/WsClientMessage.ts
+models/WsClientMessageOneOf.ts
+models/WsClientMessageOneOf1.ts
 models/WsMessage.ts
 models/WsMessageOneOf.ts
 models/WsMessageOneOf1.ts
@@ -245,6 +250,9 @@ models/WsMessageOneOf20.ts
 models/WsMessageOneOf21.ts
 models/WsMessageOneOf22.ts
 models/WsMessageOneOf23.ts
+models/WsMessageOneOf24.ts
+models/WsMessageOneOf25.ts
+models/WsMessageOneOf26.ts
 models/WsMessageOneOf3.ts
 models/WsMessageOneOf4.ts
 models/WsMessageOneOf5.ts

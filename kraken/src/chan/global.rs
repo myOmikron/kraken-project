@@ -11,6 +11,7 @@ use crate::chan::settings_manager::SettingsManagerChan;
 use crate::chan::ws_manager::chan::WsManagerChan;
 use crate::modules::aggregator::Aggregator;
 use crate::modules::cache::{UserCache, WorkspaceCache};
+use crate::modules::editor::EditorSync;
 use crate::modules::tls::TlsManager;
 
 /// Set of global managers and handles
@@ -47,6 +48,9 @@ pub struct GlobalChan {
 
     /// Scheduler for inserting or updating any aggregation model in the database
     pub aggregator: Aggregator,
+
+    /// Live synchronization for the editor in the frontend
+    pub editor_sync: EditorSync,
 }
 
 /// Simple [`OnceLock`] which panics in case of error.

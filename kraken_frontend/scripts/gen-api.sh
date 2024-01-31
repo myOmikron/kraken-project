@@ -141,6 +141,85 @@ export function WsMessageToJSON(value?: WsMessage | null): any {
 }
 EOF
 
+
+echo "Patch WsClientMessage.ts"
+mapfile -t VARIANTS < <(find "${GENERATED}/models/" | grep -o 'WsClientMessageOneOf[0-9]*')
+
+IMPORTS=""
+TYPE_DECL=""
+EXTRACT_ENUMS=""
+FROM_JSON_CASES=""
+TO_JSON_CASES=""
+for V in "${VARIANTS[@]}"; do
+IMPORTS+="
+import {
+    ${V},
+    ${V}TypeEnum,
+    ${V}FromJSONTyped,
+    ${V}ToJSON,
+} from './${V}';"
+TYPE_DECL+="
+  | ${V}"
+EXTRACT_ENUMS+="
+const ${V}Type = enumToString(${V}TypeEnum);"
+FROM_JSON_CASES+="
+        case ${V}Type:
+            return ${V}FromJSONTyped(json, ignoreDiscriminator);"
+TO_JSON_CASES+="
+        case ${V}Type:
+            return ${V}ToJSON(value);"
+done
+
+cat > "${GENERATED}/models/WsClientMessage.ts" << EOF
+/* tslint:disable */
+/* eslint-disable */
+
+${IMPORTS}
+
+/**
+ * @type WsClientMessage
+ * Message that is sent via websocket by the client
+ * @export
+ */
+export type WsClientMessage = ${TYPE_DECL};
+
+function enumToString<T extends string>(obj: Record<T, T>): T {
+    // @ts-ignore
+    return Object.values(obj)[0];
+}
+${EXTRACT_ENUMS}
+
+export function WsClientMessageFromJSON(json: any): WsClientMessage {
+    return WsClientMessageFromJSONTyped(json, false);
+}
+
+export function WsClientMessageFromJSONTyped(json: any, ignoreDiscriminator: boolean): WsClientMessage {
+    if ((json === undefined) || (json === null)) {
+        return json;
+    }
+    switch (json['type']) {
+        ${FROM_JSON_CASES}
+        default:
+            throw new Error("No variant of WsClientMessage exists with 'type=" + json["type"] + "'");
+    }
+}
+
+export function WsClientMessageToJSON(value?: WsClientMessage | null): any {
+    if (value === undefined) {
+        return undefined;
+    }
+    if (value === null) {
+        return null;
+    }
+    switch (value['type']) {
+        ${TO_JSON_CASES}
+        default:
+            throw new Error("No variant of WsClientMessage exists with 'type=" + value["type"] + "'");
+    }
+
+}
+EOF
+
 echo "Patch SourceAttackResult.ts"
 mapfile -t VARIANTS < <(find "${GENERATED}/models/" | grep -o 'SourceAttackResultOneOf[0-9]*')
 

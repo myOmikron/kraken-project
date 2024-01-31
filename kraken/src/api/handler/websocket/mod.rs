@@ -13,7 +13,7 @@ use tokio::sync::Mutex;
 
 use crate::api::extractors::SessionUser;
 use crate::chan::global::GLOBAL;
-use crate::chan::ws_manager::schema::WsMessage;
+use crate::chan::ws_manager::schema::{WsClientMessage, WsMessage};
 
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -84,10 +84,29 @@ pub async fn websocket(
 
                     match msg {
                         Message::Text(data) => {
-                            match serde_json::from_str::<WsMessage>(data.as_ref()) {
-                                Ok(_) => {
-                                    // TODO
-                                }
+                            match serde_json::from_str::<WsClientMessage>(data.as_ref()) {
+                                Ok(msg) => match msg {
+                                    WsClientMessage::EditFindingDefinition { .. } => {}
+                                    WsClientMessage::ChangedCursorFindingDefinition {
+                                        finding_definition,
+                                        finding_section,
+                                        line,
+                                        column,
+                                    } => {
+                                        tokio::spawn(async move {
+                                            GLOBAL
+                                                .editor_sync
+                                                .process_client_cursor_update(
+                                                    user_uuid,
+                                                    finding_definition,
+                                                    finding_section,
+                                                    line,
+                                                    column,
+                                                )
+                                                .await;
+                                        });
+                                    }
+                                },
                                 Err(err) => {
                                     debug!("Error deserializing data: {err}");
 
