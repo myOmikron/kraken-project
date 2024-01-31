@@ -1,10 +1,12 @@
 import { editor } from "monaco-editor";
 import React from "react";
 import { createPortal } from "react-dom";
+import TrackedRangeStickiness = editor.TrackedRangeStickiness;
 
 /** monaco decoration placed at others' cursor positions */
 const CURSOR_DECO: editor.IModelDecorationOptions = {
     className: "cursor-deco",
+    stickiness: TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
 };
 
 /**
@@ -43,7 +45,7 @@ export function useCursors<U extends { uuid: string }>(editorInstance: null | ed
     const remove = React.useCallback(
         (user: U) => {
             setCursors(({ [user.uuid]: oldCursor, ...cursors }) => {
-                oldCursor.delete();
+                if (oldCursor !== undefined) oldCursor.delete();
                 return cursors;
             });
         },

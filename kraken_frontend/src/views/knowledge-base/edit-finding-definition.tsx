@@ -9,20 +9,89 @@ import LibraryIcon from "../../svg/library";
 import FlameIcon from "../../svg/flame";
 import InformationIcon from "../../svg/information";
 import BookIcon from "../../svg/book";
-import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
+import { editor as editorNS } from "monaco-editor";
+import { CursorLabels, useCursors } from "./cursors";
+import WS from "../../api/websocket";
+import { SimpleUser } from "../../api/generated";
+import USER_CONTEXT from "../../context/user";
+import { FindingSection, SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
+import { ObjectFns } from "../../utils/helper";
 
-export type CreateFindingDefinitionProps = {};
-export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
+export type EditFindingDefinitionProps = {
+    uuid: string;
+};
+export function EditFindingDefinition(props: EditFindingDefinitionProps) {
+    const { user } = React.useContext(USER_CONTEXT);
+
     const [name, setName] = React.useState("");
     const [severity, setSeverity] = React.useState("Medium");
     const [cve, setCve] = React.useState("");
 
     const sections = useSectionsState();
 
+    const [editor, setEditor] = React.useState<editorNS.IStandaloneCodeEditor | null>(null);
+
+    const summaryCursors = useCursors<SimpleUser>(sections.Summary.selected ? editor : null);
+    const descriptionCursors = useCursors<SimpleUser>(sections.Description.selected ? editor : null);
+    const impactCursors = useCursors<SimpleUser>(sections.Impact.selected ? editor : null);
+    const remediationCursors = useCursors<SimpleUser>(sections.Remediation.selected ? editor : null);
+    const referencesCursors = useCursors<SimpleUser>(sections.References.selected ? editor : null);
+    const cursors: Record<FindingSection, ReturnType<typeof useCursors<SimpleUser>>> = {
+        Summary: summaryCursors,
+        Description: descriptionCursors,
+        Impact: impactCursors,
+        Remediation: remediationCursors,
+        References: referencesCursors,
+    };
+    const usersLastSection = React.useRef<Record<string, FindingSection>>({});
+
+    // Save incoming cursors messages
+    /*React.useEffect(() => {
+        const handle = WS.addEventListener("message.ChangedCursorFindingDefinition", (event) => {
+            if (event.findingDefinition !== props.uuid) return;
+            if (event.user.uuid === user.uuid) return;
+
+            // Remove a previous cursor from a different section
+            const lastSection = usersLastSection.current[event.user.uuid];
+            if (lastSection !== undefined && lastSection !== event.findingSection)
+                cursors[lastSection].remove(event.user);
+
+            cursors[event.findingSection].insert(event.user, event.line, event.column);
+            usersLastSection.current[event.user.uuid] = event.findingSection;
+        });
+        return () => {
+            WS.removeEventListener(handle);
+        };
+    }, [
+        props.uuid,
+        user.uuid,
+        summaryCursors.insert,
+        descriptionCursors.insert,
+        impactCursors.insert,
+        remediationCursors.insert,
+        referencesCursors.insert,
+    ]);*/
+
+    // Send outgoing cursor messages
+    React.useEffect(() => {
+        if (editor !== null) {
+            const disposable = editor.onDidChangeCursorPosition((event) => {
+                WS.send({
+                    type: "ChangedCursorFindingDefinition",
+                    findingDefinition: props.uuid,
+                    findingSection: sections.selected,
+                    line: event.position.lineNumber,
+                    column: event.position.column,
+                });
+            });
+            return () => disposable.dispose();
+        }
+    }, [editor, sections.selected, props.uuid]);
+
     return (
         <div className={"create-finding-definition-container"}>
             <div className={"pane"}>
-                <h1 className={"heading"}>New Finding Definition</h1>
+                <h1 className={"heading"}>Edit Finding Definition</h1>
             </div>
             <div className={"pane"}>
                 <div className={"create-finding-definition-form"}>
@@ -90,11 +159,18 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                             <GithubMarkdown>{sections.References.value}</GithubMarkdown>
                         </div>
                     </div>
-
-                    <button className={"button"}>Create</button>
                 </div>
                 <div className={"create-finding-definition-editor"}>
-                    <SectionSelectionTabs sections={sections} />
+                    <SectionSelectionTabs
+                        sections={sections}
+                        others={{
+                            Summary: !ObjectFns.isEmpty(summaryCursors.cursors),
+                            Description: !ObjectFns.isEmpty(descriptionCursors.cursors),
+                            Impact: !ObjectFns.isEmpty(impactCursors.cursors),
+                            Remediation: !ObjectFns.isEmpty(remediationCursors.cursors),
+                            References: !ObjectFns.isEmpty(referencesCursors.cursors),
+                        }}
+                    />
                     <Editor
                         className={"knowledge-base-editor"}
                         theme={"custom"}
@@ -104,7 +180,11 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                         onChange={(value, event) => {
                             if (value !== undefined) sections[sections.selected].set(value);
                         }}
+                        onMount={setEditor}
                     />
+                    <CursorLabels {...cursors[sections.selected]}>
+                        {({ displayName }) => <div className={"cursor-label"}>{displayName}</div>}
+                    </CursorLabels>
                 </div>
             </div>
         </div>

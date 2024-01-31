@@ -17,6 +17,8 @@ import WorkspaceAttacks, { TargetType } from "./views/workspace/workspace-attack
 import WorkspaceHosts from "./views/workspace/workspace-hosts";
 import WorkspaceHost from "./views/workspace/workspace-host";
 import KnowledgeBase from "./views/knowledge-base";
+import { CreateFindingDefinition } from "./views/knowledge-base/create-finding-definition";
+import { EditFindingDefinition } from "./views/knowledge-base/edit-finding-definition";
 
 export const ROUTER = new Router();
 
@@ -134,7 +136,24 @@ export const ROUTES = {
             </ContentWithMenu>
         ),
     }),
-
+    FINDING_DEFINITION_CREATE: ROUTER.add({
+        url: "knowledge/finding-definition/create",
+        parser: {},
+        render: () => (
+            <ContentWithMenu>
+                <CreateFindingDefinition />
+            </ContentWithMenu>
+        ),
+    }),
+    FINDING_DEFINITION_EDIT: ROUTER.add({
+        url: "knowledge/finding-definition/{uuid}",
+        parser: { uuid: String },
+        render: ({ uuid }) => (
+            <ContentWithMenu>
+                <EditFindingDefinition uuid={uuid} />
+            </ContentWithMenu>
+        ),
+    }),
     OAUTH_REQUEST: ROUTER.add({
         url: "oauth-request/{uuid}",
         parser: { uuid: String },
