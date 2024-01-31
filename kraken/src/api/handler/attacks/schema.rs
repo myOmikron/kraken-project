@@ -3,7 +3,7 @@ use std::ops::RangeInclusive;
 
 use chrono::{DateTime, Utc};
 use ipnetwork::IpNetwork;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -91,7 +91,13 @@ pub enum PortOrRange {
     Port(u16),
     /// In inclusive range of ports
     #[schema(value_type = String, example = "1-1024")]
-    Range(#[serde(deserialize_with = "deserialize_port_range")] RangeInclusive<u16>),
+    Range(
+        #[serde(
+            deserialize_with = "deserialize_port_range",
+            serialize_with = "serialize_port_range"
+        )]
+        RangeInclusive<u16>,
+    ),
 }
 
 /// Host Alive check request
@@ -312,4 +318,16 @@ where
         .ok_or_else(|| {
             <D::Error as serde::de::Error>::invalid_value(serde::de::Unexpected::Str(&value), &"")
         })
+}
+
+/// Serializes a string as `{start}-{end}` where `start` and `end` are both `u16`
+pub fn serialize_port_range<S>(port_or_range: &RangeInclusive<u16>, s: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    s.serialize_str(&format!(
+        "{start}-{end}",
+        start = port_or_range.start(),
+        end = port_or_range.end()
+    ))
 }
