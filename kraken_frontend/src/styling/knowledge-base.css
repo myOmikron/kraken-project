@@ -1,3 +1,14 @@
+.cursor-deco::after {
+    display: block;
+    content: "";
+    position: absolute;
+    height: 100%;
+    width: 2px;
+    left: -1px;
+    background-color: #f00;
+}
+.cursor-label {}
+
 .create-finding-definition-container {
     display: grid;
     grid-template-rows: 7em calc(100% - 1em - 7em);

@@ -10,6 +10,8 @@ import FlameIcon from "../../svg/flame";
 import InformationIcon from "../../svg/information";
 import BookIcon from "../../svg/book";
 import PersonCircleIcon from "../../svg/person-circle";
+import { editor as editorNS } from "monaco-editor";
+import { CursorLabels, useCursors } from "./cursors";
 
 export type CreateFindingDefinitionProps = {};
 export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
@@ -58,7 +60,10 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
             language: "markdown",
         },
     };
-    const [editor, setEditor] = React.useState<keyof typeof sections>("summary");
+    const [selectedSection, setSelectedSection] = React.useState<keyof typeof sections>("summary");
+
+    const [editor, setEditor] = React.useState<editorNS.IStandaloneCodeEditor | null>(null);
+    const cursors = useCursors(editor); // TODO set the generic to whatever our websocket representation of a user will be
 
     return (
         <div className={"create-finding-definition-container"}>
@@ -136,8 +141,8 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                     <div className={"knowledge-base-editor-tabs"}>
                         <button
                             title={"Summary"}
-                            className={`knowledge-base-editor-tab ${editor === "summary" ? "selected" : ""}`}
-                            onClick={() => setEditor("summary")}
+                            className={`knowledge-base-editor-tab ${selectedSection === "summary" ? "selected" : ""}`}
+                            onClick={() => setSelectedSection("summary")}
                         >
                             <InformationIcon />
                             {summaryOthers && (
@@ -149,8 +154,10 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                         </button>
                         <button
                             title={"Description"}
-                            className={`knowledge-base-editor-tab ${editor === "description" ? "selected" : ""}`}
-                            onClick={() => setEditor("description")}
+                            className={`knowledge-base-editor-tab ${
+                                selectedSection === "description" ? "selected" : ""
+                            }`}
+                            onClick={() => setSelectedSection("description")}
                         >
                             <BookIcon />
                             {descriptionOthers && (
@@ -162,8 +169,8 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                         </button>
                         <button
                             title={"Impact"}
-                            className={`knowledge-base-editor-tab ${editor === "impact" ? "selected" : ""}`}
-                            onClick={() => setEditor("impact")}
+                            className={`knowledge-base-editor-tab ${selectedSection === "impact" ? "selected" : ""}`}
+                            onClick={() => setSelectedSection("impact")}
                         >
                             <FlameIcon />
                             {impactOthers && (
@@ -175,8 +182,10 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                         </button>
                         <button
                             title={"Remediation"}
-                            className={`knowledge-base-editor-tab ${editor === "remediation" ? "selected" : ""}`}
-                            onClick={() => setEditor("remediation")}
+                            className={`knowledge-base-editor-tab ${
+                                selectedSection === "remediation" ? "selected" : ""
+                            }`}
+                            onClick={() => setSelectedSection("remediation")}
                         >
                             <BandageIcon />
                             {remediationOthers && (
@@ -188,8 +197,10 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                         </button>
                         <button
                             title={"References"}
-                            className={`knowledge-base-editor-tab ${editor === "references" ? "selected" : ""}`}
-                            onClick={() => setEditor("references")}
+                            className={`knowledge-base-editor-tab ${
+                                selectedSection === "references" ? "selected" : ""
+                            }`}
+                            onClick={() => setSelectedSection("references")}
                         >
                             <LibraryIcon />
                             {referencesOthers && (
@@ -204,12 +215,20 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                         className={"knowledge-base-editor"}
                         theme={"custom"}
                         beforeMount={setupMonaco}
-                        language={sections[editor].language}
-                        value={sections[editor].value}
-                        onChange={(value) => {
-                            sections[editor].set(value || "");
+                        language={sections[selectedSection].language}
+                        value={sections[selectedSection].value}
+                        onChange={(value, event) => {
+                            if (value !== undefined) sections[selectedSection].set(value);
                         }}
+                        onMount={setEditor}
                     />
+                    <CursorLabels {...cursors}>
+                        {({ uuid }) => (
+                            <div className={"cursor-label"}>
+                                <PersonCircleIcon /> {uuid}
+                            </div>
+                        )}
+                    </CursorLabels>
                 </div>
             </div>
         </div>
