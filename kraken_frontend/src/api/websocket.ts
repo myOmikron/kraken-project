@@ -1,5 +1,5 @@
 import EventEmitter from "../utils/event-emitter";
-import { WsMessage, WsMessageFromJSON } from "./generated";
+import { WsClientMessage, WsClientMessageToJSON, WsMessage, WsMessageFromJSON } from "./generated";
 
 /**
  * Declaration of all events the {@link WebSocketWrapper} exposes:
@@ -55,6 +55,12 @@ export class WebSocketWrapper extends EventEmitter<WebSocketEvents> {
         this.url = url;
         this.clearOld();
         this.reconnect();
+    }
+
+    send(msg: WsClientMessage) {
+        if (this.ws !== null && this.state === "connected") {
+            this.ws.send(JSON.stringify(WsClientMessageToJSON(msg)));
+        }
     }
 
     /** Explicitly discards the connection without opening a new one */

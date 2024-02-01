@@ -5,15 +5,7 @@ import FlameIcon from "../../../svg/flame";
 import BandageIcon from "../../../svg/bandage";
 import LibraryIcon from "../../../svg/library";
 import PersonCircleIcon from "../../../svg/person-circle";
-
-// TODO: replace with generated schema
-export enum FindingSection {
-    Summary = "Summary",
-    Description = "Description",
-    Impact = "Impact",
-    Remediation = "Remediation",
-    References = "References",
-}
+import { FindingSection } from "../../../api/generated";
 
 /** State object provided by {@link useSectionsState `useSectionsState`} */
 export type Sections = Record<

@@ -12,9 +12,9 @@ import BookIcon from "../../svg/book";
 import { editor as editorNS } from "monaco-editor";
 import { CursorLabels, useCursors } from "./cursors";
 import WS from "../../api/websocket";
-import { SimpleUser } from "../../api/generated";
+import { FindingSection, SimpleUser } from "../../api/generated";
 import USER_CONTEXT from "../../context/user";
-import { FindingSection, SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
+import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
 import { ObjectFns } from "../../utils/helper";
 
 export type EditFindingDefinitionProps = {
