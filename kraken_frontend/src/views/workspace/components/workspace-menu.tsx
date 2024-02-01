@@ -8,10 +8,10 @@ import "../../../styling/workspace-menu.css";
 import HostIcon from "../../../svg/host";
 import { WorkspaceView } from "../workspace";
 import USER_CONTEXT from "../../../context/user";
-import { UserPermission } from "../../../api/generated";
 
 type WorkspaceMenuProps = {
     uuid: string;
+    owner: string;
     active: WorkspaceView;
 };
 type WorkspaceMenuState = {};
@@ -50,7 +50,7 @@ export default class WorkspaceMenu extends React.Component<WorkspaceMenuProps, W
                     <HostIcon />
                     <div className={"workspace-menu-hint"}>Hosts</div>
                 </div>
-                {this.context.user.permission === UserPermission.Admin ? (
+                {this.context.user.uuid === this.props.owner ? (
                     <div
                         className={
                             this.props.active === "settings" ? "workspace-menu-item active" : "workspace-menu-item"

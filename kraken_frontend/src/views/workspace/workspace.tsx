@@ -58,7 +58,11 @@ export default class Workspace extends React.Component<WorkspaceProps, Workspace
                     uuid={this.props.uuid}
                     name={this.state.workspace !== null ? this.state.workspace.name : "Loading .."}
                 />
-                <WorkspaceMenu uuid={this.props.uuid} active={this.props.view} />
+                <WorkspaceMenu
+                    uuid={this.props.uuid}
+                    owner={this.state.workspace !== null ? this.state.workspace.owner.uuid : ""}
+                    active={this.props.view}
+                />
                 {this.state.workspace && (
                     <WORKSPACE_CONTEXT.Provider value={{ workspace: this.state.workspace }}>
                         {this.props.children}
