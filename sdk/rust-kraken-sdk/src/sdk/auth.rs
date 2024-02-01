@@ -11,7 +11,14 @@ impl KrakenClient {
         #[allow(clippy::expect_used)]
         let url = self.base_url.join("api/v1/auth/test").expect("Valid url");
 
-        self.make_request(KrakenRequest::get(url).build()).await
+        match self.make_request(KrakenRequest::get(url).build()).await {
+            Ok(unit) => {
+                let _: () = unit;
+                Ok(true)
+            }
+            Err(KrakenError::AuthenticationFailed) => Ok(false),
+            Err(err) => Err(err),
+        }
     }
 
     /// Logging in
