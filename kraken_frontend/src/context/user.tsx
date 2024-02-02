@@ -13,9 +13,12 @@ let USER_PROVIDER: UserProvider | null = null;
 /** Data provided by the {@link USER_CONTEXT} */
 export type UserContext = {
     user: FullUser;
+
+    /** Reload the user's information */
+    reset: () => void;
 };
 
-/** {@link React.Context Context} to access {@link FullUser user information} */
+/** {@link React.Context} to access {@link FullUser user information} */
 const USER_CONTEXT = React.createContext<UserContext>({
     user: {
         username: "",
@@ -25,6 +28,7 @@ const USER_CONTEXT = React.createContext<UserContext>({
         permission: UserPermission.ReadOnly,
         lastLogin: null,
     },
+    reset: () => {},
 });
 USER_CONTEXT.displayName = "UserContext";
 export default USER_CONTEXT;
@@ -33,7 +37,7 @@ type UserProviderProps = {
     children?: React.ReactNode;
 };
 type UserProviderState = {
-    user: FullUser | "unauthenticated" | null;
+    user: FullUser | "unauthenticated" | "loading";
 };
 
 /**
@@ -42,44 +46,51 @@ type UserProviderState = {
  * This is a **singleton** only use at most **one** instance in your application.
  */
 export class UserProvider extends React.Component<UserProviderProps, UserProviderState> {
-    state: UserProviderState = { user: null };
+    state: UserProviderState = { user: "loading" };
 
-    fetchUser() {
-        if (this.state.user == null)
-            Api.user.get().then((result) =>
-                result.match(
-                    (user) => {
-                        WS.connect(`${window.location.origin.replace("http", "ws")}/api/v1/ws`);
-                        this.setState({ user });
-                    },
-                    (error) => {
-                        switch (error.status_code) {
-                            case StatusCode.Unauthenticated:
-                                this.setState({ user: "unauthenticated" });
-                                break;
-                            default:
-                                toast.error(error.message);
-                                break;
-                        }
+    fetching: boolean = false;
+    fetchUser = () => {
+        // Guard against a lot of calls
+        if (this.fetching) return;
+        this.fetching = true;
+
+        this.setState({ user: "loading" });
+
+        Api.user.get().then((result) => {
+            result.match(
+                (user) => {
+                    WS.connect(`${window.location.origin.replace("http", "ws")}/api/v1/ws`);
+                    this.setState({ user });
+                },
+                (error) => {
+                    switch (error.status_code) {
+                        case StatusCode.Unauthenticated:
+                            this.setState({ user: "unauthenticated" });
+                            break;
+                        default:
+                            toast.error(error.message);
+                            break;
                     }
-                )
+                },
             );
-    }
+            // Clear guard against a lot of calls
+            this.fetching = false;
+        });
+    };
 
     componentDidMount() {
-        WS.addEventListener("state.connected", () => toast.success("Websocket has connected", { autoClose: 1000 }));
+        this.fetchUser();
+
+        // Register as global singleton
         if (USER_PROVIDER === null) USER_PROVIDER = this;
         else if (USER_PROVIDER === this) console.error("UserProvider did mount twice");
         else console.error("Two instances of UserProvider are used");
 
-        this.fetchUser();
-    }
-
-    componentDidUpdate(prevProps: Readonly<UserProviderProps>, prevState: Readonly<UserProviderState>) {
-        this.fetchUser();
+        WS.addEventListener("state.connected", () => toast.success("Websocket has connected", { autoClose: 1000 }));
     }
 
     componentWillUnmount() {
+        // Deregister as global singleton
         if (USER_PROVIDER === this) USER_PROVIDER = null;
         else if (USER_PROVIDER === null) console.error("UserProvider instance did unmount twice");
         else console.error("Two instances of UserProvider are used");
@@ -87,15 +98,22 @@ export class UserProvider extends React.Component<UserProviderProps, UserProvide
 
     render() {
         switch (this.state.user) {
-            case null:
+            case "loading":
                 return <Loading />;
             case "unauthenticated":
-                return <Login onLogin={() => this.setState({ user: null })} />;
+                return (
+                    <Login
+                        onLogin={() => {
+                            this.fetchUser();
+                        }}
+                    />
+                );
             default:
                 return (
                     <USER_CONTEXT.Provider
                         value={{
                             user: this.state.user,
+                            reset: this.fetchUser,
                         }}
                     >
                         {this.props.children}
@@ -103,16 +121,6 @@ export class UserProvider extends React.Component<UserProviderProps, UserProvide
                 );
         }
     }
-}
-
-/**
- * Reset the user information provided by {@link USER_CONTEXT}.
- *
- * This triggers an api call and might result in the user having to log in again.
- */
-export function resetUser() {
-    if (USER_PROVIDER !== null) USER_PROVIDER.setState({ user: null });
-    else console.warn("resetUser has been called without a UserProvider");
 }
 
 /**
