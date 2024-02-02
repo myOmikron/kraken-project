@@ -99,8 +99,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                         className={"knowledge-base-editor"}
                         theme={"custom"}
                         beforeMount={setupMonaco}
-                        language={sections[sections.selected].language}
-                        value={sections[sections.selected].value}
+                        {...sections[sections.selected].editor}
                         onChange={(value, event) => {
                             if (value !== undefined) sections[sections.selected].set(value);
                         }}

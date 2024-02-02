@@ -6,6 +6,7 @@ import BandageIcon from "../../../svg/bandage";
 import LibraryIcon from "../../../svg/library";
 import PersonCircleIcon from "../../../svg/person-circle";
 import { FindingSection } from "../../../api/generated";
+import { EditorProps } from "@monaco-editor/react";
 
 /** State object provided by {@link useSectionsState `useSectionsState`} */
 export type Sections = Record<
@@ -16,8 +17,7 @@ export type Sections = Record<
         /** Setter for this section's content */
         set: React.Dispatch<React.SetStateAction<string>>;
 
-        /** The language this section should be edited as */
-        language: "markdown" | "text";
+        editor: Pick<EditorProps, "language" | "value" | "path">;
 
         /** Selects this section */
         select(): void;
@@ -48,35 +48,55 @@ export function useSectionsState(): Sections {
         Summary: {
             value: summary,
             set: setSummary,
-            language: "text",
+            editor: {
+                language: "text",
+                value: summary,
+                path: FindingSection.Summary,
+            },
             select: () => setSelectedSection(FindingSection.Summary),
             selected: selectedSection === FindingSection.Summary,
         },
         Description: {
             value: description,
             set: setDescription,
-            language: "markdown",
+            editor: {
+                language: "markdown",
+                value: description,
+                path: FindingSection.Description,
+            },
             select: () => setSelectedSection(FindingSection.Description),
             selected: selectedSection === FindingSection.Description,
         },
         Impact: {
             value: impact,
             set: setImpact,
-            language: "markdown",
+            editor: {
+                language: "markdown",
+                value: impact,
+                path: FindingSection.Impact,
+            },
             select: () => setSelectedSection(FindingSection.Impact),
             selected: selectedSection === FindingSection.Impact,
         },
         Remediation: {
             value: remediation,
             set: setRemediation,
-            language: "markdown",
+            editor: {
+                language: "markdown",
+                value: remediation,
+                path: FindingSection.Remediation,
+            },
             select: () => setSelectedSection(FindingSection.Remediation),
             selected: selectedSection === FindingSection.Remediation,
         },
         References: {
             value: references,
             set: setReferences,
-            language: "markdown",
+            editor: {
+                language: "markdown",
+                value: references,
+                path: FindingSection.References,
+            },
             select: () => setSelectedSection(FindingSection.References),
             selected: selectedSection === FindingSection.References,
         },

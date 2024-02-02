@@ -9,76 +9,7 @@ const CURSOR_DECO: editor.IModelDecorationOptions = {
     stickiness: TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
 };
 
-/**
- * Stores cursors in internal state and exposes simple `insert` and `remove` functions to update them
- *
- * This hook is intended to be used in combination with {@link Cursors `<CursorLabels />`}
- * which adds labels (arbitrary React nodes) to the cursors.
- */
-export function useCursors<U extends { uuid: string }>(editorInstance: null | editor.IStandaloneCodeEditor) {
-    const [cursors, setCursors] = React.useState<Record<string, Cursor<U>>>({});
-
-    // Updates cursors which have been created before the editor was available
-    React.useEffect(() => {
-        for (const uuid in cursors) {
-            if (Object.hasOwn(cursors, uuid)) {
-                const cursor = cursors[uuid];
-                cursor.updateEditor(editorInstance);
-            }
-        }
-    }, [editorInstance]);
-
-    const insert = React.useCallback(
-        (user: U, line: number, column: number) => {
-            setCursors(({ ...cursors }) => {
-                if (user.uuid in cursors) {
-                    cursors[user.uuid].updatePosition(line, column);
-                } else {
-                    cursors[user.uuid] = new Cursor(editorInstance, user, line, column);
-                }
-                return cursors;
-            });
-        },
-        [editorInstance, setCursors],
-    );
-
-    const remove = React.useCallback(
-        (user: U) => {
-            setCursors(({ [user.uuid]: oldCursor, ...cursors }) => {
-                if (oldCursor !== undefined) oldCursor.delete();
-                return cursors;
-            });
-        },
-        [setCursors],
-    );
-
-    return {
-        cursors,
-        insert,
-        remove,
-    };
-}
-
-/** Properties for {@link CursorLabels `<CursorLabels />`} */
-type CursorLabelsProps<U extends { uuid: string }> = {
-    cursors: Record<string, Cursor<U>>;
-    children: (user: U) => React.ReactNode;
-};
-
-/**
- * Adds labels to a set of cursors
- *
- * The cursors are intended to be provided by the {@link useCursors `useCursors`} hook.
- *
- * This attaches to the {@link Cursor `Cursor`}'s internal dom node using {@link createPortal `createPortal`}.
- *
- * Therefore, only one instance of `<CursorLabels />` can render to a {@link Cursor `Cursor`} at a time.
- */
-export function CursorLabels<U extends { uuid: string }>(props: CursorLabelsProps<U>) {
-    return <>{Object.values(props.cursors).map((cursor) => cursor.createPortal(props.children(cursor.user)))}</>;
-}
-
-class Cursor<U extends { uuid: string }> {
+export default class Cursor<U extends { uuid: string }> {
     user: U;
     line: number;
     column: number;
@@ -142,8 +73,8 @@ class Cursor<U extends { uuid: string }> {
     }
 
     /** Renders a React node at the cursor */
-    createPortal(children: React.ReactNode) {
-        return createPortal(children, this.node);
+    render(children: React.ReactNode) {
+        return createPortal(children, this.node, this.user.uuid);
     }
 
     /**
