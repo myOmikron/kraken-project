@@ -86,7 +86,31 @@ export class UserProvider extends React.Component<UserProviderProps, UserProvide
         else if (USER_PROVIDER === this) console.error("UserProvider did mount twice");
         else console.error("Two instances of UserProvider are used");
 
-        WS.addEventListener("state.connected", () => toast.success("Websocket has connected", { autoClose: 1000 }));
+        // Report websocket state changes using toasts
+        const errorToast = [
+            "Connecting websocket...",
+            {
+                closeButton: false,
+                closeOnClick: false,
+                autoClose: false,
+                isLoading: true,
+            },
+        ] as const;
+        const successToast = ["Websocket has connected", { autoClose: 1000 }] as const;
+        let runningToast: string | number | null = toast.warn(...errorToast);
+        WS.addEventListener("state", (newState) => {
+            switch (newState) {
+                case "connected":
+                    if (runningToast !== null) {
+                        toast.dismiss(runningToast);
+                        runningToast = null;
+                    }
+                    toast.success(...successToast);
+                    break;
+                default:
+                    if (runningToast === null) runningToast = toast.error(...errorToast);
+            }
+        });
     }
 
     componentWillUnmount() {
