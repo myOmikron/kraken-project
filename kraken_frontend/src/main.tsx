@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-import { toast, ToastContainer } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./styling/toastify.css";
 import "./styling/components.css";
@@ -11,7 +11,6 @@ import "./index.css";
 import Background from "./views/background";
 import { ROUTER } from "./routes";
 import { UserProvider } from "./context/user";
-import WS from "./api/websocket";
 import GlobalPopup from "./views/gobal-popup";
 
 type RouterProps = {};
@@ -53,20 +52,22 @@ class Router extends React.Component<RouterProps, RouterState> {
     }
 
     render() {
-        return <UserProvider>{ROUTER.matchAndRender(this.state.path) || <div>Unknown route</div>}</UserProvider>;
+        return ROUTER.matchAndRender(this.state.path) || <div>Unknown route</div>;
     }
 }
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <>
         <Background />
-        <Router />
         <ToastContainer
             autoClose={3500}
             theme="dark"
             toastClassName="toast-pane"
             progressClassName="toast-neon toast-progress"
         />
-        <GlobalPopup />
-    </>
+        <UserProvider>
+            <Router />
+            <GlobalPopup />
+        </UserProvider>
+    </>,
 );
