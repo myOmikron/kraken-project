@@ -34,35 +34,49 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
 
     /* CURSORS */
 
-    // Use a ref instead of state because our effects need to manipulate it directly
-    //
-    // `cursors` is an object whose pointer won't change between renders,
-    // so including it in dependency lists of effect hooks won't do anything
-    const { current: cursors } = React.useRef<Record<string, { section: FindingSection; cursor: Cursor<SimpleUser> }>>(
-        {},
-    );
+    const [cursors, rawSetCursors] = React.useState<
+        Record<string, { section: FindingSection; user: SimpleUser; cursor: Cursor }>
+    >({});
+    // Restrict `setCursors` to "update" usage only prohibiting "overwrite" because the contained `Cursor` objects are stateful
+    const setCursors = rawSetCursors as (update: (prevState: typeof cursors) => typeof cursors) => void;
     // A few places below will iterate over the cursors
     const cursorList = Object.values(cursors);
 
-    // Hack to trigger re-renders manually if a mutation to `cursors` would require it
-    const [_, setDummy] = React.useState(0);
-    const rerender = () => setDummy((dummy) => dummy + 1);
+    // Reset cursors when switching definition
+    React.useEffect(
+        () =>
+            setCursors((cursors) => {
+                for (const { cursor } of Object.values(cursors)) {
+                    cursor.delete();
+                }
+                return {};
+            }),
+        [props.uuid, setCursors],
+    );
 
     // Update which cursors to show based on the selected section
-    React.useEffect(() => {
-        for (const { section, cursor } of Object.values(cursors)) {
-            if (section === sections.selected) {
-                cursor.updateEditor(editor);
-            }
-        }
-        return () => {
-            for (const { section, cursor } of Object.values(cursors)) {
-                if (section === sections.selected) {
-                    cursor.updateEditor(null);
+    React.useEffect(
+        () =>
+            setCursors((cursors) => {
+                for (const { section, cursor } of Object.values(cursors)) {
+                    cursor.updateActive(section === sections.selected);
                 }
-            }
-        };
-    }, [editor, sections.selected]);
+                return { ...cursors };
+            }),
+        [sections.selected, setCursors],
+    );
+
+    // Pass the editor to cursors which have been created before the editor was loaded
+    React.useEffect(
+        () =>
+            setCursors((cursors) => {
+                for (const { section, cursor } of Object.values(cursors)) {
+                    cursor.updateEditor(editor);
+                }
+                return { ...cursors };
+            }),
+        [editor, setCursors],
+    );
 
     // Save incoming cursors messages
     React.useEffect(() => {
@@ -70,34 +84,22 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
             if (event.findingDefinition !== props.uuid) return;
             if (event.user.uuid === user.uuid) return;
 
-            if (event.user.uuid in cursors) {
-                const { cursor, section } = cursors[event.user.uuid];
-
-                cursor.updatePosition(event.line, event.column);
-                if (event.findingSection === sections.selected && section !== sections.selected) {
-                    cursor.updateEditor(editor);
-                } else if (event.findingSection !== sections.selected && section === sections.selected) {
-                    cursor.updateEditor(null);
+            setCursors((cursors) => {
+                let cursor;
+                if (event.user.uuid in cursors) {
+                    cursor = cursors[event.user.uuid].cursor;
+                    cursor.updatePosition(event.line, event.column);
+                    cursor.updateActive(event.findingSection === sections.selected);
+                } else {
+                    cursor = new Cursor(editor, event.line, event.column, event.findingSection === sections.selected);
                 }
-
-                cursors[event.user.uuid] = { cursor, section: event.findingSection };
-            } else {
-                cursors[event.user.uuid] = {
-                    section: event.findingSection,
-                    cursor: new Cursor(
-                        event.findingSection === sections.selected ? editor : null,
-                        event.user,
-                        event.line,
-                        event.column,
-                    ),
-                };
-            }
-            rerender();
+                return { ...cursors, [event.user.uuid]: { cursor, section: event.findingSection, user: event.user } };
+            });
         });
         return () => {
             WS.removeEventListener(handle);
         };
-    }, [editor, sections.selected, props.uuid, user.uuid]);
+    }, [editor, sections.selected, props.uuid, user.uuid, setCursors]);
 
     // Send outgoing cursor messages
     React.useEffect(() => {
@@ -295,8 +297,8 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                     />
                     {cursorList
                         .filter(({ section }) => sections.selected === section)
-                        .map(({ cursor }) =>
-                            cursor.render(<div className={"cursor-label"}>{cursor.user.displayName}</div>),
+                        .map(({ user, cursor }) =>
+                            cursor.render(<div className={"cursor-label"}>{user.displayName}</div>),
                         )}
                 </div>
             </div>
