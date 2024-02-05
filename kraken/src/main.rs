@@ -19,6 +19,7 @@ use std::fs::read_to_string;
 use std::io;
 use std::io::Write;
 use std::sync::{Arc, RwLock};
+use std::time::Duration;
 
 use actix_toolbox::logging::setup_logging;
 use actix_web::cookie::Key;
@@ -34,7 +35,9 @@ use kraken::chan::ws_manager::chan::start_ws_manager;
 use kraken::config::Config;
 use kraken::models::{User, UserPermission};
 use kraken::modules::aggregator::Aggregator;
-use kraken::modules::cache::{UserCache, WorkspaceCache};
+use kraken::modules::cache::{
+    schedule_cache_save, FindingDefinitionCache, UserCache, WorkspaceCache,
+};
 use kraken::modules::editor::EditorSync;
 use kraken::modules::tls::TlsManager;
 use kraken::rpc::server::start_rpc_server;
@@ -121,6 +124,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let workspace_cache = WorkspaceCache::default();
             let user_cache = UserCache::default();
+            let finding_definition_cache = FindingDefinitionCache::default();
 
             let aggregator = Aggregator::default();
 
@@ -135,9 +139,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 tls,
                 workspace_cache,
                 user_cache,
+                finding_definition_cache,
                 aggregator,
                 editor_sync,
             });
+
+            /// GLOBAL needs to be initialized to work
+            tokio::spawn(schedule_cache_save(Duration::from_secs(60)));
 
             start_rpc_server(&config).map_err(|e| format!("RPC listen address is invalid: {e}"))?;
 

@@ -1,7 +1,5 @@
 use actix_web::web::{Json, Path};
 use actix_web::{get, post};
-use futures::TryStreamExt;
-use rorm::{query, FieldAccess, Model};
 
 use crate::api::handler::common::error::{ApiError, ApiResult};
 use crate::api::handler::common::schema::{PathUuid, UuidResponse};
@@ -10,7 +8,6 @@ use crate::api::handler::finding_definitions::schema::{
     SimpleFindingDefinition,
 };
 use crate::chan::global::GLOBAL;
-use crate::models::FindingDefinition;
 
 /// Add a definition for a finding
 ///
@@ -44,18 +41,19 @@ pub async fn create_finding_definition(
     } = req.into_inner();
 
     Ok(Json(UuidResponse {
-        uuid: FindingDefinition::insert(
-            &GLOBAL.db.clone(),
-            name,
-            summary,
-            severity,
-            cve,
-            description,
-            impact,
-            remediation,
-            references,
-        )
-        .await?,
+        uuid: GLOBAL
+            .finding_definition_cache
+            .insert(
+                name,
+                summary,
+                severity,
+                cve,
+                description,
+                impact,
+                remediation,
+                references,
+            )
+            .await?,
     }))
 }
 
@@ -77,11 +75,9 @@ pub async fn get_finding_definition(
 ) -> ApiResult<Json<FullFindingDefinition>> {
     let uuid = path.into_inner().uuid;
 
-    let db = &GLOBAL.db.clone();
-
-    let finding_definition = query!(db, FindingDefinition)
-        .condition(FindingDefinition::F.uuid.equals(uuid))
-        .optional()
+    let finding_definition = GLOBAL
+        .finding_definition_cache
+        .get(uuid)
         .await?
         .ok_or(ApiError::InvalidUuid)?;
 
@@ -112,19 +108,19 @@ pub async fn get_finding_definition(
 )]
 #[get("/findingDefinitions")]
 pub async fn get_all_finding_definitions() -> ApiResult<Json<ListFindingDefinitions>> {
-    let db = &GLOBAL.db.clone();
-
-    let finding_definitions = query!(db, FindingDefinition)
-        .stream()
-        .map_ok(|finding| SimpleFindingDefinition {
+    let finding_definitions = GLOBAL
+        .finding_definition_cache
+        .get_all()
+        .await?
+        .into_iter()
+        .map(|finding| SimpleFindingDefinition {
             uuid: finding.uuid,
             name: finding.name,
             summary: finding.summary,
             severity: finding.severity,
             created_at: finding.created_at,
         })
-        .try_collect()
-        .await?;
+        .collect();
 
     Ok(Json(ListFindingDefinitions {
         finding_definitions,

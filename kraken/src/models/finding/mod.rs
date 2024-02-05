@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+#[cfg(feature = "bin")]
+pub(crate) use crate::models::finding::operations::FindingDefinitionInsertError;
 use crate::models::{Domain, Host, Port, Service};
 
 #[cfg(feature = "bin")]
@@ -27,7 +29,7 @@ pub enum FindingSeverity {
 }
 
 /// The model represents a finding entry in the knowledge base
-#[derive(Model)]
+#[derive(Model, Clone)]
 pub struct FindingDefinition {
     /// The primary key of the finding
     #[rorm(primary_key)]

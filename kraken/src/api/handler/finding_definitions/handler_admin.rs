@@ -1,13 +1,12 @@
 use actix_web::web::Path;
 use actix_web::{delete, HttpResponse};
-use rorm::{query, FieldAccess, Model};
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::common::error::{ApiError, ApiResult};
 use crate::api::handler::common::schema::PathUuid;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
-use crate::models::{FindingDefinition, User, UserPermission};
+use crate::models::UserPermission;
 
 /// Delete a finding definition
 #[utoipa::path(
@@ -28,29 +27,21 @@ pub async fn delete_finding_definition(
 ) -> ApiResult<HttpResponse> {
     let uuid = path.into_inner().uuid;
 
-    let mut tx = GLOBAL.db.start_transaction().await?;
-
-    let user = query!(&mut tx, User)
-        .condition(User::F.uuid.equals(user_uuid))
-        .optional()
+    let user = GLOBAL
+        .user_cache
+        .get_full_user(user_uuid)
         .await?
-        .ok_or(ApiError::InternalServerError)?;
+        .ok_or(ApiError::SessionCorrupt)?;
 
     if user.permission != UserPermission::Admin {
         return Err(ApiError::MissingPrivileges);
     }
 
-    query!(&mut tx, (FindingDefinition::F.uuid,))
-        .condition(FindingDefinition::F.uuid.equals(uuid))
-        .optional()
-        .await?
-        .ok_or(ApiError::InvalidUuid)?;
+    let deleted = GLOBAL.finding_definition_cache.delete(uuid).await?;
 
-    rorm::delete!(&mut tx, FindingDefinition)
-        .condition(FindingDefinition::F.uuid.equals(uuid))
-        .await?;
-
-    tx.commit().await?;
+    if deleted == 0 {
+        return Err(ApiError::InvalidUuid);
+    }
 
     // Notify every user about deleted finding definition
     GLOBAL

@@ -10,7 +10,7 @@ use crate::chan::leech_manager::LeechManager;
 use crate::chan::settings_manager::SettingsManagerChan;
 use crate::chan::ws_manager::chan::WsManagerChan;
 use crate::modules::aggregator::Aggregator;
-use crate::modules::cache::{UserCache, WorkspaceCache};
+use crate::modules::cache::{FindingDefinitionCache, UserCache, WorkspaceCache};
 use crate::modules::editor::EditorSync;
 use crate::modules::tls::TlsManager;
 
@@ -45,6 +45,9 @@ pub struct GlobalChan {
 
     /// The caching layer for users
     pub user_cache: UserCache,
+
+    /// The caching layer for [FindingDefinition]
+    pub finding_definition_cache: FindingDefinitionCache,
 
     /// Scheduler for inserting or updating any aggregation model in the database
     pub aggregator: Aggregator,

@@ -1,6 +1,7 @@
 //! The schema of the ws manager
 
 use std::net::IpAddr;
+use std::num::NonZeroU64;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -294,18 +295,20 @@ pub enum FindingSection {
 }
 
 /// Defines a change
+///
+/// Columns and lines are treated as 1-indexed
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Change {
     /// The text that should be set to the range given by the other values
     pub text: String,
     /// Start of the column
-    pub start_column: u64,
+    pub start_column: NonZeroU64,
     /// End of the column
-    pub end_column: u64,
+    pub end_column: NonZeroU64,
     /// Starting line number
-    pub start_line: u64,
+    pub start_line: NonZeroU64,
     /// Ending line number
-    pub end_line: u64,
+    pub end_line: NonZeroU64,
 }
 
 /// Entry of certificate transparency results

@@ -18,7 +18,7 @@ impl FindingDefinition {
         impact: String,
         remediation: String,
         references: String,
-    ) -> Result<Uuid, FindingDefinitionInsertError> {
+    ) -> Result<FindingDefinition, FindingDefinitionInsertError> {
         let uuid = Uuid::new_v4();
 
         let mut guard = executor.ensure_transaction().await?;
@@ -32,8 +32,7 @@ impl FindingDefinition {
             return Err(FindingDefinitionInsertError::NameAlreadyExists);
         }
 
-        insert!(guard.get_transaction(), InsertFindingDefinition)
-            .return_nothing()
+        let fd = insert!(guard.get_transaction(), InsertFindingDefinition)
             .single(&InsertFindingDefinition {
                 uuid,
                 name,
@@ -49,7 +48,7 @@ impl FindingDefinition {
 
         guard.commit().await?;
 
-        Ok(uuid)
+        Ok(fd)
     }
 }
 

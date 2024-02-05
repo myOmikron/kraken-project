@@ -86,7 +86,23 @@ pub async fn websocket(
                         Message::Text(data) => {
                             match serde_json::from_str::<WsClientMessage>(data.as_ref()) {
                                 Ok(msg) => match msg {
-                                    WsClientMessage::EditFindingDefinition { .. } => {}
+                                    WsClientMessage::EditFindingDefinition {
+                                        finding_definition,
+                                        finding_section,
+                                        change,
+                                    } => {
+                                        tokio::spawn(async move {
+                                            GLOBAL
+                                                .editor_sync
+                                                .process_client_edit_finding_definition(
+                                                    user_uuid,
+                                                    finding_definition,
+                                                    finding_section,
+                                                    change,
+                                                )
+                                                .await;
+                                        });
+                                    }
                                     WsClientMessage::ChangedCursorFindingDefinition {
                                         finding_definition,
                                         finding_section,
