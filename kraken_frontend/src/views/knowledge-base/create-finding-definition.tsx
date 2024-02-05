@@ -10,6 +10,7 @@ import FlameIcon from "../../svg/flame";
 import InformationIcon from "../../svg/information";
 import BookIcon from "../../svg/book";
 import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
+import "../../styling/create-finding-definition.css";
 
 export type CreateFindingDefinitionProps = {};
 export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {

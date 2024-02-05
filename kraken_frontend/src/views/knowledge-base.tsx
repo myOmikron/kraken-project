@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "../styling/knowledge-base.css";
+import { ROUTES } from "../routes";
 import { Editor, Monaco } from "@monaco-editor/react";
 
 type KnowledgeBaseProps = {};
@@ -27,7 +28,11 @@ export default function KnowledgeBase(props: KnowledgeBaseProps) {
                         beforeMount={setupMonaco}
                     />
                 </div>
-                <div></div>
+                <div>
+                    <button className={"button"} {...ROUTES.FINDING_DEFINITION_LIST.clickHandler({})}>
+                        Finding Definitions
+                    </button>
+                </div>
             </div>
         </div>
     );

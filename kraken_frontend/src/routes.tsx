@@ -19,6 +19,7 @@ import WorkspaceHost from "./views/workspace/workspace-host";
 import KnowledgeBase from "./views/knowledge-base";
 import { CreateFindingDefinition } from "./views/knowledge-base/create-finding-definition";
 import { EditFindingDefinition } from "./views/knowledge-base/edit-finding-definition";
+import { ListFindingDefinition } from "./views/knowledge-base/list-finding-definition";
 
 export const ROUTER = new Router();
 
@@ -133,6 +134,15 @@ export const ROUTES = {
         render: () => (
             <ContentWithMenu>
                 <KnowledgeBase />
+            </ContentWithMenu>
+        ),
+    }),
+    FINDING_DEFINITION_LIST: ROUTER.add({
+        url: "knowledge/finding-definition",
+        parser: {},
+        render: () => (
+            <ContentWithMenu>
+                <ListFindingDefinition />
             </ContentWithMenu>
         ),
     }),
