@@ -25,7 +25,6 @@ pub struct WorkspaceCache {
 
 impl WorkspaceCache {
     /// Trigger a manual refresh of the users of a specific workspace
-
     pub async fn refresh_users(
         &self,
         workspace: Uuid,
