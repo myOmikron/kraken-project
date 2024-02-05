@@ -124,7 +124,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let workspace_cache = WorkspaceCache::default();
             let user_cache = UserCache::default();
-            let finding_definition_cache = FindingDefinitionCache::default();
+            let finding_definition_cache = FindingDefinitionCache::new(&db).await?;
 
             let aggregator = Aggregator::default();
 

@@ -2,7 +2,9 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
+use futures::TryStreamExt;
 use log::{debug, error};
+use rorm::db::Executor;
 use rorm::{delete, query, update, FieldAccess, Model};
 use thiserror::Error;
 use tokio::time::interval;
@@ -18,7 +20,6 @@ use crate::models::{FindingDefinition, FindingDefinitionInsertError, FindingSeve
 ///
 /// You should not interact with [FindingDefinition] directly, but do all
 /// changes through this cache.
-#[derive(Default)]
 pub struct FindingDefinitionCache {
     /// The cache for the [FindingDefinition]
     ///
@@ -42,6 +43,27 @@ struct CacheFindingDefinition {
 pub struct FindingDefinitionNotFound;
 
 impl FindingDefinitionCache {
+    /// Initialize the cache with existing findings
+    pub async fn new(db: impl Executor<'_>) -> Result<Self, rorm::Error> {
+        let findings = query!(db, FindingDefinition)
+            .stream()
+            .map_ok(|x| {
+                (
+                    x.uuid,
+                    Some(CacheFindingDefinition {
+                        fd: x,
+                        changed: false,
+                    }),
+                )
+            })
+            .try_collect()
+            .await?;
+
+        Ok(Self {
+            cache: Arc::new(RwLock::new(findings)),
+        })
+    }
+
     /// Retrieve a finding definition from the cache.
     ///
     /// If the finding definition was not found in the cache, a database lookup is made
