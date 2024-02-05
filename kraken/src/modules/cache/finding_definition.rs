@@ -66,7 +66,7 @@ impl FindingDefinitionCache {
             .read()
             .expect("If you ever encounter this error, please open an issue with the stacktrace");
 
-        Ok(guard.values().cloned().flatten().map(|x| x.fd).collect())
+        Ok(guard.values().flatten().cloned().map(|x| x.fd).collect())
     }
 
     /// Check for the existing of a [FindingDefinition]
@@ -122,6 +122,7 @@ impl FindingDefinitionCache {
             return Ok(deleted);
         }
 
+        #[allow(clippy::expect_used)]
         let mut guard = self
             .cache
             .write()
@@ -133,6 +134,7 @@ impl FindingDefinitionCache {
     }
 
     /// Inserts a new [FindingDefinition] and updates the cache
+    #[allow(clippy::too_many_arguments)]
     pub async fn insert(
         &self,
         name: String,
@@ -170,7 +172,10 @@ impl FindingDefinitionCache {
         Ok(uuid)
     }
 
-    pub async fn save_cache(&self) -> Result<(), rorm::Error> {
+    /// This method is used to save the cache to the database.
+    ///
+    /// It should only be used by the scheduler for regularly saving the cache to the database
+    async fn save_cache(&self) -> Result<(), rorm::Error> {
         let fds = {
             #[allow(clippy::expect_used)]
             let mut guard = self.cache.write().expect(

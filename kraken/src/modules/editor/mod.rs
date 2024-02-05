@@ -112,24 +112,14 @@ impl EditorSync {
     }
 
     async fn does_fd_exist(&self, finding_definition: Uuid) -> bool {
-        match GLOBAL
+        GLOBAL
             .finding_definition_cache
             .exists(finding_definition)
             .await
-        {
-            Ok(exists) => {
-                if !exists {
-                    false
-                } else {
-                    true
-                }
-            }
-
-            Err(err) => {
+            .unwrap_or_else(|err| {
                 error!("DB error: {err}");
                 false
-            }
-        }
+            })
     }
 }
 

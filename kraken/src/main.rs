@@ -144,7 +144,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 editor_sync,
             });
 
-            /// GLOBAL needs to be initialized to work
+            // GLOBAL needs to be initialized to work
             tokio::spawn(schedule_cache_save(Duration::from_secs(60)));
 
             start_rpc_server(&config).map_err(|e| format!("RPC listen address is invalid: {e}"))?;

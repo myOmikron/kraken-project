@@ -8,6 +8,7 @@ use crate::models::{FindingDefinition, FindingSeverity};
 
 impl FindingDefinition {
     /// Insert a new [FindingDefinition]
+    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn insert(
         executor: impl Executor<'_>,
         name: String,
