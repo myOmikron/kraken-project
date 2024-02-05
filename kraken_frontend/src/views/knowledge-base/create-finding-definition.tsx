@@ -11,6 +11,10 @@ import InformationIcon from "../../svg/information";
 import BookIcon from "../../svg/book";
 import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
 import "../../styling/create-finding-definition.css";
+import { handleApiError } from "../../utils/helper";
+import { Api } from "../../api/api";
+import { FindingSeverity } from "../../api/generated";
+import { ROUTES } from "../../routes";
 
 export type CreateFindingDefinitionProps = {};
 export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
@@ -84,7 +88,26 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                         <GithubMarkdown>{sections.References.value}</GithubMarkdown>
                     </div>
 
-                    <button className={"button"}>Create</button>
+                    <button
+                        className={"button"}
+                        onClick={() =>
+                            Api.knowledgeBase.findingDefinitions
+                                .create({
+                                    name,
+                                    // @ts-ignore
+                                    severity,
+                                    cve: cve.length > 0 ? cve : null,
+                                    summary: sections.Summary.value,
+                                    description: sections.Description.value,
+                                    impact: sections.Impact.value,
+                                    remediation: sections.Remediation.value,
+                                    references: sections.References.value,
+                                })
+                                .then(handleApiError(({ uuid }) => ROUTES.FINDING_DEFINITION_EDIT.visit({ uuid })))
+                        }
+                    >
+                        Create
+                    </button>
                 </div>
                 <div className={"create-finding-definition-editor"}>
                     <SectionSelectionTabs sections={sections} />

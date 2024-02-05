@@ -12,10 +12,12 @@ import BookIcon from "../../svg/book";
 import { editor as editorNS } from "monaco-editor";
 import Cursor from "../../utils/monaco-cursor";
 import WS from "../../api/websocket";
-import { FindingSection, SimpleUser, WsClientMessageOneOf } from "../../api/generated";
+import { FindingSection, SimpleUser } from "../../api/generated";
 import USER_CONTEXT from "../../context/user";
 import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
 import { toast } from "react-toastify";
+import { Api } from "../../api/api";
+import { handleApiError } from "../../utils/helper";
 
 export type EditFindingDefinitionProps = {
     uuid: string;
@@ -128,10 +130,9 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
 
     // Save incoming edit messages
     React.useEffect(() => {
-        // const handle = WS.addEventListener("message.EditFindingDefinition", (event) => {
-        WS_MOCK.onReceive = (event) => {
+        const handle = WS.addEventListener("message.EditFindingDefinition", (event) => {
             if (event.findingDefinition !== props.uuid) return;
-            // if (event.user.uuid === user.uuid) return; // TODO: might need more consideration
+            if (event.user.uuid === user.uuid) return; // TODO: might need more consideration
 
             if (monaco === null) {
                 // TODO
@@ -170,8 +171,8 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
 
             // Re-enable sending edit events
             sendChanges.current = true;
-        };
-        //return () => WS.removeEventListener(handle);
+        });
+        return () => WS.removeEventListener(handle);
     }, [monaco, editor, props.uuid, user.uuid, sections]);
 
     // Send outgoing edit messages
@@ -192,7 +193,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                         text,
                         range: { startColumn, startLineNumber, endLineNumber, endColumn },
                     } = change;
-                    WS_MOCK.send({
+                    WS.send({
                         type: "EditFindingDefinition",
                         findingDefinition: props.uuid,
                         findingSection: sections.selected,
@@ -203,6 +204,29 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
         },
         [sections, props.uuid],
     );
+
+    /* Initial load */
+
+    React.useEffect(() => {
+        Api.knowledgeBase.findingDefinitions.get(props.uuid).then(
+            handleApiError((finding) => {
+                setName(finding.name);
+                setSeverity(finding.severity);
+                setCve(finding.cve || "");
+                sections.Summary.set(finding.summary);
+                sections.Description.set(finding.description);
+                sections.Impact.set(finding.impact);
+                sections.Remediation.set(finding.remediation);
+                sections.References.set(finding.references);
+                setCursors((cursors) => {
+                    for (const { cursor } of Object.values(cursors)) {
+                        cursor.delete();
+                    }
+                    return {};
+                });
+            }),
+        );
+    }, [props.uuid]);
 
     return (
         <div className={"create-finding-definition-container"}>
@@ -297,40 +321,3 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
         </div>
     );
 }
-
-// TODO replace mockup with backend
-const WS_MOCK = {
-    delay: 5_000,
-    timeout: null as number | null,
-    events: [] as Array<{ event: WsClientMessageOneOf; delay: number }>,
-    firstSend: new Date().getTime(),
-    send(event: WsClientMessageOneOf) {
-        console.debug("Got send");
-        if (this.events.length === 0) {
-            this.events.push({ event, delay: 0 });
-            this.firstSend = new Date().getTime();
-        } else {
-            const now = new Date().getTime();
-            this.events.push({ event, delay: now - this.firstSend });
-        }
-
-        if (this.timeout !== null) clearTimeout(this.timeout);
-        this.timeout = setTimeout(() => {
-            console.debug("Started echoing");
-            for (const { event, delay } of this.events) {
-                setTimeout(() => this.onReceive(event), delay);
-            }
-            this.events = [];
-            this.timeout = null;
-        }, this.delay);
-    },
-    onReceive: (_: WsClientMessageOneOf) => {
-        console.debug("Got default receive");
-    },
-};
-// @ts-ignore
-window.clearMock = () => {
-    WS_MOCK.events = [];
-    if (WS_MOCK.timeout !== null) clearTimeout(WS_MOCK.timeout);
-    WS_MOCK.timeout = null;
-};

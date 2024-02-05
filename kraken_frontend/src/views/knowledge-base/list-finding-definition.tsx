@@ -4,6 +4,8 @@ import { FindingSeverity, SimpleFindingDefinition } from "../../api/generated";
 import React from "react";
 import Input from "../../components/input";
 import PlusIcon from "../../svg/plus";
+import { Api } from "../../api/api";
+import { handleApiError } from "../../utils/helper";
 
 type ListFindingDefinitionProps = {};
 
@@ -13,43 +15,9 @@ export function ListFindingDefinition(props: ListFindingDefinitionProps) {
     const [hover, setHover] = React.useState(null as number | null);
 
     React.useEffect(() => {
-        setDefs([
-            {
-                uuid: "00000000-0000-0000-0000-000000000000",
-                name: "Cyber Alarm 1337",
-                severity: FindingSeverity.Critical,
-                summary: SUMMARYS[0],
-                createdAt: new Date(),
-            },
-            {
-                uuid: "00000000-0000-0000-0000-000000000001",
-                name: "Hier könnte ihre Werbung stehen",
-                severity: FindingSeverity.Medium,
-                summary: SUMMARYS[1],
-                createdAt: new Date(),
-            },
-            {
-                uuid: "00000000-0000-0000-0000-000000000002",
-                name: "Nich so legger",
-                severity: FindingSeverity.High,
-                summary: SUMMARYS[2],
-                createdAt: new Date(),
-            },
-            {
-                uuid: "00000000-0000-0000-0000-000000000003",
-                name: "Meh",
-                severity: FindingSeverity.Low,
-                summary: SUMMARYS[3],
-                createdAt: new Date(),
-            },
-            {
-                uuid: "00000000-0000-0000-0000-000000000004",
-                name: "Uff wer kann sich denn dauernd scheiße ausdenken?",
-                severity: FindingSeverity.Low,
-                summary: SUMMARYS[4],
-                createdAt: new Date(),
-            },
-        ]);
+        Api.knowledgeBase.findingDefinitions
+            .all()
+            .then(handleApiError(({ findingDefinitions }) => setDefs(findingDefinitions)));
     }, []);
 
     return (
