@@ -45,7 +45,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                             <InformationIcon />
                             Summary
                         </h2>
-                        <div className={`nested-pane`}>
+                        <div>
                             {sections.Summary.value.length === 0
                                 ? null
                                 : sections.Summary.value.split("\n\n").map((line) => <p>{line}</p>)}
@@ -57,9 +57,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                             <BookIcon />
                             Description
                         </h2>
-                        <div className={`nested-pane`}>
-                            <GithubMarkdown>{sections.Description.value}</GithubMarkdown>
-                        </div>
+                        <GithubMarkdown>{sections.Description.value}</GithubMarkdown>
                     </div>
 
                     <div>
@@ -67,9 +65,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                             <FlameIcon />
                             Impact
                         </h2>
-                        <div className={`nested-pane`}>
-                            <GithubMarkdown>{sections.Impact.value}</GithubMarkdown>
-                        </div>
+                        <GithubMarkdown>{sections.Impact.value}</GithubMarkdown>
                     </div>
 
                     <div>
@@ -77,9 +73,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                             <BandageIcon />
                             Remediation
                         </h2>
-                        <div className={`nested-pane`}>
-                            <GithubMarkdown>{sections.Remediation.value}</GithubMarkdown>
-                        </div>
+                        <GithubMarkdown>{sections.Remediation.value}</GithubMarkdown>
                     </div>
 
                     <div>
@@ -87,9 +81,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                             <LibraryIcon />
                             References
                         </h2>
-                        <div className={`nested-pane`}>
-                            <GithubMarkdown>{sections.References.value}</GithubMarkdown>
-                        </div>
+                        <GithubMarkdown>{sections.References.value}</GithubMarkdown>
                     </div>
 
                     <button className={"button"}>Create</button>

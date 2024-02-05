@@ -18,6 +18,7 @@
   "dependencies": {
     "react-markdown": "^9.0.1",
     "remark-gfm": "^4.0.0",
+    "rehype-highlight": "^7.0.0",
     "@monaco-editor/react": "^4.6.0",
     "monaco-editor": "^0.45.0",
     "js-base64": "^3.7.5",

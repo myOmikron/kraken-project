@@ -1,0 +1,62 @@
+.markdown {
+    color: var(--text);
+}
+
+.markdown h1, .markdown h2, .markdown h3, .markdown h4, .markdown h5, .markdown h6 {
+    font-family: Roboto-Light, sans-serif;
+    font-weight: normal;
+    color: white;
+    filter: drop-shadow(0 0 4px var(--primary));
+}
+
+.markdown hr {
+    height: 1px;
+    background-color: var(--text);
+    border: none;
+}
+
+.markdown blockquote {
+    padding-inline-start: 19px;
+    border-inline-start: 2px solid gray;
+    margin-inline-start: 19px;
+}
+
+.markdown a {
+    color: #9cdcfe;
+    text-decoration: none;
+}
+.markdown a:hover {
+    filter: drop-shadow(0 0 0.25em #0cf);
+}
+
+.markdown table {
+    padding: 0.5em;
+    border-radius: 0.5em;
+    border: 1px solid var(--primary-op);
+    background-color: #00ccff10 ;
+    border-spacing: 0;
+}
+
+.markdown td {
+    border-top: 1px solid var(--primary-op);
+}
+
+.markdown th, td {
+    padding: 0.2em 1em;
+}
+
+.markdown tbody tr {
+    transition: box-shadow 0.3s ease-out;
+}
+
+.markdown .hljs-string {
+    color: #ce9178;
+}
+
+.markdown .hljs-number {
+    color: #b5cea8;
+}
+
+.markdown .hljs-keyword, .markdown .hljs-built_in {
+    color: #569cd6;
+}

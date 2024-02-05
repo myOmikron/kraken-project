@@ -229,7 +229,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                             <InformationIcon />
                             Summary
                         </h2>
-                        <div className={`nested-pane`}>
+                        <div>
                             {sections.Summary.value.length === 0
                                 ? null
                                 : sections.Summary.value.split("\n\n").map((line) => <p>{line}</p>)}
@@ -241,9 +241,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                             <BookIcon />
                             Description
                         </h2>
-                        <div className={`nested-pane`}>
-                            <GithubMarkdown>{sections.Description.value}</GithubMarkdown>
-                        </div>
+                        <GithubMarkdown>{sections.Description.value}</GithubMarkdown>
                     </div>
 
                     <div>
@@ -251,9 +249,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                             <FlameIcon />
                             Impact
                         </h2>
-                        <div className={`nested-pane`}>
-                            <GithubMarkdown>{sections.Impact.value}</GithubMarkdown>
-                        </div>
+                        <GithubMarkdown>{sections.Impact.value}</GithubMarkdown>
                     </div>
 
                     <div>
@@ -261,9 +257,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                             <BandageIcon />
                             Remediation
                         </h2>
-                        <div className={`nested-pane`}>
-                            <GithubMarkdown>{sections.Remediation.value}</GithubMarkdown>
-                        </div>
+                        <GithubMarkdown>{sections.Remediation.value}</GithubMarkdown>
                     </div>
 
                     <div>
@@ -271,9 +265,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                             <LibraryIcon />
                             References
                         </h2>
-                        <div className={`nested-pane`}>
-                            <GithubMarkdown>{sections.References.value}</GithubMarkdown>
-                        </div>
+                        <GithubMarkdown>{sections.References.value}</GithubMarkdown>
                     </div>
                 </div>
                 <div className={"create-finding-definition-editor"}>
