@@ -15,6 +15,8 @@
 import { exists, mapValues } from '../runtime';
 /**
  * Defines a change
+ * 
+ * Columns and lines are treated as 1-indexed
  * @export
  * @interface Change
  */

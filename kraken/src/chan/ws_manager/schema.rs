@@ -302,12 +302,16 @@ pub struct Change {
     /// The text that should be set to the range given by the other values
     pub text: String,
     /// Start of the column
+    #[schema(value_type = u64, minimum = 1)]
     pub start_column: NonZeroU64,
     /// End of the column
+    #[schema(value_type = u64, minimum = 1)]
     pub end_column: NonZeroU64,
     /// Starting line number
+    #[schema(value_type = u64, minimum = 1)]
     pub start_line: NonZeroU64,
     /// Ending line number
+    #[schema(value_type = u64, minimum = 1)]
     pub end_line: NonZeroU64,
 }
 
