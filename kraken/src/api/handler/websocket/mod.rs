@@ -126,6 +126,7 @@ pub async fn websocket(
                                                 .await;
                                         });
                                     }
+                                    _ => {}
                                 },
                                 Err(err) => {
                                     debug!("Error deserializing data: {err}");

@@ -19,6 +19,27 @@ import {
     EditorTargetOneOfFromJSONTyped,
     EditorTargetOneOfToJSON,
 } from './EditorTargetOneOf';
+import {
+    EditorTargetOneOf1,
+    instanceOfEditorTargetOneOf1,
+    EditorTargetOneOf1FromJSON,
+    EditorTargetOneOf1FromJSONTyped,
+    EditorTargetOneOf1ToJSON,
+} from './EditorTargetOneOf1';
+import {
+    EditorTargetOneOf2,
+    instanceOfEditorTargetOneOf2,
+    EditorTargetOneOf2FromJSON,
+    EditorTargetOneOf2FromJSONTyped,
+    EditorTargetOneOf2ToJSON,
+} from './EditorTargetOneOf2';
+import {
+    EditorTargetOneOf3,
+    instanceOfEditorTargetOneOf3,
+    EditorTargetOneOf3FromJSON,
+    EditorTargetOneOf3FromJSONTyped,
+    EditorTargetOneOf3ToJSON,
+} from './EditorTargetOneOf3';
 
 /**
  * @type EditorTarget
@@ -28,7 +49,7 @@ import {
  * specific section in a [FindingDefinition]
  * @export
  */
-export type EditorTarget = EditorTargetOneOf;
+export type EditorTarget = EditorTargetOneOf | EditorTargetOneOf1 | EditorTargetOneOf2 | EditorTargetOneOf3;
 
 export function EditorTargetFromJSON(json: any): EditorTarget {
     return EditorTargetFromJSONTyped(json, false);
@@ -38,7 +59,7 @@ export function EditorTargetFromJSONTyped(json: any, ignoreDiscriminator: boolea
     if ((json === undefined) || (json === null)) {
         return json;
     }
-    return { ...EditorTargetOneOfFromJSONTyped(json, true) };
+    return { ...EditorTargetOneOfFromJSONTyped(json, true), ...EditorTargetOneOf1FromJSONTyped(json, true), ...EditorTargetOneOf2FromJSONTyped(json, true), ...EditorTargetOneOf3FromJSONTyped(json, true) };
 }
 
 export function EditorTargetToJSON(value?: EditorTarget | null): any {
@@ -51,6 +72,15 @@ export function EditorTargetToJSON(value?: EditorTarget | null): any {
 
     if (instanceOfEditorTargetOneOf(value)) {
         return EditorTargetOneOfToJSON(value as EditorTargetOneOf);
+    }
+    if (instanceOfEditorTargetOneOf1(value)) {
+        return EditorTargetOneOf1ToJSON(value as EditorTargetOneOf1);
+    }
+    if (instanceOfEditorTargetOneOf2(value)) {
+        return EditorTargetOneOf2ToJSON(value as EditorTargetOneOf2);
+    }
+    if (instanceOfEditorTargetOneOf3(value)) {
+        return EditorTargetOneOf3ToJSON(value as EditorTargetOneOf3);
     }
 
     return {};

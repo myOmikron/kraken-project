@@ -64,6 +64,12 @@ models/DomainRelations.ts
 models/DomainResultsPage.ts
 models/EditorTarget.ts
 models/EditorTargetOneOf.ts
+models/EditorTargetOneOf1.ts
+models/EditorTargetOneOf1Finding.ts
+models/EditorTargetOneOf2.ts
+models/EditorTargetOneOf2FindingAffected.ts
+models/EditorTargetOneOf3.ts
+models/EditorTargetOneOf3WorkspaceNotes.ts
 models/EditorTargetOneOfFindingDefinition.ts
 models/FindingSection.ts
 models/FindingSeverity.ts

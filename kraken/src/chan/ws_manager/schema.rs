@@ -271,6 +271,23 @@ pub enum EditorTarget {
         /// The finding section which is active
         finding_section: FindingSection,
     },
+    /// The editor for the `user_details` in [Finding]
+    Finding {
+        /// Uuid of the [Finding]
+        finding: Uuid,
+    },
+    /// The editor for the `user_details` in [FindingAffected]
+    FindingAffected {
+        /// Uuid of the [Finding]
+        finding: Uuid,
+        /// Uuid of the [FindingAffected]
+        affected: Uuid,
+    },
+    /// The editor for notes in a [Workspace]
+    WorkspaceNotes {
+        /// The uuid of the workspace
+        workspace: Uuid,
+    },
 }
 
 /// The different types of aggregations
