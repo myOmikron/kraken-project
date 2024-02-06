@@ -268,7 +268,7 @@ pub enum EditorTarget {
     FindingDefinition {
         /// The finding definition that is active
         finding_definition: Uuid,
-        /// The finding section in which the cursor was placed
+        /// The finding section which is active
         finding_section: FindingSection,
     },
 }
