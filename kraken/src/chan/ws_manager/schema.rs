@@ -23,7 +23,7 @@ use crate::api::handler::workspaces::schema::SimpleWorkspace;
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 #[serde(tag = "type")]
 pub enum WsClientMessage {
-    /// A finding definition was edited
+    /// Content was changed in an editor
     EditorChangedContent {
         /// The changeset
         change: Change,
