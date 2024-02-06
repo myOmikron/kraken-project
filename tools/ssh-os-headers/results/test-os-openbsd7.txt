@@ -1,1 +1,5 @@
 SSH: debug1: Remote protocol version 2.0, remote software version OpenSSH_9.5
+Address: 192.168.121.207:22
+TCP fingerprint: Fingerprint: 8:3:2c:40:b:4000:6:5b4:611314112
+TCP fingerprint: Fingerprint: 8:3:2c:40:b:4000:6:5b4:611314112
+TCP fingerprint: Fingerprint: 8:3:2c:40:b:4000:6:5b4:611314112

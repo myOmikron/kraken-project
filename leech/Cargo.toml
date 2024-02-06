@@ -87,6 +87,7 @@ probe-config = { path = "probe-config" }
 
 socket2 = "0.5.5"
 etherparse = "0.13"
+get_if_addrs = "0.5.3"
 
 [build-dependencies]
 probe-config = { path = "probe-config" }

@@ -16,7 +16,7 @@
 use std::env;
 use std::error::Error;
 use std::io::Write;
-use std::net::{IpAddr, SocketAddr, SocketAddrV4, SocketAddrV6};
+use std::net::{IpAddr, SocketAddr};
 use std::num::NonZeroU32;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -46,6 +46,7 @@ use crate::modules::bruteforce_subdomains::{
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
 use crate::modules::dns::txt::{start_dns_txt_scan, DnsTxtScanSettings};
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
+use crate::modules::os_detection::os_detection;
 use crate::modules::os_detection::tcp_fingerprint::fingerprint_tcp;
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::modules::service_detection::DetectServiceSettings;
@@ -223,11 +224,19 @@ pub enum RunCommand {
         /// The ip to query information for.
         ip: IpAddr,
         /// A TCP port that must accept connections for a consistent fingerprint.
-        #[clap(short = 'o')]
-        opened_port: u16,
-        /// A TCP port that must not accept connections for a consistent fingerprint.
-        #[clap(short = 'c')]
-        closed_port: u16,
+        #[clap(short = 'p')]
+        port: u16,
+        /// Timeout in milliseconds after which to give up the connection if it didn't send any reply by then.
+        #[clap(default_value_t = 1000)]
+        timeout: u64,
+    },
+    /// OS detection.
+    OsDetection {
+        /// The ip to query information for.
+        ip: IpAddr,
+        /// Timeout in milliseconds after which to abort all checks and discard all immediate results.
+        #[clap(default_value_t = 60000)]
+        timeout: u64,
     },
 }
 
@@ -650,19 +659,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
                             error!("{err}");
                         }
                     }
-                    RunCommand::TcpFingerprint {
-                        ip,
-                        opened_port,
-                        closed_port,
-                    } => {
-                        let fp = fingerprint_tcp(match ip {
-                            IpAddr::V4(v4) => SocketAddr::V4(SocketAddrV4::new(v4, opened_port)),
-                            IpAddr::V6(v6) => {
-                                SocketAddr::V6(SocketAddrV6::new(v6, opened_port, 0, 0))
-                            }
-                        })
+                    RunCommand::TcpFingerprint { ip, port, timeout } => {
+                        let fp = fingerprint_tcp(
+                            SocketAddr::new(ip, port),
+                            Duration::from_millis(timeout),
+                        )
                         .await?;
-                        print!("Fingerprint: {:?}", fp);
+                        print!("Fingerprint: {fp}");
+                    }
+                    RunCommand::OsDetection { ip, timeout } => {
+                        let os =
+                            tokio::time::timeout(Duration::from_millis(timeout), os_detection(ip))
+                                .await?;
+                        print!("Result: {os:?}");
                     }
                 }
             }

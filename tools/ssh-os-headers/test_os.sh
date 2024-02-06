@@ -36,4 +36,6 @@ echo "SSH: $(echo "" | vagrant ssh -- -oBatchMode=true -v exit 2>&1 | grep -F 'r
 HOST="$(vagrant ssh-config | grep HostName | cut -d' ' -f4)"
 PORT="$(vagrant ssh-config | grep Port | cut -d' ' -f4)"
 echo "Address: $HOST:$PORT"
-echo "TCP fingerprint: $(../../target/debug/leech execute tcp-fingerprint -o "$PORT" -c 1 "$HOST")"
+echo "TCP fingerprint: $(../../target/debug/leech execute tcp-fingerprint -p "$PORT" "$HOST")"
+echo "TCP fingerprint: $(../../target/debug/leech execute tcp-fingerprint -p "$PORT" "$HOST")"
+echo "TCP fingerprint: $(../../target/debug/leech execute tcp-fingerprint -p "$PORT" "$HOST")"

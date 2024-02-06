@@ -27,3 +27,4 @@ test-os-freebsd14:generic/freebsd14
 test-os-hardenedbsd:generic/hardenedbsd
 test-os-dragonflybsd:generic/dragonflybsd
 test-os-netbsd8:generic/netbsd8
+test-os-android-lineage:lineage/lineage

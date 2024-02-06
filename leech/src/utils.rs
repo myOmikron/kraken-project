@@ -1,15 +1,17 @@
 //! Helper utilities
 
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::num::NonZeroU16;
 use std::ops::RangeInclusive;
 use std::os::fd::{FromRawFd, IntoRawFd};
 use std::str::FromStr;
 
+use get_if_addrs::IfAddr;
 use once_cell::sync::Lazy;
 use regex::{bytes, Regex};
 use thiserror::Error;
 use tokio::io::{self, stdin, AsyncBufReadExt, BufReader};
-use tokio::net::UdpSocket;
+use tokio::net::{TcpSocket, UdpSocket};
 use tonic::transport::{Certificate, ClientTlsConfig, Endpoint};
 
 use crate::config::KrakenConfig;
@@ -140,7 +142,84 @@ pub fn kraken_endpoint(config: &KrakenConfig) -> Result<Endpoint, tonic::transpo
 pub fn raw_socket(domain: socket2::Domain, protocol: socket2::Protocol) -> io::Result<UdpSocket> {
     let socket = socket2::Socket::new(domain, socket2::Type::RAW, Some(protocol))?;
     socket.set_header_included(true)?;
-    socket.set_nonblocking(false)?;
+    socket.set_nonblocking(true)?;
 
     UdpSocket::from_std(unsafe { std::net::UdpSocket::from_raw_fd(socket.into_raw_fd()) })
+}
+
+/// Returns the first IP from the system network interfaces that falls into the same network as destination.
+/// If there is no matching, returns the first non-loopback interface's address.
+/// If no non-loopback interfaces exist, returns `0.0.0.0` or `[::]` as last resort. (OS will fill it out when sending
+/// an IP packet, however the TCP checksum will be wrong and might be dropped)
+pub fn find_source_ip(destination: IpAddr) -> std::io::Result<IpAddr> {
+    // see http://linux-ip.net/html/routing-saddr-selection.html
+    let mut first = match destination {
+        IpAddr::V4(_) => IpAddr::V4(Ipv4Addr::from(0)),
+        IpAddr::V6(_) => IpAddr::V6(Ipv6Addr::from(0)),
+    };
+    let mut is_first = true;
+
+    for iface in get_if_addrs::get_if_addrs()?.iter() {
+        if iface.is_loopback() {
+            continue;
+        }
+
+        match (destination, &iface.addr) {
+            (IpAddr::V4(dst_v4), IfAddr::V4(src_v4)) => {
+                if src_v4.ip & src_v4.netmask == dst_v4 & src_v4.netmask {
+                    return Ok(IpAddr::V4(src_v4.ip));
+                }
+            }
+            (IpAddr::V6(dst_v6), IfAddr::V6(src_v6)) => {
+                if src_v6.ip & src_v6.netmask == dst_v6 & src_v6.netmask {
+                    return Ok(IpAddr::V6(src_v6.ip));
+                }
+            }
+            (_, _) => continue,
+        }
+
+        if is_first {
+            is_first = false;
+            first = iface.ip().clone();
+        }
+    }
+
+    return Ok(first);
+}
+
+/// Wraps an OS struct holding a TCP port binding so we own the port while this is held.
+pub struct AllocatedPort {
+    owner: TcpSocket,
+}
+
+impl AllocatedPort {
+    /// Returns the allocated port
+    pub fn port(&self) -> u16 {
+        self.owner
+            .local_addr()
+            .expect("should have been checked to work in allocate_tcp_port already")
+            .port()
+    }
+}
+
+/// Returns an open TCP port that will be kept available by the OS while it is being held.
+pub fn allocate_tcp_port(address: SocketAddr) -> std::io::Result<AllocatedPort> {
+    let tcp_port_socket = match address {
+        SocketAddr::V4(_) => {
+            let r = TcpSocket::new_v4()?;
+            r.bind("0.0.0.0:0".parse().unwrap())?;
+            r
+        }
+        SocketAddr::V6(_) => {
+            let r = TcpSocket::new_v6()?;
+            r.bind("[::]:0".parse().unwrap())?;
+            r
+        }
+    };
+
+    tcp_port_socket.local_addr()?;
+
+    return Ok(AllocatedPort {
+        owner: tcp_port_socket,
+    });
 }
