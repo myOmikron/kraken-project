@@ -19,12 +19,12 @@ import {
     ChangeFromJSONTyped,
     ChangeToJSON,
 } from './Change';
-import type { FindingSection } from './FindingSection';
+import type { EditorTarget } from './EditorTarget';
 import {
-    FindingSectionFromJSON,
-    FindingSectionFromJSONTyped,
-    FindingSectionToJSON,
-} from './FindingSection';
+    EditorTargetFromJSON,
+    EditorTargetFromJSONTyped,
+    EditorTargetToJSON,
+} from './EditorTarget';
 
 /**
  * A finding definition was edited
@@ -33,23 +33,17 @@ import {
  */
 export interface WsClientMessageOneOf {
     /**
-     * The finding definition
-     * @type {string}
-     * @memberof WsClientMessageOneOf
-     */
-    findingDefinition: string;
-    /**
-     * 
-     * @type {FindingSection}
-     * @memberof WsClientMessageOneOf
-     */
-    findingSection: FindingSection;
-    /**
      * 
      * @type {Change}
      * @memberof WsClientMessageOneOf
      */
     change: Change;
+    /**
+     * 
+     * @type {EditorTarget}
+     * @memberof WsClientMessageOneOf
+     */
+    target: EditorTarget;
     /**
      * 
      * @type {string}
@@ -63,7 +57,7 @@ export interface WsClientMessageOneOf {
  * @export
  */
 export const WsClientMessageOneOfTypeEnum = {
-    EditFindingDefinition: 'EditFindingDefinition'
+    EditorChangedContent: 'EditorChangedContent'
 } as const;
 export type WsClientMessageOneOfTypeEnum = typeof WsClientMessageOneOfTypeEnum[keyof typeof WsClientMessageOneOfTypeEnum];
 
@@ -73,9 +67,8 @@ export type WsClientMessageOneOfTypeEnum = typeof WsClientMessageOneOfTypeEnum[k
  */
 export function instanceOfWsClientMessageOneOf(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "findingDefinition" in value;
-    isInstance = isInstance && "findingSection" in value;
     isInstance = isInstance && "change" in value;
+    isInstance = isInstance && "target" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -91,9 +84,8 @@ export function WsClientMessageOneOfFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'findingDefinition': json['finding_definition'],
-        'findingSection': FindingSectionFromJSON(json['finding_section']),
         'change': ChangeFromJSON(json['change']),
+        'target': EditorTargetFromJSON(json['target']),
         'type': json['type'],
     };
 }
@@ -107,9 +99,8 @@ export function WsClientMessageOneOfToJSON(value?: WsClientMessageOneOf | null):
     }
     return {
         
-        'finding_definition': value.findingDefinition,
-        'finding_section': FindingSectionToJSON(value.findingSection),
         'change': ChangeToJSON(value.change),
+        'target': EditorTargetToJSON(value.target),
         'type': value.type,
     };
 }

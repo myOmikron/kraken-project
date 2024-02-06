@@ -9,7 +9,9 @@ use log::{debug, error, warn};
 use uuid::Uuid;
 
 use crate::chan::global::GLOBAL;
-use crate::chan::ws_manager::schema::{Change, FindingSection, WsMessage};
+use crate::chan::ws_manager::schema::{
+    Change, CursorPosition, EditorTarget, FindingSection, WsMessage,
+};
 
 /// Sync editor
 pub struct EditorSync;
@@ -68,9 +70,11 @@ impl EditorSync {
         // Notify all users about the change
         GLOBAL
             .ws
-            .message_all(WsMessage::EditFindingDefinition {
-                finding_definition,
-                finding_section,
+            .message_all(WsMessage::EditorChangedContent {
+                target: EditorTarget::FindingDefinition {
+                    finding_definition,
+                    finding_section,
+                },
                 change,
                 user,
             })
@@ -87,8 +91,7 @@ impl EditorSync {
         user: Uuid,
         finding_definition: Uuid,
         finding_section: FindingSection,
-        line: u64,
-        column: u64,
+        cursor: CursorPosition,
     ) {
         if !self.does_fd_exist(finding_definition).await {
             return;
@@ -101,11 +104,12 @@ impl EditorSync {
 
         GLOBAL
             .ws
-            .message_all(WsMessage::ChangedCursorFindingDefinition {
-                finding_definition,
-                finding_section,
-                line,
-                column,
+            .message_all(WsMessage::EditorChangedCursor {
+                target: EditorTarget::FindingDefinition {
+                    finding_definition,
+                    finding_section,
+                },
+                cursor,
                 user,
             })
             .await;

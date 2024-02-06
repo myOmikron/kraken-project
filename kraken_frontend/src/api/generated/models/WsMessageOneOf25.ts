@@ -19,12 +19,12 @@ import {
     ChangeFromJSONTyped,
     ChangeToJSON,
 } from './Change';
-import type { FindingSection } from './FindingSection';
+import type { EditorTarget } from './EditorTarget';
 import {
-    FindingSectionFromJSON,
-    FindingSectionFromJSONTyped,
-    FindingSectionToJSON,
-} from './FindingSection';
+    EditorTargetFromJSON,
+    EditorTargetFromJSONTyped,
+    EditorTargetToJSON,
+} from './EditorTarget';
 import type { SimpleUser } from './SimpleUser';
 import {
     SimpleUserFromJSON,
@@ -39,18 +39,6 @@ import {
  */
 export interface WsMessageOneOf25 {
     /**
-     * The finding definition in which the change occurred
-     * @type {string}
-     * @memberof WsMessageOneOf25
-     */
-    findingDefinition: string;
-    /**
-     * 
-     * @type {FindingSection}
-     * @memberof WsMessageOneOf25
-     */
-    findingSection: FindingSection;
-    /**
      * 
      * @type {Change}
      * @memberof WsMessageOneOf25
@@ -64,6 +52,12 @@ export interface WsMessageOneOf25 {
     user: SimpleUser;
     /**
      * 
+     * @type {EditorTarget}
+     * @memberof WsMessageOneOf25
+     */
+    target: EditorTarget;
+    /**
+     * 
      * @type {string}
      * @memberof WsMessageOneOf25
      */
@@ -75,7 +69,7 @@ export interface WsMessageOneOf25 {
  * @export
  */
 export const WsMessageOneOf25TypeEnum = {
-    EditFindingDefinition: 'EditFindingDefinition'
+    EditorChangedContent: 'EditorChangedContent'
 } as const;
 export type WsMessageOneOf25TypeEnum = typeof WsMessageOneOf25TypeEnum[keyof typeof WsMessageOneOf25TypeEnum];
 
@@ -85,10 +79,9 @@ export type WsMessageOneOf25TypeEnum = typeof WsMessageOneOf25TypeEnum[keyof typ
  */
 export function instanceOfWsMessageOneOf25(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "findingDefinition" in value;
-    isInstance = isInstance && "findingSection" in value;
     isInstance = isInstance && "change" in value;
     isInstance = isInstance && "user" in value;
+    isInstance = isInstance && "target" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -104,10 +97,9 @@ export function WsMessageOneOf25FromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'findingDefinition': json['finding_definition'],
-        'findingSection': FindingSectionFromJSON(json['finding_section']),
         'change': ChangeFromJSON(json['change']),
         'user': SimpleUserFromJSON(json['user']),
+        'target': EditorTargetFromJSON(json['target']),
         'type': json['type'],
     };
 }
@@ -121,10 +113,9 @@ export function WsMessageOneOf25ToJSON(value?: WsMessageOneOf25 | null): any {
     }
     return {
         
-        'finding_definition': value.findingDefinition,
-        'finding_section': FindingSectionToJSON(value.findingSection),
         'change': ChangeToJSON(value.change),
         'user': SimpleUserToJSON(value.user),
+        'target': EditorTargetToJSON(value.target),
         'type': value.type,
     };
 }

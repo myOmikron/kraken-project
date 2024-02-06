@@ -24,24 +24,18 @@ use crate::api::handler::workspaces::schema::SimpleWorkspace;
 #[serde(tag = "type")]
 pub enum WsClientMessage {
     /// A finding definition was edited
-    EditFindingDefinition {
-        /// The finding definition
-        finding_definition: Uuid,
-        /// The section of the finding definition that was edited
-        finding_section: FindingSection,
+    EditorChangedContent {
         /// The changeset
         change: Change,
+        /// The target of the editor
+        target: EditorTarget,
     },
     /// The cursor position was changed
-    ChangedCursorFindingDefinition {
-        /// The finding definition that is active
-        finding_definition: Uuid,
-        /// The finding section in which the cursor was placed
-        finding_section: FindingSection,
-        /// The line in which the cursor was placed
-        line: u64,
-        /// The column in which the cursor was placed
-        column: u64,
+    EditorChangedCursor {
+        /// The new cursor position
+        cursor: CursorPosition,
+        /// The target of the editor
+        target: EditorTarget,
     },
 }
 
@@ -245,28 +239,37 @@ pub enum WsMessage {
         uuid: Uuid,
     },
     /// A finding definition was updated
-    EditFindingDefinition {
-        /// The finding definition in which the change occurred
-        finding_definition: Uuid,
-        /// The section in which the change occurred
-        finding_section: FindingSection,
+    EditorChangedContent {
         /// The changeset
         change: Change,
         /// The user that has done the change
         user: SimpleUser,
+        /// The target of the editor
+        target: EditorTarget,
     },
-    /// A user has changed its cursor position in a finding definition
-    ChangedCursorFindingDefinition {
+    /// A user has changed its cursor position in an editor
+    EditorChangedCursor {
+        /// The user that changed the position
+        user: SimpleUser,
+        /// The target of the editor
+        target: EditorTarget,
+        /// The new cursor position
+        cursor: CursorPosition,
+    },
+}
+
+/// The target of the editor
+///
+/// Used to specify the target for the editor, for example the
+/// specific section in a [FindingDefinition]
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone, Copy)]
+pub enum EditorTarget {
+    /// The editor for a [FindingDefinition]
+    FindingDefinition {
         /// The finding definition that is active
         finding_definition: Uuid,
         /// The finding section in which the cursor was placed
         finding_section: FindingSection,
-        /// The line the cursor was placed in
-        line: u64,
-        /// The column the cursor was placed in
-        column: u64,
-        /// The user that changed the position
-        user: SimpleUser,
     },
 }
 
@@ -284,7 +287,7 @@ pub enum AggregationType {
 }
 
 /// The section that was edited
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
 #[allow(missing_docs)]
 pub enum FindingSection {
     Summary,
@@ -313,6 +316,17 @@ pub struct Change {
     /// Ending line number
     #[schema(value_type = u64, minimum = 1)]
     pub end_line: NonZeroU64,
+}
+
+/// Defines this position of a cursor
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
+pub struct CursorPosition {
+    /// The line the cursor was placed in
+    #[schema(value_type = u64, minimum = 1)]
+    pub line: NonZeroU64,
+    /// The column the cursor was placed in
+    #[schema(value_type = u64, minimum = 1)]
+    pub column: NonZeroU64,
 }
 
 /// Entry of certificate transparency results

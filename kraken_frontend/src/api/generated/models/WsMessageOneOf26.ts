@@ -13,12 +13,18 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { FindingSection } from './FindingSection';
+import type { CursorPosition } from './CursorPosition';
 import {
-    FindingSectionFromJSON,
-    FindingSectionFromJSONTyped,
-    FindingSectionToJSON,
-} from './FindingSection';
+    CursorPositionFromJSON,
+    CursorPositionFromJSONTyped,
+    CursorPositionToJSON,
+} from './CursorPosition';
+import type { EditorTarget } from './EditorTarget';
+import {
+    EditorTargetFromJSON,
+    EditorTargetFromJSONTyped,
+    EditorTargetToJSON,
+} from './EditorTarget';
 import type { SimpleUser } from './SimpleUser';
 import {
     SimpleUserFromJSON,
@@ -27,41 +33,29 @@ import {
 } from './SimpleUser';
 
 /**
- * A user has changed its cursor position in a finding definition
+ * A user has changed its cursor position in an editor
  * @export
  * @interface WsMessageOneOf26
  */
 export interface WsMessageOneOf26 {
-    /**
-     * The finding definition that is active
-     * @type {string}
-     * @memberof WsMessageOneOf26
-     */
-    findingDefinition: string;
-    /**
-     * 
-     * @type {FindingSection}
-     * @memberof WsMessageOneOf26
-     */
-    findingSection: FindingSection;
-    /**
-     * The line the cursor was placed in
-     * @type {number}
-     * @memberof WsMessageOneOf26
-     */
-    line: number;
-    /**
-     * The column the cursor was placed in
-     * @type {number}
-     * @memberof WsMessageOneOf26
-     */
-    column: number;
     /**
      * 
      * @type {SimpleUser}
      * @memberof WsMessageOneOf26
      */
     user: SimpleUser;
+    /**
+     * 
+     * @type {EditorTarget}
+     * @memberof WsMessageOneOf26
+     */
+    target: EditorTarget;
+    /**
+     * 
+     * @type {CursorPosition}
+     * @memberof WsMessageOneOf26
+     */
+    cursor: CursorPosition;
     /**
      * 
      * @type {string}
@@ -75,7 +69,7 @@ export interface WsMessageOneOf26 {
  * @export
  */
 export const WsMessageOneOf26TypeEnum = {
-    ChangedCursorFindingDefinition: 'ChangedCursorFindingDefinition'
+    EditorChangedCursor: 'EditorChangedCursor'
 } as const;
 export type WsMessageOneOf26TypeEnum = typeof WsMessageOneOf26TypeEnum[keyof typeof WsMessageOneOf26TypeEnum];
 
@@ -85,11 +79,9 @@ export type WsMessageOneOf26TypeEnum = typeof WsMessageOneOf26TypeEnum[keyof typ
  */
 export function instanceOfWsMessageOneOf26(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "findingDefinition" in value;
-    isInstance = isInstance && "findingSection" in value;
-    isInstance = isInstance && "line" in value;
-    isInstance = isInstance && "column" in value;
     isInstance = isInstance && "user" in value;
+    isInstance = isInstance && "target" in value;
+    isInstance = isInstance && "cursor" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -105,11 +97,9 @@ export function WsMessageOneOf26FromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'findingDefinition': json['finding_definition'],
-        'findingSection': FindingSectionFromJSON(json['finding_section']),
-        'line': json['line'],
-        'column': json['column'],
         'user': SimpleUserFromJSON(json['user']),
+        'target': EditorTargetFromJSON(json['target']),
+        'cursor': CursorPositionFromJSON(json['cursor']),
         'type': json['type'],
     };
 }
@@ -123,11 +113,9 @@ export function WsMessageOneOf26ToJSON(value?: WsMessageOneOf26 | null): any {
     }
     return {
         
-        'finding_definition': value.findingDefinition,
-        'finding_section': FindingSectionToJSON(value.findingSection),
-        'line': value.line,
-        'column': value.column,
         'user': SimpleUserToJSON(value.user),
+        'target': EditorTargetToJSON(value.target),
+        'cursor': CursorPositionToJSON(value.cursor),
         'type': value.type,
     };
 }

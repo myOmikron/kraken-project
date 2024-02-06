@@ -13,7 +13,7 @@ use tokio::sync::Mutex;
 
 use crate::api::extractors::SessionUser;
 use crate::chan::global::GLOBAL;
-use crate::chan::ws_manager::schema::{WsClientMessage, WsMessage};
+use crate::chan::ws_manager::schema::{EditorTarget, WsClientMessage, WsMessage};
 
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -86,9 +86,12 @@ pub async fn websocket(
                         Message::Text(data) => {
                             match serde_json::from_str::<WsClientMessage>(data.as_ref()) {
                                 Ok(msg) => match msg {
-                                    WsClientMessage::EditFindingDefinition {
-                                        finding_definition,
-                                        finding_section,
+                                    WsClientMessage::EditorChangedContent {
+                                        target:
+                                            EditorTarget::FindingDefinition {
+                                                finding_definition,
+                                                finding_section,
+                                            },
                                         change,
                                     } => {
                                         tokio::spawn(async move {
@@ -103,11 +106,13 @@ pub async fn websocket(
                                                 .await;
                                         });
                                     }
-                                    WsClientMessage::ChangedCursorFindingDefinition {
-                                        finding_definition,
-                                        finding_section,
-                                        line,
-                                        column,
+                                    WsClientMessage::EditorChangedCursor {
+                                        target:
+                                            EditorTarget::FindingDefinition {
+                                                finding_definition,
+                                                finding_section,
+                                            },
+                                        cursor,
                                     } => {
                                         tokio::spawn(async move {
                                             GLOBAL
@@ -116,8 +121,7 @@ pub async fn websocket(
                                                     user_uuid,
                                                     finding_definition,
                                                     finding_section,
-                                                    line,
-                                                    column,
+                                                    cursor,
                                                 )
                                                 .await;
                                         });

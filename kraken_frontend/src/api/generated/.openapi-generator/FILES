@@ -45,6 +45,7 @@ models/CreateUserRequest.ts
 models/CreateWordlistRequest.ts
 models/CreateWorkspaceRequest.ts
 models/CreateWorkspaceTagRequest.ts
+models/CursorPosition.ts
 models/DnsResolutionRequest.ts
 models/DnsResolutionResultsPage.ts
 models/DnsTxtScanEntry.ts
@@ -61,6 +62,9 @@ models/DomainCertainty.ts
 models/DomainOrNetwork.ts
 models/DomainRelations.ts
 models/DomainResultsPage.ts
+models/EditorTarget.ts
+models/EditorTargetOneOf.ts
+models/EditorTargetOneOfFindingDefinition.ts
 models/FindingSection.ts
 models/FindingSeverity.ts
 models/FinishRegisterRequest.ts

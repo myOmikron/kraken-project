@@ -13,12 +13,18 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { FindingSection } from './FindingSection';
+import type { CursorPosition } from './CursorPosition';
 import {
-    FindingSectionFromJSON,
-    FindingSectionFromJSONTyped,
-    FindingSectionToJSON,
-} from './FindingSection';
+    CursorPositionFromJSON,
+    CursorPositionFromJSONTyped,
+    CursorPositionToJSON,
+} from './CursorPosition';
+import type { EditorTarget } from './EditorTarget';
+import {
+    EditorTargetFromJSON,
+    EditorTargetFromJSONTyped,
+    EditorTargetToJSON,
+} from './EditorTarget';
 
 /**
  * The cursor position was changed
@@ -27,29 +33,17 @@ import {
  */
 export interface WsClientMessageOneOf1 {
     /**
-     * The finding definition that is active
-     * @type {string}
+     * 
+     * @type {CursorPosition}
      * @memberof WsClientMessageOneOf1
      */
-    findingDefinition: string;
+    cursor: CursorPosition;
     /**
      * 
-     * @type {FindingSection}
+     * @type {EditorTarget}
      * @memberof WsClientMessageOneOf1
      */
-    findingSection: FindingSection;
-    /**
-     * The line in which the cursor was placed
-     * @type {number}
-     * @memberof WsClientMessageOneOf1
-     */
-    line: number;
-    /**
-     * The column in which the cursor was placed
-     * @type {number}
-     * @memberof WsClientMessageOneOf1
-     */
-    column: number;
+    target: EditorTarget;
     /**
      * 
      * @type {string}
@@ -63,7 +57,7 @@ export interface WsClientMessageOneOf1 {
  * @export
  */
 export const WsClientMessageOneOf1TypeEnum = {
-    ChangedCursorFindingDefinition: 'ChangedCursorFindingDefinition'
+    EditorChangedCursor: 'EditorChangedCursor'
 } as const;
 export type WsClientMessageOneOf1TypeEnum = typeof WsClientMessageOneOf1TypeEnum[keyof typeof WsClientMessageOneOf1TypeEnum];
 
@@ -73,10 +67,8 @@ export type WsClientMessageOneOf1TypeEnum = typeof WsClientMessageOneOf1TypeEnum
  */
 export function instanceOfWsClientMessageOneOf1(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "findingDefinition" in value;
-    isInstance = isInstance && "findingSection" in value;
-    isInstance = isInstance && "line" in value;
-    isInstance = isInstance && "column" in value;
+    isInstance = isInstance && "cursor" in value;
+    isInstance = isInstance && "target" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -92,10 +84,8 @@ export function WsClientMessageOneOf1FromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'findingDefinition': json['finding_definition'],
-        'findingSection': FindingSectionFromJSON(json['finding_section']),
-        'line': json['line'],
-        'column': json['column'],
+        'cursor': CursorPositionFromJSON(json['cursor']),
+        'target': EditorTargetFromJSON(json['target']),
         'type': json['type'],
     };
 }
@@ -109,10 +99,8 @@ export function WsClientMessageOneOf1ToJSON(value?: WsClientMessageOneOf1 | null
     }
     return {
         
-        'finding_definition': value.findingDefinition,
-        'finding_section': FindingSectionToJSON(value.findingSection),
-        'line': value.line,
-        'column': value.column,
+        'cursor': CursorPositionToJSON(value.cursor),
+        'target': EditorTargetToJSON(value.target),
         'type': value.type,
     };
 }
