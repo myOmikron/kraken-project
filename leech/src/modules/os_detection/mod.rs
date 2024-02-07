@@ -425,6 +425,91 @@ fn aggregate_os_results(infos: &[OperatingSystemInfo]) -> Option<OperatingSystem
                 hint: HashSet::from_iter(lhint.into_iter().chain(rhint.into_iter())),
             },
             (OperatingSystemInfo::Unknown { hint }, defined) => defined.with_hints(hint),
+            (
+                OperatingSystemInfo::Linux {
+                    distro: ldistro,
+                    kernel_version: lkernel_version,
+                    hint: lhint,
+                },
+                OperatingSystemInfo::Linux {
+                    distro: rdistro,
+                    kernel_version: rkernel_version,
+                    hint: rhint,
+                },
+            ) => OperatingSystemInfo::Linux {
+                distro: HashSet::from_iter(ldistro.into_iter().chain(rdistro.into_iter())),
+                kernel_version: HashSet::from_iter(
+                    lkernel_version
+                        .into_iter()
+                        .chain(rkernel_version.into_iter()),
+                ),
+                hint: HashSet::from_iter(lhint.into_iter().chain(rhint.into_iter())),
+            },
+            (
+                OperatingSystemInfo::BSD {
+                    version: lversion,
+                    hint: lhint,
+                },
+                OperatingSystemInfo::BSD {
+                    version: rversion,
+                    hint: rhint,
+                },
+            ) => OperatingSystemInfo::BSD {
+                version: HashSet::from_iter(lversion.into_iter().chain(rversion.into_iter())),
+                hint: HashSet::from_iter(lhint.into_iter().chain(rhint.into_iter())),
+            },
+            (
+                OperatingSystemInfo::Android {
+                    version: lversion,
+                    hint: lhint,
+                },
+                OperatingSystemInfo::Android {
+                    version: rversion,
+                    hint: rhint,
+                },
+            ) => OperatingSystemInfo::Android {
+                version: HashSet::from_iter(lversion.into_iter().chain(rversion.into_iter())),
+                hint: HashSet::from_iter(lhint.into_iter().chain(rhint.into_iter())),
+            },
+            (
+                OperatingSystemInfo::OSX {
+                    version: lversion,
+                    hint: lhint,
+                },
+                OperatingSystemInfo::OSX {
+                    version: rversion,
+                    hint: rhint,
+                },
+            ) => OperatingSystemInfo::OSX {
+                version: HashSet::from_iter(lversion.into_iter().chain(rversion.into_iter())),
+                hint: HashSet::from_iter(lhint.into_iter().chain(rhint.into_iter())),
+            },
+            (
+                OperatingSystemInfo::IOS {
+                    version: lversion,
+                    hint: lhint,
+                },
+                OperatingSystemInfo::IOS {
+                    version: rversion,
+                    hint: rhint,
+                },
+            ) => OperatingSystemInfo::IOS {
+                version: HashSet::from_iter(lversion.into_iter().chain(rversion.into_iter())),
+                hint: HashSet::from_iter(lhint.into_iter().chain(rhint.into_iter())),
+            },
+            (
+                OperatingSystemInfo::Windows {
+                    version: lversion,
+                    hint: lhint,
+                },
+                OperatingSystemInfo::Windows {
+                    version: rversion,
+                    hint: rhint,
+                },
+            ) => OperatingSystemInfo::Windows {
+                version: HashSet::from_iter(lversion.into_iter().chain(rversion.into_iter())),
+                hint: HashSet::from_iter(lhint.into_iter().chain(rhint.into_iter())),
+            },
             (_, _) => return None,
         };
     }
@@ -435,7 +520,7 @@ fn aggregate_os_results(infos: &[OperatingSystemInfo]) -> Option<OperatingSystem
 /// Calls a bunch of OS detection methods to try to find out the operating system running on the given host IP address.
 pub async fn os_detection(ip_addr: IpAddr) -> Result<OperatingSystemInfo, OsDetectionError> {
     let (opened_port, _closed_port) =
-        find_open_and_closed_port(ip_addr, Duration::from_millis(1000), 32).await?;
+        find_open_and_closed_port(ip_addr, Duration::from_millis(2000), 16).await?;
 
     let mut tasks = JoinSet::new();
 
@@ -445,7 +530,7 @@ pub async fn os_detection(ip_addr: IpAddr) -> Result<OperatingSystemInfo, OsDete
     ));
     tasks.spawn(os_detect_ssh(
         ip_addr,
-        Duration::from_millis(500),
+        Duration::from_millis(1500),
         Duration::from_millis(4000),
     ));
 
@@ -543,7 +628,12 @@ async fn os_detect_ssh(
         timeout: recv_timeout,
         always_run_everything: true,
     };
-    let Ok(result) = timeout(total_timeout, settings.probe_tls(b"", None)).await else {
+    let Ok(result) = timeout(
+        total_timeout,
+        settings.probe_tcp(b"SSH-2.0-OpenSSH_9.6\r\n"),
+    )
+    .await
+    else {
         // timeout
         return Ok(OperatingSystemInfo::default());
     };
@@ -553,20 +643,102 @@ async fn os_detect_ssh(
         // without proper error information for us to match on.
         return Ok(OperatingSystemInfo::default());
     };
-    match result {
-        Ok(data) => {
-            return if data.starts_with(b"SSH-") {
-                Ok(os_detect_ssh_header(&data))
-            } else {
-                Ok(OperatingSystemInfo::default())
+
+    if let Some(data) = result {
+        if data.starts_with(b"SSH-") {
+            if let Some(end) = data.iter().find_position(|&&c| c == b'\r' || c == b'\n') {
+                return Ok(os_detect_ssh_header(&data[0..end.0]));
             }
         }
-        // TLS error: ignore
-        Err(_) => Ok(OperatingSystemInfo::default()),
     }
+
+    Ok(OperatingSystemInfo::default())
 }
 
 fn os_detect_ssh_header(header: &[u8]) -> OperatingSystemInfo {
-    // TODO
-    OperatingSystemInfo::unknown(Some(String::from_utf8_lossy(header).to_string()))
+    if &header[0..8] != b"SSH-2.0-" {
+        return OperatingSystemInfo::default();
+    }
+
+    let hint = Some(String::from_utf8_lossy(header).to_string());
+    let header = &header[8..];
+    let contains = |needle: &[u8]| header.windows(needle.len()).contains(&needle);
+
+    // TODO: this list should probably be some external text files, there might be a public repository for these strings
+    // with a compatible license on the internet as well.
+    if header == b"OpenSSH_7.2p2 Ubuntu-4ubuntu2.10" {
+        OperatingSystemInfo::linux(
+            Some((LinuxDistro::Ubuntu, Some(String::from("16")))),
+            None,
+            hint,
+        )
+    } else if header == b"OpenSSH_7.6p1 Ubuntu-4ubuntu0.7" {
+        OperatingSystemInfo::linux(
+            Some((LinuxDistro::Ubuntu, Some(String::from("18")))),
+            None,
+            hint,
+        )
+    } else if header == b"OpenSSH_8.2p1 Ubuntu-4ubuntu0.11" {
+        OperatingSystemInfo::linux(
+            Some((LinuxDistro::Ubuntu, Some(String::from("20")))),
+            None,
+            hint,
+        )
+    } else if header == b"OpenSSH_8.9p1 Ubuntu-3ubuntu0.6" {
+        OperatingSystemInfo::linux(
+            Some((LinuxDistro::Ubuntu, Some(String::from("22")))),
+            None,
+            hint,
+        )
+    } else if contains(b"Ubuntu") || contains(b"ubuntu") {
+        OperatingSystemInfo::linux(Some((LinuxDistro::Ubuntu, None)), None, hint)
+    } else if contains(b"Debian") || contains(b"debian") {
+        if contains(b"+deb7u") {
+            OperatingSystemInfo::linux(
+                Some((LinuxDistro::Debian, Some(String::from("7")))),
+                None,
+                hint,
+            )
+        } else if contains(b"+deb8u") {
+            OperatingSystemInfo::linux(
+                Some((LinuxDistro::Debian, Some(String::from("8")))),
+                None,
+                hint,
+            )
+        } else if contains(b"+deb9u") {
+            OperatingSystemInfo::linux(
+                Some((LinuxDistro::Debian, Some(String::from("9")))),
+                None,
+                hint,
+            )
+        } else if contains(b"+deb10u") {
+            OperatingSystemInfo::linux(
+                Some((LinuxDistro::Debian, Some(String::from("10")))),
+                None,
+                hint,
+            )
+        } else if contains(b"+deb11u") {
+            OperatingSystemInfo::linux(
+                Some((LinuxDistro::Debian, Some(String::from("11")))),
+                None,
+                hint,
+            )
+        } else if contains(b"+deb12u") {
+            OperatingSystemInfo::linux(
+                Some((LinuxDistro::Debian, Some(String::from("12")))),
+                None,
+                hint,
+            )
+        } else {
+            OperatingSystemInfo::linux(Some((LinuxDistro::Debian, None)), None, hint)
+        }
+    } else if contains(b"FreeBSD") {
+        OperatingSystemInfo::bsd(Some(String::from("FreeBSD")), hint)
+    } else if contains(b"NetBSD") {
+        OperatingSystemInfo::bsd(Some(String::from("NetBSD")), hint)
+    } else if contains(b"OpenSSH_for_Windows") || contains(b"Windows") || contains(b"windows") {
+        OperatingSystemInfo::windows(None, hint)
+    } else {
+        OperatingSystemInfo::unknown(hint)
+    }
 }

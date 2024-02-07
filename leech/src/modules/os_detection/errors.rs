@@ -12,8 +12,8 @@ use crate::modules::os_detection::OperatingSystemInfo;
 /// OS detection error types
 #[derive(Debug, Error)]
 pub enum OsDetectionError {
-    /// OS detection procedures reported too different operating systems.
-    #[error("OS detection procedures reported too different operating systems. ({0:?})")]
+    /// OS detection procedures reported multiple different operating systems.
+    #[error("OS detection procedures reported multiple different operating systems. ({0:?})")]
     Ambiguous(Vec<OperatingSystemInfo>),
     /// Error joining a task
     #[error("Error joining task: {0}")]
