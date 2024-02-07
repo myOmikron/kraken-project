@@ -24,8 +24,6 @@ pub mod tcp_fingerprint;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Hash)]
 #[allow(missing_docs)]
 pub enum LinuxDistro {
-    /// used with other/unknown distros but with detected extra version information
-    Generic,
     ArchLinux,
     CentOS,
     Debian,
@@ -40,8 +38,6 @@ pub enum LinuxDistro {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Hash)]
 #[allow(missing_docs)]
 pub enum WindowsVersion {
-    /// used with other/unknown distros but with detected extra version information
-    Generic,
     WindowsXP,
     WindowsVista,
     Windows7,
@@ -62,7 +58,6 @@ pub enum WindowsVersion {
 impl Display for WindowsVersion {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            WindowsVersion::Generic => write!(f, "Windows"),
             WindowsVersion::WindowsXP => write!(f, "Windows XP"),
             WindowsVersion::WindowsVista => write!(f, "Windows Vista"),
             WindowsVersion::Windows7 => write!(f, "Windows 7"),
