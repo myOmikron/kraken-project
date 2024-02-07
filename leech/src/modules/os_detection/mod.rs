@@ -1,10 +1,12 @@
 //! OS detection for a host, based on an ever-growing collection of probes
 
 use std::collections::HashSet;
+use std::fmt::{Display, Formatter};
 use std::net::{IpAddr, SocketAddr};
 use std::time::Duration;
 
-use log::trace;
+use itertools::Itertools;
+use log::debug;
 use tokio::task::JoinSet;
 use tokio::time::timeout;
 
@@ -55,6 +57,29 @@ pub enum WindowsVersion {
     Server2019,
     Server2022,
     Server2025,
+}
+
+impl Display for WindowsVersion {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            WindowsVersion::Generic => write!(f, "Windows"),
+            WindowsVersion::WindowsXP => write!(f, "Windows XP"),
+            WindowsVersion::WindowsVista => write!(f, "Windows Vista"),
+            WindowsVersion::Windows7 => write!(f, "Windows 7"),
+            WindowsVersion::Windows8 => write!(f, "Windows 8"),
+            WindowsVersion::Windows8_1 => write!(f, "Windows 8.1"),
+            WindowsVersion::Windows10 => write!(f, "Windows 10"),
+            WindowsVersion::Windows11 => write!(f, "Windows 11"),
+            WindowsVersion::Server2000 => write!(f, "Windows Server 2000"),
+            WindowsVersion::Server2003 => write!(f, "Windows Server 2003"),
+            WindowsVersion::Server2008 => write!(f, "Windows Server 2008"),
+            WindowsVersion::Server2012 => write!(f, "Windows Server 2012"),
+            WindowsVersion::Server2016 => write!(f, "Windows Server 2016"),
+            WindowsVersion::Server2019 => write!(f, "Windows Server 2019"),
+            WindowsVersion::Server2022 => write!(f, "Windows Server 2022"),
+            WindowsVersion::Server2025 => write!(f, "Windows Server 2025"),
+        }
+    }
 }
 
 /// Information about a detected operating system.
@@ -170,6 +195,19 @@ impl OperatingSystemInfo {
                 version,
                 hint: HashSet::from_iter(hint.into_iter().chain(extra_hints.into_iter())),
             },
+        }
+    }
+
+    /// Returns the `hint` value that is present in every OS info type.
+    pub fn hints(&self) -> &HashSet<String> {
+        match self {
+            OperatingSystemInfo::Unknown { hint } => hint,
+            OperatingSystemInfo::Linux { hint, .. } => hint,
+            OperatingSystemInfo::BSD { hint, .. } => hint,
+            OperatingSystemInfo::Android { hint, .. } => hint,
+            OperatingSystemInfo::OSX { hint, .. } => hint,
+            OperatingSystemInfo::IOS { hint, .. } => hint,
+            OperatingSystemInfo::Windows { hint, .. } => hint,
         }
     }
 
@@ -290,6 +328,83 @@ impl Default for OperatingSystemInfo {
     }
 }
 
+impl Display for OperatingSystemInfo {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            OperatingSystemInfo::Unknown { .. } => write!(f, "Unknown"),
+            OperatingSystemInfo::Linux {
+                distro,
+                kernel_version,
+                ..
+            } => {
+                write!(f, "Linux")?;
+                if !distro.is_empty() {
+                    write!(
+                        f,
+                        " {}",
+                        distro
+                            .iter()
+                            .map(|(distro, v)| match v {
+                                None => format!("{distro:?}"),
+                                Some(v) => format!("{distro:?} {v}"),
+                            })
+                            .join(" OR ")
+                    )?;
+                }
+                if !kernel_version.is_empty() {
+                    write!(f, " (kernel {})", kernel_version.iter().join(" OR "))?;
+                }
+                Ok(())
+            }
+            OperatingSystemInfo::BSD { version, .. } => {
+                write!(f, "BSD")?;
+                if !version.is_empty() {
+                    write!(f, " {}", version.iter().join(" OR "))?;
+                }
+                Ok(())
+            }
+            OperatingSystemInfo::Android { version, .. } => {
+                write!(f, "Android")?;
+                if !version.is_empty() {
+                    write!(f, " {}", version.iter().join(" OR "))?;
+                }
+                Ok(())
+            }
+            OperatingSystemInfo::OSX { version, .. } => {
+                write!(f, "OSX")?;
+                if !version.is_empty() {
+                    write!(f, " {}", version.iter().join(" OR "))?;
+                }
+                Ok(())
+            }
+            OperatingSystemInfo::IOS { version, .. } => {
+                write!(f, "iOS")?;
+                if !version.is_empty() {
+                    write!(f, " {}", version.iter().join(" OR "))?;
+                }
+                Ok(())
+            }
+            OperatingSystemInfo::Windows { version, .. } => {
+                if version.is_empty() {
+                    write!(f, "Windows")
+                } else {
+                    write!(
+                        f,
+                        "{}",
+                        version
+                            .iter()
+                            .map(|(ver, v)| match v {
+                                None => format!("{ver}"),
+                                Some(v) => format!("{ver} {v}"),
+                            })
+                            .join(" OR ")
+                    )
+                }
+            }
+        }
+    }
+}
+
 fn aggregate_os_results(infos: &[OperatingSystemInfo]) -> Option<OperatingSystemInfo> {
     if infos.is_empty() {
         return None;
@@ -337,7 +452,7 @@ pub async fn os_detection(ip_addr: IpAddr) -> Result<OperatingSystemInfo, OsDete
     let mut found = Vec::new();
 
     while let Some(result) = tasks.join_next().await {
-        trace!("Found OS detection partial result: {result:?}");
+        debug!("Found OS detection partial result: {result:?}");
         found.push(result??);
     }
 

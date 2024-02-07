@@ -665,13 +665,29 @@ async fn main() -> Result<(), Box<dyn Error>> {
                             Duration::from_millis(timeout),
                         )
                         .await?;
-                        print!("Fingerprint: {fp}");
+                        println!("Fingerprint: {fp}");
                     }
                     RunCommand::OsDetection { ip, timeout } => {
                         let os =
                             tokio::time::timeout(Duration::from_millis(timeout), os_detection(ip))
                                 .await?;
-                        print!("Result: {os:?}");
+
+                        match os {
+                            Ok(os) => {
+                                println!("OS detection result:");
+                                println!("- likely OS: {}", os);
+                                let hints = os.hints();
+                                if !hints.is_empty() {
+                                    println!("- hints:");
+                                    for hint in hints {
+                                        println!("\t- {hint}");
+                                    }
+                                }
+                            }
+                            Err(err) => {
+                                println!("Failed detecting OS: {err}")
+                            }
+                        }
                     }
                 }
             }
