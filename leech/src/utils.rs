@@ -180,11 +180,11 @@ pub fn find_source_ip(destination: IpAddr) -> std::io::Result<IpAddr> {
 
         if is_first {
             is_first = false;
-            first = iface.ip().clone();
+            first = iface.ip();
         }
     }
 
-    return Ok(first);
+    Ok(first)
 }
 
 /// Wraps an OS struct holding a TCP port binding so we own the port while this is held.
@@ -219,7 +219,7 @@ pub fn allocate_tcp_port(address: SocketAddr) -> std::io::Result<AllocatedPort> 
 
     tcp_port_socket.local_addr()?;
 
-    return Ok(AllocatedPort {
+    Ok(AllocatedPort {
         owner: tcp_port_socket,
-    });
+    })
 }

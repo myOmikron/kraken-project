@@ -164,7 +164,7 @@ impl OperatingSystemInfo {
     pub fn with_hints(self, extra_hints: HashSet<String>) -> OperatingSystemInfo {
         match self {
             OperatingSystemInfo::Unknown { hint } => OperatingSystemInfo::Unknown {
-                hint: HashSet::from_iter(hint.into_iter().chain(extra_hints.into_iter())),
+                hint: HashSet::from_iter(hint.into_iter().chain(extra_hints)),
             },
             OperatingSystemInfo::Linux {
                 distro,
@@ -173,27 +173,27 @@ impl OperatingSystemInfo {
             } => OperatingSystemInfo::Linux {
                 distro,
                 kernel_version,
-                hint: HashSet::from_iter(hint.into_iter().chain(extra_hints.into_iter())),
+                hint: HashSet::from_iter(hint.into_iter().chain(extra_hints)),
             },
             OperatingSystemInfo::BSD { version, hint } => OperatingSystemInfo::BSD {
                 version,
-                hint: HashSet::from_iter(hint.into_iter().chain(extra_hints.into_iter())),
+                hint: HashSet::from_iter(hint.into_iter().chain(extra_hints)),
             },
             OperatingSystemInfo::Android { version, hint } => OperatingSystemInfo::Android {
                 version,
-                hint: HashSet::from_iter(hint.into_iter().chain(extra_hints.into_iter())),
+                hint: HashSet::from_iter(hint.into_iter().chain(extra_hints)),
             },
             OperatingSystemInfo::OSX { version, hint } => OperatingSystemInfo::OSX {
                 version,
-                hint: HashSet::from_iter(hint.into_iter().chain(extra_hints.into_iter())),
+                hint: HashSet::from_iter(hint.into_iter().chain(extra_hints)),
             },
             OperatingSystemInfo::IOS { version, hint } => OperatingSystemInfo::IOS {
                 version,
-                hint: HashSet::from_iter(hint.into_iter().chain(extra_hints.into_iter())),
+                hint: HashSet::from_iter(hint.into_iter().chain(extra_hints)),
             },
             OperatingSystemInfo::Windows { version, hint } => OperatingSystemInfo::Windows {
                 version,
-                hint: HashSet::from_iter(hint.into_iter().chain(extra_hints.into_iter())),
+                hint: HashSet::from_iter(hint.into_iter().chain(extra_hints)),
             },
         }
     }
@@ -412,7 +412,7 @@ fn aggregate_os_results(infos: &[OperatingSystemInfo]) -> Option<OperatingSystem
 
     let mut combined = infos[0].clone();
     for info in &infos[1..] {
-        let (lhs, rhs) = if &combined.kind() < &info.kind() {
+        let (lhs, rhs) = if combined.kind() < info.kind() {
             (combined, info.clone())
         } else {
             (info.clone(), combined)
@@ -541,7 +541,7 @@ pub async fn os_detection(ip_addr: IpAddr) -> Result<OperatingSystemInfo, OsDete
         found.push(result??);
     }
 
-    return aggregate_os_results(&found).ok_or(OsDetectionError::Ambiguous(found));
+    aggregate_os_results(&found).ok_or(OsDetectionError::Ambiguous(found))
 }
 
 /// Opens half a TCP connection and reads implementation-defined characteristics from the initial SYN/ACK.
@@ -597,7 +597,7 @@ fn fingerprint_os_lookup(
     let fingerprint = &fingerprint.to_string();
     for (os, pattern) in known {
         let mut matches = true;
-        for (expected, actual) in pattern.split(':').zip(fingerprint.split(':')).into_iter() {
+        for (expected, actual) in pattern.split(':').zip(fingerprint.split(':')) {
             if expected != "*" && expected != actual {
                 matches = false;
                 break;

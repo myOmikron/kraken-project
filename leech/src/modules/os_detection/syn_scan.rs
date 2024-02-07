@@ -44,7 +44,7 @@ fn make_ipv6_headers(ext: &Ipv6ExtensionsSlice) -> Ipv6Extensions {
         }
     }
 
-    return ret;
+    ret
 }
 
 /// Sends out the given raw SYN packet and awaits an incoming matching SYN ACK response
@@ -75,7 +75,7 @@ pub async fn tcp_get_syn_ack(
         vlan: ElementFilter::Any,
     };
 
-    socket.send_to(&syn, address).await?;
+    socket.send_to(syn, address).await?;
 
     let mut buf = [0u8; 256];
 
@@ -222,5 +222,5 @@ pub async fn find_open_and_closed_port(
         }
     }
 
-    return Err(RawTcpError::NoPortsFound);
+    Err(RawTcpError::NoPortsFound)
 }
