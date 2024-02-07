@@ -9,7 +9,7 @@ use etherparse::{
     TcpOptionElement, TransportSlice,
 };
 use futures::{stream, StreamExt, TryFutureExt};
-use log::{debug, trace};
+use log::trace;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use socket2::{Domain, Protocol};

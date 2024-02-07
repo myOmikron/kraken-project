@@ -32,9 +32,9 @@ pub struct TcpFingerprint {
     pub payload_len: u8,
     /// IPv4: the time-to-live header field of the IP header
     /// IPv6: the hop limit header field of the IP header
+    /// For the fingerprint this is evaluated as `(ttl - 1) / 0x40 + 1` to get a rough estimation of the range for the
+    /// source TTL.
     pub ttl: u8,
-    /// The TCP data offset header field value.
-    pub data_offset: u8,
     /// The TCP window size header field value.
     pub window_size: u16,
     /// The last TCP window scale header field value.
@@ -58,8 +58,7 @@ impl Display for TcpFingerprint {
         write!(f, "{:x}:", flags1)?;
         write!(f, "{:x}:", flags2)?;
         write!(f, "{:x}:", self.payload_len)?;
-        write!(f, "{:x}:", self.ttl)?;
-        write!(f, "{:x}:", self.data_offset)?;
+        write!(f, "{:x}:", (self.ttl - 1) / 0x40 + 1)?;
         write!(f, "{:x}:", self.window_size)?;
         write!(f, "{:x}:", self.window_scale)?;
         write!(f, "{:x}:", self.mss)?;
@@ -186,7 +185,6 @@ async fn fingerprint_tcp_impl(address: SocketAddr) -> Result<TcpFingerprint, Raw
             IpHeader::Version4(header, _) => header.time_to_live,
             IpHeader::Version6(header, _) => header.hop_limit,
         },
-        data_offset: tcp.data_offset(),
         window_size: tcp.window_size,
         window_scale,
         mss,

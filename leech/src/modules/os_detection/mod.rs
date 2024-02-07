@@ -4,9 +4,11 @@ use std::collections::HashSet;
 use std::net::{IpAddr, SocketAddr};
 use std::time::Duration;
 
+use log::trace;
 use tokio::task::JoinSet;
+use tokio::time::timeout;
 
-use crate::modules::os_detection::errors::{OsDetectionError, RawTcpError, TcpFingerprintError};
+use crate::modules::os_detection::errors::{OsDetectionError, TcpFingerprintError};
 use crate::modules::os_detection::syn_scan::find_open_and_closed_port;
 use crate::modules::os_detection::tcp_fingerprint::{fingerprint_tcp, TcpFingerprint};
 use crate::modules::service_detection::DetectServiceSettings;
@@ -322,15 +324,20 @@ pub async fn os_detection(ip_addr: IpAddr) -> Result<OperatingSystemInfo, OsDete
 
     let mut tasks = JoinSet::new();
 
-    tasks.spawn(os_detect_tcp_fingerprint(SocketAddr::new(
+    tasks.spawn(os_detect_tcp_fingerprint(
+        SocketAddr::new(ip_addr, opened_port),
+        Duration::from_millis(4000),
+    ));
+    tasks.spawn(os_detect_ssh(
         ip_addr,
-        opened_port,
-    )));
-    tasks.spawn(os_detect_ssh(ip_addr));
+        Duration::from_millis(500),
+        Duration::from_millis(4000),
+    ));
 
     let mut found = Vec::new();
 
     while let Some(result) = tasks.join_next().await {
+        trace!("Found OS detection partial result: {result:?}");
         found.push(result??);
     }
 
@@ -342,8 +349,9 @@ pub async fn os_detection(ip_addr: IpAddr) -> Result<OperatingSystemInfo, OsDete
 /// Calls `fingerprint_tcp` and looks up matching fingerprints from a hardcoded fingerprint database.
 async fn os_detect_tcp_fingerprint(
     addr: SocketAddr,
+    total_timeout: Duration,
 ) -> Result<OperatingSystemInfo, OsDetectionError> {
-    match fingerprint_tcp(addr, Duration::from_millis(4000)).await {
+    match fingerprint_tcp(addr, total_timeout).await {
         Ok(fingerprint) => fingerprint_os_lookup(fingerprint),
         Err(err) => match err {
             TcpFingerprintError::ConnectionTimeout => Ok(OperatingSystemInfo::default()),
@@ -358,23 +366,31 @@ fn fingerprint_os_lookup(
     let known = [
         (
             OperatingSystemInfo::windows(None, None),
-            "8:3:28:80:a:*:8:5b4:64312",
+            "8:3:28:2:*:8:5b4:64312",
+        ),
+        (
+            OperatingSystemInfo::windows(None, None),
+            "8:1:20:2:ffff:8:5b4:411312",
         ),
         (
             OperatingSystemInfo::linux(None, None, None),
-            "8:2:28:40:a:*:7:*:31642",
+            "8:2:28:1:*:7:*:31642",
+        ),
+        (
+            OperatingSystemInfo::linux(None, None, None),
+            "8:2:28:1:a9b0:b:*:31642",
         ),
         (
             OperatingSystemInfo::bsd(Some(String::from("OpenBSD")), None),
-            "8:3:2c:40:b:4000:6:5b4:611314112",
+            "8:3:2c:1:4000:6:5b4:611314112",
         ),
         (
             OperatingSystemInfo::bsd(Some(String::from("FreeBSD")), None),
-            "8:2:*:*:*:*:*:5b4:*",
+            "8:2:*:*:*:*:5b4:*",
         ),
         (
             OperatingSystemInfo::bsd(Some(String::from("NetBSD")), None),
-            "8:2:28:40:a:*:3:5b4:64312",
+            "8:2:28:1:*:3:5b4:64312",
         ),
     ];
 
@@ -402,13 +418,22 @@ fn fingerprint_os_lookup(
 }
 
 /// Opens a TLS connection on ip_addr with port 22 and reads out the SSH banner.
-async fn os_detect_ssh(ip_addr: IpAddr) -> Result<OperatingSystemInfo, OsDetectionError> {
+async fn os_detect_ssh(
+    ip_addr: IpAddr,
+    recv_timeout: Duration,
+    total_timeout: Duration,
+) -> Result<OperatingSystemInfo, OsDetectionError> {
     let settings = DetectServiceSettings {
         socket: SocketAddr::new(ip_addr, 22),
-        timeout: Duration::from_millis(4000),
+        timeout: recv_timeout,
         always_run_everything: true,
     };
-    let Ok(result) = settings.probe_tls(b"", None).await else {
+    let Ok(result) = timeout(total_timeout, settings.probe_tls(b"", None)).await else {
+        // timeout
+        return Ok(OperatingSystemInfo::default());
+    };
+
+    let Ok(result) = result else {
         // TOOD: might want to return differently if the error is a specific one, but right now it's a dynamic error
         // without proper error information for us to match on.
         return Ok(OperatingSystemInfo::default());
