@@ -20,6 +20,7 @@ import KnowledgeBase from "./views/knowledge-base";
 import { CreateFindingDefinition } from "./views/knowledge-base/create-finding-definition";
 import { EditFindingDefinition } from "./views/knowledge-base/edit-finding-definition";
 import { ListFindingDefinition } from "./views/knowledge-base/list-finding-definition";
+import WorkspaceNotes from "./views/workspace/workspace-notes";
 
 export const ROUTER = new Router();
 
@@ -124,6 +125,17 @@ export const ROUTES = {
             <ContentWithMenu>
                 <Workspace view={"hosts"} uuid={w_uuid}>
                     <WorkspaceHost uuid={h_uuid} />
+                </Workspace>
+            </ContentWithMenu>
+        ),
+    }),
+    WORKSPACE_NOTES: ROUTER.add({
+        url: "workspaces/{uuid}/notes",
+        parser: { uuid: String },
+        render: ({ uuid }) => (
+            <ContentWithMenu>
+                <Workspace view={"notes"} uuid={uuid}>
+                    <WorkspaceNotes />
                 </Workspace>
             </ContentWithMenu>
         ),

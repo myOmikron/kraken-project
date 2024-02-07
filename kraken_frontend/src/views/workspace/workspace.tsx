@@ -30,7 +30,7 @@ type WorkspaceState = {
     workspace: FullWorkspace | null;
 };
 
-export type WorkspaceView = "search" | "attacks" | "data" | "hosts" | "settings";
+export type WorkspaceView = "search" | "attacks" | "data" | "hosts" | "settings" | "notes";
 
 export default class Workspace extends React.Component<WorkspaceProps, WorkspaceState> {
     constructor(props: WorkspaceProps) {
