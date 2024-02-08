@@ -1,5 +1,6 @@
 use std::fmt;
 use std::fmt::Write;
+use std::marker::PhantomData;
 
 use chrono::{DateTime, Utc};
 use ipnetwork::IpNetwork;
@@ -24,47 +25,103 @@ pub trait ValueSqler<T> {
     ) -> fmt::Result;
 }
 
-/// Checks whether a tag is set on the aggregated model
-///
-/// Requires the [`JoinTags`] to be applied.
-pub struct TagSqler;
-impl<T: AsRef<str>> ValueSqler<T> for TagSqler {
+/// A single column to compare against
+pub struct Column<Cmp = ()> {
+    pub column: &'static str,
+    pub table: &'static str,
+    pub phantom: PhantomData<Cmp>,
+}
+impl Column<()> {
+    /// Construct a new column
+    pub fn new(table: &'static str, column: &'static str) -> Self {
+        Self {
+            table,
+            column,
+            phantom: PhantomData,
+        }
+    }
+
+    /// Construct `"tags"."tags"`
+    pub fn tags() -> Self {
+        Self::new("tags", "tags")
+    }
+
+    /// Construct a column known to rorm
+    pub fn rorm<A: FieldAccess>(_: A) -> Self {
+        Self {
+            table: A::Path::ALIAS,
+            column: A::Field::NAME,
+            phantom: PhantomData,
+        }
+    }
+}
+impl<Cmp> Column<Cmp> {
+    /// Compare the column to be equal to a specific value
+    pub fn eq(&self) -> Column<CmpEq> {
+        self.cmp()
+    }
+
+    /// Compare the column to lie in a specific range
+    pub fn range(&self) -> Column<CmpRange> {
+        self.cmp()
+    }
+
+    /// Compare the column to be equal to a specific value or to lie in a specific range
+    pub fn maybe_range(&self) -> Column<CmpMaybeRange> {
+        self.cmp()
+    }
+
+    /// Like [`Column::maybe_range`] but it handles `NULL` values:
+    ///
+    /// A `NULL` never lies in a range and is not a specific value.
+    /// The difference to [`Column::maybe_range`] is that
+    /// in sql `value = ?` and `NOT value = ?` both evaluate to `false`, if `value` is `NULL`.
+    pub fn nullable_maybe_range(&self) -> Column<CmpNullableMaybeRange> {
+        self.cmp()
+    }
+
+    /// Check the column (storing a postgres array) to contain a specific value
+    pub fn contains(&self) -> Column<CmpContains> {
+        self.cmp()
+    }
+
+    /// Check the column to be a subnet of (or equal to) a specific network
+    pub fn subnet(&self) -> Column<CmpSubnet> {
+        self.cmp()
+    }
+
+    fn cmp<NewCmp>(&self) -> Column<NewCmp> {
+        Column {
+            column: self.column,
+            table: self.table,
+            phantom: PhantomData,
+        }
+    }
+}
+
+pub struct CmpEq;
+impl<T: AsValue> ValueSqler<T> for Column<CmpEq> {
     fn sql_value<'a>(
         &self,
         value: &'a T,
         sql: &mut String,
         values: &mut Vec<Value<'a>>,
     ) -> fmt::Result {
-        values.push(Value::String(value.as_ref()));
-        write!(
-            sql,
-            r#"(ARRAY[${i}]::VARCHAR[] <@ "tags"."tags")"#,
-            i = values.len()
-        )
+        let Self { table, column, .. } = *self;
+        values.push(value.as_value());
+        write!(sql, r#"("{table}"."{column}" = ${i})"#, i = values.len())
     }
 }
 
-/// Checks the `created_at` column to lie in a certain range
-pub struct CreatedAtSqler {
-    table: &'static str,
-    column: &'static str,
-}
-impl CreatedAtSqler {
-    pub fn new<A: FieldAccess>(_: A) -> Self {
-        Self {
-            table: A::Path::ALIAS,
-            column: A::Field::NAME,
-        }
-    }
-}
-impl ValueSqler<Range<DateTime<Utc>>> for CreatedAtSqler {
+pub struct CmpRange;
+impl<T: AsValue> ValueSqler<Range<T>> for Column<CmpRange> {
     fn sql_value<'a>(
         &self,
-        value: &'a Range<DateTime<Utc>>,
+        value: &'a Range<T>,
         sql: &mut String,
         values: &mut Vec<Value<'a>>,
     ) -> fmt::Result {
-        let Self { table, column } = *self;
+        let Self { table, column, .. } = *self;
         match value {
             Range {
                 start: None,
@@ -76,7 +133,7 @@ impl ValueSqler<Range<DateTime<Utc>>> for CreatedAtSqler {
                 start: Some(start),
                 end: None,
             } => {
-                values.push(Value::ChronoDateTime(*start));
+                values.push(start.as_value());
                 write!(
                     sql,
                     r#"("{table}"."{column}" >= ${start})"#,
@@ -87,7 +144,7 @@ impl ValueSqler<Range<DateTime<Utc>>> for CreatedAtSqler {
                 start: None,
                 end: Some(end),
             } => {
-                values.push(Value::ChronoDateTime(*end));
+                values.push(end.as_value());
                 write!(
                     sql,
                     r#"("{table}"."{column}" <= ${end})"#,
@@ -98,8 +155,8 @@ impl ValueSqler<Range<DateTime<Utc>>> for CreatedAtSqler {
                 start: Some(start),
                 end: Some(end),
             } => {
-                values.push(Value::ChronoDateTime(*start));
-                values.push(Value::ChronoDateTime(*end));
+                values.push(start.as_value());
+                values.push(end.as_value());
                 write!(
                     sql,
                     r#"("{table}"."{column}" >= ${start} AND "{table}"."{column}" <= ${end})"#,
@@ -111,178 +168,112 @@ impl ValueSqler<Range<DateTime<Utc>>> for CreatedAtSqler {
     }
 }
 
-/// Checks the `port` column to lie in a certain range or be a specific port
-pub struct PortSqler {
-    table: &'static str,
-    column: &'static str,
-}
-impl PortSqler {
-    pub fn new<A: FieldAccess>(_: A) -> Self {
-        Self {
-            table: A::Path::ALIAS,
-            column: A::Field::NAME,
-        }
-    }
-}
-impl ValueSqler<MaybeRange<u16>> for PortSqler {
+pub struct CmpMaybeRange;
+impl<T: AsValue> ValueSqler<MaybeRange<T>> for Column<CmpMaybeRange> {
     fn sql_value<'a>(
         &self,
-        value: &'a MaybeRange<u16>,
+        value: &'a MaybeRange<T>,
         sql: &mut String,
         values: &mut Vec<Value<'a>>,
     ) -> fmt::Result {
-        let Self { table, column } = *self;
+        let Self { table, column, .. } = *self;
         match value {
             MaybeRange::Single(value) => {
-                values.push(Value::I32(*value as i32));
+                values.push(value.as_value());
                 write!(sql, r#"("{table}"."{column}" = ${i})"#, i = values.len())
             }
-            MaybeRange::Range(range) => match range {
-                Range {
-                    start: None,
-                    end: None,
-                } => {
-                    write!(sql, "true")
-                }
-                Range {
-                    start: Some(start),
-                    end: None,
-                } => {
-                    values.push(Value::I32(*start as i32));
-                    write!(
-                        sql,
-                        r#"("{table}"."{column}" >= ${start})"#,
-                        start = values.len()
-                    )
-                }
-                Range {
-                    start: None,
-                    end: Some(end),
-                } => {
-                    values.push(Value::I32(*end as i32));
-                    write!(
-                        sql,
-                        r#"("{table}"."{column}" <= ${end})"#,
-                        end = values.len()
-                    )
-                }
-                Range {
-                    start: Some(start),
-                    end: Some(end),
-                } => {
-                    values.push(Value::I32(*start as i32));
-                    values.push(Value::I32(*end as i32));
-                    write!(
-                        sql,
-                        r#"("{table}"."{column}" >= ${start} AND "{table}"."{column}" <= ${end})"#,
-                        start = values.len() - 1,
-                        end = values.len(),
-                    )
-                }
-            },
+            MaybeRange::Range(range) => self.range().sql_value(range, sql, values),
         }
     }
 }
 
-/// Like [`PortSqler`] but it handles `NULL` values:
-///
-/// A `NULL` never lies in a range and is not a specific port.
-/// The difference to [`PortSqler`] is that
-/// in sql `port = ?` and `NOT port = ?` both evaluate to `false`, if `port` is `NULL`.
-pub struct NullablePortSqler(pub PortSqler);
-impl ValueSqler<MaybeRange<u16>> for NullablePortSqler {
+pub struct CmpNullableMaybeRange;
+impl<T: AsValue> ValueSqler<MaybeRange<T>> for Column<CmpNullableMaybeRange> {
     fn sql_value<'a>(
         &self,
-        value: &'a MaybeRange<u16>,
+        value: &'a MaybeRange<T>,
         sql: &mut String,
         values: &mut Vec<Value<'a>>,
     ) -> fmt::Result {
-        let Self(PortSqler { table, column }) = *self;
+        let Self { table, column, .. } = *self;
         write!(sql, r#"("{table}"."{column}" IS NOT NULL AND "#)?;
-        self.0.sql_value(value, sql, values)?;
+        self.maybe_range().sql_value(value, sql, values)?;
         write!(sql, ")")
     }
 }
 
-/// Checks the `ip_addr` column to lie in a certain ip network
-pub struct IpSqler {
-    table: &'static str,
-    column: &'static str,
-}
-impl IpSqler {
-    pub fn new<A: FieldAccess>(_: A) -> Self {
-        Self {
-            table: A::Path::ALIAS,
-            column: A::Field::NAME,
-        }
-    }
-}
-impl ValueSqler<IpNetwork> for IpSqler {
-    fn sql_value<'a>(
-        &self,
-        value: &'a IpNetwork,
-        sql: &mut String,
-        values: &mut Vec<Value<'a>>,
-    ) -> fmt::Result {
-        let Self { table, column } = *self;
-        values.push(Value::IpNetwork(*value));
-        write!(sql, r#"("{table}"."{column}" <<= ${i})"#, i = values.len())
-    }
-}
-
-/// Checks a string column to be equal to a certain value
-pub struct StringEqSqler {
-    table: &'static str,
-    column: &'static str,
-}
-impl StringEqSqler {
-    pub fn new<A: FieldAccess>(_: A) -> Self {
-        Self {
-            table: A::Path::ALIAS,
-            column: A::Field::NAME,
-        }
-    }
-}
-impl<T: AsRef<str>> ValueSqler<T> for StringEqSqler {
+pub struct CmpContains;
+impl<T: AsValue> ValueSqler<T> for Column<CmpContains> {
     fn sql_value<'a>(
         &self,
         value: &'a T,
         sql: &mut String,
         values: &mut Vec<Value<'a>>,
     ) -> fmt::Result {
-        let Self { table, column } = *self;
-        values.push(Value::String(value.as_ref()));
-        write!(sql, r#"("{table}"."{column}" = ${i})"#, i = values.len())
+        let Self { table, column, .. } = self;
+        values.push(value.as_value());
+        write!(
+            sql,
+            r#"(ARRAY[${i}] <@ "{table}"."{column}")"#,
+            i = values.len()
+        )
     }
 }
 
-/// Checks a [`PortProtocol`] column to be equal to a certain value
-pub struct PortProtocolSqler {
-    table: &'static str,
-    column: &'static str,
-}
-impl PortProtocolSqler {
-    pub fn new<A: FieldAccess>(_: A) -> Self {
-        Self {
-            table: A::Path::ALIAS,
-            column: A::Field::NAME,
-        }
-    }
-}
-impl ValueSqler<PortProtocol> for PortProtocolSqler {
+pub struct CmpSubnet;
+impl ValueSqler<IpNetwork> for Column<CmpSubnet> {
     fn sql_value<'a>(
         &self,
-        value: &'a PortProtocol,
+        value: &'a IpNetwork,
         sql: &mut String,
         values: &mut Vec<Value<'a>>,
     ) -> fmt::Result {
-        let Self { table, column } = *self;
-        values.push(Value::Choice(match value {
+        let Self { table, column, .. } = *self;
+        values.push(value.as_value());
+        write!(sql, r#"("{table}"."{column}" <<= ${i})"#, i = values.len())
+    }
+}
+
+/// Small helper trait which converts `&T` into a [`Value`]
+///
+/// Unlike `rorm`'s [`FieldType`](rorm::fields::traits::FieldType),
+/// this trait produces the [`Value`] type from `rorm-sql` and always just one of it.
+pub trait AsValue {
+    /// Convert `&self` into a [`Value`]
+    fn as_value(&self) -> Value;
+}
+impl AsValue for str {
+    fn as_value(&self) -> Value {
+        Value::String(self)
+    }
+}
+impl AsValue for String {
+    fn as_value(&self) -> Value {
+        Value::String(self)
+    }
+}
+impl AsValue for PortProtocol {
+    fn as_value(&self) -> Value {
+        Value::Choice(match self {
             PortProtocol::Unknown => stringify!(Unknown),
             PortProtocol::Tcp => stringify!(Tcp),
             PortProtocol::Udp => stringify!(Udp),
             PortProtocol::Sctp => stringify!(Sctp),
-        }));
-        write!(sql, r#"("{table}"."{column}" = ${i})"#, i = values.len())
+        })
+    }
+}
+impl AsValue for u16 {
+    fn as_value(&self) -> Value {
+        Value::I32(*self as i32)
+    }
+}
+impl AsValue for DateTime<Utc> {
+    fn as_value(&self) -> Value {
+        Value::ChronoDateTime(*self)
+    }
+}
+impl AsValue for IpNetwork {
+    fn as_value(&self) -> Value {
+        Value::IpNetwork(*self)
     }
 }

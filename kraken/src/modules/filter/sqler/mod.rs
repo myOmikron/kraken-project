@@ -10,10 +10,7 @@ use rorm::prelude::*;
 
 use crate::models::{Domain, Host, Port, Service};
 use crate::modules::filter::sqler::joins::{JoinPorts, JoinTags};
-use crate::modules::filter::sqler::value_sqler::{
-    CreatedAtSqler, IpSqler, NullablePortSqler, PortProtocolSqler, PortSqler, StringEqSqler,
-    TagSqler, ValueSqler,
-};
+use crate::modules::filter::sqler::value_sqler::{Column, ValueSqler};
 use crate::modules::filter::{And, DomainAST, GlobalAST, HostAST, Not, Or, PortAST, ServiceAST};
 use crate::modules::raw_query::RawQueryBuilder;
 
@@ -35,14 +32,13 @@ impl DomainAST {
             created_at,
             domains,
         } = self;
-        add_ast_field(sql, tags, TagSqler);
-        add_ast_field(sql, tags, TagSqler);
-        add_ast_field(sql, created_at, CreatedAtSqler::new(Domain::F.created_at));
-        add_ast_field(sql, domains, StringEqSqler::new(Domain::F.domain));
+        add_ast_field(sql, tags, Column::tags().contains());
+        add_ast_field(sql, created_at, Column::rorm(Domain::F.created_at).range());
+        add_ast_field(sql, domains, Column::rorm(Domain::F.domain).eq());
 
         let GlobalAST { tags, created_at } = global;
-        add_ast_field(sql, tags, TagSqler);
-        add_ast_field(sql, created_at, CreatedAtSqler::new(Domain::F.created_at));
+        add_ast_field(sql, tags, Column::tags().contains());
+        add_ast_field(sql, created_at, Column::rorm(Domain::F.created_at).range());
     }
 }
 impl HostAST {
@@ -63,13 +59,13 @@ impl HostAST {
             created_at,
             ips,
         } = self;
-        add_ast_field(sql, tags, TagSqler);
-        add_ast_field(sql, created_at, CreatedAtSqler::new(Host::F.created_at));
-        add_ast_field(sql, ips, IpSqler::new(Host::F.ip_addr));
+        add_ast_field(sql, tags, Column::tags().contains());
+        add_ast_field(sql, created_at, Column::rorm(Host::F.created_at).range());
+        add_ast_field(sql, ips, Column::rorm(Host::F.ip_addr).subnet());
 
         let GlobalAST { tags, created_at } = global;
-        add_ast_field(sql, tags, TagSqler);
-        add_ast_field(sql, created_at, CreatedAtSqler::new(Host::F.created_at));
+        add_ast_field(sql, tags, Column::tags().contains());
+        add_ast_field(sql, created_at, Column::rorm(Host::F.created_at).range());
     }
 }
 impl PortAST {
@@ -92,15 +88,15 @@ impl PortAST {
             ips,
             protocols,
         } = self;
-        add_ast_field(sql, tags, TagSqler);
-        add_ast_field(sql, created_at, CreatedAtSqler::new(Port::F.created_at));
-        add_ast_field(sql, ports, PortSqler::new(Port::F.port));
-        add_ast_field(sql, ips, IpSqler::new(Port::F.host.ip_addr));
-        add_ast_field(sql, protocols, PortProtocolSqler::new(Port::F.protocol));
+        add_ast_field(sql, tags, Column::tags().contains());
+        add_ast_field(sql, created_at, Column::rorm(Port::F.created_at).range());
+        add_ast_field(sql, ports, Column::rorm(Port::F.port).maybe_range());
+        add_ast_field(sql, ips, Column::rorm(Port::F.host.ip_addr).subnet());
+        add_ast_field(sql, protocols, Column::rorm(Port::F.protocol).eq());
 
         let GlobalAST { tags, created_at } = global;
-        add_ast_field(sql, tags, TagSqler);
-        add_ast_field(sql, created_at, CreatedAtSqler::new(Port::F.created_at));
+        add_ast_field(sql, tags, Column::tags().contains());
+        add_ast_field(sql, created_at, Column::rorm(Port::F.created_at).range());
     }
 }
 impl ServiceAST {
@@ -126,19 +122,19 @@ impl ServiceAST {
             services,
             ports,
         } = self;
-        add_ast_field(sql, tags, TagSqler);
-        add_ast_field(sql, created_at, CreatedAtSqler::new(Service::F.created_at));
-        add_ast_field(sql, ips, IpSqler::new(Service::F.host.ip_addr));
-        add_ast_field(sql, services, StringEqSqler::new(Service::F.name));
+        add_ast_field(sql, tags, Column::tags().contains());
+        add_ast_field(sql, created_at, Column::rorm(Service::F.created_at).range());
+        add_ast_field(sql, ips, Column::rorm(Service::F.host.ip_addr).subnet());
+        add_ast_field(sql, services, Column::rorm(Service::F.name).eq());
         add_ast_field(
             sql,
             ports,
-            NullablePortSqler(PortSqler::new(Port::F.port)), // This table is joined manually
+            Column::rorm(Port::F.port).nullable_maybe_range(), // This table is joined manually
         );
 
         let GlobalAST { tags, created_at } = global;
-        add_ast_field(sql, tags, TagSqler);
-        add_ast_field(sql, created_at, CreatedAtSqler::new(Service::F.created_at));
+        add_ast_field(sql, tags, Column::tags().contains());
+        add_ast_field(sql, created_at, Column::rorm(Service::F.created_at).range());
     }
 }
 
