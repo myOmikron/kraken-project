@@ -1,39 +1,47 @@
 import { PortProtocol } from "../../api/generated";
 
 export type GlobalAST = {
-    tags: Array<Expr.Or<string>>;
-    createdAt: Array<Expr.Or<Expr.Range<Date>>>;
+    tags: Exprs<string>;
+    createdAt: Exprs<Expr.Range<Date>>;
 };
 
 export type DomainAST = {
-    tags: Array<Expr.Or<string>>;
-    createdAt: Array<Expr.Or<Expr.Range<Date>>>;
-    domains: Array<Expr.Or<string>>;
+    tags: Exprs<string>;
+    createdAt: Exprs<Expr.Range<Date>>;
+    domains: Exprs<string>;
 };
 
 export type HostAST = {
-    tags: Array<Expr.Or<string>>;
-    createdAt: Array<Expr.Or<Expr.Range<Date>>>;
-    ips: Array<Expr.Or<string>>;
+    tags: Exprs<string>;
+    createdAt: Exprs<Expr.Range<Date>>;
+    ips: Exprs<string>;
 };
 
 export type PortAST = {
-    tags: Array<Expr.Or<string>>;
-    createdAt: Array<Expr.Or<Expr.Range<Date>>>;
-    ports: Array<Expr.Or<Expr.MaybeRange<number>>>;
-    ips: Array<Expr.Or<string>>;
-    protocols: Array<Expr.Or<PortProtocol>>;
+    tags: Exprs<string>;
+    createdAt: Exprs<Expr.Range<Date>>;
+    ports: Exprs<Expr.MaybeRange<number>>;
+    ips: Exprs<string>;
+    ipsCreatedAt: Exprs<Expr.Range<Date>>;
+    ipsTags: Exprs<string>;
+    protocols: Exprs<PortProtocol>;
 };
 
 export type ServiceAST = {
-    tags: Array<Expr.Or<string>>;
-    createdAt: Array<Expr.Or<Expr.Range<Date>>>;
-    ips: Array<Expr.Or<string>>;
-    ports: Array<Expr.Or<Expr.MaybeRange<number>>>;
-    services: Array<Expr.Or<string>>;
+    tags: Exprs<string>;
+    createdAt: Exprs<Expr.Range<Date>>;
+    ips: Exprs<string>;
+    ipsCreatedAt: Exprs<Expr.Range<Date>>;
+    ipsTags: Exprs<string>;
+    ports: Exprs<Expr.MaybeRange<number>>;
+    portsTags: Exprs<string>;
+    portsCreatedAt: Exprs<Expr.Range<Date>>;
+    protocols: Exprs<PortProtocol>;
+    services: Exprs<string>;
 };
 
 export type Expr<T> = Expr.Or<T>;
+export type Exprs<T> = Array<Expr.Or<T>>;
 
 export namespace Expr {
     /** An optional `or` */

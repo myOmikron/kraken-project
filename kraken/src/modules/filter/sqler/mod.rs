@@ -9,7 +9,9 @@ use rorm::db::sql::value::Value;
 use rorm::prelude::*;
 
 use crate::models::{Domain, Host, Port, Service};
-use crate::modules::filter::sqler::joins::{JoinPorts, JoinTags};
+use crate::modules::filter::sqler::joins::{
+    from_port_join_host, from_service_join_host, from_service_join_port, JoinTags,
+};
 use crate::modules::filter::sqler::value_sqler::{Column, ValueSqler};
 use crate::modules::filter::{And, DomainAST, GlobalAST, HostAST, Not, Or, PortAST, ServiceAST};
 use crate::modules::raw_query::RawQueryBuilder;
@@ -81,11 +83,21 @@ impl PortAST {
             sql.append_join(JoinTags::port());
         }
 
+        if self.ips_created_at.is_some() || self.ips_tags.is_some() {
+            sql.append_join(from_port_join_host());
+        }
+
+        if self.ips_tags.is_some() {
+            sql.append_join(JoinTags::host().alias("host_tags"));
+        }
+
         let PortAST {
             tags,
             created_at,
             ports,
             ips,
+            ips_created_at,
+            ips_tags,
             protocols,
         } = self;
         add_ast_field(sql, tags, Column::tags().contains());
@@ -93,6 +105,12 @@ impl PortAST {
         add_ast_field(sql, ports, Column::rorm(Port::F.port).maybe_range());
         add_ast_field(sql, ips, Column::rorm(Port::F.host.ip_addr).subnet());
         add_ast_field(sql, protocols, Column::rorm(Port::F.protocol).eq());
+        add_ast_field(
+            sql,
+            ips_created_at,
+            Column::rorm(Host::F.created_at).range(),
+        );
+        add_ast_field(sql, ips_tags, Column::new("host_tags", "tags").contains());
 
         let GlobalAST { tags, created_at } = global;
         add_ast_field(sql, tags, Column::tags().contains());
@@ -111,14 +129,32 @@ impl ServiceAST {
         if self.tags.is_some() || global.tags.is_some() {
             sql.append_join(JoinTags::service());
         }
-        if self.ports.is_some() {
-            sql.append_join(JoinPorts);
+        if self.ports.is_some()
+            || self.ports_created_at.is_some()
+            || self.protocols.is_some()
+            || self.ports_tags.is_some()
+        {
+            sql.append_join(from_service_join_port());
+        }
+        if self.ports_tags.is_some() {
+            sql.append_join(JoinTags::port().alias("port_tags")); // TODO: does this work since port might be null?
+        }
+        if self.ips_created_at.is_some() || self.ips_tags.is_some() {
+            sql.append_join(from_service_join_host());
+        }
+        if self.ips_tags.is_some() {
+            sql.append_join(JoinTags::host().alias("host_tags"));
         }
 
         let ServiceAST {
             tags,
             created_at,
             ips,
+            ips_created_at,
+            ips_tags,
+            ports_tags,
+            ports_created_at,
+            protocols,
             services,
             ports,
         } = self;
@@ -129,8 +165,21 @@ impl ServiceAST {
         add_ast_field(
             sql,
             ports,
-            Column::rorm(Port::F.port).nullable_maybe_range(), // This table is joined manually
+            Column::rorm(Port::F.port).nullable_maybe_range(),
         );
+        add_ast_field(
+            sql,
+            ports_created_at,
+            Column::rorm(Port::F.created_at).nullable_range(),
+        );
+        add_ast_field(sql, ports_tags, Column::new("port_tags", "tags").contains());
+        add_ast_field(sql, protocols, Column::rorm(Port::F.protocol).nullable_eq());
+        add_ast_field(
+            sql,
+            ips_created_at,
+            Column::rorm(Host::F.created_at).range(),
+        );
+        add_ast_field(sql, ips_tags, Column::new("host_tags", "tags").contains());
 
         let GlobalAST { tags, created_at } = global;
         add_ast_field(sql, tags, Column::tags().contains());

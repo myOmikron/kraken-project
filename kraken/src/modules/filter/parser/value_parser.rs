@@ -32,7 +32,7 @@ pub fn parse_port_protocol(tokens: &mut Cursor) -> Result<PortProtocol, ParseErr
     let string = tokens.next_value()?;
     if string.eq_ignore_ascii_case("tcp") {
         Ok(PortProtocol::Tcp)
-    } else if string.eq_ignore_ascii_case("ucp") {
+    } else if string.eq_ignore_ascii_case("udp") {
         Ok(PortProtocol::Udp)
     } else if string.eq_ignore_ascii_case("sctp") {
         Ok(PortProtocol::Sctp)

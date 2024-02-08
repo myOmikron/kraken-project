@@ -61,8 +61,18 @@ impl<Cmp> Column<Cmp> {
         self.cmp()
     }
 
+    /// Compare the nullable column to be equal to a specific value
+    pub fn nullable_eq(&self) -> Column<CmpNullable<CmpEq>> {
+        self.cmp()
+    }
+
     /// Compare the column to lie in a specific range
     pub fn range(&self) -> Column<CmpRange> {
+        self.cmp()
+    }
+
+    /// Compare the nullable column to lie in a specific range
+    pub fn nullable_range(&self) -> Column<CmpNullable<CmpRange>> {
         self.cmp()
     }
 
@@ -71,12 +81,8 @@ impl<Cmp> Column<Cmp> {
         self.cmp()
     }
 
-    /// Like [`Column::maybe_range`] but it handles `NULL` values:
-    ///
-    /// A `NULL` never lies in a range and is not a specific value.
-    /// The difference to [`Column::maybe_range`] is that
-    /// in sql `value = ?` and `NOT value = ?` both evaluate to `false`, if `value` is `NULL`.
-    pub fn nullable_maybe_range(&self) -> Column<CmpNullableMaybeRange> {
+    /// Compare the nullable column to be equal to a specific value or to lie in a specific range
+    pub fn nullable_maybe_range(&self) -> Column<CmpNullable<CmpMaybeRange>> {
         self.cmp()
     }
 
@@ -108,8 +114,15 @@ impl<T: AsValue> ValueSqler<T> for Column<CmpEq> {
         values: &mut Vec<Value<'a>>,
     ) -> fmt::Result {
         let Self { table, column, .. } = *self;
-        values.push(value.as_value());
-        write!(sql, r#"("{table}"."{column}" = ${i})"#, i = values.len())
+        match value.as_value() {
+            Value::Choice(value) => {
+                write!(sql, r#"("{table}"."{column}" = '{value}')"#)
+            }
+            value => {
+                values.push(value);
+                write!(sql, r#"("{table}"."{column}" = ${i})"#, i = values.len())
+            }
+        }
     }
 }
 
@@ -187,23 +200,26 @@ impl<T: AsValue> ValueSqler<MaybeRange<T>> for Column<CmpMaybeRange> {
     }
 }
 
-pub struct CmpNullableMaybeRange;
-impl<T: AsValue> ValueSqler<MaybeRange<T>> for Column<CmpNullableMaybeRange> {
+pub struct CmpNullable<Cmp>(Cmp);
+impl<Cmp, V> ValueSqler<V> for Column<CmpNullable<Cmp>>
+where
+    Column<Cmp>: ValueSqler<V>,
+{
     fn sql_value<'a>(
         &self,
-        value: &'a MaybeRange<T>,
+        value: &'a V,
         sql: &mut String,
         values: &mut Vec<Value<'a>>,
     ) -> fmt::Result {
         let Self { table, column, .. } = *self;
         write!(sql, r#"("{table}"."{column}" IS NOT NULL AND "#)?;
-        self.maybe_range().sql_value(value, sql, values)?;
+        self.cmp::<Cmp>().sql_value(value, sql, values)?;
         write!(sql, ")")
     }
 }
 
 pub struct CmpContains;
-impl<T: AsValue> ValueSqler<T> for Column<CmpContains> {
+impl<T: AsValue + HasDbType> ValueSqler<T> for Column<CmpContains> {
     fn sql_value<'a>(
         &self,
         value: &'a T,
@@ -214,8 +230,9 @@ impl<T: AsValue> ValueSqler<T> for Column<CmpContains> {
         values.push(value.as_value());
         write!(
             sql,
-            r#"(ARRAY[${i}] <@ "{table}"."{column}")"#,
-            i = values.len()
+            r#"(ARRAY[${i}]::{db_type}[] <@ "{table}"."{column}")"#,
+            i = values.len(),
+            db_type = T::db_type()
         )
     }
 }
@@ -275,5 +292,21 @@ impl AsValue for DateTime<Utc> {
 impl AsValue for IpNetwork {
     fn as_value(&self) -> Value {
         Value::IpNetwork(*self)
+    }
+}
+
+/// Small helper trait which associates a postgres type with a rust type
+pub trait HasDbType {
+    /// Get the associated postgres type
+    fn db_type() -> &'static str;
+}
+impl HasDbType for str {
+    fn db_type() -> &'static str {
+        "VARCHAR"
+    }
+}
+impl HasDbType for String {
+    fn db_type() -> &'static str {
+        "VARCHAR"
     }
 }

@@ -65,6 +65,12 @@ pub struct PortAST {
     /// Filter by ip address
     pub ips: Option<Or<IpNetwork>>,
 
+    /// Filter ports by their hosts' creation time
+    pub ips_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter ports by their hosts' tags
+    pub ips_tags: Option<Or<String>>,
+
     /// Filter by protocols
     pub protocols: Option<Or<PortProtocol>>,
 }
@@ -81,8 +87,23 @@ pub struct ServiceAST {
     /// Filter by ip address
     pub ips: Option<Or<IpNetwork>>,
 
+    /// Filter services by their hosts' creation time
+    pub ips_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter services by their hosts' tags
+    pub ips_tags: Option<Or<String>>,
+
     /// Filter by ports
     pub ports: Option<Or<MaybeRange<u16>>>,
+
+    /// Filter services by their ports' tags
+    pub ports_tags: Option<Or<String>>,
+
+    /// Filter services by their ports' creation time
+    pub ports_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter services by their ports' protocols
+    pub protocols: Option<Or<PortProtocol>>,
 
     /// Filter by service name
     pub services: Option<Or<String>>,
