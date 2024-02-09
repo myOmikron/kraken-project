@@ -60,10 +60,78 @@ impl HostAST {
             tags,
             created_at,
             ips,
+            ports,
+            ports_created_at,
+            ports_protocols,
+            ports_tags,
+            services,
+            services_ports,
+            services_protocols,
+            services_tags,
+            services_created_at,
         } = self;
         add_ast_field(sql, tags, Column::tags().contains());
         add_ast_field(sql, created_at, Column::rorm(Host::F.created_at).range());
         add_ast_field(sql, ips, Column::rorm(Host::F.ip_addr).subnet());
+
+        // Sub query the ports
+        if ports.is_some()
+            || ports_created_at.is_some()
+            || ports_protocols.is_some()
+            || ports_tags.is_some()
+        {
+            sql.append_condition(Column::rorm(Host::F.uuid).in_subquery(Port::F.host, |sql| {
+                if ports_tags.is_some() {
+                    sql.append_join(JoinTags::port());
+                }
+
+                add_ast_field(sql, ports, Column::rorm(Port::F.port).maybe_range());
+                add_ast_field(
+                    sql,
+                    ports_created_at,
+                    Column::rorm(Port::F.created_at).range(),
+                );
+                add_ast_field(sql, ports_protocols, Column::rorm(Port::F.protocol).eq());
+                add_ast_field(sql, ports_tags, Column::tags().contains());
+            }));
+        }
+
+        // Sub query the services
+        if services.is_some()
+            || services_ports.is_some()
+            || services_protocols.is_some()
+            || services_tags.is_some()
+            || services_created_at.is_some()
+        {
+            sql.append_condition(
+                Column::rorm(Host::F.uuid).in_subquery(Service::F.host, |sql| {
+                    if services_tags.is_some() {
+                        sql.append_join(JoinTags::service());
+                    }
+                    if services_ports.is_some() || services_protocols.is_some() {
+                        sql.append_join(from_service_join_port());
+                    }
+
+                    add_ast_field(sql, services, Column::rorm(Service::F.name).eq());
+                    add_ast_field(
+                        sql,
+                        services_ports,
+                        Column::rorm(Port::F.port).nullable_maybe_range(),
+                    );
+                    add_ast_field(
+                        sql,
+                        services_protocols,
+                        Column::rorm(Port::F.protocol).nullable_eq(),
+                    );
+                    add_ast_field(sql, services_tags, Column::tags().contains());
+                    add_ast_field(
+                        sql,
+                        services_created_at,
+                        Column::rorm(Service::F.created_at).range(),
+                    );
+                }),
+            );
+        }
 
         let GlobalAST { tags, created_at } = global;
         add_ast_field(sql, tags, Column::tags().contains());
@@ -99,6 +167,9 @@ impl PortAST {
             ips_created_at,
             ips_tags,
             protocols,
+            services,
+            services_tags,
+            services_created_at,
         } = self;
         add_ast_field(sql, tags, Column::tags().contains());
         add_ast_field(sql, created_at, Column::rorm(Port::F.created_at).range());
@@ -111,6 +182,25 @@ impl PortAST {
             Column::rorm(Host::F.created_at).range(),
         );
         add_ast_field(sql, ips_tags, Column::new("host_tags", "tags").contains());
+
+        // Sub query the services
+        if services.is_some() || services_tags.is_some() || services_created_at.is_some() {
+            sql.append_condition(
+                Column::rorm(Port::F.uuid).in_subquery(Service::F.port, |sql| {
+                    if services_tags.is_some() {
+                        sql.append_join(JoinTags::service());
+                    }
+
+                    add_ast_field(sql, services, Column::rorm(Service::F.name).eq());
+                    add_ast_field(sql, services_tags, Column::tags().contains());
+                    add_ast_field(
+                        sql,
+                        services_created_at,
+                        Column::rorm(Service::F.created_at).range(),
+                    );
+                }),
+            );
+        }
 
         let GlobalAST { tags, created_at } = global;
         add_ast_field(sql, tags, Column::tags().contains());

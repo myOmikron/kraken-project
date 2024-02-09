@@ -1,5 +1,5 @@
 import { Cursor } from "./cursor";
-import { DomainAST, Expr, GlobalAST, HostAST, PortAST, ServiceAST } from "./ast";
+import { DomainAST, Expr, Exprs, GlobalAST, HostAST, PortAST, ServiceAST } from "./ast";
 import { Token, tokenize } from "./lexer";
 import ParserError from "./error";
 import { Err, Result } from "../result";
@@ -61,7 +61,20 @@ export function parseDomainAST(input: string): DomainAST {
  * @throws ParserError
  */
 export function parseHostAST(input: string): HostAST {
-    const ast: HostAST = { tags: [], createdAt: [], ips: [] };
+    const ast: HostAST = {
+        tags: [],
+        createdAt: [],
+        ips: [],
+        ports: [],
+        portsProtocols: [],
+        portsTags: [],
+        portsCreatedAt: [],
+        services: [],
+        servicesPorts: [],
+        servicesProtocols: [],
+        servicesTags: [],
+        servicesCreatedAt: [],
+    };
     parseAst(input, (column, cursor) => {
         switch (column) {
             case "tags":
@@ -74,6 +87,52 @@ export function parseHostAST(input: string): HostAST {
             case "ips":
             case "ip":
                 ast.ips.push(parseOr(cursor, parseString));
+                break;
+            case "ports":
+            case "port":
+                ast.ports.push(parseOr(cursor, wrapMaybeRange(parsePort)));
+                break;
+            case "ports.protocols":
+            case "ports.protocol":
+            case "port.protocols":
+            case "port.protocol":
+                ast.portsProtocols.push(parseOr(cursor, parsePortProtocol));
+                break;
+            case "ports.tags":
+            case "ports.tag":
+            case "port.tags":
+            case "port.tag":
+                ast.portsTags.push(parseOr(cursor, parseString));
+                break;
+            case "ports.createdAt":
+            case "port.createdAt":
+                ast.portsCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
+                break;
+            case "services":
+            case "service":
+                ast.services.push(parseOr(cursor, parseString));
+                break;
+            case "services.ports":
+            case "services.port":
+            case "service.ports":
+            case "service.port":
+                ast.servicesPorts.push(parseOr(cursor, wrapMaybeRange(parsePort)));
+                break;
+            case "services.protocols":
+            case "services.protocol":
+            case "service.protocols":
+            case "service.protocol":
+                ast.servicesProtocols.push(parseOr(cursor, parsePortProtocol));
+                break;
+            case "services.tags":
+            case "services.tag":
+            case "service.tags":
+            case "service.tag":
+                ast.servicesTags.push(parseOr(cursor, parseString));
+                break;
+            case "services.createdAt":
+            case "service.createdAt":
+                ast.servicesCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
                 break;
             default:
                 throw new ParserError({ type: "unknownColumn", column });
@@ -88,7 +147,18 @@ export function parseHostAST(input: string): HostAST {
  * @throws ParserError
  */
 export function parsePortAST(input: string): PortAST {
-    const ast: PortAST = { tags: [], createdAt: [], ports: [], ips: [], protocols: [], ipsTags: [], ipsCreatedAt: [] };
+    const ast: PortAST = {
+        tags: [],
+        createdAt: [],
+        ports: [],
+        ips: [],
+        protocols: [],
+        ipsTags: [],
+        ipsCreatedAt: [],
+        services: [],
+        servicesTags: [],
+        servicesCreatedAt: [],
+    };
     parseAst(input, (column, cursor) => {
         switch (column) {
             case "tags":
@@ -119,6 +189,20 @@ export function parsePortAST(input: string): PortAST {
             case "protocols":
             case "protocol":
                 ast.protocols.push(parseOr(cursor, parsePortProtocol));
+                break;
+            case "services":
+            case "service":
+                ast.services.push(parseOr(cursor, parseString));
+                break;
+            case "services.tags":
+            case "services.tag":
+            case "service.tags":
+            case "service.tag":
+                ast.servicesTags.push(parseOr(cursor, parseString));
+                break;
+            case "services.createdAt":
+            case "service.createdAt":
+                ast.servicesCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
                 break;
             default:
                 throw new ParserError({ type: "unknownColumn", column });

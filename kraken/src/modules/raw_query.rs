@@ -2,6 +2,7 @@
 
 use std::fmt;
 use std::fmt::Write;
+use std::mem::swap;
 
 use futures::{Stream, StreamExt};
 use log::debug;
@@ -81,6 +82,27 @@ impl<'a, S: Selector> RawQueryBuilder<'a, S> {
             values: Vec::new(),
             position: QueryBuilderPosition::Join,
         }
+    }
+
+    /// Use the handles (`sql` and `values`) which are passed out by methods like [`append_condition`]
+    /// to write a subquery.
+    ///
+    /// The subquery will be automatically wrapped in parentheses.
+    pub fn write_subquery(
+        sql: &mut String,
+        values: &mut Vec<Value<'a>>,
+        selector: S,
+        write: impl FnOnce(&mut RawQueryBuilder<'a, S>),
+    ) {
+        let mut builder = RawQueryBuilder::new(selector);
+        sql.push('(');
+        sql.push_str(&builder.sql); // Write the "select from" generated in RawQueryBuilder::new
+        swap(sql, &mut builder.sql);
+        swap(values, &mut builder.values);
+        write(&mut builder);
+        swap(sql, &mut builder.sql);
+        swap(values, &mut builder.values);
+        sql.push(')');
     }
 
     /// Append a `JOIN`

@@ -4,6 +4,7 @@ use std::marker::PhantomData;
 
 use chrono::{DateTime, Utc};
 use ipnetwork::IpNetwork;
+use rorm::crud::selector::Selector;
 use rorm::db::sql::value::Value;
 use rorm::internal::field::Field;
 use rorm::internal::relation_path::JoinAlias;
@@ -11,6 +12,7 @@ use rorm::prelude::*;
 
 use super::super::{MaybeRange, Range};
 use crate::models::PortProtocol;
+use crate::modules::raw_query::RawQueryBuilder;
 
 /// Controls how values are written to sql
 ///
@@ -101,6 +103,20 @@ impl<Cmp> Column<Cmp> {
             column: self.column,
             table: self.table,
             phantom: PhantomData,
+        }
+    }
+
+    /// Check the column to match a subquery
+    pub fn in_subquery<'a, S: Selector>(
+        &self,
+        selector: S,
+        build: impl FnOnce(&mut RawQueryBuilder<'a, S>),
+    ) -> impl FnOnce(&mut String, &mut Vec<Value<'a>>) -> fmt::Result {
+        let Self { column, table, .. } = *self;
+        move |sql, values| {
+            write!(sql, r#""{table}"."{column}" IN "#)?;
+            RawQueryBuilder::write_subquery(sql, values, selector, build);
+            Ok(())
         }
     }
 }
