@@ -61,11 +61,3 @@ export function Details(props: SimpleFindingDefinition) {
         </div>
     );
 }
-
-const SUMMARYS = [
-    "Aspernatur aliquam id reiciendis. Magnam autem quod amet soluta ut cupiditate. Itaque expedita corporis et laborum ea dolorum. Earum reprehenderit et dolores possimus provident totam cumque sequi. Mollitia qui inventore sequi.",
-    "Sapiente id molestias doloremque odit numquam ut. Soluta quam asperiores vero atque praesentium rem. Quis eos ut non non qui eum. Sit quos laborum ratione magni. Et aut qui nostrum amet dolor. Repellat illum esse aut ad.",
-    "Rerum ea quod vero maiores. Ea quisquam est tempora natus voluptatem eum voluptatem id. Et corporis nostrum fugiat dolor natus maxime ipsum accusamus. Ipsa hic vel ratione. Dolorem quia culpa repellat tempore. Cupiditate voluptatem inventore accusamus.",
-    "Dolorum quia possimus et omnis nisi. Laborum quia voluptatem explicabo sit debitis dolores nulla. Qui quidem odit incidunt eos quis fugiat qui ut.",
-    "Necessitatibus accusamus enim ducimus nostrum vero. Ea earum et dolore ut ad. Est quia voluptatem harum provident libero. Quas officia quos ea sint accusamus. Non sed dolores libero eum accusamus qui quia vel. Accusantium labore sapiente est quis.",
-];
