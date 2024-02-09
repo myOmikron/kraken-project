@@ -39,6 +39,15 @@ impl DomainAST {
                  tags,
                  domains,
                  created_at,
+                 source_of,
+                 source_of_tags,
+                 source_of_created_at,
+                 target_of,
+                 target_of_tags,
+                 target_of_created_at,
+                 ips,
+                 ips_created_at,
+                 ips_tags,
              },
              column,
              tokens| match column {
@@ -49,6 +58,33 @@ impl DomainAST {
                     wrap_range(parse_from_str::<DateTime<Utc>>),
                 ),
                 "domains" | "domain" => parse_ast_field(domains, tokens, parse_string),
+                "sourceOf" => parse_ast_field(source_of, tokens, parse_string),
+                "sourceOf.tags" | "sourceOf.tag" => {
+                    parse_ast_field(source_of_tags, tokens, parse_string)
+                }
+                "sourceOf.createdAt" => parse_ast_field(
+                    source_of_created_at,
+                    tokens,
+                    wrap_range(parse_from_str::<DateTime<Utc>>),
+                ),
+                "targetOf" => parse_ast_field(target_of, tokens, parse_string),
+                "targetOf.tags" | "targetOf.tag" => {
+                    parse_ast_field(target_of_tags, tokens, parse_string)
+                }
+                "targetOf.createdAt" => parse_ast_field(
+                    target_of_created_at,
+                    tokens,
+                    wrap_range(parse_from_str::<DateTime<Utc>>),
+                ),
+                "ips" | "ip" => parse_ast_field(ips, tokens, parse_from_str::<IpNetwork>),
+                "ips.tags" | "ips.tag" | "ip.tags" | "ip.tag" => {
+                    parse_ast_field(ips_tags, tokens, parse_string)
+                }
+                "ips.createdAt" | "ip.createdAt" => parse_ast_field(
+                    ips_created_at,
+                    tokens,
+                    wrap_range(parse_from_str::<DateTime<Utc>>),
+                ),
                 _ => Err(ParseError::UnknownColumn(column.to_string())),
             },
         )
@@ -73,6 +109,9 @@ impl HostAST {
                  services_protocols,
                  services_tags,
                  services_created_at,
+                 domains,
+                 domains_tags,
+                 domains_created_at,
              },
              column,
              tokens| match column {
@@ -114,6 +153,15 @@ impl HostAST {
                 }
                 "services.createdAt" | "service.createdAt" => parse_ast_field(
                     services_created_at,
+                    tokens,
+                    wrap_range(parse_from_str::<DateTime<Utc>>),
+                ),
+                "domains" | "domain" => parse_ast_field(domains, tokens, parse_string),
+                "domains.tags" | "domains.tag" | "domain.tags" | "domain.tag" => {
+                    parse_ast_field(domains_tags, tokens, parse_string)
+                }
+                "domains.createdAt" | "domain.createdAt" => parse_ast_field(
+                    domains_created_at,
                     tokens,
                     wrap_range(parse_from_str::<DateTime<Utc>>),
                 ),

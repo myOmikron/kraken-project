@@ -8,7 +8,7 @@ use rorm::crud::selector::Selector;
 use rorm::db::sql::value::Value;
 use rorm::prelude::*;
 
-use crate::models::{Domain, Host, Port, Service};
+use crate::models::{Domain, DomainDomainRelation, DomainHostRelation, Host, Port, Service};
 use crate::modules::filter::sqler::joins::{
     from_port_join_host, from_service_join_host, from_service_join_port, JoinTags,
 };
@@ -33,10 +33,92 @@ impl DomainAST {
             tags,
             created_at,
             domains,
+            source_of,
+            source_of_tags,
+            source_of_created_at,
+            target_of,
+            target_of_tags,
+            target_of_created_at,
+            ips,
+            ips_created_at,
+            ips_tags,
         } = self;
         add_ast_field(sql, tags, Column::tags().contains());
         add_ast_field(sql, created_at, Column::rorm(Domain::F.created_at).range());
         add_ast_field(sql, domains, Column::rorm(Domain::F.domain).eq());
+
+        if source_of.is_some() || source_of_tags.is_some() || source_of_created_at.is_some() {
+            sql.append_condition(Column::rorm(Domain::F.uuid).in_subquery(
+                DomainDomainRelation::F.source,
+                |sql| {
+                    sql.append_join(|sql: &mut String, _: &mut Vec<Value>| {
+                        write!(
+                            sql,
+                            r#" JOIN "domain" ON "domain"."uuid" = "domaindomainrelation"."destination""#
+                        )
+                    });
+                    if source_of_tags.is_some() {
+                        sql.append_join(JoinTags::domain());
+                    }
+
+                    add_ast_field(sql, source_of, Column::rorm(Domain::F.domain).eq());
+                    add_ast_field(sql, source_of_tags, Column::tags().contains());
+                    add_ast_field(sql, source_of_created_at, Column::rorm(Domain::F.created_at).range());
+                },
+            ));
+        }
+
+        if target_of.is_some() || target_of_tags.is_some() || target_of_created_at.is_some() {
+            sql.append_condition(Column::rorm(Domain::F.uuid).in_subquery(
+                DomainDomainRelation::F.destination,
+                |sql| {
+                    sql.append_join(|sql: &mut String, _: &mut Vec<Value>| {
+                        write!(
+                            sql,
+                            r#" JOIN "domain" ON "domain"."uuid" = "domaindomainrelation"."source""#
+                        )
+                    });
+                    if target_of_tags.is_some() {
+                        sql.append_join(JoinTags::domain());
+                    }
+
+                    add_ast_field(sql, target_of, Column::rorm(Domain::F.domain).eq());
+                    add_ast_field(sql, target_of_tags, Column::tags().contains());
+                    add_ast_field(
+                        sql,
+                        target_of_created_at,
+                        Column::rorm(Domain::F.created_at).range(),
+                    );
+                },
+            ));
+        }
+
+        // Sub query the hosts
+        if ips.is_some() || ips_tags.is_some() || ips_created_at.is_some() {
+            sql.append_condition(Column::rorm(Domain::F.uuid).in_subquery(
+                DomainHostRelation::F.domain,
+                |sql| {
+                    sql.append_join(|sql: &mut String, _: &mut Vec<Value>| {
+                        write!(
+                            sql,
+                            r#" JOIN "host" ON "host"."uuid" = "domainhostrelation"."host""#
+                        )
+                    });
+
+                    if ips_tags.is_some() {
+                        sql.append_join(JoinTags::host());
+                    }
+
+                    add_ast_field(sql, ips, Column::rorm(Host::F.ip_addr).subnet());
+                    add_ast_field(sql, ips_tags, Column::tags().contains());
+                    add_ast_field(
+                        sql,
+                        ips_created_at,
+                        Column::rorm(Host::F.created_at).range(),
+                    );
+                },
+            ));
+        }
 
         let GlobalAST { tags, created_at } = global;
         add_ast_field(sql, tags, Column::tags().contains());
@@ -69,6 +151,9 @@ impl HostAST {
             services_protocols,
             services_tags,
             services_created_at,
+            domains,
+            domains_tags,
+            domains_created_at,
         } = self;
         add_ast_field(sql, tags, Column::tags().contains());
         add_ast_field(sql, created_at, Column::rorm(Host::F.created_at).range());
@@ -131,6 +216,33 @@ impl HostAST {
                     );
                 }),
             );
+        }
+
+        // Sub query the domains
+        if domains.is_some() || domains_tags.is_some() || domains_created_at.is_some() {
+            sql.append_condition(Column::rorm(Host::F.uuid).in_subquery(
+                DomainHostRelation::F.host,
+                |sql| {
+                    sql.append_join(|sql: &mut String, _: &mut Vec<Value>| {
+                        write!(
+                            sql,
+                            r#" JOIN "domain" ON "domain"."uuid" = "domainhostrelation"."domain""#
+                        )
+                    });
+
+                    if domains_tags.is_some() {
+                        sql.append_join(JoinTags::domain());
+                    }
+
+                    add_ast_field(sql, domains, Column::rorm(Domain::F.domain).eq());
+                    add_ast_field(sql, domains_tags, Column::tags().contains());
+                    add_ast_field(
+                        sql,
+                        domains_created_at,
+                        Column::rorm(Domain::F.created_at).range(),
+                    );
+                },
+            ));
         }
 
         let GlobalAST { tags, created_at } = global;

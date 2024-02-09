@@ -35,6 +35,33 @@ pub struct DomainAST {
 
     /// Filter by domain name
     pub domains: Option<Or<String>>,
+
+    /// Filter domains by their targets
+    pub source_of: Option<Or<String>>,
+
+    /// Filter domains by their targets' tags
+    pub source_of_tags: Option<Or<String>>,
+
+    /// Filter domains by their targets' creation time
+    pub source_of_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter domains by their sources
+    pub target_of: Option<Or<String>>,
+
+    /// Filter domains by their sources' tags
+    pub target_of_tags: Option<Or<String>>,
+
+    /// Filter domains by their sources' creation time
+    pub target_of_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter domains by their hosts
+    pub ips: Option<Or<IpNetwork>>,
+
+    /// Filter domains by their hosts' creation time
+    pub ips_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter domains by their hosts' tags
+    pub ips_tags: Option<Or<String>>,
 }
 
 /// AST for host specific filter
@@ -75,6 +102,15 @@ pub struct HostAST {
 
     /// Filter hosts by their services' creation time
     pub services_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter hosts by their domains' tags
+    pub domains: Option<Or<String>>,
+
+    /// Filter hosts by their domains
+    pub domains_tags: Option<Or<String>>,
+
+    /// Filter hosts by their domains
+    pub domains_created_at: Option<Or<Range<DateTime<Utc>>>>,
 }
 
 /// AST for port specific filter

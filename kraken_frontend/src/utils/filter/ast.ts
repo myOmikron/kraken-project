@@ -9,23 +9,33 @@ export type DomainAST = {
     tags: Exprs<string>;
     createdAt: Exprs<Expr.Range<Date>>;
     domains: Exprs<string>;
+    sourceOf: Exprs<string>;
+    sourceOfTags: Exprs<string>;
+    sourceOfCreatedAt: Exprs<Expr.Range<Date>>;
+    targetOf: Exprs<string>;
+    targetOfTags: Exprs<string>;
+    targetOfCreatedAt: Exprs<Expr.Range<Date>>;
+    ips: Exprs<string>;
+    ipsCreatedAt: Exprs<Expr.Range<Date>>;
+    ipsTags: Exprs<string>;
 };
 
 export type HostAST = {
     tags: Exprs<string>;
     createdAt: Exprs<Expr.Range<Date>>;
     ips: Exprs<string>;
-
     ports: Exprs<Expr.MaybeRange<number>>;
     portsProtocols: Exprs<PortProtocol>;
     portsTags: Exprs<string>;
     portsCreatedAt: Exprs<Expr.Range<Date>>;
-
     services: Exprs<string>;
     servicesPorts: Exprs<Expr.MaybeRange<number>>;
     servicesProtocols: Exprs<PortProtocol>;
     servicesTags: Exprs<string>;
     servicesCreatedAt: Exprs<Expr.Range<Date>>;
+    domains: Exprs<string>;
+    domainsTags: Exprs<string>;
+    domainsCreatedAt: Exprs<Expr.Range<Date>>;
 };
 
 export type PortAST = {
@@ -36,7 +46,6 @@ export type PortAST = {
     ipsCreatedAt: Exprs<Expr.Range<Date>>;
     ipsTags: Exprs<string>;
     protocols: Exprs<PortProtocol>;
-
     services: Exprs<string>;
     servicesTags: Exprs<string>;
     servicesCreatedAt: Exprs<Expr.Range<Date>>;

@@ -34,7 +34,20 @@ export function parseGlobalAST(input: string): GlobalAST {
  * @throws ParserError
  */
 export function parseDomainAST(input: string): DomainAST {
-    const ast: DomainAST = { tags: [], createdAt: [], domains: [] };
+    const ast: DomainAST = {
+        tags: [],
+        createdAt: [],
+        domains: [],
+        sourceOf: [],
+        sourceOfTags: [],
+        sourceOfCreatedAt: [],
+        targetOf: [],
+        targetOfTags: [],
+        targetOfCreatedAt: [],
+        ips: [],
+        ipsTags: [],
+        ipsCreatedAt: [],
+    };
     parseAst(input, (column, cursor) => {
         switch (column) {
             case "tags":
@@ -47,6 +60,40 @@ export function parseDomainAST(input: string): DomainAST {
             case "domains":
             case "domain":
                 ast.domains.push(parseOr(cursor, parseString));
+                break;
+            case "sourceOf":
+                ast.sourceOf.push(parseOr(cursor, parseString));
+                break;
+            case "sourceOf.tag":
+            case "sourceOf.tags":
+                ast.sourceOfTags.push(parseOr(cursor, parseString));
+                break;
+            case "sourceOf.createdAt":
+                ast.sourceOfCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
+                break;
+            case "targetOf":
+                ast.targetOf.push(parseOr(cursor, parseString));
+                break;
+            case "targetOf.tag":
+            case "targetOf.tags":
+                ast.targetOfTags.push(parseOr(cursor, parseString));
+                break;
+            case "targetOf.createdAt":
+                ast.targetOfCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
+                break;
+            case "ips":
+            case "ip":
+                ast.ips.push(parseOr(cursor, parseString));
+                break;
+            case "ips.tags":
+            case "ips.tag":
+            case "ip.tags":
+            case "ip.tag":
+                ast.ipsTags.push(parseOr(cursor, parseString));
+                break;
+            case "ips.createdAt":
+            case "ip.createdAt":
+                ast.ipsCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
                 break;
             default:
                 throw new ParserError({ type: "unknownColumn", column });
@@ -74,6 +121,9 @@ export function parseHostAST(input: string): HostAST {
         servicesProtocols: [],
         servicesTags: [],
         servicesCreatedAt: [],
+        domains: [],
+        domainsTags: [],
+        domainsCreatedAt: [],
     };
     parseAst(input, (column, cursor) => {
         switch (column) {
@@ -133,6 +183,20 @@ export function parseHostAST(input: string): HostAST {
             case "services.createdAt":
             case "service.createdAt":
                 ast.servicesCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
+                break;
+            case "domains":
+            case "domain":
+                ast.domains.push(parseOr(cursor, parseString));
+                break;
+            case "domains.tags":
+            case "domains.tag":
+            case "domain.tags":
+            case "domain.tag":
+                ast.domainsTags.push(parseOr(cursor, parseString));
+                break;
+            case "domains.createdAt":
+            case "domain.createdAt":
+                ast.domainsCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
                 break;
             default:
                 throw new ParserError({ type: "unknownColumn", column });
