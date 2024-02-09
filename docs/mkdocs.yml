@@ -44,7 +44,8 @@ nav:
   - Home: index.md
   - Installation: installation/index.md
   - Administration: administration/index.md
-  - User guide: user/index.md
+  - User guide:
+      - Filter: user/filter.md
   - Contribution:
       - General information: contribution/index.md
       - Development Environment: contribution/dev_setup.md
