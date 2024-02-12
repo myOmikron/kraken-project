@@ -512,22 +512,75 @@ fn aggregate_os_results(infos: &[OperatingSystemInfo]) -> Option<OperatingSystem
     Some(combined)
 }
 
+/// OS detection settings.
+pub struct OsDetectionSettings {
+    /// The host IP address to scan
+    pub ip_addr: IpAddr,
+    /// Optionally set a fixed TCP fingerprint port. This port must be open and accept connections.
+    pub fingerprint_port: Option<u16>,
+    /// The timeout for TCP fingerprinting
+    pub fingerprint_timeout: Duration,
+    /// If set, perform OS detection via SSH header on this port.
+    pub ssh_port: Option<u16>,
+    /// The timeout how long to wait at most for the SSH connection to be established.
+    /// Has no effect if `ssh_port` is `None`.
+    pub ssh_connect_timeout: Duration,
+    /// The total timeout for SSH detection. Must be more than `ssh_connect_timeout`.
+    /// Has no effect if `ssh_port` is `None`.
+    pub ssh_timeout: Duration,
+    /// The timeout for a SYN/ACK response on a port for guessing open ports.
+    /// Has no effect if `fingerprint_port` is set, since that will just be used instead.
+    pub port_ack_timeout: Duration,
+    /// The amount of parallel SYN requests to try out finding ports.
+    /// Has no effect if `fingerprint_port` is set, since that will just be used instead.
+    pub port_parallel_syns: usize,
+}
+
 /// Calls a bunch of OS detection methods to try to find out the operating system running on the given host IP address.
-pub async fn os_detection(ip_addr: IpAddr) -> Result<OperatingSystemInfo, OsDetectionError> {
-    let (opened_port, _closed_port) =
-        find_open_and_closed_port(ip_addr, Duration::from_millis(2000), 16).await?;
+pub async fn os_detection(
+    settings: OsDetectionSettings,
+) -> Result<OperatingSystemInfo, OsDetectionError> {
+    let OsDetectionSettings {
+        ip_addr,
+        fingerprint_timeout,
+        fingerprint_port,
+        ssh_connect_timeout,
+        ssh_timeout,
+        ssh_port,
+        port_ack_timeout,
+        port_parallel_syns,
+    } = settings;
+
+    if ssh_timeout <= ssh_connect_timeout {
+        return Err(OsDetectionError::InvalidSetting(String::from(
+            "`ssh_timeout` must be larger than `ssh_connect_timeout`",
+        )));
+    }
+    if port_parallel_syns == 0 {
+        return Err(OsDetectionError::InvalidSetting(String::from(
+            "`port_parallel_syns` must be non-zero",
+        )));
+    }
+
+    let (opened_port, _) = match fingerprint_port {
+        None => find_open_and_closed_port(ip_addr, port_ack_timeout, port_parallel_syns).await?,
+        Some(p) => (p, 1),
+    };
 
     let mut tasks = JoinSet::new();
 
     tasks.spawn(os_detect_tcp_fingerprint(
         SocketAddr::new(ip_addr, opened_port),
-        Duration::from_millis(4000),
+        fingerprint_timeout,
     ));
-    tasks.spawn(os_detect_ssh(
-        ip_addr,
-        Duration::from_millis(1500),
-        Duration::from_millis(4000),
-    ));
+    if let Some(ssh_port) = ssh_port {
+        tasks.spawn(os_detect_ssh(
+            ip_addr,
+            ssh_port,
+            ssh_timeout - ssh_connect_timeout,
+            ssh_timeout,
+        ));
+    }
 
     let mut found = Vec::new();
 
@@ -619,11 +672,12 @@ fn fingerprint_os_lookup(
 /// Opens a TLS connection on ip_addr with port 22 and reads out the SSH banner.
 async fn os_detect_ssh(
     ip_addr: IpAddr,
+    port: u16,
     recv_timeout: Duration,
     total_timeout: Duration,
 ) -> Result<OperatingSystemInfo, OsDetectionError> {
     let settings = DetectServiceSettings {
-        socket: SocketAddr::new(ip_addr, 22),
+        socket: SocketAddr::new(ip_addr, port),
         timeout: recv_timeout,
         always_run_everything: true,
     };

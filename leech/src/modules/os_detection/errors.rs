@@ -21,6 +21,9 @@ pub enum OsDetectionError {
     /// Internal error using raw TCP
     #[error("Internal error using raw TCP: {0}")]
     RawTcpError(#[from] RawTcpError),
+    /// Invalid setting
+    #[error("Invalid setting: {0}")]
+    InvalidSetting(String),
 }
 
 /// Possible errors inside the `fingerprint_tcp` method

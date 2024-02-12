@@ -46,8 +46,8 @@ use crate::modules::bruteforce_subdomains::{
 use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
 use crate::modules::dns::txt::{start_dns_txt_scan, DnsTxtScanSettings};
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
-use crate::modules::os_detection::os_detection;
 use crate::modules::os_detection::tcp_fingerprint::fingerprint_tcp;
+use crate::modules::os_detection::{os_detection, OsDetectionSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
 use crate::modules::service_detection::DetectServiceSettings;
 use crate::modules::{dehashed, service_detection, whois};
@@ -234,9 +234,18 @@ pub enum RunCommand {
     OsDetection {
         /// The ip to query information for.
         ip: IpAddr,
-        /// Timeout in milliseconds after which to abort all checks and discard all immediate results.
+        /// Timeout in milliseconds after which to abort checks and discard all immediate results.
         #[clap(default_value_t = 60000)]
+        total_timeout: u64,
+        /// Timeout for each probe.
+        #[clap(default_value_t = 5000)]
         timeout: u64,
+        /// Port for SSH detection
+        #[clap(default_value_t = 22)]
+        ssh_port: u16,
+        /// Timeout in milliseconds for each TCP port how long to wait for SYN/ACK on.
+        #[clap(default_value_t = 2000)]
+        port_timeout: u64,
     },
 }
 
@@ -667,10 +676,27 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         .await?;
                         println!("Fingerprint: {fp}");
                     }
-                    RunCommand::OsDetection { ip, timeout } => {
-                        let os =
-                            tokio::time::timeout(Duration::from_millis(timeout), os_detection(ip))
-                                .await?;
+                    RunCommand::OsDetection {
+                        ip,
+                        total_timeout,
+                        timeout,
+                        port_timeout,
+                        ssh_port,
+                    } => {
+                        let os = tokio::time::timeout(
+                            Duration::from_millis(total_timeout),
+                            os_detection(OsDetectionSettings {
+                                ip_addr: ip,
+                                fingerprint_port: None,
+                                fingerprint_timeout: Duration::from_millis(timeout),
+                                ssh_port: Some(ssh_port),
+                                ssh_connect_timeout: Duration::from_millis(timeout) / 2,
+                                ssh_timeout: Duration::from_millis(timeout),
+                                port_ack_timeout: Duration::from_millis(port_timeout),
+                                port_parallel_syns: 8,
+                            }),
+                        )
+                        .await?;
 
                         match os {
                             Ok(os) => {
