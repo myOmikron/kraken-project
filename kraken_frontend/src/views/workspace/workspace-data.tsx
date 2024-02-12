@@ -26,6 +26,7 @@ import UnverifiedIcon from "../../svg/unverified";
 import VerifiedIcon from "../../svg/verified";
 import HistoricalIcon from "../../svg/historical";
 import UnknownIcon from "../../svg/unknown";
+import SelectableText from "../../components/selectable-text";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations" };
@@ -143,9 +144,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     uuids={selectedUuids.domains}
                                     setUuids={(domains) => setSelectedUuids({ ...selectedUuids, domains })}
                                 />
-                                <span>{domain.domain}</span>
+                                <SelectableText>{domain.domain}</SelectableText>
                                 <TagList tags={domain.tags} />
-                                <span>{domain.comment}</span>
+                                <div>{domain.comment}</div>
                                 {domain.certainty === "Unverified"
                                     ? CertaintyIcon({ certaintyType: "Unverified" })
                                     : CertaintyIcon({ certaintyType: "Verified" })}
@@ -200,9 +201,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     uuids={selectedUuids.hosts}
                                     setUuids={(hosts) => setSelectedUuids({ ...selectedUuids, hosts })}
                                 />
-                                <span>{host.ipAddr}</span>
+                                <SelectableText>{host.ipAddr}</SelectableText>
                                 <TagList tags={host.tags} />
-                                <span>{host.comment}</span>
+                                <div>{host.comment}</div>
                                 {host.certainty === "Verified"
                                     ? CertaintyIcon({ certaintyType: "Verified" })
                                     : host.certainty === "Historical"
