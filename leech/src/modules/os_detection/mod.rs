@@ -573,6 +573,10 @@ fn fingerprint_os_lookup(
         ),
         (
             OperatingSystemInfo::linux(None, None, None),
+            "8:2:28:1:*:6:*:31642",
+        ),
+        (
+            OperatingSystemInfo::linux(None, None, None),
             "8:2:28:1:a9b0:b:*:31642",
         ),
         (
@@ -580,12 +584,12 @@ fn fingerprint_os_lookup(
             "8:3:2c:1:4000:6:5b4:611314112",
         ),
         (
-            OperatingSystemInfo::bsd(Some(String::from("FreeBSD")), None),
-            "8:2:*:*:*:*:5b4:*",
-        ),
-        (
             OperatingSystemInfo::bsd(Some(String::from("NetBSD")), None),
             "8:2:28:1:*:3:5b4:64312",
+        ),
+        (
+            OperatingSystemInfo::bsd(Some(String::from("FreeBSD")), None),
+            "8:2:*:*:*:*:5b4:*",
         ),
     ];
 
