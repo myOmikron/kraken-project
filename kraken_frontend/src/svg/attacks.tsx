@@ -155,16 +155,12 @@ export default function AttacksIcon(params: AttacksParams) {
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
                 className={`kraken-attacks-hex ${
                     activeAttackCategory === "hosts" ? "kraken-attacks-hex-box-selected" : ""
-                } ${disabled.host_alive && disabled.whois ? "kraken-attacks-hex-unavailable" : ""}`}
+                } ${disabled.host_alive ? "kraken-attacks-hex-unavailable" : ""}`}
                 transform="matrix(.46387 0 0 .46387 41.129 64.555)"
             />
-            {/* whois */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                {...mouseHandler(AttackType.Whois)}
-                className={`kraken-attacks-hex ${
-                    activeAttack === AttackType.Whois ? "kraken-attacks-hex-selected" : ""
-                } ${!disabled[AttackType.Whois] ? "kraken-attacks-clickable" : "kraken-attacks-hex-unavailable"}`}
+                className={`kraken-attacks-hex-unavailable kraken-attacks-hex`}
                 transform="matrix(.23193 0 0 .23193 19.926 77.996)"
             />
             {/* host alive */}
@@ -257,9 +253,6 @@ export default function AttacksIcon(params: AttacksParams) {
             </text>
             <text xmlSpace="preserve" x={171.25} y={94} className={"kraken-attacks-hex-text"}>
                 {"Dh"}
-            </text>
-            <text xmlSpace="preserve" x={21.5} y={94} className={"kraken-attacks-hex-text"}>
-                {"WHO"}
             </text>
             <text xmlSpace="preserve" x={59} y={31} className={"kraken-attacks-hex-text"}>
                 {"PsT"}

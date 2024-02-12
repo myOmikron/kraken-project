@@ -1,0 +1,63 @@
+.workspace-attacks-generic-container {
+    display: grid;
+    grid-template-rows: 1fr max-content;
+}
+
+.workspace-attacks-generic-container > .fields,
+.workspace-attacks-generic-container fieldset {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    align-items: center;
+    grid-auto-rows: max-content;
+    gap: 1em;
+}
+
+.workspace-attacks-generic-container > .fields .checkbox {
+    grid-column: 1 / span 2;
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    gap: 4px;
+}
+
+.workspace-attacks-generic-container .info {
+    grid-column: 1 / 3;
+    margin: 0.5em 0;
+    opacity: 0.7;
+}
+
+.workspace-attacks-generic-container fieldset {
+    grid-column: 1 / 3;
+    opacity: unset;
+    border: 1px solid var(--primary-op);
+    border-radius: 8px;
+    padding: 0.5em 1em 1em;
+    margin-left: -1em;
+    margin-right: -1em;
+}
+
+.workspace-attacks-generic-container fieldset legend .icon {
+    width: 2em;
+}
+.workspace-attacks-generic-container fieldset legend .icon > svg {
+    fill: var(--primary);
+}
+
+.workspace-attacks-generic-container fieldset legend {
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+}
+
+.workspace-attacks-generic-container fieldset.collapsed {
+    padding-top: 0;
+    padding-bottom: 0;
+    border-left: none;
+    border-bottom: none;
+    border-right: none;
+    border-radius: 0;
+}
+
+.workspace-attacks-generic-container fieldset.collapsed > :not(legend) {
+    display: none;
+}

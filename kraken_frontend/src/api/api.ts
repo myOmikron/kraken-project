@@ -147,44 +147,10 @@ export const Api = {
         },
     },
     attacks: {
-        bruteforceSubdomains: (attack: BruteforceSubdomainsRequest) =>
-            handleError(attacks.bruteforceSubdomains({ bruteforceSubdomainsRequest: attack })),
-        queryCertificateTransparency: (attack: QueryCertificateTransparencyRequest) =>
-            handleError(attacks.queryCertificateTransparency({ queryCertificateTransparencyRequest: attack })),
-        hostAlive: (hostsAliveRequest: HostsAliveRequest) =>
-            handleError(attacks.hostsAliveCheck({ hostsAliveRequest })),
-        scanTcpPorts: (attack: ScanTcpPortsRequest) =>
-            handleError(attacks.scanTcpPorts({ scanTcpPortsRequest: attack })),
-        serviceDetection: (attack: ServiceDetectionRequest) =>
-            handleError(attacks.serviceDetection({ serviceDetectionRequest: attack })),
-        udpServiceDetection: (attack: UdpServiceDetectionRequest) =>
-            handleError(attacks.udpServiceDetection({ udpServiceDetectionRequest: attack })),
-        queryDehashed: (uuid: UUID, query: Query) =>
-            handleError(attacks.queryDehashed({ queryDehashedRequest: { workspaceUuid: uuid, query } })),
-        dnsResolution: (attack: DnsResolutionRequest) =>
-            handleError(attacks.dnsResolution({ dnsResolutionRequest: attack })),
-        dnsTxtScan: (attack: DnsTxtScanRequest) => handleError(attacks.dnsTxtScan({ dnsTxtScanRequest: attack })),
+        impl: attacks,
         all: () => handleError(attacks.getAllAttacks()),
         get: (uuid: UUID) => handleError(attacks.getAttack({ uuid })),
         delete: (uuid: UUID) => handleError(attacks.deleteAttack({ uuid })),
-        raw: {
-            getBruteforceSubdomainsResults: (uuid: UUID, limit: number, offset: number) =>
-                handleError(attacks.getBruteforceSubdomainsResults({ uuid, limit, offset })),
-            getDNSResolutionResults: (uuid: UUID, limit: number, offset: number) =>
-                handleError(attacks.getDnsResolutionResults({ uuid, limit, offset })),
-            getHostAliveResults: (uuid: UUID, limit: number, offset: number) =>
-                handleError(attacks.getHostAliveResults({ uuid, limit, offset })),
-            getCertificateTransparencyResults: (uuid: UUID, limit: number, offset: number) =>
-                handleError(attacks.getQueryCertificateTransparencyResults({ uuid, limit, offset })),
-            getUnhashedResults: (uuid: UUID, limit: number, offset: number) =>
-                handleError(attacks.getQueryUnhashedResults({ uuid, limit, offset })),
-            getServiceDetectionResults: (uuid: UUID, limit: number, offset: number) =>
-                handleError(attacks.getServiceDetectionResults({ uuid, limit, offset })),
-            getUdpServiceDetectionResults: (uuid: UUID, limit: number, offset: number) =>
-                handleError(attacks.getUdpServiceDetectionResults({ uuid, limit, offset })),
-            getTcpPortScanResults: (uuid: UUID, limit: number, offset: number) =>
-                handleError(attacks.getTcpPortScanResults({ uuid, limit, offset })),
-        },
     },
     auth: {
         login,
@@ -360,7 +326,7 @@ export const Api = {
 /**
  * Wraps a promise returned by the generated SDK which handles its errors and returns a {@link Result}
  */
-async function handleError<T>(promise: Promise<T>): Promise<Result<T, ApiError>> {
+export async function handleError<T>(promise: Promise<T>): Promise<Result<T, ApiError>> {
     try {
         return Ok(await promise);
     } catch (e) {
