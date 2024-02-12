@@ -39,7 +39,7 @@ tokio-stream = { version = "~0.1" }
 itertools = { version = "~0.12" }
 
 # gRPC implementation
-tonic = { version = "~0.10", features = ["transport", "tls"] }
+tonic = { version = "~0.11", features = ["transport", "tls"] }
 # codegenerator
 prost = { version = "~0.12" }
 prost-types = { version = "~0.12" }

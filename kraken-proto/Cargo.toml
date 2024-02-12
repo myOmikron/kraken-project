@@ -10,9 +10,9 @@ description = "Protobuf declarations used by the kraken-project"
 [dependencies]
 ipnetwork = "0.20"
 thiserror = "1"
-tonic = { version = "~0.10", features = ["transport", "tls"] }
+tonic = { version = "~0.11", features = ["transport", "tls"] }
 prost = { version = "~0.12" }
 prost-types = { version = "~0.12" }
 
 [build-dependencies]
-tonic-build = { version = "~0.10" }
+tonic-build = { version = "~0.11" }

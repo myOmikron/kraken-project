@@ -72,7 +72,7 @@ futures = { version = "~0.3", optional = true }
 rand = { version = "~0.8", optional = true }
 
 # gRPC implementation
-tonic = { version = "~0.10", features = ["transport", "tls"], optional = true }
+tonic = { version = "~0.11", features = ["transport", "tls"], optional = true }
 # codegenerator
 prost = { version = "~0.12", optional = true }
 prost-types = { version = "~0.12", optional = true }

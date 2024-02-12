@@ -40,4 +40,4 @@ log = { version = "~0.4" }
 
 [dev-dependencies]
 tokio = { version = ">=1.23.1", features = ["sync", "rt-multi-thread", "macros"] }
-env_logger = { version = "~0.10" }
+env_logger = { version = "~0.11" }
