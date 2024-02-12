@@ -200,9 +200,7 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                                 return (
                                     <div
                                         className={"pane workspace-list-item"}
-                                        onClick={() => {
-                                            ROUTES.WORKSPACE_HOSTS.visit({ uuid: w.uuid });
-                                        }}
+                                        {...ROUTES.WORKSPACE_NOTES.clickHandler({ uuid: w.uuid })}
                                     >
                                         <h3 className={"heading"}>{w.name}</h3>
                                         <div className={"workspace-list-table"}>

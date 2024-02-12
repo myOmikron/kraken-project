@@ -1,3 +1,62 @@
+.cursor-deco::after {
+    display: block;
+    content: "";
+    position: absolute;
+    height: 100%;
+    width: 2px;
+    left: -1px;
+    background-color: #f00;
+}
+.cursor-label {}
+
+.knowledge-base-editor-tabs {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0.5em;
+    gap: 0.25em;
+}
+
+.knowledge-base-editor-tab {
+    border: 1px solid var(--primary-op);
+    border-radius: 0.5em 0 0 0.5em;
+    background-color: #00ccff10;
+    border-right: none;
+    cursor: pointer;
+    transition: all 0.15s ease-out;
+    backdrop-filter: blur(20px);
+
+    height: 7em;
+    padding: 0 0.5em 1em;
+
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: space-between;
+}
+
+.knowledge-base-editor-tab .icon {
+    width: 2em;
+}
+.knowledge-base-editor-tab .user-indicator {
+    position: relative;
+    left: -0.7em;
+}
+.knowledge-base-editor-tab .user-indicator .neon {
+    fill: var(--primary);
+    filter: drop-shadow(0 0 4px var(--primary));
+}
+
+.knowledge-base-editor-tab.selected {
+    padding-right: 0.5em;
+    margin-left: -0.5em;
+    background-color: #00ccff30;
+}
+
+.knowledge-base-editor-tab:hover {
+    padding-right: 0.5em;
+    margin-left: -0.5em;
+    background-color: #00ccff40;
+}
+
 .knowledge-base-container {
     display: flex;
     flex-direction: column;

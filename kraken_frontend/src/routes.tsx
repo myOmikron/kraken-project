@@ -17,6 +17,10 @@ import WorkspaceAttacks, { TargetType } from "./views/workspace/workspace-attack
 import WorkspaceHosts from "./views/workspace/workspace-hosts";
 import WorkspaceHost from "./views/workspace/workspace-host";
 import KnowledgeBase from "./views/knowledge-base";
+import { CreateFindingDefinition } from "./views/knowledge-base/create-finding-definition";
+import { EditFindingDefinition } from "./views/knowledge-base/edit-finding-definition";
+import { ListFindingDefinition } from "./views/knowledge-base/list-finding-definition";
+import WorkspaceNotes from "./views/workspace/workspace-notes";
 
 export const ROUTER = new Router();
 
@@ -125,6 +129,17 @@ export const ROUTES = {
             </ContentWithMenu>
         ),
     }),
+    WORKSPACE_NOTES: ROUTER.add({
+        url: "workspaces/{uuid}/notes",
+        parser: { uuid: String },
+        render: ({ uuid }) => (
+            <ContentWithMenu>
+                <Workspace view={"notes"} uuid={uuid}>
+                    <WorkspaceNotes />
+                </Workspace>
+            </ContentWithMenu>
+        ),
+    }),
     KNOWLEDGE_BASE: ROUTER.add({
         url: "knowledge",
         parser: {},
@@ -134,7 +149,33 @@ export const ROUTES = {
             </ContentWithMenu>
         ),
     }),
-
+    FINDING_DEFINITION_LIST: ROUTER.add({
+        url: "knowledge/finding-definition",
+        parser: {},
+        render: () => (
+            <ContentWithMenu>
+                <ListFindingDefinition />
+            </ContentWithMenu>
+        ),
+    }),
+    FINDING_DEFINITION_CREATE: ROUTER.add({
+        url: "knowledge/finding-definition/create",
+        parser: {},
+        render: () => (
+            <ContentWithMenu>
+                <CreateFindingDefinition />
+            </ContentWithMenu>
+        ),
+    }),
+    FINDING_DEFINITION_EDIT: ROUTER.add({
+        url: "knowledge/finding-definition/{uuid}",
+        parser: { uuid: String },
+        render: ({ uuid }) => (
+            <ContentWithMenu>
+                <EditFindingDefinition uuid={uuid} />
+            </ContentWithMenu>
+        ),
+    }),
     OAUTH_REQUEST: ROUTER.add({
         url: "oauth-request/{uuid}",
         parser: { uuid: String },

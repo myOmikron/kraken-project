@@ -45,6 +45,31 @@ export default class SelectMenu extends React.Component<SelectMenuProps, SelectM
     }
 }
 
+export type SelectPrimitiveProps<T extends { toString(): string }> = {
+    options: Array<T>;
+    theme?: Theme;
+    value: null | T;
+    onChange: (value: T | null) => void;
+    id?: string;
+    required?: boolean;
+};
+/** A {@link Select `<Select />} which works with primitives (i.e. strings and numbers) instead of objects */
+export function SelectPrimitive<T extends { toString(): string }>(props: SelectPrimitiveProps<T>) {
+    return (
+        <Select<{ label: string; value: T }>
+            id={props.id}
+            required={props.required}
+            options={props.options.map((t) => ({ label: t.toString(), value: t }))}
+            onChange={(value) => {
+                props.onChange(value && value.value);
+            }}
+            autoFocus={false}
+            value={props.value && { label: props.value.toString(), value: props.value }}
+            styles={selectStyles(props.theme || "default")}
+        />
+    );
+}
+
 /**
  * Generates the styling information to be passed to `<Select />` for a given theme
  */

@@ -124,3 +124,43 @@ export async function copyToClipboard(text: string | null) {
         }
     }
 }
+
+/**
+ * Hook which stabilizes the address of the object passed in
+ *
+ * I.e. you pass it any object (`{foo: 1}`) and it will return another object with the exact same fields,
+ * but the returned object will always be the same one (have the same address) each re-render.
+ *
+ * ## Intended usage
+ *
+ * ```js
+ * React.useEffect(() => {
+ *     const handler = () => {
+ *         // something using `someVar`
+ *     };
+ *     eventEmitter.addEventListener("event", handler);
+ *     return () => eventEmitter.removeEventListener("event", handler);
+ * }, [someVar]);
+ *
+ * // becomes
+ *
+ * const vars = useStableObj({
+ *     someVar,
+ * });
+ * React.useEffect(() => {
+ *     const handler = () => {
+ *         // something using `vars.someVar`
+ *     };
+ *     eventEmitter.addEventListener("event", handler);
+ *     return () => eventEmitter.removeEventListener("event", handler);
+ * }, []); // <- no dependency here
+ * ```
+ */
+export function useStableObj<T extends Record<string, any>>(obj: T): T {
+    const { current } = React.useRef(obj);
+    for (const [key, value] of Object.entries(obj)) {
+        // @ts-ignore
+        current[key] = value;
+    }
+    return current;
+}

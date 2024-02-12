@@ -8,6 +8,7 @@ import "../../../styling/workspace-menu.css";
 import HostIcon from "../../../svg/host";
 import { WorkspaceView } from "../workspace";
 import USER_CONTEXT from "../../../context/user";
+import LibraryIcon from "../../../svg/library";
 
 type WorkspaceMenuProps = {
     uuid: string;
@@ -22,6 +23,13 @@ export default class WorkspaceMenu extends React.Component<WorkspaceMenuProps, W
     render() {
         return (
             <div className={"workspace-menu pane"}>
+                <div
+                    className={this.props.active === "notes" ? "workspace-menu-item active" : "workspace-menu-item"}
+                    {...ROUTES.WORKSPACE_NOTES.clickHandler({ uuid: this.props.uuid })}
+                >
+                    <LibraryIcon /> {/* TODO: find better icon */}
+                    <div className={"workspace-menu-hint"}>Notes</div>
+                </div>
                 <div
                     className={this.props.active === "search" ? "workspace-menu-item active" : "workspace-menu-item"}
                     {...ROUTES.WORKSPACE_SEARCH.clickHandler({ uuid: this.props.uuid })}
