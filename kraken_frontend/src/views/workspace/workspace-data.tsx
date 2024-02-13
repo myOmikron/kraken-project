@@ -27,6 +27,7 @@ import VerifiedIcon from "../../svg/verified";
 import HistoricalIcon from "../../svg/historical";
 import UnknownIcon from "../../svg/unknown";
 import SelectableText from "../../components/selectable-text";
+import "../../styling/tabs.css";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations", findings: "Findings" };
