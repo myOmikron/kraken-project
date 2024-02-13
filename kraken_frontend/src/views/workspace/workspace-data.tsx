@@ -438,7 +438,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 <div className={"workspace-data-filter pane"}>
                     <FilterInput {...globalFilter} />
                 </div>
-                <div className="workspace-findings-data-table">
+                <div className="workspace-data-table">
                     <div className="tabs-selector-container">
                         {Object.entries(TABS).map(([key, displayName]) => (
                             <div
