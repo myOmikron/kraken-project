@@ -14,15 +14,12 @@ import { useState } from "react";
 import RelationRightIcon from "../../../svg/relation-right";
 import RelationIndirectIcon from "../../../svg/relation-indirect";
 import RelationLeftIcon from "../../../svg/relation-left";
-import VerifiedIcon from "../../../svg/verified";
-import HistoricalIcon from "../../../svg/historical";
-import Popup from "reactjs-popup";
 import { CertaintyIcon } from "../workspace-data";
 
 export type WorkspaceDataHostDetailsProps = {
     host: string;
     updateHost?: (uuid: string, update: Partial<FullHost>) => void;
-    tab: "general" | "results" | "relations";
+    tab: "general" | "results" | "relations" | "findings";
 };
 
 export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
@@ -142,61 +139,84 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
                             </div>
                         </div>
                     ) : (
-                        <div className="workspace-data-details-overflow">
-                            <div className="workspace-data-details-relations-container">
-                                <div className="workspace-data-details-relations-header">
-                                    <div className="workspace-data-details-relations-heading">Connection</div>
-                                    <div className="workspace-data-details-relations-heading">Type</div>
-                                    <div className="workspace-data-details-relations-heading">To</div>
+                        <>
+                            {tab === "relations" ? (
+                                <div className="workspace-data-details-overflow">
+                                    <div className="workspace-data-details-relations-container">
+                                        <div className="workspace-data-details-relations-header">
+                                            <div className="workspace-data-details-relations-heading">Connection</div>
+                                            <div className="workspace-data-details-relations-heading">Type</div>
+                                            <div className="workspace-data-details-relations-heading">To</div>
+                                        </div>
+                                        <div className="workspace-data-details-relations-body">
+                                            {relations?.directDomains.map((d) => {
+                                                return (
+                                                    <div className="workspace-data-details-relations-entry">
+                                                        <div title={"Direct"}>
+                                                            <RelationLeftIcon />
+                                                        </div>
+                                                        <span>Domain</span>
+                                                        <span>{d.domain} </span>
+                                                    </div>
+                                                );
+                                            })}
+                                            {relations?.indirectDomains.map((d) => {
+                                                return (
+                                                    <div className="workspace-data-details-relations-entry">
+                                                        <div className="indirect" title={"Indirect"}>
+                                                            <RelationIndirectIcon />
+                                                        </div>
+                                                        <span>Domain</span>
+                                                        <span>{d.domain} </span>
+                                                    </div>
+                                                );
+                                            })}
+                                            {relations?.ports.map((p) => {
+                                                return (
+                                                    <div className="workspace-data-details-relations-entry">
+                                                        <div title={"Direct"}>
+                                                            <RelationRightIcon />
+                                                        </div>
+                                                        <span>Port</span>
+                                                        <span>{p.port} </span>
+                                                    </div>
+                                                );
+                                            })}
+                                            {relations?.services.map((s) => {
+                                                return (
+                                                    <div className="workspace-data-details-relations-entry">
+                                                        <div title={"Direct"}>
+                                                            <RelationRightIcon />
+                                                        </div>
+                                                        <span>Service</span>
+                                                        <span>{s.name} </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="workspace-data-details-relations-body">
-                                    {relations?.directDomains.map((d) => {
-                                        return (
-                                            <>
-                                                <div title={"Direct"}>
-                                                    <RelationLeftIcon />
+                            ) : (
+                                <>
+                                    {tab === "findings" ? (
+                                        <div className="workspace-data-details-overflow">
+                                            <div className="workspace-data-details-relations-container">
+                                                <div className="workspace-data-details-relations-header workspace-data-details-findings">
+                                                    <div className="workspace-data-details-relations-heading">
+                                                        Severity
+                                                    </div>
+                                                    <div className="workspace-data-details-relations-heading">CVE</div>
+                                                    <div className="workspace-data-details-relations-heading">Name</div>
                                                 </div>
-                                                <span>Domain</span>
-                                                <span>{d.domain} </span>
-                                            </>
-                                        );
-                                    })}
-                                    {relations?.indirectDomains.map((d) => {
-                                        return (
-                                            <>
-                                                <div className="indirect" title={"Indirect"}>
-                                                    <RelationIndirectIcon />
-                                                </div>
-                                                <span>Domain</span>
-                                                <span>{d.domain} </span>
-                                            </>
-                                        );
-                                    })}
-                                    {relations?.ports.map((p) => {
-                                        return (
-                                            <>
-                                                <div title={"Direct"}>
-                                                    <RelationRightIcon />
-                                                </div>
-                                                <span>Port</span>
-                                                <span>{p.port} </span>
-                                            </>
-                                        );
-                                    })}
-                                    {relations?.services.map((s) => {
-                                        return (
-                                            <>
-                                                <div title={"Direct"}>
-                                                    <RelationRightIcon />
-                                                </div>
-                                                <span>Service</span>
-                                                <span>{s.name} </span>
-                                            </>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </div>
+                                                <div className="workspace-data-details-relations-body"></div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div>Unimplemented</div>
+                                    )}
+                                </>
+                            )}
+                        </>
                     )}
                 </>
             )}

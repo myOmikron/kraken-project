@@ -108,6 +108,47 @@ input[type="color"].input {
 }
 
 
+.severity-icon-ok {
+    filter: brightness(0) invert() drop-shadow(0 0 4px #0f8);
+}
+
+.severity-icon-ok path {
+    stroke: rgba(202, 255, 231, 0.7);
+}
+
+.severity-icon-low {
+    filter: brightness(0) invert() drop-shadow(0 0 4px #ffcc00);
+}
+
+.severity-icon-low path {
+    stroke: rgba(255, 211, 0, 0.7);
+}
+
+.severity-icon-medium {
+    filter: brightness(0) invert() drop-shadow(0 0 4px #ff6a00);
+}
+
+.severity-icon-medium path {
+    stroke: rgba(255, 204, 146, 0.7);
+}
+
+.severity-icon-high {
+    filter: brightness(0) invert() drop-shadow(0 0 4px #ff0000);
+}
+
+.severity-icon-high path {
+    stroke: rgba(255, 146, 146, 0.7);
+}
+
+.severity-icon-critical {
+    filter: brightness(0) invert() drop-shadow(0 0 4px #9900ff);
+}
+
+.severity-icon-critical path {
+    stroke: rgba(215, 146, 255, 0.7);
+}
+
+
 
 .start-attack-container {
     display: flex;

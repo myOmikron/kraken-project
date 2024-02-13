@@ -2,7 +2,7 @@
     grid-area: 2 / 1 / span 1 / span 1;
     display: grid;
     grid-template-columns: 8fr 3fr;
-    grid-template-rows: 2.75em 3.5em calc(100% - 1em - 2.75em - 1em - 3.5em);
+    grid-template-rows: 2.75em calc(100% - 1em - 2.75em);
     gap: 1em;
     animation: yourAnimation 0.3s step-End 0.4s 1 normal backwards;
 }
@@ -24,27 +24,6 @@
 
 .workspace-data-filter .icon {
     width: 1.4em;
-}
-
-.workspace-data-selector {
-    display: grid;
-    width: 100%;
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-    gap: 1em;
-}
-
-.workspace-data-selector > .pane {
-    padding: 1em 2em;
-    cursor: pointer;
-    transition: all 200ms;
-}
-
-.workspace-data-selector > .pane:hover {
-    box-shadow: 0 0 25em var(--primary-op), inset 0 0 10em #0cf3, inset 0 0 0.5em #0ff2, 0 0 1em var(--primary-op);
-}
-
-.workspace-data-selector h3 {
-    margin: 0;
 }
 
 .workspace-data-details-selector{

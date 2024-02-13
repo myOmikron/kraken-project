@@ -10,17 +10,12 @@ import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 import ArrowLeftIcon from "../../../svg/arrow-left";
 import ArrowRightIcon from "../../../svg/arrow-right";
 import RelationLeftIcon from "../../../svg/relation-left";
-import VerifiedIcon from "../../../svg/verified";
-import UnverifiedIcon from "../../../svg/unverified";
-import HistoricalIcon from "../../../svg/historical";
-import UnknownIcon from "../../../svg/unknown";
-import Popup from "reactjs-popup";
 import { CertaintyIcon } from "../workspace-data";
 
 export type WorkspaceDataServiceDetailsProps = {
     service: string;
     updateService?: (uuid: string, update: Partial<FullService>) => void;
-    tab: "general" | "results" | "relations";
+    tab: "general" | "results" | "relations" | "findings";
 };
 
 export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsProps) {
@@ -73,7 +68,7 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Service</h3>
                         {`${service.name} running on ${service.host.ipAddr}`}
-                        {!service.port ? "" : ` (Port ${service.port.port})`}
+                        {!service.port ? "" : ` (Port ${service.port.port}, ${service.port.protocol})`}
                     </div>
                     <div className="workspace-data-details-pane">
                         <h3 className="sub-heading">Certainty</h3>
@@ -147,35 +142,58 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
                             </div>
                         </div>
                     ) : (
-                        <div className="workspace-data-details-overflow">
-                            <div className="workspace-data-details-relations-container">
-                                <div className="workspace-data-details-relations-header">
-                                    <div className="workspace-data-details-relations-heading">Connection</div>
-                                    <div className="workspace-data-details-relations-heading">Type</div>
-                                    <div className="workspace-data-details-relations-heading">To</div>
+                        <>
+                            {tab === "relations" ? (
+                                <div className="workspace-data-details-overflow">
+                                    <div className="workspace-data-details-relations-container">
+                                        <div className="workspace-data-details-relations-header">
+                                            <div className="workspace-data-details-relations-heading">Connection</div>
+                                            <div className="workspace-data-details-relations-heading">Type</div>
+                                            <div className="workspace-data-details-relations-heading">To</div>
+                                        </div>
+                                        <div className="workspace-data-details-relations-body">
+                                            {relations?.host !== null && relations?.host !== undefined ? (
+                                                <div className="workspace-data-details-relations-entry">
+                                                    <div title={"Direct"}>
+                                                        <RelationLeftIcon />
+                                                    </div>
+                                                    <span>Host</span>
+                                                    <span>{relations.host.ipAddr} </span>
+                                                </div>
+                                            ) : undefined}
+                                            {relations?.port !== null && relations?.port !== undefined ? (
+                                                <div className="workspace-data-details-relations-entry">
+                                                    <div title={"Direct"}>
+                                                        <RelationLeftIcon />
+                                                    </div>
+                                                    <span>Port</span>
+                                                    <span>{relations.port.port} </span>
+                                                </div>
+                                            ) : undefined}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="workspace-data-details-relations-body">
-                                    {relations?.host !== null && relations?.host !== undefined ? (
-                                        <>
-                                            <div title={"Direct"}>
-                                                <RelationLeftIcon />
+                            ) : (
+                                <>
+                                    {tab === "findings" ? (
+                                        <div className="workspace-data-details-overflow">
+                                            <div className="workspace-data-details-relations-container">
+                                                <div className="workspace-data-details-relations-header workspace-data-details-findings">
+                                                    <div className="workspace-data-details-relations-heading">
+                                                        Severity
+                                                    </div>
+                                                    <div className="workspace-data-details-relations-heading">CVE</div>
+                                                    <div className="workspace-data-details-relations-heading">Name</div>
+                                                </div>
+                                                <div className="workspace-data-details-relations-body"></div>
                                             </div>
-                                            <span>Host</span>
-                                            <span>{relations.host.ipAddr} </span>
-                                        </>
-                                    ) : undefined}
-                                    {relations?.port !== null && relations?.port !== undefined ? (
-                                        <>
-                                            <div title={"Direct"}>
-                                                <RelationLeftIcon />
-                                            </div>
-                                            <span>Port</span>
-                                            <span>{relations.port.port} </span>
-                                        </>
-                                    ) : undefined}
-                                </div>
-                            </div>
-                        </div>
+                                        </div>
+                                    ) : (
+                                        <div>Unimplemented</div>
+                                    )}
+                                </>
+                            )}
+                        </>
                     )}
                 </>
             )}

@@ -29,7 +29,7 @@ import UnknownIcon from "../../svg/unknown";
 import SelectableText from "../../components/selectable-text";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
-const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations" };
+const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations", findings: "Findings" };
 type SelectedUuids = { [Key in keyof typeof TABS]: Record<string, true> };
 
 type WorkspaceDataProps = {};
@@ -108,7 +108,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"domain-table"}
                         {...domainsTable}
-                        columnsTemplate={"min-content 1fr 1fr 1fr 0.2fr 1fr 0.15fr"}
+                        columnsTemplate={"min-content 1fr 1fr 1fr 0.2fr 0.2fr 1fr 0.15fr"}
                         onAdd={() => setCreateForm("domains")}
                         filter={domainFilter}
                     >
@@ -121,6 +121,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>Domain</span>
                             <span>Tags</span>
                             <span>Comment</span>
+                            <span>Severity</span>
                             <span>Certainty</span>
                             <span>Attacks</span>
                             <span />
@@ -147,6 +148,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <SelectableText>{domain.domain}</SelectableText>
                                 <TagList tags={domain.tags} />
                                 <div>{domain.comment}</div>
+                                <span className="workspace-data-certainty-icon"></span>
                                 {domain.certainty === "Unverified"
                                     ? CertaintyIcon({ certaintyType: "Unverified" })
                                     : CertaintyIcon({ certaintyType: "Verified" })}
@@ -165,7 +167,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"host-table"}
                         {...hostsTable}
-                        columnsTemplate={"min-content 35ch 1fr 1fr 0.2fr 1fr 0.15fr"}
+                        columnsTemplate={"min-content 35ch 1fr 1fr 0.2fr 0.2fr 1fr 0.15fr"}
                         onAdd={() => setCreateForm("hosts")}
                         filter={hostFilter}
                     >
@@ -178,6 +180,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>IP</span>
                             <span>Tags</span>
                             <span>Comment</span>
+                            <span>Severity</span>
                             <span>Certainty</span>
                             <span>Attacks</span>
                             <span />
@@ -204,6 +207,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <SelectableText>{host.ipAddr}</SelectableText>
                                 <TagList tags={host.tags} />
                                 <div>{host.comment}</div>
+                                <span className="workspace-data-certainty-icon"></span>
                                 {host.certainty === "Verified"
                                     ? CertaintyIcon({ certaintyType: "Verified" })
                                     : host.certainty === "Historical"
@@ -220,7 +224,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"port-table"}
                         {...portsTable}
-                        columnsTemplate={"min-content 5ch 8ch 35ch 1fr 1fr 0.2fr 1fr 0.15fr"}
+                        columnsTemplate={"min-content 5ch 8ch 35ch 1fr 1fr 0.2fr 0.2fr 1fr 0.15fr"}
                         onAdd={() => setCreateForm("ports")}
                         filter={portFilter}
                     >
@@ -235,6 +239,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>IP</span>
                             <span>Tags</span>
                             <span>Comment</span>
+                            <span>Severity</span>
                             <span>Certainty</span>
                             <span>Attacks</span>
                             <span />
@@ -263,6 +268,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <span>{port.host.ipAddr}</span>
                                 <TagList tags={port.tags} />
                                 <span>{port.comment}</span>
+                                <span className="workspace-data-certainty-icon"></span>
                                 {port.certainty === "Verified"
                                     ? CertaintyIcon({ certaintyType: "Verified" })
                                     : port.certainty === "Historical"
@@ -279,7 +285,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"service-table"}
                         {...servicesTable}
-                        columnsTemplate={"min-content 1fr 30ch 5ch 10ch 1fr 1fr 0.2fr 1fr 0.15fr"}
+                        columnsTemplate={"min-content 0.8fr 30ch 5ch 10ch 1fr 1fr 0.2fr 0.2fr 1fr 0.15fr"}
                         onAdd={() => setCreateForm("services")}
                         filter={serviceFilter}
                     >
@@ -295,6 +301,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>Protocol</span>
                             <span>Tags</span>
                             <span>Comment</span>
+                            <span>Severity</span>
                             <span>Certainty</span>
                             <span>Attacks</span>
                             <span />
@@ -324,6 +331,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <span>{service.port?.protocol}</span>
                                 <TagList tags={service.tags} />
                                 <span>{service.comment}</span>
+                                <span className="workspace-data-certainty-icon"></span>
                                 {service.certainty === "Historical"
                                     ? CertaintyIcon({ certaintyType: "Historical" })
                                     : service.certainty === "SupposedTo"
@@ -430,17 +438,19 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 <div className={"workspace-data-filter pane"}>
                     <FilterInput {...globalFilter} />
                 </div>
-                <div className={"workspace-data-selector"}>
-                    {Object.entries(TABS).map(([key, displayName]) => (
-                        <div
-                            className={"pane" + (tab !== key ? "" : " workspace-data-selected-tab")}
-                            onClick={() => setTab(key as keyof typeof TABS)}
-                        >
-                            <h3 className={"heading"}>{displayName}</h3>
-                        </div>
-                    ))}
+                <div className="workspace-findings-data-table">
+                    <div className="tabs-selector-container">
+                        {Object.entries(TABS).map(([key, displayName]) => (
+                            <div
+                                className={"tabs " + (tab !== key ? "" : "selected-tab")}
+                                onClick={() => setTab(key as keyof typeof TABS)}
+                            >
+                                <h3 className={"heading"}>{displayName}</h3>
+                            </div>
+                        ))}
+                    </div>
+                    {tableElement}
                 </div>
-                {tableElement}
                 <div className={"workspace-data-details pane"}>
                     {ObjectFns.isEmpty(selectedUuids.domains) &&
                     ObjectFns.isEmpty(selectedUuids.hosts) &&
