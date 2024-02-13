@@ -198,26 +198,43 @@
 .workspace-data-details-relations-body{
     width: 100%;
     overflow-y: auto;
+}
+
+.workspace-data-details-relations-entry{
     display: grid;
     grid-template-columns: 1fr 1fr 2fr;
     justify-items: center;
     align-items: center;
-    margin: 1.5em 0;
-    row-gap: 1em;
-}
-
-.workspace-data-details-relations-body span{
-    text-align: center;
-    padding: 0 0.5em;
-}
-
-.workspace-data-details-relations-body > div{
     width: 100%;
- }
+    text-align: center;
+    padding: 0.5em 0
+}
 
-.workspace-data-details-relations-body div{
+.workspace-data-details-findings{
+    grid-template-columns: 0.5fr 1fr 1fr;
+}
+
+.workspace-data-details-findings:not(.workspace-data-details-relations-header):hover{
+    cursor: pointer;
+    --color: var(--primary-op);
+    --blur: 0.5em;
+    --offset: 0.2em;
+    box-shadow:
+            inset 0 var(--offset) var(--blur) var(--color),
+            inset 0 calc(-1 * var(--offset)) var(--blur) var(--color);
+}
+
+.workspace-data-details-relations-entry > div{
     width: 2em;
     height: 2em;
+}
+
+.workspace-data-details-relations-entry .icon{
+    margin-top: 0.1em;
+}
+
+.workspace-data-details-relations-entry:not(:first-child){
+    border-top: 1px solid var(--primary-op);
 }
 
 .indirect div{

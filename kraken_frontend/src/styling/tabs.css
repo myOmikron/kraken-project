@@ -1,0 +1,75 @@
+.tabs-selector-container{
+    display: flex;
+    flex-direction: row;
+    align-items: end;
+    margin-left: 0.5em;
+    gap: 0.25em;
+}
+
+.tabs{
+    border-radius: 0.5em 0.5em 0 0;
+    background-color: #00ccff10;
+    cursor: pointer;
+    backdrop-filter: blur(20px);
+
+    width: 10em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.tabs:hover{
+    background-color: #00ccff40;
+}
+
+.tabs h3{
+    font-size: 1em;
+    margin: 0.6em 1em;
+    transition: all 0.15s ease-out;
+}
+
+.icon-tabs{
+    border-radius: 0.5em 0.5em 0 0;
+    background-color: #00ccff10;
+    cursor: pointer;
+    backdrop-filter: blur(20px);
+
+    width: 4em;
+    padding: 0.5em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.icon-tabs:hover{
+    background-color: #00ccff40;
+}
+
+.icon-tabs .icon{
+    width: 1.5em;
+    transition: all 0.15s ease-out;
+}
+
+.selected-tab{
+    background-color: #00ccff30;
+}
+
+.selected-tab .icon{
+    width: 2em;
+    transition: all 0.15s ease-out;
+}
+
+.selected-tab h3{
+    font-size: 1.2em;
+    transition: all 0.15s ease-out;
+}
+
+.tabs:hover:not(.selected-tab) h3{
+    font-size: 1.2em;
+    transition: all 0.15s ease-out;
+}
+
+.icon-tabs:hover:not(.selected-tab) .icon{
+    width: 2em;
+    transition: all 0.15s ease-out;
+}

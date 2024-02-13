@@ -60,8 +60,8 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
             handleApiError(({ workspaces }) =>
                 this.setState({
                     workspaces,
-                }),
-            ),
+                })
+            )
         );
     }
 
@@ -74,7 +74,7 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                 toast.success("Created new workspace");
                 this.setState({ newName: "", newDesc: "", createNew: false });
                 this.fetchState();
-            }),
+            })
         );
     }
 
@@ -200,7 +200,7 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                                 return (
                                     <div
                                         className={"pane workspace-list-item"}
-                                        {...ROUTES.WORKSPACE_NOTES.clickHandler({ uuid: w.uuid })}
+                                        {...ROUTES.WORKSPACE_DATA.clickHandler({ uuid: w.uuid })}
                                     >
                                         <h3 className={"heading"}>{w.name}</h3>
                                         <div className={"workspace-list-table"}>

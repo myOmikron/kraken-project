@@ -1,5 +1,7 @@
 .workspace-table {
     padding: 2em 1em;
+    display: flex;
+    flex-direction: column;
 
     /* Is overwritten by javascript */
     --columns: 1fr 1fr 1fr 1fr;
@@ -52,7 +54,7 @@
 .workspace-table-controls {
     align-self: center;
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr  1fr;
+    grid-template-columns: 1fr auto auto 1fr;
     flex-direction: row;
     align-items: center;
     width: 100%;
