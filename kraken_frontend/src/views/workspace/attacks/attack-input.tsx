@@ -222,7 +222,7 @@ export function DehashedAttackInput(props: AttackInputProps<Query>) {
     delete htmlProps["validate"];
     delete htmlProps["onUpdate"];
 
-    function update(type, search) {
+    function update(type: null | SelectValue, search: string) {
         let query;
         switch (type?.value) {
             case "email":
