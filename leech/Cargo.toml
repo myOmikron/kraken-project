@@ -85,9 +85,12 @@ native-tls = { version = "~0.2", features = ["alpn"] }
 tokio-native-tls = { version = "~0.3" }
 probe-config = { path = "probe-config" }
 
+# raw sockets
 socket2 = "0.5.5"
 etherparse = "0.13"
-get_if_addrs = "0.5.3"
+nix = {  version = "0.27.1", features = ["net"] }
+strum = "~0.25"
+strum_macros = "~0.25"
 
 [build-dependencies]
 probe-config = { path = "probe-config" }

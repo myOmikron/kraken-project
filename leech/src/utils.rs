@@ -6,7 +6,8 @@ use std::ops::RangeInclusive;
 use std::os::fd::{FromRawFd, IntoRawFd};
 use std::str::FromStr;
 
-use get_if_addrs::IfAddr;
+use nix::ifaddrs::getifaddrs;
+use nix::sys::socket::{AddressFamily, SockaddrLike};
 use once_cell::sync::Lazy;
 use regex::{bytes, Regex};
 use thiserror::Error;
@@ -159,28 +160,63 @@ pub fn find_source_ip(destination: IpAddr) -> std::io::Result<IpAddr> {
     };
     let mut is_first = true;
 
-    for iface in get_if_addrs::get_if_addrs()?.iter() {
-        if iface.is_loopback() {
+    for iface in getifaddrs()? {
+        let Some(address) = iface.address else {
             continue;
-        }
+        };
+        let Some(netmask) = iface.netmask else {
+            continue;
+        };
 
-        match (destination, &iface.addr) {
-            (IpAddr::V4(dst_v4), IfAddr::V4(src_v4)) => {
-                if src_v4.ip & src_v4.netmask == dst_v4 & src_v4.netmask {
-                    return Ok(IpAddr::V4(src_v4.ip));
+        match (destination, address.family()) {
+            (IpAddr::V4(dst_v4), Some(AddressFamily::Inet)) => {
+                let src_v4 = address
+                    .as_sockaddr_in()
+                    .expect("family is inet, this must be set");
+                let src_v4 = Ipv4Addr::from(src_v4.ip());
+                if let Some(netmask) = netmask.as_sockaddr_in() {
+                    let netmask = Ipv4Addr::from(netmask.ip());
+                    if src_v4 & netmask == dst_v4 & netmask {
+                        return Ok(IpAddr::V4(src_v4));
+                    }
                 }
             }
-            (IpAddr::V6(dst_v6), IfAddr::V6(src_v6)) => {
-                if src_v6.ip & src_v6.netmask == dst_v6 & src_v6.netmask {
-                    return Ok(IpAddr::V6(src_v6.ip));
+            (IpAddr::V6(dst_v6), Some(AddressFamily::Inet6)) => {
+                let src_v6 = address
+                    .as_sockaddr_in6()
+                    .expect("family is inet6, this must be set");
+                let src_v6 = src_v6.ip();
+                if let Some(netmask) = netmask.as_sockaddr_in6() {
+                    let netmask = netmask.ip();
+                    if src_v6 & netmask == dst_v6 & netmask {
+                        return Ok(IpAddr::V6(src_v6));
+                    }
                 }
             }
             (_, _) => continue,
         }
 
         if is_first {
-            is_first = false;
-            first = iface.ip();
+            if let Some(ip) = match address.family() {
+                Some(AddressFamily::Inet) => Some(IpAddr::from(Ipv4Addr::from(
+                    address
+                        .as_sockaddr_in()
+                        .expect("family is inet, this must be set")
+                        .ip(),
+                ))),
+                Some(AddressFamily::Inet6) => Some(IpAddr::from(
+                    address
+                        .as_sockaddr_in6()
+                        .expect("family is inet6, this must be set")
+                        .ip(),
+                )),
+                _ => None,
+            } {
+                if !ip.is_loopback() {
+                    is_first = false;
+                    first = ip;
+                }
+            }
         }
     }
 

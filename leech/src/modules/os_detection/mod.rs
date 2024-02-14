@@ -7,35 +7,62 @@ use std::time::Duration;
 
 use itertools::Itertools;
 use log::debug;
+use strum_macros::EnumString;
 use tokio::task::JoinSet;
 use tokio::time::timeout;
 
 use crate::modules::os_detection::errors::{OsDetectionError, TcpFingerprintError};
+use crate::modules::os_detection::fingerprint_db::FINGERPRINT_DB;
 use crate::modules::os_detection::syn_scan::find_open_and_closed_port;
 use crate::modules::os_detection::tcp_fingerprint::{fingerprint_tcp, TcpFingerprint};
 use crate::modules::service_detection::DetectServiceSettings;
 
 pub mod errors;
+mod fingerprint_db;
 mod syn_scan;
 pub mod tcp_fingerprint;
 
 /// Various known linux distribution names. Version is stored outside of this enum, e.g. in the tuple in
 /// OperatingSystemInfo.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Hash, EnumString)]
 #[allow(missing_docs)]
 pub enum LinuxDistro {
+    // independent non-android linux distros
+    Alpine,
     ArchLinux,
-    CentOS,
+    ClearLinuxOS,
     Debian,
+    Elive,
+    Gentoo,
+    GnuGuixSystem,
+    GoboLinux,
+    KaOS,
+    Mageia,
+    NixOS,
+    OpenSUSE,
+    PuppyLinux,
+    SliTaz,
+    TinyCoreLinux,
+    VoidLinux,
+    // non-independent popular linux distros (distrowatch)
+    LinuxMint,
+    EndeavourOS,
+    Manjaro,
     Ubuntu,
     Fedora,
-    OpenSUSE,
-    Oracle,
+    PopOs,
+    Zorin,
+    // server distros
+    CentOS,
     RHEL,
+    OracleLinux,
+    RockyLinux,
+    AlmaLinux,
+    EuroLinux,
 }
 
 /// Various known Windows / Windows Server versions.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Hash, EnumString)]
 #[allow(missing_docs)]
 pub enum WindowsVersion {
     WindowsXP,
@@ -611,59 +638,18 @@ async fn os_detect_tcp_fingerprint(
 fn fingerprint_os_lookup(
     fingerprint: TcpFingerprint,
 ) -> Result<OperatingSystemInfo, OsDetectionError> {
-    let known = [
-        (
-            OperatingSystemInfo::windows(None, None),
-            "8:3:28:2:*:8:5b4:64312",
-        ),
-        (
-            OperatingSystemInfo::windows(None, None),
-            "8:1:20:2:ffff:8:5b4:411312",
-        ),
-        (
-            OperatingSystemInfo::linux(None, None, None),
-            "8:2:28:1:*:7:*:31642",
-        ),
-        (
-            OperatingSystemInfo::linux(None, None, None),
-            "8:2:28:1:*:6:*:31642",
-        ),
-        (
-            OperatingSystemInfo::linux(None, None, None),
-            "8:2:28:1:a9b0:b:*:31642",
-        ),
-        (
-            OperatingSystemInfo::bsd(Some(String::from("OpenBSD")), None),
-            "8:3:2c:1:4000:6:5b4:611314112",
-        ),
-        (
-            OperatingSystemInfo::bsd(Some(String::from("NetBSD")), None),
-            "8:2:28:1:*:3:5b4:64312",
-        ),
-        (
-            OperatingSystemInfo::bsd(Some(String::from("FreeBSD")), None),
-            "8:2:*:*:*:*:5b4:*",
-        ),
-    ];
-
     let fingerprint = &fingerprint.to_string();
-    for (os, pattern) in known {
-        let mut matches = true;
-        for (expected, actual) in pattern.split(':').zip(fingerprint.split(':')) {
-            if expected != "*" && expected != actual {
-                matches = false;
-                break;
-            }
-        }
-
-        if matches {
-            return Ok(os.with_hints(HashSet::from([
-                "TCP fingerprint: ".to_owned() + &*fingerprint.to_string()
-            ])));
+    for known in FINGERPRINT_DB.iter() {
+        if known.matches(fingerprint) {
+            return Ok(known
+                .os
+                .clone()
+                .with_hints(HashSet::from([
+                    "TCP fingerprint: ".to_owned() + &*fingerprint.to_string()
+                ])));
         }
     }
 
-    // TODO
     Ok(OperatingSystemInfo::unknown(Some(
         "TCP fingerprint: ".to_owned() + &*fingerprint.to_string(),
     )))
