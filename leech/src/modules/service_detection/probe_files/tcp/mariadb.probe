@@ -8,7 +8,8 @@ probes:
     # - 3 bytes message length (excluding the initial 4 bytes)
     # - 1 byte sequence id
     sub_regex:
-      - ^(?s-u:.)\x00\x00\x00\x0a\d+(\.\d+)+[-]+(?:MariaDB)?[-](\d+:\d+\.\d+\.\d+)(?:\+maria~\w+.\w+)?\x00
+      - |-
+        ^(?s-u:.)\x00\x00\x00\x0a\d+(\.\d+)+[-]+(?:MariaDB)?[-](\d+:\d+\.\d+\.\d+)(?:\+maria~\w+.\w+)?\x00
       # \xFF is an error packet header (https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_err_packet.html)
       # 1130 (i.e. 6a04 BE) is the error code
       #- ^(?s-u:.)\x00\x00\x00\xFF\x6a\x04Host .* is not allowed to connect to this MariaDB server$ 

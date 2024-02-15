@@ -1,8 +1,8 @@
 use std::{fmt, io};
 
-use crate::parse::{Payload, Protocol, Service};
+use crate::schema::{ProbeFile, Protocol};
 
-pub fn generate_code(writer: &mut impl io::Write, services: &[Service]) -> io::Result<()> {
+pub fn generate_code(writer: &mut impl io::Write, services: &[ProbeFile]) -> io::Result<()> {
     writer.write_fmt(format_args!("{}", AllProbes::from(services)))
 }
 
@@ -21,16 +21,22 @@ struct BaseProbe<'a> {
 }
 struct PayloadProbe<'a> {
     base: BaseProbe<'a>,
-    payload: &'a Payload,
+    payload: Payload<'a>,
 }
 struct TlsProbe<'a> {
     base: BaseProbe<'a>,
-    payload: &'a Payload,
+    payload: Payload<'a>,
     alpn: Option<&'a String>,
 }
 
-impl<'a> Extend<&'a Service> for AllProbes<'a> {
-    fn extend<T: IntoIterator<Item = &'a Service>>(&mut self, iter: T) {
+pub enum Payload<'a> {
+    Empty,
+    String(&'a String),
+    Binary(&'a Vec<u8>),
+}
+
+impl<'a> Extend<&'a ProbeFile> for AllProbes<'a> {
+    fn extend<T: IntoIterator<Item = &'a ProbeFile>>(&mut self, iter: T) {
         for service in iter {
             let empty_tcp_probes = &mut self.empty_tcp_probes[service.prevalence as usize];
             let payload_tcp_probes = &mut self.payload_tcp_probes[service.prevalence as usize];
@@ -39,28 +45,34 @@ impl<'a> Extend<&'a Service> for AllProbes<'a> {
             let udp_probes = &mut self.udp_probes[service.prevalence as usize];
 
             for probe in &service.probes {
-                match (&probe.protocol, &probe.payload) {
+                let payload = None
+                    .or(probe.payload_str.as_ref().map(Payload::String))
+                    .or(probe.payload_b64.as_ref().map(Payload::Binary))
+                    .or(probe.payload_hex.as_ref().map(Payload::Binary))
+                    .unwrap_or(Payload::Empty);
+
+                match (&probe.protocol, payload) {
                     (Protocol::Tcp, Payload::Empty) => empty_tcp_probes.push(BaseProbe {
-                        service: &service.name,
+                        service: &service.service,
                         regex: &probe.regex,
                         sub_regex: probe.sub_regex.as_deref(),
                     }),
                     (Protocol::Tcp, payload) => payload_tcp_probes.push(PayloadProbe {
                         base: BaseProbe {
-                            service: &service.name,
+                            service: &service.service,
                             regex: &probe.regex,
                             sub_regex: probe.sub_regex.as_deref(),
                         },
                         payload,
                     }),
                     (Protocol::Tls, Payload::Empty) => empty_tls_probes.push(BaseProbe {
-                        service: &service.name,
+                        service: &service.service,
                         regex: &probe.regex,
                         sub_regex: probe.sub_regex.as_deref(),
                     }),
                     (Protocol::Tls, payload) => payload_tls_probes.push(TlsProbe {
                         base: BaseProbe {
-                            service: &service.name,
+                            service: &service.service,
                             regex: &probe.regex,
                             sub_regex: probe.sub_regex.as_deref(),
                         },
@@ -69,7 +81,7 @@ impl<'a> Extend<&'a Service> for AllProbes<'a> {
                     }),
                     (Protocol::Udp, payload) => udp_probes.push(PayloadProbe {
                         base: BaseProbe {
-                            service: &service.name,
+                            service: &service.service,
                             regex: &probe.regex,
                             sub_regex: probe.sub_regex.as_deref(),
                         },
@@ -80,8 +92,8 @@ impl<'a> Extend<&'a Service> for AllProbes<'a> {
         }
     }
 }
-impl<'a> From<&'a [Service]> for AllProbes<'a> {
-    fn from(services: &'a [Service]) -> Self {
+impl<'a> From<&'a [ProbeFile]> for AllProbes<'a> {
+    fn from(services: &'a [ProbeFile]) -> Self {
         let mut probes = Self::default();
         probes.extend(services);
         probes

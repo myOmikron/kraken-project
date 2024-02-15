@@ -2,9 +2,11 @@ service: rdp
 prevalence: often
 probes:
   - protocol: TCP
-    payload_str: \x03\0\0\x2a\x25\xe0\0\0\0\0\0Cookie: mstshash=OPAUISd\r\n\x01\0\x08\0\x03\0\0\0
+    payload_str: |-
+      \x03\0\0\x2a\x25\xe0\0\0\0\0\0Cookie: mstshash=OPAUISd\r\n\x01\0\x08\0\x03\0\0\0
     regex: ^\x03\x00\x00
     sub_regex:
       # may respond with [3, 0, 0, 9, 2, f0, 80, 21, 80] => MCS Disconnect Provider Ultimatum PDU
       # https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/19a238a5-0455-46f0-a96b-31320d9a70a1
-      - (?-u:\xd0)\x00\x00\x12\x34|\x09\x02(?-u:\xf0)(?-u:\x80)\x21(?-u:\x80)
+      - |-
+        (?-u:\xd0)\x00\x00\x12\x34|\x09\x02(?-u:\xf0)(?-u:\x80)\x21(?-u:\x80)
