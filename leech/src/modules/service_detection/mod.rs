@@ -79,24 +79,6 @@ pub async fn detect_service(settings: DetectServiceSettings) -> DynResult<Servic
         };
     }
 
-    debug!("Retrieving tcp banner");
-    let tcp_banner = settings.probe_tcp(b"").await?;
-    for prev in 0..3 {
-        if let Some(tcp_banner) = tcp_banner.as_deref() {
-            debug!("Scanning tcp banner #{prev}");
-            for probe in &generated::PROBES.empty_tcp_probes[prev] {
-                check_match!(probe, tcp_banner);
-            }
-        }
-
-        debug!("Starting tcp payload scans #{prev}");
-        for probe in &generated::PROBES.payload_tcp_probes[prev] {
-            if let Some(data) = settings.probe_tcp(probe.payload).await? {
-                check_match!(probe, &data);
-            }
-        }
-    }
-
     debug!(target: "regex", "Starting tls banner scan");
     match settings.probe_tls(b"", None).await? {
         Ok(tls_banner) => {
@@ -122,6 +104,24 @@ pub async fn detect_service(settings: DetectServiceSettings) -> DynResult<Servic
             }
         }
         Err(err) => debug!(target: "tls", "TLS error: {err:?}"),
+    }
+
+    debug!("Retrieving tcp banner");
+    let tcp_banner = settings.probe_tcp(b"").await?;
+    for prev in 0..3 {
+        if let Some(tcp_banner) = tcp_banner.as_deref() {
+            debug!("Scanning tcp banner #{prev}");
+            for probe in &generated::PROBES.empty_tcp_probes[prev] {
+                check_match!(probe, tcp_banner);
+            }
+        }
+
+        debug!("Starting tcp payload scans #{prev}");
+        for probe in &generated::PROBES.payload_tcp_probes[prev] {
+            if let Some(data) = settings.probe_tcp(probe.payload).await? {
+                check_match!(probe, &data);
+            }
+        }
     }
 
     if postgres::probe(&settings).await? {
