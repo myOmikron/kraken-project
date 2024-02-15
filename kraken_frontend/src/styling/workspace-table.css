@@ -34,6 +34,10 @@
     padding: 0 1.5em;
 }
 
+.workspace-table-body span {
+    word-wrap: anywhere;
+}
+
 .workspace-table-button{
     background: none;
     border: none;

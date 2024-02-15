@@ -109,7 +109,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"domain-table"}
                         {...domainsTable}
-                        columnsTemplate={"min-content 1fr 1fr 1fr 0.2fr 0.2fr 1fr 0.15fr"}
+                        columnsTemplate={"min-content 1fr 1fr 1fr 3.5em 4em 2.25em"}
                         onAdd={() => setCreateForm("domains")}
                         filter={domainFilter}
                     >
@@ -124,7 +124,6 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>Comment</span>
                             <span>Severity</span>
                             <span>Certainty</span>
-                            <span>Attacks</span>
                             <span />
                         </div>
                         {domains.map((domain) => (
@@ -153,7 +152,6 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 {domain.certainty === "Unverified"
                                     ? CertaintyIcon({ certaintyType: "Unverified" })
                                     : CertaintyIcon({ certaintyType: "Verified" })}
-                                <SourcesList sources={domain.sources} />
                                 <AttackButton
                                     workspaceUuid={workspace}
                                     targetUuid={domain.uuid}
@@ -168,7 +166,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"host-table"}
                         {...hostsTable}
-                        columnsTemplate={"min-content 35ch 1fr 1fr 0.2fr 0.2fr 1fr 0.15fr"}
+                        columnsTemplate={"min-content 35ch 1fr 1fr 3.5em 4em 2.25em"}
                         onAdd={() => setCreateForm("hosts")}
                         filter={hostFilter}
                     >
@@ -183,7 +181,6 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>Comment</span>
                             <span>Severity</span>
                             <span>Certainty</span>
-                            <span>Attacks</span>
                             <span />
                         </div>
                         {hosts.map((host) => (
@@ -214,7 +211,6 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     : host.certainty === "Historical"
                                     ? CertaintyIcon({ certaintyType: "Historical" })
                                     : CertaintyIcon({ certaintyType: "SupposedTo" })}
-                                <SourcesList sources={host.sources} />
                                 <AttackButton workspaceUuid={workspace} targetUuid={host.uuid} targetType={"host"} />
                             </div>
                         ))}
@@ -225,7 +221,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"port-table"}
                         {...portsTable}
-                        columnsTemplate={"min-content 5ch 8ch 35ch 1fr 1fr 0.2fr 0.2fr 1fr 0.15fr"}
+                        columnsTemplate={"min-content 5ch 3.75em 30ch 1fr 1fr 3.5em 4em 2.25em"}
                         onAdd={() => setCreateForm("ports")}
                         filter={portFilter}
                     >
@@ -242,7 +238,6 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>Comment</span>
                             <span>Severity</span>
                             <span>Certainty</span>
-                            <span>Attacks</span>
                             <span />
                         </div>
                         {ports.map((port) => (
@@ -275,7 +270,6 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     : port.certainty === "Historical"
                                     ? CertaintyIcon({ certaintyType: "Historical" })
                                     : CertaintyIcon({ certaintyType: "SupposedTo" })}
-                                <SourcesList sources={port.sources} />
                                 <AttackButton workspaceUuid={workspace} targetUuid={port.uuid} targetType={"port"} />
                             </div>
                         ))}
@@ -286,7 +280,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"service-table"}
                         {...servicesTable}
-                        columnsTemplate={"min-content 0.8fr 30ch 5ch 10ch 1fr 1fr 0.2fr 0.2fr 1fr 0.15fr"}
+                        columnsTemplate={"min-content 0.8fr 30ch 5ch 3.75em 1fr 1fr 3.5em 4em 2.25em"}
                         onAdd={() => setCreateForm("services")}
                         filter={serviceFilter}
                     >
@@ -304,7 +298,6 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>Comment</span>
                             <span>Severity</span>
                             <span>Certainty</span>
-                            <span>Attacks</span>
                             <span />
                         </div>
                         {services.map((service) => (
@@ -329,7 +322,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <span>{service.name}</span>
                                 <span>{service.host.ipAddr}</span>
                                 <span>{service.port?.port}</span>
-                                <span>{service.port?.protocol}</span>
+                                <span>{service.port?.protocol?.toUpperCase()}</span>
                                 <TagList tags={service.tags} />
                                 <span>{service.comment}</span>
                                 <span className="workspace-data-certainty-icon"></span>
@@ -342,7 +335,6 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     : service.certainty === "MaybeVerified"
                                     ? CertaintyIcon({ certaintyType: "MaybeVerified" })
                                     : CertaintyIcon({ certaintyType: "DefinitelyVerified" })}
-                                <SourcesList sources={service.sources} />
                                 <AttackButton
                                     workspaceUuid={workspace}
                                     targetUuid={service.uuid}
