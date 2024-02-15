@@ -70,6 +70,29 @@ export function SelectPrimitive<T extends { toString(): string }>(props: SelectP
     );
 }
 
+export function clearSelectStyles<Option, IsMulti extends boolean, Group extends GroupBase<Option>>(
+): StylesConfig<Option, IsMulti, Group> {
+    return {
+        ...selectStyles("default"),
+        control: (styles, state) => ({
+            ...styles,
+            ":hover": {
+                boxShadow: "inset 0 -3px 3em var(--primary-op), 0 0 15em #0cf3, 0 0 .5em #0ff2",
+            },
+            transition: "box-shadow 0.3s ease-in-out",
+            backgroundColor: "transparent",
+            fontSize: "1.5em",
+            boxShadow: "none",
+            border: "none",
+            // from .sub-heading, adjusted to work without filter:
+            fontFamily: "Roboto-Light, sans-serif",
+            fontWeight: "normal",
+            color: "white",
+            textShadow: "0 0 4px var(--primary)"
+        })
+    };
+}
+
 /**
  * Generates the styling information to be passed to `<Select />` for a given theme
  */
