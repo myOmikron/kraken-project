@@ -1,7 +1,10 @@
 .workspace-list-outer-container {
-    display: grid;
-    grid-gap: 1em;
+    display: flex;
+    gap: 1em;
+    flex-direction: column;
     animation: yourAnimation 0.3s step-End 0.4s 1 normal backwards;
+    height: 100%;
+    overflow-y: auto;
 }
 
 .workspace-list-creation {
@@ -39,6 +42,9 @@
 }
 
 .workspace-list-filter {
+    position: sticky;
+    top: 1em;
+    z-index: 1;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -80,9 +86,10 @@
 }
 
 .workspace-list-container {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 24em);
     gap: 1em;
+    justify-content: center;
 }
 
 .workspace-list-item {
