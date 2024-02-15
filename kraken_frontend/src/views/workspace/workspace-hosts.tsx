@@ -19,8 +19,9 @@ import TagList from "./components/tag-list";
 type WorkspaceHostsProps = {};
 type WorkspaceHostsState = {
     searchTerm: string;
+    forUuid?: string;
     hosts: FullHost[];
-    total: number;
+    total: number | null;
     limit: number;
     offset: number;
 };
@@ -32,13 +33,15 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
     constructor(props: WorkspaceHostsProps) {
         super(props);
 
-        this.state = { searchTerm: "", hosts: [], total: 0, offset: 0, limit: 28 };
+        this.state = { searchTerm: "", hosts: [], total: null, offset: 0, limit: 28 };
     }
 
     async retrieveHosts() {
+        let uuid = this.context.workspace.uuid;
+        this.setState({ forUuid: uuid, hosts: [], total: null });
         await Api.workspaces.hosts
-            .all(this.context.workspace.uuid, this.state.limit, this.state.offset)
-            .then(handleApiError(({ items, total }) => this.setState({ hosts: items, total })));
+            .all(uuid, this.state.limit, this.state.offset)
+            .then(handleApiError(({ items, total }) => this.setState({ forUuid: uuid, hosts: items, total })));
     }
 
     componentDidMount() {
@@ -50,13 +53,17 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
         prevState: Readonly<WorkspaceHostsState>,
         snapshot?: any
     ) {
-        if (prevState.offset !== this.state.offset || this.state.limit !== prevState.limit) {
+        if (this.context.workspace.uuid != this.state.forUuid || prevState.offset !== this.state.offset || this.state.limit !== prevState.limit) {
             this.retrieveHosts().then();
         }
     }
 
     render() {
         const { offset, limit, total } = this.state;
+
+        if (total === null)
+            return <p>Loading...</p>;
+
         const lastOffset = Math.floor(total / limit) * limit;
         const setOffset = (offset: number) => {
             if (offset < 0) {
