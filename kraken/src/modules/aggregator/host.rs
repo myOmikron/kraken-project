@@ -50,13 +50,19 @@ async fn aggregate(data: HostAggregationData) -> Result<Uuid, rorm::Error> {
                 .condition(Host::F.uuid.equals(uuid))
                 .await?;
         }
+        if let Some(os_type) = data.os_type {
+            update!(&mut tx, Host)
+                .set(Host::F.os_type, os_type)
+                .condition(Host::F.uuid.equals(uuid))
+                .await?;
+        }
         uuid
     } else {
         let host = insert!(&mut tx, HostInsert)
             .single(&HostInsert {
                 uuid: Uuid::new_v4(),
                 ip_addr: data.ip_addr,
-                os_type: OsType::Unknown,
+                os_type: data.os_type.unwrap_or(OsType::Unknown),
                 response_time: None,
                 comment: String::new(),
                 certainty: HostCertainty::Verified,

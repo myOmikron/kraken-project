@@ -7,6 +7,7 @@ import {
     DnsResolutionRequest,
     DnsTxtScanRequest,
     HostsAliveRequest,
+    OsDetectionRequest,
     QueryCertificateTransparencyRequest,
     QueryDehashedRequest,
     ServiceDetectionRequest,
@@ -49,6 +50,7 @@ export enum AttackType {
     BruteforceSubdomains = "bruteforce_subdomains",
     DnsResolution = "dns_resolution",
     DnsTxtScan = "dns_txt_scan",
+    OsDetection = "os_detection",
 }
 
 type AttackRequestTypes = {
@@ -60,6 +62,7 @@ type AttackRequestTypes = {
     [AttackType.BruteforceSubdomains]: BruteforceSubdomainsRequest;
     [AttackType.DnsResolution]: DnsResolutionRequest;
     [AttackType.DnsTxtScan]: DnsTxtScanRequest;
+    [AttackType.OsDetection]: OsDetectionRequest;
 };
 
 export interface IAttackInput {
@@ -112,7 +115,7 @@ export interface IAttackDescr {
     inputs: {
         /**
          * Which API to call, on the raw API
-         * */
+         */
         endpoint: keyof AttacksApi;
         /**
          * What the key inside the `[AttackName]OperationRequest` is called
@@ -124,7 +127,7 @@ export interface IAttackDescr {
         /**
          * Describes all the available inputs on the request object how to
          * process and send them.
-         * */
+         */
         inputs: {
             [index: string]: IAttackInput | { fixed: any };
         };
@@ -442,6 +445,79 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: undefined,
                     type: DehashedAttackInput,
                     prefill: ["domain", "ipAddr"],
+                },
+            },
+        },
+    },
+    os_detection: {
+        name: "OS detection",
+        description: `Attempt to guess the operating system of the remote host.\n\nIf SSH port is non-empty, the SSH banner on that port will be checked.\n\nA fingerprint port can be force set to perform fingerprinting on the given port.`,
+        category: AttackCategory.Hosts,
+        inputs: {
+            endpoint: "osDetection",
+            jsonKey: "osDetectionRequest",
+            inputs: {
+                address: {
+                    defaultValue: "",
+                    prefill: ["ipAddr"],
+                    label: "IP",
+                    type: StringAttackInput,
+                    multi: false,
+                    required: true,
+                },
+                sshPort: {
+                    defaultValue: 22,
+                    label: "SSH Port",
+                    multi: false,
+                    type: NumberAttackInput as any,
+                    required: false,
+                },
+                fingerprintPort: {
+                    defaultValue: undefined,
+                    prefill: ["port"],
+                    label: "TCP Fingerprint Port",
+                    type: NumberAttackInput as any,
+                    multi: false,
+                },
+                fingerprintTimeout: {
+                    group: "TCP fingerprint task",
+                    defaultValue: 5000,
+                    label: "Timeout",
+                    type: DurationAttackInput,
+                    required: true,
+                    multi: false,
+                },
+                sshTimeout: {
+                    group: "SSH task",
+                    defaultValue: 5000,
+                    label: "Timeout",
+                    type: DurationAttackInput,
+                    required: true,
+                    multi: false,
+                },
+                sshConnectTimeout: {
+                    group: "SSH task",
+                    defaultValue: 2500,
+                    label: "Connection timeout",
+                    type: DurationAttackInput,
+                    required: true,
+                    multi: false,
+                },
+                portAckTimeout: {
+                    group: "TCP SYN port test",
+                    defaultValue: 2000,
+                    label: "ACK timeout",
+                    type: DurationAttackInput,
+                    required: true,
+                    multi: false,
+                },
+                portParallelSyns: {
+                    group: "TCP SYN port test",
+                    defaultValue: 8,
+                    label: "Max parallel requests",
+                    type: NumberAttackInput,
+                    required: true,
+                    multi: false,
                 },
             },
         },

@@ -238,7 +238,7 @@ export default function AttacksIcon(params: AttacksParams) {
             {/* Other */}
             <Hex {...hexProps} offsetX={40} x={3} y={0} scale={1} attackType={AttackType.Dehashed} text="Dh" />
             {/* Hosts */}
-            <Hex {...hexProps} offsetX={-40} x={-3} y={0} scale={1} className="kraken-attacks-hex-unavailable" />
+            <Hex {...hexProps} offsetX={-40} x={-3} y={0} scale={1} attackType={AttackType.OsDetection} text="OS" />
             <Hex {...hexProps} offsetX={-40} x={-4} y={0} scale={1} attackType={AttackType.HostAlive} text="HA" />
         </svg>
     );

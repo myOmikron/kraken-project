@@ -573,7 +573,7 @@ pub enum SourceType {
     UdpPortScan,
     /// The table for the not yet implemented [`AttackType::ForcedBrowsing`] results
     ForcedBrowsing,
-    /// The table for the not yet implemented [`AttackType::OSDetection`] results
+    /// The [`OsDetectionResult`] table
     OSDetection,
     /// The table for the not yet implemented [`AttackType::VersionDetection`] results
     VersionDetection,

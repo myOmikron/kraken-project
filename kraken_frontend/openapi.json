@@ -1168,6 +1168,39 @@
                 "security": [{ "api_key": [] }]
             }
         },
+        "/api/v1/attacks/osDetection": {
+            "post": {
+                "tags": ["Attacks"],
+                "summary": "Tries to find out the operating system of the remote host.",
+                "description": "Tries to find out the operating system of the remote host.",
+                "operationId": "os_detection",
+                "requestBody": {
+                    "content": {
+                        "application/json": { "schema": { "$ref": "#/components/schemas/OsDetectionRequest" } }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "202": {
+                        "description": "Attack scheduled",
+                        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UuidResponse" } } }
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } }
+                        }
+                    }
+                },
+                "security": [{ "api_key": [] }]
+            }
+        },
         "/api/v1/attacks/queryCertificateTransparency": {
             "post": {
                 "tags": ["Attacks"],
@@ -1571,6 +1604,60 @@
                         "description": "Returns attack's results",
                         "content": {
                             "application/json": { "schema": { "$ref": "#/components/schemas/HostAliveResultsPage" } }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } }
+                        }
+                    }
+                },
+                "security": [{ "api_key": [] }]
+            }
+        },
+        "/api/v1/attacks/{uuid}/osDetectionResults": {
+            "get": {
+                "tags": ["Attacks"],
+                "summary": "Retrieve a host alive's results by the attack's id",
+                "description": "Retrieve a host alive's results by the attack's id",
+                "operationId": "get_os_detection_results",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "The uuid",
+                        "required": true,
+                        "schema": { "type": "string", "format": "uuid" }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of items to retrieve",
+                        "required": true,
+                        "schema": { "type": "integer", "format": "int64", "minimum": 1 },
+                        "example": 50
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Position in the whole list to start retrieving from",
+                        "required": true,
+                        "schema": { "type": "integer", "format": "int64", "minimum": 0 },
+                        "example": 0
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns attack's results",
+                        "content": {
+                            "application/json": { "schema": { "$ref": "#/components/schemas/OsDetectionResultsPage" } }
                         }
                     },
                     "400": {
@@ -5480,6 +5567,38 @@
                     }
                 }
             },
+            "FullOsDetectionResult": {
+                "type": "object",
+                "description": "Representation of an OS detection result",
+                "required": ["uuid", "attack", "created_at", "host", "os", "hints", "version"],
+                "properties": {
+                    "uuid": { "type": "string", "format": "uuid", "description": "The primary key" },
+                    "attack": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The attack which produced this result"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "The point in time, this result was produced"
+                    },
+                    "host": {
+                        "type": "string",
+                        "description": "The ip address a port was found on",
+                        "example": "127.0.0.1"
+                    },
+                    "os": { "$ref": "#/components/schemas/OsType" },
+                    "hints": {
+                        "type": "string",
+                        "description": "Optional human-readable hints, newline separated (\\n)"
+                    },
+                    "version": {
+                        "type": "string",
+                        "description": "Optional detected version numbers, separated by OR (`\" OR \"`)"
+                    }
+                }
+            },
             "FullPort": {
                 "type": "object",
                 "description": "The full representation of a port",
@@ -6389,6 +6508,113 @@
                 "properties": {
                     "workspace": { "$ref": "#/components/schemas/SimpleWorkspace" },
                     "oauth_application": { "$ref": "#/components/schemas/SimpleOauthClient" }
+                }
+            },
+            "OsDetectionRequest": {
+                "type": "object",
+                "description": "OS detection request",
+                "required": [
+                    "address",
+                    "fingerprint_timeout",
+                    "ssh_connect_timeout",
+                    "ssh_timeout",
+                    "port_ack_timeout",
+                    "port_parallel_syns",
+                    "workspace_uuid"
+                ],
+                "properties": {
+                    "leech_uuid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The leech to use\n\nLeave empty to use a random leech",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "description": "The ip address of the host to scan",
+                        "example": "10.13.37.1"
+                    },
+                    "fingerprint_port": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "set to skip open port detection and use this port for TCP fingerprinting",
+                        "nullable": true,
+                        "minimum": 0
+                    },
+                    "ssh_port": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "set to perform OS detection through SSH header",
+                        "nullable": true,
+                        "minimum": 0
+                    },
+                    "fingerprint_timeout": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "timeout for TCP fingerprint detection task, in ms",
+                        "minimum": 0
+                    },
+                    "ssh_connect_timeout": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "timeout for establishing an SSH connection, if ssh_port is set, in ms",
+                        "minimum": 0
+                    },
+                    "ssh_timeout": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "timeout for the full SSH os detection task, in ms",
+                        "minimum": 0
+                    },
+                    "port_ack_timeout": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "If fingerprint_port is not set, timeout for each port how long to wait for ACKs",
+                        "minimum": 0
+                    },
+                    "port_parallel_syns": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "If fingerprint_port is not set, maximum parallel TCP SYN requests",
+                        "minimum": 0
+                    },
+                    "workspace_uuid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The workspace to execute the attack in"
+                    }
+                }
+            },
+            "OsDetectionResultsPage": {
+                "type": "object",
+                "description": "Response containing paginated data",
+                "required": ["items", "limit", "offset", "total"],
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": { "$ref": "#/components/schemas/FullOsDetectionResult" },
+                        "description": "The page's items"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "The limit this page was retrieved with",
+                        "example": 50,
+                        "minimum": 0
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "The offset this page was retrieved with",
+                        "example": 0,
+                        "minimum": 0
+                    },
+                    "total": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "The total number of items this page is a subset of",
+                        "minimum": 0
+                    }
                 }
             },
             "OsType": {
@@ -7693,6 +7919,18 @@
                                 "description": "The [`AttackType::DnsTxtScan`] and its results"
                             }
                         }
+                    },
+                    {
+                        "type": "object",
+                        "required": ["attack_type", "results"],
+                        "properties": {
+                            "attack_type": { "type": "string", "enum": ["OsDetection"] },
+                            "results": {
+                                "type": "array",
+                                "items": { "$ref": "#/components/schemas/FullOsDetectionResult" },
+                                "description": "The [`AttackType::OSDetection`] and its results"
+                            }
+                        }
                     }
                 ],
                 "description": "The different types of attack and their results",
@@ -8310,6 +8548,24 @@
                             },
                             "result": { "$ref": "#/components/schemas/FullDnsTxtScanResult" },
                             "type": { "type": "string", "enum": ["DnsTxtScanResult"] }
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "description": "Result for an OS detection request",
+                        "required": ["os", "host", "hints", "version", "type"],
+                        "properties": {
+                            "os": { "$ref": "#/components/schemas/OsType" },
+                            "host": { "type": "string", "description": "A host which could be reached" },
+                            "hints": {
+                                "type": "string",
+                                "description": "Human-readable extra hints for the OS, new-line (\\n) separated"
+                            },
+                            "version": {
+                                "type": "string",
+                                "description": "Optional additional version information, separated by OR (`\" OR \"`)"
+                            },
+                            "type": { "type": "string", "enum": ["OsDetectionResult"] }
                         }
                     },
                     {

@@ -25,6 +25,8 @@ import type {
   HostAliveResultsPage,
   HostsAliveRequest,
   ListAttacks,
+  OsDetectionRequest,
+  OsDetectionResultsPage,
   QueryCertificateTransparencyRequest,
   QueryCertificateTransparencyResultsPage,
   QueryDehashedRequest,
@@ -57,6 +59,10 @@ import {
     HostsAliveRequestToJSON,
     ListAttacksFromJSON,
     ListAttacksToJSON,
+    OsDetectionRequestFromJSON,
+    OsDetectionRequestToJSON,
+    OsDetectionResultsPageFromJSON,
+    OsDetectionResultsPageToJSON,
     QueryCertificateTransparencyRequestFromJSON,
     QueryCertificateTransparencyRequestToJSON,
     QueryCertificateTransparencyResultsPageFromJSON,
@@ -123,6 +129,12 @@ export interface GetHostAliveResultsRequest {
     offset: number;
 }
 
+export interface GetOsDetectionResultsRequest {
+    uuid: string;
+    limit: number;
+    offset: number;
+}
+
 export interface GetQueryCertificateTransparencyResultsRequest {
     uuid: string;
     limit: number;
@@ -153,6 +165,10 @@ export interface GetWorkspaceAttacksRequest {
 
 export interface HostsAliveCheckRequest {
     hostsAliveRequest: HostsAliveRequest;
+}
+
+export interface OsDetectionOperationRequest {
+    osDetectionRequest: OsDetectionRequest;
 }
 
 export interface QueryCertificateTransparencyOperationRequest {
@@ -565,6 +581,54 @@ export class AttacksApi extends runtime.BaseAPI {
     }
 
     /**
+     * Retrieve a host alive\'s results by the attack\'s id
+     * Retrieve a host alive\'s results by the attack\'s id
+     */
+    async getOsDetectionResultsRaw(requestParameters: GetOsDetectionResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OsDetectionResultsPage>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getOsDetectionResults.');
+        }
+
+        if (requestParameters.limit === null || requestParameters.limit === undefined) {
+            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getOsDetectionResults.');
+        }
+
+        if (requestParameters.offset === null || requestParameters.offset === undefined) {
+            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getOsDetectionResults.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.limit !== undefined) {
+            queryParameters['limit'] = requestParameters.limit;
+        }
+
+        if (requestParameters.offset !== undefined) {
+            queryParameters['offset'] = requestParameters.offset;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/attacks/{uuid}/osDetectionResults`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => OsDetectionResultsPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve a host alive\'s results by the attack\'s id
+     * Retrieve a host alive\'s results by the attack\'s id
+     */
+    async getOsDetectionResults(requestParameters: GetOsDetectionResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OsDetectionResultsPage> {
+        const response = await this.getOsDetectionResultsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Retrieve a query certificate transparency\'s results by the attack\'s id
      * Retrieve a query certificate transparency\'s results by the attack\'s id
      */
@@ -820,6 +884,41 @@ export class AttacksApi extends runtime.BaseAPI {
      */
     async hostsAliveCheck(requestParameters: HostsAliveCheckRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
         const response = await this.hostsAliveCheckRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Tries to find out the operating system of the remote host.
+     * Tries to find out the operating system of the remote host.
+     */
+    async osDetectionRaw(requestParameters: OsDetectionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
+        if (requestParameters.osDetectionRequest === null || requestParameters.osDetectionRequest === undefined) {
+            throw new runtime.RequiredError('osDetectionRequest','Required parameter requestParameters.osDetectionRequest was null or undefined when calling osDetection.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/attacks/osDetection`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: OsDetectionRequestToJSON(requestParameters.osDetectionRequest),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Tries to find out the operating system of the remote host.
+     * Tries to find out the operating system of the remote host.
+     */
+    async osDetection(requestParameters: OsDetectionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
+        const response = await this.osDetectionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

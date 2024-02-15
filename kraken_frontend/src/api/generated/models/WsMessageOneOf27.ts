@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { Change } from './Change';
+import type { CursorPosition } from './CursorPosition';
 import {
-    ChangeFromJSON,
-    ChangeFromJSONTyped,
-    ChangeToJSON,
-} from './Change';
+    CursorPositionFromJSON,
+    CursorPositionFromJSONTyped,
+    CursorPositionToJSON,
+} from './CursorPosition';
 import type { EditorTarget } from './EditorTarget';
 import {
     EditorTargetFromJSON,
@@ -33,78 +33,78 @@ import {
 } from './SimpleUser';
 
 /**
- * A finding definition was updated
+ * A user has changed its cursor position in an editor
  * @export
- * @interface WsMessageOneOf26
+ * @interface WsMessageOneOf27
  */
-export interface WsMessageOneOf26 {
-    /**
-     * 
-     * @type {Change}
-     * @memberof WsMessageOneOf26
-     */
-    change: Change;
+export interface WsMessageOneOf27 {
     /**
      * 
      * @type {SimpleUser}
-     * @memberof WsMessageOneOf26
+     * @memberof WsMessageOneOf27
      */
     user: SimpleUser;
     /**
      * 
      * @type {EditorTarget}
-     * @memberof WsMessageOneOf26
+     * @memberof WsMessageOneOf27
      */
     target: EditorTarget;
     /**
      * 
-     * @type {string}
-     * @memberof WsMessageOneOf26
+     * @type {CursorPosition}
+     * @memberof WsMessageOneOf27
      */
-    type: WsMessageOneOf26TypeEnum;
+    cursor: CursorPosition;
+    /**
+     * 
+     * @type {string}
+     * @memberof WsMessageOneOf27
+     */
+    type: WsMessageOneOf27TypeEnum;
 }
 
 
 /**
  * @export
  */
-export const WsMessageOneOf26TypeEnum = {
-    EditorChangedContent: 'EditorChangedContent'
+export const WsMessageOneOf27TypeEnum = {
+    EditorChangedCursor: 'EditorChangedCursor'
 } as const;
-export type WsMessageOneOf26TypeEnum = typeof WsMessageOneOf26TypeEnum[keyof typeof WsMessageOneOf26TypeEnum];
+export type WsMessageOneOf27TypeEnum = typeof WsMessageOneOf27TypeEnum[keyof typeof WsMessageOneOf27TypeEnum];
 
 
 /**
- * Check if a given object implements the WsMessageOneOf26 interface.
+ * Check if a given object implements the WsMessageOneOf27 interface.
  */
-export function instanceOfWsMessageOneOf26(value: object): boolean {
+export function instanceOfWsMessageOneOf27(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "change" in value;
     isInstance = isInstance && "user" in value;
     isInstance = isInstance && "target" in value;
+    isInstance = isInstance && "cursor" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
 }
 
-export function WsMessageOneOf26FromJSON(json: any): WsMessageOneOf26 {
-    return WsMessageOneOf26FromJSONTyped(json, false);
+export function WsMessageOneOf27FromJSON(json: any): WsMessageOneOf27 {
+    return WsMessageOneOf27FromJSONTyped(json, false);
 }
 
-export function WsMessageOneOf26FromJSONTyped(json: any, ignoreDiscriminator: boolean): WsMessageOneOf26 {
+export function WsMessageOneOf27FromJSONTyped(json: any, ignoreDiscriminator: boolean): WsMessageOneOf27 {
     if ((json === undefined) || (json === null)) {
         return json;
     }
     return {
         
-        'change': ChangeFromJSON(json['change']),
         'user': SimpleUserFromJSON(json['user']),
         'target': EditorTargetFromJSON(json['target']),
+        'cursor': CursorPositionFromJSON(json['cursor']),
         'type': json['type'],
     };
 }
 
-export function WsMessageOneOf26ToJSON(value?: WsMessageOneOf26 | null): any {
+export function WsMessageOneOf27ToJSON(value?: WsMessageOneOf27 | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -113,9 +113,9 @@ export function WsMessageOneOf26ToJSON(value?: WsMessageOneOf26 | null): any {
     }
     return {
         
-        'change': ChangeToJSON(value.change),
         'user': SimpleUserToJSON(value.user),
         'target': EditorTargetToJSON(value.target),
+        'cursor': CursorPositionToJSON(value.cursor),
         'type': value.type,
     };
 }

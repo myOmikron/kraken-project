@@ -5,7 +5,7 @@ use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;
 
 use crate::models::{
-    DomainCertainty, HostCertainty, PortCertainty, PortProtocol, ServiceCertainty, ServiceProtocols,
+    DomainCertainty, HostCertainty, OsType, PortCertainty, PortProtocol, ServiceCertainty, ServiceProtocols,
 };
 
 mod domain;
@@ -23,6 +23,7 @@ struct HostAggregationData {
     workspace: Uuid,
     ip_addr: IpNetwork,
     certainty: HostCertainty,
+    os_type: Option<OsType>,
 }
 struct PortAggregationData {
     workspace: Uuid,
@@ -190,6 +191,42 @@ impl Aggregator {
                     workspace,
                     certainty,
                     ip_addr,
+                    os_type: None
+                },
+                tx,
+            ))
+            .await
+            .expect("This should never fail, if you ever encounter this error, please open an issue with the stacktrace.");
+
+        // If we can't receive the channel, somethings really messed up
+        #[allow(clippy::expect_used)]
+        let aggregation_result = rx.await.expect("This should never fail, if you ever encounter this error, please open an issue with the stacktrace.");
+
+        aggregation_result
+    }
+
+    /// Insert an aggregated host if it doesn't exist yet or
+    /// update it if its information is not as precise
+    /// and return its primary key.
+    pub async fn aggregate_host_os(
+        &self,
+        workspace: Uuid,
+        ip_addr: IpNetwork,
+        certainty: HostCertainty,
+        os_type: OsType,
+    ) -> Result<Uuid, rorm::Error> {
+        let (tx, rx) = oneshot::channel();
+
+        // If we can't send to the channel, somethings really messed up
+        #[allow(clippy::expect_used)]
+        self
+            .host
+            .send((
+                HostAggregationData {
+                    workspace,
+                    certainty,
+                    ip_addr,
+                    os_type: Some(os_type)
                 },
                 tx,
             ))

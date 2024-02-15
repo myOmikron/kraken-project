@@ -87,6 +87,7 @@ impl PushAttackService for Results {
                 push_attack_request::Response::UdpServiceDetection(_) => {
                     AttackType::UdpServiceDetection
                 }
+                push_attack_request::Response::OsDetection(_) => AttackType::OSDetection,
             },
         )
         .await
@@ -117,6 +118,9 @@ impl PushAttackService for Results {
             }
             push_attack_request::Response::UdpServiceDetection(repeated) => {
                 attack.handle_vec_response(repeated.responses).await
+            }
+            push_attack_request::Response::OsDetection(response) => {
+                attack.handle_response(response).await
             }
         };
 
@@ -184,6 +188,9 @@ impl BacklogService for Results {
                     attack_context.handle_response(response).await
                 }
                 any_attack_response::Response::UdpServiceDetection(response) => {
+                    attack_context.handle_response(response).await
+                }
+                any_attack_response::Response::OsDetection(response) => {
                     attack_context.handle_response(response).await
                 }
             };

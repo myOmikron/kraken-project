@@ -238,6 +238,43 @@ message DnsTxtScanResponse {
   shared.DnsTxtScan record = 1;
 }
 
+/*
+ * OS detection
+ */
+message OsDetectionRequest {
+  // A unique id that identifier the attack
+  string attack_uuid = 1;
+  // the host address to scan
+  attacks.shared.Address address = 2;
+  // set to skip open port detection and use this port for TCP fingerprinting
+  optional uint32 fingerprint_port = 3;
+  // set to perform OS detection through SSH header
+  optional uint32 ssh_port = 4;
+  // timeout for TCP fingerprint detection task, in ms
+  uint64 fingerprint_timeout = 5;
+  // timeout for establishing an SSH connection, if ssh_port is set, in ms
+  uint64 ssh_connect_timeout = 6;
+  // timeout for the full SSH os detection task, in ms
+  uint64 ssh_timeout = 7;
+  // If fingerprint_port is not set, timeout for each port how long to wait for ACKs
+  uint64 port_ack_timeout = 8;
+  // If fingerprint_port is not set, maximum parallel TCP SYN requests
+  uint32 port_parallel_syns = 9;
+}
+
+// OS detection response
+message OsDetectionResponse {
+  // the hosts that we detected the OS on
+  attacks.shared.Address host = 1;
+  // The operating system type that was deduced here
+  shared.OperatingSystem os = 2;
+  // Additional human readable hints
+  repeated string hints = 3;
+  // For operating system types other than unknown, this may contain detected version(s) or names -
+  // can be multiple in case different probes report different results.
+  repeated string versions = 4;
+}
+
 // Implemented by leech; allows kraken to request attack from a leech
 service ReqAttackService {
   rpc BruteforceSubdomains(BruteforceSubdomainRequest) returns (stream BruteforceSubdomainResponse);
@@ -247,6 +284,7 @@ service ReqAttackService {
   rpc HostsAliveCheck(HostsAliveRequest) returns (stream HostsAliveResponse);
   rpc DnsResolution(DnsResolutionRequest) returns (stream DnsResolutionResponse);
   rpc DnsTxtScan(DnsTxtScanRequest) returns (stream DnsTxtScanResponse);
+  rpc OsDetection(OsDetectionRequest) returns (OsDetectionResponse);
 }
 
 /*
@@ -277,6 +315,8 @@ message PushAttackRequest {
     RepeatedUdpServiceDetectionResponse udp_service_detection = 9;
     // Response streamed by a dns txt scan attack
     RepeatedDnsTxtScanResponse dns_txt_scan = 10;
+    // Response to a operating system detection request
+    OsDetectionResponse os_detection = 11;
   }
 }
 
@@ -360,6 +400,8 @@ message AnyAttackResponse {
     UdpServiceDetectionResponse udp_service_detection = 8;
     // Response streamed by a dns txt scan attack
     DnsTxtScanResponse dns_txt_scan = 9;
+    // Response to a operating system detection request
+    OsDetectionResponse os_detection = 10;
   }
 }
 

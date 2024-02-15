@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { FullDnsTxtScanResult } from './FullDnsTxtScanResult';
+import type { FullOsDetectionResult } from './FullOsDetectionResult';
 import {
-    FullDnsTxtScanResultFromJSON,
-    FullDnsTxtScanResultFromJSONTyped,
-    FullDnsTxtScanResultToJSON,
-} from './FullDnsTxtScanResult';
+    FullOsDetectionResultFromJSON,
+    FullOsDetectionResultFromJSONTyped,
+    FullOsDetectionResultToJSON,
+} from './FullOsDetectionResult';
 import type { SimpleUser } from './SimpleUser';
 import {
     SimpleUserFromJSON,

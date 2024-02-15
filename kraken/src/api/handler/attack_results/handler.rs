@@ -9,15 +9,17 @@ use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::attack_results::schema::{
-    DnsTxtScanEntry, FullDnsTxtScanResult, FullQueryCertificateTransparencyResult,
-    FullServiceDetectionResult, FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult,
-    SimpleDnsResolutionResult, SimpleHostAliveResult, SimpleQueryUnhashedResult,
+    DnsTxtScanEntry, FullDnsTxtScanResult, FullOsDetectionResult,
+    FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
+    FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
+    SimpleHostAliveResult, SimpleQueryUnhashedResult,
 };
 use crate::api::handler::common::error::{ApiError, ApiResult};
 use crate::api::handler::common::schema::{
     BruteforceSubdomainsResultsPage, DnsResolutionResultsPage, DnsTxtScanResultsPage,
-    HostAliveResultsPage, Page, PageParams, PathUuid, QueryCertificateTransparencyResultsPage,
-    QueryUnhashedResultsPage, ServiceDetectionResultsPage, UdpServiceDetectionResultsPage,
+    HostAliveResultsPage, OsDetectionResultsPage, Page, PageParams, PathUuid,
+    QueryCertificateTransparencyResultsPage, QueryUnhashedResultsPage, ServiceDetectionResultsPage,
+    UdpServiceDetectionResultsPage,
 };
 use crate::api::handler::common::utils::get_page_params;
 use crate::chan::global::GLOBAL;
@@ -25,8 +27,8 @@ use crate::models::{
     Attack, BruteforceSubdomainsResult, CertificateTransparencyResult,
     CertificateTransparencyValueName, DehashedQueryResult, DnsResolutionResult,
     DnsTxtScanAttackResult, DnsTxtScanServiceHintEntry, DnsTxtScanSpfEntry, HostAliveResult,
-    ServiceCertainty, ServiceDetectionName, ServiceDetectionResult, UdpServiceDetectionName,
-    UdpServiceDetectionResult,
+    OsDetectionResult, ServiceCertainty, ServiceDetectionName, ServiceDetectionResult,
+    UdpServiceDetectionName, UdpServiceDetectionResult,
 };
 
 /// Retrieve a bruteforce subdomains' results by the attack's id
@@ -648,6 +650,65 @@ pub async fn get_dns_txt_scan_results(
 
         item.entries = [entries1, entries2].concat();
     }
+
+    tx.commit().await?;
+
+    Ok(Json(Page {
+        items,
+        limit,
+        offset,
+        total: total as u64,
+    }))
+}
+
+/// Retrieve a host alive's results by the attack's id
+#[utoipa::path(
+tag = "Attacks",
+context_path = "/api/v1",
+responses(
+(status = 200, description = "Returns attack's results", body = OsDetectionResultsPage),
+(status = 400, description = "Client error", body = ApiErrorResponse),
+(status = 500, description = "Server error", body = ApiErrorResponse),
+),
+params(PathUuid, PageParams),
+security(("api_key" = []))
+)]
+#[get("/attacks/{uuid}/osDetectionResults")]
+pub async fn get_os_detection_results(
+    path: Path<PathUuid>,
+    page_params: Query<PageParams>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<Json<OsDetectionResultsPage>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    let attack_uuid = path.uuid;
+    let (limit, offset) = get_page_params(page_params.0).await?;
+
+    if !Attack::has_access(&mut tx, attack_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    let (total,) = query!(&mut tx, (OsDetectionResult::F.uuid.count(),))
+        .condition(OsDetectionResult::F.attack.equals(attack_uuid))
+        .one()
+        .await?;
+
+    let items = query!(&mut tx, OsDetectionResult)
+        .condition(OsDetectionResult::F.attack.equals(attack_uuid))
+        .limit(limit)
+        .offset(offset)
+        .stream()
+        .map_ok(|x| FullOsDetectionResult {
+            uuid: x.uuid,
+            attack: *x.attack.key(),
+            created_at: x.created_at,
+            host: x.host,
+            version: x.version,
+            os: x.os,
+            hints: x.hints,
+        })
+        .try_collect()
+        .await?;
 
     tx.commit().await?;
 

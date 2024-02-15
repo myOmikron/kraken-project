@@ -8,7 +8,7 @@ use rorm::{query, FieldAccess, Model};
 use crate::api::extractors::SessionUser;
 use crate::api::handler::attacks::schema::{
     BruteforceSubdomainsRequest, DnsResolutionRequest, DnsTxtScanRequest, HostsAliveRequest,
-    ListAttacks, QueryCertificateTransparencyRequest, QueryDehashedRequest,
+    ListAttacks, OsDetectionRequest, QueryCertificateTransparencyRequest, QueryDehashedRequest,
     ServiceDetectionRequest, SimpleAttack, UdpServiceDetectionRequest,
 };
 use crate::api::handler::common::error::{ApiError, ApiResult};
@@ -19,10 +19,10 @@ use crate::chan::global::GLOBAL;
 use crate::models::{Attack, User, UserPermission, WordList, Workspace, WorkspaceMember};
 use crate::modules::attacks::{
     start_bruteforce_subdomains, start_certificate_transparency, start_dehashed_query,
-    start_dns_resolution, start_dns_txt_scan, start_host_alive, start_service_detection,
-    start_udp_service_detection, BruteforceSubdomainsParams, CertificateTransparencyParams,
-    DehashedQueryParams, DnsResolutionParams, DnsTxtScanParams, HostAliveParams,
-    ServiceDetectionParams, UdpServiceDetectionParams,
+    start_dns_resolution, start_dns_txt_scan, start_host_alive, start_os_detection,
+    start_service_detection, start_udp_service_detection, BruteforceSubdomainsParams,
+    CertificateTransparencyParams, DehashedQueryParams, DnsResolutionParams, DnsTxtScanParams,
+    HostAliveParams, OsDetectionParams, ServiceDetectionParams, UdpServiceDetectionParams,
 };
 
 /// Bruteforce subdomains through a DNS wordlist attack
@@ -123,6 +123,62 @@ pub async fn hosts_alive_check(
             targets,
             timeout,
             concurrent_limit,
+        },
+    )
+    .await?;
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
+}
+
+/// Tries to find out the operating system of the remote host.
+#[utoipa::path(
+tag = "Attacks",
+context_path = "/api/v1",
+responses(
+(status = 202, description = "Attack scheduled", body = UuidResponse),
+(status = 400, description = "Client error", body = ApiErrorResponse),
+(status = 500, description = "Server error", body = ApiErrorResponse)
+),
+request_body = OsDetectionRequest,
+security(("api_key" = []))
+)]
+#[post("/attacks/osDetection")]
+pub async fn os_detection(
+    req: Json<OsDetectionRequest>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let OsDetectionRequest {
+        leech_uuid,
+        address,
+        fingerprint_port,
+        ssh_port,
+        fingerprint_timeout,
+        ssh_connect_timeout,
+        ssh_timeout,
+        port_ack_timeout,
+        port_parallel_syns,
+        workspace_uuid,
+    } = req.into_inner();
+
+    let leech = if let Some(leech_uuid) = leech_uuid {
+        GLOBAL.leeches.get_leech(&leech_uuid)?
+    } else {
+        GLOBAL.leeches.random_leech()?
+    };
+
+    let (attack_uuid, _) = start_os_detection(
+        workspace_uuid,
+        user_uuid,
+        leech,
+        OsDetectionParams {
+            target: address,
+            fingerprint_port,
+            ssh_port,
+            fingerprint_timeout,
+            ssh_connect_timeout,
+            ssh_timeout,
+            port_ack_timeout,
+            port_parallel_syns,
         },
     )
     .await?;

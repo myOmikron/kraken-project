@@ -9,21 +9,26 @@ import React from "react";
 
 type OsIconProps = {
     os: OsType;
+    size?: string;
+    style?: React.CSSProperties;
 };
 export default function OsIcon(props: OsIconProps) {
+    let style: any = {...props.style};
+    if (props.size !== undefined)
+        style.width = style.height = props.size;
     switch (props.os) {
         case "Linux":
-            return <TuxIcon />;
+            return <TuxIcon style={style} />;
         case "Apple":
-            return <AppleIcon />;
+            return <AppleIcon style={style} />;
         case "Windows":
-            return <WindowsIcon />;
+            return <WindowsIcon style={style} />;
         case "FreeBSD":
-            return <FreeBSDIcon />;
+            return <FreeBSDIcon style={style} />;
         case "Android":
-            return <AndroidIcon />;
+            return <AndroidIcon style={style} />;
         case "Unknown":
         default:
-            return <AnonymousIcon />;
+            return <AnonymousIcon style={style} />;
     }
 }

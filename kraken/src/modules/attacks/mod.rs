@@ -36,6 +36,7 @@ mod dehashed_query;
 mod dns_resolution;
 mod dns_txt_scan;
 mod host_alive;
+mod os_detection;
 mod service_detection;
 mod udp_service_detection;
 
@@ -143,6 +144,43 @@ pub async fn start_host_alive(
         tokio::spawn(async move {
             ctx.set_started().await;
             let result = ctx.host_alive(leech, params).await;
+            ctx.set_finished(result).await;
+        }),
+    ))
+}
+
+/// The parameters of a "OS detection" attack
+pub struct OsDetectionParams {
+    /// The ip addresses / networks to scan
+    pub target: IpAddr,
+    /// set to skip open port detection and use this port for TCP fingerprinting
+    pub fingerprint_port: Option<u32>,
+    /// set to perform OS detection through SSH header
+    pub ssh_port: Option<u32>,
+    /// timeout for TCP fingerprint detection task, in ms
+    pub fingerprint_timeout: u64,
+    /// timeout for establishing an SSH connection, if ssh_port is set, in ms
+    pub ssh_connect_timeout: u64,
+    /// timeout for the full SSH os detection task, in ms
+    pub ssh_timeout: u64,
+    /// If fingerprint_port is not set, timeout for each port how long to wait for ACKs
+    pub port_ack_timeout: u64,
+    /// If fingerprint_port is not set, maximum parallel TCP SYN requests
+    pub port_parallel_syns: u32,
+}
+/// Start a "OS detection" attack
+pub async fn start_os_detection(
+    workspace: Uuid,
+    user: Uuid,
+    leech: LeechClient,
+    params: crate::modules::attacks::OsDetectionParams,
+) -> Result<(Uuid, JoinHandle<()>), InsertAttackError> {
+    let ctx = AttackContext::new(workspace, user, AttackType::OSDetection).await?;
+    Ok((
+        ctx.attack_uuid,
+        tokio::spawn(async move {
+            ctx.set_started().await;
+            let result = ctx.os_detection(leech, params).await;
             ctx.set_finished(result).await;
         }),
     ))

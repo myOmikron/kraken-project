@@ -16,6 +16,7 @@ use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
 use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
+use crate::models::OsType;
 
 /// Message that is sent via websocket from the client to the server.
 ///
@@ -154,6 +155,18 @@ pub enum WsMessage {
         attack_uuid: Uuid,
         /// The destination address that was returned
         result: FullDnsTxtScanResult,
+    },
+    /// Result for an OS detection request
+    OsDetectionResult {
+        /// The major operating system type
+        os: OsType,
+        /// A host which could be reached
+        #[schema(value_type = String)]
+        host: IpAddr,
+        /// Human-readable extra hints for the OS, new-line (\n) separated
+        hints: String,
+        /// Optional additional version information, separated by OR (`" OR "`)
+        version: String,
     },
     /// A new domain was found
     NewDomain {

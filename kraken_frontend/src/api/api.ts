@@ -49,6 +49,7 @@ import {
     WorkspaceTagsApi,
     KnowledgeBaseApi,
     CreateFindingDefinitionRequest,
+    OsDetectionRequest,
 } from "./generated";
 import { Configuration } from "./generated";
 import {

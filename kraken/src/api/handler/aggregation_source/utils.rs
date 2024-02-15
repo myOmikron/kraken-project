@@ -13,17 +13,19 @@ use crate::api::handler::aggregation_source::schema::{
     FullAggregationSource, ManualInsert, SimpleAggregationSource, SourceAttack, SourceAttackResult,
 };
 use crate::api::handler::attack_results::schema::{
-    DnsTxtScanEntry, FullDnsTxtScanResult, FullQueryCertificateTransparencyResult,
-    FullServiceDetectionResult, FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult,
-    SimpleDnsResolutionResult, SimpleHostAliveResult, SimpleQueryUnhashedResult,
+    DnsTxtScanEntry, FullDnsTxtScanResult, FullOsDetectionResult,
+    FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
+    FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
+    SimpleHostAliveResult, SimpleQueryUnhashedResult,
 };
 use crate::api::handler::users::schema::SimpleUser;
 use crate::models::{
     AggregationSource, AggregationTable, Attack, AttackType, BruteforceSubdomainsResult,
     CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
     DnsResolutionResult, DnsTxtScanAttackResult, DnsTxtScanServiceHintEntry, DnsTxtScanSpfEntry,
-    HostAliveResult, ManualDomain, ManualHost, ManualPort, ManualService, ServiceDetectionName,
-    ServiceDetectionResult, SourceType, UdpServiceDetectionName, UdpServiceDetectionResult,
+    HostAliveResult, ManualDomain, ManualHost, ManualPort, ManualService, OsDetectionResult,
+    ServiceDetectionName, ServiceDetectionResult, SourceType, UdpServiceDetectionName,
+    UdpServiceDetectionResult,
 };
 
 fn field_in<'a, T, F, P, Any>(
@@ -167,6 +169,7 @@ impl FullAggregationSource {
         let mut udp_service_detection: Results<FullUdpServiceDetectionResult> = Results::new();
         let mut dns_resolution: Results<SimpleDnsResolutionResult> = Results::new();
         let mut dns_txt_scan: Results<FullDnsTxtScanResult> = Results::new();
+        let mut os_detection: Results<FullOsDetectionResult> = Results::new();
         let mut manual_insert = Vec::new();
         for (source_type, uuids) in sources {
             if uuids.is_empty() {
@@ -414,9 +417,26 @@ impl FullAggregationSource {
                         );
                     }
                 }
+                SourceType::OSDetection => {
+                    let mut stream = query!(&mut *tx, OsDetectionResult)
+                        .condition(field_in(OsDetectionResult::F.uuid, uuids))
+                        .stream();
+                    while let Some(result) = stream.try_next().await? {
+                        os_detection.entry(*result.attack.key()).or_default().push(
+                            FullOsDetectionResult {
+                                uuid: result.uuid,
+                                attack: *result.attack.key(),
+                                created_at: result.created_at,
+                                host: result.host,
+                                hints: result.hints,
+                                version: result.version,
+                                os: result.os,
+                            },
+                        );
+                    }
+                }
                 SourceType::UdpPortScan
                 | SourceType::ForcedBrowsing
-                | SourceType::OSDetection
                 | SourceType::VersionDetection
                 | SourceType::AntiPortScanningDetection => {
                     error!("source type unimplemented: {source_type:?}")
@@ -559,6 +579,7 @@ impl FullAggregationSource {
                     .chain(udp_service_detection.keys())
                     .chain(dns_resolution.keys())
                     .chain(dns_txt_scan.keys())
+                    .chain(os_detection.keys())
                     .copied(),
             ))
             .stream();
@@ -603,9 +624,11 @@ impl FullAggregationSource {
                     AttackType::DnsTxtScan => SourceAttackResult::DnsTxtScan(
                         dns_txt_scan.remove(&uuid).unwrap_or_default(),
                     ),
+                    AttackType::OSDetection => SourceAttackResult::OsDetection(
+                        os_detection.remove(&uuid).unwrap_or_default(),
+                    ),
                     AttackType::UdpPortScan
                     | AttackType::ForcedBrowsing
-                    | AttackType::OSDetection
                     | AttackType::VersionDetection
                     | AttackType::AntiPortScanningDetection => {
                         error!("An `{attack_type:?}` isn't implemented yet");

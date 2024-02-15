@@ -20,17 +20,16 @@ ConfigurationDirectoryMode=0750
 LimitNOFILE=65535
 
 MemoryDenyWriteExecute=yes
-RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+# don't RestrictAddressFamilies, we use raw sockets which don't work then
 RestrictRealtime=yes
 RestrictNamespaces=~user
 InaccessiblePaths=/boot
-PrivateUsers=yes
+# can't set PrivateUsers due to raw sockets
 UMask=0177
 PrivateDevices=yes
 CapabilityBoundingSet=CAP_NET_RAW
 AmbientCapabilities=CAP_NET_RAW
 ProtectClock=yes
-PrivateUsers=yes
 SystemCallFilter=@system-service
 SystemCallFilter=~@privileged @resources
 ProtectHome=yes

@@ -5,6 +5,7 @@ import ArrowLeftIcon from "../../../svg/arrow-left";
 import ArrowRightIcon from "../../../svg/arrow-right";
 import CopyIcon from "../../../svg/copy";
 import { copyToClipboard } from "../../../utils/helper";
+import OsIcon from "../../../components/os-icon";
 
 type WorkspaceDataDetailsResultsProps = {
     attack: SourceAttack;
@@ -31,7 +32,7 @@ export default class WorkspaceDataDetailsResults extends React.Component<
         prevState: Readonly<WorkspaceDataDetailsResultsState>,
         snapshot?: any,
     ) {
-        if (prevProps.attack.uuid !== this.props.attack.uuid || prevProps.uuid !== this.props.uuid) {
+        if (prevProps.attack?.uuid !== this.props.attack?.uuid || prevProps.uuid !== this.props.uuid) {
             this.setState({ page: 0 });
         }
     }
@@ -508,6 +509,56 @@ export default class WorkspaceDataDetailsResults extends React.Component<
                                         ) : (
                                             <span>/</span>
                                         )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    } else {
+                        return null;
+                    }
+                case "OsDetection":
+                    if (this.state.page < this.props.attack.results.length) {
+                        let qdResult = this.props.attack.results[this.state.page];
+                        return (
+                            <div className="workspace-data-details-container">
+                                <div className={"workspace-data-details-pane"}>
+                                    <h3 className={"sub-heading"}>OS Detection</h3>
+                                    <div className={"workspace-data-details-list"}>
+                                        <div className="workspace-data-details-list-elements">
+                                            <span>Started by:</span>
+                                            <span>Created:</span>
+                                            <span>Finished:</span>
+                                        </div>
+                                        <div className="workspace-data-details-list-elements">
+                                            <span>{a.startedBy.displayName}</span>
+                                            <span>{this.formateDate(a.createdAt)}</span>
+                                            <span>{this.formateDate(a.finishedAt)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className={"workspace-data-details-pane-layout"}>
+                                    <div className={"workspace-data-details-pane wide"}>
+                                        <h3 className={"sub-heading"}>Date</h3>
+                                        <span>{this.formateDate(qdResult.createdAt)}</span>
+                                    </div>
+                                    <div className={"workspace-data-details-pane"}>
+                                        <h3 className={"sub-heading"}>OS</h3>
+                                        <div style={{"display": "flex", "alignItems": "center"}}>
+                                            <OsIcon os={qdResult.os} size="24px" style={{marginRight: "4px"}}/>
+                                            {qdResult.os}
+                                        </div>
+                                    </div>
+                                    <div className={"workspace-data-details-pane"}>
+                                        <h3 className={"sub-heading"}>Version</h3>
+                                        <pre>
+                                            {qdResult.version || "unknown"}
+                                        </pre>
+                                    </div>
+                                    <div className={"workspace-data-details-pane wide"}>
+                                        <h3 className={"sub-heading"}>Hints</h3>
+                                        <pre>
+                                            {qdResult.hints || "n/a"}
+                                        </pre>
                                     </div>
                                 </div>
                             </div>

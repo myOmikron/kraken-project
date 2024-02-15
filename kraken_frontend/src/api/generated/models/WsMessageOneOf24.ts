@@ -13,18 +13,43 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { AggregationType } from './AggregationType';
+import {
+    AggregationTypeFromJSON,
+    AggregationTypeFromJSONTyped,
+    AggregationTypeToJSON,
+} from './AggregationType';
+
 /**
- * A finding definition was deleted
+ * Workspace tags were updated on an aggregation
  * @export
  * @interface WsMessageOneOf24
  */
 export interface WsMessageOneOf24 {
     /**
-     * The uuid of the finding definition
+     * The workspace the aggregation is related to
+     * @type {string}
+     * @memberof WsMessageOneOf24
+     */
+    workspace: string;
+    /**
+     * 
+     * @type {AggregationType}
+     * @memberof WsMessageOneOf24
+     */
+    aggregation: AggregationType;
+    /**
+     * The uuid of the model
      * @type {string}
      * @memberof WsMessageOneOf24
      */
     uuid: string;
+    /**
+     * The updated list of tags
+     * @type {Array<string>}
+     * @memberof WsMessageOneOf24
+     */
+    tags: Array<string>;
     /**
      * 
      * @type {string}
@@ -38,7 +63,7 @@ export interface WsMessageOneOf24 {
  * @export
  */
 export const WsMessageOneOf24TypeEnum = {
-    DeletedFindingDefinition: 'DeletedFindingDefinition'
+    UpdatedWorkspaceTags: 'UpdatedWorkspaceTags'
 } as const;
 export type WsMessageOneOf24TypeEnum = typeof WsMessageOneOf24TypeEnum[keyof typeof WsMessageOneOf24TypeEnum];
 
@@ -48,7 +73,10 @@ export type WsMessageOneOf24TypeEnum = typeof WsMessageOneOf24TypeEnum[keyof typ
  */
 export function instanceOfWsMessageOneOf24(value: object): boolean {
     let isInstance = true;
+    isInstance = isInstance && "workspace" in value;
+    isInstance = isInstance && "aggregation" in value;
     isInstance = isInstance && "uuid" in value;
+    isInstance = isInstance && "tags" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -64,7 +92,10 @@ export function WsMessageOneOf24FromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
+        'workspace': json['workspace'],
+        'aggregation': AggregationTypeFromJSON(json['aggregation']),
         'uuid': json['uuid'],
+        'tags': json['tags'],
         'type': json['type'],
     };
 }
@@ -78,7 +109,10 @@ export function WsMessageOneOf24ToJSON(value?: WsMessageOneOf24 | null): any {
     }
     return {
         
+        'workspace': value.workspace,
+        'aggregation': AggregationTypeToJSON(value.aggregation),
         'uuid': value.uuid,
+        'tags': value.tags,
         'type': value.type,
     };
 }

@@ -309,3 +309,21 @@ message CertEntry {
   // The serial number of the certificate
   string serial_number = 6;
 }
+
+// Generic operating system type as responded by the OS detection attack.
+enum OperatingSystem {
+  // Unknown or uncertain OS, might contain hints
+  unknown = 0;
+  // Linux (all)
+  linux = 1;
+  // OpenBSD, FreeBSD, NetBSD or other BSDs
+  bsd = 2;
+  // Android (if it can be decided more specifically than linux)
+  android = 3;
+  // Apple OSX
+  osx = 4;
+  // Apple iOS
+  ios = 5;
+  // Microsoft Windows
+  windows = 6;
+}

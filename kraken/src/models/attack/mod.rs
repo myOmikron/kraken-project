@@ -12,7 +12,7 @@ use uuid::Uuid;
 pub(crate) use crate::models::attack::operations::*;
 #[cfg(feature = "bin")]
 pub(crate) use crate::models::attack::patches::*;
-use crate::models::{ServiceCertainty, User, Workspace};
+use crate::models::{OsType, ServiceCertainty, User, Workspace};
 
 #[cfg(feature = "bin")]
 mod operations;
@@ -506,4 +506,41 @@ pub struct UdpServiceDetectionResult {
 
     /// The found names of the service
     pub service_names: BackRef<field!(UdpServiceDetectionName::F.result)>,
+}
+
+/// Representation of a [OS Detection](AttackType::OSDetection) attack's result
+#[derive(Model)]
+pub struct OsDetectionResult {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The [attack](Attack) which produced this result
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub attack: ForeignModel<Attack>,
+
+    /// The point in time, this result was produced
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
+
+    /// A host that was checked
+    pub host: IpNetwork,
+
+    /// The detected operating system or unknown if it wasn't able to precisely detect one.
+    /// May contain additional human-readable information in `hints` or version information for known operating systems
+    /// inside `version`.
+    pub os: OsType,
+
+    /// List of human-readable hints, separated by new-line characters (\n).
+    #[rorm(max_length = 2048)]
+    pub hints: String,
+
+    /// Detected version for known operating systems. In case multiple possible were found, they
+    /// will all be joined here using OR (`" OR "`) as separator.
+    ///
+    /// For linux this is the distro + distro version, if available.
+    ///
+    /// For windows this is the major release + additional version information, if available.
+    #[rorm(max_length = 255)]
+    pub version: String,
 }

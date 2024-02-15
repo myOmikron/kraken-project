@@ -27,7 +27,7 @@ import {
 } from './EditorTarget';
 
 /**
- * A finding definition was edited
+ * Content was changed in an editor
  * @export
  * @interface WsClientMessageOneOf
  */

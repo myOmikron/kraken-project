@@ -211,6 +211,43 @@ pub struct UdpServiceDetectionRequest {
     pub workspace_uuid: Uuid,
 }
 
+/// OS detection request
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+pub struct OsDetectionRequest {
+    /// The leech to use
+    ///
+    /// Leave empty to use a random leech
+    pub leech_uuid: Option<Uuid>,
+
+    /// The ip address of the host to scan
+    #[schema(value_type = String, example = "10.13.37.1")]
+    pub address: IpAddr,
+
+    /// set to skip open port detection and use this port for TCP fingerprinting
+    pub fingerprint_port: Option<u32>,
+
+    /// set to perform OS detection through SSH header
+    pub ssh_port: Option<u32>,
+
+    /// timeout for TCP fingerprint detection task, in ms
+    pub fingerprint_timeout: u64,
+
+    /// timeout for establishing an SSH connection, if ssh_port is set, in ms
+    pub ssh_connect_timeout: u64,
+
+    /// timeout for the full SSH os detection task, in ms
+    pub ssh_timeout: u64,
+
+    /// If fingerprint_port is not set, timeout for each port how long to wait for ACKs
+    pub port_ack_timeout: u64,
+
+    /// If fingerprint_port is not set, maximum parallel TCP SYN requests
+    pub port_parallel_syns: u32,
+
+    /// The workspace to execute the attack in
+    pub workspace_uuid: Uuid,
+}
+
 /// Request to resolve domains
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct DnsResolutionRequest {

@@ -5,7 +5,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::{
-    DnsRecordType, DnsTxtScanServiceHintType, DnsTxtScanSpfType, DnsTxtScanSummaryType,
+    DnsRecordType, DnsTxtScanServiceHintType, DnsTxtScanSpfType, DnsTxtScanSummaryType, OsType,
     ServiceCertainty,
 };
 
@@ -289,4 +289,30 @@ pub enum DnsTxtScanEntry {
         /// If the txt_type is a SPF type that includes a domain, this is its ipv6 CIDR.
         spf_domain_ipv6_cidr: Option<i32>,
     },
+}
+
+/// Representation of an OS detection result
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct FullOsDetectionResult {
+    /// The primary key
+    pub uuid: Uuid,
+
+    /// The attack which produced this result
+    pub attack: Uuid,
+
+    /// The point in time, this result was produced
+    pub created_at: DateTime<Utc>,
+
+    /// The ip address a port was found on
+    #[schema(value_type = String, example = "127.0.0.1")]
+    pub host: IpNetwork,
+
+    /// The detected operating system
+    pub os: OsType,
+
+    /// Optional human-readable hints, newline separated (\n)
+    pub hints: String,
+
+    /// Optional detected version numbers, separated by OR (`" OR "`)
+    pub version: String,
 }

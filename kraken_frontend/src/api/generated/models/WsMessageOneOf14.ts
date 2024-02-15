@@ -13,31 +13,43 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleDomain } from './SimpleDomain';
+import type { OsType } from './OsType';
 import {
-    SimpleDomainFromJSON,
-    SimpleDomainFromJSONTyped,
-    SimpleDomainToJSON,
-} from './SimpleDomain';
+    OsTypeFromJSON,
+    OsTypeFromJSONTyped,
+    OsTypeToJSON,
+} from './OsType';
 
 /**
- * A new domain was found
+ * Result for an OS detection request
  * @export
  * @interface WsMessageOneOf14
  */
 export interface WsMessageOneOf14 {
     /**
-     * The workspace this domain is related to
+     * 
+     * @type {OsType}
+     * @memberof WsMessageOneOf14
+     */
+    os: OsType;
+    /**
+     * A host which could be reached
      * @type {string}
      * @memberof WsMessageOneOf14
      */
-    workspace: string;
+    host: string;
     /**
-     * 
-     * @type {SimpleDomain}
+     * Human-readable extra hints for the OS, new-line (\n) separated
+     * @type {string}
      * @memberof WsMessageOneOf14
      */
-    domain: SimpleDomain;
+    hints: string;
+    /**
+     * Optional additional version information, separated by OR (`" OR "`)
+     * @type {string}
+     * @memberof WsMessageOneOf14
+     */
+    version: string;
     /**
      * 
      * @type {string}
@@ -51,7 +63,7 @@ export interface WsMessageOneOf14 {
  * @export
  */
 export const WsMessageOneOf14TypeEnum = {
-    NewDomain: 'NewDomain'
+    OsDetectionResult: 'OsDetectionResult'
 } as const;
 export type WsMessageOneOf14TypeEnum = typeof WsMessageOneOf14TypeEnum[keyof typeof WsMessageOneOf14TypeEnum];
 
@@ -61,8 +73,10 @@ export type WsMessageOneOf14TypeEnum = typeof WsMessageOneOf14TypeEnum[keyof typ
  */
 export function instanceOfWsMessageOneOf14(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "workspace" in value;
-    isInstance = isInstance && "domain" in value;
+    isInstance = isInstance && "os" in value;
+    isInstance = isInstance && "host" in value;
+    isInstance = isInstance && "hints" in value;
+    isInstance = isInstance && "version" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -78,8 +92,10 @@ export function WsMessageOneOf14FromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'workspace': json['workspace'],
-        'domain': SimpleDomainFromJSON(json['domain']),
+        'os': OsTypeFromJSON(json['os']),
+        'host': json['host'],
+        'hints': json['hints'],
+        'version': json['version'],
         'type': json['type'],
     };
 }
@@ -93,8 +109,10 @@ export function WsMessageOneOf14ToJSON(value?: WsMessageOneOf14 | null): any {
     }
     return {
         
-        'workspace': value.workspace,
-        'domain': SimpleDomainToJSON(value.domain),
+        'os': OsTypeToJSON(value.os),
+        'host': value.host,
+        'hints': value.hints,
+        'version': value.version,
         'type': value.type,
     };
 }

@@ -6,7 +6,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::attack_results::schema::{
-    FullDnsTxtScanResult, FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
+    FullDnsTxtScanResult, FullOsDetectionResult, FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
     FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
     SimpleHostAliveResult, SimpleQueryUnhashedResult,
 };
@@ -97,6 +97,8 @@ pub enum SourceAttackResult {
     DnsResolution(Vec<SimpleDnsResolutionResult>),
     /// The [`AttackType::DnsTxtScan`] and its results
     DnsTxtScan(Vec<FullDnsTxtScanResult>),
+    /// The [`AttackType::OSDetection`] and its results
+    OsDetection(Vec<FullOsDetectionResult>),
 }
 
 /// The different types of manual inserts
