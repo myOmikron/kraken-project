@@ -73,6 +73,10 @@ pub enum CheckProbeError {
     /// No protocol has been specified
     #[error("no protocol has been specified")]
     MissingProtocol,
+
+    /// The `alpn` field is `Some` but `tls` is `false`
+    #[error("a alpn protocol has been specified but the probe doesn't run on tls")]
+    UnexpectedAlpn,
 }
 
 /// Implementation of [`parse_file`]
@@ -106,6 +110,13 @@ fn inner_parse_file(
                 error: CheckProbeError::ProtocolMismatch {
                     expected: directory,
                 },
+            });
+        }
+
+        if probe.alpn.is_some() && !probe.tls {
+            return Err(ParseErrorKind::CheckProbe {
+                index,
+                error: CheckProbeError::UnexpectedAlpn,
             });
         }
 

@@ -20,7 +20,7 @@ pub struct Probe {
     #[serde(default, deserialize_with = "deserialize_bool_11")]
     pub tcp: bool,
 
-    /// Is this probe applicable to a udp connection?
+    /// Is this probe applicable to an udp connection?
     ///
     /// This field is an optional yaml 1.1 boolean which defaults to `false`
     #[serde(default, deserialize_with = "deserialize_bool_11")]
@@ -32,6 +32,7 @@ pub struct Probe {
     #[serde(default, deserialize_with = "deserialize_bool_11")]
     pub tls: bool,
 
+    /// An optional protocol to request during ALPN while establishing a tls connection
     pub alpn: Option<String>,
 
     pub payload_str: Option<String>,
@@ -53,6 +54,7 @@ pub enum Prevalence {
     Obscure,
 }
 
+/// Deserializes a binary blob from a string containing base64
 pub fn deserialize_b64<'de, D>(deserializer: D) -> Result<Option<Vec<u8>>, D::Error>
 where
     D: Deserializer<'de>,
@@ -61,9 +63,10 @@ where
     BASE64_STANDARD
         .decode(&string)
         .map(Some)
-        .map_err(|_| serde::de::Error::custom(format_args!("invalid base64: '{string}'")))
+        .map_err(|_| Error::custom(format_args!("invalid base64: '{string}'")))
 }
 
+/// Deserializes a binary blob from a string containing hex code
 pub fn deserialize_hex<'de, D>(deserializer: D) -> Result<Option<Vec<u8>>, D::Error>
 where
     D: Deserializer<'de>,
@@ -71,7 +74,7 @@ where
     let string = String::deserialize(deserializer)?;
     hex::decode(&string)
         .map(Some)
-        .map_err(|_| serde::de::Error::custom(format_args!("invalid hex: '{string}'")))
+        .map_err(|_| Error::custom(format_args!("invalid hex: '{string}'")))
 }
 
 /// Deserializes a boolean using yaml 1.1 syntax instead of the restricted yaml 1.2 syntax
