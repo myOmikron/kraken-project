@@ -3,7 +3,7 @@ use std::{fs, io};
 
 use thiserror::Error;
 
-use crate::schema::{ProbeFile, Protocol};
+use crate::schema::ProbeFile;
 
 /// Parses a probe file and checks whether it is in the valid directory
 pub fn parse_file(
@@ -67,11 +67,12 @@ pub enum CheckProbeError {
     ConflictingPayload,
 
     /// Value for `protocol` doesn't match the [`ProbeFileDirectory`] which was passed to [`parse_file`].
-    #[error("the protocol {actual:?} can't be declared in a directory for {expected:?}")]
-    ProtocolMismatch {
-        expected: ProbeFileDirectory,
-        actual: Protocol,
-    },
+    #[error("it uses protocols which are not allowed in a directory for {expected:?}")]
+    ProtocolMismatch { expected: ProbeFileDirectory },
+
+    /// No protocol has been specified
+    #[error("no protocol has been specified")]
+    MissingProtocol,
 }
 
 /// Implementation of [`parse_file`]
@@ -88,18 +89,24 @@ fn inner_parse_file(
 
     // Check probe
     for (index, probe) in parsed.probes.iter().enumerate() {
-        match (&directory, probe.protocol) {
-            (ProbeFileDirectory::Udp, Protocol::Udp) => {}
-            (ProbeFileDirectory::Tcp, Protocol::Tcp | Protocol::Tls) => {}
-            _ => {
-                return Err(ParseErrorKind::CheckProbe {
-                    index,
-                    error: CheckProbeError::ProtocolMismatch {
-                        expected: directory,
-                        actual: probe.protocol,
-                    },
-                });
-            }
+        if !probe.udp && !probe.tcp && !probe.tls {
+            return Err(ParseErrorKind::CheckProbe {
+                index,
+                error: CheckProbeError::MissingProtocol,
+            });
+        }
+
+        let valid = match &directory {
+            ProbeFileDirectory::Tcp => !probe.udp,
+            ProbeFileDirectory::Udp => !probe.tcp && !probe.tls,
+        };
+        if !valid {
+            return Err(ParseErrorKind::CheckProbe {
+                index,
+                error: CheckProbeError::ProtocolMismatch {
+                    expected: directory,
+                },
+            });
         }
 
         if 1 < 0

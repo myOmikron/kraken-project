@@ -1,7 +1,7 @@
 service: rdp
 prevalence: often
 probes:
-  - protocol: TCP
+  - tcp: yes
     payload_str: |-
       \x03\0\0\x2a\x25\xe0\0\0\0\0\0Cookie: mstshash=OPAUISd\r\n\x01\0\x08\0\x03\0\0\0
     regex: ^\x03\x00\x00

@@ -1,7 +1,7 @@
 service: ftp
 prevalence: often
 probes:
-  - protocol: TCP
+  - tcp: yes
     regex: |-
       [Ff][tT][Pp]
     # https://datatracker.ietf.org/doc/html/rfc959

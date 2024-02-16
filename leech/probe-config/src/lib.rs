@@ -7,7 +7,7 @@ use std::error::Error;
 use std::fs;
 
 pub use codegen::generate_code;
-pub use schema::{Prevalence, Probe, ProbeFile, Protocol};
+pub use schema::{Prevalence, Probe, ProbeFile};
 
 pub use crate::parse::{
     parse_file, CheckProbeError, ParseError, ParseErrorKind, ProbeFileDirectory,

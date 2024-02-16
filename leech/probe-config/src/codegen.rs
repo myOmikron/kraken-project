@@ -1,6 +1,6 @@
 use std::{fmt, io};
 
-use crate::schema::{ProbeFile, Protocol};
+use crate::schema::ProbeFile;
 
 pub fn generate_code(writer: &mut impl io::Write, services: &[ProbeFile]) -> io::Result<()> {
     writer.write_fmt(format_args!("{}", AllProbes::from(services)))
@@ -29,6 +29,7 @@ struct TlsProbe<'a> {
     alpn: Option<&'a String>,
 }
 
+#[derive(Copy, Clone)]
 pub enum Payload<'a> {
     Empty,
     String(&'a String),
@@ -51,42 +52,50 @@ impl<'a> Extend<&'a ProbeFile> for AllProbes<'a> {
                     .or(probe.payload_hex.as_ref().map(Payload::Binary))
                     .unwrap_or(Payload::Empty);
 
-                match (&probe.protocol, payload) {
-                    (Protocol::Tcp, Payload::Empty) => empty_tcp_probes.push(BaseProbe {
-                        service: &service.service,
-                        regex: &probe.regex,
-                        sub_regex: probe.sub_regex.as_deref(),
-                    }),
-                    (Protocol::Tcp, payload) => payload_tcp_probes.push(PayloadProbe {
+                if probe.tcp {
+                    match payload {
+                        Payload::Empty => empty_tcp_probes.push(BaseProbe {
+                            service: &service.service,
+                            regex: &probe.regex,
+                            sub_regex: probe.sub_regex.as_deref(),
+                        }),
+                        payload => payload_tcp_probes.push(PayloadProbe {
+                            base: BaseProbe {
+                                service: &service.service,
+                                regex: &probe.regex,
+                                sub_regex: probe.sub_regex.as_deref(),
+                            },
+                            payload,
+                        }),
+                    }
+                }
+                if probe.tls {
+                    match payload {
+                        Payload::Empty => empty_tls_probes.push(BaseProbe {
+                            service: &service.service,
+                            regex: &probe.regex,
+                            sub_regex: probe.sub_regex.as_deref(),
+                        }),
+                        payload => payload_tls_probes.push(TlsProbe {
+                            base: BaseProbe {
+                                service: &service.service,
+                                regex: &probe.regex,
+                                sub_regex: probe.sub_regex.as_deref(),
+                            },
+                            payload,
+                            alpn: probe.alpn.as_ref(),
+                        }),
+                    }
+                }
+                if probe.udp {
+                    udp_probes.push(PayloadProbe {
                         base: BaseProbe {
                             service: &service.service,
                             regex: &probe.regex,
                             sub_regex: probe.sub_regex.as_deref(),
                         },
                         payload,
-                    }),
-                    (Protocol::Tls, Payload::Empty) => empty_tls_probes.push(BaseProbe {
-                        service: &service.service,
-                        regex: &probe.regex,
-                        sub_regex: probe.sub_regex.as_deref(),
-                    }),
-                    (Protocol::Tls, payload) => payload_tls_probes.push(TlsProbe {
-                        base: BaseProbe {
-                            service: &service.service,
-                            regex: &probe.regex,
-                            sub_regex: probe.sub_regex.as_deref(),
-                        },
-                        payload,
-                        alpn: probe.alpn.as_ref(),
-                    }),
-                    (Protocol::Udp, payload) => udp_probes.push(PayloadProbe {
-                        base: BaseProbe {
-                            service: &service.service,
-                            regex: &probe.regex,
-                            sub_regex: probe.sub_regex.as_deref(),
-                        },
-                        payload,
-                    }),
+                    });
                 }
             }
         }

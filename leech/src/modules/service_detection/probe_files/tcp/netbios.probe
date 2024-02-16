@@ -1,7 +1,7 @@
 service: netbios
 prevalence: often
 probes:
-  - protocol: TCP
+  - tcp: yes
     # This payload mimics a valid Session Request Packet but using fictitious names
     payload_str: \x81\x00\x00\x11\x06CALLED\x00\x07CALLING\x00
     # Negative Session Response Packet (https://datatracker.ietf.org/doc/html/rfc1002#section-4.3.4)
