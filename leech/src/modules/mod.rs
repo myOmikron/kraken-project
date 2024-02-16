@@ -7,6 +7,5 @@ pub mod dehashed;
 pub mod dns;
 pub mod host_alive;
 pub mod os_detection;
-pub mod port_scanner;
 pub mod service_detection;
 pub mod whois;

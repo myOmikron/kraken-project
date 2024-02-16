@@ -1,20 +1,39 @@
 use std::collections::BTreeMap;
+use std::net::SocketAddr;
 use std::ops::ControlFlow;
+use std::time::Duration;
 
 use log::{debug, trace, warn};
 use probe_config::generated::{BaseProbe, Match};
 
-use crate::modules::service_detection::tcp::TcpServiceDetectionSettings;
-use crate::modules::service_detection::{generated, DynError, DynResult};
+use crate::modules::service_detection::tcp::OneShotTcpSettings;
+use crate::modules::service_detection::{generated, DynError, DynResult, Service};
 use crate::utils::DebuggableBytes;
 
-#[derive(Default, Copy, Clone)]
+#[derive(Default, Copy, Clone, Debug)]
 pub struct Protocols {
     pub tcp: bool,
     pub tls: bool,
 }
 
+/// Runs service detection on a single tcp port which is assumed to be open.
+pub async fn detect_service(socket: SocketAddr, timeout: Duration) -> DynResult<Service> {
+    match find_exact_match(socket, timeout).await {
+        ControlFlow::Continue(partial_matches) => Ok(if partial_matches.is_empty() {
+            Service::Unknown
+        } else {
+            Service::Maybe(partial_matches.into_keys().collect())
+        }),
+        ControlFlow::Break(BreakReason::Found(service, protocol)) => {
+            let protocols = find_all_protocols(socket, timeout, service, protocol).await?;
+            Ok(Service::Definitely(service))
+        }
+        ControlFlow::Break(BreakReason::Error(err)) => Err(err),
+    }
+}
+
 /// The reason why [`find_exact_match`] might have exited early
+#[derive(Debug)]
 pub enum BreakReason {
     /// One probe had an exact match
     Found(&'static str, Protocols),
@@ -28,9 +47,11 @@ pub enum BreakReason {
 /// If an exact match is found, this function will exit early with [`BreakReason::Found`].
 ///
 /// Otherwise, the function will continue through all probes and return a set of partial matches.
-pub async fn find_exact_match(
-    settings: &TcpServiceDetectionSettings,
+async fn find_exact_match(
+    socket: SocketAddr,
+    timeout: Duration,
 ) -> ControlFlow<BreakReason, BTreeMap<&'static str, Protocols>> {
+    let settings = OneShotTcpSettings { socket, timeout };
     let mut partial_matches: BTreeMap<&'static str, Protocols> = BTreeMap::new();
 
     debug!("Retrieving tcp banner");
@@ -84,11 +105,13 @@ pub async fn find_exact_match(
 }
 
 /// Checks all of a single service's probes to detect all its protocols
-pub async fn find_all_protocols(
-    settings: &TcpServiceDetectionSettings,
+async fn find_all_protocols(
+    socket: SocketAddr,
+    timeout: Duration,
     service: &'static str,
     mut already_found: Protocols,
 ) -> DynResult<Protocols> {
+    let settings = OneShotTcpSettings { socket, timeout };
     fn iter_all<T>(probes: &[Vec<T>; 3]) -> impl Iterator<Item = &T> {
         probes.iter().flat_map(|vec| vec.iter())
     }

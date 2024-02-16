@@ -15,7 +15,7 @@ use crate::modules::os_detection::errors::{OsDetectionError, TcpFingerprintError
 use crate::modules::os_detection::fingerprint_db::FINGERPRINT_DB;
 use crate::modules::os_detection::syn_scan::find_open_and_closed_port;
 use crate::modules::os_detection::tcp_fingerprint::{fingerprint_tcp, TcpFingerprint};
-use crate::modules::service_detection::tcp::TcpServiceDetectionSettings;
+use crate::modules::service_detection::tcp::OneShotTcpSettings;
 
 pub mod errors;
 mod fingerprint_db;
@@ -662,7 +662,7 @@ async fn os_detect_ssh(
     recv_timeout: Duration,
     total_timeout: Duration,
 ) -> Result<OperatingSystemInfo, OsDetectionError> {
-    let settings = TcpServiceDetectionSettings {
+    let settings = OneShotTcpSettings {
         socket: SocketAddr::new(ip_addr, port),
         timeout: recv_timeout,
     };

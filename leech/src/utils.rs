@@ -1,9 +1,11 @@
 //! Helper utilities
 
+use std::future::Future;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
-use std::num::NonZeroU16;
+use std::num::{NonZeroU16, NonZeroUsize};
 use std::ops::RangeInclusive;
 use std::os::fd::{FromRawFd, IntoRawFd};
+use std::panic;
 use std::str::FromStr;
 
 use nix::ifaddrs::getifaddrs;
@@ -13,6 +15,7 @@ use regex::{bytes, Regex};
 use thiserror::Error;
 use tokio::io::{self, stdin, AsyncBufReadExt, BufReader};
 use tokio::net::{TcpSocket, UdpSocket};
+use tokio::task::{JoinError, JoinSet};
 use tonic::transport::{Certificate, ClientTlsConfig, Endpoint};
 
 use crate::config::KrakenConfig;
@@ -271,4 +274,62 @@ impl<'a> std::fmt::Debug for DebuggableBytes<'a> {
             write!(f, "{bytes:x?}")
         }
     }
+}
+
+/// Extension trait to provide additional methods on iterators:
+///
+/// - [`IteratorExt::try_for_each_concurrent`]
+pub(crate) trait IteratorExt: Iterator + Sized {
+    /// Runs a fallible async function concurrently on each item in the iterator,
+    /// stopping at the first error and returning that error.
+    ///
+    /// This is semantically the same as calling
+    /// [`TryStreamExt::try_for_each_concurrent`](futures::stream::TryStreamExt::try_for_each_concurrent)
+    /// on a stream returned by
+    /// [`stream::iter`](futures::stream::iter)
+    /// but without the weird conversion and using modern rust with tokio.
+    async fn try_for_each_concurrent<Fut, Err>(
+        mut self,
+        limit: Option<NonZeroUsize>,
+        f: impl FnOnce(Self::Item) -> Fut + Clone,
+    ) -> Result<(), Err>
+    where
+        Fut: Future<Output = Result<(), Err>> + Send + 'static,
+        Err: Send + 'static,
+    {
+        let limit = limit.map(NonZeroUsize::get);
+        let mut tasks = JoinSet::new();
+
+        while let Some(item) = self.next() {
+            tasks.spawn((f.clone())(item));
+
+            if Some(tasks.len()) == limit {
+                // Since the `limit` is non-zero,
+                // the above condition will only hold if `tasks.len()` is also non-zero
+                #[allow(clippy::expect_used)]
+                let join_result = tasks
+                    .join_next()
+                    .await
+                    .expect("There should be at least one task");
+
+                handle_join_result(join_result)?;
+            }
+        }
+
+        while let Some(join_result) = tasks.join_next().await {
+            handle_join_result(join_result)?;
+        }
+
+        Ok(())
+    }
+}
+impl<I: Iterator + Sized> IteratorExt for I {}
+fn handle_join_result<T>(join_result: Result<T, JoinError>) -> T {
+    join_result.unwrap_or_else(|join_error| {
+        if join_error.is_panic() {
+            panic::resume_unwind(join_error.into_panic())
+        } else {
+            unreachable!("No task should be canceled while the JoinSet is around")
+        }
+    })
 }

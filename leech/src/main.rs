@@ -48,8 +48,9 @@ use crate::modules::dns::txt::{start_dns_txt_scan, DnsTxtScanSettings};
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::os_detection::tcp_fingerprint::fingerprint_tcp;
 use crate::modules::os_detection::{os_detection, OsDetectionSettings};
-use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
-use crate::modules::service_detection::tcp::TcpServiceDetectionSettings;
+use crate::modules::service_detection::tcp::{
+    start_tcp_service_detection, TcpServiceDetectionResult, TcpServiceDetectionSettings,
+};
 use crate::modules::{dehashed, service_detection, whois};
 use crate::rpc::start_rpc_server;
 use crate::utils::{input, kraken_endpoint};
@@ -165,11 +166,15 @@ pub enum RunCommand {
     },
     /// Detect the service running behind a port
     ServiceDetection {
-        /// The ip address to connect to
-        addr: IpAddr,
+        /// Valid IPv4 or IPv6 addresses or networks in CIDR notation
+        #[clap(required(true))]
+        targets: Vec<String>,
 
-        /// The port to connect to
-        port: u16,
+        /// A single port, multiple, comma seperated ports or (inclusive) port ranges
+        ///
+        /// If no values are supplied, 1-65535 is used as default
+        #[clap(short = 'p')]
+        ports: Vec<String>,
 
         /// The interval that should be waited for a response after connecting and sending an optional payload.
         ///
@@ -536,25 +541,25 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                         match technique {
                             PortScanTechnique::TcpCon => {
-                                let settings = TcpPortScannerSettings {
+                                let settings = TcpServiceDetectionSettings {
                                     addresses,
                                     ports: port_range,
                                     timeout: Duration::from_millis(timeout as u64),
                                     skip_icmp_check,
                                     max_retries,
                                     retry_interval: Duration::from_millis(retry_interval as u64),
-                                    concurrent_limit: u32::from(concurrent_limit),
+                                    concurrent_limit,
                                 };
 
-                                let (tx, mut rx) = mpsc::channel(1);
+                                let (tx, mut rx) = mpsc::channel::<TcpServiceDetectionResult>(1);
 
                                 task::spawn(async move {
-                                    while let Some(addr) = rx.recv().await {
-                                        info!("Open port found: {addr}");
+                                    while let Some(result) = rx.recv().await {
+                                        info!("Open port found: {}", result.addr);
                                     }
                                 });
 
-                                if let Err(err) = start_tcp_con_port_scan(settings, tx).await {
+                                if let Err(err) = start_tcp_service_detection(settings, tx).await {
                                     error!("{err}");
                                 }
                             }
@@ -615,20 +620,43 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         Err(err) => error!("{err}"),
                     },
                     RunCommand::ServiceDetection {
-                        addr,
-                        port,
-                        timeout: wait_for_response,
-                        dont_stop_on_match: debug,
+                        targets,
+                        ports,
+                        timeout,
+                        dont_stop_on_match: _,
                     } => {
-                        let result = service_detection::tcp::detect_tcp_service(
+                        let addresses = targets
+                            .iter()
+                            .map(|s| IpNetwork::from_str(s))
+                            .collect::<Result<_, _>>()?;
+
+                        let mut port_range = vec![];
+                        if ports.is_empty() {
+                            port_range.push(1..=u16::MAX);
+                        } else {
+                            utils::parse_ports(&ports, &mut port_range)?;
+                        }
+
+                        let (tx, mut rx) = mpsc::channel(1);
+                        tokio::spawn(async move {
+                            while let Some(result) = rx.recv().await {
+                                info!("{result:?}");
+                            }
+                        });
+                        start_tcp_service_detection(
                             TcpServiceDetectionSettings {
-                                socket: SocketAddr::new(addr, port),
-                                timeout: Duration::from_millis(wait_for_response),
-                                // always_run_everything: debug,
+                                addresses,
+                                ports: port_range,
+                                timeout: Duration::from_millis(timeout),
+                                max_retries: 0,
+                                retry_interval: Duration::from_millis(0),
+                                concurrent_limit: NonZeroU32::new(100).unwrap(),
+                                skip_icmp_check: false,
                             },
+                            tx,
                         )
-                        .await;
-                        println!("{result:?}");
+                        .await
+                        .map_err(|e| e.to_string())?;
                     }
                     RunCommand::ServiceDetectionUdp {
                         addr,

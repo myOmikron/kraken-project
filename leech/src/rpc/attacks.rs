@@ -1,7 +1,8 @@
 //! In this module is the definition of the gRPC services
 
 use std::future::Future;
-use std::net::{IpAddr, SocketAddr};
+use std::net::IpAddr;
+use std::num::NonZeroU32;
 use std::ops::RangeInclusive;
 use std::pin::Pin;
 use std::time::Duration;
@@ -46,8 +47,9 @@ use crate::modules::dns::txt::{
 };
 use crate::modules::dns::{dns_resolution, DnsRecordResult, DnsResolutionSettings};
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
-use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
-use crate::modules::service_detection::tcp::{detect_tcp_service, TcpServiceDetectionSettings};
+use crate::modules::service_detection::tcp::{
+    start_tcp_service_detection, TcpServiceDetectionResult, TcpServiceDetectionSettings,
+};
 use crate::modules::service_detection::udp::{
     start_udp_service_detection, UdpServiceDetectionSettings,
 };
@@ -131,7 +133,10 @@ impl ReqAttackService for Attacks {
             ports.push(1..=u16::MAX);
         }
 
-        let settings = TcpPortScannerSettings {
+        let concurrent_limit = NonZeroU32::new(req.concurrent_limit)
+            .ok_or_else(|| Status::invalid_argument("concurrent_limit can't be zero"))?;
+
+        let settings = TcpServiceDetectionSettings {
             addresses: req
                 .targets
                 .into_iter()
@@ -141,7 +146,7 @@ impl ReqAttackService for Attacks {
             timeout: Duration::from_millis(req.timeout),
             max_retries: req.max_retries,
             retry_interval: Duration::from_millis(req.retry_interval),
-            concurrent_limit: req.concurrent_limit,
+            concurrent_limit,
             skip_icmp_check: req.skip_icmp_check,
         };
 
@@ -149,14 +154,14 @@ impl ReqAttackService for Attacks {
             attack_uuid,
             {
                 |tx| async move {
-                    start_tcp_con_port_scan(settings, tx)
+                    start_tcp_service_detection(settings, tx)
                         .await
                         .map_err(|err| Status::unknown(err.to_string()))
                 }
             },
             |value| TcpPortScanResponse {
-                address: Some(Address::from(value.ip())),
-                port: value.port() as u32,
+                address: Some(Address::from(value.addr.ip())),
+                port: value.addr.port() as u32,
             },
             any_attack_response::Response::TcpPortScan,
         )
@@ -221,26 +226,41 @@ impl ReqAttackService for Attacks {
         request: Request<ServiceDetectionRequest>,
     ) -> Result<Response<ServiceDetectionResponse>, Status> {
         let request = request.into_inner();
+
+        let ip = IpAddr::try_from(
+            request
+                .address
+                .clone()
+                .ok_or(Status::invalid_argument("Missing address"))?,
+        )?;
+
+        let port: u16 = request
+            .port
+            .try_into()
+            .map_err(|_| Status::invalid_argument("Port is out of range"))?;
+
         let settings = TcpServiceDetectionSettings {
-            socket: SocketAddr::new(
-                IpAddr::try_from(
-                    request
-                        .address
-                        .clone()
-                        .ok_or(Status::invalid_argument("Missing address"))?,
-                )?,
-                request
-                    .port
-                    .try_into()
-                    .map_err(|_| Status::invalid_argument("Port is out of range"))?,
-            ),
+            addresses: vec![IpNetwork::from(ip)],
+            ports: vec![port..=port],
             timeout: Duration::from_millis(request.timeout),
+            max_retries: 0,
+            retry_interval: Default::default(),
+            concurrent_limit: NonZeroU32::new(1).unwrap(),
+            skip_icmp_check: true,
         };
 
-        let service = detect_tcp_service(settings).await.map_err(|err| {
-            error!("Service detection failed: {err:?}");
-            Status::internal("Service detection failed. See logs")
-        })?;
+        let (tx, mut rx) = mpsc::channel::<TcpServiceDetectionResult>(1);
+        start_tcp_service_detection(settings, tx)
+            .await
+            .map_err(|err| {
+                error!("Service detection failed: {err:?}");
+                Status::internal("Service detection failed. See logs")
+            })?;
+        let service = rx
+            .recv()
+            .await
+            .map(|result| result.service)
+            .unwrap_or(Service::Unknown);
 
         Ok(Response::new(match service {
             Service::Unknown => ServiceDetectionResponse {

@@ -11,10 +11,8 @@ use crate::modules::service_detection::error::{Extended, ResultExt};
 use crate::modules::service_detection::DynResult;
 use crate::utils::DebuggableBytes;
 
-/// Settings for a service detection
-///
-/// This struct implements networking primitives which make use of its parameters
-pub struct TcpServiceDetectionSettings {
+/// Settings for creating "one-shot" tcp connections i.e. which send and receive at most once.
+pub struct OneShotTcpSettings {
     /// Socket to scan
     pub socket: SocketAddr,
 
@@ -23,7 +21,7 @@ pub struct TcpServiceDetectionSettings {
     pub timeout: Duration,
 }
 
-impl TcpServiceDetectionSettings {
+impl OneShotTcpSettings {
     /// Send `payload` and receive answer over TCP
     ///
     /// Errors when an unrecoverable error occurred.
