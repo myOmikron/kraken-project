@@ -47,10 +47,11 @@ use crate::modules::dns::txt::{
 use crate::modules::dns::{dns_resolution, DnsRecordResult, DnsResolutionSettings};
 use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
+use crate::modules::service_detection::tcp::{detect_tcp_service, TcpServiceDetectionSettings};
 use crate::modules::service_detection::udp::{
     start_udp_service_detection, UdpServiceDetectionSettings,
 };
-use crate::modules::service_detection::{detect_service, DetectServiceSettings, Service};
+use crate::modules::service_detection::Service;
 
 /// The Attack service
 pub struct Attacks {
@@ -220,7 +221,7 @@ impl ReqAttackService for Attacks {
         request: Request<ServiceDetectionRequest>,
     ) -> Result<Response<ServiceDetectionResponse>, Status> {
         let request = request.into_inner();
-        let settings = DetectServiceSettings {
+        let settings = TcpServiceDetectionSettings {
             socket: SocketAddr::new(
                 IpAddr::try_from(
                     request
@@ -234,10 +235,9 @@ impl ReqAttackService for Attacks {
                     .map_err(|_| Status::invalid_argument("Port is out of range"))?,
             ),
             timeout: Duration::from_millis(request.timeout),
-            always_run_everything: false,
         };
 
-        let service = detect_service(settings).await.map_err(|err| {
+        let service = detect_tcp_service(settings).await.map_err(|err| {
             error!("Service detection failed: {err:?}");
             Status::internal("Service detection failed. See logs")
         })?;

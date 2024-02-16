@@ -259,3 +259,16 @@ pub fn allocate_tcp_port(address: SocketAddr) -> std::io::Result<AllocatedPort> 
         owner: tcp_port_socket,
     })
 }
+
+/// Wrapper around byte slice with an informative [`Debug`] impl
+pub struct DebuggableBytes<'a>(pub &'a [u8]);
+impl<'a> std::fmt::Debug for DebuggableBytes<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Self(bytes) = self;
+        if let Ok(string) = std::str::from_utf8(bytes) {
+            write!(f, "{string:?}")
+        } else {
+            write!(f, "{bytes:x?}")
+        }
+    }
+}

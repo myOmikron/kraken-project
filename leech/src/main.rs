@@ -49,7 +49,7 @@ use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::os_detection::tcp_fingerprint::fingerprint_tcp;
 use crate::modules::os_detection::{os_detection, OsDetectionSettings};
 use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
-use crate::modules::service_detection::DetectServiceSettings;
+use crate::modules::service_detection::tcp::TcpServiceDetectionSettings;
 use crate::modules::{dehashed, service_detection, whois};
 use crate::rpc::start_rpc_server;
 use crate::utils::{input, kraken_endpoint};
@@ -620,11 +620,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         timeout: wait_for_response,
                         dont_stop_on_match: debug,
                     } => {
-                        let result = service_detection::detect_service(DetectServiceSettings {
-                            socket: SocketAddr::new(addr, port),
-                            timeout: Duration::from_millis(wait_for_response),
-                            always_run_everything: debug,
-                        })
+                        let result = service_detection::tcp::detect_tcp_service(
+                            TcpServiceDetectionSettings {
+                                socket: SocketAddr::new(addr, port),
+                                timeout: Duration::from_millis(wait_for_response),
+                                // always_run_everything: debug,
+                            },
+                        )
                         .await;
                         println!("{result:?}");
                     }
