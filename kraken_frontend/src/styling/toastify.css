@@ -6,9 +6,13 @@
 }
 
 .toast-pane {
-    box-shadow: 0 0 25em var(--primary-op), inset 0 0 5em var(--toast-hint-color), inset 0 0 0.5em #0ff2 !important;
+    box-shadow:
+        0 0 25em var(--primary-op),
+        inset 0 0 5em var(--toast-hint-color),
+        inset 0 0 0.5em #0ff2 !important;
     backdrop-filter: blur(0.1em) !important;
-    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFUlEQVQIW2P8//+/FCMj4zNGBigAADqJBAO/UCEeAAAAAElFTkSuQmCC), linear-gradient(0deg,#010b22,var(--level-1)) !important;
+    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFUlEQVQIW2P8//+/FCMj4zNGBigAADqJBAO/UCEeAAAAAElFTkSuQmCC),
+        linear-gradient(0deg, #010b22, var(--level-1)) !important;
     image-rendering: pixelated;
 }
 
@@ -30,7 +34,11 @@
     width: 160px;
     height: 100%;
     z-index: -1;
-    background: radial-gradient(100% 130% at left center, var(--toast-hint-color), transparent);
+    background: radial-gradient(
+        100% 130% at left center,
+        var(--toast-hint-color),
+        transparent
+    );
 }
 
 .Toastify__toast--success {

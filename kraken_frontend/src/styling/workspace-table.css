@@ -38,7 +38,7 @@
     word-wrap: anywhere;
 }
 
-.workspace-table-button{
+.workspace-table-button {
     background: none;
     border: none;
 }
@@ -50,10 +50,9 @@
     padding: 0;
 }
 
-.workspace-table-button  > .icon:hover{
+.workspace-table-button > .icon:hover {
     filter: brightness(0) invert() drop-shadow(0 0 8px var(--primary));
 }
-
 
 .workspace-table-controls {
     align-self: center;
@@ -64,7 +63,7 @@
     width: 100%;
 }
 
-.pagination-icon > svg{
+.pagination-icon > svg {
     display: flex;
     width: 2.5em;
     height: 2.5em;
@@ -73,7 +72,7 @@
     justify-content: center;
 }
 
-.workspace-table-controls-page-container{
+.workspace-table-controls-page-container {
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
@@ -81,7 +80,7 @@
     gap: 2em;
 }
 
-.workspace-table-controls-button-container{
+.workspace-table-controls-button-container {
     grid-column-start: 3;
     display: flex;
     justify-content: center;
@@ -109,8 +108,8 @@
     padding: 0.3em 0.5em;
 }
 
-.workspace-table-row-selected{
-    background-color: #00ccff20 ;
+.workspace-table-row-selected {
+    background-color: #00ccff20;
 }
 
 .workspace-table-row:hover {
@@ -118,8 +117,8 @@
     --blur: 0.5em;
     --offset: 0.2em;
     box-shadow:
-            inset 0 var(--offset) var(--blur) var(--color),
-            inset 0 calc(-1 * var(--offset)) var(--blur) var(--color);
+        inset 0 var(--offset) var(--blur) var(--color),
+        inset 0 calc(-1 * var(--offset)) var(--blur) var(--color);
 }
 
 .workspace-table-row:not(:first-child) {

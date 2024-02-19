@@ -42,8 +42,8 @@ export default class RunningAttacks extends React.Component<RunningAttacksProps,
                     }
                     this.setState({ runningAttacks });
                 },
-                (err) => toast.error(err.message)
-            )
+                (err) => toast.error(err.message),
+            ),
         );
         WS.addEventListener("message.AttackStarted", (msg) => {
             let runningAttacks = this.state.runningAttacks;

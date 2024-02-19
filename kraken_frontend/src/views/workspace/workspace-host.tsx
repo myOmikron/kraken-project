@@ -60,7 +60,7 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
         await Api.workspaces.hosts.all(this.context.workspace.uuid, 1000, 0).then(
             handleApiError(({ items }) => {
                 this.setState({ hostList: items.filter(({ uuid }) => uuid !== this.props.uuid) });
-            })
+            }),
         );
     }
 

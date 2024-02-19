@@ -1,6 +1,22 @@
 import React from "react";
 import "../../styling/workspace-attacks.css";
-import { AttacksApi, BruteforceSubdomainsRequest, DnsResolutionRequest, DnsTxtScanRequest, FullDomain, FullHost, FullPort, FullService, FullWorkspace, HostsAliveRequest, QueryCertificateTransparencyRequest, QueryDehashedRequest, ScanTcpPortsRequest, ServiceDetectionRequest, UdpServiceDetectionRequest } from "../../api/generated";
+import {
+    AttacksApi,
+    BruteforceSubdomainsRequest,
+    DnsResolutionRequest,
+    DnsTxtScanRequest,
+    FullDomain,
+    FullHost,
+    FullPort,
+    FullService,
+    FullWorkspace,
+    HostsAliveRequest,
+    QueryCertificateTransparencyRequest,
+    QueryDehashedRequest,
+    ScanTcpPortsRequest,
+    ServiceDetectionRequest,
+    UdpServiceDetectionRequest,
+} from "../../api/generated";
 import AttacksIcon from "../../svg/attacks";
 import { WORKSPACE_CONTEXT } from "./workspace";
 import { Api } from "../../api/api";
@@ -10,7 +26,17 @@ import { ROUTES } from "../../routes";
 import Input from "../../components/input";
 import Checkbox from "../../components/checkbox";
 import GenericAttackForm from "./attacks/generic-attack-form";
-import { AttackInputProps, BooleanAttackInput, DehashedAttackInput, DurationAttackInput, IAttackInputProps, NumberAttackInput, PortListInput, StringAttackInput, WordlistAttackInput } from "./attacks/attack-input"
+import {
+    AttackInputProps,
+    BooleanAttackInput,
+    DehashedAttackInput,
+    DurationAttackInput,
+    IAttackInputProps,
+    NumberAttackInput,
+    PortListInput,
+    StringAttackInput,
+    WordlistAttackInput,
+} from "./attacks/attack-input";
 
 export enum AttackCategory {
     Domains = "domains",
@@ -33,51 +59,51 @@ export enum AttackType {
 }
 
 type AttackRequestTypes = {
-    [AttackType.Dehashed]: QueryDehashedRequest,
-    [AttackType.CertificateTransparency]: QueryCertificateTransparencyRequest,
-    [AttackType.HostAlive]: HostsAliveRequest,
-    [AttackType.ServiceDetection]: ServiceDetectionRequest,
-    [AttackType.UdpServiceDetection]: UdpServiceDetectionRequest,
-    [AttackType.BruteforceSubdomains]: BruteforceSubdomainsRequest,
-    [AttackType.TcpCon]: ScanTcpPortsRequest,
-    [AttackType.DnsResolution]: DnsResolutionRequest,
-    [AttackType.DnsTxtScan]: DnsTxtScanRequest,
+    [AttackType.Dehashed]: QueryDehashedRequest;
+    [AttackType.CertificateTransparency]: QueryCertificateTransparencyRequest;
+    [AttackType.HostAlive]: HostsAliveRequest;
+    [AttackType.ServiceDetection]: ServiceDetectionRequest;
+    [AttackType.UdpServiceDetection]: UdpServiceDetectionRequest;
+    [AttackType.BruteforceSubdomains]: BruteforceSubdomainsRequest;
+    [AttackType.TcpCon]: ScanTcpPortsRequest;
+    [AttackType.DnsResolution]: DnsResolutionRequest;
+    [AttackType.DnsTxtScan]: DnsTxtScanRequest;
 };
 
 export interface IAttackInput {
-    label: string,
+    label: string;
     /// If true, the value is wrapped as a single-element array. When prefilled,
     /// may contain more than one value.
     /// If false and prefilled with more than one value, multiple requests will
     /// be sent out, one for each value.
-    multi?: boolean,
-    required?: boolean,
-    defaultValue: any,
-    prefill?: keyof PrefilledAttackParams | (keyof PrefilledAttackParams)[],
-    type: (props: IAttackInputProps) => React.JSX.Element,
+    multi?: boolean;
+    required?: boolean;
+    defaultValue: any;
+    prefill?: keyof PrefilledAttackParams | (keyof PrefilledAttackParams)[];
+    type: (props: IAttackInputProps) => React.JSX.Element;
     group?: undefined | string;
     renderProps?: React.HTMLProps<HTMLElement>;
 }
 
 export interface AttackInput<T, IsMulti extends boolean> extends IAttackInput {
     multi: IsMulti;
-    defaultValue: T | undefined,
-    type: (props: AttackInputProps<T>) => React.JSX.Element,
+    defaultValue: T | undefined;
+    type: (props: AttackInputProps<T>) => React.JSX.Element;
 }
 
 export type AttackInputs<ReqType extends AttackType> = {
     // see IAttackDescr for docs
 
-    endpoint: keyof AttacksApi,
-    jsonKey: string,
+    endpoint: keyof AttacksApi;
+    jsonKey: string;
     inputs: {
         [T in Exclude<keyof AttackRequestTypes[ReqType], "workspaceUuid" | "leechUuid">]:
-            (AttackRequestTypes[ReqType][T] extends readonly (infer ElementType)[]
-                ? AttackInput<ElementType, boolean>
-                : AttackInput<AttackRequestTypes[ReqType][T], false>
-            ) | { fixed: AttackRequestTypes[ReqType][T] }
+            | (AttackRequestTypes[ReqType][T] extends readonly (infer ElementType)[]
+                  ? AttackInput<ElementType, boolean>
+                  : AttackInput<AttackRequestTypes[ReqType][T], false>)
+            | { fixed: AttackRequestTypes[ReqType][T] };
     };
-}
+};
 
 export interface IAttackDescr {
     /** A full name to show on hover */
@@ -91,20 +117,20 @@ export interface IAttackDescr {
         /**
          * Which API to call, on the raw API
          * */
-        endpoint: keyof AttacksApi,
+        endpoint: keyof AttacksApi;
         /**
          * What the key inside the `[AttackName]OperationRequest` is called
          * (first parameter to `AttacksApi.endpoint`)
          * */
-        jsonKey: string,
+        jsonKey: string;
         /**
          * Describes all the available inputs on the request object how to
          * process and send them.
          * */
         inputs: {
-            [index: string]: IAttackInput | { fixed: any }
-        }
-    }
+            [index: string]: IAttackInput | { fixed: any };
+        };
+    };
 }
 
 export interface AttackDescr<ReqType extends AttackType> extends IAttackDescr {
@@ -113,7 +139,7 @@ export interface AttackDescr<ReqType extends AttackType> extends IAttackDescr {
 }
 
 export type AllAttackDescr = {
-    [T in AttackType]: AttackDescr<T>
+    [T in AttackType]: AttackDescr<T>;
 };
 
 const ATTACKS: AllAttackDescr = {
@@ -132,7 +158,7 @@ const ATTACKS: AllAttackDescr = {
                     required: true,
                     defaultValue: "",
                     prefill: "domain",
-                    type: StringAttackInput
+                    type: StringAttackInput,
                 },
                 wordlistUuid: {
                     label: "Wordlist",
@@ -148,8 +174,8 @@ const ATTACKS: AllAttackDescr = {
                     required: true,
                     type: NumberAttackInput,
                     group: "Advanced",
-                }
-            }
+                },
+            },
         },
     },
     certificate_transparency: {
@@ -167,13 +193,13 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: "",
                     required: true,
                     prefill: "domain",
-                    type: StringAttackInput
+                    type: StringAttackInput,
                 },
                 includeExpired: {
                     label: "Include expired certificates",
                     multi: false,
                     defaultValue: false,
-                    type: BooleanAttackInput
+                    type: BooleanAttackInput,
                 },
                 maxRetries: {
                     label: "Max. no. of retries",
@@ -190,9 +216,9 @@ const ATTACKS: AllAttackDescr = {
                     required: true,
                     type: DurationAttackInput,
                     group: "Advanced",
-                }
-            }
-        }
+                },
+            },
+        },
     },
     dns_resolution: {
         name: "Dns Resolution",
@@ -212,9 +238,9 @@ const ATTACKS: AllAttackDescr = {
                     type: StringAttackInput,
                     prefill: "domain",
                     required: true,
-                }
-            }
-        }
+                },
+            },
+        },
     },
     dns_txt_scan: {
         name: "DNS TXT Scan",
@@ -231,9 +257,9 @@ const ATTACKS: AllAttackDescr = {
                     type: StringAttackInput,
                     prefill: "domain",
                     required: true,
-                }
-            }
-        }
+                },
+            },
+        },
     },
     host_alive: {
         name: "Host alive",
@@ -266,9 +292,9 @@ const ATTACKS: AllAttackDescr = {
                     type: NumberAttackInput,
                     required: true,
                     group: "Advanced",
-                }
-            }
-        }
+                },
+            },
+        },
     },
     tcp_con: {
         name: "TCP port scan",
@@ -284,7 +310,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: undefined,
                     prefill: ["domain", "ipAddr"],
                     type: StringAttackInput,
-                    required: true
+                    required: true,
                 },
                 ports: {
                     label: "Ports",
@@ -331,9 +357,9 @@ const ATTACKS: AllAttackDescr = {
                     required: true,
                     type: DurationAttackInput,
                     group: "Advanced",
-                }
-            }
-        }
+                },
+            },
+        },
     },
     service_detection: {
         name: "Service Detection",
@@ -365,10 +391,10 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: 500,
                     type: DurationAttackInput,
                     required: true,
-                    group: "Advanced"
-                }
-            }
-        }
+                    group: "Advanced",
+                },
+            },
+        },
     },
     udp_service_detection: {
         name: "UDP Service Detection",
@@ -425,9 +451,9 @@ const ATTACKS: AllAttackDescr = {
                     type: NumberAttackInput,
                     group: "Advanced",
                     required: true,
-                }
-            }
-        }
+                },
+            },
+        },
     },
     dehashed: {
         name: "Dehashed",
@@ -442,10 +468,10 @@ const ATTACKS: AllAttackDescr = {
                     multi: false,
                     defaultValue: undefined,
                     type: DehashedAttackInput,
-                    prefill: ["domain", "ipAddr"]
-                }
-            }
-        }
+                    prefill: ["domain", "ipAddr"],
+                },
+            },
+        },
     },
 };
 
@@ -610,7 +636,12 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                             <span> - Click on an attack to start - </span>
                         </div>
                     ) : (
-                        <GenericAttackForm key={"attack_form_" + selectedAttack} prefilled={this.state.target} attack={AttackForm} targetType={this.props.targetType || null} />
+                        <GenericAttackForm
+                            key={"attack_form_" + selectedAttack}
+                            prefilled={this.state.target}
+                            attack={AttackForm}
+                            targetType={this.props.targetType || null}
+                        />
                     )}
                 </div>
             </div>

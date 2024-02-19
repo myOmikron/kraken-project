@@ -182,7 +182,7 @@ export class Router {
      * @return the new route
      */
     add<UrlParams extends {}, HiddenParams extends {}>(
-        config: RouteConfig<UrlParams, HiddenParams>
+        config: RouteConfig<UrlParams, HiddenParams>,
     ): Route<UrlParams, HiddenParams> {
         const route = new Route(this, this.routes.length, config);
         this.routes.push(route as unknown as Route<{}, {}>);

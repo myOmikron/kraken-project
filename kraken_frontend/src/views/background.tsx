@@ -36,7 +36,7 @@ export default class Background extends React.Component<any, any> {
             const h = (this.canvas.height = document.body.offsetHeight);
             this.columns = Array.from(
                 { length: Math.floor(w / 12) + 1 },
-                () => Math.floor((Math.random() * h) / 12) * 12
+                () => Math.floor((Math.random() * h) / 12) * 12,
             );
         }
     }

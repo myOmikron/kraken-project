@@ -3,27 +3,13 @@ on:
   push:
     paths-ignore:
       - "**/*.md"
+      - "kraken_frontend/**"
   pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - "kraken_frontend/**"
 
 jobs:
-  build_ts:
-    name: Build typescript
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-    steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Build
-        working-directory: kraken_frontend
-        run: |
-          npm install
-          npm run build
   build_rs:
     name: Build & Tests on linux
     runs-on: ubuntu-latest

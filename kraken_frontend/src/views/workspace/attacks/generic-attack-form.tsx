@@ -1,34 +1,31 @@
 import React, { useState } from "react";
+import { toast } from "react-toastify";
 import { Api, handleError } from "../../../api/api";
 import "../../../styling/workspace-attacks-generic.css";
+import CollapseIcon from "../../../svg/collapse";
+import ExpandIcon from "../../../svg/expand";
+import { handleApiError } from "../../../utils/helper";
 import StartAttack from "../components/start-attack";
-import { toast } from "react-toastify";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import { IAttackDescr, PrefilledAttackParams, TargetType } from "../workspace-attacks";
-import { handleApiError } from "../../../utils/helper";
-import ExpandIcon from "../../../svg/expand";
-import CollapseIcon from "../../../svg/collapse";
 
 type GenericAttackFormProps = {
-    prefilled: PrefilledAttackParams,
-    attack: IAttackDescr,
-    targetType: TargetType | null
+    prefilled: PrefilledAttackParams;
+    attack: IAttackDescr;
+    targetType: TargetType | null;
 };
 type GenericAttackFormState = {
-    attack: IAttackDescr,
-    value: any,
-    resetValue: any,
-    prefilled: any,
+    attack: IAttackDescr;
+    value: any;
+    resetValue: any;
+    prefilled: any;
 };
 
 function dupJson<T>(v: T): T {
     return JSON.parse(JSON.stringify(v));
 }
 
-export default class GenericAttackForm extends React.Component<
-    GenericAttackFormProps,
-    GenericAttackFormState
-> {
+export default class GenericAttackForm extends React.Component<GenericAttackFormProps, GenericAttackFormState> {
     static contextType = WORKSPACE_CONTEXT;
     declare context: React.ContextType<typeof WORKSPACE_CONTEXT>;
 
@@ -67,7 +64,7 @@ export default class GenericAttackForm extends React.Component<
             attack: props.attack,
             resetValue: resetValue,
             value: dupJson(resetValue),
-            prefilled
+            prefilled,
         };
     }
 
@@ -99,32 +96,31 @@ export default class GenericAttackForm extends React.Component<
                 }
             }
         }
-        if (changed)
-            this.setState({ value, prefilled });
+        if (changed) this.setState({ value, prefilled });
     }
 
     startAttack() {
         let params = {
             ...this.state.value,
-            workspaceUuid: this.context.workspace.uuid
+            workspaceUuid: this.context.workspace.uuid,
         };
         for (const key of Object.keys(this.state.attack.inputs.inputs)) {
             let input = this.state.attack.inputs.inputs[key];
             if ("fixed" in input) {
             } else {
-                if (input.required && (this.state.value[key] === undefined
-                    || this.state.value[key] === "")) {
-                        toast.error(input.label + " must not be empty");
-                        return;
-                    }
+                if (input.required && (this.state.value[key] === undefined || this.state.value[key] === "")) {
+                    toast.error(input.label + " must not be empty");
+                    return;
+                }
             }
         }
         let wrappedParams: any = {};
         wrappedParams[this.state.attack.inputs.jsonKey] = params;
         console.log("API call", this.state.attack.inputs.endpoint, JSON.stringify(wrappedParams));
-        // @ts-ignore: The 'this' context of type '...' is not assignable to method's 'this' of type '...'
-        handleError(Api.attacks.impl[this.state.attack.inputs.endpoint].call(Api.attacks.impl, wrappedParams) as any)
-            .then(handleApiError((_) => toast.success("Attack started")));
+        handleError(
+            // @ts-ignore: The 'this' context of type '...' is not assignable to method's 'this' of type '...'
+            Api.attacks.impl[this.state.attack.inputs.endpoint].call(Api.attacks.impl, wrappedParams) as any,
+        ).then(handleApiError((_) => toast.success("Attack started")));
     }
 
     render() {
@@ -132,10 +128,9 @@ export default class GenericAttackForm extends React.Component<
         let groupOrder: string[] = [];
 
         function getGroup(name: string) {
-            if (name in groups)
-                return groups[name];
+            if (name in groups) return groups[name];
             groupOrder.push(name);
-            return groups[name] = [];
+            return (groups[name] = []);
         }
 
         Object.keys(this.state.attack.inputs.inputs).map((key, i) => {
@@ -144,21 +139,23 @@ export default class GenericAttackForm extends React.Component<
                 // should we show fixed inputs? could show them here
             } else {
                 let Type = input.type;
-                let row = <Type
-                    {...input.renderProps}
-                    key={key + "_gen"}
-                    value={input.multi ? this.state.value[key][0] : this.state.value[key]}
-                    prefill={this.state.prefilled[key]}
-                    valueKey={key}
-                    label={input.label ?? key}
-                    required={input.required ?? false}
-                    autoFocus={i == 0}
-                    onUpdate={(k, v) => {
-                        let value = this.state.value;
-                        value[k] = (input as any).multi ? [v] : v;
-                        this.setState({ value });
-                    }}
-                />;
+                let row = (
+                    <Type
+                        {...input.renderProps}
+                        key={key + "_gen"}
+                        value={input.multi ? this.state.value[key][0] : this.state.value[key]}
+                        prefill={this.state.prefilled[key]}
+                        valueKey={key}
+                        label={input.label ?? key}
+                        required={input.required ?? false}
+                        autoFocus={i == 0}
+                        onUpdate={(k, v) => {
+                            let value = this.state.value;
+                            value[k] = (input as any).multi ? [v] : v;
+                            this.setState({ value });
+                        }}
+                    />
+                );
 
                 getGroup(input.group ?? "").push(row);
             }
@@ -173,9 +170,15 @@ export default class GenericAttackForm extends React.Component<
                 }}
             >
                 <div className={"fields"}>
-                    {groupOrder.map(group => group ? <CollapsibleGroup key={group} label={group} startCollapsed={group == "Advanced"}>
-                        {groups[group]}
-                    </CollapsibleGroup> : <>{groups[group]}</>)}
+                    {groupOrder.map((group) =>
+                        group ? (
+                            <CollapsibleGroup key={group} label={group} startCollapsed={group == "Advanced"}>
+                                {groups[group]}
+                            </CollapsibleGroup>
+                        ) : (
+                            <>{groups[group]}</>
+                        ),
+                    )}
                 </div>
                 <StartAttack />
             </form>
@@ -183,14 +186,20 @@ export default class GenericAttackForm extends React.Component<
     }
 }
 
-function CollapsibleGroup(props: { children: any, label: string, startCollapsed?: boolean }) {
+function CollapsibleGroup(props: { children: any; label: string; startCollapsed?: boolean }) {
     let [collapsed, setCollapsed] = useState(props.startCollapsed ?? false);
 
-    return <fieldset className={collapsed ? "collapsed" : ""}>
-        <legend onMouseDown={(e) => {
-            setCollapsed(!collapsed);
-            e.preventDefault();
-        }}>{collapsed ? (<ExpandIcon />) : (<CollapseIcon />)} {props.label}</legend>
-        {props.children}
-    </fieldset>;
+    return (
+        <fieldset className={collapsed ? "collapsed" : ""}>
+            <legend
+                onMouseDown={(e) => {
+                    setCollapsed(!collapsed);
+                    e.preventDefault();
+                }}
+            >
+                {collapsed ? <ExpandIcon /> : <CollapseIcon />} {props.label}
+            </legend>
+            {props.children}
+        </fieldset>
+    );
 }

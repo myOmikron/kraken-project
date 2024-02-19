@@ -1,4 +1,3 @@
-
 .create-finding-definition-container {
     display: grid;
     grid-template-rows: 7em calc(100% - 1em - 7em);

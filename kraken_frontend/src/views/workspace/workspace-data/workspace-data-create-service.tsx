@@ -46,7 +46,7 @@ export function CreateServiceForm(props: CreateServiceFormProps) {
                         handleApiError(() => {
                             toast.success("Added service");
                             onSubmit();
-                        })
+                        }),
                     );
             }}
         >

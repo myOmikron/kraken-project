@@ -33,8 +33,8 @@ export default class WorkspaceHeading extends React.Component<WorkspaceHeadingPr
             handleApiError(({ workspaces }) =>
                 this.setState({
                     workspaces,
-                })
-            )
+                }),
+            ),
         );
     }
 

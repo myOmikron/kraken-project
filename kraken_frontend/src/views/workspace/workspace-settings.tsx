@@ -94,7 +94,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
             handleApiError(() => {
                 toast.success("Deleted Workspace");
                 ROUTES.WORKSPACES.visit({});
-            })
+            }),
         );
         toast.dismiss(toastId);
     }
@@ -110,7 +110,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                         let member = { label: s.displayName + " (" + s.username + ") ", value: s.uuid };
                         this.state.transferList.push(member);
                     });
-            })
+            }),
         );
     }
 
@@ -129,7 +129,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                         let member = { label: s.displayName + " (" + s.username + ") ", value: s.uuid };
                         this.state.inviteList.push(member);
                     });
-            })
+            }),
         );
     }
 
@@ -148,7 +148,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                 toast.success("Invitation was sent");
                 this.setState({ selectedUser: null, invitePopup: false });
                 await this.updateInvitedUsers();
-            })
+            }),
         );
     }
 
@@ -161,7 +161,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
             handleApiError(() => {
                 toast.success("Transfer was successful");
                 this.setState({ selectedUser: null, transferOwnershipPopup: false, selected: false });
-            })
+            }),
         );
     }
 
@@ -297,7 +297,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                                                         handleApiError(async () => {
                                                             toast.success("Invitation retracted");
                                                             await this.updateInvitedUsers();
-                                                        })
+                                                        }),
                                                     );
                                             }}
                                         >

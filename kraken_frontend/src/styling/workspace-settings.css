@@ -1,51 +1,58 @@
-.workspace-settings-layout{
+.workspace-settings-layout {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     flex-direction: column;
     gap: 1em;
 }
 
-.workspace-settings-row{
+.workspace-settings-row {
     display: flex;
     flex-direction: column;
     gap: 1em;
 }
 
-.workspace-settings-container{
+.workspace-settings-container {
     display: flex;
     flex-direction: column;
     gap: 1em;
     height: max-content;
 }
 
-.danger{
-    background: radial-gradient(100% 130% at left center, rgba(255, 0, 0, 0.1), rgba(255, 0, 0, 0.05));
-    box-shadow: 0 0 25em var(--primary-op), inset 0 0 5em var(--toast-error), inset 0 0 0.5em #0ff2 !important;
+.danger {
+    background: radial-gradient(
+        100% 130% at left center,
+        rgba(255, 0, 0, 0.1),
+        rgba(255, 0, 0, 0.05)
+    );
+    box-shadow:
+        0 0 25em var(--primary-op),
+        inset 0 0 5em var(--toast-error),
+        inset 0 0 0.5em #0ff2 !important;
 }
 
-.workspace-settings-table{
+.workspace-settings-table {
     display: grid;
     gap: 0.5em;
     grid-template-columns: 1fr 3fr;
 }
 
-.workspace-settings-danger{
+.workspace-settings-danger {
     display: grid;
     gap: 0.5em;
     grid-template-columns: 2fr 1fr;
 }
 
-.workspace-settings-table > textarea{
+.workspace-settings-table > textarea {
     height: 5em;
     resize: none;
 }
 
-.workspace-settings-invite{
+.workspace-settings-invite {
     display: flex;
     justify-content: flex-end;
 }
 
-.workspace-settings-user-table-heading{
+.workspace-settings-user-table-heading {
     display: grid;
     grid-template-columns: 3fr 3fr 1fr;
     align-items: center;
@@ -55,15 +62,18 @@
     padding: 0.5em 1em;
 }
 
-.workspace-settings-button{
+.workspace-settings-button {
     width: 10em;
 }
 
-.workspace-settings-red-button{
-    box-shadow: inset 0 -3px 2em var(--red-button), 0 0 10em var(--red-button), 0 0 .5em var(--red-button);
+.workspace-settings-red-button {
+    box-shadow:
+        inset 0 -3px 2em var(--red-button),
+        0 0 10em var(--red-button),
+        0 0 0.5em var(--red-button);
 }
 
-.workspace-settings-user-table-entry{
+.workspace-settings-user-table-entry {
     display: grid;
     grid-template-columns: 3fr 3fr 1fr;
     align-items: center;
@@ -73,19 +83,19 @@
     border-radius: 0.5em;
 }
 
-.workspace-settings-tag-container{
+.workspace-settings-tag-container {
     display: flex;
     flex-direction: row;
     gap: 0.5em;
 }
 
-.workspace-setting-popup{
+.workspace-setting-popup {
     display: flex;
     flex-direction: column;
     gap: 1em;
 }
 
-.workspace-settings-oauth-table-heading{
+.workspace-settings-oauth-table-heading {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     align-items: center;
@@ -95,7 +105,7 @@
     padding: 0.5em 1em;
 }
 
-.workspace-settings-oauth-table-entry{
+.workspace-settings-oauth-table-entry {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     align-items: center;
@@ -105,6 +115,6 @@
     border-radius: 0.5em;
 }
 
-.workspace-settings-popup{
+.workspace-settings-popup {
     width: 25em;
 }

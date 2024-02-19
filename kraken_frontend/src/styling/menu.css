@@ -51,7 +51,7 @@
     filter: brightness(0) invert() drop-shadow(0 0 8px var(--primary));
 }
 
-.width{
+.width {
     width: 1em;
     height: 1em;
 }
@@ -88,7 +88,8 @@
     filter: brightness(0) invert() drop-shadow(0 0 8px var(--primary));
 }
 
-.menu-seperator::before, .menu-seperator::after {
+.menu-seperator::before,
+.menu-seperator::after {
     content: "";
     height: 1px;
     width: 80%;
@@ -121,4 +122,3 @@
 .workspace-selector-container .icon {
     width: 3em;
 }
-

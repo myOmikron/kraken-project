@@ -145,9 +145,7 @@ export default function AttacksIcon(params: AttacksParams) {
                 {...mouseHandler(AttackType.DnsTxtScan)}
                 className={`kraken-attacks-hex ${
                     activeAttack === AttackType.DnsTxtScan ? "kraken-attacks-hex-selected" : ""
-                } ${
-                    !disabled[AttackType.DnsTxtScan] ? "kraken-attacks-clickable" : "kraken-attacks-hex-unavailable"
-                }`}
+                } ${!disabled[AttackType.DnsTxtScan] ? "kraken-attacks-clickable" : "kraken-attacks-hex-unavailable"}`}
                 transform="matrix(.23193 0 0 .23193 5.876 157.213)"
             />
             {/* hosts box */}

@@ -63,7 +63,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 globalFilter: globalFilter.applied,
                 domainFilter: domainFilter.applied,
             }),
-        [workspace, globalFilter.applied, domainFilter.applied]
+        [workspace, globalFilter.applied, domainFilter.applied],
     );
     const { items: hosts, ...hostsTable } = useTable<FullHost>(
         (limit, offset) =>
@@ -71,7 +71,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 globalFilter: globalFilter.applied,
                 hostFilter: hostFilter.applied,
             }),
-        [workspace, globalFilter.applied, hostFilter.applied]
+        [workspace, globalFilter.applied, hostFilter.applied],
     );
     const { items: ports, ...portsTable } = useTable<FullPort>(
         (limit, offset) =>
@@ -79,7 +79,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 globalFilter: globalFilter.applied,
                 portFilter: portFilter.applied,
             }),
-        [workspace, globalFilter.applied, portFilter.applied]
+        [workspace, globalFilter.applied, portFilter.applied],
     );
     const { items: services, ...servicesTable } = useTable<FullService>(
         (limit, offset) =>
@@ -87,7 +87,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 globalFilter: globalFilter.applied,
                 serviceFilter: serviceFilter.applied,
             }),
-        [workspace, globalFilter.applied, serviceFilter.applied]
+        [workspace, globalFilter.applied, serviceFilter.applied],
     );
 
     // Jump to first page if filter changed
@@ -209,8 +209,8 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 {host.certainty === "Verified"
                                     ? CertaintyIcon({ certaintyType: "Verified" })
                                     : host.certainty === "Historical"
-                                    ? CertaintyIcon({ certaintyType: "Historical" })
-                                    : CertaintyIcon({ certaintyType: "SupposedTo" })}
+                                      ? CertaintyIcon({ certaintyType: "Historical" })
+                                      : CertaintyIcon({ certaintyType: "SupposedTo" })}
                                 <AttackButton workspaceUuid={workspace} targetUuid={host.uuid} targetType={"host"} />
                             </div>
                         ))}
@@ -268,8 +268,8 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 {port.certainty === "Verified"
                                     ? CertaintyIcon({ certaintyType: "Verified" })
                                     : port.certainty === "Historical"
-                                    ? CertaintyIcon({ certaintyType: "Historical" })
-                                    : CertaintyIcon({ certaintyType: "SupposedTo" })}
+                                      ? CertaintyIcon({ certaintyType: "Historical" })
+                                      : CertaintyIcon({ certaintyType: "SupposedTo" })}
                                 <AttackButton workspaceUuid={workspace} targetUuid={port.uuid} targetType={"port"} />
                             </div>
                         ))}
@@ -329,12 +329,12 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 {service.certainty === "Historical"
                                     ? CertaintyIcon({ certaintyType: "Historical" })
                                     : service.certainty === "SupposedTo"
-                                    ? CertaintyIcon({ certaintyType: "SupposedTo" })
-                                    : service.certainty === "UnknownService"
-                                    ? CertaintyIcon({ certaintyType: "UnknownService" })
-                                    : service.certainty === "MaybeVerified"
-                                    ? CertaintyIcon({ certaintyType: "MaybeVerified" })
-                                    : CertaintyIcon({ certaintyType: "DefinitelyVerified" })}
+                                      ? CertaintyIcon({ certaintyType: "SupposedTo" })
+                                      : service.certainty === "UnknownService"
+                                        ? CertaintyIcon({ certaintyType: "UnknownService" })
+                                        : service.certainty === "MaybeVerified"
+                                          ? CertaintyIcon({ certaintyType: "MaybeVerified" })
+                                          : CertaintyIcon({ certaintyType: "DefinitelyVerified" })}
                                 <AttackButton
                                     workspaceUuid={workspace}
                                     targetUuid={service.uuid}
@@ -858,7 +858,7 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                                                 } else if (result.is_ok()) {
                                                     numOk += 1;
                                                 }
-                                            })
+                                            }),
                                         );
                                     });
                                 }
@@ -873,7 +873,7 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                                                 } else if (result.is_ok()) {
                                                     numOk += 1;
                                                 }
-                                            })
+                                            }),
                                         );
                                     });
                                 }
@@ -888,7 +888,7 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                                                 } else if (result.is_ok()) {
                                                     numOk += 1;
                                                 }
-                                            })
+                                            }),
                                         );
                                     });
                                 }
@@ -903,7 +903,7 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                                                 } else if (result.is_ok()) {
                                                     numOk += 1;
                                                 }
-                                            })
+                                            }),
                                         );
                                     });
                                 }
@@ -981,7 +981,7 @@ export function SelectButton(props: SelectButtonProps) {
 
 type UpdateStrategy = (
     curTags: Array<SimpleTag>,
-    newTags: Array<SimpleTag>
+    newTags: Array<SimpleTag>,
 ) => { workspaceTags: Array<string>; globalTags: Array<string> };
 
 async function updateTags(workspace: string, uuids: SelectedUuids, strategy: UpdateStrategy, tags: Array<SimpleTag>) {
@@ -995,8 +995,8 @@ async function updateTags(workspace: string, uuids: SelectedUuids, strategy: Upd
                         .then(handleApiError);
                 });
                 return promise;
-            })
-        )
+            }),
+        ),
     );
     await Promise.all(
         Object.keys(uuids.hosts).map((uuid) =>
@@ -1008,8 +1008,8 @@ async function updateTags(workspace: string, uuids: SelectedUuids, strategy: Upd
                         .then(handleApiError);
                 });
                 return promise;
-            })
-        )
+            }),
+        ),
     );
     await Promise.all(
         Object.keys(uuids.ports).map((uuid) =>
@@ -1021,8 +1021,8 @@ async function updateTags(workspace: string, uuids: SelectedUuids, strategy: Upd
                         .then(handleApiError);
                 });
                 return promise;
-            })
-        )
+            }),
+        ),
     );
     await Promise.all(
         Object.keys(uuids.services).map((uuid) =>
@@ -1034,20 +1034,20 @@ async function updateTags(workspace: string, uuids: SelectedUuids, strategy: Upd
                         .then(handleApiError);
                 });
                 return promise;
-            })
-        )
+            }),
+        ),
     );
 }
 
 function addStrategy(curTags: Array<SimpleTag>, newTags: Array<SimpleTag>) {
     const workspaceTags = [
         ...new Set( // Use Set to eliminate duplicates
-            [...curTags, ...newTags].filter(({ tagType }) => tagType === TagType.Workspace).map(({ uuid }) => uuid)
+            [...curTags, ...newTags].filter(({ tagType }) => tagType === TagType.Workspace).map(({ uuid }) => uuid),
         ).keys(),
     ];
     const globalTags = [
         ...new Set( // Use Set to eliminate duplicates
-            [...curTags, ...newTags].filter(({ tagType }) => tagType === TagType.Global).map(({ uuid }) => uuid)
+            [...curTags, ...newTags].filter(({ tagType }) => tagType === TagType.Global).map(({ uuid }) => uuid),
         ).keys(),
     ];
     return { workspaceTags, globalTags };

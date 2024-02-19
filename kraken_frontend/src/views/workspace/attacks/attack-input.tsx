@@ -8,17 +8,17 @@ import { handleApiError } from "../../../utils/helper";
 import SelectMenu from "../../../components/select-menu";
 
 export interface IAttackInputProps extends React.HTMLProps<HTMLElement> {
-    valueKey: string,
-    label: string,
-    prefill: string | undefined,
-    value: any,
-    required: boolean,
-    onUpdate: (key: string, v: any) => any,
+    valueKey: string;
+    label: string;
+    prefill: string | undefined;
+    value: any;
+    required: boolean;
+    onUpdate: (key: string, v: any) => any;
 }
 
 export interface AttackInputProps<T> extends IAttackInputProps {
-    value: T | undefined,
-    onUpdate: (key: string, v: T | undefined) => any,
+    value: T | undefined;
+    onUpdate: (key: string, v: T | undefined) => any;
 }
 
 export function StringAttackInput(props: AttackInputProps<string>) {
@@ -29,26 +29,30 @@ export function StringAttackInput(props: AttackInputProps<string>) {
     delete htmlProps["validate"];
     delete htmlProps["onUpdate"];
 
-    return <>
-        <label htmlFor={props.valueKey + "_input"} key={props.valueKey + "_label"}>
-            {props.label ?? props.valueKey}
-        </label>
-        <Input
-            key={props.valueKey + "_value"}
-            id={props.valueKey + "_input"}
-            value={props.value}
-            onChange={(v) => {
-                props.onUpdate(props.valueKey, v);
-            }}
-            {...htmlProps}
-        />
-    </>;
+    return (
+        <>
+            <label htmlFor={props.valueKey + "_input"} key={props.valueKey + "_label"}>
+                {props.label ?? props.valueKey}
+            </label>
+            <Input
+                key={props.valueKey + "_value"}
+                id={props.valueKey + "_input"}
+                value={props.value}
+                onChange={(v) => {
+                    props.onUpdate(props.valueKey, v);
+                }}
+                {...htmlProps}
+            />
+        </>
+    );
 }
 
-export function ConvertingAttackInput<T>(props: AttackInputProps<T> & {
-    deserialize: (v: string) => T,
-    serialize: (v: T | undefined) => string,
-}) {
+export function ConvertingAttackInput<T>(
+    props: AttackInputProps<T> & {
+        deserialize: (v: string) => T;
+        serialize: (v: T | undefined) => string;
+    },
+) {
     let [errorInput, setErrorInput] = useState<string | undefined>(undefined);
 
     let htmlProps: any = { ...props };
@@ -62,68 +66,74 @@ export function ConvertingAttackInput<T>(props: AttackInputProps<T> & {
 
     let ref = useRef<HTMLInputElement>();
 
-    return <>
-        <label htmlFor={props.valueKey + "_input"} key={props.valueKey + "_label"}>
-            {props.label ?? props.valueKey}
-        </label>
-        <Input
-            key={props.valueKey + "_value"}
-            id={props.valueKey + "_input"}
-            ref={ref}
-            value={errorInput ?? props.serialize(props.value)}
-            onChange={(v) => {
-                let newValue;
-                try {
-                    newValue = props.deserialize(v);
-                } catch (e) {
-                    console.log("invalid input:", v, e);
-                    setErrorInput(v);
-                    ref.current?.setCustomValidity((e as any)?.message || "Invalid input");
-                    return;
-                }
-                setErrorInput(undefined);
-                ref.current?.setCustomValidity("");
-                props.onUpdate(props.valueKey, newValue);
-            }}
-            {...htmlProps}
-        />
-    </>;
+    return (
+        <>
+            <label htmlFor={props.valueKey + "_input"} key={props.valueKey + "_label"}>
+                {props.label ?? props.valueKey}
+            </label>
+            <Input
+                key={props.valueKey + "_value"}
+                id={props.valueKey + "_input"}
+                ref={ref}
+                value={errorInput ?? props.serialize(props.value)}
+                onChange={(v) => {
+                    let newValue;
+                    try {
+                        newValue = props.deserialize(v);
+                    } catch (e) {
+                        console.log("invalid input:", v, e);
+                        setErrorInput(v);
+                        ref.current?.setCustomValidity((e as any)?.message || "Invalid input");
+                        return;
+                    }
+                    setErrorInput(undefined);
+                    ref.current?.setCustomValidity("");
+                    props.onUpdate(props.valueKey, newValue);
+                }}
+                {...htmlProps}
+            />
+        </>
+    );
 }
 
 export function PortListInput(props: AttackInputProps<PortOrRange[] | undefined>) {
-    return <ConvertingAttackInput
-        deserialize={(v) => parseUserPorts(v).unwrap()}
-        serialize={(v) => v ? (typeof v === "number" ? "" + v : v.join(", ")) : ""}
-        {...props}
-    />
+    return (
+        <ConvertingAttackInput
+            deserialize={(v) => parseUserPorts(v).unwrap()}
+            serialize={(v) => (v ? (typeof v === "number" ? "" + v : v.join(", ")) : "")}
+            {...props}
+        />
+    );
 }
 
-export function NumberAttackInput(props: AttackInputProps<number> & {
-    minimum?: number,
-}) {
+export function NumberAttackInput(
+    props: AttackInputProps<number> & {
+        minimum?: number;
+    },
+) {
     let minimum = props.minimum ?? 1;
 
-    return <ConvertingAttackInput
-        deserialize={(v) => {
-            const n = Number(v);
-            if (n === null || !Number.isSafeInteger(n) || n < minimum) {
-                throw new Error("can't accept for NumberAttackInput: " + v);
-            }
-            return n;
-        }}
-        serialize={(v) => v ? v.toString() : ""}
-        {...props}
-    />
+    return (
+        <ConvertingAttackInput
+            deserialize={(v) => {
+                const n = Number(v);
+                if (n === null || !Number.isSafeInteger(n) || n < minimum) {
+                    throw new Error("can't accept for NumberAttackInput: " + v);
+                }
+                return n;
+            }}
+            serialize={(v) => (v ? v.toString() : "")}
+            {...props}
+        />
+    );
 }
 
-export function DurationAttackInput(props: AttackInputProps<number> & {
-    minimum?: number,
-}) {
-    return <NumberAttackInput
-        placeholder="time in ms"
-        {...props}
-        label={props.label + " (ms)"}
-    />
+export function DurationAttackInput(
+    props: AttackInputProps<number> & {
+        minimum?: number;
+    },
+) {
+    return <NumberAttackInput placeholder="time in ms" {...props} label={props.label + " (ms)"} />;
 }
 
 export function BooleanAttackInput(props: AttackInputProps<boolean>) {
@@ -134,27 +144,32 @@ export function BooleanAttackInput(props: AttackInputProps<boolean>) {
     delete htmlProps["validate"];
     delete htmlProps["onUpdate"];
 
-    return <div className="checkbox">
-        <Checkbox
-            id={props.valueKey + "_input"}
-            value={props.value}
-            onChange={(v) => props.onUpdate(props.valueKey, v)}
-            {...htmlProps}
-        />
-        <label key={props.valueKey + "_label"} htmlFor={props.valueKey + "_input"}>{props.label}</label>
-    </div>;
+    return (
+        <div className="checkbox">
+            <Checkbox
+                id={props.valueKey + "_input"}
+                value={props.value}
+                onChange={(v) => props.onUpdate(props.valueKey, v)}
+                {...htmlProps}
+            />
+            <label key={props.valueKey + "_label"} htmlFor={props.valueKey + "_input"}>
+                {props.label}
+            </label>
+        </div>
+    );
 }
 
 export function WordlistAttackInput(props: AttackInputProps<string>) {
-    let [wordlists, setWordlists] = useState<{ label: string; value: string; }[]>([]);
+    let [wordlists, setWordlists] = useState<{ label: string; value: string }[]>([]);
 
     useEffect(() => {
-        Api.wordlists.all().then(
-            handleApiError((wordlists) =>
-                setWordlists(wordlists.wordlists.map((x) =>
-                    ({ label: x.name, value: x.uuid })))
-            ),
-        );
+        Api.wordlists
+            .all()
+            .then(
+                handleApiError((wordlists) =>
+                    setWordlists(wordlists.wordlists.map((x) => ({ label: x.name, value: x.uuid }))),
+                ),
+            );
     });
 
     let htmlProps: any = { ...props };
@@ -164,21 +179,23 @@ export function WordlistAttackInput(props: AttackInputProps<string>) {
     delete htmlProps["validate"];
     delete htmlProps["onUpdate"];
 
-    return <>
-        <label key={props.valueKey + "_label"} htmlFor={props.valueKey + "_input"}>
-            {props.label ?? props.valueKey}
-        </label>
-        <SelectMenu
-            id={"wordlist"}
-            required
-            options={wordlists}
-            theme={"default"}
-            value={wordlists.find(v => v.value == props.value) ?? null}
-            onChange={(wordlist) => {
-                props.onUpdate(props.valueKey, wordlist?.value)
-            }}
-        />
-    </>;
+    return (
+        <>
+            <label key={props.valueKey + "_label"} htmlFor={props.valueKey + "_input"}>
+                {props.label ?? props.valueKey}
+            </label>
+            <SelectMenu
+                id={"wordlist"}
+                required
+                options={wordlists}
+                theme={"default"}
+                value={wordlists.find((v) => v.value == props.value) ?? null}
+                onChange={(wordlist) => {
+                    props.onUpdate(props.valueKey, wordlist?.value);
+                }}
+            />
+        </>
+    );
 }
 
 export type DehashedQueryType =
@@ -264,27 +281,29 @@ export function DehashedAttackInput(props: AttackInputProps<Query>) {
         console.log("update:", query);
     }
 
-    return <>
-        <SelectMenu
-            key={props.valueKey + "_select"}
-            required
-            options={DEHASHED_SEARCH_TYPES}
-            theme={"default"}
-            value={type}
-            onChange={(type) => {
-                setType(type);
-                update(type, search);
-            }}
-        />
-        <Input
-            key={props.valueKey + "_value"}
-            placeholder={"dehashed query"}
-            {...htmlProps}
-            value={search}
-            onChange={(search) => {
-                setSearch(search);
-                update(type, search);
-            }}
-        />
-    </>;
+    return (
+        <>
+            <SelectMenu
+                key={props.valueKey + "_select"}
+                required
+                options={DEHASHED_SEARCH_TYPES}
+                theme={"default"}
+                value={type}
+                onChange={(type) => {
+                    setType(type);
+                    update(type, search);
+                }}
+            />
+            <Input
+                key={props.valueKey + "_value"}
+                placeholder={"dehashed query"}
+                {...htmlProps}
+                value={search}
+                onChange={(search) => {
+                    setSearch(search);
+                    update(type, search);
+                }}
+            />
+        </>
+    );
 }

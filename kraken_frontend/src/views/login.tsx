@@ -26,7 +26,7 @@ export default class Login extends React.Component<LoginProps, LoginState> {
             handleApiError(() => {
                 toast.success("Authenticated successfully");
                 this.props.onLogin();
-            })
+            }),
         );
     }
 

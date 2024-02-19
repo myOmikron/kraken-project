@@ -48,7 +48,7 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
     componentDidUpdate(
         prevProps: Readonly<WorkspaceHostsProps>,
         prevState: Readonly<WorkspaceHostsState>,
-        snapshot?: any
+        snapshot?: any,
     ) {
         if (prevState.offset !== this.state.offset || this.state.limit !== prevState.limit) {
             this.retrieveHosts().then();

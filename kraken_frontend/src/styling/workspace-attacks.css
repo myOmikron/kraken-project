@@ -39,7 +39,6 @@
     from {
         stroke-dashoffset: 0;
         fill-opacity: 20% !important;
-
     }
 
     to {
@@ -56,7 +55,7 @@
     stroke-linecap: butt;
     stroke-linejoin: miter;
     stroke-dasharray: none;
-    stroke-opacity:0.666667;
+    stroke-opacity: 0.666667;
     paint-order: markers stroke fill;
     transition: all ease 400ms;
 }
