@@ -53,7 +53,7 @@ use crate::modules::service_detection::tcp::{
 use crate::modules::service_detection::udp::{
     start_udp_service_detection, UdpServiceDetectionSettings,
 };
-use crate::modules::service_detection::Service;
+use crate::modules::service_detection::{ProtocolSet, Service};
 
 /// The Attack service
 pub struct Attacks {
@@ -275,13 +275,13 @@ impl ReqAttackService for Attacks {
             },
             Service::Maybe(services) => ServiceDetectionResponse {
                 response_type: ServiceCertainty::Maybe as _,
-                services: services.iter().map(|s| s.to_string()).collect(),
+                services: services.into_iter().map(new_rpc_service).collect(),
                 address: request.address,
                 port: request.port,
             },
-            Service::Definitely(service) => ServiceDetectionResponse {
+            Service::Definitely { service, protocols } => ServiceDetectionResponse {
                 response_type: ServiceCertainty::Definitely as _,
-                services: vec![service.to_string()],
+                services: vec![new_rpc_service((service, protocols))],
                 address: request.address,
                 port: request.port,
             },
@@ -338,12 +338,14 @@ impl ReqAttackService for Attacks {
                 certainty: match value.service {
                     Service::Unknown => ServiceCertainty::Unknown as _,
                     Service::Maybe(_) => ServiceCertainty::Maybe as _,
-                    Service::Definitely(_) => ServiceCertainty::Definitely as _,
+                    Service::Definitely { .. } => ServiceCertainty::Definitely as _,
                 },
                 services: match value.service {
                     Service::Unknown => Vec::new(),
-                    Service::Maybe(services) => services.iter().map(|s| s.to_string()).collect(),
-                    Service::Definitely(service) => vec![service.to_string()],
+                    Service::Maybe(services) => services.into_iter().map(new_rpc_service).collect(),
+                    Service::Definitely { service, protocols } => {
+                        vec![new_rpc_service((service, protocols))]
+                    }
                 },
             },
             any_attack_response::Response::UdpServiceDetection,
@@ -697,5 +699,15 @@ impl Attacks {
 
         // Return stream
         Ok(Response::new(Box::pin(ReceiverStream::new(to_stream))))
+    }
+}
+
+fn new_rpc_service((service, protocols): (&'static str, ProtocolSet)) -> kraken_proto::Service {
+    let ProtocolSet { tcp, tls, udp } = protocols;
+    kraken_proto::Service {
+        name: service.to_string(),
+        tcp,
+        tls,
+        udp,
     }
 }

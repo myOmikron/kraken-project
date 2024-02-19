@@ -68,7 +68,7 @@ impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
             attack_uuid: self.attack_uuid,
             address: address.to_string(),
             port: port as u16,
-            services: services.clone(),
+            services: services.iter().map(|x| x.name.to_string()).collect(),
         })
         .await;
 
@@ -90,7 +90,7 @@ impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
                 .return_nothing()
                 .bulk(services.iter().map(|x| UdpServiceDetectionName {
                     uuid: Uuid::new_v4(),
-                    name: x.to_string(),
+                    name: x.name.to_string(),
                     result: ForeignModelByField::Key(result_uuid),
                 }))
                 .await?;
@@ -120,7 +120,7 @@ impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
                         self.workspace.uuid,
                         host_uuid,
                         Some(port_uuid),
-                        &service,
+                        &service.name,
                         certainty,
                     )
                     .await?,

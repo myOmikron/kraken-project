@@ -141,7 +141,19 @@ message ServiceDetectionResponse {
   // Indicates how many services are given and how they are to be interpreted
   ServiceCertainty responseType = 1;
   // List of services, the interpretation of this field depends on the `responseType`
-  repeated string services = 2;
+  repeated Service services = 2;
+}
+
+// A single service
+message Service {
+  // The service's name
+  string name = 1;
+  /// Does this service respond to raw TCP?
+  bool tcp = 2;
+  /// Does this service respond to TLS over TCP?
+  bool tls = 3;
+  /// Does this service respond to raw UDP?
+  bool udp = 4;
 }
 
 // Indicates how many services are returned in a ServiceCertainty and how they are to be interpreted
@@ -187,7 +199,7 @@ message UdpServiceDetectionResponse {
   // Indicates how many services are given and how they are to be interpreted
   ServiceCertainty certainty = 3;
   // List of services, the interpretation of this field depends on the `certainty`
-  repeated string services = 4;
+  repeated Service services = 4;
 }
 
 /*

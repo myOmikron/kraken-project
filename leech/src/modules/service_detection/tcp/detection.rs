@@ -8,14 +8,8 @@ use probe_config::generated::{BaseProbe, Match};
 
 use crate::modules::service_detection::tcp::oneshot::{ProbeTcpError, ProbeTcpErrorPlace};
 use crate::modules::service_detection::tcp::OneShotTcpSettings;
-use crate::modules::service_detection::{generated, DynError, DynResult, Service};
+use crate::modules::service_detection::{generated, DynError, DynResult, ProtocolSet, Service};
 use crate::utils::DebuggableBytes;
-
-#[derive(Default, Copy, Clone, Debug)]
-pub struct Protocols {
-    pub tcp: bool,
-    pub tls: bool,
-}
 
 /// Runs service detection on a single tcp port
 ///
@@ -25,11 +19,11 @@ pub async fn detect_service(socket: SocketAddr, timeout: Duration) -> DynResult<
         ControlFlow::Continue(partial_matches) => Ok(Some(if partial_matches.is_empty() {
             Service::Unknown
         } else {
-            Service::Maybe(partial_matches.into_keys().collect())
+            Service::Maybe(partial_matches)
         })),
         ControlFlow::Break(BreakReason::Found(service, protocol)) => {
             let protocols = find_all_protocols(socket, timeout, service, protocol).await?;
-            Ok(Some(Service::Definitely(service)))
+            Ok(Some(Service::Definitely { service, protocols }))
         }
         ControlFlow::Break(BreakReason::TcpError(err)) => {
             if matches!(err.place, ProbeTcpErrorPlace::Connect) {
@@ -46,7 +40,7 @@ pub async fn detect_service(socket: SocketAddr, timeout: Duration) -> DynResult<
 #[derive(Debug)]
 pub enum BreakReason {
     /// One probe had an exact match
-    Found(&'static str, Protocols),
+    Found(&'static str, ProtocolSet),
 
     /// An error occurred which might be mapped to [`Service::Failed`]
     TcpError(ProbeTcpError),
@@ -63,9 +57,9 @@ pub enum BreakReason {
 async fn find_exact_match(
     socket: SocketAddr,
     timeout: Duration,
-) -> ControlFlow<BreakReason, BTreeMap<&'static str, Protocols>> {
+) -> ControlFlow<BreakReason, BTreeMap<&'static str, ProtocolSet>> {
     let settings = OneShotTcpSettings { socket, timeout };
-    let mut partial_matches: BTreeMap<&'static str, Protocols> = BTreeMap::new();
+    let mut partial_matches: BTreeMap<&'static str, ProtocolSet> = BTreeMap::new();
 
     debug!("Retrieving tcp banner");
     let result = settings.probe_tcp(b"").await;
@@ -81,21 +75,21 @@ async fn find_exact_match(
         if let Some(tcp_banner) = tcp_banner.as_deref() {
             debug!("Starting tcp banner scans #{prevalence}");
             for probe in &generated::PROBES.empty_tcp_probes[prevalence] {
-                check_match(&mut partial_matches, probe, tcp_banner, Protocols::TCP)?;
+                check_match(&mut partial_matches, probe, tcp_banner, ProtocolSet::TCP)?;
             }
 
             debug!("Starting tcp payload scans #{prevalence}");
             for probe in &generated::PROBES.payload_tcp_probes[prevalence] {
                 let result = settings.probe_tcp(probe.payload).await;
                 if let Some(data) = convert_tcp(result)? {
-                    check_match(&mut partial_matches, probe, &data, Protocols::TCP)?
+                    check_match(&mut partial_matches, probe, &data, ProtocolSet::TCP)?
                 }
             }
 
             if let Some(tls_banner) = tls_banner.as_deref() {
                 debug!("Starting tls banner scans #{prevalence}");
                 for probe in &generated::PROBES.empty_tls_probes[prevalence] {
-                    check_match(&mut partial_matches, probe, tls_banner, Protocols::TLS)?;
+                    check_match(&mut partial_matches, probe, tls_banner, ProtocolSet::TLS)?;
                 }
 
                 debug!("Starting tls payload scans #{prevalence}");
@@ -103,7 +97,7 @@ async fn find_exact_match(
                     let result = settings.probe_tls(probe.payload, probe.alpn).await;
                     match convert_tls(result)? {
                         Ok(data) => {
-                            check_match(&mut partial_matches, probe, &data, Protocols::TCP)?
+                            check_match(&mut partial_matches, probe, &data, ProtocolSet::TCP)?
                         }
                         Err(err) => {
                             warn!(target: "tls", "Failed to connect while probing {}: {err}", probe.service)
@@ -122,8 +116,8 @@ async fn find_all_protocols(
     socket: SocketAddr,
     timeout: Duration,
     service: &'static str,
-    mut already_found: Protocols,
-) -> DynResult<Protocols> {
+    mut already_found: ProtocolSet,
+) -> DynResult<ProtocolSet> {
     let settings = OneShotTcpSettings { socket, timeout };
     fn iter_all<T>(probes: &[Vec<T>; 3]) -> impl Iterator<Item = &T> {
         probes.iter().flat_map(|vec| vec.iter())
@@ -189,10 +183,10 @@ async fn find_all_protocols(
 }
 
 fn check_match(
-    partial_matches: &mut BTreeMap<&'static str, Protocols>,
+    partial_matches: &mut BTreeMap<&'static str, ProtocolSet>,
     probe: &BaseProbe,
     haystack: &[u8],
-    protocols: Protocols,
+    protocols: ProtocolSet,
 ) -> ControlFlow<BreakReason> {
     trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(haystack));
     match probe.is_match(haystack) {
@@ -205,21 +199,6 @@ fn check_match(
             ControlFlow::Continue(())
         }
         Match::Exact => ControlFlow::Break(BreakReason::Found(probe.service, protocols)),
-    }
-}
-
-impl Protocols {
-    const TCP: Self = Self {
-        tcp: true,
-        tls: false,
-    };
-    const TLS: Self = Self {
-        tcp: false,
-        tls: true,
-    };
-    fn update(&mut self, other: Self) {
-        self.tcp |= other.tcp;
-        self.tls |= other.tls;
     }
 }
 

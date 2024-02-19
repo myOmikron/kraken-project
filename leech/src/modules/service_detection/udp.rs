@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::net::{IpAddr, SocketAddr};
 use std::ops::RangeInclusive;
 use std::time::Duration;
@@ -11,7 +12,7 @@ use tokio::task::JoinSet;
 use tokio::time::{sleep, timeout};
 
 use super::error::UdpServiceScanError;
-use super::Service;
+use super::{ProtocolSet, Service};
 use crate::modules::service_detection::generated;
 
 /// Settings for a service detection
@@ -130,7 +131,7 @@ pub async fn start_udp_service_detection(
     .try_for_each_concurrent(settings.concurrent_limit as usize, move |port| {
         let tx = tx.clone();
         async move {
-            let mut partial_matches = Vec::new();
+            let mut partial_matches = BTreeMap::new();
             for prev in 0..3 {
                 debug!("Starting udp scans prevalence={prev}");
                 for probe in &generated::PROBES.udp_probes[prev] {
@@ -138,13 +139,16 @@ pub async fn start_udp_service_detection(
                         match probe.is_match(&data) {
                             Match::No => {}
                             Match::Partial => {
-                                partial_matches.push(probe.service);
+                                partial_matches.insert(probe.service, ProtocolSet::UDP);
                             }
                             Match::Exact => {
                                 debug!("Found exact UDP service {} on port {port}", probe.service);
                                 tx.send(UdpServiceDetectionResult {
                                     port,
-                                    service: Service::Definitely(probe.service),
+                                    service: Service::Definitely {
+                                        service: probe.service,
+                                        protocols: ProtocolSet::UDP,
+                                    },
                                 })
                                 .await?;
                                 return Ok(());

@@ -71,7 +71,7 @@ impl HandleAttackResponse<ServiceDetectionResponse> for AttackContext {
             .return_nothing()
             .bulk(services.iter().map(|x| ServiceDetectionName {
                 uuid: Uuid::new_v4(),
-                name: x.to_string(),
+                name: x.name.to_string(),
                 result: ForeignModelByField::Key(result_uuid),
             }))
             .await?;
@@ -100,7 +100,7 @@ impl HandleAttackResponse<ServiceDetectionResponse> for AttackContext {
                         self.workspace.uuid,
                         host_uuid,
                         Some(port_uuid),
-                        &service,
+                        &service.name,
                         certainty,
                     )
                     .await?,
