@@ -32,8 +32,11 @@ pub struct TcpServiceDetectionSettings {
     /// The port ranges to scan
     pub ports: Vec<RangeInclusive<u16>>,
 
-    /// The duration to wait for a response
-    pub timeout: Duration,
+    /// The duration to wait until a connection is considered failed.
+    pub connect_timeout: Duration,
+
+    /// The duration to wait when receiving the service's response during detection.
+    pub receive_timeout: Duration,
 
     /// Defines how many times a connection should be retried if it failed the last time
     pub max_retries: u32,
@@ -48,14 +51,23 @@ pub struct TcpServiceDetectionSettings {
     ///
     /// All hosts are assumed to be reachable.
     pub skip_icmp_check: bool,
+
+    /// Just runs the initial port scanner without the service detection
+    pub just_scan: bool, // TODO
 }
 
+/// A found open port and the potentially detected service
 #[derive(Debug, Clone)]
 pub struct TcpServiceDetectionResult {
+    /// The socket address found to be open
     pub addr: SocketAddr,
+
+    /// The potentially detected service
     pub service: Service,
 }
 
+/// Scan for open tcp ports and detect the service running on them
+/// by recognizing their banner and their responses to certain payloads.
 pub async fn start_tcp_service_detection(
     settings: TcpServiceDetectionSettings,
     tx: Sender<TcpServiceDetectionResult>,
@@ -100,18 +112,27 @@ pub async fn start_tcp_service_detection(
             let socket = SocketAddr::new(ip, port);
             if is_port_open(
                 socket,
-                settings.timeout,
+                settings.connect_timeout,
                 settings.max_retries,
                 settings.retry_interval,
             )
             .await
             {
-                let service = detect_service(socket, settings.timeout).await?;
-                tx.send(TcpServiceDetectionResult {
-                    addr: socket,
-                    service,
-                })
-                .await?;
+                if settings.just_scan {
+                    tx.send(TcpServiceDetectionResult {
+                        addr: socket,
+                        service: Service::Unknown,
+                    })
+                    .await?;
+                } else if let Some(service) =
+                    detect_service(socket, settings.receive_timeout).await?
+                {
+                    tx.send(TcpServiceDetectionResult {
+                        addr: socket,
+                        service,
+                    })
+                    .await?;
+                };
             }
             Ok::<(), DynError>(())
         })

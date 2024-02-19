@@ -3,11 +3,12 @@ use std::net::SocketAddr;
 use std::time::Duration;
 
 use log::{debug, trace};
+use thiserror::Error;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::time::sleep;
 
-use crate::modules::service_detection::error::{Extended, ResultExt};
+use crate::modules::service_detection::error::ResultExt;
 use crate::modules::service_detection::DynResult;
 use crate::utils::DebuggableBytes;
 
@@ -26,13 +27,17 @@ impl OneShotTcpSettings {
     ///
     /// Errors when an unrecoverable error occurred.
     /// Returns `Ok(None)` when the service refused to respond to the payload.
-    pub async fn probe_tcp(&self, payload: &[u8]) -> DynResult<Option<Vec<u8>>> {
+    pub async fn probe_tcp(&self, payload: &[u8]) -> Result<Option<Vec<u8>>, ProbeTcpError> {
         match self.raw_probe_tcp(payload).await {
             Ok(data) => Ok(Some(data)),
-            Err(error) => match error.kind() {
+            Err(error) => match error.source.kind() {
                 io::ErrorKind::ConnectionReset | io::ErrorKind::ConnectionAborted => Ok(None),
-                io::ErrorKind::NotConnected if error.context == "TcpStream::shutdown" => Ok(None),
-                _ => Err(error.into()),
+                io::ErrorKind::NotConnected
+                    if matches!(error.place, ProbeTcpErrorPlace::Shutdown) =>
+                {
+                    Ok(None)
+                }
+                _ => Err(error),
             },
         }
     }
@@ -41,18 +46,20 @@ impl OneShotTcpSettings {
     /// 2. Send `payload`
     /// 3. Wait for the configured amount of time
     /// 4. Return everything which has been received
-    async fn raw_probe_tcp(&self, payload: &[u8]) -> Result<Vec<u8>, Extended<io::Error>> {
+    async fn raw_probe_tcp(&self, payload: &[u8]) -> Result<Vec<u8>, ProbeTcpError> {
         // Connect
         let mut tcp = TcpStream::connect(self.socket)
             .await
-            .context("TcpStream::connect")?;
+            .map_err(ProbeTcpErrorPlace::Connect.wrap())?;
 
         // Send payload
         if !payload.is_empty() {
             tcp.write_all(payload)
                 .await
-                .context("TcpStream::write_all")?;
-            tcp.flush().await.context("TcpStream::flush")?;
+                .map_err(ProbeTcpErrorPlace::Write.wrap())?;
+            tcp.flush()
+                .await
+                .map_err(ProbeTcpErrorPlace::Flush.wrap())?;
             trace!(target: "tcp", "Send data: {:?}", DebuggableBytes(payload));
         }
 
@@ -60,11 +67,13 @@ impl OneShotTcpSettings {
         sleep(self.timeout).await;
 
         // Read
-        tcp.shutdown().await.context("TcpStream::shutdown")?;
+        tcp.shutdown()
+            .await
+            .map_err(ProbeTcpErrorPlace::Shutdown.wrap())?;
         let mut data = Vec::new();
         tcp.read_to_end(&mut data)
             .await
-            .context("TcpStream::read_to_end")?;
+            .map_err(ProbeTcpErrorPlace::Write.wrap())?;
 
         // Log and Return
         trace!(target: "tcp", "Received data: {:?}", DebuggableBytes(&data));
@@ -123,5 +132,41 @@ impl OneShotTcpSettings {
         // Log and Return
         trace!(target: "tls", "Received data: {:?}", DebuggableBytes(&data));
         Ok(Ok(data))
+    }
+}
+
+/// The error returned by [`OneShotTcpSettings::probe_tcp`]
+#[derive(Debug, Error)]
+#[error("{source} @ {place:?}")]
+pub struct ProbeTcpError {
+    /// The error
+    #[source]
+    pub source: io::Error,
+
+    /// The place the error occurred
+    pub place: ProbeTcpErrorPlace,
+}
+
+/// The places where [`OneShotTcpSettings::probe_tcp`] might produce an error
+#[derive(Debug)]
+pub enum ProbeTcpErrorPlace {
+    /// During [`TcpStream::connect`]
+    Connect,
+    /// During [`AsyncWriteExt::write_all`]
+    Write,
+    /// During [`AsyncWriteExt::flush`]
+    Flush,
+    /// During [`AsyncWriteExt::shutdown`]
+    Shutdown,
+    /// During [`AsyncReadExt::read_to_end`]
+    Read,
+}
+
+impl ProbeTcpErrorPlace {
+    fn wrap(self) -> impl FnOnce(io::Error) -> ProbeTcpError {
+        |source| ProbeTcpError {
+            source,
+            place: self,
+        }
     }
 }

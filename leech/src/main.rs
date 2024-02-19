@@ -113,46 +113,23 @@ pub enum RunCommand {
         #[clap(default_value_t = 100)]
         retry_interval: u16,
     },
-    /// A simple port scanning utility
-    PortScanner {
+    /// A simple icmp (ping) scanning utility
+    IcmpScanner {
         /// Valid IPv4 or IPv6 addresses or networks in CIDR notation
         #[clap(required(true))]
         targets: Vec<String>,
-        /// A single port, multiple, comma seperated ports or (inclusive) port ranges
-        ///
-        /// If no values are supplied, 1-65535 is used as default
-        #[clap(short = 'p')]
-        ports: Vec<String>,
-        /// The technique to use for port scans
-        #[clap(short = 't', long)]
-        #[clap(default_value = "tcp-con")]
-        technique: PortScanTechnique,
+
         /// The time to wait until a connection is considered failed.
         ///
         /// The timeout is specified in milliseconds.
         #[clap(long)]
         #[clap(default_value_t = 1000)]
         timeout: u16,
+
         /// The concurrent task limit
         #[clap(long)]
         #[clap(default_value_t = NonZeroU32::new(1000).unwrap())]
         concurrent_limit: NonZeroU32,
-        /// The number of times the connection should be retried if it failed.
-        #[clap(long)]
-        #[clap(default_value_t = 6)]
-        max_retries: u32,
-        /// The interval that should be wait between retries on a port.
-        ///
-        /// The interval is specified in milliseconds.
-        #[clap(long)]
-        #[clap(default_value_t = 100)]
-        retry_interval: u16,
-        /// Skips the initial icmp check.
-        ///
-        /// All hosts are assumed to be reachable.
-        #[clap(long)]
-        #[clap(default_value_t = false)]
-        skip_icmp_check: bool,
     },
     /// Query the dehashed API
     Dehashed {
@@ -164,8 +141,8 @@ pub enum RunCommand {
         /// The ip to query information for
         query: IpAddr,
     },
-    /// Detect the service running behind a port
-    ServiceDetection {
+    /// Detect open tcp ports and their services
+    ServiceDetectionTcp {
         /// Valid IPv4 or IPv6 addresses or networks in CIDR notation
         #[clap(required(true))]
         targets: Vec<String>,
@@ -176,19 +153,48 @@ pub enum RunCommand {
         #[clap(short = 'p')]
         ports: Vec<String>,
 
-        /// The interval that should be waited for a response after connecting and sending an optional payload.
+        /// The time to wait until a connection is considered failed.
+        ///
+        /// The timeout is specified in milliseconds.
+        #[clap(long)]
+        #[clap(default_value_t = 1000)]
+        connect_timeout: u16,
+
+        /// The time to wait when receiving the service's response during detection.
+        ///
+        /// The timeout is specified in milliseconds.
+        #[clap(long)]
+        #[clap(default_value_t = 1000)]
+        receive_timeout: u16,
+
+        /// The concurrent task limit
+        #[clap(long)]
+        #[clap(default_value_t = NonZeroU32::new(1000).unwrap())]
+        concurrent_limit: NonZeroU32,
+
+        /// The number of times the connection should be retried if it failed.
+        #[clap(long)]
+        #[clap(default_value_t = 6)]
+        max_retries: u32,
+
+        /// The interval that should be waited between retries on a port.
         ///
         /// The interval is specified in milliseconds.
         #[clap(long)]
-        #[clap(default_value_t = 1000)]
-        timeout: u64,
+        #[clap(default_value_t = 100)]
+        retry_interval: u16,
 
-        /// Flag for debugging
+        /// Skips the initial icmp check.
         ///
-        /// Normally the service detection would stop after the first successful match.
-        /// When this flag is enabled it will always run all checks producing their logs before returning the first match.
+        /// All hosts are assumed to be reachable.
         #[clap(long)]
-        dont_stop_on_match: bool,
+        #[clap(default_value_t = false)]
+        skip_icmp_check: bool,
+
+        /// Just runs the initial port scanner without the service detection
+        #[clap(long)]
+        #[clap(default_value_t = false)]
+        just_scan: bool,
     },
     /// Detect the services running behind on a given address in the given port range
     ServiceDetectionUdp {
@@ -517,70 +523,31 @@ async fn main() -> Result<(), Box<dyn Error>> {
                             info!("{x}");
                         }
                     }
-                    RunCommand::PortScanner {
+                    RunCommand::IcmpScanner {
                         targets,
-                        technique,
-                        ports,
                         timeout,
                         concurrent_limit,
-                        max_retries,
-                        retry_interval,
-                        skip_icmp_check,
                     } => {
                         let addresses = targets
                             .iter()
                             .map(|s| IpNetwork::from_str(s))
                             .collect::<Result<_, _>>()?;
 
-                        let mut port_range = vec![];
-                        if ports.is_empty() {
-                            port_range.push(1..=u16::MAX);
-                        } else {
-                            utils::parse_ports(&ports, &mut port_range)?;
-                        }
+                        let settings = IcmpScanSettings {
+                            addresses,
+                            timeout: Duration::from_millis(timeout as u64),
+                            concurrent_limit: u32::from(concurrent_limit),
+                        };
+                        let (tx, mut rx) = mpsc::channel(1);
 
-                        match technique {
-                            PortScanTechnique::TcpCon => {
-                                let settings = TcpServiceDetectionSettings {
-                                    addresses,
-                                    ports: port_range,
-                                    timeout: Duration::from_millis(timeout as u64),
-                                    skip_icmp_check,
-                                    max_retries,
-                                    retry_interval: Duration::from_millis(retry_interval as u64),
-                                    concurrent_limit,
-                                };
-
-                                let (tx, mut rx) = mpsc::channel::<TcpServiceDetectionResult>(1);
-
-                                task::spawn(async move {
-                                    while let Some(result) = rx.recv().await {
-                                        info!("Open port found: {}", result.addr);
-                                    }
-                                });
-
-                                if let Err(err) = start_tcp_service_detection(settings, tx).await {
-                                    error!("{err}");
-                                }
+                        task::spawn(async move {
+                            while let Some(addr) = rx.recv().await {
+                                info!("Host up: {addr}");
                             }
-                            PortScanTechnique::Icmp => {
-                                let settings = IcmpScanSettings {
-                                    addresses,
-                                    timeout: Duration::from_millis(timeout as u64),
-                                    concurrent_limit: u32::from(concurrent_limit),
-                                };
-                                let (tx, mut rx) = mpsc::channel(1);
+                        });
 
-                                task::spawn(async move {
-                                    while let Some(addr) = rx.recv().await {
-                                        info!("Host up: {addr}");
-                                    }
-                                });
-
-                                if let Err(err) = start_icmp_scan(settings, tx).await {
-                                    error!("{err}");
-                                }
-                            }
+                        if let Err(err) = start_icmp_scan(settings, tx).await {
+                            error!("{err}");
                         }
                     }
                     RunCommand::Dehashed { query } => {
@@ -619,39 +586,48 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                         Err(err) => error!("{err}"),
                     },
-                    RunCommand::ServiceDetection {
+                    RunCommand::ServiceDetectionTcp {
                         targets,
                         ports,
-                        timeout,
-                        dont_stop_on_match: _,
+                        connect_timeout,
+                        receive_timeout,
+                        concurrent_limit,
+                        max_retries,
+                        retry_interval,
+                        skip_icmp_check,
+                        just_scan,
                     } => {
                         let addresses = targets
                             .iter()
                             .map(|s| IpNetwork::from_str(s))
                             .collect::<Result<_, _>>()?;
 
-                        let mut port_range = vec![];
-                        if ports.is_empty() {
-                            port_range.push(1..=u16::MAX);
+                        let (tx, mut rx) = mpsc::channel::<TcpServiceDetectionResult>(1);
+                        if just_scan {
+                            tokio::spawn(async move {
+                                while let Some(result) = rx.recv().await {
+                                    info!("Open port found: {}", result.addr);
+                                }
+                            });
                         } else {
-                            utils::parse_ports(&ports, &mut port_range)?;
+                            tokio::spawn(async move {
+                                while let Some(result) = rx.recv().await {
+                                    info!("Open port found: {}", result.addr,);
+                                    info!("It's running: {:?}", result.service);
+                                }
+                            });
                         }
-
-                        let (tx, mut rx) = mpsc::channel(1);
-                        tokio::spawn(async move {
-                            while let Some(result) = rx.recv().await {
-                                info!("{result:?}");
-                            }
-                        });
                         start_tcp_service_detection(
                             TcpServiceDetectionSettings {
                                 addresses,
-                                ports: port_range,
-                                timeout: Duration::from_millis(timeout),
-                                max_retries: 0,
-                                retry_interval: Duration::from_millis(0),
-                                concurrent_limit: NonZeroU32::new(100).unwrap(),
-                                skip_icmp_check: false,
+                                ports: utils::parse_ports(&ports, Some(1..=u16::MAX))?,
+                                connect_timeout: Duration::from_millis(connect_timeout as u64),
+                                receive_timeout: Duration::from_millis(receive_timeout as u64),
+                                max_retries,
+                                retry_interval: Duration::from_millis(retry_interval as u64),
+                                concurrent_limit,
+                                skip_icmp_check,
+                                just_scan,
                             },
                             tx,
                         )
@@ -666,13 +642,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         retry_interval,
                         concurrent_limit,
                     } => {
-                        let mut port_range = vec![];
-                        if ports.is_empty() {
-                            port_range.push(1..=u16::MAX);
-                        } else {
-                            utils::parse_ports(&ports, &mut port_range)?;
-                        }
-
                         let (tx, mut rx) =
                             mpsc::channel::<service_detection::udp::UdpServiceDetectionResult>(1);
 
@@ -685,7 +654,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         if let Err(err) = service_detection::udp::start_udp_service_detection(
                             &service_detection::udp::UdpServiceDetectionSettings {
                                 ip: addr,
-                                ports: port_range,
+                                ports: utils::parse_ports(&ports, Some(1..=u16::MAX))?,
                                 max_retries: port_retries,
                                 retry_interval: Duration::from_millis(retry_interval),
                                 timeout: Duration::from_millis(timeout),

@@ -143,11 +143,13 @@ impl ReqAttackService for Attacks {
                 .map(IpNetwork::try_from)
                 .collect::<Result<_, _>>()?,
             ports,
-            timeout: Duration::from_millis(req.timeout),
+            connect_timeout: Duration::from_millis(req.timeout),
+            receive_timeout: Duration::from_millis(req.timeout),
             max_retries: req.max_retries,
             retry_interval: Duration::from_millis(req.retry_interval),
             concurrent_limit,
             skip_icmp_check: req.skip_icmp_check,
+            just_scan: true,
         };
 
         self.stream_attack(
@@ -242,11 +244,13 @@ impl ReqAttackService for Attacks {
         let settings = TcpServiceDetectionSettings {
             addresses: vec![IpNetwork::from(ip)],
             ports: vec![port..=port],
-            timeout: Duration::from_millis(request.timeout),
+            connect_timeout: Duration::from_millis(request.timeout),
+            receive_timeout: Duration::from_millis(request.timeout),
             max_retries: 0,
             retry_interval: Default::default(),
             concurrent_limit: NonZeroU32::new(1).unwrap(),
             skip_icmp_check: true,
+            just_scan: false,
         };
 
         let (tx, mut rx) = mpsc::channel::<TcpServiceDetectionResult>(1);

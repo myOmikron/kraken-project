@@ -46,10 +46,14 @@ pub enum ParsePortError {
 }
 
 /// Parse ports retrieved via clap
+///
+/// If `ports` is empty, an optional `default` can be used to populate the `Vec`.
 pub fn parse_ports(
     ports: &[String],
-    parsed_ports: &mut Vec<RangeInclusive<u16>>,
-) -> Result<(), ParsePortError> {
+    default: Option<RangeInclusive<u16>>,
+) -> Result<Vec<RangeInclusive<u16>>, ParsePortError> {
+    let mut parsed = Vec::new();
+
     for port in ports {
         let port_parts = port.split(',');
         for part in port_parts {
@@ -92,11 +96,11 @@ pub fn parse_ports(
                         )));
                     }
 
-                    parsed_ports.push(start..=end);
+                    parsed.push(start..=end);
                 } else if let Some(m) = captures.name("single") {
                     if let Ok(v) = NonZeroU16::from_str(m.as_str()) {
                         let port = u16::from(v);
-                        parsed_ports.push(port..=port);
+                        parsed.push(port..=port);
                     } else {
                         return Err(ParsePortError::InvalidPort(m.as_str().to_string()));
                     }
@@ -109,7 +113,11 @@ pub fn parse_ports(
         }
     }
 
-    Ok(())
+    if ports.is_empty() {
+        parsed.extend(default);
+    }
+
+    Ok(parsed)
 }
 
 /// Read a line from stdin
@@ -289,7 +297,7 @@ pub(crate) trait IteratorExt: Iterator + Sized {
     /// [`stream::iter`](futures::stream::iter)
     /// but without the weird conversion and using modern rust with tokio.
     async fn try_for_each_concurrent<Fut, Err>(
-        mut self,
+        self,
         limit: Option<NonZeroUsize>,
         f: impl FnOnce(Self::Item) -> Fut + Clone,
     ) -> Result<(), Err>
@@ -300,7 +308,7 @@ pub(crate) trait IteratorExt: Iterator + Sized {
         let limit = limit.map(NonZeroUsize::get);
         let mut tasks = JoinSet::new();
 
-        while let Some(item) = self.next() {
+        for item in self {
             tasks.spawn((f.clone())(item));
 
             if Some(tasks.len()) == limit {

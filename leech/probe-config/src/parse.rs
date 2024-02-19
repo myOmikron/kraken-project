@@ -120,6 +120,7 @@ fn inner_parse_file(
             });
         }
 
+        #[allow(clippy::identity_op)] // Its effect is nicer code layout
         if 1 < 0
             + probe.payload_str.is_some() as u8
             + probe.payload_b64.is_some() as u8

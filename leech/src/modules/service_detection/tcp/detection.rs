@@ -6,6 +6,7 @@ use std::time::Duration;
 use log::{debug, trace, warn};
 use probe_config::generated::{BaseProbe, Match};
 
+use crate::modules::service_detection::tcp::oneshot::{ProbeTcpError, ProbeTcpErrorPlace};
 use crate::modules::service_detection::tcp::OneShotTcpSettings;
 use crate::modules::service_detection::{generated, DynError, DynResult, Service};
 use crate::utils::DebuggableBytes;
@@ -16,19 +17,28 @@ pub struct Protocols {
     pub tls: bool,
 }
 
-/// Runs service detection on a single tcp port which is assumed to be open.
-pub async fn detect_service(socket: SocketAddr, timeout: Duration) -> DynResult<Service> {
+/// Runs service detection on a single tcp port
+///
+/// Returns `Ok(None)` if the port is closed.
+pub async fn detect_service(socket: SocketAddr, timeout: Duration) -> DynResult<Option<Service>> {
     match find_exact_match(socket, timeout).await {
-        ControlFlow::Continue(partial_matches) => Ok(if partial_matches.is_empty() {
+        ControlFlow::Continue(partial_matches) => Ok(Some(if partial_matches.is_empty() {
             Service::Unknown
         } else {
             Service::Maybe(partial_matches.into_keys().collect())
-        }),
+        })),
         ControlFlow::Break(BreakReason::Found(service, protocol)) => {
             let protocols = find_all_protocols(socket, timeout, service, protocol).await?;
-            Ok(Service::Definitely(service))
+            Ok(Some(Service::Definitely(service)))
         }
-        ControlFlow::Break(BreakReason::Error(err)) => Err(err),
+        ControlFlow::Break(BreakReason::TcpError(err)) => {
+            if matches!(err.place, ProbeTcpErrorPlace::Connect) {
+                Ok(None)
+            } else {
+                Err(err.into())
+            }
+        }
+        ControlFlow::Break(BreakReason::DynError(err)) => Err(err),
     }
 }
 
@@ -38,8 +48,11 @@ pub enum BreakReason {
     /// One probe had an exact match
     Found(&'static str, Protocols),
 
+    /// An error occurred which might be mapped to [`Service::Failed`]
+    TcpError(ProbeTcpError),
+
     /// An unrecoverable error occurred
-    Error(DynError),
+    DynError(DynError),
 }
 
 /// Trys every probe ordered by prevalence until one matches.
@@ -56,11 +69,11 @@ async fn find_exact_match(
 
     debug!("Retrieving tcp banner");
     let result = settings.probe_tcp(b"").await;
-    let tcp_banner = convert_result(result)?;
+    let tcp_banner = convert_tcp(result)?;
 
     debug!("Retrieving tls banner");
     let result = settings.probe_tls(b"", None).await;
-    let tls_banner = convert_result(result)?
+    let tls_banner = convert_tls(result)?
         .inspect_err(|err| debug!(target: "tls", "TLS error: {err:?}"))
         .ok();
 
@@ -74,8 +87,8 @@ async fn find_exact_match(
             debug!("Starting tcp payload scans #{prevalence}");
             for probe in &generated::PROBES.payload_tcp_probes[prevalence] {
                 let result = settings.probe_tcp(probe.payload).await;
-                if let Some(data) = convert_result(result)? {
-                    check_match(&mut partial_matches, &*probe, &data, Protocols::TCP)?
+                if let Some(data) = convert_tcp(result)? {
+                    check_match(&mut partial_matches, probe, &data, Protocols::TCP)?
                 }
             }
 
@@ -88,9 +101,9 @@ async fn find_exact_match(
                 debug!("Starting tls payload scans #{prevalence}");
                 for probe in &generated::PROBES.payload_tls_probes[prevalence] {
                     let result = settings.probe_tls(probe.payload, probe.alpn).await;
-                    match convert_result(result)? {
+                    match convert_tls(result)? {
                         Ok(data) => {
-                            check_match(&mut partial_matches, &*probe, &data, Protocols::TCP)?
+                            check_match(&mut partial_matches, probe, &data, Protocols::TCP)?
                         }
                         Err(err) => {
                             warn!(target: "tls", "Failed to connect while probing {}: {err}", probe.service)
@@ -146,7 +159,7 @@ async fn find_all_protocols(
 
     // Test tls banner
     if !already_found.tls {
-        if let Some(banner) = settings.probe_tls(b"", None).await?.ok() {
+        if let Ok(banner) = settings.probe_tls(b"", None).await? {
             for probe in iter_all(&generated::PROBES.empty_tls_probes)
                 .filter(|probe| probe.service == service)
             {
@@ -163,7 +176,7 @@ async fn find_all_protocols(
         for probe in
             iter_all(&generated::PROBES.payload_tls_probes).filter(|probe| probe.service == service)
         {
-            if let Some(data) = settings.probe_tls(probe.payload, probe.alpn).await?.ok() {
+            if let Ok(data) = settings.probe_tls(probe.payload, probe.alpn).await? {
                 if matches!(probe.is_match(&data), Match::Exact) {
                     already_found.tls = true;
                     break;
@@ -187,7 +200,7 @@ fn check_match(
         Match::Partial => {
             partial_matches
                 .entry(probe.service)
-                .or_insert(Default::default())
+                .or_default()
                 .update(protocols);
             ControlFlow::Continue(())
         }
@@ -210,9 +223,15 @@ impl Protocols {
     }
 }
 
-fn convert_result<T>(result: Result<T, impl Into<DynError>>) -> ControlFlow<BreakReason, T> {
+fn convert_tcp<T>(result: Result<T, ProbeTcpError>) -> ControlFlow<BreakReason, T> {
     match result {
         Ok(value) => ControlFlow::Continue(value),
-        Err(error) => ControlFlow::Break(BreakReason::Error(error.into())),
+        Err(error) => ControlFlow::Break(BreakReason::TcpError(error)),
+    }
+}
+fn convert_tls<T>(result: Result<T, DynError>) -> ControlFlow<BreakReason, T> {
+    match result {
+        Ok(value) => ControlFlow::Continue(value),
+        Err(error) => ControlFlow::Break(BreakReason::DynError(error)),
     }
 }
