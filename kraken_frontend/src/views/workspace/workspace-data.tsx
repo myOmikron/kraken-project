@@ -763,6 +763,25 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                         Unselect all
                     </button>
                 </div>
+                <div className={"workspace-data-multi-select-tag-buttons"}>
+                    <button
+                        type={"button"}
+                        className={"button mixed-button"}
+                        onClick={() => {
+                            ROUTES.WORKSPACE_SELECTION_ATTACKS.visit({
+                                workspaceUuid: workspace
+                            }, {
+                                domains: Object.keys(selectedUuids.domains),
+                                hosts: Object.keys(selectedUuids.hosts),
+                                ports: Object.keys(selectedUuids.ports),
+                                services: Object.keys(selectedUuids.services)
+                            });
+                        }}
+                    >
+                        <AttackIcon />
+                        Attack selected
+                    </button>
+                </div>
             </div>
 
             <div className="workspace-data-pane">

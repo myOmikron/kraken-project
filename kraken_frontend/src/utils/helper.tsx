@@ -38,6 +38,81 @@ export namespace ObjectFns {
         }
         return len;
     }
+
+    export function deepEquals(lhs: any, rhs: any): boolean {
+        if (typeof lhs != typeof rhs) {
+            return false;
+        } else if (Array.isArray(lhs) && Array.isArray(rhs))
+            return lhs.length == rhs.length && lhs.every((v, i) => deepEquals(v, rhs[i]));
+        else if (typeof lhs == "object") {
+            let lhsKeys = Object.keys(lhs);
+            let rhsKeys = Object.keys(rhs);
+            return lhsKeys.length == rhsKeys.length && lhsKeys.every((k) => deepEquals(lhs[k], rhs[k]));
+        } else {
+            return lhs === rhs;
+        }
+    }
+
+    export function deepDuplicate<T>(v: T): T {
+        if (typeof v === "object" && v !== null) {
+            if (Array.isArray(v))
+                return v.map(deepDuplicate) as T;
+            else {
+                let ret: any = {};
+                for (const key of Object.keys(v))
+                    ret[key] = deepDuplicate((v as any)[key]);
+                return ret as T;
+            }
+        } else {
+            // make sure we keep delegates identical
+            return v;
+        }
+    }
+
+    /// Similar to `new Set(v).values()`, but using deepEquals instead of
+    /// reference checks for variables.
+    ///
+    /// Not very performant, only use for small-ish sets of data.
+    export function uniqueObjects<T>(array: T[]): T[] {
+        let res: T[] = [];
+        for (const v of array) {
+            let exists = false;
+            for (const existing of res) {
+                if (ObjectFns.deepEquals(existing, v)) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists)
+                res.push(v);
+        }
+        return res;
+    }
+
+    /// For a 2-dimensional non-jagged array of size AxB, return its transposed
+    /// i.e. 90 degree rotated version of size BxA.
+    ///
+    /// Throws an Error if this is passed a jagged array.
+    export function transpose2D<T>(array: T[][]): T[][] {
+        if (!array.length)
+            return array;
+
+        let w = array.length;
+        let h = array[0].length;
+        let ret = new Array(h);
+        for (let i = 0; i < h; i++)
+            ret[i] = new Array(w);
+        for (const v of array) {
+            if (v.length != h)
+                throw new Error("passed in jagged array into transpose2D");
+        }
+
+        for (let y = 0; y < h; y++)
+            for (let x = 0; x < w; x++)
+                ret[y][x] = array[x][y];
+
+        return ret;
+    }
 }
 
 /**
