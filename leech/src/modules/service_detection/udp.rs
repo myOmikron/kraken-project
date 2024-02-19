@@ -5,7 +5,6 @@ use std::time::Duration;
 
 use futures::{stream, TryStreamExt};
 use log::{debug, info};
-use probe_config::generated::Match;
 use tokio::net::UdpSocket;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinSet;
@@ -14,6 +13,7 @@ use tokio::time::{sleep, timeout};
 use super::error::UdpServiceScanError;
 use super::{ProtocolSet, Service};
 use crate::modules::service_detection::generated;
+use crate::modules::service_detection::generated::Match;
 
 /// Settings for a service detection
 #[derive(Clone)]

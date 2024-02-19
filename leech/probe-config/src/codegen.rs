@@ -113,8 +113,6 @@ impl<'a> fmt::Display for AllProbes<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         const HEADER: &str = r#"
 use once_cell::sync::Lazy;
-use probe_config::generated::*;
-use regex::bytes::Regex;
 
 /// Lists of all probes
 pub static PROBES: Lazy<AllProbes> = Lazy::new(|| AllProbes {"#;

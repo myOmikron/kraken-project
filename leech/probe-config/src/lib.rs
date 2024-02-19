@@ -1,5 +1,4 @@
 mod codegen;
-pub mod generated;
 mod parse;
 mod schema;
 

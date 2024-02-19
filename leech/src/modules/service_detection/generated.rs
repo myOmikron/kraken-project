@@ -5,6 +5,8 @@ use std::ops::Deref;
 use log::debug;
 use regex::bytes::Regex;
 
+include!(concat!(env!("OUT_DIR"), "/generated_probes.rs"));
+
 pub struct AllProbes {
     pub empty_tcp_probes: [Vec<BaseProbe>; 3],
     pub payload_tcp_probes: [Vec<PayloadProbe>; 3],

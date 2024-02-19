@@ -2,11 +2,9 @@
 
 use std::collections::BTreeMap;
 
-mod generated {
-    include!(concat!(env!("OUT_DIR"), "/generated_probes.rs"));
-}
 mod error;
 
+mod generated;
 /// TCP service detection
 pub mod tcp;
 /// UDP service detection & port scanning.

@@ -4,8 +4,8 @@ use std::ops::ControlFlow;
 use std::time::Duration;
 
 use log::{debug, trace, warn};
-use probe_config::generated::{BaseProbe, Match};
 
+use crate::modules::service_detection::generated::{BaseProbe, Match};
 use crate::modules::service_detection::tcp::oneshot::{ProbeTcpError, ProbeTcpErrorPlace};
 use crate::modules::service_detection::tcp::OneShotTcpSettings;
 use crate::modules::service_detection::{generated, DynError, DynResult, ProtocolSet, Service};
