@@ -35,13 +35,21 @@ pub struct Probe {
     /// An optional protocol to request during ALPN while establishing a tls connection
     pub alpn: Option<String>,
 
+    // Due to an annoying limitation in serde the following fields can't
+    // be split into a flattened untagged enum.
+    // Their mutual exclusion has to be checked in post-processing.
+
+    // RustProbe
+    pub rust: Option<String>,
+
+    // RegexProbe
     pub payload_str: Option<String>,
     #[serde(deserialize_with = "deserialize_b64", default)]
     pub payload_b64: Option<Vec<u8>>,
     #[serde(deserialize_with = "deserialize_hex", default)]
     pub payload_hex: Option<Vec<u8>>,
 
-    pub regex: String,
+    pub regex: Option<String>,
     pub sub_regex: Option<Vec<String>>,
 }
 

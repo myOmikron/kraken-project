@@ -4,6 +4,8 @@ use std::collections::BTreeMap;
 
 mod error;
 
+mod probe_impls;
+
 mod generated;
 /// TCP service detection
 pub mod tcp;

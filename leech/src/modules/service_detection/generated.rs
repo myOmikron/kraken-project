@@ -2,21 +2,48 @@
 
 use std::ops::Deref;
 
+use futures::future::BoxFuture;
 use log::debug;
 use regex::bytes::Regex;
+use tokio::net::UdpSocket;
+
+use crate::modules::service_detection::tcp::OneShotTcpSettings;
+use crate::modules::service_detection::DynResult;
 
 include!(concat!(env!("OUT_DIR"), "/generated_probes.rs"));
 
 pub struct AllProbes {
-    pub empty_tcp_probes: [Vec<BaseProbe>; 3],
+    pub empty_tcp_probes: [Vec<RegexProbe>; 3],
     pub payload_tcp_probes: [Vec<PayloadProbe>; 3],
-    pub empty_tls_probes: [Vec<BaseProbe>; 3],
+    pub rust_tcp_probes: [Vec<RustProbe<TcpFn>>; 3],
+    pub empty_tls_probes: [Vec<RegexProbe>; 3],
     pub payload_tls_probes: [Vec<TlsProbe>; 3],
+    pub rust_tls_probes: [Vec<RustProbe<TlsFn>>; 3],
     pub udp_probes: [Vec<PayloadProbe>; 3],
+    pub rust_udp_probes: [Vec<RustProbe<UdpFn>>; 3],
+}
+
+pub type TcpFn = for<'a> fn(&'a OneShotTcpSettings) -> BoxFuture<'a, DynResult<Match>>;
+pub type TlsFn =
+    for<'a> fn(&'a OneShotTcpSettings, Option<&'static str>) -> BoxFuture<'a, DynResult<Match>>;
+pub type UdpFn = for<'a> fn(&'a mut UdpSocket) -> BoxFuture<'a, DynResult<Match>>;
+
+/// A probe implemented in rust
+pub struct RustProbe<F> {
+    /// The name of the service detected by this probe
+    pub service: &'static str,
+
+    /// The function for running the service
+    pub function: F,
+
+    /// The protocol to use during ALPN
+    ///
+    /// This is always `None` for non-tls probes, but not enforced in type-system
+    pub alpn: Option<&'static str>,
 }
 
 /// Base data shared by all probes
-pub struct BaseProbe {
+pub struct RegexProbe {
     /// The name of the service detected by this probe
     pub service: &'static str,
 
@@ -27,19 +54,19 @@ pub struct BaseProbe {
     pub sub_regex: Vec<Regex>,
 }
 
-/// A probe with payload
+/// A regex probe with payload
 pub struct PayloadProbe {
     /// Base data shared by all probes
-    pub base: BaseProbe,
+    pub base: RegexProbe,
 
     /// The payload to send upon connection
     pub payload: &'static [u8],
 }
 
-/// A probe with payload
+/// A regex probe with payload and tls config
 pub struct TlsProbe {
     /// Base data shared by all probes
-    pub base: BaseProbe,
+    pub base: RegexProbe,
 
     /// The payload to send upon connection
     pub payload: &'static [u8],
@@ -48,14 +75,14 @@ pub struct TlsProbe {
     pub alpn: Option<&'static str>,
 }
 
-/// Extended `bool` returned by [`BaseProbe::is_match`] to state if and how much the probe matched the input
+/// Extended `bool` returned by [`RegexProbe::is_match`] to state if and how much the probe matched the input
 pub enum Match {
     No,
     Partial,
     Exact,
 }
 
-impl BaseProbe {
+impl RegexProbe {
     /// Match the probe's regex against the received data
     pub fn is_match(&self, data: &[u8]) -> Match {
         if self.regex.is_match(data) {
@@ -77,14 +104,14 @@ impl BaseProbe {
 }
 
 impl Deref for PayloadProbe {
-    type Target = BaseProbe;
+    type Target = RegexProbe;
     fn deref(&self) -> &Self::Target {
         &self.base
     }
 }
 
 impl Deref for TlsProbe {
-    type Target = BaseProbe;
+    type Target = RegexProbe;
     fn deref(&self) -> &Self::Target {
         &self.base
     }

@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use log::{debug, trace, warn};
 
-use crate::modules::service_detection::generated::{BaseProbe, Match};
+use crate::modules::service_detection::generated::Match;
 use crate::modules::service_detection::tcp::oneshot::{ProbeTcpError, ProbeTcpErrorPlace};
 use crate::modules::service_detection::tcp::OneShotTcpSettings;
 use crate::modules::service_detection::{generated, DynError, DynResult, ProtocolSet, Service};
@@ -63,11 +63,11 @@ async fn find_exact_match(
 
     debug!("Retrieving tcp banner");
     let result = settings.probe_tcp(b"").await;
-    let tcp_banner = convert_tcp(result)?;
+    let tcp_banner = convert_result(result)?;
 
     debug!("Retrieving tls banner");
     let result = settings.probe_tls(b"", None).await;
-    let tls_banner = convert_tls(result)?
+    let tls_banner = convert_result(result)?
         .inspect_err(|err| debug!(target: "tls", "TLS error: {err:?}"))
         .ok();
 
@@ -75,29 +75,73 @@ async fn find_exact_match(
         if let Some(tcp_banner) = tcp_banner.as_deref() {
             debug!("Starting tcp banner scans #{prevalence}");
             for probe in &generated::PROBES.empty_tcp_probes[prevalence] {
-                check_match(&mut partial_matches, probe, tcp_banner, ProtocolSet::TCP)?;
+                trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(tcp_banner));
+                check_match(
+                    &mut partial_matches,
+                    probe.is_match(tcp_banner),
+                    probe.service,
+                    ProtocolSet::TCP,
+                )?;
             }
 
             debug!("Starting tcp payload scans #{prevalence}");
             for probe in &generated::PROBES.payload_tcp_probes[prevalence] {
                 let result = settings.probe_tcp(probe.payload).await;
-                if let Some(data) = convert_tcp(result)? {
-                    check_match(&mut partial_matches, probe, &data, ProtocolSet::TCP)?
+                if let Some(data) = convert_result(result)? {
+                    trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(&data));
+                    check_match(
+                        &mut partial_matches,
+                        probe.is_match(&data),
+                        probe.service,
+                        ProtocolSet::TCP,
+                    )?;
                 }
+            }
+
+            debug!("Starting tcp rust scans #{prevalence}");
+            for probe in &generated::PROBES.rust_tcp_probes[prevalence] {
+                check_match(
+                    &mut partial_matches,
+                    convert_result((probe.function)(&settings).await)?,
+                    probe.service,
+                    ProtocolSet::TCP,
+                )?;
             }
 
             if let Some(tls_banner) = tls_banner.as_deref() {
                 debug!("Starting tls banner scans #{prevalence}");
                 for probe in &generated::PROBES.empty_tls_probes[prevalence] {
-                    check_match(&mut partial_matches, probe, tls_banner, ProtocolSet::TLS)?;
+                    trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(tls_banner));
+                    check_match(
+                        &mut partial_matches,
+                        probe.is_match(tls_banner),
+                        probe.service,
+                        ProtocolSet::TLS,
+                    )?;
+                }
+
+                debug!("Starting tls rust scans #{prevalence}");
+                for probe in &generated::PROBES.rust_tls_probes[prevalence] {
+                    check_match(
+                        &mut partial_matches,
+                        convert_result((probe.function)(&settings, probe.alpn).await)?,
+                        probe.service,
+                        ProtocolSet::TLS,
+                    )?;
                 }
 
                 debug!("Starting tls payload scans #{prevalence}");
                 for probe in &generated::PROBES.payload_tls_probes[prevalence] {
                     let result = settings.probe_tls(probe.payload, probe.alpn).await;
-                    match convert_tls(result)? {
+                    match convert_result(result)? {
                         Ok(data) => {
-                            check_match(&mut partial_matches, probe, &data, ProtocolSet::TCP)?
+                            trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(&data));
+                            check_match(
+                                &mut partial_matches,
+                                probe.is_match(&data),
+                                probe.service,
+                                ProtocolSet::TLS,
+                            )?;
                         }
                         Err(err) => {
                             warn!(target: "tls", "Failed to connect while probing {}: {err}", probe.service)
@@ -123,8 +167,12 @@ async fn find_all_protocols(
         probes.iter().flat_map(|vec| vec.iter())
     }
 
+    debug!("Testing all remaining protocols for {service}");
+    trace!("Already found: {already_found:?}");
+
     // Test tcp banner
     if !already_found.tcp {
+        debug!("Testing {service}'s tcp banner probes");
         if let Some(banner) = settings.probe_tcp(b"").await? {
             for probe in iter_all(&generated::PROBES.empty_tcp_probes)
                 .filter(|probe| probe.service == service)
@@ -139,6 +187,7 @@ async fn find_all_protocols(
 
     // Test tcp payload
     if !already_found.tcp {
+        debug!("Testing {service}'s tcp payload probes");
         for probe in
             iter_all(&generated::PROBES.payload_tcp_probes).filter(|probe| probe.service == service)
         {
@@ -151,8 +200,22 @@ async fn find_all_protocols(
         }
     }
 
+    // Test tcp rust
+    if !already_found.tcp {
+        debug!("Testing {service}'s tcp rust probes");
+        for probe in
+            iter_all(&generated::PROBES.rust_tcp_probes).filter(|probe| probe.service == service)
+        {
+            if matches!((probe.function)(&settings).await?, Match::Exact) {
+                already_found.tcp = true;
+                break;
+            }
+        }
+    }
+
     // Test tls banner
     if !already_found.tls {
+        debug!("Testing {service}'s tls banner probes");
         if let Ok(banner) = settings.probe_tls(b"", None).await? {
             for probe in iter_all(&generated::PROBES.empty_tls_probes)
                 .filter(|probe| probe.service == service)
@@ -167,6 +230,7 @@ async fn find_all_protocols(
 
     // Test tls payload
     if !already_found.tls {
+        debug!("Testing {service}'s tls payload probes");
         for probe in
             iter_all(&generated::PROBES.payload_tls_probes).filter(|probe| probe.service == service)
         {
@@ -179,38 +243,57 @@ async fn find_all_protocols(
         }
     }
 
+    // Test tls rust
+    if !already_found.tls {
+        debug!("Testing {service}'s tls rust probes");
+        for probe in
+            iter_all(&generated::PROBES.rust_tls_probes).filter(|probe| probe.service == service)
+        {
+            if matches!((probe.function)(&settings, probe.alpn).await?, Match::Exact) {
+                already_found.tls = true;
+                break;
+            }
+        }
+    }
+
     Ok(already_found)
 }
 
 fn check_match(
     partial_matches: &mut BTreeMap<&'static str, ProtocolSet>,
-    probe: &BaseProbe,
-    haystack: &[u8],
+    r#match: Match,
+    service: &'static str,
     protocols: ProtocolSet,
 ) -> ControlFlow<BreakReason> {
-    trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(haystack));
-    match probe.is_match(haystack) {
+    match r#match {
         Match::No => ControlFlow::Continue(()),
         Match::Partial => {
             partial_matches
-                .entry(probe.service)
+                .entry(service)
                 .or_default()
                 .update(protocols);
             ControlFlow::Continue(())
         }
-        Match::Exact => ControlFlow::Break(BreakReason::Found(probe.service, protocols)),
+        Match::Exact => ControlFlow::Break(BreakReason::Found(service, protocols)),
     }
 }
 
-fn convert_tcp<T>(result: Result<T, ProbeTcpError>) -> ControlFlow<BreakReason, T> {
+fn convert_result<T, E>(result: Result<T, E>) -> ControlFlow<BreakReason, T>
+where
+    E: Into<BreakReason>,
+{
     match result {
         Ok(value) => ControlFlow::Continue(value),
-        Err(error) => ControlFlow::Break(BreakReason::TcpError(error)),
+        Err(error) => ControlFlow::Break(error.into()),
     }
 }
-fn convert_tls<T>(result: Result<T, DynError>) -> ControlFlow<BreakReason, T> {
-    match result {
-        Ok(value) => ControlFlow::Continue(value),
-        Err(error) => ControlFlow::Break(BreakReason::DynError(error)),
+impl From<ProbeTcpError> for BreakReason {
+    fn from(value: ProbeTcpError) -> Self {
+        BreakReason::TcpError(value)
+    }
+}
+impl From<DynError> for BreakReason {
+    fn from(value: DynError) -> Self {
+        BreakReason::DynError(value)
     }
 }

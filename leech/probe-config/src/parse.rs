@@ -77,6 +77,10 @@ pub enum CheckProbeError {
     /// The `alpn` field is `Some` but `tls` is `false`
     #[error("a alpn protocol has been specified but the probe doesn't run on tls")]
     UnexpectedAlpn,
+
+    /// The probe has some fields from `RustProbe` as well as `RegexProbe`
+    #[error("`rust` is specified as well as a payload or regex")]
+    ConflictingKinds,
 }
 
 /// Implementation of [`parse_file`]
@@ -117,6 +121,19 @@ fn inner_parse_file(
             return Err(ParseErrorKind::CheckProbe {
                 index,
                 error: CheckProbeError::UnexpectedAlpn,
+            });
+        }
+
+        if probe.rust.is_some()
+            && (probe.payload_str.is_some()
+                || probe.payload_hex.is_some()
+                || probe.payload_b64.is_some()
+                || probe.regex.is_some()
+                || probe.sub_regex.is_some())
+        {
+            return Err(ParseErrorKind::CheckProbe {
+                index,
+                error: CheckProbeError::ConflictingKinds,
             });
         }
 

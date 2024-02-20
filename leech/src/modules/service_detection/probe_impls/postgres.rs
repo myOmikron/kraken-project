@@ -6,18 +6,37 @@ use std::slice;
 
 use log::{debug, trace};
 
-use super::{DebuggableBytes, DetectServiceSettings, DynResult};
+use crate::modules::service_detection::generated::Match;
+use crate::modules::service_detection::tcp::OneShotTcpSettings;
+use crate::modules::service_detection::DynResult;
+use crate::utils::DebuggableBytes;
+
+pub async fn probe_tcp(settings: &OneShotTcpSettings) -> DynResult<Match> {
+    let Some(data) = settings.probe_tcp(&create_startup_message()).await? else {
+        return Ok(Match::No);
+    };
+    trace!(target: "postgres", "Got data: {data:x?}");
+    Ok(if parse_response(data).is_some() {
+        Match::Exact
+    } else {
+        Match::No
+    })
+}
 
 // NB: postgres' protocol provides no method to enforce ssl.
 // Instead admins could block the auth step when the connection is unencrypted.
 // Therefore, no special treatment for ssl should be required.
 // https://www.postgresql.org/docs/current/protocol-flow.html#PROTOCOL-FLOW-SSL
-pub async fn probe(settings: &DetectServiceSettings) -> DynResult<bool> {
-    let Some(data) = settings.probe_tcp(&create_startup_message()).await? else {
-        return Ok(false);
+pub async fn probe_tls(settings: &OneShotTcpSettings, alpn: Option<&str>) -> DynResult<Match> {
+    let Ok(data) = settings.probe_tls(&create_startup_message(), alpn).await? else {
+        return Ok(Match::No);
     };
     trace!(target: "postgres", "Got data: {data:x?}");
-    Ok(parse_response(data).is_some())
+    Ok(if parse_response(data).is_some() {
+        Match::Exact
+    } else {
+        Match::No
+    })
 }
 
 fn create_startup_message() -> Vec<u8> {

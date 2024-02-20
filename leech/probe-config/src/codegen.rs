@@ -8,25 +8,38 @@ pub fn generate_code(writer: &mut impl io::Write, services: &[ProbeFile]) -> io:
 
 #[derive(Default)]
 struct AllProbes<'a> {
-    empty_tcp_probes: [Vec<BaseProbe<'a>>; 3],
+    empty_tcp_probes: [Vec<RegexProbe<'a>>; 3],
     payload_tcp_probes: [Vec<PayloadProbe<'a>>; 3],
-    empty_tls_probes: [Vec<BaseProbe<'a>>; 3],
+    rust_tcp_probes: [Vec<RustProbe<'a>>; 3],
+    empty_tls_probes: [Vec<RegexProbe<'a>>; 3],
     payload_tls_probes: [Vec<TlsProbe<'a>>; 3],
+    rust_tls_probes: [Vec<RustProbe<'a>>; 3],
     udp_probes: [Vec<PayloadProbe<'a>>; 3],
+    rust_udp_probes: [Vec<RustProbe<'a>>; 3],
 }
-struct BaseProbe<'a> {
+struct RegexProbe<'a> {
     service: &'a str,
     regex: &'a str,
     sub_regex: Option<&'a [String]>,
 }
 struct PayloadProbe<'a> {
-    base: BaseProbe<'a>,
+    base: RegexProbe<'a>,
     payload: Payload<'a>,
 }
 struct TlsProbe<'a> {
-    base: BaseProbe<'a>,
+    base: RegexProbe<'a>,
     payload: Payload<'a>,
     alpn: Option<&'a String>,
+}
+struct RustProbe<'a> {
+    service: &'a str,
+    module: &'a str,
+    protocol: RustProbeProtocol<'a>,
+}
+enum RustProbeProtocol<'a> {
+    Tcp,
+    Tls(Option<&'a str>),
+    Udp,
 }
 
 #[derive(Copy, Clone)]
@@ -41,61 +54,91 @@ impl<'a> Extend<&'a ProbeFile> for AllProbes<'a> {
         for service in iter {
             let empty_tcp_probes = &mut self.empty_tcp_probes[service.prevalence as usize];
             let payload_tcp_probes = &mut self.payload_tcp_probes[service.prevalence as usize];
+            let rust_tcp_probes = &mut self.rust_tcp_probes[service.prevalence as usize];
             let empty_tls_probes = &mut self.empty_tls_probes[service.prevalence as usize];
             let payload_tls_probes = &mut self.payload_tls_probes[service.prevalence as usize];
+            let rust_tls_probes = &mut self.rust_tls_probes[service.prevalence as usize];
             let udp_probes = &mut self.udp_probes[service.prevalence as usize];
+            let rust_udp_probes = &mut self.rust_udp_probes[service.prevalence as usize];
 
             for probe in &service.probes {
-                let payload = None
-                    .or(probe.payload_str.as_ref().map(Payload::String))
-                    .or(probe.payload_b64.as_ref().map(Payload::Binary))
-                    .or(probe.payload_hex.as_ref().map(Payload::Binary))
-                    .unwrap_or(Payload::Empty);
+                // RustProbe
+                if let Some(module) = probe.rust.as_deref() {
+                    if probe.tcp {
+                        rust_tcp_probes.push(RustProbe {
+                            service: &service.service,
+                            module,
+                            protocol: RustProbeProtocol::Tcp,
+                        });
+                    }
+                    if probe.tls {
+                        rust_tls_probes.push(RustProbe {
+                            service: &service.service,
+                            module,
+                            protocol: RustProbeProtocol::Tls(probe.alpn.as_deref()),
+                        });
+                    }
+                    if probe.udp {
+                        rust_udp_probes.push(RustProbe {
+                            service: &service.service,
+                            module,
+                            protocol: RustProbeProtocol::Udp,
+                        });
+                    }
+                }
+                // RegexProbe
+                if let Some(regex) = probe.regex.as_deref() {
+                    let payload = None
+                        .or(probe.payload_str.as_ref().map(Payload::String))
+                        .or(probe.payload_b64.as_ref().map(Payload::Binary))
+                        .or(probe.payload_hex.as_ref().map(Payload::Binary))
+                        .unwrap_or(Payload::Empty);
 
-                if probe.tcp {
-                    match payload {
-                        Payload::Empty => empty_tcp_probes.push(BaseProbe {
-                            service: &service.service,
-                            regex: &probe.regex,
-                            sub_regex: probe.sub_regex.as_deref(),
-                        }),
-                        payload => payload_tcp_probes.push(PayloadProbe {
-                            base: BaseProbe {
+                    if probe.tcp {
+                        match payload {
+                            Payload::Empty => empty_tcp_probes.push(RegexProbe {
                                 service: &service.service,
-                                regex: &probe.regex,
+                                regex,
+                                sub_regex: probe.sub_regex.as_deref(),
+                            }),
+                            payload => payload_tcp_probes.push(PayloadProbe {
+                                base: RegexProbe {
+                                    service: &service.service,
+                                    regex,
+                                    sub_regex: probe.sub_regex.as_deref(),
+                                },
+                                payload,
+                            }),
+                        }
+                    }
+                    if probe.tls {
+                        match payload {
+                            Payload::Empty => empty_tls_probes.push(RegexProbe {
+                                service: &service.service,
+                                regex,
+                                sub_regex: probe.sub_regex.as_deref(),
+                            }),
+                            payload => payload_tls_probes.push(TlsProbe {
+                                base: RegexProbe {
+                                    service: &service.service,
+                                    regex,
+                                    sub_regex: probe.sub_regex.as_deref(),
+                                },
+                                payload,
+                                alpn: probe.alpn.as_ref(),
+                            }),
+                        }
+                    }
+                    if probe.udp {
+                        udp_probes.push(PayloadProbe {
+                            base: RegexProbe {
+                                service: &service.service,
+                                regex,
                                 sub_regex: probe.sub_regex.as_deref(),
                             },
                             payload,
-                        }),
+                        });
                     }
-                }
-                if probe.tls {
-                    match payload {
-                        Payload::Empty => empty_tls_probes.push(BaseProbe {
-                            service: &service.service,
-                            regex: &probe.regex,
-                            sub_regex: probe.sub_regex.as_deref(),
-                        }),
-                        payload => payload_tls_probes.push(TlsProbe {
-                            base: BaseProbe {
-                                service: &service.service,
-                                regex: &probe.regex,
-                                sub_regex: probe.sub_regex.as_deref(),
-                            },
-                            payload,
-                            alpn: probe.alpn.as_ref(),
-                        }),
-                    }
-                }
-                if probe.udp {
-                    udp_probes.push(PayloadProbe {
-                        base: BaseProbe {
-                            service: &service.service,
-                            regex: &probe.regex,
-                            sub_regex: probe.sub_regex.as_deref(),
-                        },
-                        payload,
-                    });
                 }
             }
         }
@@ -113,6 +156,8 @@ impl<'a> fmt::Display for AllProbes<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         const HEADER: &str = r#"
 use once_cell::sync::Lazy;
+#[allow(unused_imports)] // Only used by rust probes
+use futures::future::FutureExt;
 
 /// Lists of all probes
 pub static PROBES: Lazy<AllProbes> = Lazy::new(|| AllProbes {"#;
@@ -130,6 +175,12 @@ pub static PROBES: Lazy<AllProbes> = Lazy::new(|| AllProbes {"#;
         }
         writeln!(f, "    ],")?;
 
+        writeln!(f, "    rust_tcp_probes: [")?;
+        for group in self.rust_tcp_probes.iter().map(ProbeGroup) {
+            writeln!(f, "        {group},")?;
+        }
+        writeln!(f, "    ],")?;
+
         writeln!(f, "    empty_tls_probes: [")?;
         for group in self.empty_tls_probes.iter().map(ProbeGroup) {
             writeln!(f, "        {group},")?;
@@ -142,8 +193,20 @@ pub static PROBES: Lazy<AllProbes> = Lazy::new(|| AllProbes {"#;
         }
         writeln!(f, "    ],")?;
 
+        writeln!(f, "    rust_tls_probes: [")?;
+        for group in self.rust_tls_probes.iter().map(ProbeGroup) {
+            writeln!(f, "        {group},")?;
+        }
+        writeln!(f, "    ],")?;
+
         writeln!(f, "    udp_probes: [")?;
         for group in self.udp_probes.iter().map(ProbeGroup) {
+            writeln!(f, "        {group},")?;
+        }
+        writeln!(f, "    ],")?;
+
+        writeln!(f, "    rust_udp_probes: [")?;
+        for group in self.rust_udp_probes.iter().map(ProbeGroup) {
             writeln!(f, "        {group},")?;
         }
         writeln!(f, "    ],")?;
@@ -163,14 +226,14 @@ impl<'a, T: fmt::Display> fmt::Display for ProbeGroup<'a, T> {
     }
 }
 
-impl<'a> fmt::Display for BaseProbe<'a> {
+impl<'a> fmt::Display for RegexProbe<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Self {
             service,
             regex,
             sub_regex,
         } = self;
-        write!(f, "BaseProbe {{ service: \"{service}\", regex: Regex::new(r\"{regex}\").unwrap(), sub_regex: vec![")?;
+        write!(f, "RegexProbe {{ service: \"{service}\", regex: Regex::new(r\"{regex}\").unwrap(), sub_regex: vec![")?;
         for sub in sub_regex.unwrap_or(&[]) {
             write!(f, "Regex::new(r\"{sub}\").unwrap(),")?;
         }
@@ -210,6 +273,45 @@ impl<'a> fmt::Display for TlsProbe<'a> {
             Some(alpn) => write!(f, "Some(\"{alpn}\")")?,
         }
         write!(f, " }}")
+    }
+}
+
+impl<'a> fmt::Display for RustProbe<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let Self {
+            service,
+            module,
+            protocol,
+        } = self;
+        let function = match protocol {
+            RustProbeProtocol::Tcp => "probe_tcp",
+            RustProbeProtocol::Tls(_) => "probe_tls",
+            RustProbeProtocol::Udp => "probe_udp",
+        };
+        let args = Args(match protocol {
+            RustProbeProtocol::Tcp => 1,
+            RustProbeProtocol::Tls(_) => 2,
+            RustProbeProtocol::Udp => 1,
+        });
+        write!(
+            f,
+            "RustProbe {{ service: \"{service}\", function: |{args}| super::probe_impls::{module}::{function}({args}).boxed(), alpn: ")?;
+        if let RustProbeProtocol::Tls(Some(alpn)) = protocol {
+            write!(f, "Some(\"{alpn}\")")?;
+        } else {
+            write!(f, "None")?;
+        }
+        return write!(f, " }}");
+
+        struct Args(usize);
+        impl fmt::Display for Args {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                for i in 0..self.0 {
+                    write!(f, "arg{i},")?;
+                }
+                Ok(())
+            }
+        }
     }
 }
 

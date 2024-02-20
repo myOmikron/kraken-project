@@ -1,0 +1,6 @@
+service: postgres
+prevalence: often
+probes:
+  - tcp: yes
+    tls: yes
+    rust: postgres
