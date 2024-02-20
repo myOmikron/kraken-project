@@ -8,7 +8,7 @@ use rorm::{query, FieldAccess, Model};
 use crate::api::extractors::SessionUser;
 use crate::api::handler::attacks::schema::{
     BruteforceSubdomainsRequest, DnsResolutionRequest, DnsTxtScanRequest, HostsAliveRequest,
-    ListAttacks, QueryCertificateTransparencyRequest, QueryDehashedRequest, ScanTcpPortsRequest,
+    ListAttacks, QueryCertificateTransparencyRequest, QueryDehashedRequest,
     ServiceDetectionRequest, SimpleAttack, UdpServiceDetectionRequest,
 };
 use crate::api::handler::common::error::{ApiError, ApiResult};
@@ -20,9 +20,9 @@ use crate::models::{Attack, User, UserPermission, WordList, Workspace, Workspace
 use crate::modules::attacks::{
     start_bruteforce_subdomains, start_certificate_transparency, start_dehashed_query,
     start_dns_resolution, start_dns_txt_scan, start_host_alive, start_service_detection,
-    start_tcp_port_scan, start_udp_service_detection, BruteforceSubdomainsParams,
-    CertificateTransparencyParams, DehashedQueryParams, DnsResolutionParams, DnsTxtScanParams,
-    HostAliveParams, ServiceDetectionParams, TcpPortScanParams, UdpServiceDetectionParams,
+    start_udp_service_detection, BruteforceSubdomainsParams, CertificateTransparencyParams,
+    DehashedQueryParams, DnsResolutionParams, DnsTxtScanParams, HostAliveParams,
+    ServiceDetectionParams, UdpServiceDetectionParams,
 };
 
 /// Bruteforce subdomains through a DNS wordlist attack
@@ -73,66 +73,6 @@ pub async fn bruteforce_subdomains(
             target: domain,
             wordlist_path,
             concurrent_limit,
-        },
-    )
-    .await?;
-
-    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
-}
-
-/// Start a tcp port scan
-///
-/// `exclude` accepts a list of ip networks in CIDR notation.
-///
-/// All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.
-///
-/// Set `max_retries` to 0 if you don't want to try a port more than 1 time.
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 202, description = "Attack scheduled", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    request_body = ScanTcpPortsRequest,
-    security(("api_key" = []))
-)]
-#[post("/attacks/scanTcpPorts")]
-pub async fn scan_tcp_ports(
-    req: Json<ScanTcpPortsRequest>,
-    SessionUser(user_uuid): SessionUser,
-) -> ApiResult<HttpResponse> {
-    let ScanTcpPortsRequest {
-        leech_uuid,
-        targets,
-        ports,
-        retry_interval,
-        max_retries,
-        timeout,
-        concurrent_limit,
-        skip_icmp_check,
-        workspace_uuid,
-    } = req.into_inner();
-
-    let client = if let Some(leech_uuid) = leech_uuid {
-        GLOBAL.leeches.get_leech(&leech_uuid)?
-    } else {
-        GLOBAL.leeches.random_leech()?
-    };
-
-    let (attack_uuid, _) = start_tcp_port_scan(
-        workspace_uuid,
-        user_uuid,
-        client,
-        TcpPortScanParams {
-            targets,
-            ports,
-            timeout,
-            concurrent_limit,
-            max_retries,
-            retry_interval,
-            skip_icmp_check,
         },
     )
     .await?;

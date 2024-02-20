@@ -37,7 +37,6 @@ mod dns_resolution;
 mod dns_txt_scan;
 mod host_alive;
 mod service_detection;
-mod tcp_port_scan;
 mod udp_service_detection;
 
 /// The parameters of a "bruteforce subdomains" attack
@@ -297,53 +296,6 @@ pub async fn start_udp_service_detection(
         tokio::spawn(async move {
             ctx.set_started().await;
             let result = ctx.udp_service_detection(leech, params).await;
-            ctx.set_finished(result).await;
-        }),
-    ))
-}
-
-/// The parameters of a "tcp port scan" attack
-pub struct TcpPortScanParams {
-    /// The ip addresses / networks to scan
-    pub targets: Vec<DomainOrNetwork>,
-
-    /// List of single ports and port ranges
-    pub ports: Vec<PortOrRange>,
-
-    /// The time to wait until a connection is considered failed.
-    ///
-    /// The timeout is specified in milliseconds.
-    pub timeout: u64,
-
-    /// The concurrent task limit
-    pub concurrent_limit: u32,
-
-    /// The number of times the connection should be retried if it failed.
-    pub max_retries: u32,
-
-    /// The interval that should be wait between retries on a port.
-    ///
-    /// The interval is specified in milliseconds.
-    pub retry_interval: u64,
-
-    /// Skips the initial icmp check.
-    ///
-    /// All hosts are assumed to be reachable
-    pub skip_icmp_check: bool,
-}
-/// Start a "tcp port scan" attack
-pub async fn start_tcp_port_scan(
-    workspace: Uuid,
-    user: Uuid,
-    leech: LeechClient,
-    params: TcpPortScanParams,
-) -> Result<(Uuid, JoinHandle<()>), InsertAttackError> {
-    let ctx = AttackContext::new(workspace, user, AttackType::TcpPortScan).await?;
-    Ok((
-        ctx.attack_uuid,
-        tokio::spawn(async move {
-            ctx.set_started().await;
-            let result = ctx.tcp_port_scan(leech, params).await;
             ctx.set_finished(result).await;
         }),
     ))

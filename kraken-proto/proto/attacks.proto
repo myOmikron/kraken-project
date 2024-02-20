@@ -30,66 +30,6 @@ message BruteforceSubdomainResponse {
 }
 
 /*
--- TcpPortScan
- */
-
-// Request for starting a tcp port scan attack
-message TcpPortScanRequest {
-  // A unique id that identifier the attack
-  string attack_uuid = 1;
-  // The ip addresses / networks to scan
-  repeated attacks.shared.NetOrAddress targets = 2;
-  // List of single ports and port ranges
-  //
-  // If no values are supplied, 1-65535 is used as default
-  repeated PortOrRange ports = 3;
-  // The time to wait until a connection is considered failed.
-  //
-  // The timeout is specified in milliseconds.
-  uint64 timeout = 4;
-  // The concurrent task limit
-  uint32 concurrent_limit = 5;
-  // The number of times the connection should be retried if it failed.
-  uint32 max_retries = 6;
-  // The interval that should be wait between retries on a port.
-  //
-  // The interval is specified in milliseconds.
-  uint64 retry_interval = 7;
-  // Skips the initial icmp check.
-  //
-  // All hosts are assumed to be reachable
-  bool skip_icmp_check = 8;
-}
-
-// An (inclusive) range of ports
-message PortRange {
-  // The first port number in this range
-  uint32 start = 1;
-  // The last port number in this range
-  uint32 end = 2;
-}
-
-// Either a single port or a range of them
-message PortOrRange {
-  // Workaround field to store a `oneof`
-  oneof port_or_range {
-    // A single port
-    uint32 single = 1;
-
-    // An (inclusive) range of ports
-    PortRange range = 2;
-  }
-}
-
-// Response streamed by an tcp port scan attack
-message TcpPortScanResponse {
-  // Address
-  attacks.shared.Address address = 1;
-  // Port value
-  uint32 port = 2;
-}
-
-/*
 --- Certificate Transparency
  */
 
@@ -148,6 +88,26 @@ message ServiceDetectionRequest {
   //
   // All hosts are assumed to be reachable
   bool skip_icmp_check = 9;
+}
+
+// An (inclusive) range of ports
+message PortRange {
+  // The first port number in this range
+  uint32 start = 1;
+  // The last port number in this range
+  uint32 end = 2;
+}
+
+// Either a single port or a range of them
+message PortOrRange {
+  // Workaround field to store a `oneof`
+  oneof port_or_range {
+    // A single port
+    uint32 single = 1;
+
+    // An (inclusive) range of ports
+    PortRange range = 2;
+  }
 }
 
 // Response to a service detection request
@@ -281,7 +241,6 @@ message DnsTxtScanResponse {
 // Implemented by leech; allows kraken to request attack from a leech
 service ReqAttackService {
   rpc BruteforceSubdomains(BruteforceSubdomainRequest) returns (stream BruteforceSubdomainResponse);
-  rpc RunTcpPortScan(TcpPortScanRequest) returns (stream TcpPortScanResponse);
   rpc QueryCertificateTransparency(CertificateTransparencyRequest) returns (CertificateTransparencyResponse);
   rpc ServiceDetection(ServiceDetectionRequest) returns (stream ServiceDetectionResponse);
   rpc UdpServiceDetection(UdpServiceDetectionRequest) returns (stream UdpServiceDetectionResponse);
@@ -306,8 +265,6 @@ message PushAttackRequest {
   oneof response {
     // Response streamed by an bruteforce subdomain attack
     RepeatedBruteforceSubdomainResponse bruteforce_subdomain = 3;
-    // Response streamed by an tcp port scan attack
-    RepeatedTcpPortScanResponse tcp_port_scan = 4;
     // Response to a certificate transparency request
     CertificateTransparencyResponse certificate_transparency = 5;
     // Response to a service detection request
@@ -327,11 +284,6 @@ message PushAttackRequest {
 message RepeatedBruteforceSubdomainResponse {
   // repeated BruteforceSubdomainResponse
   repeated BruteforceSubdomainResponse responses = 1;
-}
-// Thin wrapper to have a `repeated TcpPortScanResponse` in a `oneof`
-message RepeatedTcpPortScanResponse {
-  // repeated TcpPortScanResponse
-  repeated TcpPortScanResponse responses = 1;
 }
 // Thin wrapper to have a `repeated ServiceDetectionResponse` in a `oneof`
 message RepeatedServiceDetectionResponse {
@@ -396,8 +348,6 @@ message AnyAttackResponse {
   oneof response {
     // Response streamed by an bruteforce subdomain attack
     BruteforceSubdomainResponse bruteforce_subdomain = 2;
-    // Response streamed by an tcp port scan attack
-    TcpPortScanResponse tcp_port_scan = 3;
     // Response to a certificate transparency request
     CertificateTransparencyResponse certificate_transparency = 4;
     // Response to a service detection request

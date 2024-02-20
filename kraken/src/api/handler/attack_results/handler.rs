@@ -12,14 +12,12 @@ use crate::api::handler::attack_results::schema::{
     DnsTxtScanEntry, FullDnsTxtScanResult, FullQueryCertificateTransparencyResult,
     FullServiceDetectionResult, FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult,
     SimpleDnsResolutionResult, SimpleHostAliveResult, SimpleQueryUnhashedResult,
-    SimpleTcpPortScanResult,
 };
 use crate::api::handler::common::error::{ApiError, ApiResult};
 use crate::api::handler::common::schema::{
     BruteforceSubdomainsResultsPage, DnsResolutionResultsPage, DnsTxtScanResultsPage,
     HostAliveResultsPage, Page, PageParams, PathUuid, QueryCertificateTransparencyResultsPage,
-    QueryUnhashedResultsPage, ServiceDetectionResultsPage, TcpPortScanResultsPage,
-    UdpServiceDetectionResultsPage,
+    QueryUnhashedResultsPage, ServiceDetectionResultsPage, UdpServiceDetectionResultsPage,
 };
 use crate::api::handler::common::utils::get_page_params;
 use crate::chan::global::GLOBAL;
@@ -27,8 +25,8 @@ use crate::models::{
     Attack, BruteforceSubdomainsResult, CertificateTransparencyResult,
     CertificateTransparencyValueName, DehashedQueryResult, DnsResolutionResult,
     DnsTxtScanAttackResult, DnsTxtScanServiceHintEntry, DnsTxtScanSpfEntry, HostAliveResult,
-    ServiceCertainty, ServiceDetectionName, ServiceDetectionResult, TcpPortScanResult,
-    UdpServiceDetectionName, UdpServiceDetectionResult,
+    ServiceCertainty, ServiceDetectionName, ServiceDetectionResult, UdpServiceDetectionName,
+    UdpServiceDetectionResult,
 };
 
 /// Retrieve a bruteforce subdomains' results by the attack's id
@@ -75,63 +73,6 @@ pub async fn get_bruteforce_subdomains_results(
             destination: x.destination,
             dns_record_type: x.dns_record_type,
             created_at: x.created_at,
-        })
-        .try_collect()
-        .await?;
-
-    tx.commit().await?;
-
-    Ok(Json(Page {
-        items,
-        limit,
-        offset,
-        total: total as u64,
-    }))
-}
-
-/// Retrieve a tcp port scan's results by the attack's id
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns attack's results", body = TcpPortScanResultsPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid, PageParams),
-    security(("api_key" = []))
-)]
-#[get("/attacks/{uuid}/tcpPortScanResults")]
-pub async fn get_tcp_port_scan_results(
-    path: Path<PathUuid>,
-    page_params: Query<PageParams>,
-    SessionUser(user_uuid): SessionUser,
-) -> ApiResult<Json<TcpPortScanResultsPage>> {
-    let mut tx = GLOBAL.db.start_transaction().await?;
-
-    let uuid = path.uuid;
-    let (limit, offset) = get_page_params(page_params.0).await?;
-
-    if !Attack::has_access(&mut tx, uuid, user_uuid).await? {
-        return Err(ApiError::MissingPrivileges);
-    }
-
-    let (total,) = query!(&mut tx, (TcpPortScanResult::F.uuid.count(),))
-        .condition(TcpPortScanResult::F.attack.equals(uuid))
-        .one()
-        .await?;
-
-    let items = query!(&mut tx, TcpPortScanResult)
-        .condition(TcpPortScanResult::F.attack.equals(uuid))
-        .limit(limit)
-        .offset(offset)
-        .stream()
-        .map_ok(|result| SimpleTcpPortScanResult {
-            uuid: result.uuid,
-            attack: *result.attack.key(),
-            created_at: result.created_at,
-            address: result.address,
-            port: result.port as u16,
         })
         .try_collect()
         .await?;

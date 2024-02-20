@@ -513,8 +513,11 @@ pub struct AggregationSource {
 pub enum SourceType {
     /// The [`BruteforceSubdomainsResult`] table
     BruteforceSubdomains,
-    /// The [`TcpPortScanResult`] table
+
+    /// Effectively deleted, but postgres can't delete enum variants
+    #[serde(skip)]
     TcpPortScan,
+
     /// The [`CertificateTransparencyResult`] table
     QueryCertificateTransparency,
     /// The [`DehashedQueryResult`] table

@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { FullQueryCertificateTransparencyResult } from './FullQueryCertificateTransparencyResult';
+import type { SimpleHostAliveResult } from './SimpleHostAliveResult';
 import {
-    FullQueryCertificateTransparencyResultFromJSON,
-    FullQueryCertificateTransparencyResultFromJSONTyped,
-    FullQueryCertificateTransparencyResultToJSON,
-} from './FullQueryCertificateTransparencyResult';
+    SimpleHostAliveResultFromJSON,
+    SimpleHostAliveResultFromJSONTyped,
+    SimpleHostAliveResultToJSON,
+} from './SimpleHostAliveResult';
 
 /**
  * 
@@ -28,10 +28,10 @@ import {
 export interface SearchResultEntryOneOf8 {
     /**
      * 
-     * @type {FullQueryCertificateTransparencyResult}
+     * @type {SimpleHostAliveResult}
      * @memberof SearchResultEntryOneOf8
      */
-    certificateTransparencyResultEntry: FullQueryCertificateTransparencyResult;
+    hostAliveResult: SimpleHostAliveResult;
 }
 
 /**
@@ -39,7 +39,7 @@ export interface SearchResultEntryOneOf8 {
  */
 export function instanceOfSearchResultEntryOneOf8(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "certificateTransparencyResultEntry" in value;
+    isInstance = isInstance && "hostAliveResult" in value;
 
     return isInstance;
 }
@@ -54,7 +54,7 @@ export function SearchResultEntryOneOf8FromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'certificateTransparencyResultEntry': FullQueryCertificateTransparencyResultFromJSON(json['CertificateTransparencyResultEntry']),
+        'hostAliveResult': SimpleHostAliveResultFromJSON(json['HostAliveResult']),
     };
 }
 
@@ -67,7 +67,7 @@ export function SearchResultEntryOneOf8ToJSON(value?: SearchResultEntryOneOf8 | 
     }
     return {
         
-        'CertificateTransparencyResultEntry': FullQueryCertificateTransparencyResultToJSON(value.certificateTransparencyResultEntry),
+        'HostAliveResult': SimpleHostAliveResultToJSON(value.hostAliveResult),
     };
 }
 

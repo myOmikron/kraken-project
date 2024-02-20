@@ -79,8 +79,10 @@ pub enum ModelType {
     DnsRecordResult,
     /// [DnsTxtScanResult](models::DnsTxtScanResult) type
     DnsTxtScanResult,
-    /// [TcpPortScanResult](models::TcpPortScanResult) type
+
+    /// Effectively deleted, but postgres can't delete enum variants
     TcpPortScanResult,
+
     /// [DehashedQueryResult](models::DehashedQueryResult) type
     DehashedQueryResult,
     /// [CertificateTransparencyResult](models::CertificateTransparencyResult) type
@@ -114,9 +116,7 @@ impl Display for ModelType {
             ModelType::DnsTxtScanResult => {
                 write!(f, "{}", models::DnsTxtScanAttackResult::TABLE)
             }
-            ModelType::TcpPortScanResult => {
-                write!(f, "{}", models::TcpPortScanResult::TABLE)
-            }
+            ModelType::TcpPortScanResult => Err(std::fmt::Error),
             ModelType::DehashedQueryResult => {
                 write!(f, "{}", models::DehashedQueryResult::TABLE)
             }

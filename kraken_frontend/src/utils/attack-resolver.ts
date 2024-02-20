@@ -10,7 +10,6 @@ export type AttackResolver = {
 
 export const ATTACKS: AttackResolver = {
     BruteforceSubdomains: { abbreviation: "BSd", long: "Bruteforce Subdomains", key: "bruteforceSubdomains" },
-    TcpPortScan: { abbreviation: "PsT", long: "TCP port scan", key: "tcpPortScan" },
     QueryCertificateTransparency: {
         abbreviation: "CT",
         long: "Certificate Transparency",

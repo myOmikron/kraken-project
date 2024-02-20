@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleTcpPortScanResult } from './SimpleTcpPortScanResult';
+import type { FullQueryCertificateTransparencyResult } from './FullQueryCertificateTransparencyResult';
 import {
-    SimpleTcpPortScanResultFromJSON,
-    SimpleTcpPortScanResultFromJSONTyped,
-    SimpleTcpPortScanResultToJSON,
-} from './SimpleTcpPortScanResult';
+    FullQueryCertificateTransparencyResultFromJSON,
+    FullQueryCertificateTransparencyResultFromJSONTyped,
+    FullQueryCertificateTransparencyResultToJSON,
+} from './FullQueryCertificateTransparencyResult';
 
 /**
  * 
@@ -33,11 +33,11 @@ export interface SourceAttackResultOneOf1 {
      */
     attackType: SourceAttackResultOneOf1AttackTypeEnum;
     /**
-     * The [`AttackType::TcpPortScan`] and its results
-     * @type {Array<SimpleTcpPortScanResult>}
+     * The [`AttackType::QueryCertificateTransparency`] and its results
+     * @type {Array<FullQueryCertificateTransparencyResult>}
      * @memberof SourceAttackResultOneOf1
      */
-    results: Array<SimpleTcpPortScanResult>;
+    results: Array<FullQueryCertificateTransparencyResult>;
 }
 
 
@@ -45,7 +45,7 @@ export interface SourceAttackResultOneOf1 {
  * @export
  */
 export const SourceAttackResultOneOf1AttackTypeEnum = {
-    TcpPortScan: 'TcpPortScan'
+    QueryCertificateTransparency: 'QueryCertificateTransparency'
 } as const;
 export type SourceAttackResultOneOf1AttackTypeEnum = typeof SourceAttackResultOneOf1AttackTypeEnum[keyof typeof SourceAttackResultOneOf1AttackTypeEnum];
 
@@ -72,7 +72,7 @@ export function SourceAttackResultOneOf1FromJSONTyped(json: any, ignoreDiscrimin
     return {
         
         'attackType': json['attack_type'],
-        'results': ((json['results'] as Array<any>).map(SimpleTcpPortScanResultFromJSON)),
+        'results': ((json['results'] as Array<any>).map(FullQueryCertificateTransparencyResultFromJSON)),
     };
 }
 
@@ -86,7 +86,7 @@ export function SourceAttackResultOneOf1ToJSON(value?: SourceAttackResultOneOf1 
     return {
         
         'attack_type': value.attackType,
-        'results': ((value.results as Array<any>).map(SimpleTcpPortScanResultToJSON)),
+        'results': ((value.results as Array<any>).map(FullQueryCertificateTransparencyResultToJSON)),
     };
 }
 

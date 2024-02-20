@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleQueryUnhashedResult } from './SimpleQueryUnhashedResult';
+import type { SimpleHostAliveResult } from './SimpleHostAliveResult';
 import {
-    SimpleQueryUnhashedResultFromJSON,
-    SimpleQueryUnhashedResultFromJSONTyped,
-    SimpleQueryUnhashedResultToJSON,
-} from './SimpleQueryUnhashedResult';
+    SimpleHostAliveResultFromJSON,
+    SimpleHostAliveResultFromJSONTyped,
+    SimpleHostAliveResultToJSON,
+} from './SimpleHostAliveResult';
 
 /**
  * 
@@ -33,11 +33,11 @@ export interface SourceAttackResultOneOf3 {
      */
     attackType: SourceAttackResultOneOf3AttackTypeEnum;
     /**
-     * The [`AttackType::QueryUnhashed`] and its results
-     * @type {Array<SimpleQueryUnhashedResult>}
+     * The [`AttackType::HostAlive`] and its results
+     * @type {Array<SimpleHostAliveResult>}
      * @memberof SourceAttackResultOneOf3
      */
-    results: Array<SimpleQueryUnhashedResult>;
+    results: Array<SimpleHostAliveResult>;
 }
 
 
@@ -45,7 +45,7 @@ export interface SourceAttackResultOneOf3 {
  * @export
  */
 export const SourceAttackResultOneOf3AttackTypeEnum = {
-    QueryDehashed: 'QueryDehashed'
+    HostAlive: 'HostAlive'
 } as const;
 export type SourceAttackResultOneOf3AttackTypeEnum = typeof SourceAttackResultOneOf3AttackTypeEnum[keyof typeof SourceAttackResultOneOf3AttackTypeEnum];
 
@@ -72,7 +72,7 @@ export function SourceAttackResultOneOf3FromJSONTyped(json: any, ignoreDiscrimin
     return {
         
         'attackType': json['attack_type'],
-        'results': ((json['results'] as Array<any>).map(SimpleQueryUnhashedResultFromJSON)),
+        'results': ((json['results'] as Array<any>).map(SimpleHostAliveResultFromJSON)),
     };
 }
 
@@ -86,7 +86,7 @@ export function SourceAttackResultOneOf3ToJSON(value?: SourceAttackResultOneOf3 
     return {
         
         'attack_type': value.attackType,
-        'results': ((value.results as Array<any>).map(SimpleQueryUnhashedResultToJSON)),
+        'results': ((value.results as Array<any>).map(SimpleHostAliveResultToJSON)),
     };
 }
 

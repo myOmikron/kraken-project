@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleDnsResolutionResult } from './SimpleDnsResolutionResult';
+import type { FullDnsTxtScanResult } from './FullDnsTxtScanResult';
 import {
-    SimpleDnsResolutionResultFromJSON,
-    SimpleDnsResolutionResultFromJSONTyped,
-    SimpleDnsResolutionResultToJSON,
-} from './SimpleDnsResolutionResult';
+    FullDnsTxtScanResultFromJSON,
+    FullDnsTxtScanResultFromJSONTyped,
+    FullDnsTxtScanResultToJSON,
+} from './FullDnsTxtScanResult';
 
 /**
  * 
@@ -33,11 +33,11 @@ export interface SourceAttackResultOneOf7 {
      */
     attackType: SourceAttackResultOneOf7AttackTypeEnum;
     /**
-     * The [`AttackType::DnsResolution`] and its results
-     * @type {Array<SimpleDnsResolutionResult>}
+     * The [`AttackType::DnsTxtScan`] and its results
+     * @type {Array<FullDnsTxtScanResult>}
      * @memberof SourceAttackResultOneOf7
      */
-    results: Array<SimpleDnsResolutionResult>;
+    results: Array<FullDnsTxtScanResult>;
 }
 
 
@@ -45,7 +45,7 @@ export interface SourceAttackResultOneOf7 {
  * @export
  */
 export const SourceAttackResultOneOf7AttackTypeEnum = {
-    DnsResolution: 'DnsResolution'
+    DnsTxtScan: 'DnsTxtScan'
 } as const;
 export type SourceAttackResultOneOf7AttackTypeEnum = typeof SourceAttackResultOneOf7AttackTypeEnum[keyof typeof SourceAttackResultOneOf7AttackTypeEnum];
 
@@ -72,7 +72,7 @@ export function SourceAttackResultOneOf7FromJSONTyped(json: any, ignoreDiscrimin
     return {
         
         'attackType': json['attack_type'],
-        'results': ((json['results'] as Array<any>).map(SimpleDnsResolutionResultFromJSON)),
+        'results': ((json['results'] as Array<any>).map(FullDnsTxtScanResultFromJSON)),
     };
 }
 
@@ -86,7 +86,7 @@ export function SourceAttackResultOneOf7ToJSON(value?: SourceAttackResultOneOf7 
     return {
         
         'attack_type': value.attackType,
-        'results': ((value.results as Array<any>).map(SimpleDnsResolutionResultToJSON)),
+        'results': ((value.results as Array<any>).map(FullDnsTxtScanResultToJSON)),
     };
 }
 

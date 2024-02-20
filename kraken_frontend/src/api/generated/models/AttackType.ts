@@ -20,7 +20,6 @@
 export const AttackType = {
     Undefined: 'Undefined',
     BruteforceSubdomains: 'BruteforceSubdomains',
-    TcpPortScan: 'TcpPortScan',
     QueryCertificateTransparency: 'QueryCertificateTransparency',
     QueryUnhashed: 'QueryUnhashed',
     HostAlive: 'HostAlive',

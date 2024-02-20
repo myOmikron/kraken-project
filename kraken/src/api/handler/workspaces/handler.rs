@@ -14,7 +14,7 @@ use crate::api::extractors::SessionUser;
 use crate::api::handler::attack_results::schema::{
     FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
     FullUdpServiceDetectionResult, SimpleDnsResolutionResult, SimpleDnsTxtScanResult,
-    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+    SimpleHostAliveResult, SimpleQueryUnhashedResult,
 };
 use crate::api::handler::common::error::{ApiError, ApiResult};
 use crate::api::handler::common::schema::{
@@ -40,8 +40,8 @@ use crate::models::{
     Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
     DnsResolutionResult, DnsTxtScanAttackResult, Domain, Host, HostAliveResult, ModelType, Port,
     Search, SearchInsert, SearchResult, Service, ServiceDetectionName, ServiceDetectionResult,
-    TcpPortScanResult, UdpServiceDetectionName, UdpServiceDetectionResult, UserPermission,
-    Workspace, WorkspaceInvitation, WorkspaceMember,
+    UdpServiceDetectionName, UdpServiceDetectionResult, UserPermission, Workspace,
+    WorkspaceInvitation, WorkspaceMember,
 };
 
 /// Create a new workspace
@@ -810,20 +810,6 @@ pub async fn get_search_results(
                     collection_type: data.collection_type,
                 })
             }
-            ModelType::TcpPortScanResult => {
-                let data = query!(&mut tx, TcpPortScanResult)
-                    .condition(TcpPortScanResult::F.uuid.equals(item.ref_key))
-                    .one()
-                    .await?;
-
-                SearchResultEntry::TcpPortScanResultEntry(SimpleTcpPortScanResult {
-                    uuid: data.uuid,
-                    created_at: data.created_at,
-                    attack: *data.attack.key(),
-                    address: data.address,
-                    port: data.port as u16,
-                })
-            }
             ModelType::DehashedQueryResult => {
                 let data = query!(&mut tx, DehashedQueryResult)
                     .condition(DehashedQueryResult::F.uuid.equals(item.ref_key))
@@ -938,6 +924,7 @@ pub async fn get_search_results(
                     service_names,
                 })
             }
+            ModelType::TcpPortScanResult => continue,
         })
     }
 

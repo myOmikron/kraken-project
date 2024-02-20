@@ -16,7 +16,6 @@ use crate::api::handler::attack_results::schema::{
     DnsTxtScanEntry, FullDnsTxtScanResult, FullQueryCertificateTransparencyResult,
     FullServiceDetectionResult, FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult,
     SimpleDnsResolutionResult, SimpleHostAliveResult, SimpleQueryUnhashedResult,
-    SimpleTcpPortScanResult,
 };
 use crate::api::handler::users::schema::SimpleUser;
 use crate::models::{
@@ -24,8 +23,7 @@ use crate::models::{
     CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
     DnsResolutionResult, DnsTxtScanAttackResult, DnsTxtScanServiceHintEntry, DnsTxtScanSpfEntry,
     HostAliveResult, ManualDomain, ManualHost, ManualPort, ManualService, ServiceDetectionName,
-    ServiceDetectionResult, SourceType, TcpPortScanResult, UdpServiceDetectionName,
-    UdpServiceDetectionResult,
+    ServiceDetectionResult, SourceType, UdpServiceDetectionName, UdpServiceDetectionResult,
 };
 
 fn field_in<'a, T, F, P, Any>(
@@ -100,7 +98,6 @@ impl SimpleAggregationSource {
     fn add(&mut self, source_type: SourceType) {
         match source_type {
             SourceType::BruteforceSubdomains => self.bruteforce_subdomains += 1,
-            SourceType::TcpPortScan => self.tcp_port_scan += 1,
             SourceType::QueryCertificateTransparency => self.query_certificate_transparency += 1,
             SourceType::QueryDehashed => self.query_dehashed += 1,
             SourceType::HostAlive => self.host_alive += 1,
@@ -117,6 +114,7 @@ impl SimpleAggregationSource {
             | SourceType::ManualHost
             | SourceType::ManualPort
             | SourceType::ManualService => self.manual = true,
+            SourceType::TcpPortScan => {}
         }
     }
 }
@@ -161,7 +159,6 @@ impl FullAggregationSource {
 
         type Results<T> = HashMap<Uuid, Vec<T>>;
         let mut bruteforce_subdomains: Results<SimpleBruteforceSubdomainsResult> = Results::new();
-        let mut tcp_port_scan: Results<SimpleTcpPortScanResult> = Results::new();
         let mut certificate_transparency: Results<FullQueryCertificateTransparencyResult> =
             Results::new();
         let mut query_dehashed: Results<SimpleQueryUnhashedResult> = Results::new();
@@ -192,22 +189,6 @@ impl FullAggregationSource {
                                 destination: result.destination,
                                 dns_record_type: result.dns_record_type,
                             });
-                    }
-                }
-                SourceType::TcpPortScan => {
-                    let mut stream = query!(&mut *tx, TcpPortScanResult)
-                        .condition(field_in(TcpPortScanResult::F.uuid, uuids))
-                        .stream();
-                    while let Some(result) = stream.try_next().await? {
-                        tcp_port_scan.entry(*result.attack.key()).or_default().push(
-                            SimpleTcpPortScanResult {
-                                uuid: result.uuid,
-                                attack: *result.attack.key(),
-                                created_at: result.created_at,
-                                address: result.address,
-                                port: result.port as u16,
-                            },
-                        );
                     }
                 }
                 SourceType::QueryCertificateTransparency => {
@@ -549,6 +530,7 @@ impl FullAggregationSource {
                         });
                     }
                 }
+                SourceType::TcpPortScan => {}
             }
         }
 
@@ -570,7 +552,6 @@ impl FullAggregationSource {
                 Attack::F.uuid,
                 bruteforce_subdomains
                     .keys()
-                    .chain(tcp_port_scan.keys())
                     .chain(certificate_transparency.keys())
                     .chain(query_dehashed.keys())
                     .chain(host_alive.keys())
@@ -598,9 +579,6 @@ impl FullAggregationSource {
                     }
                     AttackType::BruteforceSubdomains => SourceAttackResult::BruteforceSubdomains(
                         bruteforce_subdomains.remove(&uuid).unwrap_or_default(),
-                    ),
-                    AttackType::TcpPortScan => SourceAttackResult::TcpPortScan(
-                        tcp_port_scan.remove(&uuid).unwrap_or_default(),
                     ),
                     AttackType::QueryCertificateTransparency => {
                         SourceAttackResult::QueryCertificateTransparency(
@@ -633,6 +611,7 @@ impl FullAggregationSource {
                         error!("An `{attack_type:?}` isn't implemented yet");
                         continue;
                     }
+                    AttackType::TcpPortScan => continue,
                 };
                 attacks.push(SourceAttack {
                     uuid,

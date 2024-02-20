@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::api::handler::attack_results::schema::{
     FullDnsTxtScanResult, FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
     FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
-    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
+    SimpleHostAliveResult, SimpleQueryUnhashedResult,
 };
 use crate::api::handler::users::schema::SimpleUser;
 use crate::models::{
@@ -20,8 +20,6 @@ use crate::models::{
 pub struct SimpleAggregationSource {
     /// Bruteforce subdomains via DNS requests
     pub bruteforce_subdomains: usize,
-    /// Scan tcp ports
-    pub tcp_port_scan: usize,
     /// Query certificate transparency
     pub query_certificate_transparency: usize,
     /// Query the dehashed API
@@ -85,8 +83,6 @@ pub struct SourceAttack {
 pub enum SourceAttackResult {
     /// The [`AttackType::BruteforceSubdomains`] and its results
     BruteforceSubdomains(Vec<SimpleBruteforceSubdomainsResult>),
-    /// The [`AttackType::TcpPortScan`] and its results
-    TcpPortScan(Vec<SimpleTcpPortScanResult>),
     /// The [`AttackType::QueryCertificateTransparency`] and its results
     QueryCertificateTransparency(Vec<FullQueryCertificateTransparencyResult>),
     /// The [`AttackType::QueryUnhashed`] and its results

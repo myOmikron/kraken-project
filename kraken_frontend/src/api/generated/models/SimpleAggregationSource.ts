@@ -26,12 +26,6 @@ export interface SimpleAggregationSource {
      */
     bruteforceSubdomains: number;
     /**
-     * Scan tcp ports
-     * @type {number}
-     * @memberof SimpleAggregationSource
-     */
-    tcpPortScan: number;
-    /**
      * Query certificate transparency
      * @type {number}
      * @memberof SimpleAggregationSource
@@ -117,7 +111,6 @@ export interface SimpleAggregationSource {
 export function instanceOfSimpleAggregationSource(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "bruteforceSubdomains" in value;
-    isInstance = isInstance && "tcpPortScan" in value;
     isInstance = isInstance && "queryCertificateTransparency" in value;
     isInstance = isInstance && "queryDehashed" in value;
     isInstance = isInstance && "hostAlive" in value;
@@ -146,7 +139,6 @@ export function SimpleAggregationSourceFromJSONTyped(json: any, ignoreDiscrimina
     return {
         
         'bruteforceSubdomains': json['bruteforce_subdomains'],
-        'tcpPortScan': json['tcp_port_scan'],
         'queryCertificateTransparency': json['query_certificate_transparency'],
         'queryDehashed': json['query_dehashed'],
         'hostAlive': json['host_alive'],
@@ -173,7 +165,6 @@ export function SimpleAggregationSourceToJSON(value?: SimpleAggregationSource | 
     return {
         
         'bruteforce_subdomains': value.bruteforceSubdomains,
-        'tcp_port_scan': value.tcpPortScan,
         'query_certificate_transparency': value.queryCertificateTransparency,
         'query_dehashed': value.queryDehashed,
         'host_alive': value.hostAlive,

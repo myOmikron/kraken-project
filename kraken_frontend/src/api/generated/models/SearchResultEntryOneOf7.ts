@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleQueryUnhashedResult } from './SimpleQueryUnhashedResult';
+import type { FullQueryCertificateTransparencyResult } from './FullQueryCertificateTransparencyResult';
 import {
-    SimpleQueryUnhashedResultFromJSON,
-    SimpleQueryUnhashedResultFromJSONTyped,
-    SimpleQueryUnhashedResultToJSON,
-} from './SimpleQueryUnhashedResult';
+    FullQueryCertificateTransparencyResultFromJSON,
+    FullQueryCertificateTransparencyResultFromJSONTyped,
+    FullQueryCertificateTransparencyResultToJSON,
+} from './FullQueryCertificateTransparencyResult';
 
 /**
  * 
@@ -28,10 +28,10 @@ import {
 export interface SearchResultEntryOneOf7 {
     /**
      * 
-     * @type {SimpleQueryUnhashedResult}
+     * @type {FullQueryCertificateTransparencyResult}
      * @memberof SearchResultEntryOneOf7
      */
-    dehashedQueryResultEntry: SimpleQueryUnhashedResult;
+    certificateTransparencyResultEntry: FullQueryCertificateTransparencyResult;
 }
 
 /**
@@ -39,7 +39,7 @@ export interface SearchResultEntryOneOf7 {
  */
 export function instanceOfSearchResultEntryOneOf7(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "dehashedQueryResultEntry" in value;
+    isInstance = isInstance && "certificateTransparencyResultEntry" in value;
 
     return isInstance;
 }
@@ -54,7 +54,7 @@ export function SearchResultEntryOneOf7FromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'dehashedQueryResultEntry': SimpleQueryUnhashedResultFromJSON(json['DehashedQueryResultEntry']),
+        'certificateTransparencyResultEntry': FullQueryCertificateTransparencyResultFromJSON(json['CertificateTransparencyResultEntry']),
     };
 }
 
@@ -67,7 +67,7 @@ export function SearchResultEntryOneOf7ToJSON(value?: SearchResultEntryOneOf7 | 
     }
     return {
         
-        'DehashedQueryResultEntry': SimpleQueryUnhashedResultToJSON(value.dehashedQueryResultEntry),
+        'CertificateTransparencyResultEntry': FullQueryCertificateTransparencyResultToJSON(value.certificateTransparencyResultEntry),
     };
 }
 

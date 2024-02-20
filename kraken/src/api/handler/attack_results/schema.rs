@@ -32,26 +32,6 @@ pub struct SimpleBruteforceSubdomainsResult {
     pub dns_record_type: DnsRecordType,
 }
 
-/// A simple representation of a tcp port scan result
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
-pub struct SimpleTcpPortScanResult {
-    /// The primary key
-    pub uuid: Uuid,
-
-    /// The attack which produced this result
-    pub attack: Uuid,
-
-    /// The point in time, this result was produced
-    pub created_at: DateTime<Utc>,
-
-    /// The ip address a port was found on
-    #[schema(value_type = String, example = "127.0.0.1")]
-    pub address: IpNetwork,
-
-    /// The found port
-    pub port: u16,
-}
-
 /// A simple representation of a query certificate transparency result
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct FullQueryCertificateTransparencyResult {

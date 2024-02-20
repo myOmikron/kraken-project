@@ -26,8 +26,11 @@ pub enum AttackType {
     Undefined,
     /// Bruteforce subdomains via DNS requests
     BruteforceSubdomains,
-    /// Scan tcp ports
+
+    /// Effectively deleted, but postgres can't delete enum variants
+    #[serde(skip)]
     TcpPortScan,
+
     /// Query certificate transparency
     QueryCertificateTransparency,
     /// Query the unhashed API
@@ -299,30 +302,6 @@ pub struct DnsTxtScanSpfEntry {
     /// The point in time, this result was produced
     #[rorm(auto_create_time)]
     pub created_at: DateTime<Utc>,
-}
-
-/// Representation of a [tcp port scan](AttackType::TcpPortScan) attack's result
-#[derive(Model)]
-pub struct TcpPortScanResult {
-    /// The primary key
-    #[rorm(primary_key)]
-    pub uuid: Uuid,
-
-    /// The attack which produced this result
-    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
-    pub attack: ForeignModel<Attack>,
-
-    /// The point in time, this result was produced
-    #[rorm(auto_create_time)]
-    pub created_at: DateTime<Utc>,
-
-    /// The ip address a port was found on
-    pub address: IpNetwork,
-
-    /// The found port
-    ///
-    /// Stored in db as `i32` but ports are actually just an `u16`
-    pub port: i32,
 }
 
 /// Representation of a [dehashed query](AttackType::Dehashed) result

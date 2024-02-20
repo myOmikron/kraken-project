@@ -26,8 +26,7 @@ use kraken_proto::{
     CertificateTransparencyRequest, CertificateTransparencyResponse, DnsResolutionRequest,
     DnsResolutionResponse, DnsTxtScanRequest, DnsTxtScanResponse, HostsAliveRequest,
     HostsAliveResponse, ServiceCertainty, ServiceDetectionRequest, ServiceDetectionResponse,
-    TcpPortScanRequest, TcpPortScanResponse, UdpServiceDetectionRequest,
-    UdpServiceDetectionResponse,
+    UdpServiceDetectionRequest, UdpServiceDetectionResponse,
 };
 use log::error;
 use prost_types::Timestamp;
@@ -109,63 +108,6 @@ impl ReqAttackService for Attacks {
                 }),
             },
             any_attack_response::Response::BruteforceSubdomain,
-        )
-    }
-
-    type RunTcpPortScanStream =
-        Pin<Box<dyn Stream<Item = Result<TcpPortScanResponse, Status>> + Send>>;
-
-    async fn run_tcp_port_scan(
-        &self,
-        request: Request<TcpPortScanRequest>,
-    ) -> Result<Response<Self::RunTcpPortScanStream>, Status> {
-        let req = request.into_inner();
-
-        let attack_uuid = Uuid::parse_str(&req.attack_uuid)
-            .map_err(|_| Status::invalid_argument("attack_uuid has to be an Uuid"))?;
-
-        let mut ports = req
-            .ports
-            .into_iter()
-            .map(RangeInclusive::try_from)
-            .collect::<Result<Vec<_>, _>>()?;
-        if ports.is_empty() {
-            ports.push(1..=u16::MAX);
-        }
-
-        let concurrent_limit = NonZeroU32::new(req.concurrent_limit)
-            .ok_or_else(|| Status::invalid_argument("concurrent_limit can't be zero"))?;
-
-        let settings = TcpServiceDetectionSettings {
-            addresses: req
-                .targets
-                .into_iter()
-                .map(IpNetwork::try_from)
-                .collect::<Result<_, _>>()?,
-            ports,
-            connect_timeout: Duration::from_millis(req.timeout),
-            receive_timeout: Duration::from_millis(req.timeout),
-            max_retries: req.max_retries,
-            retry_interval: Duration::from_millis(req.retry_interval),
-            concurrent_limit,
-            skip_icmp_check: req.skip_icmp_check,
-            just_scan: true,
-        };
-
-        self.stream_attack(
-            attack_uuid,
-            {
-                |tx| async move {
-                    start_tcp_service_detection(settings, tx)
-                        .await
-                        .map_err(|err| Status::unknown(err.to_string()))
-                }
-            },
-            |value| TcpPortScanResponse {
-                address: Some(Address::from(value.addr.ip())),
-                port: value.addr.port() as u32,
-            },
-            any_attack_response::Response::TcpPortScan,
         )
     }
 

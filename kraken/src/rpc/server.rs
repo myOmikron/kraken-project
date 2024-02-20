@@ -77,7 +77,6 @@ impl PushAttackService for Results {
                 push_attack_request::Response::DnsResolution(_) => AttackType::DnsResolution,
                 push_attack_request::Response::DnsTxtScan(_) => AttackType::DnsTxtScan,
                 push_attack_request::Response::HostsAlive(_) => AttackType::HostAlive,
-                push_attack_request::Response::TcpPortScan(_) => AttackType::TcpPortScan,
                 push_attack_request::Response::BruteforceSubdomain(_) => {
                     AttackType::BruteforceSubdomains
                 }
@@ -105,9 +104,6 @@ impl PushAttackService for Results {
                 attack.handle_vec_response(repeated.responses).await
             }
             push_attack_request::Response::HostsAlive(repeated) => {
-                attack.handle_vec_response(repeated.responses).await
-            }
-            push_attack_request::Response::TcpPortScan(repeated) => {
                 attack.handle_vec_response(repeated.responses).await
             }
             push_attack_request::Response::BruteforceSubdomain(repeated) => {
@@ -176,9 +172,6 @@ impl BacklogService for Results {
                     attack_context.handle_response(response).await
                 }
                 any_attack_response::Response::HostsAlive(response) => {
-                    attack_context.handle_response(response).await
-                }
-                any_attack_response::Response::TcpPortScan(response) => {
                     attack_context.handle_response(response).await
                 }
                 any_attack_response::Response::BruteforceSubdomain(response) => {

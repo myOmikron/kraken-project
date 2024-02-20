@@ -34,54 +34,6 @@ pub struct BruteforceSubdomainsRequest {
     pub workspace_uuid: Uuid,
 }
 
-/// The settings to configure a tcp port scan
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
-pub struct ScanTcpPortsRequest {
-    /// The leech to use
-    ///
-    /// Leave empty to use a random leech
-    pub leech_uuid: Option<Uuid>,
-
-    /// The ip addresses / networks or domains to scan
-    #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.0/24", "google.com"]))]
-    pub targets: Vec<DomainOrNetwork>,
-
-    /// List of single ports and port ranges
-    ///
-    /// If no values are supplied, 1-65535 is used as default
-    #[serde(default)]
-    pub ports: Vec<PortOrRange>,
-
-    /// The interval that should be wait between retries on a port.
-    ///
-    /// The interval is specified in milliseconds.
-    #[schema(example = 100)]
-    pub retry_interval: u64,
-
-    /// The number of times the connection should be retried if it failed.
-    #[schema(example = 2)]
-    pub max_retries: u32,
-
-    /// The time to wait until a connection is considered failed.
-    ///
-    /// The timeout is specified in milliseconds.
-    #[schema(example = 3000)]
-    pub timeout: u64,
-
-    /// The concurrent task limit
-    #[schema(example = 5000)]
-    pub concurrent_limit: u32,
-
-    /// Skips the initial icmp check.
-    ///
-    /// All hosts are assumed to be reachable
-    #[schema(example = false)]
-    pub skip_icmp_check: bool,
-
-    /// The workspace to execute the attack in
-    pub workspace_uuid: Uuid,
-}
-
 /// Single port or a range of ports
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 #[serde(untagged)]

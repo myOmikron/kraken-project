@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { FullQueryCertificateTransparencyResult } from './FullQueryCertificateTransparencyResult';
+import type { SimpleQueryUnhashedResult } from './SimpleQueryUnhashedResult';
 import {
-    FullQueryCertificateTransparencyResultFromJSON,
-    FullQueryCertificateTransparencyResultFromJSONTyped,
-    FullQueryCertificateTransparencyResultToJSON,
-} from './FullQueryCertificateTransparencyResult';
+    SimpleQueryUnhashedResultFromJSON,
+    SimpleQueryUnhashedResultFromJSONTyped,
+    SimpleQueryUnhashedResultToJSON,
+} from './SimpleQueryUnhashedResult';
 
 /**
  * 
@@ -33,11 +33,11 @@ export interface SourceAttackResultOneOf2 {
      */
     attackType: SourceAttackResultOneOf2AttackTypeEnum;
     /**
-     * The [`AttackType::QueryCertificateTransparency`] and its results
-     * @type {Array<FullQueryCertificateTransparencyResult>}
+     * The [`AttackType::QueryUnhashed`] and its results
+     * @type {Array<SimpleQueryUnhashedResult>}
      * @memberof SourceAttackResultOneOf2
      */
-    results: Array<FullQueryCertificateTransparencyResult>;
+    results: Array<SimpleQueryUnhashedResult>;
 }
 
 
@@ -45,7 +45,7 @@ export interface SourceAttackResultOneOf2 {
  * @export
  */
 export const SourceAttackResultOneOf2AttackTypeEnum = {
-    QueryCertificateTransparency: 'QueryCertificateTransparency'
+    QueryDehashed: 'QueryDehashed'
 } as const;
 export type SourceAttackResultOneOf2AttackTypeEnum = typeof SourceAttackResultOneOf2AttackTypeEnum[keyof typeof SourceAttackResultOneOf2AttackTypeEnum];
 
@@ -72,7 +72,7 @@ export function SourceAttackResultOneOf2FromJSONTyped(json: any, ignoreDiscrimin
     return {
         
         'attackType': json['attack_type'],
-        'results': ((json['results'] as Array<any>).map(FullQueryCertificateTransparencyResultFromJSON)),
+        'results': ((json['results'] as Array<any>).map(SimpleQueryUnhashedResultFromJSON)),
     };
 }
 
@@ -86,7 +86,7 @@ export function SourceAttackResultOneOf2ToJSON(value?: SourceAttackResultOneOf2 
     return {
         
         'attack_type': value.attackType,
-        'results': ((value.results as Array<any>).map(FullQueryCertificateTransparencyResultToJSON)),
+        'results': ((value.results as Array<any>).map(SimpleQueryUnhashedResultToJSON)),
     };
 }
 

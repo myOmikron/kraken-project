@@ -1,7 +1,7 @@
 use kraken::api::handler::attacks::schema::{
     BruteforceSubdomainsRequest, DnsResolutionRequest, DnsTxtScanRequest, HostsAliveRequest,
-    ListAttacks, QueryCertificateTransparencyRequest, ScanTcpPortsRequest, ServiceDetectionRequest,
-    SimpleAttack, UdpServiceDetectionRequest,
+    ListAttacks, QueryCertificateTransparencyRequest, ServiceDetectionRequest, SimpleAttack,
+    UdpServiceDetectionRequest,
 };
 use kraken::api::handler::common::schema::UuidResponse;
 use serde::Serialize;
@@ -96,11 +96,6 @@ impl KrakenClient {
         req: QueryCertificateTransparencyRequest,
     ) -> KrakenResult<Uuid> {
         self.start_attack("queryCertificateTransparency", req).await
-    }
-
-    /// Start the tcp portscan attack
-    pub async fn attack_tcp_portscan(&self, req: ScanTcpPortsRequest) -> KrakenResult<Uuid> {
-        self.start_attack("scanTcpPorts", req).await
     }
 
     /// Start the service detection attack

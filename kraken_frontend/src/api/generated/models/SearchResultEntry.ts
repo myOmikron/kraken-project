@@ -34,13 +34,6 @@ import {
     SearchResultEntryOneOf10ToJSON,
 } from './SearchResultEntryOneOf10';
 import {
-    SearchResultEntryOneOf11,
-    instanceOfSearchResultEntryOneOf11,
-    SearchResultEntryOneOf11FromJSON,
-    SearchResultEntryOneOf11FromJSONTyped,
-    SearchResultEntryOneOf11ToJSON,
-} from './SearchResultEntryOneOf11';
-import {
     SearchResultEntryOneOf2,
     instanceOfSearchResultEntryOneOf2,
     SearchResultEntryOneOf2FromJSON,
@@ -102,7 +95,7 @@ import {
  * Dynamic result of a search
  * @export
  */
-export type SearchResultEntry = SearchResultEntryOneOf | SearchResultEntryOneOf1 | SearchResultEntryOneOf10 | SearchResultEntryOneOf11 | SearchResultEntryOneOf2 | SearchResultEntryOneOf3 | SearchResultEntryOneOf4 | SearchResultEntryOneOf5 | SearchResultEntryOneOf6 | SearchResultEntryOneOf7 | SearchResultEntryOneOf8 | SearchResultEntryOneOf9;
+export type SearchResultEntry = SearchResultEntryOneOf | SearchResultEntryOneOf1 | SearchResultEntryOneOf10 | SearchResultEntryOneOf2 | SearchResultEntryOneOf3 | SearchResultEntryOneOf4 | SearchResultEntryOneOf5 | SearchResultEntryOneOf6 | SearchResultEntryOneOf7 | SearchResultEntryOneOf8 | SearchResultEntryOneOf9;
 
 export function SearchResultEntryFromJSON(json: any): SearchResultEntry {
     return SearchResultEntryFromJSONTyped(json, false);
@@ -112,7 +105,7 @@ export function SearchResultEntryFromJSONTyped(json: any, ignoreDiscriminator: b
     if ((json === undefined) || (json === null)) {
         return json;
     }
-    return { ...SearchResultEntryOneOfFromJSONTyped(json, true), ...SearchResultEntryOneOf1FromJSONTyped(json, true), ...SearchResultEntryOneOf10FromJSONTyped(json, true), ...SearchResultEntryOneOf11FromJSONTyped(json, true), ...SearchResultEntryOneOf2FromJSONTyped(json, true), ...SearchResultEntryOneOf3FromJSONTyped(json, true), ...SearchResultEntryOneOf4FromJSONTyped(json, true), ...SearchResultEntryOneOf5FromJSONTyped(json, true), ...SearchResultEntryOneOf6FromJSONTyped(json, true), ...SearchResultEntryOneOf7FromJSONTyped(json, true), ...SearchResultEntryOneOf8FromJSONTyped(json, true), ...SearchResultEntryOneOf9FromJSONTyped(json, true) };
+    return { ...SearchResultEntryOneOfFromJSONTyped(json, true), ...SearchResultEntryOneOf1FromJSONTyped(json, true), ...SearchResultEntryOneOf10FromJSONTyped(json, true), ...SearchResultEntryOneOf2FromJSONTyped(json, true), ...SearchResultEntryOneOf3FromJSONTyped(json, true), ...SearchResultEntryOneOf4FromJSONTyped(json, true), ...SearchResultEntryOneOf5FromJSONTyped(json, true), ...SearchResultEntryOneOf6FromJSONTyped(json, true), ...SearchResultEntryOneOf7FromJSONTyped(json, true), ...SearchResultEntryOneOf8FromJSONTyped(json, true), ...SearchResultEntryOneOf9FromJSONTyped(json, true) };
 }
 
 export function SearchResultEntryToJSON(value?: SearchResultEntry | null): any {
@@ -131,9 +124,6 @@ export function SearchResultEntryToJSON(value?: SearchResultEntry | null): any {
     }
     if (instanceOfSearchResultEntryOneOf10(value)) {
         return SearchResultEntryOneOf10ToJSON(value as SearchResultEntryOneOf10);
-    }
-    if (instanceOfSearchResultEntryOneOf11(value)) {
-        return SearchResultEntryOneOf11ToJSON(value as SearchResultEntryOneOf11);
     }
     if (instanceOfSearchResultEntryOneOf2(value)) {
         return SearchResultEntryOneOf2ToJSON(value as SearchResultEntryOneOf2);

@@ -9,7 +9,6 @@ import {
     HostsAliveRequest,
     QueryCertificateTransparencyRequest,
     QueryDehashedRequest,
-    ScanTcpPortsRequest,
     ServiceDetectionRequest,
     UdpServiceDetectionRequest,
 } from "../../api/generated";
@@ -48,7 +47,6 @@ export enum AttackType {
     ServiceDetection = "service_detection",
     UdpServiceDetection = "udp_service_detection",
     BruteforceSubdomains = "bruteforce_subdomains",
-    TcpCon = "tcp_con",
     DnsResolution = "dns_resolution",
     DnsTxtScan = "dns_txt_scan",
 }
@@ -60,7 +58,6 @@ type AttackRequestTypes = {
     [AttackType.ServiceDetection]: ServiceDetectionRequest;
     [AttackType.UdpServiceDetection]: UdpServiceDetectionRequest;
     [AttackType.BruteforceSubdomains]: BruteforceSubdomainsRequest;
-    [AttackType.TcpCon]: ScanTcpPortsRequest;
     [AttackType.DnsResolution]: DnsResolutionRequest;
     [AttackType.DnsTxtScan]: DnsTxtScanRequest;
 };
@@ -297,72 +294,6 @@ const ATTACKS: AllAttackDescr = {
             },
         },
     },
-    tcp_con: {
-        name: "TCP port scan",
-        description: `Determine if a port is accepting TCP connections.`,
-        category: AttackCategory.Ports,
-        inputs: {
-            endpoint: "scanTcpPorts",
-            jsonKey: "scanTcpPortsRequest",
-            inputs: {
-                targets: {
-                    label: "Domain / IP / net in CIDR",
-                    multi: true,
-                    defaultValue: undefined,
-                    prefill: ["domain", "ipAddr"],
-                    type: StringAttackInput,
-                    required: true,
-                },
-                ports: {
-                    label: "Ports",
-                    multi: false,
-                    required: true,
-                    defaultValue: ["1-65535"],
-                    prefill: ["port"],
-                    type: PortListInput,
-                    preprocess: (v) => (typeof v == "number" ? [v] : v),
-                },
-                skipIcmpCheck: {
-                    label: "Skip icmp check",
-                    multi: false,
-                    defaultValue: false,
-                    type: BooleanAttackInput,
-                },
-                timeout: {
-                    label: "Timeout",
-                    multi: false,
-                    defaultValue: 1000,
-                    required: true,
-                    type: DurationAttackInput,
-                    group: "Advanced",
-                },
-                concurrentLimit: {
-                    label: "Concurrency Limit",
-                    multi: false,
-                    defaultValue: 500,
-                    required: true,
-                    type: NumberAttackInput,
-                    group: "Advanced",
-                },
-                maxRetries: {
-                    label: "Max. no. of retries",
-                    multi: false,
-                    defaultValue: 6,
-                    required: true,
-                    type: NumberAttackInput,
-                    group: "Advanced",
-                },
-                retryInterval: {
-                    label: "Retry interval",
-                    multi: false,
-                    defaultValue: 100,
-                    required: true,
-                    type: DurationAttackInput,
-                    group: "Advanced",
-                },
-            },
-        },
-    },
     service_detection: {
         name: "Service Detection",
         description: `Try to determine which service is running on a specific port.`, // TODO
@@ -384,7 +315,7 @@ const ATTACKS: AllAttackDescr = {
                     multi: false,
                     required: true,
                     defaultValue: ["1-65535"],
-                    prefill: "port",
+                    prefill: ["port"],
                     type: PortListInput,
                 },
                 connectTimeout: {

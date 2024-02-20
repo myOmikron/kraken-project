@@ -175,16 +175,13 @@ export default function AttacksIcon(params: AttacksParams) {
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
                 className={`kraken-attacks-hex ${
                     activeAttackCategory === "ports" ? "kraken-attacks-hex-box-selected" : ""
-                } ${disabled.tcp_con ? "kraken-attacks-hex-unavailable" : ""}`}
+                } kraken-attacks-hex-unavailable`}
                 transform="matrix(.46387 0 0 .46387 61.48 28.148)"
             />
-            {/* tcp port scan */}
+            {/* ports 1 */}
             <path
                 d="m81.966 81.46-40.05 23.324L1.694 81.763l-.175-46.346 40.049-23.324L81.79 35.114Z"
-                {...mouseHandler(AttackType.TcpCon)}
-                className={`kraken-attacks-hex ${
-                    activeAttack === AttackType.TcpCon ? "kraken-attacks-hex-selected" : ""
-                } ${!disabled[AttackType.TcpCon] ? "kraken-attacks-clickable" : "kraken-attacks-hex-unavailable"}`}
+                className={"kraken-attacks-hex-unavailable kraken-attacks-hex"}
                 transform="matrix(.23193 0 0 .23193 55.05 14.824)"
             />
             {/* ports 2 */}
@@ -251,9 +248,6 @@ export default function AttacksIcon(params: AttacksParams) {
             </text>
             <text xmlSpace="preserve" x={171.25} y={94} className={"kraken-attacks-hex-text"}>
                 {"Dh"}
-            </text>
-            <text xmlSpace="preserve" x={59} y={31} className={"kraken-attacks-hex-text"}>
-                {"PsT"}
             </text>
             <text xmlSpace="preserve" x={133} y={31} className={"kraken-attacks-hex-text"}>
                 {"SvD"}

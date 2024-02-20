@@ -1,0 +1,9 @@
+[Migration]
+Hash = "6831744642217866550"
+Initial = false
+Dependency = 7
+Replaces = []
+
+[[Migration.Operations]]
+Type = "DeleteModel"
+Name = "tcpportscanresult"

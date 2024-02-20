@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { SimpleTcpPortScanResult } from './SimpleTcpPortScanResult';
+import type { SimpleQueryUnhashedResult } from './SimpleQueryUnhashedResult';
 import {
-    SimpleTcpPortScanResultFromJSON,
-    SimpleTcpPortScanResultFromJSONTyped,
-    SimpleTcpPortScanResultToJSON,
-} from './SimpleTcpPortScanResult';
+    SimpleQueryUnhashedResultFromJSON,
+    SimpleQueryUnhashedResultFromJSONTyped,
+    SimpleQueryUnhashedResultToJSON,
+} from './SimpleQueryUnhashedResult';
 
 /**
  * 
@@ -28,10 +28,10 @@ import {
 export interface SearchResultEntryOneOf6 {
     /**
      * 
-     * @type {SimpleTcpPortScanResult}
+     * @type {SimpleQueryUnhashedResult}
      * @memberof SearchResultEntryOneOf6
      */
-    tcpPortScanResultEntry: SimpleTcpPortScanResult;
+    dehashedQueryResultEntry: SimpleQueryUnhashedResult;
 }
 
 /**
@@ -39,7 +39,7 @@ export interface SearchResultEntryOneOf6 {
  */
 export function instanceOfSearchResultEntryOneOf6(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "tcpPortScanResultEntry" in value;
+    isInstance = isInstance && "dehashedQueryResultEntry" in value;
 
     return isInstance;
 }
@@ -54,7 +54,7 @@ export function SearchResultEntryOneOf6FromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'tcpPortScanResultEntry': SimpleTcpPortScanResultFromJSON(json['TcpPortScanResultEntry']),
+        'dehashedQueryResultEntry': SimpleQueryUnhashedResultFromJSON(json['DehashedQueryResultEntry']),
     };
 }
 
@@ -67,7 +67,7 @@ export function SearchResultEntryOneOf6ToJSON(value?: SearchResultEntryOneOf6 | 
     }
     return {
         
-        'TcpPortScanResultEntry': SimpleTcpPortScanResultToJSON(value.tcpPortScanResultEntry),
+        'DehashedQueryResultEntry': SimpleQueryUnhashedResultToJSON(value.dehashedQueryResultEntry),
     };
 }
 

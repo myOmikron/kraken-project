@@ -29,11 +29,9 @@ import type {
   QueryCertificateTransparencyResultsPage,
   QueryDehashedRequest,
   QueryUnhashedResultsPage,
-  ScanTcpPortsRequest,
   ServiceDetectionRequest,
   ServiceDetectionResultsPage,
   SimpleAttack,
-  TcpPortScanResultsPage,
   UdpServiceDetectionRequest,
   UdpServiceDetectionResultsPage,
   UuidResponse,
@@ -67,16 +65,12 @@ import {
     QueryDehashedRequestToJSON,
     QueryUnhashedResultsPageFromJSON,
     QueryUnhashedResultsPageToJSON,
-    ScanTcpPortsRequestFromJSON,
-    ScanTcpPortsRequestToJSON,
     ServiceDetectionRequestFromJSON,
     ServiceDetectionRequestToJSON,
     ServiceDetectionResultsPageFromJSON,
     ServiceDetectionResultsPageToJSON,
     SimpleAttackFromJSON,
     SimpleAttackToJSON,
-    TcpPortScanResultsPageFromJSON,
-    TcpPortScanResultsPageToJSON,
     UdpServiceDetectionRequestFromJSON,
     UdpServiceDetectionRequestToJSON,
     UdpServiceDetectionResultsPageFromJSON,
@@ -147,12 +141,6 @@ export interface GetServiceDetectionResultsRequest {
     offset: number;
 }
 
-export interface GetTcpPortScanResultsRequest {
-    uuid: string;
-    limit: number;
-    offset: number;
-}
-
 export interface GetUdpServiceDetectionResultsRequest {
     uuid: string;
     limit: number;
@@ -173,10 +161,6 @@ export interface QueryCertificateTransparencyOperationRequest {
 
 export interface QueryDehashedOperationRequest {
     queryDehashedRequest: QueryDehashedRequest;
-}
-
-export interface ScanTcpPortsOperationRequest {
-    scanTcpPortsRequest: ScanTcpPortsRequest;
 }
 
 export interface ServiceDetectionOperationRequest {
@@ -725,54 +709,6 @@ export class AttacksApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a tcp port scan\'s results by the attack\'s id
-     * Retrieve a tcp port scan\'s results by the attack\'s id
-     */
-    async getTcpPortScanResultsRaw(requestParameters: GetTcpPortScanResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TcpPortScanResultsPage>> {
-        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
-            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getTcpPortScanResults.');
-        }
-
-        if (requestParameters.limit === null || requestParameters.limit === undefined) {
-            throw new runtime.RequiredError('limit','Required parameter requestParameters.limit was null or undefined when calling getTcpPortScanResults.');
-        }
-
-        if (requestParameters.offset === null || requestParameters.offset === undefined) {
-            throw new runtime.RequiredError('offset','Required parameter requestParameters.offset was null or undefined when calling getTcpPortScanResults.');
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters.limit !== undefined) {
-            queryParameters['limit'] = requestParameters.limit;
-        }
-
-        if (requestParameters.offset !== undefined) {
-            queryParameters['offset'] = requestParameters.offset;
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/api/v1/attacks/{uuid}/tcpPortScanResults`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => TcpPortScanResultsPageFromJSON(jsonValue));
-    }
-
-    /**
-     * Retrieve a tcp port scan\'s results by the attack\'s id
-     * Retrieve a tcp port scan\'s results by the attack\'s id
-     */
-    async getTcpPortScanResults(requestParameters: GetTcpPortScanResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TcpPortScanResultsPage> {
-        const response = await this.getTcpPortScanResultsRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
      * Retrieve UDP service detection results by the attack\'s id
      * Retrieve UDP service detection results by the attack\'s id
      */
@@ -954,41 +890,6 @@ export class AttacksApi extends runtime.BaseAPI {
      */
     async queryDehashed(requestParameters: QueryDehashedOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
         const response = await this.queryDehashedRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Start a tcp port scan  `exclude` accepts a list of ip networks in CIDR notation.  All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.  Set `max_retries` to 0 if you don\'t want to try a port more than 1 time.
-     * Start a tcp port scan
-     */
-    async scanTcpPortsRaw(requestParameters: ScanTcpPortsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
-        if (requestParameters.scanTcpPortsRequest === null || requestParameters.scanTcpPortsRequest === undefined) {
-            throw new runtime.RequiredError('scanTcpPortsRequest','Required parameter requestParameters.scanTcpPortsRequest was null or undefined when calling scanTcpPorts.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        const response = await this.request({
-            path: `/api/v1/attacks/scanTcpPorts`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: ScanTcpPortsRequestToJSON(requestParameters.scanTcpPortsRequest),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Start a tcp port scan  `exclude` accepts a list of ip networks in CIDR notation.  All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.  Set `max_retries` to 0 if you don\'t want to try a port more than 1 time.
-     * Start a tcp port scan
-     */
-    async scanTcpPorts(requestParameters: ScanTcpPortsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
-        const response = await this.scanTcpPortsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

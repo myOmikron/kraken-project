@@ -27,7 +27,6 @@ import {
     QueryCertificateTransparencyRequest,
     RequiredError,
     ResponseError,
-    ScanTcpPortsRequest,
     ServiceDetectionRequest,
     UdpServiceDetectionRequest,
     ServicesApi,

@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { FullServiceDetectionResult } from './FullServiceDetectionResult';
+import type { FullUdpServiceDetectionResult } from './FullUdpServiceDetectionResult';
 import {
-    FullServiceDetectionResultFromJSON,
-    FullServiceDetectionResultFromJSONTyped,
-    FullServiceDetectionResultToJSON,
-} from './FullServiceDetectionResult';
+    FullUdpServiceDetectionResultFromJSON,
+    FullUdpServiceDetectionResultFromJSONTyped,
+    FullUdpServiceDetectionResultToJSON,
+} from './FullUdpServiceDetectionResult';
 
 /**
  * 
@@ -33,11 +33,11 @@ export interface SourceAttackResultOneOf5 {
      */
     attackType: SourceAttackResultOneOf5AttackTypeEnum;
     /**
-     * The [`AttackType::ServiceDetection`] and its results
-     * @type {Array<FullServiceDetectionResult>}
+     * The [`AttackType::UdpServiceDetection`] and its results
+     * @type {Array<FullUdpServiceDetectionResult>}
      * @memberof SourceAttackResultOneOf5
      */
-    results: Array<FullServiceDetectionResult>;
+    results: Array<FullUdpServiceDetectionResult>;
 }
 
 
@@ -45,7 +45,7 @@ export interface SourceAttackResultOneOf5 {
  * @export
  */
 export const SourceAttackResultOneOf5AttackTypeEnum = {
-    ServiceDetection: 'ServiceDetection'
+    UdpServiceDetection: 'UdpServiceDetection'
 } as const;
 export type SourceAttackResultOneOf5AttackTypeEnum = typeof SourceAttackResultOneOf5AttackTypeEnum[keyof typeof SourceAttackResultOneOf5AttackTypeEnum];
 
@@ -72,7 +72,7 @@ export function SourceAttackResultOneOf5FromJSONTyped(json: any, ignoreDiscrimin
     return {
         
         'attackType': json['attack_type'],
-        'results': ((json['results'] as Array<any>).map(FullServiceDetectionResultFromJSON)),
+        'results': ((json['results'] as Array<any>).map(FullUdpServiceDetectionResultFromJSON)),
     };
 }
 
@@ -86,7 +86,7 @@ export function SourceAttackResultOneOf5ToJSON(value?: SourceAttackResultOneOf5 
     return {
         
         'attack_type': value.attackType,
-        'results': ((value.results as Array<any>).map(FullServiceDetectionResultToJSON)),
+        'results': ((value.results as Array<any>).map(FullUdpServiceDetectionResultToJSON)),
     };
 }
 

@@ -340,44 +340,6 @@ export default class WorkspaceDataDetailsResults extends React.Component<
                     } else {
                         return null;
                     }
-
-                case "TcpPortScan":
-                    if (this.state.page < this.props.attack.results.length) {
-                        let tcpResult = this.props.attack.results[this.state.page];
-                        return (
-                            <div className="workspace-data-details-container">
-                                <div className={"workspace-data-details-pane"}>
-                                    <h3 className={"sub-heading"}>TCP Port Scan</h3>
-                                    <div className={"workspace-data-details-list"}>
-                                        <div className="workspace-data-details-list-elements">
-                                            <span>Address:</span>
-                                            <span>Started by:</span>
-                                            <span>Created:</span>
-                                            <span>Finished:</span>
-                                        </div>
-                                        <div className="workspace-data-details-list-elements">
-                                            <span>{tcpResult.address}</span>
-                                            <span>{a.startedBy.displayName}</span>
-                                            <span>{this.formateDate(a.createdAt)}</span>
-                                            <span>{this.formateDate(a.finishedAt)}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className={"workspace-data-details-pane-layout"}>
-                                    <div className={"workspace-data-details-pane"}>
-                                        <h3 className={"sub-heading"}>Port</h3>
-                                        <span>{tcpResult.port}</span>
-                                    </div>
-                                    <div className={"workspace-data-details-pane"}>
-                                        <h3 className={"sub-heading"}>Date</h3>
-                                        <span>{this.formateDate(a.createdAt)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    } else {
-                        return null;
-                    }
                 case "ServiceDetection":
                 case "UdpServiceDetection":
                     if (this.state.page < this.props.attack.results.length) {
