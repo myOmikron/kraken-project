@@ -208,17 +208,38 @@ pub async fn start_dehashed_query(
 
 /// The parameters of a "service detection" attack
 pub struct ServiceDetectionParams {
-    /// The ip address the service listens on
-    pub target: IpAddr,
+    /// The ip addresses / networks to scan
+    pub targets: Vec<DomainOrNetwork>,
 
-    /// The port the service listens on
-    pub port: u16,
+    /// List of single ports and port ranges
+    pub ports: Vec<PortOrRange>,
+
+    /// The time to wait until a connection is considered failed.
+    ///
+    /// The timeout is specified in milliseconds.
+    pub connect_timeout: u64,
 
     /// Time to wait for a response after sending the payload
     /// (or after establishing a connection, if not payload is to be sent)
     ///
     /// The timeout is specified in milliseconds.
-    pub timeout: u64,
+    pub receive_timeout: u64,
+
+    /// The number of times the connection should be retried if it failed.
+    pub max_retries: u32,
+
+    /// The interval that should be wait between retries on a port.
+    ///
+    /// The interval is specified in milliseconds.
+    pub retry_interval: u64,
+
+    /// The concurrent task limit
+    pub concurrent_limit: u32,
+
+    /// Skips the initial icmp check.
+    ///
+    /// All hosts are assumed to be reachable
+    pub skip_icmp_check: bool,
 }
 /// Start a "service detection" attack
 pub async fn start_service_detection(

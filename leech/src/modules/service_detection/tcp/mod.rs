@@ -53,7 +53,7 @@ pub struct TcpServiceDetectionSettings {
     pub skip_icmp_check: bool,
 
     /// Just runs the initial port scanner without the service detection
-    pub just_scan: bool, // TODO
+    pub just_scan: bool,
 }
 
 /// A found open port and the potentially detected service

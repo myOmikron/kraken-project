@@ -119,17 +119,35 @@ message CertificateTransparencyResponse {
  * Service Detection
  */
 
-// Service detection request
+// Request for stating a tcp service detection
 message ServiceDetectionRequest {
   // A unique id that identifier the attack
   string attack_uuid = 1;
-  // The ip address to connect to
-  attacks.shared.Address address = 2;
-  // The port to connect to
-  uint32 port = 3;
+  // The ip addresses / networks to scan
+  repeated attacks.shared.NetOrAddress targets = 2;
+  // List of single ports and port ranges
+  //
+  // If no values are supplied, 1-65535 is used as default
+  repeated PortOrRange ports = 3;
+  // The time to wait until a connection is considered failed.
+  //
+  // The timeout is specified in milliseconds.
+  uint64 connect_timeout = 4;
   // The interval to wait for a response after connecting and sending an optional payload.
   // Specified in milliseconds.
-  uint64 timeout = 4;
+  uint64 receive_timeout = 5;
+  // The number of times the connection should be retried if it failed.
+  uint32 max_retries = 6;
+  // The interval that should be wait between retries on a port.
+  //
+  // The interval is specified in milliseconds.
+  uint64 retry_interval = 7;
+  // The concurrent task limit
+  uint32 concurrent_limit = 8;
+  // Skips the initial icmp check.
+  //
+  // All hosts are assumed to be reachable
+  bool skip_icmp_check = 9;
 }
 
 // Response to a service detection request
@@ -265,7 +283,7 @@ service ReqAttackService {
   rpc BruteforceSubdomains(BruteforceSubdomainRequest) returns (stream BruteforceSubdomainResponse);
   rpc RunTcpPortScan(TcpPortScanRequest) returns (stream TcpPortScanResponse);
   rpc QueryCertificateTransparency(CertificateTransparencyRequest) returns (CertificateTransparencyResponse);
-  rpc ServiceDetection(ServiceDetectionRequest) returns (ServiceDetectionResponse);
+  rpc ServiceDetection(ServiceDetectionRequest) returns (stream ServiceDetectionResponse);
   rpc UdpServiceDetection(UdpServiceDetectionRequest) returns (stream UdpServiceDetectionResponse);
   rpc HostsAliveCheck(HostsAliveRequest) returns (stream HostsAliveResponse);
   rpc DnsResolution(DnsResolutionRequest) returns (stream DnsResolutionResponse);
@@ -293,7 +311,7 @@ message PushAttackRequest {
     // Response to a certificate transparency request
     CertificateTransparencyResponse certificate_transparency = 5;
     // Response to a service detection request
-    ServiceDetectionResponse service_detection = 6;
+    RepeatedServiceDetectionResponse service_detection = 6;
     // Response for checking which hosts are alive
     RepeatedHostsAliveResponse hosts_alive = 7;
     // Response streamed by a dns resolution attack
@@ -314,6 +332,11 @@ message RepeatedBruteforceSubdomainResponse {
 message RepeatedTcpPortScanResponse {
   // repeated TcpPortScanResponse
   repeated TcpPortScanResponse responses = 1;
+}
+// Thin wrapper to have a `repeated ServiceDetectionResponse` in a `oneof`
+message RepeatedServiceDetectionResponse {
+  // repeated ServiceDetectionResponse
+  repeated ServiceDetectionResponse responses = 1;
 }
 // Thin wrapper to have a `repeated HostsAliveResponse` in a `oneof`
 message RepeatedHostsAliveResponse {

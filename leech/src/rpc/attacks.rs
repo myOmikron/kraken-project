@@ -223,69 +223,80 @@ impl ReqAttackService for Attacks {
         Ok(Response::new(ct_res))
     }
 
+    type ServiceDetectionStream =
+        Pin<Box<dyn Stream<Item = Result<ServiceDetectionResponse, Status>> + Send>>;
+
     async fn service_detection(
         &self,
         request: Request<ServiceDetectionRequest>,
-    ) -> Result<Response<ServiceDetectionResponse>, Status> {
+    ) -> Result<Response<Self::ServiceDetectionStream>, Status> {
         let request = request.into_inner();
 
-        let ip = IpAddr::try_from(
-            request
-                .address
-                .clone()
-                .ok_or(Status::invalid_argument("Missing address"))?,
-        )?;
+        let attack_uuid = Uuid::parse_str(&request.attack_uuid)
+            .map_err(|_| Status::invalid_argument("attack_uuid has to be an Uuid"))?;
 
-        let port: u16 = request
-            .port
-            .try_into()
-            .map_err(|_| Status::invalid_argument("Port is out of range"))?;
+        let mut ports = request
+            .ports
+            .into_iter()
+            .map(RangeInclusive::try_from)
+            .collect::<Result<Vec<_>, _>>()?;
+        if ports.is_empty() {
+            ports.push(1..=u16::MAX);
+        }
+
+        let concurrent_limit = NonZeroU32::new(request.concurrent_limit)
+            .ok_or_else(|| Status::invalid_argument("concurrent_limit can't be zero"))?;
 
         let settings = TcpServiceDetectionSettings {
-            addresses: vec![IpNetwork::from(ip)],
-            ports: vec![port..=port],
-            connect_timeout: Duration::from_millis(request.timeout),
-            receive_timeout: Duration::from_millis(request.timeout),
-            max_retries: 0,
-            retry_interval: Default::default(),
-            concurrent_limit: NonZeroU32::new(1).unwrap(),
-            skip_icmp_check: true,
+            addresses: request
+                .targets
+                .into_iter()
+                .map(IpNetwork::try_from)
+                .collect::<Result<_, _>>()?,
+            ports,
+            connect_timeout: Duration::from_millis(request.connect_timeout),
+            receive_timeout: Duration::from_millis(request.receive_timeout),
+            max_retries: request.max_retries,
+            retry_interval: Duration::from_millis(request.retry_interval),
+            concurrent_limit,
+            skip_icmp_check: request.skip_icmp_check,
             just_scan: false,
         };
 
-        let (tx, mut rx) = mpsc::channel::<TcpServiceDetectionResult>(1);
-        start_tcp_service_detection(settings, tx)
-            .await
-            .map_err(|err| {
-                error!("Service detection failed: {err:?}");
-                Status::internal("Service detection failed. See logs")
-            })?;
-        let service = rx
-            .recv()
-            .await
-            .map(|result| result.service)
-            .unwrap_or(Service::Unknown);
-
-        Ok(Response::new(match service {
-            Service::Unknown => ServiceDetectionResponse {
-                response_type: ServiceCertainty::Unknown as _,
-                services: Vec::new(),
-                address: request.address,
-                port: request.port,
+        self.stream_attack(
+            attack_uuid,
+            {
+                |tx| async move {
+                    start_tcp_service_detection(settings, tx)
+                        .await
+                        .map_err(|err| {
+                            error!("Service detection failed: {err:?}");
+                            Status::internal("Service detection failed. See logs")
+                        })
+                }
             },
-            Service::Maybe(services) => ServiceDetectionResponse {
-                response_type: ServiceCertainty::Maybe as _,
-                services: services.into_iter().map(new_rpc_service).collect(),
-                address: request.address,
-                port: request.port,
+            |TcpServiceDetectionResult { service, addr }| match service {
+                Service::Unknown => ServiceDetectionResponse {
+                    response_type: ServiceCertainty::Unknown as _,
+                    services: Vec::new(),
+                    address: Some(shared::Address::from(addr.ip())),
+                    port: addr.port() as u32,
+                },
+                Service::Maybe(services) => ServiceDetectionResponse {
+                    response_type: ServiceCertainty::Maybe as _,
+                    services: services.into_iter().map(new_rpc_service).collect(),
+                    address: Some(shared::Address::from(addr.ip())),
+                    port: addr.port() as u32,
+                },
+                Service::Definitely { service, protocols } => ServiceDetectionResponse {
+                    response_type: ServiceCertainty::Definitely as _,
+                    services: vec![new_rpc_service((service, protocols))],
+                    address: Some(shared::Address::from(addr.ip())),
+                    port: addr.port() as u32,
+                },
             },
-            Service::Definitely { service, protocols } => ServiceDetectionResponse {
-                response_type: ServiceCertainty::Definitely as _,
-                services: vec![new_rpc_service((service, protocols))],
-                address: request.address,
-                port: request.port,
-            },
-        }))
+            any_attack_response::Response::ServiceDetection,
+        )
     }
 
     type UdpServiceDetectionStream =

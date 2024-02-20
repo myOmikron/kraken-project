@@ -1,11 +1,12 @@
 use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
-use kraken_proto::{shared, ServiceDetectionRequest, ServiceDetectionResponse};
+use kraken_proto::{shared, PortOrRange, ServiceDetectionRequest, ServiceDetectionResponse};
 use rorm::insert;
 use rorm::prelude::ForeignModelByField;
 use uuid::Uuid;
 
+use crate::api::handler::attacks::schema::DomainOrNetwork;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::models::{
@@ -23,13 +24,24 @@ impl AttackContext {
         mut leech: LeechClient,
         params: ServiceDetectionParams,
     ) -> Result<(), AttackError> {
+        let targets =
+            DomainOrNetwork::resolve(self.workspace.uuid, self.user.uuid, &leech, &params.targets)
+                .await?;
         let request = ServiceDetectionRequest {
             attack_uuid: self.attack_uuid.to_string(),
-            address: Some(shared::Address::from(params.target)),
-            port: params.port as u32,
-            timeout: params.timeout,
+            targets: targets
+                .into_iter()
+                .map(shared::NetOrAddress::from)
+                .collect(),
+            ports: params.ports.into_iter().map(PortOrRange::from).collect(),
+            connect_timeout: params.connect_timeout,
+            receive_timeout: params.receive_timeout,
+            concurrent_limit: params.concurrent_limit,
+            max_retries: params.max_retries,
+            retry_interval: params.retry_interval,
+            skip_icmp_check: params.skip_icmp_check,
         };
-        self.handle_response(leech.service_detection(request).await?.into_inner())
+        self.handle_streamed_response(leech.service_detection(request))
             .await
     }
 }

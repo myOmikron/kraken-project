@@ -302,15 +302,16 @@ pub async fn service_detection(
 ) -> ApiResult<HttpResponse> {
     let ServiceDetectionRequest {
         leech_uuid,
-        address,
-        port,
-        timeout,
+        targets,
+        ports,
+        connect_timeout,
+        receive_timeout,
+        retry_interval,
+        max_retries,
+        concurrent_limit,
+        skip_icmp_check,
         workspace_uuid,
     } = req.into_inner();
-
-    if port == 0 {
-        return Err(ApiError::InvalidPort);
-    }
 
     let client = if let Some(leech_uuid) = leech_uuid {
         GLOBAL.leeches.get_leech(&leech_uuid)?
@@ -323,9 +324,14 @@ pub async fn service_detection(
         user_uuid,
         client,
         ServiceDetectionParams {
-            target: address,
-            port,
-            timeout,
+            targets,
+            ports,
+            connect_timeout,
+            receive_timeout,
+            max_retries,
+            retry_interval,
+            concurrent_limit,
+            skip_icmp_check,
         },
     )
     .await?;

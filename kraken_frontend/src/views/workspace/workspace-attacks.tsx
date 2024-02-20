@@ -365,35 +365,73 @@ const ATTACKS: AllAttackDescr = {
     },
     service_detection: {
         name: "Service Detection",
-        description: `Try to determine which service is running on a specific port.`,
+        description: `Try to determine which service is running on a specific port.`, // TODO
         category: AttackCategory.Services,
         inputs: {
             endpoint: "serviceDetection",
             jsonKey: "serviceDetectionRequest",
             inputs: {
-                address: {
-                    label: "IP",
-                    multi: false,
-                    defaultValue: "",
-                    required: true,
-                    type: StringAttackInput,
-                    prefill: ["ipAddr"],
-                },
-                port: {
-                    label: "Port",
-                    multi: false,
+                targets: {
+                    label: "Domain / IP / net in CIDR",
+                    multi: true,
                     defaultValue: undefined,
-                    type: NumberAttackInput,
-                    prefill: ["port"],
+                    prefill: ["domain", "ipAddr"],
+                    type: StringAttackInput,
                     required: true,
                 },
-                timeout: {
-                    label: "Timeout",
+                ports: {
+                    label: "Ports",
+                    multi: false,
+                    required: true,
+                    defaultValue: ["1-65535"],
+                    prefill: "port",
+                    type: PortListInput,
+                },
+                connectTimeout: {
+                    label: "Connect Timeout",
+                    multi: false,
+                    defaultValue: 1000,
+                    required: true,
+                    type: DurationAttackInput,
+                    group: "Advanced",
+                },
+                receiveTimeout: {
+                    label: "Receive Timeout",
                     multi: false,
                     defaultValue: 500,
                     type: DurationAttackInput,
                     required: true,
                     group: "Advanced",
+                },
+                maxRetries: {
+                    label: "Max. no. of retries",
+                    multi: false,
+                    defaultValue: 6,
+                    required: true,
+                    type: NumberAttackInput,
+                    group: "Advanced",
+                },
+                retryInterval: {
+                    label: "Retry interval",
+                    multi: false,
+                    defaultValue: 100,
+                    required: true,
+                    type: DurationAttackInput,
+                    group: "Advanced",
+                },
+                concurrentLimit: {
+                    label: "Concurrency Limit",
+                    multi: false,
+                    defaultValue: 500,
+                    required: true,
+                    type: NumberAttackInput,
+                    group: "Advanced",
+                },
+                skipIcmpCheck: {
+                    label: "Skip icmp check",
+                    multi: false,
+                    defaultValue: false,
+                    type: BooleanAttackInput,
                 },
             },
         },
@@ -485,6 +523,7 @@ const TARGET_TYPE = ["domain", "host", "port", "service"] as const;
  * Used in combination with an uuid to identify an attack's target
  */
 export type TargetType = (typeof TARGET_TYPE)[number];
+
 export function TargetType(value: string): TargetType {
     // @ts-ignore
     if (TARGET_TYPE.indexOf(value) >= 0) return value;
@@ -631,6 +670,7 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
         if (this.props.targetType != "selection") throw new Error("invalid state");
 
         let workspaceUuid = this.context.workspace.uuid;
+
         function fetchAll<T>(
             api: { get: (workspaceUuid: string, thingUuid: string) => Promise<Result<T, ApiError>> },
             list: string[],
