@@ -13,7 +13,9 @@
         "dev": "vite",
         "build": "tsc && vite build",
         "preview": "vite preview",
-        "gen-api": "bash scripts/gen-api.sh"
+        "gen-api": "bash scripts/gen-api.sh",
+        "ci": "prettier --check .",
+        "format": "prettier --write ."
     },
     "dependencies": {
         "react-markdown": "^9.0.1",
