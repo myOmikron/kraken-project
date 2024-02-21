@@ -70,7 +70,7 @@ export default class Me extends React.Component<MeProps, MeState> {
                 toast.success("Created api key");
                 this.setState({ apiKeyName: "" });
                 await this.retrieveApiKeys();
-            }),
+            })
         );
     }
 
@@ -78,7 +78,7 @@ export default class Me extends React.Component<MeProps, MeState> {
         await Api.user.apiKeys.all().then(
             handleApiError((keys) => {
                 this.setState({ apiKeys: keys.keys });
-            }),
+            })
         );
     }
 
@@ -87,7 +87,7 @@ export default class Me extends React.Component<MeProps, MeState> {
             handleApiError(async (_) => {
                 toast.success("Deleted api key");
                 await this.retrieveApiKeys();
-            }),
+            })
         );
     }
 
@@ -119,7 +119,7 @@ export default class Me extends React.Component<MeProps, MeState> {
                 user.username = username;
                 this.setState({ user });
                 toast.success("Account data updated");
-            }),
+            })
         );
     }
 
@@ -137,7 +137,7 @@ export default class Me extends React.Component<MeProps, MeState> {
             handleApiError(() => {
                 toast.success("Changed password successfully");
                 this.context.reset();
-            }),
+            })
         );
     }
 

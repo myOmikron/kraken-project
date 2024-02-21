@@ -124,44 +124,67 @@ export default class WorkspaceDataDetailsResults extends React.Component<
                                     </div>
                                 </div>
                                 <div className={"workspace-data-details-pane-layout"}>
-                                    {txtResult.entries.map(entry => <>
-                                        <div className={"workspace-data-details-pane wide"}>
-                                            {("serviceHint" in entry && entry["serviceHint"]) ? <>
-                                                <h3 className={"sub-heading"}>{entry.serviceHint.txtType}</h3>
-                                                <span className={"workspace-data-details-text-wrap"}>{entry.serviceHint.rule}</span>
-                                            </> : ("spf" in entry && entry["spf"]) ? <>
-                                                <div className={"workspace-data-details-list"}>
-                                                    <h3 className={"sub-heading"}>{entry.spf.spfType}</h3>
-                                                    <span className={"workspace-data-details-text-wrap"}>{entry.spf.rule}</span>
-                                                </div>
-                                                {entry.spf.spfDomain && (<>
-                                                        <hr/>
-                                                        <div className={"workspace-data-details-list"}>
-                                                            <h3 className={"sub-heading"}>parsed{entry.spf.spfDomain && entry.spf.spfIp && " (domain) "}</h3>
-                                                            <div>
-                                                                <span>{entry.spf.spfDomain}</span>
-                                                                <span>
-                                                                    {entry.spf.spfDomainIpv4Cidr && "/" + entry.spf.spfDomainIpv4Cidr}
-                                                                </span>
-                                                                <span>
-                                                                    {entry.spf.spfDomainIpv6Cidr && "//" + entry.spf.spfDomainIpv6Cidr}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </>
-                                                )}
-                                                {entry.spf.spfIp && (
+                                    {txtResult.entries.map((entry) => (
+                                        <>
+                                            <div className={"workspace-data-details-pane wide"}>
+                                                {"serviceHint" in entry && entry["serviceHint"] ? (
                                                     <>
-                                                        <hr/>
-                                                        <div className={"workspace-data-details-list"}>
-                                                            <h3 className={"sub-heading"}>parsed{entry.spf.spfDomain && entry.spf.spfIp && " (ip) "}</h3>
-                                                            <span>{entry.spf.spfIp}</span>
-                                                        </div>
+                                                        <h3 className={"sub-heading"}>{entry.serviceHint.txtType}</h3>
+                                                        <span className={"workspace-data-details-text-wrap"}>
+                                                            {entry.serviceHint.rule}
+                                                        </span>
                                                     </>
-                                                )}
-                                            </> : undefined}
-                                        </div>
-                                    </>)}
+                                                ) : "spf" in entry && entry["spf"] ? (
+                                                    <>
+                                                        <div className={"workspace-data-details-list"}>
+                                                            <h3 className={"sub-heading"}>{entry.spf.spfType}</h3>
+                                                            <span className={"workspace-data-details-text-wrap"}>
+                                                                {entry.spf.rule}
+                                                            </span>
+                                                        </div>
+                                                        {entry.spf.spfDomain && (
+                                                            <>
+                                                                <hr />
+                                                                <div className={"workspace-data-details-list"}>
+                                                                    <h3 className={"sub-heading"}>
+                                                                        parsed
+                                                                        {entry.spf.spfDomain &&
+                                                                            entry.spf.spfIp &&
+                                                                            " (domain) "}
+                                                                    </h3>
+                                                                    <div>
+                                                                        <span>{entry.spf.spfDomain}</span>
+                                                                        <span>
+                                                                            {entry.spf.spfDomainIpv4Cidr &&
+                                                                                "/" + entry.spf.spfDomainIpv4Cidr}
+                                                                        </span>
+                                                                        <span>
+                                                                            {entry.spf.spfDomainIpv6Cidr &&
+                                                                                "//" + entry.spf.spfDomainIpv6Cidr}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                        {entry.spf.spfIp && (
+                                                            <>
+                                                                <hr />
+                                                                <div className={"workspace-data-details-list"}>
+                                                                    <h3 className={"sub-heading"}>
+                                                                        parsed
+                                                                        {entry.spf.spfDomain &&
+                                                                            entry.spf.spfIp &&
+                                                                            " (ip) "}
+                                                                    </h3>
+                                                                    <span>{entry.spf.spfIp}</span>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </>
+                                                ) : undefined}
+                                            </div>
+                                        </>
+                                    ))}
                                 </div>
                             </div>
                         );

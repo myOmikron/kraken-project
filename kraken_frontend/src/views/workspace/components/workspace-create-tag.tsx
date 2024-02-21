@@ -60,14 +60,14 @@ export default function WorkspaceCreateTag(props: WorkspaceCreateTagProps) {
                         handleApiError(({ uuid }) => {
                             toast.success("Created new global tag");
                             onCreated({ uuid, ...tag });
-                        }),
+                        })
                     );
                 } else {
                     Api.workspaces.tags.create(workspace, tag).then(
                         handleApiError(({ uuid }) => {
                             toast.success("Created new workspace tag");
                             onCreated({ uuid, ...tag, workspace });
-                        }),
+                        })
                     );
                 }
             }}

@@ -60,7 +60,7 @@ export default class KrakenNetwork extends React.Component<KrakenNetworkProps, K
                 this.setState({ leeches });
                 await sleep(10);
                 this.setState({});
-            }),
+            })
         );
     }
 
@@ -73,7 +73,7 @@ export default class KrakenNetwork extends React.Component<KrakenNetworkProps, K
                 toast.success("Created leech");
                 this.setState({ showPopup: false, address: "", name: "" });
                 this.retrieveLeeches();
-            }),
+            })
         );
     }
 

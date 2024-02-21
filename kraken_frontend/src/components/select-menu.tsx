@@ -70,8 +70,11 @@ export function SelectPrimitive<T extends { toString(): string }>(props: SelectP
     );
 }
 
-export function clearSelectStyles<Option, IsMulti extends boolean, Group extends GroupBase<Option>>(
-): StylesConfig<Option, IsMulti, Group> {
+export function clearSelectStyles<Option, IsMulti extends boolean, Group extends GroupBase<Option>>(): StylesConfig<
+    Option,
+    IsMulti,
+    Group
+> {
     return {
         ...selectStyles("default"),
         control: (styles, state) => ({
@@ -88,8 +91,8 @@ export function clearSelectStyles<Option, IsMulti extends boolean, Group extends
             fontFamily: "Roboto-Light, sans-serif",
             fontWeight: "normal",
             color: "white",
-            textShadow: "0 0 4px var(--primary)"
-        })
+            textShadow: "0 0 4px var(--primary)",
+        }),
     };
 }
 
@@ -97,7 +100,7 @@ export function clearSelectStyles<Option, IsMulti extends boolean, Group extends
  * Generates the styling information to be passed to `<Select />` for a given theme
  */
 export function selectStyles<Option, IsMulti extends boolean, Group extends GroupBase<Option>>(
-    theme: Theme,
+    theme: Theme
 ): StylesConfig<Option, IsMulti, Group> {
     return {
         control: (styles, state) => ({

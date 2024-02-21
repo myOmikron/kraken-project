@@ -43,37 +43,44 @@ export default class WorkspaceHeading extends React.Component<WorkspaceHeadingPr
     render() {
         return (
             <div className={"pane workspace-heading"}>
-                <Select<{ label: string, value: string }>
+                <Select<{ label: string; value: string }>
                     className={"dropdown"}
-                    components={{ Option: (props) => 
-                        <div onMouseDown={(e) => {
-                            if (e.ctrlKey && e.button == 0 || e.button == 1) {
-                                e.stopPropagation();
-                                ROUTES.WORKSPACE_HOSTS.open({ uuid: props.data.value });
-                            }
-                        }}>
-                            <components.Option {...props} />
-                        </div> }}
+                    components={{
+                        Option: (props) => (
+                            <div
+                                onMouseDown={(e) => {
+                                    if ((e.ctrlKey && e.button == 0) || e.button == 1) {
+                                        e.stopPropagation();
+                                        ROUTES.WORKSPACE_HOSTS.open({ uuid: props.data.value });
+                                    }
+                                }}
+                            >
+                                <components.Option {...props} />
+                            </div>
+                        ),
+                    }}
                     onChange={(t) => {
                         if (!t) return;
                         ROUTES.WORKSPACE_HOSTS.visit({ uuid: t.value });
                     }}
-                    options={this.state.workspaces
-                        ?.filter((e) => {
-                            return e.uuid !== this.props.uuid;
-                        })
-                        .map((w) => ({
-                            label: w.name,
-                            value: w.uuid
-                        })) ?? []}
+                    options={
+                        this.state.workspaces
+                            ?.filter((e) => {
+                                return e.uuid !== this.props.uuid;
+                            })
+                            .map((w) => ({
+                                label: w.name,
+                                value: w.uuid,
+                            })) ?? []
+                    }
                     value={{
                         label: this.props.name,
-                        value: this.props.uuid
+                        value: this.props.uuid,
                     }}
                     isClearable={false}
                     autoFocus={false}
                     styles={clearSelectStyles()}
-                    />
+                />
                 <div className={"workspace-heading-uuid"}>
                     {this.props.uuid}
                     <button

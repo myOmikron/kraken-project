@@ -53,7 +53,11 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
         prevState: Readonly<WorkspaceHostsState>,
         snapshot?: any
     ) {
-        if (this.context.workspace.uuid != this.state.forUuid || prevState.offset !== this.state.offset || this.state.limit !== prevState.limit) {
+        if (
+            this.context.workspace.uuid != this.state.forUuid ||
+            prevState.offset !== this.state.offset ||
+            this.state.limit !== prevState.limit
+        ) {
             this.retrieveHosts().then();
         }
     }
@@ -61,8 +65,7 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
     render() {
         const { offset, limit, total } = this.state;
 
-        if (total === null)
-            return <p>Loading...</p>;
+        if (total === null) return <p>Loading...</p>;
 
         const lastOffset = Math.floor(total / limit) * limit;
         const setOffset = (offset: number) => {

@@ -46,10 +46,10 @@ export default class GlobalPopup extends React.Component<GlobalPopupProps, Globa
                 popups.push(
                     ...e.invitations.map((i): WsInvitationToWorkspace => {
                         return { type: "invitation", invitationUuid: i.uuid, from: i.from, workspace: i.workspace };
-                    }),
+                    })
                 );
                 this.setState({ popups });
-            }),
+            })
         );
     }
 
@@ -57,7 +57,7 @@ export default class GlobalPopup extends React.Component<GlobalPopupProps, Globa
         console.log(
             this.state.popups.map((e) => {
                 return e.workspace.name;
-            }),
+            })
         );
         if (this.state.popups.length !== 0) {
             const popup = this.state.popups[0];

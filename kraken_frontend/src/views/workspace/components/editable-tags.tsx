@@ -41,8 +41,8 @@ export default function EditableTags(props: EditableTagsProps) {
                     setAllTags((workspaceTags) => [
                         ...workspaceTags,
                         ...globalTags.map((tag) => ({ ...tag, tagType: TagType.Global })),
-                    ]),
-                ),
+                    ])
+                )
             );
         Api.workspaces.tags
             .all(workspace)
@@ -51,8 +51,8 @@ export default function EditableTags(props: EditableTagsProps) {
                     setAllTags((globalTags) => [
                         ...workspaceTags.map((tag) => ({ ...tag, tagType: TagType.Workspace })),
                         ...globalTags,
-                    ]),
-                ),
+                    ])
+                )
             );
     }, [workspace]);
 

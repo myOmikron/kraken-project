@@ -12,17 +12,17 @@
 
 @font-face {
     font-family: "Roboto-Light";
-    src: url('/fonts/Roboto-Light.ttf');
+    src: url("/fonts/Roboto-Light.ttf");
 }
 
 @font-face {
     font-family: "Roboto-Thin";
-    src: url('/fonts/Roboto-Thin.ttf');
+    src: url("/fonts/Roboto-Thin.ttf");
 }
 
 @font-face {
     font-family: "Roboto-Regular";
-    src: url('/fonts/Roboto-Regular.ttf');
+    src: url("/fonts/Roboto-Regular.ttf");
 }
 
 html {
@@ -49,7 +49,7 @@ body {
     box-shadow: 0 0 25em var(--primary-op), inset 0 0 10em #0cf3, inset 0 0 0.5em #0ff2;
     backdrop-filter: blur(0.1em);
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFUlEQVQIW2P8//+/FCMj4zNGBigAADqJBAO/UCEeAAAAAElFTkSuQmCC),
-    linear-gradient(0deg,#010b22,var(--level-1));
+        linear-gradient(0deg, #010b22, var(--level-1));
     image-rendering: pixelated;
 }
 
@@ -61,7 +61,7 @@ body {
     box-shadow: 0 0 25em var(--primary-op), inset 0 0 10em #0cf3, inset 0 0 0.5em #0ff2;
     backdrop-filter: blur(0.1em);
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFUlEQVQIW2P8//+/FCMj4zNGBigAADqJBAO/UCEeAAAAAElFTkSuQmCC),
-    linear-gradient(0deg,#010b22,var(--level-1));
+        linear-gradient(0deg, #010b22, var(--level-1));
     image-rendering: pixelated;
 }
 
@@ -69,7 +69,7 @@ body {
     image-rendering: unset;
 }
 
-.nested-pane{
+.nested-pane {
     --pane-padding: 1em;
 
     display: flex;
@@ -77,7 +77,7 @@ body {
     flex-direction: column;
     border-radius: 0.5em;
     border: 1px solid var(--primary-op);
-    background-color: #00ccff10 ;
+    background-color: #00ccff10;
     gap: 0.5em;
 }
 

@@ -69,7 +69,7 @@ export type UseLiveEditorArgs<CT extends {} = true> = {
     receiveEdit: (
         target: EditorTarget,
         editor: editor.IStandaloneCodeEditor | null,
-        monaco: Monaco,
+        monaco: Monaco
     ) => { model: editor.ITextModel; setValue?: (newValue: string) => void } | undefined;
 
     /**
@@ -119,7 +119,7 @@ export default function useLiveEditor<CT extends {} = true>(args: UseLiveEditorA
                 }
                 return {};
             }),
-        deleteCursors,
+        deleteCursors
     );
 
     // Update which cursors to show based on `isHidden`
@@ -135,7 +135,7 @@ export default function useLiveEditor<CT extends {} = true>(args: UseLiveEditorA
                 }
                 return { ...cursors };
             }),
-        hideCursors,
+        hideCursors
     );
 
     React.useEffect(() => {
@@ -185,7 +185,7 @@ export default function useLiveEditor<CT extends {} = true>(args: UseLiveEditorA
                         editorInstance,
                         line,
                         column,
-                        stableArgs.isCursorHidden && !stableArgs.isCursorHidden(data),
+                        stableArgs.isCursorHidden && !stableArgs.isCursorHidden(data)
                     );
                 }
                 return {

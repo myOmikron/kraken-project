@@ -28,7 +28,7 @@ export function CreateHostForm(props: CreateHostFormProps) {
                     handleApiError(() => {
                         toast.success("Added host");
                         onSubmit();
-                    }),
+                    })
                 );
             }}
         >

@@ -11,7 +11,7 @@
 
 .workspace-hosts-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(30em, 1fr));;
+    grid-template-columns: repeat(auto-fit, minmax(30em, 1fr));
     gap: 1em;
     overflow-y: auto;
     height: fit-content;
@@ -41,4 +41,3 @@
     gap: 0.3em;
     font-size: small;
 }
-

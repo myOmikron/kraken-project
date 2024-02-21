@@ -6,7 +6,7 @@
     padding: 2em 6em;
 }
 
-.invitation-icon{
+.invitation-icon {
     width: 5em;
 }
 
@@ -14,7 +14,7 @@
     width: 100%;
 }
 
-.invitation-text{
+.invitation-text {
     display: flex;
     gap: 0.5em;
     align-items: center;

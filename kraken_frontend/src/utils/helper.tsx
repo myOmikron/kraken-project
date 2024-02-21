@@ -55,12 +55,10 @@ export namespace ObjectFns {
 
     export function deepDuplicate<T>(v: T): T {
         if (typeof v === "object" && v !== null) {
-            if (Array.isArray(v))
-                return v.map(deepDuplicate) as T;
+            if (Array.isArray(v)) return v.map(deepDuplicate) as T;
             else {
                 let ret: any = {};
-                for (const key of Object.keys(v))
-                    ret[key] = deepDuplicate((v as any)[key]);
+                for (const key of Object.keys(v)) ret[key] = deepDuplicate((v as any)[key]);
                 return ret as T;
             }
         } else {
@@ -83,8 +81,7 @@ export namespace ObjectFns {
                     break;
                 }
             }
-            if (!exists)
-                res.push(v);
+            if (!exists) res.push(v);
         }
         return res;
     }
@@ -94,22 +91,17 @@ export namespace ObjectFns {
     ///
     /// Throws an Error if this is passed a jagged array.
     export function transpose2D<T>(array: T[][]): T[][] {
-        if (!array.length)
-            return array;
+        if (!array.length) return array;
 
         let w = array.length;
         let h = array[0].length;
         let ret = new Array(h);
-        for (let i = 0; i < h; i++)
-            ret[i] = new Array(w);
+        for (let i = 0; i < h; i++) ret[i] = new Array(w);
         for (const v of array) {
-            if (v.length != h)
-                throw new Error("passed in jagged array into transpose2D");
+            if (v.length != h) throw new Error("passed in jagged array into transpose2D");
         }
 
-        for (let y = 0; y < h; y++)
-            for (let x = 0; x < w; x++)
-                ret[y][x] = array[x][y];
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) ret[y][x] = array[x][y];
 
         return ret;
     }

@@ -59,7 +59,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                     monaco.editor.createModel(
                         sections[findingSection].value,
                         sections[findingSection].editor.language,
-                        uri,
+                        uri
                     );
                 return { model, setValue: sections[findingSection].set };
             }
@@ -80,7 +80,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                 sections.Impact.set(finding.impact);
                 sections.Remediation.set(finding.remediation);
                 sections.References.set(finding.references);
-            }),
+            })
         );
     }, [props.uuid]);
 
@@ -154,11 +154,11 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                         others={{
                             Summary: cursors.some(({ data: { section } }) => section === FindingSection.Summary),
                             Description: cursors.some(
-                                ({ data: { section } }) => section === FindingSection.Description,
+                                ({ data: { section } }) => section === FindingSection.Description
                             ),
                             Impact: cursors.some(({ data: { section } }) => section === FindingSection.Impact),
                             Remediation: cursors.some(
-                                ({ data: { section } }) => section === FindingSection.Remediation,
+                                ({ data: { section } }) => section === FindingSection.Remediation
                             ),
                             References: cursors.some(({ data: { section } }) => section === FindingSection.References),
                         }}
@@ -174,7 +174,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                     {cursors
                         .filter(({ data: { section } }) => sections.selected === section)
                         .map(({ data: { displayName }, cursor }) =>
-                            cursor.render(<div className={"cursor-label"}>{displayName}</div>),
+                            cursor.render(<div className={"cursor-label"}>{displayName}</div>)
                         )}
                 </div>
             </div>

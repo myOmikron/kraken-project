@@ -377,3 +377,5 @@ export function ManualInsertToJSON(value?: ManualInsert | null): any {
 
 }
 EOF
+
+npx prettier --write "${SPEC}"

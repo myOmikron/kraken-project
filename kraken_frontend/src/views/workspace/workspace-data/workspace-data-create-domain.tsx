@@ -28,7 +28,7 @@ export function CreateDomainForm(props: CreateDomainFormProps) {
                     handleApiError(() => {
                         toast.success("Added domain");
                         onSubmit();
-                    }),
+                    })
                 );
             }}
         >

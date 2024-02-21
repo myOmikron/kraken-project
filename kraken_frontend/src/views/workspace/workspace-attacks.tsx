@@ -54,28 +54,28 @@ export enum AttackType {
 }
 
 type AttackRequestTypes = {
-    [AttackType.Dehashed]: QueryDehashedRequest,
-    [AttackType.CertificateTransparency]: QueryCertificateTransparencyRequest,
-    [AttackType.HostAlive]: HostsAliveRequest,
-    [AttackType.ServiceDetection]: ServiceDetectionRequest,
-    [AttackType.UdpServiceDetection]: UdpServiceDetectionRequest,
-    [AttackType.BruteforceSubdomains]: BruteforceSubdomainsRequest,
-    [AttackType.TcpCon]: ScanTcpPortsRequest,
-    [AttackType.DnsResolution]: DnsResolutionRequest,
-    [AttackType.DnsTxtScan]: DnsTxtScanRequest,
+    [AttackType.Dehashed]: QueryDehashedRequest;
+    [AttackType.CertificateTransparency]: QueryCertificateTransparencyRequest;
+    [AttackType.HostAlive]: HostsAliveRequest;
+    [AttackType.ServiceDetection]: ServiceDetectionRequest;
+    [AttackType.UdpServiceDetection]: UdpServiceDetectionRequest;
+    [AttackType.BruteforceSubdomains]: BruteforceSubdomainsRequest;
+    [AttackType.TcpCon]: ScanTcpPortsRequest;
+    [AttackType.DnsResolution]: DnsResolutionRequest;
+    [AttackType.DnsTxtScan]: DnsTxtScanRequest;
 };
 
 export interface IAttackInput {
-    label: string,
+    label: string;
     /// If true, the value is wrapped as a single-element array. When prefilled,
     /// may contain more than one value.
     /// If false and prefilled with more than one value, multiple requests will
     /// be sent out, one for each value.
-    multi?: boolean,
-    required?: boolean,
-    defaultValue: any,
-    prefill?: (keyof PrefilledAttackParams)[],
-    type: (props: IAttackInputProps) => React.JSX.Element,
+    multi?: boolean;
+    required?: boolean;
+    defaultValue: any;
+    prefill?: (keyof PrefilledAttackParams)[];
+    type: (props: IAttackInputProps) => React.JSX.Element;
     group?: undefined | string;
     renderProps?: React.HTMLProps<HTMLElement>;
     /// Called for prefilled inputs, to adjust prefilled value (e.g. primitive
@@ -85,24 +85,24 @@ export interface IAttackInput {
 
 export interface AttackInput<T, IsMulti extends boolean> extends IAttackInput {
     multi: IsMulti;
-    defaultValue: T | undefined,
-    type: (props: AttackInputProps<T>) => React.JSX.Element,
-    preprocess?: (v: any) => T | undefined,
+    defaultValue: T | undefined;
+    type: (props: AttackInputProps<T>) => React.JSX.Element;
+    preprocess?: (v: any) => T | undefined;
 }
 
 export type AttackInputs<ReqType extends AttackType> = {
     // see IAttackDescr for docs
 
-    endpoint: keyof AttacksApi,
-    jsonKey: string,
+    endpoint: keyof AttacksApi;
+    jsonKey: string;
     inputs: {
         [T in Exclude<keyof AttackRequestTypes[ReqType], "workspaceUuid" | "leechUuid">]:
-            (AttackRequestTypes[ReqType][T] extends readonly (infer ElementType)[]
-                ? AttackInput<ElementType, boolean>
-                : AttackInput<AttackRequestTypes[ReqType][T], false>
-            ) | { fixed: AttackRequestTypes[ReqType][T] }
+            | (AttackRequestTypes[ReqType][T] extends readonly (infer ElementType)[]
+                  ? AttackInput<ElementType, boolean>
+                  : AttackInput<AttackRequestTypes[ReqType][T], false>)
+            | { fixed: AttackRequestTypes[ReqType][T] };
     };
-}
+};
 
 export interface IAttackDescr {
     /** A full name to show on hover */
@@ -116,22 +116,22 @@ export interface IAttackDescr {
         /**
          * Which API to call, on the raw API
          * */
-        endpoint: keyof AttacksApi,
+        endpoint: keyof AttacksApi;
         /**
          * What the key inside the `[AttackName]OperationRequest` is called
          * (first parameter to `AttacksApi.endpoint`)
          *
          * See `src/api/generated/apis/AttacksApi.ts`
          */
-        jsonKey: string,
+        jsonKey: string;
         /**
          * Describes all the available inputs on the request object how to
          * process and send them.
          * */
         inputs: {
-            [index: string]: IAttackInput | { fixed: any }
-        }
-    }
+            [index: string]: IAttackInput | { fixed: any };
+        };
+    };
 }
 
 export interface AttackDescr<ReqType extends AttackType> extends IAttackDescr {
@@ -140,7 +140,7 @@ export interface AttackDescr<ReqType extends AttackType> extends IAttackDescr {
 }
 
 export type AllAttackDescr = {
-    [T in AttackType]: AttackDescr<T>
+    [T in AttackType]: AttackDescr<T>;
 };
 
 const ATTACKS: AllAttackDescr = {
@@ -159,7 +159,7 @@ const ATTACKS: AllAttackDescr = {
                     required: true,
                     defaultValue: "",
                     prefill: ["domain"],
-                    type: StringAttackInput
+                    type: StringAttackInput,
                 },
                 wordlistUuid: {
                     label: "Wordlist",
@@ -175,8 +175,8 @@ const ATTACKS: AllAttackDescr = {
                     required: true,
                     type: NumberAttackInput,
                     group: "Advanced",
-                }
-            }
+                },
+            },
         },
     },
     certificate_transparency: {
@@ -194,13 +194,13 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: "",
                     required: true,
                     prefill: ["domain"],
-                    type: StringAttackInput
+                    type: StringAttackInput,
                 },
                 includeExpired: {
                     label: "Include expired certificates",
                     multi: false,
                     defaultValue: false,
-                    type: BooleanAttackInput
+                    type: BooleanAttackInput,
                 },
                 maxRetries: {
                     label: "Max. no. of retries",
@@ -217,9 +217,9 @@ const ATTACKS: AllAttackDescr = {
                     required: true,
                     type: DurationAttackInput,
                     group: "Advanced",
-                }
-            }
-        }
+                },
+            },
+        },
     },
     dns_resolution: {
         name: "Dns Resolution",
@@ -239,9 +239,9 @@ const ATTACKS: AllAttackDescr = {
                     type: StringAttackInput,
                     prefill: ["domain"],
                     required: true,
-                }
-            }
-        }
+                },
+            },
+        },
     },
     dns_txt_scan: {
         name: "DNS TXT Scan",
@@ -258,9 +258,9 @@ const ATTACKS: AllAttackDescr = {
                     type: StringAttackInput,
                     prefill: ["domain"],
                     required: true,
-                }
-            }
-        }
+                },
+            },
+        },
     },
     host_alive: {
         name: "Host alive",
@@ -293,9 +293,9 @@ const ATTACKS: AllAttackDescr = {
                     type: NumberAttackInput,
                     required: true,
                     group: "Advanced",
-                }
-            }
-        }
+                },
+            },
+        },
     },
     tcp_con: {
         name: "TCP port scan",
@@ -311,7 +311,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: undefined,
                     prefill: ["domain", "ipAddr"],
                     type: StringAttackInput,
-                    required: true
+                    required: true,
                 },
                 ports: {
                     label: "Ports",
@@ -320,7 +320,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: ["1-65535"],
                     prefill: ["port"],
                     type: PortListInput,
-                    preprocess: (v) => typeof v == "number" ? [v] : v,
+                    preprocess: (v) => (typeof v == "number" ? [v] : v),
                 },
                 skipIcmpCheck: {
                     label: "Skip icmp check",
@@ -359,9 +359,9 @@ const ATTACKS: AllAttackDescr = {
                     required: true,
                     type: DurationAttackInput,
                     group: "Advanced",
-                }
-            }
-        }
+                },
+            },
+        },
     },
     service_detection: {
         name: "Service Detection",
@@ -393,10 +393,10 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: 500,
                     type: DurationAttackInput,
                     required: true,
-                    group: "Advanced"
-                }
-            }
-        }
+                    group: "Advanced",
+                },
+            },
+        },
     },
     udp_service_detection: {
         name: "UDP Service Detection",
@@ -421,7 +421,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: ["1-65535"],
                     prefill: ["port"],
                     type: PortListInput,
-                    preprocess: (v) => typeof v == "number" ? [v] : v,
+                    preprocess: (v) => (typeof v == "number" ? [v] : v),
                 },
                 timeout: {
                     label: "Timeout",
@@ -454,9 +454,9 @@ const ATTACKS: AllAttackDescr = {
                     type: NumberAttackInput,
                     group: "Advanced",
                     required: true,
-                }
-            }
-        }
+                },
+            },
+        },
     },
     dehashed: {
         name: "Dehashed",
@@ -471,10 +471,10 @@ const ATTACKS: AllAttackDescr = {
                     multi: false,
                     defaultValue: undefined,
                     type: DehashedAttackInput,
-                    prefill: ["domain", "ipAddr"]
-                }
-            }
-        }
+                    prefill: ["domain", "ipAddr"],
+                },
+            },
+        },
     },
 };
 
@@ -514,7 +514,7 @@ type WorkspaceAttacksProps =
 type WorkspaceAttacksState = {
     selectedAttack: AttackType | null;
     hoverAttack: AttackType | null;
-    target: { name: string, prefills: PrefilledAttackParams[] };
+    target: { name: string; prefills: PrefilledAttackParams[] };
 };
 
 export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksProps, WorkspaceAttacksState> {
@@ -554,12 +554,20 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
             case "domain":
                 Api.workspaces.domains
                     .get(this.context.workspace.uuid, this.props.targetUuid)
-                    .then(handleApiError(({ domain }) => this.setState({ target: { name: domain, prefills: [{domain}] } })));
+                    .then(
+                        handleApiError(({ domain }) =>
+                            this.setState({ target: { name: domain, prefills: [{ domain }] } })
+                        )
+                    );
                 break;
             case "host":
                 Api.workspaces.hosts
                     .get(this.context.workspace.uuid, this.props.targetUuid)
-                    .then(handleApiError(({ ipAddr }) => this.setState({ target: { name: ipAddr, prefills: [{ipAddr}] } })));
+                    .then(
+                        handleApiError(({ ipAddr }) =>
+                            this.setState({ target: { name: ipAddr, prefills: [{ ipAddr }] } })
+                        )
+                    );
                 break;
             case "port":
                 Api.workspaces.ports.get(this.context.workspace.uuid, this.props.targetUuid).then(
@@ -567,13 +575,15 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                         this.setState({
                             target: {
                                 name: `${ipAddr}'s port ${port}`,
-                                prefills: [{
-                                    ipAddr,
-                                    port,
-                                }]
+                                prefills: [
+                                    {
+                                        ipAddr,
+                                        port,
+                                    },
+                                ],
                             },
-                        }),
-                    ),
+                        })
+                    )
                 );
                 break;
             case "service":
@@ -584,13 +594,15 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                                 name: port
                                     ? `${ipAddr}'s service ${name} on port ${port.port}`
                                     : `${ipAddr}'s service ${name}`,
-                                prefills: [{
-                                    ipAddr,
-                                    port: port?.port,
-                                }]
+                                prefills: [
+                                    {
+                                        ipAddr,
+                                        port: port?.port,
+                                    },
+                                ],
                             },
-                        }),
-                    ),
+                        })
+                    )
                 );
                 break;
             case "selection":
@@ -602,8 +614,10 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                             `${this.props.ports.length} ports`,
                             `${this.props.domains.length} domains`,
                             `${this.props.services.length} services`,
-                        ].filter(s => !s.startsWith("0 ")).join(", "),
-                        prefills: []
+                        ]
+                            .filter((s) => !s.startsWith("0 "))
+                            .join(", "),
+                        prefills: [],
                     },
                 });
                 break;
@@ -614,11 +628,13 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
     }
 
     async updateSelection() {
-        if (this.props.targetType != "selection")
-            throw new Error("invalid state");
+        if (this.props.targetType != "selection") throw new Error("invalid state");
 
         let workspaceUuid = this.context.workspace.uuid;
-        function fetchAll<T>(api: { get: (workspaceUuid: string, thingUuid: string) => Promise<Result<T, ApiError>> }, list: string[]): Promise<T[]> {
+        function fetchAll<T>(
+            api: { get: (workspaceUuid: string, thingUuid: string) => Promise<Result<T, ApiError>> },
+            list: string[]
+        ): Promise<T[]> {
             return new Promise((resolve, reject) => {
                 let res: T[] = [];
 
@@ -629,13 +645,15 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                 }
 
                 checkDone();
-                list.forEach(item => {
+                list.forEach((item) => {
                     api.get(workspaceUuid, item)
-                        .then(handleApiError(v => {
-                            res.push(v);
-                            checkDone();
-                        }))
-                        .catch(v => {
+                        .then(
+                            handleApiError((v) => {
+                                res.push(v);
+                                checkDone();
+                            })
+                        )
+                        .catch((v) => {
                             console.error(v);
                             reject("failed looking up item " + item);
                         });
@@ -644,57 +662,77 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
         }
 
         let inputs: { [group: string]: PrefilledAttackParams[] } = {
-            hosts: (await fetchAll(Api.workspaces.hosts, this.props.hosts)).map(v => ({ ipAddr: v.ipAddr })),
-            ports: (await fetchAll(Api.workspaces.ports, this.props.ports)).map(v => ({ ipAddr: v.host.ipAddr, port: v.port })),
-            domains: (await fetchAll(Api.workspaces.domains, this.props.domains)).map(v => ({ domain: v.domain })),
-            services: (await fetchAll(Api.workspaces.services, this.props.services)).map(v => ({ ipAddr: v.host.ipAddr, port: v.port?.port })),
+            hosts: (await fetchAll(Api.workspaces.hosts, this.props.hosts)).map((v) => ({ ipAddr: v.ipAddr })),
+            ports: (await fetchAll(Api.workspaces.ports, this.props.ports)).map((v) => ({
+                ipAddr: v.host.ipAddr,
+                port: v.port,
+            })),
+            domains: (await fetchAll(Api.workspaces.domains, this.props.domains)).map((v) => ({ domain: v.domain })),
+            services: (await fetchAll(Api.workspaces.services, this.props.services)).map((v) => ({
+                ipAddr: v.host.ipAddr,
+                port: v.port?.port,
+            })),
         };
 
-        let prefills: PrefilledAttackParams[] = Object.keys(inputs).flatMap(k => inputs[k]);
+        let prefills: PrefilledAttackParams[] = Object.keys(inputs).flatMap((k) => inputs[k]);
 
         this.setState({
             target: {
                 name: this.state.target.name,
-                prefills: prefills
-            }
+                prefills: prefills,
+            },
         });
     }
 
     renderSelection() {
-        if (!this.state.target?.prefills?.length)
-            return <></>;
+        if (!this.state.target?.prefills?.length) return <></>;
         const columnLabels: { [P in keyof PrefilledAttackParams]: string } = {
             domain: "Domain",
             ipAddr: "Host",
-            port: "Port"
-        }
+            port: "Port",
+        };
         let columns: { [P in keyof PrefilledAttackParams]: boolean } = {
             domain: true,
             ipAddr: true,
-            port: true
-        }
+            port: true,
+        };
         for (const k of Object.keys(columns)) {
-            (columns as any)[k] = this.state.target.prefills.some(p => (p as any)[k] !== undefined);
+            (columns as any)[k] = this.state.target.prefills.some((p) => (p as any)[k] !== undefined);
         }
-        return <div className="pane selection">
-            <h2 className={"sub-heading"}>Selection</h2>
-            <table>
-                <thead>
-                    <tr>
-                        {Object.keys(columns).map(c => (columns as any)[c] && <th>{(columnLabels as any)[c]}</th>)}
-                    </tr>
-                </thead>
-                <tbody>
-                    {this.state.target.prefills.map((row: any) => <tr>
-                        {Object.keys(columns).map(c => (columns as any)[c] &&
-                            <td>{row[c] === undefined
-                                ? <em>n/a</em>
-                                : <pre>{typeof row[c] === "string" ? row[c] : JSON.stringify(row[c])}</pre>
-                            }</td>)}
-                    </tr>)}
-                </tbody>
-            </table>
-        </div>;
+        return (
+            <div className="pane selection">
+                <h2 className={"sub-heading"}>Selection</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            {Object.keys(columns).map(
+                                (c) => (columns as any)[c] && <th>{(columnLabels as any)[c]}</th>
+                            )}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {this.state.target.prefills.map((row: any) => (
+                            <tr>
+                                {Object.keys(columns).map(
+                                    (c) =>
+                                        (columns as any)[c] && (
+                                            <td>
+                                                {row[c] === undefined ? (
+                                                    <em>n/a</em>
+                                                ) : (
+                                                    <pre>
+                                                        {typeof row[c] === "string" ? row[c] : JSON.stringify(row[c])}
+                                                    </pre>
+                                                )}
+                                            </td>
+                                        )
+                                )}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        );
     }
 
     render() {

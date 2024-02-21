@@ -37,7 +37,7 @@ export function CreatePortForm(props: CreatePortFormProps) {
                         handleApiError(() => {
                             toast.success("Added port");
                             onSubmit();
-                        }),
+                        })
                     );
             }}
         >

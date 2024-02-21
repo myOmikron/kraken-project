@@ -34,24 +34,33 @@ export default function SelectableText(props: SelectableTextProps) {
 
     let div = React.useRef(null);
     let location = React.useRef([0, 0]);
-    return <As {...props} ref={div} onMouseDown={(e: MouseEvent) => {
-        location.current = [e.clientX, e.clientY];
-    }} onMouseMove={(e: MouseEvent) => {
-        let [x1, y1] = location.current;
-        let [x2, y2] = [e.clientX, e.clientY];
-        let d = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
-        if (d > MOVE_THRESHOLD * MOVE_THRESHOLD)
-            location.current = [NaN, NaN];
-    }} onDoubleClick={(e: MouseEvent) => {
-        const selection = window.getSelection();
-        let [x1, y1] = location.current;
-        let [x2, y2] = [e.clientX, e.clientY];
-        let d = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
-        if (div.current && selection && !e.ctrlKey && !e.shiftKey && d < MOVE_THRESHOLD * MOVE_THRESHOLD) {
-            const range = document.createRange();
-            range.selectNodeContents(div.current);
-            selection.removeAllRanges();
-            selection.addRange(range);
-        }
-    }}>{props.children}</As>;
+    return (
+        <As
+            {...props}
+            ref={div}
+            onMouseDown={(e: MouseEvent) => {
+                location.current = [e.clientX, e.clientY];
+            }}
+            onMouseMove={(e: MouseEvent) => {
+                let [x1, y1] = location.current;
+                let [x2, y2] = [e.clientX, e.clientY];
+                let d = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
+                if (d > MOVE_THRESHOLD * MOVE_THRESHOLD) location.current = [NaN, NaN];
+            }}
+            onDoubleClick={(e: MouseEvent) => {
+                const selection = window.getSelection();
+                let [x1, y1] = location.current;
+                let [x2, y2] = [e.clientX, e.clientY];
+                let d = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
+                if (div.current && selection && !e.ctrlKey && !e.shiftKey && d < MOVE_THRESHOLD * MOVE_THRESHOLD) {
+                    const range = document.createRange();
+                    range.selectNodeContents(div.current);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+            }}
+        >
+            {props.children}
+        </As>
+    );
 }
