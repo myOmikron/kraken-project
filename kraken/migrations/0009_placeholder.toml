@@ -1,23 +1,27 @@
 [Migration]
-Hash = "11469283306654366022"
+Hash = "8689921555127961096"
 Initial = false
 Dependency = 8
 Replaces = []
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "manualservice"
+Model = "service"
 
 [Migration.Operations.Field]
 Name = "protocols"
 Type = "int16"
 
 [[Migration.Operations.Field.Annotations]]
+Type = "default_value"
+Value = 0
+
+[[Migration.Operations.Field.Annotations]]
 Type = "not_null"
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "service"
+Model = "manualservice"
 
 [Migration.Operations.Field]
 Name = "protocols"

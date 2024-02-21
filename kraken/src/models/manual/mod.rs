@@ -64,6 +64,7 @@ pub struct ManualService {
     pub port: Option<i32>,
     pub protocol: PortProtocol,
 
+    #[rorm(default = 0)] // 0 = Unknown
     pub protocols: i16,
 
     /// The user which added the host
