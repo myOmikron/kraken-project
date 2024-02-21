@@ -1,7 +1,3 @@
-mod detection;
-mod oneshot;
-mod scanner;
-
 use std::net::SocketAddr;
 use std::num::NonZeroU32;
 use std::ops::RangeInclusive;
@@ -22,6 +18,10 @@ use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
 use crate::modules::service_detection::error::ResultExt;
 use crate::modules::service_detection::{DynError, DynResult, Service};
 use crate::utils::IteratorExt;
+
+mod detection;
+mod oneshot;
+mod scanner;
 
 /// Settings for a service detection
 #[derive(Clone, Debug)]
