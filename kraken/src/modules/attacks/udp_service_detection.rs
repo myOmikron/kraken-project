@@ -11,7 +11,8 @@ use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::{
     AggregationSource, AggregationTable, HostCertainty, PortCertainty, PortProtocol,
-    ServiceCertainty, SourceType, UdpServiceDetectionName, UdpServiceDetectionResultInsert,
+    ServiceCertainty, ServiceProtocols, SourceType, UdpServiceDetectionName,
+    UdpServiceDetectionResultInsert,
 };
 use crate::modules::attacks::{
     AttackContext, AttackError, HandleAttackResponse, UdpServiceDetectionParams,
@@ -37,6 +38,7 @@ impl AttackContext {
             .await
     }
 }
+
 impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
     async fn handle_response(
         &self,
@@ -120,6 +122,7 @@ impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
                         self.workspace.uuid,
                         host_uuid,
                         Some(port_uuid),
+                        Some(ServiceProtocols::Udp { raw: service.udp }),
                         &service.name,
                         certainty,
                     )

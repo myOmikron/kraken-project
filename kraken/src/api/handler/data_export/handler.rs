@@ -66,7 +66,7 @@ pub(crate) async fn export_workspace(
     let mut services: HashMap<Uuid, AggregatedService> = query!(&mut tx, Service)
         .condition(Service::F.workspace.equals(path.uuid))
         .stream()
-        .map_ok(|service| (service.uuid, service.into()))
+        .map_ok(|service| (service.uuid, convert_service(service, &ports)))
         .try_collect()
         .await?;
     let mut domains: HashMap<Uuid, AggregatedDomain> = query!(&mut tx, Domain)
@@ -247,35 +247,41 @@ impl From<Port> for AggregatedPort {
         }
     }
 }
-impl From<Service> for AggregatedService {
-    fn from(value: Service) -> Self {
-        let Service {
-            uuid,
-            name,
-            version,
-            host,
-            port,
-            comment,
-            certainty,
-            workspace: _,
-            workspace_tags: _,
-            global_tags: _,
-            created_at,
-        } = value;
-        // DON'T just ignore new fields with `: _`
-        // Make sure you export the field in some other way!
 
-        Self {
-            uuid,
-            name,
-            version,
-            host: *host.key(),
-            port: port.map(|port| *port.key()),
-            comment,
-            certainty,
-            tags: Default::default(),
-            created_at,
-        }
+pub fn convert_service(
+    service: Service,
+    ports: &HashMap<Uuid, AggregatedPort>,
+) -> AggregatedService {
+    let Service {
+        uuid,
+        name,
+        version,
+        host,
+        port,
+        protocols,
+        comment,
+        certainty,
+        workspace: _,
+        workspace_tags: _,
+        global_tags: _,
+        created_at,
+    } = service;
+    // DON'T just ignore new fields with `: _`
+    // Make sure you export the field in some other way!
+
+    AggregatedService {
+        uuid,
+        name,
+        version,
+        host: *host.key(),
+        port: port.as_ref().map(|port| *port.key()),
+        protocols: port
+            .and_then(|port| ports.get(port.key()))
+            .map(|port| port.protocol.decode_service(protocols)),
+        comment,
+        certainty,
+        tags: Default::default(),
+        created_at,
     }
 }
 impl From<Domain> for AggregatedDomain {

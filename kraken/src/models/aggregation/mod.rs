@@ -166,6 +166,15 @@ pub struct Service {
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub port: Option<ForeignModel<Port>>,
 
+    /// The transport protocols the service responds to.
+    ///
+    /// By "transport protocols" we mean protocols layered above the [`PortProtocol`] which are not applications yet.
+    /// For example: TLS
+    ///
+    /// This integer is a bitset whose interpretation depends on the `port`'s `protocol`.
+    #[rorm(default = 0)] // = Unknown
+    pub protocols: i16,
+
     /// A comment to the service
     #[rorm(max_length = 1024)]
     pub comment: String,
@@ -183,6 +192,34 @@ pub struct Service {
     /// The point in time, this entry was created
     #[rorm(auto_create_time)]
     pub created_at: DateTime<Utc>,
+}
+
+/// The parsed representation for a [`Service`]'s `protocols` field
+#[derive(ToSchema, Debug, Copy, Clone, Serialize, Deserialize)]
+pub enum ServiceProtocols {
+    /// The port's protocol is [`PortProtocol::Unknown`]
+    Unknown {}, // Not unit struct to make the api generator behave
+
+    /// The port's protocol is [`PortProtocol::Tcp`]
+    Tcp {
+        /// The service responds to raw tcp
+        raw: bool,
+
+        /// The service responds to tls
+        tls: bool,
+    },
+
+    /// The port's protocol is [`PortProtocol::Udp`]
+    Udp {
+        /// The service responds to raw udp
+        raw: bool,
+    },
+
+    /// The port's protocol is [`PortProtocol::Sctp`]
+    Sctp {
+        /// The service responds to raw sctp
+        raw: bool,
+    },
 }
 
 /// M2M relation between [GlobalTag] and [Service]

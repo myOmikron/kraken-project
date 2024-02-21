@@ -3,7 +3,7 @@ use rorm::prelude::*;
 use rorm::{and, insert, query, update};
 use uuid::Uuid;
 
-use crate::models::{DomainDomainRelation, DomainHostRelation};
+use crate::models::{DomainDomainRelation, DomainHostRelation, PortProtocol, ServiceProtocols};
 
 impl DomainDomainRelation {
     /// Insert a [`CnameRelation`] if it doesn't exist yet.
@@ -105,5 +105,56 @@ impl DomainHostRelation {
 
         guard.commit().await?;
         Ok(())
+    }
+}
+
+const RAW: usize = 0;
+const TLS_TCP: usize = 1;
+
+impl PortProtocol {
+    /// Decodes [`ServiceProtocols`] based on the service's port's [`PortProtocol`].
+    pub fn decode_service(&self, value: i16) -> ServiceProtocols {
+        let read_bit = |bit| (value & (1i16 << bit)) > 0;
+        match self {
+            PortProtocol::Unknown => ServiceProtocols::Unknown {},
+            PortProtocol::Tcp => ServiceProtocols::Tcp {
+                raw: read_bit(RAW),
+                tls: read_bit(TLS_TCP),
+            },
+            PortProtocol::Udp => ServiceProtocols::Udp { raw: read_bit(RAW) },
+            PortProtocol::Sctp => ServiceProtocols::Sctp { raw: read_bit(RAW) },
+        }
+    }
+}
+
+impl ServiceProtocols {
+    /// Encodes the [`ServiceProtocols`] into its database format.
+    ///
+    /// Use [`PortProtocol::decode_service`] for decoding.
+    pub fn encode(self) -> i16 {
+        let mut result = 0;
+        let mut set_bit = |bit| result |= 1i16 << bit;
+        match self {
+            ServiceProtocols::Unknown {} => {}
+            ServiceProtocols::Tcp { raw, tls } => {
+                if raw {
+                    set_bit(RAW);
+                }
+                if tls {
+                    set_bit(TLS_TCP);
+                }
+            }
+            ServiceProtocols::Udp { raw } => {
+                if raw {
+                    set_bit(RAW);
+                }
+            }
+            ServiceProtocols::Sctp { raw } => {
+                if raw {
+                    set_bit(RAW);
+                }
+            }
+        }
+        result
     }
 }

@@ -6,7 +6,7 @@ use kraken::api::handler::common::schema::{PageParams, ServiceResultsPage, UuidR
 use kraken::api::handler::services::schema::{
     CreateServiceRequest, FullService, GetAllServicesQuery, ServiceRelations, UpdateServiceRequest,
 };
-use kraken::models::{ManualServiceCertainty, PortProtocol};
+use kraken::models::{ManualServiceCertainty, ServiceProtocols};
 use uuid::Uuid;
 
 use crate::sdk::utils::KrakenRequest;
@@ -20,7 +20,7 @@ impl KrakenClient {
         name: String,
         certainty: ManualServiceCertainty,
         ip_addr: IpAddr,
-        port: Option<(NonZeroU16, PortProtocol)>,
+        port: Option<(NonZeroU16, ServiceProtocols)>,
     ) -> KrakenResult<Uuid> {
         #[allow(clippy::expect_used)]
         let url = self
@@ -36,7 +36,7 @@ impl KrakenClient {
                         certainty,
                         host: IpNetwork::from(ip_addr),
                         port: port.map(|x| x.0.get()),
-                        protocol: port.map(|x| x.1),
+                        protocols: port.map(|x| x.1),
                     })
                     .build(),
             )

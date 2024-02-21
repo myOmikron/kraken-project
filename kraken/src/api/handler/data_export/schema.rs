@@ -8,6 +8,7 @@ use uuid::Uuid;
 
 use crate::models::{
     DomainCertainty, HostCertainty, OsType, PortCertainty, PortProtocol, ServiceCertainty,
+    ServiceProtocols,
 };
 
 /// The aggregated results of a workspace
@@ -119,6 +120,9 @@ pub struct AggregatedService {
 
     /// The port this service is attached to
     pub port: Option<Uuid>,
+
+    /// The protocols used above the port's protocol
+    pub protocols: Option<ServiceProtocols>,
 
     /// A comment to the service
     pub comment: String,

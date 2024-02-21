@@ -8,7 +8,7 @@ use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
 use crate::api::handler::common::schema::{PageParams, SimpleTag};
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::SimplePort;
-use crate::models::{ManualServiceCertainty, PortProtocol, ServiceCertainty};
+use crate::models::{ManualServiceCertainty, ServiceCertainty, ServiceProtocols};
 
 /// The request to manually add a service
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -29,8 +29,9 @@ pub struct CreateServiceRequest {
     /// If set, you must specify protocol
     #[schema(example = "8080")]
     pub port: Option<u16>,
-    /// The protocol of the port
-    pub protocol: Option<PortProtocol>,
+
+    /// The port's protocol as well as its sub protocols
+    pub protocols: Option<ServiceProtocols>,
 }
 
 /// The request to update a service
@@ -104,6 +105,8 @@ pub struct FullService {
     pub host: SimpleHost,
     /// An optional port this service listens on
     pub port: Option<SimplePort>,
+    /// The protocols used above the port's protocol
+    pub protocols: Option<ServiceProtocols>,
     /// A comment to the service
     #[schema(example = "Holds all relevant information")]
     pub comment: String,

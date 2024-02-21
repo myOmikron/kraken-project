@@ -11,7 +11,8 @@ use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::models::{
     AggregationSource, AggregationTable, HostCertainty, PortCertainty, PortProtocol,
-    ServiceCertainty, ServiceDetectionName, ServiceDetectionResultInsert, SourceType,
+    ServiceCertainty, ServiceDetectionName, ServiceDetectionResultInsert, ServiceProtocols,
+    SourceType,
 };
 use crate::modules::attacks::{
     AttackContext, AttackError, HandleAttackResponse, ServiceDetectionParams,
@@ -45,6 +46,7 @@ impl AttackContext {
             .await
     }
 }
+
 impl HandleAttackResponse<ServiceDetectionResponse> for AttackContext {
     async fn handle_response(&self, response: ServiceDetectionResponse) -> Result<(), AttackError> {
         let ServiceDetectionResponse {
@@ -112,6 +114,10 @@ impl HandleAttackResponse<ServiceDetectionResponse> for AttackContext {
                         self.workspace.uuid,
                         host_uuid,
                         Some(port_uuid),
+                        Some(ServiceProtocols::Tcp {
+                            raw: service.tcp,
+                            tls: service.tls,
+                        }),
                         &service.name,
                         certainty,
                     )

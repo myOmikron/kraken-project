@@ -64,6 +64,8 @@ pub struct ManualService {
     pub port: Option<i32>,
     pub protocol: PortProtocol,
 
+    pub protocols: i16,
+
     /// The user which added the host
     pub user: ForeignModel<User>,
 

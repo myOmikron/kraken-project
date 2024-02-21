@@ -25,6 +25,12 @@ import {
     PortProtocolFromJSONTyped,
     PortProtocolToJSON,
 } from './PortProtocol';
+import type { ServiceProtocols } from './ServiceProtocols';
+import {
+    ServiceProtocolsFromJSON,
+    ServiceProtocolsFromJSONTyped,
+    ServiceProtocolsToJSON,
+} from './ServiceProtocols';
 
 /**
  * The request to manually add a service
@@ -64,6 +70,12 @@ export interface CreateServiceRequest {
      * @memberof CreateServiceRequest
      */
     protocol?: PortProtocol | null;
+    /**
+     * 
+     * @type {ServiceProtocols}
+     * @memberof CreateServiceRequest
+     */
+    protocols?: ServiceProtocols | null;
 }
 
 /**
@@ -93,6 +105,7 @@ export function CreateServiceRequestFromJSONTyped(json: any, ignoreDiscriminator
         'host': json['host'],
         'port': !exists(json, 'port') ? undefined : json['port'],
         'protocol': !exists(json, 'protocol') ? undefined : PortProtocolFromJSON(json['protocol']),
+        'protocols': !exists(json, 'protocols') ? undefined : ServiceProtocolsFromJSON(json['protocols']),
     };
 }
 
@@ -110,6 +123,7 @@ export function CreateServiceRequestToJSON(value?: CreateServiceRequest | null):
         'host': value.host,
         'port': value.port,
         'protocol': PortProtocolToJSON(value.protocol),
+        'protocols': ServiceProtocolsToJSON(value.protocols),
     };
 }
 

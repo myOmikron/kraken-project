@@ -88,6 +88,7 @@ pub async fn get_all_services(
         Service::F.created_at,
         Service::F.host.select_as::<Host>(),
         Service::F.port,
+        Service::F.protocols,
         Service::F.workspace,
     ));
 
@@ -167,7 +168,18 @@ pub async fn get_all_services(
     let items = services
         .into_iter()
         .map(
-            |(uuid, name, version, certainty, comment, created_at, host, port, workspace)| {
+            |(
+                 uuid,
+                 name,
+                 version,
+                 certainty,
+                 comment,
+                 created_at,
+                 host,
+                 port,
+                 protocols,
+                 workspace,
+             )| {
                 FullService {
                     uuid,
                     name,
@@ -184,12 +196,15 @@ pub async fn get_all_services(
                         workspace: *host.workspace.key(),
                         created_at: host.created_at,
                     },
-                    port: port.map(|y| {
+                    port: port.as_ref().map(|y| {
                         // There is an entry with the key y.key(), as y.key() was used to construct
                         // the values in the HashMap
                         #[allow(clippy::unwrap_used)]
                         ports.get(y.key()).unwrap().clone()
                     }),
+                    protocols: port
+                        .and_then(|y| ports.get(y.key()))
+                        .map(|port| port.protocol.decode_service(protocols)),
                     workspace: *workspace.key(),
                     tags: tags.remove(&uuid).unwrap_or_default(),
                     sources: sources.remove(&uuid).unwrap_or_default(),
@@ -311,6 +326,9 @@ pub async fn get_service(
             workspace: path.w_uuid,
             created_at: host.created_at,
         },
+        protocols: port
+            .as_ref()
+            .map(|port| port.protocol.decode_service(service.protocols)),
         port: port.map(|port| SimplePort {
             uuid: port.uuid,
             port: port.port as u16,
@@ -353,17 +371,23 @@ pub async fn create_service(
         certainty,
         host,
         port,
-        protocol,
+        protocols,
     } = req.into_inner();
     let PathUuid { uuid: workspace } = path.into_inner();
 
-    if port.is_some() && protocol.is_none() || port.is_none() && protocol.is_some() {
+    if port.is_some() && protocols.is_none() || port.is_none() && protocols.is_some() {
         return Err(ApiError::InvalidPort);
     }
 
     Ok(Json(UuidResponse {
         uuid: ManualService::insert(
-            &GLOBAL.db, workspace, user, name, host, port, protocol, certainty,
+            &GLOBAL.db,
+            workspace,
+            user,
+            name,
+            host,
+            port.zip(protocols),
+            certainty,
         )
         .await?,
     }))

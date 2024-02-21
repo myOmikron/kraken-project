@@ -5,7 +5,7 @@ use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;
 
 use crate::models::{
-    DomainCertainty, HostCertainty, PortCertainty, PortProtocol, ServiceCertainty,
+    DomainCertainty, HostCertainty, PortCertainty, PortProtocol, ServiceCertainty, ServiceProtocols,
 };
 
 mod domain;
@@ -35,6 +35,7 @@ struct ServiceAggregationData {
     workspace: Uuid,
     host: Uuid,
     port: Option<Uuid>,
+    protocols: Option<ServiceProtocols>,
     name: String,
     certainty: ServiceCertainty,
 }
@@ -138,6 +139,7 @@ impl Aggregator {
         workspace: Uuid,
         host: Uuid,
         port: Option<Uuid>,
+        protocols: Option<ServiceProtocols>,
         name: &str,
         certainty: ServiceCertainty,
     ) -> Result<Uuid, rorm::Error> {
@@ -152,6 +154,7 @@ impl Aggregator {
                     workspace,
                     host,
                     port,
+                    protocols,
                     name: name.to_string(),
                     certainty,
                 },

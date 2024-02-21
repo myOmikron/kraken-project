@@ -181,6 +181,14 @@ models/SearchesResultPage.ts
 models/ServiceCertainty.ts
 models/ServiceDetectionRequest.ts
 models/ServiceDetectionResultsPage.ts
+models/ServiceProtocols.ts
+models/ServiceProtocolsOneOf.ts
+models/ServiceProtocolsOneOf1.ts
+models/ServiceProtocolsOneOf1Tcp.ts
+models/ServiceProtocolsOneOf2.ts
+models/ServiceProtocolsOneOf2Udp.ts
+models/ServiceProtocolsOneOf3.ts
+models/ServiceProtocolsOneOf3Sctp.ts
 models/ServiceRelations.ts
 models/ServiceResultsPage.ts
 models/SetPasswordRequest.ts

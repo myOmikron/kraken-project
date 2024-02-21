@@ -19,6 +19,12 @@ import {
     ServiceCertaintyFromJSONTyped,
     ServiceCertaintyToJSON,
 } from './ServiceCertainty';
+import type { ServiceProtocols } from './ServiceProtocols';
+import {
+    ServiceProtocolsFromJSON,
+    ServiceProtocolsFromJSONTyped,
+    ServiceProtocolsToJSON,
+} from './ServiceProtocols';
 import type { SimpleAggregationSource } from './SimpleAggregationSource';
 import {
     SimpleAggregationSourceFromJSON,
@@ -87,6 +93,12 @@ export interface FullService {
      */
     port?: SimplePort | null;
     /**
+     * 
+     * @type {ServiceProtocols}
+     * @memberof FullService
+     */
+    protocols?: ServiceProtocols | null;
+    /**
      * A comment to the service
      * @type {string}
      * @memberof FullService
@@ -152,6 +164,7 @@ export function FullServiceFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'certainty': ServiceCertaintyFromJSON(json['certainty']),
         'host': SimpleHostFromJSON(json['host']),
         'port': !exists(json, 'port') ? undefined : SimplePortFromJSON(json['port']),
+        'protocols': !exists(json, 'protocols') ? undefined : ServiceProtocolsFromJSON(json['protocols']),
         'comment': json['comment'],
         'workspace': json['workspace'],
         'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
@@ -175,6 +188,7 @@ export function FullServiceToJSON(value?: FullService | null): any {
         'certainty': ServiceCertaintyToJSON(value.certainty),
         'host': SimpleHostToJSON(value.host),
         'port': SimplePortToJSON(value.port),
+        'protocols': ServiceProtocolsToJSON(value.protocols),
         'comment': value.comment,
         'workspace': value.workspace,
         'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),

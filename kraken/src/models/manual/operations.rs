@@ -8,7 +8,8 @@ use crate::chan::global::GLOBAL;
 use crate::models::{
     AggregationSource, AggregationTable, DomainCertainty, HostCertainty, ManualDomain, ManualHost,
     ManualHostCertainty, ManualPort, ManualPortCertainty, ManualService, ManualServiceCertainty,
-    OsType, PortCertainty, PortProtocol, ServiceCertainty, SourceType, User, Workspace,
+    OsType, PortCertainty, PortProtocol, ServiceCertainty, ServiceProtocols, SourceType, User,
+    Workspace,
 };
 
 #[derive(Patch)]
@@ -241,6 +242,7 @@ struct InsertManualService {
     host: IpNetwork,
     port: Option<i32>,
     protocol: PortProtocol,
+    protocols: i16,
     user: ForeignModel<User>,
     workspace: ForeignModel<Workspace>,
 }
@@ -259,12 +261,18 @@ impl ManualService {
         user: Uuid,
         name: String,
         host: IpNetwork,
-        port: Option<u16>,
-        protocol: Option<PortProtocol>,
+        port: Option<(u16, ServiceProtocols)>,
         certainty: ManualServiceCertainty,
     ) -> Result<Uuid, rorm::Error> {
         let mut guard = executor.ensure_transaction().await?;
         let tx = guard.get_transaction();
+
+        let port_protocol = match port {
+            Some((_, ServiceProtocols::Tcp { .. })) => PortProtocol::Tcp,
+            Some((_, ServiceProtocols::Udp { .. })) => PortProtocol::Udp,
+            Some((_, ServiceProtocols::Sctp { .. })) => PortProtocol::Sctp,
+            Some((_, ServiceProtocols::Unknown { .. })) | None => PortProtocol::Unknown,
+        };
 
         let source_uuid = insert!(&mut *tx, ManualService)
             .return_primary_key()
@@ -274,8 +282,9 @@ impl ManualService {
                 version: None,
                 certainty,
                 host,
-                port: port.map(i32::from),
-                protocol: protocol.unwrap_or(PortProtocol::Unknown),
+                port: port.map(|(x, _)| x as i32),
+                protocol: port_protocol,
+                protocols: port.map(|(_, x)| x.encode()).unwrap_or(0),
                 user: ForeignModelByField::Key(user),
                 workspace: ForeignModelByField::Key(workspace),
             })
@@ -293,26 +302,22 @@ impl ManualService {
             )
             .await?;
 
-        let port_uuid = if let Some(port) = port {
-            if let Some(protocol) = protocol {
-                Some(
-                    GLOBAL
-                        .aggregator
-                        .aggregate_port(
-                            workspace,
-                            host_uuid,
-                            port,
-                            protocol,
-                            match certainty {
-                                ManualServiceCertainty::Historical => PortCertainty::Historical,
-                                ManualServiceCertainty::SupposedTo => PortCertainty::SupposedTo,
-                            },
-                        )
-                        .await?,
-                )
-            } else {
-                None
-            }
+        let port_uuid = if let Some((port, _)) = port {
+            Some(
+                GLOBAL
+                    .aggregator
+                    .aggregate_port(
+                        workspace,
+                        host_uuid,
+                        port,
+                        port_protocol,
+                        match certainty {
+                            ManualServiceCertainty::Historical => PortCertainty::Historical,
+                            ManualServiceCertainty::SupposedTo => PortCertainty::SupposedTo,
+                        },
+                    )
+                    .await?,
+            )
         } else {
             None
         };
@@ -323,6 +328,7 @@ impl ManualService {
                 workspace,
                 host_uuid,
                 port_uuid,
+                port.map(|(_, x)| x),
                 &name,
                 match certainty {
                     ManualServiceCertainty::Historical => ServiceCertainty::Historical,
