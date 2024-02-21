@@ -3,6 +3,7 @@
 pub mod postgres;
 
 /// This module's content can be copied as a template for probe file implementations
+#[allow(dead_code)]
 pub mod template {
     use tokio::net::UdpSocket;
 
