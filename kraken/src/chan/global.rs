@@ -10,7 +10,7 @@ use crate::chan::leech_manager::LeechManager;
 use crate::chan::settings_manager::SettingsManagerChan;
 use crate::chan::ws_manager::chan::WsManagerChan;
 use crate::modules::aggregator::Aggregator;
-use crate::modules::cache::{FindingDefinitionCache, UserCache, WorkspaceCache};
+use crate::modules::cache::{FindingDefinitionCache, UserCache, WorkspaceUsersCache};
 use crate::modules::editor::EditorSync;
 use crate::modules::tls::TlsManager;
 
@@ -41,7 +41,7 @@ pub struct GlobalChan {
     pub tls: Arc<TlsManager>,
 
     /// The caching layer for workspace members
-    pub workspace_cache: WorkspaceCache,
+    pub workspace_users_cache: WorkspaceUsersCache,
 
     /// The caching layer for users
     pub user_cache: UserCache,

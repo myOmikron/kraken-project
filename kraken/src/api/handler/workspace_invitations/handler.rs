@@ -122,7 +122,7 @@ pub async fn accept_invitation(
 
     // Refresh cache
     GLOBAL
-        .workspace_cache
+        .workspace_users_cache
         .refresh_users(*invitation.workspace.key(), &mut tx)
         .await?;
 

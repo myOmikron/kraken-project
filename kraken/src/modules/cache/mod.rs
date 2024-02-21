@@ -2,8 +2,9 @@
 
 pub use finding_definition::*;
 pub use user::*;
-pub use workspace::*;
+pub use workspace_users::*;
 
+pub mod cache;
 mod finding_definition;
 mod user;
-mod workspace;
+mod workspace_users;

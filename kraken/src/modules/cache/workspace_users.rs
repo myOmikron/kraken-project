@@ -19,11 +19,11 @@ struct WorkspaceUsers {
 
 /// The cache for accessing the users that have access to a workspace
 #[derive(Default)]
-pub struct WorkspaceCache {
+pub struct WorkspaceUsersCache {
     cache: RwLock<HashMap<Uuid, WorkspaceUsers>>,
 }
 
-impl WorkspaceCache {
+impl WorkspaceUsersCache {
     /// Trigger a manual refresh of the users of a specific workspace
     pub async fn refresh_users(
         &self,
@@ -105,7 +105,7 @@ impl WorkspaceCache {
             }
         };
 
-        // If the key does not exists or the last refresh time
+        // If the key does not exist or the last refresh time
         // is more than `refresh_period` ago, update the entry
         if entry.is_none() {
             debug!("Refreshing users");

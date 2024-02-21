@@ -36,7 +36,7 @@ use kraken::config::Config;
 use kraken::models::{User, UserPermission};
 use kraken::modules::aggregator::Aggregator;
 use kraken::modules::cache::{
-    schedule_cache_save, FindingDefinitionCache, UserCache, WorkspaceCache,
+    schedule_cache_save, FindingDefinitionCache, UserCache, WorkspaceUsersCache,
 };
 use kraken::modules::editor::EditorSync;
 use kraken::modules::tls::TlsManager;
@@ -122,7 +122,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let ws = start_ws_manager().await;
 
-            let workspace_cache = WorkspaceCache::default();
+            let workspace_users_cache = WorkspaceUsersCache::default();
             let user_cache = UserCache::default();
             let finding_definition_cache = FindingDefinitionCache::new(&db).await?;
 
@@ -137,7 +137,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 settings,
                 dehashed,
                 tls,
-                workspace_cache,
+                workspace_users_cache,
                 user_cache,
                 finding_definition_cache,
                 aggregator,

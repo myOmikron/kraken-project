@@ -36,7 +36,7 @@ impl WsManagerChan {
     /// Send a message to a workspace
     pub async fn message_workspace(&self, workspace: Uuid, msg: WsMessage) {
         match GLOBAL
-            .workspace_cache
+            .workspace_users_cache
             .get_users(workspace, &GLOBAL.db)
             .await
         {
