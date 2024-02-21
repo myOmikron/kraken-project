@@ -114,7 +114,7 @@ impl Workspace {
         user: Uuid,
     ) -> Result<bool, rorm::Error> {
         if let Some(users) = GLOBAL
-            .workspace_cache
+            .workspace_users_cache
             .get_users(workspace, executor)
             .await?
         {
