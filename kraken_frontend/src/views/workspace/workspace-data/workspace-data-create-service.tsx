@@ -5,8 +5,9 @@ import { handleApiError } from "../../../utils/helper";
 import { toast } from "react-toastify";
 import Input from "../../../components/input";
 import Select from "react-select";
-import { selectStyles } from "../../../components/select-menu";
+import { SelectPrimitive, selectStyles } from "../../../components/select-menu";
 import { WORKSPACE_CONTEXT } from "../workspace";
+import Checkbox from "../../../components/checkbox";
 
 type CreateServiceFormProps = {
     onSubmit: () => void;
@@ -22,6 +23,8 @@ export function CreateServiceForm(props: CreateServiceFormProps) {
     const [port, setPort] = React.useState("");
     const [protocol, setProtocol] = React.useState<PortProtocol | null>(null);
     const [certy, setCerty] = React.useState<ManualServiceCertainty>("SupposedTo");
+    const [raw, setRaw] = React.useState(false);
+    const [tls, setTls] = React.useState(false);
     return (
         <form
             className={"pane workspace-data-create-form"}
@@ -34,12 +37,29 @@ export function CreateServiceForm(props: CreateServiceFormProps) {
                         return;
                     }
                 }
+                if ((port.length === 0) !== (protocol === null)) {
+                    toast.error("Either specify both port and protocol or neither");
+                    return;
+                }
                 Api.workspaces.services
                     .create(workspace, {
                         name,
                         host: ip,
                         port: port.length === 0 ? undefined : Number(port),
-                        protocol: protocol === null ? undefined : protocol,
+                        protocols: (() => {
+                            switch (protocol) {
+                                case null:
+                                    return undefined;
+                                case "Tcp":
+                                    return { tcp: { raw, tls } };
+                                case "Udp":
+                                    return { udp: { raw: true } };
+                                case "Sctp":
+                                    return { sctp: { raw: true } };
+                                case "Unknown":
+                                    return { unknown: {} };
+                            }
+                        })(),
                         certainty: certy,
                     })
                     .then(
@@ -65,23 +85,31 @@ export function CreateServiceForm(props: CreateServiceFormProps) {
             </label>
             <label>
                 Protocol:
-                <Select<{ value: PortProtocol | null; label: PortProtocol | null }>
-                    isClearable={true}
-                    styles={selectStyles("default")}
-                    options={Object.values(PortProtocol).map((value) => ({ value, label: value }))}
-                    value={{ value: protocol, label: protocol }}
-                    onChange={(v) => setProtocol(v == null ? v : v.value)}
+                <SelectPrimitive
+                    isClearable
+                    options={Object.values(PortProtocol)}
+                    value={protocol}
+                    onChange={(value) => setProtocol(value)}
                 />
             </label>
             <label>
                 Certainty:
-                <Select<{ value: ManualServiceCertainty; label: ManualServiceCertainty }>
-                    styles={selectStyles("default")}
-                    options={Object.values(ManualServiceCertainty).map((value) => ({ value, label: value }))}
-                    value={{ value: certy, label: certy }}
-                    onChange={(newValue) => setCerty(newValue?.value || certy)}
+                <SelectPrimitive
+                    options={Object.values(ManualServiceCertainty)}
+                    value={certy}
+                    onChange={(value) => setCerty(value || certy)}
                 />
             </label>
+            {protocol == PortProtocol.Tcp ? (
+                <div>
+                    <label>
+                        Raw: <Checkbox value={raw} onChange={setRaw} />
+                    </label>
+                    <label>
+                        TLS: <Checkbox value={tls} onChange={setTls} />
+                    </label>
+                </div>
+            ) : null}
             <button className={"button"} type={"submit"}>
                 Add
             </button>

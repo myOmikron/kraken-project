@@ -1236,39 +1236,6 @@
                 "security": [{ "api_key": [] }]
             }
         },
-        "/api/v1/attacks/scanTcpPorts": {
-            "post": {
-                "tags": ["Attacks"],
-                "summary": "Start a tcp port scan",
-                "description": "Start a tcp port scan\n\n`exclude` accepts a list of ip networks in CIDR notation.\n\nAll intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.\n\nSet `max_retries` to 0 if you don't want to try a port more than 1 time.",
-                "operationId": "scan_tcp_ports",
-                "requestBody": {
-                    "content": {
-                        "application/json": { "schema": { "$ref": "#/components/schemas/ScanTcpPortsRequest" } }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "202": {
-                        "description": "Attack scheduled",
-                        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UuidResponse" } } }
-                    },
-                    "400": {
-                        "description": "Client error",
-                        "content": {
-                            "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } }
-                        }
-                    },
-                    "500": {
-                        "description": "Server error",
-                        "content": {
-                            "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } }
-                        }
-                    }
-                },
-                "security": [{ "api_key": [] }]
-            }
-        },
         "/api/v1/attacks/serviceDetection": {
             "post": {
                 "tags": ["Attacks"],
@@ -1772,60 +1739,6 @@
                             "application/json": {
                                 "schema": { "$ref": "#/components/schemas/ServiceDetectionResultsPage" }
                             }
-                        }
-                    },
-                    "400": {
-                        "description": "Client error",
-                        "content": {
-                            "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } }
-                        }
-                    },
-                    "500": {
-                        "description": "Server error",
-                        "content": {
-                            "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } }
-                        }
-                    }
-                },
-                "security": [{ "api_key": [] }]
-            }
-        },
-        "/api/v1/attacks/{uuid}/tcpPortScanResults": {
-            "get": {
-                "tags": ["Attacks"],
-                "summary": "Retrieve a tcp port scan's results by the attack's id",
-                "description": "Retrieve a tcp port scan's results by the attack's id",
-                "operationId": "get_tcp_port_scan_results",
-                "parameters": [
-                    {
-                        "name": "uuid",
-                        "in": "path",
-                        "description": "The uuid",
-                        "required": true,
-                        "schema": { "type": "string", "format": "uuid" }
-                    },
-                    {
-                        "name": "limit",
-                        "in": "query",
-                        "description": "Number of items to retrieve",
-                        "required": true,
-                        "schema": { "type": "integer", "format": "int64", "minimum": 1 },
-                        "example": 50
-                    },
-                    {
-                        "name": "offset",
-                        "in": "query",
-                        "description": "Position in the whole list to start retrieving from",
-                        "required": true,
-                        "schema": { "type": "integer", "format": "int64", "minimum": 0 },
-                        "example": 0
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Returns attack's results",
-                        "content": {
-                            "application/json": { "schema": { "$ref": "#/components/schemas/TcpPortScanResultsPage" } }
                         }
                     },
                     "400": {
@@ -4564,7 +4477,6 @@
                 "enum": [
                     "Undefined",
                     "BruteforceSubdomains",
-                    "TcpPortScan",
                     "QueryCertificateTransparency",
                     "QueryUnhashed",
                     "HostAlive",
@@ -4860,7 +4772,7 @@
                         "nullable": true,
                         "minimum": 0
                     },
-                    "protocol": { "allOf": [{ "$ref": "#/components/schemas/PortProtocol" }], "nullable": true }
+                    "protocols": { "allOf": [{ "$ref": "#/components/schemas/ServiceProtocols" }], "nullable": true }
                 }
             },
             "CreateUserRequest": {
@@ -5686,6 +5598,7 @@
                     "certainty": { "$ref": "#/components/schemas/ServiceCertainty" },
                     "host": { "$ref": "#/components/schemas/SimpleHost" },
                     "port": { "allOf": [{ "$ref": "#/components/schemas/SimplePort" }], "nullable": true },
+                    "protocols": { "allOf": [{ "$ref": "#/components/schemas/ServiceProtocols" }], "nullable": true },
                     "comment": {
                         "type": "string",
                         "description": "A comment to the service",
@@ -6738,76 +6651,6 @@
                     }
                 }
             },
-            "ScanTcpPortsRequest": {
-                "type": "object",
-                "description": "The settings to configure a tcp port scan",
-                "required": [
-                    "targets",
-                    "retry_interval",
-                    "max_retries",
-                    "timeout",
-                    "concurrent_limit",
-                    "skip_icmp_check",
-                    "workspace_uuid"
-                ],
-                "properties": {
-                    "leech_uuid": {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "The leech to use\n\nLeave empty to use a random leech",
-                        "nullable": true
-                    },
-                    "targets": {
-                        "type": "array",
-                        "items": { "type": "string" },
-                        "description": "The ip addresses / networks or domains to scan",
-                        "example": ["10.13.37.1", "10.13.37.0/24", "google.com"]
-                    },
-                    "ports": {
-                        "type": "array",
-                        "items": { "$ref": "#/components/schemas/PortOrRange" },
-                        "description": "List of single ports and port ranges\n\nIf no values are supplied, 1-65535 is used as default"
-                    },
-                    "retry_interval": {
-                        "type": "integer",
-                        "format": "int64",
-                        "description": "The interval that should be wait between retries on a port.\n\nThe interval is specified in milliseconds.",
-                        "example": 100,
-                        "minimum": 0
-                    },
-                    "max_retries": {
-                        "type": "integer",
-                        "format": "int32",
-                        "description": "The number of times the connection should be retried if it failed.",
-                        "example": 2,
-                        "minimum": 0
-                    },
-                    "timeout": {
-                        "type": "integer",
-                        "format": "int64",
-                        "description": "The time to wait until a connection is considered failed.\n\nThe timeout is specified in milliseconds.",
-                        "example": 3000,
-                        "minimum": 0
-                    },
-                    "concurrent_limit": {
-                        "type": "integer",
-                        "format": "int32",
-                        "description": "The concurrent task limit",
-                        "example": 5000,
-                        "minimum": 0
-                    },
-                    "skip_icmp_check": {
-                        "type": "boolean",
-                        "description": "Skips the initial icmp check.\n\nAll hosts are assumed to be reachable",
-                        "example": false
-                    },
-                    "workspace_uuid": {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "The workspace to execute the attack in"
-                    }
-                }
-            },
             "SearchEntry": {
                 "type": "object",
                 "description": "Searched entry",
@@ -6862,13 +6705,6 @@
                         "required": ["DnsTxtScanResultEntry"],
                         "properties": {
                             "DnsTxtScanResultEntry": { "$ref": "#/components/schemas/SimpleDnsTxtScanResult" }
-                        }
-                    },
-                    {
-                        "type": "object",
-                        "required": ["TcpPortScanResultEntry"],
-                        "properties": {
-                            "TcpPortScanResultEntry": { "$ref": "#/components/schemas/SimpleTcpPortScanResult" }
                         }
                     },
                     {
@@ -7031,7 +6867,16 @@
             "ServiceDetectionRequest": {
                 "type": "object",
                 "description": "The request to start a service detection",
-                "required": ["address", "port", "timeout", "workspace_uuid"],
+                "required": [
+                    "targets",
+                    "connect_timeout",
+                    "receive_timeout",
+                    "retry_interval",
+                    "max_retries",
+                    "concurrent_limit",
+                    "skip_icmp_check",
+                    "workspace_uuid"
+                ],
                 "properties": {
                     "leech_uuid": {
                         "type": "string",
@@ -7039,24 +6884,56 @@
                         "description": "The leech to use\n\nLeave empty to use a random leech",
                         "nullable": true
                     },
-                    "address": {
-                        "type": "string",
-                        "description": "The ip address the service listens on",
-                        "example": "10.13.37.1"
+                    "targets": {
+                        "type": "array",
+                        "items": { "type": "string" },
+                        "description": "The ip addresses / networks or domains to scan",
+                        "example": ["10.13.37.1", "10.13.37.0/24", "google.com"]
                     },
-                    "port": {
+                    "ports": {
+                        "type": "array",
+                        "items": { "$ref": "#/components/schemas/PortOrRange" },
+                        "description": "List of single ports and port ranges\n\nIf no values are supplied, 1-65535 is used as default"
+                    },
+                    "connect_timeout": {
                         "type": "integer",
-                        "format": "int32",
-                        "description": "The port the service listens on",
-                        "example": 443,
+                        "format": "int64",
+                        "description": "The time to wait until a connection is considered failed.\n\nThe timeout is specified in milliseconds.",
+                        "example": 3000,
                         "minimum": 0
                     },
-                    "timeout": {
+                    "receive_timeout": {
                         "type": "integer",
                         "format": "int64",
                         "description": "Time to wait for a response after sending the payload\n(or after establishing a connection, if not payload is to be sent)\n\nThe timeout is specified in milliseconds.",
                         "example": 3000,
                         "minimum": 0
+                    },
+                    "retry_interval": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "The interval that should be wait between retries on a port.\n\nThe interval is specified in milliseconds.",
+                        "example": 100,
+                        "minimum": 0
+                    },
+                    "max_retries": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "The number of times the connection should be retried if it failed.",
+                        "example": 2,
+                        "minimum": 0
+                    },
+                    "concurrent_limit": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "The concurrent task limit",
+                        "example": 5000,
+                        "minimum": 0
+                    },
+                    "skip_icmp_check": {
+                        "type": "boolean",
+                        "description": "Skips the initial icmp check.\n\nAll hosts are assumed to be reachable",
+                        "example": false
                     },
                     "workspace_uuid": {
                         "type": "string",
@@ -7096,6 +6973,64 @@
                         "minimum": 0
                     }
                 }
+            },
+            "ServiceProtocols": {
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "required": ["Unknown"],
+                        "properties": {
+                            "Unknown": {
+                                "type": "object",
+                                "description": "The port's protocol is [`PortProtocol::Unknown`]"
+                            }
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "required": ["Tcp"],
+                        "properties": {
+                            "Tcp": {
+                                "type": "object",
+                                "description": "The port's protocol is [`PortProtocol::Tcp`]",
+                                "required": ["raw", "tls"],
+                                "properties": {
+                                    "raw": { "type": "boolean", "description": "The service responds to raw tcp" },
+                                    "tls": { "type": "boolean", "description": "The service responds to tls" }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "required": ["Udp"],
+                        "properties": {
+                            "Udp": {
+                                "type": "object",
+                                "description": "The port's protocol is [`PortProtocol::Udp`]",
+                                "required": ["raw"],
+                                "properties": {
+                                    "raw": { "type": "boolean", "description": "The service responds to raw udp" }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "required": ["Sctp"],
+                        "properties": {
+                            "Sctp": {
+                                "type": "object",
+                                "description": "The port's protocol is [`PortProtocol::Sctp`]",
+                                "required": ["raw"],
+                                "properties": {
+                                    "raw": { "type": "boolean", "description": "The service responds to raw sctp" }
+                                }
+                            }
+                        }
+                    }
+                ],
+                "description": "The parsed representation for a [`Service`]'s `protocols` field"
             },
             "ServiceRelations": {
                 "type": "object",
@@ -7186,7 +7121,6 @@
                 "description": "Numbers how many attacks of a certain kind found an aggregated model",
                 "required": [
                     "bruteforce_subdomains",
-                    "tcp_port_scan",
                     "query_certificate_transparency",
                     "query_dehashed",
                     "host_alive",
@@ -7207,7 +7141,6 @@
                         "description": "Bruteforce subdomains via DNS requests",
                         "minimum": 0
                     },
-                    "tcp_port_scan": { "type": "integer", "description": "Scan tcp ports", "minimum": 0 },
                     "query_certificate_transparency": {
                         "type": "integer",
                         "description": "Query certificate transparency",
@@ -7571,30 +7504,6 @@
                     "tag_type": { "$ref": "#/components/schemas/TagType" }
                 }
             },
-            "SimpleTcpPortScanResult": {
-                "type": "object",
-                "description": "A simple representation of a tcp port scan result",
-                "required": ["uuid", "attack", "created_at", "address", "port"],
-                "properties": {
-                    "uuid": { "type": "string", "format": "uuid", "description": "The primary key" },
-                    "attack": {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "The attack which produced this result"
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "description": "The point in time, this result was produced"
-                    },
-                    "address": {
-                        "type": "string",
-                        "description": "The ip address a port was found on",
-                        "example": "127.0.0.1"
-                    },
-                    "port": { "type": "integer", "format": "int32", "description": "The found port", "minimum": 0 }
-                }
-            },
             "SimpleUser": {
                 "type": "object",
                 "description": "This struct holds the user information.\n\nNote that `username` is unique, but as it is changeable,\nidentify the user by its `uuid`",
@@ -7705,18 +7614,6 @@
                         "type": "object",
                         "required": ["attack_type", "results"],
                         "properties": {
-                            "attack_type": { "type": "string", "enum": ["TcpPortScan"] },
-                            "results": {
-                                "type": "array",
-                                "items": { "$ref": "#/components/schemas/SimpleTcpPortScanResult" },
-                                "description": "The [`AttackType::TcpPortScan`] and its results"
-                            }
-                        }
-                    },
-                    {
-                        "type": "object",
-                        "required": ["attack_type", "results"],
-                        "properties": {
                             "attack_type": { "type": "string", "enum": ["QueryCertificateTransparency"] },
                             "results": {
                                 "type": "array",
@@ -7802,38 +7699,6 @@
                 "discriminator": { "propertyName": "attack_type" }
             },
             "TagType": { "type": "string", "description": "The type of a tag", "enum": ["Workspace", "Global"] },
-            "TcpPortScanResultsPage": {
-                "type": "object",
-                "description": "Response containing paginated data",
-                "required": ["items", "limit", "offset", "total"],
-                "properties": {
-                    "items": {
-                        "type": "array",
-                        "items": { "$ref": "#/components/schemas/SimpleTcpPortScanResult" },
-                        "description": "The page's items"
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "format": "int64",
-                        "description": "The limit this page was retrieved with",
-                        "example": 50,
-                        "minimum": 0
-                    },
-                    "offset": {
-                        "type": "integer",
-                        "format": "int64",
-                        "description": "The offset this page was retrieved with",
-                        "example": 0,
-                        "minimum": 0
-                    },
-                    "total": {
-                        "type": "integer",
-                        "format": "int64",
-                        "description": "The total number of items this page is a subset of",
-                        "minimum": 0
-                    }
-                }
-            },
             "TransferWorkspaceRequest": {
                 "type": "object",
                 "description": "The request to transfer a workspace to another account",
@@ -8201,7 +8066,7 @@
                 "oneOf": [
                     {
                         "type": "object",
-                        "description": "A finding definition was edited",
+                        "description": "Content was changed in an editor",
                         "required": ["change", "target", "type"],
                         "properties": {
                             "change": { "$ref": "#/components/schemas/Change" },

@@ -19,12 +19,6 @@ import {
     ManualServiceCertaintyFromJSONTyped,
     ManualServiceCertaintyToJSON,
 } from './ManualServiceCertainty';
-import type { PortProtocol } from './PortProtocol';
-import {
-    PortProtocolFromJSON,
-    PortProtocolFromJSONTyped,
-    PortProtocolToJSON,
-} from './PortProtocol';
 import type { ServiceProtocols } from './ServiceProtocols';
 import {
     ServiceProtocolsFromJSON,
@@ -66,12 +60,6 @@ export interface CreateServiceRequest {
     port?: number | null;
     /**
      * 
-     * @type {PortProtocol}
-     * @memberof CreateServiceRequest
-     */
-    protocol?: PortProtocol | null;
-    /**
-     * 
      * @type {ServiceProtocols}
      * @memberof CreateServiceRequest
      */
@@ -104,7 +92,6 @@ export function CreateServiceRequestFromJSONTyped(json: any, ignoreDiscriminator
         'certainty': ManualServiceCertaintyFromJSON(json['certainty']),
         'host': json['host'],
         'port': !exists(json, 'port') ? undefined : json['port'],
-        'protocol': !exists(json, 'protocol') ? undefined : PortProtocolFromJSON(json['protocol']),
         'protocols': !exists(json, 'protocols') ? undefined : ServiceProtocolsFromJSON(json['protocols']),
     };
 }
@@ -122,7 +109,6 @@ export function CreateServiceRequestToJSON(value?: CreateServiceRequest | null):
         'certainty': ManualServiceCertaintyToJSON(value.certainty),
         'host': value.host,
         'port': value.port,
-        'protocol': PortProtocolToJSON(value.protocol),
         'protocols': ServiceProtocolsToJSON(value.protocols),
     };
 }

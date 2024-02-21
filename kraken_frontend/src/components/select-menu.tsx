@@ -52,7 +52,9 @@ export type SelectPrimitiveProps<T extends { toString(): string }> = {
     onChange: (value: T | null) => void;
     id?: string;
     required?: boolean;
+    isClearable?: boolean;
 };
+
 /** A {@link Select `<Select />} which works with primitives (i.e. strings and numbers) instead of objects */
 export function SelectPrimitive<T extends { toString(): string }>(props: SelectPrimitiveProps<T>) {
     return (
@@ -66,6 +68,7 @@ export function SelectPrimitive<T extends { toString(): string }>(props: SelectP
             autoFocus={false}
             value={props.value && { label: props.value.toString(), value: props.value }}
             styles={selectStyles(props.theme || "default")}
+            isClearable={props.isClearable}
         />
     );
 }
