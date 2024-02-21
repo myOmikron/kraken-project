@@ -35,7 +35,7 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
             handleApiError((x) => {
                 setAttacks(x);
                 setLimit(x.attacks.length - 1);
-            })
+            }),
         );
     }, [workspace, uuid]);
     React.useEffect(() => {
@@ -56,7 +56,7 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
                 handleApiError(() => {
                     if (msg !== undefined) toast.success(msg);
                     if (signalUpdate !== undefined) signalUpdate(uuid, update);
-                })
+                }),
             );
     }
 
@@ -76,12 +76,12 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
                             {service.certainty === "Historical"
                                 ? CertaintyIcon({ certaintyType: "Historical", nameVisible: true })
                                 : service.certainty === "SupposedTo"
-                                ? CertaintyIcon({ certaintyType: "SupposedTo", nameVisible: true })
-                                : service.certainty === "UnknownService"
-                                ? CertaintyIcon({ certaintyType: "UnknownService", nameVisible: true })
-                                : service.certainty === "MaybeVerified"
-                                ? CertaintyIcon({ certaintyType: "MaybeVerified", nameVisible: true })
-                                : CertaintyIcon({ certaintyType: "DefinitelyVerified", nameVisible: true })}
+                                  ? CertaintyIcon({ certaintyType: "SupposedTo", nameVisible: true })
+                                  : service.certainty === "UnknownService"
+                                    ? CertaintyIcon({ certaintyType: "UnknownService", nameVisible: true })
+                                    : service.certainty === "MaybeVerified"
+                                      ? CertaintyIcon({ certaintyType: "MaybeVerified", nameVisible: true })
+                                      : CertaintyIcon({ certaintyType: "DefinitelyVerified", nameVisible: true })}
                         </div>
                     </div>
                     <div className={"workspace-data-details-pane"}>

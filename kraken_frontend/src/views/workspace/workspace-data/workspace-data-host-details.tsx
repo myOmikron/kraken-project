@@ -39,7 +39,7 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
             handleApiError((x) => {
                 setAttacks(x);
                 setLimit(x.attacks.length - 1);
-            })
+            }),
         );
     }, [workspace, uuid]);
     React.useEffect(() => {
@@ -60,7 +60,7 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
                 handleApiError(() => {
                     if (msg !== undefined) toast.success(msg);
                     if (signalUpdate !== undefined) signalUpdate(uuid, update);
-                })
+                }),
             );
     }
 
@@ -79,8 +79,8 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
                             {host.certainty === "Verified"
                                 ? CertaintyIcon({ certaintyType: "Verified", nameVisible: true })
                                 : host.certainty === "Historical"
-                                ? CertaintyIcon({ certaintyType: "Historical", nameVisible: true })
-                                : CertaintyIcon({ certaintyType: "SupposedTo", nameVisible: true })}
+                                  ? CertaintyIcon({ certaintyType: "Historical", nameVisible: true })
+                                  : CertaintyIcon({ certaintyType: "SupposedTo", nameVisible: true })}
                         </div>
                     </div>
                     <div className="workspace-data-details-pane">

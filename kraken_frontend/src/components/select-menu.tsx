@@ -100,7 +100,7 @@ export function clearSelectStyles<Option, IsMulti extends boolean, Group extends
  * Generates the styling information to be passed to `<Select />` for a given theme
  */
 export function selectStyles<Option, IsMulti extends boolean, Group extends GroupBase<Option>>(
-    theme: Theme
+    theme: Theme,
 ): StylesConfig<Option, IsMulti, Group> {
     return {
         control: (styles, state) => ({

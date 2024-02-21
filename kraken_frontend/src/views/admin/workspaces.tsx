@@ -24,8 +24,8 @@ export default class AdminWorkspaces extends React.Component<AdminWorkspacesProp
             handleApiError(({ workspaces }) =>
                 this.setState({
                     workspaces,
-                })
-            )
+                }),
+            ),
         );
     }
 

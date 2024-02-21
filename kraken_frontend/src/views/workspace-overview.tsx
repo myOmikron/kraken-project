@@ -60,8 +60,8 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
             handleApiError(({ workspaces }) =>
                 this.setState({
                     workspaces,
-                })
-            )
+                }),
+            ),
         );
     }
 
@@ -74,7 +74,7 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                 toast.success("Created new workspace");
                 this.setState({ newName: "", newDesc: "", createNew: false });
                 this.fetchState();
-            })
+            }),
         );
     }
 

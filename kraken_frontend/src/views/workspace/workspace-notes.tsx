@@ -52,7 +52,7 @@ export default function WorkspaceNotes(props: WorkspaceNotesProps) {
                 onMount={setEditorInstance}
             />
             {cursors.map(({ data: { displayName }, cursor }) =>
-                cursor.render(<div className={"cursor-label"}>{displayName}</div>)
+                cursor.render(<div className={"cursor-label"}>{displayName}</div>),
             )}
         </div>
     );

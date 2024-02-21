@@ -30,7 +30,7 @@ export default class ParserError extends Error {
                     case "unknownColumn":
                         return `Unknown column: ${data.column}`;
                 }
-            })()
+            })(),
         );
         this.data = data;
     }

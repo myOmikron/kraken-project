@@ -49,8 +49,8 @@ export default class AdminUsers extends React.Component<AdminUsersProps, AdminUs
             handleApiError(({ users }) =>
                 this.setState({
                     users,
-                })
-            )
+                }),
+            ),
         );
     }
 
@@ -163,7 +163,7 @@ export default class AdminUsers extends React.Component<AdminUsersProps, AdminUs
                 toast.success("Deleted user");
                 this.setState({ confirmDelete: null });
                 this.fetchState();
-            })
+            }),
         );
     }
 
@@ -191,7 +191,7 @@ export default class AdminUsers extends React.Component<AdminUsersProps, AdminUs
                     toast.success("Created user");
                     this.setState({ createNew: false, newName: "", newDisplay: "", newPwd: "" });
                     this.fetchState();
-                })
+                }),
             );
     }
 }

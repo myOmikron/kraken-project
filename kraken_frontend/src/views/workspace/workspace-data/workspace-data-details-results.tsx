@@ -29,7 +29,7 @@ export default class WorkspaceDataDetailsResults extends React.Component<
     componentDidUpdate(
         prevProps: Readonly<WorkspaceDataDetailsResultsProps>,
         prevState: Readonly<WorkspaceDataDetailsResultsState>,
-        snapshot?: any
+        snapshot?: any,
     ) {
         if (prevProps.attack.uuid !== this.props.attack.uuid || prevProps.uuid !== this.props.uuid) {
             this.setState({ page: 0 });

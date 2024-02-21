@@ -22,7 +22,7 @@ export function parseUserPorts(input: string): Result<PortOrRange[], string> {
                 let upper = parseUserPort(parts[1]);
                 if (upper === false) throw "Malformed upper port number in range '" + part + "'";
                 return lower + "-" + upper;
-            })
+            }),
         );
     } catch (e) {
         return Err("" + e);

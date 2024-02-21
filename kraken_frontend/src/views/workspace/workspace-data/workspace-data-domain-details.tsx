@@ -37,7 +37,7 @@ export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProp
             handleApiError((x) => {
                 setAttacks(x);
                 setLimit(x.attacks.length - 1);
-            })
+            }),
         );
     }, [workspace, uuid]);
     React.useEffect(() => {
@@ -57,7 +57,7 @@ export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProp
                 handleApiError(() => {
                     if (msg !== undefined) toast.success(msg);
                     if (signalUpdate !== undefined) signalUpdate(uuid, update);
-                })
+                }),
             );
     }
 

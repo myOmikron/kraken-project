@@ -539,7 +539,7 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                 if (
                     !ObjectFns.deepEquals(
                         [this.props.domains, this.props.hosts, this.props.ports, this.props.services],
-                        [prevProps.domains, prevProps.hosts, prevProps.ports, prevProps.services]
+                        [prevProps.domains, prevProps.hosts, prevProps.ports, prevProps.services],
                     )
                 )
                     this.loadTarget();
@@ -556,8 +556,8 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                     .get(this.context.workspace.uuid, this.props.targetUuid)
                     .then(
                         handleApiError(({ domain }) =>
-                            this.setState({ target: { name: domain, prefills: [{ domain }] } })
-                        )
+                            this.setState({ target: { name: domain, prefills: [{ domain }] } }),
+                        ),
                     );
                 break;
             case "host":
@@ -565,8 +565,8 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                     .get(this.context.workspace.uuid, this.props.targetUuid)
                     .then(
                         handleApiError(({ ipAddr }) =>
-                            this.setState({ target: { name: ipAddr, prefills: [{ ipAddr }] } })
-                        )
+                            this.setState({ target: { name: ipAddr, prefills: [{ ipAddr }] } }),
+                        ),
                     );
                 break;
             case "port":
@@ -582,8 +582,8 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                                     },
                                 ],
                             },
-                        })
-                    )
+                        }),
+                    ),
                 );
                 break;
             case "service":
@@ -601,8 +601,8 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                                     },
                                 ],
                             },
-                        })
-                    )
+                        }),
+                    ),
                 );
                 break;
             case "selection":
@@ -633,7 +633,7 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
         let workspaceUuid = this.context.workspace.uuid;
         function fetchAll<T>(
             api: { get: (workspaceUuid: string, thingUuid: string) => Promise<Result<T, ApiError>> },
-            list: string[]
+            list: string[],
         ): Promise<T[]> {
             return new Promise((resolve, reject) => {
                 let res: T[] = [];
@@ -651,7 +651,7 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                             handleApiError((v) => {
                                 res.push(v);
                                 checkDone();
-                            })
+                            }),
                         )
                         .catch((v) => {
                             console.error(v);
@@ -706,7 +706,7 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                     <thead>
                         <tr>
                             {Object.keys(columns).map(
-                                (c) => (columns as any)[c] && <th>{(columnLabels as any)[c]}</th>
+                                (c) => (columns as any)[c] && <th>{(columnLabels as any)[c]}</th>,
                             )}
                         </tr>
                     </thead>
@@ -725,7 +725,7 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                                                     </pre>
                                                 )}
                                             </td>
-                                        )
+                                        ),
                                 )}
                             </tr>
                         ))}

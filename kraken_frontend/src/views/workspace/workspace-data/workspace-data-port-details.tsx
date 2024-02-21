@@ -36,7 +36,7 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
             handleApiError((x) => {
                 setAttacks(x);
                 setLimit(x.attacks.length - 1);
-            })
+            }),
         );
     }, [workspace, uuid]);
     React.useEffect(() => {
@@ -57,7 +57,7 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
                 handleApiError(() => {
                     if (msg !== undefined) toast.success(msg);
                     if (signalUpdate !== undefined) signalUpdate(uuid, update);
-                })
+                }),
             );
     }
 
@@ -76,8 +76,8 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
                             {port.certainty === "Verified"
                                 ? CertaintyIcon({ certaintyType: "Verified", nameVisible: true })
                                 : port.certainty === "Historical"
-                                ? CertaintyIcon({ certaintyType: "Historical", nameVisible: true })
-                                : CertaintyIcon({ certaintyType: "SupposedTo", nameVisible: true })}
+                                  ? CertaintyIcon({ certaintyType: "Historical", nameVisible: true })
+                                  : CertaintyIcon({ certaintyType: "SupposedTo", nameVisible: true })}
                         </div>
                     </div>
                     <div className={"workspace-data-details-pane"}>

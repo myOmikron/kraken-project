@@ -4,14 +4,20 @@
     padding: 0.5em 1em;
     border: none;
     border-radius: 0.5em;
-    box-shadow: inset 0 -3px 2em -3px var(--primary-op), 0 0 10em #0cf3, 0 0 0.5em #0ff2;
+    box-shadow:
+        inset 0 -3px 2em -3px var(--primary-op),
+        0 0 10em #0cf3,
+        0 0 0.5em #0ff2;
     transition: box-shadow 0.2s ease-out;
 }
 input[type="color"].input {
     padding: revert;
 }
 .input:user-invalid {
-    box-shadow: inset 0 -3px 2em -3px #ff000040, 0 0 10em #f004, 0 0 0.5em 2px #f004;
+    box-shadow:
+        inset 0 -3px 2em -3px #ff000040,
+        0 0 10em #f004,
+        0 0 0.5em 2px #f004;
 }
 
 .button {
@@ -24,8 +30,14 @@ input[type="color"].input {
     border-radius: 0.5em;
     color: var(--text);
     padding: 0.5em 0.5em;
-    transition: padding linear 500ms, margin-top linear 500ms, background-color ease-in-out 500ms;
-    box-shadow: inset 0 -3px 2em var(--primary-op), 0 0 10em #0cf3, 0 0 0.5em #0ff2;
+    transition:
+        padding linear 500ms,
+        margin-top linear 500ms,
+        background-color ease-in-out 500ms;
+    box-shadow:
+        inset 0 -3px 2em var(--primary-op),
+        0 0 10em #0cf3,
+        0 0 0.5em #0ff2;
 }
 
 .button:hover {
@@ -42,7 +54,10 @@ input[type="color"].input {
     padding: 0.5em 1em;
     border: none;
     border-radius: 0.5em;
-    box-shadow: inset 0 -3px 2em -3px var(--primary-op), 0 0 10em #0cf3, 0 0 0.5em #0ff2;
+    box-shadow:
+        inset 0 -3px 2em -3px var(--primary-op),
+        0 0 10em #0cf3,
+        0 0 0.5em #0ff2;
 }
 
 .editable-list {
@@ -72,7 +87,10 @@ input[type="color"].input {
 }
 
 .bubble:hover {
-    box-shadow: inset 0 -3px 2em -3px var(--primary-op), 0 0 10em #0cf3, 0 0 0.5em #0ff2;
+    box-shadow:
+        inset 0 -3px 2em -3px var(--primary-op),
+        0 0 10em #0cf3,
+        0 0 0.5em #0ff2;
 }
 
 .bubble-primary {

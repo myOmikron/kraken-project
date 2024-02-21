@@ -51,7 +51,7 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
     componentDidUpdate(
         prevProps: Readonly<WorkspaceHostsProps>,
         prevState: Readonly<WorkspaceHostsState>,
-        snapshot?: any
+        snapshot?: any,
     ) {
         if (
             this.context.workspace.uuid != this.state.forUuid ||

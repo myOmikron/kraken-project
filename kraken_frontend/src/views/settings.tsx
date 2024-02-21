@@ -49,7 +49,7 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
         await Api.admin.oauthApplications.all().then(
             handleApiError((apps) => {
                 this.setState({ oauthApplications: apps.apps });
-            })
+            }),
         );
     }
 
@@ -57,7 +57,7 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
         await Api.admin.wordlists.all().then(
             handleApiError((wordlists) => {
                 this.setState({ wordlists: wordlists.wordlists });
-            })
+            }),
         );
     }
 
@@ -208,7 +208,7 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
                                                 handleApiError(async () => {
                                                     toast.success("Wordlist deleted");
                                                     await this.updateWordlists();
-                                                })
+                                                }),
                                             );
                                         }}
                                     >
@@ -280,7 +280,7 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
                                                 handleApiError(async (_) => {
                                                     toast.success(`Deleted application ${x.name}`);
                                                     await this.getOAuthApps();
-                                                })
+                                                }),
                                             );
                                         }}
                                     >

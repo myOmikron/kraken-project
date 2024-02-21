@@ -23,7 +23,11 @@
 }
 
 .workspace-host-section-selector > .pane:hover {
-    box-shadow: 0 0 25em var(--primary-op), inset 0 0 10em #0cf3, inset 0 0 0.5em #0ff2, 0 0 1em var(--primary-op);
+    box-shadow:
+        0 0 25em var(--primary-op),
+        inset 0 0 10em #0cf3,
+        inset 0 0 0.5em #0ff2,
+        0 0 1em var(--primary-op);
 }
 
 .workspace-host-section-selector h3 {
@@ -103,7 +107,10 @@
     padding: 0.5em 1em;
     border: none;
     border-radius: 0.5em;
-    box-shadow: inset 0 -3px 2em -3px var(--primary-op), 0 0 10em #0cf3, 0 0 0.5em #0ff2;
+    box-shadow:
+        inset 0 -3px 2em -3px var(--primary-op),
+        0 0 10em #0cf3,
+        0 0 0.5em #0ff2;
     width: 10em;
 }
 
@@ -121,7 +128,11 @@
 
 .workspace-host-hosts-item:hover,
 .workspace-host-hosts-back:hover {
-    box-shadow: 0 0 25em var(--primary-op), inset 0 0 10em #0cf3, inset 0 0 0.5em #0ff2, 0 0 1em var(--primary-op);
+    box-shadow:
+        0 0 25em var(--primary-op),
+        inset 0 0 10em #0cf3,
+        inset 0 0 0.5em #0ff2,
+        0 0 1em var(--primary-op);
 }
 
 .workspace-host-hosts-info {

@@ -71,7 +71,7 @@ export class UserProvider extends React.Component<UserProviderProps, UserProvide
                             toast.error(error.message);
                             break;
                     }
-                }
+                },
             );
             // Clear guard against a lot of calls
             this.fetching = false;

@@ -124,7 +124,7 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
             len ??= this.state.prefilled[k].length;
             if (this.state.prefilled[k].length != len)
                 return toast.error(
-                    "Invalid selection: prefills have different prefill value argument dimensions, can't generate API requests"
+                    "Invalid selection: prefills have different prefill value argument dimensions, can't generate API requests",
                 );
         }
 
@@ -158,7 +158,7 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
             console.log("API call", attack.inputs.endpoint, JSON.stringify(wrappedParams));
             return handleError(
                 // @ts-ignore: The 'this' context of type '...' is not assignable to method's 'this' of type '...'
-                Api.attacks.impl[attack.inputs.endpoint].call(Api.attacks.impl, wrappedParams) as any
+                Api.attacks.impl[attack.inputs.endpoint].call(Api.attacks.impl, wrappedParams) as any,
             ).then(handleApiError((_) => _));
         }
 
@@ -208,7 +208,7 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
                     (e) => {
                         failed++;
                         checkDone();
-                    }
+                    },
                 );
             }
         }
@@ -255,7 +255,7 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
                                 </pre>
                             </div>
                         </Popup>
-                    </>
+                    </>,
                 );
             } else {
                 let Type = input.type;
@@ -297,7 +297,7 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
                             </CollapsibleGroup>
                         ) : (
                             <>{groups[group]}</>
-                        )
+                        ),
                     )}
                 </div>
                 <StartAttack />

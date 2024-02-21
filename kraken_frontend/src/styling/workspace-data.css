@@ -56,7 +56,8 @@
     --color: var(--primary-op);
     --blur: 0.5em;
     --offset: 0.1em;
-    box-shadow: inset 0 var(--offset) var(--blur) var(--color),
+    box-shadow:
+        inset 0 var(--offset) var(--blur) var(--color),
         inset 0 calc(-1 * var(--offset)) var(--blur) var(--color);
 }
 

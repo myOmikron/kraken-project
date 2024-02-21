@@ -51,7 +51,7 @@ export function ConvertingAttackInput<T>(
     props: AttackInputProps<T> & {
         deserialize: (v: string) => T;
         serialize: (v: T | undefined) => string;
-    }
+    },
 ) {
     let [errorInput, setErrorInput] = useState<string | undefined>(undefined);
 
@@ -109,7 +109,7 @@ export function PortListInput(props: AttackInputProps<PortOrRange[] | undefined>
 export function NumberAttackInput(
     props: AttackInputProps<number> & {
         minimum?: number;
-    }
+    },
 ) {
     let minimum = props.minimum ?? 1;
 
@@ -131,7 +131,7 @@ export function NumberAttackInput(
 export function DurationAttackInput(
     props: AttackInputProps<number> & {
         minimum?: number;
-    }
+    },
 ) {
     return <NumberAttackInput placeholder="time in ms" {...props} label={props.label + " (ms)"} />;
 }
@@ -167,8 +167,8 @@ export function WordlistAttackInput(props: AttackInputProps<string>) {
             .all()
             .then(
                 handleApiError((wordlists) =>
-                    setWordlists(wordlists.wordlists.map((x) => ({ label: x.name, value: x.uuid })))
-                )
+                    setWordlists(wordlists.wordlists.map((x) => ({ label: x.name, value: x.uuid }))),
+                ),
             );
     });
 

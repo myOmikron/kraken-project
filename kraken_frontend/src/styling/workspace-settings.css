@@ -20,7 +20,10 @@
 
 .danger {
     background: radial-gradient(100% 130% at left center, rgba(255, 0, 0, 0.1), rgba(255, 0, 0, 0.05));
-    box-shadow: 0 0 25em var(--primary-op), inset 0 0 5em var(--toast-error), inset 0 0 0.5em #0ff2 !important;
+    box-shadow:
+        0 0 25em var(--primary-op),
+        inset 0 0 5em var(--toast-error),
+        inset 0 0 0.5em #0ff2 !important;
 }
 
 .workspace-settings-table {
@@ -60,7 +63,10 @@
 }
 
 .workspace-settings-red-button {
-    box-shadow: inset 0 -3px 2em var(--red-button), 0 0 10em var(--red-button), 0 0 0.5em var(--red-button);
+    box-shadow:
+        inset 0 -3px 2em var(--red-button),
+        0 0 10em var(--red-button),
+        0 0 0.5em var(--red-button);
 }
 
 .workspace-settings-user-table-entry {

@@ -41,7 +41,7 @@ export default class Cursor {
         editorInstance: editor.IStandaloneCodeEditor | null,
         line: number,
         column: number,
-        active: boolean = true
+        active: boolean = true,
     ) {
         this.line = line;
         this.column = column;
