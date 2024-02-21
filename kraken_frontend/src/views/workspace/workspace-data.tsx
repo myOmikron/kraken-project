@@ -28,6 +28,7 @@ import HistoricalIcon from "../../svg/historical";
 import UnknownIcon from "../../svg/unknown";
 import SelectableText from "../../components/selectable-text";
 import "../../styling/tabs.css";
+import Indicator from "../../components/indicator";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations", findings: "Findings" };
@@ -280,7 +281,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"service-table"}
                         {...servicesTable}
-                        columnsTemplate={"min-content 0.8fr 30ch 5ch 3.75em 1fr 1fr 3.5em 4em 2.25em"}
+                        columnsTemplate={"min-content 0.8fr 30ch 5ch 3.75em 2em 2em 1fr 1fr 3.5em 4em 2.25em"}
                         onAdd={() => setCreateForm("services")}
                         filter={serviceFilter}
                     >
@@ -294,6 +295,8 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>IP</span>
                             <span>Port</span>
                             <span>Protocol</span>
+                            <span>Raw</span>
+                            <span>TLS</span>
                             <span>Tags</span>
                             <span>Comment</span>
                             <span>Severity</span>
@@ -323,6 +326,20 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <span>{service.host.ipAddr}</span>
                                 <span>{service.port?.port}</span>
                                 <span>{service.port?.protocol?.toUpperCase()}</span>
+                                <span>
+                                    <Indicator
+                                        off={
+                                            !(service.protocols && Object.values(service.protocols).find(Boolean)?.raw)
+                                        }
+                                    />
+                                </span>
+                                <span>
+                                    <Indicator
+                                        off={
+                                            !(service.protocols && Object.values(service.protocols).find(Boolean)?.tls)
+                                        }
+                                    />
+                                </span>
                                 <TagList tags={service.tags} />
                                 <span>{service.comment}</span>
                                 <span className="workspace-data-certainty-icon"></span>
@@ -681,6 +698,7 @@ type MultiSelectMenuProps = {
     onUpdate: () => void;
     onDelete: () => void;
 };
+
 export function MultiSelectMenu(props: MultiSelectMenuProps) {
     const { selectedUuids, setSelectedUuids, onUpdate, onDelete } = props;
     const {
@@ -984,6 +1002,7 @@ type SelectButtonProps = {
     uuids: Record<string, true>;
     setUuids: (uuids: Record<string, true>) => void;
 };
+
 export function SelectButton(props: SelectButtonProps) {
     const { uuid, uuids, setUuids } = props;
     return (
