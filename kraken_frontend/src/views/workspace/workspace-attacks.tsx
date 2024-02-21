@@ -276,7 +276,7 @@ const ATTACKS: AllAttackDescr = {
                     required: true,
                 },
                 timeout: {
-                    label: "Timeout",
+                    label: "Timeout (in ms)",
                     multi: false,
                     defaultValue: 1000,
                     type: DurationAttackInput,
@@ -296,7 +296,8 @@ const ATTACKS: AllAttackDescr = {
     },
     service_detection: {
         name: "Service Detection",
-        description: `Try to determine which service is running on a specific port.`, // TODO
+        description:
+            "Scan a port range on a collection of hosts for open TCP ports and detect the services running on them",
         category: AttackCategory.Services,
         inputs: {
             endpoint: "serviceDetection",
@@ -319,7 +320,7 @@ const ATTACKS: AllAttackDescr = {
                     type: PortListInput,
                 },
                 connectTimeout: {
-                    label: "Connect Timeout",
+                    label: "Connect Timeout (in ms)",
                     multi: false,
                     defaultValue: 1000,
                     required: true,
@@ -327,7 +328,7 @@ const ATTACKS: AllAttackDescr = {
                     group: "Advanced",
                 },
                 receiveTimeout: {
-                    label: "Receive Timeout",
+                    label: "Receive Timeout (in ms)",
                     multi: false,
                     defaultValue: 500,
                     type: DurationAttackInput,
@@ -361,7 +362,7 @@ const ATTACKS: AllAttackDescr = {
                 skipIcmpCheck: {
                     label: "Skip icmp check",
                     multi: false,
-                    defaultValue: false,
+                    defaultValue: true,
                     type: BooleanAttackInput,
                 },
             },
@@ -393,7 +394,7 @@ const ATTACKS: AllAttackDescr = {
                     preprocess: (v) => (typeof v == "number" ? [v] : v),
                 },
                 timeout: {
-                    label: "Timeout",
+                    label: "Timeout (in ms)",
                     multi: false,
                     defaultValue: 1000,
                     type: DurationAttackInput,

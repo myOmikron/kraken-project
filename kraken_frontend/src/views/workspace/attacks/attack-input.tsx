@@ -37,7 +37,7 @@ export function StringAttackInput(props: AttackInputProps<string>) {
             <Input
                 key={props.valueKey + "_value"}
                 id={props.valueKey + "_input"}
-                value={props.value}
+                value={props.value || ""}
                 onChange={(v) => {
                     props.onUpdate(props.valueKey, v);
                 }}
