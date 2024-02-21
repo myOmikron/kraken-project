@@ -109,6 +109,12 @@
     height: fit-content;
 }
 
+.mixed-button .icon > svg {
+    width: fit-content;
+    height: 1.5em;
+    margin: 0 1ex;
+}
+
 .workspace-selector-container {
     width: 25em;
     display: flex;

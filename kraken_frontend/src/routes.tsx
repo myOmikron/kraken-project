@@ -85,6 +85,31 @@ export const ROUTES = {
             </ContentWithMenu>
         ),
     }),
+    WORKSPACE_SELECTION_ATTACKS: ROUTER.add<{
+        workspaceUuid: string
+    }, {
+        domains: string[],
+        hosts: string[],
+        ports: string[],
+        services: string[]
+    }>({
+        url: "workspaces/{workspaceUuid}/attacks/selection",
+        parser: { workspaceUuid: String },
+        render: ({ workspaceUuid }, hiddenParams) => {
+            if (hiddenParams === undefined) {
+                ROUTES.WORKSPACE_ATTACKS.visit({ uuid: workspaceUuid });
+                return <></>;
+            }
+            let { domains, hosts, ports, services } = hiddenParams;
+            return (
+                <ContentWithMenu>
+                    <Workspace view={"attacks"} uuid={workspaceUuid}>
+                        <WorkspaceAttacks targetType="selection" domains={domains} hosts={hosts} ports={ports} services={services} />
+                    </Workspace>
+                </ContentWithMenu>
+            );
+        },
+    }),
     WORKSPACE_TARGETED_ATTACKS: ROUTER.add({
         url: "workspaces/{workspaceUuid}/attacks/{targetType}/{targetUuid}",
         parser: { workspaceUuid: String, targetType: TargetType, targetUuid: String },
