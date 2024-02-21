@@ -68,10 +68,21 @@ async fn aggregate(data: ServiceAggregationData) -> Result<Uuid, rorm::Error> {
             .unwrap_or(ServiceProtocols::Unknown {})
             .encode();
         if old_protocols != protocols {
-            update!(&mut tx, Service)
-                .set(Service::F.protocols, old_protocols | protocols)
-                .condition(Service::F.uuid.equals(service_uuid))
-                .await?;
+            if old_certainty < data.certainty {
+                // Overwrite old protocols
+                update!(&mut tx, Service)
+                    .set(Service::F.protocols, protocols)
+                    .condition(Service::F.uuid.equals(service_uuid))
+                    .await?;
+            } else if old_certainty == data.certainty {
+                // Merge old and new protocols
+                update!(&mut tx, Service)
+                    .set(Service::F.protocols, old_protocols | protocols)
+                    .condition(Service::F.uuid.equals(service_uuid))
+                    .await?;
+            } else {
+                // Keep old protocols
+            }
         }
 
         service_uuid
