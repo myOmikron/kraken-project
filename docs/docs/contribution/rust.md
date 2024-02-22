@@ -17,7 +17,13 @@ formatting cases, the `#[rustfmt::skip]` annotation should be used.
 Run `rustfmt` with the following parameters:
 
 ```bash
-rustfmt --config imports_granularity="Module,group_imports=StdExternalCrate" $FILE
+rustfmt --config imports_granularity="Item,group_imports=StdExternalCrate" $FILE
+```
+
+You can also run `rustfmt` on the whole project:
+
+```bash
+cargo +nightly fmt
 ```
 
 ## Use and mod prevalence
