@@ -321,6 +321,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: ["1-65535"],
                     prefill: ["port"],
                     type: PortListInput,
+                    preprocess: (v) => (typeof v == "number" ? [v] : v),
                 },
                 connectTimeout: {
                     label: "Connect Timeout (in ms)",
