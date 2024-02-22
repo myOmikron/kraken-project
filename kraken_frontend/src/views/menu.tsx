@@ -1,15 +1,17 @@
 import React from "react";
-import { ROUTES } from "../routes";
-import USER_CONTEXT from "../context/user";
-import AttackIcon from "../svg/attack";
-import KrakenIcon from "../svg/kraken";
-import KnowledgeIcon from "../svg/knowledge";
-import WorkspaceIcon from "../svg/workspace";
-import UsersIcon from "../svg/users";
-import UserSettingsIcon from "../svg/user_settings";
-import "../styling/menu.css";
-import SettingsIcon from "../svg/settings";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import { UserPermission } from "../api/generated";
+import USER_CONTEXT from "../context/user";
+import { ROUTES } from "../routes";
+import "../styling/menu.css";
+import KnowledgeIcon from "../svg/knowledge";
+import KrakenIcon from "../svg/kraken";
+import RelationIndirectIcon from "../svg/relation-indirect";
+import SettingsIcon from "../svg/settings";
+import UserSettingsIcon from "../svg/user_settings";
+import UsersIcon from "../svg/users";
+import WorkspaceIcon from "../svg/workspace";
 import RunningAttacks from "./running-attacks";
 
 type MenuItem =
@@ -20,7 +22,8 @@ type MenuItem =
     | "users_admin"
     | "workspaces_admin"
     | "knowledge"
-    | "settings";
+    | "settings"
+    | "workflows";
 
 type MenuProps = {};
 type MenuState = {
@@ -56,6 +59,22 @@ export default class Menu extends React.Component<MenuProps, MenuState> {
                     >
                         <WorkspaceIcon />
                         <div className={"menu-hint"}>Workspaces</div>
+                    </div>
+                </div>
+                <div className={"menu-item-container"}>
+                    <div
+                        className={this.state.active === "workflows" ? "menu-item active" : "menu-item"}
+                        onClick={() => {
+                            this.setState({ active: "workflows" });
+                            ROUTES.WORKFLOWS.visit({});
+                        }}
+                        onAuxClick={() => {
+                            this.setState({ active: "workflows" });
+                            ROUTES.WORKFLOWS.open({});
+                        }}
+                    >
+                        <RelationIndirectIcon />
+                        <div className={"menu-hint"}>Workflows</div>
                     </div>
                 </div>
                 <div className={"menu-seperator"}>General</div>
@@ -170,15 +189,17 @@ type ContentWithMenuProps = {
 };
 export function ContentWithMenu(props: ContentWithMenuProps) {
     return (
-        <div className={"base-layout"}>
-            <div className={"content-container"}>{props.children}</div>
-            <Menu />
-            <div className={"top-bar"}>
-                <RunningAttacks />
-                <div className={"workspace-selector-container pane"}>
-                    <WorkspaceIcon />
+        <DndProvider backend={HTML5Backend}>
+            <div className={"base-layout"}>
+                <div className={"content-container"}>{props.children}</div>
+                <Menu />
+                <div className={"top-bar"}>
+                    <RunningAttacks />
+                    <div className={"workspace-selector-container pane"}>
+                        <WorkspaceIcon />
+                    </div>
                 </div>
             </div>
-        </div>
+        </DndProvider>
     );
 }
