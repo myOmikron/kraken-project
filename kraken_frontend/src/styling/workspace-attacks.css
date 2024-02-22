@@ -45,6 +45,10 @@
     transform: scale(calc(1 - var(--strength) * 0.1));
 }
 
+.kraken-attacks path.kraken-attacks-hex.kraken-attacks-hex-unavailable {
+    transform: unset;
+}
+
 .kraken-attacks path.kraken-attacks-hex:active {
     scale: 0.9;
 }
