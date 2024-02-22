@@ -13,9 +13,8 @@ type OsIconProps = {
     style?: React.CSSProperties;
 };
 export default function OsIcon(props: OsIconProps) {
-    let style: any = {...props.style};
-    if (props.size !== undefined)
-        style.width = style.height = props.size;
+    let style: any = { ...props.style };
+    if (props.size !== undefined) style.width = style.height = props.size;
     switch (props.os) {
         case "Linux":
             return <TuxIcon style={style} />;

@@ -543,22 +543,18 @@ export default class WorkspaceDataDetailsResults extends React.Component<
                                     </div>
                                     <div className={"workspace-data-details-pane"}>
                                         <h3 className={"sub-heading"}>OS</h3>
-                                        <div style={{"display": "flex", "alignItems": "center"}}>
-                                            <OsIcon os={qdResult.os} size="24px" style={{marginRight: "4px"}}/>
+                                        <div style={{ display: "flex", alignItems: "center" }}>
+                                            <OsIcon os={qdResult.os} size="24px" style={{ marginRight: "4px" }} />
                                             {qdResult.os}
                                         </div>
                                     </div>
                                     <div className={"workspace-data-details-pane"}>
                                         <h3 className={"sub-heading"}>Version</h3>
-                                        <pre>
-                                            {qdResult.version || "unknown"}
-                                        </pre>
+                                        <pre>{qdResult.version || "unknown"}</pre>
                                     </div>
                                     <div className={"workspace-data-details-pane wide"}>
                                         <h3 className={"sub-heading"}>Hints</h3>
-                                        <pre>
-                                            {qdResult.hints || "n/a"}
-                                        </pre>
+                                        <pre>{qdResult.hints || "n/a"}</pre>
                                     </div>
                                 </div>
                             </div>
