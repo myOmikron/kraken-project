@@ -101,14 +101,16 @@
         all ease 400ms,
         transform 0ms,
         opacity 0ms;
+}
+.kraken-attacks .kraken-attacks-hex {
     animation: hex-fade-in cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
 }
 /* hack to not play entry animation after selection anymore: */
-.kraken-attacks-hex.was-clicked:not(.kraken-attacks-hex-selected) {
+.kraken-attacks .kraken-attacks-hex.was-clicked:not(.kraken-attacks-hex-selected) {
     animation: none;
 }
 
-.kraken-attacks-hex + g {
+.kraken-attacks .kraken-attacks-hex + g {
     animation: hex-fade-in-text ease-out 0.2s both;
 }
 
