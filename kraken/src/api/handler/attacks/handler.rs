@@ -132,15 +132,15 @@ pub async fn hosts_alive_check(
 
 /// Tries to find out the operating system of the remote host.
 #[utoipa::path(
-tag = "Attacks",
-context_path = "/api/v1",
-responses(
-(status = 202, description = "Attack scheduled", body = UuidResponse),
-(status = 400, description = "Client error", body = ApiErrorResponse),
-(status = 500, description = "Server error", body = ApiErrorResponse)
-),
-request_body = OsDetectionRequest,
-security(("api_key" = []))
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 202, description = "Attack scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = OsDetectionRequest,
+    security(("api_key" = []))
 )]
 #[post("/attacks/osDetection")]
 pub async fn os_detection(

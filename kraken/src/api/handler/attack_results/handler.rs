@@ -663,15 +663,15 @@ pub async fn get_dns_txt_scan_results(
 
 /// Retrieve a host alive's results by the attack's id
 #[utoipa::path(
-tag = "Attacks",
-context_path = "/api/v1",
-responses(
-(status = 200, description = "Returns attack's results", body = OsDetectionResultsPage),
-(status = 400, description = "Client error", body = ApiErrorResponse),
-(status = 500, description = "Server error", body = ApiErrorResponse),
-),
-params(PathUuid, PageParams),
-security(("api_key" = []))
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Returns attack's results", body = OsDetectionResultsPage),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid, PageParams),
+    security(("api_key" = []))
 )]
 #[get("/attacks/{uuid}/osDetectionResults")]
 pub async fn get_os_detection_results(
