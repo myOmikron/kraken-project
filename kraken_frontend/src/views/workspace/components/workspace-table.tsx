@@ -187,7 +187,7 @@ export function useTable<T extends { uuid: string }>(
     query: (limit: number, offset: number) => Promise<Result<GenericPage<T>, ApiError>>,
     queryDeps?: React.DependencyList,
 ) {
-    const [limit, setLimit] = React.useState(20);
+    const [limit, setLimit] = React.useState(100);
     const [offset, setOffset] = React.useState(0);
     const [total, setTotal] = React.useState(0);
     const [items, setItems] = React.useState<Array<T>>([]);
