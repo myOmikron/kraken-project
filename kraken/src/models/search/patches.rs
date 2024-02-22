@@ -2,7 +2,9 @@ use rorm::prelude::ForeignModel;
 use rorm::Patch;
 use uuid::Uuid;
 
-use crate::models::{Search, User, Workspace};
+use crate::models::Search;
+use crate::models::User;
+use crate::models::Workspace;
 
 #[derive(Patch)]
 #[rorm(model = "Search")]

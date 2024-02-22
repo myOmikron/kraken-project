@@ -4,14 +4,16 @@
 
 use std::any::TypeId;
 
-use kraken::api::handler::common::schema::{ApiErrorResponse, ApiStatusCode};
+use kraken::api::handler::common::schema::ApiErrorResponse;
+use kraken::api::handler::common::schema::ApiStatusCode;
 use reqwest::Url;
 use serde::de::value::UnitDeserializer;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
 use crate::error::KrakenError;
-use crate::{KrakenClient, KrakenResult};
+use crate::KrakenClient;
+use crate::KrakenResult;
 
 pub(crate) enum Method {
     Get,

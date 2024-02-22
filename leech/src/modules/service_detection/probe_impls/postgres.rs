@@ -4,7 +4,8 @@
 
 use std::slice;
 
-use log::{debug, trace};
+use log::debug;
+use log::trace;
 
 use crate::modules::service_detection::generated::Match;
 use crate::modules::service_detection::tcp::OneShotTcpSettings;

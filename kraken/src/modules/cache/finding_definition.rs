@@ -1,17 +1,25 @@
 use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
+use std::sync::RwLock;
 use std::time::Duration;
 
 use futures::TryStreamExt;
-use log::{debug, error};
+use log::debug;
+use log::error;
 use rorm::db::Executor;
-use rorm::{delete, query, update, FieldAccess, Model};
+use rorm::delete;
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
 use thiserror::Error;
 use tokio::time::interval;
 use uuid::Uuid;
 
 use crate::chan::global::GLOBAL;
-use crate::models::{FindingDefinition, FindingDefinitionInsertError, FindingSeverity};
+use crate::models::FindingDefinition;
+use crate::models::FindingDefinitionInsertError;
+use crate::models::FindingSeverity;
 
 /// The caching layer for [FindingDefinition]
 ///

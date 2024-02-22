@@ -2,15 +2,20 @@ use std::net::IpAddr;
 use std::num::NonZeroU16;
 
 use ipnetwork::IpNetwork;
-use kraken::api::handler::common::schema::{ServiceResultsPage, UuidResponse};
-use kraken::api::handler::services::schema::{
-    CreateServiceRequest, FullService, GetAllServicesQuery, ServiceRelations, UpdateServiceRequest,
-};
-use kraken::models::{ManualServiceCertainty, ServiceProtocols};
+use kraken::api::handler::common::schema::ServiceResultsPage;
+use kraken::api::handler::common::schema::UuidResponse;
+use kraken::api::handler::services::schema::CreateServiceRequest;
+use kraken::api::handler::services::schema::FullService;
+use kraken::api::handler::services::schema::GetAllServicesQuery;
+use kraken::api::handler::services::schema::ServiceRelations;
+use kraken::api::handler::services::schema::UpdateServiceRequest;
+use kraken::models::ManualServiceCertainty;
+use kraken::models::ServiceProtocols;
 use uuid::Uuid;
 
 use crate::sdk::utils::KrakenRequest;
-use crate::{KrakenClient, KrakenResult};
+use crate::KrakenClient;
+use crate::KrakenResult;
 
 impl KrakenClient {
     /// Add a service manually to kraken

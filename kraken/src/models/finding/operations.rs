@@ -1,10 +1,15 @@
 use rorm::db::Executor;
-use rorm::{insert, query, FieldAccess, Model, Patch};
+use rorm::insert;
+use rorm::query;
+use rorm::FieldAccess;
+use rorm::Model;
+use rorm::Patch;
 use thiserror::Error;
 use uuid::Uuid;
 
 use crate::api::handler::common::error::ApiError;
-use crate::models::{FindingDefinition, FindingSeverity};
+use crate::models::FindingDefinition;
+use crate::models::FindingSeverity;
 
 impl FindingDefinition {
     /// Insert a new [FindingDefinition]

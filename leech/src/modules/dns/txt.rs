@@ -1,21 +1,26 @@
 //! leech module for parsing TXT entries in the DNS results specifically.
 
-use std::fmt::{Display, Formatter};
+use std::fmt::Display;
+use std::fmt::Formatter;
 
-use log::{debug, info};
+use log::debug;
+use log::info;
 use once_cell::sync::Lazy;
 use regex::bytes::Regex;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinSet;
-use trust_dns_resolver::name_server::{GenericConnector, TokioRuntimeProvider};
-use trust_dns_resolver::{AsyncResolver, TokioAsyncResolver};
+use trust_dns_resolver::name_server::GenericConnector;
+use trust_dns_resolver::name_server::TokioRuntimeProvider;
+use trust_dns_resolver::AsyncResolver;
+use trust_dns_resolver::TokioAsyncResolver;
 
 use crate::modules::dns::resolve;
 
 type ResolverT = AsyncResolver<GenericConnector<TokioRuntimeProvider>>;
 
 use super::errors::DnsResolutionError;
-use super::spf::{parse_spf, SPFPart};
+use super::spf::parse_spf;
+use super::spf::SPFPart;
 
 /// DNS TXT scanning settings
 pub struct DnsTxtScanSettings {

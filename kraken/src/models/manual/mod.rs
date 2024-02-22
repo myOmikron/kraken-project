@@ -1,15 +1,20 @@
 #![allow(missing_docs)]
 //! This module defines the models to store information about manually inserted aggregations
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
 use rorm::prelude::*;
 use rorm::Model;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{OsType, PortProtocol, User, Workspace};
+use crate::models::OsType;
+use crate::models::PortProtocol;
+use crate::models::User;
+use crate::models::Workspace;
 
 #[cfg(feature = "bin")]
 mod operations;

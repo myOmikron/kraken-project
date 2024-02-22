@@ -2,7 +2,8 @@ use std::sync::Arc;
 
 use kraken::chan::ws_manager::schema::WsMessage;
 use reqwest::cookie::Jar;
-use reqwest::{ClientBuilder, Url};
+use reqwest::ClientBuilder;
+use reqwest::Url;
 use tokio::sync::mpsc::Sender;
 
 use crate::error::KrakenError;

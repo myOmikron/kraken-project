@@ -1,22 +1,36 @@
 //! Helper utilities
 
 use std::future::Future;
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
-use std::num::{NonZeroU16, NonZeroUsize};
+use std::net::IpAddr;
+use std::net::Ipv4Addr;
+use std::net::Ipv6Addr;
+use std::net::SocketAddr;
+use std::num::NonZeroU16;
+use std::num::NonZeroUsize;
 use std::ops::RangeInclusive;
-use std::os::fd::{FromRawFd, IntoRawFd};
+use std::os::fd::FromRawFd;
+use std::os::fd::IntoRawFd;
 use std::panic;
 use std::str::FromStr;
 
 use nix::ifaddrs::getifaddrs;
-use nix::sys::socket::{AddressFamily, SockaddrLike};
+use nix::sys::socket::AddressFamily;
+use nix::sys::socket::SockaddrLike;
 use once_cell::sync::Lazy;
-use regex::{bytes, Regex};
+use regex::bytes;
+use regex::Regex;
 use thiserror::Error;
-use tokio::io::{self, stdin, AsyncBufReadExt, BufReader};
-use tokio::net::{TcpSocket, UdpSocket};
-use tokio::task::{JoinError, JoinSet};
-use tonic::transport::{Certificate, ClientTlsConfig, Endpoint};
+use tokio::io::stdin;
+use tokio::io::AsyncBufReadExt;
+use tokio::io::BufReader;
+use tokio::io::{self};
+use tokio::net::TcpSocket;
+use tokio::net::UdpSocket;
+use tokio::task::JoinError;
+use tokio::task::JoinSet;
+use tonic::transport::Certificate;
+use tonic::transport::ClientTlsConfig;
+use tonic::transport::Endpoint;
 
 use crate::config::KrakenConfig;
 

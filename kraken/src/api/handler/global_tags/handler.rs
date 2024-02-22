@@ -3,7 +3,8 @@ use actix_web::web::Json;
 use rorm::query;
 
 use crate::api::handler::common::error::ApiResult;
-use crate::api::handler::global_tags::schema::{FullGlobalTag, ListGlobalTags};
+use crate::api::handler::global_tags::schema::FullGlobalTag;
+use crate::api::handler::global_tags::schema::ListGlobalTags;
 use crate::chan::global::GLOBAL;
 use crate::models::GlobalTag;
 

@@ -1,14 +1,19 @@
-use kraken::api::handler::attacks::schema::{
-    BruteforceSubdomainsRequest, DnsResolutionRequest, DnsTxtScanRequest, HostsAliveRequest,
-    ListAttacks, QueryCertificateTransparencyRequest, ServiceDetectionRequest, SimpleAttack,
-    UdpServiceDetectionRequest,
-};
+use kraken::api::handler::attacks::schema::BruteforceSubdomainsRequest;
+use kraken::api::handler::attacks::schema::DnsResolutionRequest;
+use kraken::api::handler::attacks::schema::DnsTxtScanRequest;
+use kraken::api::handler::attacks::schema::HostsAliveRequest;
+use kraken::api::handler::attacks::schema::ListAttacks;
+use kraken::api::handler::attacks::schema::QueryCertificateTransparencyRequest;
+use kraken::api::handler::attacks::schema::ServiceDetectionRequest;
+use kraken::api::handler::attacks::schema::SimpleAttack;
+use kraken::api::handler::attacks::schema::UdpServiceDetectionRequest;
 use kraken::api::handler::common::schema::UuidResponse;
 use serde::Serialize;
 use uuid::Uuid;
 
 use crate::sdk::utils::KrakenRequest;
-use crate::{KrakenClient, KrakenResult};
+use crate::KrakenClient;
+use crate::KrakenResult;
 
 impl KrakenClient {
     /// Get all attacks the user has access to

@@ -3,7 +3,8 @@ use log::info;
 
 use crate::error::KrakenError;
 use crate::sdk::utils::KrakenRequest;
-use crate::{KrakenClient, KrakenResult};
+use crate::KrakenClient;
+use crate::KrakenResult;
 
 impl KrakenClient {
     /// Test if the user is authenticated

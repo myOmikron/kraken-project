@@ -1,10 +1,14 @@
+use actix_web::get;
+use actix_web::put;
 use actix_web::web::Json;
-use actix_web::{get, put, HttpResponse};
+use actix_web::HttpResponse;
 use log::error;
 use uuid::Uuid;
 
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::settings::schema::{SettingsFull, UpdateSettingsRequest};
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::settings::schema::SettingsFull;
+use crate::api::handler::settings::schema::UpdateSettingsRequest;
 use crate::chan::global::GLOBAL;
 use crate::models::SettingsInsert;
 

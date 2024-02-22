@@ -1,7 +1,10 @@
 use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
-use kraken_proto::{shared, PortOrRange, UdpServiceDetectionRequest, UdpServiceDetectionResponse};
+use kraken_proto::shared;
+use kraken_proto::PortOrRange;
+use kraken_proto::UdpServiceDetectionRequest;
+use kraken_proto::UdpServiceDetectionResponse;
 use rorm::insert;
 use rorm::prelude::ForeignModelByField;
 use uuid::Uuid;
@@ -9,14 +12,20 @@ use uuid::Uuid;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
-use crate::models::{
-    AggregationSource, AggregationTable, HostCertainty, PortCertainty, PortProtocol,
-    ServiceCertainty, ServiceProtocols, SourceType, UdpServiceDetectionName,
-    UdpServiceDetectionResultInsert,
-};
-use crate::modules::attacks::{
-    AttackContext, AttackError, HandleAttackResponse, UdpServiceDetectionParams,
-};
+use crate::models::AggregationSource;
+use crate::models::AggregationTable;
+use crate::models::HostCertainty;
+use crate::models::PortCertainty;
+use crate::models::PortProtocol;
+use crate::models::ServiceCertainty;
+use crate::models::ServiceProtocols;
+use crate::models::SourceType;
+use crate::models::UdpServiceDetectionName;
+use crate::models::UdpServiceDetectionResultInsert;
+use crate::modules::attacks::AttackContext;
+use crate::modules::attacks::AttackError;
+use crate::modules::attacks::HandleAttackResponse;
+use crate::modules::attacks::UdpServiceDetectionParams;
 
 impl AttackContext {
     /// Executes the "service detection" attack

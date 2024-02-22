@@ -1,9 +1,15 @@
+use rorm::and;
 use rorm::db::Executor;
+use rorm::insert;
 use rorm::prelude::*;
-use rorm::{and, insert, query, update};
+use rorm::query;
+use rorm::update;
 use uuid::Uuid;
 
-use crate::models::{DomainDomainRelation, DomainHostRelation, PortProtocol, ServiceProtocols};
+use crate::models::DomainDomainRelation;
+use crate::models::DomainHostRelation;
+use crate::models::PortProtocol;
+use crate::models::ServiceProtocols;
 
 impl DomainDomainRelation {
     /// Insert a [`CnameRelation`] if it doesn't exist yet.

@@ -5,7 +5,9 @@ use rorm::db::sql::value::Value;
 use rorm::internal::field::Field;
 use rorm::prelude::*;
 
-use crate::models::{Host, Port, Service};
+use crate::models::Host;
+use crate::models::Port;
+use crate::models::Service;
 use crate::modules::raw_query::RawJoin;
 
 macro_rules! sql_name {
@@ -92,11 +94,14 @@ pub struct JoinTags {
 
 macro_rules! join_tags {
     ($TargetModel:ident, w: $WorkspaceModel:ident::F.$workspace_field:ident, g: $GlobalModel:ident::F.$global_field:ident) => {{
+        use rorm::field;
         use rorm::internal::field::Field;
-        use rorm::{field, Model};
-        use $crate::models::{
-            $GlobalModel, $TargetModel, $WorkspaceModel, GlobalTag, WorkspaceTag,
-        };
+        use rorm::Model;
+        use $crate::models::$GlobalModel;
+        use $crate::models::$TargetModel;
+        use $crate::models::$WorkspaceModel;
+        use $crate::models::GlobalTag;
+        use $crate::models::WorkspaceTag;
 
         $crate::modules::filter::sqler::joins::JoinTags {
             table_alias: "tags",

@@ -1,18 +1,25 @@
-use kraken_proto::{CertificateTransparencyRequest, CertificateTransparencyResponse};
+use kraken_proto::CertificateTransparencyRequest;
+use kraken_proto::CertificateTransparencyResponse;
+use rorm::insert;
 use rorm::prelude::*;
-use rorm::{insert, query};
+use rorm::query;
 use uuid::Uuid;
 
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
-use crate::chan::ws_manager::schema::{CertificateTransparencyEntry, WsMessage};
-use crate::models::{
-    AggregationSource, AggregationTable, Attack, CertificateTransparencyResultInsert,
-    CertificateTransparencyValueNameInsert, DomainCertainty, SourceType,
-};
-use crate::modules::attacks::{
-    AttackContext, AttackError, CertificateTransparencyParams, HandleAttackResponse,
-};
+use crate::chan::ws_manager::schema::CertificateTransparencyEntry;
+use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::AggregationSource;
+use crate::models::AggregationTable;
+use crate::models::Attack;
+use crate::models::CertificateTransparencyResultInsert;
+use crate::models::CertificateTransparencyValueNameInsert;
+use crate::models::DomainCertainty;
+use crate::models::SourceType;
+use crate::modules::attacks::AttackContext;
+use crate::modules::attacks::AttackError;
+use crate::modules::attacks::CertificateTransparencyParams;
+use crate::modules::attacks::HandleAttackResponse;
 use crate::modules::utc::utc_from_seconds;
 
 impl AttackContext {

@@ -2,17 +2,41 @@
 //!
 //! They got created with [utoipa].
 
-use utoipa::openapi::security::{ApiKey, ApiKeyValue, Http, HttpAuthScheme, SecurityScheme};
-use utoipa::{Modify, OpenApi};
+use utoipa::openapi::security::ApiKey;
+use utoipa::openapi::security::ApiKeyValue;
+use utoipa::openapi::security::Http;
+use utoipa::openapi::security::HttpAuthScheme;
+use utoipa::openapi::security::SecurityScheme;
+use utoipa::Modify;
+use utoipa::OpenApi;
 
-use crate::api::handler::{
-    aggregation_source, api_keys, attack_results, attacks, auth, common, data_export, domains,
-    finding_definitions, global_tags, hosts, leeches, oauth, oauth_applications, oauth_decisions,
-    ports, services, settings, users, websocket, wordlists, workspace_invitations, workspace_tags,
-    workspaces,
-};
+use crate::api::handler::aggregation_source;
+use crate::api::handler::api_keys;
+use crate::api::handler::attack_results;
+use crate::api::handler::attacks;
+use crate::api::handler::auth;
+use crate::api::handler::common;
+use crate::api::handler::data_export;
+use crate::api::handler::domains;
+use crate::api::handler::finding_definitions;
+use crate::api::handler::global_tags;
+use crate::api::handler::hosts;
+use crate::api::handler::leeches;
+use crate::api::handler::oauth;
+use crate::api::handler::oauth_applications;
+use crate::api::handler::oauth_decisions;
+use crate::api::handler::ports;
+use crate::api::handler::services;
+use crate::api::handler::settings;
+use crate::api::handler::users;
+use crate::api::handler::websocket;
+use crate::api::handler::wordlists;
+use crate::api::handler::workspace_invitations;
+use crate::api::handler::workspace_tags;
+use crate::api::handler::workspaces;
+use crate::chan;
+use crate::models;
 use crate::modules::oauth::schemas as oauth_schemas;
-use crate::{chan, models};
 
 struct SecurityAddon;
 impl Modify for SecurityAddon {

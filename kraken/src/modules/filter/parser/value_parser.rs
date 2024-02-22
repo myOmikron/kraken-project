@@ -5,7 +5,9 @@ use serde::de::StdError;
 use crate::models::PortProtocol;
 use crate::modules::filter::lexer::Token;
 use crate::modules::filter::parser::cursor::Cursor;
-use crate::modules::filter::{MaybeRange, ParseError, Range};
+use crate::modules::filter::MaybeRange;
+use crate::modules::filter::ParseError;
+use crate::modules::filter::Range;
 
 /// Trait alias for `Fn(&mut Cursor) -> Result<T, ParseError>` and `Copy`
 pub trait ValueParser<T>: Fn(&mut Cursor) -> Result<T, ParseError> + Copy {}

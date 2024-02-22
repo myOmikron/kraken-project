@@ -1,7 +1,10 @@
 use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
-use kraken_proto::{shared, PortOrRange, ServiceDetectionRequest, ServiceDetectionResponse};
+use kraken_proto::shared;
+use kraken_proto::PortOrRange;
+use kraken_proto::ServiceDetectionRequest;
+use kraken_proto::ServiceDetectionResponse;
 use rorm::insert;
 use rorm::prelude::ForeignModelByField;
 use uuid::Uuid;
@@ -9,14 +12,20 @@ use uuid::Uuid;
 use crate::api::handler::attacks::schema::DomainOrNetwork;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
-use crate::models::{
-    AggregationSource, AggregationTable, HostCertainty, PortCertainty, PortProtocol,
-    ServiceCertainty, ServiceDetectionName, ServiceDetectionResultInsert, ServiceProtocols,
-    SourceType,
-};
-use crate::modules::attacks::{
-    AttackContext, AttackError, HandleAttackResponse, ServiceDetectionParams,
-};
+use crate::models::AggregationSource;
+use crate::models::AggregationTable;
+use crate::models::HostCertainty;
+use crate::models::PortCertainty;
+use crate::models::PortProtocol;
+use crate::models::ServiceCertainty;
+use crate::models::ServiceDetectionName;
+use crate::models::ServiceDetectionResultInsert;
+use crate::models::ServiceProtocols;
+use crate::models::SourceType;
+use crate::modules::attacks::AttackContext;
+use crate::modules::attacks::AttackError;
+use crate::modules::attacks::HandleAttackResponse;
+use crate::modules::attacks::ServiceDetectionParams;
 
 impl AttackContext {
     /// Executes the "service detection" attack

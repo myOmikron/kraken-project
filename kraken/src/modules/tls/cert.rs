@@ -2,11 +2,17 @@
 
 use std::net::IpAddr;
 
-use rcgen::{
-    BasicConstraints, Certificate, CertificateParams, DnType, ExtendedKeyUsagePurpose, IsCa,
-    KeyUsagePurpose, SanType, PKCS_ECDSA_P256_SHA256,
-};
-use url::{Host, Url};
+use rcgen::BasicConstraints;
+use rcgen::Certificate;
+use rcgen::CertificateParams;
+use rcgen::DnType;
+use rcgen::ExtendedKeyUsagePurpose;
+use rcgen::IsCa;
+use rcgen::KeyUsagePurpose;
+use rcgen::SanType;
+use rcgen::PKCS_ECDSA_P256_SHA256;
+use url::Host;
+use url::Url;
 
 /// [`CertificateBuilder`] which builds the kraken's CA
 pub struct CA;

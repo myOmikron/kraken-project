@@ -1,18 +1,32 @@
-use actix_web::web::{Json, Path};
-use actix_web::{delete, get, post, put, HttpResponse};
+use actix_web::delete;
+use actix_web::get;
+use actix_web::post;
+use actix_web::put;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::HttpResponse;
 use futures::TryStreamExt;
-use rand::distributions::{Alphanumeric, DistString};
+use rand::distributions::Alphanumeric;
+use rand::distributions::DistString;
 use rand::thread_rng;
+use rorm::and;
+use rorm::insert;
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, insert, query, update, FieldAccess, Model};
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::api_keys::schema::{
-    CreateApiKeyRequest, FullApiKey, ListApiKeys, UpdateApiKeyRequest,
-};
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{PathUuid, UuidResponse};
+use crate::api::handler::api_keys::schema::CreateApiKeyRequest;
+use crate::api::handler::api_keys::schema::FullApiKey;
+use crate::api::handler::api_keys::schema::ListApiKeys;
+use crate::api::handler::api_keys::schema::UpdateApiKeyRequest;
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::UuidResponse;
 use crate::chan::global::GLOBAL;
 use crate::models::LeechApiKey;
 

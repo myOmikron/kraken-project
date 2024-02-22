@@ -1,13 +1,18 @@
-use dehashed_rs::{DehashedError, ScheduledRequest, SearchResult};
+use dehashed_rs::DehashedError;
+use dehashed_rs::ScheduledRequest;
+use dehashed_rs::SearchResult;
 use ipnetwork::IpNetwork;
 use rorm::insert;
 use rorm::prelude::*;
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::mpsc;
+use tokio::sync::oneshot;
 use uuid::Uuid;
 
 use crate::chan::global::GLOBAL;
 use crate::models::DehashedQueryResultInsert;
-use crate::modules::attacks::{AttackContext, AttackError, DehashedQueryParams};
+use crate::modules::attacks::AttackContext;
+use crate::modules::attacks::AttackError;
+use crate::modules::attacks::DehashedQueryParams;
 
 impl AttackContext {
     /// Executes the "dehashed query" attack

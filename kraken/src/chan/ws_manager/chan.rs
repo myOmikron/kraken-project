@@ -5,7 +5,8 @@ use std::collections::HashMap;
 use actix_toolbox::ws;
 use actix_toolbox::ws::Message;
 use bytestring::ByteString;
-use log::{debug, error};
+use log::debug;
+use log::error;
 use tokio::sync::mpsc;
 use uuid::Uuid;
 

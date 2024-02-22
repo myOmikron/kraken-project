@@ -1,12 +1,16 @@
-use actix_web::web::{Json, Path};
-use actix_web::{get, post};
+use actix_web::get;
+use actix_web::post;
+use actix_web::web::Json;
+use actix_web::web::Path;
 
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{PathUuid, UuidResponse};
-use crate::api::handler::finding_definitions::schema::{
-    CreateFindingDefinitionRequest, FullFindingDefinition, ListFindingDefinitions,
-    SimpleFindingDefinition,
-};
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::UuidResponse;
+use crate::api::handler::finding_definitions::schema::CreateFindingDefinitionRequest;
+use crate::api::handler::finding_definitions::schema::FullFindingDefinition;
+use crate::api::handler::finding_definitions::schema::ListFindingDefinitions;
+use crate::api::handler::finding_definitions::schema::SimpleFindingDefinition;
 use crate::chan::global::GLOBAL;
 
 /// Add a definition for a finding

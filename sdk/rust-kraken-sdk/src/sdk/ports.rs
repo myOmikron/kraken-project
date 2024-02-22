@@ -2,15 +2,20 @@ use std::net::IpAddr;
 use std::num::NonZeroU16;
 
 use ipnetwork::IpNetwork;
-use kraken::api::handler::common::schema::{PortResultsPage, UuidResponse};
-use kraken::api::handler::ports::schema::{
-    CreatePortRequest, FullPort, GetAllPortsQuery, PortRelations, UpdatePortRequest,
-};
-use kraken::models::{ManualPortCertainty, PortProtocol};
+use kraken::api::handler::common::schema::PortResultsPage;
+use kraken::api::handler::common::schema::UuidResponse;
+use kraken::api::handler::ports::schema::CreatePortRequest;
+use kraken::api::handler::ports::schema::FullPort;
+use kraken::api::handler::ports::schema::GetAllPortsQuery;
+use kraken::api::handler::ports::schema::PortRelations;
+use kraken::api::handler::ports::schema::UpdatePortRequest;
+use kraken::models::ManualPortCertainty;
+use kraken::models::PortProtocol;
 use uuid::Uuid;
 
 use crate::sdk::utils::KrakenRequest;
-use crate::{KrakenClient, KrakenResult};
+use crate::KrakenClient;
+use crate::KrakenResult;
 
 impl KrakenClient {
     /// Add a port manually to kraken

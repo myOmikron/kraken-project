@@ -5,11 +5,18 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use futures::TryStreamExt;
+use kraken_proto::any_attack_response;
 use kraken_proto::backlog_service_client::BacklogServiceClient;
-use kraken_proto::{any_attack_response, AnyAttackResponse, BacklogRequest};
-use log::{debug, error, info};
+use kraken_proto::AnyAttackResponse;
+use kraken_proto::BacklogRequest;
+use log::debug;
+use log::error;
+use log::info;
+use rorm::delete;
+use rorm::insert;
 use rorm::prelude::*;
-use rorm::{delete, insert, query, Database};
+use rorm::query;
+use rorm::Database;
 use tokio::sync::Notify;
 use tonic::metadata::AsciiMetadataValue;
 use tonic::transport::Endpoint;
@@ -17,7 +24,8 @@ use tonic::Request;
 use uuid::Uuid;
 
 use crate::config::KrakenConfig;
-use crate::models::{BacklogEntry, Proto};
+use crate::models::BacklogEntry;
+use crate::models::Proto;
 use crate::utils::kraken_endpoint;
 
 /// The main struct for the Backlog,

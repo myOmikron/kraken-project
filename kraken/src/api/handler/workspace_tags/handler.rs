@@ -1,16 +1,29 @@
-use actix_web::web::{Json, Path};
-use actix_web::{delete, get, post, put, HttpResponse};
-use rorm::{and, query, update, FieldAccess, Model};
+use actix_web::delete;
+use actix_web::get;
+use actix_web::post;
+use actix_web::put;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::HttpResponse;
+use rorm::and;
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{PathUuid, UuidResponse};
-use crate::api::handler::workspace_tags::schema::{
-    CreateWorkspaceTagRequest, FullWorkspaceTag, ListWorkspaceTags, PathWorkspaceTag,
-    UpdateWorkspaceTag,
-};
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::UuidResponse;
+use crate::api::handler::workspace_tags::schema::CreateWorkspaceTagRequest;
+use crate::api::handler::workspace_tags::schema::FullWorkspaceTag;
+use crate::api::handler::workspace_tags::schema::ListWorkspaceTags;
+use crate::api::handler::workspace_tags::schema::PathWorkspaceTag;
+use crate::api::handler::workspace_tags::schema::UpdateWorkspaceTag;
 use crate::chan::global::GLOBAL;
-use crate::models::{Workspace, WorkspaceTag};
+use crate::models::Workspace;
+use crate::models::WorkspaceTag;
 
 /// Create a workspace tag.
 #[utoipa::path(

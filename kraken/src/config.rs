@@ -1,7 +1,8 @@
 //! Definitions of the configuration file
 
 use actix_toolbox::logging::LoggingConfig;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
 /// Server related configuration.
 #[derive(Deserialize, Serialize)]

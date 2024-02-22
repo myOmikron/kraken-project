@@ -2,14 +2,19 @@ use std::collections::HashMap;
 use std::ops::Add;
 use std::sync::RwLock;
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::DateTime;
+use chrono::Duration;
+use chrono::Utc;
 use futures::TryStreamExt;
 use log::debug;
 use rorm::db::Executor;
-use rorm::{query, FieldAccess, Model};
+use rorm::query;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
-use crate::models::{Workspace, WorkspaceMember};
+use crate::models::Workspace;
+use crate::models::WorkspaceMember;
 
 #[derive(Debug)]
 struct WorkspaceUsers {

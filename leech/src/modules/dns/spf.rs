@@ -1,6 +1,7 @@
 //! parser and data structures for SPF TXT entries
 
-use std::{fmt::Display, str::FromStr};
+use std::fmt::Display;
+use std::str::FromStr;
 
 use ipnetwork::IpNetwork;
 use log::debug;
@@ -19,7 +20,6 @@ ip4:212.224.101.32 ip4:159.100.31.138 ip6:2a01:7e0:0:259::32 include:amazonses.c
 mx ?all
 mx ip4:87.139.193.6 ip4:212.227.181.119 ~all
 */
-
 use crate::utils::RE;
 
 /// In the (whitespace delimited) SPF string this is one part of it such as `~all` or `include:_spf.example.org`

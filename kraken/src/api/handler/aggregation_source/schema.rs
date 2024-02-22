@@ -1,19 +1,27 @@
 use std::net::IpAddr;
 
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use chrono::DateTime;
+use chrono::Utc;
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::attack_results::schema::{
-    FullDnsTxtScanResult, FullOsDetectionResult, FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
-    FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
-    SimpleHostAliveResult, SimpleQueryUnhashedResult,
-};
+use crate::api::handler::attack_results::schema::FullDnsTxtScanResult;
+use crate::api::handler::attack_results::schema::FullOsDetectionResult;
+use crate::api::handler::attack_results::schema::FullQueryCertificateTransparencyResult;
+use crate::api::handler::attack_results::schema::FullServiceDetectionResult;
+use crate::api::handler::attack_results::schema::FullUdpServiceDetectionResult;
+use crate::api::handler::attack_results::schema::SimpleBruteforceSubdomainsResult;
+use crate::api::handler::attack_results::schema::SimpleDnsResolutionResult;
+use crate::api::handler::attack_results::schema::SimpleHostAliveResult;
+use crate::api::handler::attack_results::schema::SimpleQueryUnhashedResult;
 use crate::api::handler::users::schema::SimpleUser;
-use crate::models::{
-    ManualHostCertainty, ManualPortCertainty, ManualServiceCertainty, OsType, PortProtocol,
-};
+use crate::models::ManualHostCertainty;
+use crate::models::ManualPortCertainty;
+use crate::models::ManualServiceCertainty;
+use crate::models::OsType;
+use crate::models::PortProtocol;
 
 /// Numbers how many attacks of a certain kind found an aggregated model
 #[derive(Copy, Clone, Serialize, Deserialize, ToSchema, Debug, Default)]

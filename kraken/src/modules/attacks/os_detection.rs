@@ -1,8 +1,11 @@
 use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
-use kraken_proto::shared::{Address, OperatingSystem};
-use kraken_proto::{shared, OsDetectionRequest, OsDetectionResponse};
+use kraken_proto::shared;
+use kraken_proto::shared::Address;
+use kraken_proto::shared::OperatingSystem;
+use kraken_proto::OsDetectionRequest;
+use kraken_proto::OsDetectionResponse;
 use rorm::insert;
 use rorm::prelude::ForeignModelByField;
 use uuid::Uuid;
@@ -10,12 +13,16 @@ use uuid::Uuid;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
-use crate::models::{
-    AggregationSource, AggregationTable, HostCertainty, OsDetectionResultInsert, OsType, SourceType,
-};
-use crate::modules::attacks::{
-    AttackContext, AttackError, HandleAttackResponse, OsDetectionParams,
-};
+use crate::models::AggregationSource;
+use crate::models::AggregationTable;
+use crate::models::HostCertainty;
+use crate::models::OsDetectionResultInsert;
+use crate::models::OsType;
+use crate::models::SourceType;
+use crate::modules::attacks::AttackContext;
+use crate::modules::attacks::AttackError;
+use crate::modules::attacks::HandleAttackResponse;
+use crate::modules::attacks::OsDetectionParams;
 
 impl AttackContext {
     pub async fn os_detection(

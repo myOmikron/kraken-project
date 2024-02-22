@@ -2,11 +2,13 @@
 
 use std::collections::HashMap;
 use std::future::Future;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
+use std::sync::RwLock;
 
 use log::debug;
 use rorm::db::transaction::Transaction;
-use rorm::internal::field::{Field, SingleColumnField};
+use rorm::internal::field::Field;
+use rorm::internal::field::SingleColumnField;
 use rorm::model::Identifiable;
 use rorm::Model;
 use thiserror::Error;

@@ -1,7 +1,8 @@
 use kraken::api::handler::wordlists::schema::ListWordlists;
 
 use crate::sdk::utils::KrakenRequest;
-use crate::{KrakenClient, KrakenResult};
+use crate::KrakenClient;
+use crate::KrakenResult;
 
 impl KrakenClient {
     /// Retrieve all wordlists

@@ -1,6 +1,7 @@
 use rorm::prelude::ForeignModel;
 use rorm::Model;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 

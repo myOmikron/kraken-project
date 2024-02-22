@@ -1,14 +1,20 @@
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
-use serde::{Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
+use serde::Deserialize;
+use serde::Serialize;
+use utoipa::IntoParams;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
-use crate::api::handler::common::schema::{PageParams, SimpleTag};
+use crate::api::handler::common::schema::PageParams;
+use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::SimplePort;
-use crate::models::{ManualServiceCertainty, ServiceCertainty, ServiceProtocols};
+use crate::models::ManualServiceCertainty;
+use crate::models::ServiceCertainty;
+use crate::models::ServiceProtocols;
 
 /// The request to manually add a service
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]

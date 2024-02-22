@@ -1,7 +1,9 @@
 //! The schema of the module `finding_definitions` are here
 
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use chrono::DateTime;
+use chrono::Utc;
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 

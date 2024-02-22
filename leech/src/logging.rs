@@ -6,10 +6,14 @@ use log4rs::append::rolling_file::policy::compound::roll::fixed_window::FixedWin
 use log4rs::append::rolling_file::policy::compound::trigger::size::SizeTrigger;
 use log4rs::append::rolling_file::policy::compound::CompoundPolicy;
 use log4rs::append::rolling_file::RollingFileAppender;
-use log4rs::config::{Appender, Logger, Root};
+use log4rs::config::Appender;
+use log4rs::config::Logger;
+use log4rs::config::Root;
 use log4rs::encode::pattern::PatternEncoder;
-use log4rs::{Config, Handle};
-use serde::{Deserialize, Serialize};
+use log4rs::Config;
+use log4rs::Handle;
+use serde::Deserialize;
+use serde::Serialize;
 use uuid::Uuid;
 
 /// Default log pattern

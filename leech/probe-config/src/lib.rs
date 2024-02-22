@@ -6,11 +6,15 @@ use std::error::Error;
 use std::fs;
 
 pub use codegen::generate_code;
-pub use schema::{Prevalence, Probe, ProbeFile};
+pub use schema::Prevalence;
+pub use schema::Probe;
+pub use schema::ProbeFile;
 
-pub use crate::parse::{
-    parse_file, CheckProbeError, ParseError, ParseErrorKind, ProbeFileDirectory,
-};
+pub use crate::parse::parse_file;
+pub use crate::parse::CheckProbeError;
+pub use crate::parse::ParseError;
+pub use crate::parse::ParseErrorKind;
+pub use crate::parse::ProbeFileDirectory;
 
 pub fn generate(
     in_dirs: &[(&str, ProbeFileDirectory)],

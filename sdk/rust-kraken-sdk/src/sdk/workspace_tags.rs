@@ -1,11 +1,12 @@
 use kraken::api::handler::common::schema::UuidResponse;
-use kraken::api::handler::workspace_tags::schema::{
-    CreateWorkspaceTagRequest, ListWorkspaceTags, UpdateWorkspaceTag,
-};
+use kraken::api::handler::workspace_tags::schema::CreateWorkspaceTagRequest;
+use kraken::api::handler::workspace_tags::schema::ListWorkspaceTags;
+use kraken::api::handler::workspace_tags::schema::UpdateWorkspaceTag;
 use uuid::Uuid;
 
 use crate::sdk::utils::KrakenRequest;
-use crate::{KrakenClient, KrakenResult};
+use crate::KrakenClient;
+use crate::KrakenResult;
 
 impl KrakenClient {
     /// Retrieve all workspace tags

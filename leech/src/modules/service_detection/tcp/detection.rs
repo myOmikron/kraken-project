@@ -3,12 +3,19 @@ use std::net::SocketAddr;
 use std::ops::ControlFlow;
 use std::time::Duration;
 
-use log::{debug, trace, warn};
+use log::debug;
+use log::trace;
+use log::warn;
 
+use crate::modules::service_detection::generated;
 use crate::modules::service_detection::generated::Match;
-use crate::modules::service_detection::tcp::oneshot::{ProbeTcpError, ProbeTcpErrorPlace};
+use crate::modules::service_detection::tcp::oneshot::ProbeTcpError;
+use crate::modules::service_detection::tcp::oneshot::ProbeTcpErrorPlace;
 use crate::modules::service_detection::tcp::OneShotTcpSettings;
-use crate::modules::service_detection::{generated, DynError, DynResult, ProtocolSet, Service};
+use crate::modules::service_detection::DynError;
+use crate::modules::service_detection::DynResult;
+use crate::modules::service_detection::ProtocolSet;
+use crate::modules::service_detection::Service;
 use crate::utils::DebuggableBytes;
 
 /// Runs service detection on a single tcp port

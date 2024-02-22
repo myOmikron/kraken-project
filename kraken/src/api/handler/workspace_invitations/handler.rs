@@ -1,16 +1,23 @@
-use actix_web::web::{Json, Path};
-use actix_web::{get, post, HttpResponse};
-use rorm::{query, FieldAccess, Model};
+use actix_web::get;
+use actix_web::post;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::HttpResponse;
+use rorm::query;
+use rorm::FieldAccess;
+use rorm::Model;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::common::error::{ApiError, ApiResult};
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::PathUuid;
-use crate::api::handler::workspace_invitations::schema::{
-    FullWorkspaceInvitation, WorkspaceInvitationList,
-};
+use crate::api::handler::workspace_invitations::schema::FullWorkspaceInvitation;
+use crate::api::handler::workspace_invitations::schema::WorkspaceInvitationList;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::chan::global::GLOBAL;
-use crate::models::{Workspace, WorkspaceInvitation, WorkspaceMemberPermission};
+use crate::models::Workspace;
+use crate::models::WorkspaceInvitation;
+use crate::models::WorkspaceMemberPermission;
 
 /// Retrieve all open invitations to workspaces the currently logged-in user
 /// has retrieved

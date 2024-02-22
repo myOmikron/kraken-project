@@ -18,30 +18,38 @@
 use std::fs::read_to_string;
 use std::io;
 use std::io::Write;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
+use std::sync::RwLock;
 use std::time::Duration;
 
 use actix_toolbox::logging::setup_logging;
 use actix_web::cookie::Key;
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
-use clap::{Parser, Subcommand};
+use clap::Parser;
+use clap::Subcommand;
 use kraken::api::server;
 use kraken::chan::dehashed_manager::start_dehashed_manager;
-use kraken::chan::global::{GlobalChan, GLOBAL};
+use kraken::chan::global::GlobalChan;
+use kraken::chan::global::GLOBAL;
 use kraken::chan::leech_manager::LeechManager;
 use kraken::chan::settings_manager::start_settings_manager;
 use kraken::chan::ws_manager::chan::start_ws_manager;
 use kraken::config::Config;
-use kraken::models::{User, UserPermission};
+use kraken::models::User;
+use kraken::models::UserPermission;
 use kraken::modules::aggregator::Aggregator;
-use kraken::modules::cache::{
-    schedule_cache_save, FindingDefinitionCache, UserCache, WorkspaceUsersCache,
-};
+use kraken::modules::cache::schedule_cache_save;
+use kraken::modules::cache::FindingDefinitionCache;
+use kraken::modules::cache::UserCache;
+use kraken::modules::cache::WorkspaceUsersCache;
 use kraken::modules::editor::EditorSync;
 use kraken::modules::tls::TlsManager;
 use kraken::rpc::server::start_rpc_server;
-use rorm::{cli, Database, DatabaseConfiguration, DatabaseDriver};
+use rorm::cli;
+use rorm::Database;
+use rorm::DatabaseConfiguration;
+use rorm::DatabaseDriver;
 
 /// The subcommands of kraken
 #[derive(Subcommand)]

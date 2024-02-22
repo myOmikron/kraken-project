@@ -1,20 +1,35 @@
 use ipnetwork::IpNetwork;
-use kraken_proto::shared::{dns_txt_scan, spf_directive, spf_part, DnsTxtScan, DnsTxtServiceHint};
-use kraken_proto::{DnsTxtScanRequest, DnsTxtScanResponse};
+use kraken_proto::shared::dns_txt_scan;
+use kraken_proto::shared::spf_directive;
+use kraken_proto::shared::spf_part;
+use kraken_proto::shared::DnsTxtScan;
+use kraken_proto::shared::DnsTxtServiceHint;
+use kraken_proto::DnsTxtScanRequest;
+use kraken_proto::DnsTxtScanResponse;
 use rorm::insert;
 use rorm::prelude::*;
 use uuid::Uuid;
 
-use crate::api::handler::attack_results::schema::{DnsTxtScanEntry, FullDnsTxtScanResult};
+use crate::api::handler::attack_results::schema::DnsTxtScanEntry;
+use crate::api::handler::attack_results::schema::FullDnsTxtScanResult;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
-use crate::models::{
-    AggregationSource, AggregationTable, DnsTxtScanAttackResultInsert,
-    DnsTxtScanServiceHintEntryInsert, DnsTxtScanServiceHintType, DnsTxtScanSpfEntryInsert,
-    DnsTxtScanSpfType, DnsTxtScanSummaryType, DomainCertainty, HostCertainty, SourceType,
-};
-use crate::modules::attacks::{AttackContext, AttackError, DnsTxtScanParams, HandleAttackResponse};
+use crate::models::AggregationSource;
+use crate::models::AggregationTable;
+use crate::models::DnsTxtScanAttackResultInsert;
+use crate::models::DnsTxtScanServiceHintEntryInsert;
+use crate::models::DnsTxtScanServiceHintType;
+use crate::models::DnsTxtScanSpfEntryInsert;
+use crate::models::DnsTxtScanSpfType;
+use crate::models::DnsTxtScanSummaryType;
+use crate::models::DomainCertainty;
+use crate::models::HostCertainty;
+use crate::models::SourceType;
+use crate::modules::attacks::AttackContext;
+use crate::modules::attacks::AttackError;
+use crate::modules::attacks::DnsTxtScanParams;
+use crate::modules::attacks::HandleAttackResponse;
 
 impl AttackContext {
     /// Executes the "dns txt scan" attack

@@ -3,11 +3,16 @@ use std::sync::TryLockError;
 use actix_toolbox::tb_middleware::actix_session;
 use actix_web::body::BoxBody;
 use actix_web::HttpResponse;
-use log::{debug, error, info, trace, warn};
+use log::debug;
+use log::error;
+use log::info;
+use log::trace;
+use log::warn;
 use thiserror::Error;
 use webauthn_rs::prelude::WebauthnError;
 
-use crate::api::handler::common::schema::{ApiErrorResponse, ApiStatusCode};
+use crate::api::handler::common::schema::ApiErrorResponse;
+use crate::api::handler::common::schema::ApiStatusCode;
 use crate::modules::filter::ParseError;
 
 /// The result type of kraken.

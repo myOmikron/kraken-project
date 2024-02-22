@@ -1,10 +1,13 @@
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use rorm::Patch;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{User, UserPermission};
+use crate::models::User;
+use crate::models::UserPermission;
 
 /// The request to create a user
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]

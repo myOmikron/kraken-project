@@ -1,17 +1,22 @@
 use std::collections::BTreeMap;
-use std::net::{IpAddr, SocketAddr};
+use std::net::IpAddr;
+use std::net::SocketAddr;
 use std::ops::RangeInclusive;
 use std::time::Duration;
 
-use futures::{stream, TryStreamExt};
-use log::{debug, info};
+use futures::stream;
+use futures::TryStreamExt;
+use log::debug;
+use log::info;
 use tokio::net::UdpSocket;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinSet;
-use tokio::time::{sleep, timeout};
+use tokio::time::sleep;
+use tokio::time::timeout;
 
 use super::error::UdpServiceScanError;
-use super::{ProtocolSet, Service};
+use super::ProtocolSet;
+use super::Service;
 use crate::modules::service_detection::generated;
 use crate::modules::service_detection::generated::Match;
 

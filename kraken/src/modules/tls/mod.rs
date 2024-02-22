@@ -1,18 +1,25 @@
 //! The TLS manager is defined in this module
 
-use std::fs::{set_permissions, Permissions};
+use std::fmt;
+use std::fs;
+use std::fs::set_permissions;
+use std::fs::Permissions;
+use std::io;
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
-use std::{fmt, fs, io};
 
 use log::error;
-use rand::distributions::{Distribution, Uniform};
+use rand::distributions::Distribution;
+use rand::distributions::Uniform;
 use rand::thread_rng;
-use rcgen::{Certificate, CertificateParams, KeyPair};
+use rcgen::Certificate;
+use rcgen::CertificateParams;
+use rcgen::KeyPair;
 use thiserror::Error;
-use tonic::transport::{
-    Certificate as TonicCertificate, ClientTlsConfig, Identity, ServerTlsConfig,
-};
+use tonic::transport::Certificate as TonicCertificate;
+use tonic::transport::ClientTlsConfig;
+use tonic::transport::Identity;
+use tonic::transport::ServerTlsConfig;
 use url::Url;
 
 use crate::api::handler::common::error::ApiError;

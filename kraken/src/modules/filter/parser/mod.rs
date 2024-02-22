@@ -1,16 +1,28 @@
 mod cursor;
 mod value_parser;
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
 
 use self::cursor::Cursor;
-use self::value_parser::{parse_from_str, parse_string, wrap_maybe_range, ValueParser};
-use crate::modules::filter::lexer::{tokenize, Token};
-use crate::modules::filter::parser::value_parser::{parse_port_protocol, wrap_range};
-use crate::modules::filter::{
-    And, DomainAST, GlobalAST, HostAST, Not, Or, ParseError, PortAST, ServiceAST,
-};
+use self::value_parser::parse_from_str;
+use self::value_parser::parse_string;
+use self::value_parser::wrap_maybe_range;
+use self::value_parser::ValueParser;
+use crate::modules::filter::lexer::tokenize;
+use crate::modules::filter::lexer::Token;
+use crate::modules::filter::parser::value_parser::parse_port_protocol;
+use crate::modules::filter::parser::value_parser::wrap_range;
+use crate::modules::filter::And;
+use crate::modules::filter::DomainAST;
+use crate::modules::filter::GlobalAST;
+use crate::modules::filter::HostAST;
+use crate::modules::filter::Not;
+use crate::modules::filter::Or;
+use crate::modules::filter::ParseError;
+use crate::modules::filter::PortAST;
+use crate::modules::filter::ServiceAST;
 
 impl GlobalAST {
     /// Parse a string into a [`GlobalAST`]

@@ -1,35 +1,60 @@
 use std::collections::HashMap;
 
 use actix_web::get;
-use actix_web::web::{Json, Path, Query};
-use futures::{StreamExt, TryStreamExt};
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::web::Query;
+use futures::StreamExt;
+use futures::TryStreamExt;
 use log::error;
-use rorm::{query, FieldAccess, Model};
+use rorm::query;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::attack_results::schema::{
-    DnsTxtScanEntry, FullDnsTxtScanResult, FullOsDetectionResult,
-    FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
-    FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
-    SimpleHostAliveResult, SimpleQueryUnhashedResult,
-};
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{
-    BruteforceSubdomainsResultsPage, DnsResolutionResultsPage, DnsTxtScanResultsPage,
-    HostAliveResultsPage, OsDetectionResultsPage, Page, PageParams, PathUuid,
-    QueryCertificateTransparencyResultsPage, QueryUnhashedResultsPage, ServiceDetectionResultsPage,
-    UdpServiceDetectionResultsPage,
-};
+use crate::api::handler::attack_results::schema::DnsTxtScanEntry;
+use crate::api::handler::attack_results::schema::FullDnsTxtScanResult;
+use crate::api::handler::attack_results::schema::FullOsDetectionResult;
+use crate::api::handler::attack_results::schema::FullQueryCertificateTransparencyResult;
+use crate::api::handler::attack_results::schema::FullServiceDetectionResult;
+use crate::api::handler::attack_results::schema::FullUdpServiceDetectionResult;
+use crate::api::handler::attack_results::schema::SimpleBruteforceSubdomainsResult;
+use crate::api::handler::attack_results::schema::SimpleDnsResolutionResult;
+use crate::api::handler::attack_results::schema::SimpleHostAliveResult;
+use crate::api::handler::attack_results::schema::SimpleQueryUnhashedResult;
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::BruteforceSubdomainsResultsPage;
+use crate::api::handler::common::schema::DnsResolutionResultsPage;
+use crate::api::handler::common::schema::DnsTxtScanResultsPage;
+use crate::api::handler::common::schema::HostAliveResultsPage;
+use crate::api::handler::common::schema::OsDetectionResultsPage;
+use crate::api::handler::common::schema::Page;
+use crate::api::handler::common::schema::PageParams;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::QueryCertificateTransparencyResultsPage;
+use crate::api::handler::common::schema::QueryUnhashedResultsPage;
+use crate::api::handler::common::schema::ServiceDetectionResultsPage;
+use crate::api::handler::common::schema::UdpServiceDetectionResultsPage;
 use crate::api::handler::common::utils::get_page_params;
 use crate::chan::global::GLOBAL;
-use crate::models::{
-    Attack, BruteforceSubdomainsResult, CertificateTransparencyResult,
-    CertificateTransparencyValueName, DehashedQueryResult, DnsResolutionResult,
-    DnsTxtScanAttackResult, DnsTxtScanServiceHintEntry, DnsTxtScanSpfEntry, HostAliveResult,
-    OsDetectionResult, ServiceCertainty, ServiceDetectionName, ServiceDetectionResult,
-    UdpServiceDetectionName, UdpServiceDetectionResult,
-};
+use crate::models::Attack;
+use crate::models::BruteforceSubdomainsResult;
+use crate::models::CertificateTransparencyResult;
+use crate::models::CertificateTransparencyValueName;
+use crate::models::DehashedQueryResult;
+use crate::models::DnsResolutionResult;
+use crate::models::DnsTxtScanAttackResult;
+use crate::models::DnsTxtScanServiceHintEntry;
+use crate::models::DnsTxtScanSpfEntry;
+use crate::models::HostAliveResult;
+use crate::models::OsDetectionResult;
+use crate::models::ServiceCertainty;
+use crate::models::ServiceDetectionName;
+use crate::models::ServiceDetectionResult;
+use crate::models::UdpServiceDetectionName;
+use crate::models::UdpServiceDetectionResult;
 
 /// Retrieve a bruteforce subdomains' results by the attack's id
 #[utoipa::path(

@@ -1,6 +1,9 @@
 //! The dehashed related code lives here
 
-use dehashed_rs::{DehashedApi, Query, ScheduledRequest, SearchResult};
+use dehashed_rs::DehashedApi;
+use dehashed_rs::Query;
+use dehashed_rs::ScheduledRequest;
+use dehashed_rs::SearchResult;
 use log::error;
 use tokio::sync::oneshot;
 

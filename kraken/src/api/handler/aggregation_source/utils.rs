@@ -2,31 +2,58 @@ use std::collections::HashMap;
 
 use futures::TryStreamExt;
 use log::error;
-use rorm::conditions::{BoxedCondition, Condition, DynamicCollection};
+use rorm::and;
+use rorm::conditions::BoxedCondition;
+use rorm::conditions::Condition;
+use rorm::conditions::DynamicCollection;
 use rorm::db::transaction::Transaction;
 use rorm::fields::traits::FieldEq;
-use rorm::internal::field::{Field, FieldProxy};
-use rorm::{and, query, FieldAccess, Model};
+use rorm::internal::field::Field;
+use rorm::internal::field::FieldProxy;
+use rorm::query;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
-use crate::api::handler::aggregation_source::schema::{
-    FullAggregationSource, ManualInsert, SimpleAggregationSource, SourceAttack, SourceAttackResult,
-};
-use crate::api::handler::attack_results::schema::{
-    DnsTxtScanEntry, FullDnsTxtScanResult, FullOsDetectionResult,
-    FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
-    FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
-    SimpleHostAliveResult, SimpleQueryUnhashedResult,
-};
+use crate::api::handler::aggregation_source::schema::FullAggregationSource;
+use crate::api::handler::aggregation_source::schema::ManualInsert;
+use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
+use crate::api::handler::aggregation_source::schema::SourceAttack;
+use crate::api::handler::aggregation_source::schema::SourceAttackResult;
+use crate::api::handler::attack_results::schema::DnsTxtScanEntry;
+use crate::api::handler::attack_results::schema::FullDnsTxtScanResult;
+use crate::api::handler::attack_results::schema::FullOsDetectionResult;
+use crate::api::handler::attack_results::schema::FullQueryCertificateTransparencyResult;
+use crate::api::handler::attack_results::schema::FullServiceDetectionResult;
+use crate::api::handler::attack_results::schema::FullUdpServiceDetectionResult;
+use crate::api::handler::attack_results::schema::SimpleBruteforceSubdomainsResult;
+use crate::api::handler::attack_results::schema::SimpleDnsResolutionResult;
+use crate::api::handler::attack_results::schema::SimpleHostAliveResult;
+use crate::api::handler::attack_results::schema::SimpleQueryUnhashedResult;
 use crate::api::handler::users::schema::SimpleUser;
-use crate::models::{
-    AggregationSource, AggregationTable, Attack, AttackType, BruteforceSubdomainsResult,
-    CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
-    DnsResolutionResult, DnsTxtScanAttackResult, DnsTxtScanServiceHintEntry, DnsTxtScanSpfEntry,
-    HostAliveResult, ManualDomain, ManualHost, ManualPort, ManualService, OsDetectionResult,
-    ServiceDetectionName, ServiceDetectionResult, SourceType, UdpServiceDetectionName,
-    UdpServiceDetectionResult,
-};
+use crate::models::AggregationSource;
+use crate::models::AggregationTable;
+use crate::models::Attack;
+use crate::models::AttackType;
+use crate::models::BruteforceSubdomainsResult;
+use crate::models::CertificateTransparencyResult;
+use crate::models::CertificateTransparencyValueName;
+use crate::models::DehashedQueryResult;
+use crate::models::DnsResolutionResult;
+use crate::models::DnsTxtScanAttackResult;
+use crate::models::DnsTxtScanServiceHintEntry;
+use crate::models::DnsTxtScanSpfEntry;
+use crate::models::HostAliveResult;
+use crate::models::ManualDomain;
+use crate::models::ManualHost;
+use crate::models::ManualPort;
+use crate::models::ManualService;
+use crate::models::OsDetectionResult;
+use crate::models::ServiceDetectionName;
+use crate::models::ServiceDetectionResult;
+use crate::models::SourceType;
+use crate::models::UdpServiceDetectionName;
+use crate::models::UdpServiceDetectionResult;
 
 fn field_in<'a, T, F, P, Any>(
     field_proxy: FieldProxy<F, P>,

@@ -5,11 +5,14 @@ use std::ops::Deref;
 use actix_toolbox::tb_middleware::Session;
 use actix_web::dev::Payload;
 use actix_web::http::header::HeaderValue;
-use actix_web::{FromRequest, HttpRequest};
-use futures::future::{ready, Ready};
+use actix_web::FromRequest;
+use actix_web::HttpRequest;
+use futures::future::ready;
+use futures::future::Ready;
 use uuid::Uuid;
 
-use crate::api::handler::common::error::{ApiError, ApiResult};
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
 
 /// Extractor for the `Session`'s `"uuid"` field
 pub struct SessionUser(pub Uuid);

@@ -1,14 +1,23 @@
-use std::future::{ready, Ready};
+use std::future::ready;
+use std::future::Ready;
 
 use actix_toolbox::tb_middleware::actix_session::SessionExt;
-use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
+use actix_web::dev::forward_ready;
+use actix_web::dev::Service;
+use actix_web::dev::ServiceRequest;
+use actix_web::dev::ServiceResponse;
+use actix_web::dev::Transform;
 use futures::future::LocalBoxFuture;
-use rorm::{query, FieldAccess, Model};
+use rorm::query;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
 use crate::api::handler::common::error::ApiError;
 use crate::chan::global::GLOBAL;
-use crate::models::{LocalUserKey, User, UserPermission};
+use crate::models::LocalUserKey;
+use crate::models::User;
+use crate::models::UserPermission;
 
 pub(crate) struct AdminRequired;
 

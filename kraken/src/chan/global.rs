@@ -1,7 +1,9 @@
 //! Set of global managers and handles
 
 use std::ops::Deref;
-use std::sync::{Arc, OnceLock, RwLock};
+use std::sync::Arc;
+use std::sync::OnceLock;
+use std::sync::RwLock;
 
 use dehashed_rs::Scheduler;
 use rorm::Database;
@@ -10,7 +12,9 @@ use crate::chan::leech_manager::LeechManager;
 use crate::chan::settings_manager::SettingsManagerChan;
 use crate::chan::ws_manager::chan::WsManagerChan;
 use crate::modules::aggregator::Aggregator;
-use crate::modules::cache::{FindingDefinitionCache, UserCache, WorkspaceUsersCache};
+use crate::modules::cache::FindingDefinitionCache;
+use crate::modules::cache::UserCache;
+use crate::modules::cache::WorkspaceUsersCache;
 use crate::modules::editor::EditorSync;
 use crate::modules::tls::TlsManager;
 

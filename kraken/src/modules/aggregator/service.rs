@@ -1,13 +1,26 @@
+use rorm::and;
 use rorm::fields::traits::FieldType;
-use rorm::prelude::{ForeignModel, ForeignModelByField};
-use rorm::{and, insert, query, update, FieldAccess, Model, Patch};
-use tokio::sync::{mpsc, oneshot};
+use rorm::insert;
+use rorm::prelude::ForeignModel;
+use rorm::prelude::ForeignModelByField;
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
+use rorm::Patch;
+use tokio::sync::mpsc;
+use tokio::sync::oneshot;
 use uuid::Uuid;
 
 use crate::api::handler::services::schema::SimpleService;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
-use crate::models::{Host, Port, Service, ServiceCertainty, ServiceProtocols, Workspace};
+use crate::models::Host;
+use crate::models::Port;
+use crate::models::Service;
+use crate::models::ServiceCertainty;
+use crate::models::ServiceProtocols;
+use crate::models::Workspace;
 use crate::modules::aggregator::ServiceAggregationData;
 
 pub async fn run_service_aggregator(
@@ -42,7 +55,7 @@ async fn aggregate(data: ServiceAggregationData) -> Result<Uuid, rorm::Error> {
         &mut tx,
         (Service::F.uuid, Service::F.certainty, Service::F.protocols,)
     )
-        .condition(and![
+    .condition(and![
         Service::F.workspace.equals(data.workspace),
         Service::F.name.equals(&data.name),
         Service::F.host.equals(data.host),
@@ -53,8 +66,8 @@ async fn aggregate(data: ServiceAggregationData) -> Result<Uuid, rorm::Error> {
             snd_arg: data.port.into_values()[0].clone(),
         },
     ])
-        .optional()
-        .await?
+    .optional()
+    .await?
     {
         if old_certainty < data.certainty {
             update!(&mut tx, Service)

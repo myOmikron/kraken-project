@@ -1,9 +1,12 @@
 use std::net::IpAddr;
 use std::ops::RangeInclusive;
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
-use serde::{Deserialize, Serialize, Serializer};
+use serde::Deserialize;
+use serde::Serialize;
+use serde::Serializer;
 use utoipa::ToSchema;
 use uuid::Uuid;
 

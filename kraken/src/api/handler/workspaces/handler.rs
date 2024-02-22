@@ -1,48 +1,92 @@
-use actix_web::web::{Json, Path, Query};
-use actix_web::{delete, get, post, put, HttpResponse};
+use actix_web::delete;
+use actix_web::get;
+use actix_web::post;
+use actix_web::put;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::web::Query;
+use actix_web::HttpResponse;
 use chrono::Utc;
 use futures::TryStreamExt;
-use log::{debug, error, info};
+use log::debug;
+use log::error;
+use log::info;
+use rorm::and;
+use rorm::db::executor;
 use rorm::db::sql::value::Value;
-use rorm::db::{executor, Executor};
+use rorm::db::Executor;
+use rorm::field;
+use rorm::insert;
 use rorm::internal::field::Field;
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, field, insert, query, update, FieldAccess, Model};
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::attack_results::schema::{
-    FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
-    FullUdpServiceDetectionResult, SimpleDnsResolutionResult, SimpleDnsTxtScanResult,
-    SimpleHostAliveResult, SimpleQueryUnhashedResult,
-};
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{
-    Page, PageParams, PathUuid, SearchResultPage, SearchesResultPage, UuidResponse,
-};
+use crate::api::handler::attack_results::schema::FullQueryCertificateTransparencyResult;
+use crate::api::handler::attack_results::schema::FullServiceDetectionResult;
+use crate::api::handler::attack_results::schema::FullUdpServiceDetectionResult;
+use crate::api::handler::attack_results::schema::SimpleDnsResolutionResult;
+use crate::api::handler::attack_results::schema::SimpleDnsTxtScanResult;
+use crate::api::handler::attack_results::schema::SimpleHostAliveResult;
+use crate::api::handler::attack_results::schema::SimpleQueryUnhashedResult;
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::Page;
+use crate::api::handler::common::schema::PageParams;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::SearchResultPage;
+use crate::api::handler::common::schema::SearchesResultPage;
+use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::domains::schema::SimpleDomain;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
 use crate::api::handler::users::schema::SimpleUser;
-use crate::api::handler::workspace_invitations::schema::{
-    FullWorkspaceInvitation, WorkspaceInvitationList,
-};
-use crate::api::handler::workspaces::schema::{
-    CreateWorkspaceRequest, FullWorkspace, InviteToWorkspaceRequest, InviteUuid, ListWorkspaces,
-    SearchEntry, SearchResultEntry, SearchUuid, SearchWorkspaceRequest, SimpleWorkspace,
-    TransferWorkspaceRequest, UpdateWorkspaceRequest,
-};
-use crate::api::handler::workspaces::utils::{get_workspace_unchecked, run_search};
+use crate::api::handler::workspace_invitations::schema::FullWorkspaceInvitation;
+use crate::api::handler::workspace_invitations::schema::WorkspaceInvitationList;
+use crate::api::handler::workspaces::schema::CreateWorkspaceRequest;
+use crate::api::handler::workspaces::schema::FullWorkspace;
+use crate::api::handler::workspaces::schema::InviteToWorkspaceRequest;
+use crate::api::handler::workspaces::schema::InviteUuid;
+use crate::api::handler::workspaces::schema::ListWorkspaces;
+use crate::api::handler::workspaces::schema::SearchEntry;
+use crate::api::handler::workspaces::schema::SearchResultEntry;
+use crate::api::handler::workspaces::schema::SearchUuid;
+use crate::api::handler::workspaces::schema::SearchWorkspaceRequest;
+use crate::api::handler::workspaces::schema::SimpleWorkspace;
+use crate::api::handler::workspaces::schema::TransferWorkspaceRequest;
+use crate::api::handler::workspaces::schema::UpdateWorkspaceRequest;
+use crate::api::handler::workspaces::utils::get_workspace_unchecked;
+use crate::api::handler::workspaces::utils::run_search;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
-use crate::models::{
-    Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
-    DnsResolutionResult, DnsTxtScanAttackResult, Domain, Host, HostAliveResult, ModelType, Port,
-    Search, SearchInsert, SearchResult, Service, ServiceDetectionName, ServiceDetectionResult,
-    UdpServiceDetectionName, UdpServiceDetectionResult, UserPermission, Workspace,
-    WorkspaceInvitation, WorkspaceMember,
-};
+use crate::models::Attack;
+use crate::models::CertificateTransparencyResult;
+use crate::models::CertificateTransparencyValueName;
+use crate::models::DehashedQueryResult;
+use crate::models::DnsResolutionResult;
+use crate::models::DnsTxtScanAttackResult;
+use crate::models::Domain;
+use crate::models::Host;
+use crate::models::HostAliveResult;
+use crate::models::ModelType;
+use crate::models::Port;
+use crate::models::Search;
+use crate::models::SearchInsert;
+use crate::models::SearchResult;
+use crate::models::Service;
+use crate::models::ServiceDetectionName;
+use crate::models::ServiceDetectionResult;
+use crate::models::UdpServiceDetectionName;
+use crate::models::UdpServiceDetectionResult;
+use crate::models::UserPermission;
+use crate::models::Workspace;
+use crate::models::WorkspaceInvitation;
+use crate::models::WorkspaceMember;
 
 /// Create a new workspace
 #[utoipa::path(

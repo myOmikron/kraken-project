@@ -1,14 +1,21 @@
 use std::fmt;
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
-use rorm::prelude::{BackRef, ForeignModel};
-use rorm::{field, DbEnum, Model};
-use serde::{Deserialize, Serialize};
+use rorm::field;
+use rorm::prelude::BackRef;
+use rorm::prelude::ForeignModel;
+use rorm::DbEnum;
+use rorm::Model;
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{GlobalTag, Workspace, WorkspaceTag};
+use crate::models::GlobalTag;
+use crate::models::Workspace;
+use crate::models::WorkspaceTag;
 
 #[cfg(feature = "bin")]
 mod operations;

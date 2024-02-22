@@ -5,13 +5,20 @@ pub mod spf;
 pub mod txt;
 
 use std::future::Future;
-use std::net::{Ipv4Addr, Ipv6Addr};
+use std::net::Ipv4Addr;
+use std::net::Ipv6Addr;
 
-use futures::{stream, StreamExt};
-use log::{debug, error, info, warn};
+use futures::stream;
+use futures::StreamExt;
+use log::debug;
+use log::error;
+use log::info;
+use log::warn;
 use tokio::sync::mpsc::Sender;
-use trust_dns_resolver::error::{ResolveError, ResolveErrorKind};
-use trust_dns_resolver::proto::rr::{Record, RecordType};
+use trust_dns_resolver::error::ResolveError;
+use trust_dns_resolver::error::ResolveErrorKind;
+use trust_dns_resolver::proto::rr::Record;
+use trust_dns_resolver::proto::rr::RecordType;
 use trust_dns_resolver::TokioAsyncResolver;
 
 use crate::modules::dns::errors::DnsResolutionError;

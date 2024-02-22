@@ -2,7 +2,8 @@ use std::fmt;
 use std::fmt::Write;
 use std::marker::PhantomData;
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
 use rorm::crud::selector::Selector;
 use rorm::db::sql::value::Value;
@@ -10,7 +11,8 @@ use rorm::internal::field::Field;
 use rorm::internal::relation_path::JoinAlias;
 use rorm::prelude::*;
 
-use super::super::{MaybeRange, Range};
+use super::super::MaybeRange;
+use super::super::Range;
 use crate::models::PortProtocol;
 use crate::modules::raw_query::RawQueryBuilder;
 

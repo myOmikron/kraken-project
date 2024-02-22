@@ -3,32 +3,59 @@
 use std::io;
 
 use actix_toolbox::tb_middleware::actix_session::config::TtlExtensionPolicy;
-use actix_toolbox::tb_middleware::{
-    setup_logging_mw, DBSessionStore, LoggingMiddlewareConfig, PersistentSession, SessionMiddleware,
-};
+use actix_toolbox::tb_middleware::setup_logging_mw;
+use actix_toolbox::tb_middleware::DBSessionStore;
+use actix_toolbox::tb_middleware::LoggingMiddlewareConfig;
+use actix_toolbox::tb_middleware::PersistentSession;
+use actix_toolbox::tb_middleware::SessionMiddleware;
 use actix_web::cookie::time::Duration;
-use actix_web::cookie::{Key, KeyError};
+use actix_web::cookie::Key;
+use actix_web::cookie::KeyError;
 use actix_web::http::StatusCode;
-use actix_web::middleware::{Compress, ErrorHandlers};
-use actix_web::web::{scope, Data, JsonConfig, PayloadConfig};
-use actix_web::{App, HttpServer};
+use actix_web::middleware::Compress;
+use actix_web::middleware::ErrorHandlers;
+use actix_web::web::scope;
+use actix_web::web::Data;
+use actix_web::web::JsonConfig;
+use actix_web::web::PayloadConfig;
+use actix_web::App;
+use actix_web::HttpServer;
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use thiserror::Error;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
-use webauthn_rs::prelude::{Url, WebauthnError};
+use webauthn_rs::prelude::Url;
+use webauthn_rs::prelude::WebauthnError;
 use webauthn_rs::WebauthnBuilder;
 
-use crate::api::handler::{
-    api_keys, attack_results, attacks, auth, data_export, domains, finding_definitions,
-    global_tags, hosts, leeches, oauth, oauth_applications, ports, services, settings, users,
-    websocket, wordlists, workspace_invitations, workspace_tags, workspaces,
-};
-use crate::api::middleware::{
-    handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
-};
-use crate::api::swagger::{ExternalApi, FrontendApi};
+use crate::api::handler::api_keys;
+use crate::api::handler::attack_results;
+use crate::api::handler::attacks;
+use crate::api::handler::auth;
+use crate::api::handler::data_export;
+use crate::api::handler::domains;
+use crate::api::handler::finding_definitions;
+use crate::api::handler::global_tags;
+use crate::api::handler::hosts;
+use crate::api::handler::leeches;
+use crate::api::handler::oauth;
+use crate::api::handler::oauth_applications;
+use crate::api::handler::ports;
+use crate::api::handler::services;
+use crate::api::handler::settings;
+use crate::api::handler::users;
+use crate::api::handler::websocket;
+use crate::api::handler::wordlists;
+use crate::api::handler::workspace_invitations;
+use crate::api::handler::workspace_tags;
+use crate::api::handler::workspaces;
+use crate::api::middleware::handle_not_found;
+use crate::api::middleware::json_extractor_error;
+use crate::api::middleware::AdminRequired;
+use crate::api::middleware::AuthenticationRequired;
+use crate::api::swagger::ExternalApi;
+use crate::api::swagger::FrontendApi;
 use crate::chan::global::GLOBAL;
 use crate::config::Config;
 use crate::modules::oauth::OauthManager;

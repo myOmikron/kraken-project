@@ -2,7 +2,9 @@ use std::str::FromStr;
 
 use once_cell::sync::Lazy;
 
-use crate::modules::os_detection::{LinuxDistro, OperatingSystemInfo, WindowsVersion};
+use crate::modules::os_detection::LinuxDistro;
+use crate::modules::os_detection::OperatingSystemInfo;
+use crate::modules::os_detection::WindowsVersion;
 
 const FINGERPRINT_DB_RAW: &str = include_str!("../../../res/tcp_fingerprints_db.txt");
 

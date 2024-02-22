@@ -1,22 +1,37 @@
 use std::collections::HashSet;
-use std::net::{IpAddr, SocketAddr};
+use std::net::IpAddr;
+use std::net::SocketAddr;
 use std::time::Duration;
 
 use etherparse::packet_filter::ElementFilter;
-use etherparse::{
-    InternetSlice, IpHeader, Ipv4Extensions, Ipv4Header, Ipv6ExtensionSlice, Ipv6Extensions,
-    Ipv6ExtensionsSlice, Ipv6Header, Ipv6RoutingExtensions, PacketBuilder, SlicedPacket, TcpHeader,
-    TcpOptionElement, TransportSlice,
-};
-use futures::{stream, StreamExt, TryFutureExt};
+use etherparse::InternetSlice;
+use etherparse::IpHeader;
+use etherparse::Ipv4Extensions;
+use etherparse::Ipv4Header;
+use etherparse::Ipv6ExtensionSlice;
+use etherparse::Ipv6Extensions;
+use etherparse::Ipv6ExtensionsSlice;
+use etherparse::Ipv6Header;
+use etherparse::Ipv6RoutingExtensions;
+use etherparse::PacketBuilder;
+use etherparse::SlicedPacket;
+use etherparse::TcpHeader;
+use etherparse::TcpOptionElement;
+use etherparse::TransportSlice;
+use futures::stream;
+use futures::StreamExt;
+use futures::TryFutureExt;
 use log::trace;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-use socket2::{Domain, Protocol};
+use socket2::Domain;
+use socket2::Protocol;
 use tokio::net::UdpSocket;
 
 use crate::modules::os_detection::errors::RawTcpError;
-use crate::utils::{allocate_tcp_port, find_source_ip, raw_socket};
+use crate::utils::allocate_tcp_port;
+use crate::utils::find_source_ip;
+use crate::utils::raw_socket;
 
 fn make_ipv6_headers(ext: &Ipv6ExtensionsSlice) -> Ipv6Extensions {
     let mut ret = Ipv6Extensions {

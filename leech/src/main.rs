@@ -16,44 +16,64 @@
 use std::env;
 use std::error::Error;
 use std::io::Write;
-use std::net::{IpAddr, SocketAddr};
+use std::net::IpAddr;
+use std::net::SocketAddr;
 use std::num::NonZeroU32;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::Duration;
 
-use chrono::{Datelike, Timelike};
-use clap::{ArgAction, Parser, Subcommand, ValueEnum};
+use chrono::Datelike;
+use chrono::Timelike;
+use clap::ArgAction;
+use clap::Parser;
+use clap::Subcommand;
+use clap::ValueEnum;
 use dehashed_rs::SearchType;
 use ipnetwork::IpNetwork;
 use itertools::Itertools;
+use kraken_proto::push_attack_request;
 use kraken_proto::push_attack_service_client::PushAttackServiceClient;
 use kraken_proto::shared::CertEntry;
-use kraken_proto::{push_attack_request, CertificateTransparencyResponse, PushAttackRequest};
-use log::{error, info, warn};
+use kraken_proto::CertificateTransparencyResponse;
+use kraken_proto::PushAttackRequest;
+use log::error;
+use log::info;
+use log::warn;
 use prost_types::Timestamp;
-use rorm::{cli, Database, DatabaseConfiguration, DatabaseDriver};
+use rorm::cli;
+use rorm::Database;
+use rorm::DatabaseConfiguration;
+use rorm::DatabaseDriver;
 use tokio::sync::mpsc;
 use tokio::task;
 use trust_dns_resolver::Name;
 use uuid::Uuid;
 
 use crate::backlog::start_backlog;
-use crate::config::{get_config, Config};
-use crate::modules::bruteforce_subdomains::{
-    bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
-};
-use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
-use crate::modules::dns::txt::{start_dns_txt_scan, DnsTxtScanSettings};
-use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
+use crate::config::get_config;
+use crate::config::Config;
+use crate::modules::bruteforce_subdomains::bruteforce_subdomains;
+use crate::modules::bruteforce_subdomains::BruteforceSubdomainResult;
+use crate::modules::bruteforce_subdomains::BruteforceSubdomainsSettings;
+use crate::modules::certificate_transparency::query_ct_api;
+use crate::modules::certificate_transparency::CertificateTransparencySettings;
+use crate::modules::dehashed;
+use crate::modules::dns::txt::start_dns_txt_scan;
+use crate::modules::dns::txt::DnsTxtScanSettings;
+use crate::modules::host_alive::icmp_scan::start_icmp_scan;
+use crate::modules::host_alive::icmp_scan::IcmpScanSettings;
+use crate::modules::os_detection::os_detection;
 use crate::modules::os_detection::tcp_fingerprint::fingerprint_tcp;
-use crate::modules::os_detection::{os_detection, OsDetectionSettings};
-use crate::modules::service_detection::tcp::{
-    start_tcp_service_detection, TcpServiceDetectionResult, TcpServiceDetectionSettings,
-};
-use crate::modules::{dehashed, service_detection, whois};
+use crate::modules::os_detection::OsDetectionSettings;
+use crate::modules::service_detection;
+use crate::modules::service_detection::tcp::start_tcp_service_detection;
+use crate::modules::service_detection::tcp::TcpServiceDetectionResult;
+use crate::modules::service_detection::tcp::TcpServiceDetectionSettings;
+use crate::modules::whois;
 use crate::rpc::start_rpc_server;
-use crate::utils::{input, kraken_endpoint};
+use crate::utils::input;
+use crate::utils::kraken_endpoint;
 
 pub mod backlog;
 pub mod config;

@@ -2,8 +2,11 @@ use std::fmt;
 
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
-use serde::de::{Error, Unexpected, Visitor};
-use serde::{Deserialize, Deserializer};
+use serde::de::Error;
+use serde::de::Unexpected;
+use serde::de::Visitor;
+use serde::Deserialize;
+use serde::Deserializer;
 
 #[derive(Debug, Deserialize)]
 pub struct ProbeFile {

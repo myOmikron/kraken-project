@@ -1,7 +1,8 @@
 use kraken::api::handler::global_tags::schema::ListGlobalTags;
 
 use crate::sdk::utils::KrakenRequest;
-use crate::{KrakenClient, KrakenResult};
+use crate::KrakenClient;
+use crate::KrakenResult;
 
 impl KrakenClient {
     /// Get all global tags

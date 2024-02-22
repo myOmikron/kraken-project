@@ -1,8 +1,10 @@
+use actix_web::delete;
 use actix_web::web::Path;
-use actix_web::{delete, HttpResponse};
+use actix_web::HttpResponse;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::common::error::{ApiError, ApiResult};
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::PathUuid;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;

@@ -1,8 +1,10 @@
-use kraken::api::handler::workspaces::schema::{FullWorkspace, ListWorkspaces};
+use kraken::api::handler::workspaces::schema::FullWorkspace;
+use kraken::api::handler::workspaces::schema::ListWorkspaces;
 use uuid::Uuid;
 
 use crate::sdk::utils::KrakenRequest;
-use crate::{KrakenClient, KrakenResult};
+use crate::KrakenClient;
+use crate::KrakenResult;
 
 impl KrakenClient {
     /// Retrieve all workspaces the user has access to

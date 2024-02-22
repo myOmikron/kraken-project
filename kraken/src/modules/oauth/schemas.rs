@@ -2,8 +2,10 @@
 
 use std::time::Duration;
 
-use serde::{Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
+use serde::Deserialize;
+use serde::Serialize;
+use utoipa::IntoParams;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 /// The client constructs the request URI by adding the following

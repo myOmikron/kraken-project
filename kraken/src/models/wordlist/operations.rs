@@ -1,6 +1,9 @@
 use rorm::db::Executor;
+use rorm::insert;
+use rorm::or;
 use rorm::prelude::*;
-use rorm::{insert, or, query, update};
+use rorm::query;
+use rorm::update;
 use thiserror::Error;
 use uuid::Uuid;
 

@@ -1,10 +1,12 @@
 //! This module holds all the information regarding attacks
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
 use rorm::prelude::*;
 use rorm::Model;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -12,7 +14,10 @@ use uuid::Uuid;
 pub(crate) use crate::models::attack::operations::*;
 #[cfg(feature = "bin")]
 pub(crate) use crate::models::attack::patches::*;
-use crate::models::{OsType, ServiceCertainty, User, Workspace};
+use crate::models::OsType;
+use crate::models::ServiceCertainty;
+use crate::models::User;
+use crate::models::Workspace;
 
 #[cfg(feature = "bin")]
 mod operations;

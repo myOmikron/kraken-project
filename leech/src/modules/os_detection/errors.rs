@@ -2,7 +2,8 @@
 
 use std::io;
 
-use etherparse::{ReadError, TcpOptionReadError};
+use etherparse::ReadError;
+use etherparse::TcpOptionReadError;
 use thiserror::Error;
 use tokio::task::JoinError;
 use tokio::time::error::Elapsed;

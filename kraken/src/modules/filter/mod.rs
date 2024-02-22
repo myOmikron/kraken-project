@@ -3,12 +3,14 @@
 use std::error::Error as StdError;
 use std::fmt::Debug;
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
 use thiserror::Error;
 
 use crate::models::PortProtocol;
-use crate::modules::filter::lexer::{Token, UnexpectedCharacter};
+use crate::modules::filter::lexer::Token;
+use crate::modules::filter::lexer::UnexpectedCharacter;
 
 mod lexer;
 mod parser;

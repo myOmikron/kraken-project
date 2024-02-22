@@ -2,12 +2,15 @@ use std::io;
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use log::{debug, trace, warn};
+use log::debug;
+use log::trace;
+use log::warn;
 use thiserror::Error;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use tokio::time::error::Elapsed;
-use tokio::time::{sleep, timeout};
+use tokio::time::sleep;
+use tokio::time::timeout;
 
 /// Tries up to `max_retries + 1` times to connect to `socket` using tcp.
 pub async fn is_port_open(

@@ -4,13 +4,18 @@ use kraken_proto::AnyAttackResponse;
 use prost::Message;
 use rorm::conditions::Value;
 use rorm::fields::traits::FieldType;
+use rorm::imr;
 use rorm::internal::field::as_db_type::AsDbType;
-use rorm::internal::field::modifier::{MergeAnnotations, SingleColumnCheck, SingleColumnFromName};
+use rorm::internal::field::modifier::MergeAnnotations;
+use rorm::internal::field::modifier::SingleColumnCheck;
+use rorm::internal::field::modifier::SingleColumnFromName;
 use rorm::internal::field::Field;
 use rorm::internal::hmr::annotations::Annotations;
-use rorm::internal::hmr::db_type::{Binary, DbType};
+use rorm::internal::hmr::db_type::Binary;
+use rorm::internal::hmr::db_type::DbType;
 use rorm::internal::hmr::AsImr;
-use rorm::{imr, new_converting_decoder, Model};
+use rorm::new_converting_decoder;
+use rorm::Model;
 use uuid::Uuid;
 
 /// A response and its associated attack which couldn't be sent

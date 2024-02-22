@@ -1,11 +1,15 @@
+use rorm::and;
 use rorm::db::Executor;
+use rorm::insert;
 use rorm::prelude::*;
-use rorm::{and, insert, query};
+use rorm::query;
 use thiserror::Error;
 use uuid::Uuid;
-use crate::api::handler::common::error::ApiError;
 
-use crate::models::{OAuthDecision, OAuthDecisionAction, Workspace};
+use crate::api::handler::common::error::ApiError;
+use crate::models::OAuthDecision;
+use crate::models::OAuthDecisionAction;
+use crate::models::Workspace;
 use crate::modules::oauth::OAuthScope;
 
 impl OAuthDecision {

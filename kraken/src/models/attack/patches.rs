@@ -1,14 +1,27 @@
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
 use rorm::prelude::*;
 use uuid::Uuid;
 
-use crate::models::{
-    Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
-    DnsRecordResult, DnsRecordType, DnsTxtScanAttackResult, DnsTxtScanServiceHintEntry,
-    DnsTxtScanServiceHintType, DnsTxtScanSpfEntry, DnsTxtScanSpfType, DnsTxtScanSummaryType,
-    HostAliveResult, OsDetectionResult, OsType, ServiceCertainty, ServiceDetectionResult, UdpServiceDetectionResult,
-};
+use crate::models::Attack;
+use crate::models::CertificateTransparencyResult;
+use crate::models::CertificateTransparencyValueName;
+use crate::models::DehashedQueryResult;
+use crate::models::DnsRecordResult;
+use crate::models::DnsRecordType;
+use crate::models::DnsTxtScanAttackResult;
+use crate::models::DnsTxtScanServiceHintEntry;
+use crate::models::DnsTxtScanServiceHintType;
+use crate::models::DnsTxtScanSpfEntry;
+use crate::models::DnsTxtScanSpfType;
+use crate::models::DnsTxtScanSummaryType;
+use crate::models::HostAliveResult;
+use crate::models::OsDetectionResult;
+use crate::models::OsType;
+use crate::models::ServiceCertainty;
+use crate::models::ServiceDetectionResult;
+use crate::models::UdpServiceDetectionResult;
 
 pub(crate) type BruteforceSubdomainsResultInsert = DnsRecordResultInsert;
 pub(crate) type DnsResolutionResultInsert = DnsRecordResultInsert;

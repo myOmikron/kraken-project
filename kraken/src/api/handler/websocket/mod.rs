@@ -1,19 +1,26 @@
 //! The websocket to the frontend client is defined in this module
 
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+use std::time::Instant;
 
 use actix_toolbox::ws;
-use actix_toolbox::ws::{MailboxError, Message};
+use actix_toolbox::ws::MailboxError;
+use actix_toolbox::ws::Message;
+use actix_web::get;
 use actix_web::web::Payload;
-use actix_web::{get, HttpRequest, HttpResponse};
+use actix_web::HttpRequest;
+use actix_web::HttpResponse;
 use bytes::Bytes;
-use log::{debug, error};
+use log::debug;
+use log::error;
 use tokio::sync::Mutex;
 
 use crate::api::extractors::SessionUser;
 use crate::chan::global::GLOBAL;
-use crate::chan::ws_manager::schema::{EditorTarget, WsClientMessage, WsMessage};
+use crate::chan::ws_manager::schema::EditorTarget;
+use crate::chan::ws_manager::schema::WsClientMessage;
+use crate::chan::ws_manager::schema::WsMessage;
 
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
 

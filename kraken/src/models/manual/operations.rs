@@ -5,12 +5,25 @@ use rorm::prelude::*;
 use uuid::Uuid;
 
 use crate::chan::global::GLOBAL;
-use crate::models::{
-    AggregationSource, AggregationTable, DomainCertainty, HostCertainty, ManualDomain, ManualHost,
-    ManualHostCertainty, ManualPort, ManualPortCertainty, ManualService, ManualServiceCertainty,
-    OsType, PortCertainty, PortProtocol, ServiceCertainty, ServiceProtocols, SourceType, User,
-    Workspace,
-};
+use crate::models::AggregationSource;
+use crate::models::AggregationTable;
+use crate::models::DomainCertainty;
+use crate::models::HostCertainty;
+use crate::models::ManualDomain;
+use crate::models::ManualHost;
+use crate::models::ManualHostCertainty;
+use crate::models::ManualPort;
+use crate::models::ManualPortCertainty;
+use crate::models::ManualService;
+use crate::models::ManualServiceCertainty;
+use crate::models::OsType;
+use crate::models::PortCertainty;
+use crate::models::PortProtocol;
+use crate::models::ServiceCertainty;
+use crate::models::ServiceProtocols;
+use crate::models::SourceType;
+use crate::models::User;
+use crate::models::Workspace;
 
 #[derive(Patch)]
 #[rorm(model = "ManualDomain")]

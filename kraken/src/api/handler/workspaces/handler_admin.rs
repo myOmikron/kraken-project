@@ -1,11 +1,15 @@
 use actix_web::get;
-use actix_web::web::{Json, Path};
-use rorm::{query, Model};
+use actix_web::web::Json;
+use actix_web::web::Path;
+use rorm::query;
+use rorm::Model;
 
 use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::users::schema::SimpleUser;
-use crate::api::handler::workspaces::schema::{FullWorkspace, ListWorkspaces, SimpleWorkspace};
+use crate::api::handler::workspaces::schema::FullWorkspace;
+use crate::api::handler::workspaces::schema::ListWorkspaces;
+use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::api::handler::workspaces::utils::get_workspace_unchecked;
 use crate::chan::global::GLOBAL;
 use crate::models::Workspace;

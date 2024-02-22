@@ -1,18 +1,31 @@
 use actix_toolbox::tb_middleware::Session;
+use actix_web::get;
+use actix_web::post;
+use actix_web::put;
 use actix_web::web::Json;
-use actix_web::{get, post, put, HttpResponse};
+use actix_web::HttpResponse;
 use argon2::password_hash::SaltString;
-use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
+use argon2::Argon2;
+use argon2::PasswordHash;
+use argon2::PasswordHasher;
+use argon2::PasswordVerifier;
 use rand::thread_rng;
-use rorm::{query, update, FieldAccess, Model};
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::users::schema::{
-    FullUser, ListUsers, SetPasswordRequest, SimpleUser, UpdateMeRequest,
-};
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::users::schema::FullUser;
+use crate::api::handler::users::schema::ListUsers;
+use crate::api::handler::users::schema::SetPasswordRequest;
+use crate::api::handler::users::schema::SimpleUser;
+use crate::api::handler::users::schema::UpdateMeRequest;
 use crate::chan::global::GLOBAL;
-use crate::models::{LocalUser, User};
+use crate::models::LocalUser;
+use crate::models::User;
 
 /// Retrieve the own user
 #[utoipa::path(

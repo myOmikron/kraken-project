@@ -1,7 +1,8 @@
 //! This module contains common types, such as [ApiError], [PathUuid] and the complete
 //! error implementation
 
-use serde::{Deserialize, Deserializer};
+use serde::Deserialize;
+use serde::Deserializer;
 
 #[cfg(feature = "bin")]
 pub(crate) mod error;

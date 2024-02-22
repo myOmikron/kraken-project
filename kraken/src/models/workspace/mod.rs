@@ -2,13 +2,17 @@
 //! This module holds all database related definitions of workspace related structs
 //!
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use rorm::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{Attack, OauthClient, User};
+use crate::models::Attack;
+use crate::models::OauthClient;
+use crate::models::User;
 
 #[cfg(feature = "bin")]
 mod operations;

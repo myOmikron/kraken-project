@@ -7,55 +7,99 @@ use std::ops::RangeInclusive;
 use std::pin::Pin;
 use std::time::Duration;
 
-use chrono::{Datelike, Timelike};
+use chrono::Datelike;
+use chrono::Timelike;
 use futures::stream::BoxStream;
 use futures::Stream;
 use ipnetwork::IpNetwork;
 use itertools::Itertools;
+use kraken_proto::any_attack_response;
 use kraken_proto::req_attack_service_server::ReqAttackService;
+use kraken_proto::shared;
 use kraken_proto::shared::dns_record::Record;
 use kraken_proto::shared::dns_txt_scan::Info;
-use kraken_proto::shared::{
-    spf_directive, spf_part, Aaaa, Address, CertEntry, DnsRecord, DnsTxtKnownService,
-    DnsTxtKnownServiceList, DnsTxtScan, DnsTxtServiceHint, GenericRecord, Net, OperatingSystem,
-    SpfDirective, SpfExplanationModifier, SpfInfo, SpfMechanismA, SpfMechanismAll,
-    SpfMechanismExists, SpfMechanismInclude, SpfMechanismIp, SpfMechanismMx, SpfMechanismPtr,
-    SpfPart, SpfQualifier, SpfRedirectModifier, SpfUnknownModifier, A,
-};
-use kraken_proto::{
-    any_attack_response, shared, BruteforceSubdomainRequest, BruteforceSubdomainResponse,
-    CertificateTransparencyRequest, CertificateTransparencyResponse, DnsResolutionRequest,
-    DnsResolutionResponse, DnsTxtScanRequest, DnsTxtScanResponse, HostsAliveRequest,
-    HostsAliveResponse, OsDetectionRequest, OsDetectionResponse, ServiceCertainty,
-    ServiceDetectionRequest, ServiceDetectionResponse, UdpServiceDetectionRequest,
-    UdpServiceDetectionResponse,
-};
+use kraken_proto::shared::spf_directive;
+use kraken_proto::shared::spf_part;
+use kraken_proto::shared::Aaaa;
+use kraken_proto::shared::Address;
+use kraken_proto::shared::CertEntry;
+use kraken_proto::shared::DnsRecord;
+use kraken_proto::shared::DnsTxtKnownService;
+use kraken_proto::shared::DnsTxtKnownServiceList;
+use kraken_proto::shared::DnsTxtScan;
+use kraken_proto::shared::DnsTxtServiceHint;
+use kraken_proto::shared::GenericRecord;
+use kraken_proto::shared::Net;
+use kraken_proto::shared::OperatingSystem;
+use kraken_proto::shared::SpfDirective;
+use kraken_proto::shared::SpfExplanationModifier;
+use kraken_proto::shared::SpfInfo;
+use kraken_proto::shared::SpfMechanismA;
+use kraken_proto::shared::SpfMechanismAll;
+use kraken_proto::shared::SpfMechanismExists;
+use kraken_proto::shared::SpfMechanismInclude;
+use kraken_proto::shared::SpfMechanismIp;
+use kraken_proto::shared::SpfMechanismMx;
+use kraken_proto::shared::SpfMechanismPtr;
+use kraken_proto::shared::SpfPart;
+use kraken_proto::shared::SpfQualifier;
+use kraken_proto::shared::SpfRedirectModifier;
+use kraken_proto::shared::SpfUnknownModifier;
+use kraken_proto::shared::A;
+use kraken_proto::BruteforceSubdomainRequest;
+use kraken_proto::BruteforceSubdomainResponse;
+use kraken_proto::CertificateTransparencyRequest;
+use kraken_proto::CertificateTransparencyResponse;
+use kraken_proto::DnsResolutionRequest;
+use kraken_proto::DnsResolutionResponse;
+use kraken_proto::DnsTxtScanRequest;
+use kraken_proto::DnsTxtScanResponse;
+use kraken_proto::HostsAliveRequest;
+use kraken_proto::HostsAliveResponse;
+use kraken_proto::OsDetectionRequest;
+use kraken_proto::OsDetectionResponse;
+use kraken_proto::ServiceCertainty;
+use kraken_proto::ServiceDetectionRequest;
+use kraken_proto::ServiceDetectionResponse;
+use kraken_proto::UdpServiceDetectionRequest;
+use kraken_proto::UdpServiceDetectionResponse;
 use log::error;
 use prost_types::Timestamp;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
-use tonic::{Request, Response, Status};
+use tonic::Request;
+use tonic::Response;
+use tonic::Status;
 use uuid::Uuid;
 
 use crate::backlog::Backlog;
-use crate::modules::bruteforce_subdomains::{
-    bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
-};
-use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
-use crate::modules::dns::spf::{SPFMechanism, SPFPart, SPFQualifier};
-use crate::modules::dns::txt::{
-    start_dns_txt_scan, DnsTxtScanSettings, TxtScanInfo, TxtServiceHint,
-};
-use crate::modules::dns::{dns_resolution, DnsRecordResult, DnsResolutionSettings};
-use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
-use crate::modules::os_detection::{os_detection, OperatingSystemInfo, OsDetectionSettings};
-use crate::modules::service_detection::tcp::{
-    start_tcp_service_detection, TcpServiceDetectionResult, TcpServiceDetectionSettings,
-};
-use crate::modules::service_detection::udp::{
-    start_udp_service_detection, UdpServiceDetectionSettings,
-};
-use crate::modules::service_detection::{ProtocolSet, Service};
+use crate::modules::bruteforce_subdomains::bruteforce_subdomains;
+use crate::modules::bruteforce_subdomains::BruteforceSubdomainResult;
+use crate::modules::bruteforce_subdomains::BruteforceSubdomainsSettings;
+use crate::modules::certificate_transparency::query_ct_api;
+use crate::modules::certificate_transparency::CertificateTransparencySettings;
+use crate::modules::dns::dns_resolution;
+use crate::modules::dns::spf::SPFMechanism;
+use crate::modules::dns::spf::SPFPart;
+use crate::modules::dns::spf::SPFQualifier;
+use crate::modules::dns::txt::start_dns_txt_scan;
+use crate::modules::dns::txt::DnsTxtScanSettings;
+use crate::modules::dns::txt::TxtScanInfo;
+use crate::modules::dns::txt::TxtServiceHint;
+use crate::modules::dns::DnsRecordResult;
+use crate::modules::dns::DnsResolutionSettings;
+use crate::modules::host_alive::icmp_scan::start_icmp_scan;
+use crate::modules::host_alive::icmp_scan::IcmpScanSettings;
+use crate::modules::os_detection::os_detection;
+use crate::modules::os_detection::OperatingSystemInfo;
+use crate::modules::os_detection::OsDetectionSettings;
+use crate::modules::service_detection::tcp::start_tcp_service_detection;
+use crate::modules::service_detection::tcp::TcpServiceDetectionResult;
+use crate::modules::service_detection::tcp::TcpServiceDetectionSettings;
+use crate::modules::service_detection::udp::start_udp_service_detection;
+use crate::modules::service_detection::udp::UdpServiceDetectionSettings;
+use crate::modules::service_detection::ProtocolSet;
+use crate::modules::service_detection::Service;
 
 /// The Attack service
 pub struct Attacks {

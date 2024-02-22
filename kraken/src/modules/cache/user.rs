@@ -2,13 +2,17 @@ use std::collections::HashMap;
 use std::ops::Add;
 use std::sync::RwLock;
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::DateTime;
+use chrono::Duration;
+use chrono::Utc;
 use futures::TryStreamExt;
 use log::debug;
-use rorm::{query, Model};
+use rorm::query;
+use rorm::Model;
 use uuid::Uuid;
 
-use crate::api::handler::users::schema::{FullUser, SimpleUser};
+use crate::api::handler::users::schema::FullUser;
+use crate::api::handler::users::schema::SimpleUser;
 use crate::chan::global::GLOBAL;
 use crate::models::User;
 

@@ -1,13 +1,17 @@
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{
-    DnsRecordType, DnsTxtScanServiceHintType, DnsTxtScanSpfType, DnsTxtScanSummaryType, OsType,
-    ServiceCertainty,
-};
+use crate::models::DnsRecordType;
+use crate::models::DnsTxtScanServiceHintType;
+use crate::models::DnsTxtScanSpfType;
+use crate::models::DnsTxtScanSummaryType;
+use crate::models::OsType;
+use crate::models::ServiceCertainty;
 
 /// A simple representation of a bruteforce subdomains result
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]

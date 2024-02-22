@@ -1,8 +1,10 @@
 //! OS detection for a host, based on an ever-growing collection of probes
 
 use std::collections::HashSet;
-use std::fmt::{Display, Formatter};
-use std::net::{IpAddr, SocketAddr};
+use std::fmt::Display;
+use std::fmt::Formatter;
+use std::net::IpAddr;
+use std::net::SocketAddr;
 use std::time::Duration;
 
 use itertools::Itertools;
@@ -11,10 +13,12 @@ use strum_macros::EnumString;
 use tokio::task::JoinSet;
 use tokio::time::timeout;
 
-use crate::modules::os_detection::errors::{OsDetectionError, TcpFingerprintError};
+use crate::modules::os_detection::errors::OsDetectionError;
+use crate::modules::os_detection::errors::TcpFingerprintError;
 use crate::modules::os_detection::fingerprint_db::FINGERPRINT_DB;
 use crate::modules::os_detection::syn_scan::find_open_and_closed_port;
-use crate::modules::os_detection::tcp_fingerprint::{fingerprint_tcp, TcpFingerprint};
+use crate::modules::os_detection::tcp_fingerprint::fingerprint_tcp;
+use crate::modules::os_detection::tcp_fingerprint::TcpFingerprint;
 use crate::modules::service_detection::tcp::OneShotTcpSettings;
 
 pub mod errors;

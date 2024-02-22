@@ -1,15 +1,20 @@
 //! The schemas of workspace related are defined in this module
 
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
+use chrono::DateTime;
+use chrono::Utc;
+use serde::Deserialize;
+use serde::Serialize;
+use utoipa::IntoParams;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::attack_results::schema::{
-    FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
-    FullUdpServiceDetectionResult, SimpleDnsResolutionResult, SimpleDnsTxtScanResult,
-    SimpleHostAliveResult, SimpleQueryUnhashedResult,
-};
+use crate::api::handler::attack_results::schema::FullQueryCertificateTransparencyResult;
+use crate::api::handler::attack_results::schema::FullServiceDetectionResult;
+use crate::api::handler::attack_results::schema::FullUdpServiceDetectionResult;
+use crate::api::handler::attack_results::schema::SimpleDnsResolutionResult;
+use crate::api::handler::attack_results::schema::SimpleDnsTxtScanResult;
+use crate::api::handler::attack_results::schema::SimpleHostAliveResult;
+use crate::api::handler::attack_results::schema::SimpleQueryUnhashedResult;
 use crate::api::handler::attacks::schema::SimpleAttack;
 use crate::api::handler::common::de_optional;
 use crate::api::handler::domains::schema::SimpleDomain;

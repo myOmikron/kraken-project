@@ -1,9 +1,11 @@
 //! The configuration definitions of a leech
 
+use std::fs;
+use std::io;
 use std::path::Path;
-use std::{fs, io};
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use thiserror::Error;
 use url::Url;
 

@@ -1,13 +1,25 @@
-use serde::{Deserialize, Serialize};
-use serde_repr::{Deserialize_repr, Serialize_repr};
-use utoipa::{IntoParams, ToSchema};
-pub use utoipa_fix::{
-    BruteforceSubdomainsResultsPage, DnsResolutionResultsPage, DnsTxtScanResultsPage,
-    DomainResultsPage, HostAliveResultsPage, HostResultsPage, OsDetectionResultsPage, Page, PortResultsPage,
-    QueryCertificateTransparencyResultsPage, QueryUnhashedResultsPage, SearchResultPage,
-    SearchesResultPage, ServiceDetectionResultsPage, ServiceResultsPage,
-    UdpServiceDetectionResultsPage,
-};
+use serde::Deserialize;
+use serde::Serialize;
+use serde_repr::Deserialize_repr;
+use serde_repr::Serialize_repr;
+use utoipa::IntoParams;
+use utoipa::ToSchema;
+pub use utoipa_fix::BruteforceSubdomainsResultsPage;
+pub use utoipa_fix::DnsResolutionResultsPage;
+pub use utoipa_fix::DnsTxtScanResultsPage;
+pub use utoipa_fix::DomainResultsPage;
+pub use utoipa_fix::HostAliveResultsPage;
+pub use utoipa_fix::HostResultsPage;
+pub use utoipa_fix::OsDetectionResultsPage;
+pub use utoipa_fix::Page;
+pub use utoipa_fix::PortResultsPage;
+pub use utoipa_fix::QueryCertificateTransparencyResultsPage;
+pub use utoipa_fix::QueryUnhashedResultsPage;
+pub use utoipa_fix::SearchResultPage;
+pub use utoipa_fix::SearchesResultPage;
+pub use utoipa_fix::ServiceDetectionResultsPage;
+pub use utoipa_fix::ServiceResultsPage;
+pub use utoipa_fix::UdpServiceDetectionResultsPage;
 use uuid::Uuid;
 
 use crate::models::Color;
@@ -40,19 +52,25 @@ pub struct PageParams {
 
 #[allow(missing_docs)]
 mod utoipa_fix {
-    use serde::{Deserialize, Serialize};
+    use serde::Deserialize;
+    use serde::Serialize;
     use utoipa::ToSchema;
 
-    use crate::api::handler::attack_results::schema::{
-        FullDnsTxtScanResult, FullOsDetectionResult, FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
-        FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult,
-        SimpleHostAliveResult, SimpleQueryUnhashedResult,
-    };
+    use crate::api::handler::attack_results::schema::FullDnsTxtScanResult;
+    use crate::api::handler::attack_results::schema::FullOsDetectionResult;
+    use crate::api::handler::attack_results::schema::FullQueryCertificateTransparencyResult;
+    use crate::api::handler::attack_results::schema::FullServiceDetectionResult;
+    use crate::api::handler::attack_results::schema::FullUdpServiceDetectionResult;
+    use crate::api::handler::attack_results::schema::SimpleBruteforceSubdomainsResult;
+    use crate::api::handler::attack_results::schema::SimpleDnsResolutionResult;
+    use crate::api::handler::attack_results::schema::SimpleHostAliveResult;
+    use crate::api::handler::attack_results::schema::SimpleQueryUnhashedResult;
     use crate::api::handler::domains::schema::FullDomain;
     use crate::api::handler::hosts::schema::FullHost;
     use crate::api::handler::ports::schema::FullPort;
     use crate::api::handler::services::schema::FullService;
-    use crate::api::handler::workspaces::schema::{SearchEntry, SearchResultEntry};
+    use crate::api::handler::workspaces::schema::SearchEntry;
+    use crate::api::handler::workspaces::schema::SearchResultEntry;
 
     /// Response containing paginated data
     #[derive(Serialize, Deserialize, Default, ToSchema, Clone)]

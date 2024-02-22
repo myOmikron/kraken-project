@@ -1,10 +1,14 @@
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
+use chrono::DateTime;
+use chrono::Utc;
+use serde::Deserialize;
+use serde::Serialize;
+use utoipa::IntoParams;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
-use crate::api::handler::common::schema::{PageParams, SimpleTag};
+use crate::api::handler::common::schema::PageParams;
+use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::models::DomainCertainty;
 

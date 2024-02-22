@@ -1,11 +1,15 @@
-use kraken::api::handler::common::schema::{DomainResultsPage, UuidResponse};
-use kraken::api::handler::domains::schema::{
-    CreateDomainRequest, DomainRelations, FullDomain, GetAllDomainsQuery, UpdateDomainRequest,
-};
+use kraken::api::handler::common::schema::DomainResultsPage;
+use kraken::api::handler::common::schema::UuidResponse;
+use kraken::api::handler::domains::schema::CreateDomainRequest;
+use kraken::api::handler::domains::schema::DomainRelations;
+use kraken::api::handler::domains::schema::FullDomain;
+use kraken::api::handler::domains::schema::GetAllDomainsQuery;
+use kraken::api::handler::domains::schema::UpdateDomainRequest;
 use uuid::Uuid;
 
 use crate::sdk::utils::KrakenRequest;
-use crate::{KrakenClient, KrakenResult};
+use crate::KrakenClient;
+use crate::KrakenResult;
 
 impl KrakenClient {
     /// Manually add a domain

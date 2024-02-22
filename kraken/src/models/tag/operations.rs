@@ -1,11 +1,15 @@
+use rorm::and;
 use rorm::conditions::DynamicCollection;
 use rorm::db::Executor;
+use rorm::insert;
 use rorm::prelude::*;
-use rorm::{and, insert, query};
+use rorm::query;
 use thiserror::Error;
 use uuid::Uuid;
 
-use super::{GlobalTag, Workspace, WorkspaceTag};
+use super::GlobalTag;
+use super::Workspace;
+use super::WorkspaceTag;
 use crate::api::handler::common::error::ApiError;
 use crate::models::Color;
 

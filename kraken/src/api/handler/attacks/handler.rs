@@ -1,29 +1,60 @@
-use actix_web::web::{Json, Path};
-use actix_web::{delete, get, post, HttpResponse};
+use actix_web::delete;
+use actix_web::get;
+use actix_web::post;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::HttpResponse;
 use futures::TryStreamExt;
 use log::debug;
-use rorm::conditions::{Condition, DynamicCollection};
-use rorm::{query, FieldAccess, Model};
+use rorm::conditions::Condition;
+use rorm::conditions::DynamicCollection;
+use rorm::query;
+use rorm::FieldAccess;
+use rorm::Model;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::attacks::schema::{
-    BruteforceSubdomainsRequest, DnsResolutionRequest, DnsTxtScanRequest, HostsAliveRequest,
-    ListAttacks, OsDetectionRequest, QueryCertificateTransparencyRequest, QueryDehashedRequest,
-    ServiceDetectionRequest, SimpleAttack, UdpServiceDetectionRequest,
-};
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{PathUuid, UuidResponse};
+use crate::api::handler::attacks::schema::BruteforceSubdomainsRequest;
+use crate::api::handler::attacks::schema::DnsResolutionRequest;
+use crate::api::handler::attacks::schema::DnsTxtScanRequest;
+use crate::api::handler::attacks::schema::HostsAliveRequest;
+use crate::api::handler::attacks::schema::ListAttacks;
+use crate::api::handler::attacks::schema::OsDetectionRequest;
+use crate::api::handler::attacks::schema::QueryCertificateTransparencyRequest;
+use crate::api::handler::attacks::schema::QueryDehashedRequest;
+use crate::api::handler::attacks::schema::ServiceDetectionRequest;
+use crate::api::handler::attacks::schema::SimpleAttack;
+use crate::api::handler::attacks::schema::UdpServiceDetectionRequest;
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::chan::global::GLOBAL;
-use crate::models::{Attack, User, UserPermission, WordList, Workspace, WorkspaceMember};
-use crate::modules::attacks::{
-    start_bruteforce_subdomains, start_certificate_transparency, start_dehashed_query,
-    start_dns_resolution, start_dns_txt_scan, start_host_alive, start_os_detection,
-    start_service_detection, start_udp_service_detection, BruteforceSubdomainsParams,
-    CertificateTransparencyParams, DehashedQueryParams, DnsResolutionParams, DnsTxtScanParams,
-    HostAliveParams, OsDetectionParams, ServiceDetectionParams, UdpServiceDetectionParams,
-};
+use crate::models::Attack;
+use crate::models::User;
+use crate::models::UserPermission;
+use crate::models::WordList;
+use crate::models::Workspace;
+use crate::models::WorkspaceMember;
+use crate::modules::attacks::start_bruteforce_subdomains;
+use crate::modules::attacks::start_certificate_transparency;
+use crate::modules::attacks::start_dehashed_query;
+use crate::modules::attacks::start_dns_resolution;
+use crate::modules::attacks::start_dns_txt_scan;
+use crate::modules::attacks::start_host_alive;
+use crate::modules::attacks::start_os_detection;
+use crate::modules::attacks::start_service_detection;
+use crate::modules::attacks::start_udp_service_detection;
+use crate::modules::attacks::BruteforceSubdomainsParams;
+use crate::modules::attacks::CertificateTransparencyParams;
+use crate::modules::attacks::DehashedQueryParams;
+use crate::modules::attacks::DnsResolutionParams;
+use crate::modules::attacks::DnsTxtScanParams;
+use crate::modules::attacks::HostAliveParams;
+use crate::modules::attacks::OsDetectionParams;
+use crate::modules::attacks::ServiceDetectionParams;
+use crate::modules::attacks::UdpServiceDetectionParams;
 
 /// Bruteforce subdomains through a DNS wordlist attack
 ///

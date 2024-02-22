@@ -1,8 +1,10 @@
-use rand::distributions::{Alphanumeric, DistString};
+use rand::distributions::Alphanumeric;
+use rand::distributions::DistString;
 use rand::thread_rng;
 use rorm::db::Executor;
+use rorm::insert;
 use rorm::prelude::*;
-use rorm::{insert, query};
+use rorm::query;
 use thiserror::Error;
 use url::Url;
 use uuid::Uuid;

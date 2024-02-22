@@ -1,13 +1,24 @@
 use ipnetwork::IpNetwork;
-use rorm::prelude::{ForeignModel, ForeignModelByField};
-use rorm::{and, insert, query, update, FieldAccess, Model, Patch};
-use tokio::sync::{mpsc, oneshot};
+use rorm::and;
+use rorm::insert;
+use rorm::prelude::ForeignModel;
+use rorm::prelude::ForeignModelByField;
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
+use rorm::Patch;
+use tokio::sync::mpsc;
+use tokio::sync::oneshot;
 use uuid::Uuid;
 
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
-use crate::models::{Host, HostCertainty, OsType, Workspace};
+use crate::models::Host;
+use crate::models::HostCertainty;
+use crate::models::OsType;
+use crate::models::Workspace;
 use crate::modules::aggregator::HostAggregationData;
 
 pub async fn run_host_aggregator(

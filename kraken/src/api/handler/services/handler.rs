@@ -1,36 +1,59 @@
 use std::collections::HashMap;
 
-use actix_web::web::{Json, Path};
-use actix_web::{delete, get, post, put, HttpResponse};
+use actix_web::delete;
+use actix_web::get;
+use actix_web::post;
+use actix_web::put;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::HttpResponse;
 use futures::TryStreamExt;
+use rorm::and;
 use rorm::conditions::DynamicCollection;
 use rorm::db::sql::value::Value;
+use rorm::insert;
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, insert, query, update, FieldAccess, Model};
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::aggregation_source::schema::{
-    FullAggregationSource, SimpleAggregationSource,
-};
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{
-    PathUuid, ServiceResultsPage, SimpleTag, TagType, UuidResponse,
-};
+use crate::api::handler::aggregation_source::schema::FullAggregationSource;
+use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::ServiceResultsPage;
+use crate::api::handler::common::schema::SimpleTag;
+use crate::api::handler::common::schema::TagType;
+use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::common::utils::get_page_params;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::SimplePort;
-use crate::api::handler::services::schema::{
-    CreateServiceRequest, FullService, GetAllServicesQuery, PathService, ServiceRelations,
-    UpdateServiceRequest,
-};
+use crate::api::handler::services::schema::CreateServiceRequest;
+use crate::api::handler::services::schema::FullService;
+use crate::api::handler::services::schema::GetAllServicesQuery;
+use crate::api::handler::services::schema::PathService;
+use crate::api::handler::services::schema::ServiceRelations;
+use crate::api::handler::services::schema::UpdateServiceRequest;
 use crate::chan::global::GLOBAL;
-use crate::chan::ws_manager::schema::{AggregationType, WsMessage};
-use crate::models::{
-    AggregationSource, AggregationTable, GlobalTag, Host, ManualService, Port, Service,
-    ServiceGlobalTag, ServiceWorkspaceTag, Workspace, WorkspaceTag,
-};
-use crate::modules::filter::{GlobalAST, ServiceAST};
+use crate::chan::ws_manager::schema::AggregationType;
+use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::AggregationSource;
+use crate::models::AggregationTable;
+use crate::models::GlobalTag;
+use crate::models::Host;
+use crate::models::ManualService;
+use crate::models::Port;
+use crate::models::Service;
+use crate::models::ServiceGlobalTag;
+use crate::models::ServiceWorkspaceTag;
+use crate::models::Workspace;
+use crate::models::WorkspaceTag;
+use crate::modules::filter::GlobalAST;
+use crate::modules::filter::ServiceAST;
 use crate::modules::raw_query::RawQueryBuilder;
 use crate::query_tags;
 
@@ -169,17 +192,17 @@ pub async fn get_all_services(
         .into_iter()
         .map(
             |(
-                 uuid,
-                 name,
-                 version,
-                 certainty,
-                 comment,
-                 created_at,
-                 host,
-                 port,
-                 protocols,
-                 workspace,
-             )| {
+                uuid,
+                name,
+                version,
+                certainty,
+                comment,
+                created_at,
+                host,
+                port,
+                protocols,
+                workspace,
+            )| {
                 FullService {
                     uuid,
                     name,

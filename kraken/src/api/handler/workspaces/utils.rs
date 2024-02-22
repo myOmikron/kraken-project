@@ -5,17 +5,29 @@ use rorm::db::executor::Stream;
 use rorm::db::sql::value::Value;
 use rorm::db::transaction::Transaction;
 use rorm::db::Executor;
+use rorm::insert;
 use rorm::prelude::ForeignModelByField;
-use rorm::{insert, query, update, FieldAccess, Model};
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
 use crate::api::handler::attacks::schema::SimpleAttack;
-use crate::api::handler::common::error::{ApiError, ApiResult};
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::users::schema::SimpleUser;
-use crate::api::handler::workspaces::schema::{FullWorkspace, SimpleWorkspace};
+use crate::api::handler::workspaces::schema::FullWorkspace;
+use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
-use crate::models::{Attack, ModelType, Search, SearchResult, User, Workspace, WorkspaceMember};
+use crate::models::Attack;
+use crate::models::ModelType;
+use crate::models::Search;
+use crate::models::SearchResult;
+use crate::models::User;
+use crate::models::Workspace;
+use crate::models::WorkspaceMember;
 
 pub(crate) fn build_query_list() -> Vec<(String, ModelType)> {
     let table_names_no_ref_to_ws = vec![

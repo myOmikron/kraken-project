@@ -1,6 +1,9 @@
 //! Some utility functions for `DateTime<Utc>`
 
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use chrono::DateTime;
+use chrono::NaiveDateTime;
+use chrono::TimeZone;
+use chrono::Utc;
 use log::warn;
 
 /// Convert a raw timestamp in seconds into a `DateTime<Utc>`

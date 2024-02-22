@@ -1,13 +1,19 @@
 //! Central storage of settings which are allowed to change during operation
 
-use rorm::{insert, query, Database, Model};
+use rorm::insert;
+use rorm::query;
+use rorm::Database;
+use rorm::Model;
 use thiserror::Error;
 use tokio::sync::watch;
 use tokio::sync::watch::error::SendError;
-use tokio::sync::watch::{Receiver, Sender};
+use tokio::sync::watch::Receiver;
+use tokio::sync::watch::Sender;
 use uuid::Uuid;
 
-use crate::models::{Settings, SettingsInsert, UserPermission};
+use crate::models::Settings;
+use crate::models::SettingsInsert;
+use crate::models::UserPermission;
 
 /// The errors that can occur while
 #[derive(Error, Debug)]

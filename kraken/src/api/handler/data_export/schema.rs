@@ -1,15 +1,20 @@
 use std::collections::HashMap;
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{
-    DomainCertainty, HostCertainty, OsType, PortCertainty, PortProtocol, ServiceCertainty,
-    ServiceProtocols,
-};
+use crate::models::DomainCertainty;
+use crate::models::HostCertainty;
+use crate::models::OsType;
+use crate::models::PortCertainty;
+use crate::models::PortProtocol;
+use crate::models::ServiceCertainty;
+use crate::models::ServiceProtocols;
 
 /// The aggregated results of a workspace
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]

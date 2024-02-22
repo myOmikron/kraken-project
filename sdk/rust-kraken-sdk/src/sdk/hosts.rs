@@ -1,15 +1,19 @@
 use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
-use kraken::api::handler::common::schema::{HostResultsPage, UuidResponse};
-use kraken::api::handler::hosts::schema::{
-    CreateHostRequest, FullHost, GetAllHostsQuery, HostRelations, UpdateHostRequest,
-};
+use kraken::api::handler::common::schema::HostResultsPage;
+use kraken::api::handler::common::schema::UuidResponse;
+use kraken::api::handler::hosts::schema::CreateHostRequest;
+use kraken::api::handler::hosts::schema::FullHost;
+use kraken::api::handler::hosts::schema::GetAllHostsQuery;
+use kraken::api::handler::hosts::schema::HostRelations;
+use kraken::api::handler::hosts::schema::UpdateHostRequest;
 use kraken::models::ManualHostCertainty;
 use uuid::Uuid;
 
 use crate::sdk::utils::KrakenRequest;
-use crate::{KrakenClient, KrakenResult};
+use crate::KrakenClient;
+use crate::KrakenResult;
 
 impl KrakenClient {
     /// Add a host

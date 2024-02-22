@@ -5,13 +5,17 @@
 //! The internal synchronization will take care of fanning the events to the websocket
 //! as well as caching the results internally and saving them regularly to the database
 
-use log::{debug, error, warn};
+use log::debug;
+use log::error;
+use log::warn;
 use uuid::Uuid;
 
 use crate::chan::global::GLOBAL;
-use crate::chan::ws_manager::schema::{
-    Change, CursorPosition, EditorTarget, FindingSection, WsMessage,
-};
+use crate::chan::ws_manager::schema::Change;
+use crate::chan::ws_manager::schema::CursorPosition;
+use crate::chan::ws_manager::schema::EditorTarget;
+use crate::chan::ws_manager::schema::FindingSection;
+use crate::chan::ws_manager::schema::WsMessage;
 
 /// Sync editor
 pub struct EditorSync;
