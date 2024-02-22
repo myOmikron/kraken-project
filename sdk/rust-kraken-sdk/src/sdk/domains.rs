@@ -1,4 +1,4 @@
-use kraken::api::handler::common::schema::{DomainResultsPage, PageParams, UuidResponse};
+use kraken::api::handler::common::schema::{DomainResultsPage, UuidResponse};
 use kraken::api::handler::domains::schema::{
     CreateDomainRequest, DomainRelations, FullDomain, GetAllDomainsQuery, UpdateDomainRequest,
 };
@@ -31,7 +31,7 @@ impl KrakenClient {
     pub async fn get_all_domains(
         &self,
         workspace: Uuid,
-        page: PageParams,
+        query: GetAllDomainsQuery,
     ) -> KrakenResult<DomainResultsPage> {
         #[allow(clippy::expect_used)]
         let url = self
@@ -40,16 +40,7 @@ impl KrakenClient {
             .expect("valid url");
 
         let domains = self
-            .make_request(
-                KrakenRequest::post(url)
-                    .body(GetAllDomainsQuery {
-                        page,
-                        host: None,
-                        domain_filter: None,
-                        global_filter: None,
-                    })
-                    .build(),
-            )
+            .make_request(KrakenRequest::post(url).body(query).build())
             .await?;
 
         Ok(domains)

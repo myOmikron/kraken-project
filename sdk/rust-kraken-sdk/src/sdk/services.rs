@@ -2,7 +2,7 @@ use std::net::IpAddr;
 use std::num::NonZeroU16;
 
 use ipnetwork::IpNetwork;
-use kraken::api::handler::common::schema::{PageParams, ServiceResultsPage, UuidResponse};
+use kraken::api::handler::common::schema::{ServiceResultsPage, UuidResponse};
 use kraken::api::handler::services::schema::{
     CreateServiceRequest, FullService, GetAllServicesQuery, ServiceRelations, UpdateServiceRequest,
 };
@@ -49,7 +49,7 @@ impl KrakenClient {
     pub async fn get_all_services(
         &self,
         workspace: Uuid,
-        page: PageParams,
+        query: GetAllServicesQuery,
     ) -> KrakenResult<ServiceResultsPage> {
         #[allow(clippy::expect_used)]
         let url = self
@@ -57,17 +57,8 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/services/all"))
             .expect("Valid Url");
 
-        self.make_request(
-            KrakenRequest::post(url)
-                .body(GetAllServicesQuery {
-                    page,
-                    host: None,
-                    global_filter: None,
-                    service_filter: None,
-                })
-                .build(),
-        )
-        .await
+        self.make_request(KrakenRequest::post(url).body(query).build())
+            .await
     }
 
     /// Get a single service

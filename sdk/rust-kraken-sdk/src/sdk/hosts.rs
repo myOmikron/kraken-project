@@ -1,10 +1,9 @@
 use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
-use kraken::api::handler::common::schema::{HostResultsPage, PageParams, UuidResponse};
-use kraken::api::handler::domains::schema::GetAllDomainsQuery;
+use kraken::api::handler::common::schema::{HostResultsPage, UuidResponse};
 use kraken::api::handler::hosts::schema::{
-    CreateHostRequest, FullHost, HostRelations, UpdateHostRequest,
+    CreateHostRequest, FullHost, GetAllHostsQuery, HostRelations, UpdateHostRequest,
 };
 use kraken::models::ManualHostCertainty;
 use uuid::Uuid;
@@ -44,7 +43,7 @@ impl KrakenClient {
     pub async fn get_all_hosts(
         &self,
         workspace: Uuid,
-        page: PageParams,
+        query: GetAllHostsQuery,
     ) -> KrakenResult<HostResultsPage> {
         #[allow(clippy::expect_used)]
         let url = self
@@ -52,17 +51,8 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/hosts/all"))
             .expect("Valid url");
 
-        self.make_request(
-            KrakenRequest::post(url)
-                .body(GetAllDomainsQuery {
-                    page,
-                    host: None,
-                    global_filter: None,
-                    domain_filter: None,
-                })
-                .build(),
-        )
-        .await
+        self.make_request(KrakenRequest::post(url).body(query).build())
+            .await
     }
 
     /// Retrieve a single host

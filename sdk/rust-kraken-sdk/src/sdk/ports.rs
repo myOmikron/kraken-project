@@ -2,7 +2,7 @@ use std::net::IpAddr;
 use std::num::NonZeroU16;
 
 use ipnetwork::IpNetwork;
-use kraken::api::handler::common::schema::{PageParams, PortResultsPage, UuidResponse};
+use kraken::api::handler::common::schema::{PortResultsPage, UuidResponse};
 use kraken::api::handler::ports::schema::{
     CreatePortRequest, FullPort, GetAllPortsQuery, PortRelations, UpdatePortRequest,
 };
@@ -48,7 +48,7 @@ impl KrakenClient {
     pub async fn get_all_ports(
         &self,
         workspace: Uuid,
-        page: PageParams,
+        query: GetAllPortsQuery,
     ) -> KrakenResult<PortResultsPage> {
         #[allow(clippy::expect_used)]
         let url = self
@@ -56,17 +56,8 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/ports/all"))
             .expect("Valid Url");
 
-        self.make_request(
-            KrakenRequest::post(url)
-                .body(GetAllPortsQuery {
-                    global_filter: None,
-                    port_filter: None,
-                    host: None,
-                    page,
-                })
-                .build(),
-        )
-        .await
+        self.make_request(KrakenRequest::post(url).body(query).build())
+            .await
     }
 
     /// Get all information about a single port
