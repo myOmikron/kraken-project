@@ -17,6 +17,7 @@ mod ports;
 mod services;
 mod utils;
 mod wordlists;
+mod workspace_tags;
 mod workspaces;
 mod ws;
 
