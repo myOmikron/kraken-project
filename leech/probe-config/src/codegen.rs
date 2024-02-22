@@ -233,9 +233,9 @@ impl<'a> fmt::Display for RegexProbe<'a> {
             regex,
             sub_regex,
         } = self;
-        write!(f, "RegexProbe {{ service: \"{service}\", regex: Regex::new(r\"{regex}\").unwrap(), sub_regex: vec![")?;
+        write!(f, "RegexProbe {{ service: \"{service}\", regex: Regex::new(r\"(?i-u){regex}\").unwrap(), sub_regex: vec![")?;
         for sub in sub_regex.unwrap_or(&[]) {
-            write!(f, "Regex::new(r\"{sub}\").unwrap(),")?;
+            write!(f, "Regex::new(r\"(?i-u){sub}\").unwrap(),")?;
         }
         write!(f, "] }}")
     }

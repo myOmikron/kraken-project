@@ -64,7 +64,8 @@ It is then followed by a list of probes using 2 spaces per indentation level.
 Each value has to be separated from its key by `: `
 and everything in the line after that (excluding the actual line break) is the value.
 
-**Regexes**' escape sequences are resolved by our the [regex](https://docs.rs/regex) library.
+**Regexes**' escape sequences are resolved by our the [regex](https://docs.rs/regex) library. We prepend every
+regex with `(?i-u)` which allows matching for invalid UTF-8 matching globally.
 
 **Strings**' escape sequences are resolve by the rust compiler.
 You can find a reference in the [rust docs](https://doc.rust-lang.org/reference/tokens.html#ascii-escapes).
