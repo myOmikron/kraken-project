@@ -31,12 +31,22 @@
     height: auto;
 }
 
-.kraken-attacks-hex-selected {
-    fill: var(--primary) !important;
-    stroke-dasharray: 1em !important;
-    transition: all ease 200ms;
-    animation: rotate linear infinite 1s;
-    filter: brightness(0) invert() drop-shadow(0 0 4px var(--primary));
+.kraken-attacks {
+    --mouse-x: 0;
+    --mouse-y: 0;
+}
+
+.kraken-attacks path.kraken-attacks-hex {
+    --dist: calc(hypot(var(--mouse-x) - var(--cx), var(--mouse-y) - var(--cy)));
+    --d: calc((var(--dist) - 100) / 100);
+    --t: clamp(0, var(--d), 1);
+    --strength: calc(cos(var(--t)));
+    opacity: calc(1 - var(--t) * 0.25);
+    transform: scale(calc(1 - var(--strength) * 0.1));
+}
+
+.kraken-attacks path.kraken-attacks-hex:active {
+    scale: 0.9;
 }
 
 .kraken-attacks-hex-box-selected {
@@ -46,12 +56,30 @@
 @keyframes rotate {
     from {
         stroke-dashoffset: 0;
-        fill-opacity: 20% !important;
     }
 
     to {
         stroke-dashoffset: 6em;
-        fill-opacity: 60% !important;
+    }
+}
+
+@keyframes hex-fade-in {
+    from {
+        scale: 0;
+    }
+
+    to {
+        scale: 1;
+    }
+}
+
+@keyframes hex-fade-in-text {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
     }
 }
 
@@ -65,7 +93,28 @@
     stroke-dasharray: none;
     stroke-opacity: 0.666667;
     paint-order: markers stroke fill;
-    transition: all ease 400ms;
+    transition:
+        all ease 400ms,
+        transform 0ms,
+        opacity 0ms;
+    animation: hex-fade-in cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+}
+/* hack to not play entry animation after selection anymore: */
+.kraken-attacks-hex.was-clicked:not(.kraken-attacks-hex-selected) {
+    animation: none;
+}
+
+.kraken-attacks-hex + g {
+    animation: hex-fade-in-text ease-out 0.2s both;
+}
+
+.kraken-attacks-hex-selected {
+    fill: var(--primary);
+    stroke-dasharray: 1em;
+    transition: all ease 200ms;
+    animation: rotate linear infinite 1s;
+    animation-delay: 0ms !important;
+    filter: brightness(0) invert() drop-shadow(0 0 4px var(--primary));
 }
 
 .kraken-attacks-clickable {
@@ -136,16 +185,13 @@
     margin: 0;
 }
 
-.kraken-attacks-hex-box-text {
-    font-family: "Roboto-Light", sans-serif;
-    fill: white;
-    font-size: 0.5em;
-    pointer-events: none;
-}
-
 .kraken-attacks-hex-text {
     font-family: "Roboto-Thin", sans-serif;
     fill: white;
-    font-size: 0.45em;
+    font-size: 1.25rem;
     pointer-events: none;
+}
+
+.category-text .kraken-attacks-hex-text {
+    font-family: "Roboto-Light", sans-serif;
 }
