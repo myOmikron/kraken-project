@@ -1,13 +1,13 @@
 import React from "react";
-import "../styling/running-attacks.css";
-import RunningAttackIcon from "../svg/running-attack";
-import Popup from "reactjs-popup";
-import SuccessIcon from "../svg/success";
-import FailedIcon from "../svg/failed";
-import WS from "../api/websocket";
-import { Api, UUID } from "../api/api";
-import { AttackType, SimpleAttack, SimpleWorkspace } from "../api/generated";
 import { toast } from "react-toastify";
+import Popup from "reactjs-popup";
+import { Api, UUID } from "../api/api";
+import { SimpleAttack } from "../api/generated";
+import WS from "../api/websocket";
+import "../styling/running-attacks.css";
+import FailedIcon from "../svg/failed";
+import RunningAttackIcon from "../svg/running-attack";
+import SuccessIcon from "../svg/success";
 import { ATTACKS } from "../utils/attack-resolver";
 
 type RunningAttacksProps = {};
@@ -103,7 +103,7 @@ export default class RunningAttacks extends React.Component<RunningAttacksProps,
                                             )}
                                         </div>
                                     }
-                                    position={"bottom center"}
+                                    position={"bottom left"}
                                     on={"hover"}
                                     arrow={true}
                                 >

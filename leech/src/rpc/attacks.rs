@@ -410,7 +410,7 @@ impl ReqAttackService for Attacks {
 
         let settings = DnsResolutionSettings {
             domains: req.targets,
-            concurrent_limit: req.concurrent_limit,
+            // TODO: concurrent limit currently has no effect
         };
 
         self.stream_attack(
