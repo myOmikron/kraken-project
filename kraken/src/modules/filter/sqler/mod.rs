@@ -56,6 +56,7 @@ impl DomainAST {
             ips,
             ips_created_at,
             ips_tags,
+            ips_os,
         } = self;
         add_ast_field(sql, tags, Column::tags().contains());
         add_ast_field(sql, created_at, Column::rorm(Domain::F.created_at).range());
@@ -108,7 +109,7 @@ impl DomainAST {
         }
 
         // Sub query the hosts
-        if ips.is_some() || ips_tags.is_some() || ips_created_at.is_some() {
+        if ips.is_some() || ips_tags.is_some() || ips_created_at.is_some() || ips_os.is_some() {
             sql.append_condition(Column::rorm(Domain::F.uuid).in_subquery(
                 DomainHostRelation::F.domain,
                 |sql| {
@@ -130,6 +131,7 @@ impl DomainAST {
                         ips_created_at,
                         Column::rorm(Host::F.created_at).range(),
                     );
+                    add_ast_field(sql, ips_os, Column::rorm(Host::F.os_type).eq());
                 },
             ));
         }
@@ -156,6 +158,7 @@ impl HostAST {
             tags,
             created_at,
             ips,
+            os,
             ports,
             ports_created_at,
             ports_protocols,
@@ -172,6 +175,7 @@ impl HostAST {
         add_ast_field(sql, tags, Column::tags().contains());
         add_ast_field(sql, created_at, Column::rorm(Host::F.created_at).range());
         add_ast_field(sql, ips, Column::rorm(Host::F.ip_addr).subnet());
+        add_ast_field(sql, os, Column::rorm(Host::F.os_type).eq());
 
         // Sub query the ports
         if ports.is_some()
@@ -277,7 +281,7 @@ impl PortAST {
             sql.append_join(JoinTags::port());
         }
 
-        if self.ips_created_at.is_some() || self.ips_tags.is_some() {
+        if self.ips_created_at.is_some() || self.ips_tags.is_some() || self.ips_os.is_some() {
             sql.append_join(from_port_join_host());
         }
 
@@ -292,6 +296,7 @@ impl PortAST {
             ips,
             ips_created_at,
             ips_tags,
+            ips_os,
             protocols,
             services,
             services_tags,
@@ -307,6 +312,7 @@ impl PortAST {
             ips_created_at,
             Column::rorm(Host::F.created_at).range(),
         );
+        add_ast_field(sql, ips_os, Column::rorm(Host::F.os_type).eq());
         add_ast_field(sql, ips_tags, Column::new("host_tags", "tags").contains());
 
         // Sub query the services
@@ -355,7 +361,7 @@ impl ServiceAST {
         if self.ports_tags.is_some() {
             sql.append_join(JoinTags::port().alias("port_tags")); // TODO: does this work since port might be null?
         }
-        if self.ips_created_at.is_some() || self.ips_tags.is_some() {
+        if self.ips_created_at.is_some() || self.ips_tags.is_some() || self.ips_os.is_some() {
             sql.append_join(from_service_join_host());
         }
         if self.ips_tags.is_some() {
@@ -368,6 +374,7 @@ impl ServiceAST {
             ips,
             ips_created_at,
             ips_tags,
+            ips_os,
             ports_tags,
             ports_created_at,
             protocols,
@@ -395,6 +402,7 @@ impl ServiceAST {
             ips_created_at,
             Column::rorm(Host::F.created_at).range(),
         );
+        add_ast_field(sql, ips_os, Column::rorm(Host::F.os_type).eq());
         add_ast_field(sql, ips_tags, Column::new("host_tags", "tags").contains());
 
         let GlobalAST { tags, created_at } = global;

@@ -1,9 +1,8 @@
+import { OsType, PortProtocol } from "../../api/generated";
+import { DomainAST, Expr, GlobalAST, HostAST, PortAST, ServiceAST } from "./ast";
 import { Cursor } from "./cursor";
-import { DomainAST, Expr, Exprs, GlobalAST, HostAST, PortAST, ServiceAST } from "./ast";
-import { Token, tokenize } from "./lexer";
 import ParserError from "./error";
-import { Err, Result } from "../result";
-import { PortProtocol } from "../../api/generated";
+import { tokenize } from "./lexer";
 
 /**
  * Parse a string into a {@link GlobalAST}
@@ -47,6 +46,7 @@ export function parseDomainAST(input: string): DomainAST {
         ips: [],
         ipsTags: [],
         ipsCreatedAt: [],
+        ipsOs: [],
     };
     parseAst(input, (column, cursor) => {
         switch (column) {
@@ -95,6 +95,10 @@ export function parseDomainAST(input: string): DomainAST {
             case "ip.createdAt":
                 ast.ipsCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
                 break;
+            case "ips.os":
+            case "ip.os":
+                ast.ipsOs.push(parseOr(cursor, parseOsType));
+                break;
             default:
                 throw new ParserError({ type: "unknownColumn", column });
         }
@@ -112,6 +116,7 @@ export function parseHostAST(input: string): HostAST {
         tags: [],
         createdAt: [],
         ips: [],
+        os: [],
         ports: [],
         portsProtocols: [],
         portsTags: [],
@@ -137,6 +142,9 @@ export function parseHostAST(input: string): HostAST {
             case "ips":
             case "ip":
                 ast.ips.push(parseOr(cursor, parseString));
+                break;
+            case "os":
+                ast.os.push(parseOr(cursor, parseOsType));
                 break;
             case "ports":
             case "port":
@@ -216,6 +224,7 @@ export function parsePortAST(input: string): PortAST {
         createdAt: [],
         ports: [],
         ips: [],
+        ipsOs: [],
         protocols: [],
         ipsTags: [],
         ipsCreatedAt: [],
@@ -249,6 +258,10 @@ export function parsePortAST(input: string): PortAST {
             case "ips.createdAt":
             case "ip.createdAt":
                 ast.ipsCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
+                break;
+            case "ips.os":
+            case "ip.os":
+                ast.ipsOs.push(parseOr(cursor, parseOsType));
                 break;
             case "protocols":
             case "protocol":
@@ -289,6 +302,7 @@ export function parseServiceAST(input: string): ServiceAST {
         services: [],
         ipsTags: [],
         ipsCreatedAt: [],
+        ipsOs: [],
         portsTags: [],
         portsCreatedAt: [],
         protocols: [],
@@ -333,6 +347,10 @@ export function parseServiceAST(input: string): ServiceAST {
             case "ips.createdAt":
             case "ip.createdAt":
                 ast.ipsCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
+                break;
+            case "ips.os":
+            case "ip.os":
+                ast.ipsOs.push(parseOr(cursor, parseOsType));
                 break;
             case "services":
             case "service":
@@ -429,6 +447,27 @@ function parsePortProtocol(tokens: Cursor): Expr.Value<PortProtocol> {
             return PortProtocol.Unknown;
         default:
             throw new ParserError({ type: "parseValue", msg: `Unknown port protocol: ${value}` });
+    }
+}
+
+/** Parse a single {@link OsType} */
+function parseOsType(tokens: Cursor): Expr.Value<OsType> {
+    const value = tokens.nextValue();
+    switch (value.toLowerCase()) {
+        case "unknown":
+            return OsType.Unknown;
+        case "linux":
+            return OsType.Linux;
+        case "windows":
+            return OsType.Windows;
+        case "apple":
+            return OsType.Apple;
+        case "android":
+            return OsType.Android;
+        case "freebsd":
+            return OsType.FreeBsd;
+        default:
+            throw new ParserError({ type: "parseValue", msg: `Unknown OS type: ${value}` });
     }
 }
 

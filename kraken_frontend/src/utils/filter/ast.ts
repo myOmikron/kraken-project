@@ -1,4 +1,4 @@
-import { PortProtocol } from "../../api/generated";
+import { OsType, PortProtocol } from "../../api/generated";
 
 export type GlobalAST = {
     tags: Exprs<string>;
@@ -18,12 +18,14 @@ export type DomainAST = {
     ips: Exprs<string>;
     ipsCreatedAt: Exprs<Expr.Range<Date>>;
     ipsTags: Exprs<string>;
+    ipsOs: Exprs<OsType>;
 };
 
 export type HostAST = {
     tags: Exprs<string>;
     createdAt: Exprs<Expr.Range<Date>>;
     ips: Exprs<string>;
+    os: Exprs<OsType>;
     ports: Exprs<Expr.MaybeRange<number>>;
     portsProtocols: Exprs<PortProtocol>;
     portsTags: Exprs<string>;
@@ -45,6 +47,7 @@ export type PortAST = {
     ips: Exprs<string>;
     ipsCreatedAt: Exprs<Expr.Range<Date>>;
     ipsTags: Exprs<string>;
+    ipsOs: Exprs<OsType>;
     protocols: Exprs<PortProtocol>;
     services: Exprs<string>;
     servicesTags: Exprs<string>;
@@ -57,6 +60,7 @@ export type ServiceAST = {
     ips: Exprs<string>;
     ipsCreatedAt: Exprs<Expr.Range<Date>>;
     ipsTags: Exprs<string>;
+    ipsOs: Exprs<OsType>;
     ports: Exprs<Expr.MaybeRange<number>>;
     portsTags: Exprs<string>;
     portsCreatedAt: Exprs<Expr.Range<Date>>;

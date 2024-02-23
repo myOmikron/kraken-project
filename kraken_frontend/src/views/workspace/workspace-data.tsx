@@ -5,6 +5,7 @@ import { Api } from "../../api/api";
 import { FullDomain, FullHost, FullPort, FullService, SimpleTag, TagType } from "../../api/generated";
 import Checkbox from "../../components/checkbox";
 import Indicator from "../../components/indicator";
+import OsIcon from "../../components/os-icon";
 import SelectableText from "../../components/selectable-text";
 import { ROUTES } from "../../routes";
 import "../../styling/tabs.css";
@@ -170,7 +171,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"host-table"}
                         {...hostsTable}
-                        columnsTemplate={"min-content 35ch 1fr 1fr 3.5em 4em 2.25em"}
+                        columnsTemplate={"min-content 35ch 2em 1fr 1fr 3.5em 4em 2.25em"}
                         onAdd={() => setCreateForm("hosts")}
                         filter={hostFilter}
                     >
@@ -181,6 +182,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 setUuids={(hosts) => setSelectedUuids({ ...selectedUuids, hosts })}
                             />
                             <span>IP</span>
+                            <span>OS</span>
                             <span>Tags</span>
                             <span>Comment</span>
                             <span>Severity</span>
@@ -207,6 +209,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     setUuids={(hosts) => setSelectedUuids({ ...selectedUuids, hosts })}
                                 />
                                 <SelectableText>{host.ipAddr}</SelectableText>
+                                <OsIcon tooltip os={host.osType} size="2em" />
                                 <TagList
                                     tags={host.tags}
                                     onCtrlClick={globalFilter.addTag}

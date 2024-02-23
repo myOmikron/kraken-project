@@ -8,6 +8,7 @@ use chrono::Utc;
 use ipnetwork::IpNetwork;
 use thiserror::Error;
 
+use crate::models::OsType;
 use crate::models::PortProtocol;
 use crate::modules::filter::lexer::Token;
 use crate::modules::filter::lexer::UnexpectedCharacter;
@@ -64,6 +65,9 @@ pub struct DomainAST {
 
     /// Filter domains by their hosts' tags
     pub ips_tags: Option<Or<String>>,
+
+    /// Filter domains by their hosts' OS
+    pub ips_os: Option<Or<OsType>>,
 }
 
 /// AST for host specific filter
@@ -77,6 +81,9 @@ pub struct HostAST {
 
     /// Filter by ip address
     pub ips: Option<Or<IpNetwork>>,
+
+    /// Filter hosts by their OS
+    pub os: Option<Or<OsType>>,
 
     /// Filter hosts by their ports
     pub ports: Option<Or<MaybeRange<u16>>>,
@@ -136,6 +143,9 @@ pub struct PortAST {
     /// Filter ports by their hosts' tags
     pub ips_tags: Option<Or<String>>,
 
+    /// Filter ports by their hosts' OS
+    pub ips_os: Option<Or<OsType>>,
+
     /// Filter by protocols
     pub protocols: Option<Or<PortProtocol>>,
 
@@ -166,6 +176,9 @@ pub struct ServiceAST {
 
     /// Filter services by their hosts' tags
     pub ips_tags: Option<Or<String>>,
+
+    /// Filter services by their hosts' OS
+    pub ips_os: Option<Or<OsType>>,
 
     /// Filter by ports
     pub ports: Option<Or<MaybeRange<u16>>>,

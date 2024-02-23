@@ -13,6 +13,7 @@ use rorm::prelude::*;
 
 use super::super::MaybeRange;
 use super::super::Range;
+use crate::models::OsType;
 use crate::models::PortProtocol;
 use crate::modules::raw_query::RawQueryBuilder;
 
@@ -294,6 +295,18 @@ impl AsValue for PortProtocol {
             PortProtocol::Tcp => stringify!(Tcp),
             PortProtocol::Udp => stringify!(Udp),
             PortProtocol::Sctp => stringify!(Sctp),
+        })
+    }
+}
+impl AsValue for OsType {
+    fn as_value(&self) -> Value {
+        Value::Choice(match self {
+            OsType::Unknown => stringify!(Unknown),
+            OsType::Linux => stringify!(Linux),
+            OsType::Windows => stringify!(Windows),
+            OsType::Apple => stringify!(Apple),
+            OsType::Android => stringify!(Android),
+            OsType::FreeBSD => stringify!(FreeBSD),
         })
     }
 }

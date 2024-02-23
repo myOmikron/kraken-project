@@ -12,6 +12,7 @@ use self::value_parser::wrap_maybe_range;
 use self::value_parser::ValueParser;
 use crate::modules::filter::lexer::tokenize;
 use crate::modules::filter::lexer::Token;
+use crate::modules::filter::parser::value_parser::parse_os_type;
 use crate::modules::filter::parser::value_parser::parse_port_protocol;
 use crate::modules::filter::parser::value_parser::wrap_range;
 use crate::modules::filter::And;
@@ -60,6 +61,7 @@ impl DomainAST {
                  ips,
                  ips_created_at,
                  ips_tags,
+                 ips_os,
              },
              column,
              tokens| match column {
@@ -97,6 +99,7 @@ impl DomainAST {
                     tokens,
                     wrap_range(parse_from_str::<DateTime<Utc>>),
                 ),
+                "ips.os" | "ip.os" => parse_ast_field(ips_os, tokens, parse_os_type),
                 _ => Err(ParseError::UnknownColumn(column.to_string())),
             },
         )
@@ -111,6 +114,7 @@ impl HostAST {
             |HostAST {
                  tags,
                  ips,
+                 os,
                  created_at,
                  ports,
                  ports_created_at,
@@ -134,6 +138,7 @@ impl HostAST {
                     wrap_range(parse_from_str::<DateTime<Utc>>),
                 ),
                 "ips" | "ip" => parse_ast_field(ips, tokens, parse_from_str::<IpNetwork>),
+                "os" => parse_ast_field(os, tokens, parse_os_type),
                 "ports" | "port" => {
                     parse_ast_field(ports, tokens, wrap_maybe_range(parse_from_str::<u16>))
                 }
@@ -194,6 +199,7 @@ impl PortAST {
                  ips,
                  ips_created_at,
                  ips_tags,
+                 ips_os,
                  protocols,
                  created_at,
                  services,
@@ -220,6 +226,7 @@ impl PortAST {
                 "ips.tags" | "ips.tag" | "ip.tags" | "ip.tag" => {
                     parse_ast_field(ips_tags, tokens, parse_string)
                 }
+                "ips.os" | "ip.os" => parse_ast_field(ips_os, tokens, parse_os_type),
                 "protocols" | "protocol" => parse_ast_field(protocols, tokens, parse_port_protocol),
                 "services" | "service" => parse_ast_field(services, tokens, parse_string),
                 "services.tags" | "services.tag" | "service.tags" | "service.tag" => {
@@ -247,6 +254,7 @@ impl ServiceAST {
                  ips,
                  ips_created_at,
                  ips_tags,
+                 ips_os,
                  ports_tags,
                  ports_created_at,
                  protocols,
@@ -270,6 +278,7 @@ impl ServiceAST {
                 "ip.tag" | "ip.tags" | "ips.tag" | "ips.tags" => {
                     parse_ast_field(ips_tags, tokens, parse_string)
                 }
+                "ips.os" | "ip.os" => parse_ast_field(ips_os, tokens, parse_os_type),
                 "services" | "service" => parse_ast_field(services, tokens, parse_string),
                 "ports" | "port" => {
                     parse_ast_field(ports, tokens, wrap_maybe_range(parse_from_str::<u16>))

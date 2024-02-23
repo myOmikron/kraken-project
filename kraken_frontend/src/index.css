@@ -115,3 +115,8 @@ body {
         font-size: 0.8em;
     }
 }
+
+.popup-arrow {
+    color: #2189a3;
+    fill-opacity: 50%;
+}
