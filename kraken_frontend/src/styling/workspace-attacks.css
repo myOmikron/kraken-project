@@ -114,7 +114,7 @@
     animation: hex-fade-in-text ease-out 0.2s both;
 }
 
-.kraken-attacks-hex-selected {
+.kraken-attacks .kraken-attacks-hex-selected {
     fill: var(--primary);
     stroke-dasharray: 1em;
     transition: all ease 200ms;
