@@ -1,6 +1,6 @@
 .workspace-attacks-container {
     display: grid;
-    grid-template-columns: 1.5fr 4fr 2fr;
+    grid-template-columns: 50ch 4fr 2fr;
     gap: 1em;
 }
 
@@ -165,7 +165,7 @@
 .workspace-attacks-info > .selection {
     flex-shrink: 1;
     flex-grow: 1;
-    overflow-y: auto;
+    overflow: auto;
     height: 0;
 }
 
