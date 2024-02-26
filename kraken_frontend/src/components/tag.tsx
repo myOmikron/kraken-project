@@ -1,9 +1,10 @@
-import React, { CSSProperties } from "react";
+import { CSSProperties, MouseEventHandler } from "react";
 import { Color } from "../api/generated";
 
 export type TagProps = {
     name: string;
     color?: Color;
+    onClick?: MouseEventHandler<HTMLDivElement>;
 };
 
 /** Sample of background color */
@@ -33,7 +34,7 @@ export default function Tag(props: TagProps) {
     }
 
     return (
-        <div className={"tag"} style={style}>
+        <div className={`tag ${props.onClick ? "interactive" : ""}`} style={style} onClick={props.onClick}>
             {name}
         </div>
     );

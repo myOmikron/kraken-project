@@ -1,34 +1,33 @@
 import React from "react";
-import "../../styling/workspace-data.css";
-import { StatelessWorkspaceTable, useTable } from "./components/workspace-table";
+import { toast } from "react-toastify";
+import Popup from "reactjs-popup";
 import { Api } from "../../api/api";
 import { FullDomain, FullHost, FullPort, FullService, SimpleTag, TagType } from "../../api/generated";
-import { WorkspaceDataHostDetails } from "./workspace-data/workspace-data-host-details";
-import { WorkspaceDataServiceDetails } from "./workspace-data/workspace-data-service-details";
-import { WorkspaceDataPortDetails } from "./workspace-data/workspace-data-port-details";
-import { WorkspaceDataDomainDetails } from "./workspace-data/workspace-data-domain-details";
-import SourcesList from "./components/sources-list";
+import Checkbox from "../../components/checkbox";
+import Indicator from "../../components/indicator";
+import SelectableText from "../../components/selectable-text";
+import { ROUTES } from "../../routes";
+import "../../styling/tabs.css";
+import "../../styling/workspace-data.css";
+import AttackIcon from "../../svg/attack";
+import HistoricalIcon from "../../svg/historical";
+import UnknownIcon from "../../svg/unknown";
+import UnverifiedIcon from "../../svg/unverified";
+import VerifiedIcon from "../../svg/verified";
+import { ObjectFns, handleApiError } from "../../utils/helper";
+import EditableTags from "./components/editable-tags";
+import FilterInput, { useFilter } from "./components/filter-input";
 import TagList from "./components/tag-list";
-import Popup from "reactjs-popup";
+import { StatelessWorkspaceTable, useTable } from "./components/workspace-table";
+import { WORKSPACE_CONTEXT } from "./workspace";
 import { CreateDomainForm } from "./workspace-data/workspace-data-create-domain";
 import { CreateHostForm } from "./workspace-data/workspace-data-create-host";
 import { CreatePortForm } from "./workspace-data/workspace-data-create-port";
 import { CreateServiceForm } from "./workspace-data/workspace-data-create-service";
-import { WORKSPACE_CONTEXT } from "./workspace";
-import { ROUTES } from "../../routes";
-import AttackIcon from "../../svg/attack";
-import FilterInput, { useFilter } from "./components/filter-input";
-import { handleApiError, ObjectFns } from "../../utils/helper";
-import Checkbox from "../../components/checkbox";
-import EditableTags from "./components/editable-tags";
-import { toast } from "react-toastify";
-import UnverifiedIcon from "../../svg/unverified";
-import VerifiedIcon from "../../svg/verified";
-import HistoricalIcon from "../../svg/historical";
-import UnknownIcon from "../../svg/unknown";
-import SelectableText from "../../components/selectable-text";
-import "../../styling/tabs.css";
-import Indicator from "../../components/indicator";
+import { WorkspaceDataDomainDetails } from "./workspace-data/workspace-data-domain-details";
+import { WorkspaceDataHostDetails } from "./workspace-data/workspace-data-host-details";
+import { WorkspaceDataPortDetails } from "./workspace-data/workspace-data-port-details";
+import { WorkspaceDataServiceDetails } from "./workspace-data/workspace-data-service-details";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations", findings: "Findings" };
@@ -147,7 +146,11 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     setUuids={(domains) => setSelectedUuids({ ...selectedUuids, domains })}
                                 />
                                 <SelectableText>{domain.domain}</SelectableText>
-                                <TagList tags={domain.tags} />
+                                <TagList
+                                    tags={domain.tags}
+                                    onCtrlClick={globalFilter.addTag}
+                                    onClick={domainFilter.addTag}
+                                />
                                 <div>{domain.comment}</div>
                                 <span className="workspace-data-certainty-icon"></span>
                                 {domain.certainty === "Unverified"
@@ -204,7 +207,11 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     setUuids={(hosts) => setSelectedUuids({ ...selectedUuids, hosts })}
                                 />
                                 <SelectableText>{host.ipAddr}</SelectableText>
-                                <TagList tags={host.tags} />
+                                <TagList
+                                    tags={host.tags}
+                                    onCtrlClick={globalFilter.addTag}
+                                    onClick={hostFilter.addTag}
+                                />
                                 <div>{host.comment}</div>
                                 <span className="workspace-data-certainty-icon"></span>
                                 {host.certainty === "Verified"
@@ -263,7 +270,11 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <span>{port.port}</span>
                                 <span>{port.protocol.toUpperCase()}</span>
                                 <span>{port.host.ipAddr}</span>
-                                <TagList tags={port.tags} />
+                                <TagList
+                                    tags={port.tags}
+                                    onCtrlClick={globalFilter.addTag}
+                                    onClick={portFilter.addTag}
+                                />
                                 <span>{port.comment}</span>
                                 <span className="workspace-data-certainty-icon"></span>
                                 {port.certainty === "Verified"
@@ -340,7 +351,11 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                         }
                                     />
                                 </span>
-                                <TagList tags={service.tags} />
+                                <TagList
+                                    tags={service.tags}
+                                    onCtrlClick={globalFilter.addTag}
+                                    onClick={serviceFilter.addTag}
+                                />
                                 <span>{service.comment}</span>
                                 <span className="workspace-data-certainty-icon"></span>
                                 {service.certainty === "Historical"
