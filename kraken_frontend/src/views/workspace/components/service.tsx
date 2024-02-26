@@ -2,8 +2,8 @@ import { useCallback, useState } from "react";
 import Popup from "reactjs-popup";
 import { Api } from "../../../api/api";
 import { FullService, ServiceRelations, SimpleService } from "../../../api/generated";
-import RelationLeftIcon from "../../../svg/relation-left";
 import { handleApiError } from "../../../utils/helper";
+import { ServiceRelationsList } from "./relations-list";
 
 export default function ServiceName({ service }: { service: FullService | SimpleService }) {
     const [relations, setRelations] = useState<ServiceRelations | undefined>(undefined);
@@ -33,49 +33,10 @@ export default function ServiceName({ service }: { service: FullService | Simple
             onOpen={ensureDataLoaded}
             keepTooltipInside
         >
-            <ServiceRelationsView
+            <ServiceRelationsList
                 className="workspace-data-details-relations-container pane-thin zero-padding-popup"
                 relations={relations}
             />
         </Popup>
-    );
-}
-
-export function ServiceRelationsView({
-    relations,
-    ...props
-}: { relations: ServiceRelations | null | undefined } & React.HTMLProps<HTMLDivElement>) {
-    return (
-        <div className="workspace-data-details-relations-container" {...props}>
-            <div className="workspace-data-details-relations-header">
-                <div className="workspace-data-details-relations-heading">Connection</div>
-                <div className="workspace-data-details-relations-heading">Type</div>
-                <div className="workspace-data-details-relations-heading">To</div>
-            </div>
-            {relations ? (
-                <div className="workspace-data-details-relations-body">
-                    {relations.host !== null && relations.host !== undefined ? (
-                        <div className="workspace-data-details-relations-entry">
-                            <div title={"Direct"}>
-                                <RelationLeftIcon />
-                            </div>
-                            <span>Host</span>
-                            <span>{relations.host.ipAddr} </span>
-                        </div>
-                    ) : undefined}
-                    {relations.port !== null && relations.port !== undefined ? (
-                        <div className="workspace-data-details-relations-entry">
-                            <div title={"Direct"}>
-                                <RelationLeftIcon />
-                            </div>
-                            <span>Port</span>
-                            <span>{relations.port.port} </span>
-                        </div>
-                    ) : undefined}
-                </div>
-            ) : (
-                <p>Loading...</p>
-            )}
-        </div>
     );
 }

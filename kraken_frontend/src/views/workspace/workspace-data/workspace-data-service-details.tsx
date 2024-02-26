@@ -7,7 +7,7 @@ import ArrowLeftIcon from "../../../svg/arrow-left";
 import ArrowRightIcon from "../../../svg/arrow-right";
 import { handleApiError } from "../../../utils/helper";
 import EditableTags from "../components/editable-tags";
-import { ServiceRelationsView } from "../components/service";
+import { ServiceRelationsList } from "../components/relations-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import { CertaintyIcon } from "../workspace-data";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
@@ -145,7 +145,7 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
                         <>
                             {tab === "relations" ? (
                                 <div className="workspace-data-details-overflow">
-                                    <ServiceRelationsView relations={relations} />
+                                    <ServiceRelationsList relations={relations} />
                                 </div>
                             ) : (
                                 <>

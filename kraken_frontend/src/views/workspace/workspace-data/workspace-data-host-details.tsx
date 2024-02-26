@@ -8,7 +8,7 @@ import ArrowLeftIcon from "../../../svg/arrow-left";
 import ArrowRightIcon from "../../../svg/arrow-right";
 import { handleApiError } from "../../../utils/helper";
 import EditableTags from "../components/editable-tags";
-import { HostRelationsView } from "../components/host";
+import { HostRelationsList } from "../components/relations-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import { CertaintyIcon } from "../workspace-data";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
@@ -139,7 +139,7 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
                         <>
                             {tab === "relations" ? (
                                 <div className="workspace-data-details-overflow">
-                                    <HostRelationsView relations={relations} />
+                                    <HostRelationsList relations={relations} />
                                 </div>
                             ) : (
                                 <>

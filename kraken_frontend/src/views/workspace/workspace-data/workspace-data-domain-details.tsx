@@ -6,8 +6,8 @@ import Textarea from "../../../components/textarea";
 import ArrowLeftIcon from "../../../svg/arrow-left";
 import ArrowRightIcon from "../../../svg/arrow-right";
 import { handleApiError } from "../../../utils/helper";
-import { DomainRelationsView } from "../components/domain";
 import EditableTags from "../components/editable-tags";
+import { DomainRelationsList } from "../components/relations-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import { CertaintyIcon } from "../workspace-data";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
@@ -137,7 +137,7 @@ export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProp
                         <>
                             {tab === "relations" ? (
                                 <div className="workspace-data-details-overflow">
-                                    <DomainRelationsView relations={relations} />
+                                    <DomainRelationsList relations={relations} />
                                 </div>
                             ) : (
                                 <>
