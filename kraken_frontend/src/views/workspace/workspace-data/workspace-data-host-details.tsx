@@ -1,20 +1,17 @@
-import { Api } from "../../../api/api";
-import React from "react";
-import { FullAggregationSource, FullHost, HostRelations, TagType } from "../../../api/generated";
-import { handleApiError } from "../../../utils/helper";
-import Textarea from "../../../components/textarea";
+import React, { useState } from "react";
 import { toast } from "react-toastify";
-import EditableTags from "../components/editable-tags";
-import { WORKSPACE_CONTEXT } from "../workspace";
+import { Api } from "../../../api/api";
+import { FullAggregationSource, FullHost, HostRelations, TagType } from "../../../api/generated";
+import Textarea from "../../../components/textarea";
 import "../../../styling/workspace-data-details.css";
-import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 import ArrowLeftIcon from "../../../svg/arrow-left";
 import ArrowRightIcon from "../../../svg/arrow-right";
-import { useState } from "react";
-import RelationRightIcon from "../../../svg/relation-right";
-import RelationIndirectIcon from "../../../svg/relation-indirect";
-import RelationLeftIcon from "../../../svg/relation-left";
+import { handleApiError } from "../../../utils/helper";
+import EditableTags from "../components/editable-tags";
+import { HostRelationsView } from "../components/host";
+import { WORKSPACE_CONTEXT } from "../workspace";
 import { CertaintyIcon } from "../workspace-data";
+import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 
 export type WorkspaceDataHostDetailsProps = {
     host: string;
@@ -142,59 +139,7 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
                         <>
                             {tab === "relations" ? (
                                 <div className="workspace-data-details-overflow">
-                                    <div className="workspace-data-details-relations-container">
-                                        <div className="workspace-data-details-relations-header">
-                                            <div className="workspace-data-details-relations-heading">Connection</div>
-                                            <div className="workspace-data-details-relations-heading">Type</div>
-                                            <div className="workspace-data-details-relations-heading">To</div>
-                                        </div>
-                                        <div className="workspace-data-details-relations-body">
-                                            {relations?.directDomains.map((d) => {
-                                                return (
-                                                    <div className="workspace-data-details-relations-entry">
-                                                        <div title={"Direct"}>
-                                                            <RelationLeftIcon />
-                                                        </div>
-                                                        <span>Domain</span>
-                                                        <span>{d.domain} </span>
-                                                    </div>
-                                                );
-                                            })}
-                                            {relations?.indirectDomains.map((d) => {
-                                                return (
-                                                    <div className="workspace-data-details-relations-entry">
-                                                        <div className="indirect" title={"Indirect"}>
-                                                            <RelationIndirectIcon />
-                                                        </div>
-                                                        <span>Domain</span>
-                                                        <span>{d.domain} </span>
-                                                    </div>
-                                                );
-                                            })}
-                                            {relations?.ports.map((p) => {
-                                                return (
-                                                    <div className="workspace-data-details-relations-entry">
-                                                        <div title={"Direct"}>
-                                                            <RelationRightIcon />
-                                                        </div>
-                                                        <span>Port</span>
-                                                        <span>{p.port} </span>
-                                                    </div>
-                                                );
-                                            })}
-                                            {relations?.services.map((s) => {
-                                                return (
-                                                    <div className="workspace-data-details-relations-entry">
-                                                        <div title={"Direct"}>
-                                                            <RelationRightIcon />
-                                                        </div>
-                                                        <span>Service</span>
-                                                        <span>{s.name} </span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
+                                    <HostRelationsView relations={relations} />
                                 </div>
                             ) : (
                                 <>

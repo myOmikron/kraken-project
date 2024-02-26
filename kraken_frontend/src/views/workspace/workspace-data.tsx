@@ -6,7 +6,6 @@ import { FullDomain, FullHost, FullPort, FullService, SimpleTag, TagType } from 
 import Checkbox from "../../components/checkbox";
 import Indicator from "../../components/indicator";
 import OsIcon from "../../components/os-icon";
-import SelectableText from "../../components/selectable-text";
 import { ROUTES } from "../../routes";
 import "../../styling/tabs.css";
 import "../../styling/workspace-data.css";
@@ -20,8 +19,12 @@ import UnverifiedIcon from "../../svg/unverified";
 import VerifiedIcon from "../../svg/verified";
 import { ObjectFns, handleApiError } from "../../utils/helper";
 import ContextMenu, { ContextMenuEntry, GroupedMenuItem, PlainMenuItem } from "./components/context-menu";
+import Domain from "./components/domain";
 import EditableTags from "./components/editable-tags";
 import FilterInput, { FilterOutput, useFilter } from "./components/filter-input";
+import IpAddr from "./components/host";
+import PortNumber from "./components/port";
+import ServiceName from "./components/service";
 import TableRow from "./components/table-row";
 import TagList from "./components/tag-list";
 import { StatelessWorkspaceTable, useTable } from "./components/workspace-table";
@@ -281,7 +284,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     uuids={selectedUuids.domains}
                                     setUuids={(domains) => setSelectedUuids({ ...selectedUuids, domains })}
                                 />
-                                <SelectableText>{domain.domain}</SelectableText>
+                                <Domain domain={domain} />
                                 <TagList tags={domain.tags} globalFilter={globalFilter} filter={domainFilter} />
                                 <div>{domain.comment}</div>
                                 <span className="workspace-data-certainty-icon icon"></span>
@@ -381,7 +384,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     uuids={selectedUuids.hosts}
                                     setUuids={(hosts) => setSelectedUuids({ ...selectedUuids, hosts })}
                                 />
-                                <SelectableText>{host.ipAddr}</SelectableText>
+                                <IpAddr host={host} />
                                 <OsIcon tooltip os={host.osType} size="2em" />
                                 <TagList tags={host.tags} globalFilter={globalFilter} filter={hostFilter} />
                                 <div>{host.comment}</div>
@@ -464,7 +467,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     uuids={selectedUuids.ports}
                                     setUuids={(ports) => setSelectedUuids({ ...selectedUuids, ports })}
                                 />
-                                <span>{port.port}</span>
+                                <PortNumber port={port} />
                                 <span>{port.protocol.toUpperCase()}</span>
                                 <span>{port.host.ipAddr}</span>
                                 <TagList tags={port.tags} globalFilter={globalFilter} filter={portFilter} />
@@ -554,7 +557,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     uuids={selectedUuids.services}
                                     setUuids={(services) => setSelectedUuids({ ...selectedUuids, services })}
                                 />
-                                <span>{service.name}</span>
+                                <ServiceName service={service} />
                                 <span>{service.host.ipAddr}</span>
                                 <span>{service.port?.port}</span>
                                 <span>{service.port?.protocol?.toUpperCase()}</span>

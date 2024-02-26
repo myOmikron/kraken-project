@@ -72,6 +72,11 @@ body {
     image-rendering: pixelated;
 }
 
+.zero-padding-popup {
+    padding: 0;
+    max-height: 70vh !important;
+}
+
 .pane > * {
     image-rendering: unset;
 }
