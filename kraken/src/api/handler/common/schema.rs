@@ -109,7 +109,7 @@ mod utoipa_fix {
 }
 
 /// The type of a tag
-#[derive(Serialize, Deserialize, ToSchema, Debug, Copy, Clone)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Copy, Clone, Eq, PartialEq)]
 pub enum TagType {
     /// Workspace tag
     Workspace,
