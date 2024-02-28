@@ -26,7 +26,7 @@ impl KrakenClient {
         #[allow(clippy::expect_used)]
         let url = self
             .base_url
-            .join(&format!("api/v1/{workspace}/hosts"))
+            .join(&format!("api/v1/workspaces/{workspace}/hosts"))
             .expect("Valid url");
 
         let uuid: UuidResponse = self
