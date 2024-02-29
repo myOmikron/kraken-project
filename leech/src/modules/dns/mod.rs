@@ -15,6 +15,9 @@ use log::error;
 use log::info;
 use log::warn;
 use tokio::sync::mpsc::Sender;
+use trust_dns_resolver::config::LookupIpStrategy;
+use trust_dns_resolver::config::ResolverConfig;
+use trust_dns_resolver::config::ResolverOpts;
 use trust_dns_resolver::error::ResolveError;
 use trust_dns_resolver::error::ResolveErrorKind;
 use trust_dns_resolver::proto::rr::Record;
@@ -100,8 +103,11 @@ pub async fn dns_resolution(
 ) -> Result<(), DnsResolutionError> {
     info!("Started DNS resolution");
 
-    let resolver = TokioAsyncResolver::tokio_from_system_conf()
-        .map_err(DnsResolutionError::CreateSystemResolver)?;
+    let mut opts = ResolverOpts::default();
+    opts.ip_strategy = LookupIpStrategy::Ipv4AndIpv6;
+    opts.preserve_intermediates = true;
+    opts.shuffle_dns_servers = true;
+    let resolver = TokioAsyncResolver::tokio(ResolverConfig::cloudflare_https(), opts);
 
     // TODO: hard limit MAX workers
     let chunk_count = if settings.concurrent_limit == 0 {
