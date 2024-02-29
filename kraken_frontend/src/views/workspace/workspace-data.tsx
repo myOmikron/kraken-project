@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
 import { Api } from "../../api/api";
@@ -11,13 +11,18 @@ import { ROUTES } from "../../routes";
 import "../../styling/tabs.css";
 import "../../styling/workspace-data.css";
 import AttackIcon from "../../svg/attack";
+import ClockActivityIcon from "../../svg/clock-activity";
 import HistoricalIcon from "../../svg/historical";
+import LinkIcon from "../../svg/link";
+import TagIcon from "../../svg/tag";
 import UnknownIcon from "../../svg/unknown";
 import UnverifiedIcon from "../../svg/unverified";
 import VerifiedIcon from "../../svg/verified";
 import { ObjectFns, handleApiError } from "../../utils/helper";
+import ContextMenu, { ContextMenuEntry, GroupedMenuItem, PlainMenuItem } from "./components/context-menu";
 import EditableTags from "./components/editable-tags";
-import FilterInput, { useFilter } from "./components/filter-input";
+import FilterInput, { FilterOutput, useFilter } from "./components/filter-input";
+import TableRow from "./components/table-row";
 import TagList from "./components/tag-list";
 import { StatelessWorkspaceTable, useTable } from "./components/workspace-table";
 import { WORKSPACE_CONTEXT } from "./workspace";
@@ -103,6 +108,103 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
     React.useEffect(() => portsTable.setOffset(0), [portFilter.applied]);
     React.useEffect(() => servicesTable.setOffset(0), [serviceFilter.applied]);
 
+    function copyTagsAction(tags: SimpleTag[], filter: FilterOutput): PlainMenuItem {
+        return [
+            <>
+                <TagIcon />
+                Copy tags into search
+            </>,
+            tags.length > 0
+                ? (e) => {
+                      for (const tag of tags) {
+                          (e.ctrlKey ? globalFilter : filter).addColumn("tag", tag.name, e.altKey);
+                      }
+                  }
+                : undefined,
+        ];
+    }
+
+    function filterActionImpl(
+        title: ReactNode,
+        filter: FilterOutput,
+        column: string,
+        value: string,
+        overrideLabel?: ReactNode,
+    ): PlainMenuItem {
+        return [
+            <>
+                {overrideLabel ? (
+                    overrideLabel
+                ) : (
+                    <>
+                        {title}{" "}
+                        <pre>
+                            {column}:{value}
+                        </pre>
+                    </>
+                )}
+            </>,
+            (e) => {
+                console.log(e);
+                (e.ctrlKey ? globalFilter : filter).addColumn(column, value, e.altKey);
+            },
+        ];
+    }
+
+    const findSimilarAction = (filter: FilterOutput, column: string, value: string) =>
+        filterActionImpl(
+            <>
+                <LinkIcon />
+                Find similar
+            </>,
+            filter,
+            column,
+            value,
+        );
+
+    const filterAction = (filter: FilterOutput, column: string, value: string) =>
+        filterActionImpl("Filter", filter, column, value);
+
+    const dateWithinAction = (
+        filter: FilterOutput,
+        column: string,
+        date: Date,
+        deltaPlusMinusMs: number,
+        amountHuman: string,
+    ) =>
+        filterActionImpl(
+            "",
+            filter,
+            column,
+            `"${new Date(date.getTime() - deltaPlusMinusMs).toISOString()}"-"${new Date(date.getTime() + deltaPlusMinusMs).toISOString()}"`,
+            "Date within " + amountHuman,
+        );
+
+    function singleOrSubmenu(label: string, items: ContextMenuEntry[]): ContextMenuEntry[] {
+        return items.length > 1
+            ? [
+                  {
+                      group: label,
+                      items: items,
+                  },
+              ]
+            : items;
+    }
+
+    function createdAtAction(filter: FilterOutput, createdAt: Date): GroupedMenuItem {
+        return {
+            icon: <ClockActivityIcon />,
+            group: "Filter relative to creation date",
+            items: [
+                dateWithinAction(filter, "createdAt", createdAt, 1000 * 60, "1 minute"),
+                dateWithinAction(filter, "createdAt", createdAt, 1000 * 60 * 60, "1 hour"),
+                dateWithinAction(filter, "createdAt", createdAt, 1000 * 60 * 60 * 24, "1 day"),
+                dateWithinAction(filter, "createdAt", createdAt, 1000 * 60 * 60 * 24 * 7, "1 week"),
+                dateWithinAction(filter, "createdAt", createdAt, 1000 * 60 * 60 * 24 * 7 * 4, "4 weeks"),
+            ],
+        };
+    }
+
     const tableElement = (() => {
         switch (tab) {
             case "domains":
@@ -128,7 +230,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span />
                         </div>
                         {domains.map((domain) => (
-                            <div
+                            <ContextMenu
+                                key={domain.uuid}
+                                as={TableRow}
                                 className={
                                     domain.uuid === selected?.uuid
                                         ? "workspace-table-row workspace-table-row-selected"
@@ -140,6 +244,31 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     }
                                     setSelected({ type: "domains", uuid: domain.uuid });
                                 }}
+                                menu={[
+                                    /* TODO: certainty filter, then uncomment this:
+                                    [
+                                        <>
+                                            {domain.certainty === "Unverified"
+                                                ? CertaintyIcon({ certaintyType: "Unverified" })
+                                                : CertaintyIcon({ certaintyType: "Verified" })}
+                                            Filter <pre>certainty:{domain.certainty}</pre>
+                                        </>,
+                                        undefined,
+                                    ], */
+                                    copyTagsAction(domain.tags, domainFilter),
+                                    () =>
+                                        Api.workspaces.domains
+                                            .relations(workspace, domain.uuid)
+                                            .then((r) => {
+                                                const data = r.unwrap();
+                                                return ObjectFns.uniqueObjects([
+                                                    ...data.directHosts.map((h) => ["ips", h.ipAddr]),
+                                                    ...data.indirectHosts.map((h) => ["ips", h.ipAddr]),
+                                                ]).map(([k, v]) => findSimilarAction(domainFilter, k, v));
+                                            })
+                                            .catch((e) => [["Failed loading hosts", undefined]]),
+                                    createdAtAction(domainFilter, domain.createdAt),
+                                ]}
                             >
                                 <SelectButton
                                     uuid={domain.uuid}
@@ -147,13 +276,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     setUuids={(domains) => setSelectedUuids({ ...selectedUuids, domains })}
                                 />
                                 <SelectableText>{domain.domain}</SelectableText>
-                                <TagList
-                                    tags={domain.tags}
-                                    onCtrlClick={globalFilter.addTag}
-                                    onClick={domainFilter.addTag}
-                                />
+                                <TagList tags={domain.tags} globalFilter={globalFilter} filter={domainFilter} />
                                 <div>{domain.comment}</div>
-                                <span className="workspace-data-certainty-icon"></span>
+                                <span className="workspace-data-certainty-icon icon"></span>
                                 {domain.certainty === "Unverified"
                                     ? CertaintyIcon({ certaintyType: "Unverified" })
                                     : CertaintyIcon({ certaintyType: "Verified" })}
@@ -162,7 +287,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     targetUuid={domain.uuid}
                                     targetType={"domain"}
                                 />
-                            </div>
+                            </ContextMenu>
                         ))}
                     </StatelessWorkspaceTable>
                 );
@@ -190,7 +315,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span />
                         </div>
                         {hosts.map((host) => (
-                            <div
+                            <ContextMenu
+                                key={host.uuid}
+                                as={TableRow}
                                 className={
                                     host.uuid === selected?.uuid
                                         ? "workspace-table-row workspace-table-row-selected"
@@ -202,6 +329,45 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     }
                                     setSelected({ type: "hosts", uuid: host.uuid });
                                 }}
+                                menu={[
+                                    copyTagsAction(host.tags, hostFilter),
+                                    () =>
+                                        Api.workspaces.hosts
+                                            .relations(workspace, host.uuid)
+                                            .then((r) => {
+                                                const data = r.unwrap();
+                                                return [
+                                                    ...singleOrSubmenu(
+                                                        "Filter Domain",
+                                                        ObjectFns.uniqueObjects(
+                                                            [...data.directDomains, ...data.indirectDomains].map(
+                                                                (d) => ["domains", d.domain],
+                                                            ),
+                                                        ).map(([k, v]) => findSimilarAction(hostFilter, k, v)),
+                                                    ),
+                                                    ...singleOrSubmenu(
+                                                        "Filter Protocol",
+                                                        ObjectFns.uniqueObjects(
+                                                            data.ports.map((p) => ["port.protocols", p.protocol]),
+                                                        ).map(([k, v]) => findSimilarAction(hostFilter, k, v)),
+                                                    ),
+                                                    ...singleOrSubmenu(
+                                                        "Filter Port",
+                                                        ObjectFns.uniqueObjects(
+                                                            data.ports.map((p) => ["ports", p.port + ""]),
+                                                        ).map(([k, v]) => findSimilarAction(hostFilter, k, v)),
+                                                    ),
+                                                    ...singleOrSubmenu(
+                                                        "Filter Service",
+                                                        ObjectFns.uniqueObjects(
+                                                            data.services.map((s) => ["services", s.name]),
+                                                        ).map(([k, v]) => findSimilarAction(hostFilter, k, v)),
+                                                    ),
+                                                ];
+                                            })
+                                            .catch((e) => [["Failed loading hosts", undefined]]),
+                                    createdAtAction(hostFilter, host.createdAt),
+                                ]}
                             >
                                 <SelectButton
                                     uuid={host.uuid}
@@ -210,20 +376,16 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 />
                                 <SelectableText>{host.ipAddr}</SelectableText>
                                 <OsIcon tooltip os={host.osType} size="2em" />
-                                <TagList
-                                    tags={host.tags}
-                                    onCtrlClick={globalFilter.addTag}
-                                    onClick={hostFilter.addTag}
-                                />
+                                <TagList tags={host.tags} globalFilter={globalFilter} filter={hostFilter} />
                                 <div>{host.comment}</div>
-                                <span className="workspace-data-certainty-icon"></span>
+                                <span className="workspace-data-certainty-icon icon"></span>
                                 {host.certainty === "Verified"
                                     ? CertaintyIcon({ certaintyType: "Verified" })
                                     : host.certainty === "Historical"
                                       ? CertaintyIcon({ certaintyType: "Historical" })
                                       : CertaintyIcon({ certaintyType: "SupposedTo" })}
                                 <AttackButton workspaceUuid={workspace} targetUuid={host.uuid} targetType={"host"} />
-                            </div>
+                            </ContextMenu>
                         ))}
                     </StatelessWorkspaceTable>
                 );
@@ -252,7 +414,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span />
                         </div>
                         {ports.map((port) => (
-                            <div
+                            <ContextMenu
+                                key={port.uuid}
+                                as={TableRow}
                                 className={
                                     port.uuid === selected?.uuid
                                         ? "workspace-table-row workspace-table-row-selected"
@@ -264,6 +428,28 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     }
                                     setSelected({ type: "ports", uuid: port.uuid });
                                 }}
+                                menu={[
+                                    copyTagsAction(port.tags, portFilter),
+                                    filterAction(portFilter, "ports", port.port + ""),
+                                    filterAction(portFilter, "ips", port.host.ipAddr),
+                                    filterAction(portFilter, "protocols", port.protocol),
+                                    () =>
+                                        Api.workspaces.ports
+                                            .relations(workspace, port.uuid)
+                                            .then((r) => {
+                                                const data = r.unwrap();
+                                                return [
+                                                    ...singleOrSubmenu(
+                                                        "Filter Service",
+                                                        ObjectFns.uniqueObjects(
+                                                            data.services.map((s) => ["services", s.name]),
+                                                        ).map(([k, v]) => findSimilarAction(portFilter, k, v)),
+                                                    ),
+                                                ];
+                                            })
+                                            .catch((e) => [["Failed loading hosts", undefined]]),
+                                    createdAtAction(portFilter, port.createdAt),
+                                ]}
                             >
                                 <SelectButton
                                     uuid={port.uuid}
@@ -273,20 +459,16 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <span>{port.port}</span>
                                 <span>{port.protocol.toUpperCase()}</span>
                                 <span>{port.host.ipAddr}</span>
-                                <TagList
-                                    tags={port.tags}
-                                    onCtrlClick={globalFilter.addTag}
-                                    onClick={portFilter.addTag}
-                                />
+                                <TagList tags={port.tags} globalFilter={globalFilter} filter={portFilter} />
                                 <span>{port.comment}</span>
-                                <span className="workspace-data-certainty-icon"></span>
+                                <span className="workspace-data-certainty-icon icon"></span>
                                 {port.certainty === "Verified"
                                     ? CertaintyIcon({ certaintyType: "Verified" })
                                     : port.certainty === "Historical"
                                       ? CertaintyIcon({ certaintyType: "Historical" })
                                       : CertaintyIcon({ certaintyType: "SupposedTo" })}
                                 <AttackButton workspaceUuid={workspace} targetUuid={port.uuid} targetType={"port"} />
-                            </div>
+                            </ContextMenu>
                         ))}
                     </StatelessWorkspaceTable>
                 );
@@ -318,7 +500,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span />
                         </div>
                         {services.map((service) => (
-                            <div
+                            <ContextMenu
+                                key={service.uuid}
+                                as={TableRow}
                                 className={
                                     service.uuid === selected?.uuid
                                         ? "workspace-table-row workspace-table-row-selected"
@@ -330,6 +514,31 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     }
                                     setSelected({ type: "services", uuid: service.uuid });
                                 }}
+                                menu={[
+                                    copyTagsAction(service.tags, serviceFilter),
+                                    filterAction(serviceFilter, "service", service.name),
+                                    filterAction(serviceFilter, "ips", service.host.ipAddr),
+                                    ...(service.port
+                                        ? [filterAction(serviceFilter, "ports", service.port.port + "")]
+                                        : []),
+                                    ...(service.protocols
+                                        ? (() => {
+                                              let res = [];
+                                              let p = service.protocols as any;
+                                              if (p.sctp) {
+                                                  res.push(filterAction(serviceFilter, "protocols", "Sctp"));
+                                              } else if (p.tcp) {
+                                                  res.push(filterAction(serviceFilter, "protocols", "Tcp"));
+                                              } else if (p.udp) {
+                                                  res.push(filterAction(serviceFilter, "protocols", "Udp"));
+                                              } else if (p.unknown) {
+                                                  res.push(filterAction(serviceFilter, "protocols", "Unknown"));
+                                              }
+                                              return res;
+                                          })()
+                                        : []),
+                                    createdAtAction(serviceFilter, service.createdAt),
+                                ]}
                             >
                                 <SelectButton
                                     uuid={service.uuid}
@@ -354,13 +563,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                         }
                                     />
                                 </span>
-                                <TagList
-                                    tags={service.tags}
-                                    onCtrlClick={globalFilter.addTag}
-                                    onClick={serviceFilter.addTag}
-                                />
+                                <TagList tags={service.tags} globalFilter={globalFilter} filter={serviceFilter} />
                                 <span>{service.comment}</span>
-                                <span className="workspace-data-certainty-icon"></span>
+                                <span className="workspace-data-certainty-icon icon"></span>
                                 {service.certainty === "Historical"
                                     ? CertaintyIcon({ certaintyType: "Historical" })
                                     : service.certainty === "SupposedTo"
@@ -375,7 +580,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     targetUuid={service.uuid}
                                     targetType={"service"}
                                 />
-                            </div>
+                            </ContextMenu>
                         ))}
                     </StatelessWorkspaceTable>
                 );
@@ -570,7 +775,7 @@ export function CertaintyIcon(props: CertaintyIconProps) {
             return (
                 <Popup
                     trigger={
-                        <span className="workspace-data-certainty-icon">
+                        <span className="workspace-data-certainty-icon icon">
                             <VerifiedIcon />
                             {nameVisible !== undefined && nameVisible ? <span> Verified</span> : undefined}
                         </span>
@@ -589,7 +794,7 @@ export function CertaintyIcon(props: CertaintyIconProps) {
             return (
                 <Popup
                     trigger={
-                        <span className="workspace-data-certainty-icon">
+                        <span className="workspace-data-certainty-icon icon">
                             <div>
                                 <VerifiedIcon />
                                 <span className="workspace-data-certainty-letter">D</span>
@@ -611,7 +816,7 @@ export function CertaintyIcon(props: CertaintyIconProps) {
             return (
                 <Popup
                     trigger={
-                        <span className="workspace-data-certainty-icon">
+                        <span className="workspace-data-certainty-icon icon">
                             <div>
                                 <VerifiedIcon />
                                 <span className="workspace-data-certainty-letter">M</span>
@@ -633,7 +838,7 @@ export function CertaintyIcon(props: CertaintyIconProps) {
             return (
                 <Popup
                     trigger={
-                        <span className="workspace-data-certainty-icon">
+                        <span className="workspace-data-certainty-icon icon">
                             <UnverifiedIcon />
                             {nameVisible !== undefined && nameVisible ? <span>Unverified</span> : undefined}
                         </span>
@@ -652,7 +857,7 @@ export function CertaintyIcon(props: CertaintyIconProps) {
             return (
                 <Popup
                     trigger={
-                        <span className="workspace-data-certainty-icon">
+                        <span className="workspace-data-certainty-icon icon">
                             <span className="workspace-data-certainty-letter">S</span>
                             {nameVisible !== undefined && nameVisible ? <span>Supposed to</span> : undefined}
                         </span>
@@ -671,7 +876,7 @@ export function CertaintyIcon(props: CertaintyIconProps) {
             return (
                 <Popup
                     trigger={
-                        <span className="workspace-data-certainty-icon">
+                        <span className="workspace-data-certainty-icon icon">
                             <HistoricalIcon />
                             {nameVisible !== undefined && nameVisible ? <span>Historical</span> : undefined}
                         </span>
@@ -690,7 +895,7 @@ export function CertaintyIcon(props: CertaintyIconProps) {
             return (
                 <Popup
                     trigger={
-                        <span className="workspace-data-certainty-icon">
+                        <span className="workspace-data-certainty-icon icon">
                             <UnknownIcon />
                             {nameVisible !== undefined && nameVisible ? <span>Unknown Service</span> : undefined}
                         </span>

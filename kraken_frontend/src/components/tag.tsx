@@ -1,10 +1,10 @@
-import { CSSProperties, MouseEventHandler } from "react";
+import { CSSProperties, EventHandler } from "react";
 import { Color } from "../api/generated";
 
 export type TagProps = {
     name: string;
     color?: Color;
-    onClick?: MouseEventHandler<HTMLDivElement>;
+    onClick?: EventHandler<React.MouseEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>>;
 };
 
 /** Sample of background color */
@@ -34,7 +34,18 @@ export default function Tag(props: TagProps) {
     }
 
     return (
-        <div className={`tag ${props.onClick ? "interactive" : ""}`} style={style} onClick={props.onClick}>
+        <div
+            className={`tag ${props.onClick ? "interactive" : ""}`}
+            style={style}
+            onClick={props.onClick}
+            onKeyDown={(e) => {
+                if (e.key == "Enter") {
+                    props.onClick?.(e);
+                    e.preventDefault();
+                }
+            }}
+            tabIndex={0}
+        >
             {name}
         </div>
     );
