@@ -568,7 +568,6 @@ export default class WorkspaceDataDetailsResults extends React.Component<
                     return "Unimplemented";
             }
         })();
-        console.log(this.state.page);
         if (this.state.page < this.props.attack.results.length) {
             let uuid = this.props.attack.results[this.state.page].uuid;
             return (

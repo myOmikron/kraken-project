@@ -278,7 +278,6 @@ export function DehashedAttackInput(props: AttackInputProps<Query>) {
         }
 
         props.onUpdate(props.valueKey, query);
-        console.log("update:", query);
     }
 
     return (
