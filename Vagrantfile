@@ -9,7 +9,7 @@ Vagrant.configure("2") do |config|
     kraken.vm.network :private_network, :ip => '10.13.37.10'
     kraken.vm.provider "libvirt" do |vb|
         vb.default_prefix = "myomikron_kraken"
-        vb.memory = "2048"
+        vb.memory = "4096"
         vb.cpus = "8"
         vb.memorybacking :access, :mode => "shared"
     end
