@@ -1,3 +1,6 @@
+use std::future::Future;
+
+use futures::FutureExt;
 use rorm::and;
 use rorm::db::Executor;
 use rorm::insert;
@@ -12,7 +15,7 @@ use crate::models::PortProtocol;
 use crate::models::ServiceProtocols;
 
 impl DomainDomainRelation {
-    /// Insert a [`CnameRelation`] if it doesn't exist yet.
+    /// Insert a [`DomainDomainRelation`] if it doesn't exist yet.
     pub async fn insert_if_missing(
         executor: impl Executor<'_>,
         workspace: Uuid,
@@ -66,51 +69,71 @@ impl DomainDomainRelation {
 impl DomainHostRelation {
     /// Insert a [`DomainHostRelation`] if it doesn't exist yet.
     ///
-    /// Indirect relations are created implicitly by [`CnameRelation::insert_if_missing`].
-    pub async fn insert_if_missing(
-        executor: impl Executor<'_>,
+    /// Indirect relations are created implicitly by [`DomainDomainRelation::insert_if_missing`].
+    #[allow(clippy::manual_async_fn)] // Required for recursion
+    pub fn insert_if_missing<'a, 'e>(
+        executor: impl Executor<'e> + 'a + Send,
         workspace: Uuid,
         domain: Uuid,
         host: Uuid,
         is_direct: bool,
-    ) -> Result<(), rorm::Error> {
-        let mut guard = executor.ensure_transaction().await?;
-        let tx = guard.get_transaction();
+    ) -> impl Future<Output = Result<(), rorm::Error>> + 'a + Send {
+        async move {
+            let mut guard = executor.ensure_transaction().await?;
+            let tx = guard.get_transaction();
 
-        match query!(
-            &mut *tx,
-            (DomainHostRelation::F.uuid, DomainHostRelation::F.is_direct)
-        )
-        .condition(and![
-            DomainHostRelation::F.domain.equals(domain),
-            DomainHostRelation::F.host.equals(host)
-        ])
-        .optional()
-        .await?
-        {
-            None => {
-                insert!(&mut *tx, DomainHostRelation)
-                    .return_nothing()
-                    .single(&DomainHostRelation {
-                        uuid: Uuid::new_v4(),
-                        domain: ForeignModelByField::Key(domain),
-                        host: ForeignModelByField::Key(host),
-                        workspace: ForeignModelByField::Key(workspace),
-                        is_direct: true,
-                    })
-                    .await?;
+            match query!(
+                &mut *tx,
+                (DomainHostRelation::F.uuid, DomainHostRelation::F.is_direct)
+            )
+            .condition(and![
+                DomainHostRelation::F.domain.equals(domain),
+                DomainHostRelation::F.host.equals(host)
+            ])
+            .optional()
+            .await?
+            {
+                None => {
+                    insert!(&mut *tx, DomainHostRelation)
+                        .return_nothing()
+                        .single(&DomainHostRelation {
+                            uuid: Uuid::new_v4(),
+                            domain: ForeignModelByField::Key(domain),
+                            host: ForeignModelByField::Key(host),
+                            workspace: ForeignModelByField::Key(workspace),
+                            is_direct: true,
+                        })
+                        .await?;
+
+                    // Propagate new host through cname chain
+                    for (domain,) in query!(&mut *tx, (DomainDomainRelation::F.source,))
+                        .condition(DomainDomainRelation::F.destination.equals(domain))
+                        .all()
+                        .await?
+                    {
+                        DomainHostRelation::insert_if_missing(
+                            &mut *tx,
+                            workspace,
+                            *domain.key(),
+                            host,
+                            false,
+                        )
+                        .boxed()
+                        .await?;
+                    }
+                }
+                Some((uuid, false)) if is_direct => {
+                    update!(&mut *tx, DomainHostRelation)
+                        .set(DomainHostRelation::F.is_direct, true)
+                        .condition(DomainHostRelation::F.uuid.equals(uuid))
+                        .await?;
+                }
+                _ => {}
             }
-            Some((uuid, false)) if is_direct => {
-                update!(&mut *tx, DomainHostRelation)
-                    .set(DomainHostRelation::F.is_direct, true)
-                    .condition(DomainHostRelation::F.uuid.equals(uuid))
-                    .await?;
-            }
-            _ => {}
+
+            guard.commit().await?;
+            Ok(())
         }
-
-        guard.commit().await?;
-        Ok(())
     }
 }
 
