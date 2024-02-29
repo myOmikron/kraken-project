@@ -7,13 +7,14 @@ import SelectMenu from "../../../components/select-menu";
 import { handleApiError } from "../../../utils/helper";
 import { parseUserPorts } from "../../../utils/ports";
 
-export interface IAttackInputProps extends React.HTMLProps<HTMLElement> {
+export interface IAttackInputProps extends Omit<React.HTMLProps<HTMLElement>, "ref"> {
     valueKey: string;
     label: string;
     prefill: string | undefined;
     value: any;
     required: boolean;
     onUpdate: (key: string, v: any) => any;
+    ref: React.Ref<any>;
 }
 
 export interface AttackInputProps<T> extends IAttackInputProps {
@@ -103,7 +104,7 @@ export function ConvertingAttackInput<T>(
 }
 
 export const PortListInput = forwardRef(
-    (props: AttackInputProps<PortOrRange[] | undefined>, ref: React.ForwardedRef<HTMLInputElement>) => {
+    (props: Omit<AttackInputProps<PortOrRange[] | undefined>, "ref">, ref: React.ForwardedRef<HTMLInputElement>) => {
         return (
             <ConvertingAttackInput
                 ref={ref}

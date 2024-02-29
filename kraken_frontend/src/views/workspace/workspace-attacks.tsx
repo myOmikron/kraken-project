@@ -75,7 +75,7 @@ export interface IAttackInput {
     required?: boolean;
     defaultValue: any;
     prefill?: (keyof PrefilledAttackParams)[];
-    type: (props: IAttackInputProps) => React.JSX.Element;
+    type: React.FC<IAttackInputProps>;
     group?: undefined | string;
     renderProps?: React.HTMLProps<HTMLElement>;
     /// Called for prefilled inputs, to adjust prefilled value (e.g. primitive
@@ -86,7 +86,7 @@ export interface IAttackInput {
 export interface AttackInput<T, IsMulti extends boolean> extends IAttackInput {
     multi: IsMulti;
     defaultValue: T | undefined;
-    type: (props: AttackInputProps<T>) => React.JSX.Element;
+    type: React.FC<AttackInputProps<T>>;
     preprocess?: (v: any) => T | undefined;
 }
 
