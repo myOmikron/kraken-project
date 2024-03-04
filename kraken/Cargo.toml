@@ -57,7 +57,7 @@ chrono = { version = ">=0.4.20", default-features = false, features = ["serde"] 
 bytes = { version = "~1" }
 bytestring = { version = "~1" }
 # Base64 decoder and encoder
-base64 = { version = "~0.21" }
+base64 = { version = "~0.22" }
 # ip networks
 ipnet = { version = "~2", features = ["serde"] }
 # Uuid v4 generation
