@@ -6,8 +6,13 @@ import {
     BruteforceSubdomainsRequest,
     DnsResolutionRequest,
     DnsTxtScanRequest,
+    FullDomain,
+    FullHost,
+    FullPort,
+    FullService,
     HostsAliveRequest,
     OsDetectionRequest,
+    PortProtocol,
     QueryCertificateTransparencyRequest,
     QueryDehashedRequest,
     ServiceDetectionRequest,
@@ -74,7 +79,7 @@ export interface IAttackInput {
     multi?: boolean;
     required?: boolean;
     defaultValue: any;
-    prefill?: (keyof PrefilledAttackParams)[];
+    prefill?: PrefillType[];
     type: React.FC<IAttackInputProps>;
     group?: undefined | string;
     renderProps?: React.HTMLProps<HTMLElement>;
@@ -319,7 +324,7 @@ const ATTACKS: AllAttackDescr = {
                     multi: false,
                     required: true,
                     defaultValue: ["1-65535"],
-                    prefill: ["port"],
+                    prefill: ["port[Tcp]"],
                     type: PortListInput,
                     preprocess: (v) => (typeof v == "number" ? [v] : v),
                 },
@@ -393,7 +398,7 @@ const ATTACKS: AllAttackDescr = {
                     multi: false,
                     required: true,
                     defaultValue: ["1-65535"],
-                    prefill: ["port"],
+                    prefill: ["port[Udp]"],
                     type: PortListInput,
                     preprocess: (v) => (typeof v == "number" ? [v] : v),
                 },
@@ -445,7 +450,15 @@ const ATTACKS: AllAttackDescr = {
                     multi: false,
                     defaultValue: undefined,
                     type: DehashedAttackInput,
-                    prefill: ["domain", "ipAddr"],
+                    prefill: ["raw"],
+                    preprocess: (v: RawSelectionData | undefined) => {
+                        if (!v) return undefined;
+                        if (v.domain) return { domain: { simple: v.domain.domain } };
+                        if (v.host) return { ipAddress: { simple: v.host.ipAddr } };
+                        if (v.port) return { ipAddress: { simple: v.port.host.ipAddr } };
+                        if (v.service) return { ipAddress: { simple: v.service.host.ipAddr } };
+                        return undefined;
+                    },
                 },
             },
         },
@@ -469,13 +482,14 @@ const ATTACKS: AllAttackDescr = {
                 sshPort: {
                     defaultValue: 22,
                     label: "SSH Port",
+                    prefill: ["service[ssh].port"],
                     multi: false,
                     type: NumberAttackInput as any,
                     required: false,
                 },
                 fingerprintPort: {
                     defaultValue: undefined,
-                    prefill: ["port"],
+                    prefill: ["port[Tcp]"],
                     label: "TCP Fingerprint Port",
                     type: NumberAttackInput as any,
                     multi: false,
@@ -540,7 +554,23 @@ export function TargetType(value: string): TargetType {
 }
 
 /** Set of attacks' parameters prefilled based on the target and passed to the attacks' forms */
-export type PrefilledAttackParams = { domain?: string; ipAddr?: string; port?: number };
+export type RawSelectionData = {
+    domain?: FullDomain;
+    host?: FullHost;
+    port?: FullPort;
+    service?: FullService;
+};
+
+export type PrefillType =
+    | "raw" // receive full PrefilledAttackParams
+    | "domain" // domain (from any aggregation kind relating to domains)
+    | "ipAddr" // ip address (e.g. from host, port or service)
+    | "port" // port (e.g. from port or service)
+    | `port[${PortProtocol}]` // TCP/UDP/... only port (e.g. from port or service)
+    | "service.name" // service name (from any aggregation kind relating to services)
+    | `service[${string}].port` // port (only from a service with the name within the square brackets)
+    | `service[!${string}].port` // port (only from a service not with the name within the square brackets)
+    | `service[${string}][${PortProtocol}].port`; // TCP/UDP/... only port (only from a service with the name within the square brackets)
 
 type WorkspaceAttacksProps =
     | {
@@ -562,7 +592,7 @@ type WorkspaceAttacksProps =
 type WorkspaceAttacksState = {
     selectedAttack: AttackType | null;
     hoverAttack: AttackType | null;
-    target: { name: string; prefills: PrefilledAttackParams[] };
+    target: { name: string; selection: RawSelectionData[] };
 };
 
 export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksProps, WorkspaceAttacksState> {
@@ -572,7 +602,7 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
     state: WorkspaceAttacksState = {
         selectedAttack: null,
         hoverAttack: null,
-        target: { name: "Loading...", prefills: [] },
+        target: { name: "Loading...", selection: [] },
     };
 
     componentDidMount() {
@@ -603,8 +633,8 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                 Api.workspaces.domains
                     .get(this.context.workspace.uuid, this.props.targetUuid)
                     .then(
-                        handleApiError(({ domain }) =>
-                            this.setState({ target: { name: domain, prefills: [{ domain }] } }),
+                        handleApiError((domain) =>
+                            this.setState({ target: { name: domain.domain, selection: [{ domain }] } }),
                         ),
                     );
                 break;
@@ -612,23 +642,18 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                 Api.workspaces.hosts
                     .get(this.context.workspace.uuid, this.props.targetUuid)
                     .then(
-                        handleApiError(({ ipAddr }) =>
-                            this.setState({ target: { name: ipAddr, prefills: [{ ipAddr }] } }),
+                        handleApiError((host) =>
+                            this.setState({ target: { name: host.ipAddr, selection: [{ host }] } }),
                         ),
                     );
                 break;
             case "port":
                 Api.workspaces.ports.get(this.context.workspace.uuid, this.props.targetUuid).then(
-                    handleApiError(({ host: { ipAddr }, port }) =>
+                    handleApiError((port) =>
                         this.setState({
                             target: {
-                                name: `${ipAddr}'s port ${port}`,
-                                prefills: [
-                                    {
-                                        ipAddr,
-                                        port,
-                                    },
-                                ],
+                                name: `${port.host.ipAddr}'s port ${port.port}`,
+                                selection: [{ port }],
                             },
                         }),
                     ),
@@ -636,21 +661,17 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                 break;
             case "service":
                 Api.workspaces.services.get(this.context.workspace.uuid, this.props.targetUuid).then(
-                    handleApiError(({ name, host: { ipAddr }, port }) =>
+                    handleApiError((service) => {
+                        let { name, host, port } = service;
                         this.setState({
                             target: {
                                 name: port
-                                    ? `${ipAddr}'s service ${name} on port ${port.port}`
-                                    : `${ipAddr}'s service ${name}`,
-                                prefills: [
-                                    {
-                                        ipAddr,
-                                        port: port?.port,
-                                    },
-                                ],
+                                    ? `${host.ipAddr}'s service ${name} on port ${port.port}`
+                                    : `${host.ipAddr}'s service ${name}`,
+                                selection: [{ service }],
                             },
-                        }),
-                    ),
+                        });
+                    }),
                 );
                 break;
             case "selection":
@@ -665,12 +686,12 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                         ]
                             .filter((s) => !s.startsWith("0 "))
                             .join(", "),
-                        prefills: [],
+                        selection: [],
                     },
                 });
                 break;
             default:
-                this.setState({ target: { name: "Loading...", prefills: [] } });
+                this.setState({ target: { name: "Loading...", selection: [] } });
                 break;
         }
     }
@@ -710,75 +731,50 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
             });
         }
 
-        let inputs: { [group: string]: PrefilledAttackParams[] } = {
-            hosts: (await fetchAll(Api.workspaces.hosts, this.props.hosts)).map((v) => ({ ipAddr: v.ipAddr })),
-            ports: (await fetchAll(Api.workspaces.ports, this.props.ports)).map((v) => ({
-                ipAddr: v.host.ipAddr,
-                port: v.port,
-            })),
-            domains: (await fetchAll(Api.workspaces.domains, this.props.domains)).map((v) => ({ domain: v.domain })),
-            services: (await fetchAll(Api.workspaces.services, this.props.services)).map((v) => ({
-                ipAddr: v.host.ipAddr,
-                port: v.port?.port,
-            })),
+        let inputs: { [group: string]: RawSelectionData[] } = {
+            hosts: (await fetchAll(Api.workspaces.hosts, this.props.hosts)).map((v) => ({ host: v })),
+            ports: (await fetchAll(Api.workspaces.ports, this.props.ports)).map((v) => ({ port: v })),
+            domains: (await fetchAll(Api.workspaces.domains, this.props.domains)).map((v) => ({ domain: v })),
+            services: (await fetchAll(Api.workspaces.services, this.props.services)).map((v) => ({ service: v })),
         };
 
-        let prefills: PrefilledAttackParams[] = Object.keys(inputs).flatMap((k) => inputs[k]);
+        let selection: RawSelectionData[] = Object.keys(inputs).flatMap((k) => inputs[k]);
 
         this.setState({
             target: {
                 name: this.state.target.name,
-                prefills: prefills,
+                selection: selection,
             },
         });
     }
 
     renderSelection() {
-        if (!this.state.target?.prefills?.length) return <></>;
-        const columnLabels: { [P in keyof PrefilledAttackParams]: string } = {
-            domain: "Domain",
-            ipAddr: "Host",
-            port: "Port",
-        };
-        let columns: { [P in keyof PrefilledAttackParams]: boolean } = {
-            domain: true,
-            ipAddr: true,
-            port: true,
-        };
-        for (const k of Object.keys(columns)) {
-            (columns as any)[k] = this.state.target.prefills.some((p) => (p as any)[k] !== undefined);
-        }
+        if (!this.state.target?.selection?.length) return <></>;
+        let attack = (this.state.hoverAttack || this.state.selectedAttack) as AttackType;
+        if (!attack) return <></>;
+        let values = generateAttackPrefill(attack, this.state.target.selection);
+        const keys = Object.keys(values);
+        if (!keys) return <></>;
+        const columnLabels = keys.map((k) => (ATTACKS as any)[attack].inputs.inputs[k].label);
+        let rows = values[keys[0]].map((_, i) => (
+            <tr key={attack + "_row" + i}>
+                {keys.map((k) => (
+                    <td>{values[k][i] === undefined ? <em>n/a</em> : <pre>{JSON.stringify(values[k][i])}</pre>}</td>
+                ))}
+            </tr>
+        ));
         return (
             <div className="pane selection">
                 <h2 className={"sub-heading"}>Selection</h2>
                 <table>
                     <thead>
                         <tr>
-                            {Object.keys(columns).map(
-                                (c) => (columns as any)[c] && <th>{(columnLabels as any)[c]}</th>,
-                            )}
+                            {columnLabels.map((label) => (
+                                <th>{label}</th>
+                            ))}
                         </tr>
                     </thead>
-                    <tbody>
-                        {this.state.target.prefills.map((row: any) => (
-                            <tr>
-                                {Object.keys(columns).map(
-                                    (c) =>
-                                        (columns as any)[c] && (
-                                            <td>
-                                                {row[c] === undefined ? (
-                                                    <em>n/a</em>
-                                                ) : (
-                                                    <pre>
-                                                        {typeof row[c] === "string" ? row[c] : JSON.stringify(row[c])}
-                                                    </pre>
-                                                )}
-                                            </td>
-                                        ),
-                                )}
-                            </tr>
-                        ))}
-                    </tbody>
+                    <tbody>{rows}</tbody>
                 </table>
             </div>
         );
@@ -790,18 +786,7 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
         const attackInfo = (hoverAttack && ATTACKS[hoverAttack]) || (selectedAttack && ATTACKS[selectedAttack]);
         const AttackForm = selectedAttack && ATTACKS[selectedAttack];
 
-        const disabled: Partial<Record<AttackType, boolean>> = {};
-        if ("targetType" in this.props) {
-            if (this.props.targetType === "domain") {
-                disabled.service_detection = true;
-                disabled.udp_service_detection = true;
-            } else {
-                disabled.bruteforce_subdomains = true;
-                disabled.certificate_transparency = true;
-                disabled.dns_resolution = true;
-                disabled.dns_txt_scan = true;
-            }
-        }
+        const disabled: Record<AttackType, boolean> = generateDisabled(this.state.target.selection);
 
         return (
             <div className={"workspace-attacks-container"}>
@@ -853,12 +838,166 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
                     ) : (
                         <GenericAttackForm
                             key={"attack_form_" + selectedAttack}
-                            prefilled={this.state.target.prefills}
+                            prefilled={generateAttackPrefill(selectedAttack!, this.state.target.selection)}
                             attack={AttackForm}
                         />
                     )}
                 </div>
             </div>
         );
+    }
+}
+function generateDisabled(prefill: RawSelectionData[]): Record<AttackType, boolean> {
+    return Object.fromEntries(
+        Object.keys(ATTACKS).map((v) => [
+            v,
+            prefill.length &&
+                Object.values(generateAttackPrefill(v as AttackType, prefill)).every((v) => v.length == 0),
+        ]),
+    ) as { [T in keyof typeof ATTACKS]: boolean };
+}
+
+function generateAttackPrefill(attack: AttackType, prefill: RawSelectionData[]): { [key: string]: any[] } {
+    let ret: { [key: string]: any[] } = {};
+    for (const key of Object.keys(ATTACKS[attack].inputs.inputs)) {
+        let input: IAttackInput = (ATTACKS as any)[attack].inputs.inputs[key];
+        if (typeof input === "object" && !Array.isArray(input) && input.prefill) {
+            ret[key] = [];
+        }
+    }
+
+    // first generate all the raw data
+    for (const row of prefill) {
+        for (const key of Object.keys(ret)) {
+            let input: IAttackInput = (ATTACKS as any)[attack].inputs.inputs[key];
+            let data = getFirstPrefill(row, input.prefill!);
+            if (input.preprocess) data = input.preprocess(data);
+            ret[key].push(data);
+        }
+    }
+
+    // then eliminate columns that are completely undefined
+    const toDeleteKeys = Object.keys(ret).filter((key) => ret[key].every((value) => value === undefined));
+    for (const d of toDeleteKeys) {
+        delete ret[d];
+    }
+
+    // now deduplicate rows
+    let entries = Object.entries(ret);
+    let keys = entries.map((e) => e[0]);
+    let values = entries.map((e) => e[1]);
+    values = ObjectFns.transpose2D(values);
+    values = ObjectFns.uniqueObjects(values);
+    // and remove rows that have missing required values
+    values = values.filter(
+        (row) => !row.some((v, i) => v === undefined && (ATTACKS as any)[attack].inputs.inputs[keys[i]].required),
+    );
+    values = ObjectFns.transpose2D(values);
+    if (keys.length != values.length) throw new Error("logic error");
+
+    return Object.fromEntries(keys.map((k, i) => [k, values[i]]));
+}
+
+export function getFirstPrefill(raw: RawSelectionData, types: PrefillType[]): any | undefined {
+    for (const p of types) {
+        let v = getPrefill(raw, p);
+        if (v) return v;
+    }
+    return undefined;
+}
+
+export function getPrefill(raw: RawSelectionData, type: "raw"): RawSelectionData;
+export function getPrefill(raw: RawSelectionData, type: "domain"): string | undefined;
+export function getPrefill(raw: RawSelectionData, type: "ipAddr"): string | undefined;
+export function getPrefill(raw: RawSelectionData, type: "port"): number | undefined;
+export function getPrefill(raw: RawSelectionData, type: "port[Unknown]"): number | undefined;
+export function getPrefill(raw: RawSelectionData, type: "port[Udp]"): number | undefined;
+export function getPrefill(raw: RawSelectionData, type: "port[Tcp]"): number | undefined;
+export function getPrefill(raw: RawSelectionData, type: "port[Sctp]"): number | undefined;
+export function getPrefill(raw: RawSelectionData, type: "service.name"): string | undefined;
+export function getPrefill(raw: RawSelectionData, type: `service[${string}].port`): number | undefined;
+export function getPrefill(raw: RawSelectionData, type: `service[${string}][Unknown].port`): number | undefined;
+export function getPrefill(raw: RawSelectionData, type: `service[${string}][Udp].port`): number | undefined;
+export function getPrefill(raw: RawSelectionData, type: `service[${string}][Tcp].port`): number | undefined;
+export function getPrefill(raw: RawSelectionData, type: `service[${string}][Sctp].port`): number | undefined;
+export function getPrefill(raw: RawSelectionData, type: PrefillType): any | undefined;
+export function getPrefill(raw: RawSelectionData, type: PrefillType): any | undefined {
+    switch (type) {
+        case "raw":
+            return raw;
+        case "domain":
+            return raw.domain?.domain;
+        case "ipAddr":
+            return raw.host
+                ? raw.host.ipAddr
+                : raw.port
+                  ? raw.port.host.ipAddr
+                  : raw.service
+                    ? raw.service.host.ipAddr
+                    : undefined;
+        case "port":
+        case "port[Unknown]":
+        case "port[Udp]":
+        case "port[Tcp]":
+        case "port[Sctp]":
+            let p = raw.port ? raw.port : raw.service && raw.service.port ? raw.service.port : undefined;
+            if (p) {
+                if (type.startsWith("port[") && type.endsWith("]")) {
+                    if (p.protocol != type.substring(5, type.length - 1)) return undefined;
+                }
+                return p.port;
+            }
+            return undefined;
+        case "service.name":
+            return raw.service?.name;
+        default:
+            if (type.startsWith("service[")) {
+                if (raw.service) {
+                    let [service, remaining] = type.substring(8).split("]", 2);
+                    if (
+                        service.startsWith("!")
+                            ? raw.service.name.toLowerCase() == service.substring(1).toLowerCase()
+                            : raw.service.name.toLowerCase() != service.toLowerCase()
+                    )
+                        return undefined;
+                    switch (remaining) {
+                        case ".port":
+                            return getPrefill({ service: raw.service }, "port");
+                        case "[Unknown].port":
+                            return getPrefill({ service: raw.service }, "port[Unknown]");
+                        case "[Udp].port":
+                            return getPrefill({ service: raw.service }, "port[Udp]");
+                        case "[Tcp].port":
+                            return getPrefill({ service: raw.service }, "port[Tcp]");
+                        case "[Sctp].port":
+                            return getPrefill({ service: raw.service }, "port[Sctp]");
+                    }
+                }
+            }
+            return undefined;
+    }
+}
+
+function couldBePrefilled(prefill: PrefillType, target: TargetType) {
+    switch (prefill) {
+        case "raw":
+            throw new Error("input with prefill type raw must define acceptTargetTypes!");
+        case "domain":
+            return target == "domain";
+        case "ipAddr":
+            return target == "host" || target == "port" || target == "service";
+        case "port":
+        case "port[Unknown]":
+        case "port[Udp]":
+        case "port[Tcp]":
+        case "port[Sctp]":
+            return target == "port" || target == "service";
+        case "service.name":
+            return target == "service";
+        default:
+            if (prefill.startsWith("service[")) {
+                return target == "service";
+            }
+            return undefined;
     }
 }

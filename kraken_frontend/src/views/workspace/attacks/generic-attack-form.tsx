@@ -8,23 +8,16 @@ import ExpandIcon from "../../../svg/expand";
 import { ObjectFns, handleApiError } from "../../../utils/helper";
 import StartAttack from "../components/start-attack";
 import { WORKSPACE_CONTEXT } from "../workspace";
-import { IAttackDescr, PrefilledAttackParams } from "../workspace-attacks";
+import { IAttackDescr } from "../workspace-attacks";
 
 type GenericAttackFormProps = {
-    prefilled: PrefilledAttackParams[];
+    prefilled: { [key: string]: any[] };
     attack: IAttackDescr;
 };
 type GenericAttackFormState = {
     value: { [apiJsonKey: string]: any };
     resetValue: { [apiJsonKey: string]: any };
-    prefilled: { [apiJsonKey: string]: any[] };
 };
-
-/**
- * If a value inside `GenericAttackFormState.value` is `=== PREFILL_MULTI_MAGIC`,
- * use prefilled values when sending data.
- */
-const PREFILL_MULTI_MAGIC = function () {};
 
 export default class GenericAttackForm extends React.Component<GenericAttackFormProps, GenericAttackFormState> {
     static contextType = WORKSPACE_CONTEXT;
@@ -35,69 +28,48 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
         super(props);
 
         let resetValue: GenericAttackFormState["resetValue"] = {};
-        let prefilled: GenericAttackFormState["prefilled"] = {};
         for (const key of Object.keys(props.attack.inputs.inputs)) {
             let input = props.attack.inputs.inputs[key];
             if ("fixed" in input) {
                 resetValue[key] = input.fixed;
             } else {
                 resetValue[key] = input.multi ? [input.defaultValue] : input.defaultValue;
+            }
+        }
 
-                this.updatePrefill(resetValue, prefilled, key);
+        let value = ObjectFns.deepDuplicate(resetValue);
+        // if pre-fill is a single value, just embed the value
+        if (Object.keys(props.prefilled).every((k) => props.prefilled[k].length == 1)) {
+            for (const k of Object.keys(props.prefilled)) {
+                let input = props.attack.inputs.inputs[k];
+                value[k] = "multi" in input && input.multi ? [props.prefilled[k][0]] : props.prefilled[k][0];
             }
         }
 
         this.inputRefs = [];
 
         this.state = {
-            resetValue: resetValue,
-            value: ObjectFns.deepDuplicate(resetValue),
-            prefilled,
+            resetValue,
+            value,
         };
     }
 
     componentDidUpdate(prevProps: Readonly<GenericAttackFormProps>, prevState: Readonly<GenericAttackFormState>) {
         if (this.props.attack.inputs.inputs != prevProps.attack.inputs.inputs) {
             let resetValue: GenericAttackFormState["resetValue"] = {};
-            let prefilled: GenericAttackFormState["prefilled"] = {};
             for (const key of Object.keys(this.props.attack.inputs.inputs)) {
                 let input = this.props.attack.inputs.inputs[key];
                 if ("fixed" in input) {
                     resetValue[key] = input.fixed;
                 } else {
                     resetValue[key] = input.multi ? [input.defaultValue] : input.defaultValue;
-
-                    this.updatePrefill(resetValue, prefilled, key);
                 }
             }
 
             this.setState({
                 resetValue,
                 value: ObjectFns.deepDuplicate(resetValue),
-                prefilled,
             });
-        }
-    }
-
-    updatePrefill(into: GenericAttackFormState["value"], prefilled: GenericAttackFormState["prefilled"], key: string) {
-        let input = this.props.attack.inputs.inputs[key];
-        if (input && !("fixed" in input) && input.prefill) {
-            for (const prefill of input.prefill) {
-                let preprocess = input.preprocess ? input.preprocess.bind(input) : undefined;
-                let v = this.props.prefilled.map((v) => (preprocess ? preprocess(v[prefill]) : v[prefill]));
-                let first = v.find((v) => v !== undefined);
-                if (first !== undefined) {
-                    prefilled[key] = v;
-                    if (v.every((v) => v === first)) {
-                        if (input.preprocess) first = input.preprocess(first);
-                        into[key] = input.multi ? [first] : first;
-                        break;
-                    } else if (v.some((v) => v !== undefined)) {
-                        into[key] = PREFILL_MULTI_MAGIC;
-                        break;
-                    }
-                }
-            }
         }
     }
 
@@ -109,13 +81,13 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
         let needMultiCallArgs = [];
         for (const key of Object.keys(this.props.attack.inputs.inputs)) {
             let input = this.props.attack.inputs.inputs[key];
-            if (params[key] === PREFILL_MULTI_MAGIC) {
+            if (this.usePrefill(key)) {
                 needMultiCallArgs.push(key);
             }
 
             if ("fixed" in input) {
             } else {
-                if (input.required && (params[key] === undefined || params[key] === "")) {
+                if (input.required && !this.usePrefill(key) && (params[key] === undefined || params[key] === "")) {
                     toast.error(input.label + " must not be empty");
                     return;
                 }
@@ -124,8 +96,8 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
 
         let len = undefined;
         for (const k of needMultiCallArgs) {
-            len ??= this.state.prefilled[k].length;
-            if (this.state.prefilled[k].length != len)
+            len ??= this.props.prefilled[k].length;
+            if (this.props.prefilled[k].length != len)
                 return toast.error(
                     "Invalid selection: prefills have different prefill value argument dimensions, can't generate API requests",
                 );
@@ -142,15 +114,9 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
 
             for (const key of needMultiCallArgs) {
                 keys.push(key);
-                values.push(this.state.prefilled[key]);
+                values.push(this.props.prefilled[key]);
             }
 
-            // deduplicate attack input parameters for multi-functions
-            // for non-multi functions, see below where `copies` is created
-            values = ObjectFns.transpose2D(values);
-            values = ObjectFns.uniqueObjects(values);
-            values = ObjectFns.transpose2D(values);
-            if (keys.length != values.length) throw new Error("logic error");
             for (let i = 0; i < keys.length; i++) params[keys[i]] = values[i];
             needMultiCallArgs = [];
         }
@@ -177,7 +143,7 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
                 let copy = { ...params };
                 for (const k of needMultiCallArgs) {
                     let input = this.props.attack.inputs.inputs[k];
-                    copy[k] = this.state.prefilled[k][i];
+                    copy[k] = this.props.prefilled[k][i];
                     if (!("fixed" in input)) {
                         if (input.required && copy[k] === undefined)
                             return toast.error("selection has undefined item for required key '" + k + "'");
@@ -186,8 +152,6 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
                 }
                 copies.push(copy);
             }
-
-            copies = ObjectFns.uniqueObjects(copies);
 
             let finished = 0;
             let failed = 0;
@@ -231,6 +195,10 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
         }
     }
 
+    usePrefill(key: string): boolean {
+        return this.props.prefilled[key]?.length > 1;
+    }
+
     render() {
         let groups: { [name: string]: JSX.Element[] } = {};
         let groupOrder: string[] = [];
@@ -248,17 +216,14 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
             let input = this.props.attack.inputs.inputs[key];
             if ("fixed" in input) {
                 // should we show fixed inputs? could show them here
-            } else if (this.state.value[key] === PREFILL_MULTI_MAGIC) {
+            } else if (this.usePrefill(key)) {
                 getGroup(input.group ?? "").push(
                     <>
                         <div>{input.label}</div>
                         <Popup
                             trigger={
                                 <span className="workspace-data-certainty-icon">
-                                    <em>
-                                        {this.state.prefilled[key].filter((v) => v !== undefined).length} different
-                                        values
-                                    </em>
+                                    <em>{this.props.prefilled[key].filter((v) => v !== undefined).length} values</em>
                                 </span>
                             }
                             position={"bottom center"}
@@ -268,7 +233,7 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
                             <div className="pane-thin">
                                 <h2 className="sub-heading">Values for {key}</h2>
                                 <pre>
-                                    {this.state.prefilled[key]
+                                    {this.props.prefilled[key]
                                         .filter((v) => v !== undefined)
                                         .map((v) => JSON.stringify(v))
                                         .join("\n")}
@@ -285,7 +250,7 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
                         ref={(e) => (this.inputRefs[i++] = e)}
                         key={key + "_gen"}
                         value={input.multi ? this.state.value[key][0] : this.state.value[key]}
-                        prefill={this.state.prefilled[key] ? this.state.prefilled[key][0] : undefined}
+                        prefill={this.props.prefilled[key]}
                         valueKey={key}
                         label={input.label ?? key}
                         required={input.required ?? false}

@@ -6,7 +6,7 @@ export type AttacksParams = {
     activeAttack: AttackType | null;
     onAttackHover: (attack_type: AttackType | null) => void;
     onAttackSelect: (attack_type: AttackType) => void;
-    disabled: Partial<Record<AttackType, boolean>>;
+    disabled: Record<AttackType, boolean>;
     onClickOutside?: (e: React.MouseEvent<SVGSVGElement>) => any;
 
     className?: string;
@@ -260,7 +260,7 @@ function Hex(props: {
     activeAttack: AttackType | null;
     onAttackHover: (attack_type: AttackType | null) => void;
     onAttackSelect: (attack_type: AttackType) => void;
-    disabled: Partial<Record<AttackType, boolean>>;
+    disabled: Record<AttackType, boolean>;
     onClickOutside?: (e: React.MouseEvent<SVGSVGElement>) => any;
 }) {
     // we use useState so react caches the random value for us.
@@ -271,7 +271,7 @@ function Hex(props: {
 
     const mouseHandler = useCallback(
         (attackType: AttackType) =>
-            props.disabled[attackType] || false
+            props.disabled[attackType]
                 ? {}
                 : {
                       onClick: () => props.onAttackSelect(attackType),

@@ -10,7 +10,7 @@ import { parseUserPorts } from "../../../utils/ports";
 export interface IAttackInputProps extends Omit<React.HTMLProps<HTMLElement>, "ref"> {
     valueKey: string;
     label: string;
-    prefill: string | undefined;
+    prefill: any[] | undefined;
     value: any;
     required: boolean;
     onUpdate: (key: string, v: any) => any;
@@ -253,8 +253,10 @@ const DEHASHED_SEARCH_TYPES: Array<SelectValue> = [
 ];
 
 export const DehashedAttackInput = forwardRef((props: AttackInputProps<Query>, ref) => {
-    let [search, setSearch] = useState<string>(props.prefill || "");
-    let [type, setType] = useState<null | SelectValue>(null);
+    let [search, setSearch] = useState<string>(props.value !== undefined ? Object.keys(props.value)[0] || "" : "");
+    let [type, setType] = useState<null | SelectValue>(
+        props.value && search ? (props.value as any)[search]?.simple || "" : "",
+    );
 
     let htmlProps: any = { ...props };
     delete htmlProps["value"];
