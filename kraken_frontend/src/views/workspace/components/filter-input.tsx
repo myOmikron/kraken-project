@@ -6,7 +6,7 @@ import SearchIcon from "../../../svg/search";
 import SettingsIcon from "../../../svg/settings";
 import ParserError from "../../../utils/filter/error";
 import { tokenize } from "../../../utils/filter/lexer";
-import { addExprs, removeExprs } from "../../../utils/filter/mutate";
+import { addExprRange, addExprs, removeExprRange, removeExprs } from "../../../utils/filter/mutate";
 import {
     parseDomainAST,
     parseGlobalAST,
@@ -97,6 +97,7 @@ export default function FilterInput(props: FilterInputProps) {
 
 export type FilterOutput = FilterInputProps & {
     addColumn: (column: string, value: string, negate: boolean) => any;
+    addRange: (column: string, from: string, to: string, negate: boolean) => any;
 };
 export function useFilter(target: FilterInputProps["target"]): FilterOutput {
     const [value, onChange] = React.useState("");
@@ -117,6 +118,15 @@ export function useFilter(target: FilterInputProps["target"]): FilterOutput {
         addColumn: (column, value, negate) => {
             onChange((v) => {
                 let newFilter = negate ? removeExprs(v, column, value) : addExprs(v, column, value, "and");
+                onApply(newFilter);
+                return newFilter;
+            });
+        },
+        addRange: (column, from, to, negate) => {
+            onChange((v) => {
+                let newFilter = negate
+                    ? removeExprRange(v, column, from, to)
+                    : addExprRange(v, column, from, to, "and");
                 onApply(newFilter);
                 return newFilter;
             });

@@ -34,45 +34,49 @@ function findColumnValueSpan(filter: string, columnName: string): { column: Span
 }
 
 export function addExprs(filter: string, column: string, value: string, op: "or" | "and"): string {
-    let range = tryParseRange(value);
-    if (range) {
-        if (!filter.length) return column + ":" + valueToString(range[0]) + "-" + valueToString(range[1]);
+    if (!filter.length) return column + ":" + valueToString(value);
 
-        let span = findColumnValueSpan(filter, column)?.value;
-        if (!span) return filter + " " + column + ":" + valueToString(range[0]) + "-" + valueToString(range[1]);
+    let span = findColumnValueSpan(filter, column)?.value;
+    if (!span) return filter + " " + column + ":" + valueToString(value);
 
-        return (
-            filter.substring(0, span.start) +
-            insertRange(filter.substring(span.start, span.end), range, op) +
-            filter.substring(span.end)
-        );
-    } else {
-        if (!filter.length) return column + ":" + valueToString(value);
+    return (
+        filter.substring(0, span.start) +
+        insertValue(filter.substring(span.start, span.end), value, op) +
+        filter.substring(span.end)
+    );
+}
 
-        let span = findColumnValueSpan(filter, column)?.value;
-        if (!span) return filter + " " + column + ":" + valueToString(value);
+export function addExprRange(filter: string, column: string, from: string, to: string, op: "or" | "and"): string {
+    if (!filter.length) return column + ":" + valueToString(from) + "-" + valueToString(to);
 
-        return (
-            filter.substring(0, span.start) +
-            insertValue(filter.substring(span.start, span.end), value, op) +
-            filter.substring(span.end)
-        );
-    }
+    let span = findColumnValueSpan(filter, column)?.value;
+    if (!span) return filter + " " + column + ":" + valueToString(from) + "-" + valueToString(to);
+
+    return (
+        filter.substring(0, span.start) +
+        insertRange(filter.substring(span.start, span.end), [from, to], op) +
+        filter.substring(span.end)
+    );
 }
 
 export function removeExprs(filter: string, column: string, value: string): string {
     let span = findColumnValueSpan(filter, column);
     if (!span) return filter;
 
-    let range = tryParseRange(value);
     let newValue = "";
-    if (range) {
-        newValue = removeRange(filter.substring(span.value.start, span.value.end), range);
-        if (!newValue) return filter.substring(0, span.column.start) + filter.substring(span.value.end);
-    } else {
-        newValue = removeValue(filter.substring(span.value.start, span.value.end), value);
-        if (!newValue) return filter.substring(0, span.column.start) + filter.substring(span.value.end);
-    }
+    newValue = removeValue(filter.substring(span.value.start, span.value.end), value);
+    if (!newValue) return filter.substring(0, span.column.start) + filter.substring(span.value.end);
+
+    return filter.substring(0, span.value.start) + newValue + filter.substring(span.value.end);
+}
+
+export function removeExprRange(filter: string, column: string, from: string, to: string): string {
+    let span = findColumnValueSpan(filter, column);
+    if (!span) return filter;
+
+    let newValue = "";
+    newValue = removeRange(filter.substring(span.value.start, span.value.end), [from, to]);
+    if (!newValue) return filter.substring(0, span.column.start) + filter.substring(span.value.end);
 
     return filter.substring(0, span.value.start) + newValue + filter.substring(span.value.end);
 }
@@ -129,17 +133,6 @@ function insertValue(existing: string, addValue: string, op: "or" | "and"): stri
     } else {
         throw new Error("invalid operator");
     }
-}
-
-function tryParseRange(value: string): [string, string] | undefined {
-    try {
-        const tok = tokenize(value);
-        if (tok.length == 3 && tok[0].type == "value" && tok[1].type == "rangeOperator" && tok[2].type == "value")
-            return [tok[0].value, tok[2].value];
-    } catch (e) {
-        // ignore parse error on value
-    }
-    return undefined;
 }
 
 function removeValue(existing: string, value: string): string {

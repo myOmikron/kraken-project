@@ -128,7 +128,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
         title: ReactNode,
         filter: FilterOutput,
         column: string,
-        value: string,
+        value: string | [string, string],
         overrideLabel?: ReactNode,
     ): PlainMenuItem {
         return [
@@ -145,8 +145,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 )}
             </>,
             (e) => {
-                console.log(e);
-                (e.ctrlKey ? globalFilter : filter).addColumn(column, value, e.altKey);
+                if (Array.isArray(value))
+                    (e.ctrlKey ? globalFilter : filter).addRange(column, value[0], value[1], e.altKey);
+                else (e.ctrlKey ? globalFilter : filter).addColumn(column, value, e.altKey);
             },
         ];
     }
@@ -176,7 +177,10 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
             "",
             filter,
             column,
-            `"${new Date(date.getTime() - deltaPlusMinusMs).toISOString()}"-"${new Date(date.getTime() + deltaPlusMinusMs).toISOString()}"`,
+            [
+                new Date(date.getTime() - deltaPlusMinusMs).toISOString(),
+                new Date(date.getTime() + deltaPlusMinusMs).toISOString(),
+            ],
             "Date within " + amountHuman,
         );
 
