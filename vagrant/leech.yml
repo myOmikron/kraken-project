@@ -110,11 +110,7 @@
         owner: root
     - name: Restart leech
       systemd:
+        daemon_reload: yes
         enabled: yes
-        name: leech.service
-        state: restarted
-
-    - name: Restart leech
-      systemd:
         name: leech.service
         state: restarted
