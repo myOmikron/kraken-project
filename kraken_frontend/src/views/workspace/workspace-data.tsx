@@ -268,8 +268,8 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                                 return ObjectFns.uniqueObjects([
                                                     ...data.directHosts.map((h) => ["ips", h.ipAddr]),
                                                     ...data.indirectHosts.map((h) => ["ips", h.ipAddr]),
-                                                    ...data.directHosts.map((h) => ["os", h.osType]),
-                                                    ...data.indirectHosts.map((h) => ["os", h.osType]),
+                                                    ...data.directHosts.map((h) => ["ips.os", h.osType]),
+                                                    ...data.indirectHosts.map((h) => ["ips.os", h.osType]),
                                                 ]).map(([k, v]) => findSimilarAction(domainFilter, k, v));
                                             })
                                             .catch((e) => [["Failed loading hosts", undefined]]),
@@ -439,7 +439,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     copyTagsAction(port.tags, portFilter),
                                     filterAction(portFilter, "ports", port.port + ""),
                                     filterAction(portFilter, "ips", port.host.ipAddr),
-                                    filterAction(portFilter, "os", port.host.osType),
+                                    filterAction(portFilter, "ips.os", port.host.osType),
                                     filterAction(portFilter, "protocols", port.protocol),
                                     () =>
                                         Api.workspaces.ports
@@ -526,7 +526,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     copyTagsAction(service.tags, serviceFilter),
                                     filterAction(serviceFilter, "service", service.name),
                                     filterAction(serviceFilter, "ips", service.host.ipAddr),
-                                    filterAction(serviceFilter, "os", service.host.osType),
+                                    filterAction(serviceFilter, "ips.os", service.host.osType),
                                     ...(service.port
                                         ? [filterAction(serviceFilter, "ports", service.port.port + "")]
                                         : []),
