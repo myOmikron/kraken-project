@@ -296,7 +296,6 @@ export const DehashedAttackInput = forwardRef((props: AttackInputProps<Query>, r
         }
 
         props.onUpdate(props.valueKey, query);
-        console.log("update:", query);
     }
 
     return (

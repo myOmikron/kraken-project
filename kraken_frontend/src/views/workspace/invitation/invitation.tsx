@@ -37,7 +37,6 @@ export default class Invitation extends React.Component<InvitationProps, Invitat
     }
 
     render() {
-        console.log(this.props, this.state);
         return (
             <Popup closeOnEscape={false} closeOnDocumentClick={false} modal={true} nested={true} open={true}>
                 <div className="invitation-popup pane">
