@@ -1,13 +1,12 @@
 import React from "react";
 import { toast } from "react-toastify";
-import { SimpleTag } from "../../../api/generated";
 import Input from "../../../components/input";
 import CheckmarkIcon from "../../../svg/checkmark";
 import SearchIcon from "../../../svg/search";
 import SettingsIcon from "../../../svg/settings";
 import ParserError from "../../../utils/filter/error";
 import { tokenize } from "../../../utils/filter/lexer";
-import { addExprs, removeExprs } from "../../../utils/filter/mutate";
+import { addExprRange, addExprs, removeExprRange, removeExprs } from "../../../utils/filter/mutate";
 import {
     parseDomainAST,
     parseGlobalAST,
@@ -97,7 +96,8 @@ export default function FilterInput(props: FilterInputProps) {
 }
 
 export type FilterOutput = FilterInputProps & {
-    addTag: (tag: SimpleTag, negate: boolean) => any;
+    addColumn: (column: string, value: string, negate: boolean) => any;
+    addRange: (column: string, from: string, to: string, negate: boolean) => any;
 };
 export function useFilter(target: FilterInputProps["target"]): FilterOutput {
     const [value, onChange] = React.useState("");
@@ -115,9 +115,18 @@ export function useFilter(target: FilterInputProps["target"]): FilterOutput {
         applied,
         onApply,
         target,
-        addTag: (tag, negate) => {
+        addColumn: (column, value, negate) => {
             onChange((v) => {
-                let newFilter = negate ? removeExprs(v, "tag", tag.name) : addExprs(v, "tag", tag.name, "and");
+                let newFilter = negate ? removeExprs(v, column, value) : addExprs(v, column, value, "and");
+                onApply(newFilter);
+                return newFilter;
+            });
+        },
+        addRange: (column, from, to, negate) => {
+            onChange((v) => {
+                let newFilter = negate
+                    ? removeExprRange(v, column, from, to)
+                    : addExprRange(v, column, from, to, "and");
                 onApply(newFilter);
                 return newFilter;
             });

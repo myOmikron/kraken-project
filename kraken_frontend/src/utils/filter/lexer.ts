@@ -111,7 +111,7 @@ export function tokensToString(tokens: SpanlessToken[]): string {
         switch (token.type) {
             case "column":
                 if (ret.length && !ret.endsWith(" ")) ret += " ";
-                ret += token.value + ":";
+                ret += token.value + ": ";
                 break;
             case "logicalAnd":
                 ret += " & ";
@@ -123,7 +123,7 @@ export function tokensToString(tokens: SpanlessToken[]): string {
                 ret += ", ";
                 break;
             case "rangeOperator":
-                ret += "-";
+                ret += " - ";
                 break;
             case "value":
                 ret += valueToString(token.value);
