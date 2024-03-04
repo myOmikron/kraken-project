@@ -198,11 +198,11 @@ pub fn find_source_ip(destination: IpAddr) -> std::io::Result<IpAddr> {
                 let src_v4 = address
                     .as_sockaddr_in()
                     .expect("family is inet, this must be set");
-                let src_v4 = Ipv4Addr::from(src_v4.ip());
+                let src_v4 = src_v4.ip();
                 if let Some(netmask) = netmask.as_sockaddr_in() {
-                    let netmask = Ipv4Addr::from(netmask.ip());
+                    let netmask = netmask.ip();
                     if src_v4 & netmask == dst_v4 & netmask {
-                        return Ok(IpAddr::V4(src_v4));
+                        return Ok(IpAddr::from(src_v4));
                     }
                 }
             }
@@ -223,12 +223,12 @@ pub fn find_source_ip(destination: IpAddr) -> std::io::Result<IpAddr> {
 
         if is_first {
             if let Some(ip) = match address.family() {
-                Some(AddressFamily::Inet) => Some(IpAddr::from(Ipv4Addr::from(
+                Some(AddressFamily::Inet) => Some(IpAddr::from(
                     address
                         .as_sockaddr_in()
                         .expect("family is inet, this must be set")
                         .ip(),
-                ))),
+                )),
                 Some(AddressFamily::Inet6) => Some(IpAddr::from(
                     address
                         .as_sockaddr_in6()
