@@ -1,19 +1,20 @@
-import React, { useEffect, useRef, useState } from "react";
-import Input from "../../../components/input";
-import Checkbox from "../../../components/checkbox";
-import { PortOrRange, Query } from "../../../api/generated";
-import { parseUserPorts } from "../../../utils/ports";
+import React, { forwardRef, useEffect, useRef, useState } from "react";
 import { Api } from "../../../api/api";
-import { handleApiError } from "../../../utils/helper";
+import { PortOrRange, Query } from "../../../api/generated";
+import Checkbox from "../../../components/checkbox";
+import Input from "../../../components/input";
 import SelectMenu from "../../../components/select-menu";
+import { handleApiError } from "../../../utils/helper";
+import { parseUserPorts } from "../../../utils/ports";
 
-export interface IAttackInputProps extends React.HTMLProps<HTMLElement> {
+export interface IAttackInputProps extends Omit<React.HTMLProps<HTMLElement>, "ref"> {
     valueKey: string;
     label: string;
     prefill: string | undefined;
     value: any;
     required: boolean;
     onUpdate: (key: string, v: any) => any;
+    ref: React.Ref<any>;
 }
 
 export interface AttackInputProps<T> extends IAttackInputProps {
@@ -21,7 +22,7 @@ export interface AttackInputProps<T> extends IAttackInputProps {
     onUpdate: (key: string, v: T | undefined) => any;
 }
 
-export function StringAttackInput(props: AttackInputProps<string>) {
+export const StringAttackInput = forwardRef((props: AttackInputProps<string>, ref) => {
     let htmlProps: any = { ...props };
     delete htmlProps["value"];
     delete htmlProps["label"];
@@ -35,6 +36,7 @@ export function StringAttackInput(props: AttackInputProps<string>) {
                 {props.label ?? props.valueKey}
             </label>
             <Input
+                ref={ref}
                 key={props.valueKey + "_value"}
                 id={props.valueKey + "_input"}
                 value={props.value || ""}
@@ -45,12 +47,13 @@ export function StringAttackInput(props: AttackInputProps<string>) {
             />
         </>
     );
-}
+});
 
 export function ConvertingAttackInput<T>(
     props: AttackInputProps<T> & {
         deserialize: (v: string) => T;
         serialize: (v: T | undefined) => string;
+        inputRef?: React.ForwardedRef<HTMLInputElement>;
     },
 ) {
     let [errorInput, setErrorInput] = useState<string | undefined>(undefined);
@@ -64,7 +67,7 @@ export function ConvertingAttackInput<T>(
     delete htmlProps["serialize"];
     delete htmlProps["deserialize"];
 
-    let ref = useRef<HTMLInputElement>();
+    let ref = useRef<HTMLInputElement | null>();
 
     return (
         <>
@@ -74,7 +77,11 @@ export function ConvertingAttackInput<T>(
             <Input
                 key={props.valueKey + "_value"}
                 id={props.valueKey + "_input"}
-                ref={ref}
+                ref={(e) => {
+                    ref.current = e;
+                    if (typeof props.inputRef == "function") props.inputRef(e);
+                    else if (props.inputRef) props.inputRef.current = e;
+                }}
                 value={errorInput ?? props.serialize(props.value)}
                 onChange={(v) => {
                     let newValue;
@@ -96,25 +103,30 @@ export function ConvertingAttackInput<T>(
     );
 }
 
-export function PortListInput(props: AttackInputProps<PortOrRange[] | undefined>) {
-    return (
-        <ConvertingAttackInput
-            deserialize={(v) => parseUserPorts(v).unwrap()}
-            serialize={(v) => (v ? (typeof v === "number" ? "" + v : v.join(", ")) : "")}
-            {...props}
-        />
-    );
-}
-
-export function NumberAttackInput(
-    props: AttackInputProps<number> & {
-        minimum?: number;
+export const PortListInput = forwardRef(
+    (props: Omit<AttackInputProps<PortOrRange[] | undefined>, "ref">, ref: React.ForwardedRef<HTMLInputElement>) => {
+        return (
+            <ConvertingAttackInput
+                ref={ref}
+                deserialize={(v) => parseUserPorts(v).unwrap()}
+                serialize={(v) => (v ? (typeof v === "number" ? "" + v : v.join(", ")) : "")}
+                {...props}
+            />
+        );
     },
-) {
+);
+
+export const NumberAttackInput = forwardRef<
+    HTMLInputElement,
+    AttackInputProps<number> & {
+        minimum?: number;
+    }
+>((props, ref) => {
     let minimum = props.minimum ?? 1;
 
     return (
         <ConvertingAttackInput
+            inputRef={ref}
             deserialize={(v) => {
                 const n = Number(v);
                 if (n === null || !Number.isSafeInteger(n) || n < minimum) {
@@ -126,17 +138,22 @@ export function NumberAttackInput(
             {...props}
         />
     );
-}
+});
 
-export function DurationAttackInput(
-    props: AttackInputProps<number> & {
-        minimum?: number;
-    },
-) {
-    return <NumberAttackInput placeholder="time in ms" {...props} label={props.label + " (ms)"} />;
-}
+export const DurationAttackInput = forwardRef<
+    HTMLInputElement,
+    // Omit because of this error: https://stackoverflow.com/questions/70198671/react-nested-forwardref
+    Omit<
+        AttackInputProps<number> & {
+            minimum?: number;
+        },
+        "ref"
+    >
+>((props, ref) => {
+    return <NumberAttackInput ref={ref} placeholder="time in ms" {...props} label={props.label + " (ms)"} />;
+});
 
-export function BooleanAttackInput(props: AttackInputProps<boolean>) {
+export const BooleanAttackInput = forwardRef((props: AttackInputProps<boolean>, ref) => {
     let htmlProps: any = { ...props };
     delete htmlProps["value"];
     delete htmlProps["label"];
@@ -147,6 +164,7 @@ export function BooleanAttackInput(props: AttackInputProps<boolean>) {
     return (
         <div className="checkbox">
             <Checkbox
+                ref={ref}
                 id={props.valueKey + "_input"}
                 value={props.value}
                 onChange={(v) => props.onUpdate(props.valueKey, v)}
@@ -157,9 +175,9 @@ export function BooleanAttackInput(props: AttackInputProps<boolean>) {
             </label>
         </div>
     );
-}
+});
 
-export function WordlistAttackInput(props: AttackInputProps<string>) {
+export const WordlistAttackInput = (props: AttackInputProps<string>) => {
     let [wordlists, setWordlists] = useState<{ label: string; value: string }[]>([]);
 
     useEffect(() => {
@@ -196,7 +214,7 @@ export function WordlistAttackInput(props: AttackInputProps<string>) {
             />
         </>
     );
-}
+};
 
 export type DehashedQueryType =
     | "email"
@@ -228,7 +246,7 @@ const DEHASHED_SEARCH_TYPES: Array<SelectValue> = [
     { label: "Vin", value: "vin" },
 ];
 
-export function DehashedAttackInput(props: AttackInputProps<Query>) {
+export const DehashedAttackInput = forwardRef((props: AttackInputProps<Query>, ref) => {
     let [search, setSearch] = useState<string>(props.prefill || "");
     let [type, setType] = useState<null | SelectValue>(null);
 
@@ -295,6 +313,7 @@ export function DehashedAttackInput(props: AttackInputProps<Query>) {
                 }}
             />
             <Input
+                ref={ref}
                 key={props.valueKey + "_value"}
                 placeholder={"dehashed query"}
                 {...htmlProps}
@@ -306,4 +325,4 @@ export function DehashedAttackInput(props: AttackInputProps<Query>) {
             />
         </>
     );
-}
+});

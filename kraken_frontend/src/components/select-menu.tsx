@@ -20,8 +20,12 @@ type SelectValue = {
 };
 
 export default class SelectMenu extends React.Component<SelectMenuProps, SelectMenuState> {
+    declare ref: React.Ref<any>;
+
     constructor(props: SelectMenuProps) {
         super(props);
+
+        this.ref = React.createRef();
 
         this.state = {
             type: null,
@@ -31,6 +35,7 @@ export default class SelectMenu extends React.Component<SelectMenuProps, SelectM
     render() {
         return (
             <Select<SelectValue>
+                ref={this.ref}
                 id={this.props.id}
                 required={this.props.required}
                 options={this.props.options}

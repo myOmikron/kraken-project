@@ -29,6 +29,7 @@ const PREFILL_MULTI_MAGIC = function () {};
 export default class GenericAttackForm extends React.Component<GenericAttackFormProps, GenericAttackFormState> {
     static contextType = WORKSPACE_CONTEXT;
     declare context: React.ContextType<typeof WORKSPACE_CONTEXT>;
+    declare inputRefs: (HTMLElement | null)[];
 
     constructor(props: GenericAttackFormProps) {
         super(props);
@@ -45,6 +46,8 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
                 this.updatePrefill(resetValue, prefilled, key);
             }
         }
+
+        this.inputRefs = [];
 
         this.state = {
             resetValue: resetValue,
@@ -163,7 +166,10 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
         }
 
         if (needMultiCallArgs.length == 0) {
-            send(this.props.attack, params).then((_) => toast.success("Attack started"));
+            send(this.props.attack, params).then((_) => {
+                toast.success("Attack started");
+                this.afterAttackHandler();
+            });
         } else {
             let copies: (typeof params)[] = [];
             if (len === undefined) throw new Error("impossible state");
@@ -186,7 +192,7 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
             let finished = 0;
             let failed = 0;
 
-            function checkDone() {
+            const checkAllStarted = () => {
                 if (finished + failed == copies.length) {
                     if (failed == 0) {
                         toast.success("Started " + finished + " attacks");
@@ -195,22 +201,33 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
                     } else {
                         toast.warn(finished + " attacks started, " + failed + " failed!");
                     }
-                }
-            }
 
-            checkDone();
+                    this.afterAttackHandler();
+                }
+            };
+
+            checkAllStarted();
             for (const copy of copies) {
                 send(this.props.attack, copy).then(
                     (f) => {
                         finished++;
-                        checkDone();
+                        checkAllStarted();
                     },
                     (e) => {
                         failed++;
-                        checkDone();
+                        checkAllStarted();
                     },
                 );
             }
+        }
+    }
+
+    // This is called after attacks are successfully started.
+    afterAttackHandler() {
+        let first = this.inputRefs.find((v) => v);
+        if (first) {
+            first.focus();
+            if ("select" in first && typeof first["select"] == "function") first.select();
         }
     }
 
@@ -223,6 +240,9 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
             groupOrder.push(name);
             return (groups[name] = []);
         }
+
+        this.inputRefs = [];
+        let i = 0;
 
         Object.keys(this.props.attack.inputs.inputs).map((key, i) => {
             let input = this.props.attack.inputs.inputs[key];
@@ -262,6 +282,7 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
                 let row = (
                     <Type
                         {...input.renderProps}
+                        ref={(e) => (this.inputRefs[i++] = e)}
                         key={key + "_gen"}
                         value={input.multi ? this.state.value[key][0] : this.state.value[key]}
                         prefill={this.state.prefilled[key] ? this.state.prefilled[key][0] : undefined}

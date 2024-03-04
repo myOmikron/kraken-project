@@ -1,4 +1,4 @@
-import React from "react";
+import React, { forwardRef } from "react";
 
 export type CheckboxProps = {
     value: boolean;
@@ -6,7 +6,7 @@ export type CheckboxProps = {
     autoFocus?: boolean;
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "autoFocus" | "type">;
 
-export default function Checkbox(props: CheckboxProps) {
+export const Checkbox = forwardRef((props: CheckboxProps, ref) => {
     const { value, onChange, autoFocus, ...passThrough } = props;
 
     const callback = React.useCallback((element: HTMLInputElement) => {
@@ -15,6 +15,9 @@ export default function Checkbox(props: CheckboxProps) {
                 element.focus();
             }, 10);
         } // eslint-disable-next-line
+
+        if (typeof ref == "function") ref(element);
+        else if (ref) ref.current = element;
     }, []);
 
     return (
@@ -29,4 +32,5 @@ export default function Checkbox(props: CheckboxProps) {
             {...passThrough}
         />
     );
-}
+});
+export default Checkbox;
