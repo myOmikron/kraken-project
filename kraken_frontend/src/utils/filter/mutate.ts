@@ -1,4 +1,4 @@
-import { Span, SpanlessToken, TokenType, tokenize, tokensToString, valueToString } from "./lexer";
+import { Span, SpanlessToken, Token, TokenType, tokenize, tokensToString, valueToString } from "./lexer";
 
 /**
  * Given an input `filter`, return the span of its whole value starting after
@@ -13,17 +13,21 @@ function findColumnValueSpan(filter: string, columnName: string): { column: Span
     let tokens = tokenize(filter);
     let column: Span | undefined = undefined;
     let endIndex = -1;
+    let last: Token | undefined;
     for (const token of tokens) {
-        if (!column && token.type == "column" && token.value == columnName) {
+        if (column === undefined && token.type == "column" && token.value == columnName) {
             column = token.span;
-        } else if (column && token.type == "column") {
-            endIndex = token.span.start;
+        } else if (column !== undefined && token.type == "column") {
+            if (!last) throw new Error("logic error: last should always be defined here");
+            endIndex = last.span.end;
+            break;
         }
+        last = token;
     }
 
-    if (!column) return undefined;
-
+    if (column === undefined) return undefined;
     if (endIndex == -1) endIndex = filter.length;
+
     return {
         column,
         value: {
@@ -37,7 +41,7 @@ export function addExprs(filter: string, column: string, value: string, op: "or"
     if (!filter.length) return column + ":" + valueToString(value);
 
     let span = findColumnValueSpan(filter, column)?.value;
-    if (!span) return filter + " " + column + ":" + valueToString(value);
+    if (!span) return (filter + " " + column + ":" + valueToString(value)).trim();
 
     return (
         filter.substring(0, span.start) +
@@ -50,7 +54,7 @@ export function addExprRange(filter: string, column: string, from: string, to: s
     if (!filter.length) return column + ":" + valueToString(from) + "-" + valueToString(to);
 
     let span = findColumnValueSpan(filter, column)?.value;
-    if (!span) return filter + " " + column + ":" + valueToString(from) + "-" + valueToString(to);
+    if (!span) return (filter + " " + column + ":" + valueToString(from) + "-" + valueToString(to)).trim();
 
     return (
         filter.substring(0, span.start) +
@@ -61,13 +65,14 @@ export function addExprRange(filter: string, column: string, from: string, to: s
 
 export function removeExprs(filter: string, column: string, value: string): string {
     let span = findColumnValueSpan(filter, column);
+    console.log(filter, span);
     if (!span) return filter;
 
     let newValue = "";
     newValue = removeValue(filter.substring(span.value.start, span.value.end), value);
-    if (!newValue) return filter.substring(0, span.column.start) + filter.substring(span.value.end);
+    if (!newValue) return (filter.substring(0, span.column.start) + filter.substring(span.value.end)).trim();
 
-    return filter.substring(0, span.value.start) + newValue + filter.substring(span.value.end);
+    return (filter.substring(0, span.value.start) + newValue + filter.substring(span.value.end)).trim();
 }
 
 export function removeExprRange(filter: string, column: string, from: string, to: string): string {
@@ -76,9 +81,9 @@ export function removeExprRange(filter: string, column: string, from: string, to
 
     let newValue = "";
     newValue = removeRange(filter.substring(span.value.start, span.value.end), [from, to]);
-    if (!newValue) return filter.substring(0, span.column.start) + filter.substring(span.value.end);
+    if (!newValue) return (filter.substring(0, span.column.start) + filter.substring(span.value.end)).trim();
 
-    return filter.substring(0, span.value.start) + newValue + filter.substring(span.value.end);
+    return (filter.substring(0, span.value.start) + newValue + filter.substring(span.value.end)).trim();
 }
 
 function insertRange(existing: string, addValue: [string, string], op: "or" | "and"): string {
