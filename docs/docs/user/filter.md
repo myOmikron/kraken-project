@@ -135,12 +135,12 @@ For example `port.protocol: tcp` on a `Host` would filter for TCP ports instead 
 
 ## Type values
 
-| Type                      | Valid values                                                                              |
-|---------------------------|:------------------------------------------------------------------------------------------|
-| **ip address or network** | IPv4 or IPv6 in CIDR notation                                                             |
-| **os type**               | `unknown`, `linux`, `windows`, `apple`, `android`, `freebsd`                              |
-| **port number**           | decimal port number (0-65535)                                                             |
-| **port protocol**         | `tcp`, `udp`, `sctp`, `unknown`                                                           |
-| **string**                | any valid string like described above, quoted if it contains `:`                          |
-| **time**                  | RFC3339 / ISO 8601 datetime: `"yyyy-mm-ddThh:mm:ssZ"`                                     |
-|                           | The `T` may be replaced with a space. The timezone must be UTC (`Z` / `+0000` / `+00:00`) |
+| Type                      | Valid values                                                                                                |
+|---------------------------|:------------------------------------------------------------------------------------------------------------|
+| **ip address or network** | IPv4 or IPv6 in CIDR notation                                                                               |
+| **os type**               | `unknown`, `linux`, `windows`, `apple`, `android`, `freebsd`                                                |
+| **port number**           | decimal port number (1-65535) - Usually valid as a range like `1000-2000`                                   |
+| **port protocol**         | `tcp`, `udp`, `sctp`, `unknown`                                                                             |
+| **string**                | any valid string like described above, quoted if it contains whitespace, `,`, `&`, `!`, `:`, `"` or `-`     |
+| **time**                  | RFC3339 / ISO 8601 datetime: `"yyyy-mm-ddThh:mm:ssZ"` - Usually valid as a range                            |
+|                           | The `T` may be replaced with a space. The timezone must be UTC (`Z`) or a fixed offset (`+0200` / `-01:30`) |
