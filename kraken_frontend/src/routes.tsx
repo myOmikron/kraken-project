@@ -1,26 +1,26 @@
-import Home from "./views/home";
-import React from "react";
+import AdminGuard from "./components/admin-guard";
 import { Router } from "./utils/router";
-import KrakenNetwork from "./views/kraken-network";
-import Me from "./views/me";
 import AdminUsers from "./views/admin/users";
 import AdminWorkspaces from "./views/admin/workspaces";
-import AdminGuard from "./components/admin-guard";
-import WorkspaceOverview from "./views/workspace-overview";
-import OauthRequest from "./views/oauth-request";
-import { ContentWithMenu } from "./views/menu";
-import Settings from "./views/settings";
-import Workspace from "./views/workspace/workspace";
-import WorkspaceSettings from "./views/workspace/workspace-settings";
-import WorkspaceData from "./views/workspace/workspace-data";
-import WorkspaceAttacks, { TargetType } from "./views/workspace/workspace-attacks";
-import WorkspaceHosts from "./views/workspace/workspace-hosts";
-import WorkspaceHost from "./views/workspace/workspace-host";
+import Home from "./views/home";
 import KnowledgeBase from "./views/knowledge-base";
 import { CreateFindingDefinition } from "./views/knowledge-base/create-finding-definition";
 import { EditFindingDefinition } from "./views/knowledge-base/edit-finding-definition";
 import { ListFindingDefinition } from "./views/knowledge-base/list-finding-definition";
+import KrakenNetwork from "./views/kraken-network";
+import Me from "./views/me";
+import { ContentWithMenu } from "./views/menu";
+import OauthRequest from "./views/oauth-request";
+import Settings from "./views/settings";
+import WorkflowEditor from "./views/workflow-editor";
+import WorkspaceOverview from "./views/workspace-overview";
+import Workspace from "./views/workspace/workspace";
+import WorkspaceAttacks, { TargetType } from "./views/workspace/workspace-attacks";
+import WorkspaceData from "./views/workspace/workspace-data";
+import WorkspaceHost from "./views/workspace/workspace-host";
+import WorkspaceHosts from "./views/workspace/workspace-hosts";
 import WorkspaceNotes from "./views/workspace/workspace-notes";
+import WorkspaceSettings from "./views/workspace/workspace-settings";
 
 export const ROUTER = new Router();
 
@@ -49,6 +49,15 @@ export const ROUTES = {
         render: () => (
             <ContentWithMenu>
                 <WorkspaceOverview />
+            </ContentWithMenu>
+        ),
+    }),
+    WORKFLOWS: ROUTER.add({
+        url: "workflows",
+        parser: {},
+        render: () => (
+            <ContentWithMenu>
+                <WorkflowEditor />
             </ContentWithMenu>
         ),
     }),

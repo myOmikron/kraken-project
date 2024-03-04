@@ -53,7 +53,7 @@ export enum AttackType {
     OsDetection = "os_detection",
 }
 
-type AttackRequestTypes = {
+export type AttackRequestTypes = {
     [AttackType.Dehashed]: QueryDehashedRequest;
     [AttackType.CertificateTransparency]: QueryCertificateTransparencyRequest;
     [AttackType.HostAlive]: HostsAliveRequest;
@@ -143,7 +143,7 @@ export type AllAttackDescr = {
     [T in AttackType]: AttackDescr<T>;
 };
 
-const ATTACKS: AllAttackDescr = {
+export const ATTACKS: AllAttackDescr = {
     bruteforce_subdomains: {
         name: "Bruteforce Subdomains",
         description: `Query a DNS server for all combinations of the given domain and the entries from the provided wordlist. 
