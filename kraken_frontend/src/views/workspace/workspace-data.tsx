@@ -469,7 +469,6 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 />
                                 <PortNumber port={port} />
                                 <span>{port.protocol.toUpperCase()}</span>
-                                <span>{port.host.ipAddr}</span>
                                 <IpAddr host={port.host} />
                                 <TagList tags={port.tags} globalFilter={globalFilter} filter={portFilter} />
                                 <span>{port.comment}</span>
