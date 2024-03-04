@@ -1,11 +1,13 @@
-import Input from "../../../components/input";
 import React from "react";
-import SettingsIcon from "../../../svg/settings";
-import SearchIcon from "../../../svg/search";
+import { toast } from "react-toastify";
+import { SimpleTag } from "../../../api/generated";
+import Input from "../../../components/input";
 import CheckmarkIcon from "../../../svg/checkmark";
+import SearchIcon from "../../../svg/search";
+import SettingsIcon from "../../../svg/settings";
 import ParserError from "../../../utils/filter/error";
 import { tokenize } from "../../../utils/filter/lexer";
-import { toast } from "react-toastify";
+import { addExprs, removeExprs } from "../../../utils/filter/mutate";
 import {
     parseDomainAST,
     parseGlobalAST,
@@ -94,7 +96,10 @@ export default function FilterInput(props: FilterInputProps) {
     );
 }
 
-export function useFilter(target: FilterInputProps["target"]): FilterInputProps {
+export type FilterOutput = FilterInputProps & {
+    addTag: (tag: SimpleTag, negate: boolean) => any;
+};
+export function useFilter(target: FilterInputProps["target"]): FilterOutput {
     const [value, onChange] = React.useState("");
     const [applied, onApply] = React.useState("");
     return {
@@ -110,5 +115,12 @@ export function useFilter(target: FilterInputProps["target"]): FilterInputProps 
         applied,
         onApply,
         target,
+        addTag: (tag, negate) => {
+            onChange((v) => {
+                let newFilter = negate ? removeExprs(v, "tag", tag.name) : addExprs(v, "tag", tag.name, "and");
+                onApply(newFilter);
+                return newFilter;
+            });
+        },
     };
 }

@@ -233,6 +233,12 @@ form:invalid .start-attack path:last-of-type {
     border-radius: 1em;
 }
 
+.tag.interactive:hover {
+    box-shadow:
+        0 0 1em var(--color),
+        0 0 1em rgba(255, 255, 255, 0.2) inset;
+}
+
 ::-webkit-scrollbar {
     width: 5px;
 }
