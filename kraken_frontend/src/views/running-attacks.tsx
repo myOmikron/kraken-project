@@ -1,13 +1,13 @@
 import React from "react";
-import "../styling/running-attacks.css";
-import RunningAttackIcon from "../svg/running-attack";
-import Popup from "reactjs-popup";
-import SuccessIcon from "../svg/success";
-import FailedIcon from "../svg/failed";
-import WS from "../api/websocket";
-import { Api, UUID } from "../api/api";
-import { AttackType, SimpleAttack, SimpleWorkspace } from "../api/generated";
 import { toast } from "react-toastify";
+import Popup from "reactjs-popup";
+import { Api, UUID } from "../api/api";
+import { SimpleAttack } from "../api/generated";
+import WS from "../api/websocket";
+import "../styling/running-attacks.css";
+import FailedIcon from "../svg/failed";
+import RunningAttackIcon from "../svg/running-attack";
+import SuccessIcon from "../svg/success";
 import { ATTACKS } from "../utils/attack-resolver";
 
 type RunningAttacksProps = {};
@@ -77,15 +77,16 @@ export default class RunningAttacks extends React.Component<RunningAttacksProps,
             <div className={"running-attacks-container"}>
                 {Object.entries(this.state.runningAttacks).map(([key, value]) => {
                     return (
-                        <>
+                        <React.Fragment key={key}>
                             <div>
                                 Workspace
                                 <br />
                             </div>
                             {value.map((attack) => (
                                 <Popup
+                                    key={attack.uuid}
                                     trigger={
-                                        <div className={"running-attacks-attack"}>
+                                        <div key={attack.uuid + "_trigger"} className={"running-attacks-attack"}>
                                             <RunningAttackIcon />
                                             {attack.finishedAt === null ? (
                                                 <span className={"running-attacks-inner neon"}>
@@ -119,7 +120,7 @@ export default class RunningAttacks extends React.Component<RunningAttacksProps,
                                 </Popup>
                             ))}
                             <div className={"running-attacks-seperator"}></div>
-                        </>
+                        </React.Fragment>
                     );
                 })}
             </div>
