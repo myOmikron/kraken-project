@@ -15,6 +15,7 @@ import {
 } from "./workflow-editor/common";
 import { WorkflowEditorDragLayer } from "./workflow-editor/drag-layer";
 import { DesignWorkflowNodeEditor } from "./workflow-editor/node";
+import { Viewport, ViewportProps } from "./workspace/components/viewport";
 import { AttackType } from "./workspace/workspace-attacks";
 
 export interface EditorNodeCSS extends CSSProperties {
@@ -32,7 +33,7 @@ export default function WorkflowEditor(props: WorkflowEditorProps) {
         (key) => [key, workflow.nodes[key]] as [string, DesignWorkflowNode<AttackType>],
     );
 
-    let connections = nodes.flatMap(([id, node]) =>
+    let connections: ViewportProps["connections"] = nodes.flatMap(([id, node]) =>
         Object.keys(node.outputs).flatMap((k) =>
             node.outputs[k].flatMap((output) => {
                 let target = workflow.nodes[output.into];
@@ -54,43 +55,28 @@ export default function WorkflowEditor(props: WorkflowEditorProps) {
     if (previewConnection) {
         const c = previewConnection;
         const node = workflow.nodes[c.sourceId];
-        let from = [
+        let from: [number, number] = [
             c.side == "input" ? node.x : node.x + node.width,
             c.side == "input" ? node.y + getInputY(node, c.field) : node.y + getOutputY(node, c.field),
         ];
-        let to = [c.x, c.y];
+        let to: [number, number] = [c.x, c.y];
         if (c.side == "input") [from, to] = [to, from];
         connections.push({
             from,
             to,
         });
     }
-    const padding = 300;
-    let cx = {
-        minX: Math.min(...connections.map((v) => Math.min(v.from[0], v.to[0]))) - padding,
-        minY: Math.min(...connections.map((v) => Math.min(v.from[1], v.to[1]))) - padding,
-        maxX: Math.max(...connections.map((v) => Math.max(v.from[0], v.to[0]))) + padding,
-        maxY: Math.max(...connections.map((v) => Math.max(v.from[1], v.to[1]))) + padding,
-        width: 0,
-        height: 0,
-    };
-    cx.width = cx.maxX - cx.minX;
-    cx.height = cx.maxY - cx.minY;
-    // when adjusting the workflow to update it with setState afterwards,
-    // operate on this value instead so that multiple updates in the same frame
-    // are combined and not discard the previous one.
-    let newWorkflow = workflow;
 
     const moveBox = useCallback(
         (id: string, x: number, y: number) => {
-            setWorkflow(
-                (newWorkflow = update(newWorkflow, {
+            setWorkflow((workflow) =>
+                update(workflow, {
                     nodes: {
                         [id]: {
                             $merge: { x, y },
                         },
                     },
-                })),
+                }),
             );
         },
         [workflow, setWorkflow],
@@ -119,38 +105,41 @@ export default function WorkflowEditor(props: WorkflowEditorProps) {
             // remove existing outgoing connections (just iterate over the whole nodes right now)
             let existing = getInput(id, field);
             if (existing) {
-                newWorkflow = update(newWorkflow, {
-                    nodes: {
-                        [existing.id]: {
-                            outputs: {
-                                [existing.field]: {
-                                    $splice: [[existing.index, 1]],
+                setWorkflow((workflow) =>
+                    update(workflow, {
+                        nodes: {
+                            [existing!.id]: {
+                                outputs: {
+                                    [existing!.field]: {
+                                        $splice: [[existing!.index, 1]],
+                                    },
                                 },
                             },
                         },
-                    },
-                });
+                    }),
+                );
             }
             // now add a new output:
             if (from && fromField) {
-                newWorkflow = update(newWorkflow, {
-                    nodes: {
-                        [from]: {
-                            outputs: {
-                                [fromField]: {
-                                    $push: [
-                                        {
-                                            into: id,
-                                            field: field,
-                                        },
-                                    ],
+                setWorkflow((workflow) =>
+                    update(workflow, {
+                        nodes: {
+                            [from]: {
+                                outputs: {
+                                    [fromField]: {
+                                        $push: [
+                                            {
+                                                into: id,
+                                                field: field,
+                                            },
+                                        ],
+                                    },
                                 },
                             },
                         },
-                    },
-                });
+                    }),
+                );
             }
-            setWorkflow(newWorkflow);
         },
         [workflow, setWorkflow],
     );
@@ -194,84 +183,51 @@ export default function WorkflowEditor(props: WorkflowEditorProps) {
     );
 
     return (
-        <div
-            className="workflow-editor"
-            onContextMenu={(e) => {
-                if (!e.ctrlKey && addAttack === undefined) {
-                    setAddAttack({ x: e.pageX, y: e.pageY });
-                    e.preventDefault();
-                }
-            }}
-        >
+        <div className="workflow-editor-root">
             <WorkflowAttackSelector
                 x={addAttack?.x ?? 0}
                 y={addAttack?.y ?? 0}
                 open={addAttack !== undefined}
                 onClose={() => setAddAttack(undefined)}
             />
-            <div className="pane" ref={drop}>
-                <div className="nodes">
-                    <svg
-                        className="connections"
-                        style={{
-                            left: cx.minX + "px",
-                            top: cx.minY + "px",
-                            width: cx.width + "px",
-                            height: cx.height + "px",
+            <Viewport
+                className="workflow-editor"
+                onContextMenu={(e) => {
+                    if (!e.ctrlKey && addAttack === undefined) {
+                        setAddAttack({ x: e.pageX, y: e.pageY });
+                        e.preventDefault();
+                    }
+                }}
+                ref={drop}
+                connections={connections}
+            >
+                {nodes.map(([key, node]) => (
+                    <DesignWorkflowNodeEditor
+                        connectInput={(dstField, srcId, srcField) => {
+                            setInput(key, dstField, srcId, srcField);
                         }}
-                        viewBox={`${cx.minX} ${cx.minY} ${cx.width} ${cx.height}`}
-                    >
-                        {connections.map((c, i) => {
-                            const curviness = Math.abs(c.from[0] - c.to[0] + 40) / 2;
-                            const padding = 10;
-                            const path =
-                                `M${c.from[0]},${c.from[1]}` +
-                                `h${padding}` +
-                                `C${c.from[0] + padding + curviness},${c.from[1]},${c.to[0] - curviness - padding},${
-                                    c.to[1]
-                                },${c.to[0] - padding},${c.to[1]}` +
-                                `h${padding}`;
-                            return (
-                                <>
-                                    <path key={"connection-" + i} d={path} stroke="white" strokeWidth={2} fill="none" />
-                                    <path
-                                        key={"select-connection-" + i}
-                                        d={path}
-                                        strokeWidth={12}
-                                        stroke="transparent"
-                                        fill="none"
-                                    />
-                                </>
-                            );
-                        })}
-                    </svg>
-                    {nodes.map(([key, node]) => (
-                        <DesignWorkflowNodeEditor
-                            connectInput={(dstField, srcId, srcField) => {
-                                setInput(key, dstField, srcId, srcField);
-                            }}
-                            connectOutput={(srcField, dstId, dstField) => {
-                                setInput(dstId, dstField, key, srcField);
-                            }}
-                            connectedInputs={Object.fromEntries(
-                                Object.keys(getInputs(node.attack))
-                                    .map((k) => [k, getInput(key, k)] as [string, ReturnType<typeof getInput>])
-                                    .filter((v) => v[1] !== undefined)
-                                    .map((v) => [
-                                        v[0],
-                                        {
-                                            from: v[1]!.id,
-                                            field: v[1]!.field,
-                                        },
-                                    ]),
-                            )}
-                            id={key}
-                            key={"node-" + key}
-                            {...node}
-                        />
-                    ))}
-                </div>
-            </div>
+                        connectOutput={(srcField, dstId, dstField) => {
+                            setInput(dstId, dstField, key, srcField);
+                        }}
+                        connectedInputs={Object.fromEntries(
+                            Object.keys(getInputs(node.attack))
+                                .map((k) => [k, getInput(key, k)] as [string, ReturnType<typeof getInput>])
+                                .filter((v) => v[1] !== undefined)
+                                .map((v) => [
+                                    v[0],
+                                    {
+                                        from: v[1]!.id,
+                                        field: v[1]!.field,
+                                    },
+                                ]),
+                        )}
+                        id={key}
+                        key={"node-" + key}
+                        {...node}
+                    />
+                ))}
+            </Viewport>
+
             <WorkflowEditorDragLayer />
         </div>
     );

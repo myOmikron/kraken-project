@@ -1,8 +1,5 @@
-.workflow-editor {
+.workflow-editor-root {
     height: 100%;
-    --dot-color: var(--primary-op);
-    --dot-size: 1px;
-    --pattern-size: 20px;
 
     --type-boolean: #945d3d;
     --type-ip-addr: #0066ff;
@@ -12,40 +9,6 @@
     --type-duration: #ff0062;
     --type-number: #ff00ea;
     --type-port: #c300ff;
-}
-
-.workflow-editor > .pane {
-    height: 100%;
-    box-sizing: border-box;
-    display: grid;
-    border-radius: 0.5em;
-    box-shadow:
-        0 0 25em var(--primary-op),
-        inset 0 0 10em #0cf2,
-        inset 0 0 0.5em #0ff2;
-    backdrop-filter: blur(0.1em);
-    background:
-        radial-gradient(
-                circle at center,
-                var(--dot-color) 0,
-                var(--dot-color) var(--dot-size),
-                transparent var(--dot-size)
-            ) -1px repeat,
-        linear-gradient(0deg, #010b2280, #44444420);
-    background-size:
-        var(--pattern-size) var(--pattern-size),
-        100% 100%;
-    position: relative;
-    overflow: hidden;
-}
-
-.workflow-editor > .pane > .nodes {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    transform-origin: 0 0;
-    left: 50%;
-    top: 50%;
 }
 
 .workflow-editor-node {
@@ -183,10 +146,6 @@
         0 0 0 1px var(--border-color);
     border-radius: 0;
     transform: rotate(45deg);
-}
-
-.workflow-editor svg.connections {
-    position: absolute;
 }
 
 .workflow-attack-selector {
