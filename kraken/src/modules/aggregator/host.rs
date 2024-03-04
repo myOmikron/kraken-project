@@ -76,7 +76,7 @@ async fn aggregate(data: HostAggregationData) -> Result<Uuid, rorm::Error> {
                 os_type: data.os_type.unwrap_or(OsType::Unknown),
                 response_time: None,
                 comment: String::new(),
-                certainty: HostCertainty::Verified,
+                certainty: data.certainty,
                 workspace: ForeignModelByField::Key(data.workspace),
             })
             .await?;
