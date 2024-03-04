@@ -178,16 +178,18 @@ export const BooleanAttackInput = forwardRef((props: AttackInputProps<boolean>, 
 });
 
 export const WordlistAttackInput = (props: AttackInputProps<string>) => {
-    let [wordlists, setWordlists] = useState<{ label: string; value: string }[]>([]);
+    let [wordlists, setWordlists] = useState<{ label: string; value: string }[] | null>(null);
 
     useEffect(() => {
-        Api.wordlists
-            .all()
-            .then(
-                handleApiError((wordlists) =>
-                    setWordlists(wordlists.wordlists.map((x) => ({ label: x.name, value: x.uuid }))),
-                ),
-            );
+        if (wordlists === null) {
+            Api.wordlists
+                .all()
+                .then(
+                    handleApiError((wordlists) =>
+                        setWordlists(wordlists.wordlists.map((x) => ({ label: x.name, value: x.uuid }))),
+                    ),
+                );
+        }
     });
 
     let htmlProps: any = { ...props };
@@ -202,16 +204,20 @@ export const WordlistAttackInput = (props: AttackInputProps<string>) => {
             <label key={props.valueKey + "_label"} htmlFor={props.valueKey + "_input"}>
                 {props.label ?? props.valueKey}
             </label>
-            <SelectMenu
-                id={"wordlist"}
-                required
-                options={wordlists}
-                theme={"default"}
-                value={wordlists.find((v) => v.value == props.value) ?? null}
-                onChange={(wordlist) => {
-                    props.onUpdate(props.valueKey, wordlist?.value);
-                }}
-            />
+            {wordlists === null ? (
+                <Input value="Loading..." onChange={() => {}} readOnly />
+            ) : (
+                <SelectMenu
+                    id={"wordlist"}
+                    required
+                    options={wordlists}
+                    theme={"default"}
+                    value={wordlists.find((v) => v.value == props.value) ?? null}
+                    onChange={(wordlist) => {
+                        props.onUpdate(props.valueKey, wordlist?.value);
+                    }}
+                />
+            )}
         </>
     );
 };
