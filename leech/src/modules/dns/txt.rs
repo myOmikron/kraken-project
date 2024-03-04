@@ -278,7 +278,7 @@ fn process_txt_record(record: &[u8]) -> Option<TxtScanInfo> {
 }
 
 async fn domain_impl(resolver: ResolverT, tx: Sender<DnsTxtScanResult>, domain: String) {
-    if let Ok(res) = resolve(resolver.txt_lookup(&domain)).await {
+    if let Ok(Some(res)) = resolve(resolver.txt_lookup(&domain)).await {
         let records = res.as_lookup().records();
         let mut services = Vec::new();
         for record in records {

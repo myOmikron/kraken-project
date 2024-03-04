@@ -104,7 +104,7 @@ export default class RunningAttacks extends React.Component<RunningAttacksProps,
                                             )}
                                         </div>
                                     }
-                                    position={"bottom center"}
+                                    position={"bottom left"}
                                     on={"hover"}
                                     arrow={true}
                                 >
