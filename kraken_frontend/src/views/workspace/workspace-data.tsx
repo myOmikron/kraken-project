@@ -470,6 +470,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <PortNumber port={port} />
                                 <span>{port.protocol.toUpperCase()}</span>
                                 <span>{port.host.ipAddr}</span>
+                                <IpAddr host={port.host} />
                                 <TagList tags={port.tags} globalFilter={globalFilter} filter={portFilter} />
                                 <span>{port.comment}</span>
                                 <span className="workspace-data-certainty-icon icon"></span>
@@ -558,8 +559,8 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     setUuids={(services) => setSelectedUuids({ ...selectedUuids, services })}
                                 />
                                 <ServiceName service={service} />
-                                <span>{service.host.ipAddr}</span>
-                                <span>{service.port?.port}</span>
+                                <IpAddr host={service.host} />
+                                {service.port ? <PortNumber port={service.port} /> : <span></span>}
                                 <span>{service.port?.protocol?.toUpperCase()}</span>
                                 <span>
                                     <Indicator
