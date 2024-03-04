@@ -83,7 +83,8 @@ Each target has its own set of allowed keys:
 |               | sourceOf    | string                | `sourceOf: docs.kraken-project.org`                        | 
 |               | targetOf    | string                | `targetOf: docs.kraken-project.org`                        | 
 | **Host**      | ip[s]       | ip address or network | `ip: 127.0.0.1`, `ip: 127.0.0.1/24`                        |
-|               | port[s]     | port number  or range | `port: 80`, ` port: 1-1000`                                |
+|               | os          | os type               | `os: linux`, `os: windows`                                 |
+|               | port[s]     | port number or range  | `port: 80`, ` port: 1-1000`                                |
 |               | service[s]  | string                | `service: http`                                            |
 |               | domain[s]   | string                | `domain: docs.kraken-project.org`                          |
 | **Port**      | port[s]     | port number or range  | `port: 80`, `port: 1-1000`                                 |
@@ -92,7 +93,7 @@ Each target has its own set of allowed keys:
 |               | service[s]  | string                | `service: http`                                            |
 | **Service**   | service[s]  | string                | `service: http`                                            |
 |               | ip[s]       | ip address or network | `ip: 127.0.0.1`, `ip: 127.0.0.1/24`                        |
-|               | port[s]     | port number  or range | `port: 80`, `port: 1-1000`                                 |
+|               | port[s]     | port number or range  | `port: 80`, `port: 1-1000`                                 |
 |               | protocol[s] | port protocol         | `protocol: tcp`                                            |
 
 ### Subkeys
@@ -107,6 +108,7 @@ For example `port.protocol: tcp` on a `Host` would filter for TCP ports instead 
 |-------------|------------|-------------|----------------------|---------------------------------------------------------------------|
 | **Domain**  | ip[s]      | tag[s]      | string               | `ip.tag: critical`                                                  | 
 |             |            | createdAt   | time range           | `ip.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`       | 
+|             |            | os          | os type              | `ip.os: linux`, `ip.os: windows`                                    | 
 |             | sourceOf   | tag[s]      | string               | `sourceOf.tag: critical`                                            | 
 |             |            | createdAt   | time range           | `sourceOf.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"` | 
 |             | targetOf   | tag[s]      | string               | `targetOf.tag: critical`                                            | 
@@ -122,9 +124,23 @@ For example `port.protocol: tcp` on a `Host` would filter for TCP ports instead 
 |             |            | createdAt   | time range           | `domain.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`   | 
 | **Port**    | ip[s]      | tag[s]      | string               | `ip.tag: critical`                                                  | 
 |             |            | createdAt   | time range           | `ip.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`       | 
+|             |            | os          | os type              | `ip.os:linux`, `ip.os:windows`                                      | 
 |             | service[s] | tag[s]      | string               | `service.tag: critical`                                             | 
 |             |            | createdAt   | time range           | `service.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`  |
 | **Service** | ip[s]      | tag[s]      | string               | `ip.tag: critical`                                                  | 
 |             |            | createdAt   | time range           | `ip.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`       | 
+|             |            | os          | os type              | `ip.os:linux`, `ip.os:windows`                                      | 
 |             | port[s]    | tag[s]      | string               | `port.tag: critical`                                                | 
 |             |            | createdAt   | time range           | `port.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`     | 
+
+## Type values
+
+| Type                      | Valid values                                                                                                |
+|---------------------------|:------------------------------------------------------------------------------------------------------------|
+| **ip address or network** | IPv4 or IPv6 in CIDR notation                                                                               |
+| **os type**               | `unknown`, `linux`, `windows`, `apple`, `android`, `freebsd`                                                |
+| **port number**           | decimal port number (1-65535) - Usually valid as a range like `1000-2000`                                   |
+| **port protocol**         | `tcp`, `udp`, `sctp`, `unknown`                                                                             |
+| **string**                | any valid string like described above, quoted if it contains whitespace, `,`, `&`, `!`, `:`, `"` or `-`     |
+| **time**                  | RFC3339 / ISO 8601 datetime: `"yyyy-mm-ddThh:mm:ssZ"` - Usually valid as a range                            |
+|                           | The `T` may be replaced with a space. The timezone must be UTC (`Z`) or a fixed offset (`+0200` / `-01:30`) |

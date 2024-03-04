@@ -1,33 +1,49 @@
-import { OsType } from "../api/generated";
-import AnonymousIcon from "../svg/anonymous";
-import TuxIcon from "../svg/tux";
-import AppleIcon from "../svg/apple";
-import WindowsIcon from "../svg/windows";
-import FreeBSDIcon from "../svg/freebsd";
-import AndroidIcon from "../svg/android";
 import React from "react";
+import Popup from "reactjs-popup";
+import { OsType } from "../api/generated";
+import AndroidIcon from "../svg/android";
+import AnonymousIcon from "../svg/anonymous";
+import AppleIcon from "../svg/apple";
+import FreeBSDIcon from "../svg/freebsd";
+import TuxIcon from "../svg/tux";
+import WindowsIcon from "../svg/windows";
 
 type OsIconProps = {
     os: OsType;
+    tooltip?: boolean;
     size?: string;
     style?: React.CSSProperties;
 };
 export default function OsIcon(props: OsIconProps) {
     let style: any = { ...props.style };
     if (props.size !== undefined) style.width = style.height = props.size;
+    let icon;
     switch (props.os) {
         case "Linux":
-            return <TuxIcon style={style} />;
+            icon = <TuxIcon style={style} />;
+            break;
         case "Apple":
-            return <AppleIcon style={style} />;
+            icon = <AppleIcon style={style} />;
+            break;
         case "Windows":
-            return <WindowsIcon style={style} />;
+            icon = <WindowsIcon style={style} />;
+            break;
         case "FreeBSD":
-            return <FreeBSDIcon style={style} />;
+            icon = <FreeBSDIcon style={style} />;
+            break;
         case "Android":
-            return <AndroidIcon style={style} />;
+            icon = <AndroidIcon style={style} />;
+            break;
         case "Unknown":
         default:
-            return <AnonymousIcon style={style} />;
+            icon = <AnonymousIcon style={style} />;
+            break;
     }
+    return props.tooltip ? (
+        <Popup trigger={<div>{icon}</div>} position={"bottom center"} on={"hover"} arrow={true}>
+            <div className="pane-thin">{props.os}</div>
+        </Popup>
+    ) : (
+        icon
+    );
 }

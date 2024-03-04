@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use serde::de::StdError;
 
+use crate::models::OsType;
 use crate::models::PortProtocol;
 use crate::modules::filter::lexer::Token;
 use crate::modules::filter::parser::cursor::Cursor;
@@ -32,6 +33,7 @@ where
 /// Parse a single [`PortProtocol`]
 pub fn parse_port_protocol(tokens: &mut Cursor) -> Result<PortProtocol, ParseError> {
     let string = tokens.next_value()?;
+    // don't forget to update docs/user/filter.md and frontend if you extend this!
     if string.eq_ignore_ascii_case("tcp") {
         Ok(PortProtocol::Tcp)
     } else if string.eq_ignore_ascii_case("udp") {
@@ -43,6 +45,29 @@ pub fn parse_port_protocol(tokens: &mut Cursor) -> Result<PortProtocol, ParseErr
     } else {
         Err(ParseError::ParseValue(
             format!("Unknown port protocol: {string}").into(),
+        ))
+    }
+}
+
+/// Parse a single [`OsType`]
+pub fn parse_os_type(tokens: &mut Cursor) -> Result<OsType, ParseError> {
+    let string = tokens.next_value()?;
+    // don't forget to update docs/user/filter.md and frontend if you extend this!
+    if string.eq_ignore_ascii_case("unknown") {
+        Ok(OsType::Unknown)
+    } else if string.eq_ignore_ascii_case("linux") {
+        Ok(OsType::Linux)
+    } else if string.eq_ignore_ascii_case("windows") {
+        Ok(OsType::Windows)
+    } else if string.eq_ignore_ascii_case("apple") {
+        Ok(OsType::Apple)
+    } else if string.eq_ignore_ascii_case("android") {
+        Ok(OsType::Android)
+    } else if string.eq_ignore_ascii_case("freebsd") {
+        Ok(OsType::FreeBSD)
+    } else {
+        Err(ParseError::ParseValue(
+            format!("Unknown OS type: {string}").into(),
         ))
     }
 }
