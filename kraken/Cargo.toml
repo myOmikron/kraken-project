@@ -32,6 +32,7 @@ kraken-proto = { path = "../kraken-proto" }
 actix-web = { version = "~4", optional = true }
 # Extensions for actix-web
 actix-toolbox = { version = "~0.13", features = ["ws", "logging", "session-postgres-only"], optional = true }
+actix-files = "~0.6"
 # Webauthn library
 webauthn-rs = { version = "~0.4", features = ["danger-allow-state-serialisation"] }
 
