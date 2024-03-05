@@ -110,9 +110,9 @@ pub async fn start_tcp_service_detection(
         .concurrent_limit
         .try_into()
         .expect("u32 should be convertible to usize");
-    iter_addresses
-        .cartesian_product(iter_ports)
-        .try_for_each_concurrent(Some(limit), |(ip, port)| async move {
+    iter_ports
+        .cartesian_product(iter_addresses)
+        .try_for_each_concurrent(Some(limit), |(port, ip)| async move {
             let socket = SocketAddr::new(ip, port);
             if is_port_open(
                 socket,
