@@ -21,6 +21,13 @@ name = "kraken"
 [dependencies]
 kraken-proto = { path = "../kraken-proto" }
 
+# Important!
+#
+# When adding new dependencies, make sure to make them optional and add them to the "bin" feature
+# if they are only used in parts of the code, that are annotated with #[cfg(feature = "bin")].
+#
+# This will speed up the compile time when using kraken as a library.
+
 # Webframework
 actix-web = { version = "~4", optional = true }
 # Extensions for actix-web
