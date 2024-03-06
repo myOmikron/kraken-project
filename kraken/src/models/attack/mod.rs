@@ -66,7 +66,7 @@ pub enum AttackType {
 ///
 /// If the attack is still running, `finished_at` is `None`.
 /// If `error` is not `None`, the attack has finished with errors.
-#[derive(Model)]
+#[derive(Model, Clone)]
 pub struct Attack {
     /// The primary key
     #[rorm(primary_key)]

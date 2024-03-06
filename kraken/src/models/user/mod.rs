@@ -70,7 +70,7 @@ pub struct LocalUserKey {
 }
 
 /// The definition of a user
-#[derive(Model)]
+#[derive(Model, Clone)]
 pub struct User {
     /// Primary key of the user, a uuid v4
     #[rorm(primary_key)]

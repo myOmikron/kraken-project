@@ -33,7 +33,7 @@ pub enum WorkspaceMemberPermission {
 /// A workspace member has the privileges to access and modify a workspace of another user
 ///
 /// The owner of the workspace can add and remove members at any time
-#[derive(Model)]
+#[derive(Model, Clone)]
 pub struct WorkspaceMember {
     /// Unique identifier of the workspace member
     #[rorm(id)]
@@ -58,7 +58,7 @@ pub struct WorkspaceMember {
 /// Representation of a set of connected data.
 ///
 /// Workspaces are owned by a user and can be shared with others.
-#[derive(Model)]
+#[derive(Model, Clone)]
 pub struct Workspace {
     /// Unique identifier of the workspace
     #[rorm(primary_key)]
@@ -71,6 +71,10 @@ pub struct Workspace {
     /// Optional description of the workspace
     #[rorm(max_length = 65535)]
     pub description: Option<String>,
+
+    /// Optional description of the workspace
+    #[rorm(max_length = 65535)]
+    pub notes: Option<String>,
 
     /// The user that owns this workspace
     #[rorm(index)]

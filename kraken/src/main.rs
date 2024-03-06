@@ -20,7 +20,6 @@ use std::io;
 use std::io::Write;
 use std::sync::Arc;
 use std::sync::RwLock;
-use std::time::Duration;
 
 use actix_toolbox::logging::setup_logging;
 use actix_web::cookie::Key;
@@ -36,11 +35,12 @@ use kraken::chan::leech_manager::LeechManager;
 use kraken::chan::settings_manager::start_settings_manager;
 use kraken::chan::ws_manager::chan::start_ws_manager;
 use kraken::config::Config;
+use kraken::models::FindingDefinition;
 use kraken::models::User;
 use kraken::models::UserPermission;
+use kraken::models::Workspace;
 use kraken::modules::aggregator::Aggregator;
-use kraken::modules::cache::schedule_cache_save;
-use kraken::modules::cache::FindingDefinitionCache;
+use kraken::modules::cache::full_cache::FullCache;
 use kraken::modules::cache::UserCache;
 use kraken::modules::cache::WorkspaceUsersCache;
 use kraken::modules::editor::EditorSync;
@@ -132,7 +132,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let workspace_users_cache = WorkspaceUsersCache::default();
             let user_cache = UserCache::default();
-            let finding_definition_cache = FindingDefinitionCache::new(&db).await?;
+            let finding_definition_cache = FullCache::<FindingDefinition>::new();
+            let workspace_cache = FullCache::<Workspace>::new();
 
             let aggregator = Aggregator::default();
 
@@ -148,12 +149,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 workspace_users_cache,
                 user_cache,
                 finding_definition_cache,
+                workspace_cache,
                 aggregator,
                 editor_sync,
             });
 
-            // GLOBAL needs to be initialized to work
-            tokio::spawn(schedule_cache_save(Duration::from_secs(60)));
 
             start_rpc_server(&config).map_err(|e| format!("RPC listen address is invalid: {e}"))?;
 

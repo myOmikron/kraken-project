@@ -4,37 +4,82 @@ use std::collections::HashMap;
 use std::future::Future;
 use std::sync::Arc;
 use std::sync::RwLock;
+use std::time::Duration;
 
 use log::debug;
+use log::error;
 use rorm::db::transaction::Transaction;
 use rorm::internal::field::Field;
 use rorm::internal::field::SingleColumnField;
 use rorm::model::Identifiable;
+use rorm::update;
+use rorm::Error;
+use rorm::FieldAccess;
 use rorm::Model;
+use rorm::Patch;
 use thiserror::Error;
+use tokio::time::interval;
 use uuid::Uuid;
 
 use crate::chan::global::GLOBAL;
+use crate::models::FindingDefinition;
+use crate::models::Workspace;
+
+impl CacheDBControl for Workspace {
+    fn update_item_db(
+        item: Self,
+        tx: &mut Transaction,
+    ) -> impl Future<Output = Result<(), Error>> + Send {
+        async move {
+            update!(tx, Self)
+                .condition(Self::F.uuid.equals(item.uuid))
+                .set(Self::F.notes, item.notes)
+                .exec()
+                .await
+                .map(|_| ())
+        }
+    }
+}
+
+impl CacheDBControl for FindingDefinition {
+    fn update_item_db(
+        item: Self,
+        tx: &mut Transaction,
+    ) -> impl Future<Output = Result<(), Error>> + Send {
+        async move {
+            update!(tx, FindingDefinition)
+                .condition(FindingDefinition::F.uuid.equals(item.uuid))
+                .set(FindingDefinition::F.name, item.name)
+                .set(FindingDefinition::F.cve, item.cve)
+                .set(FindingDefinition::F.severity, item.severity)
+                .set(FindingDefinition::F.summary, item.summary)
+                .set(FindingDefinition::F.description, item.description)
+                .set(FindingDefinition::F.impact, item.impact)
+                .set(FindingDefinition::F.remediation, item.remediation)
+                .set(FindingDefinition::F.references, item.references)
+                .exec()
+                .await
+                .map(|_| ())
+        }
+    }
+}
+
+// -----------------------------------
+// Cache Implementation
+// -----------------------------------
 
 /// A generic struct for implementing caches.
 ///
 /// Implement [RwCache] for a specific type on this type to create a new cache.
-pub struct FullCache<M>
-where
-    M: Model,
-    M::Primary: Field<Type = Uuid>,
-{
+#[derive(Clone)]
+pub struct FullCache<M> {
     cache: Arc<RwLock<InnerCache<M>>>,
 }
 
 type InnerCache<M> = HashMap<Uuid, Option<CacheItem<M>>>;
 
 #[derive(Clone)]
-struct CacheItem<M>
-where
-    M: Model,
-    M::Primary: Field<Type = Uuid>,
-{
+struct CacheItem<M> {
     item: M,
     changed: bool,
 }
@@ -43,42 +88,46 @@ where
 ///
 /// This is used by [RwCache] to be able to default-implement all high-level methods.
 /// To create a new cache, implement these methods for your specific model.
-pub trait CacheDBControl<M>
+pub trait CacheDBControl
 where
-    M: Model + Identifiable + Send,
-    M::Primary: Field<Type = Uuid> + SingleColumnField,
-    <M as rorm::Patch>::Decoder: Send,
+    Self: Model + Identifiable + Send,
+    <Self as rorm::Model>::Primary: Field<Type = Uuid> + SingleColumnField,
+    <Self as rorm::Patch>::Decoder: Send,
 {
     /// Delete a specific item in the database
-    fn delete_item_db(
-        &self,
-        identifier: Uuid,
-    ) -> impl Future<Output = Result<u64, rorm::Error>> + Send {
+    fn delete_item_db(identifier: Uuid) -> impl Future<Output = Result<u64, rorm::Error>> + Send {
         async move {
-            rorm::delete!(&GLOBAL.db, M)
-                .condition(M::Primary::type_as_value(&identifier))
+            rorm::delete!(&GLOBAL.db, Self)
+                .condition(Self::Primary::type_as_value(&identifier))
                 .await
         }
     }
 
     /// Retrieve a specific item in the database
     fn get_item_db(
-        &self,
         identifier: Uuid,
-    ) -> impl Future<Output = Result<Option<M>, rorm::Error>> + Send {
+    ) -> impl Future<Output = Result<Option<Self>, rorm::Error>> + Send {
         async move {
-            rorm::query!(&GLOBAL.db, M)
-                .condition(M::Primary::type_as_value(&identifier))
+            rorm::query!(&GLOBAL.db, Self)
+                .condition(Self::Primary::type_as_value(&identifier))
                 .optional()
                 .await
         }
     }
 
+    /// Insert a specific item in the database
+    fn insert_item_db<P>(item: P) -> impl Future<Output = Result<Self, rorm::Error>> + Send
+    where
+        P: Sync + Send,
+        P: Patch<Model = Self>,
+    {
+        async move { rorm::insert!(&GLOBAL.db, Self).single(&item).await }
+    }
+
     /// Take the item and update it in the database using
     /// this provided [Transaction].
     fn update_item_db(
-        &self,
-        item: M,
+        item: Self,
         tx: &mut Transaction,
     ) -> impl Future<Output = Result<(), rorm::Error>> + Send;
 }
@@ -90,9 +139,8 @@ pub struct ItemNotInCacheError;
 
 impl<M> FullCache<M>
 where
-    Self: CacheDBControl<M>,
-    M: Model + Clone + Identifiable + Send,
-    M::Primary: Field<Type = Uuid>,
+    M: Clone + Model + Identifiable + Send + Sync + CacheDBControl,
+    <M as rorm::Model>::Primary: Field<Type = Uuid> + SingleColumnField,
     <M as rorm::Patch>::Decoder: Send,
 {
     /// Retrieve a Model from the cache.
@@ -162,7 +210,7 @@ where
     /// You have to check for the deleted rows in the return value to check if
     /// there was a Model with the given uuid
     pub async fn delete(&self, identifier: Uuid) -> Result<u64, rorm::Error> {
-        let deleted = self.delete_item_db(identifier).await?;
+        let deleted = M::delete_item_db(identifier).await?;
 
         // Short circuit if no entry was deleted
         if deleted == 0 {
@@ -180,10 +228,59 @@ where
         Ok(deleted)
     }
 
+    /// Inserts a Model
+    ///
+    /// Returns an error if there is already a model with the same UUID
+    pub async fn insert<P>(&self, item: P) -> Result<(), rorm::Error>
+    where
+        P: Sync + Send,
+        P: Patch<Model = M>,
+    {
+        let populated = M::insert_item_db(item).await?;
+
+        #[allow(clippy::expect_used)]
+        let mut guard = self
+            .cache
+            .write()
+            .expect("If you ever encounter this error, please open an issue with the stacktrace");
+
+        guard.insert(
+            *populated.get_primary_key(),
+            Some(CacheItem {
+                item: populated,
+                changed: false,
+            }),
+        );
+
+        Ok(())
+    }
+
+    /// Construct a new instance of the FullCache
+    pub fn new() -> Self {
+        let cache = Self {
+            cache: Arc::new(RwLock::new(InnerCache::new())),
+        };
+
+        tokio::spawn(cache.clone().schedule_cache_save(Duration::from_secs(5)));
+
+        cache
+    }
+
+    /// Schedule the cache save
+    async fn schedule_cache_save(self, itvl: Duration) {
+        let mut timer = interval(itvl);
+        loop {
+            if let Err(err) = self.save_cache().await {
+                error!("Error saving fd cache: {err}");
+            }
+            timer.tick().await;
+        }
+    }
+
     /// This method is used to save the cache to the database.
     ///
     /// It should only be used by the scheduler for regularly saving the cache to the database
-    pub async fn save_cache(&self) -> Result<(), rorm::Error> {
+    async fn save_cache(&self) -> Result<(), rorm::Error> {
         let items = {
             #[allow(clippy::expect_used)]
             let mut guard = self.cache.write().expect(
@@ -206,7 +303,7 @@ where
         let mut tx = GLOBAL.db.start_transaction().await?;
 
         for item in items {
-            self.update_item_db(item, &mut tx).await?;
+            M::update_item_db(item, &mut tx).await?;
         }
 
         tx.commit().await?;
@@ -232,7 +329,7 @@ where
     /// If no result with the given [Uuid] was found, [None] is inserted
     /// into the cache.
     async fn query_db(&self, identifier: Uuid) -> Result<Option<M>, rorm::Error> {
-        let item = self.get_item_db(identifier).await?;
+        let item = M::get_item_db(identifier).await?;
 
         #[allow(clippy::expect_used)]
         let mut guard = self

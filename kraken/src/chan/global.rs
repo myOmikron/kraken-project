@@ -11,8 +11,10 @@ use rorm::Database;
 use crate::chan::leech_manager::LeechManager;
 use crate::chan::settings_manager::SettingsManagerChan;
 use crate::chan::ws_manager::chan::WsManagerChan;
+use crate::models::FindingDefinition;
+use crate::models::Workspace;
 use crate::modules::aggregator::Aggregator;
-use crate::modules::cache::FindingDefinitionCache;
+use crate::modules::cache::full_cache::FullCache;
 use crate::modules::cache::UserCache;
 use crate::modules::cache::WorkspaceUsersCache;
 use crate::modules::editor::EditorSync;
@@ -40,8 +42,8 @@ pub struct GlobalChan {
 
     /// Kraken's CA and certificate
     ///
-    /// It is is wrapped by an `Arc` as we may want to make future changes in `TlsManager`
-    /// that would required the `Arc`
+    /// It is wrapped by an `Arc` as we may want to make future changes in `TlsManager`
+    /// that would require the `Arc`
     pub tls: Arc<TlsManager>,
 
     /// The caching layer for workspace members
@@ -51,7 +53,9 @@ pub struct GlobalChan {
     pub user_cache: UserCache,
 
     /// The caching layer for [FindingDefinition]
-    pub finding_definition_cache: FindingDefinitionCache,
+    pub finding_definition_cache: FullCache<FindingDefinition>,
+    /// The caching layer for [Workspace]
+    pub workspace_cache: FullCache<Workspace>,
 
     /// Scheduler for inserting or updating any aggregation model in the database
     pub aggregator: Aggregator,

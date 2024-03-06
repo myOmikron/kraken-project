@@ -2,6 +2,7 @@ use actix_web::get;
 use actix_web::post;
 use actix_web::web::Json;
 use actix_web::web::Path;
+use uuid::Uuid;
 
 use crate::api::handler::common::error::ApiError;
 use crate::api::handler::common::error::ApiResult;
@@ -12,6 +13,7 @@ use crate::api::handler::finding_definitions::schema::FullFindingDefinition;
 use crate::api::handler::finding_definitions::schema::ListFindingDefinitions;
 use crate::api::handler::finding_definitions::schema::SimpleFindingDefinition;
 use crate::chan::global::GLOBAL;
+use crate::models::InsertFindingDefinition;
 
 /// Add a definition for a finding
 ///
@@ -44,21 +46,24 @@ pub async fn create_finding_definition(
         references,
     } = req.into_inner();
 
-    Ok(Json(UuidResponse {
-        uuid: GLOBAL
-            .finding_definition_cache
-            .insert(
-                name,
-                summary,
-                severity,
-                cve,
-                description,
-                impact,
-                remediation,
-                references,
-            )
-            .await?,
-    }))
+    let uuid = Uuid::new_v4();
+
+    GLOBAL
+        .finding_definition_cache
+        .insert(InsertFindingDefinition {
+            uuid,
+            name,
+            summary,
+            severity,
+            cve,
+            description,
+            impact,
+            remediation,
+            references,
+        })
+        .await?;
+
+    Ok(Json(UuidResponse { uuid }))
 }
 
 /// Retrieve a specific finding definition

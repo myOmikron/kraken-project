@@ -11,14 +11,14 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[cfg(feature = "bin")]
-pub(crate) use crate::models::finding::operations::FindingDefinitionInsertError;
+pub(crate) use crate::models::finding::patches::InsertFindingDefinition;
 use crate::models::Domain;
 use crate::models::Host;
 use crate::models::Port;
 use crate::models::Service;
 
 #[cfg(feature = "bin")]
-mod operations;
+mod patches;
 
 /// The severity of a finding
 #[rustfmt::skip]
