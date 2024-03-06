@@ -8,7 +8,7 @@
 //!
 //! ## Leeches
 //! Leeches are the workers of kraken.
-//! Kraken for it self, does not collect any data.
+//! Kraken for itself, does not collect any data.
 #![warn(missing_docs, clippy::unwrap_used, clippy::expect_used)]
 #![cfg_attr(
     feature = "rorm-main",
@@ -154,12 +154,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 editor_sync,
             });
 
-
-            start_rpc_server(&config).map_err(|e| format!("RPC listen address is invalid: {e}"))?;
+            let rpc_handle = start_rpc_server(&config)
+                .map_err(|e| format!("RPC listen address is invalid: {e}"))?;
 
             server::start_server(&config).await?;
 
-            // TODO: Stop rpc server as it also has access to the database
+            // Stop the RPC server as the webserver has already shut down
+            rpc_handle.abort();
             GLOBAL.db.clone().close().await;
         }
         Command::Keygen => {

@@ -25,6 +25,7 @@ use log::warn;
 use rorm::query;
 use rorm::FieldAccess;
 use rorm::Model;
+use tokio::task::JoinHandle;
 use tonic::transport::Server;
 use tonic::Code;
 use tonic::Request;
@@ -246,12 +247,12 @@ pub async fn auth_leech<T>(request: &Request<T>) -> Result<(), Status> {
 /// - `config`: Reference to [Config]
 ///
 /// Returns an error if the rpc listen address is invalid
-pub fn start_rpc_server(config: &Config) -> Result<(), AddrParseError> {
+pub fn start_rpc_server(config: &Config) -> Result<JoinHandle<()>, AddrParseError> {
     let listen_address = config.server.rpc_listen_address.parse()?;
     let listen_port = config.server.rpc_listen_port;
     let tls_config = GLOBAL.tls.tonic_server();
 
-    tokio::spawn(async move {
+    let handle = tokio::spawn(async move {
         info!("Starting gRPC server");
         // TLS config should be valid is it is constructed by our TLS manager
         #[allow(clippy::expect_used)]
@@ -268,7 +269,7 @@ pub fn start_rpc_server(config: &Config) -> Result<(), AddrParseError> {
         }
     });
 
-    Ok(())
+    Ok(handle)
 }
 
 /// Convert [`rorm::Error`] to [`tonic::Status`]
