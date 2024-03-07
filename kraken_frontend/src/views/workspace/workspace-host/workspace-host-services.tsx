@@ -1,9 +1,9 @@
-import { Api } from "../../../api/api";
 import React from "react";
-import WorkspaceTable from "../components/workspace-table";
-import { FullHost, FullService, SimpleService } from "../../../api/generated";
+import { Api } from "../../../api/api";
+import { FullHost, FullService } from "../../../api/generated";
 import SourcesList from "../components/sources-list";
 import TagList from "../components/tag-list";
+import WorkspaceTable from "../components/workspace-table";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
 export type WorkspaceDataServicesProps = {
@@ -18,6 +18,7 @@ export function WorkspaceHostServices(props: WorkspaceDataServicesProps) {
     } = React.useContext(WORKSPACE_CONTEXT);
     return (
         <WorkspaceTable<FullService>
+            workspace={workspace}
             query={(limit, offset) => Api.workspaces.services.all(workspace, limit, offset, { host: host?.uuid })}
             queryDeps={[workspace, host?.uuid]}
             columnsTemplate={"1fr 5ch 1fr 1fr 1fr"}

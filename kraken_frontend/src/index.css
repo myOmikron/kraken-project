@@ -29,6 +29,8 @@
 html {
     overflow: hidden;
     width: 100%;
+    color-scheme: dark;
+    accent-color: var(--primary);
 }
 
 body {

@@ -110,7 +110,7 @@ export function tokensToString(tokens: SpanlessToken[]): string {
     for (const token of tokens) {
         switch (token.type) {
             case "column":
-                if (ret.length && !ret.endsWith(" ")) ret += " ";
+                if (ret != "" && !ret.endsWith(" ")) ret += " ";
                 ret += token.value + ": ";
                 break;
             case "logicalAnd":
