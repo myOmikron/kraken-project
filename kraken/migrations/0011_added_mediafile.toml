@@ -1,5 +1,5 @@
 [Migration]
-Hash = "7422017012907031008"
+Hash = "6068361599801710487"
 Initial = false
 Dependency = 10
 Replaces = []
@@ -38,7 +38,7 @@ Value = 64
 Type = "not_null"
 
 [[Migration.Operations.Fields]]
-Name = "has_thumbnail"
+Name = "is_image"
 Type = "boolean"
 
 [[Migration.Operations.Fields.Annotations]]

@@ -103,6 +103,8 @@ impl Modify for SecurityAddon2 {
         workspaces::handler::get_searches,
         workspaces::handler::get_search_results,
         files::handler::upload_file,
+        files::handler::upload_image,
+        files::handler::download_thumbnail,
         files::handler::download_file,
         files::handler_admin::get_all_files,
         files::handler_admin::download_file,

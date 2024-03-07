@@ -189,6 +189,8 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(workspaces::handler::get_search_results)
                     .service(workspaces::handler::get_searches)
                     .service(files::handler::upload_file)
+                    .service(files::handler::upload_image)
+                    .service(files::handler::download_thumbnail)
                     .service(files::handler::download_file)
                     .service(attacks::handler::bruteforce_subdomains)
                     .service(attacks::handler::query_certificate_transparency)

@@ -30,9 +30,12 @@ pub struct MediaFile {
     #[rorm(max_length = 64)]
     pub sha256: String,
 
-    /// Does this file have a thumbnail?
+    /// Is this file an image?
+    ///
+    /// This flag indicates whether there exists a thumbnail file
+    /// and if it can be used where an image is required.
     #[rorm(default = false)]
-    pub has_thumbnail: bool,
+    pub is_image: bool,
 
     /// The user who uploaded the file
     // SetNull because the model should only be deleted when the file is

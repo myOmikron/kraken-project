@@ -222,6 +222,8 @@ pub enum ApiStatusCode {
     NoLeechAvailable = 2005,
     /// The streamed request body failed
     PayloadError = 2006,
+    /// The uploaded image file is invalid
+    InvalidImage = 2007,
 }
 
 /// Representation of an error response

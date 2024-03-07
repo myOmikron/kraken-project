@@ -47,8 +47,11 @@ pub struct FullFile {
     /// The file's sha256
     pub sha256: String,
 
-    /// Does this file have a thumbnail?
-    pub has_thumbnail: bool,
+    /// Is this file an image?
+    ///
+    /// This flag indicates whether there exists a thumbnail file
+    /// and if it can be used where an image is required.
+    pub is_image: bool,
 
     /// The user who uploaded the file
     pub user: SimpleUser,

@@ -149,6 +149,10 @@ pub enum ApiError {
     /// process a request body as stream of [`Bytes`](bytes::Bytes)
     #[error("File upload failed")]
     PayloadError(#[from] actix_web::error::PayloadError),
+
+    /// The uploaded image file is invalid
+    #[error("File is an invalid image")]
+    InvalidImage,
 }
 
 impl actix_web::ResponseError for ApiError {
@@ -385,6 +389,10 @@ impl actix_web::ResponseError for ApiError {
                     self.to_string(),
                 ))
             }
+            ApiError::InvalidImage => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::InvalidImage,
+                self.to_string(),
+            )),
         }
     }
 }

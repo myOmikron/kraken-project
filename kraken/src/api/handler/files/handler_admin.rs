@@ -78,7 +78,7 @@ pub async fn get_all_files(
             MediaFile::F.uuid,
             MediaFile::F.name,
             MediaFile::F.sha256,
-            MediaFile::F.has_thumbnail,
+            MediaFile::F.is_image,
             MediaFile::F.user as User,
             MediaFile::F.workspace as Workspace,
             MediaFile::F.workspace.owner as User,
@@ -90,11 +90,11 @@ pub async fn get_all_files(
     .offset(offset)
     .stream()
     .map_ok(
-        |(uuid, name, sha256, has_thumbnail, user, workspace, owner, uploaded_at)| FullFile {
+        |(uuid, name, sha256, is_image, user, workspace, owner, uploaded_at)| FullFile {
             uuid,
             name,
             sha256,
-            has_thumbnail,
+            is_image,
             user: SimpleUser {
                 uuid: user.uuid,
                 username: user.username,
@@ -172,6 +172,11 @@ pub async fn delete_file(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
     let uuid = path.into_inner().uuid;
 
     let mut tx = GLOBAL.db.start_transaction().await?;
+    let (is_image,) = query!(&mut tx, (MediaFile::F.is_image,))
+        .condition(MediaFile::F.uuid.equals(uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::NotFound)?;
     rorm::delete!(&mut tx, MediaFile)
         .condition(MediaFile::F.uuid.equals(uuid))
         .await?;
@@ -181,6 +186,14 @@ pub async fn delete_file(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
             error!("Failed to delete file: {err}");
             ApiError::InternalServerError
         })?;
+    if is_image {
+        fs::remove_file(format!("{VAR_DIR}/media/thumbnails/{uuid}"))
+            .await
+            .map_err(|err| {
+                error!("Failed to delete thumbnail: {err}");
+                ApiError::InternalServerError
+            })?;
+    }
     tx.commit().await?;
 
     Ok(HttpResponse::Ok().finish())

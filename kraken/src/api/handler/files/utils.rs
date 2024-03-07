@@ -1,19 +1,51 @@
 use std::fmt::Write;
 use std::io;
+use std::io::Cursor;
 use std::path::Path;
 
 use actix_web::web::Payload;
+use bytes::Bytes;
 use futures::TryStreamExt;
+use image::guess_format;
+use image::ImageFormat;
 use log::error;
 use sha2::Digest;
 use tokio::fs;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
+use crate::api::handler::common::error::ApiError;
+
+pub fn valid_image(file_start: &[u8]) -> Option<ImageFormat> {
+    match guess_format(file_start) {
+        Ok(format) if matches!(format, ImageFormat::Png | ImageFormat::Jpeg) => Some(format),
+        _ => None,
+    }
+}
+
+pub async fn stream_into_file_with_magic<D: Digest>(
+    path: &Path,
+    body: Payload,
+) -> Result<Option<((DeleteFile, String), ImageFormat)>, StreamIntoFileError> {
+    let mut magic = [0u8; 8];
+    let mut magic_cursor = Some(Cursor::new(&mut magic[..]));
+    let option = stream_into_file::<D>(path, body, move |chunk| {
+        if let Some(cursor) = magic_cursor.as_mut() {
+            if io::Write::write_all(cursor, &chunk).is_err() {
+                valid_image(&cursor.get_ref()).ok_or(())?;
+            }
+        }
+        Ok(())
+    })
+    .await?;
+    Ok(option.zip(valid_image(&magic)))
+}
+
 pub async fn stream_into_file<D: Digest>(
     path: &Path,
     mut body: Payload,
-) -> Result<(DeleteFile, String), StreamIntoFileError> {
+    mut hook: impl FnMut(&Bytes) -> Result<(), ()>,
+) -> Result<Option<(DeleteFile, String)>, StreamIntoFileError> {
     use StreamIntoFileError::Actix;
     use StreamIntoFileError::FileClose;
     use StreamIntoFileError::FileCreate;
@@ -24,6 +56,10 @@ pub async fn stream_into_file<D: Digest>(
     let guard = DeleteFile::new(path);
 
     while let Some(chunk) = body.try_next().await.map_err(Actix)? {
+        if hook(&chunk).is_err() {
+            return Ok(None);
+        }
+
         file.write_all(&chunk).await.map_err(FileWrite)?;
         hashed.update(&chunk);
     }
@@ -35,7 +71,7 @@ pub async fn stream_into_file<D: Digest>(
         write!(&mut hash, "{byte:x}").unwrap();
     }
 
-    Ok((guard, hash))
+    Ok(Some((guard, hash)))
 }
 
 pub struct DeleteFile<'p>(Option<&'p Path>);
@@ -67,4 +103,18 @@ pub enum StreamIntoFileError {
     FileCreate(io::Error),
     FileWrite(io::Error),
     FileClose(io::Error),
+}
+
+impl From<StreamIntoFileError> for ApiError {
+    fn from(value: StreamIntoFileError) -> Self {
+        match value {
+            StreamIntoFileError::Actix(err) => ApiError::PayloadError(err),
+            StreamIntoFileError::FileCreate(err)
+            | StreamIntoFileError::FileWrite(err)
+            | StreamIntoFileError::FileClose(err) => {
+                error!("Failed to write uploaded file to tmp: {err}");
+                ApiError::InternalServerError
+            }
+        }
+    }
 }
