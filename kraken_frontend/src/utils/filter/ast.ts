@@ -1,74 +1,243 @@
-import { OsType, PortProtocol } from "../../api/generated";
+import { Cursor } from "./cursor";
+import { parseDate, parseOsType, parsePort, parsePortProtocol, parseString, wrapMaybeRange, wrapRange } from "./parser";
 
-export type GlobalAST = {
-    tags: Exprs<string>;
-    createdAt: Exprs<Expr.Range<Date>>;
+export type ASTField = { [key: string]: { columns: string[]; parse: (cursor: Cursor) => any } };
+
+export const ASTFields = {
+    global: {
+        tags: {
+            columns: ["tags", "tag"],
+            parse: parseString,
+        },
+        createdAt: {
+            columns: ["createdAt"],
+            parse: wrapRange(parseDate),
+        },
+    },
+    domain: {
+        tags: {
+            columns: ["tags", "tag"],
+            parse: parseString,
+        },
+        createdAt: {
+            columns: ["createdAt"],
+            parse: wrapRange(parseDate),
+        },
+        domains: {
+            columns: ["domains", "domain"],
+            parse: parseString,
+        },
+        sourceOf: {
+            columns: ["sourceOf"],
+            parse: parseString,
+        },
+        sourceOfTags: {
+            columns: ["sourceOf.tag", "sourceOf.tags"],
+            parse: parseString,
+        },
+        sourceOfCreatedAt: {
+            columns: ["sourceOf.createdAt"],
+            parse: wrapRange(parseDate),
+        },
+        targetOf: {
+            columns: ["targetOf"],
+            parse: parseString,
+        },
+        targetOfTags: {
+            columns: ["targetOf.tag", "targetOf.tags"],
+            parse: parseString,
+        },
+        targetOfCreatedAt: {
+            columns: ["targetOf.createdAt"],
+            parse: wrapRange(parseDate),
+        },
+        ips: {
+            columns: ["ips", "ip"],
+            parse: parseString,
+        },
+        ipsCreatedAt: {
+            columns: ["ips.createdAt", "ip.createdAt"],
+            parse: wrapRange(parseDate),
+        },
+        ipsTags: {
+            columns: ["ips.tags", "ips.tag", "ip.tags", "ip.tag"],
+            parse: parseString,
+        },
+        ipsOs: {
+            columns: ["ips.os", "ip.os"],
+            parse: parseOsType,
+        },
+    },
+    host: {
+        tags: {
+            columns: ["tags", "tag"],
+            parse: parseString,
+        },
+        createdAt: {
+            columns: ["createdAt"],
+            parse: wrapRange(parseDate),
+        },
+        ips: {
+            columns: ["ips", "ip"],
+            parse: parseString,
+        },
+        os: {
+            columns: ["os"],
+            parse: parseOsType,
+        },
+        ports: {
+            columns: ["ports", "port"],
+            parse: wrapMaybeRange(parsePort),
+        },
+        portsProtocols: {
+            columns: ["ports.protocols", "ports.protocol", "port.protocols", "port.protocol"],
+            parse: parsePortProtocol,
+        },
+        portsTags: {
+            columns: ["ports.tags", "ports.tag", "port.tags", "port.tag"],
+            parse: parseString,
+        },
+        portsCreatedAt: {
+            columns: ["ports.createdAt", "port.createdAt"],
+            parse: wrapRange(parseDate),
+        },
+        services: {
+            columns: ["services", "service"],
+            parse: parseString,
+        },
+        servicesPorts: {
+            columns: ["services.ports", "services.port", "service.ports", "service.port"],
+            parse: wrapMaybeRange(parsePort),
+        },
+        servicesProtocols: {
+            columns: ["services.protocols", "services.protocol", "service.protocols", "service.protocol"],
+            parse: parsePortProtocol,
+        },
+        servicesTags: {
+            columns: ["services.tags", "services.tag", "service.tags", "service.tag"],
+            parse: parseString,
+        },
+        servicesCreatedAt: {
+            columns: ["services.createdAt", "service.createdAt"],
+            parse: wrapRange(parseDate),
+        },
+        domains: {
+            columns: ["domains", "domain"],
+            parse: parseString,
+        },
+        domainsTags: {
+            columns: ["domains.tags", "domains.tag", "domain.tags", "domain.tag"],
+            parse: parseString,
+        },
+        domainsCreatedAt: {
+            columns: ["domains.createdAt", "domain.createdAt"],
+            parse: wrapRange(parseDate),
+        },
+    },
+    port: {
+        tags: {
+            columns: ["tags", "tag"],
+            parse: parseString,
+        },
+        createdAt: {
+            columns: ["createdAt"],
+            parse: wrapRange(parseDate),
+        },
+        ports: {
+            columns: ["ports", "port"],
+            parse: wrapMaybeRange(parsePort),
+        },
+        ips: {
+            columns: ["ips", "ip"],
+            parse: parseString,
+        },
+        ipsCreatedAt: {
+            columns: ["ips.createdAt", "ip.createdAt"],
+            parse: wrapRange(parseDate),
+        },
+        ipsTags: {
+            columns: ["ips.tags", "ips.tag", "ip.tags", "ip.tag"],
+            parse: parseString,
+        },
+        ipsOs: {
+            columns: ["ips.os", "ip.os"],
+            parse: parseOsType,
+        },
+        protocols: {
+            columns: ["protocols", "protocol"],
+            parse: parsePortProtocol,
+        },
+        services: {
+            columns: ["services", "service"],
+            parse: parseString,
+        },
+        servicesTags: {
+            columns: ["services.tags", "services.tag", "service.tags", "service.tag"],
+            parse: parseString,
+        },
+        servicesCreatedAt: {
+            columns: ["services.createdAt", "service.createdAt"],
+            parse: wrapRange(parseDate),
+        },
+    },
+    service: {
+        tags: {
+            columns: ["tags", "tag"],
+            parse: parseString,
+        },
+        createdAt: {
+            columns: ["createdAt"],
+            parse: wrapRange(parseDate),
+        },
+        ips: {
+            columns: ["ips", "ip"],
+            parse: parseString,
+        },
+        ipsCreatedAt: {
+            columns: ["ips.createdAt", "ip.createdAt"],
+            parse: wrapRange(parseDate),
+        },
+        ipsTags: {
+            columns: ["ips.tags", "ips.tag", "ip.tags", "ip.tag"],
+            parse: parseString,
+        },
+        ipsOs: {
+            columns: ["ips.os", "ip.os"],
+            parse: parseOsType,
+        },
+        ports: {
+            columns: ["ports", "port"],
+            parse: wrapMaybeRange(parsePort),
+        },
+        portsTags: {
+            columns: ["ports.tags", "ports.tag", "port.tags", "port.tag"],
+            parse: parseString,
+        },
+        portsCreatedAt: {
+            columns: ["ports.createdAt", "port.createdAt"],
+            parse: wrapRange(parseDate),
+        },
+        protocols: {
+            columns: ["protocols", "protocol"],
+            parse: parsePortProtocol,
+        },
+        services: {
+            columns: ["services", "service"],
+            parse: parseString,
+        },
+    },
+} satisfies { [ast: string]: ASTField };
+
+export type ASTType<Fields extends ASTField> = {
+    [key in keyof Fields]: Array<ReturnType<Fields[key]["parse"]>>;
 };
 
-export type DomainAST = {
-    tags: Exprs<string>;
-    createdAt: Exprs<Expr.Range<Date>>;
-    domains: Exprs<string>;
-    sourceOf: Exprs<string>;
-    sourceOfTags: Exprs<string>;
-    sourceOfCreatedAt: Exprs<Expr.Range<Date>>;
-    targetOf: Exprs<string>;
-    targetOfTags: Exprs<string>;
-    targetOfCreatedAt: Exprs<Expr.Range<Date>>;
-    ips: Exprs<string>;
-    ipsCreatedAt: Exprs<Expr.Range<Date>>;
-    ipsTags: Exprs<string>;
-    ipsOs: Exprs<OsType>;
-};
+export type GlobalAST = ASTType<(typeof ASTFields)["global"]>;
+export type DomainAST = ASTType<(typeof ASTFields)["domain"]>;
+export type HostAST = ASTType<(typeof ASTFields)["host"]>;
+export type PortAST = ASTType<(typeof ASTFields)["port"]>;
+export type ServiceAST = ASTType<(typeof ASTFields)["service"]>;
 
-export type HostAST = {
-    tags: Exprs<string>;
-    createdAt: Exprs<Expr.Range<Date>>;
-    ips: Exprs<string>;
-    os: Exprs<OsType>;
-    ports: Exprs<Expr.MaybeRange<number>>;
-    portsProtocols: Exprs<PortProtocol>;
-    portsTags: Exprs<string>;
-    portsCreatedAt: Exprs<Expr.Range<Date>>;
-    services: Exprs<string>;
-    servicesPorts: Exprs<Expr.MaybeRange<number>>;
-    servicesProtocols: Exprs<PortProtocol>;
-    servicesTags: Exprs<string>;
-    servicesCreatedAt: Exprs<Expr.Range<Date>>;
-    domains: Exprs<string>;
-    domainsTags: Exprs<string>;
-    domainsCreatedAt: Exprs<Expr.Range<Date>>;
-};
-
-export type PortAST = {
-    tags: Exprs<string>;
-    createdAt: Exprs<Expr.Range<Date>>;
-    ports: Exprs<Expr.MaybeRange<number>>;
-    ips: Exprs<string>;
-    ipsCreatedAt: Exprs<Expr.Range<Date>>;
-    ipsTags: Exprs<string>;
-    ipsOs: Exprs<OsType>;
-    protocols: Exprs<PortProtocol>;
-    services: Exprs<string>;
-    servicesTags: Exprs<string>;
-    servicesCreatedAt: Exprs<Expr.Range<Date>>;
-};
-
-export type ServiceAST = {
-    tags: Exprs<string>;
-    createdAt: Exprs<Expr.Range<Date>>;
-    ips: Exprs<string>;
-    ipsCreatedAt: Exprs<Expr.Range<Date>>;
-    ipsTags: Exprs<string>;
-    ipsOs: Exprs<OsType>;
-    ports: Exprs<Expr.MaybeRange<number>>;
-    portsTags: Exprs<string>;
-    portsCreatedAt: Exprs<Expr.Range<Date>>;
-    protocols: Exprs<PortProtocol>;
-    services: Exprs<string>;
-};
-
-export type Expr<T> = Expr.Or<T>;
 export type Exprs<T> = Array<Expr.Or<T>>;
 
 export namespace Expr {
