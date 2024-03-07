@@ -126,3 +126,8 @@ body {
     color: #2189a3;
     fill-opacity: 50%;
 }
+
+.popup-content > .pane,
+.popup-content > .pane-thin {
+    backdrop-filter: blur(8px);
+}
