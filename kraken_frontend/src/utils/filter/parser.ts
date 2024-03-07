@@ -1,8 +1,27 @@
 import { OsType, PortProtocol } from "../../api/generated";
-import { DomainAST, Expr, GlobalAST, HostAST, PortAST, ServiceAST } from "./ast";
+import { ASTField, ASTFields, ASTType, DomainAST, Expr, GlobalAST, HostAST, PortAST, ServiceAST } from "./ast";
 import { Cursor } from "./cursor";
 import ParserError from "./error";
 import { tokenize } from "./lexer";
+
+/**
+ * Parse a string into a generic AST defined in {@link ASTFields}
+ *
+ * @throws ParserError
+ */
+export function parseAstFields<Fields extends ASTField>(input: string, ast: Fields): ASTType<Fields> {
+    // create object like `{ tags: [], createdAt: [], ... }`
+    let ret: {
+        [Key in keyof Fields]: any[];
+    } = Object.fromEntries(Object.keys(ast).map((k) => [k, []])) as any;
+
+    parseAst(input, (column, cursor) => {
+        let field = Object.keys(ast).find((field) => ast[field].columns.includes(column));
+        if (!field) throw new ParserError({ type: "unknownColumn", column });
+        ret[field].push(parseOr(cursor, ast[field].parse));
+    });
+    return ret;
+}
 
 /**
  * Parse a string into a {@link GlobalAST}
@@ -10,21 +29,7 @@ import { tokenize } from "./lexer";
  * @throws ParserError
  */
 export function parseGlobalAST(input: string): GlobalAST {
-    const ast: GlobalAST = { tags: [], createdAt: [] };
-    parseAst(input, (column, cursor) => {
-        switch (column) {
-            case "tags":
-            case "tag":
-                ast.tags.push(parseOr(cursor, parseString));
-                break;
-            case "createdAt":
-                ast.createdAt.push(parseOr(cursor, wrapRange(parseDate)));
-                break;
-            default:
-                throw new ParserError({ type: "unknownColumn", column });
-        }
-    });
-    return ast;
+    return parseAstFields(input, ASTFields.global);
 }
 
 /**
@@ -33,77 +38,7 @@ export function parseGlobalAST(input: string): GlobalAST {
  * @throws ParserError
  */
 export function parseDomainAST(input: string): DomainAST {
-    const ast: DomainAST = {
-        tags: [],
-        createdAt: [],
-        domains: [],
-        sourceOf: [],
-        sourceOfTags: [],
-        sourceOfCreatedAt: [],
-        targetOf: [],
-        targetOfTags: [],
-        targetOfCreatedAt: [],
-        ips: [],
-        ipsTags: [],
-        ipsCreatedAt: [],
-        ipsOs: [],
-    };
-    parseAst(input, (column, cursor) => {
-        switch (column) {
-            case "tags":
-            case "tag":
-                ast.tags.push(parseOr(cursor, parseString));
-                break;
-            case "createdAt":
-                ast.createdAt.push(parseOr(cursor, wrapRange(parseDate)));
-                break;
-            case "domains":
-            case "domain":
-                ast.domains.push(parseOr(cursor, parseString));
-                break;
-            case "sourceOf":
-                ast.sourceOf.push(parseOr(cursor, parseString));
-                break;
-            case "sourceOf.tag":
-            case "sourceOf.tags":
-                ast.sourceOfTags.push(parseOr(cursor, parseString));
-                break;
-            case "sourceOf.createdAt":
-                ast.sourceOfCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
-                break;
-            case "targetOf":
-                ast.targetOf.push(parseOr(cursor, parseString));
-                break;
-            case "targetOf.tag":
-            case "targetOf.tags":
-                ast.targetOfTags.push(parseOr(cursor, parseString));
-                break;
-            case "targetOf.createdAt":
-                ast.targetOfCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
-                break;
-            case "ips":
-            case "ip":
-                ast.ips.push(parseOr(cursor, parseString));
-                break;
-            case "ips.tags":
-            case "ips.tag":
-            case "ip.tags":
-            case "ip.tag":
-                ast.ipsTags.push(parseOr(cursor, parseString));
-                break;
-            case "ips.createdAt":
-            case "ip.createdAt":
-                ast.ipsCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
-                break;
-            case "ips.os":
-            case "ip.os":
-                ast.ipsOs.push(parseOr(cursor, parseOsType));
-                break;
-            default:
-                throw new ParserError({ type: "unknownColumn", column });
-        }
-    });
-    return ast;
+    return parseAstFields(input, ASTFields.domain);
 }
 
 /**
@@ -112,105 +47,7 @@ export function parseDomainAST(input: string): DomainAST {
  * @throws ParserError
  */
 export function parseHostAST(input: string): HostAST {
-    const ast: HostAST = {
-        tags: [],
-        createdAt: [],
-        ips: [],
-        os: [],
-        ports: [],
-        portsProtocols: [],
-        portsTags: [],
-        portsCreatedAt: [],
-        services: [],
-        servicesPorts: [],
-        servicesProtocols: [],
-        servicesTags: [],
-        servicesCreatedAt: [],
-        domains: [],
-        domainsTags: [],
-        domainsCreatedAt: [],
-    };
-    parseAst(input, (column, cursor) => {
-        switch (column) {
-            case "tags":
-            case "tag":
-                ast.tags.push(parseOr(cursor, parseString));
-                break;
-            case "createdAt":
-                ast.createdAt.push(parseOr(cursor, wrapRange(parseDate)));
-                break;
-            case "ips":
-            case "ip":
-                ast.ips.push(parseOr(cursor, parseString));
-                break;
-            case "os":
-                ast.os.push(parseOr(cursor, parseOsType));
-                break;
-            case "ports":
-            case "port":
-                ast.ports.push(parseOr(cursor, wrapMaybeRange(parsePort)));
-                break;
-            case "ports.protocols":
-            case "ports.protocol":
-            case "port.protocols":
-            case "port.protocol":
-                ast.portsProtocols.push(parseOr(cursor, parsePortProtocol));
-                break;
-            case "ports.tags":
-            case "ports.tag":
-            case "port.tags":
-            case "port.tag":
-                ast.portsTags.push(parseOr(cursor, parseString));
-                break;
-            case "ports.createdAt":
-            case "port.createdAt":
-                ast.portsCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
-                break;
-            case "services":
-            case "service":
-                ast.services.push(parseOr(cursor, parseString));
-                break;
-            case "services.ports":
-            case "services.port":
-            case "service.ports":
-            case "service.port":
-                ast.servicesPorts.push(parseOr(cursor, wrapMaybeRange(parsePort)));
-                break;
-            case "services.protocols":
-            case "services.protocol":
-            case "service.protocols":
-            case "service.protocol":
-                ast.servicesProtocols.push(parseOr(cursor, parsePortProtocol));
-                break;
-            case "services.tags":
-            case "services.tag":
-            case "service.tags":
-            case "service.tag":
-                ast.servicesTags.push(parseOr(cursor, parseString));
-                break;
-            case "services.createdAt":
-            case "service.createdAt":
-                ast.servicesCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
-                break;
-            case "domains":
-            case "domain":
-                ast.domains.push(parseOr(cursor, parseString));
-                break;
-            case "domains.tags":
-            case "domains.tag":
-            case "domain.tags":
-            case "domain.tag":
-                ast.domainsTags.push(parseOr(cursor, parseString));
-                break;
-            case "domains.createdAt":
-            case "domain.createdAt":
-                ast.domainsCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
-                break;
-            default:
-                throw new ParserError({ type: "unknownColumn", column });
-        }
-    });
-    return ast;
+    return parseAstFields(input, ASTFields.host);
 }
 
 /**
@@ -219,73 +56,7 @@ export function parseHostAST(input: string): HostAST {
  * @throws ParserError
  */
 export function parsePortAST(input: string): PortAST {
-    const ast: PortAST = {
-        tags: [],
-        createdAt: [],
-        ports: [],
-        ips: [],
-        ipsOs: [],
-        protocols: [],
-        ipsTags: [],
-        ipsCreatedAt: [],
-        services: [],
-        servicesTags: [],
-        servicesCreatedAt: [],
-    };
-    parseAst(input, (column, cursor) => {
-        switch (column) {
-            case "tags":
-            case "tag":
-                ast.tags.push(parseOr(cursor, parseString));
-                break;
-            case "createdAt":
-                ast.createdAt.push(parseOr(cursor, wrapRange(parseDate)));
-                break;
-            case "ports":
-            case "port":
-                ast.ports.push(parseOr(cursor, wrapMaybeRange(parsePort)));
-                break;
-            case "ips":
-            case "ip":
-                ast.ips.push(parseOr(cursor, parseString));
-                break;
-            case "ips.tags":
-            case "ips.tag":
-            case "ip.tags":
-            case "ip.tag":
-                ast.ipsTags.push(parseOr(cursor, parseString));
-                break;
-            case "ips.createdAt":
-            case "ip.createdAt":
-                ast.ipsCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
-                break;
-            case "ips.os":
-            case "ip.os":
-                ast.ipsOs.push(parseOr(cursor, parseOsType));
-                break;
-            case "protocols":
-            case "protocol":
-                ast.protocols.push(parseOr(cursor, parsePortProtocol));
-                break;
-            case "services":
-            case "service":
-                ast.services.push(parseOr(cursor, parseString));
-                break;
-            case "services.tags":
-            case "services.tag":
-            case "service.tags":
-            case "service.tag":
-                ast.servicesTags.push(parseOr(cursor, parseString));
-                break;
-            case "services.createdAt":
-            case "service.createdAt":
-                ast.servicesCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
-                break;
-            default:
-                throw new ParserError({ type: "unknownColumn", column });
-        }
-    });
-    return ast;
+    return parseAstFields(input, ASTFields.port);
 }
 
 /**
@@ -294,74 +65,9 @@ export function parsePortAST(input: string): PortAST {
  * @throws ParserError
  */
 export function parseServiceAST(input: string): ServiceAST {
-    const ast: ServiceAST = {
-        tags: [],
-        createdAt: [],
-        ports: [],
-        ips: [],
-        services: [],
-        ipsTags: [],
-        ipsCreatedAt: [],
-        ipsOs: [],
-        portsTags: [],
-        portsCreatedAt: [],
-        protocols: [],
-    };
-    parseAst(input, (column, cursor) => {
-        switch (column) {
-            case "tags":
-            case "tag":
-                ast.tags.push(parseOr(cursor, parseString));
-                break;
-            case "createdAt":
-                ast.createdAt.push(parseOr(cursor, wrapRange(parseDate)));
-                break;
-            case "ports":
-            case "port":
-                ast.ports.push(parseOr(cursor, wrapMaybeRange(parsePort)));
-                break;
-            case "ports.tags":
-            case "ports.tag":
-            case "port.tags":
-            case "port.tag":
-                ast.portsTags.push(parseOr(cursor, parseString));
-                break;
-            case "ports.createdAt":
-            case "port.createdAt":
-                ast.portsCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
-                break;
-            case "protocols":
-            case "protocol":
-                ast.protocols.push(parseOr(cursor, parsePortProtocol));
-                break;
-            case "ips":
-            case "ip":
-                ast.ips.push(parseOr(cursor, parseString));
-                break;
-            case "ips.tags":
-            case "ips.tag":
-            case "ip.tags":
-            case "ip.tag":
-                ast.ipsTags.push(parseOr(cursor, parseString));
-                break;
-            case "ips.createdAt":
-            case "ip.createdAt":
-                ast.ipsCreatedAt.push(parseOr(cursor, wrapRange(parseDate)));
-                break;
-            case "ips.os":
-            case "ip.os":
-                ast.ipsOs.push(parseOr(cursor, parseOsType));
-                break;
-            case "services":
-            case "service":
-                ast.services.push(parseOr(cursor, parseString));
-                break;
-            default:
-                throw new ParserError({ type: "unknownColumn", column });
-        }
-    });
-    return ast;
+    return parseAstFields(input, ASTFields.service);
 }
+
 /**
  * Helper function to be called from `parse...AST`
  *
@@ -412,12 +118,12 @@ function parseNot<T>(tokens: Cursor, parseValue: (cursor: Cursor) => Expr.Value<
 }
 
 /** Parse a single string */
-function parseString(tokens: Cursor): Expr.Value<string> {
+export function parseString(tokens: Cursor): Expr.Value<string> {
     return tokens.nextValue();
 }
 
 /** Parse a single {@link Date} */
-function parseDate(tokens: Cursor): Expr.Value<Date> {
+export function parseDate(tokens: Cursor): Expr.Value<Date> {
     const value = tokens.nextValue();
     const timestamp = Date.parse(value);
     if (Number.isNaN(timestamp)) throw new ParserError({ type: "parseValue", msg: `${value} is not a date` });
@@ -425,7 +131,7 @@ function parseDate(tokens: Cursor): Expr.Value<Date> {
 }
 
 /** Parse a single port i.e. a number in the range `1..65535` */
-function parsePort(tokens: Cursor): Expr.Value<number> {
+export function parsePort(tokens: Cursor): Expr.Value<number> {
     const value = tokens.nextValue();
     const number = Number(value);
     if (Number.isNaN(number) || number <= 0 || number > 65535)
@@ -434,7 +140,7 @@ function parsePort(tokens: Cursor): Expr.Value<number> {
 }
 
 /** Parse a single {@link PortProtocol} */
-function parsePortProtocol(tokens: Cursor): Expr.Value<PortProtocol> {
+export function parsePortProtocol(tokens: Cursor): Expr.Value<PortProtocol> {
     const value = tokens.nextValue();
     switch (value.toLowerCase()) {
         case "tcp":
@@ -451,7 +157,7 @@ function parsePortProtocol(tokens: Cursor): Expr.Value<PortProtocol> {
 }
 
 /** Parse a single {@link OsType} */
-function parseOsType(tokens: Cursor): Expr.Value<OsType> {
+export function parseOsType(tokens: Cursor): Expr.Value<OsType> {
     const value = tokens.nextValue();
     switch (value.toLowerCase()) {
         case "unknown":
@@ -472,7 +178,7 @@ function parseOsType(tokens: Cursor): Expr.Value<OsType> {
 }
 
 /** Wraps a `(cursor: Cursor) => Expr.Value<T>` to produce a `(cursor: Cursor) => Expr.Value<Expr.Range<T>>` */
-function wrapRange<T>(parseValue: (cursor: Cursor) => Expr.Value<T>) {
+export function wrapRange<T>(parseValue: (cursor: Cursor) => Expr.Value<T>) {
     return function (cursor: Cursor): Expr.Value<Expr.Range<T>> {
         const start = cursor.peekToken()?.type === "rangeOperator" ? null : parseValue(cursor);
 
@@ -501,7 +207,7 @@ function wrapRange<T>(parseValue: (cursor: Cursor) => Expr.Value<T>) {
 }
 
 /** Wraps a `(cursor: Cursor) => Expr.Value<T>` to produce a `(cursor: Cursor) => Expr.Value<Expr.MaybeRange<T>>` */
-function wrapMaybeRange<T>(parseValue: (cursor: Cursor) => Expr.Value<T>) {
+export function wrapMaybeRange<T>(parseValue: (cursor: Cursor) => Expr.Value<T>) {
     const parseRange = wrapRange(parseValue);
     return function (cursor: Cursor): Expr.Value<Expr.MaybeRange<T>> {
         const cursor2 = cursor.clone();
