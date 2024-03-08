@@ -36,7 +36,7 @@ actix-toolbox = { version = "~0.13", features = ["ws", "logging", "session-postg
 webauthn-rs = { version = "~0.4", features = ["danger-allow-state-serialisation"] }
 
 # openapi swagger
-utoipa = { version = "~4", features = ["actix_extras", "repr", "chrono", "uuid", "openapi_extensions", "preserve_order"]}
+utoipa = { version = "~4", features = ["actix_extras", "repr", "chrono", "uuid", "openapi_extensions", "preserve_order"] }
 # openapi swagger boilerplat generation
 utoipa-swagger-ui = { version = "~6", features = ["actix-web"], optional = true }
 

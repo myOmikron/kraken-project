@@ -5,9 +5,11 @@
 //! The internal synchronization will take care of fanning the events to the websocket
 //! as well as caching the results internally and saving them regularly to the database
 
-use log::debug;
 use log::error;
 use log::warn;
+use rorm::query;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
 use crate::chan::global::GLOBAL;
@@ -16,6 +18,8 @@ use crate::chan::ws_manager::schema::CursorPosition;
 use crate::chan::ws_manager::schema::EditorTarget;
 use crate::chan::ws_manager::schema::FindingSection;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::FindingDefinition;
+use crate::modules::cache::EditorCached;
 
 /// Sync editor
 pub struct EditorSync;
@@ -25,25 +29,16 @@ impl EditorSync {
     pub async fn process_client_edit_finding_definition(
         &self,
         user: Uuid,
-        finding_definition: Uuid,
+        fd: Uuid,
         finding_section: FindingSection,
         change: Change,
     ) {
-        if !self.does_fd_exist(finding_definition).await {
+        if !self.does_fd_exist(fd).await {
             return;
         }
 
         let Ok(Some(user)) = GLOBAL.user_cache.get_simple_user(user).await else {
             error!("Could not retrieve user from cache for active websocket");
-            return;
-        };
-
-        let Ok(Some(mut fd)) = GLOBAL
-            .finding_definition_cache
-            .get(finding_definition)
-            .await
-        else {
-            error!("Could not retrieve finding definition from cache");
             return;
         };
 
@@ -59,16 +54,81 @@ impl EditorSync {
 
         // Apply change
         match finding_section {
-            FindingSection::Summary => fd.summary = apply_change(&fd.summary, &change),
-            FindingSection::Description => fd.description = apply_change(&fd.description, &change),
-            FindingSection::Impact => fd.impact = apply_change(&fd.impact, &change),
-            FindingSection::Remediation => fd.remediation = apply_change(&fd.remediation, &change),
-            FindingSection::References => fd.references = apply_change(&fd.references, &change),
-        }
-
-        // Update cache
-        if GLOBAL.finding_definition_cache.update(fd).await.is_err() {
-            debug!("Finding definition was deleted while updating it");
+            FindingSection::Summary => {
+                let Ok(Some(summary)) = GLOBAL.editor_cache.fd_summary.get(fd).await else {
+                    warn!("Summary not in cache");
+                    return;
+                };
+                if let Err(err) = GLOBAL
+                    .editor_cache
+                    .fd_summary
+                    .update(fd, apply_change(&summary, &change))
+                    .await
+                {
+                    warn!("Cache error: {err}");
+                    return;
+                }
+            }
+            FindingSection::Description => {
+                let Ok(Some(description)) = GLOBAL.editor_cache.fd_description.get(fd).await else {
+                    warn!("Description not in cache");
+                    return;
+                };
+                if let Err(err) = GLOBAL
+                    .editor_cache
+                    .fd_description
+                    .update(fd, apply_change(&description, &change))
+                    .await
+                {
+                    warn!("Cache error: {err}");
+                    return;
+                }
+            }
+            FindingSection::Impact => {
+                let Ok(Some(impact)) = GLOBAL.editor_cache.fd_impact.get(fd).await else {
+                    warn!("Impact not in cache");
+                    return;
+                };
+                if let Err(err) = GLOBAL
+                    .editor_cache
+                    .fd_impact
+                    .update(fd, apply_change(&impact, &change))
+                    .await
+                {
+                    warn!("Cache error: {err}");
+                    return;
+                }
+            }
+            FindingSection::Remediation => {
+                let Ok(Some(remediation)) = GLOBAL.editor_cache.fd_remediation.get(fd).await else {
+                    warn!("Remediation not in cache");
+                    return;
+                };
+                if let Err(err) = GLOBAL
+                    .editor_cache
+                    .fd_remediation
+                    .update(fd, apply_change(&remediation, &change))
+                    .await
+                {
+                    warn!("Cache error: {err}");
+                    return;
+                }
+            }
+            FindingSection::References => {
+                let Ok(Some(references)) = GLOBAL.editor_cache.fd_references.get(fd).await else {
+                    warn!("References not in cache");
+                    return;
+                };
+                if let Err(err) = GLOBAL
+                    .editor_cache
+                    .fd_references
+                    .update(fd, apply_change(&references, &change))
+                    .await
+                {
+                    warn!("Cache error: {err}");
+                    return;
+                }
+            }
         }
 
         // Notify all users about the change
@@ -76,7 +136,7 @@ impl EditorSync {
             .ws
             .message_all(WsMessage::EditorChangedContent {
                 target: EditorTarget::FindingDefinition {
-                    finding_definition,
+                    finding_definition: fd,
                     finding_section,
                 },
                 change,
@@ -120,14 +180,12 @@ impl EditorSync {
     }
 
     async fn does_fd_exist(&self, finding_definition: Uuid) -> bool {
-        GLOBAL
-            .finding_definition_cache
-            .exists(finding_definition)
+        query!(&GLOBAL.db, (FindingDefinition::F.uuid,))
+            .condition(FindingDefinition::F.uuid.equals(finding_definition))
+            .optional()
             .await
-            .unwrap_or_else(|err| {
-                error!("DB error: {err}");
-                false
-            })
+            .map(|x| x.is_some())
+            .unwrap_or(false)
     }
 }
 

@@ -86,7 +86,9 @@ impl WorkspaceUsersCache {
     ) -> Result<Option<Vec<Uuid>>, rorm::Error> {
         debug!("Workspace Member Cache was hit");
         let now = Utc::now();
-        let refresh_period = Duration::minutes(5);
+        // panics on out-of-bounds, so this is fine
+        #[allow(clippy::unwrap_used)]
+        let refresh_period = Duration::try_minutes(5).unwrap();
 
         let mut users: Option<Vec<Uuid>> = None;
         let entry = {

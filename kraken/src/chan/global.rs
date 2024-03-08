@@ -11,10 +11,8 @@ use rorm::Database;
 use crate::chan::leech_manager::LeechManager;
 use crate::chan::settings_manager::SettingsManagerChan;
 use crate::chan::ws_manager::chan::WsManagerChan;
-use crate::models::FindingDefinition;
-use crate::models::Workspace;
 use crate::modules::aggregator::Aggregator;
-use crate::modules::cache::full_cache::FullCache;
+use crate::modules::cache::EditorCache;
 use crate::modules::cache::UserCache;
 use crate::modules::cache::WorkspaceUsersCache;
 use crate::modules::editor::EditorSync;
@@ -52,10 +50,8 @@ pub struct GlobalChan {
     /// The caching layer for users
     pub user_cache: UserCache,
 
-    /// The caching layer for [FindingDefinition]
-    pub finding_definition_cache: FullCache<FindingDefinition>,
-    /// The caching layer for [Workspace]
-    pub workspace_cache: FullCache<Workspace>,
+    /// All caches for editors
+    pub editor_cache: EditorCache,
 
     /// Scheduler for inserting or updating any aggregation model in the database
     pub aggregator: Aggregator,
@@ -70,6 +66,11 @@ impl<T> GlobalOnceCell<T> {
     /// Creates a new empty cell
     pub const fn new() -> Self {
         Self(OnceLock::new())
+    }
+
+    /// Check if the OnceLock is already initialized
+    pub fn is_initialized(&self) -> bool {
+        self.0.get().is_some()
     }
 
     /// Initialise the cell

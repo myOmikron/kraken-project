@@ -35,12 +35,10 @@ use kraken::chan::leech_manager::LeechManager;
 use kraken::chan::settings_manager::start_settings_manager;
 use kraken::chan::ws_manager::chan::start_ws_manager;
 use kraken::config::Config;
-use kraken::models::FindingDefinition;
 use kraken::models::User;
 use kraken::models::UserPermission;
-use kraken::models::Workspace;
 use kraken::modules::aggregator::Aggregator;
-use kraken::modules::cache::full_cache::FullCache;
+use kraken::modules::cache::EditorCache;
 use kraken::modules::cache::UserCache;
 use kraken::modules::cache::WorkspaceUsersCache;
 use kraken::modules::editor::EditorSync;
@@ -132,8 +130,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let workspace_users_cache = WorkspaceUsersCache::default();
             let user_cache = UserCache::default();
-            let finding_definition_cache = FullCache::<FindingDefinition>::new();
-            let workspace_cache = FullCache::<Workspace>::new();
+            let editor_cache = EditorCache::new();
 
             let aggregator = Aggregator::default();
 
@@ -148,8 +145,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 tls,
                 workspace_users_cache,
                 user_cache,
-                finding_definition_cache,
-                workspace_cache,
+                editor_cache,
                 aggregator,
                 editor_sync,
             });

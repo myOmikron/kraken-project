@@ -2,6 +2,11 @@ use actix_web::get;
 use actix_web::post;
 use actix_web::web::Json;
 use actix_web::web::Path;
+use futures::TryStreamExt;
+use rorm::insert;
+use rorm::query;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
 use crate::api::handler::common::error::ApiError;
@@ -13,7 +18,9 @@ use crate::api::handler::finding_definitions::schema::FullFindingDefinition;
 use crate::api::handler::finding_definitions::schema::ListFindingDefinitions;
 use crate::api::handler::finding_definitions::schema::SimpleFindingDefinition;
 use crate::chan::global::GLOBAL;
+use crate::models::FindingDefinition;
 use crate::models::InsertFindingDefinition;
+use crate::modules::cache::EditorCached;
 
 /// Add a definition for a finding
 ///
@@ -48,9 +55,8 @@ pub async fn create_finding_definition(
 
     let uuid = Uuid::new_v4();
 
-    GLOBAL
-        .finding_definition_cache
-        .insert(InsertFindingDefinition {
+    insert!(&GLOBAL.db, FindingDefinition)
+        .single(&InsertFindingDefinition {
             uuid,
             name,
             summary,
@@ -62,6 +68,12 @@ pub async fn create_finding_definition(
             references,
         })
         .await?;
+
+    GLOBAL.editor_cache.fd_summary.invalidate_not_found();
+    GLOBAL.editor_cache.fd_description.invalidate_not_found();
+    GLOBAL.editor_cache.fd_impact.invalidate_not_found();
+    GLOBAL.editor_cache.fd_remediation.invalidate_not_found();
+    GLOBAL.editor_cache.fd_references.invalidate_not_found();
 
     Ok(Json(UuidResponse { uuid }))
 }
@@ -84,22 +96,27 @@ pub async fn get_finding_definition(
 ) -> ApiResult<Json<FullFindingDefinition>> {
     let uuid = path.into_inner().uuid;
 
-    let finding_definition = GLOBAL
-        .finding_definition_cache
-        .get(uuid)
+    let finding_definition = query!(&GLOBAL.db, FindingDefinition)
+        .condition(FindingDefinition::F.uuid.equals(uuid))
+        .optional()
         .await?
         .ok_or(ApiError::InvalidUuid)?;
 
     Ok(Json(FullFindingDefinition {
         uuid: finding_definition.uuid,
         name: finding_definition.name,
-        summary: finding_definition.summary,
+        #[rustfmt::skip]
+        summary: GLOBAL.editor_cache.fd_summary.get(uuid).await?.ok_or(ApiError::InvalidUuid)?,
         severity: finding_definition.severity,
         cve: finding_definition.cve,
-        description: finding_definition.description,
-        impact: finding_definition.impact,
-        remediation: finding_definition.remediation,
-        references: finding_definition.references,
+        #[rustfmt::skip]
+        description: GLOBAL.editor_cache.fd_description.get(uuid).await?.ok_or(ApiError::InvalidUuid)?,
+        #[rustfmt::skip]
+        impact: GLOBAL.editor_cache.fd_impact.get(uuid).await?.ok_or(ApiError::InvalidUuid)?,
+        #[rustfmt::skip]
+        remediation: GLOBAL.editor_cache.fd_remediation.get(uuid).await?.ok_or(ApiError::InvalidUuid)?,
+        #[rustfmt::skip]
+        references: GLOBAL.editor_cache.fd_references.get(uuid).await?.ok_or(ApiError::InvalidUuid)?,
         created_at: finding_definition.created_at,
     }))
 }
@@ -117,19 +134,27 @@ pub async fn get_finding_definition(
 )]
 #[get("/findingDefinitions")]
 pub async fn get_all_finding_definitions() -> ApiResult<Json<ListFindingDefinitions>> {
-    let finding_definitions = GLOBAL
-        .finding_definition_cache
-        .get_all()
-        .await?
-        .into_iter()
-        .map(|finding| SimpleFindingDefinition {
-            uuid: finding.uuid,
-            name: finding.name,
-            summary: finding.summary,
-            severity: finding.severity,
-            created_at: finding.created_at,
-        })
-        .collect();
+    let mut finding_definitions: Vec<SimpleFindingDefinition> =
+        query!(&GLOBAL.db, FindingDefinition)
+            .stream()
+            .map_ok(|fd| SimpleFindingDefinition {
+                uuid: fd.uuid,
+                name: fd.name,
+                summary: fd.summary,
+                severity: fd.severity,
+                created_at: fd.created_at,
+            })
+            .try_collect()
+            .await?;
+
+    for fd in &mut finding_definitions {
+        fd.summary = GLOBAL
+            .editor_cache
+            .fd_summary
+            .get(fd.uuid)
+            .await?
+            .ok_or(ApiError::InternalServerError)?;
+    }
 
     Ok(Json(ListFindingDefinitions {
         finding_definitions,

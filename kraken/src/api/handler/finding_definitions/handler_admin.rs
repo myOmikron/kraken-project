@@ -1,6 +1,8 @@
 use actix_web::delete;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
+use rorm::FieldAccess;
+use rorm::Model;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::common::error::ApiError;
@@ -8,7 +10,9 @@ use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::PathUuid;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::FindingDefinition;
 use crate::models::UserPermission;
+use crate::modules::cache::EditorCached;
 
 /// Delete a finding definition
 #[utoipa::path(
@@ -39,11 +43,19 @@ pub async fn delete_finding_definition(
         return Err(ApiError::MissingPrivileges);
     }
 
-    let deleted = GLOBAL.finding_definition_cache.delete(uuid).await?;
+    let deleted = rorm::delete!(&GLOBAL.db, FindingDefinition)
+        .condition(FindingDefinition::F.uuid.equals(uuid))
+        .await?;
 
     if deleted == 0 {
         return Err(ApiError::InvalidUuid);
     }
+
+    GLOBAL.editor_cache.fd_summary.delete(uuid);
+    GLOBAL.editor_cache.fd_description.delete(uuid);
+    GLOBAL.editor_cache.fd_impact.delete(uuid);
+    GLOBAL.editor_cache.fd_remediation.delete(uuid);
+    GLOBAL.editor_cache.fd_references.delete(uuid);
 
     // Notify every user about deleted finding definition
     GLOBAL

@@ -10,12 +10,16 @@ use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+#[cfg(feature = "bin")]
+pub(crate) use crate::models::workspace::patches::*;
 use crate::models::Attack;
 use crate::models::OauthClient;
 use crate::models::User;
 
 #[cfg(feature = "bin")]
 mod operations;
+#[cfg(feature = "bin")]
+mod patches;
 
 /// The permission of a member in a workspace
 #[derive(Debug, Copy, Clone, Deserialize, Serialize, ToSchema, DbEnum)]
@@ -72,10 +76,6 @@ pub struct Workspace {
     #[rorm(max_length = 65535)]
     pub description: Option<String>,
 
-    /// Optional description of the workspace
-    #[rorm(max_length = 65535)]
-    pub notes: Option<String>,
-
     /// The user that owns this workspace
     #[rorm(index)]
     pub owner: ForeignModel<User>,
@@ -93,6 +93,26 @@ pub struct Workspace {
 
     /// All attacks started in this workspace
     pub attacks: BackRef<field!(Attack::F.workspace)>,
+}
+
+/// The notes that are saved in a workspace
+#[derive(Model)]
+pub struct WorkspaceNotes {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// Optional notes of the workspace
+    #[rorm(max_length = 65535)]
+    pub notes: String,
+
+    /// The linked workspace
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub workspace: ForeignModel<Workspace>,
+
+    /// The point in time the notes are created
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
 }
 
 /// An oauth `access_token` for a workspace
