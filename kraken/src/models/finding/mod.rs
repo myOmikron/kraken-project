@@ -14,9 +14,13 @@ use uuid::Uuid;
 pub(crate) use crate::models::finding::patches::InsertFindingDefinition;
 use crate::models::Domain;
 use crate::models::Host;
+use crate::models::MediaFile;
 use crate::models::Port;
 use crate::models::Service;
+use crate::models::Workspace;
 
+#[cfg(feature = "bin")]
+mod operations;
 #[cfg(feature = "bin")]
 mod patches;
 
@@ -100,6 +104,10 @@ pub struct Finding {
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
     pub details: ForeignModel<FindingDetails>,
 
+    /// The workspace the finding was found in
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub workspace: ForeignModel<Workspace>,
+
     /// The point in time this finding was created
     #[rorm(auto_create_time)]
     pub created_at: DateTime<Utc>,
@@ -107,10 +115,13 @@ pub struct Finding {
 
 /// The affected aggregations of the [Finding]
 ///
-/// At least one of `domain`, `host`, `port` or `service` must be set
+/// At exactly one of `domain`, `host`, `port` or `service` must be set
 #[derive(Model)]
 pub struct FindingAffected {
     /// The primary key
+    ///
+    /// Not exposed to the api,
+    /// use the aggregated object in combination with the finding instead.
     #[rorm(primary_key)]
     pub uuid: Uuid,
 
@@ -134,6 +145,10 @@ pub struct FindingAffected {
     /// The details of this affected finding
     #[rorm(on_update = "Cascade", on_delete = "SetNull")]
     pub details: Option<ForeignModel<FindingDetails>>,
+
+    /// The workspace the finding was found in
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub workspace: ForeignModel<Workspace>,
 
     /// The point in time this model was created
     #[rorm(auto_create_time)]
@@ -160,11 +175,15 @@ pub struct FindingDetails {
     #[rorm(max_length = 65535)]
     pub tool_details: Option<String>,
 
-    /// The path to the file relative to the media directory from the config
-    #[rorm(max_length = 1024)]
-    pub screenshot: Option<String>,
+    /// A screenshot
+    ///
+    /// `MediaFile`'s `is_image` field must be `true`.
+    #[rorm(on_update = "Cascade", on_delete = "SetNull")]
+    pub screenshot: Option<ForeignModel<MediaFile>>,
 
-    /// The path to the file relative to the media directory from the config
-    #[rorm(max_length = 1024)]
-    pub log_file: Option<String>,
+    /// A log file
+    ///
+    /// `MediaFile`'s `is_image` field should be `false`.
+    #[rorm(on_update = "Cascade", on_delete = "SetNull")]
+    pub log_file: Option<ForeignModel<MediaFile>>,
 }

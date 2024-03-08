@@ -36,7 +36,9 @@ use crate::api::handler::auth;
 use crate::api::handler::data_export;
 use crate::api::handler::domains;
 use crate::api::handler::files;
+use crate::api::handler::finding_affected;
 use crate::api::handler::finding_definitions;
+use crate::api::handler::findings;
 use crate::api::handler::global_tags;
 use crate::api::handler::hosts;
 use crate::api::handler::leeches;
@@ -255,6 +257,15 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(workspace_invitations::handler::get_all_invitations)
                     .service(workspace_invitations::handler::accept_invitation)
                     .service(workspace_invitations::handler::decline_invitation)
+                    .service(findings::handler::create_finding)
+                    .service(findings::handler::get_all_findings)
+                    .service(findings::handler::get_finding)
+                    .service(findings::handler::update_finding)
+                    .service(findings::handler::delete_finding)
+                    .service(finding_affected::handler::create_finding_affected)
+                    .service(finding_affected::handler::get_finding_affected)
+                    .service(finding_affected::handler::update_finding_affected)
+                    .service(finding_affected::handler::delete_finding_affected)
                     .service(finding_definitions::handler::create_finding_definition)
                     .service(finding_definitions::handler::get_finding_definition)
                     .service(finding_definitions::handler::get_all_finding_definitions),

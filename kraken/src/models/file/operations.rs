@@ -16,6 +16,25 @@ use crate::models::Workspace;
 pub struct DeferCommit<E>(pub E);
 
 impl MediaFile {
+    /// Checks whether a file exists
+    pub async fn exists(executor: impl Executor<'_>, uuid: Uuid) -> Result<bool, rorm::Error> {
+        Ok(query!(executor, (MediaFile::F.uuid,))
+            .condition(MediaFile::F.uuid.equals(uuid))
+            .optional()
+            .await?
+            .is_some())
+    }
+
+    /// Checks whether a file exists and is an image
+    pub async fn is_image(executor: impl Executor<'_>, uuid: Uuid) -> Result<bool, rorm::Error> {
+        Ok(query!(executor, (MediaFile::F.is_image,))
+            .condition(MediaFile::F.uuid.equals(uuid))
+            .optional()
+            .await?
+            .map(|(is_image,)| is_image)
+            .unwrap_or(false))
+    }
+
     /// Inserts a new [`MediaFile`]
     ///
     /// ## Beware:

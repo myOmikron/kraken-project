@@ -19,7 +19,9 @@ use crate::api::handler::common;
 use crate::api::handler::data_export;
 use crate::api::handler::domains;
 use crate::api::handler::files;
+use crate::api::handler::finding_affected;
 use crate::api::handler::finding_definitions;
+use crate::api::handler::findings;
 use crate::api::handler::global_tags;
 use crate::api::handler::hosts;
 use crate::api::handler::leeches;
@@ -191,6 +193,15 @@ impl Modify for SecurityAddon2 {
         workspace_invitations::handler::get_all_invitations,
         workspace_invitations::handler::accept_invitation,
         workspace_invitations::handler::decline_invitation,
+        findings::handler::create_finding,
+        findings::handler::get_all_findings,
+        findings::handler::get_finding,
+        findings::handler::update_finding,
+        findings::handler::delete_finding,
+        finding_affected::handler::create_finding_affected,
+        finding_affected::handler::get_finding_affected,
+        finding_affected::handler::update_finding_affected,
+        finding_affected::handler::delete_finding_affected,
         finding_definitions::handler::create_finding_definition,
         finding_definitions::handler::get_finding_definition,
         finding_definitions::handler::get_all_finding_definitions,
@@ -345,6 +356,16 @@ impl Modify for SecurityAddon2 {
         chan::ws_manager::schema::FindingSection,
         chan::ws_manager::schema::EditorTarget,
         chan::ws_manager::schema::CursorPosition,
+        findings::schema::CreateFindingRequest,
+        findings::schema::UpdateFindingRequest,
+        findings::schema::SimpleFinding,
+        findings::schema::FullFinding,
+        findings::schema::SimpleFindingAffected,
+        findings::schema::ListFindings,
+        finding_affected::schema::CreateFindingAffectedRequest,
+        finding_affected::schema::UpdateFindingAffectedRequest,
+        finding_affected::schema::FullFindingAffected,
+        finding_affected::schema::FindingAffectedObject,
         finding_definitions::schema::CreateFindingDefinitionRequest,
         finding_definitions::schema::FullFindingDefinition,
         finding_definitions::schema::SimpleFindingDefinition,
