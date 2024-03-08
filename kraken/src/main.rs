@@ -130,7 +130,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let workspace_users_cache = WorkspaceUsersCache::default();
             let user_cache = UserCache::default();
-            let editor_cache = EditorCache::new();
+            let editor_cache = EditorCache::default();
 
             let aggregator = Aggregator::default();
 
