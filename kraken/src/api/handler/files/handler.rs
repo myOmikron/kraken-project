@@ -21,10 +21,11 @@ use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::files::schema::PathFile;
 use crate::api::handler::files::schema::UploadQuery;
+use crate::api::handler::files::utils::media_file_path;
+use crate::api::handler::files::utils::media_thumbnail_path;
 use crate::api::handler::files::utils::stream_into_file;
 use crate::api::handler::files::utils::stream_into_file_with_magic;
 use crate::chan::global::GLOBAL;
-use crate::config::VAR_DIR;
 use crate::models::MediaFile;
 use crate::models::Workspace;
 
@@ -59,7 +60,7 @@ pub async fn upload_image(
         .and_then(|(_, ext)| ImageFormat::from_extension(ext))
         .ok_or(ApiError::InvalidImage)?;
 
-    let file_path = format!("{VAR_DIR}/media/{file_uuid}");
+    let file_path = media_file_path(file_uuid);
     let ((delete_file_guard, sha256), magic_format) =
         stream_into_file_with_magic::<sha2::Sha256>(file_path.as_ref(), body)
             .await?
@@ -85,15 +86,12 @@ pub async fn upload_image(
     }
 
     tokio::task::spawn_blocking(move || {
-        let mut reader = image::io::Reader::open(format!("{VAR_DIR}/media/{file_uuid}"))?;
+        let mut reader = image::io::Reader::open(media_file_path(file_uuid))?;
         reader.set_format(image_format);
         let image = reader.decode()?;
 
         let image = image.thumbnail(256, 256);
-        image.save_with_format(
-            format!("{VAR_DIR}/media/thumbnails/{file_uuid}"),
-            image_format,
-        )
+        image.save_with_format(media_thumbnail_path(file_uuid), image_format)
     })
     .await
     .map_err(|panic| {
@@ -135,7 +133,7 @@ pub async fn upload_file(
     let workspace_uuid = path.into_inner().uuid;
     let file_uuid = Uuid::new_v4();
 
-    let file_path = format!("{VAR_DIR}/media/{file_uuid}");
+    let file_path = media_file_path(file_uuid);
     #[allow(clippy::unwrap_used)] // None is only returned iff the hook returns Err which it doesn't
     let (delete_file_guard, sha256) =
         stream_into_file::<sha2::Sha256>(file_path.as_ref(), body, |_| Ok(()))
@@ -194,7 +192,7 @@ pub async fn download_thumbnail(
         return Err(ApiError::NotFound);
     }
 
-    File::open(format!("{VAR_DIR}/media/thumbnails/{f_uuid}"))
+    File::open(media_thumbnail_path(f_uuid))
         .and_then(|file| NamedFile::from_file(file, name))
         .map(|file| file.use_etag(true).use_last_modified(true))
         .map_err(|err| {
@@ -222,17 +220,21 @@ pub async fn download_file(
 ) -> ApiResult<NamedFile> {
     let PathFile { w_uuid, f_uuid } = path.into_inner();
 
-    if !Workspace::is_user_member_or_owner(&GLOBAL.db, w_uuid, u_uuid).await? {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    if !Workspace::is_user_member_or_owner(&mut tx, w_uuid, u_uuid).await? {
         return Err(ApiError::NotFound);
     }
 
-    let (name,) = query!(&GLOBAL.db, (MediaFile::F.name,))
+    let (name,) = query!(&mut tx, (MediaFile::F.name,))
         .condition(MediaFile::F.uuid.equals(f_uuid))
         .optional()
         .await?
         .ok_or(ApiError::NotFound)?;
 
-    File::open(format!("{VAR_DIR}/media/{f_uuid}"))
+    tx.commit().await?;
+
+    File::open(media_file_path(f_uuid))
         .and_then(|file| NamedFile::from_file(file, name))
         .map(|file| file.use_etag(true).use_last_modified(true))
         .map_err(|err| {

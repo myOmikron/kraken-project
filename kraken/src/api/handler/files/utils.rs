@@ -2,6 +2,7 @@ use std::fmt::Write;
 use std::io;
 use std::io::Cursor;
 use std::path::Path;
+use std::path::PathBuf;
 
 use actix_web::web::Payload;
 use bytes::Bytes;
@@ -13,8 +14,21 @@ use sha2::Digest;
 use tokio::fs;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
+use uuid::Uuid;
 
 use crate::api::handler::common::error::ApiError;
+use crate::config::VAR_DIR;
+
+pub fn media_file_path(uuid: Uuid) -> PathBuf {
+    Path::new(VAR_DIR).join("media").join(uuid.to_string())
+}
+
+pub fn media_thumbnail_path(uuid: Uuid) -> PathBuf {
+    Path::new(VAR_DIR)
+        .join("media")
+        .join("thumbnails")
+        .join(uuid.to_string())
+}
 
 pub fn valid_image(file_start: &[u8]) -> Option<ImageFormat> {
     match guess_format(file_start) {

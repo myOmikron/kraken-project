@@ -23,10 +23,11 @@ use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::common::utils::get_page_params;
 use crate::api::handler::files::schema::FullFile;
 use crate::api::handler::files::schema::GetAllFilesQuery;
+use crate::api::handler::files::utils::media_file_path;
+use crate::api::handler::files::utils::media_thumbnail_path;
 use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::chan::global::GLOBAL;
-use crate::config::VAR_DIR;
 use crate::models::MediaFile;
 use crate::models::User;
 use crate::models::Workspace;
@@ -55,13 +56,15 @@ pub async fn get_all_files(
         .map(|uuid| MediaFile::F.workspace.equals(uuid));
     let user = filter.user.map(|uuid| MediaFile::F.user.equals(uuid));
 
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
     let mut conditions = Vec::with_capacity(3);
     conditions.push(rorm::conditions::Value::Bool(true).boxed());
     conditions.extend(workspace.clone().map(Condition::boxed));
     conditions.extend(user.clone().map(Condition::boxed));
     let conditions = DynamicCollection::and(conditions);
 
-    let (total,) = query!(&GLOBAL.db, (MediaFile::F.uuid.count(),))
+    let (total,) = query!(&mut tx, (MediaFile::F.uuid.count(),))
         .condition(conditions)
         .one()
         .await?;
@@ -73,7 +76,7 @@ pub async fn get_all_files(
     let conditions = DynamicCollection::and(conditions);
 
     let items = query!(
-        &GLOBAL.db,
+        &mut tx,
         (
             MediaFile::F.uuid,
             MediaFile::F.name,
@@ -116,6 +119,9 @@ pub async fn get_all_files(
     )
     .try_collect()
     .await?;
+
+    tx.commit().await?;
+
     Ok(Json(Page {
         items,
         total: total as u64,
@@ -146,7 +152,7 @@ pub async fn download_file(path: Path<PathUuid>) -> ApiResult<NamedFile> {
         .await?
         .ok_or(ApiError::NotFound)?;
 
-    File::open(format!("{VAR_DIR}/media/{uuid}"))
+    File::open(media_file_path(uuid))
         .and_then(|x| NamedFile::from_file(x, file.name))
         .map(|file| file.use_etag(true).use_last_modified(true))
         .map_err(|err| {
@@ -180,14 +186,14 @@ pub async fn delete_file(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
     rorm::delete!(&mut tx, MediaFile)
         .condition(MediaFile::F.uuid.equals(uuid))
         .await?;
-    fs::remove_file(format!("{VAR_DIR}/media/{uuid}"))
+    fs::remove_file(media_file_path(uuid))
         .await
         .map_err(|err| {
             error!("Failed to delete file: {err}");
             ApiError::InternalServerError
         })?;
     if is_image {
-        fs::remove_file(format!("{VAR_DIR}/media/thumbnails/{uuid}"))
+        fs::remove_file(media_thumbnail_path(uuid))
             .await
             .map_err(|err| {
                 error!("Failed to delete thumbnail: {err}");
