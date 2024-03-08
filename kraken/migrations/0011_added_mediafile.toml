@@ -91,23 +91,3 @@ TableName = "workspace"
 ColumnName = "uuid"
 OnDelete = "SetNull"
 OnUpdate = "Cascade"
-
-[[Migration.Operations]]
-Type = "CreateField"
-Model = "findingaffected"
-
-[Migration.Operations.Field]
-Name = "workspace"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "workspace"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"

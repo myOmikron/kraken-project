@@ -85,21 +85,23 @@ pub async fn upload_image(
     }
 
     tokio::task::spawn_blocking(move || {
-        let mut reader = image::io::Reader::open(format!("{VAR_DIR}/media/{file_uuid}")).unwrap();
+        let mut reader = image::io::Reader::open(format!("{VAR_DIR}/media/{file_uuid}"))?;
         reader.set_format(image_format);
-        let image = reader.decode().unwrap();
+        let image = reader.decode()?;
 
         let image = image.thumbnail(256, 256);
-        image
-            .save_with_format(
-                format!("{VAR_DIR}/media/thumbnails/{file_uuid}"),
-                image_format,
-            )
-            .unwrap();
+        image.save_with_format(
+            format!("{VAR_DIR}/media/thumbnails/{file_uuid}"),
+            image_format,
+        )
     })
     .await
     .map_err(|panic| {
         error!("Image converter paniced: {panic}");
+        ApiError::InternalServerError
+    })?
+    .map_err(|error| {
+        error!("Image converter errored: {error}");
         ApiError::InternalServerError
     })?;
     tx.commit().await?;
@@ -134,6 +136,7 @@ pub async fn upload_file(
     let file_uuid = Uuid::new_v4();
 
     let file_path = format!("{VAR_DIR}/media/{file_uuid}");
+    #[allow(clippy::unwrap_used)] // None is only returned iff the hook returns Err which it doesn't
     let (delete_file_guard, sha256) =
         stream_into_file::<sha2::Sha256>(file_path.as_ref(), body, |_| Ok(()))
             .await?
@@ -191,13 +194,13 @@ pub async fn download_thumbnail(
         return Err(ApiError::NotFound);
     }
 
-    Ok(File::open(format!("{VAR_DIR}/media/thumbnails/{f_uuid}"))
+    File::open(format!("{VAR_DIR}/media/thumbnails/{f_uuid}"))
         .and_then(|file| NamedFile::from_file(file, name))
         .map(|file| file.use_etag(true).use_last_modified(true))
         .map_err(|err| {
             error!("Failed to open file for download: {err}");
             ApiError::InternalServerError
-        })?)
+        })
 }
 
 /// Downloads a file from the workspace
@@ -229,11 +232,11 @@ pub async fn download_file(
         .await?
         .ok_or(ApiError::NotFound)?;
 
-    Ok(File::open(format!("{VAR_DIR}/media/{f_uuid}"))
+    File::open(format!("{VAR_DIR}/media/{f_uuid}"))
         .and_then(|file| NamedFile::from_file(file, name))
         .map(|file| file.use_etag(true).use_last_modified(true))
         .map_err(|err| {
             error!("Failed to open file for download: {err}");
             ApiError::InternalServerError
-        })?)
+        })
 }

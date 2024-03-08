@@ -146,13 +146,13 @@ pub async fn download_file(path: Path<PathUuid>) -> ApiResult<NamedFile> {
         .await?
         .ok_or(ApiError::NotFound)?;
 
-    Ok(File::open(format!("{VAR_DIR}/media/{uuid}"))
+    File::open(format!("{VAR_DIR}/media/{uuid}"))
         .and_then(|x| NamedFile::from_file(x, file.name))
         .map(|file| file.use_etag(true).use_last_modified(true))
         .map_err(|err| {
             error!("Failed to open file for download: {err}");
             ApiError::InternalServerError
-        })?)
+        })
 }
 
 /// Deletes a file

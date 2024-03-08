@@ -31,8 +31,8 @@ pub async fn stream_into_file_with_magic<D: Digest>(
     let mut magic_cursor = Some(Cursor::new(&mut magic[..]));
     let option = stream_into_file::<D>(path, body, move |chunk| {
         if let Some(cursor) = magic_cursor.as_mut() {
-            if io::Write::write_all(cursor, &chunk).is_err() {
-                valid_image(&cursor.get_ref()).ok_or(())?;
+            if io::Write::write_all(cursor, chunk).is_err() {
+                valid_image(cursor.get_ref()).ok_or(())?;
             }
         }
         Ok(())
