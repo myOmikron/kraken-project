@@ -1,8 +1,10 @@
+apis/AdminFilesApi.ts
 apis/AdminWorkspacesApi.ts
 apis/ApiKeysApi.ts
 apis/AttacksApi.ts
 apis/AuthenticationApi.ts
 apis/DomainsApi.ts
+apis/FilesApi.ts
 apis/GlobalTagsApi.ts
 apis/HostsApi.ts
 apis/KnowledgeBaseApi.ts
@@ -79,6 +81,8 @@ models/FullAggregationSource.ts
 models/FullApiKey.ts
 models/FullDnsTxtScanResult.ts
 models/FullDomain.ts
+models/FullFile.ts
+models/FullFilesPage.ts
 models/FullFindingDefinition.ts
 models/FullGlobalTag.ts
 models/FullHost.ts

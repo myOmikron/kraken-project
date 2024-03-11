@@ -56,6 +56,8 @@ export * from './FullAggregationSource';
 export * from './FullApiKey';
 export * from './FullDnsTxtScanResult';
 export * from './FullDomain';
+export * from './FullFile';
+export * from './FullFilesPage';
 export * from './FullFindingDefinition';
 export * from './FullGlobalTag';
 export * from './FullHost';

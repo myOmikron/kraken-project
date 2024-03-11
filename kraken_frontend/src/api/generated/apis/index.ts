@@ -1,10 +1,12 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './AdminFilesApi';
 export * from './AdminWorkspacesApi';
 export * from './ApiKeysApi';
 export * from './AttacksApi';
 export * from './AuthenticationApi';
 export * from './DomainsApi';
+export * from './FilesApi';
 export * from './GlobalTagsApi';
 export * from './HostsApi';
 export * from './KnowledgeBaseApi';
