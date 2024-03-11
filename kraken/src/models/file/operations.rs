@@ -1,5 +1,5 @@
 use rorm::and;
-use rorm::db::transaction::Transaction;
+use rorm::db::Executor;
 use rorm::insert;
 use rorm::prelude::ForeignModel;
 use rorm::prelude::ForeignModelByField;
@@ -12,6 +12,9 @@ use crate::models::MediaFile;
 use crate::models::User;
 use crate::models::Workspace;
 
+/// Transparent wrapper around an [`Executor`] to hint the user to defer the actual execution.
+pub struct DeferCommit<E>(pub E);
+
 impl MediaFile {
     /// Inserts a new [`MediaFile`]
     ///
@@ -21,9 +24,10 @@ impl MediaFile {
     ///   In that case, the new file has to be deleted on disk.
     /// - The insert should only be applied after every filesystem operation finished successfully.
     ///   But the duplicate should be checked as soon as the entire file is available.
-    ///   So the insert has to be run in a transaction whose commit is delayed until everything else finished.
+    ///
+    ///   => You can achieve this by using a transaction whose commit is delayed until everything else finished.
     pub async fn get_or_insert(
-        tx: &mut Transaction,
+        DeferCommit(executor): DeferCommit<impl Executor<'_>>,
         uuid: Uuid,
         name: String,
         sha256: String,
@@ -31,7 +35,9 @@ impl MediaFile {
         user: Uuid,
         workspace: Uuid,
     ) -> Result<Uuid, rorm::Error> {
-        if let Some((uuid,)) = query!(&mut *tx, (MediaFile::F.uuid,))
+        let mut guard = executor.ensure_transaction().await?;
+
+        let uuid = if let Some((uuid,)) = query!(guard.get_transaction(), (MediaFile::F.uuid,))
             .condition(and![
                 MediaFile::F.workspace.equals(workspace),
                 MediaFile::F.user.equals(user),
@@ -41,9 +47,9 @@ impl MediaFile {
             .optional()
             .await?
         {
-            Ok(uuid)
+            uuid
         } else {
-            insert!(&mut *tx, MediaFile)
+            insert!(guard.get_transaction(), MediaFile)
                 .return_primary_key()
                 .single(&MediaFileInsert {
                     uuid,
@@ -53,8 +59,11 @@ impl MediaFile {
                     user: Some(ForeignModelByField::Key(user)),
                     workspace: Some(ForeignModelByField::Key(workspace)),
                 })
-                .await
-        }
+                .await?
+        };
+
+        guard.commit().await?;
+        Ok(uuid)
     }
 }
 

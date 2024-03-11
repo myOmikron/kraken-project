@@ -2,6 +2,7 @@ mod operations;
 
 use chrono::DateTime;
 use chrono::Utc;
+pub use operations::DeferCommit;
 use rorm::prelude::*;
 use uuid::Uuid;
 

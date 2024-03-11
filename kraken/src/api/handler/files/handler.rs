@@ -28,6 +28,7 @@ use crate::api::handler::files::utils::media_thumbnail_path;
 use crate::api::handler::files::utils::stream_into_file;
 use crate::api::handler::files::utils::stream_into_file_with_magic;
 use crate::chan::global::GLOBAL;
+use crate::models::DeferCommit;
 use crate::models::MediaFile;
 use crate::models::Workspace;
 
@@ -73,9 +74,9 @@ pub async fn upload_image(
         return Err(ApiError::InvalidImage);
     }
 
-    let mut tx = GLOBAL.db.start_transaction().await?;
+    let mut deferred_tx = GLOBAL.db.start_transaction().await?;
     let uuid = MediaFile::get_or_insert(
-        &mut tx,
+        DeferCommit(&mut deferred_tx), // The tx should be committed after all fs operations
         file_uuid,
         query.filename,
         sha256,
@@ -105,7 +106,7 @@ pub async fn upload_image(
         error!("Image converter errored: {error}");
         ApiError::InternalServerError
     })?;
-    tx.commit().await?;
+    deferred_tx.commit().await?;
 
     delete_file_guard.dont();
     Ok(Json(UuidResponse { uuid }))
@@ -144,9 +145,8 @@ pub async fn upload_file(
             .await?
             .unwrap();
 
-    let mut tx = GLOBAL.db.start_transaction().await?;
     let uuid = MediaFile::get_or_insert(
-        &mut tx,
+        DeferCommit(&GLOBAL.db), // We are not performing any fs operations after this
         file_uuid,
         query.filename,
         sha256,
@@ -158,7 +158,6 @@ pub async fn upload_file(
     if uuid != file_uuid {
         return Ok(Json(UuidResponse { uuid }));
     }
-    tx.commit().await?;
 
     delete_file_guard.dont();
     Ok(Json(UuidResponse { uuid }))
