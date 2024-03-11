@@ -1,9 +1,9 @@
-import { Api } from "../../../api/api";
 import React from "react";
-import WorkspaceTable from "../components/workspace-table";
-import { FullHost, FullPort, SimplePort } from "../../../api/generated";
+import { Api } from "../../../api/api";
+import { FullHost, FullPort } from "../../../api/generated";
 import SourcesList from "../components/sources-list";
 import TagList from "../components/tag-list";
+import WorkspaceTable from "../components/workspace-table";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
 type WorkspaceDataPortsProps = {
@@ -18,6 +18,7 @@ export function WorkspaceHostPorts(props: WorkspaceDataPortsProps) {
     } = React.useContext(WORKSPACE_CONTEXT);
     return (
         <WorkspaceTable<FullPort>
+            workspace={workspace}
             query={(limit, offset) => Api.workspaces.ports.all(workspace, limit, offset, { host: host?.uuid })}
             queryDeps={[workspace, host?.uuid]}
             columnsTemplate={"5ch 1fr 1fr 1fr"}

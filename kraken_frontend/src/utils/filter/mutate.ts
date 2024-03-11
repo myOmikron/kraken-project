@@ -38,15 +38,15 @@ function findColumnValueSpan(filter: string, columnName: string): { column: Span
 }
 
 export function addExprs(filter: string, column: string, value: string, op: "or" | "and"): string {
-    if (!filter.length) return column + ":" + valueToString(value);
+    if (!filter.length) return prettifyFilter(column + ":" + valueToString(value));
 
     let span = findColumnValueSpan(filter, column)?.value;
-    if (!span) return (filter + " " + column + ":" + valueToString(value)).trim();
+    if (!span) return prettifyFilter(filter + " " + column + ":" + valueToString(value));
 
-    return (
+    return prettifyFilter(
         filter.substring(0, span.start) +
-        insertValue(filter.substring(span.start, span.end), value, op) +
-        filter.substring(span.end)
+            insertValue(filter.substring(span.start, span.end), value, op) +
+            filter.substring(span.end),
     );
 }
 
@@ -54,12 +54,12 @@ export function addExprRange(filter: string, column: string, from: string, to: s
     if (!filter.length) return column + ":" + valueToString(from) + "-" + valueToString(to);
 
     let span = findColumnValueSpan(filter, column)?.value;
-    if (!span) return (filter + " " + column + ":" + valueToString(from) + "-" + valueToString(to)).trim();
+    if (!span) return prettifyFilter(filter + " " + column + ":" + valueToString(from) + "-" + valueToString(to));
 
-    return (
+    return prettifyFilter(
         filter.substring(0, span.start) +
-        insertRange(filter.substring(span.start, span.end), [from, to], op) +
-        filter.substring(span.end)
+            insertRange(filter.substring(span.start, span.end), [from, to], op) +
+            filter.substring(span.end),
     );
 }
 
@@ -70,9 +70,9 @@ export function removeExprs(filter: string, column: string, value: string): stri
 
     let newValue = "";
     newValue = removeValue(filter.substring(span.value.start, span.value.end), value);
-    if (!newValue) return (filter.substring(0, span.column.start) + filter.substring(span.value.end)).trim();
+    if (!newValue) return prettifyFilter(filter.substring(0, span.column.start) + filter.substring(span.value.end));
 
-    return (filter.substring(0, span.value.start) + newValue + filter.substring(span.value.end)).trim();
+    return prettifyFilter(filter.substring(0, span.value.start) + newValue + filter.substring(span.value.end));
 }
 
 export function removeExprRange(filter: string, column: string, from: string, to: string): string {
@@ -81,9 +81,27 @@ export function removeExprRange(filter: string, column: string, from: string, to
 
     let newValue = "";
     newValue = removeRange(filter.substring(span.value.start, span.value.end), [from, to]);
-    if (!newValue) return (filter.substring(0, span.column.start) + filter.substring(span.value.end)).trim();
+    if (!newValue) return prettifyFilter(filter.substring(0, span.column.start) + filter.substring(span.value.end));
 
-    return (filter.substring(0, span.value.start) + newValue + filter.substring(span.value.end)).trim();
+    return prettifyFilter(filter.substring(0, span.value.start) + newValue + filter.substring(span.value.end));
+}
+
+export function getExprs(filter: string, column: string): SpanlessToken[] | undefined {
+    let span = findColumnValueSpan(filter, column);
+    if (!span) return undefined;
+
+    return tokenize(filter.substring(span.value.start, span.value.end)) as SpanlessToken[];
+}
+
+export function replaceRaw(filter: string, column: string, raw: string): string {
+    const hasValue = raw.trim() != "";
+    let span = findColumnValueSpan(filter, column);
+    if (!span) return hasValue ? prettifyFilter(filter + " " + column + ":" + raw) : filter;
+    return prettifyFilter(
+        hasValue
+            ? filter.substring(0, span.value.start) + raw + filter.substring(span.value.end)
+            : filter.substring(0, span.column.start) + filter.substring(span.value.end),
+    );
 }
 
 function insertRange(existing: string, addValue: [string, string], op: "or" | "and"): string {
@@ -215,4 +233,8 @@ function removeRange(existing: string, range: [string, string]): string {
         }
     }
     return modified ? tokensToString(tokens) : existing;
+}
+
+export function prettifyFilter(filter: string): string {
+    return tokensToString(tokenize(filter));
 }

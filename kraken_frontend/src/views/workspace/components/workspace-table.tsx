@@ -1,21 +1,21 @@
 import React, { CSSProperties } from "react";
-import { handleApiError } from "../../../utils/helper";
 import Select from "react-select";
-import { selectStyles } from "../../../components/select-menu";
-import { Result } from "../../../utils/result";
 import { ApiError } from "../../../api/error";
-import Input from "../../../components/input";
+import { selectStyles } from "../../../components/select-menu";
 import "../../../styling/workspace-table.css";
-import ArrowLeftIcon from "../../../svg/arrow-left";
-import ArrowRightIcon from "../../../svg/arrow-right";
 import ArrowFirstIcon from "../../../svg/arrow-first";
 import ArrowLastIcon from "../../../svg/arrow-last";
+import ArrowLeftIcon from "../../../svg/arrow-left";
+import ArrowRightIcon from "../../../svg/arrow-right";
 import PlusIcon from "../../../svg/plus";
-import Popup from "reactjs-popup";
+import { handleApiError } from "../../../utils/helper";
+import { Result } from "../../../utils/result";
 import FilterInput, { FilterInputProps, useFilter } from "./filter-input";
-import { toast } from "react-toastify";
 
 export type WorkspaceDataTableProps<T> = {
+    /** workspace UUID */
+    workspace: string;
+
     /** Method used to query a page */
     query: (limit: number, offset: number) => Promise<Result<GenericPage<T>, ApiError>>;
 
@@ -62,7 +62,7 @@ export default function WorkspaceTable<T extends { uuid: string }>(props: Worksp
     } = props;
 
     const { items, ...table } = useTable(query, queryDeps);
-    const filter = useFilter("global");
+    const filter = useFilter(props.workspace, "global");
 
     return StatelessWorkspaceTable({
         ...table,

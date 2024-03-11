@@ -1,5 +1,5 @@
 import React from "react";
-import { toast } from "react-toastify";
+import Popup from "reactjs-popup";
 import Input from "../../../components/input";
 import CheckmarkIcon from "../../../svg/checkmark";
 import SearchIcon from "../../../svg/search";
@@ -14,9 +14,11 @@ import {
     parsePortAST,
     parseServiceAST,
 } from "../../../utils/filter/parser";
+import { FilterEditorUi } from "./filter-editor-ui";
 
 export type FilterInputProps = {
     placeholder?: string;
+    workspace: string;
     value: string;
     onChange: (newValue: string) => void;
     applied: string;
@@ -70,13 +72,25 @@ export default function FilterInput(props: FilterInputProps) {
                 onApply(value);
             }}
         >
-            <button
-                className={"button"}
-                type={"button"}
-                onClick={() => toast.info("There will be an interactive menu soon™")}
+            <Popup
+                trigger={
+                    <button className={"button"} type={"button"}>
+                        <SettingsIcon />
+                    </button>
+                }
+                on={"click"}
+                position={"right center"}
             >
-                <SettingsIcon />
-            </button>
+                <div className="pane-thin popup-filter-editor">
+                    <FilterEditorUi
+                        workspace={props.workspace}
+                        ast={props.target}
+                        filter={value}
+                        onChange={onChange}
+                        onApply={onApply}
+                    />
+                </div>
+            </Popup>
             <Input
                 ref={inputRef}
                 className={"input"}
@@ -99,7 +113,7 @@ export type FilterOutput = FilterInputProps & {
     addColumn: (column: string, value: string, negate: boolean) => any;
     addRange: (column: string, from: string, to: string, negate: boolean) => any;
 };
-export function useFilter(target: FilterInputProps["target"]): FilterOutput {
+export function useFilter(workspace: string, target: FilterInputProps["target"]): FilterOutput {
     const [value, onChange] = React.useState("");
     const [applied, onApply] = React.useState("");
     return {
@@ -110,6 +124,7 @@ export function useFilter(target: FilterInputProps["target"]): FilterOutput {
             port: "Port Filter...",
             service: "Service Filter...",
         }[target],
+        workspace,
         value,
         onChange,
         applied,

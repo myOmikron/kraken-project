@@ -1,5 +1,5 @@
 import { OsType, PortProtocol } from "../../api/generated";
-import { ASTField, ASTFields, ASTType, DomainAST, Expr, GlobalAST, HostAST, PortAST, ServiceAST } from "./ast";
+import { ASTField, ASTFields, ASTResult, DomainAST, Expr, GlobalAST, HostAST, PortAST, ServiceAST } from "./ast";
 import { Cursor } from "./cursor";
 import ParserError from "./error";
 import { tokenize } from "./lexer";
@@ -9,7 +9,7 @@ import { tokenize } from "./lexer";
  *
  * @throws ParserError
  */
-export function parseAstFields<Fields extends ASTField>(input: string, ast: Fields): ASTType<Fields> {
+export function parseAstFields<Fields extends ASTField>(input: string, ast: Fields): ASTResult<Fields> {
     // create object like `{ tags: [], createdAt: [], ... }`
     let ret: {
         [Key in keyof Fields]: any[];
