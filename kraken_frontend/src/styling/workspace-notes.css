@@ -3,3 +3,7 @@
     grid-template-columns: 1fr 1fr;
     gap: 4em;
 }
+
+.workspace-notes-container .markdown {
+    overflow: auto;
+}
