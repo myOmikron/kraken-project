@@ -45,7 +45,7 @@ use crate::models::Workspace;
     security(("api_key" = []))
 )]
 #[get("/files")]
-pub async fn get_all_files(
+pub async fn get_all_files_admin(
     Query(page): Query<PageParams>,
     Query(filter): Query<GetAllFilesQuery>,
 ) -> ApiResult<Json<Page<FullFile>>> {
@@ -174,7 +174,7 @@ pub async fn download_file_admin(path: Path<PathUuid>) -> ApiResult<NamedFile> {
     security(("api_key" = []))
 )]
 #[delete("/files/{uuid}")]
-pub async fn delete_file(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
+pub async fn delete_file_admin(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
     let uuid = path.into_inner().uuid;
 
     let mut tx = GLOBAL.db.start_transaction().await?;
