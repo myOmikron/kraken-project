@@ -40,6 +40,9 @@ export default function WorkspaceNotes(props: WorkspaceNotesProps) {
             }
         },
         setValue: setText,
+        onUserEdit: (value) => {
+            window.localStorage.setItem(`workspaces/${workspace.uuid}/notes`, value);
+        },
     });
 
     React.useEffect(() => {

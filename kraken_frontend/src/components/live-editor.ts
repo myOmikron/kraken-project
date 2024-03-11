@@ -76,6 +76,13 @@ export type UseLiveEditorArgs<CT extends {} = true> = {
      * The React setter for the value currently displayed in the editor
      */
     setValue: (newValue: string) => void;
+
+    /**
+     * Optional callback invoked with the entire text when the user performs an edit
+     *
+     * This differs from the `<Editor />`'s `onChange` which is also invoked for other users' edits.
+     */
+    onUserEdit?: (newValue: string) => void;
 };
 
 export default function useLiveEditor<CT extends {} = true>(args: UseLiveEditorArgs<CT>) {
@@ -89,6 +96,7 @@ export default function useLiveEditor<CT extends {} = true>(args: UseLiveEditorA
         includeOwnCursor = false,
         receiveEdit,
         setValue,
+        onUserEdit,
     } = args;
     const monaco = useMonaco();
     const { user } = React.useContext(USER_CONTEXT);
@@ -100,6 +108,7 @@ export default function useLiveEditor<CT extends {} = true>(args: UseLiveEditorA
         receiveEdit,
         setValue,
         user: user.uuid,
+        onUserEdit,
     });
 
     /*
@@ -148,7 +157,9 @@ export default function useLiveEditor<CT extends {} = true>(args: UseLiveEditorA
         });
 
         // Send outgoing cursor messages
-        let disposable = { dispose() {} };
+        let disposable = {
+            dispose() {},
+        };
         if (editorInstance !== null) {
             editorInstance.onDidChangeCursorSelection;
             disposable = editorInstance.onDidChangeCursorPosition((event) => {
@@ -252,6 +263,9 @@ export default function useLiveEditor<CT extends {} = true>(args: UseLiveEditorA
 
         // Send the changes to the websocket
         if (sendChanges.current) {
+            if (value !== undefined && stableArgs.onUserEdit) {
+                stableArgs.onUserEdit(value);
+            }
             for (const change of event.changes) {
                 const {
                     text,
