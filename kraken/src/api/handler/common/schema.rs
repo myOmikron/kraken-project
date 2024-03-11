@@ -66,6 +66,7 @@ mod utoipa_fix {
     use crate::api::handler::attack_results::schema::SimpleHostAliveResult;
     use crate::api::handler::attack_results::schema::SimpleQueryUnhashedResult;
     use crate::api::handler::domains::schema::FullDomain;
+    use crate::api::handler::files::schema::FullFile;
     use crate::api::handler::hosts::schema::FullHost;
     use crate::api::handler::ports::schema::FullPort;
     use crate::api::handler::services::schema::FullService;
@@ -90,6 +91,7 @@ mod utoipa_fix {
         OsDetectionResultsPage = Page<FullOsDetectionResult>,
         SearchResultPage = Page<SearchResultEntry>,
         SearchesResultPage = Page<SearchEntry>,
+        FullFilesPage = Page<FullFile>,
     )]
     pub struct Page<T> {
         /// The page's items
@@ -218,6 +220,10 @@ pub enum ApiStatusCode {
     DehashedNotAvailable = 2004,
     /// There's no leech available
     NoLeechAvailable = 2005,
+    /// The streamed request body failed
+    PayloadError = 2006,
+    /// The uploaded image file is invalid
+    InvalidImage = 2007,
 }
 
 /// Representation of an error response

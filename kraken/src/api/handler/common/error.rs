@@ -145,6 +145,14 @@ pub enum ApiError {
     /// There's no leech available
     #[error("No leech available")]
     NoLeechAvailable,
+    /// Error returned by the [`Payload`](actix_web::web::Payload) stream which is used to
+    /// process a request body as stream of [`Bytes`](bytes::Bytes)
+    #[error("File upload failed")]
+    PayloadError(#[from] actix_web::error::PayloadError),
+
+    /// The uploaded image file is invalid
+    #[error("File is an invalid image")]
+    InvalidImage,
 }
 
 impl actix_web::ResponseError for ApiError {
@@ -372,6 +380,17 @@ impl actix_web::ResponseError for ApiError {
             )),
             ApiError::InvalidFilter(_) => HttpResponse::BadRequest().json(ApiErrorResponse::new(
                 ApiStatusCode::InvalidFilter,
+                self.to_string(),
+            )),
+            ApiError::PayloadError(err) => {
+                debug!("File upload failed: {err}");
+                HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                    ApiStatusCode::PayloadError,
+                    self.to_string(),
+                ))
+            }
+            ApiError::InvalidImage => HttpResponse::BadRequest().json(ApiErrorResponse::new(
+                ApiStatusCode::InvalidImage,
                 self.to_string(),
             )),
         }

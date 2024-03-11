@@ -35,6 +35,7 @@ use crate::api::handler::attacks;
 use crate::api::handler::auth;
 use crate::api::handler::data_export;
 use crate::api::handler::domains;
+use crate::api::handler::files;
 use crate::api::handler::finding_definitions;
 use crate::api::handler::global_tags;
 use crate::api::handler::hosts;
@@ -148,6 +149,9 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(users::handler_admin::get_all_users_admin)
                     .service(workspaces::handler_admin::get_workspace_admin)
                     .service(workspaces::handler_admin::get_all_workspaces_admin)
+                    .service(files::handler_admin::get_all_files_admin)
+                    .service(files::handler_admin::download_file_admin)
+                    .service(files::handler_admin::delete_file_admin)
                     .service(oauth_applications::handler_admin::create_oauth_app)
                     .service(oauth_applications::handler_admin::get_all_oauth_apps)
                     .service(oauth_applications::handler_admin::get_oauth_app)
@@ -184,6 +188,10 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(workspaces::handler::search)
                     .service(workspaces::handler::get_search_results)
                     .service(workspaces::handler::get_searches)
+                    .service(files::handler::upload_file)
+                    .service(files::handler::upload_image)
+                    .service(files::handler::download_thumbnail)
+                    .service(files::handler::download_file)
                     .service(attacks::handler::bruteforce_subdomains)
                     .service(attacks::handler::query_certificate_transparency)
                     .service(attacks::handler::delete_attack)

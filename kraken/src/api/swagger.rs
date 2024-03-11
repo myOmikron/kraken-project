@@ -18,6 +18,7 @@ use crate::api::handler::auth;
 use crate::api::handler::common;
 use crate::api::handler::data_export;
 use crate::api::handler::domains;
+use crate::api::handler::files;
 use crate::api::handler::finding_definitions;
 use crate::api::handler::global_tags;
 use crate::api::handler::hosts;
@@ -101,6 +102,13 @@ impl Modify for SecurityAddon2 {
         workspaces::handler::search,
         workspaces::handler::get_searches,
         workspaces::handler::get_search_results,
+        files::handler::upload_file,
+        files::handler::upload_image,
+        files::handler::download_thumbnail,
+        files::handler::download_file,
+        files::handler_admin::get_all_files_admin,
+        files::handler_admin::download_file_admin,
+        files::handler_admin::delete_file_admin,
         attacks::handler::bruteforce_subdomains,
         attacks::handler::query_certificate_transparency,
         attacks::handler::delete_attack,
@@ -226,6 +234,7 @@ impl Modify for SecurityAddon2 {
         workspaces::schema::SearchWorkspaceRequest,
         workspaces::schema::SearchEntry,
         workspaces::schema::SearchResultEntry,
+        files::schema::FullFile,
         attacks::schema::SimpleAttack,
         attacks::schema::ListAttacks,
         attacks::schema::BruteforceSubdomainsRequest,

@@ -35,6 +35,7 @@ use kraken::chan::leech_manager::LeechManager;
 use kraken::chan::settings_manager::start_settings_manager;
 use kraken::chan::ws_manager::chan::start_ws_manager;
 use kraken::config::Config;
+use kraken::config::VAR_DIR;
 use kraken::models::User;
 use kraken::models::UserPermission;
 use kraken::modules::aggregator::Aggregator;
@@ -118,8 +119,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let dehashed = RwLock::new(start_dehashed_manager(&settings).await?);
 
             let tls = Arc::new(
-                TlsManager::load("/var/lib/kraken")
-                    .map_err(|e| format!("Failed to initialize tls: {e}"))?,
+                TlsManager::load(VAR_DIR).map_err(|e| format!("Failed to initialize tls: {e}"))?,
             );
 
             let leeches = LeechManager::start(db.clone(), tls.clone())

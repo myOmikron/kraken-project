@@ -8,6 +8,7 @@ pub mod auth;
 pub mod common;
 pub mod data_export;
 pub mod domains;
+pub mod files;
 pub mod finding_definitions;
 pub mod global_tags;
 pub mod hosts;

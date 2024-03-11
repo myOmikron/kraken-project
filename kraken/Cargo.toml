@@ -32,6 +32,7 @@ kraken-proto = { path = "../kraken-proto" }
 actix-web = { version = "~4", optional = true }
 # Extensions for actix-web
 actix-toolbox = { version = "~0.13", features = ["ws", "logging", "session-postgres-only"], optional = true }
+actix-files = { version = "~0.6" }
 # Webauthn library
 webauthn-rs = { version = "~0.4", features = ["danger-allow-state-serialisation"] }
 
@@ -97,6 +98,9 @@ dehashed-rs = { version = "~0.4", features = ["tokio", "utoipa"] }
 # TLS
 rcgen = { version = "~0.12", features = ["x509-parser"], optional = true }
 url = { version = "~2", features = ["serde"] } # Parsing ip / domain when filling subject_alt_names
+
+# Image processing
+image = { version = "~0.24" }
 
 [features]
 rorm-main = []
