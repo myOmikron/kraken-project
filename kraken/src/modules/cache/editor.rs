@@ -374,16 +374,22 @@ where
                         error!("DB error when updating workspace notes: {err}");
                         update_failed.push((uuid, value))
                     } else {
-                        update_success.push(uuid);
+                        update_success.push((uuid, value));
                     }
                 }
 
                 {
                     let mut guard = self.write_cache();
-                    for uuid in update_success {
-                        guard
-                            .get_mut(&uuid)
-                            .and_then(|opt| opt.as_mut().map(|inner| inner.changed = false));
+                    for (uuid, value) in update_success {
+                        guard.get_mut(&uuid).and_then(|opt| {
+                            opt.as_mut().map(|inner| {
+                                // If the data was changed in the meantime, we shouldn't set
+                                // changed to false
+                                if inner.data = value {
+                                    inner.changed = false
+                                }
+                            })
+                        });
                     }
                 }
 
