@@ -168,6 +168,7 @@ impl HostAST {
             services_protocols,
             services_tags,
             services_created_at,
+            services_transports,
             domains,
             domains_tags,
             domains_created_at,
@@ -205,6 +206,7 @@ impl HostAST {
             || services_protocols.is_some()
             || services_tags.is_some()
             || services_created_at.is_some()
+            || services_transports.is_some()
         {
             sql.append_condition(
                 Column::rorm(Host::F.uuid).in_subquery(Service::F.host, |sql| {
@@ -231,6 +233,11 @@ impl HostAST {
                         sql,
                         services_created_at,
                         Column::rorm(Service::F.created_at).range(),
+                    );
+                    add_ast_field(
+                        sql,
+                        services_transports,
+                        Column::rorm(Service::F.protocols).bitset(),
                     );
                 }),
             );
@@ -301,6 +308,7 @@ impl PortAST {
             services,
             services_tags,
             services_created_at,
+            services_transports,
         } = self;
         add_ast_field(sql, tags, Column::tags().contains());
         add_ast_field(sql, created_at, Column::rorm(Port::F.created_at).range());
@@ -316,7 +324,11 @@ impl PortAST {
         add_ast_field(sql, ips_tags, Column::new("host_tags", "tags").contains());
 
         // Sub query the services
-        if services.is_some() || services_tags.is_some() || services_created_at.is_some() {
+        if services.is_some()
+            || services_tags.is_some()
+            || services_created_at.is_some()
+            || services_transports.is_some()
+        {
             sql.append_condition(
                 Column::rorm(Port::F.uuid).in_subquery(Service::F.port, |sql| {
                     if services_tags.is_some() {
@@ -329,6 +341,11 @@ impl PortAST {
                         sql,
                         services_created_at,
                         Column::rorm(Service::F.created_at).range(),
+                    );
+                    add_ast_field(
+                        sql,
+                        services_transports,
+                        Column::rorm(Service::F.protocols).bitset(),
                     );
                 }),
             );
@@ -380,11 +397,13 @@ impl ServiceAST {
             protocols,
             services,
             ports,
+            transport,
         } = self;
         add_ast_field(sql, tags, Column::tags().contains());
         add_ast_field(sql, created_at, Column::rorm(Service::F.created_at).range());
         add_ast_field(sql, ips, Column::rorm(Service::F.host.ip_addr).subnet());
         add_ast_field(sql, services, Column::rorm(Service::F.name).eq());
+        add_ast_field(sql, transport, Column::rorm(Service::F.protocols).bitset());
         add_ast_field(
             sql,
             ports,

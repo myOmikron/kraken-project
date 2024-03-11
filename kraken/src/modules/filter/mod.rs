@@ -112,6 +112,9 @@ pub struct HostAST {
     /// Filter hosts by their services' creation time
     pub services_created_at: Option<Or<Range<DateTime<Utc>>>>,
 
+    /// Filter ports by their services' transport type
+    pub services_transports: Option<Or<ServiceTransport>>,
+
     /// Filter hosts by their domains' tags
     pub domains: Option<Or<String>>,
 
@@ -157,6 +160,9 @@ pub struct PortAST {
 
     /// Filter ports by their services' creation time
     pub services_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter ports by their services' transport type
+    pub services_transports: Option<Or<ServiceTransport>>,
 }
 
 /// AST for service specific filter
@@ -194,6 +200,18 @@ pub struct ServiceAST {
 
     /// Filter by service name
     pub services: Option<Or<String>>,
+
+    /// Filter services by their transport types
+    pub transport: Option<Or<ServiceTransport>>,
+}
+
+/// Service transport protocol. See `protocols` field in [crate::models::Service].
+#[derive(Debug)]
+pub enum ServiceTransport {
+    /// Raw unencrypted traffic
+    Raw,
+    /// TLS encrypted traffic
+    Tls,
 }
 
 /// An error encountered while parsing a filter ast

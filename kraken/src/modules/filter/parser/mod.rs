@@ -14,6 +14,7 @@ use crate::modules::filter::lexer::tokenize;
 use crate::modules::filter::lexer::Token;
 use crate::modules::filter::parser::value_parser::parse_os_type;
 use crate::modules::filter::parser::value_parser::parse_port_protocol;
+use crate::modules::filter::parser::value_parser::parse_service_transport;
 use crate::modules::filter::parser::value_parser::wrap_range;
 use crate::modules::filter::And;
 use crate::modules::filter::DomainAST;
@@ -125,6 +126,7 @@ impl HostAST {
                  services_protocols,
                  services_tags,
                  services_created_at,
+                 services_transports,
                  domains,
                  domains_tags,
                  domains_created_at,
@@ -173,6 +175,12 @@ impl HostAST {
                     tokens,
                     wrap_range(parse_from_str::<DateTime<Utc>>),
                 ),
+                "services.transports"
+                | "service.transports"
+                | "services.transport"
+                | "service.transport" => {
+                    parse_ast_field(services_transports, tokens, parse_service_transport)
+                }
                 "domains" | "domain" => parse_ast_field(domains, tokens, parse_string),
                 "domains.tags" | "domains.tag" | "domain.tags" | "domain.tag" => {
                     parse_ast_field(domains_tags, tokens, parse_string)
@@ -205,6 +213,7 @@ impl PortAST {
                  services,
                  services_tags,
                  services_created_at,
+                 services_transports,
              },
              column,
              tokens| match column {
@@ -237,6 +246,12 @@ impl PortAST {
                     tokens,
                     wrap_range(parse_from_str::<DateTime<Utc>>),
                 ),
+                "services.transports"
+                | "service.transports"
+                | "services.transport"
+                | "service.transport" => {
+                    parse_ast_field(services_transports, tokens, parse_service_transport)
+                }
                 _ => Err(ParseError::UnknownColumn(column.to_string())),
             },
         )
@@ -260,6 +275,7 @@ impl ServiceAST {
                  protocols,
                  services,
                  ports,
+                 transport,
              },
              column,
              tokens| match column {
@@ -292,6 +308,9 @@ impl ServiceAST {
                     parse_ast_field(ports_tags, tokens, parse_string)
                 }
                 "protocols" | "protocol" => parse_ast_field(protocols, tokens, parse_port_protocol),
+                "transports" | "transport" => {
+                    parse_ast_field(transport, tokens, parse_service_transport)
+                }
                 _ => Err(ParseError::UnknownColumn(column.to_string())),
             },
         )

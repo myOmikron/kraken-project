@@ -29,6 +29,7 @@ export function FilterEditorUi(props: FilterEditorProps) {
         "mayberange.port": FilterRawPortSelector,
         ostype: FilterOsTypeSelector,
         protocol: FilterPortProtocolSelector,
+        transport: FilterServiceTransportSelector,
     };
 
     const [showAdvanced, setShowAdvanced] = useState(false);
@@ -361,6 +362,13 @@ function FilterPortProtocolSelector(props: FilterComponentProps) {
     return FilterCheckboxEnumSelector({
         ...props,
         enum: Object.values(PortProtocol),
+    });
+}
+
+function FilterServiceTransportSelector(props: FilterComponentProps) {
+    return FilterCheckboxEnumSelector({
+        ...props,
+        enum: ["Raw", "TLS"],
     });
 }
 

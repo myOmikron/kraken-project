@@ -15,6 +15,8 @@ use super::super::MaybeRange;
 use super::super::Range;
 use crate::models::OsType;
 use crate::models::PortProtocol;
+use crate::models::ServiceProtocols;
+use crate::modules::filter::ServiceTransport;
 use crate::modules::raw_query::RawQueryBuilder;
 
 /// Controls how values are written to sql
@@ -98,6 +100,11 @@ impl<Cmp> Column<Cmp> {
 
     /// Check the column to be a subnet of (or equal to) a specific network
     pub fn subnet(&self) -> Column<CmpSubnet> {
+        self.cmp()
+    }
+
+    /// Check the column to have all the input bits on a numerical value set.
+    pub fn bitset(&self) -> Column<CmpBitset> {
         self.cmp()
     }
 
@@ -270,6 +277,24 @@ impl ValueSqler<IpNetwork> for Column<CmpSubnet> {
     }
 }
 
+pub struct CmpBitset;
+impl<V: AsValue> ValueSqler<V> for Column<CmpBitset> {
+    fn sql_value<'a>(
+        &self,
+        value: &'a V,
+        sql: &mut String,
+        values: &mut Vec<Value<'a>>,
+    ) -> fmt::Result {
+        let Self { table, column, .. } = *self;
+        values.push(value.as_value());
+        write!(
+            sql,
+            r#"("{table}"."{column}" & ${i} = ${i})"#,
+            i = values.len()
+        )
+    }
+}
+
 /// Small helper trait which converts `&T` into a [`Value`]
 ///
 /// Unlike `rorm`'s [`FieldType`](rorm::fields::traits::FieldType),
@@ -308,6 +333,14 @@ impl AsValue for OsType {
             OsType::Android => stringify!(Android),
             OsType::FreeBSD => stringify!(FreeBSD),
         })
+    }
+}
+impl AsValue for ServiceTransport {
+    fn as_value(&self) -> Value {
+        match self {
+            ServiceTransport::Raw => Value::I16(ServiceProtocols::bitset_raw()),
+            ServiceTransport::Tls => Value::I16(ServiceProtocols::bitset_tls()),
+        }
     }
 }
 impl AsValue for u16 {
