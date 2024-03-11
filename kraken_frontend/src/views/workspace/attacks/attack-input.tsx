@@ -22,13 +22,8 @@ export interface AttackInputProps<T> extends IAttackInputProps {
     onUpdate: (key: string, v: T | undefined) => any;
 }
 
-export const StringAttackInput = forwardRef((props: AttackInputProps<string>, ref) => {
-    let htmlProps: any = { ...props };
-    delete htmlProps["value"];
-    delete htmlProps["label"];
-    delete htmlProps["valueKey"];
-    delete htmlProps["validate"];
-    delete htmlProps["onUpdate"];
+export const StringAttackInput = forwardRef<HTMLInputElement, AttackInputProps<string>>((props, ref) => {
+    let { as, value, label, valueKey, onUpdate, ref: _, onChange, ...htmlProps } = props;
 
     return (
         <>
@@ -58,14 +53,7 @@ export function ConvertingAttackInput<T>(
 ) {
     let [errorInput, setErrorInput] = useState<string | undefined>(undefined);
 
-    let htmlProps: any = { ...props };
-    delete htmlProps["value"];
-    delete htmlProps["label"];
-    delete htmlProps["valueKey"];
-    delete htmlProps["validate"];
-    delete htmlProps["onUpdate"];
-    delete htmlProps["serialize"];
-    delete htmlProps["deserialize"];
+    let { as, value, label, valueKey, onChange, onUpdate, serialize, deserialize, ref: _, ...htmlProps } = props;
 
     let ref = useRef<HTMLInputElement | null>();
 
@@ -154,19 +142,14 @@ export const DurationAttackInput = forwardRef<
 });
 
 export const BooleanAttackInput = forwardRef((props: AttackInputProps<boolean>, ref) => {
-    let htmlProps: any = { ...props };
-    delete htmlProps["value"];
-    delete htmlProps["label"];
-    delete htmlProps["valueKey"];
-    delete htmlProps["validate"];
-    delete htmlProps["onUpdate"];
+    let { value, label, valueKey, onUpdate, ref: _, onChange, ...htmlProps } = props;
 
     return (
         <div className="checkbox">
             <Checkbox
                 ref={ref}
                 id={props.valueKey + "_input"}
-                value={props.value}
+                value={props.value ?? false}
                 onChange={(v) => props.onUpdate(props.valueKey, v)}
                 {...htmlProps}
             />
@@ -192,12 +175,7 @@ export const WordlistAttackInput = (props: AttackInputProps<string>) => {
         }
     });
 
-    let htmlProps: any = { ...props };
-    delete htmlProps["value"];
-    delete htmlProps["label"];
-    delete htmlProps["valueKey"];
-    delete htmlProps["validate"];
-    delete htmlProps["onUpdate"];
+    let { value, label, valueKey, onUpdate, ref: _, onChange, ...htmlProps } = props;
 
     return (
         <>
@@ -252,18 +230,13 @@ const DEHASHED_SEARCH_TYPES: Array<SelectValue> = [
     { label: "Vin", value: "vin" },
 ];
 
-export const DehashedAttackInput = forwardRef((props: AttackInputProps<Query>, ref) => {
+export const DehashedAttackInput = forwardRef<HTMLInputElement, AttackInputProps<Query>>((props, ref) => {
     let [search, setSearch] = useState<string>(props.value !== undefined ? Object.keys(props.value)[0] || "" : "");
     let [type, setType] = useState<null | SelectValue>(
         props.value && search ? (props.value as any)[search]?.simple || "" : "",
     );
 
-    let htmlProps: any = { ...props };
-    delete htmlProps["value"];
-    delete htmlProps["label"];
-    delete htmlProps["valueKey"];
-    delete htmlProps["validate"];
-    delete htmlProps["onUpdate"];
+    let { as, value, label, valueKey, onUpdate, ref: _, onChange, ...htmlProps } = props;
 
     function update(type: null | SelectValue, search: string) {
         let query;
