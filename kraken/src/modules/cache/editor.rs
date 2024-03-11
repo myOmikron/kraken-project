@@ -385,7 +385,7 @@ where
                             opt.as_mut().map(|inner| {
                                 // If the data was changed in the meantime, we shouldn't set
                                 // changed to false
-                                if inner.data = value {
+                                if inner.data == value {
                                     inner.changed = false
                                 }
                             })
