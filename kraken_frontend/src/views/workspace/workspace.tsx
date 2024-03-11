@@ -16,6 +16,7 @@ export const WORKSPACE_CONTEXT = React.createContext<WorkspaceContext>({
         owner: { uuid: "", username: "", displayName: "" },
         attacks: [],
         members: [],
+        notes: "",
         createdAt: new Date(),
     },
 });
