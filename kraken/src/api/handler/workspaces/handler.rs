@@ -87,6 +87,7 @@ use crate::models::UserPermission;
 use crate::models::Workspace;
 use crate::models::WorkspaceInvitation;
 use crate::models::WorkspaceMember;
+use crate::modules::cache::EditorCached;
 
 /// Create a new workspace
 #[utoipa::path(
@@ -175,6 +176,9 @@ pub async fn delete_workspace(
     }
 
     tx.commit().await?;
+
+    // Remove entry from the cache
+    GLOBAL.editor_cache.ws_notes.delete(req.uuid);
 
     Ok(HttpResponse::Ok().finish())
 }
@@ -333,7 +337,7 @@ pub async fn update_workspace(
 
 /// Transfer ownership to another account
 ///
-/// You will loose access to the workspace.
+/// You will lose access to the workspace.
 #[utoipa::path(
     tag = "Workspaces",
     context_path = "/api/v1",
@@ -710,7 +714,7 @@ pub async fn get_searches(
     }))
 }
 
-/// Retrieve results for a search by it's uuid
+/// Retrieve results for a search by its uuid
 #[utoipa::path(
     tag = "Workspaces",
     context_path = "/api/v1",

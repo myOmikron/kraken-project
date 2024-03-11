@@ -113,6 +113,19 @@ pub async fn websocket(
                                                 .await;
                                         });
                                     }
+                                    WsClientMessage::EditorChangedContent {
+                                        target: EditorTarget::WorkspaceNotes { workspace },
+                                        change,
+                                    } => {
+                                        tokio::spawn(async move {
+                                            GLOBAL
+                                                .editor_sync
+                                                .process_client_edit_ws_notes(
+                                                    user_uuid, workspace, change,
+                                                )
+                                                .await;
+                                        });
+                                    }
                                     WsClientMessage::EditorChangedCursor {
                                         target:
                                             EditorTarget::FindingDefinition {
@@ -124,11 +137,24 @@ pub async fn websocket(
                                         tokio::spawn(async move {
                                             GLOBAL
                                                 .editor_sync
-                                                .process_client_cursor_update(
+                                                .process_client_cursor_update_finding_definition(
                                                     user_uuid,
                                                     finding_definition,
                                                     finding_section,
                                                     cursor,
+                                                )
+                                                .await;
+                                        });
+                                    }
+                                    WsClientMessage::EditorChangedCursor {
+                                        target: EditorTarget::WorkspaceNotes { workspace },
+                                        cursor,
+                                    } => {
+                                        tokio::spawn(async move {
+                                            GLOBAL
+                                                .editor_sync
+                                                .process_client_cursor_update_ws_notes(
+                                                    user_uuid, workspace, cursor,
                                                 )
                                                 .await;
                                         });

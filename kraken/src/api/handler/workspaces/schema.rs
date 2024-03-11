@@ -115,6 +115,8 @@ pub struct FullWorkspace {
     /// The description of the workspace
     #[schema(example = "This workspace is ultra secure and should not be looked at!!")]
     pub description: Option<String>,
+    /// Notes of the workspace
+    pub notes: String,
     /// The owner of the workspace
     pub owner: SimpleUser,
     /// The attacks linked to this workspace

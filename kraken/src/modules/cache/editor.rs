@@ -417,7 +417,7 @@ where
 
             // Check if ws notes have already been queried once
             return if let Some(item) = cache_item {
-                Ok(item.map(|x| x.data))
+                Ok(Some(item.map(|x| x.data).unwrap_or_default()))
             } else {
                 // Query the db to populate the cache
                 let notes = self.query_db(key).await?;

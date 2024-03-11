@@ -5,6 +5,7 @@
 //! The internal synchronization will take care of fanning the events to the websocket
 //! as well as caching the results internally and saving them regularly to the database
 
+use log::debug;
 use log::error;
 use log::warn;
 use rorm::query;
@@ -25,6 +26,92 @@ use crate::modules::cache::EditorCached;
 pub struct EditorSync;
 
 impl EditorSync {
+    /// Process a change in workspace notes
+    pub async fn process_client_edit_ws_notes(&self, user: Uuid, ws: Uuid, change: Change) {
+        let existing = match GLOBAL.editor_cache.ws_notes.get(ws).await {
+            Ok(ws) => {
+                if let Some(ws) = ws {
+                    ws
+                } else {
+                    debug!("Workspace does not exist");
+                    return;
+                }
+            }
+
+            Err(err) => {
+                error!("Error gathering ws from cache: {err}");
+                return;
+            }
+        };
+
+        let Ok(Some(user)) = GLOBAL.user_cache.get_simple_user(user).await else {
+            error!("Could not retrieve user from cache for active websocket");
+            return;
+        };
+
+        // Check change
+        // Requirements:
+        // - start must be before or equal to end
+        if change.end_line < change.start_line
+            || change.start_line == change.end_line && change.end_column < change.start_column
+        {
+            warn!("Invalid change received!");
+            return;
+        }
+
+        if let Err(err) = GLOBAL
+            .editor_cache
+            .ws_notes
+            .update(ws, apply_change(&existing, &change))
+            .await
+        {
+            error!("Cache error: {err}");
+            return;
+        }
+
+        // Notify all users about the change
+        GLOBAL
+            .ws
+            .message_all(WsMessage::EditorChangedContent {
+                target: EditorTarget::WorkspaceNotes { workspace: ws },
+                change,
+                user,
+            })
+            .await;
+    }
+
+    /// Process a client cursor update event
+    ///
+    /// The event is fanned out via websocket with
+    pub async fn process_client_cursor_update_ws_notes(
+        &self,
+        user: Uuid,
+        ws: Uuid,
+        cursor: CursorPosition,
+    ) {
+        let existing = match GLOBAL.editor_cache.ws_notes.get(ws).await {
+            Ok(ws) => ws.unwrap_or_default(),
+            Err(err) => {
+                error!("Error gathering ws from cache: {err}");
+                return;
+            }
+        };
+
+        let Ok(Some(user)) = GLOBAL.user_cache.get_simple_user(user).await else {
+            error!("Could not retrieve user");
+            return;
+        };
+
+        GLOBAL
+            .ws
+            .message_all(WsMessage::EditorChangedCursor {
+                target: EditorTarget::WorkspaceNotes { workspace: ws },
+                cursor,
+                user,
+            })
+            .await;
+    }
+
     /// Process a client's EditFindingDefinition update
     pub async fn process_client_edit_finding_definition(
         &self,
@@ -150,7 +237,7 @@ impl EditorSync {
     /// The event is fanned out via websocket with
     ///
     /// If the finding definition is unknown, the event will be dropped
-    pub async fn process_client_cursor_update(
+    pub async fn process_client_cursor_update_finding_definition(
         &self,
         user: Uuid,
         finding_definition: Uuid,

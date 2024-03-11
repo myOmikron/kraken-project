@@ -17,6 +17,7 @@ use crate::models::WorkspaceAccessToken;
 use crate::models::WorkspaceInvitation;
 use crate::models::WorkspaceMember;
 use crate::models::WorkspaceMemberPermission;
+use crate::models::WorkspaceNotesInsert;
 
 #[derive(Patch)]
 #[rorm(model = "WorkspaceMember")]
@@ -168,7 +169,9 @@ impl Workspace {
             return Err(InsertWorkspaceError::EmptyName);
         }
 
-        insert!(executor, WorkspaceInsert)
+        let mut guard = executor.ensure_transaction().await?;
+
+        insert!(guard.get_transaction(), WorkspaceInsert)
             .return_nothing()
             .single(&WorkspaceInsert {
                 uuid,
@@ -177,6 +180,16 @@ impl Workspace {
                 owner: ForeignModelByField::Key(owner),
             })
             .await?;
+
+        insert!(guard.get_transaction(), WorkspaceNotesInsert)
+            .single(&WorkspaceNotesInsert {
+                uuid,
+                notes: "".to_string(),
+                workspace: ForeignModelByField::Key(uuid),
+            })
+            .await?;
+
+        guard.commit().await?;
 
         Ok(uuid)
     }
