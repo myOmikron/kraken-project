@@ -86,8 +86,8 @@ tokio-native-tls = { version = "~0.3" }
 
 # raw sockets
 socket2 = { version = "~0.5" }
-etherparse = { version = "~0.13" }
-nix = {  version = "~0.28", features = ["net"] }
+etherparse = { version = "~0.14" }
+nix = { version = "~0.28", features = ["net"] }
 strum = { version = "~0.26" }
 strum_macros = { version = "~0.26" }
 
