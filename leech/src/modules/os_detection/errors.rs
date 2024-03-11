@@ -2,7 +2,7 @@
 
 use std::io;
 
-use etherparse::ReadError;
+use etherparse::err::ip::LaxHeaderSliceError;
 use etherparse::TcpOptionReadError;
 use thiserror::Error;
 use tokio::task::JoinError;
@@ -47,8 +47,10 @@ pub enum RawTcpError {
     /// Regular I/O errors
     #[error("I/O error: {0}")]
     IoError(#[from] io::Error),
-    #[error("Failed parsing IP/TCP packet: {0}")]
-    PacketParseError(#[from] ReadError),
+    #[error("Failed parsing IP packet: {0}")]
+    IpParseError(#[from] etherparse::err::ip::SliceError),
+    #[error("Failed parsing packet: {0}")]
+    PacketParseError(#[from] LaxHeaderSliceError),
     #[error("Failed parsing TCP option: {0}")]
     TcpOptionParseError(#[from] TcpOptionReadError),
     #[error("Socket was created in IPv4/v6 domain, but local_addr didn't match the domain")]

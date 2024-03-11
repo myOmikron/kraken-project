@@ -9,10 +9,12 @@ use std::net::IpAddr;
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use etherparse::IpHeader;
+use etherparse::IpHeaders;
+use etherparse::IpNumber;
 use etherparse::Ipv4Extensions;
 use etherparse::Ipv4Header;
 use etherparse::Ipv6Extensions;
+use etherparse::Ipv6FlowLabel;
 use etherparse::Ipv6Header;
 use etherparse::PacketBuilder;
 use etherparse::TcpOptionElement;
@@ -101,20 +103,27 @@ async fn fingerprint_tcp_impl(address: SocketAddr) -> Result<TcpFingerprint, Raw
 
     let syn = PacketBuilder::ip(match (address, source_ip) {
         (SocketAddr::V4(addr), IpAddr::V4(local_addr)) => {
-            let mut ip = Ipv4Header::new(0, 42, 6, local_addr.octets(), addr.ip().octets());
+            let mut ip = Ipv4Header::new(
+                0,
+                42,
+                IpNumber::TCP,
+                local_addr.octets(),
+                addr.ip().octets(),
+            )
+            .expect("failed creating Ipv4Header from static values?!");
             ip.identification = rand::random();
 
-            IpHeader::Version4(ip, Ipv4Extensions { auth: None })
+            IpHeaders::Ipv4(ip, Ipv4Extensions { auth: None })
         }
-        (SocketAddr::V6(addr), IpAddr::V6(local_addr)) => IpHeader::Version6(
+        (SocketAddr::V6(addr), IpAddr::V6(local_addr)) => IpHeaders::Ipv6(
             Ipv6Header {
                 traffic_class: 0, // TODO: sane values?
                 source: local_addr.octets(),
                 destination: addr.ip().octets(),
-                flow_label: 0,     // TODO: sane values?
-                hop_limit: 0,      // TODO: sane values?
-                next_header: 0,    // TODO: sane values?
-                payload_length: 0, // filled in by OS
+                flow_label: Ipv6FlowLabel::ZERO, // TODO: sane values?
+                hop_limit: 0,                    // TODO: sane values?
+                next_header: IpNumber(0),        // TODO: sane values?
+                payload_length: 0,               // filled in by OS
             },
             Ipv6Extensions {
                 auth: None,
@@ -176,23 +185,23 @@ async fn fingerprint_tcp_impl(address: SocketAddr) -> Result<TcpFingerprint, Raw
 
     Ok(TcpFingerprint {
         is_ipv4: match &ip {
-            IpHeader::Version4(_, _) => true,
-            IpHeader::Version6(_, _) => false,
+            IpHeaders::Ipv4(_, _) => true,
+            IpHeaders::Ipv6(_, _) => false,
         },
         payload_len: min(
             match &ip {
-                IpHeader::Version4(header, _) => header.payload_len,
-                IpHeader::Version6(header, _) => header.payload_length,
+                IpHeaders::Ipv4(header, _) => header.payload_len().unwrap_or(255),
+                IpHeaders::Ipv6(header, _) => header.payload_length,
             },
             255u16,
         ) as u8,
         has_identification: match &ip {
-            IpHeader::Version4(header, _) => header.identification != 0,
-            IpHeader::Version6(_, _) => false,
+            IpHeaders::Ipv4(header, _) => header.identification != 0,
+            IpHeaders::Ipv6(_, _) => false,
         },
         ttl: match &ip {
-            IpHeader::Version4(header, _) => header.time_to_live,
-            IpHeader::Version6(header, _) => header.hop_limit,
+            IpHeaders::Ipv4(header, _) => header.time_to_live,
+            IpHeaders::Ipv6(header, _) => header.hop_limit,
         },
         window_size: tcp.window_size,
         window_scale,

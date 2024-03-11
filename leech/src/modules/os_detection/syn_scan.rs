@@ -3,18 +3,19 @@ use std::net::IpAddr;
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use etherparse::packet_filter::ElementFilter;
-use etherparse::InternetSlice;
-use etherparse::IpHeader;
+use etherparse::IpHeaders;
+use etherparse::IpNumber;
 use etherparse::Ipv4Extensions;
 use etherparse::Ipv4Header;
 use etherparse::Ipv6ExtensionSlice;
 use etherparse::Ipv6Extensions;
 use etherparse::Ipv6ExtensionsSlice;
+use etherparse::Ipv6FlowLabel;
 use etherparse::Ipv6Header;
 use etherparse::Ipv6RoutingExtensions;
+use etherparse::LaxNetSlice;
+use etherparse::LaxSlicedPacket;
 use etherparse::PacketBuilder;
-use etherparse::SlicedPacket;
 use etherparse::TcpHeader;
 use etherparse::TcpOptionElement;
 use etherparse::TransportSlice;
@@ -68,28 +69,7 @@ pub async fn tcp_get_syn_ack(
     address: SocketAddr,
     recv_port: u16,
     syn: &[u8],
-) -> Result<(IpHeader, TcpHeader), RawTcpError> {
-    let recv_tcp_filter = etherparse::packet_filter::TransportFilter::Tcp {
-        source_port: Some(address.port()),
-        destination_port: Some(recv_port),
-    };
-    let recv_ip_filter = match address.ip() {
-        IpAddr::V4(v4) => etherparse::packet_filter::IpFilter::Ipv4 {
-            source: Some(v4.octets()),
-            destination: None,
-        },
-        IpAddr::V6(v6) => etherparse::packet_filter::IpFilter::Ipv6 {
-            source: Some(v6.octets()),
-            destination: None,
-        },
-    };
-    let recv_filter = etherparse::packet_filter::Filter {
-        ip: ElementFilter::Some(recv_ip_filter),
-        transport: ElementFilter::Some(recv_tcp_filter),
-        link: ElementFilter::Any,
-        vlan: ElementFilter::Any,
-    };
-
+) -> Result<(IpHeaders, TcpHeader), RawTcpError> {
     socket.send_to(syn, address).await?;
 
     let mut buf = [0u8; 256];
@@ -97,32 +77,44 @@ pub async fn tcp_get_syn_ack(
     loop {
         let (len, _) = socket.recv_from(&mut buf).await?;
 
-        let packet = SlicedPacket::from_ip(&buf[0..len])?;
-        if !recv_filter.applies_to_slice(&packet) {
+        let packet = LaxSlicedPacket::from_ip(&buf[0..len])?;
+        let Some(net) = packet.net else {
+            continue;
+        };
+
+        let Some(TransportSlice::Tcp(tcp)) = packet.transport else {
+            continue;
+        };
+        if tcp.source_port() != address.port()
+            || tcp.destination_port() != recv_port
+            || !(tcp.syn() && tcp.ack())
+        {
             continue;
         }
 
-        if let Some(transport_slice) = packet.transport {
-            return Ok(match transport_slice {
-                TransportSlice::Tcp(tcp) => {
-                    if !(tcp.syn() && tcp.ack()) {
+        return Ok((
+            match (net, address.ip()) {
+                (LaxNetSlice::Ipv4(in_v4), IpAddr::V4(expect_v4)) => {
+                    if in_v4.header().source_addr() != expect_v4 {
                         continue;
                     }
 
-                    (match packet.ip.expect("must have ip since we decoded from ip") {
-                        InternetSlice::Ipv4(ip, ext) => IpHeader::Version4(
-                            ip.to_header(),
-                            ext.to_header()
-                        ),
-                        InternetSlice::Ipv6(ip, ext) => IpHeader::Version6(
-                            ip.to_header(),
-                            make_ipv6_headers(&ext)
-                        )
-                    }, tcp.to_header())
-                },
-                _ => panic!("should never reach this since the TransportFilter::Tcp (recv_filter) matched on this")
-            });
-        }
+                    IpHeaders::Ipv4(in_v4.header().to_header(), in_v4.extensions().to_header())
+                }
+                (LaxNetSlice::Ipv6(in_v6), IpAddr::V6(expect_v6)) => {
+                    if in_v6.header().source_addr() != expect_v6 {
+                        continue;
+                    }
+
+                    IpHeaders::Ipv6(
+                        in_v6.header().to_header(),
+                        make_ipv6_headers(in_v6.extensions()),
+                    )
+                }
+                (_, _) => continue,
+            },
+            tcp.to_header(),
+        ));
     }
 }
 
@@ -141,20 +133,27 @@ pub async fn check_syn_ack(address: SocketAddr, timeout: Duration) -> Result<boo
 
     let syn = PacketBuilder::ip(match (address, source_ip) {
         (SocketAddr::V4(addr), IpAddr::V4(local_addr)) => {
-            let mut ip = Ipv4Header::new(0, 42, 6, local_addr.octets(), addr.ip().octets());
+            let mut ip = Ipv4Header::new(
+                0,
+                42,
+                IpNumber::TCP,
+                local_addr.octets(),
+                addr.ip().octets(),
+            )
+            .expect("failed creating Ipv4Header with static values?!");
             ip.identification = rand::random();
 
-            IpHeader::Version4(ip, Ipv4Extensions { auth: None })
+            IpHeaders::Ipv4(ip, Ipv4Extensions { auth: None })
         }
-        (SocketAddr::V6(addr), IpAddr::V6(local_addr)) => IpHeader::Version6(
+        (SocketAddr::V6(addr), IpAddr::V6(local_addr)) => IpHeaders::Ipv6(
             Ipv6Header {
                 traffic_class: 0, // TODO: sane values?
                 source: local_addr.octets(),
                 destination: addr.ip().octets(),
-                flow_label: 0,     // TODO: sane values?
-                hop_limit: 0,      // TODO: sane values?
-                next_header: 0,    // TODO: sane values?
-                payload_length: 0, // filled in by OS
+                flow_label: Ipv6FlowLabel::ZERO, // TODO: sane values?
+                hop_limit: 0,                    // TODO: sane values?
+                next_header: IpNumber(0),        // TODO: sane values?
+                payload_length: 0,               // filled in by OS
             },
             Ipv6Extensions {
                 auth: None,
