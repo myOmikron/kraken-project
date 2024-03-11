@@ -8,7 +8,7 @@
 
 .tabs {
     border-radius: 0.5em 0.5em 0 0;
-    background-color: #001012;
+    background-color: #041216;
     cursor: pointer;
 
     width: 10em;
@@ -52,7 +52,7 @@
 
 .selected-tab,
 .selected-tab:hover {
-    background-color: #003036;
+    background-color: #033745;
 }
 
 .selected-tab .icon {
