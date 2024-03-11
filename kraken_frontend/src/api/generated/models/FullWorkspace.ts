@@ -51,6 +51,12 @@ export interface FullWorkspace {
      */
     description?: string | null;
     /**
+     * Notes of the workspace
+     * @type {string}
+     * @memberof FullWorkspace
+     */
+    notes: string;
+    /**
      * 
      * @type {SimpleUser}
      * @memberof FullWorkspace
@@ -83,6 +89,7 @@ export function instanceOfFullWorkspace(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "name" in value;
+    isInstance = isInstance && "notes" in value;
     isInstance = isInstance && "owner" in value;
     isInstance = isInstance && "attacks" in value;
     isInstance = isInstance && "members" in value;
@@ -104,6 +111,7 @@ export function FullWorkspaceFromJSONTyped(json: any, ignoreDiscriminator: boole
         'uuid': json['uuid'],
         'name': json['name'],
         'description': !exists(json, 'description') ? undefined : json['description'],
+        'notes': json['notes'],
         'owner': SimpleUserFromJSON(json['owner']),
         'attacks': ((json['attacks'] as Array<any>).map(SimpleAttackFromJSON)),
         'members': ((json['members'] as Array<any>).map(SimpleUserFromJSON)),
@@ -123,6 +131,7 @@ export function FullWorkspaceToJSON(value?: FullWorkspace | null): any {
         'uuid': value.uuid,
         'name': value.name,
         'description': value.description,
+        'notes': value.notes,
         'owner': SimpleUserToJSON(value.owner),
         'attacks': ((value.attacks as Array<any>).map(SimpleAttackToJSON)),
         'members': ((value.members as Array<any>).map(SimpleUserToJSON)),

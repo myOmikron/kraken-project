@@ -279,8 +279,8 @@ export class WorkspacesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve results for a search by it\'s uuid
-     * Retrieve results for a search by it\'s uuid
+     * Retrieve results for a search by its uuid
+     * Retrieve results for a search by its uuid
      */
     async getSearchResultsRaw(requestParameters: GetSearchResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SearchResultPage>> {
         if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
@@ -322,8 +322,8 @@ export class WorkspacesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve results for a search by it\'s uuid
-     * Retrieve results for a search by it\'s uuid
+     * Retrieve results for a search by its uuid
+     * Retrieve results for a search by its uuid
      */
     async getSearchResults(requestParameters: GetSearchResultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SearchResultPage> {
         const response = await this.getSearchResultsRaw(requestParameters, initOverrides);
@@ -485,7 +485,7 @@ export class WorkspacesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Transfer ownership to another account  You will loose access to the workspace.
+     * Transfer ownership to another account  You will lose access to the workspace.
      * Transfer ownership to another account
      */
     async transferOwnershipRaw(requestParameters: TransferOwnershipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -515,7 +515,7 @@ export class WorkspacesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Transfer ownership to another account  You will loose access to the workspace.
+     * Transfer ownership to another account  You will lose access to the workspace.
      * Transfer ownership to another account
      */
     async transferOwnership(requestParameters: TransferOwnershipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
