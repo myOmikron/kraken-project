@@ -150,7 +150,7 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(workspaces::handler_admin::get_workspace_admin)
                     .service(workspaces::handler_admin::get_all_workspaces_admin)
                     .service(files::handler_admin::get_all_files)
-                    .service(files::handler_admin::download_file)
+                    .service(files::handler_admin::download_file_admin)
                     .service(files::handler_admin::delete_file)
                     .service(oauth_applications::handler_admin::create_oauth_app)
                     .service(oauth_applications::handler_admin::get_all_oauth_apps)

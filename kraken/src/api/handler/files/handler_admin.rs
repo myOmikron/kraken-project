@@ -143,7 +143,7 @@ pub async fn get_all_files(
     security(("api_key" = []))
 )]
 #[get("/files/{uuid}")]
-pub async fn download_file(path: Path<PathUuid>) -> ApiResult<NamedFile> {
+pub async fn download_file_admin(path: Path<PathUuid>) -> ApiResult<NamedFile> {
     let uuid = path.into_inner().uuid;
 
     let file = query!(&GLOBAL.db, MediaFile)

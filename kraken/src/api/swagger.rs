@@ -107,7 +107,7 @@ impl Modify for SecurityAddon2 {
         files::handler::download_thumbnail,
         files::handler::download_file,
         files::handler_admin::get_all_files,
-        files::handler_admin::download_file,
+        files::handler_admin::download_file_admin,
         files::handler_admin::delete_file,
         attacks::handler::bruteforce_subdomains,
         attacks::handler::query_certificate_transparency,
