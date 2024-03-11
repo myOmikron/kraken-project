@@ -4,6 +4,7 @@ use std::io::Cursor;
 use std::path::Path;
 use std::path::PathBuf;
 
+use actix_web::http::header::ContentLength;
 use actix_web::web::Payload;
 use bytes::Bytes;
 use futures::TryStreamExt;
@@ -18,6 +19,9 @@ use uuid::Uuid;
 
 use crate::api::handler::common::error::ApiError;
 use crate::config::VAR_DIR;
+
+/// The maximum size accepted by the file endpoints
+const MAX_FILE_SIZE: usize = 100 * 1024 * 1024; // 100MiB
 
 pub fn media_file_path(uuid: Uuid) -> PathBuf {
     Path::new(VAR_DIR).join("media").join(uuid.to_string())
@@ -39,11 +43,12 @@ pub fn valid_image(file_start: &[u8]) -> Option<ImageFormat> {
 
 pub async fn stream_into_file_with_magic<D: Digest>(
     path: &Path,
+    content_length: ContentLength,
     body: Payload,
 ) -> Result<Option<((DeleteFile, String), ImageFormat)>, StreamIntoFileError> {
     let mut magic = [0u8; 8];
     let mut magic_cursor = Some(Cursor::new(&mut magic[..]));
-    let option = stream_into_file::<D>(path, body, move |chunk| {
+    let option = stream_into_file::<D>(path, content_length, body, move |chunk| {
         if let Some(cursor) = magic_cursor.as_mut() {
             if io::Write::write_all(cursor, chunk).is_err() {
                 valid_image(cursor.get_ref()).ok_or(())?;
@@ -57,6 +62,7 @@ pub async fn stream_into_file_with_magic<D: Digest>(
 
 pub async fn stream_into_file<D: Digest>(
     path: &Path,
+    content_length: ContentLength,
     mut body: Payload,
     mut hook: impl FnMut(&Bytes) -> Result<(), ()>,
 ) -> Result<Option<(DeleteFile, String)>, StreamIntoFileError> {
@@ -65,13 +71,25 @@ pub async fn stream_into_file<D: Digest>(
     use StreamIntoFileError::FileCreate;
     use StreamIntoFileError::FileWrite;
 
+    if content_length.0 > MAX_FILE_SIZE {
+        return Err(StreamIntoFileError::BodyTooLarge);
+    }
+
     let mut file = File::create(path).await.map_err(FileCreate)?;
     let mut hashed = D::new();
     let guard = DeleteFile::new(path);
 
+    let mut file_size = 0;
+
     while let Some(chunk) = body.try_next().await.map_err(Actix)? {
         if hook(&chunk).is_err() {
             return Ok(None);
+        }
+
+        // The check above should be sufficient, but just to be sure
+        file_size += chunk.len();
+        if file_size > MAX_FILE_SIZE {
+            return Err(StreamIntoFileError::BodyTooLarge);
         }
 
         file.write_all(&chunk).await.map_err(FileWrite)?;
@@ -113,6 +131,7 @@ impl<'p> Drop for DeleteFile<'p> {
 
 #[derive(Debug)]
 pub enum StreamIntoFileError {
+    BodyTooLarge,
     Actix(actix_web::error::PayloadError),
     FileCreate(io::Error),
     FileWrite(io::Error),
@@ -122,6 +141,9 @@ pub enum StreamIntoFileError {
 impl From<StreamIntoFileError> for ApiError {
     fn from(value: StreamIntoFileError) -> Self {
         match value {
+            StreamIntoFileError::BodyTooLarge => {
+                ApiError::PayloadOverflow("The uploaded file is too large".to_string())
+            }
             StreamIntoFileError::Actix(err) => ApiError::PayloadError(err),
             StreamIntoFileError::FileCreate(err)
             | StreamIntoFileError::FileWrite(err)

@@ -2,7 +2,9 @@ use std::fs::File;
 
 use actix_files::NamedFile;
 use actix_web::get;
+use actix_web::http::header::ContentLength;
 use actix_web::post;
+use actix_web::web::Header;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::web::Payload;
@@ -49,6 +51,7 @@ pub async fn upload_image(
     path: Path<PathUuid>,
     Query(query): Query<UploadQuery>,
     SessionUser(user_uuid): SessionUser,
+    Header(content_length): Header<ContentLength>,
     body: Payload,
 ) -> ApiResult<Json<UuidResponse>> {
     let workspace_uuid = path.into_inner().uuid;
@@ -62,7 +65,7 @@ pub async fn upload_image(
 
     let file_path = media_file_path(file_uuid);
     let ((delete_file_guard, sha256), magic_format) =
-        stream_into_file_with_magic::<sha2::Sha256>(file_path.as_ref(), body)
+        stream_into_file_with_magic::<sha2::Sha256>(file_path.as_ref(), content_length, body)
             .await?
             .ok_or(ApiError::InvalidImage)?;
 
@@ -128,6 +131,7 @@ pub async fn upload_file(
     path: Path<PathUuid>,
     Query(query): Query<UploadQuery>,
     SessionUser(user_uuid): SessionUser,
+    Header(content_length): Header<ContentLength>,
     body: Payload,
 ) -> ApiResult<Json<UuidResponse>> {
     let workspace_uuid = path.into_inner().uuid;
@@ -136,7 +140,7 @@ pub async fn upload_file(
     let file_path = media_file_path(file_uuid);
     #[allow(clippy::unwrap_used)] // None is only returned iff the hook returns Err which it doesn't
     let (delete_file_guard, sha256) =
-        stream_into_file::<sha2::Sha256>(file_path.as_ref(), body, |_| Ok(()))
+        stream_into_file::<sha2::Sha256>(file_path.as_ref(), content_length, body, |_| Ok(()))
             .await?
             .unwrap();
 
