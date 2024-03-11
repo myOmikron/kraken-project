@@ -10,7 +10,6 @@
         0 0 25em var(--primary-op),
         inset 0 0 5em var(--toast-hint-color),
         inset 0 0 0.5em #0ff2 !important;
-    backdrop-filter: blur(0.1em) !important;
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFUlEQVQIW2P8//+/FCMj4zNGBigAADqJBAO/UCEeAAAAAElFTkSuQmCC),
         linear-gradient(0deg, #010b22, var(--level-1)) !important;
     image-rendering: pixelated;

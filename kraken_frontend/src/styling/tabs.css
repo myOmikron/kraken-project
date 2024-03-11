@@ -8,18 +8,19 @@
 
 .tabs {
     border-radius: 0.5em 0.5em 0 0;
-    background-color: #00ccff10;
+    background-color: #001012;
     cursor: pointer;
-    backdrop-filter: blur(20px);
 
     width: 10em;
     display: flex;
     justify-content: center;
     align-items: center;
+
+    transition: background-color 0.1s ease-out;
 }
 
 .tabs:hover {
-    background-color: #00ccff40;
+    background-color: #002024;
 }
 
 .tabs h3 {
@@ -32,7 +33,6 @@
     border-radius: 0.5em 0.5em 0 0;
     background-color: #00ccff10;
     cursor: pointer;
-    backdrop-filter: blur(20px);
 
     width: 4em;
     padding: 0.5em;
@@ -50,8 +50,9 @@
     transition: all 0.15s ease-out;
 }
 
-.selected-tab {
-    background-color: #00ccff30;
+.selected-tab,
+.selected-tab:hover {
+    background-color: #003036;
 }
 
 .selected-tab .icon {

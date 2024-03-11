@@ -15,7 +15,6 @@
         0 0 25em var(--primary-op),
         inset 0 0 10em #0cf2,
         inset 0 0 0.5em #0ff2;
-    backdrop-filter: blur(0.1em);
     background:
         radial-gradient(
                 circle at center,

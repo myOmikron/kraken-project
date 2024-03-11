@@ -1,6 +1,6 @@
 :root {
     --level-0: #000;
-    --level-1: #44444440;
+    --level-1: #2a3c47c0;
     --text: #bbb;
     --primary: #0cf;
     --primary-light: #00ccffaa;
@@ -53,7 +53,6 @@ body {
         0 0 25em var(--primary-op),
         inset 0 0 10em #0cf3,
         inset 0 0 0.5em #0ff2;
-    backdrop-filter: blur(0.1em);
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFUlEQVQIW2P8//+/FCMj4zNGBigAADqJBAO/UCEeAAAAAElFTkSuQmCC),
         linear-gradient(0deg, #010b22, var(--level-1));
     image-rendering: pixelated;
@@ -68,7 +67,6 @@ body {
         0 0 25em var(--primary-op),
         inset 0 0 10em #0cf3,
         inset 0 0 0.5em #0ff2;
-    backdrop-filter: blur(0.1em);
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFUlEQVQIW2P8//+/FCMj4zNGBigAADqJBAO/UCEeAAAAAElFTkSuQmCC),
         linear-gradient(0deg, #010b22, var(--level-1));
     image-rendering: pixelated;
