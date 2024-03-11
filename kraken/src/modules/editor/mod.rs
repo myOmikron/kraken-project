@@ -89,13 +89,10 @@ impl EditorSync {
         ws: Uuid,
         cursor: CursorPosition,
     ) {
-        let existing = match GLOBAL.editor_cache.ws_notes.get(ws).await {
-            Ok(ws) => ws.unwrap_or_default(),
-            Err(err) => {
-                error!("Error gathering ws from cache: {err}");
-                return;
-            }
-        };
+        if let Err(err) = GLOBAL.editor_cache.ws_notes.get(ws).await {
+            error!("Error gathering ws from cache: {err}");
+            return;
+        }
 
         let Ok(Some(user)) = GLOBAL.user_cache.get_simple_user(user).await else {
             error!("Could not retrieve user");
