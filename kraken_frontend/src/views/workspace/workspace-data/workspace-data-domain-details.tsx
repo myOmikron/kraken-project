@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { Api } from "../../../api/api";
-import { DomainRelations, FullAggregationSource, FullDomain, TagType } from "../../../api/generated";
+import { DomainRelations, FullAggregationSource, FullDomain, ListFindings, TagType } from "../../../api/generated";
 import SelectableText from "../../../components/selectable-text";
 import Textarea from "../../../components/textarea";
 import { handleApiError } from "../../../utils/helper";
@@ -9,6 +9,7 @@ import EditableTags from "../components/editable-tags";
 import { DomainRelationsList } from "../components/relations-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import { CertaintyIcon } from "../workspace-data";
+import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 
 export type WorkspaceDataDomainDetailsProps = {
@@ -27,9 +28,11 @@ export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProp
     const [page, setPage] = useState(0);
     const [domain, setDomain] = React.useState<FullDomain | null>(null);
     const [relations, setRelations] = React.useState<DomainRelations | null>(null);
+    const [findings, setFindings] = React.useState<ListFindings | null>(null);
     React.useEffect(() => {
         Api.workspaces.domains.get(workspace, uuid).then(handleApiError(setDomain));
         Api.workspaces.domains.relations(workspace, uuid).then(handleApiError(setRelations));
+        Api.workspaces.domains.findings(workspace, uuid).then(handleApiError(setFindings));
         Api.workspaces.domains.sources(workspace, uuid).then(
             handleApiError((x) => {
                 setAttacks(x);
@@ -116,14 +119,7 @@ export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProp
         case "findings":
             return (
                 <div className="workspace-data-details-overflow">
-                    <div className="workspace-data-details-relations-container">
-                        <div className="workspace-data-details-relations-header workspace-data-details-findings">
-                            <div className="workspace-data-details-relations-heading">Severity</div>
-                            <div className="workspace-data-details-relations-heading">CVE</div>
-                            <div className="workspace-data-details-relations-heading">Name</div>
-                        </div>
-                        <div className="workspace-data-details-relations-body"></div>
-                    </div>
+                    <WorkspaceDataDetailsFindings findings={findings} />
                 </div>
             );
     }
