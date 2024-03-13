@@ -161,7 +161,7 @@ pub async fn get_finding(
         .await?;
 
     let definition = query!(&mut tx, FindingDefinition)
-        .condition(FindingDetails::F.uuid.equals(*finding.definition.key()))
+        .condition(FindingDefinition::F.uuid.equals(*finding.definition.key()))
         .one()
         .await?;
 

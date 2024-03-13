@@ -42,8 +42,7 @@ impl Finding {
 
         let mut guard = executor.ensure_transaction().await?;
 
-        let details_uuid = Uuid::new_v4();
-        let finding_uuid = FindingDetails::insert(
+        let details_uuid = FindingDetails::insert(
             guard.get_transaction(),
             user_details,
             tool_details,
@@ -52,6 +51,7 @@ impl Finding {
         )
         .await?;
 
+        let finding_uuid = Uuid::new_v4();
         insert!(guard.get_transaction(), InsertFinding)
             .return_nothing()
             .single(&InsertFinding {
