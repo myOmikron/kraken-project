@@ -112,34 +112,7 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
         case "results":
             return (
                 <div className="workspace-data-details-flex">
-                    <WorkspaceDataDetailsResults attack={attacks.attacks[page]} uuid={service.uuid} />
-                    <div className="workspace-data-details-table-controls">
-                        <div className="workspace-data-details-controls-container">
-                            <button
-                                className={"workspace-table-button"}
-                                disabled={page === 0}
-                                onClick={() => {
-                                    setPage(page - 1);
-                                }}
-                            >
-                                <ArrowLeftIcon />
-                            </button>
-                            <div className="workspace-table-controls-page-container">
-                                <span>
-                                    {page + 1} of {limit + 1}
-                                </span>
-                            </div>
-                            <button
-                                className={"workspace-table-button"}
-                                disabled={page === limit}
-                                onClick={() => {
-                                    setPage(page + 1);
-                                }}
-                            >
-                                <ArrowRightIcon />
-                            </button>
-                        </div>
-                    </div>
+                    <WorkspaceDataDetailsResults attacks={attacks.attacks} />
                 </div>
             );
         case "relations":
