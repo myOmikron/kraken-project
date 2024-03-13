@@ -1,8 +1,9 @@
 import React from "react";
 import "../index.css";
+import { FindingSeverity } from "../api/generated";
 
 type SeverityIconProps = {
-    severity?: "ok" | "low" | "medium" | "high" | "critical";
+    severity?: FindingSeverity;
 };
 
 export default function SeverityIcon(props: SeverityIconProps) {
@@ -13,15 +14,15 @@ export default function SeverityIcon(props: SeverityIconProps) {
                 width="800px"
                 height="800px"
                 className={
-                    severity === "ok"
+                    severity === FindingSeverity.Okay
                         ? "severity-icon-ok"
-                        : severity === "low"
+                        : severity === FindingSeverity.Low
                           ? "severity-icon-low"
-                          : severity === "medium"
+                          : severity === FindingSeverity.Medium
                             ? "severity-icon-medium"
-                            : severity === "high"
+                            : severity === FindingSeverity.High
                               ? "severity-icon-high"
-                              : severity === "critical"
+                              : severity === FindingSeverity.Critical
                                 ? "severity-icon-critical"
                                 : "neon"
                 }

@@ -61,9 +61,9 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
     }
 
     if (service === null) return null;
-    return (
-        <>
-            {tab === "general" ? (
+    switch (tab) {
+        case "general":
+            return (
                 <>
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Service</h3>
@@ -108,69 +108,31 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
                         />
                     </div>
                 </>
-            ) : (
-                <>
-                    {tab === "results" ? (
-                        <div className="workspace-data-details-flex">
-                            <WorkspaceDataDetailsResults attack={attacks.attacks[page]} uuid={service.uuid} />
-                            <div className="workspace-data-details-table-controls">
-                                <div className="workspace-data-details-controls-container">
-                                    <button
-                                        className={"workspace-table-button"}
-                                        disabled={page === 0}
-                                        onClick={() => {
-                                            setPage(page - 1);
-                                        }}
-                                    >
-                                        <ArrowLeftIcon />
-                                    </button>
-                                    <div className="workspace-table-controls-page-container">
-                                        <span>
-                                            {page + 1} of {limit + 1}
-                                        </span>
-                                    </div>
-                                    <button
-                                        className={"workspace-table-button"}
-                                        disabled={page === limit}
-                                        onClick={() => {
-                                            setPage(page + 1);
-                                        }}
-                                    >
-                                        <ArrowRightIcon />
-                                    </button>
-                                </div>
-                            </div>
+            );
+        case "results":
+            return (
+                <div className="workspace-data-details-flex">
+                    <WorkspaceDataDetailsResults attacks={attacks.attacks} />
+                </div>
+            );
+        case "relations":
+            return (
+                <div className="workspace-data-details-overflow">
+                    <ServiceRelationsList relations={relations} />
+                </div>
+            );
+        case "findings":
+            return (
+                <div className="workspace-data-details-overflow">
+                    <div className="workspace-data-details-relations-container">
+                        <div className="workspace-data-details-relations-header workspace-data-details-findings">
+                            <div className="workspace-data-details-relations-heading">Severity</div>
+                            <div className="workspace-data-details-relations-heading">CVE</div>
+                            <div className="workspace-data-details-relations-heading">Name</div>
                         </div>
-                    ) : (
-                        <>
-                            {tab === "relations" ? (
-                                <div className="workspace-data-details-overflow">
-                                    <ServiceRelationsList relations={relations} />
-                                </div>
-                            ) : (
-                                <>
-                                    {tab === "findings" ? (
-                                        <div className="workspace-data-details-overflow">
-                                            <div className="workspace-data-details-relations-container">
-                                                <div className="workspace-data-details-relations-header workspace-data-details-findings">
-                                                    <div className="workspace-data-details-relations-heading">
-                                                        Severity
-                                                    </div>
-                                                    <div className="workspace-data-details-relations-heading">CVE</div>
-                                                    <div className="workspace-data-details-relations-heading">Name</div>
-                                                </div>
-                                                <div className="workspace-data-details-relations-body"></div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div>Unimplemented</div>
-                                    )}
-                                </>
-                            )}
-                        </>
-                    )}
-                </>
-            )}
-        </>
-    );
+                        <div className="workspace-data-details-relations-body"></div>
+                    </div>
+                </div>
+            );
+    }
 }
