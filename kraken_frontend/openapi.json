@@ -4455,6 +4455,128 @@
                 ]
             }
         },
+        "/api/v1/workspace/{uuid}/findings": {
+            "get": {
+                "tags": ["Findings"],
+                "summary": "Gets a workspace's findings",
+                "description": "Gets a workspace's findings",
+                "operationId": "get_all_findings",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "The uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The list of findings",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListFindings"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": ["Findings"],
+                "summary": "Creates a new finding",
+                "description": "Creates a new finding",
+                "operationId": "create_finding",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "The uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateFindingRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Finding created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UuidResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
         "/api/v1/workspace/{w_uuid}/files/{f_uuid}": {
             "get": {
                 "tags": ["Files"],
@@ -4562,6 +4684,492 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/workspace/{w_uuid}/findings/{f_uuid}": {
+            "get": {
+                "tags": ["Findings"],
+                "summary": "Gets a single finding",
+                "description": "Gets a single finding",
+                "operationId": "get_finding",
+                "parameters": [
+                    {
+                        "name": "w_uuid",
+                        "in": "path",
+                        "description": "Workspace uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "f_uuid",
+                        "in": "path",
+                        "description": "Finding uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "A full finding and its affected",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FullFinding"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": ["Findings"],
+                "summary": "Updates a finding",
+                "description": "Updates a finding",
+                "operationId": "update_finding",
+                "parameters": [
+                    {
+                        "name": "w_uuid",
+                        "in": "path",
+                        "description": "Workspace uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "f_uuid",
+                        "in": "path",
+                        "description": "Finding uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateFindingRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Finding has been updated"
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": ["Findings"],
+                "summary": "Deletes a finding",
+                "description": "Deletes a finding",
+                "operationId": "delete_finding",
+                "parameters": [
+                    {
+                        "name": "w_uuid",
+                        "in": "path",
+                        "description": "Workspace uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "f_uuid",
+                        "in": "path",
+                        "description": "Finding uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Finding has been deleted"
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/workspace/{w_uuid}/findings/{f_uuid}/affected": {
+            "post": {
+                "tags": ["Findings"],
+                "summary": "Add a new affected object to a finding",
+                "description": "Add a new affected object to a finding",
+                "operationId": "create_finding_affected",
+                "parameters": [
+                    {
+                        "name": "w_uuid",
+                        "in": "path",
+                        "description": "Workspace uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "f_uuid",
+                        "in": "path",
+                        "description": "Finding uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateFindingAffectedRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Affected object was added successfully"
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/workspace/{w_uuid}/findings/{f_uuid}/affected/{a_uuid}": {
+            "get": {
+                "tags": ["Findings"],
+                "summary": "Get an object affected by a finding",
+                "description": "Get an object affected by a finding",
+                "operationId": "get_finding_affected",
+                "parameters": [
+                    {
+                        "name": "w_uuid",
+                        "in": "path",
+                        "description": "Workspace uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "f_uuid",
+                        "in": "path",
+                        "description": "Finding uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "a_uuid",
+                        "in": "path",
+                        "description": "The affected object's uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "A full finding and the affected object",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FullFindingAffected"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": ["Findings"],
+                "summary": "Update the details of an affected object",
+                "description": "Update the details of an affected object",
+                "operationId": "update_finding_affected",
+                "parameters": [
+                    {
+                        "name": "w_uuid",
+                        "in": "path",
+                        "description": "Workspace uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "f_uuid",
+                        "in": "path",
+                        "description": "Finding uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "a_uuid",
+                        "in": "path",
+                        "description": "The affected object's uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateFindingAffectedRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Affected object has been updated"
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": ["Findings"],
+                "summary": "Remove an affected object from a finding",
+                "description": "Remove an affected object from a finding",
+                "operationId": "delete_finding_affected",
+                "parameters": [
+                    {
+                        "name": "w_uuid",
+                        "in": "path",
+                        "description": "Workspace uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "f_uuid",
+                        "in": "path",
+                        "description": "Finding uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "a_uuid",
+                        "in": "path",
+                        "description": "The affected object's uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Affected object has been removed"
                     },
                     "400": {
                         "description": "Client error",
@@ -7782,6 +8390,38 @@
                     }
                 }
             },
+            "CreateFindingAffectedRequest": {
+                "type": "object",
+                "description": "The request to add a new object affected by a finding",
+                "required": ["uuid", "type"],
+                "properties": {
+                    "uuid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The object's uuid"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/AggregationType"
+                    },
+                    "details": {
+                        "type": "string",
+                        "description": "Notes about the affected provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user",
+                        "nullable": true
+                    },
+                    "screenshot": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "A screenshot\n\nThe file must have been uploaded through the image upload.",
+                        "nullable": true
+                    },
+                    "log_file": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "A log file",
+                        "nullable": true
+                    }
+                }
+            },
             "CreateFindingDefinitionRequest": {
                 "type": "object",
                 "description": "The request to create a new finding definition",
@@ -7818,6 +8458,38 @@
                     "references": {
                         "type": "string",
                         "description": "Any references to get more information about the definition of a finding.\n\nCan link to resources like Mitre's Attack or CME explanations, etc."
+                    }
+                }
+            },
+            "CreateFindingRequest": {
+                "type": "object",
+                "description": "The request to create a new finding",
+                "required": ["definition", "severity"],
+                "properties": {
+                    "definition": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Name of the new finding definition\n\nThis must be unique"
+                    },
+                    "severity": {
+                        "$ref": "#/components/schemas/FindingSeverity"
+                    },
+                    "details": {
+                        "type": "string",
+                        "description": "Notes about the finding provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user",
+                        "nullable": true
+                    },
+                    "screenshot": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "A screenshot\n\nThe file must have been uploaded through the image upload.",
+                        "nullable": true
+                    },
+                    "log_file": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "A log file",
+                        "nullable": true
                     }
                 }
             },
@@ -8450,6 +9122,47 @@
                 ],
                 "description": "The target of the editor\n\nUsed to specify the target for the editor, for example the\nspecific section in a [FindingDefinition]"
             },
+            "FindingAffectedObject": {
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "required": ["Domain"],
+                        "properties": {
+                            "Domain": {
+                                "$ref": "#/components/schemas/SimpleDomain"
+                            }
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "required": ["Host"],
+                        "properties": {
+                            "Host": {
+                                "$ref": "#/components/schemas/SimpleHost"
+                            }
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "required": ["Port"],
+                        "properties": {
+                            "Port": {
+                                "$ref": "#/components/schemas/SimplePort"
+                            }
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "required": ["Service"],
+                        "properties": {
+                            "Service": {
+                                "$ref": "#/components/schemas/SimpleService"
+                            }
+                        }
+                    }
+                ],
+                "description": "The object affected by a finding"
+            },
             "FindingSection": {
                 "type": "string",
                 "description": "The section that was edited",
@@ -8670,6 +9383,98 @@
                         "format": "int64",
                         "description": "The total number of items this page is a subset of",
                         "minimum": 0
+                    }
+                }
+            },
+            "FullFinding": {
+                "type": "object",
+                "description": "A full finding",
+                "required": ["uuid", "definition", "severity", "affected", "created_at"],
+                "properties": {
+                    "uuid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The uuid of the finding"
+                    },
+                    "definition": {
+                        "$ref": "#/components/schemas/SimpleFindingDefinition"
+                    },
+                    "severity": {
+                        "$ref": "#/components/schemas/FindingSeverity"
+                    },
+                    "affected": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SimpleFindingAffected"
+                        },
+                        "description": "List of all affected objects"
+                    },
+                    "user_details": {
+                        "type": "string",
+                        "description": "Notes about the finding provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user",
+                        "nullable": true
+                    },
+                    "tool_details": {
+                        "type": "string",
+                        "description": "Details of the finding that comes from the attack module\n\nThis field should only be read-only for the user",
+                        "nullable": true
+                    },
+                    "screenshot": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The uuid to download a screenshot with",
+                        "nullable": true
+                    },
+                    "log_file": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The uuid to download a log file with",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "The point in time this finding was created"
+                    }
+                }
+            },
+            "FullFindingAffected": {
+                "type": "object",
+                "description": "An affected object's details and the finding it is affected by",
+                "required": ["finding", "affected", "created_at"],
+                "properties": {
+                    "finding": {
+                        "$ref": "#/components/schemas/FullFinding"
+                    },
+                    "affected": {
+                        "$ref": "#/components/schemas/FindingAffectedObject"
+                    },
+                    "user_details": {
+                        "type": "string",
+                        "description": "Notes about the finding provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user",
+                        "nullable": true
+                    },
+                    "tool_details": {
+                        "type": "string",
+                        "description": "Details of the finding that comes from the attack module\n\nThis field should only be read-only for the user",
+                        "nullable": true
+                    },
+                    "screenshot": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The uuid to download a screenshot with",
+                        "nullable": true
+                    },
+                    "log_file": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The uuid to download a log file with",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "The point in time this object was attached to the finding"
                     }
                 }
             },
@@ -9705,6 +10510,20 @@
                             "$ref": "#/components/schemas/SimpleFindingDefinition"
                         },
                         "description": "The finding definitions"
+                    }
+                }
+            },
+            "ListFindings": {
+                "type": "object",
+                "description": "A list of simple findings",
+                "required": ["findings"],
+                "properties": {
+                    "findings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SimpleFinding"
+                        },
+                        "description": "The findings"
                     }
                 }
             },
@@ -11311,6 +12130,55 @@
                     }
                 }
             },
+            "SimpleFinding": {
+                "type": "object",
+                "description": "A simple finding",
+                "required": ["uuid", "definition", "name", "severity", "created_at"],
+                "properties": {
+                    "uuid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The uuid of the finding"
+                    },
+                    "definition": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The uuid of the finding definition"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the finding definition"
+                    },
+                    "severity": {
+                        "$ref": "#/components/schemas/FindingSeverity"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "The point in time this finding definition was created"
+                    }
+                }
+            },
+            "SimpleFindingAffected": {
+                "type": "object",
+                "description": "The uuid's for objects affected by findings",
+                "required": ["finding", "affected_type", "affected_uuid"],
+                "properties": {
+                    "finding": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The finding this affected belongs to"
+                    },
+                    "affected_type": {
+                        "$ref": "#/components/schemas/AggregationType"
+                    },
+                    "affected_uuid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The affected object's uuid"
+                    }
+                }
+            },
             "SimpleFindingDefinition": {
                 "type": "object",
                 "description": "The simple definition of a finding",
@@ -12096,6 +12964,66 @@
                             "format": "uuid"
                         },
                         "description": "Workspace tags that are linked to the domain",
+                        "nullable": true
+                    }
+                }
+            },
+            "UpdateFindingAffectedRequest": {
+                "type": "object",
+                "description": "The request to update an affected object's details",
+                "properties": {
+                    "details": {
+                        "type": "string",
+                        "description": "Notes about the affected provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user",
+                        "nullable": true
+                    },
+                    "screenshot": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "A screenshot\n\nThe file must have been uploaded through the image upload.",
+                        "nullable": true
+                    },
+                    "log_file": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "A log file",
+                        "nullable": true
+                    }
+                }
+            },
+            "UpdateFindingRequest": {
+                "type": "object",
+                "description": "The request to update an existing finding",
+                "properties": {
+                    "definition": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Name of the new finding definition\n\nThis must be unique",
+                        "nullable": true
+                    },
+                    "severity": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/FindingSeverity"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "details": {
+                        "type": "string",
+                        "description": "Notes about the finding provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user",
+                        "nullable": true
+                    },
+                    "screenshot": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "A screenshot\n\nThe file must have been uploaded through the image upload.",
+                        "nullable": true
+                    },
+                    "log_file": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "A log file",
                         "nullable": true
                     }
                 }

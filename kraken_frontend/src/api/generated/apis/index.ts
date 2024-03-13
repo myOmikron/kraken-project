@@ -7,6 +7,7 @@ export * from './AttacksApi';
 export * from './AuthenticationApi';
 export * from './DomainsApi';
 export * from './FilesApi';
+export * from './FindingsApi';
 export * from './GlobalTagsApi';
 export * from './HostsApi';
 export * from './KnowledgeBaseApi';

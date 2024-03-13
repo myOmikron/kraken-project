@@ -5,6 +5,7 @@ apis/AttacksApi.ts
 apis/AuthenticationApi.ts
 apis/DomainsApi.ts
 apis/FilesApi.ts
+apis/FindingsApi.ts
 apis/GlobalTagsApi.ts
 apis/HostsApi.ts
 apis/KnowledgeBaseApi.ts
@@ -37,7 +38,9 @@ models/Color.ts
 models/CreateApiKeyRequest.ts
 models/CreateAppRequest.ts
 models/CreateDomainRequest.ts
+models/CreateFindingAffectedRequest.ts
 models/CreateFindingDefinitionRequest.ts
+models/CreateFindingRequest.ts
 models/CreateGlobalTagRequest.ts
 models/CreateHostRequest.ts
 models/CreateLeechRequest.ts
@@ -73,6 +76,11 @@ models/EditorTargetOneOf2FindingAffected.ts
 models/EditorTargetOneOf3.ts
 models/EditorTargetOneOf3WorkspaceNotes.ts
 models/EditorTargetOneOfFindingDefinition.ts
+models/FindingAffectedObject.ts
+models/FindingAffectedObjectOneOf.ts
+models/FindingAffectedObjectOneOf1.ts
+models/FindingAffectedObjectOneOf2.ts
+models/FindingAffectedObjectOneOf3.ts
 models/FindingSection.ts
 models/FindingSeverity.ts
 models/FinishRegisterRequest.ts
@@ -83,6 +91,8 @@ models/FullDnsTxtScanResult.ts
 models/FullDomain.ts
 models/FullFile.ts
 models/FullFilesPage.ts
+models/FullFinding.ts
+models/FullFindingAffected.ts
 models/FullFindingDefinition.ts
 models/FullGlobalTag.ts
 models/FullHost.ts
@@ -119,6 +129,7 @@ models/LeechTlsConfig.ts
 models/ListApiKeys.ts
 models/ListAttacks.ts
 models/ListFindingDefinitions.ts
+models/ListFindings.ts
 models/ListFullUsers.ts
 models/ListGlobalTags.ts
 models/ListLeeches.ts
@@ -206,6 +217,8 @@ models/SimpleBruteforceSubdomainsResult.ts
 models/SimpleDnsResolutionResult.ts
 models/SimpleDnsTxtScanResult.ts
 models/SimpleDomain.ts
+models/SimpleFinding.ts
+models/SimpleFindingAffected.ts
 models/SimpleFindingDefinition.ts
 models/SimpleHost.ts
 models/SimpleHostAliveResult.ts
@@ -237,6 +250,8 @@ models/UdpServiceDetectionResultsPage.ts
 models/UpdateApiKeyRequest.ts
 models/UpdateAppRequest.ts
 models/UpdateDomainRequest.ts
+models/UpdateFindingAffectedRequest.ts
+models/UpdateFindingRequest.ts
 models/UpdateGlobalTag.ts
 models/UpdateHostRequest.ts
 models/UpdateLeechRequest.ts
