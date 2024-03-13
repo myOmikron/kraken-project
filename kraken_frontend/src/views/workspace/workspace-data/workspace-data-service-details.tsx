@@ -2,9 +2,8 @@ import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { Api } from "../../../api/api";
 import { FullAggregationSource, FullService, ServiceRelations, TagType } from "../../../api/generated";
+import SelectableText from "../../../components/selectable-text";
 import Textarea from "../../../components/textarea";
-import ArrowLeftIcon from "../../../svg/arrow-left";
-import ArrowRightIcon from "../../../svg/arrow-right";
 import { handleApiError } from "../../../utils/helper";
 import EditableTags from "../components/editable-tags";
 import { ServiceRelationsList } from "../components/relations-list";
@@ -107,6 +106,7 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
                             }}
                         />
                     </div>
+                    <SelectableText className="uuid">{uuid}</SelectableText>
                 </>
             );
         case "results":

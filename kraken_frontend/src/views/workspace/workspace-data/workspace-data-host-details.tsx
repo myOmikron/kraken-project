@@ -2,10 +2,9 @@ import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { Api } from "../../../api/api";
 import { FullAggregationSource, FullHost, HostRelations, TagType } from "../../../api/generated";
+import SelectableText from "../../../components/selectable-text";
 import Textarea from "../../../components/textarea";
 import "../../../styling/workspace-data-details.css";
-import ArrowLeftIcon from "../../../svg/arrow-left";
-import ArrowRightIcon from "../../../svg/arrow-right";
 import { handleApiError } from "../../../utils/helper";
 import EditableTags from "../components/editable-tags";
 import { HostRelationsList } from "../components/relations-list";
@@ -101,6 +100,7 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
                             }}
                         />
                     </div>
+                    <SelectableText className="uuid">{uuid}</SelectableText>
                 </>
             );
         case "results":

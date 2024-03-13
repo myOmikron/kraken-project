@@ -2,9 +2,8 @@ import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { Api } from "../../../api/api";
 import { FullAggregationSource, FullPort, PortRelations, TagType } from "../../../api/generated";
+import SelectableText from "../../../components/selectable-text";
 import Textarea from "../../../components/textarea";
-import ArrowLeftIcon from "../../../svg/arrow-left";
-import ArrowRightIcon from "../../../svg/arrow-right";
 import { handleApiError } from "../../../utils/helper";
 import EditableTags from "../components/editable-tags";
 import { PortRelationsList } from "../components/relations-list";
@@ -100,6 +99,7 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
                             }}
                         />
                     </div>
+                    <SelectableText className="uuid">{uuid}</SelectableText>
                 </>
             );
         case "results":
