@@ -114,7 +114,11 @@ export default function ContextMenu<E extends ElementType = "div">({
                         /* various shortcuts since we don't have many, people
                          * might come up and memorize with them in different
                          * ways, e.g. `[e]dit`, `[f]ilter`, `[c]ontext` */
-                        (e.key == "e" || e.key == "f" || e.key == "c" || e.key == "ContextMenu") && onContextMenu(e)
+                        !e.ctrlKey &&
+                        !e.altKey &&
+                        !e.shiftKey &&
+                        (e.key == "e" || e.key == "f" || e.key == "c" || e.key == "ContextMenu") &&
+                        onContextMenu(e)
                     }
                     onContextMenu={onContextMenu}
                     tabIndex={0}
