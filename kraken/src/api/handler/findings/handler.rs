@@ -103,6 +103,7 @@ pub async fn get_all_findings(
             Finding::F.uuid,
             Finding::F.definition.uuid,
             Finding::F.definition.name,
+            Finding::F.definition.cve,
             Finding::F.severity,
             Finding::F.created_at
         )
@@ -110,10 +111,11 @@ pub async fn get_all_findings(
     .condition(Finding::F.workspace.equals(workspace_uuid))
     .stream()
     .map_ok(
-        |(uuid, definition, name, severity, created_at)| SimpleFinding {
+        |(uuid, definition, name, cve, severity, created_at)| SimpleFinding {
             uuid,
             definition,
             name,
+            cve,
             severity,
             created_at,
         },

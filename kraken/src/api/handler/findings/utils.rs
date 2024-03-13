@@ -77,6 +77,7 @@ impl ListFindings {
                 FindingAffected::F.finding.uuid,
                 FindingAffected::F.finding.definition.uuid,
                 FindingAffected::F.finding.definition.name,
+                FindingAffected::F.finding.definition.cve,
                 FindingAffected::F.finding.severity,
                 FindingAffected::F.finding.created_at
             )
@@ -86,11 +87,12 @@ impl ListFindings {
             FindingAffected::F.workspace.equals(workspace)
         ])
         .stream()
-        .and_then(|(uuid, definition, name, severity, created_at)| {
+        .and_then(|(uuid, definition, name, cve, severity, created_at)| {
             std::future::ready(Ok(SimpleFinding {
                 uuid,
                 definition,
                 name,
+                cve,
                 severity,
                 created_at,
             }))

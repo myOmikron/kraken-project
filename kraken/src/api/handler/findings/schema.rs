@@ -78,6 +78,9 @@ pub struct SimpleFinding {
     /// The name of the finding definition
     pub name: String,
 
+    /// The CVE of the finding definition
+    pub cve: Option<String>,
+
     /// The severity of the finding
     pub severity: FindingSeverity,
 
