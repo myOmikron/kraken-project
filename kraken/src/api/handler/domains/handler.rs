@@ -43,6 +43,7 @@ use crate::api::handler::domains::schema::GetAllDomainsQuery;
 use crate::api::handler::domains::schema::PathDomain;
 use crate::api::handler::domains::schema::SimpleDomain;
 use crate::api::handler::domains::schema::UpdateDomainRequest;
+use crate::api::handler::findings::schema::ListFindings;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::AggregationType;
@@ -54,6 +55,7 @@ use crate::models::DomainDomainRelation;
 use crate::models::DomainGlobalTag;
 use crate::models::DomainHostRelation;
 use crate::models::DomainWorkspaceTag;
+use crate::models::FindingAffected;
 use crate::models::GlobalTag;
 use crate::models::Host;
 use crate::models::ManualDomain;
@@ -514,7 +516,7 @@ pub async fn get_domain_sources(
     Ok(Json(source))
 }
 
-/// Get a host's direct relations
+/// Get a domain's direct relations
 #[utoipa::path(
     tag = "Domains",
     context_path = "/api/v1",
@@ -605,4 +607,39 @@ pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<Doma
         direct_hosts,
         indirect_hosts,
     }))
+}
+
+/// Get a domain's findings
+#[utoipa::path(
+    tag = "Domains",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The domain's findings", body = ListFindings),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathDomain),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/domains/{d_uuid}/findings")]
+pub async fn get_domain_findings(
+    path: Path<PathDomain>,
+    SessionUser(u_uuid): SessionUser,
+) -> ApiResult<Json<ListFindings>> {
+    let PathDomain { w_uuid, d_uuid } = path.into_inner();
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, w_uuid, u_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    let findings = ListFindings::query_through_affected(
+        &mut tx,
+        w_uuid,
+        FindingAffected::F.domain.equals(d_uuid),
+    )
+    .await?;
+
+    tx.commit().await?;
+    Ok(Json(findings))
 }

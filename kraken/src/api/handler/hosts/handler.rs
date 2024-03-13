@@ -32,6 +32,7 @@ use crate::api::handler::common::schema::TagType;
 use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::common::utils::get_page_params;
 use crate::api::handler::domains::schema::SimpleDomain;
+use crate::api::handler::findings::schema::ListFindings;
 use crate::api::handler::hosts::schema::CreateHostRequest;
 use crate::api::handler::hosts::schema::FullHost;
 use crate::api::handler::hosts::schema::GetAllHostsQuery;
@@ -47,6 +48,7 @@ use crate::models::AggregationSource;
 use crate::models::AggregationTable;
 use crate::models::Domain;
 use crate::models::DomainHostRelation;
+use crate::models::FindingAffected;
 use crate::models::GlobalTag;
 use crate::models::Host;
 use crate::models::HostGlobalTag;
@@ -584,4 +586,39 @@ pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRela
         direct_domains,
         indirect_domains,
     }))
+}
+
+/// Get a host's findings
+#[utoipa::path(
+    tag = "Hosts",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The host's findings", body = ListFindings),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathHost),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/hosts/{h_uuid}/findings")]
+pub async fn get_host_findings(
+    path: Path<PathHost>,
+    SessionUser(u_uuid): SessionUser,
+) -> ApiResult<Json<ListFindings>> {
+    let PathHost { w_uuid, h_uuid } = path.into_inner();
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, w_uuid, u_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    let findings = ListFindings::query_through_affected(
+        &mut tx,
+        w_uuid,
+        FindingAffected::F.host.equals(h_uuid),
+    )
+    .await?;
+
+    tx.commit().await?;
+    Ok(Json(findings))
 }

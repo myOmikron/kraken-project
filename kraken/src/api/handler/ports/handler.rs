@@ -30,6 +30,7 @@ use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::common::schema::TagType;
 use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::common::utils::get_page_params;
+use crate::api::handler::findings::schema::ListFindings;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::CreatePortRequest;
 use crate::api::handler::ports::schema::FullPort;
@@ -43,6 +44,7 @@ use crate::chan::ws_manager::schema::AggregationType;
 use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::AggregationSource;
 use crate::models::AggregationTable;
+use crate::models::FindingAffected;
 use crate::models::GlobalTag;
 use crate::models::Host;
 use crate::models::ManualPort;
@@ -595,4 +597,39 @@ pub async fn get_port_relations(path: Path<PathPort>) -> ApiResult<Json<PortRela
         },
         services,
     }))
+}
+
+/// Get a port's findings
+#[utoipa::path(
+    tag = "Ports",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The port's findings", body = ListFindings),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathPort),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/ports/{p_uuid}/findings")]
+pub async fn get_port_findings(
+    path: Path<PathPort>,
+    SessionUser(u_uuid): SessionUser,
+) -> ApiResult<Json<ListFindings>> {
+    let PathPort { w_uuid, p_uuid } = path.into_inner();
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, w_uuid, u_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    let findings = ListFindings::query_through_affected(
+        &mut tx,
+        w_uuid,
+        FindingAffected::F.port.equals(p_uuid),
+    )
+    .await?;
+
+    tx.commit().await?;
+    Ok(Json(findings))
 }
