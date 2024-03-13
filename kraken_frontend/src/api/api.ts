@@ -1,10 +1,14 @@
-import { login, test, registerKey, authenticate, logout } from "./auth";
-import { ApiError, parseError, StatusCode } from "./error";
+import { Err, Ok, Result } from "../utils/result";
+import { authenticate, login, logout, registerKey, test } from "./auth";
+import { ApiError, StatusCode, parseError } from "./error";
 import {
+    AdminWorkspacesApi,
     ApiKeysApi,
-    BruteforceSubdomainsRequest,
+    AttacksApi,
+    Configuration,
     CreateAppRequest,
     CreateDomainRequest,
+    CreateFindingDefinitionRequest,
     CreateGlobalTagRequest,
     CreateHostRequest,
     CreateLeechRequest,
@@ -14,21 +18,16 @@ import {
     CreateWordlistRequest,
     CreateWorkspaceRequest,
     CreateWorkspaceTagRequest,
-    DnsResolutionRequest,
-    DnsTxtScanRequest,
     DomainsApi,
     GlobalTagsApi,
-    HostsAliveRequest,
     HostsApi,
+    KnowledgeBaseApi,
+    LeechManagementApi,
     OAuthApi,
     OAuthApplicationApi,
     PortsApi,
-    Query,
-    QueryCertificateTransparencyRequest,
     RequiredError,
     ResponseError,
-    ServiceDetectionRequest,
-    UdpServiceDetectionRequest,
     ServicesApi,
     SettingsManagementApi,
     UpdateAppRequest,
@@ -43,24 +42,14 @@ import {
     UpdateWordlistRequest,
     UpdateWorkspaceRequest,
     UpdateWorkspaceTag,
+    UserAdminManagementApi,
+    UserManagementApi,
     WordlistApi,
     WordlistManagementApi,
     WorkspaceInvitationsApi,
     WorkspaceTagsApi,
-    KnowledgeBaseApi,
-    CreateFindingDefinitionRequest,
-    OsDetectionRequest,
-} from "./generated";
-import { Configuration } from "./generated";
-import {
-    AdminWorkspacesApi,
-    AttacksApi,
-    LeechManagementApi,
-    UserAdminManagementApi,
-    UserManagementApi,
     WorkspacesApi,
 } from "./generated";
-import { Err, Ok, Result } from "../utils/result";
 
 /** Database id i.e. and u32 */
 export type ID = number;
@@ -213,6 +202,8 @@ export const Api = {
                 handleError(hosts.getHostSources({ wUuid: workspaceUuid, hUuid: hostUuid })),
             relations: (workspaceUuid: UUID, hostUuid: UUID) =>
                 handleError(hosts.getHostRelations({ wUuid: workspaceUuid, hUuid: hostUuid })),
+            findings: (workspaceUuid: UUID, hostUuid: UUID) =>
+                handleError(hosts.getHostFindings({ wUuid: workspaceUuid, hUuid: hostUuid })),
         },
         ports: {
             all: (
@@ -234,6 +225,8 @@ export const Api = {
                 handleError(ports.getPortSources({ wUuid: workspaceUuid, pUuid: portUuid })),
             relations: (workspaceUuid: UUID, portUuid: UUID) =>
                 handleError(ports.getPortRelations({ wUuid: workspaceUuid, pUuid: portUuid })),
+            findings: (workspaceUuid: UUID, portUuid: UUID) =>
+                handleError(ports.getPortFindings({ wUuid: workspaceUuid, pUuid: portUuid })),
         },
         domains: {
             all: (
@@ -257,6 +250,8 @@ export const Api = {
                 handleError(domains.getDomainSources({ wUuid: workspaceUuid, dUuid: domainUuid })),
             relations: (workspaceUuid: UUID, domainUuid: UUID) =>
                 handleError(domains.getDomainRelations({ wUuid: workspaceUuid, dUuid: domainUuid })),
+            findings: (workspaceUuid: UUID, domainUuid: UUID) =>
+                handleError(domains.getDomainFindings({ wUuid: workspaceUuid, dUuid: domainUuid })),
         },
         services: {
             all: (
@@ -280,6 +275,8 @@ export const Api = {
                 handleError(services.getServiceSources({ wUuid: workspaceUuid, sUuid: serviceUuid })),
             relations: (workspaceUuid: UUID, serviceUuid: UUID) =>
                 handleError(services.getServiceRelations({ wUuid: workspaceUuid, sUuid: serviceUuid })),
+            findings: (workspaceUuid: UUID, serviceUuid: UUID) =>
+                handleError(services.getServiceFindings({ wUuid: workspaceUuid, sUuid: serviceUuid })),
         },
         tags: {
             all: (workspaceUuid: UUID) => handleError(workspaceTags.getAllWorkspaceTags({ uuid: workspaceUuid })),

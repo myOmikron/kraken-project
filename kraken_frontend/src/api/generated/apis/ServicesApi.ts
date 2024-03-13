@@ -20,6 +20,7 @@ import type {
   FullAggregationSource,
   FullService,
   GetAllServicesQuery,
+  ListFindings,
   ServiceRelations,
   ServiceResultsPage,
   UpdateServiceRequest,
@@ -36,6 +37,8 @@ import {
     FullServiceToJSON,
     GetAllServicesQueryFromJSON,
     GetAllServicesQueryToJSON,
+    ListFindingsFromJSON,
+    ListFindingsToJSON,
     ServiceRelationsFromJSON,
     ServiceRelationsToJSON,
     ServiceResultsPageFromJSON,
@@ -62,6 +65,11 @@ export interface GetAllServicesRequest {
 }
 
 export interface GetServiceRequest {
+    wUuid: string;
+    sUuid: string;
+}
+
+export interface GetServiceFindingsRequest {
     wUuid: string;
     sUuid: string;
 }
@@ -233,6 +241,42 @@ export class ServicesApi extends runtime.BaseAPI {
      */
     async getService(requestParameters: GetServiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullService> {
         const response = await this.getServiceRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get a service\'s findings
+     * Get a service\'s findings
+     */
+    async getServiceFindingsRaw(requestParameters: GetServiceFindingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListFindings>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling getServiceFindings.');
+        }
+
+        if (requestParameters.sUuid === null || requestParameters.sUuid === undefined) {
+            throw new runtime.RequiredError('sUuid','Required parameter requestParameters.sUuid was null or undefined when calling getServiceFindings.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/services/{s_uuid}/findings`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"s_uuid"}}`, encodeURIComponent(String(requestParameters.sUuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListFindingsFromJSON(jsonValue));
+    }
+
+    /**
+     * Get a service\'s findings
+     * Get a service\'s findings
+     */
+    async getServiceFindings(requestParameters: GetServiceFindingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListFindings> {
+        const response = await this.getServiceFindingsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

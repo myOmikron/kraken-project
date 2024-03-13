@@ -45,6 +45,12 @@ export interface SimpleFinding {
      */
     name: string;
     /**
+     * The CVE of the finding definition
+     * @type {string}
+     * @memberof SimpleFinding
+     */
+    cve?: string | null;
+    /**
      * 
      * @type {FindingSeverity}
      * @memberof SimpleFinding
@@ -85,6 +91,7 @@ export function SimpleFindingFromJSONTyped(json: any, ignoreDiscriminator: boole
         'uuid': json['uuid'],
         'definition': json['definition'],
         'name': json['name'],
+        'cve': !exists(json, 'cve') ? undefined : json['cve'],
         'severity': FindingSeverityFromJSON(json['severity']),
         'createdAt': (new Date(json['created_at'])),
     };
@@ -102,6 +109,7 @@ export function SimpleFindingToJSON(value?: SimpleFinding | null): any {
         'uuid': value.uuid,
         'definition': value.definition,
         'name': value.name,
+        'cve': value.cve,
         'severity': FindingSeverityToJSON(value.severity),
         'created_at': (value.createdAt.toISOString()),
     };

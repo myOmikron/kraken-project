@@ -22,6 +22,7 @@ import type {
   FullAggregationSource,
   FullDomain,
   GetAllDomainsQuery,
+  ListFindings,
   UpdateDomainRequest,
   UuidResponse,
 } from '../models';
@@ -40,6 +41,8 @@ import {
     FullDomainToJSON,
     GetAllDomainsQueryFromJSON,
     GetAllDomainsQueryToJSON,
+    ListFindingsFromJSON,
+    ListFindingsToJSON,
     UpdateDomainRequestFromJSON,
     UpdateDomainRequestToJSON,
     UuidResponseFromJSON,
@@ -62,6 +65,11 @@ export interface GetAllDomainsRequest {
 }
 
 export interface GetDomainRequest {
+    wUuid: string;
+    dUuid: string;
+}
+
+export interface GetDomainFindingsRequest {
     wUuid: string;
     dUuid: string;
 }
@@ -237,8 +245,44 @@ export class DomainsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get a host\'s direct relations
-     * Get a host\'s direct relations
+     * Get a domain\'s findings
+     * Get a domain\'s findings
+     */
+    async getDomainFindingsRaw(requestParameters: GetDomainFindingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListFindings>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling getDomainFindings.');
+        }
+
+        if (requestParameters.dUuid === null || requestParameters.dUuid === undefined) {
+            throw new runtime.RequiredError('dUuid','Required parameter requestParameters.dUuid was null or undefined when calling getDomainFindings.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/domains/{d_uuid}/findings`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"d_uuid"}}`, encodeURIComponent(String(requestParameters.dUuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListFindingsFromJSON(jsonValue));
+    }
+
+    /**
+     * Get a domain\'s findings
+     * Get a domain\'s findings
+     */
+    async getDomainFindings(requestParameters: GetDomainFindingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListFindings> {
+        const response = await this.getDomainFindingsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get a domain\'s direct relations
+     * Get a domain\'s direct relations
      */
     async getDomainRelationsRaw(requestParameters: GetDomainRelationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DomainRelations>> {
         if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
@@ -264,8 +308,8 @@ export class DomainsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get a host\'s direct relations
-     * Get a host\'s direct relations
+     * Get a domain\'s direct relations
+     * Get a domain\'s direct relations
      */
     async getDomainRelations(requestParameters: GetDomainRelationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DomainRelations> {
         const response = await this.getDomainRelationsRaw(requestParameters, initOverrides);

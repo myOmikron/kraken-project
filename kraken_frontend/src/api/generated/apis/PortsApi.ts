@@ -20,6 +20,7 @@ import type {
   FullAggregationSource,
   FullPort,
   GetAllPortsQuery,
+  ListFindings,
   PortRelations,
   PortResultsPage,
   UpdatePortRequest,
@@ -36,6 +37,8 @@ import {
     FullPortToJSON,
     GetAllPortsQueryFromJSON,
     GetAllPortsQueryToJSON,
+    ListFindingsFromJSON,
+    ListFindingsToJSON,
     PortRelationsFromJSON,
     PortRelationsToJSON,
     PortResultsPageFromJSON,
@@ -62,6 +65,11 @@ export interface GetAllPortsRequest {
 }
 
 export interface GetPortRequest {
+    wUuid: string;
+    pUuid: string;
+}
+
+export interface GetPortFindingsRequest {
     wUuid: string;
     pUuid: string;
 }
@@ -233,6 +241,42 @@ export class PortsApi extends runtime.BaseAPI {
      */
     async getPort(requestParameters: GetPortRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullPort> {
         const response = await this.getPortRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get a port\'s findings
+     * Get a port\'s findings
+     */
+    async getPortFindingsRaw(requestParameters: GetPortFindingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListFindings>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling getPortFindings.');
+        }
+
+        if (requestParameters.pUuid === null || requestParameters.pUuid === undefined) {
+            throw new runtime.RequiredError('pUuid','Required parameter requestParameters.pUuid was null or undefined when calling getPortFindings.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/ports/{p_uuid}/findings`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"p_uuid"}}`, encodeURIComponent(String(requestParameters.pUuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListFindingsFromJSON(jsonValue));
+    }
+
+    /**
+     * Get a port\'s findings
+     * Get a port\'s findings
+     */
+    async getPortFindings(requestParameters: GetPortFindingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListFindings> {
+        const response = await this.getPortFindingsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
