@@ -100,6 +100,12 @@
     resize: vertical;
 }
 
+.workspace-data-details .uuid {
+    text-align: center;
+    opacity: 0.6;
+    font-size: 0.9em;
+}
+
 .workspace-data-create-form {
     display: grid;
     grid-template-columns: 1fr 2fr;

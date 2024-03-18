@@ -22,6 +22,7 @@ import type {
   GetAllHostsQuery,
   HostRelations,
   HostResultsPage,
+  ListFindings,
   UpdateHostRequest,
   UuidResponse,
 } from '../models';
@@ -40,6 +41,8 @@ import {
     HostRelationsToJSON,
     HostResultsPageFromJSON,
     HostResultsPageToJSON,
+    ListFindingsFromJSON,
+    ListFindingsToJSON,
     UpdateHostRequestFromJSON,
     UpdateHostRequestToJSON,
     UuidResponseFromJSON,
@@ -62,6 +65,11 @@ export interface GetAllHostsRequest {
 }
 
 export interface GetHostRequest {
+    wUuid: string;
+    hUuid: string;
+}
+
+export interface GetHostFindingsRequest {
     wUuid: string;
     hUuid: string;
 }
@@ -233,6 +241,42 @@ export class HostsApi extends runtime.BaseAPI {
      */
     async getHost(requestParameters: GetHostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullHost> {
         const response = await this.getHostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get a host\'s findings
+     * Get a host\'s findings
+     */
+    async getHostFindingsRaw(requestParameters: GetHostFindingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListFindings>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling getHostFindings.');
+        }
+
+        if (requestParameters.hUuid === null || requestParameters.hUuid === undefined) {
+            throw new runtime.RequiredError('hUuid','Required parameter requestParameters.hUuid was null or undefined when calling getHostFindings.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{w_uuid}/hosts/{h_uuid}/findings`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"h_uuid"}}`, encodeURIComponent(String(requestParameters.hUuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListFindingsFromJSON(jsonValue));
+    }
+
+    /**
+     * Get a host\'s findings
+     * Get a host\'s findings
+     */
+    async getHostFindings(requestParameters: GetHostFindingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListFindings> {
+        const response = await this.getHostFindingsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

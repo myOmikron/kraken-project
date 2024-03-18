@@ -6690,11 +6690,78 @@
                 ]
             }
         },
+        "/api/v1/workspaces/{w_uuid}/domains/{d_uuid}/findings": {
+            "get": {
+                "tags": ["Domains"],
+                "summary": "Get a domain's findings",
+                "description": "Get a domain's findings",
+                "operationId": "get_domain_findings",
+                "parameters": [
+                    {
+                        "name": "w_uuid",
+                        "in": "path",
+                        "description": "The workspace's uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "d_uuid",
+                        "in": "path",
+                        "description": "The domain's uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The domain's findings",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListFindings"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
         "/api/v1/workspaces/{w_uuid}/domains/{d_uuid}/relations": {
             "get": {
                 "tags": ["Domains"],
-                "summary": "Get a host's direct relations",
-                "description": "Get a host's direct relations",
+                "summary": "Get a domain's direct relations",
+                "description": "Get a domain's direct relations",
                 "operationId": "get_domain_relations",
                 "parameters": [
                     {
@@ -6988,6 +7055,73 @@
                 "responses": {
                     "200": {
                         "description": "Host was deleted"
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/workspaces/{w_uuid}/hosts/{h_uuid}/findings": {
+            "get": {
+                "tags": ["Hosts"],
+                "summary": "Get a host's findings",
+                "description": "Get a host's findings",
+                "operationId": "get_host_findings",
+                "parameters": [
+                    {
+                        "name": "w_uuid",
+                        "in": "path",
+                        "description": "Workspace uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "h_uuid",
+                        "in": "path",
+                        "description": "Host uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The host's findings",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListFindings"
+                                }
+                            }
+                        }
                     },
                     "400": {
                         "description": "Client error",
@@ -7375,6 +7509,73 @@
                 "responses": {
                     "200": {
                         "description": "Port was deleted"
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/workspaces/{w_uuid}/ports/{p_uuid}/findings": {
+            "get": {
+                "tags": ["Ports"],
+                "summary": "Get a port's findings",
+                "description": "Get a port's findings",
+                "operationId": "get_port_findings",
+                "parameters": [
+                    {
+                        "name": "w_uuid",
+                        "in": "path",
+                        "description": "The workspace's uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "p_uuid",
+                        "in": "path",
+                        "description": "The port's uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The port's findings",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListFindings"
+                                }
+                            }
+                        }
                     },
                     "400": {
                         "description": "Client error",
@@ -7793,6 +7994,73 @@
                 "responses": {
                     "200": {
                         "description": "Service was deleted"
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/workspaces/{w_uuid}/services/{s_uuid}/findings": {
+            "get": {
+                "tags": ["Services"],
+                "summary": "Get a service's findings",
+                "description": "Get a service's findings",
+                "operationId": "get_service_findings",
+                "parameters": [
+                    {
+                        "name": "w_uuid",
+                        "in": "path",
+                        "description": "The workspace's uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "s_uuid",
+                        "in": "path",
+                        "description": "The service's uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The service's findings",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListFindings"
+                                }
+                            }
+                        }
                     },
                     "400": {
                         "description": "Client error",
@@ -12148,6 +12416,11 @@
                     "name": {
                         "type": "string",
                         "description": "The name of the finding definition"
+                    },
+                    "cve": {
+                        "type": "string",
+                        "description": "The CVE of the finding definition",
+                        "nullable": true
                     },
                     "severity": {
                         "$ref": "#/components/schemas/FindingSeverity"

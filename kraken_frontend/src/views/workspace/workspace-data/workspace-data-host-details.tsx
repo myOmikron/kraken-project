@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { Api } from "../../../api/api";
-import { FullAggregationSource, FullHost, HostRelations, TagType } from "../../../api/generated";
+import { FullAggregationSource, FullHost, HostRelations, ListFindings, TagType } from "../../../api/generated";
+import SelectableText from "../../../components/selectable-text";
 import Textarea from "../../../components/textarea";
 import "../../../styling/workspace-data-details.css";
-import ArrowLeftIcon from "../../../svg/arrow-left";
-import ArrowRightIcon from "../../../svg/arrow-right";
 import { handleApiError } from "../../../utils/helper";
 import EditableTags from "../components/editable-tags";
 import { HostRelationsList } from "../components/relations-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import { CertaintyIcon } from "../workspace-data";
+import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 
 export type WorkspaceDataHostDetailsProps = {
@@ -29,9 +29,11 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
     const [page, setPage] = useState(0);
     const [host, setHost] = React.useState<FullHost | null>(null);
     const [relations, setRelations] = React.useState<HostRelations | null>(null);
+    const [findings, setFindings] = React.useState<ListFindings | null>(null);
     React.useEffect(() => {
         Api.workspaces.hosts.get(workspace, uuid).then(handleApiError(setHost));
         Api.workspaces.hosts.relations(workspace, uuid).then(handleApiError(setRelations));
+        Api.workspaces.hosts.findings(workspace, uuid).then(handleApiError(setFindings));
         Api.workspaces.hosts.sources(workspace, uuid).then(
             handleApiError((x) => {
                 setAttacks(x);
@@ -101,6 +103,7 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
                             }}
                         />
                     </div>
+                    <SelectableText className="uuid">{uuid}</SelectableText>
                 </>
             );
         case "results":
@@ -118,14 +121,7 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
         case "findings":
             return (
                 <div className="workspace-data-details-overflow">
-                    <div className="workspace-data-details-relations-container">
-                        <div className="workspace-data-details-relations-header workspace-data-details-findings">
-                            <div className="workspace-data-details-relations-heading">Severity</div>
-                            <div className="workspace-data-details-relations-heading">CVE</div>
-                            <div className="workspace-data-details-relations-heading">Name</div>
-                        </div>
-                        <div className="workspace-data-details-relations-body"></div>
-                    </div>
+                    <WorkspaceDataDetailsFindings findings={findings} />
                 </div>
             );
     }
