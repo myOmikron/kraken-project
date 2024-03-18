@@ -138,8 +138,8 @@ impl PushAttackService for Results {
             push_attack_request::Response::UdpServiceDetection(repeated) => {
                 attack.handle_vec_response(repeated.responses).await
             }
-            push_attack_request::Response::OsDetection(response) => {
-                attack.handle_response(response).await
+            push_attack_request::Response::OsDetection(repeated) => {
+                attack.handle_vec_response(repeated.responses).await
             }
         };
 

@@ -222,9 +222,9 @@ pub struct OsDetectionRequest {
     /// Leave empty to use a random leech
     pub leech_uuid: Option<Uuid>,
 
-    /// The ip address of the host to scan
-    #[schema(value_type = String, example = "10.13.37.1")]
-    pub address: IpAddr,
+    /// The ip addresses / networks or domains to scan
+    #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.0/24", "google.com"]))]
+    pub targets: Vec<DomainOrNetwork>,
 
     /// set to skip open port detection and use this port for TCP fingerprinting
     pub fingerprint_port: Option<u32>,
@@ -249,6 +249,10 @@ pub struct OsDetectionRequest {
 
     /// The workspace to execute the attack in
     pub workspace_uuid: Uuid,
+
+    /// The concurrent task limit
+    #[schema(example = 5000)]
+    pub concurrent_limit: u32,
 }
 
 /// Request to resolve domains

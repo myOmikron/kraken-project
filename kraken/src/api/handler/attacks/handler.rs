@@ -180,7 +180,7 @@ pub async fn os_detection(
 ) -> ApiResult<HttpResponse> {
     let OsDetectionRequest {
         leech_uuid,
-        address,
+        targets,
         fingerprint_port,
         ssh_port,
         fingerprint_timeout,
@@ -188,6 +188,7 @@ pub async fn os_detection(
         ssh_timeout,
         port_ack_timeout,
         port_parallel_syns,
+        concurrent_limit,
         workspace_uuid,
     } = req.into_inner();
 
@@ -202,7 +203,7 @@ pub async fn os_detection(
         user_uuid,
         leech,
         OsDetectionParams {
-            target: address,
+            targets,
             fingerprint_port,
             ssh_port,
             fingerprint_timeout,
@@ -210,6 +211,7 @@ pub async fn os_detection(
             ssh_timeout,
             port_ack_timeout,
             port_parallel_syns,
+            concurrent_limit,
         },
     )
     .await?;

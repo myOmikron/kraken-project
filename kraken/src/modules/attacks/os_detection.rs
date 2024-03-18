@@ -2,7 +2,6 @@ use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
 use kraken_proto::shared;
-use kraken_proto::shared::Address;
 use kraken_proto::shared::OperatingSystem;
 use kraken_proto::OsDetectionRequest;
 use kraken_proto::OsDetectionResponse;
@@ -10,6 +9,7 @@ use rorm::insert;
 use rorm::prelude::ForeignModelByField;
 use uuid::Uuid;
 
+use crate::api::handler::attacks::schema::DomainOrNetwork;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
@@ -30,21 +30,25 @@ impl AttackContext {
         mut leech: LeechClient,
         params: OsDetectionParams,
     ) -> Result<(), AttackError> {
-        self.handle_response(
-            leech
-                .os_detection(OsDetectionRequest {
-                    attack_uuid: self.attack_uuid.to_string(),
-                    address: Some(Address::from(params.target)),
-                    fingerprint_port: params.fingerprint_port,
-                    ssh_port: params.ssh_port,
-                    fingerprint_timeout: params.fingerprint_timeout,
-                    ssh_connect_timeout: params.ssh_connect_timeout,
-                    ssh_timeout: params.ssh_timeout,
-                    port_ack_timeout: params.port_ack_timeout,
-                    port_parallel_syns: params.port_parallel_syns,
-                })
-                .await?
-                .into_inner(),
+        let targets =
+            DomainOrNetwork::resolve(self.workspace.uuid, self.user.uuid, &leech, &params.targets)
+                .await?;
+        self.handle_streamed_response(
+            leech.os_detection(OsDetectionRequest {
+                targets: targets
+                    .into_iter()
+                    .map(shared::NetOrAddress::from)
+                    .collect(),
+                attack_uuid: self.attack_uuid.to_string(),
+                fingerprint_port: params.fingerprint_port,
+                ssh_port: params.ssh_port,
+                fingerprint_timeout: params.fingerprint_timeout,
+                ssh_connect_timeout: params.ssh_connect_timeout,
+                ssh_timeout: params.ssh_timeout,
+                port_ack_timeout: params.port_ack_timeout,
+                port_parallel_syns: params.port_parallel_syns,
+                concurrent_limit: params.concurrent_limit,
+            }),
         )
         .await
     }

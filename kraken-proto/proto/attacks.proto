@@ -244,8 +244,8 @@ message DnsTxtScanResponse {
 message OsDetectionRequest {
   // A unique id that identifier the attack
   string attack_uuid = 1;
-  // the host address to scan
-  attacks.shared.Address address = 2;
+  // The ip addresses / networks to scan
+  repeated attacks.shared.NetOrAddress targets = 2;
   // set to skip open port detection and use this port for TCP fingerprinting
   optional uint32 fingerprint_port = 3;
   // set to perform OS detection through SSH header
@@ -260,6 +260,10 @@ message OsDetectionRequest {
   uint64 port_ack_timeout = 8;
   // If fingerprint_port is not set, maximum parallel TCP SYN requests
   uint32 port_parallel_syns = 9;
+  // Maximum of concurrent host scans that should be spawned
+  //
+  // 0 means, that there should be no limit.
+  uint32 concurrent_limit = 10;
 }
 
 // OS detection response
@@ -284,7 +288,7 @@ service ReqAttackService {
   rpc HostsAliveCheck(HostsAliveRequest) returns (stream HostsAliveResponse);
   rpc DnsResolution(DnsResolutionRequest) returns (stream DnsResolutionResponse);
   rpc DnsTxtScan(DnsTxtScanRequest) returns (stream DnsTxtScanResponse);
-  rpc OsDetection(OsDetectionRequest) returns (OsDetectionResponse);
+  rpc OsDetection(OsDetectionRequest) returns (stream OsDetectionResponse);
 }
 
 /*
@@ -316,7 +320,7 @@ message PushAttackRequest {
     // Response streamed by a dns txt scan attack
     RepeatedDnsTxtScanResponse dns_txt_scan = 10;
     // Response to a operating system detection request
-    OsDetectionResponse os_detection = 11;
+    RepeatedOsDetectionResponse os_detection = 11;
   }
 }
 
@@ -349,6 +353,11 @@ message RepeatedUdpServiceDetectionResponse {
 message RepeatedDnsTxtScanResponse {
   // repeated DnsTxtScanResponse
   repeated DnsTxtScanResponse responses = 1;
+}
+// Thin wrapper to have a `repeated OsDetectionResponse` in a `oneof`
+message RepeatedOsDetectionResponse {
+  // repeated OsDetectionResponse
+  repeated OsDetectionResponse responses = 1;
 }
 
 // Response to a manually pushed attack
