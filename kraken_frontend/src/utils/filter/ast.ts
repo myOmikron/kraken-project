@@ -1,6 +1,15 @@
 import { OsType, PortProtocol } from "../../api/generated";
 import { Cursor } from "./cursor";
-import { parseDate, parseOsType, parsePort, parsePortProtocol, parseString, wrapMaybeRange, wrapRange } from "./parser";
+import {
+    parseDate,
+    parseOsType,
+    parsePort,
+    parsePortProtocol,
+    parseServiceTransport,
+    parseString,
+    wrapMaybeRange,
+    wrapRange,
+} from "./parser";
 
 export type ASTField = {
     [key: string]: {
@@ -314,6 +323,11 @@ export const ASTFields = {
             columns: ["services", "service"],
             parse: parseString,
         },
+        transport: {
+            label: "Transport Type",
+            columns: ["transports", "transport"],
+            parse: parseServiceTransport,
+        },
     },
 } satisfies { [ast: string]: ASTField };
 
@@ -352,7 +366,7 @@ type FieldTypeValue<key, T> = key extends "tags" | `${any}Tags`
           : T extends number
             ? "number" | "port"
             : T extends string
-              ? "string" | "domain" | "host" | "service"
+              ? "string" | "domain" | "host" | "service" | "transport"
               : T extends Date
                 ? "date"
                 : never;
@@ -420,6 +434,7 @@ export const ASTFieldTypes = {
         portsCreatedAt: "mayberange.date",
         protocols: "protocol",
         services: "service",
+        transport: "transport",
     },
 } satisfies { [K in keyof typeof ASTFields]: FieldTypes<ASTType<(typeof ASTFields)[K]>> };
 

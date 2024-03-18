@@ -9,6 +9,7 @@ use crate::modules::filter::parser::cursor::Cursor;
 use crate::modules::filter::MaybeRange;
 use crate::modules::filter::ParseError;
 use crate::modules::filter::Range;
+use crate::modules::filter::ServiceTransport;
 
 /// Trait alias for `Fn(&mut Cursor) -> Result<T, ParseError>` and `Copy`
 pub trait ValueParser<T>: Fn(&mut Cursor) -> Result<T, ParseError> + Copy {}
@@ -45,6 +46,21 @@ pub fn parse_port_protocol(tokens: &mut Cursor) -> Result<PortProtocol, ParseErr
     } else {
         Err(ParseError::ParseValue(
             format!("Unknown port protocol: {string}").into(),
+        ))
+    }
+}
+
+/// Parse a single [`ServiceTransport`]
+pub fn parse_service_transport(tokens: &mut Cursor) -> Result<ServiceTransport, ParseError> {
+    let string = tokens.next_value()?;
+    // don't forget to update docs/user/filter.md and frontend if you extend this!
+    if string.eq_ignore_ascii_case("raw") {
+        Ok(ServiceTransport::Raw)
+    } else if string.eq_ignore_ascii_case("tls") {
+        Ok(ServiceTransport::Tls)
+    } else {
+        Err(ParseError::ParseValue(
+            format!("Unknown service transport: {string}").into(),
         ))
     }
 }

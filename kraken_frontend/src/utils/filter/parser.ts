@@ -156,6 +156,19 @@ export function parsePortProtocol(tokens: Cursor): Expr.Value<PortProtocol> {
     }
 }
 
+/** Parse a single service transport */
+export function parseServiceTransport(tokens: Cursor): Expr.Value<"Raw" | "TLS"> {
+    const value = tokens.nextValue();
+    switch (value.toLowerCase()) {
+        case "raw":
+            return "Raw";
+        case "tls":
+            return "TLS";
+        default:
+            throw new ParserError({ type: "parseValue", msg: `Unknown service transport: ${value}` });
+    }
+}
+
 /** Parse a single {@link OsType} */
 export function parseOsType(tokens: Cursor): Expr.Value<OsType> {
     const value = tokens.nextValue();

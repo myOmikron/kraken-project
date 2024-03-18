@@ -186,4 +186,14 @@ impl ServiceProtocols {
         }
         result
     }
+
+    /// The bits set for when the transport protocol is `Raw`.
+    pub const fn bitset_raw() -> i16 {
+        return 1i16 << RAW;
+    }
+
+    /// The bits set for when the transport protocol is `TLS`.
+    pub const fn bitset_tls() -> i16 {
+        return 1i16 << TLS_TCP;
+    }
 }
