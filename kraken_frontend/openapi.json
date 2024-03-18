@@ -13087,7 +13087,7 @@
                 "type": "object",
                 "description": "The request to start a service detection",
                 "required": [
-                    "address",
+                    "targets",
                     "retry_interval",
                     "max_retries",
                     "timeout",
@@ -13101,10 +13101,13 @@
                         "description": "The leech to use\n\nLeave empty to use a random leech",
                         "nullable": true
                     },
-                    "address": {
-                        "type": "string",
-                        "description": "The ip address the service listens on",
-                        "example": "10.13.37.1"
+                    "targets": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "The ip addresses / networks or domains to scan",
+                        "example": ["10.13.37.1", "10.13.37.0/24", "google.com"]
                     },
                     "ports": {
                         "type": "array",

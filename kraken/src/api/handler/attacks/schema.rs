@@ -180,9 +180,9 @@ pub struct UdpServiceDetectionRequest {
     /// Leave empty to use a random leech
     pub leech_uuid: Option<Uuid>,
 
-    /// The ip address the service listens on
-    #[schema(value_type = String, example = "10.13.37.1")]
-    pub address: IpAddr,
+    /// The ip addresses / networks or domains to scan
+    #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.0/24", "google.com"]))]
+    pub targets: Vec<DomainOrNetwork>,
 
     /// List of single ports and port ranges
     ///

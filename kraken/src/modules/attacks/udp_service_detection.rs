@@ -9,6 +9,7 @@ use rorm::insert;
 use rorm::prelude::ForeignModelByField;
 use uuid::Uuid;
 
+use crate::api::handler::attacks::schema::DomainOrNetwork;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
@@ -34,9 +35,15 @@ impl AttackContext {
         mut leech: LeechClient,
         params: UdpServiceDetectionParams,
     ) -> Result<(), AttackError> {
+        let targets =
+            DomainOrNetwork::resolve(self.workspace.uuid, self.user.uuid, &leech, &params.targets)
+                .await?;
         let request = UdpServiceDetectionRequest {
             attack_uuid: self.attack_uuid.to_string(),
-            address: Some(shared::Address::from(params.target)),
+            targets: targets
+                .into_iter()
+                .map(shared::NetOrAddress::from)
+                .collect(),
             ports: params.ports.into_iter().map(PortOrRange::from).collect(),
             timeout: params.timeout,
             concurrent_limit: params.concurrent_limit,

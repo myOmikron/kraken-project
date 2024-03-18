@@ -35,11 +35,11 @@ export interface UdpServiceDetectionRequest {
      */
     leechUuid?: string | null;
     /**
-     * The ip address the service listens on
-     * @type {string}
+     * The ip addresses / networks or domains to scan
+     * @type {Array<string>}
      * @memberof UdpServiceDetectionRequest
      */
-    address: string;
+    targets: Array<string>;
     /**
      * List of single ports and port ranges
      * 
@@ -89,7 +89,7 @@ export interface UdpServiceDetectionRequest {
  */
 export function instanceOfUdpServiceDetectionRequest(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "address" in value;
+    isInstance = isInstance && "targets" in value;
     isInstance = isInstance && "retryInterval" in value;
     isInstance = isInstance && "maxRetries" in value;
     isInstance = isInstance && "timeout" in value;
@@ -110,7 +110,7 @@ export function UdpServiceDetectionRequestFromJSONTyped(json: any, ignoreDiscrim
     return {
         
         'leechUuid': !exists(json, 'leech_uuid') ? undefined : json['leech_uuid'],
-        'address': json['address'],
+        'targets': json['targets'],
         'ports': !exists(json, 'ports') ? undefined : ((json['ports'] as Array<any>).map(PortOrRangeFromJSON)),
         'retryInterval': json['retry_interval'],
         'maxRetries': json['max_retries'],
@@ -130,7 +130,7 @@ export function UdpServiceDetectionRequestToJSON(value?: UdpServiceDetectionRequ
     return {
         
         'leech_uuid': value.leechUuid,
-        'address': value.address,
+        'targets': value.targets,
         'ports': value.ports === undefined ? undefined : ((value.ports as Array<any>).map(PortOrRangeToJSON)),
         'retry_interval': value.retryInterval,
         'max_retries': value.maxRetries,
