@@ -8,7 +8,9 @@ import {
     Configuration,
     CreateAppRequest,
     CreateDomainRequest,
+    CreateFindingAffectedRequest,
     CreateFindingDefinitionRequest,
+    CreateFindingRequest,
     CreateGlobalTagRequest,
     CreateHostRequest,
     CreateLeechRequest,
@@ -19,6 +21,7 @@ import {
     CreateWorkspaceRequest,
     CreateWorkspaceTagRequest,
     DomainsApi,
+    FindingsApi,
     GlobalTagsApi,
     HostsApi,
     KnowledgeBaseApi,
@@ -32,6 +35,8 @@ import {
     SettingsManagementApi,
     UpdateAppRequest,
     UpdateDomainRequest,
+    UpdateFindingAffectedRequest,
+    UpdateFindingRequest,
     UpdateGlobalTag,
     UpdateHostRequest,
     UpdateLeechRequest,
@@ -63,6 +68,7 @@ const configuration = new Configuration({
 const userAdminManagement = new UserAdminManagementApi(configuration);
 const adminWorkspaces = new AdminWorkspacesApi(configuration);
 const attacks = new AttacksApi(configuration);
+const findings = new FindingsApi(configuration);
 // const authentication = new generated.AuthenticationApi(configuration);
 const leechManagement = new LeechManagementApi(configuration);
 const userManagement = new UserManagementApi(configuration);
@@ -174,6 +180,52 @@ export const Api = {
             handleError(workspaces.transferOwnership({ uuid, transferWorkspaceRequest: { user } })),
         attacks: {
             all: (uuid: UUID) => handleError(attacks.getWorkspaceAttacks({ uuid })),
+        },
+        findings: {
+            all: (workspace: UUID) => handleError(findings.getAllFindings({ uuid: workspace })),
+            create: (workspace: UUID, options: CreateFindingRequest) =>
+                handleError(findings.createFinding({ uuid: workspace, createFindingRequest: options })),
+            get: (workspace: UUID, finding: UUID) =>
+                handleError(findings.getFinding({ wUuid: workspace, fUuid: finding })),
+            update: (workspace: UUID, finding: UUID, options: UpdateFindingRequest) =>
+                handleError(
+                    findings.updateFinding({ wUuid: workspace, fUuid: finding, updateFindingRequest: options }),
+                ),
+            delete: (workspace: UUID, finding: UUID) =>
+                handleError(findings.deleteFinding({ wUuid: workspace, fUuid: finding })),
+            addAffected: (workspace: UUID, finding: UUID, affected: CreateFindingAffectedRequest) =>
+                handleError(
+                    findings.createFindingAffected({
+                        wUuid: workspace,
+                        fUuid: finding,
+                        createFindingAffectedRequest: affected,
+                    }),
+                ),
+            getAffected: (workspace: UUID, finding: UUID, affected: UUID) =>
+                handleError(
+                    findings.getFindingAffected({
+                        wUuid: workspace,
+                        fUuid: finding,
+                        aUuid: affected,
+                    }),
+                ),
+            updateAffected: (workspace: UUID, finding: UUID, affected: UUID, options: UpdateFindingAffectedRequest) =>
+                handleError(
+                    findings.updateFindingAffected({
+                        wUuid: workspace,
+                        fUuid: finding,
+                        aUuid: affected,
+                        updateFindingAffectedRequest: options,
+                    }),
+                ),
+            removeAffected: (workspace: UUID, finding: UUID, affected: UUID) =>
+                handleError(
+                    findings.deleteFindingAffected({
+                        wUuid: workspace,
+                        fUuid: finding,
+                        aUuid: affected,
+                    }),
+                ),
         },
         invitations: {
             all: (uuid: UUID) => handleError(workspaces.getAllWorkspaceInvitations({ uuid })),
