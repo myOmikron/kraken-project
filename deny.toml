@@ -13,6 +13,7 @@ allow = [
     "MPL-2.0",
     "ISC",
     "Unicode-DFS-2016",
+    "BSD-2-Clause",
     "BSD-3-Clause",
     "LicenseRef-ring",
     "AGPL-3.0"
