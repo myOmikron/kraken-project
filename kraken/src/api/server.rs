@@ -272,7 +272,8 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(finding_affected::handler::delete_finding_affected)
                     .service(finding_definitions::handler::create_finding_definition)
                     .service(finding_definitions::handler::get_finding_definition)
-                    .service(finding_definitions::handler::get_all_finding_definitions),
+                    .service(finding_definitions::handler::get_all_finding_definitions)
+                    .service(finding_definitions::handler::update_finding_definition),
             )
     })
     .bind((

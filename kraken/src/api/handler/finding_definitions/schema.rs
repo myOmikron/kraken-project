@@ -7,6 +7,7 @@ use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use crate::api::handler::common::de_optional;
 use crate::models::FindingSeverity;
 
 /// The request to create a new finding definition
@@ -88,4 +89,26 @@ pub struct SimpleFindingDefinition {
 pub struct ListFindingDefinitions {
     /// The finding definitions
     pub finding_definitions: Vec<SimpleFindingDefinition>,
+}
+
+/// The request to update a new finding definition
+// The `#[serde(skip_serializing_if = "Option::is_none")]` is required by the frontend.
+// The update is echoed over the websocket to allow live editing
+// and the frontend needs to differentiate between no update and set to `None`.
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct UpdateFindingDefinitionRequest {
+    /// Name of the new finding definition
+    ///
+    /// This must be unique
+    #[serde(skip_serializing_if = "Option::is_none")] // see above
+    pub name: Option<String>,
+
+    /// The severity of the finding
+    #[serde(skip_serializing_if = "Option::is_none")] // see above
+    pub severity: Option<FindingSeverity>,
+
+    /// Optional linked CVE
+    #[serde(skip_serializing_if = "Option::is_none")] // see above
+    #[serde(default, deserialize_with = "de_optional")]
+    pub cve: Option<Option<String>>,
 }
