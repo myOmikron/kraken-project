@@ -142,8 +142,8 @@ impl FindingAffected {
         match object_type {
             AggregationType::Domain => patch.domain = Some(ForeignModelByField::Key(object_uuid)),
             AggregationType::Host => patch.host = Some(ForeignModelByField::Key(object_uuid)),
-            AggregationType::Service => patch.port = Some(ForeignModelByField::Key(object_uuid)),
-            AggregationType::Port => patch.service = Some(ForeignModelByField::Key(object_uuid)),
+            AggregationType::Service => patch.service = Some(ForeignModelByField::Key(object_uuid)),
+            AggregationType::Port => patch.port = Some(ForeignModelByField::Key(object_uuid)),
         }
 
         insert!(guard.get_transaction(), FindingAffected)
