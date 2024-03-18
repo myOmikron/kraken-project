@@ -100,7 +100,7 @@ rcgen = { version = "~0.12", features = ["x509-parser"], optional = true }
 url = { version = "~2", features = ["serde"] } # Parsing ip / domain when filling subject_alt_names
 
 # Image processing
-image = { version = "~0.24" }
+image = { version = "~0.25" }
 
 [features]
 rorm-main = []
