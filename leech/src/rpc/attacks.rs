@@ -1,7 +1,6 @@
 //! In this module is the definition of the gRPC services
 
 use std::future::Future;
-use std::net::IpAddr;
 use std::num::NonZeroU32;
 use std::num::NonZeroUsize;
 use std::ops::RangeInclusive;

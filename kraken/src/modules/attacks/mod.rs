@@ -3,7 +3,6 @@
 use std::collections::HashSet;
 use std::error::Error as StdError;
 use std::future::Future;
-use std::net::IpAddr;
 
 use chrono::DateTime;
 use chrono::Utc;
