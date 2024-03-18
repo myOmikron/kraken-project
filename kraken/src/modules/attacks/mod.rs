@@ -310,8 +310,8 @@ pub async fn start_service_detection(
 
 /// The parameters of a "service detection" attack
 pub struct UdpServiceDetectionParams {
-    /// The ip address the service listens on
-    pub target: IpAddr,
+    /// The ip addresses / networks to scan
+    pub targets: Vec<DomainOrNetwork>,
 
     /// List of single ports and port ranges
     pub ports: Vec<PortOrRange>,

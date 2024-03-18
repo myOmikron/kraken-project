@@ -310,12 +310,11 @@ impl ReqAttackService for Attacks {
         }
 
         let settings = UdpServiceDetectionSettings {
-            ip: IpAddr::try_from(
-                request
-                    .address
-                    .clone()
-                    .ok_or(Status::invalid_argument("Missing address"))?,
-            )?,
+            addresses: request
+                .targets
+                .into_iter()
+                .map(IpNetwork::try_from)
+                .collect::<Result<_, _>>()?,
             ports,
             concurrent_limit: request.concurrent_limit,
             max_retries: request.max_retries,
@@ -333,7 +332,7 @@ impl ReqAttackService for Attacks {
                 }
             },
             move |value| UdpServiceDetectionResponse {
-                address: request.address.clone(),
+                address: Some(shared::Address::from(value.address)),
                 port: value.port as u32,
                 certainty: match value.service {
                     Service::Unknown => ServiceCertainty::Unknown as _,

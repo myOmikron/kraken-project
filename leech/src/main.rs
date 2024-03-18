@@ -218,8 +218,9 @@ pub enum RunCommand {
     },
     /// Detect the services running behind on a given address in the given port range
     ServiceDetectionUdp {
-        /// The ip address to connect to
-        addr: IpAddr,
+        /// Valid IPv4 or IPv6 addresses or networks in CIDR notation
+        #[clap(required(true))]
+        targets: Vec<String>,
 
         /// A single port, multiple, comma seperated ports or (inclusive) port ranges
         ///
@@ -655,25 +656,33 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         .map_err(|e| e.to_string())?;
                     }
                     RunCommand::ServiceDetectionUdp {
-                        addr,
+                        targets,
                         ports,
                         timeout,
                         port_retries,
                         retry_interval,
                         concurrent_limit,
                     } => {
+                        let addresses = targets
+                            .iter()
+                            .map(|s| IpNetwork::from_str(s))
+                            .collect::<Result<_, _>>()?;
+
                         let (tx, mut rx) =
                             mpsc::channel::<service_detection::udp::UdpServiceDetectionResult>(1);
 
                         task::spawn(async move {
                             while let Some(result) = rx.recv().await {
-                                info!("detected service on {}: {:?}", result.port, result.service);
+                                info!(
+                                    "detected service on {}:{}: {:?}",
+                                    result.address, result.port, result.service
+                                );
                             }
                         });
 
                         if let Err(err) = service_detection::udp::start_udp_service_detection(
                             &service_detection::udp::UdpServiceDetectionSettings {
-                                ip: addr,
+                                addresses,
                                 ports: utils::parse_ports(&ports, Some(1..=u16::MAX))?,
                                 max_retries: port_retries,
                                 retry_interval: Duration::from_millis(retry_interval),

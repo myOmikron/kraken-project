@@ -148,8 +148,8 @@ enum ServiceCertainty {
 message UdpServiceDetectionRequest {
   // A unique id that identifier the attack
   string attack_uuid = 1;
-  // The ip address to connect to
-  attacks.shared.Address address = 2;
+  // The ip addresses / networks to scan
+  repeated attacks.shared.NetOrAddress targets = 2;
   // List of single ports and port ranges
   //
   // If no values are supplied, 1-65535 is used as default
@@ -225,7 +225,7 @@ message DnsResolutionResponse {
 /*
  * DNS TXT scan
  */
- message DnsTxtScanRequest {
+message DnsTxtScanRequest {
   // A unique id that identifier the attack
   string attack_uuid = 1;
   // The domains to resolve

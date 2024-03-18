@@ -385,13 +385,13 @@ const ATTACKS: AllAttackDescr = {
             endpoint: "udpServiceDetection",
             jsonKey: "udpServiceDetectionRequest",
             inputs: {
-                address: {
-                    multi: false,
-                    label: "IP",
-                    defaultValue: "",
-                    prefill: ["ipAddr"],
-                    required: true,
+                targets: {
+                    label: "Domain / IP / net in CIDR",
+                    multi: true,
+                    defaultValue: undefined,
+                    prefill: ["domain", "ipAddr"],
                     type: StringAttackInput,
+                    required: true,
                 },
                 ports: {
                     label: "Ports",

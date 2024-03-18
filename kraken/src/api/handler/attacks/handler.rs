@@ -389,7 +389,7 @@ pub async fn udp_service_detection(
 ) -> ApiResult<HttpResponse> {
     let UdpServiceDetectionRequest {
         leech_uuid,
-        address,
+        targets,
         ports,
         retry_interval,
         max_retries,
@@ -409,7 +409,7 @@ pub async fn udp_service_detection(
         user_uuid,
         client,
         UdpServiceDetectionParams {
-            target: address,
+            targets,
             ports,
             timeout,
             concurrent_limit,
