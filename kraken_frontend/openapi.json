@@ -11153,13 +11153,14 @@
                 "type": "object",
                 "description": "OS detection request",
                 "required": [
-                    "address",
+                    "targets",
                     "fingerprint_timeout",
                     "ssh_connect_timeout",
                     "ssh_timeout",
                     "port_ack_timeout",
                     "port_parallel_syns",
-                    "workspace_uuid"
+                    "workspace_uuid",
+                    "concurrent_limit"
                 ],
                 "properties": {
                     "leech_uuid": {
@@ -11168,10 +11169,13 @@
                         "description": "The leech to use\n\nLeave empty to use a random leech",
                         "nullable": true
                     },
-                    "address": {
-                        "type": "string",
-                        "description": "The ip address of the host to scan",
-                        "example": "10.13.37.1"
+                    "targets": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "The ip addresses / networks or domains to scan",
+                        "example": ["10.13.37.1", "10.13.37.0/24", "google.com"]
                     },
                     "fingerprint_port": {
                         "type": "integer",
@@ -11221,6 +11225,13 @@
                         "type": "string",
                         "format": "uuid",
                         "description": "The workspace to execute the attack in"
+                    },
+                    "concurrent_limit": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "The concurrent task limit",
+                        "example": 5000,
+                        "minimum": 0
                     }
                 }
             },

@@ -164,7 +164,7 @@ pub async fn start_host_alive(
 /// The parameters of a "OS detection" attack
 pub struct OsDetectionParams {
     /// The ip addresses / networks to scan
-    pub target: IpAddr,
+    pub targets: Vec<DomainOrNetwork>,
     /// set to skip open port detection and use this port for TCP fingerprinting
     pub fingerprint_port: Option<u32>,
     /// set to perform OS detection through SSH header
@@ -179,6 +179,8 @@ pub struct OsDetectionParams {
     pub port_ack_timeout: u64,
     /// If fingerprint_port is not set, maximum parallel TCP SYN requests
     pub port_parallel_syns: u32,
+    /// The concurrent host scan limit
+    pub concurrent_limit: u32,
 }
 /// Start a "OS detection" attack
 pub async fn start_os_detection(

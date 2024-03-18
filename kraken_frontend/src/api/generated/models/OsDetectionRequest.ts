@@ -28,11 +28,11 @@ export interface OsDetectionRequest {
      */
     leechUuid?: string | null;
     /**
-     * The ip address of the host to scan
-     * @type {string}
+     * The ip addresses / networks or domains to scan
+     * @type {Array<string>}
      * @memberof OsDetectionRequest
      */
-    address: string;
+    targets: Array<string>;
     /**
      * set to skip open port detection and use this port for TCP fingerprinting
      * @type {number}
@@ -81,6 +81,12 @@ export interface OsDetectionRequest {
      * @memberof OsDetectionRequest
      */
     workspaceUuid: string;
+    /**
+     * The concurrent task limit
+     * @type {number}
+     * @memberof OsDetectionRequest
+     */
+    concurrentLimit: number;
 }
 
 /**
@@ -88,13 +94,14 @@ export interface OsDetectionRequest {
  */
 export function instanceOfOsDetectionRequest(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "address" in value;
+    isInstance = isInstance && "targets" in value;
     isInstance = isInstance && "fingerprintTimeout" in value;
     isInstance = isInstance && "sshConnectTimeout" in value;
     isInstance = isInstance && "sshTimeout" in value;
     isInstance = isInstance && "portAckTimeout" in value;
     isInstance = isInstance && "portParallelSyns" in value;
     isInstance = isInstance && "workspaceUuid" in value;
+    isInstance = isInstance && "concurrentLimit" in value;
 
     return isInstance;
 }
@@ -110,7 +117,7 @@ export function OsDetectionRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'leechUuid': !exists(json, 'leech_uuid') ? undefined : json['leech_uuid'],
-        'address': json['address'],
+        'targets': json['targets'],
         'fingerprintPort': !exists(json, 'fingerprint_port') ? undefined : json['fingerprint_port'],
         'sshPort': !exists(json, 'ssh_port') ? undefined : json['ssh_port'],
         'fingerprintTimeout': json['fingerprint_timeout'],
@@ -119,6 +126,7 @@ export function OsDetectionRequestFromJSONTyped(json: any, ignoreDiscriminator: 
         'portAckTimeout': json['port_ack_timeout'],
         'portParallelSyns': json['port_parallel_syns'],
         'workspaceUuid': json['workspace_uuid'],
+        'concurrentLimit': json['concurrent_limit'],
     };
 }
 
@@ -132,7 +140,7 @@ export function OsDetectionRequestToJSON(value?: OsDetectionRequest | null): any
     return {
         
         'leech_uuid': value.leechUuid,
-        'address': value.address,
+        'targets': value.targets,
         'fingerprint_port': value.fingerprintPort,
         'ssh_port': value.sshPort,
         'fingerprint_timeout': value.fingerprintTimeout,
@@ -141,6 +149,7 @@ export function OsDetectionRequestToJSON(value?: OsDetectionRequest | null): any
         'port_ack_timeout': value.portAckTimeout,
         'port_parallel_syns': value.portParallelSyns,
         'workspace_uuid': value.workspaceUuid,
+        'concurrent_limit': value.concurrentLimit,
     };
 }
 

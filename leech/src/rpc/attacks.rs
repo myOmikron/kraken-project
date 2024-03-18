@@ -3,6 +3,7 @@
 use std::future::Future;
 use std::net::IpAddr;
 use std::num::NonZeroU32;
+use std::num::NonZeroUsize;
 use std::ops::RangeInclusive;
 use std::pin::Pin;
 use std::time::Duration;
@@ -100,6 +101,7 @@ use crate::modules::service_detection::udp::start_udp_service_detection;
 use crate::modules::service_detection::udp::UdpServiceDetectionSettings;
 use crate::modules::service_detection::ProtocolSet;
 use crate::modules::service_detection::Service;
+use crate::utils::IteratorExt;
 
 /// The Attack service
 pub struct Attacks {
@@ -632,17 +634,27 @@ impl ReqAttackService for Attacks {
         )
     }
 
+    type OsDetectionStream =
+        Pin<Box<dyn Stream<Item = Result<OsDetectionResponse, Status>> + Send>>;
+
     async fn os_detection(
         &self,
-        req: Request<OsDetectionRequest>,
-    ) -> Result<Response<OsDetectionResponse>, Status> {
-        let req = req.into_inner();
+        request: Request<OsDetectionRequest>,
+    ) -> Result<Response<Self::OsDetectionStream>, Status> {
+        let req = request.into_inner();
 
-        let address = IpAddr::try_from(
-            req.address
-                .clone()
-                .ok_or(Status::invalid_argument("Missing address"))?,
-        )?;
+        if req.targets.is_empty() {
+            return Err(Status::invalid_argument("no targets specified"));
+        }
+
+        let addresses: Vec<_> = req
+            .targets
+            .into_iter()
+            .map(IpNetwork::try_from)
+            .collect::<Result<_, _>>()?;
+
+        let attack_uuid = Uuid::parse_str(&req.attack_uuid)
+            .map_err(|_| Status::invalid_argument("attack_uuid has to be an Uuid"))?;
 
         let fingerprint_port = match req.fingerprint_port {
             None => None,
@@ -651,6 +663,7 @@ impl ReqAttackService for Attacks {
                     .map_err(|_| Status::invalid_argument("`fingerprint_port` out of range"))?,
             ),
         };
+
         let ssh_port = match req.ssh_port {
             None => None,
             Some(p) => Some(
@@ -659,94 +672,112 @@ impl ReqAttackService for Attacks {
             ),
         };
 
-        let os = os_detection(OsDetectionSettings {
-            ip_addr: address,
-            fingerprint_port,
-            fingerprint_timeout: Duration::from_millis(req.fingerprint_timeout),
-            ssh_port,
-            ssh_connect_timeout: Duration::from_millis(req.ssh_connect_timeout),
-            ssh_timeout: Duration::from_millis(req.ssh_timeout),
-            port_ack_timeout: Duration::from_millis(req.port_ack_timeout),
-            port_parallel_syns: req.port_parallel_syns as usize,
-        })
-        .await
-        .map_err(|err| {
-            error!("OS detection failed: {err:?}");
-            Status::internal("OS detection failed. See logs")
-        })?;
+        let concurrent_limit = NonZeroUsize::new(req.concurrent_limit as usize);
 
-        let address = Address::from(address);
+        self.stream_attack(
+            attack_uuid,
+            |tx| async move {
+                addresses
+                    .iter()
+                    .cloned()
+                    .flat_map(|network| network.into_iter())
+                    .try_for_each_concurrent(concurrent_limit, |address| async move {
+                        let os = os_detection(OsDetectionSettings {
+                            ip_addr: address,
+                            fingerprint_port,
+                            fingerprint_timeout: Duration::from_millis(req.fingerprint_timeout),
+                            ssh_port,
+                            ssh_connect_timeout: Duration::from_millis(req.ssh_connect_timeout),
+                            ssh_timeout: Duration::from_millis(req.ssh_timeout),
+                            port_ack_timeout: Duration::from_millis(req.port_ack_timeout),
+                            port_parallel_syns: req.port_parallel_syns as usize,
+                        })
+                        .await
+                        .map_err(|err| {
+                            error!("OS detection failed: {err:?}");
+                            Status::internal("OS detection failed. See logs")
+                        })?;
 
-        Ok(Response::new(match os {
-            OperatingSystemInfo::Unknown { hint } => OsDetectionResponse {
-                host: Some(address),
-                os: OperatingSystem::Unknown as _,
-                hints: hint.iter().cloned().collect(),
-                versions: Vec::new(),
-            },
-            OperatingSystemInfo::Linux {
-                distro,
-                kernel_version,
-                hint,
-            } => OsDetectionResponse {
-                host: Some(address),
-                os: OperatingSystem::Linux as _,
-                hints: if kernel_version.is_empty() {
-                    hint.iter().cloned().collect()
-                } else {
-                    hint.iter()
-                        .cloned()
-                        .chain(vec![format!(
-                            "Kernel {}",
-                            kernel_version.iter().join(" OR ")
-                        )])
-                        .collect()
-                },
-                versions: distro
-                    .iter()
-                    .map(|(distro, v)| match v {
-                        None => format!("{distro:?}"),
-                        Some(v) => format!("{distro:?} {v}"),
+                        let address = Address::from(address);
+
+                        tx.send(match os {
+                            OperatingSystemInfo::Unknown { hint } => OsDetectionResponse {
+                                host: Some(address),
+                                os: OperatingSystem::Unknown as _,
+                                hints: hint.iter().cloned().collect(),
+                                versions: Vec::new(),
+                            },
+                            OperatingSystemInfo::Linux {
+                                distro,
+                                kernel_version,
+                                hint,
+                            } => OsDetectionResponse {
+                                host: Some(address),
+                                os: OperatingSystem::Linux as _,
+                                hints: if kernel_version.is_empty() {
+                                    hint.iter().cloned().collect()
+                                } else {
+                                    hint.iter()
+                                        .cloned()
+                                        .chain(vec![format!(
+                                            "Kernel {}",
+                                            kernel_version.iter().join(" OR ")
+                                        )])
+                                        .collect()
+                                },
+                                versions: distro
+                                    .iter()
+                                    .map(|(distro, v)| match v {
+                                        None => format!("{distro:?}"),
+                                        Some(v) => format!("{distro:?} {v}"),
+                                    })
+                                    .collect(),
+                            },
+                            OperatingSystemInfo::BSD { version, hint } => OsDetectionResponse {
+                                host: Some(address),
+                                os: OperatingSystem::Bsd as _,
+                                hints: hint.iter().cloned().collect(),
+                                versions: version.iter().cloned().collect(),
+                            },
+                            OperatingSystemInfo::Android { version, hint } => OsDetectionResponse {
+                                host: Some(address),
+                                os: OperatingSystem::Android as _,
+                                hints: hint.iter().cloned().collect(),
+                                versions: version.iter().cloned().collect(),
+                            },
+                            OperatingSystemInfo::OSX { version, hint } => OsDetectionResponse {
+                                host: Some(address),
+                                os: OperatingSystem::Osx as _,
+                                hints: hint.iter().cloned().collect(),
+                                versions: version.iter().cloned().collect(),
+                            },
+                            OperatingSystemInfo::IOS { version, hint } => OsDetectionResponse {
+                                host: Some(address),
+                                os: OperatingSystem::Ios as _,
+                                hints: hint.iter().cloned().collect(),
+                                versions: version.iter().cloned().collect(),
+                            },
+                            OperatingSystemInfo::Windows { version, hint } => OsDetectionResponse {
+                                host: Some(address),
+                                os: OperatingSystem::Windows as _,
+                                hints: hint.iter().cloned().collect(),
+                                versions: version
+                                    .iter()
+                                    .map(|(ver, v)| match v {
+                                        None => format!("{ver}"),
+                                        Some(v) => format!("{ver} {v}"),
+                                    })
+                                    .collect(),
+                            },
+                        })
+                        .await
+                        .map_err(|_| Status::internal("failed to send"))
                     })
-                    .collect(),
+                    .await
             },
-            OperatingSystemInfo::BSD { version, hint } => OsDetectionResponse {
-                host: Some(address),
-                os: OperatingSystem::Bsd as _,
-                hints: hint.iter().cloned().collect(),
-                versions: version.iter().cloned().collect(),
-            },
-            OperatingSystemInfo::Android { version, hint } => OsDetectionResponse {
-                host: Some(address),
-                os: OperatingSystem::Android as _,
-                hints: hint.iter().cloned().collect(),
-                versions: version.iter().cloned().collect(),
-            },
-            OperatingSystemInfo::OSX { version, hint } => OsDetectionResponse {
-                host: Some(address),
-                os: OperatingSystem::Osx as _,
-                hints: hint.iter().cloned().collect(),
-                versions: version.iter().cloned().collect(),
-            },
-            OperatingSystemInfo::IOS { version, hint } => OsDetectionResponse {
-                host: Some(address),
-                os: OperatingSystem::Ios as _,
-                hints: hint.iter().cloned().collect(),
-                versions: version.iter().cloned().collect(),
-            },
-            OperatingSystemInfo::Windows { version, hint } => OsDetectionResponse {
-                host: Some(address),
-                os: OperatingSystem::Windows as _,
-                hints: hint.iter().cloned().collect(),
-                versions: version
-                    .iter()
-                    .map(|(ver, v)| match v {
-                        None => format!("{ver}"),
-                        Some(v) => format!("{ver} {v}"),
-                    })
-                    .collect(),
-            },
-        }))
+            |value| value,
+            any_attack_response::Response::OsDetection,
+        )
     }
 }
 
