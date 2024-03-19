@@ -3,6 +3,11 @@
         stroke-dashoffset: 100%;
     }
 }
+@keyframes inverted-dash {
+    to {
+        stroke-dashoffset: -100%;
+    }
+}
 
 .login-container {
     display: flex;

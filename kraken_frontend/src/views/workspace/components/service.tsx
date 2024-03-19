@@ -2,10 +2,11 @@ import { useCallback, useState } from "react";
 import Popup from "reactjs-popup";
 import { Api } from "../../../api/api";
 import { FullService, ServiceRelations, SimpleService } from "../../../api/generated";
+import SelectableText from "../../../components/selectable-text";
 import { handleApiError } from "../../../utils/helper";
 import { ServiceRelationsList } from "./relations-list";
 
-export default function ServiceName({ service }: { service: FullService | SimpleService }) {
+export default function ServiceName({ service, pretty }: { service: FullService | SimpleService; pretty?: boolean }) {
     const [relations, setRelations] = useState<ServiceRelations | undefined>(undefined);
 
     const ensureDataLoaded = useCallback(() => {
@@ -27,7 +28,18 @@ export default function ServiceName({ service }: { service: FullService | Simple
             trigger={
                 // eagerly load on mouse over, so popup potentially doesn't need to wait
                 <div onMouseOver={ensureDataLoaded}>
-                    <div>{service.name}</div>
+                    {pretty && typeof service.host === "object" ? (
+                        <div>
+                            <b>{service.name}</b>
+                            {" on "}
+                            <SelectableText as="span">
+                                {service.host.ipAddr.includes(":") ? `[${service.host.ipAddr}]` : service.host.ipAddr}
+                                {typeof service.port === "object" && ":" + service.port?.port}
+                            </SelectableText>
+                        </div>
+                    ) : (
+                        <div>{service.name}</div>
+                    )}
                 </div>
             }
             onOpen={ensureDataLoaded}

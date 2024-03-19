@@ -21,6 +21,7 @@ import {
     CreateWorkspaceRequest,
     CreateWorkspaceTagRequest,
     DomainsApi,
+    FilesApi,
     FindingsApi,
     GlobalTagsApi,
     HostsApi,
@@ -69,6 +70,7 @@ const userAdminManagement = new UserAdminManagementApi(configuration);
 const adminWorkspaces = new AdminWorkspacesApi(configuration);
 const attacks = new AttacksApi(configuration);
 const findings = new FindingsApi(configuration);
+const files = new FilesApi(configuration);
 // const authentication = new generated.AuthenticationApi(configuration);
 const leechManagement = new LeechManagementApi(configuration);
 const userManagement = new UserManagementApi(configuration);
@@ -180,6 +182,38 @@ export const Api = {
             handleError(workspaces.transferOwnership({ uuid, transferWorkspaceRequest: { user } })),
         attacks: {
             all: (uuid: UUID) => handleError(attacks.getWorkspaceAttacks({ uuid })),
+        },
+        files: {
+            uploadFile: (workspace: UUID, filename: string, data: Blob) =>
+                handleError(
+                    files.uploadFile({
+                        uuid: workspace,
+                        body: data,
+                        filename: filename,
+                    }),
+                ),
+            uploadImage: (workspace: UUID, filename: string, data: Blob) =>
+                handleError(
+                    files.uploadImage({
+                        uuid: workspace,
+                        body: data,
+                        filename: filename,
+                    }),
+                ),
+            downloadFile: (workspace: UUID, file: UUID) =>
+                handleError(
+                    files.downloadFile({
+                        wUuid: workspace,
+                        fUuid: file,
+                    }),
+                ),
+            downloadThumbnail: (workspace: UUID, file: UUID) =>
+                handleError(
+                    files.downloadThumbnail({
+                        wUuid: workspace,
+                        fUuid: file,
+                    }),
+                ),
         },
         findings: {
             all: (workspace: UUID) => handleError(findings.getAllFindings({ uuid: workspace })),

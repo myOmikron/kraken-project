@@ -1,6 +1,7 @@
 :root {
     --level-0: #000;
     --level-1: #131c2290;
+    --level-1-opaque: #131c22dd;
     --text: #bbb;
     --primary: #0cf;
     --primary-light: #00ccffaa;

@@ -1,0 +1,39 @@
+.markdown-editor-popup-overlay .pane {
+    background-color: black;
+    width: 60vw;
+    height: 60vh;
+    display: flex;
+    gap: 1em;
+}
+
+.markdown-editor-popup-overlay {
+    backdrop-filter: blur(1px);
+}
+
+.markdown-editor-popup-overlay .pane > .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1em;
+    height: calc(100% - 4em);
+}
+
+.markdown-editor-popup-overlay > span > .h3 {
+    opacity: 50%;
+}
+
+.markdown-editor-popup-overlay .markdown {
+    height: 100%;
+    overflow-y: auto;
+}
+
+.markdown-editor-popup-overlay .label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3em;
+}
+
+.markdown-editor-popup-overlay h3 {
+    opacity: 70%;
+    width: max-content;
+    max-width: 100%;
+}

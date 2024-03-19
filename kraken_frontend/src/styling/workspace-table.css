@@ -2,6 +2,7 @@
     padding: 2em 1em;
     display: flex;
     flex-direction: column;
+    overflow-x: auto;
 
     /* Is overwritten by javascript */
     --columns: 1fr 1fr 1fr 1fr;
@@ -127,4 +128,10 @@
 
 .workspace-table-row .bubble {
     padding: 0 0.5em;
+}
+
+.solid-background {
+    background-color: #00ccff10;
+    border: 1px solid var(--primary-op);
+    border-radius: 0.5em;
 }

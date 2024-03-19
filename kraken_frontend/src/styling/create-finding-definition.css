@@ -17,6 +17,12 @@
     height: 100%;
 }
 
+.create-finding-editor-container > .workspace-findings-graph > .pane {
+    box-shadow:
+        inset 0 0 10em #0cf2,
+        inset 0 0 0.5em #0ff2;
+}
+
 /*
  * Form on the left panel
  */
@@ -46,10 +52,120 @@
     column-gap: 1.5em;
 }
 
+.create-finding-definition-header .sub-heading {
+    margin-bottom: 0.25em;
+}
+
 /*
  * Editor on the right panel
  */
 .create-finding-definition-editor {
     display: flex;
     flex-direction: row;
+}
+
+.affected-list {
+    display: grid;
+
+    gap: 0.5em;
+    padding: 1em 0;
+}
+
+.affected-list > .affected {
+    position: relative;
+    min-width: 350px;
+    display: grid;
+    grid-template-columns: 1fr 100px 100px;
+    min-height: 100px;
+    grid-template-rows: 1fr auto;
+    border-radius: 8px;
+    padding: 0.5em;
+    gap: 0.5em;
+    box-sizing: border-box;
+    --accent: rgba(255, 255, 255, 0.1);
+    background-color: var(--accent);
+    border: 1px solid var(--accent);
+    align-items: start;
+    justify-content: start;
+}
+
+.affected-list > .affected-Domain {
+    --accent: #00c49322;
+}
+
+.affected-list > .affected-Host {
+    --accent: #0066ff22;
+}
+
+.affected-list > .affected-Service {
+    --accent: #00c5e722;
+}
+
+.affected-list > .affected-Port {
+    --accent: #c300ff22;
+}
+
+.affected-list > .affected > .screenshot,
+.affected-list > .affected > .logfile {
+    border: 1px solid var(--accent);
+    height: 100%;
+    border-radius: 4px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background-color: var(--accent);
+}
+
+.affected-list > .affected > .screenshot {
+    grid-row: 1 / span 3;
+    grid-column: 2 / span 1;
+}
+
+.affected-list > .affected > .screenshot span {
+    padding: 0;
+}
+
+.affected-list > .affected > .logfile {
+    grid-row: 1 / span 3;
+    grid-column: 3 / span 1;
+}
+
+.affected-list > .affected svg {
+    height: 24px;
+}
+
+.affected-list > .affected > .details {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5em;
+    margin-left: 0.5em;
+}
+
+.affected-list > .affected > .details > .icon:hover {
+    cursor: pointer;
+}
+
+.affected > .name > .remove {
+    opacity: 70%;
+    width: 1.5em;
+    height: 1.5em;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.affected > .name > .remove {
+    cursor: pointer;
+}
+
+.affected .name {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5em;
+    align-items: center;
 }

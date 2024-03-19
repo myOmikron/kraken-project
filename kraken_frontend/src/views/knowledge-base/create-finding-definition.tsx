@@ -13,7 +13,6 @@ import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sec
 import "../../styling/create-finding-definition.css";
 import { handleApiError } from "../../utils/helper";
 import { Api } from "../../api/api";
-import { FindingSeverity } from "../../api/generated";
 import { ROUTES } from "../../routes";
 
 export type CreateFindingDefinitionProps = {};

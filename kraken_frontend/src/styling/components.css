@@ -269,3 +269,12 @@ form:invalid .start-attack path:last-of-type {
 .indicator.off {
     background-color: transparent;
 }
+
+/* XXX: fix sizing issue at 100%, upstream PR: https://github.com/JedWatson/react-select/pull/5880 */
+.dropdown > input[aria-hidden="true"][value=""] {
+    box-sizing: border-box;
+}
+
+.dropdown {
+    z-index: 10;
+}

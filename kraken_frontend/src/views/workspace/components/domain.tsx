@@ -6,7 +6,7 @@ import SelectableText from "../../../components/selectable-text";
 import { handleApiError } from "../../../utils/helper";
 import { DomainRelationsList } from "./relations-list";
 
-export default function Domain({ domain }: { domain: FullDomain | SimpleDomain }) {
+export default function Domain({ domain, pretty: _ }: { domain: FullDomain | SimpleDomain; pretty?: boolean }) {
     const [relations, setRelations] = useState<DomainRelations | undefined>(undefined);
 
     const ensureDataLoaded = useCallback(() => {
