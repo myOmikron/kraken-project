@@ -30,7 +30,7 @@ import IpAddr from "../components/host";
 import { LogFile, LogFileInput } from "../components/log-file-input";
 import MarkdownEditorPopup from "../components/markdown-editor-popup";
 import PortNumber from "../components/port";
-import { Screenshot, ScreenshotInput } from "../components/screenshot-input";
+import { ScreenshotInput } from "../components/screenshot-input";
 import ServiceName from "../components/service";
 import TagList from "../components/tag-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
@@ -40,7 +40,7 @@ import WorkspaceFindingTable from "./workspace-finding-table";
 export type CreateFindingProps = {};
 
 type LocalAffected = CreateFindingAffectedRequest & {
-    _localScreenshot?: Screenshot;
+    _localScreenshot?: File;
     _localLogFile?: LogFile;
 } & (
         | { type: "Domain"; _data: FullDomain }
@@ -64,8 +64,9 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
     const [description, setDescription] = React.useState<boolean>(true);
     const [affectedVisible, setAffectedVisible] = React.useState<boolean>(true);
     const [affected, setAffected] = React.useState<Array<LocalAffected>>([]);
-    const [screenshot, setScreenshot] = React.useState<Screenshot | undefined>(undefined);
+
     const [logFile, setLogFile] = React.useState<LogFile | undefined>(undefined);
+    const [screenshot, setScreenshot] = React.useState<File>();
 
     const addAffected = (newAffected: LocalAffected) => {
         setAffected((affected) => {
@@ -191,11 +192,11 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                             const affectedUploaded = await Promise.all(
                                 affected.map(async (a) => {
                                     let { _localLogFile: logFile, _localScreenshot: screenshot, ...request } = a;
-                                    if (screenshot?.file !== undefined) {
+                                    if (screenshot !== undefined) {
                                         let r = await Api.workspaces.files.uploadImage(
                                             workspace,
-                                            screenshot.file.name,
-                                            screenshot.file,
+                                            screenshot.name,
+                                            screenshot,
                                         );
                                         request.screenshot = r.unwrap().uuid;
                                     }
@@ -219,14 +220,12 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                             }
 
                             let screenshotUuid = null;
-                            if (screenshot?.file !== undefined) {
-                                await Api.workspaces.files
-                                    .uploadImage(workspace, screenshot.file.name, screenshot.file)
-                                    .then(
-                                        handleApiError(({ uuid }) => {
-                                            screenshotUuid = uuid;
-                                        }),
-                                    );
+                            if (screenshot !== undefined) {
+                                await Api.workspaces.files.uploadImage(workspace, screenshot.name, screenshot).then(
+                                    handleApiError(({ uuid }) => {
+                                        screenshotUuid = uuid;
+                                    }),
+                                );
                                 if (screenshotUuid === null) return toast.error("Fail to upload screenshot");
                             }
 
