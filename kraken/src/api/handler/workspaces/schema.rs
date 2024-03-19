@@ -51,7 +51,7 @@ pub struct UpdateWorkspaceRequest {
     pub name: Option<String>,
     /// Description of the workspace
     #[schema(example = "This workspace is for work and for work only!")]
-    #[serde(deserialize_with = "de_optional")]
+    #[serde(default, deserialize_with = "de_optional")]
     pub description: Option<Option<String>>,
 }
 

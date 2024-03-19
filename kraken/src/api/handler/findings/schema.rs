@@ -52,17 +52,17 @@ pub struct UpdateFindingRequest {
     ///
     /// May be used for documenting command invocation or other information
     /// that are provided by the user
-    #[serde(deserialize_with = "de_optional")]
+    #[serde(default, deserialize_with = "de_optional")]
     pub details: Option<Option<String>>,
 
     /// A screenshot
     ///
     /// The file must have been uploaded through the image upload.
-    #[serde(deserialize_with = "de_optional")]
+    #[serde(default, deserialize_with = "de_optional")]
     pub screenshot: Option<Option<Uuid>>,
 
     /// A log file
-    #[serde(deserialize_with = "de_optional")]
+    #[serde(default, deserialize_with = "de_optional")]
     pub log_file: Option<Option<Uuid>>,
 }
 

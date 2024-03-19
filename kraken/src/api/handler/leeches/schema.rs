@@ -31,8 +31,7 @@ pub struct UpdateLeechRequest {
     pub address: Option<Url>,
     /// Description of the leech
     #[schema(example = "First leech in a private network")]
-    #[serde(default)]
-    #[serde(deserialize_with = "de_optional")]
+    #[serde(default, deserialize_with = "de_optional")]
     pub description: Option<Option<String>>,
 }
 

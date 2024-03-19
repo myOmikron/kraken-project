@@ -21,8 +21,8 @@ pub(crate) mod utils;
 ///  pub(crate) struct UpdateRequest {
 ///     name: Option<String>,
 ///
-///     #[serde(default)]
-///     #[serde(deserialize_with = "crate::api::handler::de_optional")]
+///     // Don't forget the `default`!
+///     #[serde(default, deserialize_with = "crate::api::handler::de_optional")]
 ///     description: Option<Option<String>>,
 /// }
 /// ```
