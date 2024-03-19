@@ -1,17 +1,23 @@
 import Editor from "@monaco-editor/react";
-import React, { ChangeEvent } from "react";
+import React, { useEffect } from "react";
 import { Api } from "../../../api/api";
 import {
-    CreateFindingAffectedRequest,
+    AggregationType,
+    FindingAffectedObjectOneOf,
+    FindingAffectedObjectOneOf1,
+    FindingAffectedObjectOneOf2,
+    FindingAffectedObjectOneOf3,
     FindingSeverity,
-    FullDomain,
-    FullHost,
-    FullPort,
-    FullService,
+    FullFindingAffected,
+    SimpleDomain,
     SimpleFindingDefinition,
+    SimpleHost,
+    SimplePort,
+    SimpleService,
+    UpdateFindingRequest,
 } from "../../../api/generated";
 import { GithubMarkdown } from "../../../components/github-markdown";
-import { SelectPrimitive, selectStyles } from "../../../components/select-menu";
+import { SelectPrimitive } from "../../../components/select-menu";
 import BookIcon from "../../../svg/book";
 import FileIcon from "../../../svg/file";
 import InformationIcon from "../../../svg/information";
@@ -21,35 +27,29 @@ import { handleApiError } from "../../../utils/helper";
 import { setupMonaco } from "../../knowledge-base";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
+import { toast } from "react-toastify";
+import WS from "../../../api/websocket";
 import ArrowDownIcon from "../../../svg/arrow-down";
-import PlusIcon from "../../../svg/plus";
+import CloseIcon from "../../../svg/close";
+import GraphIcon from "../../../svg/graph";
 import Domain from "../components/domain";
+import { UploadingFileInput } from "../components/file-input";
 import IpAddr from "../components/host";
+import MarkdownEditorPopup from "../components/markdown-editor-popup";
 import PortNumber from "../components/port";
-import { ScreenshotInput } from "../components/screenshot-input";
+import SelectFindingDefinition from "../components/select-finding-definition";
 import ServiceName from "../components/service";
 import TagList from "../components/tag-list";
-import WorkspaceFindingTable from "./workspace-finding-table";
 import { FindingDefinitionDetails } from "./workspace-create-finding";
-import SelectFindingDefinition from "../components/select-finding-definition";
-import WS from "../../../api/websocket";
+import EditingTreeGraph from "./workspace-finding-editing-tree";
+import WorkspaceFindingTable from "./workspace-finding-table";
 
 export type WorkspaceEditFindingProps = {
     /** The finding's uuid */
     uuid: string;
 };
 
-type LocalAffected = CreateFindingAffectedRequest & {
-    _localScreenshot?: File;
-    _fileDataURL?: string;
-} & (
-        | { type: "Domain"; _data: FullDomain }
-        | { type: "Host"; _data: FullHost }
-        | { type: "Service"; _data: FullService }
-        | { type: "Port"; _data: FullPort }
-    );
-
-const SECTION = { definition: "Definition", description: "Description", affected: "Affected", graph: "Graph" };
+type Section = "definition" | "description" | "affected" | "network";
 
 export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     const {
@@ -57,28 +57,71 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     } = React.useContext(WORKSPACE_CONTEXT);
     const { uuid: finding } = props;
 
-    const [section, setSection] = React.useState<keyof typeof SECTION>("definition");
-    const [hoveredFindingDef, setHoveredFindingDef] = React.useState<SimpleFindingDefinition>();
+    const [section, setSection] = React.useState<Section>("definition");
 
     const [severity, setSeverity] = React.useState<FindingSeverity>("Medium");
     const [findingDef, setFindingDef] = React.useState<SimpleFindingDefinition>();
+    const [hoveredFindingDef, setHoveredFindingDef] = React.useState<SimpleFindingDefinition>();
     const [details, setDetails] = React.useState("");
 
-    const [file, setFile] = React.useState<File>();
-    const [fileDataURL, setFileDataURL] = React.useState<string>("");
     const [description, setDescription] = React.useState<boolean>(true);
     const [affectedVisible, setAffectedVisible] = React.useState<boolean>(true);
-    const [affected, setAffected] = React.useState<Array<LocalAffected>>([]);
+    const [affected, setAffected] = React.useState<Array<FullFindingAffected>>([]);
+    const [logFile, setLogFile] = React.useState("");
     const [screenshot, setScreenshot] = React.useState("");
+
+    // Upload to API with changes
+    const [pendingApiChanges, setPendingApiChanges] = React.useState<
+        UpdateFindingRequest & { _onSuccess: Function[]; _onFailure: Function[] }
+    >();
+    const updateFinding = (changes: UpdateFindingRequest, rollback: Function, success?: Function) => {
+        setPendingApiChanges((c) => ({
+            ...c,
+            ...changes,
+            _onSuccess: success ? [...(c?._onSuccess ?? []), success] : c?._onSuccess ?? [],
+            _onFailure: [...(c?._onFailure ?? []), rollback],
+        }));
+    };
+    useEffect(() => {
+        // TODO: debounce
+        if (pendingApiChanges !== undefined) {
+            const c = pendingApiChanges;
+            Api.workspaces.findings.update(workspace, finding, c).then((v) => {
+                v.match(
+                    () => c._onSuccess.forEach((v) => v()),
+                    () => {
+                        toast.error("Failed to update finding");
+                        c._onFailure.forEach((v) => v());
+                    },
+                );
+            });
+            setPendingApiChanges(undefined);
+        }
+    }, [pendingApiChanges]);
 
     React.useEffect(() => {
         // Get initial state
         Api.workspaces.findings.get(workspace, finding).then(
-            handleApiError((x) => {
+            handleApiError(async (x) => {
                 setFindingDef(x.definition);
                 setSeverity(x.severity);
                 setDetails(x.userDetails || "");
                 setScreenshot(x.screenshot || "");
+                setLogFile(x.logFile || "");
+
+                try {
+                    setAffected(
+                        await Promise.all(
+                            x.affected.map((a) =>
+                                Api.workspaces.findings
+                                    .getAffected(workspace, finding, a.affectedUuid)
+                                    .then((v) => v.unwrap()),
+                            ),
+                        ),
+                    );
+                } catch (e) {
+                    toast.error("Failed to read affected data");
+                }
             }),
         );
 
@@ -86,7 +129,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
         const handles = [
             WS.addEventListener("message.UpdatedFinding", ({ workspace: w, finding: f, update }) => {
                 if (w !== workspace || f !== finding) return;
-                const { severity, definition, screenshot } = update;
+                const { severity, definition, screenshot, logFile } = update;
                 if (severity) {
                     setSeverity(severity);
                 }
@@ -96,9 +139,13 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                 if (screenshot) {
                     setScreenshot(screenshot);
                 }
+                if (logFile) {
+                    setLogFile(logFile);
+                }
             }),
             WS.addEventListener("message.AddedFindingAffected", ({ workspace: w, finding: f }) => {
                 if (w !== workspace || f !== finding) return;
+                // addAffected(affected)
             }),
             WS.addEventListener("message.UpdatedFindingAffected", ({ workspace: w, finding: f }) => {
                 if (w !== workspace || f !== finding) return;
@@ -115,23 +162,41 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
         };
     }, [workspace, finding]);
 
-    const addAffected = (newAffected: LocalAffected) => {
-        setAffected((affected) => {
-            if (affected.some((a) => a.uuid == newAffected.uuid)) return affected;
+    const affectedType = (a: FullFindingAffected): AggregationType =>
+        (a.affected as any)["domain"]
+            ? "Domain"
+            : (a.affected as any)["host"]
+              ? "Host"
+              : (a.affected as any)["port"]
+                ? "Port"
+                : (a.affected as any)["service"]
+                  ? "Service"
+                  : (() => {
+                        throw new Error("unexpected finding type");
+                    })();
+    const extractAffected = (a: FullFindingAffected) =>
+        (a.affected as any)["domain"]
+            ? (a.affected as FindingAffectedObjectOneOf).domain
+            : (a.affected as any)["host"]
+              ? (a.affected as FindingAffectedObjectOneOf1).host
+              : (a.affected as any)["port"]
+                ? (a.affected as FindingAffectedObjectOneOf2).port
+                : (a.affected as any)["service"]
+                  ? (a.affected as FindingAffectedObjectOneOf3).service
+                  : (() => {
+                        throw new Error("unexpected finding type");
+                    })();
 
-            return [
-                ...affected,
-                {
-                    _fileDataURL: undefined,
-                    _screenshotDataURL: undefined,
-                    ...newAffected,
-                },
-            ].sort((a, b) => {
-                if (a.type < b.type) return -1;
-                if (a.type > b.type) return 1;
+    const addAffected = (newAffected: FullFindingAffected) => {
+        setAffected((affected) => {
+            if (affected.some((a) => extractAffected(a).uuid == extractAffected(newAffected).uuid)) return affected;
+
+            return [...affected, newAffected].sort((a, b) => {
+                if (affectedType(a) < affectedType(b)) return -1;
+                if (affectedType(a) > affectedType(b)) return 1;
                 // TODO: type-based sorters
-                if (a.uuid < b.uuid) return -1;
-                if (a.uuid > b.uuid) return 1;
+                if (extractAffected(a).uuid < extractAffected(b).uuid) return -1;
+                if (extractAffected(a).uuid > extractAffected(b).uuid) return 1;
                 return 0;
             });
         });
@@ -157,35 +222,46 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                     <div className="workspace-finding-data-table">
                         <WorkspaceFindingTable
                             onAddDomain={(d) =>
-                                addAffected({
+                                Api.workspaces.findings.addAffected(workspace, finding, {
                                     type: "Domain",
                                     uuid: d.uuid,
-                                    _data: d,
+                                    details: "",
                                 })
                             }
                             onAddHost={(d) =>
-                                addAffected({
+                                Api.workspaces.findings.addAffected(workspace, finding, {
                                     type: "Host",
                                     uuid: d.uuid,
-                                    _data: d,
+                                    details: "",
                                 })
                             }
                             onAddPort={(d) =>
-                                addAffected({
+                                Api.workspaces.findings.addAffected(workspace, finding, {
                                     type: "Port",
                                     uuid: d.uuid,
-                                    _data: d,
+                                    details: "",
                                 })
                             }
                             onAddService={(d) =>
-                                addAffected({
+                                Api.workspaces.findings.addAffected(workspace, finding, {
                                     type: "Service",
                                     uuid: d.uuid,
-                                    _data: d,
+                                    details: "",
                                 })
                             }
                         />
                     </div>
+                );
+            case "network":
+                return (
+                    <EditingTreeGraph
+                        uuid={finding}
+                        definition={findingDef}
+                        severity={severity}
+                        affected={affected}
+                        workspace={workspace}
+                        maximizable
+                    />
                 );
             default:
                 return "Unimplemented";
@@ -254,47 +330,114 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         {affectedVisible && (
                             <div className="affected-list">
                                 {affected.length > 0 ? (
-                                    affected.map((a) => (
-                                        <div className={`affected affected-${a.type}`}>
-                                            <div>
-                                                {a.type == "Domain" ? (
-                                                    <Domain domain={a._data} pretty />
-                                                ) : a.type == "Host" ? (
-                                                    <IpAddr host={a._data} pretty />
-                                                ) : a.type == "Port" ? (
-                                                    <PortNumber port={a._data} pretty />
-                                                ) : a.type == "Service" ? (
-                                                    <ServiceName service={a._data} pretty />
-                                                ) : (
-                                                    "not implemented"
-                                                )}
-                                            </div>
-                                            <TagList tags={a._data.tags} />
-                                            <ScreenshotInput
-                                                shortText
-                                                className="screenshot"
-                                                screenshot={a._localScreenshot}
-                                                onChange={(v) => {
-                                                    setAffected((affected) =>
-                                                        affected.map((orig) =>
-                                                            orig.uuid == a.uuid
-                                                                ? {
-                                                                      ...orig,
-                                                                      _localScreenshot: v,
-                                                                  }
-                                                                : orig,
-                                                        ),
-                                                    );
-                                                }}
+                                    affected.map((a, index) => {
+                                        const label =
+                                            affectedType(a) == "Domain" ? (
+                                                <Domain domain={extractAffected(a) as SimpleDomain} pretty />
+                                            ) : affectedType(a) == "Host" ? (
+                                                <IpAddr host={extractAffected(a) as SimpleHost} pretty />
+                                            ) : affectedType(a) == "Port" ? (
+                                                <PortNumber port={extractAffected(a) as SimplePort} pretty />
+                                            ) : affectedType(a) == "Service" ? (
+                                                <ServiceName service={extractAffected(a) as SimpleService} pretty />
+                                            ) : (
+                                                "not implemented"
+                                            );
+
+                                        return (
+                                            <div
+                                                key={extractAffected(a).uuid}
+                                                className={`affected affected-${affectedType(a)}`}
                                             >
-                                                <ScreenshotIcon />
-                                            </ScreenshotInput>
-                                            <div className="logfile">
-                                                <FileIcon />
-                                                Upload Attachment
+                                                <div className="name">
+                                                    <div
+                                                        title={"Remove affected"}
+                                                        className="remove"
+                                                        onClick={() => {
+                                                            Api.workspaces.findings.removeAffected(
+                                                                workspace,
+                                                                finding,
+                                                                extractAffected(a).uuid,
+                                                            );
+                                                            let copy = [...affected];
+                                                            copy.splice(index, 1);
+                                                            setAffected(copy);
+                                                        }}
+                                                    >
+                                                        <CloseIcon />
+                                                    </div>
+                                                    {label}
+                                                </div>
+                                                <MarkdownEditorPopup
+                                                    label={label}
+                                                    content={a.userDetails}
+                                                    onChange={(d) => {
+                                                        // TODO: websocket / live editor here
+                                                    }}
+                                                />
+                                                <TagList tags={extractAffected(a).tags || []} />
+                                                <UploadingFileInput
+                                                    image
+                                                    shortText
+                                                    className="screenshot"
+                                                    file={a.screenshot ?? undefined}
+                                                    onUploaded={(v) => {
+                                                        Api.workspaces.findings
+                                                            .updateAffected(
+                                                                workspace,
+                                                                finding,
+                                                                extractAffected(a).uuid,
+                                                                {
+                                                                    screenshot: v,
+                                                                },
+                                                            )
+                                                            .then(handleApiError);
+                                                        setAffected((affected) =>
+                                                            affected.map((orig) =>
+                                                                extractAffected(a).uuid == extractAffected(orig).uuid
+                                                                    ? {
+                                                                          ...orig,
+                                                                          screenshot: v,
+                                                                      }
+                                                                    : orig,
+                                                            ),
+                                                        );
+                                                    }}
+                                                >
+                                                    <ScreenshotIcon />
+                                                </UploadingFileInput>
+                                                <UploadingFileInput
+                                                    shortText
+                                                    className="logfile"
+                                                    file={a.logFile ?? undefined}
+                                                    onUploaded={(v) => {
+                                                        Api.workspaces.findings
+                                                            .updateAffected(
+                                                                workspace,
+                                                                finding,
+                                                                extractAffected(a).uuid,
+                                                                {
+                                                                    logFile: v,
+                                                                },
+                                                            )
+                                                            .then(handleApiError);
+                                                        setAffected((affected) =>
+                                                            affected.map((orig) =>
+                                                                extractAffected(a).uuid == extractAffected(orig).uuid
+                                                                    ? {
+                                                                          ...orig,
+                                                                          logFile: v,
+                                                                      }
+                                                                    : orig,
+                                                            ),
+                                                        );
+                                                    }}
+                                                >
+                                                    <FileIcon />
+                                                </UploadingFileInput>
                                             </div>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 ) : (
                                     <p>No affected items yet</p>
                                 )}
@@ -311,58 +454,30 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                             <FileIcon />
                             Log File
                         </h2>
-                        <ScreenshotInput
-                            screenshot={screenshot}
-                            onChange={(newScreenshot) => {
-                                if (newScreenshot === undefined) {
-                                    setScreenshot("");
-                                } else {
-                                    Api.workspaces.files
-                                        .uploadImage(workspace, newScreenshot.name, newScreenshot)
-                                        .then(handleApiError(({ uuid }) => setScreenshot(uuid)));
-                                }
+                        <UploadingFileInput
+                            image
+                            file={screenshot}
+                            onUploaded={(newScreenshot) => {
+                                setScreenshot((oldScreenshot) => {
+                                    updateFinding({ screenshot: newScreenshot ?? null }, () => {
+                                        setScreenshot(oldScreenshot);
+                                    });
+                                    return newScreenshot ?? "";
+                                });
                             }}
-                            className="create-finding-screenshot-container"
                         />
-                        <div className="create-finding-file-container">
-                            <div className="create-finding-log-file">
-                                <label className="button create-finding-file-upload" htmlFor="upload">
-                                    Upload
-                                </label>
-                                <input
-                                    id="upload"
-                                    type="file"
-                                    onChange={(event) => {
-                                        const file = event.target.files?.[0];
-                                        setFile(file);
-                                        if (file !== undefined) {
-                                            setFileDataURL(URL.createObjectURL(file));
-                                        } else if (fileDataURL.length > 0) {
-                                            URL.revokeObjectURL(fileDataURL);
-                                            setFileDataURL("");
-                                        }
-                                    }}
-                                />
-                            </div>
-                            {file ? (
-                                <div className="create-finding-file-grid">
-                                    <button title="Remove file" className="button" onClick={() => setFile(undefined)}>
-                                        <PlusIcon />
-                                    </button>
-                                    <a
-                                        className="create-finding-file-name"
-                                        download={file.name}
-                                        href={URL.createObjectURL(file)}
-                                    >
-                                        <span>{file.name}</span>
-                                    </a>
-                                </div>
-                            ) : undefined}
-                        </div>
+                        <UploadingFileInput
+                            file={logFile}
+                            onUploaded={(newFile) => {
+                                setLogFile((oldFile) => {
+                                    updateFinding({ logFile: newFile ?? null }, () => {
+                                        setLogFile(oldFile);
+                                    });
+                                    return newFile ?? "";
+                                });
+                            }}
+                        />
                     </div>
-                    <button type={"submit"} className="button">
-                        Create
-                    </button>
                 </form>
                 <div className="create-finding-editor-container">
                     <div className="knowledge-base-editor-tabs">
@@ -392,6 +507,15 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                             }}
                         >
                             <RelationLeftRightIcon />
+                        </button>
+                        <button
+                            title={"Network"}
+                            className={`knowledge-base-editor-tab ${section === "network" ? "selected" : ""}`}
+                            onClick={() => {
+                                setSection("network");
+                            }}
+                        >
+                            <GraphIcon />
                         </button>
                     </div>
                     {editor()}

@@ -1,0 +1,148 @@
+.file-input {
+    position: relative;
+}
+
+.file-input button {
+    overflow: visible;
+}
+
+.file-input > .content {
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.file-input > .content > .image-preview {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+}
+
+.file-input > .content > .file-preview {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.file-input input {
+    opacity: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    cursor: pointer;
+}
+
+.file-input span {
+    padding: 2em;
+    text-align: center;
+}
+
+.file-input img {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.file-input img:hover {
+    cursor: pointer;
+}
+
+.screenshot-popup-overlay {
+    backdrop-filter: blur(4px) saturate(0%);
+    transition: all 0.15s ease-out;
+}
+
+.file-input-popup {
+    display: flex;
+    height: 80vh;
+    width: 80vw;
+}
+
+.file-input-popup img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.file-input .remove {
+    z-index: 3;
+    position: absolute;
+    right: -5%;
+    top: -5%;
+    border: 1px solid var(--primary-op);
+    border-radius: 1em;
+    width: 1.5em;
+    height: 1.5em;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.file-input .remove svg {
+    height: min-content;
+}
+
+.file-input .remove:hover {
+    cursor: pointer;
+}
+
+.file-input.uploading > .content > * {
+    filter: grayscale(1);
+}
+
+@keyframes rotate-360-center {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes rotate-360-2 {
+    from {
+        rotate: 0deg;
+    }
+    to {
+        rotate: 360deg;
+    }
+}
+
+.file-input.uploading::before {
+    content: "";
+    display: block;
+    position: absolute;
+    z-index: 10;
+    left: 50%;
+    top: 50%;
+    width: 48px;
+    height: 48px;
+    border-radius: 100%;
+    --fill: #dddc;
+    background: conic-gradient(var(--fill) 0deg, var(--fill) 120deg, transparent 20deg);
+    translate: -50% -50%;
+    transform-origin: center center;
+    mask: radial-gradient(at center, transparent 18px, white 19px);
+    animation:
+        rotate-360-center 1s infinite cubic-bezier(0.68, -0.55, 0.265, 1.55),
+        rotate-360-2 7s infinite linear;
+}

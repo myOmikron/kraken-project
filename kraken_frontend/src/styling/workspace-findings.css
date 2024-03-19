@@ -298,13 +298,12 @@
     height: 72vh;
 }
 
-.create-finding-screenshot-container {
+.create-finding-files > .file-input {
     height: 8em;
     width: 16em;
-    position: relative;
 }
 
-.create-finding-screenshot-container > .content {
+.create-finding-files > .file-input > .content {
     border-radius: 0.5em;
     border: 2px dashed var(--primary-op);
     background-color: #00ccff10;

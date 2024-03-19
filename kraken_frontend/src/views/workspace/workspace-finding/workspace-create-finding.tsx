@@ -1,6 +1,5 @@
 import Editor from "@monaco-editor/react";
 import React from "react";
-import Select, { components } from "react-select";
 import { toast } from "react-toastify";
 import { Api } from "../../../api/api";
 import {
@@ -13,7 +12,7 @@ import {
     SimpleFindingDefinition,
 } from "../../../api/generated";
 import { GithubMarkdown } from "../../../components/github-markdown";
-import { SelectPrimitive, selectStyles } from "../../../components/select-menu";
+import { SelectPrimitive } from "../../../components/select-menu";
 import { ROUTES } from "../../../routes";
 import ArrowDownIcon from "../../../svg/arrow-down";
 import BookIcon from "../../../svg/book";
@@ -26,11 +25,11 @@ import ScreenshotIcon from "../../../svg/screenshot";
 import { handleApiError } from "../../../utils/helper";
 import { setupMonaco } from "../../knowledge-base";
 import Domain from "../components/domain";
+import { FileInput } from "../components/file-input";
 import IpAddr from "../components/host";
-import { LogFile, LogFileInput } from "../components/log-file-input";
 import MarkdownEditorPopup from "../components/markdown-editor-popup";
 import PortNumber from "../components/port";
-import { ScreenshotInput } from "../components/screenshot-input";
+import SelectFindingDefinition from "../components/select-finding-definition";
 import ServiceName from "../components/service";
 import TagList from "../components/tag-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
@@ -41,7 +40,7 @@ export type CreateFindingProps = {};
 
 type LocalAffected = CreateFindingAffectedRequest & {
     _localScreenshot?: File;
-    _localLogFile?: LogFile;
+    _localLogFile?: File;
 } & (
         | { type: "Domain"; _data: FullDomain }
         | { type: "Host"; _data: FullHost }
@@ -55,17 +54,19 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
     const {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
-    const [severity, setSeverity] = React.useState<FindingSeverity>("Medium");
+
     const [section, setSection] = React.useState<Section>("definition");
+
+    const [severity, setSeverity] = React.useState<FindingSeverity>("Medium");
+    const [findingDef, setFindingDef] = React.useState<SimpleFindingDefinition>();
+    const [hoveredFindingDef, setHoveredFindingDef] = React.useState<SimpleFindingDefinition>();
     const [details, setDetails] = React.useState<string>("");
-    const [defs, setDefs] = React.useState([] as Array<SimpleFindingDefinition>); // all definitions
-    const [findingDef, setFindingDef] = React.useState<string | undefined>(undefined); // selected definition
-    const [hover, setHover] = React.useState<SimpleFindingDefinition | undefined>(); // hovered definition
+
     const [description, setDescription] = React.useState<boolean>(true);
     const [affectedVisible, setAffectedVisible] = React.useState<boolean>(true);
     const [affected, setAffected] = React.useState<Array<LocalAffected>>([]);
 
-    const [logFile, setLogFile] = React.useState<LogFile | undefined>(undefined);
+    const [logFile, setLogFile] = React.useState<File>();
     const [screenshot, setScreenshot] = React.useState<File>();
 
     const addAffected = (newAffected: LocalAffected) => {
@@ -90,27 +91,11 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
         });
     };
 
-    React.useEffect(() => {
-        Api.knowledgeBase.findingDefinitions.all().then(
-            handleApiError(({ findingDefinitions }) => {
-                setDefs(findingDefinitions);
-            }),
-        );
-    }, []);
-
     const editor = () => {
         switch (section) {
             case "definition":
-                return (
-                    <>
-                        {hover !== undefined ? (
-                            <FindingDefinitionDetails {...hover} />
-                        ) : (
-                            // @ts-ignore
-                            <FindingDefinitionDetails {...defs.find((finding) => finding.uuid === findingDef)} />
-                        )}
-                    </>
-                );
+                const effectiveDef = hoveredFindingDef || findingDef;
+                return effectiveDef && <FindingDefinitionDetails {...effectiveDef} />;
             case "description":
                 return (
                     <Editor
@@ -132,6 +117,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                 addAffected({
                                     type: "Domain",
                                     uuid: d.uuid,
+                                    details: "",
                                     _data: d,
                                 })
                             }
@@ -139,6 +125,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                 addAffected({
                                     type: "Host",
                                     uuid: d.uuid,
+                                    details: "",
                                     _data: d,
                                 })
                             }
@@ -146,6 +133,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                 addAffected({
                                     type: "Port",
                                     uuid: d.uuid,
+                                    details: "",
                                     _data: d,
                                 })
                             }
@@ -153,6 +141,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                 addAffected({
                                     type: "Service",
                                     uuid: d.uuid,
+                                    details: "",
                                     _data: d,
                                 })
                             }
@@ -162,7 +151,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
             case "network":
                 return (
                     <EditingTreeGraph
-                        definition={defs.find((finding) => finding.uuid === findingDef)}
+                        definition={findingDef}
                         severity={severity}
                         affected={affected}
                         workspace={workspace}
@@ -201,11 +190,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                         request.screenshot = r.unwrap().uuid;
                                     }
                                     if (logFile !== undefined) {
-                                        let r = await Api.workspaces.files.uploadFile(
-                                            workspace,
-                                            logFile.file.name,
-                                            logFile.file,
-                                        );
+                                        let r = await Api.workspaces.files.uploadFile(workspace, logFile.name, logFile);
                                         request.logFile = r.unwrap().uuid;
                                     }
                                     return request;
@@ -230,8 +215,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                             }
 
                             let logFileUuid = null;
-                            if (logFile?.file !== undefined) {
-                                await Api.workspaces.files.uploadFile(workspace, logFile.file.name, logFile.file).then(
+                            if (logFile !== undefined) {
+                                await Api.workspaces.files.uploadFile(workspace, logFile.name, logFile).then(
                                     handleApiError(({ uuid }) => {
                                         logFileUuid = uuid;
                                     }),
@@ -242,7 +227,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                             Api.workspaces.findings
                                 .create(workspace, {
                                     severity: severity,
-                                    definition: findingDef,
+                                    definition: findingDef.uuid,
                                     details: details,
                                     logFile: logFileUuid,
                                     screenshot: screenshotUuid,
@@ -278,50 +263,11 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                 ]}
                                 onChange={(value) => setSeverity(value || severity)}
                             />
-                            <Select<{ label: string; value: string }>
-                                required={true}
-                                className={"dropdown"}
-                                components={{
-                                    Option: (props) => (
-                                        <div
-                                            onMouseOver={(e) => {
-                                                if (section !== "definition") {
-                                                    setSection("definition");
-                                                }
-                                                let def = defs.find((finding) => finding.name === props.label);
-                                                setHover(def);
-                                            }}
-                                            onMouseOut={() => {
-                                                setHover(undefined);
-                                            }}
-                                        >
-                                            <components.Option {...props} />
-                                        </div>
-                                    ),
-                                }}
-                                options={
-                                    defs.map((def) => ({
-                                        label: def.name,
-                                        value: def.uuid,
-                                    })) ?? []
-                                }
-                                value={
-                                    findingDef === undefined
-                                        ? undefined
-                                        : {
-                                              label: defs.find((finding) => finding.uuid === findingDef)?.name || "",
-                                              value: findingDef,
-                                          }
-                                }
-                                onChange={(value) => {
-                                    if (value !== undefined && value !== null) {
-                                        setFindingDef(value.value);
-                                        setHover(undefined);
-                                    }
-                                }}
-                                isClearable={false}
-                                autoFocus={false}
-                                styles={selectStyles("default")}
+                            <SelectFindingDefinition
+                                selected={findingDef?.uuid}
+                                onSelect={setFindingDef}
+                                hovered={hoveredFindingDef?.uuid}
+                                onHover={setHoveredFindingDef}
                             />
                         </div>
 
@@ -367,79 +313,78 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                                 );
 
                                             return (
-                                                <>
-                                                    <div className={`affected affected-${a.type}`}>
-                                                        <div className="name">
-                                                            <div
-                                                                title={"Remove affected"}
-                                                                className="remove"
-                                                                onClick={() => {
-                                                                    let copy = [...affected];
-                                                                    copy.splice(index, 1);
-                                                                    setAffected(copy);
-                                                                }}
-                                                            >
-                                                                <CloseIcon />
-                                                            </div>
-                                                            {label}
+                                                <div className={`affected affected-${a.type}`}>
+                                                    <div className="name">
+                                                        <div
+                                                            title={"Remove affected"}
+                                                            className="remove"
+                                                            onClick={() => {
+                                                                let copy = [...affected];
+                                                                copy.splice(index, 1);
+                                                                setAffected(copy);
+                                                            }}
+                                                        >
+                                                            <CloseIcon />
                                                         </div>
-                                                        <MarkdownEditorPopup
-                                                            label={label}
-                                                            content={a.details || ""}
-                                                            onChange={(d) => {
-                                                                setAffected((affected) =>
-                                                                    affected.map((orig) =>
-                                                                        orig.uuid == a.uuid
-                                                                            ? {
-                                                                                  ...orig,
-                                                                                  details: d,
-                                                                              }
-                                                                            : orig,
-                                                                    ),
-                                                                );
-                                                            }}
-                                                        />
-                                                        <TagList tags={a._data.tags} />
-                                                        <ScreenshotInput
-                                                            shortText
-                                                            className="screenshot"
-                                                            screenshot={a._localScreenshot}
-                                                            onChange={(v) => {
-                                                                setAffected((affected) =>
-                                                                    affected.map((orig) =>
-                                                                        orig.uuid == a.uuid
-                                                                            ? {
-                                                                                  ...orig,
-                                                                                  _localScreenshot: v,
-                                                                              }
-                                                                            : orig,
-                                                                    ),
-                                                                );
-                                                            }}
-                                                        >
-                                                            <ScreenshotIcon />
-                                                        </ScreenshotInput>
-                                                        <LogFileInput
-                                                            affected
-                                                            className="logfile"
-                                                            logfile={a._localLogFile}
-                                                            onChange={(f) => {
-                                                                setAffected((affected) =>
-                                                                    affected.map((orig) =>
-                                                                        orig.uuid == a.uuid
-                                                                            ? {
-                                                                                  ...orig,
-                                                                                  _localLogFile: f,
-                                                                              }
-                                                                            : orig,
-                                                                    ),
-                                                                );
-                                                            }}
-                                                        >
-                                                            <FileIcon />
-                                                        </LogFileInput>
+                                                        {label}
                                                     </div>
-                                                </>
+                                                    <MarkdownEditorPopup
+                                                        label={label}
+                                                        content={a.details || ""}
+                                                        onChange={(d) => {
+                                                            setAffected((affected) =>
+                                                                affected.map((orig) =>
+                                                                    orig.uuid == a.uuid
+                                                                        ? {
+                                                                              ...orig,
+                                                                              details: d,
+                                                                          }
+                                                                        : orig,
+                                                                ),
+                                                            );
+                                                        }}
+                                                    />
+                                                    <TagList tags={a._data.tags} />
+                                                    <FileInput
+                                                        image
+                                                        shortText
+                                                        className="screenshot"
+                                                        file={a._localScreenshot}
+                                                        onChange={(v) => {
+                                                            setAffected((affected) =>
+                                                                affected.map((orig) =>
+                                                                    orig.uuid == a.uuid
+                                                                        ? {
+                                                                              ...orig,
+                                                                              _localScreenshot: v,
+                                                                          }
+                                                                        : orig,
+                                                                ),
+                                                            );
+                                                        }}
+                                                    >
+                                                        <ScreenshotIcon />
+                                                    </FileInput>
+                                                    <FileInput
+                                                        shortText
+                                                        className="logfile"
+                                                        file={a._localLogFile}
+                                                        onChange={(f) => {
+                                                            setAffected((affected) =>
+                                                                affected.map((orig) =>
+                                                                    orig.uuid == a.uuid
+                                                                        ? {
+                                                                              ...orig,
+                                                                              _localLogFile: f,
+                                                                          }
+                                                                        : orig,
+                                                                ),
+                                                            );
+                                                        }}
+                                                    >
+                                                        <FileIcon />
+                                                    </FileInput>
+                                                </div>
                                             );
                                         })
                                     ) : (
@@ -458,12 +403,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                 <FileIcon />
                                 Log File
                             </h2>
-                            <ScreenshotInput
-                                screenshot={screenshot}
-                                onChange={setScreenshot}
-                                className="create-finding-screenshot-container"
-                            />
-                            <LogFileInput logfile={logFile} onChange={setLogFile} />
+                            <FileInput image file={screenshot} onChange={setScreenshot} />
+                            <FileInput file={logFile} onChange={setLogFile} />
                         </div>
                         <button type={"submit"} className="button">
                             Create

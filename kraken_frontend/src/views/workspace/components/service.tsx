@@ -28,6 +28,7 @@ export default function ServiceName({ service, pretty }: { service: FullService 
             trigger={
                 // eagerly load on mouse over, so popup potentially doesn't need to wait
                 <div onMouseOver={ensureDataLoaded}>
+                    {/* TODO: if pretty and only a SimpleService is passed in, load it on demand and show it here (same for `<PortNumber>`) */}
                     {pretty && typeof service.host === "object" ? (
                         <div>
                             <b>{service.name}</b>

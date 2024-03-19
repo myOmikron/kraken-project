@@ -124,7 +124,8 @@
     grid-column: 2 / span 1;
 }
 
-.affected-list > .affected > .screenshot span {
+.affected-list > .affected > .screenshot span,
+.affected-list > .affected > .logfile span {
     padding: 0;
 }
 
