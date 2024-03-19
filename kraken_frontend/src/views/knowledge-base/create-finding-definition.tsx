@@ -14,8 +14,10 @@ import "../../styling/create-finding-definition.css";
 import { handleApiError } from "../../utils/helper";
 import { Api } from "../../api/api";
 import { ROUTES } from "../../routes";
+import { toast } from "react-toastify";
 
 export type CreateFindingDefinitionProps = {};
+
 export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
     const [name, setName] = React.useState("");
     const [severity, setSeverity] = React.useState("Medium");
@@ -102,7 +104,12 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                                     remediation: sections.Remediation.value,
                                     references: sections.References.value,
                                 })
-                                .then(handleApiError(({ uuid }) => ROUTES.FINDING_DEFINITION_EDIT.visit({ uuid })))
+                                .then(
+                                    handleApiError(({ uuid }) => {
+                                        toast.success("Created finding definition");
+                                        ROUTES.FINDING_DEFINITION_EDIT.visit({ uuid });
+                                    }),
+                                )
                         }
                     >
                         Create
