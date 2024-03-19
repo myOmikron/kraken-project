@@ -138,7 +138,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let aggregator = Aggregator::default();
 
-            let editor_sync = EditorSync;
+            let editor_sync = EditorSync::new();
 
             GLOBAL.init(GlobalChan {
                 db,

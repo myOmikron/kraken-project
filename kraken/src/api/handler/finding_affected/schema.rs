@@ -27,7 +27,7 @@ pub struct CreateFindingAffectedRequest {
     ///
     /// May be used for documenting command invocation or other information
     /// that are provided by the user
-    pub details: Option<String>,
+    pub details: String,
 
     /// A screenshot
     ///
@@ -41,13 +41,6 @@ pub struct CreateFindingAffectedRequest {
 /// The request to update an affected object's details
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateFindingAffectedRequest {
-    /// Notes about the affected provided by the user
-    ///
-    /// May be used for documenting command invocation or other information
-    /// that are provided by the user
-    #[serde(default, deserialize_with = "de_optional")]
-    pub details: Option<Option<String>>,
-
     /// A screenshot
     ///
     /// The file must have been uploaded through the image upload.
@@ -72,7 +65,7 @@ pub struct FullFindingAffected {
     ///
     /// May be used for documenting command invocation or other information
     /// that are provided by the user
-    pub user_details: Option<String>,
+    pub user_details: String,
 
     /// Details of the finding that comes from the attack module
     ///

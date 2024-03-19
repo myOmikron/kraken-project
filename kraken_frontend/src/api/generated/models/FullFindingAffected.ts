@@ -52,7 +52,7 @@ export interface FullFindingAffected {
      * @type {string}
      * @memberof FullFindingAffected
      */
-    userDetails?: string | null;
+    userDetails: string;
     /**
      * Details of the finding that comes from the attack module
      * 
@@ -88,6 +88,7 @@ export function instanceOfFullFindingAffected(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "finding" in value;
     isInstance = isInstance && "affected" in value;
+    isInstance = isInstance && "userDetails" in value;
     isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
@@ -105,7 +106,7 @@ export function FullFindingAffectedFromJSONTyped(json: any, ignoreDiscriminator:
         
         'finding': FullFindingFromJSON(json['finding']),
         'affected': FindingAffectedObjectFromJSON(json['affected']),
-        'userDetails': !exists(json, 'user_details') ? undefined : json['user_details'],
+        'userDetails': json['user_details'],
         'toolDetails': !exists(json, 'tool_details') ? undefined : json['tool_details'],
         'screenshot': !exists(json, 'screenshot') ? undefined : json['screenshot'],
         'logFile': !exists(json, 'log_file') ? undefined : json['log_file'],

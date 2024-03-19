@@ -48,7 +48,7 @@ export interface CreateFindingRequest {
      * @type {string}
      * @memberof CreateFindingRequest
      */
-    details?: string | null;
+    details: string;
     /**
      * A screenshot
      * 
@@ -72,6 +72,7 @@ export function instanceOfCreateFindingRequest(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "definition" in value;
     isInstance = isInstance && "severity" in value;
+    isInstance = isInstance && "details" in value;
 
     return isInstance;
 }
@@ -88,7 +89,7 @@ export function CreateFindingRequestFromJSONTyped(json: any, ignoreDiscriminator
         
         'definition': json['definition'],
         'severity': FindingSeverityFromJSON(json['severity']),
-        'details': !exists(json, 'details') ? undefined : json['details'],
+        'details': json['details'],
         'screenshot': !exists(json, 'screenshot') ? undefined : json['screenshot'],
         'logFile': !exists(json, 'log_file') ? undefined : json['log_file'],
     };

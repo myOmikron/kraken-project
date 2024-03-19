@@ -26,7 +26,7 @@ pub struct CreateFindingRequest {
     ///
     /// May be used for documenting command invocation or other information
     /// that are provided by the user
-    pub details: Option<String>,
+    pub details: String,
 
     /// A screenshot
     ///
@@ -47,13 +47,6 @@ pub struct UpdateFindingRequest {
 
     /// The severity of this specific instance of the finding
     pub severity: Option<FindingSeverity>,
-
-    /// Notes about the finding provided by the user
-    ///
-    /// May be used for documenting command invocation or other information
-    /// that are provided by the user
-    #[serde(default, deserialize_with = "de_optional")]
-    pub details: Option<Option<String>>,
 
     /// A screenshot
     ///
@@ -107,7 +100,7 @@ pub struct FullFinding {
     ///
     /// May be used for documenting command invocation or other information
     /// that are provided by the user
-    pub user_details: Option<String>,
+    pub user_details: String,
 
     /// Details of the finding that comes from the attack module
     ///

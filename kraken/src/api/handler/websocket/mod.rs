@@ -15,6 +15,7 @@ use bytes::Bytes;
 use log::debug;
 use log::error;
 use tokio::sync::Mutex;
+use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::chan::global::GLOBAL;
@@ -92,75 +93,7 @@ pub async fn websocket(
                     match msg {
                         Message::Text(data) => {
                             match serde_json::from_str::<WsClientMessage>(data.as_ref()) {
-                                Ok(msg) => match msg {
-                                    WsClientMessage::EditorChangedContent {
-                                        target:
-                                            EditorTarget::FindingDefinition {
-                                                finding_definition,
-                                                finding_section,
-                                            },
-                                        change,
-                                    } => {
-                                        tokio::spawn(async move {
-                                            GLOBAL
-                                                .editor_sync
-                                                .process_client_edit_finding_definition(
-                                                    user_uuid,
-                                                    finding_definition,
-                                                    finding_section,
-                                                    change,
-                                                )
-                                                .await;
-                                        });
-                                    }
-                                    WsClientMessage::EditorChangedContent {
-                                        target: EditorTarget::WorkspaceNotes { workspace },
-                                        change,
-                                    } => {
-                                        tokio::spawn(async move {
-                                            GLOBAL
-                                                .editor_sync
-                                                .process_client_edit_ws_notes(
-                                                    user_uuid, workspace, change,
-                                                )
-                                                .await;
-                                        });
-                                    }
-                                    WsClientMessage::EditorChangedCursor {
-                                        target:
-                                            EditorTarget::FindingDefinition {
-                                                finding_definition,
-                                                finding_section,
-                                            },
-                                        cursor,
-                                    } => {
-                                        tokio::spawn(async move {
-                                            GLOBAL
-                                                .editor_sync
-                                                .process_client_cursor_update_finding_definition(
-                                                    user_uuid,
-                                                    finding_definition,
-                                                    finding_section,
-                                                    cursor,
-                                                )
-                                                .await;
-                                        });
-                                    }
-                                    WsClientMessage::EditorChangedCursor {
-                                        target: EditorTarget::WorkspaceNotes { workspace },
-                                        cursor,
-                                    } => {
-                                        tokio::spawn(async move {
-                                            GLOBAL
-                                                .editor_sync
-                                                .process_client_cursor_update_ws_notes(
-                                                    user_uuid, workspace, cursor,
-                                                )
-                                                .await;
-                                        });
-                                    }
-                                    _ => {}
-                                },
+                                Ok(msg) => process_msg(msg, user_uuid).await,
                                 Err(err) => {
                                     debug!("Error deserializing data: {err}");
 
@@ -205,4 +138,80 @@ pub async fn websocket(
     GLOBAL.ws.add(user_uuid, tx.clone()).await;
 
     Ok(response)
+}
+
+async fn process_msg(msg: WsClientMessage, user_uuid: Uuid) {
+    match msg {
+        WsClientMessage::EditorChangedContent { change, target } => match target {
+            EditorTarget::FindingDefinition {
+                finding_definition,
+                finding_section,
+            } => {
+                GLOBAL
+                    .editor_sync
+                    .send_finding_definition(user_uuid, finding_definition, finding_section, change)
+                    .await
+            }
+            EditorTarget::WorkspaceNotes { workspace } => {
+                GLOBAL
+                    .editor_sync
+                    .send_ws_notes(user_uuid, workspace, change)
+                    .await
+            }
+            EditorTarget::Finding { finding } => {
+                GLOBAL
+                    .editor_sync
+                    .send_finding(user_uuid, finding, change)
+                    .await;
+            }
+            EditorTarget::FindingAffected { finding, affected } => {
+                GLOBAL
+                    .editor_sync
+                    .send_finding_affected(user_uuid, finding, affected, change)
+                    .await;
+            }
+        },
+        WsClientMessage::EditorChangedCursor { cursor, target } => {
+            tokio::spawn(async move {
+                match target {
+                    EditorTarget::FindingDefinition {
+                        finding_definition,
+                        finding_section,
+                    } => {
+                        GLOBAL
+                            .editor_sync
+                            .process_client_cursor_update_finding_definition(
+                                user_uuid,
+                                finding_definition,
+                                finding_section,
+                                cursor,
+                            )
+                            .await;
+                    }
+                    EditorTarget::WorkspaceNotes { workspace } => {
+                        GLOBAL
+                            .editor_sync
+                            .process_client_cursor_update_ws_notes(user_uuid, workspace, cursor)
+                            .await;
+                    }
+                    EditorTarget::Finding { finding } => {
+                        GLOBAL
+                            .editor_sync
+                            .process_client_cursor_update_finding_details(
+                                user_uuid, finding, cursor,
+                            )
+                            .await;
+                    }
+                    EditorTarget::FindingAffected { finding, affected } => {
+                        GLOBAL
+                            .editor_sync
+                            .process_client_cursor_update_finding_affected_details(
+                                user_uuid, finding, affected, cursor,
+                            )
+                            .await;
+                    }
+                }
+            });
+        }
+    }
 }

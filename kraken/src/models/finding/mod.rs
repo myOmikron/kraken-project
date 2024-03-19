@@ -166,8 +166,8 @@ pub struct FindingDetails {
     ///
     /// May be used for documenting command invocation or other information
     /// that are provided by the user
-    #[rorm(max_length = 65535)]
-    pub user_details: Option<String>,
+    #[rorm(max_length = 65535, default = "")]
+    pub user_details: String,
 
     /// Details of the finding that comes from the attack module
     ///

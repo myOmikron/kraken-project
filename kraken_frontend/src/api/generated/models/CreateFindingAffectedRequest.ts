@@ -46,7 +46,7 @@ export interface CreateFindingAffectedRequest {
      * @type {string}
      * @memberof CreateFindingAffectedRequest
      */
-    details?: string | null;
+    details: string;
     /**
      * A screenshot
      * 
@@ -70,6 +70,7 @@ export function instanceOfCreateFindingAffectedRequest(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "type" in value;
+    isInstance = isInstance && "details" in value;
 
     return isInstance;
 }
@@ -86,7 +87,7 @@ export function CreateFindingAffectedRequestFromJSONTyped(json: any, ignoreDiscr
         
         'uuid': json['uuid'],
         'type': AggregationTypeFromJSON(json['type']),
-        'details': !exists(json, 'details') ? undefined : json['details'],
+        'details': json['details'],
         'screenshot': !exists(json, 'screenshot') ? undefined : json['screenshot'],
         'logFile': !exists(json, 'log_file') ? undefined : json['log_file'],
     };

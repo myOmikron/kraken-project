@@ -8661,7 +8661,7 @@
             "CreateFindingAffectedRequest": {
                 "type": "object",
                 "description": "The request to add a new object affected by a finding",
-                "required": ["uuid", "type"],
+                "required": ["uuid", "type", "details"],
                 "properties": {
                     "uuid": {
                         "type": "string",
@@ -8673,8 +8673,7 @@
                     },
                     "details": {
                         "type": "string",
-                        "description": "Notes about the affected provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user",
-                        "nullable": true
+                        "description": "Notes about the affected provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user"
                     },
                     "screenshot": {
                         "type": "string",
@@ -8732,7 +8731,7 @@
             "CreateFindingRequest": {
                 "type": "object",
                 "description": "The request to create a new finding",
-                "required": ["definition", "severity"],
+                "required": ["definition", "severity", "details"],
                 "properties": {
                     "definition": {
                         "type": "string",
@@ -8744,8 +8743,7 @@
                     },
                     "details": {
                         "type": "string",
-                        "description": "Notes about the finding provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user",
-                        "nullable": true
+                        "description": "Notes about the finding provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user"
                     },
                     "screenshot": {
                         "type": "string",
@@ -9657,7 +9655,7 @@
             "FullFinding": {
                 "type": "object",
                 "description": "A full finding",
-                "required": ["uuid", "definition", "severity", "affected", "created_at"],
+                "required": ["uuid", "definition", "severity", "affected", "user_details", "created_at"],
                 "properties": {
                     "uuid": {
                         "type": "string",
@@ -9679,8 +9677,7 @@
                     },
                     "user_details": {
                         "type": "string",
-                        "description": "Notes about the finding provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user",
-                        "nullable": true
+                        "description": "Notes about the finding provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user"
                     },
                     "tool_details": {
                         "type": "string",
@@ -9709,7 +9706,7 @@
             "FullFindingAffected": {
                 "type": "object",
                 "description": "An affected object's details and the finding it is affected by",
-                "required": ["finding", "affected", "created_at"],
+                "required": ["finding", "affected", "user_details", "created_at"],
                 "properties": {
                     "finding": {
                         "$ref": "#/components/schemas/FullFinding"
@@ -9719,8 +9716,7 @@
                     },
                     "user_details": {
                         "type": "string",
-                        "description": "Notes about the finding provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user",
-                        "nullable": true
+                        "description": "Notes about the finding provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user"
                     },
                     "tool_details": {
                         "type": "string",
@@ -13259,11 +13255,6 @@
                 "type": "object",
                 "description": "The request to update an affected object's details",
                 "properties": {
-                    "details": {
-                        "type": "string",
-                        "description": "Notes about the affected provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user",
-                        "nullable": true
-                    },
                     "screenshot": {
                         "type": "string",
                         "format": "uuid",
@@ -13294,11 +13285,6 @@
                                 "$ref": "#/components/schemas/FindingSeverity"
                             }
                         ],
-                        "nullable": true
-                    },
-                    "details": {
-                        "type": "string",
-                        "description": "Notes about the finding provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user",
                         "nullable": true
                     },
                     "screenshot": {

@@ -23,7 +23,10 @@ use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
 
 use crate::chan::global::GLOBAL;
+use crate::models::Finding;
+use crate::models::FindingAffected;
 use crate::models::FindingDefinition;
+use crate::models::FindingDetails;
 use crate::models::WorkspaceNotes;
 use crate::models::WorkspaceNotesInsert;
 
@@ -46,6 +49,10 @@ pub struct EditorCache {
     pub fd_remediation: FdRemediationCache,
     /// Finding definition references cache
     pub fd_references: FdReferencesCache,
+    /// Finding details cache
+    pub finding_details: FindingDetailsCache,
+    /// FindingAffected details cache
+    pub finding_affected_details: FindingAffectedDetailsCache,
 }
 
 impl Default for EditorCache {
@@ -58,6 +65,8 @@ impl Default for EditorCache {
             fd_impact: Default::default(),
             fd_remediation: Default::default(),
             fd_references: Default::default(),
+            finding_details: Default::default(),
+            finding_affected_details: Default::default(),
         };
 
         tokio::spawn(cache.ws_notes.clone().run_cache_save());
@@ -66,36 +75,170 @@ impl Default for EditorCache {
         tokio::spawn(cache.fd_impact.clone().run_cache_save());
         tokio::spawn(cache.fd_remediation.clone().run_cache_save());
         tokio::spawn(cache.fd_references.clone().run_cache_save());
+        tokio::spawn(cache.finding_details.clone().run_cache_save());
+        tokio::spawn(cache.finding_affected_details.clone().run_cache_save());
 
         cache
     }
 }
 
 // --------
-// FD Summary
+// FindingAffected Details
 // --------
 
 #[derive(Clone, Default)]
-pub struct FdSummaryCache(InnerCache);
+pub struct FindingAffectedDetailsCache(InnerCache<Uuid>);
 
-impl InternalEditorCached for FdSummaryCache {
-    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem>>> {
+impl InternalEditorCached<Uuid> for FindingAffectedDetailsCache {
+    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem<Uuid>>>> {
         #[allow(clippy::expect_used)]
         self.0.read().expect(EXPECT_MSG)
     }
 
-    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem>>> {
+    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem<Uuid>>>> {
         #[allow(clippy::expect_used)]
         self.0.write().expect(EXPECT_MSG)
     }
 
-    async fn query_db(&self, key: Uuid) -> Result<Option<String>, Error> {
+    async fn query_db(&self, key: Uuid) -> Result<Option<(String, Uuid)>, Error> {
         let db = &GLOBAL.db;
-        Ok(query!(db, FindingDefinition)
+
+        Ok(query!(
+            db,
+            (
+                FindingAffected::F.details.user_details,
+                FindingAffected::F.workspace
+            )
+        )
+        .condition(FindingAffected::F.uuid.equals(key))
+        .optional()
+        .await?
+        .map(|x| (x.0, *x.1.key())))
+    }
+
+    async fn save_to_db(&self, key: Uuid, value: String) -> Result<(), Error> {
+        let mut tx = GLOBAL.db.start_transaction().await?;
+
+        let old_details = query!(&mut tx, (FindingAffected::F.details,))
+            .condition(FindingAffected::F.uuid.equals(key))
+            .one()
+            .await?
+            .0
+            .map(|x| *x.key());
+
+        if let Some(old_details) = old_details {
+            update!(&mut tx, FindingDetails)
+                .condition(FindingDetails::F.uuid.equals(old_details))
+                .set(FindingDetails::F.user_details, value)
+                .exec()
+                .await?;
+        } else {
+            let pk = insert!(&mut tx, FindingDetails)
+                .return_primary_key()
+                .single(&FindingDetails {
+                    uuid: Uuid::new_v4(),
+                    user_details: value,
+                    tool_details: None,
+                    screenshot: None,
+                    log_file: None,
+                })
+                .await?;
+
+            update!(&mut tx, FindingAffected)
+                .condition(FindingAffected::F.uuid.equals(key))
+                .set(
+                    FindingAffected::F.details,
+                    Some(ForeignModelByField::Key(pk)),
+                )
+                .exec()
+                .await?;
+        }
+
+        tx.commit().await?;
+
+        Ok(())
+    }
+}
+
+impl EditorCached<Uuid> for FindingAffectedDetailsCache {}
+
+// --------
+// Finding Details
+// --------
+
+#[derive(Clone, Default)]
+pub struct FindingDetailsCache(InnerCache<Uuid>);
+
+impl InternalEditorCached<Uuid> for FindingDetailsCache {
+    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem<Uuid>>>> {
+        #[allow(clippy::expect_used)]
+        self.0.read().expect(EXPECT_MSG)
+    }
+
+    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem<Uuid>>>> {
+        #[allow(clippy::expect_used)]
+        self.0.write().expect(EXPECT_MSG)
+    }
+
+    async fn query_db(&self, key: Uuid) -> Result<Option<(String, Uuid)>, Error> {
+        let db = &GLOBAL.db;
+        Ok(
+            query!(db, (Finding::F.details.user_details, Finding::F.workspace))
+                .condition(Finding::F.uuid.equals(key))
+                .optional()
+                .await
+                .map(|x| x.map(|y| (y.0, *y.1.key())))?,
+        )
+    }
+
+    async fn save_to_db(&self, key: Uuid, value: String) -> Result<(), Error> {
+        let mut tx = GLOBAL.db.start_transaction().await?;
+
+        let details_uuid = query!(&mut tx, (Finding::F.details,))
+            .condition(Finding::F.uuid.equals(key))
+            .one()
+            .await?
+            .0;
+
+        update!(&mut tx, FindingDetails)
+            .condition(FindingDetails::F.uuid.equals(*details_uuid.key()))
+            .set(FindingDetails::F.user_details, value)
+            .exec()
+            .await?;
+
+        tx.commit().await?;
+
+        Ok(())
+    }
+}
+
+impl EditorCached<Uuid> for FindingDetailsCache {}
+
+// --------
+// FD Summary
+// --------
+
+#[derive(Clone, Default)]
+pub struct FdSummaryCache(InnerCache<()>);
+
+impl InternalEditorCached<()> for FdSummaryCache {
+    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem<()>>>> {
+        #[allow(clippy::expect_used)]
+        self.0.read().expect(EXPECT_MSG)
+    }
+
+    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem<()>>>> {
+        #[allow(clippy::expect_used)]
+        self.0.write().expect(EXPECT_MSG)
+    }
+
+    async fn query_db(&self, key: Uuid) -> Result<Option<(String, ())>, Error> {
+        let db = &GLOBAL.db;
+        Ok(query!(db, (FindingDefinition::F.summary,))
             .condition(FindingDefinition::F.uuid.equals(key))
             .optional()
             .await?
-            .map(|x| x.summary))
+            .map(|x| (x.0, ())))
     }
 
     async fn save_to_db(&self, key: Uuid, value: String) -> Result<(), rorm::Error> {
@@ -109,33 +252,33 @@ impl InternalEditorCached for FdSummaryCache {
         Ok(())
     }
 }
-impl EditorCached for FdSummaryCache {}
+impl EditorCached<()> for FdSummaryCache {}
 
 // --------
 // FD Description
 // --------
 
 #[derive(Clone, Default)]
-pub struct FdDescriptionCache(InnerCache);
+pub struct FdDescriptionCache(InnerCache<()>);
 
-impl InternalEditorCached for FdDescriptionCache {
-    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem>>> {
+impl InternalEditorCached<()> for FdDescriptionCache {
+    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem<()>>>> {
         #[allow(clippy::expect_used)]
         self.0.read().expect(EXPECT_MSG)
     }
 
-    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem>>> {
+    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem<()>>>> {
         #[allow(clippy::expect_used)]
         self.0.write().expect(EXPECT_MSG)
     }
 
-    async fn query_db(&self, key: Uuid) -> Result<Option<String>, Error> {
+    async fn query_db(&self, key: Uuid) -> Result<Option<(String, ())>, Error> {
         let db = &GLOBAL.db;
-        Ok(query!(db, FindingDefinition)
+        Ok(query!(db, (FindingDefinition::F.description,))
             .condition(FindingDefinition::F.uuid.equals(key))
             .optional()
             .await?
-            .map(|x| x.description))
+            .map(|x| (x.0, ())))
     }
 
     async fn save_to_db(&self, key: Uuid, value: String) -> Result<(), Error> {
@@ -149,33 +292,33 @@ impl InternalEditorCached for FdDescriptionCache {
         Ok(())
     }
 }
-impl EditorCached for FdDescriptionCache {}
+impl EditorCached<()> for FdDescriptionCache {}
 
 // --------
 // FD Impact
 // --------
 
 #[derive(Clone, Default)]
-pub struct FdImpactCache(InnerCache);
+pub struct FdImpactCache(InnerCache<()>);
 
-impl InternalEditorCached for FdImpactCache {
-    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem>>> {
+impl InternalEditorCached<()> for FdImpactCache {
+    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem<()>>>> {
         #[allow(clippy::expect_used)]
         self.0.read().expect(EXPECT_MSG)
     }
 
-    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem>>> {
+    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem<()>>>> {
         #[allow(clippy::expect_used)]
         self.0.write().expect(EXPECT_MSG)
     }
 
-    async fn query_db(&self, key: Uuid) -> Result<Option<String>, Error> {
+    async fn query_db(&self, key: Uuid) -> Result<Option<(String, ())>, Error> {
         let db = &GLOBAL.db;
-        Ok(query!(db, FindingDefinition)
+        Ok(query!(db, (FindingDefinition::F.impact,))
             .condition(FindingDefinition::F.uuid.equals(key))
             .optional()
             .await?
-            .map(|x| x.impact))
+            .map(|x| (x.0, ())))
     }
 
     async fn save_to_db(&self, key: Uuid, value: String) -> Result<(), Error> {
@@ -189,33 +332,33 @@ impl InternalEditorCached for FdImpactCache {
         Ok(())
     }
 }
-impl EditorCached for FdImpactCache {}
+impl EditorCached<()> for FdImpactCache {}
 
 // --------
 // FD Remediation
 // --------
 
 #[derive(Clone, Default)]
-pub struct FdRemediationCache(InnerCache);
+pub struct FdRemediationCache(InnerCache<()>);
 
-impl InternalEditorCached for FdRemediationCache {
-    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem>>> {
+impl InternalEditorCached<()> for FdRemediationCache {
+    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem<()>>>> {
         #[allow(clippy::expect_used)]
         self.0.read().expect(EXPECT_MSG)
     }
 
-    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem>>> {
+    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem<()>>>> {
         #[allow(clippy::expect_used)]
         self.0.write().expect(EXPECT_MSG)
     }
 
-    async fn query_db(&self, key: Uuid) -> Result<Option<String>, Error> {
+    async fn query_db(&self, key: Uuid) -> Result<Option<(String, ())>, Error> {
         let db = &GLOBAL.db;
-        Ok(query!(db, FindingDefinition)
+        Ok(query!(db, (FindingDefinition::F.remediation,))
             .condition(FindingDefinition::F.uuid.equals(key))
             .optional()
             .await?
-            .map(|x| x.remediation))
+            .map(|x| (x.0, ())))
     }
 
     async fn save_to_db(&self, key: Uuid, value: String) -> Result<(), Error> {
@@ -229,33 +372,33 @@ impl InternalEditorCached for FdRemediationCache {
         Ok(())
     }
 }
-impl EditorCached for FdRemediationCache {}
+impl EditorCached<()> for FdRemediationCache {}
 
 // --------
 // FD References
 // --------
 
 #[derive(Clone, Default)]
-pub struct FdReferencesCache(InnerCache);
+pub struct FdReferencesCache(InnerCache<()>);
 
-impl InternalEditorCached for FdReferencesCache {
-    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem>>> {
+impl InternalEditorCached<()> for FdReferencesCache {
+    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem<()>>>> {
         #[allow(clippy::expect_used)]
         self.0.read().expect(EXPECT_MSG)
     }
 
-    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem>>> {
+    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem<()>>>> {
         #[allow(clippy::expect_used)]
         self.0.write().expect(EXPECT_MSG)
     }
 
-    async fn query_db(&self, key: Uuid) -> Result<Option<String>, Error> {
+    async fn query_db(&self, key: Uuid) -> Result<Option<(String, ())>, Error> {
         let db = &GLOBAL.db;
-        Ok(query!(db, FindingDefinition)
+        Ok(query!(db, (FindingDefinition::F.references,))
             .condition(FindingDefinition::F.uuid.equals(key))
             .optional()
             .await?
-            .map(|x| x.references))
+            .map(|x| (x.0, ())))
     }
 
     async fn save_to_db(&self, key: Uuid, value: String) -> Result<(), Error> {
@@ -269,34 +412,34 @@ impl InternalEditorCached for FdReferencesCache {
         Ok(())
     }
 }
-impl EditorCached for FdReferencesCache {}
+impl EditorCached<()> for FdReferencesCache {}
 
 // --------
 // WS NOTES
 // --------
 
 #[derive(Clone, Default)]
-pub struct WsNotesCache(InnerCache);
+pub struct WsNotesCache(InnerCache<Uuid>);
 
-impl InternalEditorCached for WsNotesCache {
-    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem>>> {
+impl InternalEditorCached<Uuid> for WsNotesCache {
+    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem<Uuid>>>> {
         #[allow(clippy::expect_used)]
         self.0.read().expect(EXPECT_MSG)
     }
 
-    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem>>> {
+    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem<Uuid>>>> {
         #[allow(clippy::expect_used)]
         self.0.write().expect(EXPECT_MSG)
     }
 
-    async fn query_db(&self, key: Uuid) -> Result<Option<String>, Error> {
+    async fn query_db(&self, key: Uuid) -> Result<Option<(String, Uuid)>, Error> {
         let db = &GLOBAL.db;
         Ok(query!(db, (WorkspaceNotes::F.notes,))
             .condition(WorkspaceNotes::F.workspace.equals(key))
             .order_desc(WorkspaceNotes::F.created_at)
             .optional()
             .await?
-            .map(|x| x.0))
+            .map(|x| (x.0, key)))
     }
 
     async fn save_to_db(&self, key: Uuid, value: String) -> Result<(), Error> {
@@ -317,23 +460,24 @@ impl InternalEditorCached for WsNotesCache {
     }
 }
 
-impl EditorCached for WsNotesCache {}
+impl EditorCached<Uuid> for WsNotesCache {}
 
 // --------------
 // Implementation details
 // --------------
-pub trait InternalEditorCached
+pub trait InternalEditorCached<WS>
 where
+    WS: Send,
     Self: Send + Sync,
 {
-    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem>>>;
+    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem<WS>>>>;
 
-    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem>>>;
+    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem<WS>>>>;
 
     fn query_db(
         &self,
         key: Uuid,
-    ) -> impl Future<Output = Result<Option<String>, rorm::Error>> + Send;
+    ) -> impl Future<Output = Result<Option<(String, WS)>, rorm::Error>> + Send;
 
     fn save_to_db(
         &self,
@@ -423,40 +567,46 @@ where
 }
 
 /// Trait for accessing the editor cache
-pub trait EditorCached
+pub trait EditorCached<WS>
 where
-    Self: InternalEditorCached,
+    Self: InternalEditorCached<WS>,
+    WS: Copy + Default + Send,
 {
     /// Retrieve an item through a key
     ///
     /// The option marks the availability of the key in the database.
-    fn get(&self, key: Uuid) -> impl Future<Output = Result<Option<String>, rorm::Error>> {
+    fn get(
+        &self,
+        key: Uuid,
+    ) -> impl Future<Output = Result<Option<(String, WS)>, rorm::Error>> + Send {
         async move {
             let cache_item = self.read_cache().get(&key).cloned();
 
             // Check if ws notes have already been queried once
             return if let Some(item) = cache_item {
-                Ok(Some(item.map(|x| x.data).unwrap_or_default()))
+                Ok(Some(item.map(|x| (x.data, x.ws)).unwrap_or_default()))
             } else {
                 // Query the db to populate the cache
                 let notes = self.query_db(key).await?;
 
-                let Some(notes) = notes else {
+                let Some((notes, ws)) = notes else {
                     // Update cache so it knows that there's no DB entry
                     self.write_cache().insert(key, None);
                     return Ok(None);
                 };
 
                 // If the workspace was found, insert it into the cache
+
                 self.write_cache().insert(
                     key,
                     Some(InnerItem {
                         changed: true,
                         data: notes.clone(),
+                        ws,
                     }),
                 );
 
-                Ok(Some(notes))
+                Ok(Some((notes, ws)))
             };
         }
     }
@@ -480,34 +630,52 @@ where
     }
 
     /// Update an item in the cache
-    fn update(&self, key: Uuid, value: String) -> impl Future<Output = Result<(), CacheError>> {
+    fn update(
+        &self,
+        key: Uuid,
+        value: String,
+    ) -> impl Future<Output = Result<(), CacheError>> + Send {
         async move {
             // Check if ws notes have already been queried once
-            if !self.read_cache().contains_key(&key) {
-                self.query_db(key).await?.ok_or(CacheError::ItemNotFound)?;
+            let item = self.read_cache().get(&key).cloned();
 
-                // If the item was found, insert the update in the cache
-                self.write_cache().insert(
-                    key,
-                    Some(InnerItem {
-                        changed: true,
-                        data: value,
-                    }),
-                );
+            match item {
+                None => {
+                    let (_, ws) = self.query_db(key).await?.ok_or(CacheError::ItemNotFound)?;
 
-                return Ok(());
+                    // If the item was found, insert the update in the cache
+                    self.write_cache().insert(
+                        key,
+                        Some(InnerItem {
+                            changed: true,
+                            data: value,
+                            ws,
+                        }),
+                    );
+
+                    return Ok(());
+                }
+                Some(old) => {
+                    let item = if let Some(data) = old {
+                        InnerItem {
+                            changed: true,
+                            data: value,
+                            ws: data.ws,
+                        }
+                    } else {
+                        let (_, ws) = self.query_db(key).await?.ok_or(CacheError::ItemNotFound)?;
+                        InnerItem {
+                            changed: true,
+                            data: value,
+                            ws,
+                        }
+                    };
+
+                    self.write_cache().insert(key, Some(item));
+
+                    Ok(())
+                }
             }
-
-            // Update the cache
-            self.write_cache().insert(
-                key,
-                Some(InnerItem {
-                    changed: true,
-                    data: value,
-                }),
-            );
-
-            Ok(())
         }
     }
 }
@@ -523,9 +691,13 @@ pub enum CacheError {
 }
 
 #[derive(Default, Clone)]
-pub struct InnerItem {
+pub struct InnerItem<WS>
+where
+    WS: Send,
+{
     data: String,
     changed: bool,
+    ws: WS,
 }
 
-type InnerCache = Arc<RwLock<HashMap<Uuid, Option<InnerItem>>>>;
+type InnerCache<WS> = Arc<RwLock<HashMap<Uuid, Option<InnerItem<WS>>>>>;

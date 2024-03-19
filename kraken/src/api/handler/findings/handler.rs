@@ -183,7 +183,7 @@ pub async fn get_finding(
             name: definition.name,
             severity: definition.severity,
             #[rustfmt::skip]
-            summary: GLOBAL.editor_cache.fd_summary.get(*finding.definition.key()).await?.ok_or(ApiError::InvalidUuid)?,
+            summary: GLOBAL.editor_cache.fd_summary.get(*finding.definition.key()).await?.ok_or(ApiError::InvalidUuid)?.0,
             created_at: definition.created_at,
         },
         severity: finding.severity,
@@ -227,7 +227,6 @@ pub async fn update_finding(
         UpdateFindingRequest {
             definition: None,
             severity: None,
-            details: None,
             screenshot: None,
             log_file: None
         }
@@ -260,7 +259,6 @@ pub async fn update_finding(
     FindingDetails::update(
         &mut tx,
         *d_uuid.key(),
-        request.details,
         None,
         request.screenshot,
         request.log_file,

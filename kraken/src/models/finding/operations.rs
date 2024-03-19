@@ -33,7 +33,7 @@ impl Finding {
         workspace: Uuid,
         definition: Uuid,
         severity: FindingSeverity,
-        user_details: Option<String>,
+        user_details: String,
         tool_details: Option<String>,
         screenshot: Option<Uuid>,
         log_file: Option<Uuid>,
@@ -102,7 +102,7 @@ impl FindingAffected {
         object_uuid: Uuid,
         object_type: AggregationType,
         workspace: Uuid,
-        user_details: Option<String>,
+        user_details: String,
         tool_details: Option<String>,
         screenshot: Option<Uuid>,
         log_file: Option<Uuid>,
@@ -110,11 +110,7 @@ impl FindingAffected {
         let mut guard = executor.ensure_transaction().await?;
         let uuid = Uuid::new_v4();
 
-        let details = if user_details.is_some()
-            || tool_details.is_some()
-            || screenshot.is_some()
-            || log_file.is_some()
-        {
+        let details = if tool_details.is_some() || screenshot.is_some() || log_file.is_some() {
             Some(ForeignModelByField::Key(
                 FindingDetails::insert(
                     guard.get_transaction(),
@@ -183,7 +179,7 @@ impl FindingDetails {
     /// Insert a new [`FindingDetails`]
     pub(crate) async fn insert(
         executor: impl Executor<'_>,
-        user_details: Option<String>,
+        user_details: String,
         tool_details: Option<String>,
         screenshot: Option<Uuid>,
         log_file: Option<Uuid>,
@@ -224,7 +220,6 @@ impl FindingDetails {
     pub(crate) async fn update(
         executor: impl Executor<'_>,
         uuid: Uuid,
-        user_details: Option<Option<String>>,
         tool_details: Option<Option<String>>,
         screenshot: Option<Option<Uuid>>,
         log_file: Option<Option<Uuid>>,
@@ -252,7 +247,6 @@ impl FindingDetails {
         if let Ok(update) = update!(guard.get_transaction(), Self)
             .condition(Self::F.uuid.equals(uuid))
             .begin_dyn_set()
-            .set_if(Self::F.user_details, user_details)
             .set_if(Self::F.tool_details, tool_details)
             .set_if(
                 Self::F.screenshot,

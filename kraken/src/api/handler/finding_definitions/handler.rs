@@ -106,17 +106,17 @@ pub async fn get_finding_definition(
         uuid: finding_definition.uuid,
         name: finding_definition.name,
         #[rustfmt::skip]
-        summary: GLOBAL.editor_cache.fd_summary.get(uuid).await?.ok_or(ApiError::InvalidUuid)?,
+        summary: GLOBAL.editor_cache.fd_summary.get(uuid).await?.ok_or(ApiError::InvalidUuid)?.0,
         severity: finding_definition.severity,
         cve: finding_definition.cve,
         #[rustfmt::skip]
-        description: GLOBAL.editor_cache.fd_description.get(uuid).await?.ok_or(ApiError::InvalidUuid)?,
+        description: GLOBAL.editor_cache.fd_description.get(uuid).await?.ok_or(ApiError::InvalidUuid)?.0,
         #[rustfmt::skip]
-        impact: GLOBAL.editor_cache.fd_impact.get(uuid).await?.ok_or(ApiError::InvalidUuid)?,
+        impact: GLOBAL.editor_cache.fd_impact.get(uuid).await?.ok_or(ApiError::InvalidUuid)?.0,
         #[rustfmt::skip]
-        remediation: GLOBAL.editor_cache.fd_remediation.get(uuid).await?.ok_or(ApiError::InvalidUuid)?,
+        remediation: GLOBAL.editor_cache.fd_remediation.get(uuid).await?.ok_or(ApiError::InvalidUuid)?.0,
         #[rustfmt::skip]
-        references: GLOBAL.editor_cache.fd_references.get(uuid).await?.ok_or(ApiError::InvalidUuid)?,
+        references: GLOBAL.editor_cache.fd_references.get(uuid).await?.ok_or(ApiError::InvalidUuid)?.0,
         created_at: finding_definition.created_at,
     }))
 }
@@ -153,7 +153,8 @@ pub async fn get_all_finding_definitions() -> ApiResult<Json<ListFindingDefiniti
             .fd_summary
             .get(fd.uuid)
             .await?
-            .ok_or(ApiError::InternalServerError)?;
+            .ok_or(ApiError::InternalServerError)?
+            .0;
     }
 
     Ok(Json(ListFindingDefinitions {

@@ -210,7 +210,8 @@ pub(crate) async fn get_workspace_unchecked(
             .ws_notes
             .get(workspace.uuid)
             .await?
-            .unwrap_or_default(),
+            .unwrap_or_default()
+            .0,
         owner,
         attacks,
         members,

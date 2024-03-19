@@ -36,6 +36,7 @@ use crate::models::Host;
 use crate::models::Port;
 use crate::models::Service;
 use crate::models::Workspace;
+use crate::modules::cache::EditorCached;
 
 /// Add a new affected object to a finding
 #[utoipa::path(
@@ -256,7 +257,13 @@ pub async fn get_finding_affected(
             created_at: finding.created_at,
         },
         affected,
-        user_details: details.as_mut().and_then(|d| d.user_details.take()),
+        user_details: GLOBAL
+            .editor_cache
+            .finding_affected_details
+            .get(finding.uuid)
+            .await?
+            .unwrap_or_default()
+            .0,
         tool_details: details.as_mut().and_then(|d| d.tool_details.take()),
         screenshot: details
             .as_mut()
@@ -293,7 +300,6 @@ pub async fn update_finding_affected(
     if matches!(
         &request,
         UpdateFindingAffectedRequest {
-            details: None,
             screenshot: None,
             log_file: None
         }
@@ -313,18 +319,17 @@ pub async fn update_finding_affected(
         FindingDetails::update(
             &mut tx,
             *details.key(),
-            request.details,
             None,
             request.screenshot,
             request.log_file,
         )
         .await?;
     } else {
-        let details = request.details.flatten();
         let screenshot = request.screenshot.flatten();
         let log_file = request.log_file.flatten();
         if details.is_some() || screenshot.is_some() || log_file.is_some() {
-            let uuid = FindingDetails::insert(&mut tx, details, None, screenshot, log_file).await?;
+            let uuid =
+                FindingDetails::insert(&mut tx, String::new(), None, screenshot, log_file).await?;
             update!(&mut tx, FindingAffected)
                 .set(
                     FindingAffected::F.details,

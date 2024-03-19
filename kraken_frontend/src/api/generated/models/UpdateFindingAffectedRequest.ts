@@ -20,15 +20,6 @@ import { exists, mapValues } from '../runtime';
  */
 export interface UpdateFindingAffectedRequest {
     /**
-     * Notes about the affected provided by the user
-     * 
-     * May be used for documenting command invocation or other information
-     * that are provided by the user
-     * @type {string}
-     * @memberof UpdateFindingAffectedRequest
-     */
-    details?: string | null;
-    /**
      * A screenshot
      * 
      * The file must have been uploaded through the image upload.
@@ -63,7 +54,6 @@ export function UpdateFindingAffectedRequestFromJSONTyped(json: any, ignoreDiscr
     }
     return {
         
-        'details': !exists(json, 'details') ? undefined : json['details'],
         'screenshot': !exists(json, 'screenshot') ? undefined : json['screenshot'],
         'logFile': !exists(json, 'log_file') ? undefined : json['log_file'],
     };
@@ -78,7 +68,6 @@ export function UpdateFindingAffectedRequestToJSON(value?: UpdateFindingAffected
     }
     return {
         
-        'details': value.details,
         'screenshot': value.screenshot,
         'log_file': value.logFile,
     };
