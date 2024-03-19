@@ -97,7 +97,7 @@ export default function WorkspaceFindingTable({
                         </div>
                         {/*TODO filter items that are not in findings already*/}
                         {domains.map((domain) => (
-                            <div className="workspace-table-row">
+                            <div key={domain.uuid} className="workspace-table-row">
                                 <span
                                     className="workspace-data-certainty-icon workspace-finding-selection-arrow"
                                     onClick={() => onAddDomain?.(domain)}
@@ -138,7 +138,7 @@ export default function WorkspaceFindingTable({
                         </div>
                         {/*TODO filter items that are not in findings already*/}
                         {hosts.map((host) => (
-                            <div className="workspace-table-row deleted">
+                            <div key={host.uuid} className="workspace-table-row deleted">
                                 <span
                                     className="workspace-data-certainty-icon workspace-finding-selection-arrow"
                                     onClick={() => onAddHost?.(host)}
@@ -182,7 +182,7 @@ export default function WorkspaceFindingTable({
                         </div>
                         {/*TODO filter items that are not in findings already*/}
                         {ports.map((port) => (
-                            <div className="workspace-table-row">
+                            <div key={port.uuid} className="workspace-table-row">
                                 <span
                                     className="workspace-data-certainty-icon workspace-finding-selection-arrow"
                                     onClick={() => onAddPort?.(port)}
@@ -230,7 +230,7 @@ export default function WorkspaceFindingTable({
                         </div>
                         {/*TODO filter items that are not in findings already*/}
                         {services.map((service) => (
-                            <div className="workspace-table-row">
+                            <div key={service.uuid} className="workspace-table-row">
                                 <span
                                     className="workspace-data-certainty-icon workspace-finding-selection-arrow"
                                     onClick={() => onAddService?.(service)}
@@ -281,6 +281,7 @@ export default function WorkspaceFindingTable({
             <div className="tabs-selector-container">
                 {Object.entries(DATA_TAB).map(([key, displayName]) => (
                     <div
+                        key={key}
                         className={`tabs ${dataTab !== key ? "" : " selected-tab"}`}
                         onClick={() => setDataTab(key as keyof typeof DATA_TAB)}
                     >

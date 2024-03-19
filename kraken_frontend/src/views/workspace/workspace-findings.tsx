@@ -71,6 +71,7 @@ export default function WorkspaceFindings(props: WorkspaceFindingsProps) {
                                     })
                                     .map((f) => (
                                         <div
+                                            key={f.uuid}
                                             className="workspace-table-row"
                                             {...ROUTES.WORKSPACE_FINDINGS_EDIT.clickHandler({
                                                 wUuid: workspace,
