@@ -43,6 +43,7 @@ use kraken::modules::cache::EditorCache;
 use kraken::modules::cache::UserCache;
 use kraken::modules::cache::WorkspaceUsersCache;
 use kraken::modules::editor::EditorSync;
+use kraken::modules::media_files::start_file_cleanup;
 use kraken::modules::tls::TlsManager;
 use kraken::rpc::server::start_rpc_server;
 use rorm::cli;
@@ -127,6 +128,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .map_err(|e| format!("Failed to query initial leeches: {e}"))?;
 
             let ws = start_ws_manager().await;
+            start_file_cleanup()
+                .await
+                .map_err(|e| format!("Failed to initialize media file cleanup: {e}"))?;
 
             let workspace_users_cache = WorkspaceUsersCache::default();
             let user_cache = UserCache::default();
