@@ -15,6 +15,7 @@ use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::domains::schema::SimpleDomain;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
+use crate::models::FindingSeverity;
 use crate::models::HostCertainty;
 use crate::models::ManualHostCertainty;
 use crate::models::OsType;
@@ -99,6 +100,8 @@ pub struct FullHost {
     pub sources: SimpleAggregationSource,
     /// The point in time, the record was created
     pub created_at: DateTime<Utc>,
+    /// The severest finding's severity associated with this host
+    pub severity: Option<FindingSeverity>,
     /// The certainty of this host
     pub certainty: HostCertainty,
 }

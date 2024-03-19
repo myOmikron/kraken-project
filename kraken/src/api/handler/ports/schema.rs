@@ -12,6 +12,7 @@ use crate::api::handler::common::schema::PageParams;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::services::schema::SimpleService;
+use crate::models::FindingSeverity;
 use crate::models::ManualPortCertainty;
 use crate::models::PortCertainty;
 use crate::models::PortProtocol;
@@ -107,6 +108,8 @@ pub struct FullPort {
     pub workspace: Uuid,
     /// The number of attacks which found this host
     pub sources: SimpleAggregationSource,
+    /// The severest finding's severity associated with this host
+    pub severity: Option<FindingSeverity>,
     /// The point in time, the record was created
     pub created_at: DateTime<Utc>,
 }

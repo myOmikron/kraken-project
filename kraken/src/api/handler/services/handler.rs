@@ -29,6 +29,8 @@ use crate::api::handler::common::schema::ServiceResultsPage;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::common::utils::get_page_params;
+use crate::api::handler::common::utils::query_many_severities;
+use crate::api::handler::common::utils::query_single_severity;
 use crate::api::handler::findings::schema::ListFindings;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::SimplePort;
@@ -187,6 +189,13 @@ pub async fn get_all_services(
     )
     .await?;
 
+    let severities = query_many_severities(
+        &mut tx,
+        FindingAffected::F.service,
+        services.iter().map(|x| x.0),
+    )
+    .await?;
+
     tx.commit().await?;
 
     let items = services
@@ -232,6 +241,7 @@ pub async fn get_all_services(
                     workspace: *workspace.key(),
                     tags: tags.remove(&uuid).unwrap_or_default(),
                     sources: sources.remove(&uuid).unwrap_or_default(),
+                    severity: severities.get(&uuid).copied(),
                     created_at,
                 }
             },
@@ -323,6 +333,8 @@ pub async fn get_service(
         .try_collect()
         .await?;
 
+    let severity = query_single_severity(&mut tx, FindingAffected::F.service, path.s_uuid).await?;
+
     tx.commit().await?;
 
     Ok(Json(FullService {
@@ -357,6 +369,7 @@ pub async fn get_service(
         workspace: path.w_uuid,
         tags,
         sources,
+        severity,
         created_at: service.created_at,
     }))
 }

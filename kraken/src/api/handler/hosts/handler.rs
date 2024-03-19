@@ -30,6 +30,8 @@ use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::common::utils::get_page_params;
+use crate::api::handler::common::utils::query_many_severities;
+use crate::api::handler::common::utils::query_single_severity;
 use crate::api::handler::domains::schema::SimpleDomain;
 use crate::api::handler::findings::schema::ListFindings;
 use crate::api::handler::hosts::schema::CreateHostRequest;
@@ -148,24 +150,34 @@ pub(crate) async fn get_all_hosts(
     )
     .await?;
 
+    let severities = query_many_severities(
+        &mut tx,
+        FindingAffected::F.host,
+        hosts.iter().map(|x| x.uuid),
+    )
+    .await?;
+
     tx.commit().await?;
 
+    let items = hosts
+        .into_iter()
+        .map(|x| FullHost {
+            uuid: x.uuid,
+            ip_addr: x.ip_addr.ip(),
+            comment: x.comment,
+            response_time: x.response_time,
+            certainty: x.certainty,
+            os_type: x.os_type,
+            workspace: *x.workspace.key(),
+            tags: tags.remove(&x.uuid).unwrap_or_default(),
+            sources: sources.remove(&x.uuid).unwrap_or_default(),
+            severity: severities.get(&x.uuid).copied(),
+            created_at: x.created_at,
+        })
+        .collect();
+
     Ok(Json(HostResultsPage {
-        items: hosts
-            .into_iter()
-            .map(|x| FullHost {
-                uuid: x.uuid,
-                ip_addr: x.ip_addr.ip(),
-                comment: x.comment,
-                response_time: x.response_time,
-                certainty: x.certainty,
-                os_type: x.os_type,
-                workspace: *x.workspace.key(),
-                tags: tags.remove(&x.uuid).unwrap_or_default(),
-                sources: sources.remove(&x.uuid).unwrap_or_default(),
-                created_at: x.created_at,
-            })
-            .collect(),
+        items,
         limit,
         offset,
         total: total as u64,
@@ -232,6 +244,8 @@ pub async fn get_host(
         .try_collect()
         .await?;
 
+    let severity = query_single_severity(&mut tx, FindingAffected::F.host, path.h_uuid).await?;
+
     tx.commit().await?;
 
     Ok(Json(FullHost {
@@ -244,6 +258,7 @@ pub async fn get_host(
         certainty: host.certainty,
         tags,
         sources,
+        severity,
         created_at: host.created_at,
     }))
 }

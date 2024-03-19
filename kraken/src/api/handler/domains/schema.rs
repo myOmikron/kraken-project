@@ -11,6 +11,7 @@ use crate::api::handler::common::schema::PageParams;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::models::DomainCertainty;
+use crate::models::FindingSeverity;
 
 /// The request to manually add a domain
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -85,6 +86,8 @@ pub struct FullDomain {
     pub sources: SimpleAggregationSource,
     /// The point in time, the record was created
     pub created_at: DateTime<Utc>,
+    /// The severest finding's severity associated with this host
+    pub severity: Option<FindingSeverity>,
     /// The certainty of this domain entry
     pub certainty: DomainCertainty,
 }

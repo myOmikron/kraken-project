@@ -35,6 +35,8 @@ use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::common::utils::get_page_params;
+use crate::api::handler::common::utils::query_many_severities;
+use crate::api::handler::common::utils::query_single_severity;
 use crate::api::handler::domains::schema::CreateDomainRequest;
 use crate::api::handler::domains::schema::DomainRelations;
 use crate::api::handler::domains::schema::FullDomain;
@@ -167,6 +169,15 @@ pub async fn get_all_domains(
     )
     .await?;
 
+    let severities = query_many_severities(
+        &mut tx,
+        FindingAffected::F.domain,
+        domains.iter().map(|x| x.uuid),
+    )
+    .await?;
+
+    tx.commit().await?;
+
     let items = domains
         .into_iter()
         .map(|x| FullDomain {
@@ -177,11 +188,11 @@ pub async fn get_all_domains(
             workspace: *x.workspace.key(),
             tags: tags.remove(&x.uuid).unwrap_or_default(),
             sources: sources.remove(&x.uuid).unwrap_or_default(),
+            severity: severities.get(&x.uuid).copied(),
             created_at: x.created_at,
         })
         .collect();
 
-    tx.commit().await?;
     Ok(Json(DomainResultsPage {
         items,
         limit,
@@ -249,6 +260,8 @@ pub async fn get_domain(
         .try_collect()
         .await?;
 
+    let severity = query_single_severity(&mut tx, FindingAffected::F.domain, path.d_uuid).await?;
+
     tx.commit().await?;
 
     Ok(Json(FullDomain {
@@ -259,6 +272,7 @@ pub async fn get_domain(
         workspace: path.w_uuid,
         tags,
         sources,
+        severity,
         created_at: domain.created_at,
     }))
 }

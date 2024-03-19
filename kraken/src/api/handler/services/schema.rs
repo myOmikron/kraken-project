@@ -12,6 +12,7 @@ use crate::api::handler::common::schema::PageParams;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::SimplePort;
+use crate::models::FindingSeverity;
 use crate::models::ManualServiceCertainty;
 use crate::models::ServiceCertainty;
 use crate::models::ServiceProtocols;
@@ -122,6 +123,8 @@ pub struct FullService {
     pub tags: Vec<SimpleTag>,
     /// The number of attacks which found this host
     pub sources: SimpleAggregationSource,
+    /// The severest finding's severity associated with this host
+    pub severity: Option<FindingSeverity>,
     /// The point in time, the record was created
     pub created_at: DateTime<Utc>,
 }

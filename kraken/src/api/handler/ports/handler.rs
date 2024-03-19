@@ -29,6 +29,8 @@ use crate::api::handler::common::schema::PortResultsPage;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::common::utils::get_page_params;
+use crate::api::handler::common::utils::query_many_severities;
+use crate::api::handler::common::utils::query_single_severity;
 use crate::api::handler::findings::schema::ListFindings;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::CreatePortRequest;
@@ -157,6 +159,11 @@ pub async fn get_all_ports(
     )
     .await?;
 
+    let severities =
+        query_many_severities(&mut tx, FindingAffected::F.port, ports.iter().map(|x| x.0)).await?;
+
+    tx.commit().await?;
+
     let items = ports
         .into_iter()
         .map(
@@ -179,12 +186,11 @@ pub async fn get_all_ports(
                 workspace: *workspace.key(),
                 tags: tags.remove(&uuid).unwrap_or_default(),
                 sources: sources.remove(&uuid).unwrap_or_default(),
+                severity: severities.get(&uuid).copied(),
                 created_at,
             },
         )
         .collect();
-
-    tx.commit().await?;
 
     Ok(Json(PortResultsPage {
         items,
@@ -258,6 +264,8 @@ pub async fn get_port(
         .try_collect()
         .await?;
 
+    let severity = query_single_severity(&mut tx, FindingAffected::F.port, path.p_uuid).await?;
+
     tx.commit().await?;
 
     Ok(Json(FullPort {
@@ -278,6 +286,7 @@ pub async fn get_port(
         comment: port.comment,
         tags,
         sources,
+        severity,
         workspace: path.w_uuid,
         created_at: port.created_at,
     }))
