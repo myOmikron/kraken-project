@@ -7,5 +7,4 @@ pub use workspace_users::*;
 
 mod editor;
 mod user;
-mod workspace;
 mod workspace_users;
