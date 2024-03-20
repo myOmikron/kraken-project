@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::future::Future;
 use std::path::Path;
 use std::sync::Arc;
@@ -7,9 +8,11 @@ use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
 use std::time::Duration;
 
+use log::debug;
 use log::error;
 use log::trace;
 use rorm::insert;
+use rorm::or;
 use rorm::prelude::ForeignModelByField;
 use rorm::query;
 use rorm::update;
@@ -101,26 +104,51 @@ impl InternalEditorCached<Uuid> for FindingAffectedDetailsCache {
     }
 
     async fn query_db(&self, key: Uuid) -> Result<Option<(String, Uuid)>, Error> {
-        let db = &GLOBAL.db;
+        let mut tx = GLOBAL.db.start_transaction().await?;
 
-        Ok(query!(
-            db,
-            (
-                FindingAffected::F.details.user_details,
-                FindingAffected::F.workspace
-            )
+        let res = if let Some((details, workspace)) = query!(
+            &mut tx,
+            (FindingAffected::F.details, FindingAffected::F.workspace)
         )
-        .condition(FindingAffected::F.uuid.equals(key))
+        .condition(or!(
+            FindingAffected::F.domain.equals(key),
+            FindingAffected::F.host.equals(key),
+            FindingAffected::F.port.equals(key),
+            FindingAffected::F.service.equals(key)
+        ))
         .optional()
         .await?
-        .map(|x| (x.0, *x.1.key())))
+        .map(|x| (x.0.map(|y| *y.key()), *x.1.key()))
+        {
+            if let Some(details) = details {
+                let user_details = query!(&mut tx, (FindingDetails::F.user_details,))
+                    .condition(FindingDetails::F.uuid.equals(details))
+                    .one()
+                    .await?
+                    .0;
+                Ok(Some((user_details, workspace)))
+            } else {
+                Ok(Some((String::new(), workspace)))
+            }
+        } else {
+            Ok(None)
+        };
+
+        tx.commit().await?;
+
+        res
     }
 
     async fn save_to_db(&self, key: Uuid, value: String) -> Result<(), Error> {
         let mut tx = GLOBAL.db.start_transaction().await?;
 
         let old_details = query!(&mut tx, (FindingAffected::F.details,))
-            .condition(FindingAffected::F.uuid.equals(key))
+            .condition(or!(
+                FindingAffected::F.domain.equals(key),
+                FindingAffected::F.host.equals(key),
+                FindingAffected::F.port.equals(key),
+                FindingAffected::F.service.equals(key)
+            ))
             .one()
             .await?
             .0
@@ -145,7 +173,12 @@ impl InternalEditorCached<Uuid> for FindingAffectedDetailsCache {
                 .await?;
 
             update!(&mut tx, FindingAffected)
-                .condition(FindingAffected::F.uuid.equals(key))
+                .condition(or!(
+                    FindingAffected::F.domain.equals(key),
+                    FindingAffected::F.host.equals(key),
+                    FindingAffected::F.port.equals(key),
+                    FindingAffected::F.service.equals(key)
+                ))
                 .set(
                     FindingAffected::F.details,
                     Some(ForeignModelByField::Key(pk)),
@@ -569,7 +602,7 @@ where
 pub trait EditorCached<WS>
 where
     Self: InternalEditorCached<WS>,
-    WS: Copy + Default + Send,
+    WS: Copy + Default + Send + Debug,
 {
     /// Retrieve an item through a key
     ///
@@ -583,10 +616,11 @@ where
 
             // Check if ws notes have already been queried once
             return if let Some(item) = cache_item {
-                Ok(Some(item.map(|x| (x.data, x.ws)).unwrap_or_default()))
+                Ok(item.map(|x| (x.data, x.ws)))
             } else {
                 // Query the db to populate the cache
                 let notes = self.query_db(key).await?;
+                debug!("Notes: {notes:?}");
 
                 let Some((notes, ws)) = notes else {
                     // Update cache so it knows that there's no DB entry
