@@ -1,5 +1,5 @@
 import Editor from "@monaco-editor/react";
-import React, { useEffect } from "react";
+import React, { ReactNode, useEffect } from "react";
 import { Api, UUID } from "../../../api/api";
 import {
     AggregationType,
@@ -31,7 +31,6 @@ import GraphIcon from "../../../svg/graph";
 import Domain from "../components/domain";
 import { UploadingFileInput } from "../components/file-input";
 import IpAddr from "../components/host";
-import MarkdownEditorPopup from "../components/markdown-editor-popup";
 import PortNumber from "../components/port";
 import SelectFindingDefinition from "../components/select-finding-definition";
 import ServiceName from "../components/service";
@@ -42,6 +41,8 @@ import WorkspaceFindingTable from "./workspace-finding-table";
 import useLiveEditor from "../../../components/live-editor";
 import { editor } from "monaco-editor";
 import PersonCircleIcon from "../../../svg/person-circle";
+import Popup from "reactjs-popup";
+import EditIcon from "../../../svg/edit";
 
 export type WorkspaceEditFindingProps = {
     /** The finding's uuid */
@@ -166,6 +167,24 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
         };
     }, [workspace, finding]);
 
+    const [editorInstance, setEditorInstance] = React.useState<editor.IStandaloneCodeEditor | null>(null);
+    const { cursors: editorCursors, onChange: editorOnChange } = useLiveEditor({
+        target: { finding: { finding } },
+        editorInstance,
+        setValue: setDetails,
+        receiveCursor: (target) => {
+            if ("finding" in target && target.finding.finding === finding) {
+                return true;
+            }
+        },
+        receiveEdit: (target, editorInstance) => {
+            if ("finding" in target && target.finding.finding === finding) {
+                const model = editorInstance?.getModel();
+                if (model) return { model, setValue: setDetails };
+            }
+        },
+    });
+
     return (
         <div className="pane">
             <div className="workspace-findings-selection-info">
@@ -255,12 +274,17 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                 </div>
                                                 <AffectedLabel affected={fullAffected.affected} pretty />
                                             </div>
-                                            <MarkdownEditorPopup
+                                            <MarkdownLiveEditorPopup
                                                 label={<AffectedLabel affected={fullAffected.affected} pretty />}
-                                                content={fullAffected.userDetails}
-                                                onChange={(d) => {
-                                                    // TODO: websocket / live editor here
+                                                value={fullAffected.userDetails}
+                                                setValue={(userDetails) => {
+                                                    setAffected(({ [affectedUuid]: affected, ...rest }) => ({
+                                                        [affectedUuid]: { ...affected, userDetails },
+                                                        ...rest,
+                                                    }));
                                                 }}
+                                                findingUuid={finding}
+                                                affectedUuid={affectedUuid}
                                             />
                                             <TagList
                                                 tags={
@@ -376,6 +400,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                             }}
                         >
                             <BookIcon />
+                            {editorCursors.length > 0 ? <PersonCircleIcon /> : null}
                         </button>
                         <button
                             title={"Affected"}
@@ -409,7 +434,12 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                             theme={"custom"}
                                             beforeMount={setupMonaco}
                                             value={details}
+                                            onChange={editorOnChange}
+                                            onMount={setEditorInstance}
                                         />
+                                        {editorCursors.map(({ data: { displayName }, cursor }) =>
+                                            cursor.render(<div className={"cursor-label"}>{displayName}</div>),
+                                        )}
                                     </>
                                 );
                             case "affected":
@@ -460,6 +490,61 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                 </div>
             </div>
         </div>
+    );
+}
+
+type MarkdownLiveEditorPopupProps = {
+    label: React.ReactNode;
+    findingUuid: string;
+    affectedUuid: string;
+    value: string;
+    setValue: (newValue: string) => void;
+};
+
+export function MarkdownLiveEditorPopup(props: MarkdownLiveEditorPopupProps) {
+    const { label, value, setValue, findingUuid, affectedUuid } = props;
+
+    const [editorInstance, setEditorInstance] = React.useState<editor.IStandaloneCodeEditor | null>(null);
+    const { onChange } = useLiveEditor({
+        target: { findingAffected: { finding: findingUuid, affected: affectedUuid } },
+        editorInstance,
+        setValue,
+        receiveEdit: () => undefined,
+        receiveCursor: () => undefined,
+    });
+
+    return (
+        <Popup
+            className="markdown-editor-popup"
+            trigger={
+                <div className="details">
+                    Edit Details
+                    <EditIcon />
+                </div>
+            }
+            nested
+            modal
+            on={"click"}
+        >
+            <div className="pane">
+                <div className="label">
+                    <h1 className="sub-heading">Details</h1>
+                    <h3 className="sub-heading">{label}</h3>
+                </div>
+                <div className="grid">
+                    <GithubMarkdown>{value}</GithubMarkdown>
+                    <Editor
+                        className={"knowledge-base-editor"}
+                        theme={"custom"}
+                        beforeMount={setupMonaco}
+                        language={"markdown"}
+                        value={value}
+                        onChange={onChange}
+                        onMount={setEditorInstance}
+                    />
+                </div>
+            </div>
+        </Popup>
     );
 }
 

@@ -14,6 +14,16 @@ import { toast } from "react-toastify";
 export type UseLiveEditorArgs<CT extends {} = true> = {
     /**
      * The editor to sync (might be `null` on initial render)
+     *
+     * Simple create a state variable for it:
+     * ```js
+     * const [editorInstance, setEditorInstance] = React.useState<editor.IStandaloneCodeEditor | null>(null);
+     * ````
+     *
+     * Add set it using `onMount`:
+     * ```jsx
+     * <Editor onMount={setEditorInstance} />
+     * ```
      */
     editorInstance: editor.IStandaloneCodeEditor | null;
 
@@ -251,7 +261,7 @@ export default function useLiveEditor<CT extends {} = true>(args: UseLiveEditorA
             if (setValue !== undefined) setValue(model.getValue());
         });
         return () => WS.removeEventListener(handle);
-    }, [editorInstance, user.uuid]);
+    }, [monaco, editorInstance, user.uuid]);
 
     // Send outgoing edit messages
     //
