@@ -40,7 +40,7 @@ impl EditorSync {
     /// Create a new instance of [EditorSync]
     ///
     /// This will also start the worker for the synchronization
-    pub fn new() -> Self {
+    pub fn start() -> Self {
         let (ws_notes_tx, ws_notes_rx) = mpsc::channel(1);
         let (finding_definition_tx, finding_definition_rx) = mpsc::channel(1);
         let (finding_tx, finding_rx) = mpsc::channel(1);

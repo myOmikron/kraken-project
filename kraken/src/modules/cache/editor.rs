@@ -182,13 +182,12 @@ impl InternalEditorCached<Uuid> for FindingDetailsCache {
 
     async fn query_db(&self, key: Uuid) -> Result<Option<(String, Uuid)>, Error> {
         let db = &GLOBAL.db;
-        Ok(
-            query!(db, (Finding::F.details.user_details, Finding::F.workspace))
-                .condition(Finding::F.uuid.equals(key))
-                .optional()
-                .await
-                .map(|x| x.map(|y| (y.0, *y.1.key())))?,
-        )
+
+        query!(db, (Finding::F.details.user_details, Finding::F.workspace))
+            .condition(Finding::F.uuid.equals(key))
+            .optional()
+            .await
+            .map(|x| x.map(|y| (y.0, *y.1.key())))
     }
 
     async fn save_to_db(&self, key: Uuid, value: String) -> Result<(), Error> {
@@ -653,7 +652,7 @@ where
                         }),
                     );
 
-                    return Ok(());
+                    Ok(())
                 }
                 Some(old) => {
                     let item = if let Some(data) = old {
