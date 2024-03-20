@@ -149,10 +149,16 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                     ),
                 );
             }),
-            WS.addEventListener("message.UpdatedFindingAffected", ({ workspace: w, finding: f }) => {
-                if (w !== workspace || f !== finding) return;
-                // TODO
-            }),
+            WS.addEventListener(
+                "message.UpdatedFindingAffected",
+                ({ workspace: w, finding: f, affectedUuid, update }) => {
+                    if (w !== workspace || f !== finding) return;
+                    setAffected(({ [affectedUuid]: affected, ...rest }) => ({
+                        [affectedUuid]: { ...affected, ...update },
+                        ...rest,
+                    }));
+                },
+            ),
             WS.addEventListener("message.RemovedFindingAffected", ({ workspace: w, finding: f, affectedUuid }) => {
                 if (w !== workspace || f !== finding) return;
                 setAffected(({ [affectedUuid]: _, ...rest }) => rest);
