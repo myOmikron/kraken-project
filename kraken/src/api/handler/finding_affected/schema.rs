@@ -39,15 +39,20 @@ pub struct CreateFindingAffectedRequest {
 }
 
 /// The request to update an affected object's details
+// The `#[serde(skip_serializing_if = "Option::is_none")]` is required by the frontend.
+// The update is echoed over the websocket to allow live editing
+// and the frontend needs to differentiate between no update and set to `None`.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateFindingAffectedRequest {
     /// A screenshot
     ///
     /// The file must have been uploaded through the image upload.
+    #[serde(skip_serializing_if = "Option::is_none")] // see above
     #[serde(default, deserialize_with = "de_optional")]
     pub screenshot: Option<Option<Uuid>>,
 
     /// A log file
+    #[serde(skip_serializing_if = "Option::is_none")] // see above
     #[serde(default, deserialize_with = "de_optional")]
     pub log_file: Option<Option<Uuid>>,
 }

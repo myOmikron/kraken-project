@@ -24,6 +24,7 @@ use crate::api::handler::findings::schema::SimpleFinding;
 use crate::api::handler::findings::schema::UpdateFindingRequest;
 use crate::api::handler::findings::utils::finding_affected_into_simple;
 use crate::chan::global::GLOBAL;
+use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::Finding;
 use crate::models::FindingAffected;
 use crate::models::FindingDefinition;
@@ -267,6 +268,17 @@ pub async fn update_finding(
     .await?;
 
     tx.commit().await?;
+    GLOBAL
+        .ws
+        .message_workspace(
+            w_uuid,
+            WsMessage::UpdatedFinding {
+                workspace: w_uuid,
+                finding: f_uuid,
+                update: request,
+            },
+        )
+        .await;
     Ok(HttpResponse::Ok().finish())
 }
 

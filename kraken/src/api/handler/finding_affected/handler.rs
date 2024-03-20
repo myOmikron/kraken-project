@@ -28,6 +28,7 @@ use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
 use crate::chan::global::GLOBAL;
+use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::Domain;
 use crate::models::Finding;
 use crate::models::FindingAffected;
@@ -92,6 +93,18 @@ pub async fn create_finding_affected(
     .await?;
 
     tx.commit().await?;
+    GLOBAL
+        .ws
+        .message_workspace(
+            w_uuid,
+            WsMessage::AddedFindingAffected {
+                workspace: w_uuid,
+                finding: f_uuid,
+                affected_uuid: request.uuid,
+                affected_type: request.r#type,
+            },
+        )
+        .await;
     Ok(HttpResponse::Ok().finish())
 }
 
@@ -348,6 +361,18 @@ pub async fn update_finding_affected(
     };
 
     tx.commit().await?;
+    GLOBAL
+        .ws
+        .message_workspace(
+            w_uuid,
+            WsMessage::UpdatedFindingAffected {
+                workspace: w_uuid,
+                finding: f_uuid,
+                affected_uuid: a_uuid,
+                update: request,
+            },
+        )
+        .await;
     Ok(HttpResponse::Ok().finish())
 }
 
@@ -382,5 +407,16 @@ pub async fn delete_finding_affected(
     FindingAffected::delete(&mut tx, uuid).await?;
 
     tx.commit().await?;
+    GLOBAL
+        .ws
+        .message_workspace(
+            w_uuid,
+            WsMessage::RemovedFindingAffected {
+                workspace: w_uuid,
+                finding: f_uuid,
+                affected_uuid: a_uuid,
+            },
+        )
+        .await;
     Ok(HttpResponse::Ok().finish())
 }
