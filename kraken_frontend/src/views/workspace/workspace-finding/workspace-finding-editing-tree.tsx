@@ -1,6 +1,5 @@
 import { ApiError, StatusCode } from "../../../api/error";
 import {
-    AggregationType,
     CreateFindingAffectedRequest,
     FindingSeverity,
     FullFinding,
@@ -9,6 +8,7 @@ import {
     SimpleFindingDefinition,
 } from "../../../api/generated";
 import { Err, Ok, Result } from "../../../utils/result";
+import { getAffectedType } from "./workspace-edit-finding";
 import {
     AffectedShallow,
     DynamicTreeGraph,
@@ -28,25 +28,12 @@ export type EditingTreeGraphProps = {
 export default function EditingTreeGraph(props: EditingTreeGraphProps) {
     const rootUuid = props.uuid ?? "local-finding";
 
-    const affectedType = (a: FullFindingAffected): AggregationType =>
-        "domain" in a.affected
-            ? "Domain"
-            : "host" in a.affected
-              ? "Host"
-              : "port" in a.affected
-                ? "Port"
-                : "service" in a.affected
-                  ? "Service"
-                  : (() => {
-                        throw new Error("unexpected finding type");
-                    })();
-
     const api: DynamicTreeLookupFunctions = {
         getRoot: async function (): Promise<FullFinding> {
             return {
                 affected: props.affected.map((a, i) => ({
                     affectedUuid: "local-" + i,
-                    affectedType: "affected" in a ? affectedType(a) : "affectedType" in a ? a.affectedType : a.type,
+                    affectedType: "affected" in a ? getAffectedType(a) : "affectedType" in a ? a.affectedType : a.type,
                     finding: rootUuid,
                 })),
                 createdAt: new Date(),

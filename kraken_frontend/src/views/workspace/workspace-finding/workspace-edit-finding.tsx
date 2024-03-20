@@ -576,7 +576,7 @@ function isAffectedService(obj: FindingAffectedObject): obj is FindingAffectedOb
     return "service" in obj && obj["service"] !== undefined;
 }
 
-function getAffectedType({ affected }: FullFindingAffected): AggregationType {
+export function getAffectedType({ affected }: FullFindingAffected): AggregationType {
     if (isAffectedDomain(affected)) return AggregationType.Domain;
     if (isAffectedHost(affected)) return AggregationType.Host;
     if (isAffectedPort(affected)) return AggregationType.Port;
