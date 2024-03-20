@@ -38,23 +38,30 @@ pub struct CreateFindingRequest {
 }
 
 /// The request to update an existing finding
+// The `#[serde(skip_serializing_if = "Option::is_none")]` is required by the frontend.
+// The update is echoed over the websocket to allow live editing
+// and the frontend needs to differentiate between no update and set to `None`.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateFindingRequest {
     /// Name of the new finding definition
     ///
     /// This must be unique
+    #[serde(skip_serializing_if = "Option::is_none")] // see above
     pub definition: Option<Uuid>,
 
     /// The severity of this specific instance of the finding
+    #[serde(skip_serializing_if = "Option::is_none")] // see above
     pub severity: Option<FindingSeverity>,
 
     /// A screenshot
     ///
     /// The file must have been uploaded through the image upload.
+    #[serde(skip_serializing_if = "Option::is_none")] // see above
     #[serde(default, deserialize_with = "de_optional")]
     pub screenshot: Option<Option<Uuid>>,
 
     /// A log file
+    #[serde(skip_serializing_if = "Option::is_none")] // see above
     #[serde(default, deserialize_with = "de_optional")]
     pub log_file: Option<Option<Uuid>>,
 }

@@ -13,6 +13,8 @@ use uuid::Uuid;
 use crate::api::handler::attack_results::schema::FullDnsTxtScanResult;
 use crate::api::handler::attacks::schema::SimpleAttack;
 use crate::api::handler::domains::schema::SimpleDomain;
+use crate::api::handler::finding_affected::schema::UpdateFindingAffectedRequest;
+use crate::api::handler::findings::schema::UpdateFindingRequest;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
@@ -270,6 +272,46 @@ pub enum WsMessage {
         target: EditorTarget,
         /// The new cursor position
         cursor: CursorPosition,
+    },
+    /// A finding has been updated
+    UpdatedFinding {
+        /// The workspace the updated finding is in
+        workspace: Uuid,
+        /// The finding which has been updated
+        finding: Uuid,
+        /// The update
+        update: UpdateFindingRequest,
+    },
+    /// An affected has been added to a finding
+    AddedFindingAffected {
+        /// The workspace the updated finding is in
+        workspace: Uuid,
+        /// The finding which has been updated
+        finding: Uuid,
+        /// The affected's uuid
+        affected_uuid: Uuid,
+        /// The affected's type
+        affected_type: AggregationType,
+    },
+    /// A finding's affected has been updated
+    UpdatedFindingAffected {
+        /// The workspace the updated finding is in
+        workspace: Uuid,
+        /// The finding which has been updated
+        finding: Uuid,
+        /// The affected's uuid
+        affected_uuid: Uuid,
+        /// The update
+        update: UpdateFindingAffectedRequest,
+    },
+    /// An affected has been removed to a finding
+    RemovedFindingAffected {
+        /// The workspace the updated finding is in
+        workspace: Uuid,
+        /// The finding which has been updated
+        finding: Uuid,
+        /// The affected's uuid
+        affected_uuid: Uuid,
     },
 }
 
