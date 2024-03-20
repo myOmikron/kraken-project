@@ -249,7 +249,18 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                 {ObjectFns.isEmpty(affected) ? (
                                     <p>No affected items yet</p>
                                 ) : (
-                                    Object.entries(affected).map(([affectedUuid, fullAffected]) => (
+                                    Object.entries(affected)
+                                        .sort(([aUuid, a], [bUuid, b]) => {
+                                            let aType = getAffectedType(a);
+                                            let bType = getAffectedType(b);
+                                            if (aType < bType) return -1;
+                                            if (aType > bType) return 1;
+                                            // TODO: type-based sorters
+                                            if (aUuid < bUuid) return -1;
+                                            if (aUuid > bUuid) return 1;
+                                            return 0;
+                                        })
+                                        .map(([affectedUuid, fullAffected]) => (
                                         <div
                                             key={affectedUuid}
                                             className={`affected affected-${getAffectedType(fullAffected)}`}
