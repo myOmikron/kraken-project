@@ -298,7 +298,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                 shortText
                                                 className="screenshot"
                                                 file={fullAffected.screenshot ?? undefined}
-                                                onUploaded={(screenshot) => {
+                                                onChange={(screenshot) => {
                                                     Api.workspaces.findings
                                                         .updateAffected(workspace, finding, affectedUuid, {
                                                             screenshot,
@@ -321,7 +321,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                 shortText
                                                 className="logfile"
                                                 file={fullAffected.logFile ?? undefined}
-                                                onUploaded={(logFile) => {
+                                                onChange={(logFile) => {
                                                     Api.workspaces.findings
                                                         .updateAffected(workspace, finding, affectedUuid, {
                                                             logFile,
@@ -359,9 +359,9 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         <UploadingFileInput
                             image
                             file={screenshot}
-                            onUploaded={(newScreenshot) => {
+                            onChange={(newScreenshot) => {
                                 setScreenshot((oldScreenshot) => {
-                                    updateFinding({ screenshot: newScreenshot ?? null }, () => {
+                                    updateFinding({ screenshot }, () => {
                                         setScreenshot(oldScreenshot);
                                     });
                                     return newScreenshot ?? "";
@@ -370,9 +370,9 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         />
                         <UploadingFileInput
                             file={logFile}
-                            onUploaded={(newFile) => {
+                            onChange={(newFile) => {
                                 setLogFile((oldFile) => {
-                                    updateFinding({ logFile: newFile ?? null }, () => {
+                                    updateFinding({ logFile }, () => {
                                         setLogFile(oldFile);
                                     });
                                     return newFile ?? "";

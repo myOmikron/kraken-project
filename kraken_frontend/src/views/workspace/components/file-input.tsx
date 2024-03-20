@@ -166,8 +166,8 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
 );
 
 export type UploadingFileInputProps = {
-    onUploaded?: (uuid: string | undefined) => void;
-    onChange?: FileInputProps["onChange"] | undefined;
+    onChange?: (uuid: string | null) => void;
+    onBeforeChange?: FileInputProps["onChange"] | undefined;
 } & Omit<FileInputProps, "onChange">;
 
 /**
@@ -175,7 +175,7 @@ export type UploadingFileInputProps = {
  * to the server and shows an upload animation while doing so.
  */
 export const UploadingFileInput = forwardRef<HTMLDivElement, UploadingFileInputProps>(
-    ({ onUploaded, onChange, ...props }, ref) => {
+    ({ onBeforeChange, onChange, ...props }, ref) => {
         const {
             workspace: { uuid: workspace },
         } = React.useContext(WORKSPACE_CONTEXT);
@@ -189,9 +189,9 @@ export const UploadingFileInput = forwardRef<HTMLDivElement, UploadingFileInputP
                 className={`${props.className} ${uploading ? "uploading" : ""}`}
                 file={uploading ?? props.file}
                 onChange={(newFile) => {
-                    onChange?.(newFile);
+                    onBeforeChange?.(newFile);
                     if (newFile === undefined) {
-                        onUploaded?.(undefined);
+                        onChange?.(null);
                     } else {
                         setUploading(newFile);
                         (props.image ? Api.workspaces.files.uploadImage : Api.workspaces.files.uploadFile)(
@@ -201,7 +201,7 @@ export const UploadingFileInput = forwardRef<HTMLDivElement, UploadingFileInputP
                         ).then((r) => {
                             setUploading(undefined);
                             handleApiError(r, (r) => {
-                                onUploaded?.(r.uuid);
+                                onChange?.(r.uuid);
                             });
                         });
                     }
