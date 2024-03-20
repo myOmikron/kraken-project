@@ -183,15 +183,13 @@ export const Viewport = forwardRef(
                                 viewBox={`${cx.minX} ${cx.minY} ${cx.width} ${cx.height}`}
                             >
                                 {connections.map((c, i) => {
-                                    const curviness = Math.abs(c.from[0] - c.to[0] + 40) / 2;
-                                    const padding = 10;
+                                    const curviness = Math.abs(c.from[0] - c.to[0]) / 4;
+                                    const cx = c.to[0] + (c.from[0] - c.to[0]) / 2;
+                                    const cy = c.to[1] + (c.from[1] - c.to[1]) / 2;
                                     const path =
                                         `M${c.from[0]},${c.from[1]}` +
-                                        `h${padding}` +
-                                        `C${c.from[0] + padding + curviness},${c.from[1]},${c.to[0] - curviness - padding},${
-                                            c.to[1]
-                                        },${c.to[0] - padding},${c.to[1]}` +
-                                        `h${padding}`;
+                                        `Q${c.from[0] + curviness},${c.from[1]},${cx},${cy}` +
+                                        `Q${c.to[0] - curviness},${c.to[1]},${c.to[0]},${c.to[1]}`;
                                     return (
                                         <React.Fragment key={i}>
                                             <path
