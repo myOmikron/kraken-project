@@ -1,6 +1,6 @@
 import Editor from "@monaco-editor/react";
 import React, { useEffect } from "react";
-import { Api } from "../../../api/api";
+import { Api, UUID } from "../../../api/api";
 import {
     AggregationType,
     FindingAffectedObject,
@@ -10,11 +10,7 @@ import {
     FindingAffectedObjectOneOf3,
     FindingSeverity,
     FullFindingAffected,
-    SimpleDomain,
     SimpleFindingDefinition,
-    SimpleHost,
-    SimplePort,
-    SimpleService,
     UpdateFindingRequest,
 } from "../../../api/generated";
 import { GithubMarkdown } from "../../../components/github-markdown";
@@ -24,10 +20,9 @@ import FileIcon from "../../../svg/file";
 import InformationIcon from "../../../svg/information";
 import RelationLeftRightIcon from "../../../svg/relation-left-right";
 import ScreenshotIcon from "../../../svg/screenshot";
-import { handleApiError } from "../../../utils/helper";
+import { handleApiError, ObjectFns } from "../../../utils/helper";
 import { setupMonaco } from "../../knowledge-base";
 import { WORKSPACE_CONTEXT } from "../workspace";
-
 import { toast } from "react-toastify";
 import WS from "../../../api/websocket";
 import ArrowDownIcon from "../../../svg/arrow-down";
@@ -44,6 +39,9 @@ import TagList from "../components/tag-list";
 import { FindingDefinitionDetails } from "./workspace-create-finding";
 import EditingTreeGraph from "./workspace-finding-editing-tree";
 import WorkspaceFindingTable from "./workspace-finding-table";
+import useLiveEditor from "../../../components/live-editor";
+import { editor } from "monaco-editor";
+import PersonCircleIcon from "../../../svg/person-circle";
 
 export type WorkspaceEditFindingProps = {
     /** The finding's uuid */
@@ -67,7 +65,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
 
     const [description, setDescription] = React.useState<boolean>(true);
     const [affectedVisible, setAffectedVisible] = React.useState<boolean>(true);
-    const [affected, setAffected] = React.useState<Array<FullFindingAffected>>([]);
+    const [affected, setAffected] = React.useState<Record<UUID, FullFindingAffected>>({});
     const [logFile, setLogFile] = React.useState("");
     const [screenshot, setScreenshot] = React.useState("");
 
@@ -103,26 +101,23 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     React.useEffect(() => {
         // Get initial state
         Api.workspaces.findings.get(workspace, finding).then(
-            handleApiError(async (x) => {
-                setFindingDef(x.definition);
-                setSeverity(x.severity);
-                setDetails(x.userDetails || "");
-                setScreenshot(x.screenshot || "");
-                setLogFile(x.logFile || "");
+            handleApiError((fullFinding) => {
+                setFindingDef(fullFinding.definition);
+                setSeverity(fullFinding.severity);
+                setDetails(fullFinding.userDetails || "");
+                setScreenshot(fullFinding.screenshot || "");
+                setLogFile(fullFinding.logFile || "");
 
-                try {
-                    setAffected(
-                        await Promise.all(
-                            x.affected.map((a) =>
-                                Api.workspaces.findings
-                                    .getAffected(workspace, finding, a.affectedUuid)
-                                    .then((v) => v.unwrap()),
-                            ),
-                        ),
-                    );
-                } catch (e) {
-                    toast.error("Failed to read affected data");
-                }
+                Promise.all(
+                    fullFinding.affected.map((simpleAffected) =>
+                        Api.workspaces.findings
+                            .getAffected(workspace, finding, simpleAffected.affectedUuid)
+                            .then((fullAffected) => [simpleAffected.affectedUuid, fullAffected.unwrap()]),
+                    ),
+                )
+                    .then(Object.fromEntries)
+                    .then(setAffected)
+                    .catch(() => toast.error("Failed to read affected data"));
             }),
         );
 
@@ -144,16 +139,24 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                     setLogFile(logFile);
                 }
             }),
-            WS.addEventListener("message.AddedFindingAffected", ({ workspace: w, finding: f }) => {
+            WS.addEventListener("message.AddedFindingAffected", ({ workspace: w, finding: f, affectedUuid }) => {
                 if (w !== workspace || f !== finding) return;
-                // addAffected(affected)
+                Api.workspaces.findings.getAffected(workspace, finding, affectedUuid).then(
+                    handleApiError((newAffected) =>
+                        setAffected((affected) => ({
+                            ...affected,
+                            [affectedUuid]: newAffected,
+                        })),
+                    ),
+                );
             }),
             WS.addEventListener("message.UpdatedFindingAffected", ({ workspace: w, finding: f }) => {
                 if (w !== workspace || f !== finding) return;
+                // TODO
             }),
             WS.addEventListener("message.RemovedFindingAffected", ({ workspace: w, finding: f, affectedUuid }) => {
                 if (w !== workspace || f !== finding) return;
-                setAffected((affected) => affected.filter((affected) => getAffected(affected).uuid !== affectedUuid));
+                setAffected(({ [affectedUuid]: _, ...rest }) => rest);
             }),
         ];
         return () => {
@@ -163,79 +166,13 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
         };
     }, [workspace, finding]);
 
-    const editor = () => {
-        switch (section) {
-            case "definition":
-                const effectiveDef = hoveredFindingDef || findingDef;
-                return effectiveDef && <FindingDefinitionDetails {...effectiveDef} />;
-            case "description":
-                return (
-                    <Editor
-                        className={"knowledge-base-editor"}
-                        theme={"custom"}
-                        beforeMount={setupMonaco}
-                        value={details}
-                        onChange={(value) => setDetails(value || details)}
-                    />
-                );
-            case "affected":
-                return (
-                    <div className="workspace-finding-data-table">
-                        <WorkspaceFindingTable
-                            onAddDomain={(d) =>
-                                Api.workspaces.findings.addAffected(workspace, finding, {
-                                    type: "Domain",
-                                    uuid: d.uuid,
-                                    details: "",
-                                })
-                            }
-                            onAddHost={(d) =>
-                                Api.workspaces.findings.addAffected(workspace, finding, {
-                                    type: "Host",
-                                    uuid: d.uuid,
-                                    details: "",
-                                })
-                            }
-                            onAddPort={(d) =>
-                                Api.workspaces.findings.addAffected(workspace, finding, {
-                                    type: "Port",
-                                    uuid: d.uuid,
-                                    details: "",
-                                })
-                            }
-                            onAddService={(d) =>
-                                Api.workspaces.findings.addAffected(workspace, finding, {
-                                    type: "Service",
-                                    uuid: d.uuid,
-                                    details: "",
-                                })
-                            }
-                        />
-                    </div>
-                );
-            case "network":
-                return (
-                    <EditingTreeGraph
-                        uuid={finding}
-                        definition={findingDef}
-                        severity={severity}
-                        affected={affected}
-                        workspace={workspace}
-                        maximizable
-                    />
-                );
-            default:
-                return "Unimplemented";
-        }
-    };
-
     return (
         <div className="pane">
             <div className="workspace-findings-selection-info">
                 <h1 className="heading">Edit finding</h1>
             </div>
             <div className="create-finding-container">
-                <form className="create-finding-form" onSubmit={async () => {}}>
+                <div className="create-finding-form">
                     <div className="create-finding-header">
                         <h2 className={"sub-heading"}>Severity</h2>
                         <h2 className={"sub-heading"}>
@@ -290,110 +227,97 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         </h2>
                         {affectedVisible && (
                             <div className="affected-list">
-                                {affected.length > 0 ? (
-                                    affected.map((a, index) => {
-                                        const label = isAffectedDomain(a.affected) ? (
-                                            <Domain domain={a.affected.domain} pretty />
-                                        ) : isAffectedHost(a.affected) ? (
-                                            <IpAddr host={a.affected.host} pretty />
-                                        ) : isAffectedPort(a.affected) ? (
-                                            <PortNumber port={a.affected.port} pretty />
-                                        ) : (
-                                            <ServiceName service={a.affected.service} pretty />
-                                        );
-
-                                        return (
-                                            <div
-                                                key={getAffected(a).uuid}
-                                                className={`affected affected-${getAffectedType(a)}`}
-                                            >
-                                                <div className="name">
-                                                    <div
-                                                        title={"Remove affected"}
-                                                        className="remove"
-                                                        onClick={() => {
-                                                            Api.workspaces.findings.removeAffected(
-                                                                workspace,
-                                                                finding,
-                                                                getAffected(a).uuid,
-                                                            );
-                                                            let copy = [...affected];
-                                                            copy.splice(index, 1);
-                                                            setAffected(copy);
-                                                        }}
-                                                    >
-                                                        <CloseIcon />
-                                                    </div>
-                                                    {label}
-                                                </div>
-                                                <MarkdownEditorPopup
-                                                    label={label}
-                                                    content={a.userDetails}
-                                                    onChange={(d) => {
-                                                        // TODO: websocket / live editor here
-                                                    }}
-                                                />
-                                                <TagList
-                                                    tags={
-                                                        [
-                                                            /*TODO*/
-                                                        ]
-                                                    }
-                                                />
-                                                <UploadingFileInput
-                                                    image
-                                                    shortText
-                                                    className="screenshot"
-                                                    file={a.screenshot ?? undefined}
-                                                    onUploaded={(v) => {
-                                                        Api.workspaces.findings
-                                                            .updateAffected(workspace, finding, getAffected(a).uuid, {
-                                                                screenshot: v,
-                                                            })
-                                                            .then(handleApiError);
-                                                        setAffected((affected) =>
-                                                            affected.map((orig) =>
-                                                                getAffected(a).uuid == getAffected(orig).uuid
-                                                                    ? {
-                                                                          ...orig,
-                                                                          screenshot: v,
-                                                                      }
-                                                                    : orig,
-                                                            ),
-                                                        );
-                                                    }}
-                                                >
-                                                    <ScreenshotIcon />
-                                                </UploadingFileInput>
-                                                <UploadingFileInput
-                                                    shortText
-                                                    className="logfile"
-                                                    file={a.logFile ?? undefined}
-                                                    onUploaded={(v) => {
-                                                        Api.workspaces.findings
-                                                            .updateAffected(workspace, finding, getAffected(a).uuid, {
-                                                                logFile: v,
-                                                            })
-                                                            .then(handleApiError);
-                                                        setAffected((affected) =>
-                                                            affected.map((orig) =>
-                                                                getAffected(a).uuid == getAffected(orig).uuid
-                                                                    ? {
-                                                                          ...orig,
-                                                                          logFile: v,
-                                                                      }
-                                                                    : orig,
-                                                            ),
-                                                        );
-                                                    }}
-                                                >
-                                                    <FileIcon />
-                                                </UploadingFileInput>
-                                            </div>
-                                        );
-                                    })
-                                ) : (
+                                {ObjectFns.isEmpty(affected) ? (
                                     <p>No affected items yet</p>
+                                ) : (
+                                    Object.entries(affected).map(([affectedUuid, fullAffected]) => (
+                                        <div
+                                            key={affectedUuid}
+                                            className={`affected affected-${getAffectedType(fullAffected)}`}
+                                        >
+                                            <div className="name">
+                                                <div
+                                                    title={"Remove affected"}
+                                                    className="remove"
+                                                    onClick={() => {
+                                                        Api.workspaces.findings
+                                                            .removeAffected(workspace, finding, affectedUuid)
+                                                            .then(
+                                                                handleApiError(() =>
+                                                                    setAffected(
+                                                                        ({ [affectedUuid]: _, ...rest }) => rest,
+                                                                    ),
+                                                                ),
+                                                            );
+                                                    }}
+                                                >
+                                                    <CloseIcon />
+                                                </div>
+                                                <AffectedLabel affected={fullAffected.affected} pretty />
+                                            </div>
+                                            <MarkdownEditorPopup
+                                                label={<AffectedLabel affected={fullAffected.affected} pretty />}
+                                                content={fullAffected.userDetails}
+                                                onChange={(d) => {
+                                                    // TODO: websocket / live editor here
+                                                }}
+                                            />
+                                            <TagList
+                                                tags={
+                                                    [
+                                                        /*TODO*/
+                                                    ]
+                                                }
+                                            />
+                                            <UploadingFileInput
+                                                image
+                                                shortText
+                                                className="screenshot"
+                                                file={fullAffected.screenshot ?? undefined}
+                                                onUploaded={(screenshot) => {
+                                                    Api.workspaces.findings
+                                                        .updateAffected(workspace, finding, affectedUuid, {
+                                                            screenshot,
+                                                        })
+                                                        .then(
+                                                            handleApiError(() =>
+                                                                setAffected(
+                                                                    ({ [affectedUuid]: affected, ...rest }) => ({
+                                                                        [affectedUuid]: { ...affected, screenshot },
+                                                                        ...rest,
+                                                                    }),
+                                                                ),
+                                                            ),
+                                                        );
+                                                }}
+                                            >
+                                                <ScreenshotIcon />
+                                            </UploadingFileInput>
+                                            <UploadingFileInput
+                                                shortText
+                                                className="logfile"
+                                                file={fullAffected.logFile ?? undefined}
+                                                onUploaded={(logFile) => {
+                                                    Api.workspaces.findings
+                                                        .updateAffected(workspace, finding, affectedUuid, {
+                                                            logFile,
+                                                        })
+                                                        .then(
+                                                            handleApiError(() =>
+                                                                setAffected(
+                                                                    ({ [affectedUuid]: affected, ...rest }) => ({
+                                                                        [affectedUuid]: { ...affected, logFile },
+                                                                        ...rest,
+                                                                    }),
+                                                                ),
+                                                            ),
+                                                        );
+                                                }}
+                                            >
+                                                <FileIcon />
+                                            </UploadingFileInput>
+                                        </div>
+                                    ))
                                 )}
                             </div>
                         )}
@@ -432,7 +356,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                             }}
                         />
                     </div>
-                </form>
+                </div>
                 <div className="create-finding-editor-container">
                     <div className="knowledge-base-editor-tabs">
                         <button
@@ -472,11 +396,83 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                             <GraphIcon />
                         </button>
                     </div>
-                    {editor()}
+                    {(() => {
+                        switch (section) {
+                            case "definition":
+                                const effectiveDef = hoveredFindingDef || findingDef;
+                                return effectiveDef && <FindingDefinitionDetails {...effectiveDef} />;
+                            case "description":
+                                return (
+                                    <>
+                                        <Editor
+                                            className={"knowledge-base-editor"}
+                                            theme={"custom"}
+                                            beforeMount={setupMonaco}
+                                            value={details}
+                                        />
+                                    </>
+                                );
+                            case "affected":
+                                const addAffected = (uuid: UUID, type: AggregationType) =>
+                                    Api.workspaces.findings
+                                        .addAffected(workspace, finding, {
+                                            type,
+                                            uuid,
+                                            details: "",
+                                        })
+                                        .then(
+                                            handleApiError(() =>
+                                                Api.workspaces.findings.getAffected(workspace, finding, uuid).then(
+                                                    handleApiError((fullAffected) =>
+                                                        setAffected((affected) => ({
+                                                            ...affected,
+                                                            [uuid]: fullAffected,
+                                                        })),
+                                                    ),
+                                                ),
+                                            ),
+                                        );
+                                return (
+                                    <div className="workspace-finding-data-table">
+                                        <WorkspaceFindingTable
+                                            onAddDomain={({ uuid }) => addAffected(uuid, AggregationType.Domain)}
+                                            onAddHost={({ uuid }) => addAffected(uuid, AggregationType.Host)}
+                                            onAddPort={({ uuid }) => addAffected(uuid, AggregationType.Port)}
+                                            onAddService={({ uuid }) => addAffected(uuid, AggregationType.Service)}
+                                        />
+                                    </div>
+                                );
+                            case "network":
+                                return (
+                                    <EditingTreeGraph
+                                        uuid={finding}
+                                        definition={findingDef}
+                                        severity={severity}
+                                        affected={Object.values(affected)}
+                                        workspace={workspace}
+                                        maximizable
+                                    />
+                                );
+                            default:
+                                return "Unimplemented";
+                        }
+                    })()}
                 </div>
             </div>
         </div>
     );
+}
+
+export type AffectedLabelProps = {
+    pretty?: boolean;
+    affected: FindingAffectedObject;
+};
+
+export function AffectedLabel({ pretty, affected }: AffectedLabelProps) {
+    if (isAffectedDomain(affected)) return <Domain domain={affected.domain} pretty={pretty} />;
+    if (isAffectedHost(affected)) return <IpAddr host={affected.host} pretty={pretty} />;
+    if (isAffectedPort(affected)) return <PortNumber port={affected.port} pretty={pretty} />;
+    else return <ServiceName service={affected.service} pretty={pretty} />;
 }
 
 function isAffectedDomain(obj: FindingAffectedObject): obj is FindingAffectedObjectOneOf {
