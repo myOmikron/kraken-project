@@ -2,10 +2,11 @@ mod operations;
 
 use chrono::DateTime;
 use chrono::Utc;
-pub use operations::DeferCommit;
 use rorm::prelude::*;
 use uuid::Uuid;
 
+pub use self::operations::DeferCommit;
+pub use self::operations::MediaFileInsertOutcome;
 use crate::models::User;
 use crate::models::Workspace;
 

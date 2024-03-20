@@ -5,6 +5,7 @@ use rorm::prelude::ForeignModel;
 use rorm::prelude::ForeignModelByField;
 use rorm::prelude::*;
 use rorm::query;
+use rorm::update;
 use rorm::Patch;
 use uuid::Uuid;
 
@@ -53,37 +54,77 @@ impl MediaFile {
         is_image: bool,
         user: Uuid,
         workspace: Uuid,
-    ) -> Result<Uuid, rorm::Error> {
+    ) -> Result<MediaFileInsertOutcome, rorm::Error> {
         let mut guard = executor.ensure_transaction().await?;
 
-        let uuid = if let Some((uuid,)) = query!(guard.get_transaction(), (MediaFile::F.uuid,))
-            .condition(and![
-                MediaFile::F.workspace.equals(workspace),
-                MediaFile::F.user.equals(user),
-                MediaFile::F.name.equals(&name),
-                MediaFile::F.sha256.equals(&sha256)
-            ])
-            .optional()
-            .await?
-        {
-            uuid
-        } else {
-            insert!(guard.get_transaction(), MediaFile)
-                .return_primary_key()
-                .single(&MediaFileInsert {
-                    uuid,
-                    name,
-                    sha256,
-                    is_image,
-                    user: Some(ForeignModelByField::Key(user)),
-                    workspace: Some(ForeignModelByField::Key(workspace)),
-                })
-                .await?
+        let db_state = query!(
+            guard.get_transaction(),
+            (MediaFile::F.uuid, MediaFile::F.is_image)
+        )
+        .condition(and![
+            MediaFile::F.workspace.equals(workspace),
+            MediaFile::F.user.equals(user),
+            MediaFile::F.name.equals(&name),
+            MediaFile::F.sha256.equals(&sha256),
+        ])
+        .optional()
+        .await?;
+
+        let outcome = match db_state {
+            None => {
+                insert!(guard.get_transaction(), MediaFile)
+                    .return_nothing()
+                    .single(&MediaFileInsert {
+                        uuid,
+                        name,
+                        sha256,
+                        is_image,
+                        user: Some(ForeignModelByField::Key(user)),
+                        workspace: Some(ForeignModelByField::Key(workspace)),
+                    })
+                    .await?;
+                MediaFileInsertOutcome::Inserted
+            }
+            Some((existing_file, false)) if is_image => {
+                update!(guard.get_transaction(), MediaFile)
+                    .condition(MediaFile::F.uuid.equals(existing_file))
+                    .set(MediaFile::F.is_image, true)
+                    .await?;
+                MediaFileInsertOutcome::NeedsThumbnail(existing_file)
+            }
+            Some((existing_file, _)) => MediaFileInsertOutcome::Found(existing_file),
         };
 
         guard.commit().await?;
-        Ok(uuid)
+        Ok(outcome)
     }
+}
+
+/// The outcome of a [`MediaFile::get_or_insert`]
+pub enum MediaFileInsertOutcome {
+    /// The new file was inserted normally
+    Inserted,
+
+    /// The user already uploaded this file (detected by sha256 and name).
+    Found(
+        /// The uuid for the existing file
+        ///
+        /// Use this uuid instead of the one you passed to `MediaFile::get_or_insert`!
+        Uuid,
+    ),
+
+    /// Special case of `Found`:
+    /// If the file was first uploaded as non-image and as image later,
+    /// then the file existed and can be used instead of being stored twice.
+    ///
+    /// **But** the caller **must** generate a thumbnail for the file and abort the transaction,
+    /// if he can't. Because `MediaFile::get_or_insert` will already have updated the `is_image` flag.
+    NeedsThumbnail(
+        /// The uuid for the existing file
+        ///
+        /// Use this uuid instead of the one you passed to `MediaFile::get_or_insert`!
+        Uuid,
+    ),
 }
 
 #[derive(Patch)]

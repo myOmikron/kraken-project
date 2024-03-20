@@ -30,6 +30,7 @@ use crate::api::handler::files::utils::stream_into_file_with_magic;
 use crate::chan::global::GLOBAL;
 use crate::models::DeferCommit;
 use crate::models::MediaFile;
+use crate::models::MediaFileInsertOutcome;
 use crate::models::Workspace;
 
 /// Uploads an image to the workspace and generates a thumbnail for it
@@ -75,7 +76,7 @@ pub async fn upload_image(
     }
 
     let mut deferred_tx = GLOBAL.db.start_transaction().await?;
-    let uuid = MediaFile::get_or_insert(
+    let outcome = MediaFile::get_or_insert(
         DeferCommit(&mut deferred_tx), // The tx should be committed after all fs operations
         file_uuid,
         query.filename,
@@ -85,9 +86,22 @@ pub async fn upload_image(
         workspace_uuid,
     )
     .await?;
-    if uuid != file_uuid {
-        return Ok(Json(UuidResponse { uuid }));
-    }
+
+    let (file_uuid, delete_file_guard) = match outcome {
+        MediaFileInsertOutcome::Found(existing_file) => {
+            return Ok(Json(UuidResponse {
+                uuid: existing_file,
+            }));
+        }
+        MediaFileInsertOutcome::Inserted => (
+            file_uuid,               // Continue generating thumbnail for uploaded file
+            Some(delete_file_guard), // Keep the uploaded file
+        ),
+        MediaFileInsertOutcome::NeedsThumbnail(existing_file) => (
+            existing_file, // Continue generating thumbnail for existing file
+            None,          // Dump the uploaded file
+        ),
+    };
 
     tokio::task::spawn_blocking(move || {
         let mut reader = image::io::Reader::open(media_file_path(file_uuid))?;
@@ -108,8 +122,10 @@ pub async fn upload_image(
     })?;
     deferred_tx.commit().await?;
 
-    delete_file_guard.dont();
-    Ok(Json(UuidResponse { uuid }))
+    if let Some(guard) = delete_file_guard {
+        guard.dont();
+    }
+    Ok(Json(UuidResponse { uuid: file_uuid }))
 }
 
 /// Uploads a file to the workspace
@@ -145,7 +161,7 @@ pub async fn upload_file(
             .await?
             .unwrap();
 
-    let uuid = MediaFile::get_or_insert(
+    let outcome = MediaFile::get_or_insert(
         DeferCommit(&GLOBAL.db), // We are not performing any fs operations after this
         file_uuid,
         query.filename,
@@ -155,12 +171,20 @@ pub async fn upload_file(
         workspace_uuid,
     )
     .await?;
-    if uuid != file_uuid {
-        return Ok(Json(UuidResponse { uuid }));
-    }
 
-    delete_file_guard.dont();
-    Ok(Json(UuidResponse { uuid }))
+    match outcome {
+        MediaFileInsertOutcome::Found(existing_file) => Ok(Json(UuidResponse {
+            uuid: existing_file,
+        })),
+        MediaFileInsertOutcome::Inserted => {
+            delete_file_guard.dont();
+            Ok(Json(UuidResponse { uuid: file_uuid }))
+        }
+        MediaFileInsertOutcome::NeedsThumbnail(_) => {
+            error!("Impossible state");
+            Err(ApiError::InternalServerError)
+        }
+    }
 }
 
 /// Downloads a thumbnail from the workspace
