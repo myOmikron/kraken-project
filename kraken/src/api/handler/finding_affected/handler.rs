@@ -121,6 +121,7 @@ pub async fn get_finding_affected(
     }
 
     let (
+        finding_affected_uuid,
         finding,
         finding_details,
         finding_definition_uuid,
@@ -137,6 +138,7 @@ pub async fn get_finding_affected(
     ) = query_finding_affected(
         &mut tx,
         (
+            FindingAffected::F.uuid,
             FindingAffected::F.finding.select_as::<Finding>(),
             FindingAffected::F
                 .finding
@@ -259,20 +261,16 @@ pub async fn get_finding_affected(
             },
             severity: finding.severity,
             affected: finding_affected,
-            user_details: finding_details.user_details,
+            #[rustfmt::skip]
+            user_details: GLOBAL.editor_cache.finding_details.get(finding.uuid).await?.unwrap_or_default().0,
             tool_details: finding_details.tool_details,
             screenshot: finding_details.screenshot.map(|fm| *fm.key()),
             log_file: finding_details.log_file.map(|fm| *fm.key()),
             created_at: finding.created_at,
         },
         affected,
-        user_details: GLOBAL
-            .editor_cache
-            .finding_affected_details
-            .get(finding.uuid)
-            .await?
-            .unwrap_or_default()
-            .0,
+        #[rustfmt::skip]
+        user_details: GLOBAL.editor_cache.finding_affected_details.get(finding_affected_uuid).await?.unwrap_or_default().0,
         tool_details: details.as_mut().and_then(|d| d.tool_details.take()),
         screenshot: details
             .as_mut()

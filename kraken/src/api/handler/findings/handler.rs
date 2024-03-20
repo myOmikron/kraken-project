@@ -188,7 +188,8 @@ pub async fn get_finding(
         },
         severity: finding.severity,
         affected,
-        user_details: details.user_details,
+        #[rustfmt::skip]
+        user_details: GLOBAL.editor_cache.finding_details.get(finding.uuid).await?.unwrap_or_default().0,
         tool_details: details.tool_details,
         screenshot: details.screenshot.map(|x| *x.key()),
         log_file: details.log_file.map(|x| *x.key()),
