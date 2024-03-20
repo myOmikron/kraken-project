@@ -33,7 +33,6 @@ use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::DomainResultsPage;
 use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::common::schema::SimpleTag;
-use crate::api::handler::common::schema::TagType;
 use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::common::utils::get_page_params;
 use crate::api::handler::domains::schema::CreateDomainRequest;
@@ -227,12 +226,7 @@ pub async fn get_domain(
     let mut tags: Vec<_> = query!(&mut tx, (DomainGlobalTag::F.global_tag as GlobalTag,))
         .condition(DomainGlobalTag::F.domain.equals(path.d_uuid))
         .stream()
-        .map_ok(|(x,)| SimpleTag {
-            uuid: x.uuid,
-            name: x.name,
-            color: x.color.into(),
-            tag_type: TagType::Global,
-        })
+        .map_ok(|(tag,)| SimpleTag::from(tag))
         .try_collect()
         .await?;
 
@@ -242,12 +236,7 @@ pub async fn get_domain(
     )
     .condition(DomainWorkspaceTag::F.domain.equals(path.d_uuid))
     .stream()
-    .map_ok(|(x,)| SimpleTag {
-        uuid: x.uuid,
-        name: x.name,
-        color: x.color.into(),
-        tag_type: TagType::Workspace,
-    })
+    .map_ok(|(tag,)| SimpleTag::from(tag))
     .try_collect()
     .await?;
 
