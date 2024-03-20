@@ -70,6 +70,14 @@ pub async fn create_finding_affected(
         .await?
         .ok_or(ApiError::NotFound)?;
 
+    let already_exists =
+        query_finding_affected(&mut tx, (FindingAffected::F.uuid,), f_uuid, request.uuid)
+            .await?
+            .is_some();
+    if already_exists {
+        return Err(ApiError::InvalidUuid);
+    }
+
     FindingAffected::insert(
         &mut tx,
         f_uuid,
@@ -149,7 +157,8 @@ pub async fn get_finding_affected(
         f_uuid,
         a_uuid,
     )
-    .await?;
+    .await?
+    .ok_or(ApiError::NotFound)?;
 
     let mut details = if let Some(details) = details {
         Some(
@@ -312,8 +321,9 @@ pub async fn update_finding_affected(
         return Err(ApiError::NotFound);
     }
 
-    let (details,) =
-        query_finding_affected(&mut tx, (FindingAffected::F.details,), f_uuid, a_uuid).await?;
+    let (details,) = query_finding_affected(&mut tx, (FindingAffected::F.details,), f_uuid, a_uuid)
+        .await?
+        .ok_or(ApiError::NotFound)?;
 
     if let Some(details) = details {
         FindingDetails::update(
@@ -327,7 +337,7 @@ pub async fn update_finding_affected(
     } else {
         let screenshot = request.screenshot.flatten();
         let log_file = request.log_file.flatten();
-        if details.is_some() || screenshot.is_some() || log_file.is_some() {
+        if screenshot.is_some() || log_file.is_some() {
             let uuid =
                 FindingDetails::insert(&mut tx, String::new(), None, screenshot, log_file).await?;
             update!(&mut tx, FindingAffected)
@@ -368,8 +378,9 @@ pub async fn delete_finding_affected(
         return Err(ApiError::NotFound);
     }
 
-    let (uuid,) =
-        query_finding_affected(&mut tx, (FindingAffected::F.uuid,), f_uuid, a_uuid).await?;
+    let (uuid,) = query_finding_affected(&mut tx, (FindingAffected::F.uuid,), f_uuid, a_uuid)
+        .await?
+        .ok_or(ApiError::NotFound)?;
     FindingAffected::delete(&mut tx, uuid).await?;
 
     tx.commit().await?;

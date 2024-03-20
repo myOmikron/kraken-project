@@ -156,7 +156,7 @@ impl FindingAffected {
     pub async fn delete(executor: impl Executor<'_>, uuid: Uuid) -> Result<bool, rorm::Error> {
         let mut guard = executor.ensure_transaction().await?;
         let Some((details,)) = query!(guard.get_transaction(), (FindingAffected::F.details,))
-            .condition(FindingAffected::F.details.equals(uuid))
+            .condition(FindingAffected::F.uuid.equals(uuid))
             .optional()
             .await?
         else {

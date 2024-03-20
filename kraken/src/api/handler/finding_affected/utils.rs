@@ -6,8 +6,6 @@ use rorm::or;
 use rorm::prelude::*;
 use uuid::Uuid;
 
-use crate::api::handler::common::error::ApiError;
-use crate::api::handler::common::error::ApiResult;
 use crate::models::FindingAffected;
 
 pub async fn query_finding_affected<S: Selector<Model = FindingAffected>>(
@@ -15,7 +13,7 @@ pub async fn query_finding_affected<S: Selector<Model = FindingAffected>>(
     selector: S,
     f_uuid: Uuid,
     a_uuid: Uuid,
-) -> ApiResult<S::Result> {
+) -> Result<Option<S::Result>, rorm::Error> {
     QueryBuilder::new(executor, selector)
         .condition(and![
             FindingAffected::F.finding.equals(f_uuid),
@@ -27,6 +25,5 @@ pub async fn query_finding_affected<S: Selector<Model = FindingAffected>>(
             ]
         ])
         .optional()
-        .await?
-        .ok_or(ApiError::NotFound)
+        .await
 }
