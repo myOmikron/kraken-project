@@ -10,6 +10,7 @@
     --grey-blue-op: #67748680;
     --secondary: #00ffb3;
     --red-button: rgba(255, 159, 159, 0.2);
+    --popup-pane-bg: #002545; /* backround color for large popup panes that should hide content behind them instead of bluring it */
 }
 
 @font-face {

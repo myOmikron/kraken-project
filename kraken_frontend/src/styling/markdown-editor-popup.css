@@ -1,13 +1,14 @@
 .markdown-editor-popup-overlay .pane {
-    background-color: black;
+    background-color: var(--popup-pane-bg);
     width: 60vw;
     height: 60vh;
     display: flex;
     gap: 1em;
+    backdrop-filter: none;
 }
 
 .markdown-editor-popup-overlay {
-    backdrop-filter: blur(1px);
+    backdrop-filter: blur(4px) saturate(25%);
 }
 
 .markdown-editor-popup-overlay .pane > .grid {
