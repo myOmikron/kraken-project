@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 import { forwardRef, useEffect, useRef, useState } from "react";
+import { UUID } from "../../../api/api";
 import {
     FullDomain,
     FullHost,
@@ -208,10 +209,12 @@ export function TreeGraph({
         const old = new Map(simulationState.current.nodes.map((n) => [n.uuid, n]));
         const state = new Map(sim.nodes().map((n) => [n.uuid, n]));
         const uuids = roots.map((r) => r.uuid).join("\n");
+        const inserted: { [index: UUID]: any } = {};
         let nextY = 0;
         let forceRecalcX = simulationState.current.rootUuids != uuids;
         let nodes = roots.flatMap((root) =>
             flatMapTree<NodeT>(root, (n, d, ci, parent) => {
+                if (n.uuid in inserted) return [];
                 const fx = d * (treeNodeWidth + horizontalMargin);
                 let overrideY: number | undefined = undefined;
                 if (parent) {
@@ -233,6 +236,7 @@ export function TreeGraph({
                     ...n,
                 };
                 if (forceRecalcX) res.fx = fx;
+                inserted[n.uuid] = res;
                 return [res];
             }),
         );
@@ -292,6 +296,7 @@ export function TreeGraph({
         }
     }, [connections, highlighted]);
 
+    const rendered: { [index: UUID]: any } = {};
     return (
         <Viewport
             {...props}
@@ -305,16 +310,20 @@ export function TreeGraph({
             connections={connections}
         >
             {roots.flatMap((root) =>
-                flatMapTree(root, (n) => [
-                    <TreeNode
-                        key={n.uuid}
-                        node={n}
-                        className={`${highlighted.includes(n.uuid) ? "highlighted" : ""}`}
-                        onClickTag={onClickTag}
-                        onPointerEnter={(e) => (e.altKey ? null : setHovered(n.uuid))}
-                        onPointerLeave={() => unsetHovered(n.uuid)}
-                    />,
-                ]),
+                flatMapTree(root, (n) =>
+                    n.uuid in rendered
+                        ? []
+                        : (rendered[n.uuid] = [
+                              <TreeNode
+                                  key={n.uuid}
+                                  node={n}
+                                  className={`${highlighted.includes(n.uuid) ? "highlighted" : ""}`}
+                                  onClickTag={onClickTag}
+                                  onPointerEnter={(e) => (e.altKey ? null : setHovered(n.uuid))}
+                                  onPointerLeave={() => unsetHovered(n.uuid)}
+                              />,
+                          ]),
+                ),
             )}
             {children}
         </Viewport>

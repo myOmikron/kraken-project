@@ -158,7 +158,10 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                     }
 
                     setRoots((r) => {
-                        let res = r.map(mutate);
+                        let res = r.map((r) => {
+                            copied = {};
+                            return mutate(r);
+                        });
                         if (!found) console.warn("couldn't find ", parent, " in roots to insert child into?!");
                         return res;
                     });
