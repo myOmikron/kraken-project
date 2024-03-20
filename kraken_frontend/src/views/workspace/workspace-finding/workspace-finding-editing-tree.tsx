@@ -43,7 +43,7 @@ export default function EditingTreeGraph(props: EditingTreeGraphProps) {
     };
 
     const api = React.useRef<DynamicTreeLookupFunctions>({
-        async getRoot() {
+        async getRoots() {
             throw new Error("function not overriden!");
         },
         async getAffected() {
@@ -55,31 +55,33 @@ export default function EditingTreeGraph(props: EditingTreeGraphProps) {
     // props.affected) every time, but we don't recreate the api / api.current
     // object so that the reference stays the same and the DynamicTreeGraph
     // component doesn't rerender because we changed how the API behaves every time.
-    api.current.getRoot = async function (): Promise<FullFinding> {
-        return {
-            affected: props.affected.map((a, i) => ({
-                _index: i,
-                affectedUuid: getUuid(a),
-                affectedType: "affected" in a ? getAffectedType(a) : "affectedType" in a ? a.affectedType : a.type,
-                finding: rootUuid,
-            })),
-            createdAt: new Date(),
-            definition: props.definition || {
+    api.current.getRoots = async function () {
+        return [
+            {
+                affected: props.affected.map((a, i) => ({
+                    _index: i,
+                    affectedUuid: getUuid(a),
+                    affectedType: "affected" in a ? getAffectedType(a) : "affectedType" in a ? a.affectedType : a.type,
+                    finding: rootUuid,
+                })),
                 createdAt: new Date(),
-                name: "(missing definition)",
+                definition: props.definition || {
+                    createdAt: new Date(),
+                    name: "(missing definition)",
+                    severity: props.severity,
+                    summary: "",
+                    uuid: "local-undefined",
+                },
+                userDetails: "",
                 severity: props.severity,
-                summary: "",
-                uuid: "local-undefined",
+                uuid: rootUuid,
             },
-            userDetails: "",
-            severity: props.severity,
-            uuid: rootUuid,
-        };
+        ];
     };
-    api.current.getAffected = async function ({
-        affectedUuid: affected,
-        _index,
-    }: SimpleFindingAffected & { _index?: number }): Promise<Result<{ affected: AffectedShallow }, ApiError>> {
+    api.current.getAffected = async function (
+        finding: FullFinding,
+        { affectedUuid: affected, _index }: SimpleFindingAffected & { _index?: number },
+    ): Promise<Result<{ affected: AffectedShallow }, ApiError>> {
         if (_index === undefined)
             return Err({
                 message: "invalid ID",
