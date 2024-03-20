@@ -11,7 +11,7 @@ import SeverityIcon from "../../svg/severity";
 import TableIcon from "../../svg/table";
 import { handleApiError } from "../../utils/helper";
 import { WORKSPACE_CONTEXT } from "./workspace";
-import { TreeGraph, TreeNode } from "./workspace-finding/workspace-finding-tree";
+import { DynamicTreeGraph } from "./workspace-finding/workspace-finding-dynamic-tree";
 
 const TABS = { table: "Table", graph: "Graph" };
 
@@ -26,7 +26,7 @@ export default function WorkspaceFindings(props: WorkspaceFindingsProps) {
     const [defs, setDefs] = React.useState([] as Array<SimpleFindingDefinition>);
     const [search, setSearch] = React.useState("");
 
-    const [roots, setRoots] = React.useState<TreeNode[]>([]);
+    const [roots, setRoots] = React.useState<string[]>([]);
 
     React.useEffect(() => {
         Api.knowledgeBase.findingDefinitions
@@ -34,7 +34,12 @@ export default function WorkspaceFindings(props: WorkspaceFindingsProps) {
             .then(handleApiError(({ findingDefinitions }) => setDefs(findingDefinitions)));
     }, []);
     React.useEffect(() => {
-        Api.workspaces.findings.all(workspace).then(handleApiError(({ findings }) => setFindings(findings)));
+        Api.workspaces.findings.all(workspace).then(
+            handleApiError(({ findings }): void => {
+                setFindings(findings);
+                setRoots(findings.map((f) => f.uuid));
+            }),
+        );
     }, [workspace]);
 
     // @ts-ignore
@@ -90,7 +95,7 @@ export default function WorkspaceFindings(props: WorkspaceFindingsProps) {
                     </>
                 );
             case "graph":
-                return <TreeGraph roots={roots} />;
+                return <DynamicTreeGraph workspace={workspace} uuids={roots} />;
             default:
                 return "Unimplemented";
         }

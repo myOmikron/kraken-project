@@ -30,7 +30,7 @@ import { TreeGraph, TreeNode } from "./workspace-finding-tree";
 
 export type DynamicTreeGraphProps = {
     maximizable?: boolean;
-} & ({ api: DynamicTreeLookupFunctions } | { workspace: string; uuid: string }) &
+} & ({ api: DynamicTreeLookupFunctions } | { workspace: string; uuids: string[] }) &
     ViewportProps;
 
 export type DynamicTreeWorkspaceFunctions = {
@@ -64,8 +64,11 @@ export type AffectedShallow =
       };
 
 export type DynamicTreeLookupFunctions = {
-    getRoot: () => Promise<FullFinding>;
-    getAffected: (affected: SimpleFindingAffected) => Promise<Result<{ affected: AffectedShallow }, ApiError>>;
+    getRoots: () => Promise<FullFinding[]>;
+    getAffected: (
+        finding: FullFinding,
+        affected: SimpleFindingAffected,
+    ) => Promise<Result<{ affected: AffectedShallow }, ApiError>>;
 } & DynamicTreeWorkspaceFunctions;
 
 export function treeLookupFunctionsWorkspace(workspace: string): DynamicTreeWorkspaceFunctions {
@@ -86,11 +89,18 @@ export function treeLookupFunctionsWorkspace(workspace: string): DynamicTreeWork
     };
 }
 
-export function treeLookupFunctionsRoot(workspace: string, uuid: string): DynamicTreeLookupFunctions {
+export function treeLookupFunctionsRoot(workspace: string, uuids: string[]): DynamicTreeLookupFunctions {
     return {
-        getRoot: () =>
-            new Promise((resolve) => Api.workspaces.findings.get(workspace, uuid).then(handleApiError(resolve))),
-        getAffected: ({ affectedUuid: affected }: SimpleFindingAffected) =>
+        getRoots: () =>
+            Promise.all(
+                uuids.map(
+                    (uuid) =>
+                        new Promise<FullFinding>((resolve) =>
+                            Api.workspaces.findings.get(workspace, uuid).then(handleApiError(resolve)),
+                        ),
+                ),
+            ),
+        getAffected: ({ uuid }: FullFinding, { affectedUuid: affected }: SimpleFindingAffected) =>
             Api.workspaces.findings.getAffected(workspace, uuid, affected),
         ...treeLookupFunctionsWorkspace(workspace),
     };
@@ -104,7 +114,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
     ({ maximizable, ...props }, ref) => {
         const apiTimeout = 100;
 
-        const api = "api" in props ? props.api : treeLookupFunctionsRoot(props.workspace, props.uuid);
+        const api = "api" in props ? props.api : treeLookupFunctionsRoot(props.workspace, props.uuids);
 
         const [maximized, setMaximized] = useState(false);
         const [manualAffected, setManualAffected] = useState(0);
@@ -283,10 +293,10 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                 insertServiceSimple(node: TreeNode, child: { uuid: string }) {
                     api.resolveService(child.uuid).then(handleApiError((full) => mutator.insertService(node, full)));
                 },
-                populateAffectedRoot(root: TreeNode, affected: SimpleFindingAffected[]) {
+                populateAffectedRoot(root: TreeNode, finding: FullFinding) {
                     if (mutator.shouldAbort()) return;
-                    for (const a of affected) {
-                        api.getAffected(a).then(
+                    for (const a of finding.affected) {
+                        api.getAffected(finding, a).then(
                             handleApiError((affected) => {
                                 if (mutator.shouldAbort()) return;
                                 if ("domain" in affected.affected && affected.affected.domain) {
@@ -309,20 +319,18 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
         useImperativeHandle(ref, () => ({
             reloadAffected() {
                 setManualAffected((v) => v + 1);
-                api.getRoot().then((finding) => {
-                    const mutator = getMutator();
-                    console.log(roots[0].children?.map((a) => a.uuid));
-                    console.log(finding.affected.map((a) => a.affectedUuid));
-                    setRoots((r) => [
-                        {
-                            ...r[0],
-                            children: r[0].children
-                                ?.filter((a) => finding.affected.some((f) => f.affectedUuid == a.uuid))
+                api.getRoots().then((findingsList) => {
+                    const findings = Object.fromEntries(findingsList.map((f) => [f.uuid, f]));
+                    setRoots((roots) =>
+                        roots.map((root, index) => ({
+                            ...root,
+                            children: root.children
+                                ?.filter((a) => findings[root.uuid].affected.some((f) => f.affectedUuid == a.uuid))
                                 .map((c) => ({
                                     ...c,
                                 })),
-                        },
-                    ]);
+                        })),
+                    );
                 });
             },
         }));
@@ -330,7 +338,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
         const toggleMax = () => setMaximized((m) => !m);
 
         const apiOrWorkspace = "api" in props ? props.api : props.workspace;
-        const apiOrUuid = "api" in props ? props.api : props.uuid;
+        const apiOrUuid = "api" in props ? props.api : props.uuids.join("+"); // dependency cache index (just join strings)
 
         useEffect(() => {
             setRoots([]);
@@ -338,17 +346,21 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
 
             const mutator = getMutator();
 
-            api.getRoot().then((finding) => {
+            api.getRoots().then((findings): void => {
                 if (mutator.shouldAbort()) return;
-                const root: TreeNode = {
-                    uuid: finding.uuid,
-                    type: "Finding",
-                    definition: finding.definition,
-                };
-                setRoots([root]);
-                setTimeout(function () {
-                    mutator.populateAffectedRoot(root, finding.affected);
-                }, apiTimeout);
+                let roots = [];
+                for (const finding of findings) {
+                    const root: TreeNode = {
+                        uuid: finding.uuid,
+                        type: "Finding",
+                        definition: finding.definition,
+                    };
+                    roots.push(root);
+                    setTimeout(function () {
+                        mutator.populateAffectedRoot(root, finding);
+                    }, apiTimeout);
+                }
+                setRoots(roots);
             });
         }, [apiOrUuid, apiOrWorkspace]);
 
