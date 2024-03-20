@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { Api } from "../../../api/api";
 import {
     AggregationType,
+    FindingAffectedObject,
     FindingAffectedObjectOneOf,
     FindingAffectedObjectOneOf1,
     FindingAffectedObjectOneOf2,
@@ -152,7 +153,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
             }),
             WS.addEventListener("message.RemovedFindingAffected", ({ workspace: w, finding: f, affectedUuid }) => {
                 if (w !== workspace || f !== finding) return;
-                setAffected((affected) => affected.filter(({ uuid }) => uuid !== affectedUuid));
+                setAffected((affected) => affected.filter((affected) => getAffected(affected).uuid !== affectedUuid));
             }),
         ];
         return () => {
@@ -161,46 +162,6 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
             }
         };
     }, [workspace, finding]);
-
-    const affectedType = (a: FullFindingAffected): AggregationType =>
-        (a.affected as any)["domain"]
-            ? "Domain"
-            : (a.affected as any)["host"]
-              ? "Host"
-              : (a.affected as any)["port"]
-                ? "Port"
-                : (a.affected as any)["service"]
-                  ? "Service"
-                  : (() => {
-                        throw new Error("unexpected finding type");
-                    })();
-    const extractAffected = (a: FullFindingAffected) =>
-        (a.affected as any)["domain"]
-            ? (a.affected as FindingAffectedObjectOneOf).domain
-            : (a.affected as any)["host"]
-              ? (a.affected as FindingAffectedObjectOneOf1).host
-              : (a.affected as any)["port"]
-                ? (a.affected as FindingAffectedObjectOneOf2).port
-                : (a.affected as any)["service"]
-                  ? (a.affected as FindingAffectedObjectOneOf3).service
-                  : (() => {
-                        throw new Error("unexpected finding type");
-                    })();
-
-    const addAffected = (newAffected: FullFindingAffected) => {
-        setAffected((affected) => {
-            if (affected.some((a) => extractAffected(a).uuid == extractAffected(newAffected).uuid)) return affected;
-
-            return [...affected, newAffected].sort((a, b) => {
-                if (affectedType(a) < affectedType(b)) return -1;
-                if (affectedType(a) > affectedType(b)) return 1;
-                // TODO: type-based sorters
-                if (extractAffected(a).uuid < extractAffected(b).uuid) return -1;
-                if (extractAffected(a).uuid > extractAffected(b).uuid) return 1;
-                return 0;
-            });
-        });
-    };
 
     const editor = () => {
         switch (section) {
@@ -331,23 +292,20 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                             <div className="affected-list">
                                 {affected.length > 0 ? (
                                     affected.map((a, index) => {
-                                        const label =
-                                            affectedType(a) == "Domain" ? (
-                                                <Domain domain={extractAffected(a) as SimpleDomain} pretty />
-                                            ) : affectedType(a) == "Host" ? (
-                                                <IpAddr host={extractAffected(a) as SimpleHost} pretty />
-                                            ) : affectedType(a) == "Port" ? (
-                                                <PortNumber port={extractAffected(a) as SimplePort} pretty />
-                                            ) : affectedType(a) == "Service" ? (
-                                                <ServiceName service={extractAffected(a) as SimpleService} pretty />
-                                            ) : (
-                                                "not implemented"
-                                            );
+                                        const label = isAffectedDomain(a.affected) ? (
+                                            <Domain domain={a.affected.domain} pretty />
+                                        ) : isAffectedHost(a.affected) ? (
+                                            <IpAddr host={a.affected.host} pretty />
+                                        ) : isAffectedPort(a.affected) ? (
+                                            <PortNumber port={a.affected.port} pretty />
+                                        ) : (
+                                            <ServiceName service={a.affected.service} pretty />
+                                        );
 
                                         return (
                                             <div
-                                                key={extractAffected(a).uuid}
-                                                className={`affected affected-${affectedType(a)}`}
+                                                key={getAffected(a).uuid}
+                                                className={`affected affected-${getAffectedType(a)}`}
                                             >
                                                 <div className="name">
                                                     <div
@@ -357,7 +315,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                             Api.workspaces.findings.removeAffected(
                                                                 workspace,
                                                                 finding,
-                                                                extractAffected(a).uuid,
+                                                                getAffected(a).uuid,
                                                             );
                                                             let copy = [...affected];
                                                             copy.splice(index, 1);
@@ -375,7 +333,13 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                         // TODO: websocket / live editor here
                                                     }}
                                                 />
-                                                <TagList tags={extractAffected(a).tags || []} />
+                                                <TagList
+                                                    tags={
+                                                        [
+                                                            /*TODO*/
+                                                        ]
+                                                    }
+                                                />
                                                 <UploadingFileInput
                                                     image
                                                     shortText
@@ -383,18 +347,13 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                     file={a.screenshot ?? undefined}
                                                     onUploaded={(v) => {
                                                         Api.workspaces.findings
-                                                            .updateAffected(
-                                                                workspace,
-                                                                finding,
-                                                                extractAffected(a).uuid,
-                                                                {
-                                                                    screenshot: v,
-                                                                },
-                                                            )
+                                                            .updateAffected(workspace, finding, getAffected(a).uuid, {
+                                                                screenshot: v,
+                                                            })
                                                             .then(handleApiError);
                                                         setAffected((affected) =>
                                                             affected.map((orig) =>
-                                                                extractAffected(a).uuid == extractAffected(orig).uuid
+                                                                getAffected(a).uuid == getAffected(orig).uuid
                                                                     ? {
                                                                           ...orig,
                                                                           screenshot: v,
@@ -412,18 +371,13 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                     file={a.logFile ?? undefined}
                                                     onUploaded={(v) => {
                                                         Api.workspaces.findings
-                                                            .updateAffected(
-                                                                workspace,
-                                                                finding,
-                                                                extractAffected(a).uuid,
-                                                                {
-                                                                    logFile: v,
-                                                                },
-                                                            )
+                                                            .updateAffected(workspace, finding, getAffected(a).uuid, {
+                                                                logFile: v,
+                                                            })
                                                             .then(handleApiError);
                                                         setAffected((affected) =>
                                                             affected.map((orig) =>
-                                                                extractAffected(a).uuid == extractAffected(orig).uuid
+                                                                getAffected(a).uuid == getAffected(orig).uuid
                                                                     ? {
                                                                           ...orig,
                                                                           logFile: v,
@@ -523,4 +477,34 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
             </div>
         </div>
     );
+}
+
+function isAffectedDomain(obj: FindingAffectedObject): obj is FindingAffectedObjectOneOf {
+    return "domain" in obj && obj["domain"] !== undefined;
+}
+
+function isAffectedHost(obj: FindingAffectedObject): obj is FindingAffectedObjectOneOf1 {
+    return "host" in obj && obj["host"] !== undefined;
+}
+
+function isAffectedPort(obj: FindingAffectedObject): obj is FindingAffectedObjectOneOf2 {
+    return "port" in obj && obj["port"] !== undefined;
+}
+
+function isAffectedService(obj: FindingAffectedObject): obj is FindingAffectedObjectOneOf3 {
+    return "service" in obj && obj["service"] !== undefined;
+}
+
+function getAffectedType({ affected }: FullFindingAffected): AggregationType {
+    if (isAffectedDomain(affected)) return AggregationType.Domain;
+    if (isAffectedHost(affected)) return AggregationType.Host;
+    if (isAffectedPort(affected)) return AggregationType.Port;
+    else return AggregationType.Service;
+}
+
+function getAffected({ affected }: FullFindingAffected) {
+    if (isAffectedDomain(affected)) return affected.domain;
+    if (isAffectedHost(affected)) return affected.host;
+    if (isAffectedPort(affected)) return affected.port;
+    else return affected.service;
 }
