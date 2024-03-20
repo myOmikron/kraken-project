@@ -594,7 +594,7 @@ export function getAffectedType({ affected }: FullFindingAffected): AggregationT
     else return AggregationType.Service;
 }
 
-function getAffected({ affected }: FullFindingAffected) {
+export function getAffectedData({ affected }: FullFindingAffected) {
     if (isAffectedDomain(affected)) return affected.domain;
     if (isAffectedHost(affected)) return affected.host;
     if (isAffectedPort(affected)) return affected.port;

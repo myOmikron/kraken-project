@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { Api } from "../../../api/api";
 import { ApiError } from "../../../api/error";
 import {
@@ -65,7 +65,7 @@ export type AffectedShallow =
 
 export type DynamicTreeLookupFunctions = {
     getRoot: () => Promise<FullFinding>;
-    getAffected: (affected: string) => Promise<Result<{ affected: AffectedShallow }, ApiError>>;
+    getAffected: (affected: SimpleFindingAffected) => Promise<Result<{ affected: AffectedShallow }, ApiError>>;
 } & DynamicTreeWorkspaceFunctions;
 
 export function treeLookupFunctionsWorkspace(workspace: string): DynamicTreeWorkspaceFunctions {
@@ -90,298 +90,343 @@ export function treeLookupFunctionsRoot(workspace: string, uuid: string): Dynami
     return {
         getRoot: () =>
             new Promise((resolve) => Api.workspaces.findings.get(workspace, uuid).then(handleApiError(resolve))),
-        getAffected: (affected: string) => Api.workspaces.findings.getAffected(workspace, uuid, affected),
+        getAffected: ({ affectedUuid: affected }: SimpleFindingAffected) =>
+            Api.workspaces.findings.getAffected(workspace, uuid, affected),
         ...treeLookupFunctionsWorkspace(workspace),
     };
 }
 
-export function DynamicTreeGraph({ maximizable, ...props }: DynamicTreeGraphProps) {
-    const apiTimeout = 100;
+export type DynamicTreeGraphRef = {
+    reloadAffected(): void;
+};
 
-    const api = "api" in props ? props.api : treeLookupFunctionsRoot(props.workspace, props.uuid);
+export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraphProps>(
+    ({ maximizable, ...props }, ref) => {
+        const apiTimeout = 100;
 
-    const [maximized, setMaximized] = useState(false);
-    const [roots, setRoots] = useState<TreeNode[]>([]);
-    const [filterTags, setFilterTags] = useState<SimpleTag[]>([]);
-    const addedUuids = useRef<{ [index: string]: null }>({});
+        const api = "api" in props ? props.api : treeLookupFunctionsRoot(props.workspace, props.uuid);
 
-    const toggleMax = () => setMaximized((m) => !m);
+        const [maximized, setMaximized] = useState(false);
+        const [manualAffected, setManualAffected] = useState(0);
+        const [roots, setRoots] = useState<TreeNode[]>([]);
+        const [filterTags, setFilterTags] = useState<SimpleTag[]>([]);
+        const addedUuids = useRef<{ [index: string]: null }>({});
 
-    const apiOrWorkspace = "api" in props ? props.api : props.workspace;
-    const apiOrUuid = "api" in props ? props.api : props.uuid;
+        const getMutator = () => {
+            const srcUuid = apiOrUuid;
+            const srcWorkspace = apiOrWorkspace;
+            const srcManualAffected = manualAffected;
 
-    useEffect(() => {
-        const srcUuid = apiOrUuid;
-        const srcWorkspace = apiOrWorkspace;
-        const shouldAbort = () => srcUuid != apiOrUuid || srcWorkspace != apiOrWorkspace;
-
-        setRoots([]);
-        addedUuids.current = {};
-
-        /// inserts the child to parent, returns true if the child hasn't been added to the tree yet
-        const insertChild = (parent: TreeNode, child: TreeNode) => {
-            const isNew = !(child.uuid in addedUuids.current);
-            addedUuids.current[child.uuid] = null;
-            let found = false;
-            let copied: { [uuid: string]: TreeNode } = {};
-            function mutate(n: TreeNode): TreeNode {
-                if (copied[n.uuid]) return copied[n.uuid];
-                if (n.uuid == parent.uuid) {
-                    found = true;
-                    return (copied[n.uuid] = {
-                        ...n,
-                        children: [...(n.children ?? []), child],
-                    });
-                } else {
-                    let copy: TreeNode = {
-                        ...n,
-                    };
-                    copied[n.uuid] = copy;
-                    copy.children = n.children?.map(mutate);
-                    return copy;
-                }
-            }
-
-            setRoots((r) => {
-                let res = r.map(mutate);
-                if (!found) console.warn("couldn't find ", parent, " in roots to insert child into?!");
-                return res;
-            });
-            return isNew;
-        };
-
-        const insertFindings = (parent: TreeNode, node: TreeNode, findings: ListFindings) => {
-            if (shouldAbort()) return;
-            for (const f of findings.findings) {
-                if (f.uuid == parent.uuid) return;
-                api.resolveFinding(f.definition).then(
-                    handleApiError((definition) => {
-                        if (shouldAbort()) return;
-                        const insert: TreeNode = {
-                            uuid: f.uuid,
-                            type: "Finding",
-                            definition: definition,
-                        };
-                        if (!insertChild(node, insert)) return;
-                        // TODO: recurse here
-                    }),
-                );
-            }
-        };
-        const populateDomain = (parent: TreeNode, node: TreeNode, domain: SimpleDomain | FullDomain) => {
-            api.findingsForDomain(domain.uuid).then(
-                handleApiError((findings) => insertFindings(parent, node, findings)),
-            );
-            api.relationsForDomain(domain.uuid).then(
-                handleApiError((relations) => {
-                    [...relations.directHosts, ...relations.indirectHosts].forEach((c) => insertHostSimple(node, c));
-                    [...relations.sourceDomains, ...relations.targetDomains].forEach((c) =>
-                        insertDomainSimple(node, c),
+            const mutator = {
+                shouldAbort() {
+                    return (
+                        srcUuid != apiOrUuid || srcWorkspace != apiOrWorkspace || srcManualAffected != manualAffected
                     );
-                }),
-            );
-        };
-        const populateHost = (parent: TreeNode, node: TreeNode, host: SimpleHost | FullHost) => {
-            api.findingsForHost(host.uuid).then(handleApiError((findings) => insertFindings(parent, node, findings)));
-            api.relationsForHost(host.uuid).then(
-                handleApiError((relations) => {
-                    [...relations.directDomains, ...relations.indirectDomains].forEach((c) =>
-                        insertDomainSimple(node, c),
-                    );
-                    relations.ports.forEach((c) => insertPortSimple(node, c));
-                    relations.services.forEach((c) => insertServiceSimple(node, c));
-                }),
-            );
-        };
-        const populatePort = (parent: TreeNode, node: TreeNode, port: SimplePort | FullPort) => {
-            api.findingsForPort(port.uuid).then(handleApiError((findings) => insertFindings(parent, node, findings)));
-            api.relationsForPort(port.uuid).then(
-                handleApiError((relations) => {
-                    insertHostSimple(node, relations.host);
-                    relations.services.forEach((c) => insertServiceSimple(node, c));
-                }),
-            );
-        };
-        const populateService = (parent: TreeNode, node: TreeNode, service: SimpleService | FullService) => {
-            api.findingsForService(service.uuid).then(
-                handleApiError((findings) => insertFindings(parent, node, findings)),
-            );
-            api.relationsForService(service.uuid).then(
-                handleApiError((relations) => {
-                    insertHostSimple(node, relations.host);
-                    if (relations.port) insertPortSimple(node, relations.port);
-                }),
-            );
-        };
-        const insertDomain = (node: TreeNode, child: FullDomain) => {
-            if (shouldAbort()) return;
-            const insert: TreeNode = {
-                type: "Domain",
-                domain: child,
-                uuid: child.uuid,
-            };
-            if (!insertChild(node, insert)) return;
-            setTimeout(function () {
-                populateDomain(node, insert, child);
-            }, apiTimeout);
-        };
-        const insertHost = (node: TreeNode, child: FullHost) => {
-            if (shouldAbort()) return;
-            const insert: TreeNode = {
-                type: "Host",
-                host: child,
-                uuid: child.uuid,
-            };
-            if (!insertChild(node, insert)) return;
-            setTimeout(function () {
-                populateHost(node, insert, child);
-            }, apiTimeout);
-        };
-        const insertPort = (node: TreeNode, child: FullPort) => {
-            if (shouldAbort()) return;
-            const insert: TreeNode = {
-                type: "Port",
-                port: child,
-                uuid: child.uuid,
-            };
-            if (!insertChild(node, insert)) return;
-            setTimeout(function () {
-                populatePort(node, insert, child);
-            }, apiTimeout);
-        };
-        const insertService = (node: TreeNode, child: FullService) => {
-            if (shouldAbort()) return;
-            const insert: TreeNode = {
-                type: "Service",
-                service: child,
-                uuid: child.uuid,
-            };
-            if (!insertChild(node, insert)) return;
-            setTimeout(function () {
-                populateService(node, insert, child);
-            }, apiTimeout);
-        };
-
-        const insertDomainSimple = (node: TreeNode, child: { uuid: string }) => {
-            api.resolveDomain(child.uuid).then(handleApiError((full) => insertDomain(node, full)));
-        };
-        const insertHostSimple = (node: TreeNode, child: { uuid: string }) => {
-            api.resolveHost(child.uuid).then(handleApiError((full) => insertHost(node, full)));
-        };
-        const insertPortSimple = (node: TreeNode, child: { uuid: string }) => {
-            api.resolvePort(child.uuid).then(handleApiError((full) => insertPort(node, full)));
-        };
-        const insertServiceSimple = (node: TreeNode, child: { uuid: string }) => {
-            api.resolveService(child.uuid).then(handleApiError((full) => insertService(node, full)));
-        };
-        const populateAffectedRoot = (root: TreeNode, affected: SimpleFindingAffected[]) => {
-            if (shouldAbort()) return;
-            for (const a of affected) {
-                api.getAffected(a.affectedUuid).then(
-                    handleApiError((affected) => {
-                        if (shouldAbort()) return;
-                        if ("domain" in affected.affected && affected.affected.domain) {
-                            insertDomainSimple(root, affected.affected.domain);
-                        } else if ("host" in affected.affected && affected.affected.host) {
-                            insertHostSimple(root, affected.affected.host);
-                        } else if ("port" in affected.affected && affected.affected.port) {
-                            insertPortSimple(root, affected.affected.port);
-                        } else if ("service" in affected.affected && affected.affected.service) {
-                            insertServiceSimple(root, affected.affected.service);
+                },
+                /// inserts the child to parent, returns true if the child hasn't been added to the tree yet
+                insertChild(parent: TreeNode, child: TreeNode) {
+                    const isNew = !(child.uuid in addedUuids.current);
+                    addedUuids.current[child.uuid] = null;
+                    let found = false;
+                    let copied: { [uuid: string]: TreeNode } = {};
+                    function mutate(n: TreeNode): TreeNode {
+                        if (copied[n.uuid]) return copied[n.uuid];
+                        if (n.uuid == parent.uuid) {
+                            found = true;
+                            return (copied[n.uuid] = {
+                                ...n,
+                                children: [...(n.children ?? []), child],
+                            });
+                        } else {
+                            let copy: TreeNode = {
+                                ...n,
+                            };
+                            copied[n.uuid] = copy;
+                            copy.children = n.children?.map(mutate);
+                            return copy;
                         }
-                    }),
-                );
-            }
+                    }
+
+                    setRoots((r) => {
+                        let res = r.map(mutate);
+                        if (!found) console.warn("couldn't find ", parent, " in roots to insert child into?!");
+                        return res;
+                    });
+                    return isNew;
+                },
+                insertFindings(parent: TreeNode, node: TreeNode, findings: ListFindings) {
+                    if (mutator.shouldAbort()) return;
+                    for (const f of findings.findings) {
+                        if (f.uuid == parent.uuid) return;
+                        api.resolveFinding(f.definition).then(
+                            handleApiError((definition) => {
+                                if (mutator.shouldAbort()) return;
+                                const insert: TreeNode = {
+                                    uuid: f.uuid,
+                                    type: "Finding",
+                                    definition: definition,
+                                };
+                                if (!mutator.insertChild(node, insert)) return;
+                                // TODO: recurse here
+                            }),
+                        );
+                    }
+                },
+                populateDomain(parent: TreeNode, node: TreeNode, domain: SimpleDomain | FullDomain) {
+                    api.findingsForDomain(domain.uuid).then(
+                        handleApiError((findings) => mutator.insertFindings(parent, node, findings)),
+                    );
+                    api.relationsForDomain(domain.uuid).then(
+                        handleApiError((relations) => {
+                            [...relations.directHosts, ...relations.indirectHosts].forEach((c) =>
+                                mutator.insertHostSimple(node, c),
+                            );
+                            [...relations.sourceDomains, ...relations.targetDomains].forEach((c) =>
+                                mutator.insertDomainSimple(node, c),
+                            );
+                        }),
+                    );
+                },
+                populateHost(parent: TreeNode, node: TreeNode, host: SimpleHost | FullHost) {
+                    api.findingsForHost(host.uuid).then(
+                        handleApiError((findings) => mutator.insertFindings(parent, node, findings)),
+                    );
+                    api.relationsForHost(host.uuid).then(
+                        handleApiError((relations) => {
+                            [...relations.directDomains, ...relations.indirectDomains].forEach((c) =>
+                                mutator.insertDomainSimple(node, c),
+                            );
+                            relations.ports.forEach((c) => mutator.insertPortSimple(node, c));
+                            relations.services.forEach((c) => mutator.insertServiceSimple(node, c));
+                        }),
+                    );
+                },
+                populatePort(parent: TreeNode, node: TreeNode, port: SimplePort | FullPort) {
+                    api.findingsForPort(port.uuid).then(
+                        handleApiError((findings) => mutator.insertFindings(parent, node, findings)),
+                    );
+                    api.relationsForPort(port.uuid).then(
+                        handleApiError((relations) => {
+                            mutator.insertHostSimple(node, relations.host);
+                            relations.services.forEach((c) => mutator.insertServiceSimple(node, c));
+                        }),
+                    );
+                },
+                populateService(parent: TreeNode, node: TreeNode, service: SimpleService | FullService) {
+                    api.findingsForService(service.uuid).then(
+                        handleApiError((findings) => mutator.insertFindings(parent, node, findings)),
+                    );
+                    api.relationsForService(service.uuid).then(
+                        handleApiError((relations) => {
+                            mutator.insertHostSimple(node, relations.host);
+                            if (relations.port) mutator.insertPortSimple(node, relations.port);
+                        }),
+                    );
+                },
+                insertDomain(node: TreeNode, child: FullDomain) {
+                    if (mutator.shouldAbort()) return;
+                    const insert: TreeNode = {
+                        type: "Domain",
+                        domain: child,
+                        uuid: child.uuid,
+                    };
+                    if (!mutator.insertChild(node, insert)) return;
+                    setTimeout(function () {
+                        mutator.populateDomain(node, insert, child);
+                    }, apiTimeout);
+                },
+                insertHost(node: TreeNode, child: FullHost) {
+                    if (mutator.shouldAbort()) return;
+                    const insert: TreeNode = {
+                        type: "Host",
+                        host: child,
+                        uuid: child.uuid,
+                    };
+                    if (!mutator.insertChild(node, insert)) return;
+                    setTimeout(function () {
+                        mutator.populateHost(node, insert, child);
+                    }, apiTimeout);
+                },
+                insertPort(node: TreeNode, child: FullPort) {
+                    if (mutator.shouldAbort()) return;
+                    const insert: TreeNode = {
+                        type: "Port",
+                        port: child,
+                        uuid: child.uuid,
+                    };
+                    if (!mutator.insertChild(node, insert)) return;
+                    setTimeout(function () {
+                        mutator.populatePort(node, insert, child);
+                    }, apiTimeout);
+                },
+                insertService(node: TreeNode, child: FullService) {
+                    if (mutator.shouldAbort()) return;
+                    const insert: TreeNode = {
+                        type: "Service",
+                        service: child,
+                        uuid: child.uuid,
+                    };
+                    if (!mutator.insertChild(node, insert)) return;
+                    setTimeout(function () {
+                        mutator.populateService(node, insert, child);
+                    }, apiTimeout);
+                },
+                insertDomainSimple(node: TreeNode, child: { uuid: string }) {
+                    api.resolveDomain(child.uuid).then(handleApiError((full) => mutator.insertDomain(node, full)));
+                },
+                insertHostSimple(node: TreeNode, child: { uuid: string }) {
+                    api.resolveHost(child.uuid).then(handleApiError((full) => mutator.insertHost(node, full)));
+                },
+                insertPortSimple(node: TreeNode, child: { uuid: string }) {
+                    api.resolvePort(child.uuid).then(handleApiError((full) => mutator.insertPort(node, full)));
+                },
+                insertServiceSimple(node: TreeNode, child: { uuid: string }) {
+                    api.resolveService(child.uuid).then(handleApiError((full) => mutator.insertService(node, full)));
+                },
+                populateAffectedRoot(root: TreeNode, affected: SimpleFindingAffected[]) {
+                    if (mutator.shouldAbort()) return;
+                    for (const a of affected) {
+                        api.getAffected(a).then(
+                            handleApiError((affected) => {
+                                if (mutator.shouldAbort()) return;
+                                if ("domain" in affected.affected && affected.affected.domain) {
+                                    mutator.insertDomainSimple(root, affected.affected.domain);
+                                } else if ("host" in affected.affected && affected.affected.host) {
+                                    mutator.insertHostSimple(root, affected.affected.host);
+                                } else if ("port" in affected.affected && affected.affected.port) {
+                                    mutator.insertPortSimple(root, affected.affected.port);
+                                } else if ("service" in affected.affected && affected.affected.service) {
+                                    mutator.insertServiceSimple(root, affected.affected.service);
+                                }
+                            }),
+                        );
+                    }
+                },
+            };
+            return mutator;
         };
 
-        api.getRoot().then((finding) => {
-            if (shouldAbort()) return;
-            const root: TreeNode = {
-                uuid: finding.uuid,
-                type: "Finding",
-                definition: finding.definition,
-            };
-            setRoots([root]);
-            setTimeout(function () {
-                populateAffectedRoot(root, finding.affected);
-            }, apiTimeout);
-        });
-    }, [apiOrUuid, apiOrWorkspace]);
+        useImperativeHandle(ref, () => ({
+            reloadAffected() {
+                setManualAffected((v) => v + 1);
+                api.getRoot().then((finding) => {
+                    const mutator = getMutator();
+                    console.log(roots[0].children?.map((a) => a.uuid));
+                    console.log(finding.affected.map((a) => a.affectedUuid));
+                    setRoots((r) => [
+                        {
+                            ...r[0],
+                            children: r[0].children
+                                ?.filter((a) => finding.affected.some((f) => f.affectedUuid == a.uuid))
+                                .map((c) => ({
+                                    ...c,
+                                })),
+                        },
+                    ]);
+                });
+            },
+        }));
 
-    function checkTag(node: TreeNode) {
-        switch (node.type) {
-            case "Domain":
-                return filterTags.every((expect) => node.domain.tags.some((t) => expect.uuid == t.uuid));
-            case "Host":
-                return filterTags.every((expect) => node.host.tags.some((t) => expect.uuid == t.uuid));
-            case "Port":
-                return filterTags.every((expect) => node.port.tags.some((t) => expect.uuid == t.uuid));
-            case "Service":
-                return filterTags.every((expect) => node.service.tags.some((t) => expect.uuid == t.uuid));
-            case "Finding":
-                return true;
+        const toggleMax = () => setMaximized((m) => !m);
+
+        const apiOrWorkspace = "api" in props ? props.api : props.workspace;
+        const apiOrUuid = "api" in props ? props.api : props.uuid;
+
+        useEffect(() => {
+            setRoots([]);
+            addedUuids.current = {};
+
+            const mutator = getMutator();
+
+            api.getRoot().then((finding) => {
+                if (mutator.shouldAbort()) return;
+                const root: TreeNode = {
+                    uuid: finding.uuid,
+                    type: "Finding",
+                    definition: finding.definition,
+                };
+                setRoots([root]);
+                setTimeout(function () {
+                    mutator.populateAffectedRoot(root, finding.affected);
+                }, apiTimeout);
+            });
+        }, [apiOrUuid, apiOrWorkspace]);
+
+        function checkTag(node: TreeNode) {
+            switch (node.type) {
+                case "Domain":
+                    return filterTags.every((expect) => node.domain.tags.some((t) => expect.uuid == t.uuid));
+                case "Host":
+                    return filterTags.every((expect) => node.host.tags.some((t) => expect.uuid == t.uuid));
+                case "Port":
+                    return filterTags.every((expect) => node.port.tags.some((t) => expect.uuid == t.uuid));
+                case "Service":
+                    return filterTags.every((expect) => node.service.tags.some((t) => expect.uuid == t.uuid));
+                case "Finding":
+                    return true;
+            }
         }
-    }
 
-    return (
-        <TreeGraph
-            className={`${maximized ? "maximized" : ""}`}
-            onClickTag={(e, tag) => {
-                if (e.altKey) setFilterTags((tags) => tags.filter((t) => t.uuid != tag.uuid));
-                else setFilterTags((tags) => (tags.some((t) => t.uuid == tag.uuid) ? tags : [...tags, tag]));
-            }}
-            roots={
-                filterTags.length
-                    ? roots.map((root) => {
-                          type T = TreeNode & { _hit: boolean };
-                          let visited: { [uuid: string]: T } = {};
-                          function markTagged(n: TreeNode, parents: T[]): T {
-                              if (visited[n.uuid]) return visited[n.uuid];
-                              const v: T = (visited[n.uuid] = {
-                                  ...n,
-                                  _hit: checkTag(n),
-                              });
-                              if (v._hit) for (const p of parents) p._hit = true;
-                              v.children = v.children?.map((c) => markTagged(c, [...parents, v]));
-                              return v;
-                          }
-                          let tagged = markTagged(root, []);
-                          let visited2: { [uuid: string]: TreeNode } = {};
-                          function filterTagged(n: T): TreeNode {
-                              if (visited2[n.uuid]) return visited2[n.uuid];
-                              if (!("_hit" in n)) return n;
-                              let { _hit, ...node } = n;
-                              visited2[n.uuid] = node;
-                              node.children = node.children
-                                  ?.filter((v) => (v as T)._hit)
-                                  .map((v) => filterTagged(v as T));
-                              return node;
-                          }
-                          return filterTagged(tagged);
-                      })
-                    : roots
-            }
-            decoration={
-                <>
-                    <TagList
-                        tags={filterTags}
-                        onClickTag={(e, tag) => {
-                            setFilterTags((tags) => tags.filter((t) => t.uuid != tag.uuid));
-                        }}
-                    />
-                    {maximizable && (
-                        <button
-                            className="maximize"
-                            onClick={toggleMax}
-                            aria-label={maximized ? "Minimize" : "Maximize"}
-                            title={maximized ? "Minimize" : "Maximize"}
-                        >
-                            {maximized ? <CollapseIcon /> : <ExpandIcon />}
-                        </button>
-                    )}
-                </>
-            }
-            {...props}
-        />
-    );
-}
+        return (
+            <TreeGraph
+                className={`${maximized ? "maximized" : ""}`}
+                onClickTag={(e, tag) => {
+                    if (e.altKey) setFilterTags((tags) => tags.filter((t) => t.uuid != tag.uuid));
+                    else setFilterTags((tags) => (tags.some((t) => t.uuid == tag.uuid) ? tags : [...tags, tag]));
+                }}
+                roots={
+                    filterTags.length
+                        ? roots.map((root) => {
+                              type T = TreeNode & { _hit: boolean };
+                              let visited: { [uuid: string]: T } = {};
+                              function markTagged(n: TreeNode, parents: T[]): T {
+                                  if (visited[n.uuid]) return visited[n.uuid];
+                                  const v: T = (visited[n.uuid] = {
+                                      ...n,
+                                      _hit: checkTag(n),
+                                  });
+                                  if (v._hit) for (const p of parents) p._hit = true;
+                                  v.children = v.children?.map((c) => markTagged(c, [...parents, v]));
+                                  return v;
+                              }
+                              let tagged = markTagged(root, []);
+                              let visited2: { [uuid: string]: TreeNode } = {};
+                              function filterTagged(n: T): TreeNode {
+                                  if (visited2[n.uuid]) return visited2[n.uuid];
+                                  if (!("_hit" in n)) return n;
+                                  let { _hit, ...node } = n;
+                                  visited2[n.uuid] = node;
+                                  node.children = node.children
+                                      ?.filter((v) => (v as T)._hit)
+                                      .map((v) => filterTagged(v as T));
+                                  return node;
+                              }
+                              return filterTagged(tagged);
+                          })
+                        : roots
+                }
+                decoration={
+                    <>
+                        <TagList
+                            tags={filterTags}
+                            onClickTag={(e, tag) => {
+                                setFilterTags((tags) => tags.filter((t) => t.uuid != tag.uuid));
+                            }}
+                        />
+                        {maximizable && (
+                            <button
+                                className="maximize"
+                                onClick={toggleMax}
+                                aria-label={maximized ? "Minimize" : "Maximize"}
+                                title={maximized ? "Minimize" : "Maximize"}
+                            >
+                                {maximized ? <CollapseIcon /> : <ExpandIcon />}
+                            </button>
+                        )}
+                    </>
+                }
+                {...props}
+            />
+        );
+    },
+);
