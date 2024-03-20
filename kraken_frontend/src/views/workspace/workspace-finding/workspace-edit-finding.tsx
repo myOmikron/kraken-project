@@ -1,5 +1,8 @@
 import Editor from "@monaco-editor/react";
-import React, { ReactNode, useEffect } from "react";
+import { editor } from "monaco-editor";
+import React, { useEffect } from "react";
+import { toast } from "react-toastify";
+import Popup from "reactjs-popup";
 import { Api, UUID } from "../../../api/api";
 import {
     AggregationType,
@@ -13,21 +16,22 @@ import {
     SimpleFindingDefinition,
     UpdateFindingRequest,
 } from "../../../api/generated";
+import WS from "../../../api/websocket";
 import { GithubMarkdown } from "../../../components/github-markdown";
+import useLiveEditor from "../../../components/live-editor";
 import { SelectPrimitive } from "../../../components/select-menu";
 import BookIcon from "../../../svg/book";
+import CloseIcon from "../../../svg/close";
+import EditIcon from "../../../svg/edit";
 import FileIcon from "../../../svg/file";
+import GraphIcon from "../../../svg/graph";
 import InformationIcon from "../../../svg/information";
+import PersonCircleIcon from "../../../svg/person-circle";
 import RelationLeftRightIcon from "../../../svg/relation-left-right";
 import ScreenshotIcon from "../../../svg/screenshot";
-import { handleApiError, ObjectFns } from "../../../utils/helper";
+import { ObjectFns, handleApiError } from "../../../utils/helper";
 import { setupMonaco } from "../../knowledge-base";
-import { WORKSPACE_CONTEXT } from "../workspace";
-import { toast } from "react-toastify";
-import WS from "../../../api/websocket";
-import ArrowDownIcon from "../../../svg/arrow-down";
-import CloseIcon from "../../../svg/close";
-import GraphIcon from "../../../svg/graph";
+import CollapsibleSection from "../components/collapsible-section";
 import Domain from "../components/domain";
 import { UploadingFileInput } from "../components/file-input";
 import IpAddr from "../components/host";
@@ -35,14 +39,10 @@ import PortNumber from "../components/port";
 import SelectFindingDefinition from "../components/select-finding-definition";
 import ServiceName from "../components/service";
 import TagList from "../components/tag-list";
+import { WORKSPACE_CONTEXT } from "../workspace";
 import { FindingDefinitionDetails } from "./workspace-create-finding";
 import EditingTreeGraph from "./workspace-finding-editing-tree";
 import WorkspaceFindingTable from "./workspace-finding-table";
-import useLiveEditor from "../../../components/live-editor";
-import { editor } from "monaco-editor";
-import PersonCircleIcon from "../../../svg/person-circle";
-import Popup from "reactjs-popup";
-import EditIcon from "../../../svg/edit";
 
 export type WorkspaceEditFindingProps = {
     /** The finding's uuid */
@@ -64,8 +64,6 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     const [hoveredFindingDef, setHoveredFindingDef] = React.useState<SimpleFindingDefinition>();
     const [details, setDetails] = React.useState("");
 
-    const [description, setDescription] = React.useState<boolean>(true);
-    const [affectedVisible, setAffectedVisible] = React.useState<boolean>(true);
     const [affected, setAffected] = React.useState<Record<UUID, FullFindingAffected>>({});
     const [logFile, setLogFile] = React.useState("");
     const [screenshot, setScreenshot] = React.useState("");
@@ -223,44 +221,41 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         />
                     </div>
 
-                    <div>
-                        <h2 className={"sub-heading"}>
-                            <BookIcon />
-                            Description
-                            <div className="create-finding-section-toggle" onClick={() => setDescription(!description)}>
-                                <ArrowDownIcon inverted={description} />
-                            </div>
-                        </h2>
-                        {description ? <GithubMarkdown>{details}</GithubMarkdown> : <div />}
-                    </div>
-                    <div>
-                        <h2 className={"sub-heading"}>
-                            <RelationLeftRightIcon />
-                            Affected
-                            <div
-                                className="create-finding-section-toggle"
-                                onClick={() => setAffectedVisible(!affectedVisible)}
-                            >
-                                <ArrowDownIcon inverted={affectedVisible} />
-                            </div>
-                        </h2>
-                        {affectedVisible && (
-                            <div className="affected-list">
-                                {ObjectFns.isEmpty(affected) ? (
-                                    <p>No affected items yet</p>
-                                ) : (
-                                    Object.entries(affected)
-                                        .sort(([aUuid, a], [bUuid, b]) => {
-                                            let aType = getAffectedType(a);
-                                            let bType = getAffectedType(b);
-                                            if (aType < bType) return -1;
-                                            if (aType > bType) return 1;
-                                            // TODO: type-based sorters
-                                            if (aUuid < bUuid) return -1;
-                                            if (aUuid > bUuid) return 1;
-                                            return 0;
-                                        })
-                                        .map(([affectedUuid, fullAffected]) => (
+                    <CollapsibleSection
+                        summary={
+                            <>
+                                <BookIcon />
+                                Description
+                            </>
+                        }
+                    >
+                        <GithubMarkdown>{details}</GithubMarkdown>
+                    </CollapsibleSection>
+
+                    <CollapsibleSection
+                        summary={
+                            <>
+                                <RelationLeftRightIcon />
+                                Affected
+                            </>
+                        }
+                    >
+                        <div className="affected-list">
+                            {ObjectFns.isEmpty(affected) ? (
+                                <p>No affected items yet</p>
+                            ) : (
+                                Object.entries(affected)
+                                    .sort(([aUuid, a], [bUuid, b]) => {
+                                        let aType = getAffectedType(a);
+                                        let bType = getAffectedType(b);
+                                        if (aType < bType) return -1;
+                                        if (aType > bType) return 1;
+                                        // TODO: type-based sorters
+                                        if (aUuid < bUuid) return -1;
+                                        if (aUuid > bUuid) return 1;
+                                        return 0;
+                                    })
+                                    .map(([affectedUuid, fullAffected]) => (
                                         <div
                                             key={affectedUuid}
                                             className={`affected affected-${getAffectedType(fullAffected)}`}
@@ -353,10 +348,9 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                             </UploadingFileInput>
                                         </div>
                                     ))
-                                )}
-                            </div>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    </CollapsibleSection>
 
                     <div className="create-finding-files">
                         <h2 className={"sub-heading"}>

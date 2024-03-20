@@ -311,14 +311,6 @@
     width: 16em;
 }
 
-.create-finding-section-toggle :hover {
-    cursor: pointer;
-}
-
-.create-finding-section-toggle .icon:hover {
-    filter: brightness(0) invert() drop-shadow(0 0 8px var(--primary));
-}
-
 .workspace-finding-affected-selector {
     margin-bottom: 0.5em;
     display: grid;
