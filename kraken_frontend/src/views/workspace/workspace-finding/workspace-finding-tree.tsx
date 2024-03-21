@@ -218,7 +218,7 @@ export function TreeGraph({
         let nodes = roots.flatMap((root) =>
             flatMapTree<NodeT>(root, (n, d, ci, parent) => {
                 if (n.uuid in inserted) return [];
-                const fx = d * (treeNodeWidth + horizontalMargin);
+                const fx = d;
                 let overrideY: number | undefined = undefined;
                 if (parent) {
                     let parentNode = state.get(parent.uuid);
@@ -235,7 +235,9 @@ export function TreeGraph({
                 let res = {
                     y: (overrideY ?? (nextY += 20)) + Math.random() * 10,
                     ...old.get(n.uuid),
-                    fx,
+                    fx:
+                        Math.max(0, fx + (state.get(root.uuid)?.fx ?? 0) - (n.type == "Finding" ? 2 : 0)) *
+                        (treeNodeWidth + horizontalMargin),
                     ...n,
                 };
                 if (forceRecalcX) res.fx = fx;
