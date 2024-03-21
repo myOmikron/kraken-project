@@ -1,6 +1,6 @@
 import React, { CSSProperties } from "react";
 import { Api } from "../../api/api";
-import { SimpleFinding, SimpleFindingDefinition } from "../../api/generated";
+import { SimpleFinding } from "../../api/generated";
 import Input from "../../components/input";
 import { ROUTES } from "../../routes";
 import "../../styling/tabs.css";
@@ -62,10 +62,8 @@ export default function WorkspaceFindings(props: WorkspaceFindingsProps) {
                             <div className="workspace-table-body">
                                 {findings
                                     .filter((f) => {
-                                        if (search === "") {
-                                            return true;
-                                        }
-                                        return f.name.toLowerCase().includes(search.toLowerCase());
+                                        let q = search.toLowerCase();
+                                        return f.name.toLowerCase().includes(q) || f.cve?.toLowerCase().includes(q);
                                     })
                                     .map((f) => (
                                         <div

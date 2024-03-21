@@ -192,12 +192,18 @@
 .workspace-findings-graph .tree-node-heading {
     background-color: var(--primary-op);
     padding: 0.5em;
-    text-align: center;
     border-top-left-radius: 0.4em;
     border-top-right-radius: 0.4em;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.workspace-findings-graph .tree-node-heading.with-cve {
+    justify-content: space-between;
 }
 
 .workspace-findings-graph .group > .tree-node .tree-node-heading {

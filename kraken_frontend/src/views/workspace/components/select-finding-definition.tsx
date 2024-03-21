@@ -1,10 +1,9 @@
-import Select, { components } from "react-select";
-import { selectStyles } from "../../../components/select-menu";
 import React from "react";
+import Select, { components } from "react-select";
 import { Api } from "../../../api/api";
-import { handleApiError } from "../../../utils/helper";
 import { SimpleFindingDefinition } from "../../../api/generated";
-import { Option } from "../../../utils/option";
+import { selectStyles } from "../../../components/select-menu";
+import { handleApiError } from "../../../utils/helper";
 
 export type SelectFindingDefinitionProps = {
     selected: string | undefined;
@@ -32,18 +31,24 @@ export default function SelectFindingDefinition(props: SelectFindingDefinitionPr
         );
     }, []);
 
+    const label = ({ name, cve }: { name: string; cve?: string | null }) => name + (cve ? ` [${cve}]` : "");
+
     return (
-        <Select<{ label: string; value: string }>
+        <Select<{ label: string; name: string; cve?: string | null; value: string }>
             className={"dropdown"}
             styles={selectStyles("default")}
-            options={definitions.map(({ uuid, name }) => ({
-                label: name,
+            options={definitions.map(({ uuid, name, cve }) => ({
+                label: label({ name, cve }),
+                name,
+                cve,
                 value: uuid,
             }))}
             value={
                 typeof selected === "string"
                     ? {
-                          label: lookups.byUuid[selected]?.name ?? "",
+                          label: lookups.byUuid[selected] ? label(lookups.byUuid[selected]) : "",
+                          name: lookups.byUuid[selected].name ?? "",
+                          cve: lookups.byUuid[selected].cve,
                           value: selected,
                       }
                     : null
@@ -58,10 +63,23 @@ export default function SelectFindingDefinition(props: SelectFindingDefinitionPr
             components={{
                 Option: ({ children, ...props }) => (
                     <div
-                        onMouseOver={() => onHover(definitions.find(({ name }) => name === props.label))}
+                        onMouseOver={() => onHover(lookups.byUuid[props.data.value])}
                         onMouseOut={() => onHover(undefined)}
                     >
-                        <components.Option {...props}>{children}</components.Option>
+                        <components.Option {...props}>
+                            {props.data.name}
+                            {props.data.cve && (
+                                <span
+                                    style={{
+                                        fontSize: "0.8em",
+                                        float: "right",
+                                        opacity: 0.8,
+                                    }}
+                                >
+                                    [{props.data.cve}]
+                                </span>
+                            )}
+                        </components.Option>
                     </div>
                 ),
             }}

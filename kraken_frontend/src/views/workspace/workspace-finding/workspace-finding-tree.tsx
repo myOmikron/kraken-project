@@ -345,10 +345,12 @@ const TreeNode = forwardRef<
     }
 >(({ node, onClickTag, className, onPointerEnter, onPointerLeave, onClick }, ref) => {
     let name: string;
+    let cve: string | null | undefined;
     let tags: SimpleTag[] | undefined;
     switch (node.type) {
         case "Finding":
             name = node.definition.name;
+            cve = node.definition.cve;
             tags = undefined;
             break;
         case "Domain":
@@ -387,8 +389,9 @@ const TreeNode = forwardRef<
             onClick={onClick}
         >
             <div className="tree-node-content">
-                <div className="tree-node-heading">
+                <div className={`tree-node-heading ${cve ? "with-cve" : ""}`}>
                     <span>{name}</span>
+                    {cve && <span>{cve}</span>}
                 </div>
                 {node.type == "Finding" ? (
                     <div className="tree-node-body">
