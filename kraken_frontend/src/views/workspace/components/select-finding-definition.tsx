@@ -24,6 +24,9 @@ export default function SelectFindingDefinition(props: SelectFindingDefinitionPr
     React.useEffect(() => {
         Api.knowledgeBase.findingDefinitions.all().then(
             handleApiError(({ findingDefinitions }) => {
+                findingDefinitions.sort(
+                    (a, b) => a.name.localeCompare(b.name) || (a.cve && b.cve ? a.cve.localeCompare(b.cve) : 0),
+                );
                 setDefinitions(findingDefinitions);
                 lookups.byName = Object.fromEntries(findingDefinitions.map((x) => [x.name, x]));
                 lookups.byUuid = Object.fromEntries(findingDefinitions.map((x) => [x.uuid, x]));
