@@ -7,6 +7,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::common::de_optional;
+use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::domains::schema::SimpleDomain;
 use crate::api::handler::findings::schema::FullFinding;
 use crate::api::handler::hosts::schema::SimpleHost;
@@ -65,6 +66,9 @@ pub struct FullFindingAffected {
 
     /// The affected object
     pub affected: FindingAffectedObject,
+
+    /// List of tags for the affected object
+    pub affected_tags: Vec<SimpleTag>,
 
     /// Notes about the finding provided by the user
     ///
