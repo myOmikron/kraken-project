@@ -490,6 +490,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                 return (
                                     <div className="workspace-finding-data-table">
                                         <WorkspaceFindingTable
+                                            hideUuids={Object.keys(affected)}
                                             onAddDomain={({ uuid }) => addAffected(uuid, AggregationType.Domain)}
                                             onAddHost={({ uuid }) => addAffected(uuid, AggregationType.Host)}
                                             onAddPort={({ uuid }) => addAffected(uuid, AggregationType.Port)}

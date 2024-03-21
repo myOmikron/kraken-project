@@ -111,6 +111,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                 return (
                     <div className="workspace-finding-data-table">
                         <WorkspaceFindingTable
+                            hideUuids={affected.map((a) => a._data.uuid)}
                             onAddDomain={(d) =>
                                 addAffected({
                                     type: "Domain",

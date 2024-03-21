@@ -16,6 +16,7 @@ import { StatelessWorkspaceTable, useTable } from "../components/workspace-table
 import { WORKSPACE_CONTEXT } from "../workspace";
 
 export type WorkspaceFindingTableProps = {
+    hideUuids: string[];
     onAddDomain?: (domain: FullDomain) => void;
     onAddHost?: (host: FullHost) => void;
     onAddService?: (service: FullService) => void;
@@ -24,6 +25,7 @@ export type WorkspaceFindingTableProps = {
 
 const DATA_TAB = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 export default function WorkspaceFindingTable({
+    hideUuids,
     onAddDomain,
     onAddHost,
     onAddService,
@@ -96,25 +98,26 @@ export default function WorkspaceFindingTable({
                             <span>Severity</span>
                             <span>Certainty</span>
                         </div>
-                        {/*TODO filter items that are not in findings already*/}
-                        {domains.map((domain) => (
-                            <div key={domain.uuid} className="workspace-table-row">
-                                <span
-                                    className="workspace-data-certainty-icon workspace-finding-selection-arrow"
-                                    onClick={() => onAddDomain?.(domain)}
-                                >
-                                    <RelationLeftIcon />
-                                </span>
+                        {domains
+                            .filter((v) => !hideUuids.includes(v.uuid))
+                            .map((domain) => (
+                                <div key={domain.uuid} className="workspace-table-row">
+                                    <span
+                                        className="workspace-data-certainty-icon workspace-finding-selection-arrow"
+                                        onClick={() => onAddDomain?.(domain)}
+                                    >
+                                        <RelationLeftIcon />
+                                    </span>
 
-                                <Domain domain={domain} />
-                                <TagList tags={domain.tags} filter={domainFilter} />
-                                <span>{domain.comment}</span>
-                                <div className={"workspace-data-certainty-icon"}>
-                                    <SeverityIcon severity={domain.severity} />
+                                    <Domain domain={domain} />
+                                    <TagList tags={domain.tags} filter={domainFilter} />
+                                    <span>{domain.comment}</span>
+                                    <div className={"workspace-data-certainty-icon"}>
+                                        <SeverityIcon severity={domain.severity} />
+                                    </div>
+                                    <CertaintyIcon certainty={domain.certainty} />
                                 </div>
-                                <CertaintyIcon certainty={domain.certainty} />
-                            </div>
-                        ))}
+                            ))}
                     </StatelessWorkspaceTable>
                 );
             case "hosts":
@@ -137,25 +140,26 @@ export default function WorkspaceFindingTable({
                             <span>Severity</span>
                             <span>Certainty</span>
                         </div>
-                        {/*TODO filter items that are not in findings already*/}
-                        {hosts.map((host) => (
-                            <div key={host.uuid} className="workspace-table-row deleted">
-                                <span
-                                    className="workspace-data-certainty-icon workspace-finding-selection-arrow"
-                                    onClick={() => onAddHost?.(host)}
-                                >
-                                    <RelationLeftIcon />
-                                </span>
-                                <IpAddr host={host} />
-                                <OsIcon tooltip os={host.osType} size="2em" />
-                                <TagList tags={host.tags} filter={hostFilter} />
-                                <span>{host.comment}</span>
-                                <div className={"workspace-data-certainty-icon"}>
-                                    <SeverityIcon severity={host.severity} />
+                        {hosts
+                            .filter((v) => !hideUuids.includes(v.uuid))
+                            .map((host) => (
+                                <div key={host.uuid} className="workspace-table-row deleted">
+                                    <span
+                                        className="workspace-data-certainty-icon workspace-finding-selection-arrow"
+                                        onClick={() => onAddHost?.(host)}
+                                    >
+                                        <RelationLeftIcon />
+                                    </span>
+                                    <IpAddr host={host} />
+                                    <OsIcon tooltip os={host.osType} size="2em" />
+                                    <TagList tags={host.tags} filter={hostFilter} />
+                                    <span>{host.comment}</span>
+                                    <div className={"workspace-data-certainty-icon"}>
+                                        <SeverityIcon severity={host.severity} />
+                                    </div>
+                                    <CertaintyIcon certainty={host.certainty} />
                                 </div>
-                                <CertaintyIcon certainty={host.certainty} />
-                            </div>
-                        ))}
+                            ))}
                     </StatelessWorkspaceTable>
                 );
             case "ports":
@@ -179,26 +183,27 @@ export default function WorkspaceFindingTable({
                             <span>Severity</span>
                             <span>Certainty</span>
                         </div>
-                        {/*TODO filter items that are not in findings already*/}
-                        {ports.map((port) => (
-                            <div key={port.uuid} className="workspace-table-row">
-                                <span
-                                    className="workspace-data-certainty-icon workspace-finding-selection-arrow"
-                                    onClick={() => onAddPort?.(port)}
-                                >
-                                    <RelationLeftIcon />
-                                </span>
-                                <PortNumber port={port} />
-                                <span>{port.protocol.toUpperCase()}</span>
-                                <IpAddr host={port.host} />
-                                <TagList tags={port.tags} filter={portFilter} />
-                                <span>{port.comment}</span>
-                                <div className={"workspace-data-certainty-icon"}>
-                                    <SeverityIcon severity={port.severity} />
+                        {ports
+                            .filter((v) => !hideUuids.includes(v.uuid))
+                            .map((port) => (
+                                <div key={port.uuid} className="workspace-table-row">
+                                    <span
+                                        className="workspace-data-certainty-icon workspace-finding-selection-arrow"
+                                        onClick={() => onAddPort?.(port)}
+                                    >
+                                        <RelationLeftIcon />
+                                    </span>
+                                    <PortNumber port={port} />
+                                    <span>{port.protocol.toUpperCase()}</span>
+                                    <IpAddr host={port.host} />
+                                    <TagList tags={port.tags} filter={portFilter} />
+                                    <span>{port.comment}</span>
+                                    <div className={"workspace-data-certainty-icon"}>
+                                        <SeverityIcon severity={port.severity} />
+                                    </div>
+                                    <CertaintyIcon certainty={port.certainty} />
                                 </div>
-                                <CertaintyIcon certainty={port.certainty} />
-                            </div>
-                        ))}
+                            ))}
                     </StatelessWorkspaceTable>
                 );
             case "services":
@@ -225,41 +230,48 @@ export default function WorkspaceFindingTable({
                             <span>Severity</span>
                             <span>Certainty</span>
                         </div>
-                        {/*TODO filter items that are not in findings already*/}
-                        {services.map((service) => (
-                            <div key={service.uuid} className="workspace-table-row">
-                                <span
-                                    className="workspace-data-certainty-icon workspace-finding-selection-arrow"
-                                    onClick={() => onAddService?.(service)}
-                                >
-                                    <RelationLeftIcon />
-                                </span>
-                                <ServiceName service={service} />
-                                <IpAddr host={service.host} />
-                                {service.port ? <PortNumber port={service.port} /> : <span></span>}
-                                <span>{service.port?.protocol?.toUpperCase()}</span>
-                                <span>
-                                    <Indicator
-                                        off={
-                                            !(service.protocols && Object.values(service.protocols).find(Boolean)?.raw)
-                                        }
-                                    />
-                                </span>
-                                <span>
-                                    <Indicator
-                                        off={
-                                            !(service.protocols && Object.values(service.protocols).find(Boolean)?.tls)
-                                        }
-                                    />
-                                </span>
-                                <TagList tags={service.tags} filter={serviceFilter} />
-                                <span>{service.comment}</span>
-                                <div className={"workspace-data-certainty-icon"}>
-                                    <SeverityIcon severity={service.severity} />
+                        {services
+                            .filter((v) => !hideUuids.includes(v.uuid))
+                            .map((service) => (
+                                <div key={service.uuid} className="workspace-table-row">
+                                    <span
+                                        className="workspace-data-certainty-icon workspace-finding-selection-arrow"
+                                        onClick={() => onAddService?.(service)}
+                                    >
+                                        <RelationLeftIcon />
+                                    </span>
+                                    <ServiceName service={service} />
+                                    <IpAddr host={service.host} />
+                                    {service.port ? <PortNumber port={service.port} /> : <span></span>}
+                                    <span>{service.port?.protocol?.toUpperCase()}</span>
+                                    <span>
+                                        <Indicator
+                                            off={
+                                                !(
+                                                    service.protocols &&
+                                                    Object.values(service.protocols).find(Boolean)?.raw
+                                                )
+                                            }
+                                        />
+                                    </span>
+                                    <span>
+                                        <Indicator
+                                            off={
+                                                !(
+                                                    service.protocols &&
+                                                    Object.values(service.protocols).find(Boolean)?.tls
+                                                )
+                                            }
+                                        />
+                                    </span>
+                                    <TagList tags={service.tags} filter={serviceFilter} />
+                                    <span>{service.comment}</span>
+                                    <div className={"workspace-data-certainty-icon"}>
+                                        <SeverityIcon severity={service.severity} />
+                                    </div>
+                                    <CertaintyIcon certainty={service.certainty} />
                                 </div>
-                                <CertaintyIcon certainty={service.certainty} />
-                            </div>
-                        ))}
+                            ))}
                     </StatelessWorkspaceTable>
                 );
             default:
