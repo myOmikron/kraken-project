@@ -182,6 +182,7 @@ pub async fn get_finding(
         definition: SimpleFindingDefinition {
             uuid: definition.uuid,
             name: definition.name,
+            cve: definition.cve,
             severity: definition.severity,
             #[rustfmt::skip]
             summary: GLOBAL.editor_cache.fd_summary.get(*finding.definition.key()).await?.ok_or(ApiError::InvalidUuid)?.0,

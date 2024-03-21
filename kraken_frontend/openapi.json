@@ -12506,6 +12506,11 @@
                         "type": "string",
                         "description": "Name of the new finding definition"
                     },
+                    "cve": {
+                        "type": "string",
+                        "description": "CVE of the finding definition",
+                        "nullable": true
+                    },
                     "severity": {
                         "$ref": "#/components/schemas/FindingSeverity"
                     },
