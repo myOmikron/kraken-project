@@ -204,6 +204,7 @@ export function TreeGraph({
         };
     }, []);
 
+    const rootUuids = roots.map((r) => r.uuid).join("\n");
     useEffect(() => {
         const sim = simulation.current;
         if (!sim) throw new Error("simulation not ready?!");
@@ -211,15 +212,25 @@ export function TreeGraph({
         // recycle old nodes to preserve position and velocity.
         const old = new Map(simulationState.current.nodes.map((n) => [n.uuid, n]));
         const state = new Map(sim.nodes().map((n) => [n.uuid, n]));
-        const uuids = roots.map((r) => r.uuid).join("\n");
-        const inserted: { [index: UUID]: any } = {};
+        const inserted: { [index: UUID]: NodeT } = {};
         const columnW = treeNodeWidth + horizontalMargin;
         let nextY = 0;
-        let forceRecalcX = simulationState.current.rootUuids != uuids;
+        let forceRecalcX = simulationState.current.rootUuids != rootUuids;
+        // if (forceRecalcX) {
+        //     old.forEach((v, k) => {
+        //         v.fx = undefined;
+        //     });
+        // }
         let nodes = roots.flatMap((root) =>
             flatMapTree<NodeT>(root, (n, d, ci, parent) => {
                 if (n.uuid in inserted) return [];
-                const fx = d;
+                const fx = Math.max(
+                    0,
+                    d +
+                        Math.round((inserted[root.uuid]?.fx ?? 0) / columnW) -
+                        // try to align findings always left of nodes, so we add finding children of nodes left of them:
+                        (n.type == "Finding" ? 2 : 0),
+                );
                 let overrideY: number | undefined = undefined;
                 if (parent) {
                     let parentNode = state.get(parent.uuid);
@@ -236,17 +247,9 @@ export function TreeGraph({
                 let res = {
                     y: (overrideY ?? (nextY += 20)) + Math.random() * 10,
                     ...old.get(n.uuid),
-                    fx:
-                        Math.max(
-                            0,
-                            fx +
-                                Math.round((state.get(root.uuid)?.fx ?? 0) / columnW) -
-                                // try to align findings always left of nodes, so we add finding children of nodes left of them:
-                                (n.type == "Finding" ? 2 : 0),
-                        ) * columnW,
+                    fx: /* old.get(n.uuid)?.fx ?? */ fx * columnW,
                     ...n,
                 };
-                if (forceRecalcX) res.fx = fx;
                 inserted[n.uuid] = res;
                 return [res];
             }),
@@ -273,7 +276,7 @@ export function TreeGraph({
         linkForce.links(links);
         simulationState.current.nodes = nodes;
         simulationState.current.links = links;
-        simulationState.current.rootUuids = uuids;
+        simulationState.current.rootUuids = rootUuids;
         sim.force("centering", centeringForce);
         sim.alpha(0.4).restart().tick();
 
@@ -285,7 +288,7 @@ export function TreeGraph({
                 }
             }
         }
-    }, [roots, simulation]);
+    }, [roots, rootUuids, simulation]);
 
     useEffect(() => {
         if (
