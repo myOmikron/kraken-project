@@ -27,6 +27,7 @@ import FileIcon from "../../../svg/file";
 import GraphIcon from "../../../svg/graph";
 import InformationIcon from "../../../svg/information";
 import PersonCircleIcon from "../../../svg/person-circle";
+import PlusIcon from "../../../svg/plus";
 import RelationLeftRightIcon from "../../../svg/relation-left-right";
 import ScreenshotIcon from "../../../svg/screenshot";
 import { ObjectFns, handleApiError } from "../../../utils/helper";
@@ -43,7 +44,6 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 import { FindingDefinitionDetails } from "./workspace-create-finding";
 import EditingTreeGraph from "./workspace-finding-editing-tree";
 import WorkspaceFindingTable from "./workspace-finding-table";
-import PlusIcon from "../../../svg/plus";
 
 export type WorkspaceEditFindingProps = {
     /** The finding's uuid */
@@ -312,13 +312,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                 findingUuid={finding}
                                                 affectedUuid={affectedUuid}
                                             />
-                                            <TagList
-                                                tags={
-                                                    [
-                                                        /*TODO*/
-                                                    ]
-                                                }
-                                            />
+                                            <TagList tags={fullAffected.affectedTags} />
                                             <UploadingFileInput
                                                 image
                                                 shortText
