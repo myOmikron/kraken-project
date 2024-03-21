@@ -213,6 +213,7 @@ export function TreeGraph({
         const state = new Map(sim.nodes().map((n) => [n.uuid, n]));
         const uuids = roots.map((r) => r.uuid).join("\n");
         const inserted: { [index: UUID]: any } = {};
+        const columnW = treeNodeWidth + horizontalMargin;
         let nextY = 0;
         let forceRecalcX = simulationState.current.rootUuids != uuids;
         let nodes = roots.flatMap((root) =>
@@ -236,8 +237,13 @@ export function TreeGraph({
                     y: (overrideY ?? (nextY += 20)) + Math.random() * 10,
                     ...old.get(n.uuid),
                     fx:
-                        Math.max(0, fx + (state.get(root.uuid)?.fx ?? 0) - (n.type == "Finding" ? 2 : 0)) *
-                        (treeNodeWidth + horizontalMargin),
+                        Math.max(
+                            0,
+                            fx +
+                                Math.round((state.get(root.uuid)?.fx ?? 0) / columnW) -
+                                // try to align findings always left of nodes, so we add finding children of nodes left of them:
+                                (n.type == "Finding" ? 2 : 0),
+                        ) * columnW,
                     ...n,
                 };
                 if (forceRecalcX) res.fx = fx;
