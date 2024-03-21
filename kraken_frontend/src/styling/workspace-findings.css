@@ -189,6 +189,12 @@
     transition: filter 0.1s ease-in;
 }
 
+@media screen and (min-width: 2001px) {
+    .workspace-findings-graph .tree-node {
+        width: 310px;
+    }
+}
+
 .workspace-findings-graph.has-highlighted .tree-node:not(.highlighted) {
     filter: opacity(0.4);
 }

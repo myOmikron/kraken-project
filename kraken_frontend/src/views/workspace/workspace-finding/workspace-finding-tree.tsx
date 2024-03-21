@@ -49,9 +49,13 @@ export function TreeGraph({
 }: { roots: TreeNode[]; onClickTag?: TagClickCallback } & ViewportProps) {
     const verticalMargin = 16;
     const horizontalMargin = 64;
-    const treeNodeWidth = 240; // from CSS: .tree-node width in px
 
-    type NodeT = d3.SimulationNodeDatum & { uuid: string; radius?: number; children?: { uuid: string }[] };
+    type NodeT = d3.SimulationNodeDatum & {
+        uuid: string;
+        column?: number;
+        radius?: number;
+        children?: { uuid: string }[];
+    };
     type LinkT = d3.SimulationLinkDatum<NodeT> & { sourceUuid: string; targetUuid: string };
     type ConnectionT = {
         from: [number, number];
@@ -168,6 +172,7 @@ export function TreeGraph({
                     }
                 }
                 const linkForce = sim.force("link")! as d3.ForceLink<NodeT, LinkT>;
+                const treeNodeWidth = window.innerWidth < 2000 ? 240 : 310;
                 setConnections(
                     linkForce.links().map((l) => {
                         let res: ConnectionT = {
@@ -213,23 +218,30 @@ export function TreeGraph({
         const old = new Map(simulationState.current.nodes.map((n) => [n.uuid, n]));
         const state = new Map(sim.nodes().map((n) => [n.uuid, n]));
         const inserted: { [index: UUID]: NodeT } = {};
+        const treeNodeWidth = window.innerWidth < 2000 ? 240 : 300;
         const columnW = treeNodeWidth + horizontalMargin;
         let nextY = 0;
         let forceRecalcX = simulationState.current.rootUuids != rootUuids;
-        // if (forceRecalcX) {
-        //     old.forEach((v, k) => {
-        //         v.fx = undefined;
-        //     });
-        // }
+        if (forceRecalcX) {
+            old.forEach((v, k) => {
+                v.column = undefined;
+                v.fx = undefined;
+            });
+        }
         let nodes = roots.flatMap((root) =>
             flatMapTree<NodeT>(root, (n, d, ci, parent) => {
                 if (n.uuid in inserted) return [];
-                const fx = Math.max(
+                let startColumn = 0;
+                if (n.type == "Finding" && parent === undefined && n.children?.length) {
+                    let c = n.children.map((c) => inserted[c.uuid]).find((a) => a);
+                    if (c?.column) startColumn = c.column - 1;
+                }
+                const column = Math.max(
                     0,
-                    d +
-                        Math.round((inserted[root.uuid]?.fx ?? 0) / columnW) -
+                    startColumn,
+                    (parent ? inserted[parent.uuid]?.column ?? 0 : 0) +
                         // try to align findings always left of nodes, so we add finding children of nodes left of them:
-                        (n.type == "Finding" ? 2 : 0),
+                        (n.type == "Finding" ? -1 : 1),
                 );
                 let overrideY: number | undefined = undefined;
                 if (parent) {
@@ -247,7 +259,8 @@ export function TreeGraph({
                 let res = {
                     y: (overrideY ?? (nextY += 20)) + Math.random() * 10,
                     ...old.get(n.uuid),
-                    fx: /* old.get(n.uuid)?.fx ?? */ fx * columnW,
+                    column: /* old.get(n.uuid)?.column ??  */ column,
+                    fx: /* old.get(n.uuid)?.fx ??  */ column * columnW,
                     ...n,
                 };
                 inserted[n.uuid] = res;
