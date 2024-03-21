@@ -114,5 +114,9 @@ export default function EditingTreeGraph(props: EditingTreeGraphProps) {
         treeRef.current?.reloadAffected();
     }, [props.affected]);
 
+    useEffect(() => {
+        treeRef.current?.reloadRoot();
+    }, [props.severity, props.definition]);
+
     return <DynamicTreeGraph ref={treeRef} uuid={rootUuid} api={api.current} {...props} />;
 }

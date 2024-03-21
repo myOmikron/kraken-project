@@ -108,6 +108,7 @@ export function treeLookupFunctionsRoot(workspace: string, uuids: string[]): Dyn
 
 export type DynamicTreeGraphRef = {
     reloadAffected(): void;
+    reloadRoot(): void;
 };
 
 export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraphProps>(
@@ -334,6 +335,23 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                                     ...c,
                                 })),
                         })),
+                    );
+                });
+            },
+            reloadRoot() {
+                api.getRoots().then((findingsList) => {
+                    setRoots((roots) =>
+                        roots.map<TreeNode>((root, index) => {
+                            const finding = findingsList.find((f) => f.uuid == root.uuid);
+                            if (!finding) return root;
+                            return {
+                                uuid: root.uuid,
+                                type: "Finding",
+                                definition: finding.definition,
+                                severity: finding.severity,
+                                children: root.children,
+                            };
+                        }),
                     );
                 });
             },
