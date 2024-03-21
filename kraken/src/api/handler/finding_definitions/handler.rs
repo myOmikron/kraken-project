@@ -53,6 +53,10 @@ pub async fn create_finding_definition(
         references,
     } = req.into_inner();
 
+    if name.is_empty() {
+        return Err(ApiError::InvalidName);
+    }
+
     let uuid = Uuid::new_v4();
 
     insert!(&GLOBAL.db, FindingDefinition)
@@ -140,6 +144,7 @@ pub async fn get_all_finding_definitions() -> ApiResult<Json<ListFindingDefiniti
             .map_ok(|fd| SimpleFindingDefinition {
                 uuid: fd.uuid,
                 name: fd.name,
+                cve: fd.cve,
                 summary: fd.summary,
                 severity: fd.severity,
                 created_at: fd.created_at,

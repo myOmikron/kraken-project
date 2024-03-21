@@ -139,6 +139,7 @@ pub async fn get_finding_affected(
         finding_details,
         finding_definition_uuid,
         finding_definition_name,
+        finding_definition_cve,
         finding_definition_severity,
         finding_definition_summary,
         finding_definition_created_at,
@@ -159,6 +160,7 @@ pub async fn get_finding_affected(
                 .select_as::<FindingDetails>(),
             FindingAffected::F.finding.definition.uuid,
             FindingAffected::F.finding.definition.name,
+            FindingAffected::F.finding.definition.cve,
             FindingAffected::F.finding.definition.severity,
             FindingAffected::F.finding.definition.summary,
             FindingAffected::F.finding.definition.created_at,
@@ -268,6 +270,7 @@ pub async fn get_finding_affected(
             definition: SimpleFindingDefinition {
                 uuid: finding_definition_uuid,
                 name: finding_definition_name,
+                cve: finding_definition_cve,
                 severity: finding_definition_severity,
                 summary: finding_definition_summary,
                 created_at: finding_definition_created_at,

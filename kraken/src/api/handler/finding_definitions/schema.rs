@@ -73,6 +73,8 @@ pub struct SimpleFindingDefinition {
     pub uuid: Uuid,
     /// Name of the new finding definition
     pub name: String,
+    /// CVE of the finding definition
+    pub cve: Option<String>,
     /// The severity of the finding
     pub severity: FindingSeverity,
     /// Short summary of the finding
