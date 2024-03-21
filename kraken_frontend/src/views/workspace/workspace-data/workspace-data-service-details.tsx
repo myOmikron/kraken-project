@@ -11,6 +11,7 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 import { CertaintyIcon } from "../workspace-data";
 import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
+import SeverityIcon from "../../../svg/severity";
 
 export type WorkspaceDataServiceDetailsProps = {
     service: string;
@@ -86,6 +87,18 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
                                       : CertaintyIcon({ certaintyType: "DefinitelyVerified", nameVisible: true })}
                         </div>
                     </div>
+                    {service.severity && (
+                        <div className="workspace-data-details-pane">
+                            <h3 className="sub-heading">Severity</h3>
+                            <div className="workspace-data-certainty-list">
+                                <SeverityIcon
+                                    className={"icon workspace-data-certainty-icon"}
+                                    severity={service.severity}
+                                />
+                                {service.severity}
+                            </div>
+                        </div>
+                    )}
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Comment</h3>
                         <Textarea value={service.comment} onChange={(comment) => setService({ ...service, comment })} />

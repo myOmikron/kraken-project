@@ -11,6 +11,7 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 import { CertaintyIcon } from "../workspace-data";
 import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
+import SeverityIcon from "../../../svg/severity";
 
 export type WorkspaceDataPortDetailsProps = {
     port: string;
@@ -81,6 +82,18 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
                                   : CertaintyIcon({ certaintyType: "SupposedTo", nameVisible: true })}
                         </div>
                     </div>
+                    {port.severity && (
+                        <div className="workspace-data-details-pane">
+                            <h3 className="sub-heading">Severity</h3>
+                            <div className="workspace-data-certainty-list">
+                                <SeverityIcon
+                                    className={"icon workspace-data-certainty-icon"}
+                                    severity={port.severity}
+                                />
+                                {port.severity}
+                            </div>
+                        </div>
+                    )}
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Comment</h3>
                         <Textarea value={port.comment} onChange={(comment) => setPort({ ...port, comment })} />

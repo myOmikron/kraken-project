@@ -13,6 +13,7 @@ import TagList from "../components/tag-list";
 import { StatelessWorkspaceTable, useTable } from "../components/workspace-table";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import { CertaintyIcon } from "../workspace-data";
+import SeverityIcon from "../../../svg/severity";
 
 export type WorkspaceFindingTableProps = {
     onAddDomain?: (domain: FullDomain) => void;
@@ -108,7 +109,9 @@ export default function WorkspaceFindingTable({
                                 <Domain domain={domain} />
                                 <TagList tags={domain.tags} filter={domainFilter} />
                                 <span>{domain.comment}</span>
-                                <span className="workspace-data-certainty-icon icon"></span>
+                                <div className={"workspace-data-certainty-icon"}>
+                                    <SeverityIcon severity={domain.severity} />
+                                </div>
                                 {domain.certainty === "Unverified"
                                     ? CertaintyIcon({ certaintyType: "Unverified" })
                                     : CertaintyIcon({ certaintyType: "Verified" })}
@@ -149,7 +152,9 @@ export default function WorkspaceFindingTable({
                                 <OsIcon tooltip os={host.osType} size="2em" />
                                 <TagList tags={host.tags} filter={hostFilter} />
                                 <span>{host.comment}</span>
-                                <span className="workspace-data-certainty-icon icon"></span>
+                                <div className={"workspace-data-certainty-icon"}>
+                                    <SeverityIcon severity={host.severity} />
+                                </div>
                                 {host.certainty === "Verified"
                                     ? CertaintyIcon({ certaintyType: "Verified" })
                                     : host.certainty === "Historical"
@@ -194,7 +199,9 @@ export default function WorkspaceFindingTable({
                                 <IpAddr host={port.host} />
                                 <TagList tags={port.tags} filter={portFilter} />
                                 <span>{port.comment}</span>
-                                <span className="workspace-data-certainty-icon icon"></span>
+                                <div className={"workspace-data-certainty-icon"}>
+                                    <SeverityIcon severity={port.severity} />
+                                </div>
                                 {port.certainty === "Verified"
                                     ? CertaintyIcon({ certaintyType: "Verified" })
                                     : port.certainty === "Historical"
@@ -257,7 +264,9 @@ export default function WorkspaceFindingTable({
                                 </span>
                                 <TagList tags={service.tags} filter={serviceFilter} />
                                 <span>{service.comment}</span>
-                                <span className="workspace-data-certainty-icon icon"></span>
+                                <div className={"workspace-data-certainty-icon"}>
+                                    <SeverityIcon severity={service.severity} />
+                                </div>
                                 {service.certainty === "Historical"
                                     ? CertaintyIcon({ certaintyType: "Historical" })
                                     : service.certainty === "SupposedTo"

@@ -12,6 +12,7 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 import { CertaintyIcon } from "../workspace-data";
 import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
+import SeverityIcon from "../../../svg/severity";
 
 export type WorkspaceDataHostDetailsProps = {
     host: string;
@@ -82,6 +83,18 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
                                   : CertaintyIcon({ certaintyType: "SupposedTo", nameVisible: true })}
                         </div>
                     </div>
+                    {host.severity && (
+                        <div className="workspace-data-details-pane">
+                            <h3 className="sub-heading">Severity</h3>
+                            <div className="workspace-data-certainty-list">
+                                <SeverityIcon
+                                    className={"icon workspace-data-certainty-icon"}
+                                    severity={host.severity}
+                                />
+                                {host.severity}
+                            </div>
+                        </div>
+                    )}
                     <div className="workspace-data-details-pane">
                         <h3 className={"sub-heading"}>Comment</h3>
                         <Textarea value={host.comment} onChange={(comment) => setHost({ ...host, comment })} />

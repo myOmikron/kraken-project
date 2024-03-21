@@ -11,6 +11,7 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 import { CertaintyIcon } from "../workspace-data";
 import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
+import SeverityIcon from "../../../svg/severity";
 
 export type WorkspaceDataDomainDetailsProps = {
     domain: string;
@@ -78,6 +79,18 @@ export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProp
                                 : CertaintyIcon({ certaintyType: "Unverified", nameVisible: true })}
                         </div>
                     </div>
+                    {domain.severity && (
+                        <div className="workspace-data-details-pane">
+                            <h3 className="sub-heading">Severity</h3>
+                            <div className="workspace-data-certainty-list">
+                                <SeverityIcon
+                                    className={"icon workspace-data-certainty-icon"}
+                                    severity={domain.severity}
+                                />
+                                {domain.severity}
+                            </div>
+                        </div>
+                    )}
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Comment</h3>
                         <Textarea value={domain.comment} onChange={(comment) => setDomain({ ...domain, comment })} />

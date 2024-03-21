@@ -3,13 +3,15 @@ import "../index.css";
 import { FindingSeverity } from "../api/generated";
 
 type SeverityIconProps = {
-    severity?: FindingSeverity;
+    severity: FindingSeverity | null | undefined;
+    className?: string;
 };
 
 export default function SeverityIcon(props: SeverityIconProps) {
-    const { severity } = props;
+    const { className, severity } = props;
+    if (!severity) return null;
     return (
-        <div className={"icon"} {...props}>
+        <div className={className ?? "icon"} title={severity}>
             <svg
                 width="800px"
                 height="800px"

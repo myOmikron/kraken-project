@@ -37,6 +37,7 @@ import { WorkspaceDataDomainDetails } from "./workspace-data/workspace-data-doma
 import { WorkspaceDataHostDetails } from "./workspace-data/workspace-data-host-details";
 import { WorkspaceDataPortDetails } from "./workspace-data/workspace-data-port-details";
 import { WorkspaceDataServiceDetails } from "./workspace-data/workspace-data-service-details";
+import SeverityIcon from "../../svg/severity";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations", findings: "Findings" };
@@ -287,7 +288,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <Domain domain={domain} />
                                 <TagList tags={domain.tags} globalFilter={globalFilter} filter={domainFilter} />
                                 <div>{domain.comment}</div>
-                                <span className="workspace-data-certainty-icon icon"></span>
+                                <div className={"workspace-data-certainty-icon"}>
+                                    <SeverityIcon severity={domain.severity} />
+                                </div>
                                 {domain.certainty === "Unverified"
                                     ? CertaintyIcon({ certaintyType: "Unverified" })
                                     : CertaintyIcon({ certaintyType: "Verified" })}
@@ -388,7 +391,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <OsIcon tooltip os={host.osType} size="2em" />
                                 <TagList tags={host.tags} globalFilter={globalFilter} filter={hostFilter} />
                                 <div>{host.comment}</div>
-                                <span className="workspace-data-certainty-icon icon"></span>
+                                <div className={"workspace-data-certainty-icon"}>
+                                    <SeverityIcon severity={host.severity} />
+                                </div>
                                 {host.certainty === "Verified"
                                     ? CertaintyIcon({ certaintyType: "Verified" })
                                     : host.certainty === "Historical"
@@ -472,7 +477,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <IpAddr host={port.host} />
                                 <TagList tags={port.tags} globalFilter={globalFilter} filter={portFilter} />
                                 <span>{port.comment}</span>
-                                <span className="workspace-data-certainty-icon icon"></span>
+                                <div className={"workspace-data-certainty-icon"}>
+                                    <SeverityIcon severity={port.severity} />
+                                </div>
                                 {port.certainty === "Verified"
                                     ? CertaintyIcon({ certaintyType: "Verified" })
                                     : port.certainty === "Historical"
@@ -577,7 +584,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 </span>
                                 <TagList tags={service.tags} globalFilter={globalFilter} filter={serviceFilter} />
                                 <span>{service.comment}</span>
-                                <span className="workspace-data-certainty-icon icon"></span>
+                                <div className={"workspace-data-certainty-icon"}>
+                                    <SeverityIcon severity={service.severity} />
+                                </div>
                                 {service.certainty === "Historical"
                                     ? CertaintyIcon({ certaintyType: "Historical" })
                                     : service.certainty === "SupposedTo"
