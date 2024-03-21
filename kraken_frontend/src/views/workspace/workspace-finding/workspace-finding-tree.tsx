@@ -257,7 +257,7 @@ export function TreeGraph({
                     }
                 }
                 let res = {
-                    y: (overrideY ?? (nextY += 20)) + Math.random() * 10,
+                    y: (overrideY ?? (nextY += 20)) + (ci / (parent?.children?.length || 1)) * 19,
                     ...old.get(n.uuid),
                     column: /* old.get(n.uuid)?.column ??  */ column,
                     fx: /* old.get(n.uuid)?.fx ??  */ column * columnW,
