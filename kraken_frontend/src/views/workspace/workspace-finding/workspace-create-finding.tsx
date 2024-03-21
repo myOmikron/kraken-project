@@ -270,134 +270,136 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                             />
                         </div>
 
-                        <div className="create-finding-files">
-                            <h2 className={"sub-heading"}>
-                                <ScreenshotIcon />
-                                Screenshot
-                            </h2>
-                            <h2 className={"sub-heading"}>
-                                <FileIcon />
-                                Log File
-                            </h2>
-                            <FileInput image file={screenshot} onChange={setScreenshot} />
-                            <FileInput file={logFile} onChange={setLogFile} />
-                        </div>
+                        <div className="scrollable">
+                            <div className="create-finding-files">
+                                <h2 className={"sub-heading"}>
+                                    <ScreenshotIcon />
+                                    Screenshot
+                                </h2>
+                                <h2 className={"sub-heading"}>
+                                    <FileIcon />
+                                    Log File
+                                </h2>
+                                <FileInput image file={screenshot} onChange={setScreenshot} />
+                                <FileInput file={logFile} onChange={setLogFile} />
+                            </div>
 
-                        <CollapsibleSection
-                            summary={
-                                <>
-                                    <BookIcon />
-                                    User Details
-                                </>
-                            }
-                        >
-                            <GithubMarkdown>{details}</GithubMarkdown>
-                        </CollapsibleSection>
+                            <CollapsibleSection
+                                summary={
+                                    <>
+                                        <BookIcon />
+                                        User Details
+                                    </>
+                                }
+                            >
+                                <GithubMarkdown>{details}</GithubMarkdown>
+                            </CollapsibleSection>
 
-                        <CollapsibleSection
-                            summary={
-                                <>
-                                    <RelationLeftRightIcon />
-                                    Affected
-                                </>
-                            }
-                        >
-                            <div className="affected-list">
-                                {affected.length > 0 ? (
-                                    affected.map((a, index) => {
-                                        const label =
-                                            a.type == "Domain" ? (
-                                                <Domain domain={a._data} pretty />
-                                            ) : a.type == "Host" ? (
-                                                <IpAddr host={a._data} pretty />
-                                            ) : a.type == "Port" ? (
-                                                <PortNumber port={a._data} pretty />
-                                            ) : a.type == "Service" ? (
-                                                <ServiceName service={a._data} pretty />
-                                            ) : (
-                                                "not implemented"
-                                            );
+                            <CollapsibleSection
+                                summary={
+                                    <>
+                                        <RelationLeftRightIcon />
+                                        Affected
+                                    </>
+                                }
+                            >
+                                <div className="affected-list">
+                                    {affected.length > 0 ? (
+                                        affected.map((a, index) => {
+                                            const label =
+                                                a.type == "Domain" ? (
+                                                    <Domain domain={a._data} pretty />
+                                                ) : a.type == "Host" ? (
+                                                    <IpAddr host={a._data} pretty />
+                                                ) : a.type == "Port" ? (
+                                                    <PortNumber port={a._data} pretty />
+                                                ) : a.type == "Service" ? (
+                                                    <ServiceName service={a._data} pretty />
+                                                ) : (
+                                                    "not implemented"
+                                                );
 
-                                        return (
-                                            <div className={`affected affected-${a.type}`}>
-                                                <div className="name">
-                                                    <div
-                                                        title={"Remove affected"}
-                                                        className="remove"
-                                                        onClick={() => {
-                                                            let copy = [...affected];
-                                                            copy.splice(index, 1);
-                                                            setAffected(copy);
+                                            return (
+                                                <div className={`affected affected-${a.type}`}>
+                                                    <div className="name">
+                                                        <div
+                                                            title={"Remove affected"}
+                                                            className="remove"
+                                                            onClick={() => {
+                                                                let copy = [...affected];
+                                                                copy.splice(index, 1);
+                                                                setAffected(copy);
+                                                            }}
+                                                        >
+                                                            <CloseIcon />
+                                                        </div>
+                                                        {label}
+                                                    </div>
+                                                    <MarkdownEditorPopup
+                                                        label={label}
+                                                        content={a.details || ""}
+                                                        onChange={(d) => {
+                                                            setAffected((affected) =>
+                                                                affected.map((orig) =>
+                                                                    orig.uuid == a.uuid
+                                                                        ? {
+                                                                              ...orig,
+                                                                              details: d,
+                                                                          }
+                                                                        : orig,
+                                                                ),
+                                                            );
+                                                        }}
+                                                    />
+                                                    <TagList tags={a._data.tags} />
+                                                    <FileInput
+                                                        image
+                                                        shortText
+                                                        className="screenshot"
+                                                        file={a._localScreenshot}
+                                                        onChange={(v) => {
+                                                            setAffected((affected) =>
+                                                                affected.map((orig) =>
+                                                                    orig.uuid == a.uuid
+                                                                        ? {
+                                                                              ...orig,
+                                                                              _localScreenshot: v,
+                                                                          }
+                                                                        : orig,
+                                                                ),
+                                                            );
                                                         }}
                                                     >
-                                                        <CloseIcon />
-                                                    </div>
-                                                    {label}
+                                                        <ScreenshotIcon />
+                                                    </FileInput>
+                                                    <FileInput
+                                                        shortText
+                                                        className="logfile"
+                                                        file={a._localLogFile}
+                                                        onChange={(f) => {
+                                                            setAffected((affected) =>
+                                                                affected.map((orig) =>
+                                                                    orig.uuid == a.uuid
+                                                                        ? {
+                                                                              ...orig,
+                                                                              _localLogFile: f,
+                                                                          }
+                                                                        : orig,
+                                                                ),
+                                                            );
+                                                        }}
+                                                    >
+                                                        <FileIcon />
+                                                    </FileInput>
                                                 </div>
-                                                <MarkdownEditorPopup
-                                                    label={label}
-                                                    content={a.details || ""}
-                                                    onChange={(d) => {
-                                                        setAffected((affected) =>
-                                                            affected.map((orig) =>
-                                                                orig.uuid == a.uuid
-                                                                    ? {
-                                                                          ...orig,
-                                                                          details: d,
-                                                                      }
-                                                                    : orig,
-                                                            ),
-                                                        );
-                                                    }}
-                                                />
-                                                <TagList tags={a._data.tags} />
-                                                <FileInput
-                                                    image
-                                                    shortText
-                                                    className="screenshot"
-                                                    file={a._localScreenshot}
-                                                    onChange={(v) => {
-                                                        setAffected((affected) =>
-                                                            affected.map((orig) =>
-                                                                orig.uuid == a.uuid
-                                                                    ? {
-                                                                          ...orig,
-                                                                          _localScreenshot: v,
-                                                                      }
-                                                                    : orig,
-                                                            ),
-                                                        );
-                                                    }}
-                                                >
-                                                    <ScreenshotIcon />
-                                                </FileInput>
-                                                <FileInput
-                                                    shortText
-                                                    className="logfile"
-                                                    file={a._localLogFile}
-                                                    onChange={(f) => {
-                                                        setAffected((affected) =>
-                                                            affected.map((orig) =>
-                                                                orig.uuid == a.uuid
-                                                                    ? {
-                                                                          ...orig,
-                                                                          _localLogFile: f,
-                                                                      }
-                                                                    : orig,
-                                                            ),
-                                                        );
-                                                    }}
-                                                >
-                                                    <FileIcon />
-                                                </FileInput>
-                                            </div>
-                                        );
-                                    })
-                                ) : (
-                                    <p>No affected items yet</p>
-                                )}
-                            </div>
-                        </CollapsibleSection>
+                                            );
+                                        })
+                                    ) : (
+                                        <p>No affected items yet</p>
+                                    )}
+                                </div>
+                            </CollapsibleSection>
+                        </div>
 
                         <button type={"submit"} className="button">
                             Create

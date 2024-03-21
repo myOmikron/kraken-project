@@ -319,12 +319,10 @@
 }
 
 .create-finding-form {
-    padding: 0.5em;
     display: flex;
     flex-direction: column;
     gap: 2em;
     height: 100%;
-    overflow-y: auto;
 }
 
 .create-finding-form .sub-heading {
@@ -338,9 +336,14 @@
     margin-right: 0.2em;
 }
 
-.create-finding-form > button {
-    position: sticky;
-    bottom: 0;
+.create-finding-form > .scrollable {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5em;
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow-y: auto;
+    gap: 2em;
 }
 
 .create-finding-editor-container {

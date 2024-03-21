@@ -230,181 +230,183 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         />
                     </div>
 
-                    <div className="create-finding-files">
-                        <h2 className={"sub-heading"}>
-                            <ScreenshotIcon />
-                            Screenshot
-                        </h2>
-                        <h2 className={"sub-heading"}>
-                            <FileIcon />
-                            Log File
-                        </h2>
-                        <UploadingFileInput
-                            image
-                            file={screenshot}
-                            onChange={(newImage) => {
-                                setScreenshot((oldScreenshot) => {
-                                    updateFinding({ screenshot: newImage }, () => {
-                                        setScreenshot(oldScreenshot);
+                    <div className="scrollable">
+                        <div className="create-finding-files">
+                            <h2 className={"sub-heading"}>
+                                <ScreenshotIcon />
+                                Screenshot
+                            </h2>
+                            <h2 className={"sub-heading"}>
+                                <FileIcon />
+                                Log File
+                            </h2>
+                            <UploadingFileInput
+                                image
+                                file={screenshot}
+                                onChange={(newImage) => {
+                                    setScreenshot((oldScreenshot) => {
+                                        updateFinding({ screenshot: newImage }, () => {
+                                            setScreenshot(oldScreenshot);
+                                        });
+                                        return newImage ?? "";
                                     });
-                                    return newImage ?? "";
-                                });
-                            }}
-                        />
-                        <UploadingFileInput
-                            file={logFile}
-                            onChange={(newFile) => {
-                                setLogFile((oldFile) => {
-                                    updateFinding({ logFile: newFile }, () => {
-                                        setLogFile(oldFile);
+                                }}
+                            />
+                            <UploadingFileInput
+                                file={logFile}
+                                onChange={(newFile) => {
+                                    setLogFile((oldFile) => {
+                                        updateFinding({ logFile: newFile }, () => {
+                                            setLogFile(oldFile);
+                                        });
+                                        return newFile ?? "";
                                     });
-                                    return newFile ?? "";
-                                });
-                            }}
-                        />
-                    </div>
+                                }}
+                            />
+                        </div>
 
-                    <CollapsibleSection
-                        summary={
-                            <>
-                                <BookIcon />
-                                User Details
-                            </>
-                        }
-                    >
-                        <GithubMarkdown>{userDetails}</GithubMarkdown>
-                    </CollapsibleSection>
+                        <CollapsibleSection
+                            summary={
+                                <>
+                                    <BookIcon />
+                                    User Details
+                                </>
+                            }
+                        >
+                            <GithubMarkdown>{userDetails}</GithubMarkdown>
+                        </CollapsibleSection>
 
-                    <CollapsibleSection
-                        summary={
-                            <>
-                                <BookIcon />
-                                Tool Details
-                            </>
-                        }
-                    >
-                        <GithubMarkdown>{toolDetails}</GithubMarkdown>
-                    </CollapsibleSection>
+                        <CollapsibleSection
+                            summary={
+                                <>
+                                    <BookIcon />
+                                    Tool Details
+                                </>
+                            }
+                        >
+                            <GithubMarkdown>{toolDetails}</GithubMarkdown>
+                        </CollapsibleSection>
 
-                    <CollapsibleSection
-                        summary={
-                            <>
-                                <RelationLeftRightIcon />
-                                Affected
-                            </>
-                        }
-                    >
-                        <div className="affected-list">
-                            {ObjectFns.isEmpty(affected) ? (
-                                <p>No affected items yet</p>
-                            ) : (
-                                Object.entries(affected)
-                                    .sort(([aUuid, a], [bUuid, b]) => {
-                                        let aType = getAffectedType(a);
-                                        let bType = getAffectedType(b);
-                                        if (aType < bType) return -1;
-                                        if (aType > bType) return 1;
-                                        // TODO: type-based sorters
-                                        if (aUuid < bUuid) return -1;
-                                        if (aUuid > bUuid) return 1;
-                                        return 0;
-                                    })
-                                    .map(([affectedUuid, fullAffected]) => (
-                                        <div
-                                            key={affectedUuid}
-                                            className={`affected affected-${getAffectedType(fullAffected)}`}
-                                        >
-                                            <div className="name">
-                                                <div
-                                                    title={"Remove affected"}
-                                                    className="remove"
-                                                    onClick={() => {
+                        <CollapsibleSection
+                            summary={
+                                <>
+                                    <RelationLeftRightIcon />
+                                    Affected
+                                </>
+                            }
+                        >
+                            <div className="affected-list">
+                                {ObjectFns.isEmpty(affected) ? (
+                                    <p>No affected items yet</p>
+                                ) : (
+                                    Object.entries(affected)
+                                        .sort(([aUuid, a], [bUuid, b]) => {
+                                            let aType = getAffectedType(a);
+                                            let bType = getAffectedType(b);
+                                            if (aType < bType) return -1;
+                                            if (aType > bType) return 1;
+                                            // TODO: type-based sorters
+                                            if (aUuid < bUuid) return -1;
+                                            if (aUuid > bUuid) return 1;
+                                            return 0;
+                                        })
+                                        .map(([affectedUuid, fullAffected]) => (
+                                            <div
+                                                key={affectedUuid}
+                                                className={`affected affected-${getAffectedType(fullAffected)}`}
+                                            >
+                                                <div className="name">
+                                                    <div
+                                                        title={"Remove affected"}
+                                                        className="remove"
+                                                        onClick={() => {
+                                                            Api.workspaces.findings
+                                                                .removeAffected(workspace, finding, affectedUuid)
+                                                                .then(
+                                                                    handleApiError(() =>
+                                                                        setAffected(
+                                                                            ({ [affectedUuid]: _, ...rest }) => rest,
+                                                                        ),
+                                                                    ),
+                                                                );
+                                                        }}
+                                                    >
+                                                        <CloseIcon />
+                                                    </div>
+                                                    <AffectedLabel affected={fullAffected.affected} pretty />
+                                                </div>
+                                                <MarkdownLiveEditorPopup
+                                                    label={<AffectedLabel affected={fullAffected.affected} pretty />}
+                                                    value={fullAffected.userDetails}
+                                                    setValue={(userDetails) => {
+                                                        setAffected(({ [affectedUuid]: affected, ...rest }) => ({
+                                                            [affectedUuid]: { ...affected, userDetails },
+                                                            ...rest,
+                                                        }));
+                                                    }}
+                                                    findingUuid={finding}
+                                                    affectedUuid={affectedUuid}
+                                                />
+                                                <TagList tags={fullAffected.affectedTags} />
+                                                <UploadingFileInput
+                                                    image
+                                                    shortText
+                                                    className="screenshot"
+                                                    file={fullAffected.screenshot ?? undefined}
+                                                    onChange={(newImage) => {
                                                         Api.workspaces.findings
-                                                            .removeAffected(workspace, finding, affectedUuid)
+                                                            .updateAffected(workspace, finding, affectedUuid, {
+                                                                screenshot: newImage,
+                                                            })
                                                             .then(
                                                                 handleApiError(() =>
                                                                     setAffected(
-                                                                        ({ [affectedUuid]: _, ...rest }) => rest,
+                                                                        ({ [affectedUuid]: affected, ...rest }) => ({
+                                                                            [affectedUuid]: {
+                                                                                ...affected,
+                                                                                screenshot: newImage,
+                                                                            },
+                                                                            ...rest,
+                                                                        }),
                                                                     ),
                                                                 ),
                                                             );
                                                     }}
                                                 >
-                                                    <CloseIcon />
-                                                </div>
-                                                <AffectedLabel affected={fullAffected.affected} pretty />
+                                                    <ScreenshotIcon />
+                                                </UploadingFileInput>
+                                                <UploadingFileInput
+                                                    shortText
+                                                    className="logfile"
+                                                    file={fullAffected.logFile ?? undefined}
+                                                    onChange={(newFile) => {
+                                                        Api.workspaces.findings
+                                                            .updateAffected(workspace, finding, affectedUuid, {
+                                                                logFile: newFile,
+                                                            })
+                                                            .then(
+                                                                handleApiError(() =>
+                                                                    setAffected(
+                                                                        ({ [affectedUuid]: affected, ...rest }) => ({
+                                                                            [affectedUuid]: {
+                                                                                ...affected,
+                                                                                logFile: newFile,
+                                                                            },
+                                                                            ...rest,
+                                                                        }),
+                                                                    ),
+                                                                ),
+                                                            );
+                                                    }}
+                                                >
+                                                    <FileIcon />
+                                                </UploadingFileInput>
                                             </div>
-                                            <MarkdownLiveEditorPopup
-                                                label={<AffectedLabel affected={fullAffected.affected} pretty />}
-                                                value={fullAffected.userDetails}
-                                                setValue={(userDetails) => {
-                                                    setAffected(({ [affectedUuid]: affected, ...rest }) => ({
-                                                        [affectedUuid]: { ...affected, userDetails },
-                                                        ...rest,
-                                                    }));
-                                                }}
-                                                findingUuid={finding}
-                                                affectedUuid={affectedUuid}
-                                            />
-                                            <TagList tags={fullAffected.affectedTags} />
-                                            <UploadingFileInput
-                                                image
-                                                shortText
-                                                className="screenshot"
-                                                file={fullAffected.screenshot ?? undefined}
-                                                onChange={(newImage) => {
-                                                    Api.workspaces.findings
-                                                        .updateAffected(workspace, finding, affectedUuid, {
-                                                            screenshot: newImage,
-                                                        })
-                                                        .then(
-                                                            handleApiError(() =>
-                                                                setAffected(
-                                                                    ({ [affectedUuid]: affected, ...rest }) => ({
-                                                                        [affectedUuid]: {
-                                                                            ...affected,
-                                                                            screenshot: newImage,
-                                                                        },
-                                                                        ...rest,
-                                                                    }),
-                                                                ),
-                                                            ),
-                                                        );
-                                                }}
-                                            >
-                                                <ScreenshotIcon />
-                                            </UploadingFileInput>
-                                            <UploadingFileInput
-                                                shortText
-                                                className="logfile"
-                                                file={fullAffected.logFile ?? undefined}
-                                                onChange={(newFile) => {
-                                                    Api.workspaces.findings
-                                                        .updateAffected(workspace, finding, affectedUuid, {
-                                                            logFile: newFile,
-                                                        })
-                                                        .then(
-                                                            handleApiError(() =>
-                                                                setAffected(
-                                                                    ({ [affectedUuid]: affected, ...rest }) => ({
-                                                                        [affectedUuid]: {
-                                                                            ...affected,
-                                                                            logFile: newFile,
-                                                                        },
-                                                                        ...rest,
-                                                                    }),
-                                                                ),
-                                                            ),
-                                                        );
-                                                }}
-                                            >
-                                                <FileIcon />
-                                            </UploadingFileInput>
-                                        </div>
-                                    ))
-                            )}
-                        </div>
-                    </CollapsibleSection>
+                                        ))
+                                )}
+                            </div>
+                        </CollapsibleSection>
+                    </div>
                 </div>
                 <div className="create-finding-editor-container">
                     <div className="knowledge-base-editor-tabs">
