@@ -170,7 +170,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                 insertFindings(parent: TreeNode, node: TreeNode, findings: ListFindings) {
                     if (mutator.shouldAbort()) return;
                     for (const f of findings.findings) {
-                        if (f.uuid == parent.uuid) return;
+                        if (f.uuid == parent.uuid) continue;
                         api.resolveFinding(f.definition).then(
                             handleApiError((definition) => {
                                 if (mutator.shouldAbort()) return;
