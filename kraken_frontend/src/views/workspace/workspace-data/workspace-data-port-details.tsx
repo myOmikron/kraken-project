@@ -25,8 +25,6 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
     const [attacks, setAttacks] = useState({} as FullAggregationSource);
-    const [limit, setLimit] = useState(0);
-    const [page, setPage] = useState(0);
     const [port, setPort] = React.useState<FullPort | null>(null);
     const [relations, setRelations] = React.useState<PortRelations | null>(null);
     const [findings, setFindings] = React.useState<ListFindings | null>(null);
@@ -34,16 +32,8 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
         Api.workspaces.ports.get(workspace, uuid).then(handleApiError(setPort));
         Api.workspaces.ports.relations(workspace, uuid).then(handleApiError(setRelations));
         Api.workspaces.ports.findings(workspace, uuid).then(handleApiError(setFindings));
-        Api.workspaces.ports.sources(workspace, uuid).then(
-            handleApiError((x) => {
-                setAttacks(x);
-                setLimit(x.attacks.length - 1);
-            }),
-        );
+        Api.workspaces.ports.sources(workspace, uuid).then(handleApiError(setAttacks));
     }, [workspace, uuid]);
-    React.useEffect(() => {
-        setPage(0);
-    }, [uuid]);
 
     /** Send an update to the server and parent component */
     function update(uuid: string, update: Partial<FullPort>, msg?: string) {

@@ -25,8 +25,6 @@ export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProp
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
     const [attacks, setAttacks] = useState({} as FullAggregationSource);
-    const [limit, setLimit] = useState(0);
-    const [page, setPage] = useState(0);
     const [domain, setDomain] = React.useState<FullDomain | null>(null);
     const [relations, setRelations] = React.useState<DomainRelations | null>(null);
     const [findings, setFindings] = React.useState<ListFindings | null>(null);
@@ -34,16 +32,8 @@ export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProp
         Api.workspaces.domains.get(workspace, uuid).then(handleApiError(setDomain));
         Api.workspaces.domains.relations(workspace, uuid).then(handleApiError(setRelations));
         Api.workspaces.domains.findings(workspace, uuid).then(handleApiError(setFindings));
-        Api.workspaces.domains.sources(workspace, uuid).then(
-            handleApiError((x) => {
-                setAttacks(x);
-                setLimit(x.attacks.length - 1);
-            }),
-        );
+        Api.workspaces.domains.sources(workspace, uuid).then(handleApiError(setAttacks));
     }, [workspace, uuid]);
-    React.useEffect(() => {
-        setPage(0);
-    }, [uuid]);
 
     function update(uuid: string, update: Partial<FullDomain>, msg?: string) {
         const { tags, comment } = update;

@@ -25,8 +25,6 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
     const [attacks, setAttacks] = useState({} as FullAggregationSource);
-    const [limit, setLimit] = useState(0);
-    const [page, setPage] = useState(0);
     const [service, setService] = React.useState<FullService | null>(null);
     const [relations, setRelations] = React.useState<ServiceRelations | null>(null);
     const [findings, setFindings] = React.useState<ListFindings | null>(null);
@@ -34,16 +32,8 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
         Api.workspaces.services.get(workspace, uuid).then(handleApiError(setService));
         Api.workspaces.services.relations(workspace, uuid).then(handleApiError(setRelations));
         Api.workspaces.services.findings(workspace, uuid).then(handleApiError(setFindings));
-        Api.workspaces.services.sources(workspace, uuid).then(
-            handleApiError((x) => {
-                setAttacks(x);
-                setLimit(x.attacks.length - 1);
-            }),
-        );
+        Api.workspaces.services.sources(workspace, uuid).then(handleApiError(setAttacks));
     }, [workspace, uuid]);
-    React.useEffect(() => {
-        setPage(0);
-    }, [uuid]);
 
     /** Send an update to the server and parent component */
     function update(uuid: string, update: Partial<FullService>, msg?: string) {
