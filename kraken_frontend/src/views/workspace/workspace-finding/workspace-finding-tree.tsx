@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { UUID } from "../../../api/api";
 import {
+    FindingSeverity,
     FullDomain,
     FullHost,
     FullPort,
@@ -19,6 +20,7 @@ export type TreeNode = {
     | {
           definition: SimpleFindingDefinition;
           type: "Finding";
+          severity: FindingSeverity;
       }
     | {
           type: "Host";
@@ -343,7 +345,7 @@ const TreeNode = forwardRef<
 >(({ node, onClickTag, className, onPointerEnter, onPointerLeave, onClick }, ref) => {
     function getSeverityColor(node: TreeNode): { color: string; backgroundColor: string } {
         if (node.type != "Finding") return { backgroundColor: "#00ccff40", color: "white" };
-        switch (node.definition.severity) {
+        switch (node.severity) {
             case "Okay":
                 return { backgroundColor: "#00ff8840", color: "white" };
             case "Low":
@@ -355,7 +357,7 @@ const TreeNode = forwardRef<
             case "Critical":
                 return { backgroundColor: "#9900ff40", color: "white" };
             default:
-                const exhaustiveCheck: never = node.definition.severity;
+                const exhaustiveCheck: never = node.severity;
                 throw new Error(`Unhandled severity: ${exhaustiveCheck}`);
         }
     }

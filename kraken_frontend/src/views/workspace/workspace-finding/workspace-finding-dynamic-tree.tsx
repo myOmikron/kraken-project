@@ -178,6 +178,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                                     uuid: f.uuid,
                                     type: "Finding",
                                     definition: definition,
+                                    severity: f.severity,
                                 };
                                 if (!mutator.insertChild(node, insert)) return;
                                 // TODO: recurse here
@@ -357,6 +358,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                         uuid: finding.uuid,
                         type: "Finding",
                         definition: finding.definition,
+                        severity: finding.severity,
                     };
                     roots.push(root);
                     setTimeout(function () {
