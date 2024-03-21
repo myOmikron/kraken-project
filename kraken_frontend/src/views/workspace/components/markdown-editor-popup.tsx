@@ -5,6 +5,7 @@ import { Editor } from "@monaco-editor/react";
 import { setupMonaco } from "../../knowledge-base";
 import "../../../styling/markdown-editor-popup.css";
 import { GithubMarkdown } from "../../../components/github-markdown";
+import PlusIcon from "../../../svg/plus";
 
 type MarkdownEditorPopupProps = {
     label: ReactNode;
@@ -19,8 +20,7 @@ export default function MarkdownEditorPopup(props: MarkdownEditorPopupProps) {
             className="markdown-editor-popup"
             trigger={
                 <div className="details">
-                    Edit Details
-                    <EditIcon />
+                    {content.length > 0 ? ["Edit Details", <EditIcon />] : ["Add Details", <PlusIcon />]}
                 </div>
             }
             nested

@@ -43,6 +43,7 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 import { FindingDefinitionDetails } from "./workspace-create-finding";
 import EditingTreeGraph from "./workspace-finding-editing-tree";
 import WorkspaceFindingTable from "./workspace-finding-table";
+import PlusIcon from "../../../svg/plus";
 
 export type WorkspaceEditFindingProps = {
     /** The finding's uuid */
@@ -535,8 +536,7 @@ export function MarkdownLiveEditorPopup(props: MarkdownLiveEditorPopupProps) {
             className="markdown-editor-popup"
             trigger={
                 <div className="details">
-                    Edit Details
-                    <EditIcon />
+                    {value.length > 0 ? ["Edit Details", <EditIcon />] : ["Add Details", <PlusIcon />]}
                 </div>
             }
             nested
