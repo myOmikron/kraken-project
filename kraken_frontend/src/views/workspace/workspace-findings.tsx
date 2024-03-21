@@ -13,15 +13,14 @@ import SeverityIcon from "./components/severity-icon";
 import { WORKSPACE_CONTEXT } from "./workspace";
 import { DynamicTreeGraph } from "./workspace-finding/workspace-finding-dynamic-tree";
 
-const TABS = { table: "Table", graph: "Graph" };
-
-type WorkspaceFindingsProps = {};
+export type WorkspaceFindingsProps = {
+    view: "table" | "graph";
+};
 
 export default function WorkspaceFindings(props: WorkspaceFindingsProps) {
     const {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
-    const [tab, setTab] = React.useState<keyof typeof TABS>("table");
     const [findings, setFindings] = React.useState<Array<SimpleFinding>>([]);
     const [defs, setDefs] = React.useState([] as Array<SimpleFindingDefinition>);
     const [search, setSearch] = React.useState("");
@@ -46,7 +45,7 @@ export default function WorkspaceFindings(props: WorkspaceFindingsProps) {
     const style: CSSProperties = { "--columns": "0.1fr 1fr 1fr" };
 
     const body = (() => {
-        switch (tab) {
+        switch (props.view) {
             case "table":
                 return (
                     <>
@@ -96,22 +95,24 @@ export default function WorkspaceFindings(props: WorkspaceFindingsProps) {
                 );
             case "graph":
                 return <DynamicTreeGraph workspace={workspace} uuids={roots} />;
-            default:
-                return "Unimplemented";
         }
     })();
 
     return (
         <div className="workspace-findings-layout">
             <div className="tabs-selector-container">
-                {Object.entries(TABS).map(([key, name]) => (
-                    <div
-                        className={`icon-tabs ${tab !== key ? "" : "selected-icon-tab"}`}
-                        onClick={() => setTab(key as keyof typeof TABS)}
-                    >
-                        {name === "Table" ? <TableIcon /> : <GraphIcon />}
-                    </div>
-                ))}
+                <div
+                    className={`icon-tabs ${props.view === "table" ? "selected-icon-tab" : ""}`}
+                    {...ROUTES.WORKSPACE_FINDINGS_LIST.clickHandler({ uuid: workspace })}
+                >
+                    <TableIcon />
+                </div>
+                <div
+                    className={`icon-tabs ${props.view === "graph" ? "selected-icon-tab" : ""}`}
+                    {...ROUTES.WORKSPACE_FINDINGS_GRAPH.clickHandler({ uuid: workspace })}
+                >
+                    <GraphIcon />
+                </div>
             </div>
             <div className="pane workspace-findings-body">{body}</div>
         </div>

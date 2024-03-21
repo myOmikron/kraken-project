@@ -133,13 +133,24 @@ export const ROUTES = {
             </ContentWithMenu>
         ),
     }),
-    WORKSPACE_FINDINGS: ROUTER.add({
+    WORKSPACE_FINDINGS_LIST: ROUTER.add({
         url: "workspaces/{uuid}/findings",
         parser: { uuid: String },
         render: ({ uuid }) => (
             <ContentWithMenu>
                 <Workspace uuid={uuid} view={"findings"}>
-                    <WorkspaceFindings />
+                    <WorkspaceFindings view={"table"} />
+                </Workspace>
+            </ContentWithMenu>
+        ),
+    }),
+    WORKSPACE_FINDINGS_GRAPH: ROUTER.add({
+        url: "workspaces/{uuid}/findings/graph",
+        parser: { uuid: String },
+        render: ({ uuid }) => (
+            <ContentWithMenu>
+                <Workspace uuid={uuid} view={"findings"}>
+                    <WorkspaceFindings view={"graph"} />
                 </Workspace>
             </ContentWithMenu>
         ),

@@ -21,6 +21,7 @@ type WorkspaceMenuState = {};
 export default class WorkspaceMenu extends React.Component<WorkspaceMenuProps, WorkspaceMenuState> {
     static contextType = USER_CONTEXT;
     declare context: React.ContextType<typeof USER_CONTEXT>;
+
     render() {
         return (
             <div className={"workspace-menu pane"}>
@@ -47,7 +48,7 @@ export default class WorkspaceMenu extends React.Component<WorkspaceMenuProps, W
                 </div>
                 <div
                     className={this.props.active === "findings" ? "workspace-menu-item active" : "workspace-menu-item"}
-                    {...ROUTES.WORKSPACE_FINDINGS.clickHandler({ uuid: this.props.uuid })}
+                    {...ROUTES.WORKSPACE_FINDINGS_LIST.clickHandler({ uuid: this.props.uuid })}
                     style={{ padding: 0 }}
                 >
                     <FindingIcon />
