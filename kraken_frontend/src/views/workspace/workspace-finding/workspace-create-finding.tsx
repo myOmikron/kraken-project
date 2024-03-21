@@ -273,7 +273,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                             summary={
                                 <>
                                     <BookIcon />
-                                    Description
+                                    User Details
                                 </>
                             }
                         >

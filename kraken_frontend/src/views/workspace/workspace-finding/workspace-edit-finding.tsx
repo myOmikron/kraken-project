@@ -63,7 +63,8 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     const [severity, setSeverity] = React.useState<FindingSeverity>("Medium");
     const [findingDef, setFindingDef] = React.useState<SimpleFindingDefinition>();
     const [hoveredFindingDef, setHoveredFindingDef] = React.useState<SimpleFindingDefinition>();
-    const [details, setDetails] = React.useState("");
+    const [userDetails, setUserDetails] = React.useState("");
+    const [toolDetails, setToolDetails] = React.useState("");
 
     const [affected, setAffected] = React.useState<Record<UUID, FullFindingAffected>>({});
     const [logFile, setLogFile] = React.useState("");
@@ -104,7 +105,8 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
             handleApiError((fullFinding) => {
                 setFindingDef(fullFinding.definition);
                 setSeverity(fullFinding.severity);
-                setDetails(fullFinding.userDetails || "");
+                setUserDetails(fullFinding.userDetails || "");
+                setToolDetails(fullFinding.toolDetails || "");
                 setScreenshot(fullFinding.screenshot || "");
                 setLogFile(fullFinding.logFile || "");
 
@@ -176,7 +178,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     const { cursors: editorCursors, onChange: editorOnChange } = useLiveEditor({
         target: { finding: { finding } },
         editorInstance,
-        setValue: setDetails,
+        setValue: setUserDetails,
         receiveCursor: (target) => {
             if ("finding" in target && target.finding.finding === finding) {
                 return true;
@@ -185,7 +187,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
         receiveEdit: (target, editorInstance) => {
             if ("finding" in target && target.finding.finding === finding) {
                 const model = editorInstance?.getModel();
-                if (model) return { model, setValue: setDetails };
+                if (model) return { model, setValue: setUserDetails };
             }
         },
     });
@@ -232,11 +234,22 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         summary={
                             <>
                                 <BookIcon />
-                                Description
+                                User Details
                             </>
                         }
                     >
-                        <GithubMarkdown>{details}</GithubMarkdown>
+                        <GithubMarkdown>{userDetails}</GithubMarkdown>
+                    </CollapsibleSection>
+
+                    <CollapsibleSection
+                        summary={
+                            <>
+                                <BookIcon />
+                                Tool Details
+                            </>
+                        }
+                    >
+                        <GithubMarkdown>{toolDetails}</GithubMarkdown>
                     </CollapsibleSection>
 
                     <CollapsibleSection
@@ -451,7 +464,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                             className={"knowledge-base-editor"}
                                             theme={"custom"}
                                             beforeMount={setupMonaco}
-                                            value={details}
+                                            value={userDetails}
                                             onChange={editorOnChange}
                                             onMount={setEditorInstance}
                                         />
@@ -536,7 +549,7 @@ export function MarkdownLiveEditorPopup(props: MarkdownLiveEditorPopupProps) {
             className="markdown-editor-popup"
             trigger={
                 <div className="details">
-                    {value.length > 0 ? ["Edit Details", <EditIcon />] : ["Add Details", <PlusIcon />]}
+                    {value.length > 0 ? ["Edit User Details", <EditIcon />] : ["Add User Details", <PlusIcon />]}
                 </div>
             }
             nested

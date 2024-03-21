@@ -20,7 +20,7 @@ export default function MarkdownEditorPopup(props: MarkdownEditorPopupProps) {
             className="markdown-editor-popup"
             trigger={
                 <div className="details">
-                    {content.length > 0 ? ["Edit Details", <EditIcon />] : ["Add Details", <PlusIcon />]}
+                    {content.length > 0 ? ["Edit User Details", <EditIcon />] : ["Add User Details", <PlusIcon />]}
                 </div>
             }
             nested
