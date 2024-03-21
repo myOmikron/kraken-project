@@ -8,10 +8,10 @@ import { handleApiError } from "../../../utils/helper";
 import EditableTags from "../components/editable-tags";
 import { ServiceRelationsList } from "../components/relations-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
-import { CertaintyIcon } from "../workspace-data";
 import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 import SeverityIcon from "../../../svg/severity";
+import CertaintyIcon from "../components/certainty-icon";
 
 export type WorkspaceDataServiceDetailsProps = {
     service: string;
@@ -76,15 +76,7 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
                     <div className="workspace-data-details-pane">
                         <h3 className="sub-heading">Certainty</h3>
                         <div className="workspace-data-certainty-list">
-                            {service.certainty === "Historical"
-                                ? CertaintyIcon({ certaintyType: "Historical", nameVisible: true })
-                                : service.certainty === "SupposedTo"
-                                  ? CertaintyIcon({ certaintyType: "SupposedTo", nameVisible: true })
-                                  : service.certainty === "UnknownService"
-                                    ? CertaintyIcon({ certaintyType: "UnknownService", nameVisible: true })
-                                    : service.certainty === "MaybeVerified"
-                                      ? CertaintyIcon({ certaintyType: "MaybeVerified", nameVisible: true })
-                                      : CertaintyIcon({ certaintyType: "DefinitelyVerified", nameVisible: true })}
+                            <CertaintyIcon certainty={service.certainty} />
                         </div>
                     </div>
                     {service.severity && (

@@ -8,10 +8,10 @@ import { handleApiError } from "../../../utils/helper";
 import EditableTags from "../components/editable-tags";
 import { PortRelationsList } from "../components/relations-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
-import { CertaintyIcon } from "../workspace-data";
 import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 import SeverityIcon from "../../../svg/severity";
+import CertaintyIcon from "../components/certainty-icon";
 
 export type WorkspaceDataPortDetailsProps = {
     port: string;
@@ -75,11 +75,7 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
                     <div className="workspace-data-details-pane">
                         <h3 className="sub-heading">Certainty</h3>
                         <div className="workspace-data-certainty-list">
-                            {port.certainty === "Verified"
-                                ? CertaintyIcon({ certaintyType: "Verified", nameVisible: true })
-                                : port.certainty === "Historical"
-                                  ? CertaintyIcon({ certaintyType: "Historical", nameVisible: true })
-                                  : CertaintyIcon({ certaintyType: "SupposedTo", nameVisible: true })}
+                            <CertaintyIcon certainty={port.certainty} />
                         </div>
                     </div>
                     {port.severity && (

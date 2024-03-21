@@ -12,8 +12,8 @@ import ServiceName from "../components/service";
 import TagList from "../components/tag-list";
 import { StatelessWorkspaceTable, useTable } from "../components/workspace-table";
 import { WORKSPACE_CONTEXT } from "../workspace";
-import { CertaintyIcon } from "../workspace-data";
 import SeverityIcon from "../../../svg/severity";
+import CertaintyIcon from "../components/certainty-icon";
 
 export type WorkspaceFindingTableProps = {
     onAddDomain?: (domain: FullDomain) => void;
@@ -112,9 +112,7 @@ export default function WorkspaceFindingTable({
                                 <div className={"workspace-data-certainty-icon"}>
                                     <SeverityIcon severity={domain.severity} />
                                 </div>
-                                {domain.certainty === "Unverified"
-                                    ? CertaintyIcon({ certaintyType: "Unverified" })
-                                    : CertaintyIcon({ certaintyType: "Verified" })}
+                                <CertaintyIcon certainty={domain.certainty} />
                             </div>
                         ))}
                     </StatelessWorkspaceTable>
@@ -155,11 +153,7 @@ export default function WorkspaceFindingTable({
                                 <div className={"workspace-data-certainty-icon"}>
                                     <SeverityIcon severity={host.severity} />
                                 </div>
-                                {host.certainty === "Verified"
-                                    ? CertaintyIcon({ certaintyType: "Verified" })
-                                    : host.certainty === "Historical"
-                                      ? CertaintyIcon({ certaintyType: "Historical" })
-                                      : CertaintyIcon({ certaintyType: "SupposedTo" })}
+                                <CertaintyIcon certainty={host.certainty} />
                             </div>
                         ))}
                     </StatelessWorkspaceTable>
@@ -202,11 +196,7 @@ export default function WorkspaceFindingTable({
                                 <div className={"workspace-data-certainty-icon"}>
                                     <SeverityIcon severity={port.severity} />
                                 </div>
-                                {port.certainty === "Verified"
-                                    ? CertaintyIcon({ certaintyType: "Verified" })
-                                    : port.certainty === "Historical"
-                                      ? CertaintyIcon({ certaintyType: "Historical" })
-                                      : CertaintyIcon({ certaintyType: "SupposedTo" })}
+                                <CertaintyIcon certainty={port.certainty} />
                             </div>
                         ))}
                     </StatelessWorkspaceTable>
@@ -267,15 +257,7 @@ export default function WorkspaceFindingTable({
                                 <div className={"workspace-data-certainty-icon"}>
                                     <SeverityIcon severity={service.severity} />
                                 </div>
-                                {service.certainty === "Historical"
-                                    ? CertaintyIcon({ certaintyType: "Historical" })
-                                    : service.certainty === "SupposedTo"
-                                      ? CertaintyIcon({ certaintyType: "SupposedTo" })
-                                      : service.certainty === "UnknownService"
-                                        ? CertaintyIcon({ certaintyType: "UnknownService" })
-                                        : service.certainty === "MaybeVerified"
-                                          ? CertaintyIcon({ certaintyType: "MaybeVerified" })
-                                          : CertaintyIcon({ certaintyType: "DefinitelyVerified" })}
+                                <CertaintyIcon certainty={service.certainty} />
                             </div>
                         ))}
                     </StatelessWorkspaceTable>

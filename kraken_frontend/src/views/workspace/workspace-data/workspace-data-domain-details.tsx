@@ -8,10 +8,10 @@ import { handleApiError } from "../../../utils/helper";
 import EditableTags from "../components/editable-tags";
 import { DomainRelationsList } from "../components/relations-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
-import { CertaintyIcon } from "../workspace-data";
 import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 import SeverityIcon from "../../../svg/severity";
+import CertaintyIcon from "../components/certainty-icon";
 
 export type WorkspaceDataDomainDetailsProps = {
     domain: string;
@@ -74,9 +74,7 @@ export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProp
                     <div className="workspace-data-details-pane">
                         <h3 className="sub-heading">Certainty</h3>
                         <div className="workspace-data-certainty-list">
-                            {domain.certainty === "Verified"
-                                ? CertaintyIcon({ certaintyType: "Verified", nameVisible: true })
-                                : CertaintyIcon({ certaintyType: "Unverified", nameVisible: true })}
+                            <CertaintyIcon certainty={domain.certainty} />
                         </div>
                     </div>
                     {domain.severity && (

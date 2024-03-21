@@ -2,7 +2,18 @@ import React, { ReactNode } from "react";
 import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
 import { Api } from "../../api/api";
-import { FullDomain, FullHost, FullPort, FullService, SimpleTag, TagType } from "../../api/generated";
+import {
+    DomainCertainty,
+    FullDomain,
+    FullHost,
+    FullPort,
+    FullService,
+    HostCertainty,
+    PortCertainty,
+    ServiceCertainty,
+    SimpleTag,
+    TagType,
+} from "../../api/generated";
 import Checkbox from "../../components/checkbox";
 import Indicator from "../../components/indicator";
 import OsIcon from "../../components/os-icon";
@@ -38,6 +49,7 @@ import { WorkspaceDataHostDetails } from "./workspace-data/workspace-data-host-d
 import { WorkspaceDataPortDetails } from "./workspace-data/workspace-data-port-details";
 import { WorkspaceDataServiceDetails } from "./workspace-data/workspace-data-service-details";
 import SeverityIcon from "../../svg/severity";
+import CertaintyIcon from "./components/certainty-icon";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations", findings: "Findings" };
@@ -291,9 +303,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <div className={"workspace-data-certainty-icon"}>
                                     <SeverityIcon severity={domain.severity} />
                                 </div>
-                                {domain.certainty === "Unverified"
-                                    ? CertaintyIcon({ certaintyType: "Unverified" })
-                                    : CertaintyIcon({ certaintyType: "Verified" })}
+                                <CertaintyIcon certainty={domain.certainty} />
                                 <AttackButton
                                     workspaceUuid={workspace}
                                     targetUuid={domain.uuid}
@@ -394,11 +404,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <div className={"workspace-data-certainty-icon"}>
                                     <SeverityIcon severity={host.severity} />
                                 </div>
-                                {host.certainty === "Verified"
-                                    ? CertaintyIcon({ certaintyType: "Verified" })
-                                    : host.certainty === "Historical"
-                                      ? CertaintyIcon({ certaintyType: "Historical" })
-                                      : CertaintyIcon({ certaintyType: "SupposedTo" })}
+                                <CertaintyIcon certainty={host.certainty} />
                                 <AttackButton workspaceUuid={workspace} targetUuid={host.uuid} targetType={"host"} />
                             </ContextMenu>
                         ))}
@@ -480,11 +486,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <div className={"workspace-data-certainty-icon"}>
                                     <SeverityIcon severity={port.severity} />
                                 </div>
-                                {port.certainty === "Verified"
-                                    ? CertaintyIcon({ certaintyType: "Verified" })
-                                    : port.certainty === "Historical"
-                                      ? CertaintyIcon({ certaintyType: "Historical" })
-                                      : CertaintyIcon({ certaintyType: "SupposedTo" })}
+                                <CertaintyIcon certainty={port.certainty} />
                                 <AttackButton workspaceUuid={workspace} targetUuid={port.uuid} targetType={"port"} />
                             </ContextMenu>
                         ))}
@@ -587,15 +589,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <div className={"workspace-data-certainty-icon"}>
                                     <SeverityIcon severity={service.severity} />
                                 </div>
-                                {service.certainty === "Historical"
-                                    ? CertaintyIcon({ certaintyType: "Historical" })
-                                    : service.certainty === "SupposedTo"
-                                      ? CertaintyIcon({ certaintyType: "SupposedTo" })
-                                      : service.certainty === "UnknownService"
-                                        ? CertaintyIcon({ certaintyType: "UnknownService" })
-                                        : service.certainty === "MaybeVerified"
-                                          ? CertaintyIcon({ certaintyType: "MaybeVerified" })
-                                          : CertaintyIcon({ certaintyType: "DefinitelyVerified" })}
+                                <CertaintyIcon certainty={service.certainty} />
                                 <AttackButton
                                     workspaceUuid={workspace}
                                     targetUuid={service.uuid}
@@ -774,166 +768,6 @@ export function AttackButton(props: Parameters<typeof ROUTES.WORKSPACE_TARGETED_
             <AttackIcon />
         </button>
     );
-}
-
-type CertaintyIconProps = {
-    certaintyType:
-        | "Verified"
-        | "Unverified"
-        | "SupposedTo"
-        | "MaybeVerified"
-        | "DefinitelyVerified"
-        | "Historical"
-        | "UnknownService";
-    nameVisible?: true | undefined;
-};
-
-export function CertaintyIcon(props: CertaintyIconProps) {
-    const { certaintyType, nameVisible } = props;
-
-    switch (certaintyType) {
-        case "Verified":
-            return (
-                <Popup
-                    trigger={
-                        <span className="workspace-data-certainty-icon icon">
-                            <VerifiedIcon />
-                            {nameVisible !== undefined && nameVisible ? <span> Verified</span> : undefined}
-                        </span>
-                    }
-                    position={"bottom center"}
-                    on={"hover"}
-                    arrow={true}
-                >
-                    <div className="pane-thin">
-                        <h2 className="sub-heading">Verified</h2>
-                        <span>{/*TODO insert description*/}Description</span>
-                    </div>
-                </Popup>
-            );
-        case "DefinitelyVerified":
-            return (
-                <Popup
-                    trigger={
-                        <span className="workspace-data-certainty-icon icon">
-                            <div>
-                                <VerifiedIcon />
-                                <span className="workspace-data-certainty-letter">D</span>
-                            </div>
-                            {nameVisible !== undefined && nameVisible ? <span>Definitely Verified</span> : undefined}
-                        </span>
-                    }
-                    position={"bottom center"}
-                    on={"hover"}
-                    arrow={true}
-                >
-                    <div className="pane-thin">
-                        <h2 className="sub-heading">Definitely Verified</h2>
-                        <span>{/*TODO insert description*/}Description</span>
-                    </div>
-                </Popup>
-            );
-        case "MaybeVerified":
-            return (
-                <Popup
-                    trigger={
-                        <span className="workspace-data-certainty-icon icon">
-                            <div>
-                                <VerifiedIcon />
-                                <span className="workspace-data-certainty-letter">M</span>
-                            </div>
-                            {nameVisible !== undefined && nameVisible ? <span>Maybe Verified</span> : undefined}
-                        </span>
-                    }
-                    position={"bottom center"}
-                    on={"hover"}
-                    arrow={true}
-                >
-                    <div className="pane-thin">
-                        <h2 className="sub-heading">Maybe Verified</h2>
-                        <span>{/*TODO insert description*/}Description</span>
-                    </div>
-                </Popup>
-            );
-        case "Unverified":
-            return (
-                <Popup
-                    trigger={
-                        <span className="workspace-data-certainty-icon icon">
-                            <UnverifiedIcon />
-                            {nameVisible !== undefined && nameVisible ? <span>Unverified</span> : undefined}
-                        </span>
-                    }
-                    position={"bottom center"}
-                    on={"hover"}
-                    arrow={true}
-                >
-                    <div className="pane-thin">
-                        <h2 className="sub-heading">Unverified</h2>
-                        <span>{/*TODO insert description*/}Description</span>
-                    </div>
-                </Popup>
-            );
-        case "SupposedTo":
-            return (
-                <Popup
-                    trigger={
-                        <span className="workspace-data-certainty-icon icon">
-                            <span className="workspace-data-certainty-letter">S</span>
-                            {nameVisible !== undefined && nameVisible ? <span>Supposed to</span> : undefined}
-                        </span>
-                    }
-                    position={"bottom center"}
-                    on={"hover"}
-                    arrow={true}
-                >
-                    <div className="pane-thin">
-                        <h2 className="sub-heading">Supposed to</h2>
-                        <span>{/*TODO insert description*/}Description</span>
-                    </div>
-                </Popup>
-            );
-        case "Historical":
-            return (
-                <Popup
-                    trigger={
-                        <span className="workspace-data-certainty-icon icon">
-                            <HistoricalIcon />
-                            {nameVisible !== undefined && nameVisible ? <span>Historical</span> : undefined}
-                        </span>
-                    }
-                    position={"bottom center"}
-                    on={"hover"}
-                    arrow={true}
-                >
-                    <div className="pane-thin">
-                        <h2 className="sub-heading">Historical</h2>
-                        <span>{/*TODO insert description*/}Description</span>
-                    </div>
-                </Popup>
-            );
-        case "UnknownService":
-            return (
-                <Popup
-                    trigger={
-                        <span className="workspace-data-certainty-icon icon">
-                            <UnknownIcon />
-                            {nameVisible !== undefined && nameVisible ? <span>Unknown Service</span> : undefined}
-                        </span>
-                    }
-                    position={"bottom center"}
-                    on={"hover"}
-                    arrow={true}
-                >
-                    <div className="pane-thin">
-                        <h2 className="sub-heading">Unknown Service</h2>
-                        <span>{/*TODO insert description*/}Description</span>
-                    </div>
-                </Popup>
-            );
-        default:
-            return "Unimplemented";
-    }
 }
 
 type MultiSelectMenuProps = {
