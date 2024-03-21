@@ -36,7 +36,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                         <h2 className={"sub-heading"}>Name</h2>
                         <h2 className={"sub-heading"}>Severity</h2>
                         <h2 className={"sub-heading"}>CVE</h2>
-                        <Input maxLength={255} value={name} onChange={setName} />
+                        <Input maxLength={255} value={name} required onChange={setName} />
                         <SelectPrimitive
                             value={severity}
                             options={["Okay", "Low", "Medium", "High", "Critical"]}
