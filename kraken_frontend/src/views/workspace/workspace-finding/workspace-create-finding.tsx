@@ -269,6 +269,19 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                             />
                         </div>
 
+                        <div className="create-finding-files">
+                            <h2 className={"sub-heading"}>
+                                <ScreenshotIcon />
+                                Screenshot
+                            </h2>
+                            <h2 className={"sub-heading"}>
+                                <FileIcon />
+                                Log File
+                            </h2>
+                            <FileInput image file={screenshot} onChange={setScreenshot} />
+                            <FileInput file={logFile} onChange={setLogFile} />
+                        </div>
+
                         <CollapsibleSection
                             summary={
                                 <>
@@ -385,18 +398,6 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                             </div>
                         </CollapsibleSection>
 
-                        <div className="create-finding-files">
-                            <h2 className={"sub-heading"}>
-                                <ScreenshotIcon />
-                                Screenshot
-                            </h2>
-                            <h2 className={"sub-heading"}>
-                                <FileIcon />
-                                Log File
-                            </h2>
-                            <FileInput image file={screenshot} onChange={setScreenshot} />
-                            <FileInput file={logFile} onChange={setLogFile} />
-                        </div>
                         <button type={"submit"} className="button">
                             Create
                         </button>

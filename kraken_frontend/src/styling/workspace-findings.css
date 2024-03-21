@@ -312,7 +312,7 @@
 
 .create-finding-container {
     display: grid;
-    grid-template-columns: 1fr 1.1fr;
+    grid-template-columns: 78ch 1fr;
     grid-template-rows: 100%;
     gap: 4em;
     height: calc(100% - 6em);
@@ -338,11 +338,6 @@
     margin-right: 0.2em;
 }
 
-.create-finding-files {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    column-gap: 1.5em;
-}
 
 .create-finding-editor-container {
     display: grid;
@@ -376,17 +371,29 @@
     height: 72vh;
 }
 
+.create-finding-files {
+    box-sizing: border-box;
+    padding-right: 1em;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1.5em;
+    align-items: center;
+}
+
 .create-finding-files > .file-input {
-    height: 8em;
-    width: 16em;
+    height: 4em;
+    width: 100%;
+}
+
+.create-finding-files > .file-input.image.has-content {
+    height: 22ch /* 39ch / 16 * 9 */;
 }
 
 .create-finding-files > .file-input > .content {
     border-radius: 0.5em;
     border: 2px dashed var(--primary-op);
     background-color: #00ccff10;
-    height: 8em;
-    width: 16em;
+    width: 100%;
 }
 
 .workspace-finding-affected-selector {

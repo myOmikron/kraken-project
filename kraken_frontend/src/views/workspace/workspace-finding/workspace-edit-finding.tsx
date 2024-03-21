@@ -230,6 +230,40 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         />
                     </div>
 
+                    <div className="create-finding-files">
+                        <h2 className={"sub-heading"}>
+                            <ScreenshotIcon />
+                            Screenshot
+                        </h2>
+                        <h2 className={"sub-heading"}>
+                            <FileIcon />
+                            Log File
+                        </h2>
+                        <UploadingFileInput
+                            image
+                            file={screenshot}
+                            onChange={(newImage) => {
+                                setScreenshot((oldScreenshot) => {
+                                    updateFinding({ screenshot: newImage }, () => {
+                                        setScreenshot(oldScreenshot);
+                                    });
+                                    return newImage ?? "";
+                                });
+                            }}
+                        />
+                        <UploadingFileInput
+                            file={logFile}
+                            onChange={(newFile) => {
+                                setLogFile((oldFile) => {
+                                    updateFinding({ logFile: newFile }, () => {
+                                        setLogFile(oldFile);
+                                    });
+                                    return newFile ?? "";
+                                });
+                            }}
+                        />
+                    </div>
+
                     <CollapsibleSection
                         summary={
                             <>
@@ -371,40 +405,6 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                             )}
                         </div>
                     </CollapsibleSection>
-
-                    <div className="create-finding-files">
-                        <h2 className={"sub-heading"}>
-                            <ScreenshotIcon />
-                            Screenshot
-                        </h2>
-                        <h2 className={"sub-heading"}>
-                            <FileIcon />
-                            Log File
-                        </h2>
-                        <UploadingFileInput
-                            image
-                            file={screenshot}
-                            onChange={(newImage) => {
-                                setScreenshot((oldScreenshot) => {
-                                    updateFinding({ screenshot: newImage }, () => {
-                                        setScreenshot(oldScreenshot);
-                                    });
-                                    return newImage ?? "";
-                                });
-                            }}
-                        />
-                        <UploadingFileInput
-                            file={logFile}
-                            onChange={(newFile) => {
-                                setLogFile((oldFile) => {
-                                    updateFinding({ logFile: newFile }, () => {
-                                        setLogFile(oldFile);
-                                    });
-                                    return newFile ?? "";
-                                });
-                            }}
-                        />
-                    </div>
                 </div>
                 <div className="create-finding-editor-container">
                     <div className="knowledge-base-editor-tabs">
