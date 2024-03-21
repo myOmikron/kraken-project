@@ -10,7 +10,7 @@ import {
     SimpleFindingDefinition,
     SimpleTag,
 } from "../../../api/generated";
-import SeverityIcon from "../../../svg/severity";
+import SeverityIcon from "../components/severity-icon";
 import TagList, { TagClickCallback } from "../components/tag-list";
 import { Viewport, ViewportProps, ViewportRef } from "../components/viewport";
 
@@ -392,8 +392,8 @@ const TreeNode = forwardRef<
                 </div>
                 {node.type == "Finding" ? (
                     <div className="tree-node-body">
-                        <SeverityIcon severity={node.severity} />
-                        <b>Severity: {node.severity}</b>
+                        <SeverityIcon severity={node.severity} tooltip={false} />
+                        Severity: <b>{node.severity}</b>
                     </div>
                 ) : (
                     <div className={`tree-node-body ${tags!.length == 0 ? "empty" : ""}`}>

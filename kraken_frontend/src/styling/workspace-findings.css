@@ -247,7 +247,7 @@
 }
 
 .workspace-findings-graph .tree-node.node-Finding > .tree-node-content > .tree-node-heading {
-    background-color: #ff6a0040;
+    background-color: #ffd90030;
     color: white;
 }
 
@@ -278,7 +278,7 @@
 }
 
 .workspace-findings-graph .tree-node.node-Finding {
-    background: radial-gradient(at bottom right, var(--severity, transparent), transparent 50%);
+    background: radial-gradient(at bottom right, var(--severity, transparent), transparent 200px);
     background-color: var(--level-1-opaque, transparent);
 }
 

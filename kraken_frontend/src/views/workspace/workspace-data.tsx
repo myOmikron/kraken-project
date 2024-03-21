@@ -2,18 +2,7 @@ import React, { ReactNode } from "react";
 import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
 import { Api } from "../../api/api";
-import {
-    DomainCertainty,
-    FullDomain,
-    FullHost,
-    FullPort,
-    FullService,
-    HostCertainty,
-    PortCertainty,
-    ServiceCertainty,
-    SimpleTag,
-    TagType,
-} from "../../api/generated";
+import { FullDomain, FullHost, FullPort, FullService, SimpleTag, TagType } from "../../api/generated";
 import Checkbox from "../../components/checkbox";
 import Indicator from "../../components/indicator";
 import OsIcon from "../../components/os-icon";
@@ -22,13 +11,10 @@ import "../../styling/tabs.css";
 import "../../styling/workspace-data.css";
 import AttackIcon from "../../svg/attack";
 import ClockActivityIcon from "../../svg/clock-activity";
-import HistoricalIcon from "../../svg/historical";
 import LinkIcon from "../../svg/link";
 import TagIcon from "../../svg/tag";
-import UnknownIcon from "../../svg/unknown";
-import UnverifiedIcon from "../../svg/unverified";
-import VerifiedIcon from "../../svg/verified";
 import { ObjectFns, handleApiError } from "../../utils/helper";
+import CertaintyIcon from "./components/certainty-icon";
 import ContextMenu, { ContextMenuEntry, GroupedMenuItem, PlainMenuItem } from "./components/context-menu";
 import Domain from "./components/domain";
 import EditableTags from "./components/editable-tags";
@@ -36,6 +22,7 @@ import FilterInput, { FilterOutput, useFilter } from "./components/filter-input"
 import IpAddr from "./components/host";
 import PortNumber from "./components/port";
 import ServiceName from "./components/service";
+import SeverityIcon from "./components/severity-icon";
 import TableRow from "./components/table-row";
 import TagList from "./components/tag-list";
 import { StatelessWorkspaceTable, useTable } from "./components/workspace-table";
@@ -48,8 +35,6 @@ import { WorkspaceDataDomainDetails } from "./workspace-data/workspace-data-doma
 import { WorkspaceDataHostDetails } from "./workspace-data/workspace-data-host-details";
 import { WorkspaceDataPortDetails } from "./workspace-data/workspace-data-port-details";
 import { WorkspaceDataServiceDetails } from "./workspace-data/workspace-data-service-details";
-import SeverityIcon from "../../svg/severity";
-import CertaintyIcon from "./components/certainty-icon";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations", findings: "Findings" };

@@ -201,6 +201,7 @@
 
 .workspace-data-certainty-icon svg {
     width: 1.2em;
+    min-width: 24px;
 }
 
 .workspace-data-certainty-letter {

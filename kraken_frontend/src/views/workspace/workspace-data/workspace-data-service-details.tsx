@@ -5,13 +5,13 @@ import { FullAggregationSource, FullService, ListFindings, ServiceRelations, Tag
 import SelectableText from "../../../components/selectable-text";
 import Textarea from "../../../components/textarea";
 import { handleApiError } from "../../../utils/helper";
+import CertaintyIcon from "../components/certainty-icon";
 import EditableTags from "../components/editable-tags";
 import { ServiceRelationsList } from "../components/relations-list";
+import SeverityIcon from "../components/severity-icon";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
-import SeverityIcon from "../../../svg/severity";
-import CertaintyIcon from "../components/certainty-icon";
 
 export type WorkspaceDataServiceDetailsProps = {
     service: string;
@@ -74,6 +74,7 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
                             <h3 className="sub-heading">Severity</h3>
                             <div className="workspace-data-certainty-list">
                                 <SeverityIcon
+                                    tooltip={false}
                                     className={"icon workspace-data-certainty-icon"}
                                     severity={service.severity}
                                 />

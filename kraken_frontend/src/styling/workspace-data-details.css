@@ -219,7 +219,8 @@
     grid-template-columns: 0.5fr 1fr 1fr;
 }
 
-.workspace-data-details-findings:not(.workspace-data-details-relations-header):hover {
+.workspace-data-details-findings:not(.workspace-data-details-relations-header)
+    .workspace-data-details-relations-entry:hover {
     cursor: pointer;
     --color: var(--primary-op);
     --blur: 0.5em;

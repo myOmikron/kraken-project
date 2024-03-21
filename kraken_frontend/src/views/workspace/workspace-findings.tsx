@@ -7,9 +7,9 @@ import "../../styling/tabs.css";
 import "../../styling/workspace-findings.css";
 import GraphIcon from "../../svg/graph";
 import PlusIcon from "../../svg/plus";
-import SeverityIcon from "../../svg/severity";
 import TableIcon from "../../svg/table";
 import { handleApiError } from "../../utils/helper";
+import SeverityIcon from "./components/severity-icon";
 import { WORKSPACE_CONTEXT } from "./workspace";
 import { DynamicTreeGraph } from "./workspace-finding/workspace-finding-dynamic-tree";
 

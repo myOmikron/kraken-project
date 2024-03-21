@@ -1,8 +1,8 @@
-import { ListFindings } from "../../../api/generated";
-import SeverityIcon from "../../../svg/severity";
-import { ROUTES } from "../../../routes";
-import { WORKSPACE_CONTEXT } from "../workspace";
 import React from "react";
+import { ListFindings } from "../../../api/generated";
+import { ROUTES } from "../../../routes";
+import SeverityIcon from "../components/severity-icon";
+import { WORKSPACE_CONTEXT } from "../workspace";
 
 export default function WorkspaceDataDetailsFindings({ findings }: { findings: ListFindings | null }) {
     const {

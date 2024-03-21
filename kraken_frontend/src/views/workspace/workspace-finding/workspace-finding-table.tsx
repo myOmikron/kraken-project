@@ -4,16 +4,16 @@ import { FullDomain, FullHost, FullPort, FullService } from "../../../api/genera
 import Indicator from "../../../components/indicator";
 import OsIcon from "../../../components/os-icon";
 import RelationLeftIcon from "../../../svg/relation-left";
+import CertaintyIcon from "../components/certainty-icon";
 import Domain from "../components/domain";
 import { useFilter } from "../components/filter-input";
 import IpAddr from "../components/host";
 import PortNumber from "../components/port";
 import ServiceName from "../components/service";
+import SeverityIcon from "../components/severity-icon";
 import TagList from "../components/tag-list";
 import { StatelessWorkspaceTable, useTable } from "../components/workspace-table";
 import { WORKSPACE_CONTEXT } from "../workspace";
-import SeverityIcon from "../../../svg/severity";
-import CertaintyIcon from "../components/certainty-icon";
 
 export type WorkspaceFindingTableProps = {
     onAddDomain?: (domain: FullDomain) => void;
