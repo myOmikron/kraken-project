@@ -94,14 +94,14 @@
 }
 
 .affected-list > .affected-Host {
-    --accent: #0066ff22;
-}
-
-.affected-list > .affected-Service {
     --accent: #00c5e722;
 }
 
 .affected-list > .affected-Port {
+    --accent: #0066ff22;
+}
+
+.affected-list > .affected-Service {
     --accent: #c300ff22;
 }
 

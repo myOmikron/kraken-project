@@ -232,16 +232,16 @@
 }
 
 .workspace-findings-graph .tree-node.node-Host > .tree-node-content > .tree-node-heading {
-    background-color: #0066ff40;
-    color: white;
-}
-
-.workspace-findings-graph .tree-node.node-Service > .tree-node-content > .tree-node-heading {
     background-color: #00c5e740;
     color: white;
 }
 
 .workspace-findings-graph .tree-node.node-Port > .tree-node-content > .tree-node-heading {
+    background-color: #0066ff40;
+    color: white;
+}
+
+.workspace-findings-graph .tree-node.node-Service > .tree-node-content > .tree-node-heading {
     background-color: #c300ff40;
     color: white;
 }

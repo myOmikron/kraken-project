@@ -11,6 +11,17 @@
     --secondary: #00ffb3;
     --red-button: rgba(255, 159, 159, 0.2);
     --popup-pane-bg: #002545; /* backround color for large popup panes that should hide content behind them instead of bluring it */
+
+    --severity-ok: #0f8;
+    --severity-ok-op: #0f84;
+    --severity-low: #ffcc00;
+    --severity-low-op: #ffcc0044;
+    --severity-medium: #ff6a00;
+    --severity-medium-op: #ff6a0044;
+    --severity-high: #ff0000;
+    --severity-high-op: #ff000044;
+    --severity-critical: #9900ff;
+    --severity-critical-op: #9900ff44;
 }
 
 @font-face {
