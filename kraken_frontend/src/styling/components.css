@@ -135,7 +135,7 @@ input[type="color"].input {
 }
 
 .severity-icon-ok {
-    filter: brightness(0) invert() drop-shadow(0 0 4px #0f8);
+    filter: brightness(0) invert() drop-shadow(0 0 4px #0f8) saturate(3);
 }
 
 .severity-icon-ok path {
@@ -143,7 +143,7 @@ input[type="color"].input {
 }
 
 .severity-icon-low {
-    filter: brightness(0) invert() drop-shadow(0 0 4px #ffcc00);
+    filter: brightness(0) invert() drop-shadow(0 0 4px #ffcc00) saturate(3);
 }
 
 .severity-icon-low path {
@@ -151,7 +151,7 @@ input[type="color"].input {
 }
 
 .severity-icon-medium {
-    filter: brightness(0) invert() drop-shadow(0 0 4px #ff6a00);
+    filter: brightness(0) invert() drop-shadow(0 0 4px #ff6a00) saturate(3);
 }
 
 .severity-icon-medium path {
@@ -159,7 +159,7 @@ input[type="color"].input {
 }
 
 .severity-icon-high {
-    filter: brightness(0) invert() drop-shadow(0 0 4px #ff0000);
+    filter: brightness(0) invert() drop-shadow(0 0 4px #ff0000) saturate(3);
 }
 
 .severity-icon-high path {
@@ -167,7 +167,7 @@ input[type="color"].input {
 }
 
 .severity-icon-critical {
-    filter: brightness(0) invert() drop-shadow(0 0 4px #9900ff);
+    filter: brightness(0) invert() drop-shadow(0 0 4px #9900ff) saturate(3);
 }
 
 .severity-icon-critical path {
