@@ -292,6 +292,10 @@ export function TreeGraph({
         simulationState.current.rootUuids = rootUuids;
         sim.force("centering", centeringForce);
         sim.alpha(0.4).restart().tick();
+        for (let i = 0; i < 1000; i++) {
+            if (sim.alpha() < sim.alphaMin()) break;
+            sim.tick();
+        }
 
         if (forceRecalcX) {
             let viewportDiv = viewportRef.current?.getRootElement();
