@@ -310,16 +310,19 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                 shortText
                                                 className="screenshot"
                                                 file={fullAffected.screenshot ?? undefined}
-                                                onChange={(screenshot) => {
+                                                onChange={(newImage) => {
                                                     Api.workspaces.findings
                                                         .updateAffected(workspace, finding, affectedUuid, {
-                                                            screenshot,
+                                                            screenshot: newImage,
                                                         })
                                                         .then(
                                                             handleApiError(() =>
                                                                 setAffected(
                                                                     ({ [affectedUuid]: affected, ...rest }) => ({
-                                                                        [affectedUuid]: { ...affected, screenshot },
+                                                                        [affectedUuid]: {
+                                                                            ...affected,
+                                                                            screenshot: newImage,
+                                                                        },
                                                                         ...rest,
                                                                     }),
                                                                 ),
@@ -333,16 +336,19 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                 shortText
                                                 className="logfile"
                                                 file={fullAffected.logFile ?? undefined}
-                                                onChange={(logFile) => {
+                                                onChange={(newFile) => {
                                                     Api.workspaces.findings
                                                         .updateAffected(workspace, finding, affectedUuid, {
-                                                            logFile,
+                                                            logFile: newFile,
                                                         })
                                                         .then(
                                                             handleApiError(() =>
                                                                 setAffected(
                                                                     ({ [affectedUuid]: affected, ...rest }) => ({
-                                                                        [affectedUuid]: { ...affected, logFile },
+                                                                        [affectedUuid]: {
+                                                                            ...affected,
+                                                                            logFile: newFile,
+                                                                        },
                                                                         ...rest,
                                                                     }),
                                                                 ),
@@ -370,12 +376,12 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         <UploadingFileInput
                             image
                             file={screenshot}
-                            onChange={(newScreenshot) => {
+                            onChange={(newImage) => {
                                 setScreenshot((oldScreenshot) => {
-                                    updateFinding({ screenshot }, () => {
+                                    updateFinding({ screenshot: newImage }, () => {
                                         setScreenshot(oldScreenshot);
                                     });
-                                    return newScreenshot ?? "";
+                                    return newImage ?? "";
                                 });
                             }}
                         />
@@ -383,7 +389,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                             file={logFile}
                             onChange={(newFile) => {
                                 setLogFile((oldFile) => {
-                                    updateFinding({ logFile }, () => {
+                                    updateFinding({ logFile: newFile }, () => {
                                         setLogFile(oldFile);
                                     });
                                     return newFile ?? "";
