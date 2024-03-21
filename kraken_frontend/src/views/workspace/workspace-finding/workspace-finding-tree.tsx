@@ -52,7 +52,8 @@ export function TreeGraph({
 
     type NodeT = d3.SimulationNodeDatum & {
         uuid: string;
-        column?: number;
+        root: boolean;
+        column: number;
         radius?: number;
         children?: { uuid: string }[];
     };
@@ -138,13 +139,13 @@ export function TreeGraph({
         );
     };
 
-    const centeringForce = d3.forceY<NodeT>(0).strength((n) => (roots.some((r) => r.uuid == n.uuid) ? 1 : 0.01));
+    const centeringForce = d3.forceY<NodeT>(0).strength((n) => (n.root ? 0.05 : 0.01));
 
     useEffect(() => {
         console.log("start simulation");
         simulation.current = d3
             .forceSimulation<NodeT, LinkT>()
-            .force("charge", d3.forceManyBody())
+            // .force("charge", d3.forceManyBody().strength(10))
             .force(
                 "collide",
                 d3
@@ -158,7 +159,7 @@ export function TreeGraph({
                 d3
                     .forceLink<NodeT, LinkT>()
                     .id((d) => d.uuid)
-                    .strength((l) => (roots.some((r) => r.uuid == l.source || l.target) ? 0 : 0.2)),
+                    .strength((l) => (roots.some((r) => r.uuid == l.source || l.target) ? 0.5 : 0.1)),
             )
             .force("centering", centeringForce)
             .on("tick", () => {
@@ -224,7 +225,7 @@ export function TreeGraph({
         let forceRecalcX = simulationState.current.rootUuids != rootUuids;
         if (forceRecalcX) {
             old.forEach((v, k) => {
-                v.column = undefined;
+                v.column = 0;
                 v.fx = undefined;
             });
         }
@@ -246,7 +247,7 @@ export function TreeGraph({
                 let overrideY: number | undefined = undefined;
                 if (parent) {
                     let parentNode = state.get(parent.uuid);
-                    overrideY = parentNode?.y;
+                    overrideY = inserted[parent.uuid]?.y ?? parentNode?.y;
                     if (parentNode?.children) {
                         for (const child of parentNode.children) {
                             let siblingNode = state.get(child.uuid);
@@ -257,6 +258,7 @@ export function TreeGraph({
                     }
                 }
                 let res = {
+                    root: d == 0,
                     y: (overrideY ?? (nextY += 20)) + (ci / (parent?.children?.length || 1)) * 19,
                     ...old.get(n.uuid),
                     column: /* old.get(n.uuid)?.column ??  */ column,
@@ -285,17 +287,68 @@ export function TreeGraph({
 
         const linkForce = sim.force("link")! as d3.ForceLink<NodeT, LinkT>;
 
+        const contentColumns = new Set(nodes.filter((n) => !n.root).map((n) => n.column));
+        const rootColumns = new Set(nodes.filter((n) => n.root).map((n) => n.column));
+        const mixedColumns: number[] = [];
+        for (const c of contentColumns.values()) {
+            if (rootColumns.has(c)) mixedColumns.push(c);
+        }
+        mixedColumns.sort((a, b) => b - a);
+        let maxColumn = 0;
+        for (const c of mixedColumns) {
+            for (const node of nodes) {
+                if (node.column > c) {
+                    node.column += 2;
+                    node.fx = node.column * columnW;
+                } else if (node.column == c) {
+                    node.column += node.root ? 1 : 2;
+                    node.fx = node.column * columnW;
+                }
+                maxColumn = Math.max(maxColumn, node.column);
+            }
+        }
+        const usedColumns = new Set(nodes.map((n) => n.column));
+        const emptyColumns: number[] = [];
+        for (let i = maxColumn; i >= 0; i--) {
+            if (!usedColumns.has(i)) emptyColumns.push(i);
+        }
+        for (const c of emptyColumns) {
+            for (const node of nodes) {
+                if (node.column > c) {
+                    node.column--;
+                    node.fx = node.column * columnW;
+                }
+            }
+        }
+
         sim.nodes(nodes);
         linkForce.links(links);
         simulationState.current.nodes = nodes;
         simulationState.current.links = links;
         simulationState.current.rootUuids = rootUuids;
+        sim.force("centering", null);
+        const collisionForce = sim.force("collide")!;
+        sim.force("collide", null);
+        sim.alpha(0.4).restart().tick();
+        for (let i = 0; i < 400; i++) {
+            if (sim.alpha() < sim.alphaMin()) break;
+            sim.tick();
+        }
+        sim.force("collide", collisionForce);
         sim.force("centering", centeringForce);
         sim.alpha(0.4).restart().tick();
         for (let i = 0; i < 1000; i++) {
             if (sim.alpha() < sim.alphaMin()) break;
             sim.tick();
         }
+        for (const node of nodes) {
+            if (node.root && node.children?.length) {
+                node.y =
+                    node.children.map((c) => inserted[c.uuid].y ?? 0).reduce((a, b) => a + b) / node.children.length;
+                node.vy = 0;
+            }
+        }
+        sim.alpha(0.01).restart().tick();
 
         if (forceRecalcX) {
             let viewportDiv = viewportRef.current?.getRootElement();
