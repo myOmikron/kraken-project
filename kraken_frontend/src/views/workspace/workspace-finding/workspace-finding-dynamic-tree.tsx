@@ -20,6 +20,7 @@ import {
     SimpleService,
     SimpleTag,
 } from "../../../api/generated";
+import Input from "../../../components/input";
 import CollapseIcon from "../../../svg/collapse";
 import ExpandIcon from "../../../svg/expand";
 import { handleApiError } from "../../../utils/helper";
@@ -111,6 +112,11 @@ export type DynamicTreeGraphRef = {
     reloadRoot(): void;
 };
 
+type DynamicTreeNode = {
+    _searchIndex: string;
+    children?: Array<DynamicTreeNode>;
+} & TreeNode;
+
 export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraphProps>(
     ({ maximizable, ...props }, ref) => {
         const apiTimeout = 100;
@@ -119,9 +125,11 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
 
         const [maximized, setMaximized] = useState(false);
         const [manualAffected, setManualAffected] = useState(0);
-        const [roots, setRoots] = useState<TreeNode[]>([]);
+        const [roots, setRoots] = useState<DynamicTreeNode[]>([]);
+        const [shownRoots, setShownRoots] = useState<DynamicTreeNode[]>([]);
         const [filterTags, setFilterTags] = useState<SimpleTag[]>([]);
         const addedUuids = useRef<{ [index: string]: null }>({});
+        const [filterText, setFilterText] = useState("");
 
         const getMutator = () => {
             const srcUuid = apiOrUuid;
@@ -135,12 +143,12 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                     );
                 },
                 /// inserts the child to parent, returns true if the child hasn't been added to the tree yet
-                insertChild(parent: TreeNode, child: TreeNode) {
+                insertChild(parent: DynamicTreeNode, child: DynamicTreeNode) {
                     const isNew = !(child.uuid in addedUuids.current);
                     addedUuids.current[child.uuid] = null;
                     let found = false;
-                    let copied: { [uuid: string]: TreeNode } = {};
-                    function mutate(n: TreeNode): TreeNode {
+                    let copied: { [uuid: string]: DynamicTreeNode } = {};
+                    function mutate(n: DynamicTreeNode): DynamicTreeNode {
                         if (copied[n.uuid]) return copied[n.uuid];
                         if (n.uuid == parent.uuid) {
                             found = true;
@@ -149,7 +157,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                                 children: [...(n.children ?? []), child],
                             });
                         } else {
-                            let copy: TreeNode = {
+                            let copy: DynamicTreeNode = {
                                 ...n,
                             };
                             copied[n.uuid] = copy;
@@ -168,18 +176,23 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                     });
                     return isNew;
                 },
-                insertFindings(parent: TreeNode, node: TreeNode, findings: ListFindings) {
+                insertFindings(parent: DynamicTreeNode, node: DynamicTreeNode, findings: ListFindings) {
                     if (mutator.shouldAbort()) return;
                     for (const f of findings.findings) {
                         if (f.uuid == parent.uuid) continue;
                         api.resolveFinding(f.definition).then(
                             handleApiError((definition) => {
                                 if (mutator.shouldAbort()) return;
-                                const insert: TreeNode = {
+                                const insert: DynamicTreeNode = {
                                     uuid: f.uuid,
                                     type: "Finding",
                                     definition: definition,
                                     severity: f.severity,
+                                    _searchIndex:
+                                        "finding " +
+                                        (
+                                            definition.name + (definition.cve ? ` [${definition.cve}]` : "")
+                                        ).toLowerCase(),
                                 };
                                 if (!mutator.insertChild(node, insert)) return;
                                 // TODO: recurse here
@@ -187,7 +200,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                         );
                     }
                 },
-                populateDomain(parent: TreeNode, node: TreeNode, domain: SimpleDomain | FullDomain) {
+                populateDomain(parent: DynamicTreeNode, node: DynamicTreeNode, domain: SimpleDomain | FullDomain) {
                     api.findingsForDomain(domain.uuid).then(
                         handleApiError((findings) => mutator.insertFindings(parent, node, findings)),
                     );
@@ -202,7 +215,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                         }),
                     );
                 },
-                populateHost(parent: TreeNode, node: TreeNode, host: SimpleHost | FullHost) {
+                populateHost(parent: DynamicTreeNode, node: DynamicTreeNode, host: SimpleHost | FullHost) {
                     api.findingsForHost(host.uuid).then(
                         handleApiError((findings) => mutator.insertFindings(parent, node, findings)),
                     );
@@ -216,7 +229,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                         }),
                     );
                 },
-                populatePort(parent: TreeNode, node: TreeNode, port: SimplePort | FullPort) {
+                populatePort(parent: DynamicTreeNode, node: DynamicTreeNode, port: SimplePort | FullPort) {
                     api.findingsForPort(port.uuid).then(
                         handleApiError((findings) => mutator.insertFindings(parent, node, findings)),
                     );
@@ -227,7 +240,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                         }),
                     );
                 },
-                populateService(parent: TreeNode, node: TreeNode, service: SimpleService | FullService) {
+                populateService(parent: DynamicTreeNode, node: DynamicTreeNode, service: SimpleService | FullService) {
                     api.findingsForService(service.uuid).then(
                         handleApiError((findings) => mutator.insertFindings(parent, node, findings)),
                     );
@@ -238,67 +251,71 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                         }),
                     );
                 },
-                insertDomain(node: TreeNode, child: FullDomain) {
+                insertDomain(node: DynamicTreeNode, child: FullDomain) {
                     if (mutator.shouldAbort()) return;
-                    const insert: TreeNode = {
+                    const insert: DynamicTreeNode = {
                         type: "Domain",
                         domain: child,
                         uuid: child.uuid,
+                        _searchIndex: child.domain.toLowerCase(),
                     };
                     if (!mutator.insertChild(node, insert)) return;
                     setTimeout(function () {
                         mutator.populateDomain(node, insert, child);
                     }, apiTimeout);
                 },
-                insertHost(node: TreeNode, child: FullHost) {
+                insertHost(node: DynamicTreeNode, child: FullHost) {
                     if (mutator.shouldAbort()) return;
-                    const insert: TreeNode = {
+                    const insert: DynamicTreeNode = {
                         type: "Host",
                         host: child,
                         uuid: child.uuid,
+                        _searchIndex: child.ipAddr.toLowerCase(),
                     };
                     if (!mutator.insertChild(node, insert)) return;
                     setTimeout(function () {
                         mutator.populateHost(node, insert, child);
                     }, apiTimeout);
                 },
-                insertPort(node: TreeNode, child: FullPort) {
+                insertPort(node: DynamicTreeNode, child: FullPort) {
                     if (mutator.shouldAbort()) return;
-                    const insert: TreeNode = {
+                    const insert: DynamicTreeNode = {
                         type: "Port",
                         port: child,
                         uuid: child.uuid,
+                        _searchIndex: "port " + child.port,
                     };
                     if (!mutator.insertChild(node, insert)) return;
                     setTimeout(function () {
                         mutator.populatePort(node, insert, child);
                     }, apiTimeout);
                 },
-                insertService(node: TreeNode, child: FullService) {
+                insertService(node: DynamicTreeNode, child: FullService) {
                     if (mutator.shouldAbort()) return;
-                    const insert: TreeNode = {
+                    const insert: DynamicTreeNode = {
                         type: "Service",
                         service: child,
                         uuid: child.uuid,
+                        _searchIndex: "service " + child.name.toLowerCase(),
                     };
                     if (!mutator.insertChild(node, insert)) return;
                     setTimeout(function () {
                         mutator.populateService(node, insert, child);
                     }, apiTimeout);
                 },
-                insertDomainSimple(node: TreeNode, child: { uuid: string }) {
+                insertDomainSimple(node: DynamicTreeNode, child: { uuid: string }) {
                     api.resolveDomain(child.uuid).then(handleApiError((full) => mutator.insertDomain(node, full)));
                 },
-                insertHostSimple(node: TreeNode, child: { uuid: string }) {
+                insertHostSimple(node: DynamicTreeNode, child: { uuid: string }) {
                     api.resolveHost(child.uuid).then(handleApiError((full) => mutator.insertHost(node, full)));
                 },
-                insertPortSimple(node: TreeNode, child: { uuid: string }) {
+                insertPortSimple(node: DynamicTreeNode, child: { uuid: string }) {
                     api.resolvePort(child.uuid).then(handleApiError((full) => mutator.insertPort(node, full)));
                 },
-                insertServiceSimple(node: TreeNode, child: { uuid: string }) {
+                insertServiceSimple(node: DynamicTreeNode, child: { uuid: string }) {
                     api.resolveService(child.uuid).then(handleApiError((full) => mutator.insertService(node, full)));
                 },
-                populateAffectedRoot(root: TreeNode, finding: FullFinding) {
+                populateAffectedRoot(root: DynamicTreeNode, finding: FullFinding) {
                     if (mutator.shouldAbort()) return;
                     for (const a of finding.affected) {
                         api.getAffected(finding, a).then(
@@ -341,12 +358,18 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
             reloadRoot() {
                 api.getRoots().then((findingsList) => {
                     setRoots((roots) =>
-                        roots.map<TreeNode>((root, index) => {
+                        roots.map<DynamicTreeNode>((root, index) => {
                             const finding = findingsList.find((f) => f.uuid == root.uuid);
                             if (!finding) return root;
                             return {
                                 uuid: root.uuid,
                                 type: "Finding",
+                                _searchIndex:
+                                    "finding " +
+                                    (
+                                        finding.definition.name +
+                                        (finding.definition.cve ? ` [${finding.definition.cve}]` : "")
+                                    ).toLowerCase(),
                                 definition: finding.definition,
                                 severity: finding.severity,
                                 children: root.children,
@@ -372,9 +395,10 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                 if (mutator.shouldAbort()) return;
                 let roots = [];
                 for (const finding of findings) {
-                    const root: TreeNode = {
+                    const root: DynamicTreeNode = {
                         uuid: finding.uuid,
                         type: "Finding",
+                        _searchIndex: "",
                         definition: finding.definition,
                         severity: finding.severity,
                     };
@@ -402,6 +426,65 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
             }
         }
 
+        useEffect(() => {
+            let lowerCaseFilterText = filterText?.toLowerCase() ?? "";
+            console.log(lowerCaseFilterText);
+            let toShow =
+                filterTags.length || lowerCaseFilterText != ""
+                    ? roots.map((root) => {
+                          // TODO: performance optimize
+                          type T = DynamicTreeNode & { _hit: boolean };
+                          let visited: { [uuid: string]: T } = {};
+                          function markTagged(n: DynamicTreeNode, parents: T[]): T {
+                              if (visited[n.uuid]) return visited[n.uuid];
+                              const v: T = (visited[n.uuid] = {
+                                  ...n,
+                                  _hit:
+                                      (filterTags.length && checkTag(n)) ||
+                                      (lowerCaseFilterText != "" && n._searchIndex.includes(lowerCaseFilterText)),
+                              });
+                              if (v._hit) for (const p of parents) p._hit = true;
+                              v.children = v.children?.map((c) => markTagged(c, [...parents, v]));
+                              return v;
+                          }
+                          let tagged = markTagged(root, []);
+                          let visited2: { [uuid: string]: DynamicTreeNode } = {};
+                          function filterTagged(n: T): DynamicTreeNode {
+                              if (visited2[n.uuid]) return visited2[n.uuid];
+                              if (!("_hit" in n)) return n;
+                              let { _hit, ...node } = n;
+                              visited2[n.uuid] = node;
+                              node.children = node.children
+                                  ?.filter((v) => (v as T)._hit)
+                                  .map((v) => filterTagged(v as T));
+                              return node;
+                          }
+                          return filterTagged(tagged);
+                      })
+                    : roots;
+
+            function isIdentical(
+                shown: DynamicTreeNode,
+                check: DynamicTreeNode,
+                checked: Record<string, true>,
+            ): boolean {
+                if (shown == check) return true;
+                if (typeof shown != typeof check) return false;
+                if (checked[check.uuid]) return true;
+                checked[check.uuid] = true;
+                return (
+                    shown.uuid == check.uuid &&
+                    shown.children?.length == check.children?.length &&
+                    (shown.children?.every(
+                        (c, i) => check.children?.[i] && isIdentical(c, check.children[i], checked),
+                    ) ??
+                        true)
+                );
+            }
+
+            if (toShow.some((r, i) => !isIdentical(r, shownRoots[i], {}))) setShownRoots(toShow);
+        }, [roots, shownRoots, filterText, filterTags]);
+
         return (
             <TreeGraph
                 className={`${maximized ? "maximized" : ""}`}
@@ -409,45 +492,22 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                     if (e.altKey) setFilterTags((tags) => tags.filter((t) => t.uuid != tag.uuid));
                     else setFilterTags((tags) => (tags.some((t) => t.uuid == tag.uuid) ? tags : [...tags, tag]));
                 }}
-                roots={
-                    filterTags.length
-                        ? roots.map((root) => {
-                              type T = TreeNode & { _hit: boolean };
-                              let visited: { [uuid: string]: T } = {};
-                              function markTagged(n: TreeNode, parents: T[]): T {
-                                  if (visited[n.uuid]) return visited[n.uuid];
-                                  const v: T = (visited[n.uuid] = {
-                                      ...n,
-                                      _hit: checkTag(n),
-                                  });
-                                  if (v._hit) for (const p of parents) p._hit = true;
-                                  v.children = v.children?.map((c) => markTagged(c, [...parents, v]));
-                                  return v;
-                              }
-                              let tagged = markTagged(root, []);
-                              let visited2: { [uuid: string]: TreeNode } = {};
-                              function filterTagged(n: T): TreeNode {
-                                  if (visited2[n.uuid]) return visited2[n.uuid];
-                                  if (!("_hit" in n)) return n;
-                                  let { _hit, ...node } = n;
-                                  visited2[n.uuid] = node;
-                                  node.children = node.children
-                                      ?.filter((v) => (v as T)._hit)
-                                      .map((v) => filterTagged(v as T));
-                                  return node;
-                              }
-                              return filterTagged(tagged);
-                          })
-                        : roots
-                }
+                roots={shownRoots}
                 decoration={
-                    <>
+                    <div className="toolbar">
                         <TagList
                             tags={filterTags}
                             onClickTag={(e, tag) => {
                                 setFilterTags((tags) => tags.filter((t) => t.uuid != tag.uuid));
                             }}
                         />
+                        <Input
+                            className=""
+                            placeholder="Search"
+                            value={filterText}
+                            onChange={(v) => setFilterText(v)}
+                        />
+                        <div className="pad"></div>
                         {maximizable && (
                             <button
                                 className="maximize"
@@ -458,7 +518,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                                 {maximized ? <CollapseIcon /> : <ExpandIcon />}
                             </button>
                         )}
-                    </>
+                    </div>
                 }
                 {...props}
             />

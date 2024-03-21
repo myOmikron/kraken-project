@@ -86,7 +86,7 @@ export default function WorkspaceFindings(props: WorkspaceFindingsProps) {
                     </>
                 );
             case "graph":
-                return <DynamicTreeGraph workspace={workspace} uuids={roots} />;
+                return <DynamicTreeGraph maximizable workspace={workspace} uuids={roots} />;
         }
     })();
 

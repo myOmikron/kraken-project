@@ -75,30 +75,55 @@
     }
 }
 
-.workspace-findings-graph > .tag-list {
+.workspace-findings-graph > .toolbar {
     position: absolute;
     top: 1em;
-    left: 1em;
+    left: 0;
+    width: 100%;
+    padding: 0 1em;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
 }
 
-.workspace-findings-graph > button.maximize {
-    position: absolute;
-    top: 1em;
-    right: 1em;
+.workspace-findings-graph > .toolbar > .tag-list {
+    flex-basis: 300px;
+    flex-shrink: 1;
+    flex-grow: 1;
+}
+
+.workspace-findings-graph > .toolbar > input {
+    flex-shrink: 0;
+    text-align: center;
+    background-color: #fff1;
+    border-radius: 1em;
+    border: none;
+    appearance: none;
+    padding: 1em;
+}
+
+.workspace-findings-graph > .toolbar > .pad {
+    flex-grow: 1;
+    flex-basis: 250px;
+}
+
+.workspace-findings-graph > .toolbar > button.maximize {
     padding: 0;
     background: none;
     border: none;
     appearance: none;
+    flex-shrink: 0;
 }
 
-.workspace-findings-graph > button.maximize svg {
+.workspace-findings-graph > .toolbar > button.maximize svg {
     width: 2em;
     height: 2em;
     fill: white;
     transform: rotate(45deg);
 }
 
-.workspace-findings-graph > button.maximize:hover svg {
+.workspace-findings-graph > .toolbar > button.maximize:hover svg {
     transform: rotate(45deg) scale(1.2);
 }
 
