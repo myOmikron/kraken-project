@@ -13,6 +13,7 @@ use rorm::update;
 use crate::api::extractors::SessionUser;
 use crate::api::handler::common::error::ApiError;
 use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::domains::schema::SimpleDomain;
 use crate::api::handler::finding_affected::schema::CreateFindingAffectedRequest;
 use crate::api::handler::finding_affected::schema::FindingAffectedObject;
@@ -30,13 +31,23 @@ use crate::api::handler::services::schema::SimpleService;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::Domain;
+use crate::models::DomainGlobalTag;
+use crate::models::DomainWorkspaceTag;
 use crate::models::Finding;
 use crate::models::FindingAffected;
 use crate::models::FindingDetails;
+use crate::models::GlobalTag;
 use crate::models::Host;
+use crate::models::HostGlobalTag;
+use crate::models::HostWorkspaceTag;
 use crate::models::Port;
+use crate::models::PortGlobalTag;
+use crate::models::PortWorkspaceTag;
 use crate::models::Service;
+use crate::models::ServiceGlobalTag;
+use crate::models::ServiceWorkspaceTag;
 use crate::models::Workspace;
+use crate::models::WorkspaceTag;
 use crate::modules::cache::EditorCached;
 
 /// Add a new affected object to a finding
@@ -194,69 +205,161 @@ pub async fn get_finding_affected(
         .try_collect()
         .await?;
 
-    let affected = match (domain, host, port, service) {
+    let (affected, affected_tags) = match (domain, host, port, service) {
         (Some(fm), None, None, None) => {
             let domain = query!(&mut tx, Domain)
                 .condition(Domain::F.uuid.equals(*fm.key()))
                 .one()
                 .await?;
-            FindingAffectedObject::Domain(SimpleDomain {
-                uuid: domain.uuid,
-                domain: domain.domain,
-                comment: domain.comment,
-                workspace: *domain.workspace.key(),
-                created_at: domain.created_at,
-                certainty: domain.certainty,
-            })
+
+            let mut tags: Vec<_> = query!(&mut tx, (DomainGlobalTag::F.global_tag as GlobalTag,))
+                .condition(DomainGlobalTag::F.domain.equals(domain.uuid))
+                .stream()
+                .map_ok(|(tag,)| SimpleTag::from(tag))
+                .try_collect()
+                .await?;
+
+            let global_tags: Vec<_> = query!(
+                &mut tx,
+                (DomainWorkspaceTag::F.workspace_tag as WorkspaceTag,)
+            )
+            .condition(DomainWorkspaceTag::F.domain.equals(domain.uuid))
+            .stream()
+            .map_ok(|(tag,)| SimpleTag::from(tag))
+            .try_collect()
+            .await?;
+
+            tags.extend(global_tags);
+
+            (
+                FindingAffectedObject::Domain(SimpleDomain {
+                    uuid: domain.uuid,
+                    domain: domain.domain,
+                    comment: domain.comment,
+                    workspace: *domain.workspace.key(),
+                    created_at: domain.created_at,
+                    certainty: domain.certainty,
+                }),
+                tags,
+            )
         }
         (None, Some(fm), None, None) => {
             let host = query!(&mut tx, Host)
                 .condition(Host::F.uuid.equals(*fm.key()))
                 .one()
                 .await?;
-            FindingAffectedObject::Host(SimpleHost {
-                uuid: host.uuid,
-                ip_addr: host.ip_addr.ip(),
-                os_type: host.os_type,
-                response_time: host.response_time,
-                comment: host.comment,
-                workspace: *host.workspace.key(),
-                created_at: host.created_at,
-                certainty: host.certainty,
-            })
+
+            let mut tags: Vec<_> = query!(&mut tx, (HostGlobalTag::F.global_tag as GlobalTag,))
+                .condition(HostGlobalTag::F.host.equals(host.uuid))
+                .stream()
+                .map_ok(|(tag,)| SimpleTag::from(tag))
+                .try_collect()
+                .await?;
+
+            let global_tags: Vec<_> = query!(
+                &mut tx,
+                (HostWorkspaceTag::F.workspace_tag as WorkspaceTag,)
+            )
+            .condition(HostWorkspaceTag::F.host.equals(host.uuid))
+            .stream()
+            .map_ok(|(tag,)| SimpleTag::from(tag))
+            .try_collect()
+            .await?;
+
+            tags.extend(global_tags);
+
+            (
+                FindingAffectedObject::Host(SimpleHost {
+                    uuid: host.uuid,
+                    ip_addr: host.ip_addr.ip(),
+                    os_type: host.os_type,
+                    response_time: host.response_time,
+                    comment: host.comment,
+                    workspace: *host.workspace.key(),
+                    created_at: host.created_at,
+                    certainty: host.certainty,
+                }),
+                tags,
+            )
         }
         (None, None, Some(fm), None) => {
             let port = query!(&mut tx, Port)
                 .condition(Port::F.uuid.equals(*fm.key()))
                 .one()
                 .await?;
-            FindingAffectedObject::Port(SimplePort {
-                uuid: port.uuid,
-                port: port.port as u16,
-                protocol: port.protocol,
-                certainty: port.certainty,
-                host: *port.host.key(),
-                comment: port.comment,
-                workspace: *port.workspace.key(),
-                created_at: port.created_at,
-            })
+
+            let mut tags: Vec<_> = query!(&mut tx, (PortGlobalTag::F.global_tag as GlobalTag,))
+                .condition(PortGlobalTag::F.port.equals(port.uuid))
+                .stream()
+                .map_ok(|(tag,)| SimpleTag::from(tag))
+                .try_collect()
+                .await?;
+
+            let global_tags: Vec<_> = query!(
+                &mut tx,
+                (PortWorkspaceTag::F.workspace_tag as WorkspaceTag,)
+            )
+            .condition(PortWorkspaceTag::F.port.equals(port.uuid))
+            .stream()
+            .map_ok(|(tag,)| SimpleTag::from(tag))
+            .try_collect()
+            .await?;
+
+            tags.extend(global_tags);
+
+            (
+                FindingAffectedObject::Port(SimplePort {
+                    uuid: port.uuid,
+                    port: port.port as u16,
+                    protocol: port.protocol,
+                    certainty: port.certainty,
+                    host: *port.host.key(),
+                    comment: port.comment,
+                    workspace: *port.workspace.key(),
+                    created_at: port.created_at,
+                }),
+                tags,
+            )
         }
         (None, None, None, Some(fm)) => {
             let service = query!(&mut tx, Service)
                 .condition(Service::F.uuid.equals(*fm.key()))
                 .one()
                 .await?;
-            FindingAffectedObject::Service(SimpleService {
-                uuid: service.uuid,
-                name: service.name,
-                version: service.version,
-                certainty: service.certainty,
-                host: *service.host.key(),
-                port: service.port.map(|fm| *fm.key()),
-                comment: service.comment,
-                workspace: *service.workspace.key(),
-                created_at: service.created_at,
-            })
+
+            let mut tags: Vec<_> = query!(&mut tx, (ServiceGlobalTag::F.global_tag as GlobalTag,))
+                .condition(ServiceGlobalTag::F.service.equals(service.uuid))
+                .stream()
+                .map_ok(|(tag,)| SimpleTag::from(tag))
+                .try_collect()
+                .await?;
+
+            let global_tags: Vec<_> = query!(
+                &mut tx,
+                (ServiceWorkspaceTag::F.workspace_tag as WorkspaceTag,)
+            )
+            .condition(ServiceWorkspaceTag::F.service.equals(service.uuid))
+            .stream()
+            .map_ok(|(tag,)| SimpleTag::from(tag))
+            .try_collect()
+            .await?;
+
+            tags.extend(global_tags);
+
+            (
+                FindingAffectedObject::Service(SimpleService {
+                    uuid: service.uuid,
+                    name: service.name,
+                    version: service.version,
+                    certainty: service.certainty,
+                    host: *service.host.key(),
+                    port: service.port.map(|fm| *fm.key()),
+                    comment: service.comment,
+                    workspace: *service.workspace.key(),
+                    created_at: service.created_at,
+                }),
+                tags,
+            )
         }
         _ => return Err(ApiError::InternalServerError),
     };
@@ -282,6 +385,7 @@ pub async fn get_finding_affected(
             created_at: finding.created_at,
         },
         affected,
+        affected_tags,
         #[rustfmt::skip]
         user_details: GLOBAL.editor_cache.finding_affected_details.get(finding_affected_uuid).await?.unwrap_or_default().0,
         tool_details: details.as_mut().and_then(|d| d.tool_details.take()),

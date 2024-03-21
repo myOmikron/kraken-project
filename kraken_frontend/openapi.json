@@ -9714,13 +9714,14 @@
             "FullFindingAffected": {
                 "type": "object",
                 "description": "An affected object's details and the finding it is affected by",
-                "required": ["finding", "affected", "user_details", "created_at"],
+                "required": ["finding", "affected", "affected_tags", "user_details", "created_at"],
                 "properties": {
-                    "finding": {
-                        "$ref": "#/components/schemas/FullFinding"
-                    },
-                    "affected": {
-                        "$ref": "#/components/schemas/FindingAffectedObject"
+                    "finding": { "$ref": "#/components/schemas/FullFinding" },
+                    "affected": { "$ref": "#/components/schemas/FindingAffectedObject" },
+                    "affected_tags": {
+                        "type": "array",
+                        "items": { "$ref": "#/components/schemas/SimpleTag" },
+                        "description": "List of tags for the affected object"
                     },
                     "user_details": {
                         "type": "string",

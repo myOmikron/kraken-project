@@ -25,6 +25,12 @@ import {
     FullFindingFromJSONTyped,
     FullFindingToJSON,
 } from './FullFinding';
+import type { SimpleTag } from './SimpleTag';
+import {
+    SimpleTagFromJSON,
+    SimpleTagFromJSONTyped,
+    SimpleTagToJSON,
+} from './SimpleTag';
 
 /**
  * An affected object's details and the finding it is affected by
@@ -44,6 +50,12 @@ export interface FullFindingAffected {
      * @memberof FullFindingAffected
      */
     affected: FindingAffectedObject;
+    /**
+     * List of tags for the affected object
+     * @type {Array<SimpleTag>}
+     * @memberof FullFindingAffected
+     */
+    affectedTags: Array<SimpleTag>;
     /**
      * Notes about the finding provided by the user
      * 
@@ -88,6 +100,7 @@ export function instanceOfFullFindingAffected(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "finding" in value;
     isInstance = isInstance && "affected" in value;
+    isInstance = isInstance && "affectedTags" in value;
     isInstance = isInstance && "userDetails" in value;
     isInstance = isInstance && "createdAt" in value;
 
@@ -106,6 +119,7 @@ export function FullFindingAffectedFromJSONTyped(json: any, ignoreDiscriminator:
         
         'finding': FullFindingFromJSON(json['finding']),
         'affected': FindingAffectedObjectFromJSON(json['affected']),
+        'affectedTags': ((json['affected_tags'] as Array<any>).map(SimpleTagFromJSON)),
         'userDetails': json['user_details'],
         'toolDetails': !exists(json, 'tool_details') ? undefined : json['tool_details'],
         'screenshot': !exists(json, 'screenshot') ? undefined : json['screenshot'],
@@ -125,6 +139,7 @@ export function FullFindingAffectedToJSON(value?: FullFindingAffected | null): a
         
         'finding': FullFindingToJSON(value.finding),
         'affected': FindingAffectedObjectToJSON(value.affected),
+        'affected_tags': ((value.affectedTags as Array<any>).map(SimpleTagToJSON)),
         'user_details': value.userDetails,
         'tool_details': value.toolDetails,
         'screenshot': value.screenshot,
