@@ -71,7 +71,7 @@
         --connections-opacity: 0;
     }
     to {
-        --connections-opacity: 1;
+        --connections-opacity: 0.7;
     }
 }
 
@@ -147,7 +147,7 @@
 }
 
 .workspace-findings-graph .connections {
-    opacity: var(--connections-opacity, 1);
+    opacity: var(--connections-opacity, 0.7);
     pointer-events: none;
 }
 
