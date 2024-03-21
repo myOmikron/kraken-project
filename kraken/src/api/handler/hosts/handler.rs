@@ -28,7 +28,6 @@ use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::HostResultsPage;
 use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::common::schema::SimpleTag;
-use crate::api::handler::common::schema::TagType;
 use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::common::utils::get_page_params;
 use crate::api::handler::domains::schema::SimpleDomain;
@@ -210,12 +209,7 @@ pub async fn get_host(
     let mut tags: Vec<_> = query!(&mut tx, (HostGlobalTag::F.global_tag as GlobalTag,))
         .condition(HostGlobalTag::F.host.equals(host.uuid))
         .stream()
-        .map_ok(|(x,)| SimpleTag {
-            uuid: x.uuid,
-            name: x.name,
-            color: x.color.into(),
-            tag_type: TagType::Global,
-        })
+        .map_ok(|(tag,)| SimpleTag::from(tag))
         .try_collect()
         .await?;
 
@@ -225,12 +219,7 @@ pub async fn get_host(
     )
     .condition(HostWorkspaceTag::F.host.equals(host.uuid))
     .stream()
-    .map_ok(|(x,)| SimpleTag {
-        uuid: x.uuid,
-        name: x.name,
-        color: x.color.into(),
-        tag_type: TagType::Workspace,
-    })
+    .map_ok(|(tag,)| SimpleTag::from(tag))
     .try_collect()
     .await?;
 

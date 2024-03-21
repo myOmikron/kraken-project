@@ -27,7 +27,6 @@ use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::common::schema::ServiceResultsPage;
 use crate::api::handler::common::schema::SimpleTag;
-use crate::api::handler::common::schema::TagType;
 use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::common::utils::get_page_params;
 use crate::api::handler::findings::schema::ListFindings;
@@ -301,12 +300,7 @@ pub async fn get_service(
     let mut tags: Vec<_> = query!(&mut tx, (ServiceGlobalTag::F.global_tag as GlobalTag,))
         .condition(ServiceGlobalTag::F.service.equals(path.s_uuid))
         .stream()
-        .map_ok(|(x,)| SimpleTag {
-            uuid: x.uuid,
-            name: x.name,
-            color: x.color.into(),
-            tag_type: TagType::Global,
-        })
+        .map_ok(|(tag,)| SimpleTag::from(tag))
         .try_collect()
         .await?;
 
@@ -316,12 +310,7 @@ pub async fn get_service(
     )
     .condition(ServiceWorkspaceTag::F.service.equals(path.s_uuid))
     .stream()
-    .map_ok(|(x,)| SimpleTag {
-        uuid: x.uuid,
-        name: x.name,
-        color: x.color.into(),
-        tag_type: TagType::Workspace,
-    })
+    .map_ok(|(tag,)| SimpleTag::from(tag))
     .try_collect()
     .await?;
 

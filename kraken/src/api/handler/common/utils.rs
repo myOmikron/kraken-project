@@ -1,5 +1,9 @@
 use crate::api::handler::common::error::ApiError;
 use crate::api::handler::common::schema::PageParams;
+use crate::api::handler::common::schema::SimpleTag;
+use crate::api::handler::common::schema::TagType;
+use crate::models::GlobalTag;
+use crate::models::WorkspaceTag;
 
 const QUERY_LIMIT_MAX: u64 = 1000;
 
@@ -33,12 +37,9 @@ macro_rules! query_tags {
                     .stream();
 
                 while let Some((tag, item)) = workspace_tag_stream.try_next().await? {
-                    $map.entry(*item.key()).or_insert(vec![]).push(SimpleTag {
-                        uuid: tag.uuid,
-                        name: tag.name,
-                        tag_type: TagType::Workspace,
-                        color: tag.color.into(),
-                    });
+                    $map.entry(*item.key())
+                        .or_insert(vec![])
+                        .push(SimpleTag::from(tag));
                 }
             }
         }
@@ -52,14 +53,33 @@ macro_rules! query_tags {
                     .stream();
 
                 while let Some((tag, item)) = global_tag_stream.try_next().await? {
-                    $map.entry(*item.key()).or_insert(vec![]).push(SimpleTag {
-                        uuid: tag.uuid,
-                        name: tag.name,
-                        tag_type: TagType::Global,
-                        color: tag.color.into(),
-                    });
+                    $map.entry(*item.key())
+                        .or_insert(vec![])
+                        .push(SimpleTag::from(tag));
                 }
             }
         }
     }};
+}
+
+impl From<WorkspaceTag> for SimpleTag {
+    fn from(tag: WorkspaceTag) -> Self {
+        SimpleTag {
+            uuid: tag.uuid,
+            name: tag.name,
+            color: tag.color.into(),
+            tag_type: TagType::Workspace,
+        }
+    }
+}
+
+impl From<GlobalTag> for SimpleTag {
+    fn from(tag: GlobalTag) -> Self {
+        SimpleTag {
+            uuid: tag.uuid,
+            name: tag.name,
+            color: tag.color.into(),
+            tag_type: TagType::Global,
+        }
+    }
 }
