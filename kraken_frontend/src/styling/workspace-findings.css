@@ -182,7 +182,7 @@
     background: linear-gradient(0deg, #010b22, var(--level-1-opaque));
     image-rendering: pixelated;
     border-radius: 0.5em;
-    width: 200px;
+    width: 240px;
     transform: translate(-50%, -50%);
     transition: left 0.3s ease-in-out;
     animation: fade-in-node 0.2s ease-out both;

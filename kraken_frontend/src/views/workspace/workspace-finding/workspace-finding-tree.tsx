@@ -49,7 +49,7 @@ export function TreeGraph({
 }: { roots: TreeNode[]; onClickTag?: TagClickCallback } & ViewportProps) {
     const verticalMargin = 16;
     const horizontalMargin = 64;
-    const treeNodeWidth = 200; // from CSS: .tree-node width in px
+    const treeNodeWidth = 240; // from CSS: .tree-node width in px
 
     type NodeT = d3.SimulationNodeDatum & { uuid: string; radius?: number; children?: { uuid: string }[] };
     type LinkT = d3.SimulationLinkDatum<NodeT> & { sourceUuid: string; targetUuid: string };
