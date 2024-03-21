@@ -338,6 +338,10 @@
     margin-right: 0.2em;
 }
 
+.create-finding-form > button {
+    position: sticky;
+    bottom: 0;
+}
 
 .create-finding-editor-container {
     display: grid;
