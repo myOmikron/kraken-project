@@ -22,16 +22,10 @@ export default function WorkspaceFindings(props: WorkspaceFindingsProps) {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
     const [findings, setFindings] = React.useState<Array<SimpleFinding>>([]);
-    const [defs, setDefs] = React.useState([] as Array<SimpleFindingDefinition>);
     const [search, setSearch] = React.useState("");
 
     const [roots, setRoots] = React.useState<string[]>([]);
 
-    React.useEffect(() => {
-        Api.knowledgeBase.findingDefinitions
-            .all()
-            .then(handleApiError(({ findingDefinitions }) => setDefs(findingDefinitions)));
-    }, []);
     React.useEffect(() => {
         Api.workspaces.findings.all(workspace).then(
             handleApiError(({ findings }): void => {
