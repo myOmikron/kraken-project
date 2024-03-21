@@ -290,7 +290,11 @@ models/WsMessageOneOf24.ts
 models/WsMessageOneOf25.ts
 models/WsMessageOneOf26.ts
 models/WsMessageOneOf27.ts
+models/WsMessageOneOf28.ts
+models/WsMessageOneOf29.ts
 models/WsMessageOneOf3.ts
+models/WsMessageOneOf30.ts
+models/WsMessageOneOf31.ts
 models/WsMessageOneOf4.ts
 models/WsMessageOneOf5.ts
 models/WsMessageOneOf6.ts

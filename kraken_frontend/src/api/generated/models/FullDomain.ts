@@ -19,6 +19,12 @@ import {
     DomainCertaintyFromJSONTyped,
     DomainCertaintyToJSON,
 } from './DomainCertainty';
+import type { FindingSeverity } from './FindingSeverity';
+import {
+    FindingSeverityFromJSON,
+    FindingSeverityFromJSONTyped,
+    FindingSeverityToJSON,
+} from './FindingSeverity';
 import type { SimpleAggregationSource } from './SimpleAggregationSource';
 import {
     SimpleAggregationSourceFromJSON,
@@ -82,6 +88,12 @@ export interface FullDomain {
     createdAt: Date;
     /**
      * 
+     * @type {FindingSeverity}
+     * @memberof FullDomain
+     */
+    severity?: FindingSeverity | null;
+    /**
+     * 
      * @type {DomainCertainty}
      * @memberof FullDomain
      */
@@ -122,6 +134,7 @@ export function FullDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
         'sources': SimpleAggregationSourceFromJSON(json['sources']),
         'createdAt': (new Date(json['created_at'])),
+        'severity': !exists(json, 'severity') ? undefined : FindingSeverityFromJSON(json['severity']),
         'certainty': DomainCertaintyFromJSON(json['certainty']),
     };
 }
@@ -142,6 +155,7 @@ export function FullDomainToJSON(value?: FullDomain | null): any {
         'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),
         'sources': SimpleAggregationSourceToJSON(value.sources),
         'created_at': (value.createdAt.toISOString()),
+        'severity': FindingSeverityToJSON(value.severity),
         'certainty': DomainCertaintyToJSON(value.certainty),
     };
 }

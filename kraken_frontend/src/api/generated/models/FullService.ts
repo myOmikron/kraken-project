@@ -13,6 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { FindingSeverity } from './FindingSeverity';
+import {
+    FindingSeverityFromJSON,
+    FindingSeverityFromJSONTyped,
+    FindingSeverityToJSON,
+} from './FindingSeverity';
 import type { ServiceCertainty } from './ServiceCertainty';
 import {
     ServiceCertaintyFromJSON,
@@ -123,6 +129,12 @@ export interface FullService {
      */
     sources: SimpleAggregationSource;
     /**
+     * 
+     * @type {FindingSeverity}
+     * @memberof FullService
+     */
+    severity?: FindingSeverity | null;
+    /**
      * The point in time, the record was created
      * @type {Date}
      * @memberof FullService
@@ -169,6 +181,7 @@ export function FullServiceFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'workspace': json['workspace'],
         'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
         'sources': SimpleAggregationSourceFromJSON(json['sources']),
+        'severity': !exists(json, 'severity') ? undefined : FindingSeverityFromJSON(json['severity']),
         'createdAt': (new Date(json['created_at'])),
     };
 }
@@ -193,6 +206,7 @@ export function FullServiceToJSON(value?: FullService | null): any {
         'workspace': value.workspace,
         'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),
         'sources': SimpleAggregationSourceToJSON(value.sources),
+        'severity': FindingSeverityToJSON(value.severity),
         'created_at': (value.createdAt.toISOString()),
     };
 }

@@ -129,11 +129,35 @@ import {
     WsMessageOneOf27ToJSON,
 } from './WsMessageOneOf27';
 import {
+    WsMessageOneOf28,
+    WsMessageOneOf28TypeEnum,
+    WsMessageOneOf28FromJSONTyped,
+    WsMessageOneOf28ToJSON,
+} from './WsMessageOneOf28';
+import {
+    WsMessageOneOf29,
+    WsMessageOneOf29TypeEnum,
+    WsMessageOneOf29FromJSONTyped,
+    WsMessageOneOf29ToJSON,
+} from './WsMessageOneOf29';
+import {
     WsMessageOneOf3,
     WsMessageOneOf3TypeEnum,
     WsMessageOneOf3FromJSONTyped,
     WsMessageOneOf3ToJSON,
 } from './WsMessageOneOf3';
+import {
+    WsMessageOneOf30,
+    WsMessageOneOf30TypeEnum,
+    WsMessageOneOf30FromJSONTyped,
+    WsMessageOneOf30ToJSON,
+} from './WsMessageOneOf30';
+import {
+    WsMessageOneOf31,
+    WsMessageOneOf31TypeEnum,
+    WsMessageOneOf31FromJSONTyped,
+    WsMessageOneOf31ToJSON,
+} from './WsMessageOneOf31';
 import {
     WsMessageOneOf4,
     WsMessageOneOf4TypeEnum,
@@ -198,7 +222,11 @@ export type WsMessage =
   | WsMessageOneOf25
   | WsMessageOneOf26
   | WsMessageOneOf27
+  | WsMessageOneOf28
+  | WsMessageOneOf29
   | WsMessageOneOf3
+  | WsMessageOneOf30
+  | WsMessageOneOf31
   | WsMessageOneOf4
   | WsMessageOneOf5
   | WsMessageOneOf6
@@ -232,7 +260,11 @@ const WsMessageOneOf24Type = enumToString(WsMessageOneOf24TypeEnum);
 const WsMessageOneOf25Type = enumToString(WsMessageOneOf25TypeEnum);
 const WsMessageOneOf26Type = enumToString(WsMessageOneOf26TypeEnum);
 const WsMessageOneOf27Type = enumToString(WsMessageOneOf27TypeEnum);
+const WsMessageOneOf28Type = enumToString(WsMessageOneOf28TypeEnum);
+const WsMessageOneOf29Type = enumToString(WsMessageOneOf29TypeEnum);
 const WsMessageOneOf3Type = enumToString(WsMessageOneOf3TypeEnum);
+const WsMessageOneOf30Type = enumToString(WsMessageOneOf30TypeEnum);
+const WsMessageOneOf31Type = enumToString(WsMessageOneOf31TypeEnum);
 const WsMessageOneOf4Type = enumToString(WsMessageOneOf4TypeEnum);
 const WsMessageOneOf5Type = enumToString(WsMessageOneOf5TypeEnum);
 const WsMessageOneOf6Type = enumToString(WsMessageOneOf6TypeEnum);
@@ -292,8 +324,16 @@ export function WsMessageFromJSONTyped(json: any, ignoreDiscriminator: boolean):
             return WsMessageOneOf26FromJSONTyped(json, ignoreDiscriminator);
         case WsMessageOneOf27Type:
             return WsMessageOneOf27FromJSONTyped(json, ignoreDiscriminator);
+        case WsMessageOneOf28Type:
+            return WsMessageOneOf28FromJSONTyped(json, ignoreDiscriminator);
+        case WsMessageOneOf29Type:
+            return WsMessageOneOf29FromJSONTyped(json, ignoreDiscriminator);
         case WsMessageOneOf3Type:
             return WsMessageOneOf3FromJSONTyped(json, ignoreDiscriminator);
+        case WsMessageOneOf30Type:
+            return WsMessageOneOf30FromJSONTyped(json, ignoreDiscriminator);
+        case WsMessageOneOf31Type:
+            return WsMessageOneOf31FromJSONTyped(json, ignoreDiscriminator);
         case WsMessageOneOf4Type:
             return WsMessageOneOf4FromJSONTyped(json, ignoreDiscriminator);
         case WsMessageOneOf5Type:
@@ -362,8 +402,16 @@ export function WsMessageToJSON(value?: WsMessage | null): any {
             return WsMessageOneOf26ToJSON(value);
         case WsMessageOneOf27Type:
             return WsMessageOneOf27ToJSON(value);
+        case WsMessageOneOf28Type:
+            return WsMessageOneOf28ToJSON(value);
+        case WsMessageOneOf29Type:
+            return WsMessageOneOf29ToJSON(value);
         case WsMessageOneOf3Type:
             return WsMessageOneOf3ToJSON(value);
+        case WsMessageOneOf30Type:
+            return WsMessageOneOf30ToJSON(value);
+        case WsMessageOneOf31Type:
+            return WsMessageOneOf31ToJSON(value);
         case WsMessageOneOf4Type:
             return WsMessageOneOf4ToJSON(value);
         case WsMessageOneOf5Type:

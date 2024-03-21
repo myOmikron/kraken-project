@@ -13,6 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { FindingSeverity } from './FindingSeverity';
+import {
+    FindingSeverityFromJSON,
+    FindingSeverityFromJSONTyped,
+    FindingSeverityToJSON,
+} from './FindingSeverity';
 import type { HostCertainty } from './HostCertainty';
 import {
     HostCertaintyFromJSON,
@@ -100,6 +106,12 @@ export interface FullHost {
     createdAt: Date;
     /**
      * 
+     * @type {FindingSeverity}
+     * @memberof FullHost
+     */
+    severity?: FindingSeverity | null;
+    /**
+     * 
      * @type {HostCertainty}
      * @memberof FullHost
      */
@@ -143,6 +155,7 @@ export function FullHostFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
         'sources': SimpleAggregationSourceFromJSON(json['sources']),
         'createdAt': (new Date(json['created_at'])),
+        'severity': !exists(json, 'severity') ? undefined : FindingSeverityFromJSON(json['severity']),
         'certainty': HostCertaintyFromJSON(json['certainty']),
     };
 }
@@ -165,6 +178,7 @@ export function FullHostToJSON(value?: FullHost | null): any {
         'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),
         'sources': SimpleAggregationSourceToJSON(value.sources),
         'created_at': (value.createdAt.toISOString()),
+        'severity': FindingSeverityToJSON(value.severity),
         'certainty': HostCertaintyToJSON(value.certainty),
     };
 }

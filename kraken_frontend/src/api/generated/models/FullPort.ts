@@ -13,6 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { FindingSeverity } from './FindingSeverity';
+import {
+    FindingSeverityFromJSON,
+    FindingSeverityFromJSONTyped,
+    FindingSeverityToJSON,
+} from './FindingSeverity';
 import type { PortCertainty } from './PortCertainty';
 import {
     PortCertaintyFromJSON,
@@ -105,6 +111,12 @@ export interface FullPort {
      */
     sources: SimpleAggregationSource;
     /**
+     * 
+     * @type {FindingSeverity}
+     * @memberof FullPort
+     */
+    severity?: FindingSeverity | null;
+    /**
      * The point in time, the record was created
      * @type {Date}
      * @memberof FullPort
@@ -150,6 +162,7 @@ export function FullPortFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
         'workspace': json['workspace'],
         'sources': SimpleAggregationSourceFromJSON(json['sources']),
+        'severity': !exists(json, 'severity') ? undefined : FindingSeverityFromJSON(json['severity']),
         'createdAt': (new Date(json['created_at'])),
     };
 }
@@ -172,6 +185,7 @@ export function FullPortToJSON(value?: FullPort | null): any {
         'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),
         'workspace': value.workspace,
         'sources': SimpleAggregationSourceToJSON(value.sources),
+        'severity': FindingSeverityToJSON(value.severity),
         'created_at': (value.createdAt.toISOString()),
     };
 }

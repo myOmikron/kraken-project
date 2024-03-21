@@ -9578,6 +9578,14 @@
                         "format": "date-time",
                         "description": "The point in time, the record was created"
                     },
+                    "severity": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/FindingSeverity"
+                            }
+                        ],
+                        "nullable": true
+                    },
                     "certainty": {
                         "$ref": "#/components/schemas/DomainCertainty"
                     }
@@ -9878,6 +9886,14 @@
                         "format": "date-time",
                         "description": "The point in time, the record was created"
                     },
+                    "severity": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/FindingSeverity"
+                            }
+                        ],
+                        "nullable": true
+                    },
                     "certainty": {
                         "$ref": "#/components/schemas/HostCertainty"
                     }
@@ -10028,6 +10044,14 @@
                     "sources": {
                         "$ref": "#/components/schemas/SimpleAggregationSource"
                     },
+                    "severity": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/FindingSeverity"
+                            }
+                        ],
+                        "nullable": true
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time",
@@ -10168,6 +10192,14 @@
                     },
                     "sources": {
                         "$ref": "#/components/schemas/SimpleAggregationSource"
+                    },
+                    "severity": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/FindingSeverity"
+                            }
+                        ],
+                        "nullable": true
                     },
                     "created_at": {
                         "type": "string",
@@ -14224,6 +14256,114 @@
                             "type": {
                                 "type": "string",
                                 "enum": ["EditorChangedCursor"]
+                            }
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "description": "A finding has been updated",
+                        "required": ["workspace", "finding", "update", "type"],
+                        "properties": {
+                            "workspace": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The workspace the updated finding is in"
+                            },
+                            "finding": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The finding which has been updated"
+                            },
+                            "update": {
+                                "$ref": "#/components/schemas/UpdateFindingRequest"
+                            },
+                            "type": {
+                                "type": "string",
+                                "enum": ["UpdatedFinding"]
+                            }
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "description": "An affected has been added to a finding",
+                        "required": ["workspace", "finding", "affected_uuid", "affected_type", "type"],
+                        "properties": {
+                            "workspace": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The workspace the updated finding is in"
+                            },
+                            "finding": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The finding which has been updated"
+                            },
+                            "affected_uuid": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The affected's uuid"
+                            },
+                            "affected_type": {
+                                "$ref": "#/components/schemas/AggregationType"
+                            },
+                            "type": {
+                                "type": "string",
+                                "enum": ["AddedFindingAffected"]
+                            }
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "description": "A finding's affected has been updated",
+                        "required": ["workspace", "finding", "affected_uuid", "update", "type"],
+                        "properties": {
+                            "workspace": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The workspace the updated finding is in"
+                            },
+                            "finding": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The finding which has been updated"
+                            },
+                            "affected_uuid": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The affected's uuid"
+                            },
+                            "update": {
+                                "$ref": "#/components/schemas/UpdateFindingAffectedRequest"
+                            },
+                            "type": {
+                                "type": "string",
+                                "enum": ["UpdatedFindingAffected"]
+                            }
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "description": "An affected has been removed to a finding",
+                        "required": ["workspace", "finding", "affected_uuid", "type"],
+                        "properties": {
+                            "workspace": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The workspace the updated finding is in"
+                            },
+                            "finding": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The finding which has been updated"
+                            },
+                            "affected_uuid": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The affected's uuid"
+                            },
+                            "type": {
+                                "type": "string",
+                                "enum": ["RemovedFindingAffected"]
                             }
                         }
                     }
