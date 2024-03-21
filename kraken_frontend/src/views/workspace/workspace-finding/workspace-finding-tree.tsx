@@ -233,9 +233,9 @@ export function TreeGraph({
                     }
                 }
                 let res = {
-                    fx,
                     y: (overrideY ?? (nextY += 20)) + Math.random() * 10,
                     ...old.get(n.uuid),
+                    fx,
                     ...n,
                 };
                 if (forceRecalcX) res.fx = fx;
