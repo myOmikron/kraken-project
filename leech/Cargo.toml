@@ -76,7 +76,7 @@ surge-ping = { version = "~0.8" }
 rlimit = { version = "~0.10" }
 
 # http request library
-reqwest = { version = "~0.11", features = ["json", "trust-dns", "rustls-tls-native-roots"] }
+reqwest = { version = "~0.12", features = ["json", "trust-dns", "rustls-tls-native-roots"] }
 
 # dehashed api
 dehashed-rs = { version = "~0.4", features = ["tokio"] }
