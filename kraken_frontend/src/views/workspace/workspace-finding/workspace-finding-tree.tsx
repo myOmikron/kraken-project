@@ -10,6 +10,7 @@ import {
     SimpleFindingDefinition,
     SimpleTag,
 } from "../../../api/generated";
+import SeverityIcon from "../../../svg/severity";
 import TagList, { TagClickCallback } from "../components/tag-list";
 import { Viewport, ViewportProps, ViewportRef } from "../components/viewport";
 
@@ -343,25 +344,6 @@ const TreeNode = forwardRef<
         onClick?: React.MouseEventHandler<HTMLDivElement>;
     }
 >(({ node, onClickTag, className, onPointerEnter, onPointerLeave, onClick }, ref) => {
-    function getSeverityColor(node: TreeNode): { color: string; backgroundColor: string } {
-        if (node.type != "Finding") return { backgroundColor: "#00ccff40", color: "white" };
-        switch (node.severity) {
-            case "Okay":
-                return { backgroundColor: "#00ff8840", color: "white" };
-            case "Low":
-                return { backgroundColor: "#ffcc0040", color: "white" };
-            case "Medium":
-                return { backgroundColor: "#ff6a0040", color: "white" };
-            case "High":
-                return { backgroundColor: "#ff000040", color: "white" };
-            case "Critical":
-                return { backgroundColor: "#9900ff40", color: "white" };
-            default:
-                const exhaustiveCheck: never = node.severity;
-                throw new Error(`Unhandled severity: ${exhaustiveCheck}`);
-        }
-    }
-
     let name: string;
     let tags: SimpleTag[] | undefined;
     switch (node.type) {
@@ -393,20 +375,31 @@ const TreeNode = forwardRef<
     return (
         <div
             data-uuid={node.uuid}
-            className={`tree-node ` + className}
+            className={`
+                tree-node
+                node-${node.type}
+                ${node.type === "Finding" ? "severity-" + node.severity : ""}
+                ${className}
+            `}
             ref={ref}
             onPointerEnter={onPointerEnter}
             onPointerLeave={onPointerLeave}
             onClick={onClick}
         >
             <div className="tree-node-content">
-                <div className="tree-node-heading" style={getSeverityColor(node)}>
+                <div className="tree-node-heading">
                     <span>{name}</span>
                 </div>
-                <span className="tree-node-type">{node.type}</span>
-                <div className="tree-node-body">
-                    {node.type != "Finding" && <TagList tags={tags!} onClickTag={onClickTag} />}
-                </div>
+                {node.type == "Finding" ? (
+                    <div className="tree-node-body">
+                        <SeverityIcon severity={node.severity} />
+                        <b>Severity: {node.severity}</b>
+                    </div>
+                ) : (
+                    <div className={`tree-node-body ${tags!.length == 0 ? "empty" : ""}`}>
+                        <TagList tags={tags!} onClickTag={onClickTag} />
+                    </div>
+                )}
             </div>
         </div>
     );

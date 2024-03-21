@@ -226,6 +226,70 @@
     gap: 0.5em;
 }
 
+.workspace-findings-graph .tree-node.node-Domain > .tree-node-content > .tree-node-heading {
+    background-color: #00c49340;
+    color: white;
+}
+
+.workspace-findings-graph .tree-node.node-Host > .tree-node-content > .tree-node-heading {
+    background-color: #0066ff40;
+    color: white;
+}
+
+.workspace-findings-graph .tree-node.node-Service > .tree-node-content > .tree-node-heading {
+    background-color: #00c5e740;
+    color: white;
+}
+
+.workspace-findings-graph .tree-node.node-Port > .tree-node-content > .tree-node-heading {
+    background-color: #c300ff40;
+    color: white;
+}
+
+.workspace-findings-graph .tree-node.node-Finding > .tree-node-content > .tree-node-heading {
+    background-color: #ff6a0040;
+    color: white;
+}
+
+.workspace-findings-graph .tree-node.node-Finding > .tree-node-content > .tree-node-body {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.workspace-findings-graph .tree-node.node-Finding.severity-Okay {
+    --severity: var(--severity-ok-op);
+}
+
+.workspace-findings-graph .tree-node.node-Finding.severity-Low {
+    --severity: var(--severity-low-op);
+}
+
+.workspace-findings-graph .tree-node.node-Finding.severity-Medium {
+    --severity: var(--severity-medium-op);
+}
+
+.workspace-findings-graph .tree-node.node-Finding.severity-High {
+    --severity: var(--severity-high-op);
+}
+
+.workspace-findings-graph .tree-node.node-Finding.severity-Critical {
+    --severity: var(--severity-critical-op);
+}
+
+.workspace-findings-graph .tree-node.node-Finding {
+    background: radial-gradient(at bottom right, var(--severity, transparent), transparent 50%);
+    background-color: var(--level-1-opaque, transparent);
+}
+
+.workspace-findings-graph .tree-node > .tree-node-content > .tree-node-body.empty {
+    display: none;
+}
+
+.workspace-findings-graph .tree-node.node-Finding > .tree-node-content > .tree-node-body .icon svg {
+    height: 24px;
+}
+
 .create-finding-header {
     display: grid;
     grid-template-columns: 1fr 1fr;
