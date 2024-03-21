@@ -225,7 +225,9 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                                 mutator.insertDomainSimple(node, c),
                             );
                             relations.ports.forEach((c) => mutator.insertPortSimple(node, c));
-                            relations.services.forEach((c) => mutator.insertServiceSimple(node, c));
+                            relations.services
+                                .filter((s) => !s.port || !relations.ports.some((rp) => rp.uuid == s.port))
+                                .forEach((c) => mutator.insertServiceSimple(node, c));
                         }),
                     );
                 },
@@ -246,7 +248,9 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                     );
                     api.relationsForService(service.uuid).then(
                         handleApiError((relations) => {
-                            mutator.insertHostSimple(node, relations.host);
+                            if (relations.port && relations.port.host == relations.host.uuid) {
+                                // don't make graph cyclic here
+                            } else mutator.insertHostSimple(node, relations.host);
                             if (relations.port) mutator.insertPortSimple(node, relations.port);
                         }),
                     );
