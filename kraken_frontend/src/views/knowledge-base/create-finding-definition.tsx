@@ -105,9 +105,9 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                                     references: sections.References.value,
                                 })
                                 .then(
-                                    handleApiError(({ uuid }) => {
+                                    handleApiError(() => {
                                         toast.success("Created finding definition");
-                                        ROUTES.FINDING_DEFINITION_EDIT.visit({ uuid });
+                                        ROUTES.FINDING_DEFINITION_LIST.visit({});
                                     }),
                                 )
                         }

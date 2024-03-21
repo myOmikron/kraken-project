@@ -44,6 +44,9 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 import { FindingDefinitionDetails } from "./workspace-create-finding";
 import WorkspaceFindingDataTable from "./workspace-finding-data-table";
 import EditingTreeGraph from "./workspace-finding-editing-tree";
+import WorkspaceFindingTable from "./workspace-finding-table";
+import ArrowLeftIcon from "../../../svg/arrow-left";
+import { ROUTES } from "../../../routes";
 
 export type WorkspaceEditFindingProps = {
     /** The finding's uuid */
@@ -195,6 +198,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     return (
         <div className="pane">
             <div className="workspace-findings-selection-info">
+                <ArrowLeftIcon title={"Back"} {...ROUTES.WORKSPACE_FINDINGS_LIST.clickHandler({ uuid: workspace })} />
                 <h1 className="heading">Edit finding</h1>
             </div>
             <div className="create-finding-container">

@@ -258,7 +258,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                                     .then(handleApiError()),
                                             ),
                                         );
-                                        ROUTES.WORKSPACE_FINDINGS_EDIT.visit({ wUuid: workspace, fUuid: uuid });
+                                        ROUTES.WORKSPACE_FINDINGS_LIST.visit({ uuid: workspace });
+                                        toast.success("Created finding");
                                     }),
                                 );
                         }}
