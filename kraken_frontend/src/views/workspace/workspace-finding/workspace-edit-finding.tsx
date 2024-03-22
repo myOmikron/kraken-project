@@ -210,7 +210,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         </h2>
 
                         <SelectPrimitive
-                            value={severity}
+                            value={hoveredFindingDef?.severity || severity}
                             options={Object.values(FindingSeverity)}
                             onChange={(value) => {
                                 if (value) {
@@ -223,13 +223,13 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         />
                         <SelectFindingDefinition
                             selected={findingDef?.uuid}
-                            onSelect={(value) => {
-                                setFindingDef(value);
+                            onSelect={(newDef) => {
+                                setFindingDef(newDef);
+                                setSeverity(newDef.severity);
                                 Api.workspaces.findings
-                                    .update(workspace, finding, { definition: value.uuid })
+                                    .update(workspace, finding, { definition: newDef.uuid })
                                     .then(handleApiError);
                             }}
-                            hovered={hoveredFindingDef?.uuid}
                             onHover={setHoveredFindingDef}
                         />
                     </div>

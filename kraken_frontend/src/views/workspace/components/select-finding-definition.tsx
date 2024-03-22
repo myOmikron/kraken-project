@@ -12,13 +12,12 @@ import "../../../styling/select-finding-definition.css";
 export type SelectFindingDefinitionProps = {
     selected: string | undefined;
     onSelect: (newSelected: SimpleFindingDefinition) => void;
-    hovered: string | undefined;
     onHover: (newHovered: SimpleFindingDefinition | undefined) => void;
     required?: boolean;
 };
 
 export default function SelectFindingDefinition(props: SelectFindingDefinitionProps) {
-    const { selected, onSelect, hovered, onHover, required } = props;
+    const { selected, onSelect, onHover, required } = props;
 
     const [newDefinition, setNewDefinition] = React.useState<string>();
     const [definitions, setDefinitions] = React.useState([] as Array<SimpleFindingDefinition>); // all definitions
@@ -49,10 +48,15 @@ export default function SelectFindingDefinition(props: SelectFindingDefinitionPr
                 getOptionValue={({ uuid }) => uuid}
                 value={definitions.find(({ uuid }) => uuid === selected) ?? null}
                 onChange={(value) => {
+                    onHover(undefined);
                     if (value) onSelect(value);
                 }}
                 onCreateOption={(name) => setNewDefinition(name)}
                 components={{
+                    SelectContainer: (props) => {
+                        props.innerProps.onMouseOut = () => onHover(undefined);
+                        return components.SelectContainer(props);
+                    },
                     Option: ({ children, ...props }) => {
                         if ("value" in props.data) {
                             return (

@@ -270,20 +270,16 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                             </h2>
 
                             <SelectPrimitive
-                                value={severity}
-                                options={[
-                                    FindingSeverity.Okay,
-                                    FindingSeverity.Low,
-                                    FindingSeverity.Medium,
-                                    FindingSeverity.High,
-                                    FindingSeverity.Critical,
-                                ]}
+                                value={hoveredFindingDef?.severity || severity}
+                                options={Object.values(FindingSeverity)}
                                 onChange={(value) => setSeverity(value || severity)}
                             />
                             <SelectFindingDefinition
                                 selected={findingDef?.uuid}
-                                onSelect={setFindingDef}
-                                hovered={hoveredFindingDef?.uuid}
+                                onSelect={(newDef) => {
+                                    setFindingDef(newDef);
+                                    setSeverity(newDef.severity);
+                                }}
                                 onHover={setHoveredFindingDef}
                             />
                         </div>
