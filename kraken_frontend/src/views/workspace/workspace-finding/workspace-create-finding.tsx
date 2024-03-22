@@ -3,6 +3,7 @@ import React from "react";
 import { toast } from "react-toastify";
 import { Api } from "../../../api/api";
 import {
+    AggregationType,
     CreateFindingAffectedRequest,
     FindingSeverity,
     FullDomain,
@@ -33,10 +34,18 @@ import SelectFindingDefinition from "../components/select-finding-definition";
 import ServiceName from "../components/service";
 import TagList from "../components/tag-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
+import WorkspaceFindingDataTable from "./workspace-finding-data-table";
 import EditingTreeGraph from "./workspace-finding-editing-tree";
-import WorkspaceFindingTable from "./workspace-finding-table";
 
-export type CreateFindingProps = {};
+export type CreateFindingObject =
+    | { domain: FullDomain }
+    | { host: FullHost }
+    | { service: FullService }
+    | { port: FullPort };
+
+export type CreateFindingProps = {
+    initAffected?: CreateFindingObject[];
+};
 
 type LocalAffected = CreateFindingAffectedRequest & {
     _localScreenshot?: File;
@@ -62,7 +71,16 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
     const [hoveredFindingDef, setHoveredFindingDef] = React.useState<SimpleFindingDefinition>();
     const [details, setDetails] = React.useState<string>("");
 
-    const [affected, setAffected] = React.useState<Array<LocalAffected>>([]);
+    const [affected, setAffected] = React.useState<Array<LocalAffected>>(
+        (props.initAffected ?? []).map((a) => {
+            let type = getCreateAffectedType(a);
+            let data = getCreateAffectedData(a);
+            return {
+                _data: data satisfies LocalAffected["_data"],
+                type: type satisfies LocalAffected["type"],
+            } as LocalAffected;
+        }),
+    );
 
     const [logFile, setLogFile] = React.useState<File>();
     const [screenshot, setScreenshot] = React.useState<File>();
@@ -110,7 +128,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
             case "affected":
                 return (
                     <div className="workspace-finding-data-table">
-                        <WorkspaceFindingTable
+                        <WorkspaceFindingDataTable
                             hideUuids={affected.map((a) => a._data.uuid)}
                             onAddDomain={(d) =>
                                 addAffected({
@@ -305,95 +323,52 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                             >
                                 <div className="affected-list">
                                     {affected.length > 0 ? (
-                                        affected.map((a, index) => {
-                                            const label =
-                                                a.type == "Domain" ? (
-                                                    <Domain domain={a._data} pretty />
-                                                ) : a.type == "Host" ? (
-                                                    <IpAddr host={a._data} pretty />
-                                                ) : a.type == "Port" ? (
-                                                    <PortNumber port={a._data} pretty />
-                                                ) : a.type == "Service" ? (
-                                                    <ServiceName service={a._data} pretty />
-                                                ) : (
-                                                    "not implemented"
-                                                );
-
-                                            return (
-                                                <div className={`affected affected-${a.type}`}>
-                                                    <div className="name">
-                                                        <div
-                                                            title={"Remove affected"}
-                                                            className="remove"
-                                                            onClick={() => {
-                                                                let copy = [...affected];
-                                                                copy.splice(index, 1);
-                                                                setAffected(copy);
-                                                            }}
-                                                        >
-                                                            <CloseIcon />
-                                                        </div>
-                                                        {label}
-                                                    </div>
-                                                    <MarkdownEditorPopup
-                                                        label={label}
-                                                        content={a.details || ""}
-                                                        onChange={(d) => {
-                                                            setAffected((affected) =>
-                                                                affected.map((orig) =>
-                                                                    orig.uuid == a.uuid
-                                                                        ? {
-                                                                              ...orig,
-                                                                              details: d,
-                                                                          }
-                                                                        : orig,
-                                                                ),
-                                                            );
-                                                        }}
-                                                    />
-                                                    <TagList tags={a._data.tags} />
-                                                    <FileInput
-                                                        image
-                                                        shortText
-                                                        className="screenshot"
-                                                        file={a._localScreenshot}
-                                                        onChange={(v) => {
-                                                            setAffected((affected) =>
-                                                                affected.map((orig) =>
-                                                                    orig.uuid == a.uuid
-                                                                        ? {
-                                                                              ...orig,
-                                                                              _localScreenshot: v,
-                                                                          }
-                                                                        : orig,
-                                                                ),
-                                                            );
-                                                        }}
-                                                    >
-                                                        <ScreenshotIcon />
-                                                    </FileInput>
-                                                    <FileInput
-                                                        shortText
-                                                        className="logfile"
-                                                        file={a._localLogFile}
-                                                        onChange={(f) => {
-                                                            setAffected((affected) =>
-                                                                affected.map((orig) =>
-                                                                    orig.uuid == a.uuid
-                                                                        ? {
-                                                                              ...orig,
-                                                                              _localLogFile: f,
-                                                                          }
-                                                                        : orig,
-                                                                ),
-                                                            );
-                                                        }}
-                                                    >
-                                                        <FileIcon />
-                                                    </FileInput>
-                                                </div>
-                                            );
-                                        })
+                                        affected.map((a, index) => (
+                                            <CreateFindingAffected
+                                                affected={a}
+                                                onRemove={() => {
+                                                    let copy = [...affected];
+                                                    copy.splice(index, 1);
+                                                    setAffected(copy);
+                                                }}
+                                                onChangeDetails={(d) => {
+                                                    setAffected((affected) =>
+                                                        affected.map((orig) =>
+                                                            orig.uuid == a.uuid
+                                                                ? {
+                                                                      ...orig,
+                                                                      details: d,
+                                                                  }
+                                                                : orig,
+                                                        ),
+                                                    );
+                                                }}
+                                                onChangeScreenshot={(v) => {
+                                                    setAffected((affected) =>
+                                                        affected.map((orig) =>
+                                                            orig.uuid == a.uuid
+                                                                ? {
+                                                                      ...orig,
+                                                                      _localScreenshot: v,
+                                                                  }
+                                                                : orig,
+                                                        ),
+                                                    );
+                                                }}
+                                                onChangeLogFile={(f) => {
+                                                    setAffected((affected) =>
+                                                        affected.map((orig) =>
+                                                            orig.uuid == a.uuid
+                                                                ? {
+                                                                      ...orig,
+                                                                      _localLogFile: f,
+                                                                  }
+                                                                : orig,
+                                                        ),
+                                                    );
+                                                }}
+                                            />
+                                        ))
                                     ) : (
                                         <p>No affected items yet</p>
                                     )}
@@ -460,6 +435,98 @@ export function FindingDefinitionDetails(props: SimpleFindingDefinition) {
                 {name} <small>{severity}</small>
             </h1>
             <p>{summary}</p>
+        </div>
+    );
+}
+
+function isAffectedDomain(obj: CreateFindingObject): obj is { domain: FullDomain } {
+    return "domain" in obj && obj["domain"] !== undefined;
+}
+
+function isAffectedHost(obj: CreateFindingObject): obj is { host: FullHost } {
+    return "host" in obj && obj["host"] !== undefined;
+}
+
+function isAffectedPort(obj: CreateFindingObject): obj is { port: FullPort } {
+    return "port" in obj && obj["port"] !== undefined;
+}
+
+function isAffectedService(obj: CreateFindingObject): obj is { service: FullService } {
+    return "service" in obj && obj["service"] !== undefined;
+}
+
+export function getCreateAffectedType(affected: CreateFindingObject): AggregationType {
+    if (isAffectedDomain(affected)) return AggregationType.Domain;
+    if (isAffectedHost(affected)) return AggregationType.Host;
+    if (isAffectedPort(affected)) return AggregationType.Port;
+    else return AggregationType.Service;
+}
+
+export function getCreateAffectedData(affected: CreateFindingObject) {
+    if (isAffectedDomain(affected)) return affected.domain;
+    if (isAffectedHost(affected)) return affected.host;
+    if (isAffectedPort(affected)) return affected.port;
+    else return affected.service;
+}
+
+export function CreateFindingAffected({
+    affected: a,
+    onRemove,
+    onChangeDetails,
+    onChangeScreenshot,
+    onChangeLogFile,
+}: {
+    affected: LocalAffected;
+    onRemove?: () => void;
+    onChangeDetails?: (content: string) => void;
+    onChangeScreenshot?: (newFile: File | undefined) => void;
+    onChangeLogFile?: (newFile: File | undefined) => void;
+}) {
+    const label =
+        a.type == "Domain" ? (
+            <Domain domain={a._data} pretty />
+        ) : a.type == "Host" ? (
+            <IpAddr host={a._data} pretty />
+        ) : a.type == "Port" ? (
+            <PortNumber port={a._data} pretty />
+        ) : a.type == "Service" ? (
+            <ServiceName service={a._data} pretty />
+        ) : (
+            "not implemented"
+        );
+
+    const noop = () => {};
+
+    return (
+        <div className={`create-finding-affected affected affected-${a.type}`}>
+            <div className="name">
+                {onRemove && (
+                    <div title={"Remove affected"} className="remove" onClick={() => onRemove()}>
+                        <CloseIcon />
+                    </div>
+                )}
+                {label}
+            </div>
+            {(a.details || onChangeDetails) && (
+                <MarkdownEditorPopup label={label} content={a.details || ""} onChange={onChangeDetails ?? noop} />
+            )}
+            <TagList tags={a._data.tags} />
+            {(a._localScreenshot || onChangeScreenshot) && (
+                <FileInput
+                    image
+                    shortText
+                    className="screenshot"
+                    file={a._localScreenshot}
+                    onChange={onChangeScreenshot ?? noop}
+                >
+                    <ScreenshotIcon />
+                </FileInput>
+            )}
+            {(a._localLogFile || onChangeLogFile) && (
+                <FileInput shortText className="logfile" file={a._localLogFile} onChange={onChangeLogFile ?? noop}>
+                    <FileIcon />
+                </FileInput>
+            )}
         </div>
     );
 }

@@ -1,29 +1,33 @@
-import Home from "./views/home";
-import React from "react";
+import { AggregationType } from "./api/generated";
+import AdminGuard from "./components/admin-guard";
 import { Router } from "./utils/router";
-import KrakenNetwork from "./views/kraken-network";
-import Me from "./views/me";
 import AdminUsers from "./views/admin/users";
 import AdminWorkspaces from "./views/admin/workspaces";
-import AdminGuard from "./components/admin-guard";
-import WorkspaceOverview from "./views/workspace-overview";
-import OauthRequest from "./views/oauth-request";
-import { ContentWithMenu } from "./views/menu";
-import Settings from "./views/settings";
-import Workspace from "./views/workspace/workspace";
-import WorkspaceSettings from "./views/workspace/workspace-settings";
-import WorkspaceData from "./views/workspace/workspace-data";
-import WorkspaceAttacks, { TargetType } from "./views/workspace/workspace-attacks";
-import WorkspaceHosts from "./views/workspace/workspace-hosts";
-import WorkspaceHost from "./views/workspace/workspace-host";
+import Home from "./views/home";
 import KnowledgeBase from "./views/knowledge-base";
 import { CreateFindingDefinition } from "./views/knowledge-base/create-finding-definition";
 import { EditFindingDefinition } from "./views/knowledge-base/edit-finding-definition";
 import { ListFindingDefinition } from "./views/knowledge-base/list-finding-definition";
-import WorkspaceNotes from "./views/workspace/workspace-notes";
-import WorkspaceFindings from "./views/workspace/workspace-findings";
-import { WorkspaceCreateFinding } from "./views/workspace/workspace-finding/workspace-create-finding";
+import KrakenNetwork from "./views/kraken-network";
+import Me from "./views/me";
+import { ContentWithMenu } from "./views/menu";
+import OauthRequest from "./views/oauth-request";
+import Settings from "./views/settings";
+import WorkspaceOverview from "./views/workspace-overview";
+import Workspace from "./views/workspace/workspace";
+import WorkspaceAttacks, { TargetType } from "./views/workspace/workspace-attacks";
+import WorkspaceData from "./views/workspace/workspace-data";
+import {
+    CreateFindingObject,
+    WorkspaceCreateFinding,
+} from "./views/workspace/workspace-finding/workspace-create-finding";
 import WorkspaceEditFinding from "./views/workspace/workspace-finding/workspace-edit-finding";
+import WorkspaceFindings from "./views/workspace/workspace-findings";
+import WorkspaceFindingsQuickAttach from "./views/workspace/workspace-findings-quick-attach";
+import WorkspaceHost from "./views/workspace/workspace-host";
+import WorkspaceHosts from "./views/workspace/workspace-hosts";
+import WorkspaceNotes from "./views/workspace/workspace-notes";
+import WorkspaceSettings from "./views/workspace/workspace-settings";
 
 export const ROUTER = new Router();
 
@@ -144,6 +148,17 @@ export const ROUTES = {
             </ContentWithMenu>
         ),
     }),
+    WORKSPACE_FINDINGS_QUICK_ATTACH: ROUTER.add({
+        url: "workspaces/{workspace}/findings/attach/{type}/{uuid}",
+        parser: { workspace: String, type: String, uuid: String },
+        render: ({ workspace, type, uuid }) => (
+            <ContentWithMenu>
+                <Workspace uuid={workspace} view={"findings"}>
+                    <WorkspaceFindingsQuickAttach type={type as AggregationType} uuid={uuid} />
+                </Workspace>
+            </ContentWithMenu>
+        ),
+    }),
     WORKSPACE_FINDINGS_GRAPH: ROUTER.add({
         url: "workspaces/{uuid}/findings/graph",
         parser: { uuid: String },
@@ -155,13 +170,13 @@ export const ROUTES = {
             </ContentWithMenu>
         ),
     }),
-    WORKSPACE_FINDINGS_CREATE: ROUTER.add({
+    WORKSPACE_FINDINGS_CREATE: ROUTER.add<{ uuid: string }, { affected: CreateFindingObject[] }>({
         url: "workspaces/{uuid}/findings/create",
         parser: { uuid: String },
-        render: ({ uuid }) => (
+        render: ({ uuid }, hiddenParams) => (
             <ContentWithMenu>
                 <Workspace uuid={uuid} view={"findings"}>
-                    <WorkspaceCreateFinding />
+                    <WorkspaceCreateFinding initAffected={hiddenParams ? hiddenParams.affected : []} />
                 </Workspace>
             </ContentWithMenu>
         ),

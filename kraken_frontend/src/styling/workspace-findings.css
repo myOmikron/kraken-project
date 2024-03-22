@@ -1,6 +1,33 @@
 .workspace-findings-layout {
-    display: grid;
-    grid-template-rows: 2.5em 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.workspace-findings-layout > :nth-child(1) {
+    height: 2.5em;
+}
+
+.workspace-findings-layout > :nth-child(2) {
+    flex-grow: 1;
+}
+
+.workspace-findings-layout > .selected-affected {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 1em;
+    height: min-content;
+}
+
+.workspace-findings-layout > .selected-affected > span {
+    padding-bottom: 1ex;
+    font-weight: bold;
+}
+
+.workspace-findings-layout > .selected-affected > .affected {
+    width: 600px;
+    max-width: 100%;
 }
 
 .workspace-findings-body {

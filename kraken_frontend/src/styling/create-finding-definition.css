@@ -71,7 +71,7 @@
     padding: 1em 0;
 }
 
-.affected-list > .affected {
+.create-finding-affected {
     position: relative;
     min-width: 350px;
     display: grid;
@@ -89,24 +89,24 @@
     justify-content: start;
 }
 
-.affected-list > .affected-Domain {
+.create-finding-affected.affected-Domain {
     --accent: #00c49322;
 }
 
-.affected-list > .affected-Host {
+.create-finding-affected.affected-Host {
     --accent: #00c5e722;
 }
 
-.affected-list > .affected-Port {
+.create-finding-affected.affected-Port {
     --accent: #0066ff22;
 }
 
-.affected-list > .affected-Service {
+.create-finding-affected.affected-Service {
     --accent: #c300ff22;
 }
 
-.affected-list > .affected > .screenshot,
-.affected-list > .affected > .logfile {
+.create-finding-affected > .screenshot,
+.create-finding-affected > .logfile {
     border: 1px solid var(--accent);
     height: 100%;
     border-radius: 4px;
@@ -119,26 +119,33 @@
     background-color: var(--accent);
 }
 
-.affected-list > .affected > .screenshot {
+.create-finding-affected > .tag-list {
+    grid-row: 3 / span 1;
+    grid-column: 1 / span 1;
+}
+
+.create-finding-affected > .screenshot {
     grid-row: 1 / span 3;
     grid-column: 2 / span 1;
 }
 
-.affected-list > .affected > .screenshot span,
-.affected-list > .affected > .logfile span {
+.create-finding-affected > .screenshot span,
+.create-finding-affected > .logfile span {
     padding: 0;
 }
 
-.affected-list > .affected > .logfile {
+.create-finding-affected > .logfile {
     grid-row: 1 / span 3;
     grid-column: 3 / span 1;
 }
 
-.affected-list > .affected svg {
+.create-finding-affected .icon > svg {
     height: 24px;
 }
 
-.affected-list > .affected > .details {
+.create-finding-affected > .details {
+    grid-row: 2 / span 1;
+    grid-column: 1 / span 1;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -146,11 +153,11 @@
     margin-left: 0.5em;
 }
 
-.affected-list > .affected > .details > .icon:hover {
+.create-finding-affected > .details > .icon:hover {
     cursor: pointer;
 }
 
-.affected > .name > .remove {
+.create-finding-affected > .name > .remove {
     opacity: 70%;
     width: 1.5em;
     height: 1.5em;
@@ -160,11 +167,11 @@
     justify-content: center;
 }
 
-.affected > .name > .remove {
+.create-finding-affected > .name > .remove {
     cursor: pointer;
 }
 
-.affected .name {
+.create-finding-affected .name {
     display: flex;
     flex-direction: row;
     gap: 0.5em;

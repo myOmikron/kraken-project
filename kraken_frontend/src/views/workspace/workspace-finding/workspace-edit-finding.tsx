@@ -42,8 +42,8 @@ import ServiceName from "../components/service";
 import TagList from "../components/tag-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import { FindingDefinitionDetails } from "./workspace-create-finding";
+import WorkspaceFindingDataTable from "./workspace-finding-data-table";
 import EditingTreeGraph from "./workspace-finding-editing-tree";
-import WorkspaceFindingTable from "./workspace-finding-table";
 
 export type WorkspaceEditFindingProps = {
     /** The finding's uuid */
@@ -313,7 +313,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                         .map(([affectedUuid, fullAffected]) => (
                                             <div
                                                 key={affectedUuid}
-                                                className={`affected affected-${getAffectedType(fullAffected)}`}
+                                                className={`create-finding-affected affected affected-${getAffectedType(fullAffected)}`}
                                             >
                                                 <div className="name">
                                                     <div
@@ -491,7 +491,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                         );
                                 return (
                                     <div className="workspace-finding-data-table">
-                                        <WorkspaceFindingTable
+                                        <WorkspaceFindingDataTable
                                             hideUuids={Object.keys(affected)}
                                             onAddDomain={({ uuid }) => addAffected(uuid, AggregationType.Domain)}
                                             onAddHost={({ uuid }) => addAffected(uuid, AggregationType.Host)}
@@ -603,14 +603,14 @@ function isAffectedService(obj: FindingAffectedObject): obj is FindingAffectedOb
     return "service" in obj && obj["service"] !== undefined;
 }
 
-export function getAffectedType({ affected }: FullFindingAffected): AggregationType {
+export function getAffectedType({ affected }: { affected: FindingAffectedObject }): AggregationType {
     if (isAffectedDomain(affected)) return AggregationType.Domain;
     if (isAffectedHost(affected)) return AggregationType.Host;
     if (isAffectedPort(affected)) return AggregationType.Port;
     else return AggregationType.Service;
 }
 
-export function getAffectedData({ affected }: FullFindingAffected) {
+export function getAffectedData({ affected }: { affected: FindingAffectedObject }) {
     if (isAffectedDomain(affected)) return affected.domain;
     if (isAffectedHost(affected)) return affected.host;
     if (isAffectedPort(affected)) return affected.port;

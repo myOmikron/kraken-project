@@ -11,7 +11,9 @@ import "../../styling/tabs.css";
 import "../../styling/workspace-data.css";
 import AttackIcon from "../../svg/attack";
 import ClockActivityIcon from "../../svg/clock-activity";
+import FindingIcon from "../../svg/finding";
 import LinkIcon from "../../svg/link";
+import PlusIcon from "../../svg/plus";
 import TagIcon from "../../svg/tag";
 import { ObjectFns, handleApiError } from "../../utils/helper";
 import CertaintyIcon from "./components/certainty-icon";
@@ -35,6 +37,12 @@ import { WorkspaceDataDomainDetails } from "./workspace-data/workspace-data-doma
 import { WorkspaceDataHostDetails } from "./workspace-data/workspace-data-host-details";
 import { WorkspaceDataPortDetails } from "./workspace-data/workspace-data-port-details";
 import { WorkspaceDataServiceDetails } from "./workspace-data/workspace-data-service-details";
+import {
+    CreateFindingObject,
+    getCreateAffectedData,
+    getCreateAffectedType,
+} from "./workspace-finding/workspace-create-finding";
+import WorkspaceFindingsQuickAttach from "./workspace-findings-quick-attach";
 
 const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations", findings: "Findings" };
@@ -57,6 +65,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
         ports: {},
         services: {},
     });
+    const [attaching, setAttaching] = React.useState<CreateFindingObject>();
 
     const globalFilter = useFilter(workspace, "global");
     const domainFilter = useFilter(workspace, "domain");
@@ -108,6 +117,49 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
     React.useEffect(() => hostsTable.setOffset(0), [hostFilter.applied]);
     React.useEffect(() => portsTable.setOffset(0), [portFilter.applied]);
     React.useEffect(() => servicesTable.setOffset(0), [serviceFilter.applied]);
+
+    function findingActions(item: CreateFindingObject): ContextMenuEntry[] {
+        return [
+            {
+                icon: <FindingIcon />,
+                group: "Finding",
+                items: [
+                    [
+                        <>
+                            <PlusIcon />
+                            New with affected
+                        </>,
+                        (e) => {
+                            // TODO: open in new tab, with hidden data, when e.ctrlKey
+                            ROUTES.WORKSPACE_FINDINGS_CREATE.visit(
+                                {
+                                    uuid: workspace,
+                                },
+                                {
+                                    affected: [item],
+                                },
+                            );
+                        },
+                    ],
+                    [
+                        <>
+                            <LinkIcon />
+                            Add to affected...
+                        </>,
+                        (e) => {
+                            if (e.ctrlKey)
+                                ROUTES.WORKSPACE_FINDINGS_QUICK_ATTACH.open({
+                                    workspace,
+                                    type: getCreateAffectedType(item),
+                                    uuid: getCreateAffectedData(item).uuid,
+                                });
+                            else setAttaching(item);
+                        },
+                    ],
+                ],
+            },
+        ];
+    }
 
     function copyTagsAction(tags: SimpleTag[], filter: FilterOutput): PlainMenuItem {
         return [
@@ -250,6 +302,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     setSelected({ type: "domains", uuid: domain.uuid });
                                 }}
                                 menu={[
+                                    ...findingActions({ domain }),
                                     /* TODO: certainty filter, then uncomment this:
                                     [
                                         <>
@@ -337,6 +390,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     setSelected({ type: "hosts", uuid: host.uuid });
                                 }}
                                 menu={[
+                                    ...findingActions({ host }),
                                     copyTagsAction(host.tags, hostFilter),
                                     filterAction(hostFilter, "os", host.osType, { icon: <OsIcon os={host.osType} /> }),
                                     () =>
@@ -435,6 +489,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     setSelected({ type: "ports", uuid: port.uuid });
                                 }}
                                 menu={[
+                                    ...findingActions({ port }),
                                     copyTagsAction(port.tags, portFilter),
                                     filterAction(portFilter, "ports", port.port + ""),
                                     filterAction(portFilter, "ips", port.host.ipAddr),
@@ -520,6 +575,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     setSelected({ type: "services", uuid: service.uuid });
                                 }}
                                 menu={[
+                                    ...findingActions({ service }),
                                     copyTagsAction(service.tags, serviceFilter),
                                     filterAction(serviceFilter, "service", service.name),
                                     filterAction(serviceFilter, "ips", service.host.ipAddr),
@@ -743,6 +799,19 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
             <Popup nested modal open={createForm !== null} onClose={() => setCreateForm(null)}>
                 {createElement}
             </Popup>
+            {attaching && (
+                <Popup nested modal open onClose={() => setAttaching(undefined)}>
+                    <div className="pane-thin">
+                        <WorkspaceFindingsQuickAttach
+                            type={getCreateAffectedType(attaching)}
+                            data={getCreateAffectedData(attaching)}
+                            onAttached={(f, wantMore) => {
+                                if (!wantMore) setAttaching(undefined);
+                            }}
+                        />
+                    </div>
+                </Popup>
+            )}
         </>
     );
 }
@@ -925,8 +994,8 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                 </button>
             </div>
             <Popup
-                modal={true}
-                nested={true}
+                modal
+                nested
                 open={deleteData}
                 onClose={() => {
                     setDeleteData(false);
