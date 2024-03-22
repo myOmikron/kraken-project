@@ -112,11 +112,11 @@ export function TreeGraph({
         );
     };
 
-    const unsetHovered = (uuid: string) => {
+    const unsetHovered = (uuid?: string) => {
         clearTimeout(hoverDebounceTimer.current);
         hoverDebounceTimer.current = setTimeout(function () {
             setHoveredUuid((prev) => {
-                if (prev == uuid) {
+                if (uuid === undefined || prev == uuid) {
                     setHighlighted([]);
                     return undefined;
                 }
@@ -392,6 +392,9 @@ export function TreeGraph({
             `}
             ref={viewportRef}
             connections={connections}
+            onMouseMoveBackground={() => {
+                unsetHovered();
+            }}
         >
             {roots.flatMap((root) =>
                 flatMapTree(root, (n) =>

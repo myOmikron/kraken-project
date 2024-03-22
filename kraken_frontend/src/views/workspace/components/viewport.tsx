@@ -21,6 +21,9 @@ export type ViewportProps = {
     initialZoom?: number;
     /// Extra elements inserted after the pane
     decoration?: React.ReactNode;
+
+    onMouseMoveBackground?: React.MouseEventHandler<HTMLDivElement>;
+    onClickBackground?: React.MouseEventHandler<HTMLDivElement>;
 } & HTMLAttributes<HTMLDivElement>;
 
 export type ViewportRef = {
@@ -152,7 +155,27 @@ export const Viewport = forwardRef(
         );
 
         return (
-            <div className={`viewport ${className}`} {...props} ref={ref}>
+            <div
+                className={`viewport ${className}`}
+                {...props}
+                ref={ref}
+                onClick={
+                    props.onClick || props.onClickBackground
+                        ? (e) => {
+                              props.onClick?.(e);
+                              if (isBackground(e.target as HTMLElement)) props.onClickBackground?.(e);
+                          }
+                        : undefined
+                }
+                onMouseMove={
+                    props.onMouseMove || props.onMouseMoveBackground
+                        ? (e) => {
+                              props.onMouseMove?.(e);
+                              if (isBackground(e.target as HTMLElement)) props.onMouseMoveBackground?.(e);
+                          }
+                        : undefined
+                }
+            >
                 <div
                     className="pane"
                     style={
