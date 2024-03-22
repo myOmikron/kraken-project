@@ -117,7 +117,7 @@ export default class AdminUsers extends React.Component<AdminUsersProps, AdminUs
                             Delete
                         </button>
                         <button className="button" type="button" onClick={() => this.setState({ confirmDelete: null })}>
-                            Chancel
+                            Cancel
                         </button>
                     </div>
                 </Popup>
