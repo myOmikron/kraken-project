@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { forwardRef, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { UUID } from "../../../api/api";
 import {
     FindingSeverity,
@@ -10,6 +10,7 @@ import {
     SimpleFindingDefinition,
     SimpleTag,
 } from "../../../api/generated";
+import ContextMenu, { ContextMenuEntry } from "../components/context-menu";
 import SeverityIcon from "../components/severity-icon";
 import TagList, { TagClickCallback } from "../components/tag-list";
 import { Viewport, ViewportProps, ViewportRef } from "../components/viewport";
@@ -45,8 +46,13 @@ export function TreeGraph({
     roots,
     onClickTag,
     children,
+    getMenu,
     ...props
-}: { roots: TreeNode[]; onClickTag?: TagClickCallback } & ViewportProps) {
+}: {
+    roots: TreeNode[];
+    onClickTag?: TagClickCallback;
+    getMenu?: (t: TreeNode) => ContextMenuEntry[] | undefined;
+} & ViewportProps) {
     const verticalMargin = 16;
     const horizontalMargin = 64;
 
@@ -424,6 +430,7 @@ export function TreeGraph({
                         : (rendered[n.uuid] = [
                               <TreeNode
                                   key={n.uuid}
+                                  menu={getMenu?.(n)}
                                   node={n}
                                   className={`${highlighted.includes(n.uuid) ? "highlighted" : ""}`}
                                   onClickTag={onClickTag}
@@ -438,17 +445,23 @@ export function TreeGraph({
     );
 }
 
-const TreeNode = forwardRef<
-    HTMLDivElement,
-    {
-        node: TreeNode;
-        className?: string;
-        onClickTag?: TagClickCallback;
-        onPointerEnter?: React.PointerEventHandler<HTMLDivElement>;
-        onPointerLeave?: React.PointerEventHandler<HTMLDivElement>;
-        onClick?: React.MouseEventHandler<HTMLDivElement>;
-    }
->(({ node, onClickTag, className, onPointerEnter, onPointerLeave, onClick }, ref) => {
+function TreeNode({
+    node,
+    menu,
+    onClickTag,
+    className,
+    onPointerEnter,
+    onPointerLeave,
+    onClick,
+}: {
+    node: TreeNode;
+    menu?: ContextMenuEntry[];
+    className?: string;
+    onClickTag?: TagClickCallback;
+    onPointerEnter?: React.PointerEventHandler<HTMLDivElement>;
+    onPointerLeave?: React.PointerEventHandler<HTMLDivElement>;
+    onClick?: React.MouseEventHandler<HTMLDivElement>;
+}) {
     let name: string;
     let cve: string | null | undefined;
     let tags: SimpleTag[] | undefined;
@@ -480,7 +493,7 @@ const TreeNode = forwardRef<
     }
 
     return (
-        <div
+        <ContextMenu
             data-uuid={node.uuid}
             className={`
                 tree-node
@@ -488,10 +501,10 @@ const TreeNode = forwardRef<
                 ${node.type === "Finding" ? "severity-" + node.severity : ""}
                 ${className}
             `}
-            ref={ref}
             onPointerEnter={onPointerEnter}
             onPointerLeave={onPointerLeave}
             onClick={onClick}
+            menu={menu}
         >
             <div className="tree-node-content">
                 <div className={`tree-node-heading ${cve ? "with-cve" : ""}`}>
@@ -509,9 +522,9 @@ const TreeNode = forwardRef<
                     </div>
                 )}
             </div>
-        </div>
+        </ContextMenu>
     );
-});
+}
 
 function flatMapTree<T>(
     node: TreeNode,

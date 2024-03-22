@@ -1,6 +1,9 @@
 .context-menu-wrapper {
     cursor: context-menu;
 }
+.context-menu-wrapper.unavailabe {
+    cursor: pointer;
+}
 
 .context-menu {
     margin: 0;

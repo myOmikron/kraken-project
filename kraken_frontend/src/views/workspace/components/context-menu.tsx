@@ -41,9 +41,6 @@ export default function ContextMenu<E extends ElementType = "div">({
     const [open, setOpen] = useState(false);
     const [submenuOpen, setSubmenuOpen] = useState(0);
 
-    if ("className" in props) (props as any).className += " context-menu-wrapper";
-    else (props as any).className = "context-menu-wrapper";
-
     const clickHandler = useCallback(
         (handler: ClickHandler, e: React.MouseEvent<HTMLLIElement>) => {
             e.preventDefault();
@@ -124,6 +121,7 @@ export default function ContextMenu<E extends ElementType = "div">({
                     onContextMenu={onContextMenu}
                     tabIndex={0}
                     {...props}
+                    className={`${props.className} context-menu-wrapper ${menu === undefined ? "unavailabe " : ""}`}
                 >
                     {children}
                 </Component>
