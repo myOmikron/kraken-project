@@ -15,10 +15,13 @@ import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sec
 import { Api } from "../../api/api";
 import { handleApiError } from "../../utils/helper";
 import useLiveEditor from "../../components/live-editor";
+import { ROUTES } from "../../routes";
+import ArrowLeftIcon from "../../svg/arrow-left";
 
 export type EditFindingDefinitionProps = {
     uuid: string;
 };
+
 export function EditFindingDefinition(props: EditFindingDefinitionProps) {
     const [name, setName] = React.useState("");
     const [severity, setSeverity] = React.useState("Medium");
@@ -86,7 +89,8 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
 
     return (
         <div className={"create-finding-definition-container"}>
-            <div className={"pane"}>
+            <div className={"pane"} style={{ flex: "row" }}>
+                <ArrowLeftIcon title={"Back"} {...ROUTES.FINDING_DEFINITION_LIST.clickHandler({})} />
                 <h1 className={"heading"}>Edit Finding Definition</h1>
             </div>
             <div className={"pane"}>

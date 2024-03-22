@@ -6,7 +6,18 @@
 }
 
 .create-finding-definition-container > div:first-child {
-    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+}
+
+.create-finding-definition-container > div:first-child .icon {
+    width: 2em;
+    margin-rightr: 0.5em;
+    cursor: pointer;
+}
+
+.create-finding-definition-container > div:first-child .icon:hover {
+    filter: brightness(0) invert() drop-shadow(0 0 8px var(--primary));
 }
 
 .create-finding-definition-container > div:last-child {
@@ -42,6 +53,7 @@
     flex-direction: row;
     margin-bottom: 0.25em;
 }
+
 .create-finding-definition-form .sub-heading .icon {
     width: 1.5em;
 }
