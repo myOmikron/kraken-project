@@ -1,6 +1,6 @@
 import React from "react";
 import { Api } from "../../../api/api";
-import { FullDomain, FullHost, FullPort, FullService } from "../../../api/generated";
+import { AggregationType, FullDomain, FullHost, FullPort, FullService } from "../../../api/generated";
 import Indicator from "../../../components/indicator";
 import OsIcon from "../../../components/os-icon";
 import RelationLeftIcon from "../../../svg/relation-left";
@@ -14,6 +14,7 @@ import SeverityIcon from "../components/severity-icon";
 import TagList from "../components/tag-list";
 import { StatelessWorkspaceTable, useTable } from "../components/workspace-table";
 import { WORKSPACE_CONTEXT } from "../workspace";
+import { DataTabsSelector, useDataTabs } from "../components/data-tabs";
 
 export type WorkspaceFindingDataTableProps = {
     hideUuids: string[];
@@ -23,7 +24,6 @@ export type WorkspaceFindingDataTableProps = {
     onAddPort?: (port: FullPort) => void;
 };
 
-const DATA_TAB = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 export default function WorkspaceFindingDataTable({
     hideUuids,
     onAddDomain,
@@ -35,7 +35,7 @@ export default function WorkspaceFindingDataTable({
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
 
-    const [dataTab, setDataTab] = React.useState<keyof typeof DATA_TAB>("hosts");
+    const [dataTab, setDataTab] = useDataTabs();
 
     const domainFilter = useFilter(workspace, "domain");
     const hostFilter = useFilter(workspace, "host");
@@ -79,7 +79,7 @@ export default function WorkspaceFindingDataTable({
 
     const tableElement = (() => {
         switch (dataTab) {
-            case "domains":
+            case AggregationType.Domain:
                 return (
                     <StatelessWorkspaceTable
                         key={"domain-table"}
@@ -120,7 +120,7 @@ export default function WorkspaceFindingDataTable({
                             ))}
                     </StatelessWorkspaceTable>
                 );
-            case "hosts":
+            case AggregationType.Host:
                 return (
                     <StatelessWorkspaceTable
                         key={"host-table"}
@@ -162,7 +162,7 @@ export default function WorkspaceFindingDataTable({
                             ))}
                     </StatelessWorkspaceTable>
                 );
-            case "ports":
+            case AggregationType.Port:
                 return (
                     <StatelessWorkspaceTable
                         key={"port-table"}
@@ -206,7 +206,7 @@ export default function WorkspaceFindingDataTable({
                             ))}
                     </StatelessWorkspaceTable>
                 );
-            case "services":
+            case AggregationType.Service:
                 return (
                     <StatelessWorkspaceTable
                         key={"service-table"}
@@ -281,17 +281,7 @@ export default function WorkspaceFindingDataTable({
 
     return (
         <div className="workspace-data-table">
-            <div className="tabs-selector-container">
-                {Object.entries(DATA_TAB).map(([key, displayName]) => (
-                    <div
-                        key={key}
-                        className={`tabs ${dataTab !== key ? "" : " selected-tab"}`}
-                        onClick={() => setDataTab(key as keyof typeof DATA_TAB)}
-                    >
-                        <h3 className={"heading"}>{displayName}</h3>
-                    </div>
-                ))}
-            </div>
+            <DataTabsSelector value={dataTab} onChange={setDataTab} />
             {tableElement}
         </div>
     );

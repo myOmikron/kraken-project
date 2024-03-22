@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
 import { Api } from "../../api/api";
 import { ApiError } from "../../api/error";
-import { FullDomain, FullHost, FullPort, FullService, SimpleTag, TagType } from "../../api/generated";
+import { AggregationType, FullDomain, FullHost, FullPort, FullService, SimpleTag, TagType } from "../../api/generated";
 import Checkbox from "../../components/checkbox";
 import Indicator from "../../components/indicator";
 import OsIcon from "../../components/os-icon";
@@ -45,10 +45,10 @@ import {
     getCreateAffectedType,
 } from "./workspace-finding/workspace-create-finding";
 import WorkspaceFindingsQuickAttach from "./workspace-findings-quick-attach";
+import { DataTabsSelector, useDataTabs } from "./components/data-tabs";
 
-const TABS = { domains: "Domains", hosts: "Hosts", ports: "Ports", services: "Services" };
 const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations", findings: "Findings" };
-type SelectedUuids = { [Key in keyof typeof TABS]: Record<string, true> };
+type SelectedUuids = Record<AggregationType, Record<string, true>>;
 
 type WorkspaceDataProps = {};
 
@@ -57,15 +57,16 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
 
-    const [tab, setTab] = React.useState<keyof typeof TABS>("hosts");
+    const [dataTab, setDataTab] = useDataTabs();
+
     const [detailTab, setDetailTab] = React.useState<keyof typeof DETAILS_TAB>("general");
-    const [selected, setSelected] = React.useState<{ type: keyof typeof TABS; uuid: string } | null>(null);
-    const [createForm, setCreateForm] = React.useState<keyof typeof TABS | null>(null);
+    const [selected, setSelected] = React.useState<{ type: AggregationType; uuid: string } | null>(null);
+    const [createForm, setCreateForm] = React.useState<AggregationType | null>(null);
     const [selectedUuids, setSelectedUuids] = React.useState<SelectedUuids>({
-        domains: {},
-        hosts: {},
-        ports: {},
-        services: {},
+        [AggregationType.Domain]: {},
+        [AggregationType.Host]: {},
+        [AggregationType.Port]: {},
+        [AggregationType.Service]: {},
     });
     const [attaching, setAttaching] = React.useState<CreateFindingObject>();
 
@@ -265,21 +266,26 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
     }
 
     const tableElement = (() => {
-        switch (tab) {
-            case "domains":
+        switch (dataTab) {
+            case AggregationType.Domain:
                 return (
                     <StatelessWorkspaceTable
                         key={"domain-table"}
                         {...domainsTable}
                         columnsTemplate={"min-content 1fr 1fr 1fr 3.5em 4em 2.25em"}
-                        onAdd={() => setCreateForm("domains")}
+                        onAdd={() => setCreateForm(AggregationType.Domain)}
                         filter={domainFilter}
                     >
                         <div className={"workspace-table-header"}>
                             <MultiSelectButton
                                 items={domains}
-                                uuids={selectedUuids.domains}
-                                setUuids={(domains) => setSelectedUuids({ ...selectedUuids, domains })}
+                                uuids={selectedUuids[AggregationType.Domain]}
+                                setUuids={(domains) =>
+                                    setSelectedUuids({
+                                        ...selectedUuids,
+                                        [AggregationType.Domain]: domains,
+                                    })
+                                }
                             />
                             <span>Domain</span>
                             <span>Tags</span>
@@ -298,10 +304,10 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                         : "workspace-table-row"
                                 }
                                 onClick={() => {
-                                    if (selected?.type !== "domains") {
+                                    if (selected?.type !== AggregationType.Domain) {
                                         setDetailTab("general");
                                     }
-                                    setSelected({ type: "domains", uuid: domain.uuid });
+                                    setSelected({ type: AggregationType.Domain, uuid: domain.uuid });
                                 }}
                                 menu={[
                                     ...findingActions({ domain }),
@@ -334,8 +340,13 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             >
                                 <SelectButton
                                     uuid={domain.uuid}
-                                    uuids={selectedUuids.domains}
-                                    setUuids={(domains) => setSelectedUuids({ ...selectedUuids, domains })}
+                                    uuids={selectedUuids[AggregationType.Domain]}
+                                    setUuids={(domains) =>
+                                        setSelectedUuids({
+                                            ...selectedUuids,
+                                            [AggregationType.Domain]: domains,
+                                        })
+                                    }
                                 />
                                 <Domain domain={domain} />
                                 <TagList tags={domain.tags} globalFilter={globalFilter} filter={domainFilter} />
@@ -353,20 +364,25 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         ))}
                     </StatelessWorkspaceTable>
                 );
-            case "hosts":
+            case AggregationType.Host:
                 return (
                     <StatelessWorkspaceTable
                         key={"host-table"}
                         {...hostsTable}
                         columnsTemplate={"min-content 35ch 2em 1fr 1fr 3.5em 4em 2.25em"}
-                        onAdd={() => setCreateForm("hosts")}
+                        onAdd={() => setCreateForm(AggregationType.Host)}
                         filter={hostFilter}
                     >
                         <div className={"workspace-table-header"}>
                             <MultiSelectButton
                                 items={hosts}
-                                uuids={selectedUuids.hosts}
-                                setUuids={(hosts) => setSelectedUuids({ ...selectedUuids, hosts })}
+                                uuids={selectedUuids[AggregationType.Host]}
+                                setUuids={(hosts) =>
+                                    setSelectedUuids({
+                                        ...selectedUuids,
+                                        [AggregationType.Host]: hosts,
+                                    })
+                                }
                             />
                             <span>IP</span>
                             <span>OS</span>
@@ -386,10 +402,10 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                         : "workspace-table-row"
                                 }
                                 onClick={() => {
-                                    if (selected?.type !== "hosts") {
+                                    if (selected?.type !== AggregationType.Host) {
                                         setDetailTab("general");
                                     }
-                                    setSelected({ type: "hosts", uuid: host.uuid });
+                                    setSelected({ type: AggregationType.Host, uuid: host.uuid });
                                 }}
                                 menu={[
                                     ...findingActions({ host }),
@@ -435,8 +451,13 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             >
                                 <SelectButton
                                     uuid={host.uuid}
-                                    uuids={selectedUuids.hosts}
-                                    setUuids={(hosts) => setSelectedUuids({ ...selectedUuids, hosts })}
+                                    uuids={selectedUuids[AggregationType.Host]}
+                                    setUuids={(hosts) =>
+                                        setSelectedUuids({
+                                            ...selectedUuids,
+                                            [AggregationType.Host]: hosts,
+                                        })
+                                    }
                                 />
                                 <IpAddr host={host} />
                                 <OsIcon tooltip os={host.osType} size="2em" />
@@ -451,20 +472,25 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         ))}
                     </StatelessWorkspaceTable>
                 );
-            case "ports":
+            case AggregationType.Port:
                 return (
                     <StatelessWorkspaceTable
                         key={"port-table"}
                         {...portsTable}
                         columnsTemplate={"min-content 5ch 3.75em 30ch 1fr 1fr 3.5em 4em 2.25em"}
-                        onAdd={() => setCreateForm("ports")}
+                        onAdd={() => setCreateForm(AggregationType.Port)}
                         filter={portFilter}
                     >
                         <div className={"workspace-table-header"}>
                             <MultiSelectButton
                                 items={ports}
-                                uuids={selectedUuids.ports}
-                                setUuids={(ports) => setSelectedUuids({ ...selectedUuids, ports })}
+                                uuids={selectedUuids[AggregationType.Port]}
+                                setUuids={(ports) =>
+                                    setSelectedUuids({
+                                        ...selectedUuids,
+                                        [AggregationType.Port]: ports,
+                                    })
+                                }
                             />
                             <span>Port</span>
                             <span>Protocol</span>
@@ -485,10 +511,10 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                         : "workspace-table-row"
                                 }
                                 onClick={() => {
-                                    if (selected?.type !== "ports") {
+                                    if (selected?.type !== AggregationType.Port) {
                                         setDetailTab("general");
                                     }
-                                    setSelected({ type: "ports", uuid: port.uuid });
+                                    setSelected({ type: AggregationType.Port, uuid: port.uuid });
                                 }}
                                 menu={[
                                     ...findingActions({ port }),
@@ -517,8 +543,13 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             >
                                 <SelectButton
                                     uuid={port.uuid}
-                                    uuids={selectedUuids.ports}
-                                    setUuids={(ports) => setSelectedUuids({ ...selectedUuids, ports })}
+                                    uuids={selectedUuids[AggregationType.Port]}
+                                    setUuids={(ports) =>
+                                        setSelectedUuids({
+                                            ...selectedUuids,
+                                            [AggregationType.Port]: ports,
+                                        })
+                                    }
                                 />
                                 <PortNumber port={port} />
                                 <span>{port.protocol.toUpperCase()}</span>
@@ -534,20 +565,25 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         ))}
                     </StatelessWorkspaceTable>
                 );
-            case "services":
+            case AggregationType.Service:
                 return (
                     <StatelessWorkspaceTable
                         key={"service-table"}
                         {...servicesTable}
                         columnsTemplate={"min-content 0.8fr 30ch 5ch 3.75em 2em 2em 1fr 1fr 3.5em 4em 2.25em"}
-                        onAdd={() => setCreateForm("services")}
+                        onAdd={() => setCreateForm(AggregationType.Service)}
                         filter={serviceFilter}
                     >
                         <div className={"workspace-table-header"}>
                             <MultiSelectButton
                                 items={services}
-                                uuids={selectedUuids.services}
-                                setUuids={(services) => setSelectedUuids({ ...selectedUuids, services })}
+                                uuids={selectedUuids[AggregationType.Service]}
+                                setUuids={(services) =>
+                                    setSelectedUuids({
+                                        ...selectedUuids,
+                                        [AggregationType.Service]: services,
+                                    })
+                                }
                             />
                             <span>Service</span>
                             <span>IP</span>
@@ -571,10 +607,10 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                         : "workspace-table-row"
                                 }
                                 onClick={() => {
-                                    if (selected?.type !== "services") {
+                                    if (selected?.type !== AggregationType.Service) {
                                         setDetailTab("general");
                                     }
-                                    setSelected({ type: "services", uuid: service.uuid });
+                                    setSelected({ type: AggregationType.Service, uuid: service.uuid });
                                 }}
                                 menu={[
                                     ...findingActions({ service }),
@@ -606,8 +642,13 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             >
                                 <SelectButton
                                     uuid={service.uuid}
-                                    uuids={selectedUuids.services}
-                                    setUuids={(services) => setSelectedUuids({ ...selectedUuids, services })}
+                                    uuids={selectedUuids[AggregationType.Service]}
+                                    setUuids={(services) =>
+                                        setSelectedUuids({
+                                            ...selectedUuids,
+                                            [AggregationType.Service]: services,
+                                        })
+                                    }
                                 />
                                 <ServiceName service={service} />
                                 <IpAddr host={service.host} />
@@ -648,7 +689,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
     })();
     const detailsElement = (() => {
         switch (selected?.type) {
-            case "domains":
+            case AggregationType.Domain:
                 return (
                     <WorkspaceDataDomainDetails
                         domain={selected.uuid}
@@ -656,15 +697,15 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         tab={detailTab}
                     />
                 );
-            case "hosts":
+            case AggregationType.Host:
                 return (
                     <WorkspaceDataHostDetails host={selected.uuid} updateHost={hostsTable.updateItem} tab={detailTab} />
                 );
-            case "ports":
+            case AggregationType.Port:
                 return (
                     <WorkspaceDataPortDetails port={selected.uuid} updatePort={portsTable.updateItem} tab={detailTab} />
                 );
-            case "services":
+            case AggregationType.Service:
                 return (
                     <WorkspaceDataServiceDetails
                         service={selected.uuid}
@@ -674,15 +715,13 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                 );
             case undefined:
                 return null;
-            default:
-                return "Unimplemented";
         }
     })();
     const createElement = (() => {
         switch (createForm) {
             case null:
                 return null;
-            case "domains":
+            case AggregationType.Domain:
                 return (
                     <CreateDomainForm
                         onSubmit={() => {
@@ -691,7 +730,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         }}
                     />
                 );
-            case "hosts":
+            case AggregationType.Host:
                 return (
                     <CreateHostForm
                         onSubmit={() => {
@@ -700,7 +739,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         }}
                     />
                 );
-            case "ports":
+            case AggregationType.Port:
                 return (
                     <CreatePortForm
                         onSubmit={() => {
@@ -710,7 +749,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         }}
                     />
                 );
-            case "services":
+            case AggregationType.Service:
                 return (
                     <CreateServiceForm
                         onSubmit={() => {
@@ -730,35 +769,18 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <FilterInput {...globalFilter} />
                 </div>
                 <div className="workspace-data-table">
-                    <div className="tabs-selector-container">
-                        {Object.entries(TABS).map(([key, displayName]) => (
-                            <div
-                                className={"tabs " + (tab !== key ? "" : "selected-tab")}
-                                onClick={() => setTab(key as keyof typeof TABS)}
-                            >
-                                <h3 className={"heading"}>{displayName}</h3>
-                            </div>
-                        ))}
-                    </div>
+                    <DataTabsSelector value={dataTab} onChange={setDataTab} />
                     {tableElement}
                 </div>
                 <div className={"workspace-data-details pane"}>
-                    {ObjectFns.isEmpty(selectedUuids.domains) &&
-                    ObjectFns.isEmpty(selectedUuids.hosts) &&
-                    ObjectFns.isEmpty(selectedUuids.ports) &&
-                    ObjectFns.isEmpty(selectedUuids.services) ? (
+                    {ObjectFns.isEmpty(selectedUuids[AggregationType.Domain]) &&
+                    ObjectFns.isEmpty(selectedUuids[AggregationType.Host]) &&
+                    ObjectFns.isEmpty(selectedUuids[AggregationType.Port]) &&
+                    ObjectFns.isEmpty(selectedUuids[AggregationType.Service]) ? (
                         selected ? (
                             <>
                                 <h2 className={"sub-heading"}>
-                                    {selected.type === "domains" ? (
-                                        <span>Domain </span>
-                                    ) : selected.type === "hosts" ? (
-                                        <span>Host </span>
-                                    ) : selected.type === "ports" ? (
-                                        <span>Port </span>
-                                    ) : (
-                                        <span>Service </span>
-                                    )}
+                                    <span>{selected.type} </span>
                                     Details
                                 </h2>
                                 <div className={"workspace-data-details-selector"}>
@@ -782,10 +804,10 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             selectedUuids={selectedUuids}
                             setSelectedUuids={setSelectedUuids}
                             onUpdate={() => {
-                                if (!ObjectFns.isEmpty(selectedUuids.domains)) domainsTable.reload();
-                                if (!ObjectFns.isEmpty(selectedUuids.hosts)) hostsTable.reload();
-                                if (!ObjectFns.isEmpty(selectedUuids.ports)) portsTable.reload();
-                                if (!ObjectFns.isEmpty(selectedUuids.services)) servicesTable.reload();
+                                if (!ObjectFns.isEmpty(selectedUuids[AggregationType.Domain])) domainsTable.reload();
+                                if (!ObjectFns.isEmpty(selectedUuids[AggregationType.Host])) hostsTable.reload();
+                                if (!ObjectFns.isEmpty(selectedUuids[AggregationType.Port])) portsTable.reload();
+                                if (!ObjectFns.isEmpty(selectedUuids[AggregationType.Service])) servicesTable.reload();
                             }}
                             onDelete={() => {
                                 domainsTable.reload();
@@ -842,10 +864,10 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
     const [newTags, setNewTags] = React.useState<Array<SimpleTag>>([]);
     const [deleteData, setDeleteData] = React.useState(false);
 
-    const domainsLen = ObjectFns.len(selectedUuids.domains);
-    const hostsLen = ObjectFns.len(selectedUuids.hosts);
-    const portsLen = ObjectFns.len(selectedUuids.ports);
-    const servicesLen = ObjectFns.len(selectedUuids.services);
+    const domainsLen = ObjectFns.len(selectedUuids[AggregationType.Domain]);
+    const hostsLen = ObjectFns.len(selectedUuids[AggregationType.Host]);
+    const portsLen = ObjectFns.len(selectedUuids[AggregationType.Port]);
+    const servicesLen = ObjectFns.len(selectedUuids[AggregationType.Service]);
     const totalLen = domainsLen + hostsLen + portsLen + servicesLen;
 
     return (
@@ -861,7 +883,7 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                               <button
                                   type={"button"}
                                   className={"button"}
-                                  onClick={() => setSelectedUuids({ ...selectedUuids, domains: {} })}
+                                  onClick={() => setSelectedUuids({ ...selectedUuids, [AggregationType.Domain]: {} })}
                               >
                                   Unselect all domains
                               </button>,
@@ -874,7 +896,7 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                               <button
                                   type={"button"}
                                   className={"button"}
-                                  onClick={() => setSelectedUuids({ ...selectedUuids, hosts: {} })}
+                                  onClick={() => setSelectedUuids({ ...selectedUuids, [AggregationType.Host]: {} })}
                               >
                                   Unselect all hosts
                               </button>,
@@ -887,7 +909,7 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                               <button
                                   type={"button"}
                                   className={"button"}
-                                  onClick={() => setSelectedUuids({ ...selectedUuids, ports: {} })}
+                                  onClick={() => setSelectedUuids({ ...selectedUuids, [AggregationType.Port]: {} })}
                               >
                                   Unselect all ports
                               </button>,
@@ -900,7 +922,7 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                               <button
                                   type={"button"}
                                   className={"button"}
-                                  onClick={() => setSelectedUuids({ ...selectedUuids, services: {} })}
+                                  onClick={() => setSelectedUuids({ ...selectedUuids, [AggregationType.Service]: {} })}
                               >
                                   Unselect all services
                               </button>,
@@ -910,7 +932,14 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                     <button
                         type={"button"}
                         className={"button workspace-data-multi-select-total"}
-                        onClick={() => setSelectedUuids({ domains: {}, hosts: {}, ports: {}, services: {} })}
+                        onClick={() =>
+                            setSelectedUuids({
+                                [AggregationType.Domain]: {},
+                                [AggregationType.Host]: {},
+                                [AggregationType.Port]: {},
+                                [AggregationType.Service]: {},
+                            })
+                        }
                     >
                         Unselect all
                     </button>
@@ -925,10 +954,10 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                                     workspaceUuid: workspace,
                                 },
                                 {
-                                    domains: Object.keys(selectedUuids.domains),
-                                    hosts: Object.keys(selectedUuids.hosts),
-                                    ports: Object.keys(selectedUuids.ports),
-                                    services: Object.keys(selectedUuids.services),
+                                    domains: Object.keys(selectedUuids[AggregationType.Domain]),
+                                    hosts: Object.keys(selectedUuids[AggregationType.Host]),
+                                    ports: Object.keys(selectedUuids[AggregationType.Port]),
+                                    services: Object.keys(selectedUuids[AggregationType.Service]),
                                 },
                             );
                         }}
@@ -1045,15 +1074,20 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                                 const promises: Array<Promise<void>> = [];
                                 let numOk = 0;
                                 let numErr = 0;
-                                let stillSelected: SelectedUuids = { domains: {}, hosts: {}, ports: {}, services: {} };
+                                let stillSelected: SelectedUuids = {
+                                    [AggregationType.Domain]: {},
+                                    [AggregationType.Host]: {},
+                                    [AggregationType.Port]: {},
+                                    [AggregationType.Service]: {},
+                                };
                                 if (domainsLen !== 0) {
-                                    Object.keys(selectedUuids.domains).map((u) => {
+                                    Object.keys(selectedUuids[AggregationType.Domain]).map((u) => {
                                         promises.push(
                                             Api.workspaces.domains.delete(workspace, u).then((result) => {
                                                 if (result.is_err()) {
                                                     numErr += 1;
                                                     handleApiError(result);
-                                                    stillSelected.domains[u] = true;
+                                                    stillSelected[AggregationType.Domain][u] = true;
                                                 } else if (result.is_ok()) {
                                                     numOk += 1;
                                                 }
@@ -1062,13 +1096,13 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                                     });
                                 }
                                 if (hostsLen !== 0) {
-                                    Object.keys(selectedUuids.hosts).map((u) => {
+                                    Object.keys(selectedUuids[AggregationType.Host]).map((u) => {
                                         promises.push(
                                             Api.workspaces.hosts.delete(workspace, u).then((result) => {
                                                 if (result.is_err()) {
                                                     numErr += 1;
                                                     handleApiError(result);
-                                                    stillSelected.hosts[u] = true;
+                                                    stillSelected[AggregationType.Host][u] = true;
                                                 } else if (result.is_ok()) {
                                                     numOk += 1;
                                                 }
@@ -1077,13 +1111,13 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                                     });
                                 }
                                 if (portsLen !== 0) {
-                                    Object.keys(selectedUuids.ports).map((u) => {
+                                    Object.keys(selectedUuids[AggregationType.Port]).map((u) => {
                                         promises.push(
                                             Api.workspaces.ports.delete(workspace, u).then((result) => {
                                                 if (result.is_err()) {
                                                     numErr += 1;
                                                     handleApiError(result);
-                                                    stillSelected.ports[u] = true;
+                                                    stillSelected[AggregationType.Port][u] = true;
                                                 } else if (result.is_ok()) {
                                                     numOk += 1;
                                                 }
@@ -1092,13 +1126,13 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                                     });
                                 }
                                 if (servicesLen !== 0) {
-                                    Object.keys(selectedUuids.services).map((u) => {
+                                    Object.keys(selectedUuids[AggregationType.Service]).map((u) => {
                                         promises.push(
                                             Api.workspaces.services.delete(workspace, u).then((result) => {
                                                 if (result.is_err()) {
                                                     numErr += 1;
                                                     handleApiError(result);
-                                                    stillSelected.services[u] = true;
+                                                    stillSelected[AggregationType.Service][u] = true;
                                                 } else if (result.is_ok()) {
                                                     numOk += 1;
                                                 }
@@ -1199,22 +1233,30 @@ async function resolveSelection(
     return {
         domains: (
             await Promise.all(
-                Object.keys(uuids.domains).map((uuid) => Api.workspaces.domains.get(workspace, uuid).then(unwrap)),
+                Object.keys(uuids[AggregationType.Domain]).map((uuid) =>
+                    Api.workspaces.domains.get(workspace, uuid).then(unwrap),
+                ),
             )
         ).filter((v) => v !== undefined),
         hosts: (
             await Promise.all(
-                Object.keys(uuids.hosts).map((uuid) => Api.workspaces.hosts.get(workspace, uuid).then(unwrap)),
+                Object.keys(uuids[AggregationType.Host]).map((uuid) =>
+                    Api.workspaces.hosts.get(workspace, uuid).then(unwrap),
+                ),
             )
         ).filter((v) => v !== undefined),
         services: (
             await Promise.all(
-                Object.keys(uuids.services).map((uuid) => Api.workspaces.services.get(workspace, uuid).then(unwrap)),
+                Object.keys(uuids[AggregationType.Service]).map((uuid) =>
+                    Api.workspaces.services.get(workspace, uuid).then(unwrap),
+                ),
             )
         ).filter((v) => v !== undefined),
         ports: (
             await Promise.all(
-                Object.keys(uuids.ports).map((uuid) => Api.workspaces.ports.get(workspace, uuid).then(unwrap)),
+                Object.keys(uuids[AggregationType.Port]).map((uuid) =>
+                    Api.workspaces.ports.get(workspace, uuid).then(unwrap),
+                ),
             )
         ).filter((v) => v !== undefined),
     };
@@ -1222,7 +1264,7 @@ async function resolveSelection(
 
 async function updateTags(workspace: string, uuids: SelectedUuids, strategy: UpdateStrategy, tags: Array<SimpleTag>) {
     await Promise.all(
-        Object.keys(uuids.domains).map((uuid) =>
+        Object.keys(uuids[AggregationType.Domain]).map((uuid) =>
             Api.workspaces.domains.get(workspace, uuid).then((result) => {
                 let promise = null;
                 handleApiError(result, ({ tags: curTags }) => {
@@ -1235,7 +1277,7 @@ async function updateTags(workspace: string, uuids: SelectedUuids, strategy: Upd
         ),
     );
     await Promise.all(
-        Object.keys(uuids.hosts).map((uuid) =>
+        Object.keys(uuids[AggregationType.Host]).map((uuid) =>
             Api.workspaces.hosts.get(workspace, uuid).then((result) => {
                 let promise = null;
                 handleApiError(result, ({ tags: curTags }) => {
@@ -1248,7 +1290,7 @@ async function updateTags(workspace: string, uuids: SelectedUuids, strategy: Upd
         ),
     );
     await Promise.all(
-        Object.keys(uuids.ports).map((uuid) =>
+        Object.keys(uuids[AggregationType.Port]).map((uuid) =>
             Api.workspaces.ports.get(workspace, uuid).then((result) => {
                 let promise = null;
                 handleApiError(result, ({ tags: curTags }) => {
@@ -1261,7 +1303,7 @@ async function updateTags(workspace: string, uuids: SelectedUuids, strategy: Upd
         ),
     );
     await Promise.all(
-        Object.keys(uuids.services).map((uuid) =>
+        Object.keys(uuids[AggregationType.Service]).map((uuid) =>
             Api.workspaces.services.get(workspace, uuid).then((result) => {
                 let promise = null;
                 handleApiError(result, ({ tags: curTags }) => {
