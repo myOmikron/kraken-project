@@ -110,8 +110,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
     const editor = () => {
         switch (section) {
             case "definition":
-                const effectiveDef = hoveredFindingDef || findingDef;
-                return effectiveDef && <FindingDefinitionDetails {...effectiveDef} />;
+                return <FindingDefinitionDetails definition={hoveredFindingDef || findingDef} />;
             case "description":
                 return (
                     <Editor
@@ -428,16 +427,18 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
     );
 }
 
-export function FindingDefinitionDetails(props: SimpleFindingDefinition) {
-    const { name, severity, summary } = props;
-    return (
-        <div className={"create-finding-pane"}>
-            <h1 className={"sub-heading"}>
-                {name} <small>{severity}</small>
-            </h1>
-            <p>{summary}</p>
-        </div>
-    );
+export function FindingDefinitionDetails(props: { definition: SimpleFindingDefinition | null | undefined }) {
+    const { definition } = props;
+    if (!definition) return <div className={"create-finding-pane"} />;
+    else
+        return (
+            <div className={"create-finding-pane"}>
+                <h1 className={"sub-heading"}>
+                    {definition.name} <small>{definition.severity}</small>
+                </h1>
+                <p>{definition.summary}</p>
+            </div>
+        );
 }
 
 function isAffectedDomain(obj: CreateFindingObject): obj is { domain: FullDomain } {

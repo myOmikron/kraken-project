@@ -1,0 +1,10 @@
+.form-popup-container {
+    max-width: 90vw;
+    background: var(--level-0);
+    padding: 1em;
+    border-radius: 1em;
+}
+
+.form-popup-overlay {
+    backdrop-filter: blur(1px);
+}

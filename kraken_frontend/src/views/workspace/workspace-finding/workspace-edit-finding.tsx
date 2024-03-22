@@ -455,8 +455,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                     {(() => {
                         switch (section) {
                             case "definition":
-                                const effectiveDef = hoveredFindingDef || findingDef;
-                                return effectiveDef && <FindingDefinitionDetails {...effectiveDef} />;
+                                return <FindingDefinitionDetails definition={hoveredFindingDef || findingDef} />;
                             case "description":
                                 return (
                                     <>

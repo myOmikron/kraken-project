@@ -15,12 +15,16 @@ import { handleApiError } from "../../utils/helper";
 import { Api } from "../../api/api";
 import { ROUTES } from "../../routes";
 import { toast } from "react-toastify";
+import { FindingSeverity, SimpleFindingDefinition } from "../../api/generated";
 
-export type CreateFindingDefinitionProps = {};
+export type CreateFindingDefinitionProps = {
+    initialName?: string;
+    onCreate?: (definition: SimpleFindingDefinition) => void;
+};
 
 export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
-    const [name, setName] = React.useState("");
-    const [severity, setSeverity] = React.useState("Medium");
+    const [name, setName] = React.useState(props.initialName ?? "");
+    const [severity, setSeverity] = React.useState<FindingSeverity>(FindingSeverity.Medium);
     const [cve, setCve] = React.useState("");
 
     const sections = useSectionsState();
@@ -39,7 +43,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                         <Input maxLength={255} value={name} required onChange={setName} />
                         <SelectPrimitive
                             value={severity}
-                            options={["Okay", "Low", "Medium", "High", "Critical"]}
+                            options={Object.values(FindingSeverity)}
                             onChange={(value) => setSeverity(value || severity)}
                         />
                         <Input maxLength={255} value={cve} onChange={setCve} />
@@ -95,7 +99,6 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                             Api.knowledgeBase.findingDefinitions
                                 .create({
                                     name,
-                                    // @ts-ignore
                                     severity,
                                     cve: cve.length > 0 ? cve : null,
                                     summary: sections.Summary.value,
@@ -105,9 +108,20 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                                     references: sections.References.value,
                                 })
                                 .then(
-                                    handleApiError(() => {
+                                    handleApiError(({ uuid }) => {
                                         toast.success("Created finding definition");
-                                        ROUTES.FINDING_DEFINITION_LIST.visit({});
+                                        if (!props.onCreate) {
+                                            ROUTES.FINDING_DEFINITION_LIST.visit({});
+                                        } else {
+                                            props.onCreate({
+                                                uuid,
+                                                name,
+                                                severity,
+                                                cve: cve.length > 0 ? cve : null,
+                                                summary: sections.Summary.value,
+                                                createdAt: new Date(),
+                                            });
+                                        }
                                     }),
                                 )
                         }
