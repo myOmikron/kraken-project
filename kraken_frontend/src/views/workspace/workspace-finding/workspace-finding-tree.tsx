@@ -287,36 +287,52 @@ export function TreeGraph({
 
         const linkForce = sim.force("link")! as d3.ForceLink<NodeT, LinkT>;
 
-        const contentColumns = new Set(nodes.filter((n) => !n.root).map((n) => n.column));
-        const rootColumns = new Set(nodes.filter((n) => n.root).map((n) => n.column));
-        const mixedColumns: number[] = [];
-        for (const c of contentColumns.values()) {
-            if (rootColumns.has(c)) mixedColumns.push(c);
-        }
-        mixedColumns.sort((a, b) => b - a);
-        let maxColumn = 0;
-        for (const c of mixedColumns) {
-            for (const node of nodes) {
-                if (node.column > c) {
-                    node.column += 2;
-                    node.fx = node.column * columnW;
-                } else if (node.column == c) {
-                    node.column += node.root ? 1 : 2;
-                    node.fx = node.column * columnW;
+        {
+            const contentColumns = new Set(nodes.filter((n) => !n.root).map((n) => n.column));
+            const rootColumns = new Set(nodes.filter((n) => n.root).map((n) => n.column));
+            const mixedColumns: number[] = [];
+            for (const c of contentColumns.values()) {
+                if (rootColumns.has(c)) mixedColumns.push(c);
+            }
+            mixedColumns.sort((a, b) => b - a);
+            let maxColumn = 0;
+            for (const c of mixedColumns) {
+                for (const node of nodes) {
+                    if (node.column > c) {
+                        node.column += 2;
+                        node.fx = node.column * columnW;
+                    } else if (node.column == c) {
+                        node.column += node.root ? 1 : 2;
+                        node.fx = node.column * columnW;
+                    }
+                    maxColumn = Math.max(maxColumn, node.column);
                 }
-                maxColumn = Math.max(maxColumn, node.column);
+            }
+            const usedColumns = new Set(nodes.map((n) => n.column));
+            const emptyColumns: number[] = [];
+            for (let i = maxColumn; i >= 0; i--) {
+                if (!usedColumns.has(i)) emptyColumns.push(i);
+            }
+            for (const c of emptyColumns) {
+                for (const node of nodes) {
+                    if (node.column > c) {
+                        node.column--;
+                        node.fx = node.column * columnW;
+                    }
+                }
             }
         }
-        const usedColumns = new Set(nodes.map((n) => n.column));
-        const emptyColumns: number[] = [];
-        for (let i = maxColumn; i >= 0; i--) {
-            if (!usedColumns.has(i)) emptyColumns.push(i);
-        }
-        for (const c of emptyColumns) {
-            for (const node of nodes) {
-                if (node.column > c) {
-                    node.column--;
-                    node.fx = node.column * columnW;
+        {
+            const rootColumns = new Set(nodes.filter((n) => n.root).map((n) => n.column));
+            for (const c of Array.from(rootColumns.values()).sort((a, b) => b - a)) {
+                if (rootColumns.has(c - 1)) {
+                    // neighboring root columns, merge
+                    for (const node of nodes) {
+                        if (node.column >= c) {
+                            node.column--;
+                            node.fx = node.column * columnW;
+                        }
+                    }
                 }
             }
         }
