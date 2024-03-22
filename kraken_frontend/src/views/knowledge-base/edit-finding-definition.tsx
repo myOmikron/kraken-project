@@ -1,22 +1,25 @@
-import React from "react";
-import Input from "../../components/input";
-import { SelectPrimitive } from "../../components/select-menu";
 import Editor from "@monaco-editor/react";
-import { setupMonaco } from "../knowledge-base";
-import { GithubMarkdown } from "../../components/github-markdown";
-import BandageIcon from "../../svg/bandage";
-import LibraryIcon from "../../svg/library";
-import FlameIcon from "../../svg/flame";
-import InformationIcon from "../../svg/information";
-import BookIcon from "../../svg/book";
 import { editor as editorNS } from "monaco-editor";
+import React from "react";
+import { toast } from "react-toastify";
+import Popup from "reactjs-popup";
+import { Api, UUID } from "../../api/api";
 import { FindingSection } from "../../api/generated";
-import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
-import { Api } from "../../api/api";
-import { handleApiError } from "../../utils/helper";
+import { AdminOnly } from "../../components/admin-guard";
+import { GithubMarkdown } from "../../components/github-markdown";
+import Input from "../../components/input";
 import useLiveEditor from "../../components/live-editor";
+import { SelectPrimitive } from "../../components/select-menu";
 import { ROUTES } from "../../routes";
 import ArrowLeftIcon from "../../svg/arrow-left";
+import BandageIcon from "../../svg/bandage";
+import BookIcon from "../../svg/book";
+import FlameIcon from "../../svg/flame";
+import InformationIcon from "../../svg/information";
+import LibraryIcon from "../../svg/library";
+import { handleApiError } from "../../utils/helper";
+import { setupMonaco } from "../knowledge-base";
+import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
 
 export type EditFindingDefinitionProps = {
     uuid: string;
@@ -151,6 +154,10 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                         </h2>
                         <GithubMarkdown>{sections.References.value}</GithubMarkdown>
                     </div>
+
+                    <AdminOnly>
+                        <DeleteButton finding={props.uuid} name={name} />
+                    </AdminOnly>
                 </div>
                 <div className={"create-finding-definition-editor"}>
                     <SectionSelectionTabs
@@ -183,5 +190,56 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                 </div>
             </div>
         </div>
+    );
+}
+
+function DeleteButton({ finding, name }: { finding: UUID; name: string }) {
+    const [open, setOpen] = React.useState(false);
+
+    return (
+        <Popup
+            modal
+            nested
+            open={open}
+            onClose={() => setOpen(false)}
+            trigger={
+                <div>
+                    <button onClick={() => setOpen(true)} className="button danger" type="button">
+                        Delete this Finding
+                    </button>
+                </div>
+            }
+        >
+            <div className="popup-content pane" style={{ width: "78ch" }}>
+                <h1 className="heading neon">Are you sure you want to delete the finding definition "{name}"?</h1>
+                <div>
+                    <p>The following findings will be deleted due to this:</p>
+                    <ul>
+                        <li>TODO</li>
+                    </ul>
+                </div>
+                <button
+                    className="button danger"
+                    type="button"
+                    onClick={() => {
+                        toast.promise(
+                            Api.knowledgeBase.findingDefinitions.admin
+                                .delete(finding)
+                                .then(() => ROUTES.FINDING_DEFINITION_LIST.visit({})),
+                            {
+                                pending: "Deleting finding definition...",
+                                error: "Failed to delete finding definition!",
+                                success: "Successfully deleted finding definition",
+                            },
+                        );
+                    }}
+                >
+                    Delete
+                </button>
+                <button className="button" type="reset" onClick={() => setOpen(false)}>
+                    Cancel
+                </button>
+            </div>
+        </Popup>
     );
 }

@@ -20,6 +20,8 @@ import WS from "../../../api/websocket";
 import { GithubMarkdown } from "../../../components/github-markdown";
 import useLiveEditor from "../../../components/live-editor";
 import { SelectPrimitive } from "../../../components/select-menu";
+import { ROUTES } from "../../../routes";
+import ArrowLeftIcon from "../../../svg/arrow-left";
 import BookIcon from "../../../svg/book";
 import CloseIcon from "../../../svg/close";
 import EditIcon from "../../../svg/edit";
@@ -44,9 +46,6 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 import { FindingDefinitionDetails } from "./workspace-create-finding";
 import WorkspaceFindingDataTable from "./workspace-finding-data-table";
 import EditingTreeGraph from "./workspace-finding-editing-tree";
-import WorkspaceFindingTable from "./workspace-finding-table";
-import ArrowLeftIcon from "../../../svg/arrow-left";
-import { ROUTES } from "../../../routes";
 
 export type WorkspaceEditFindingProps = {
     /** The finding's uuid */
@@ -410,6 +409,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                 )}
                             </div>
                         </CollapsibleSection>
+                        <DeleteButton workspace={workspace} finding={finding} severity={severity} />
                     </div>
                 </div>
                 <div className="create-finding-editor-container">
@@ -521,6 +521,51 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                 </div>
             </div>
         </div>
+    );
+}
+
+function DeleteButton({ workspace, finding, severity }: { workspace: UUID; finding: UUID; severity: FindingSeverity }) {
+    const [open, setOpen] = React.useState(false);
+
+    return (
+        <Popup
+            modal
+            nested
+            open={open}
+            onClose={() => setOpen(false)}
+            trigger={
+                <div>
+                    <button onClick={() => setOpen(true)} className="button danger" type="button">
+                        Delete this Finding
+                    </button>
+                </div>
+            }
+        >
+            <div className="popup-content pane" style={{ width: "52ch" }}>
+                <h1 className="heading neon">Are you sure you want to delete this {severity} Severity finding?</h1>
+                <button
+                    className="button danger"
+                    type="button"
+                    onClick={() => {
+                        toast.promise(
+                            Api.workspaces.findings
+                                .delete(workspace, finding)
+                                .then(() => ROUTES.WORKSPACE_FINDINGS_LIST.visit({ uuid: workspace })),
+                            {
+                                pending: "Deleting finding...",
+                                error: "Failed to delete finding!",
+                                success: "Successfully deleted",
+                            },
+                        );
+                    }}
+                >
+                    Delete
+                </button>
+                <button className="button" type="reset" onClick={() => setOpen(false)}>
+                    Cancel
+                </button>
+            </div>
+        </Popup>
     );
 }
 

@@ -402,6 +402,10 @@ export const Api = {
                 handleError(knowledgeBase.getFindingDefinition({ uuid: findingDefinition })),
             create: (createFindingDefinitionRequest: CreateFindingDefinitionRequest) =>
                 handleError(knowledgeBase.createFindingDefinition({ createFindingDefinitionRequest })),
+            admin: {
+                delete: (findingDefinition: UUID) =>
+                    handleError(knowledgeBase.deleteFindingDefinition({ uuid: findingDefinition })),
+            },
         },
     },
 };
