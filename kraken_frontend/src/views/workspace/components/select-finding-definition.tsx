@@ -85,14 +85,8 @@ export default function SelectFindingDefinition(props: SelectFindingDefinitionPr
                     },
                 }}
             />
-            <Popup
-                modal
-                nested
-                className={"form-popup"}
-                open={newDefinition !== undefined}
-                onClose={() => setNewDefinition(undefined)}
-            >
-                <div className={"form-popup-container"}>
+            <Popup modal nested open={newDefinition !== undefined} onClose={() => setNewDefinition(undefined)}>
+                <div className={"select-finding-definition-popup pane"}>
                     <CreateFindingDefinition
                         initialName={newDefinition || ""}
                         onCreate={(def) => {
@@ -100,6 +94,7 @@ export default function SelectFindingDefinition(props: SelectFindingDefinitionPr
                             setNewDefinition(undefined);
                             onSelect(def);
                         }}
+                        inPane
                     />
                 </div>
             </Popup>

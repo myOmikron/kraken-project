@@ -18,8 +18,22 @@ import { toast } from "react-toastify";
 import { FindingSeverity, SimpleFindingDefinition } from "../../api/generated";
 
 export type CreateFindingDefinitionProps = {
+    /** Prefill the name <input /> with an initial value*/
     initialName?: string;
+
+    /**
+     * Use a custom callback upon successful creation
+     *
+     * The default will redirect to the list of finding definitions.
+     */
     onCreate?: (definition: SimpleFindingDefinition) => void;
+
+    /**
+     * Is this component already rendered inside a pane?
+     *
+     * If yes, use nested-pane instead of pane again.
+     */
+    inPane?: boolean;
 };
 
 export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
@@ -31,10 +45,10 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
 
     return (
         <div className={"create-finding-definition-container"}>
-            <div className={"pane"}>
+            <div className={props.inPane ? "nested-pane" : "pane"}>
                 <h1 className={"heading"}>New Finding Definition</h1>
             </div>
-            <div className={"pane"}>
+            <div className={props.inPane ? "nested-pane" : "pane"}>
                 <div className={"create-finding-definition-form"}>
                     <div className={"create-finding-definition-header"}>
                         <h2 className={"sub-heading"}>Name</h2>
