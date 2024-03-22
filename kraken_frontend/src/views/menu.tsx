@@ -64,11 +64,11 @@ export default class Menu extends React.Component<MenuProps, MenuState> {
                         className={this.state.active === "knowledge" ? "menu-item active" : "menu-item"}
                         onClick={() => {
                             this.setState({ active: "knowledge" });
-                            ROUTES.KNOWLEDGE_BASE.visit({});
+                            ROUTES.FINDING_DEFINITION_LIST.visit({});
                         }}
                         onAuxClick={() => {
                             this.setState({ active: "knowledge" });
-                            ROUTES.KNOWLEDGE_BASE.open({});
+                            ROUTES.FINDING_DEFINITION_LIST.open({});
                         }}
                     >
                         <KnowledgeIcon />
@@ -168,6 +168,7 @@ export default class Menu extends React.Component<MenuProps, MenuState> {
 type ContentWithMenuProps = {
     children: React.ReactNode;
 };
+
 export function ContentWithMenu(props: ContentWithMenuProps) {
     return (
         <div className={"base-layout"}>
