@@ -2,6 +2,7 @@ import React, { ReactNode } from "react";
 import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
 import { Api } from "../../api/api";
+import { ApiError } from "../../api/error";
 import { FullDomain, FullHost, FullPort, FullService, SimpleTag, TagType } from "../../api/generated";
 import Checkbox from "../../components/checkbox";
 import Indicator from "../../components/indicator";
@@ -16,6 +17,7 @@ import LinkIcon from "../../svg/link";
 import PlusIcon from "../../svg/plus";
 import TagIcon from "../../svg/tag";
 import { ObjectFns, handleApiError } from "../../utils/helper";
+import { Result } from "../../utils/result";
 import CertaintyIcon from "./components/certainty-icon";
 import ContextMenu, { ContextMenuEntry, GroupedMenuItem, PlainMenuItem } from "./components/context-menu";
 import Domain from "./components/domain";
@@ -935,6 +937,31 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                         Attack selected
                     </button>
                 </div>
+                <div className={"workspace-data-multi-select-tag-buttons"}>
+                    <button
+                        type={"button"}
+                        className={"button mixed-button"}
+                        onClick={async () => {
+                            const affected = await resolveSelection(workspace, selectedUuids, true);
+                            ROUTES.WORKSPACE_FINDINGS_CREATE.visit(
+                                {
+                                    uuid: workspace,
+                                },
+                                {
+                                    affected: [
+                                        ...affected.domains.map<CreateFindingObject>((d) => ({ domain: d })),
+                                        ...affected.hosts.map<CreateFindingObject>((d) => ({ host: d })),
+                                        ...affected.services.map<CreateFindingObject>((d) => ({ service: d })),
+                                        ...affected.ports.map<CreateFindingObject>((d) => ({ port: d })),
+                                    ],
+                                },
+                            );
+                        }}
+                    >
+                        <FindingIcon />
+                        Create new finding
+                    </button>
+                </div>
             </div>
 
             <div className="workspace-data-pane">
@@ -1156,6 +1183,42 @@ type UpdateStrategy = (
     curTags: Array<SimpleTag>,
     newTags: Array<SimpleTag>,
 ) => { workspaceTags: Array<string>; globalTags: Array<string> };
+
+async function resolveSelection(
+    workspace: string,
+    uuids: SelectedUuids,
+    skipInvalid?: boolean,
+): Promise<{
+    domains: FullDomain[];
+    hosts: FullHost[];
+    services: FullService[];
+    ports: FullPort[];
+}> {
+    const unwrap = (e: Result<any, ApiError>) => (skipInvalid && !e.is_ok() ? undefined : e.unwrap());
+
+    return {
+        domains: (
+            await Promise.all(
+                Object.keys(uuids.domains).map((uuid) => Api.workspaces.domains.get(workspace, uuid).then(unwrap)),
+            )
+        ).filter((v) => v !== undefined),
+        hosts: (
+            await Promise.all(
+                Object.keys(uuids.hosts).map((uuid) => Api.workspaces.hosts.get(workspace, uuid).then(unwrap)),
+            )
+        ).filter((v) => v !== undefined),
+        services: (
+            await Promise.all(
+                Object.keys(uuids.services).map((uuid) => Api.workspaces.services.get(workspace, uuid).then(unwrap)),
+            )
+        ).filter((v) => v !== undefined),
+        ports: (
+            await Promise.all(
+                Object.keys(uuids.ports).map((uuid) => Api.workspaces.ports.get(workspace, uuid).then(unwrap)),
+            )
+        ).filter((v) => v !== undefined),
+    };
+}
 
 async function updateTags(workspace: string, uuids: SelectedUuids, strategy: UpdateStrategy, tags: Array<SimpleTag>) {
     await Promise.all(
