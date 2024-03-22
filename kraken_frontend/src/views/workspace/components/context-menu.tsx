@@ -22,7 +22,7 @@ export type ContextMenuEntry = PlainMenuItem | GroupedMenuItem | LazyMenuItem;
 
 export type ContextMenuProps<E extends ElementType = "div"> = PropsWithChildren<{
     as?: E;
-    menu: ContextMenuEntry[];
+    menu?: ContextMenuEntry[];
     onOpen?: Function;
 }> &
     React.ComponentPropsWithoutRef<E>;
@@ -95,6 +95,7 @@ export default function ContextMenu<E extends ElementType = "div">({
     };
 
     const onContextMenu = (event: React.MouseEvent | React.KeyboardEvent) => {
+        if (menu === undefined) return;
         event.preventDefault();
         componentRef.current = event.target as any;
         popupRef.current?.toggle?.();
@@ -136,7 +137,7 @@ export default function ContextMenu<E extends ElementType = "div">({
                 role="menu"
                 className={`pane-thin context-menu ${keyboardNav ? "keyboard-nav" : ""}`}
             >
-                {menu.map((v, i) => (
+                {menu?.map((v, i) => (
                     <ContextMenuEntryRenderer
                         key={i}
                         v={v}

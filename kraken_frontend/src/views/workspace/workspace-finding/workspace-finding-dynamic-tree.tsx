@@ -1,7 +1,9 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { Api } from "../../../api/api";
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import Popup from "reactjs-popup";
+import { Api, UUID } from "../../../api/api";
 import { ApiError } from "../../../api/error";
 import {
+    AggregationType,
     DomainRelations,
     FullDomain,
     FullFinding,
@@ -21,12 +23,18 @@ import {
     SimpleTag,
 } from "../../../api/generated";
 import Input from "../../../components/input";
+import { ROUTES } from "../../../routes";
 import CollapseIcon from "../../../svg/collapse";
 import ExpandIcon from "../../../svg/expand";
+import LinkIcon from "../../../svg/link";
 import { handleApiError } from "../../../utils/helper";
 import { Result } from "../../../utils/result";
+import { ContextMenuEntry } from "../components/context-menu";
 import TagList from "../components/tag-list";
 import { ViewportProps } from "../components/viewport";
+import { WORKSPACE_CONTEXT } from "../workspace";
+import WorkspaceFindingsQuickAttach from "../workspace-findings-quick-attach";
+import { CreateFindingObject, getCreateAffectedData, getCreateAffectedType } from "./workspace-create-finding";
 import { TreeGraph, TreeNode } from "./workspace-finding-tree";
 
 export type DynamicTreeGraphProps = {
@@ -130,6 +138,10 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
         const [filterTags, setFilterTags] = useState<SimpleTag[]>([]);
         const addedUuids = useRef<{ [index: string]: null }>({});
         const [filterText, setFilterText] = useState("");
+        const [attaching, setAttaching] = useState<CreateFindingObject>();
+        const {
+            workspace: { uuid: contextWorkspace },
+        } = React.useContext(WORKSPACE_CONTEXT);
 
         const getMutator = () => {
             const srcUuid = apiOrUuid;
@@ -490,42 +502,103 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
         }, [roots, shownRoots, filterText, filterTags]);
 
         return (
-            <TreeGraph
-                className={`${maximized ? "maximized" : ""}`}
-                onClickTag={(e, tag) => {
-                    if (e.altKey) setFilterTags((tags) => tags.filter((t) => t.uuid != tag.uuid));
-                    else setFilterTags((tags) => (tags.some((t) => t.uuid == tag.uuid) ? tags : [...tags, tag]));
-                }}
-                roots={shownRoots}
-                decoration={
-                    <div className="toolbar">
-                        <TagList
-                            tags={filterTags}
-                            onClickTag={(e, tag) => {
-                                setFilterTags((tags) => tags.filter((t) => t.uuid != tag.uuid));
-                            }}
-                        />
-                        <Input
-                            className=""
-                            placeholder="Search"
-                            value={filterText}
-                            onChange={(v) => setFilterText(v)}
-                        />
-                        <div className="pad"></div>
-                        {maximizable && (
-                            <button
-                                className="maximize"
-                                onClick={toggleMax}
-                                aria-label={maximized ? "Minimize" : "Maximize"}
-                                title={maximized ? "Minimize" : "Maximize"}
-                            >
-                                {maximized ? <CollapseIcon /> : <ExpandIcon />}
-                            </button>
-                        )}
-                    </div>
-                }
-                {...props}
-            />
+            <>
+                <TreeGraph
+                    className={`${maximized ? "maximized" : ""}`}
+                    onClickTag={(e, tag) => {
+                        if (e.altKey) setFilterTags((tags) => tags.filter((t) => t.uuid != tag.uuid));
+                        else setFilterTags((tags) => (tags.some((t) => t.uuid == tag.uuid) ? tags : [...tags, tag]));
+                    }}
+                    roots={shownRoots}
+                    decoration={
+                        <div className="toolbar">
+                            <TagList
+                                tags={filterTags}
+                                onClickTag={(e, tag) => {
+                                    setFilterTags((tags) => tags.filter((t) => t.uuid != tag.uuid));
+                                }}
+                            />
+                            <Input
+                                className=""
+                                placeholder="Search"
+                                value={filterText}
+                                onChange={(v) => setFilterText(v)}
+                            />
+                            <div className="pad"></div>
+                            {maximizable && (
+                                <button
+                                    className="maximize"
+                                    onClick={toggleMax}
+                                    aria-label={maximized ? "Minimize" : "Maximize"}
+                                    title={maximized ? "Minimize" : "Maximize"}
+                                >
+                                    {maximized ? <CollapseIcon /> : <ExpandIcon />}
+                                </button>
+                            )}
+                        </div>
+                    }
+                    getMenu={(item) => [
+                        [<>{item.type}</>, undefined],
+                        ...(item.type === "Finding"
+                            ? []
+                            : [
+                                  [
+                                      <>
+                                          <LinkIcon />
+                                          <span>Attach to finding...</span>
+                                      </>,
+                                      async (e) => {
+                                          if (e.ctrlKey)
+                                              ROUTES.WORKSPACE_FINDINGS_QUICK_ATTACH.open({
+                                                  workspace: contextWorkspace,
+                                                  type: item.type,
+                                                  uuid: item.uuid,
+                                              });
+                                          else setAttaching(await resolveItem(contextWorkspace, item.type, item.uuid));
+                                      },
+                                  ] satisfies ContextMenuEntry,
+                              ]),
+                    ]}
+                    {...props}
+                />
+                {attaching && (
+                    <Popup nested modal open onClose={() => setAttaching(undefined)}>
+                        <div className="pane-thin">
+                            <WorkspaceFindingsQuickAttach
+                                type={getCreateAffectedType(attaching)}
+                                data={getCreateAffectedData(attaching)}
+                                onAttached={(f, wantMore) => {
+                                    if (!wantMore) setAttaching(undefined);
+                                }}
+                            />
+                        </div>
+                    </Popup>
+                )}
+            </>
         );
     },
 );
+
+async function resolveItem(workspace: string, type: AggregationType, uuid: UUID): Promise<CreateFindingObject> {
+    switch (type) {
+        case "Domain":
+            return {
+                domain: await Api.workspaces.domains.get(workspace, uuid).then((a) => a.unwrap()),
+            };
+        case "Host":
+            return {
+                host: await Api.workspaces.hosts.get(workspace, uuid).then((a) => a.unwrap()),
+            };
+        case "Port":
+            return {
+                port: await Api.workspaces.ports.get(workspace, uuid).then((a) => a.unwrap()),
+            };
+        case "Service":
+            return {
+                service: await Api.workspaces.services.get(workspace, uuid).then((a) => a.unwrap()),
+            };
+        default:
+            const exhaustiveCheck: never = type;
+            throw new Error("Invalid item type: " + exhaustiveCheck);
+    }
+}

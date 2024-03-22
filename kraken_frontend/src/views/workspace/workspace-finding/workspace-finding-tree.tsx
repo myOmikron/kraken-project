@@ -193,6 +193,7 @@ export function TreeGraph({
                             finding:
                                 (typeof l.source == "object" ? l.source.root : false) ||
                                 (typeof l.target == "object" ? l.target.root : false),
+                            className: "",
                         };
                         // XXX: swapping connection direction here for reverse connections
                         if (res.from[0] > res.to[0])
