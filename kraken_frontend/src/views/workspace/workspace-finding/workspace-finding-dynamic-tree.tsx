@@ -21,20 +21,33 @@ import {
     SimplePort,
     SimpleService,
     SimpleTag,
+    TagType,
 } from "../../../api/generated";
 import Input from "../../../components/input";
 import { ROUTES } from "../../../routes";
 import CollapseIcon from "../../../svg/collapse";
 import ExpandIcon from "../../../svg/expand";
+import InformationIcon from "../../../svg/information";
 import LinkIcon from "../../../svg/link";
+import TagIcon from "../../../svg/tag";
 import { handleApiError } from "../../../utils/helper";
 import { Result } from "../../../utils/result";
 import { ContextMenuEntry } from "../components/context-menu";
+import Domain from "../components/domain";
+import EditableTags from "../components/editable-tags";
+import IpAddr from "../components/host";
+import PortNumber from "../components/port";
+import ServiceName from "../components/service";
 import TagList from "../components/tag-list";
 import { ViewportProps } from "../components/viewport";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import WorkspaceFindingsQuickAttach from "../workspace-findings-quick-attach";
-import { CreateFindingObject, getCreateAffectedData, getCreateAffectedType } from "./workspace-create-finding";
+import {
+    CreateFindingObject,
+    getCreateAffectedData,
+    getCreateAffectedKey,
+    getCreateAffectedType,
+} from "./workspace-create-finding";
 import { TreeGraph, TreeNode } from "./workspace-finding-tree";
 
 export type DynamicTreeGraphProps = {
@@ -135,10 +148,12 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
         const [manualAffected, setManualAffected] = useState(0);
         const [roots, setRoots] = useState<DynamicTreeNode[]>([]);
         const [shownRoots, setShownRoots] = useState<DynamicTreeNode[]>([]);
+        const [wantRerender, setWantRerender] = React.useState(false);
         const [filterTags, setFilterTags] = useState<SimpleTag[]>([]);
         const addedUuids = useRef<{ [index: string]: null }>({});
         const [filterText, setFilterText] = useState("");
         const [attaching, setAttaching] = useState<CreateFindingObject>();
+        const [tagging, setTagging] = useState<CreateFindingObject>();
         const {
             workspace: { uuid: contextWorkspace },
         } = React.useContext(WORKSPACE_CONTEXT);
@@ -158,16 +173,21 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                 insertChild(parent: DynamicTreeNode, child: DynamicTreeNode) {
                     const isNew = !(child.uuid in addedUuids.current);
                     addedUuids.current[child.uuid] = null;
+                    mutator.updateNode(parent, (n) => ({
+                        ...n,
+                        children: [...(n.children ?? []), child],
+                    }));
+                    return isNew;
+                },
+                updateNode(search: string | DynamicTreeNode, update: (node: DynamicTreeNode) => DynamicTreeNode) {
+                    const uuid = typeof search == "string" ? search : search.uuid;
                     let found = false;
                     let copied: { [uuid: string]: DynamicTreeNode } = {};
                     function mutate(n: DynamicTreeNode): DynamicTreeNode {
                         if (copied[n.uuid]) return copied[n.uuid];
-                        if (n.uuid == parent.uuid) {
+                        if (n.uuid == uuid) {
                             found = true;
-                            return (copied[n.uuid] = {
-                                ...n,
-                                children: [...(n.children ?? []), child],
-                            });
+                            return (copied[n.uuid] = update(n));
                         } else {
                             let copy: DynamicTreeNode = {
                                 ...n,
@@ -183,10 +203,9 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                             copied = {};
                             return mutate(r);
                         });
-                        if (!found) console.warn("couldn't find ", parent, " in roots to insert child into?!");
+                        if (!found) console.warn("couldn't find ", search, " in roots for update!");
                         return res;
                     });
-                    return isNew;
                 },
                 insertFindings(parent: DynamicTreeNode, node: DynamicTreeNode, findings: ListFindings) {
                     if (mutator.shouldAbort()) return;
@@ -444,7 +463,6 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
 
         useEffect(() => {
             let lowerCaseFilterText = filterText?.toLowerCase() ?? "";
-            console.log(lowerCaseFilterText);
             let toShow =
                 filterTags.length || lowerCaseFilterText != ""
                     ? roots.map((root) => {
@@ -498,8 +516,11 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                 );
             }
 
-            if (toShow.some((r, i) => !isIdentical(r, shownRoots[i], {}))) setShownRoots(toShow);
-        }, [roots, shownRoots, filterText, filterTags]);
+            if (wantRerender || toShow.some((r, i) => !isIdentical(r, shownRoots[i], {}))) {
+                setShownRoots(toShow);
+                setWantRerender(false);
+            }
+        }, [roots, shownRoots, filterText, filterTags, wantRerender]);
 
         return (
             <>
@@ -538,10 +559,68 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                         </div>
                     }
                     getMenu={(item) => [
-                        [<>{item.type}</>, undefined],
+                        (async (): Promise<ContextMenuEntry[]> => {
+                            switch (item.type) {
+                                case "Finding":
+                                    return [
+                                        [
+                                            <>
+                                                <InformationIcon />
+                                                {item.definition.name}
+                                                {" - "}
+                                                {item.definition.cve}
+                                            </>,
+                                            undefined,
+                                        ],
+                                    ];
+                                case "Domain":
+                                    return [
+                                        [
+                                            <>
+                                                <InformationIcon />
+                                                <Domain domain={item.domain} pretty />
+                                            </>,
+                                            undefined,
+                                        ],
+                                    ];
+                                case "Host":
+                                    return [
+                                        [
+                                            <>
+                                                <InformationIcon />
+                                                <IpAddr host={item.host} pretty />
+                                            </>,
+                                            undefined,
+                                        ],
+                                    ];
+                                case "Port":
+                                    return [
+                                        [
+                                            <>
+                                                <InformationIcon />
+                                                <PortNumber port={item.port} pretty />
+                                            </>,
+                                            undefined,
+                                        ],
+                                    ];
+                                case "Service":
+                                    return [
+                                        [
+                                            <>
+                                                <InformationIcon />
+                                                <ServiceName service={item.service} pretty />
+                                            </>,
+                                            undefined,
+                                        ],
+                                    ];
+                                default:
+                                    const exhaustiveCheck: never = item;
+                                    throw new Error(`Unhandled node type: ${(exhaustiveCheck as any).type}`);
+                            }
+                        }) satisfies ContextMenuEntry,
                         ...(item.type === "Finding"
                             ? []
-                            : [
+                            : ([
                                   [
                                       <>
                                           <LinkIcon />
@@ -556,8 +635,17 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                                               });
                                           else setAttaching(await resolveItem(contextWorkspace, item.type, item.uuid));
                                       },
-                                  ] satisfies ContextMenuEntry,
-                              ]),
+                                  ],
+                                  [
+                                      <>
+                                          <TagIcon />
+                                          <span>Manage tags...</span>
+                                      </>,
+                                      async (e) => {
+                                          setTagging(await resolveItem(contextWorkspace, item.type, item.uuid));
+                                      },
+                                  ],
+                              ] satisfies ContextMenuEntry[])),
                     ]}
                     {...props}
                 />
@@ -574,10 +662,81 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                         </div>
                     </Popup>
                 )}
+                {tagging && (
+                    <Popup nested modal open onClose={() => setTagging(undefined)}>
+                        <div className="popup-thin">
+                            <TagEditorPopup
+                                data={tagging}
+                                workspace={contextWorkspace}
+                                onChange={(newTags) => {
+                                    const mutator = getMutator();
+                                    const key = getCreateAffectedKey(tagging);
+                                    mutator.updateNode(getCreateAffectedData(tagging).uuid, (n) =>
+                                        n.type === "Finding"
+                                            ? n
+                                            : {
+                                                  ...n,
+                                                  [key]: {
+                                                      ...(n as any)[key],
+                                                      tags: newTags,
+                                                  },
+                                              },
+                                    );
+                                    setWantRerender(true);
+                                }}
+                            />
+                        </div>
+                    </Popup>
+                )}
             </>
         );
     },
 );
+
+function TagEditorPopup({
+    data,
+    workspace,
+    onChange,
+}: {
+    data: CreateFindingObject;
+    workspace: string;
+    onChange?: (newTags: SimpleTag[]) => void;
+}) {
+    const obj = getCreateAffectedData(data);
+    const [tags, setTags] = React.useState(obj.tags);
+
+    return (
+        <form className="pane-thin">
+            <EditableTags
+                tags={tags}
+                workspace={workspace}
+                onChange={(newTags) => {
+                    console.log(newTags);
+                    onChange?.(newTags);
+                    const args = {
+                        globalTags: newTags.filter((t) => t.tagType == TagType.Global).map((t) => t.uuid),
+                        workspaceTags: newTags.filter((t) => t.tagType == TagType.Workspace).map((t) => t.uuid),
+                    };
+                    switch (getCreateAffectedType(data)) {
+                        case "Domain":
+                            Api.workspaces.domains.update(workspace, obj.uuid, args);
+                            break;
+                        case "Host":
+                            Api.workspaces.hosts.update(workspace, obj.uuid, args);
+                            break;
+                        case "Port":
+                            Api.workspaces.ports.update(workspace, obj.uuid, args);
+                            break;
+                        case "Service":
+                            Api.workspaces.services.update(workspace, obj.uuid, args);
+                            break;
+                    }
+                    setTags(newTags);
+                }}
+            />
+        </form>
+    );
+}
 
 async function resolveItem(workspace: string, type: AggregationType, uuid: UUID): Promise<CreateFindingObject> {
     switch (type) {

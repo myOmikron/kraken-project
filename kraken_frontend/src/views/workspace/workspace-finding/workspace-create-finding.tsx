@@ -464,6 +464,13 @@ export function getCreateAffectedType(affected: CreateFindingObject): Aggregatio
     else return AggregationType.Service;
 }
 
+export function getCreateAffectedKey(affected: CreateFindingObject): "domain" | "host" | "service" | "port" {
+    if (isAffectedDomain(affected)) return "domain";
+    if (isAffectedHost(affected)) return "host";
+    if (isAffectedPort(affected)) return "port";
+    else return "service";
+}
+
 export function getCreateAffectedData(affected: CreateFindingObject) {
     if (isAffectedDomain(affected)) return affected.domain;
     if (isAffectedHost(affected)) return affected.host;
