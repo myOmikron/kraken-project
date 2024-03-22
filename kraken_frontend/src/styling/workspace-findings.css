@@ -162,7 +162,19 @@
 }
 
 .workspace-findings-graph .connections path {
+    stroke-width: 2px;
+    stroke-dasharray: 4px 1%;
+    animation: inverted-dash linear 80s infinite;
     transition: stroke 0.1s ease-in;
+}
+
+.workspace-findings-graph .connections path.reversed {
+    animation: dash linear 80s infinite;
+}
+
+.workspace-findings-graph .connections path.finding {
+    stroke-dasharray: unset;
+    animation: unset;
 }
 
 .workspace-findings-graph .group {
@@ -180,17 +192,6 @@
     display: flex;
     flex-direction: column;
     align-items: start;
-}
-
-.workspace-findings-graph .tree-link {
-    fill: none;
-    stroke: #ccc;
-    stroke-width: 2px;
-}
-
-.workspace-findings-graph .tree-link-animation {
-    stroke-dasharray: 2%;
-    animation: inverted-dash linear 20s infinite;
 }
 
 .workspace-findings-graph .tree-wordwrap {

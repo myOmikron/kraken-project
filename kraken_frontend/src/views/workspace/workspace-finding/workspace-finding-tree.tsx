@@ -64,6 +64,8 @@ export function TreeGraph({
         fromUuid: string;
         toUuid: string;
         className: string;
+        reversed: boolean;
+        finding: boolean;
     };
     const defaultConnectionClass = "";
     const highlightConnectionClass = "highlighted";
@@ -187,7 +189,10 @@ export function TreeGraph({
                                     : [NaN, NaN],
                             fromUuid: typeof l.source == "object" ? l.source.uuid : (l.source as string),
                             toUuid: typeof l.target == "object" ? l.target.uuid : (l.target as string),
-                            className: defaultConnectionClass,
+                            reversed: false,
+                            finding:
+                                (typeof l.source == "object" ? l.source.root : false) ||
+                                (typeof l.target == "object" ? l.target.root : false),
                         };
                         // XXX: swapping connection direction here for reverse connections
                         if (res.from[0] > res.to[0])
@@ -197,7 +202,9 @@ export function TreeGraph({
                                 to: [res.from[0] - treeNodeWidth, res.from[1]],
                                 fromUuid: res.toUuid,
                                 toUuid: res.fromUuid,
+                                reversed: true,
                             };
+                        res.className = generateConnectionClass(res);
                         return res;
                     }),
                 );
@@ -376,21 +383,18 @@ export function TreeGraph({
         }
     }, [roots, rootUuids, simulation]);
 
+    const generateConnectionClass = (c: ConnectionT): string => `
+        ${highlighted.includes(c.fromUuid) && highlighted.includes(c.toUuid) ? highlightConnectionClass : defaultConnectionClass}
+        ${c.reversed ? "reversed" : ""}
+        ${c.finding ? "finding" : ""}
+    `;
+
     useEffect(() => {
-        if (
-            connections.some(
-                (c) =>
-                    (c.className == highlightConnectionClass) !=
-                    (highlighted.includes(c.fromUuid) && highlighted.includes(c.toUuid)),
-            )
-        ) {
+        if (connections.some((c) => c.className != generateConnectionClass(c))) {
             setConnections((conns) =>
                 conns.map((c) => ({
                     ...c,
-                    className:
-                        highlighted.includes(c.fromUuid) && highlighted.includes(c.toUuid)
-                            ? highlightConnectionClass
-                            : defaultConnectionClass,
+                    className: generateConnectionClass(c),
                 })),
             );
         }
