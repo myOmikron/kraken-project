@@ -711,7 +711,6 @@ function TagEditorPopup({
                 tags={tags}
                 workspace={workspace}
                 onChange={(newTags) => {
-                    console.log(newTags);
                     onChange?.(newTags);
                     const args = {
                         globalTags: newTags.filter((t) => t.tagType == TagType.Global).map((t) => t.uuid),

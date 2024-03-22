@@ -21,9 +21,9 @@ export function RelationsList({
             </div>
             {relations ? (
                 <div className="workspace-data-details-relations-body">
-                    {relations.map((r) => {
+                    {relations.map((r, i) => {
                         return (
-                            <div className="workspace-data-details-relations-entry">
+                            <div key={i} className="workspace-data-details-relations-entry">
                                 <RelationConnection type={r.connection} />
                                 <span>{r.type}</span>
                                 <span>{r.to}</span>

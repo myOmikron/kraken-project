@@ -41,7 +41,18 @@ export type ViewportRef = {
  */
 export const Viewport = forwardRef(
     (
-        { connections, className, children, originX, originY, initialZoom, decoration, ...props }: ViewportProps,
+        {
+            connections,
+            className,
+            children,
+            originX,
+            originY,
+            initialZoom,
+            decoration,
+            onMouseMoveBackground,
+            onClickBackground,
+            ...props
+        }: ViewportProps,
         propsRef,
     ) => {
         const minZoom = -2;
@@ -160,18 +171,18 @@ export const Viewport = forwardRef(
                 {...props}
                 ref={ref}
                 onClick={
-                    props.onClick || props.onClickBackground
+                    props.onClick || onClickBackground
                         ? (e) => {
                               props.onClick?.(e);
-                              if (isBackground(e.target as HTMLElement)) props.onClickBackground?.(e);
+                              if (isBackground(e.target as HTMLElement)) onClickBackground?.(e);
                           }
                         : undefined
                 }
                 onMouseMove={
-                    props.onMouseMove || props.onMouseMoveBackground
+                    props.onMouseMove || onMouseMoveBackground
                         ? (e) => {
                               props.onMouseMove?.(e);
-                              if (isBackground(e.target as HTMLElement)) props.onMouseMoveBackground?.(e);
+                              if (isBackground(e.target as HTMLElement)) onMouseMoveBackground?.(e);
                           }
                         : undefined
                 }

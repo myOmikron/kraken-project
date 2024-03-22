@@ -46,6 +46,7 @@ export default function SeverityIcon(props: SeverityIconProps) {
                     >
                         {[...Array(4)].map((_, i) => (
                             <rect
+                                key={i}
                                 x={4}
                                 y={19 - i * 5}
                                 rx={0.5}
