@@ -202,42 +202,53 @@ function DeleteButton({ finding, name }: { finding: UUID; name: string }) {
             open={open}
             onClose={() => setOpen(false)}
             trigger={
-                <div>
-                    <button onClick={() => setOpen(true)} className="button danger" type="button">
-                        Delete this Finding
+                <div className="workspace-data-danger-pane">
+                    <h2 className={"sub-heading"}>Danger Zone</h2>
+                    <button
+                        type="button"
+                        onClick={() => setOpen(true)}
+                        className="workspace-settings-red-button button"
+                    >
+                        Delete finding definition
                     </button>
                 </div>
             }
         >
-            <div className="popup-content pane" style={{ width: "78ch" }}>
-                <h1 className="heading neon">Are you sure you want to delete the finding definition "{name}"?</h1>
-                <div>
-                    <p>The following findings will be deleted due to this:</p>
-                    <ul>
-                        <li>TODO</li>
-                    </ul>
+            <div className="popup-content pane danger" style={{ width: "70ch", backgroundColor: "rgba(30,0,0,0.25)" }}>
+                <div className="workspace-setting-popup">
+                    <h2 className="heading neon">Are you sure you want to delete the finding definition "{name}"?</h2>
+                    <div>
+                        <p>The following findings will be deleted due to this:</p>
+                        <ul>
+                            <li>TODO</li>
+                        </ul>
+                    </div>
+                    <button
+                        className="button workspace-settings-red-button"
+                        type="reset"
+                        onClick={() => setOpen(false)}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        className="button workspace-settings-red-button"
+                        type="button"
+                        onClick={() => {
+                            toast.promise(
+                                Api.knowledgeBase.findingDefinitions.admin
+                                    .delete(finding)
+                                    .then(() => ROUTES.FINDING_DEFINITION_LIST.visit({})),
+                                {
+                                    pending: "Deleting finding definition...",
+                                    error: "Failed to delete finding definition!",
+                                    success: "Successfully deleted finding definition",
+                                },
+                            );
+                        }}
+                    >
+                        Delete
+                    </button>
                 </div>
-                <button
-                    className="button danger"
-                    type="button"
-                    onClick={() => {
-                        toast.promise(
-                            Api.knowledgeBase.findingDefinitions.admin
-                                .delete(finding)
-                                .then(() => ROUTES.FINDING_DEFINITION_LIST.visit({})),
-                            {
-                                pending: "Deleting finding definition...",
-                                error: "Failed to delete finding definition!",
-                                success: "Successfully deleted finding definition",
-                            },
-                        );
-                    }}
-                >
-                    Delete
-                </button>
-                <button className="button" type="reset" onClick={() => setOpen(false)}>
-                    Cancel
-                </button>
             </div>
         </Popup>
     );

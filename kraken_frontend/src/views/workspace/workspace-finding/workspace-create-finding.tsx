@@ -37,6 +37,7 @@ import TagList, { TagClickCallback } from "../components/tag-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import WorkspaceFindingDataTable, { WorkspaceFindingDataTableRef } from "./workspace-finding-data-table";
 import EditingTreeGraph, { EditingTreeGraphRef } from "./workspace-finding-editing-tree";
+import ArrowLeftIcon from "../../../svg/arrow-left";
 
 export type CreateFindingObject =
     | { domain: FullDomain }
@@ -194,6 +195,10 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
         <>
             <div className="pane">
                 <div className="workspace-findings-selection-info">
+                    <ArrowLeftIcon
+                        title={"Back"}
+                        {...ROUTES.WORKSPACE_FINDINGS_LIST.clickHandler({ uuid: workspace })}
+                    />
                     <h1 className="heading">Create new finding</h1>
                 </div>
                 <div className="create-finding-container">

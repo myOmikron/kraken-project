@@ -552,36 +552,47 @@ function DeleteButton({ workspace, finding, severity }: { workspace: UUID; findi
             open={open}
             onClose={() => setOpen(false)}
             trigger={
-                <div>
-                    <button onClick={() => setOpen(true)} className="button danger" type="button">
-                        Delete this Finding
+                <div className="workspace-data-danger-pane">
+                    <h2 className={"sub-heading"}>Danger Zone</h2>
+                    <button
+                        type="button"
+                        onClick={() => setOpen(true)}
+                        className="workspace-settings-red-button button"
+                    >
+                        Delete finding
                     </button>
                 </div>
             }
         >
-            <div className="popup-content pane" style={{ width: "52ch" }}>
-                <h1 className="heading neon">Are you sure you want to delete this {severity} Severity finding?</h1>
-                <button
-                    className="button danger"
-                    type="button"
-                    onClick={() => {
-                        toast.promise(
-                            Api.workspaces.findings
-                                .delete(workspace, finding)
-                                .then(() => ROUTES.WORKSPACE_FINDINGS_LIST.visit({ uuid: workspace })),
-                            {
-                                pending: "Deleting finding...",
-                                error: "Failed to delete finding!",
-                                success: "Successfully deleted",
-                            },
-                        );
-                    }}
-                >
-                    Delete
-                </button>
-                <button className="button" type="reset" onClick={() => setOpen(false)}>
-                    Cancel
-                </button>
+            <div className="popup-content pane danger " style={{ width: "50ch", backgroundColor: "rgba(30,0,0,0.25)" }}>
+                <div className="workspace-setting-popup">
+                    <h2 className="heading neon">Are you sure you want to delete this {severity} Severity finding?</h2>
+                    <button
+                        className="workspace-settings-red-button button"
+                        type="reset"
+                        onClick={() => setOpen(false)}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        className="workspace-settings-red-button button"
+                        type="button"
+                        onClick={() => {
+                            toast.promise(
+                                Api.workspaces.findings
+                                    .delete(workspace, finding)
+                                    .then(() => ROUTES.WORKSPACE_FINDINGS_LIST.visit({ uuid: workspace })),
+                                {
+                                    pending: "Deleting finding...",
+                                    error: "Failed to delete finding!",
+                                    success: "Successfully deleted",
+                                },
+                            );
+                        }}
+                    >
+                        Delete
+                    </button>
+                </div>
             </div>
         </Popup>
     );

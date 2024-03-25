@@ -36,8 +36,26 @@
 }
 
 .workspace-findings-selection-info {
-    display: flex;
+    display: grid;
+    grid-template-columns: min-content auto;
     gap: 1em;
+    align-items: center;
+
+}
+
+.workspace-findings-selection-info > h1{
+    justify-self: start;
+}
+
+.workspace-findings-selection-info > div > .button{
+    width: 3.5em;
+    border-radius: 0.5em;
+}
+
+
+
+.workspace-findings-selection-info > div > .button > .icon:hover{
+    box-shadow: inset 0 -3px 2em var(--red-button), 0 0 10em var(--red-button), 0 0 0.5em var(--red-button);
 }
 
 .workspace-findings-selection-info > .icon {
@@ -45,7 +63,7 @@
     cursor: pointer;
 }
 
-.workspace-findings-selection-info .icon:hover {
+.workspace-findings-selection-info > .icon:hover {
     filter: brightness(0) invert() drop-shadow(0 0 8px var(--primary));
 }
 
