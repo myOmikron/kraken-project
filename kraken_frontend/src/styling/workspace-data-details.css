@@ -216,7 +216,7 @@
 
 .workspace-data-details-findings,
 .workspace-data-details-findings .workspace-data-details-relations-entry {
-    grid-template-columns: 0.5fr 1fr 1fr;
+    grid-template-columns: 1fr 1.5fr 1.5fr;
 }
 
 .workspace-data-details-findings:not(.workspace-data-details-relations-header)

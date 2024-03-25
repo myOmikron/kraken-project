@@ -26,7 +26,7 @@ import FilterInput, { FilterOutput, useFilter } from "./components/filter-input"
 import IpAddr from "./components/host";
 import PortNumber from "./components/port";
 import ServiceName from "./components/service";
-import SeverityIcon from "./components/severity-icon";
+import SeverityIcon, { Severity } from "./components/severity-icon";
 import TableRow from "./components/table-row";
 import TagList from "./components/tag-list";
 import { StatelessWorkspaceTable, useTable } from "./components/workspace-table";
@@ -351,9 +351,12 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <Domain domain={domain} />
                                 <TagList tags={domain.tags} globalFilter={globalFilter} filter={domainFilter} />
                                 <div>{domain.comment}</div>
-                                <div className={"workspace-data-certainty-icon"}>
-                                    <SeverityIcon severity={domain.severity} />
-                                </div>
+                                <Severity
+                                    severity={domain.severity}
+                                    dataType={"Domain"}
+                                    uuid={domain.uuid}
+                                    workspace={workspace}
+                                />
                                 <CertaintyIcon certainty={domain.certainty} />
                                 <AttackButton
                                     workspaceUuid={workspace}
@@ -463,9 +466,12 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <OsIcon tooltip os={host.osType} size="2em" />
                                 <TagList tags={host.tags} globalFilter={globalFilter} filter={hostFilter} />
                                 <div>{host.comment}</div>
-                                <div className={"workspace-data-certainty-icon"}>
-                                    <SeverityIcon severity={host.severity} />
-                                </div>
+                                <Severity
+                                    severity={host.severity}
+                                    dataType={"Host"}
+                                    uuid={host.uuid}
+                                    workspace={workspace}
+                                />
                                 <CertaintyIcon certainty={host.certainty} />
                                 <AttackButton workspaceUuid={workspace} targetUuid={host.uuid} targetType={"host"} />
                             </ContextMenu>
@@ -556,9 +562,12 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <IpAddr host={port.host} />
                                 <TagList tags={port.tags} globalFilter={globalFilter} filter={portFilter} />
                                 <span>{port.comment}</span>
-                                <div className={"workspace-data-certainty-icon"}>
-                                    <SeverityIcon severity={port.severity} />
-                                </div>
+                                <Severity
+                                    severity={port.severity}
+                                    dataType={"Port"}
+                                    uuid={port.uuid}
+                                    workspace={workspace}
+                                />
                                 <CertaintyIcon certainty={port.certainty} />
                                 <AttackButton workspaceUuid={workspace} targetUuid={port.uuid} targetType={"port"} />
                             </ContextMenu>
@@ -670,9 +679,12 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 </span>
                                 <TagList tags={service.tags} globalFilter={globalFilter} filter={serviceFilter} />
                                 <span>{service.comment}</span>
-                                <div className={"workspace-data-certainty-icon"}>
-                                    <SeverityIcon severity={service.severity} />
-                                </div>
+                                <Severity
+                                    severity={service.severity}
+                                    dataType={"Service"}
+                                    uuid={service.uuid}
+                                    workspace={workspace}
+                                />
                                 <CertaintyIcon certainty={service.certainty} />
                                 <AttackButton
                                     workspaceUuid={workspace}

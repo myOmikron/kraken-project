@@ -11,7 +11,7 @@ import { FilterOutput, useFilter } from "../components/filter-input";
 import IpAddr from "../components/host";
 import PortNumber from "../components/port";
 import ServiceName from "../components/service";
-import SeverityIcon from "../components/severity-icon";
+import SeverityIcon, { Severity } from "../components/severity-icon";
 import TagList from "../components/tag-list";
 import { StatelessWorkspaceTable, useTable } from "../components/workspace-table";
 import { WORKSPACE_CONTEXT } from "../workspace";
@@ -135,9 +135,12 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                                         <Domain domain={domain} />
                                         <TagList tags={domain.tags} filter={domainFilter} />
                                         <span>{domain.comment}</span>
-                                        <div className={"workspace-data-certainty-icon"}>
-                                            <SeverityIcon severity={domain.severity} />
-                                        </div>
+                                        <Severity
+                                            severity={domain.severity}
+                                        dataType={"Domain"}
+                                        uuid={domain.uuid}
+                                        workspace={workspace}
+                                    />
                                         <CertaintyIcon certainty={domain.certainty} />
                                     </div>
                                 ))}
@@ -177,9 +180,12 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                                         <OsIcon tooltip os={host.osType} size="2em" />
                                         <TagList tags={host.tags} filter={hostFilter} />
                                         <span>{host.comment}</span>
-                                        <div className={"workspace-data-certainty-icon"}>
-                                            <SeverityIcon severity={host.severity} />
-                                        </div>
+                                        <Severity
+                                            severity={host.severity}
+                                        dataType={"Host"}
+                                        uuid={host.uuid}
+                                        workspace={workspace}
+                                    />
                                         <CertaintyIcon certainty={host.certainty} />
                                     </div>
                                 ))}
@@ -221,9 +227,12 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                                         <IpAddr host={port.host} />
                                         <TagList tags={port.tags} filter={portFilter} />
                                         <span>{port.comment}</span>
-                                        <div className={"workspace-data-certainty-icon"}>
-                                            <SeverityIcon severity={port.severity} />
-                                        </div>
+                                        <Severity
+                                            severity={port.severity}
+                                        dataType={"Port"}
+                                        uuid={port.uuid}
+                                        workspace={workspace}
+                                    />
                                         <CertaintyIcon certainty={port.certainty} />
                                     </div>
                                 ))}
@@ -289,9 +298,12 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                                         </span>
                                         <TagList tags={service.tags} filter={serviceFilter} />
                                         <span>{service.comment}</span>
-                                        <div className={"workspace-data-certainty-icon"}>
-                                            <SeverityIcon severity={service.severity} />
-                                        </div>
+                                        <Severity
+                                            severity={service.severity}
+                                        dataType={"Service"}
+                                        uuid={service.uuid}
+                                        workspace={workspace}
+                                    />
                                         <CertaintyIcon certainty={service.certainty} />
                                     </div>
                                 ))}
