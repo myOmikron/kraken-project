@@ -158,11 +158,12 @@
 .pane-thin.sidebar-popup {
     width: 300px;
     margin: 0;
-    padding: 1em;
+    padding: 0.5em 0.5em 1em;
+    margin-left: -1em;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-    border-radius: 1em;
+    border-radius: 0.5em;
 }
 
 .pane-thin.sidebar-popup .collapsible-section {
@@ -170,6 +171,9 @@
 }
 .pane-thin.sidebar-popup .collapsible-section h2 {
     margin-bottom: 1rem;
+}
+.pane-thin.sidebar-popup .collapsible-section h2:last-child {
+    margin-bottom: 0;
 }
 
 .workspace-findings-graph.maximized {

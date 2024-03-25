@@ -571,7 +571,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                                         </button>
                                     }
                                     on={["click"]}
-                                    position={["bottom right", "bottom center"]}
+                                    position={["bottom left", "right center"]}
                                 >
                                     <div className="sidebar-popup pane-thin">
                                         <CollapsibleSection summary={"Display"} defaultVisible>
