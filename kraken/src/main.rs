@@ -83,6 +83,8 @@ pub struct Cli {
 #[rorm::rorm_main]
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let foo = 2;
+
     let cli = Cli::parse();
 
     let config_content =
