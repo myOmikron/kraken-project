@@ -159,6 +159,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
         const [attaching, setAttaching] = useState<CreateFindingObject>();
         const [tagging, setTagging] = useState<CreateFindingObject>();
         const [showTags, setShowTags] = React.useState(true);
+        const [fastSimulation, setFastSimulation] = React.useState(true);
         const {
             workspace: { uuid: contextWorkspace },
         } = React.useContext(WORKSPACE_CONTEXT);
@@ -554,6 +555,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                         else setFilterTags((tags) => (tags.some((t) => t.uuid == tag.uuid) ? tags : [...tags, tag]));
                     }}
                     showTags={showTags}
+                    fastSimulation={fastSimulation}
                     roots={shownRoots}
                     decoration={
                         <>
@@ -572,11 +574,19 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                                     position={["bottom right", "bottom center"]}
                                 >
                                     <div className="sidebar-popup pane-thin">
-                                        {/* <CollapsibleSection summary={"Physics"} defaultVisible></CollapsibleSection> */}
                                         <CollapsibleSection summary={"Display"} defaultVisible>
                                             <label>
                                                 <Checkbox value={showTags} onChange={(v) => setShowTags(v)} />
                                                 Show tags
+                                            </label>
+                                        </CollapsibleSection>
+                                        <CollapsibleSection summary={"Physics"} defaultVisible>
+                                            <label>
+                                                <Checkbox
+                                                    value={fastSimulation}
+                                                    onChange={(v) => setFastSimulation(v)}
+                                                />
+                                                Speed up simulation
                                             </label>
                                         </CollapsibleSection>
                                     </div>

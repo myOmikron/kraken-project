@@ -45,6 +45,7 @@ export type TreeNode = {
 export function TreeGraph({
     roots,
     showTags,
+    fastSimulation,
     onClickTag,
     children,
     getMenu,
@@ -52,6 +53,7 @@ export function TreeGraph({
 }: {
     roots: TreeNode[];
     showTags?: boolean;
+    fastSimulation?: boolean;
     onClickTag?: TagClickCallback;
     getMenu?: (t: TreeNode) => ContextMenuEntry[] | undefined;
 } & ViewportProps) {
@@ -362,16 +364,20 @@ export function TreeGraph({
         const collisionForce = sim.force("collide")!;
         sim.force("collide", null);
         sim.alpha(0.4).restart().tick();
-        for (let i = 0; i < 400; i++) {
-            if (sim.alpha() < sim.alphaMin()) break;
-            sim.tick();
+        if (fastSimulation ?? true) {
+            for (let i = 0; i < 400; i++) {
+                if (sim.alpha() < sim.alphaMin()) break;
+                sim.tick();
+            }
         }
         sim.force("collide", collisionForce);
         sim.force("centering", centeringForce);
         sim.alpha(0.4).restart().tick();
-        for (let i = 0; i < 1000; i++) {
-            if (sim.alpha() < sim.alphaMin()) break;
-            sim.tick();
+        if (fastSimulation ?? true) {
+            for (let i = 0; i < 1000; i++) {
+                if (sim.alpha() < sim.alphaMin()) break;
+                sim.tick();
+            }
         }
         for (const node of nodes) {
             if (node.root && node.children?.length) {
@@ -390,7 +396,7 @@ export function TreeGraph({
                 }
             }
         }
-    }, [roots, rootUuids, simulation, showTags]);
+    }, [roots, rootUuids, simulation, showTags, fastSimulation]);
 
     const generateConnectionClass = (c: ConnectionT): string => `
         ${highlighted.includes(c.fromUuid) && highlighted.includes(c.toUuid) ? highlightConnectionClass : defaultConnectionClass}
