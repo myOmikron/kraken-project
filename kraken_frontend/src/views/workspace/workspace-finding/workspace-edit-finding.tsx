@@ -340,6 +340,10 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                 case "Host":
                                                     return compareHost(aObj as SimpleHost, bObj as SimpleHost);
                                                 case "Port":
+                                                    // Sorting here doesn't compare host / relational data yet.
+                                                    // To fix this we would need FullPort/FullService, which would
+                                                    // need tons of more requests right now. Not going to do this until
+                                                    // it really becomes a problem - it should not be a major problem.
                                                     return comparePort(aObj as SimplePort, bObj as SimplePort);
                                                 case "Service":
                                                     return compareService(aObj as SimpleService, bObj as SimpleService);
