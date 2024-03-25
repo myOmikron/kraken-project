@@ -230,7 +230,7 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                             .map((w) => {
                                 return (
                                     <div
-                                        className={"pane workspace-list-item"}
+                                        className={`pane workspace-list-item ${w.archived ? "archived" : ""}`}
                                         {...ROUTES.WORKSPACE_DATA.clickHandler({ uuid: w.uuid })}
                                     >
                                         <h3 className={"heading"}>{w.name}</h3>
