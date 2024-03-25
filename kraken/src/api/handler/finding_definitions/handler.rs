@@ -1,10 +1,14 @@
 use actix_web::get;
 use actix_web::post;
+use actix_web::put;
 use actix_web::web::Json;
 use actix_web::web::Path;
+use actix_web::HttpResponse;
 use futures::TryStreamExt;
+use rorm::and;
 use rorm::insert;
 use rorm::query;
+use rorm::update;
 use rorm::FieldAccess;
 use rorm::Model;
 use uuid::Uuid;
@@ -17,7 +21,9 @@ use crate::api::handler::finding_definitions::schema::CreateFindingDefinitionReq
 use crate::api::handler::finding_definitions::schema::FullFindingDefinition;
 use crate::api::handler::finding_definitions::schema::ListFindingDefinitions;
 use crate::api::handler::finding_definitions::schema::SimpleFindingDefinition;
+use crate::api::handler::finding_definitions::schema::UpdateFindingDefinitionRequest;
 use crate::chan::global::GLOBAL;
+use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::FindingDefinition;
 use crate::models::InsertFindingDefinition;
 use crate::modules::cache::EditorCached;
@@ -165,4 +171,83 @@ pub async fn get_all_finding_definitions() -> ApiResult<Json<ListFindingDefiniti
     Ok(Json(ListFindingDefinitions {
         finding_definitions,
     }))
+}
+
+/// Update a finding definition
+///
+/// This endpoint only allows updating the `name`, `severity` and `cve`.
+/// The other values have to be updated through the websocket as part of a live editor.
+#[utoipa::path(
+    tag = "Knowledge Base",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Updated a finding definition"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid),
+    request_body = UpdateFindingDefinitionRequest,
+    security(("api_key" = []))
+)]
+#[put("/findingDefinitions/{uuid}")]
+pub async fn update_finding_definition(
+    path: Path<PathUuid>,
+    Json(request): Json<UpdateFindingDefinitionRequest>,
+) -> ApiResult<HttpResponse> {
+    let PathUuid { uuid } = path.into_inner();
+
+    if matches!(
+        &request,
+        UpdateFindingDefinitionRequest {
+            name: None,
+            severity: None,
+            cve: None
+        }
+    ) {
+        return Err(ApiError::EmptyJson);
+    }
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    query!(&mut tx, (FindingDefinition::F.uuid,))
+        .condition(FindingDefinition::F.uuid.equals(uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    if let Some(new_name) = request.name.as_deref() {
+        if query!(&mut tx, (FindingDefinition::F.uuid,))
+            .condition(and![
+                FindingDefinition::F.uuid.not_equals(uuid),
+                FindingDefinition::F.name.equals(new_name)
+            ])
+            .optional()
+            .await?
+            .is_some()
+        {
+            return Err(ApiError::NameAlreadyExists);
+        }
+    }
+
+    if let Ok(update) = update!(&mut tx, FindingDefinition)
+        .begin_dyn_set()
+        .condition(FindingDefinition::F.uuid.equals(uuid))
+        .set_if(FindingDefinition::F.name, request.name.clone())
+        .set_if(FindingDefinition::F.cve, request.cve.clone())
+        .set_if(FindingDefinition::F.severity, request.severity)
+        .finish_dyn_set()
+    {
+        update.exec().await?;
+    }
+
+    tx.commit().await?;
+
+    GLOBAL
+        .ws
+        .message_all(WsMessage::UpdatedFindingDefinition {
+            uuid,
+            update: request,
+        })
+        .await;
+    Ok(HttpResponse::Ok().finish())
 }

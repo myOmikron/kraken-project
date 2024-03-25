@@ -14,6 +14,7 @@ use crate::api::handler::attack_results::schema::FullDnsTxtScanResult;
 use crate::api::handler::attacks::schema::SimpleAttack;
 use crate::api::handler::domains::schema::SimpleDomain;
 use crate::api::handler::finding_affected::schema::UpdateFindingAffectedRequest;
+use crate::api::handler::finding_definitions::schema::UpdateFindingDefinitionRequest;
 use crate::api::handler::findings::schema::UpdateFindingRequest;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::SimplePort;
@@ -249,6 +250,13 @@ pub enum WsMessage {
         uuid: Uuid,
         /// The updated list of tags
         tags: Vec<Uuid>,
+    },
+    /// A finding definition has been updated
+    UpdatedFindingDefinition {
+        /// The uuid of the finding definition
+        uuid: Uuid,
+        /// The update
+        update: UpdateFindingDefinitionRequest,
     },
     /// A finding definition was deleted
     DeletedFindingDefinition {
