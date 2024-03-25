@@ -1,16 +1,16 @@
 import React from "react";
-import { Api } from "../api/api";
-import { check, handleApiError } from "../utils/helper";
-import { SimpleWorkspace } from "../api/generated";
-import Loading from "../components/loading";
-import Input from "../components/input";
-import Textarea from "../components/textarea";
 import { toast } from "react-toastify";
-import "../styling/workspace-overview.css";
-import WorkspaceIcon from "../svg/workspace";
+import { Api } from "../api/api";
+import { SimpleWorkspace } from "../api/generated";
 import Checkbox from "../components/checkbox";
+import Input from "../components/input";
+import Loading from "../components/loading";
+import Textarea from "../components/textarea";
 import USER_CONTEXT from "../context/user";
 import { ROUTES } from "../routes";
+import "../styling/workspace-overview.css";
+import WorkspaceIcon from "../svg/workspace";
+import { check, handleApiError } from "../utils/helper";
 
 type Sorting = "none" | "name" | "createdAt" | "lastModified";
 
@@ -125,52 +125,71 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                         />
                         <div className={"workspace-list-filter-ownership"}>
                             <h3 className={"heading"}>Filter</h3>
-                            <div className={"workspace-list-filter-ownership-table"}>
-                                <span>Owner</span>
-                                <Checkbox
-                                    value={this.state.onlyOwner}
-                                    onChange={() => {
-                                        this.setState({ onlyOwner: !this.state.onlyOwner, onlyMember: false });
-                                    }}
-                                />
-                                <span>Member</span>
-                                <Checkbox
-                                    value={this.state.onlyMember}
-                                    onChange={() => {
-                                        this.setState({ onlyOwner: false, onlyMember: !this.state.onlyMember });
-                                    }}
-                                />
+                            <div className={"workspace-list-checkbox-table"}>
+                                <label>
+                                    <Checkbox
+                                        value={this.state.onlyOwner}
+                                        onChange={() => {
+                                            this.setState({ onlyOwner: !this.state.onlyOwner, onlyMember: false });
+                                        }}
+                                    />
+                                    <span>Owner</span>
+                                </label>
+                                <label>
+                                    <Checkbox
+                                        value={this.state.onlyMember}
+                                        onChange={() => {
+                                            this.setState({ onlyOwner: false, onlyMember: !this.state.onlyMember });
+                                        }}
+                                    />
+                                    <span>Member</span>
+                                </label>
+                                <label>
+                                    <Checkbox
+                                        value={this.state.onlyMember}
+                                        onChange={() => {
+                                            this.setState({ onlyOwner: false, onlyMember: !this.state.onlyMember });
+                                        }}
+                                    />
+                                    <span>Archived</span>
+                                </label>
                             </div>
                         </div>
                         <div className={"workspace-list-sorting"}>
                             <h3 className={"heading"}>Sorting</h3>
-                            <div className={"workspace-list-sorting-table"}>
-                                <span>Name</span>
-                                <Checkbox
-                                    value={this.state.sorting === "name"}
-                                    onChange={() => {
-                                        this.setState({ sorting: this.state.sorting === "name" ? "none" : "name" });
-                                    }}
-                                />
-                                <div></div>
-                                <span>Created timestamp</span>
-                                <Checkbox
-                                    value={this.state.sorting === "createdAt"}
-                                    onChange={() => {
-                                        this.setState({
-                                            sorting: this.state.sorting === "createdAt" ? "none" : "createdAt",
-                                        });
-                                    }}
-                                />
-                                <span>Last modified</span>
-                                <Checkbox
-                                    value={this.state.sorting === "lastModified"}
-                                    onChange={() => {
-                                        this.setState({
-                                            sorting: this.state.sorting === "lastModified" ? "none" : "lastModified",
-                                        });
-                                    }}
-                                />
+                            <div className={"workspace-list-checkbox-table"}>
+                                <label>
+                                    <Checkbox
+                                        value={this.state.sorting === "name"}
+                                        onChange={() => {
+                                            this.setState({ sorting: this.state.sorting === "name" ? "none" : "name" });
+                                        }}
+                                    />
+                                    <span>Name</span>
+                                </label>
+                                <label>
+                                    <Checkbox
+                                        value={this.state.sorting === "createdAt"}
+                                        onChange={() => {
+                                            this.setState({
+                                                sorting: this.state.sorting === "createdAt" ? "none" : "createdAt",
+                                            });
+                                        }}
+                                    />
+                                    <span>Created timestamp</span>
+                                </label>
+                                <label>
+                                    <Checkbox
+                                        value={this.state.sorting === "lastModified"}
+                                        onChange={() => {
+                                            this.setState({
+                                                sorting:
+                                                    this.state.sorting === "lastModified" ? "none" : "lastModified",
+                                            });
+                                        }}
+                                    />
+                                    <span>Last modified</span>
+                                </label>
                             </div>
                         </div>
                     </div>
