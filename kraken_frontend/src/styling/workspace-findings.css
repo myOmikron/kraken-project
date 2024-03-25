@@ -115,10 +115,10 @@
 
 .workspace-findings-graph > .toolbar > .pad {
     flex-grow: 1;
-    flex-basis: 250px;
+    flex-basis: 290px;
 }
 
-.workspace-findings-graph > .toolbar > button.maximize {
+.workspace-findings-graph > .toolbar > button.icon-button {
     padding: 0;
     background: none;
     border: none;
@@ -126,15 +126,32 @@
     flex-shrink: 0;
 }
 
-.workspace-findings-graph > .toolbar > button.maximize svg {
+.workspace-findings-graph > .toolbar > button.icon-button svg {
     width: 2em;
     height: 2em;
     fill: white;
     transform: rotate(45deg);
 }
 
-.workspace-findings-graph > .toolbar > button.maximize:hover svg {
+.workspace-findings-graph > .toolbar > button.icon-button:hover svg {
     transform: rotate(45deg) scale(1.2);
+}
+
+.pane-thin.sidebar-popup {
+    width: 300px;
+    margin: 0;
+    padding: 1em;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    border-radius: 1em;
+}
+
+.pane-thin.sidebar-popup .collapsible-section {
+    padding: 1em;
+}
+.pane-thin.sidebar-popup .collapsible-section h2 {
+    margin-bottom: 1rem;
 }
 
 .workspace-findings-graph.maximized {

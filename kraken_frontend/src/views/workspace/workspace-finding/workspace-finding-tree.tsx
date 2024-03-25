@@ -44,12 +44,14 @@ export type TreeNode = {
 
 export function TreeGraph({
     roots,
+    showTags,
     onClickTag,
     children,
     getMenu,
     ...props
 }: {
     roots: TreeNode[];
+    showTags?: boolean;
     onClickTag?: TagClickCallback;
     getMenu?: (t: TreeNode) => ContextMenuEntry[] | undefined;
 } & ViewportProps) {
@@ -388,7 +390,7 @@ export function TreeGraph({
                 }
             }
         }
-    }, [roots, rootUuids, simulation]);
+    }, [roots, rootUuids, simulation, showTags]);
 
     const generateConnectionClass = (c: ConnectionT): string => `
         ${highlighted.includes(c.fromUuid) && highlighted.includes(c.toUuid) ? highlightConnectionClass : defaultConnectionClass}
@@ -429,6 +431,7 @@ export function TreeGraph({
                         ? []
                         : (rendered[n.uuid] = [
                               <TreeNode
+                                  showTags={showTags ?? true}
                                   key={n.uuid}
                                   menu={getMenu?.(n)}
                                   node={n}
@@ -447,6 +450,7 @@ export function TreeGraph({
 
 function TreeNode({
     node,
+    showTags,
     menu,
     onClickTag,
     className,
@@ -455,6 +459,7 @@ function TreeNode({
     onClick,
 }: {
     node: TreeNode;
+    showTags: boolean;
     menu?: ContextMenuEntry[];
     className?: string;
     onClickTag?: TagClickCallback;
@@ -517,8 +522,8 @@ function TreeNode({
                         Severity: <b>{node.severity}</b>
                     </div>
                 ) : (
-                    <div className={`tree-node-body ${tags!.length == 0 ? "empty" : ""}`}>
-                        <TagList tags={tags!} onClickTag={onClickTag} />
+                    <div className={`tree-node-body ${!showTags || tags!.length == 0 ? "empty" : ""}`}>
+                        {showTags && <TagList tags={tags!} onClickTag={onClickTag} />}
                     </div>
                 )}
             </div>

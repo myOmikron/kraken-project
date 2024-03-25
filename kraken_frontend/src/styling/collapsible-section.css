@@ -1,7 +1,16 @@
+.collapsible-section > h2 {
+    display: flex;
+    flex-direction: row;
+}
+
 .collapsible-section > h2 > .toggle:hover {
     cursor: pointer;
 }
 
 .collapsible-section > h2 > .toggle:hover .icon {
     filter: brightness(0) invert() drop-shadow(0 0 8px var(--primary));
+}
+
+.collapsible-section > h2 > .toggle .icon svg {
+    height: 1em;
 }

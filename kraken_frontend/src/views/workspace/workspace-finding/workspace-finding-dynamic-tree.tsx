@@ -23,15 +23,18 @@ import {
     SimpleTag,
     TagType,
 } from "../../../api/generated";
+import Checkbox from "../../../components/checkbox";
 import Input from "../../../components/input";
 import { ROUTES } from "../../../routes";
 import CollapseIcon from "../../../svg/collapse";
 import ExpandIcon from "../../../svg/expand";
 import InformationIcon from "../../../svg/information";
 import LinkIcon from "../../../svg/link";
+import SettingsIcon from "../../../svg/settings";
 import TagIcon from "../../../svg/tag";
 import { handleApiError } from "../../../utils/helper";
 import { Result } from "../../../utils/result";
+import CollapsibleSection from "../components/collapsible-section";
 import { ContextMenuEntry } from "../components/context-menu";
 import Domain from "../components/domain";
 import EditableTags from "../components/editable-tags";
@@ -155,6 +158,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
         const [filterText, setFilterText] = useState("");
         const [attaching, setAttaching] = useState<CreateFindingObject>();
         const [tagging, setTagging] = useState<CreateFindingObject>();
+        const [showTags, setShowTags] = React.useState(true);
         const {
             workspace: { uuid: contextWorkspace },
         } = React.useContext(WORKSPACE_CONTEXT);
@@ -549,33 +553,59 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                         if (e.altKey) setFilterTags((tags) => tags.filter((t) => t.uuid != tag.uuid));
                         else setFilterTags((tags) => (tags.some((t) => t.uuid == tag.uuid) ? tags : [...tags, tag]));
                     }}
+                    showTags={showTags}
                     roots={shownRoots}
                     decoration={
-                        <div className="toolbar">
-                            <TagList
-                                tags={filterTags}
-                                onClickTag={(e, tag) => {
-                                    setFilterTags((tags) => tags.filter((t) => t.uuid != tag.uuid));
-                                }}
-                            />
-                            <Input
-                                className=""
-                                placeholder="Search"
-                                value={filterText}
-                                onChange={(v) => setFilterText(v)}
-                            />
-                            <div className="pad"></div>
-                            {maximizable && (
-                                <button
-                                    className="maximize"
-                                    onClick={toggleMax}
-                                    aria-label={maximized ? "Minimize" : "Maximize"}
-                                    title={maximized ? "Minimize" : "Maximize"}
+                        <>
+                            <div className="toolbar">
+                                <Popup
+                                    trigger={
+                                        <button
+                                            className="icon-button sidebar"
+                                            aria-label={"Show Graph Options"}
+                                            title={"Show Graph Options"}
+                                        >
+                                            <SettingsIcon />
+                                        </button>
+                                    }
+                                    on={["click"]}
+                                    position={["bottom right", "bottom center"]}
                                 >
-                                    {maximized ? <CollapseIcon /> : <ExpandIcon />}
-                                </button>
-                            )}
-                        </div>
+                                    <div className="sidebar-popup pane-thin">
+                                        {/* <CollapsibleSection summary={"Physics"} defaultVisible></CollapsibleSection> */}
+                                        <CollapsibleSection summary={"Display"} defaultVisible>
+                                            <label>
+                                                <Checkbox value={showTags} onChange={(v) => setShowTags(v)} />
+                                                Show tags
+                                            </label>
+                                        </CollapsibleSection>
+                                    </div>
+                                </Popup>
+                                <TagList
+                                    tags={filterTags}
+                                    onClickTag={(e, tag) => {
+                                        setFilterTags((tags) => tags.filter((t) => t.uuid != tag.uuid));
+                                    }}
+                                />
+                                <Input
+                                    className=""
+                                    placeholder="Search"
+                                    value={filterText}
+                                    onChange={(v) => setFilterText(v)}
+                                />
+                                <div className="pad"></div>
+                                {maximizable && (
+                                    <button
+                                        className="icon-button maximize"
+                                        onClick={toggleMax}
+                                        aria-label={maximized ? "Minimize" : "Maximize"}
+                                        title={maximized ? "Minimize" : "Maximize"}
+                                    >
+                                        {maximized ? <CollapseIcon /> : <ExpandIcon />}
+                                    </button>
+                                )}
+                            </div>
+                        </>
                     }
                     getMenu={(item) => [
                         (async (): Promise<ContextMenuEntry[]> => {
