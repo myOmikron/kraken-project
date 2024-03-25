@@ -217,12 +217,7 @@ function DeleteButton({ finding, name }: { finding: UUID; name: string }) {
             <div className="popup-content pane danger" style={{ width: "70ch", backgroundColor: "rgba(30,0,0,0.25)" }}>
                 <div className="workspace-setting-popup">
                     <h2 className="heading neon">Are you sure you want to delete the finding definition "{name}"?</h2>
-                    <div>
-                        <p>The following findings will be deleted due to this:</p>
-                        <ul>
-                            <li>TODO</li>
-                        </ul>
-                    </div>
+                    {/* TODO: list all findings affected by this deletion [waiting for backend] */}
                     <button
                         className="button workspace-settings-red-button"
                         type="reset"
