@@ -542,6 +542,13 @@ You're not viewing the latest version.
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#type-values" class="md-nav__link">
+    Type values
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -704,6 +711,26 @@ You're not viewing the latest version.
   
   <span class="md-ellipsis">
     Typescript
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribution/css/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CSS
   </span>
   
 
@@ -922,8 +949,14 @@ You're not viewing the latest version.
 </tr>
 <tr>
 <td></td>
+<td>os</td>
+<td>os type</td>
+<td><code>os: linux</code>, <code>os: windows</code></td>
+</tr>
+<tr>
+<td></td>
 <td>port[s]</td>
-<td>port number  or range</td>
+<td>port number or range</td>
 <td><code>port: 80</code>, <code>port: 1-1000</code></td>
 </tr>
 <tr>
@@ -977,7 +1010,7 @@ You're not viewing the latest version.
 <tr>
 <td></td>
 <td>port[s]</td>
-<td>port number  or range</td>
+<td>port number or range</td>
 <td><code>port: 80</code>, <code>port: 1-1000</code></td>
 </tr>
 <tr>
@@ -985,6 +1018,12 @@ You're not viewing the latest version.
 <td>protocol[s]</td>
 <td>port protocol</td>
 <td><code>protocol: tcp</code></td>
+</tr>
+<tr>
+<td></td>
+<td>transport[s]</td>
+<td>service transport</td>
+<td><code>transport: tls</code>, <code>transport: raw</code></td>
 </tr>
 </tbody>
 </table>
@@ -1016,6 +1055,13 @@ You're not viewing the latest version.
 <td>createdAt</td>
 <td>time range</td>
 <td><code>ip.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"</code></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>os</td>
+<td>os type</td>
+<td><code>ip.os: linux</code>, <code>ip.os: windows</code></td>
 </tr>
 <tr>
 <td></td>
@@ -1096,6 +1142,13 @@ You're not viewing the latest version.
 </tr>
 <tr>
 <td></td>
+<td></td>
+<td>transport[s]</td>
+<td>service transport</td>
+<td><code>service.transport: raw</code>, <code>service.transport: tls</code></td>
+</tr>
+<tr>
+<td></td>
 <td>domain[s]</td>
 <td>tag[s]</td>
 <td>string</td>
@@ -1124,6 +1177,13 @@ You're not viewing the latest version.
 </tr>
 <tr>
 <td></td>
+<td></td>
+<td>os</td>
+<td>os type</td>
+<td><code>ip.os:linux</code>, <code>ip.os:windows</code></td>
+</tr>
+<tr>
+<td></td>
 <td>service[s]</td>
 <td>tag[s]</td>
 <td>string</td>
@@ -1135,6 +1195,13 @@ You're not viewing the latest version.
 <td>createdAt</td>
 <td>time range</td>
 <td><code>service.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"</code></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>transport[s]</td>
+<td>service transport</td>
+<td><code>service.transport: raw</code>, <code>service.transport: tls</code></td>
 </tr>
 <tr>
 <td><strong>Service</strong></td>
@@ -1152,6 +1219,13 @@ You're not viewing the latest version.
 </tr>
 <tr>
 <td></td>
+<td></td>
+<td>os</td>
+<td>os type</td>
+<td><code>ip.os:linux</code>, <code>ip.os:windows</code></td>
+</tr>
+<tr>
+<td></td>
 <td>port[s]</td>
 <td>tag[s]</td>
 <td>string</td>
@@ -1163,6 +1237,49 @@ You're not viewing the latest version.
 <td>createdAt</td>
 <td>time range</td>
 <td><code>port.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="type-values">Type values</h2>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th style="text-align: left;">Valid values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ip address or network</strong></td>
+<td style="text-align: left;">IPv4 or IPv6 in CIDR notation</td>
+</tr>
+<tr>
+<td><strong>os type</strong></td>
+<td style="text-align: left;"><code>unknown</code>, <code>linux</code>, <code>windows</code>, <code>apple</code>, <code>android</code>, <code>freebsd</code></td>
+</tr>
+<tr>
+<td><strong>port number</strong></td>
+<td style="text-align: left;">decimal port number (1-65535) - Usually valid as a range like <code>1000-2000</code></td>
+</tr>
+<tr>
+<td><strong>port protocol</strong></td>
+<td style="text-align: left;"><code>tcp</code>, <code>udp</code>, <code>sctp</code>, <code>unknown</code></td>
+</tr>
+<tr>
+<td><strong>service transport</strong></td>
+<td style="text-align: left;"><code>raw</code>, <code>tls</code></td>
+</tr>
+<tr>
+<td><strong>string</strong></td>
+<td style="text-align: left;">any valid string like described above, quoted if it contains whitespace, <code>,</code>, <code>&amp;</code>, <code>!</code>, <code>:</code>, <code>"</code> or <code>-</code></td>
+</tr>
+<tr>
+<td><strong>time</strong></td>
+<td style="text-align: left;">RFC3339 / ISO 8601 datetime: <code>"yyyy-mm-ddThh:mm:ssZ"</code> - Usually valid as a range</td>
+</tr>
+<tr>
+<td></td>
+<td style="text-align: left;">The <code>T</code> may be replaced with a space. The timezone must be UTC (<code>Z</code>) or a fixed offset (<code>+0200</code> / <code>-01:30</code>)</td>
 </tr>
 </tbody>
 </table>

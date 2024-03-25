@@ -2,52 +2,57 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://docs.kraken-project.org/0.1/</loc>
-         <lastmod>2024-02-22</lastmod>
+         <lastmod>2024-03-25</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.kraken-project.org/0.1/administration/</loc>
-         <lastmod>2024-02-22</lastmod>
+         <lastmod>2024-03-25</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.kraken-project.org/0.1/contribution/</loc>
-         <lastmod>2024-02-22</lastmod>
+         <lastmod>2024-03-25</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://docs.kraken-project.org/0.1/contribution/css/</loc>
+         <lastmod>2024-03-25</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.kraken-project.org/0.1/contribution/dev_setup/</loc>
-         <lastmod>2024-02-22</lastmod>
+         <lastmod>2024-03-25</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.kraken-project.org/0.1/contribution/new_attack/</loc>
-         <lastmod>2024-02-22</lastmod>
+         <lastmod>2024-03-25</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.kraken-project.org/0.1/contribution/rust/</loc>
-         <lastmod>2024-02-22</lastmod>
+         <lastmod>2024-03-25</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.kraken-project.org/0.1/contribution/typescript/</loc>
-         <lastmod>2024-02-22</lastmod>
+         <lastmod>2024-03-25</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.kraken-project.org/0.1/installation/</loc>
-         <lastmod>2024-02-22</lastmod>
+         <lastmod>2024-03-25</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.kraken-project.org/0.1/user/</loc>
-         <lastmod>2024-02-22</lastmod>
+         <lastmod>2024-03-25</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.kraken-project.org/0.1/user/filter/</loc>
-         <lastmod>2024-02-22</lastmod>
+         <lastmod>2024-03-25</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>
