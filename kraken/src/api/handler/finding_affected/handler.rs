@@ -390,7 +390,7 @@ pub async fn get_finding_affected(
         affected,
         affected_tags,
         #[rustfmt::skip]
-        user_details: GLOBAL.editor_cache.finding_affected_details.get(finding_affected_uuid).await?.unwrap_or_default().0,
+        user_details: GLOBAL.editor_cache.finding_affected_details.get(a_uuid).await?.unwrap_or_default().0,
         tool_details: details.as_mut().and_then(|d| d.tool_details.take()),
         screenshot: details
             .as_mut()
@@ -512,6 +512,7 @@ pub async fn delete_finding_affected(
         .await?
         .ok_or(ApiError::NotFound)?;
     FindingAffected::delete(&mut tx, uuid).await?;
+    GLOBAL.editor_cache.finding_affected_details.delete(a_uuid);
 
     tx.commit().await?;
     GLOBAL
