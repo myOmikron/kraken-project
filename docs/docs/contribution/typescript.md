@@ -1,43 +1,51 @@
+## Components
+
+Only use Functional components in React for new components.
+
+Rationale: state manipulation and caching can be written much simpler as well as it being what the react developers recommend.
+
 ## Conditional class names
 When adding class names to a react element based on conditions
 use [template literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals)
 in combination with the [`?` operator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_operator)
 
-### Do:
-```jsx
-{/* The following will produce a <div /> with the class "always".                        */}
-{/* If the `condition1` is `true` the div will also have the class "conditional-class1". */}
-{/* Likewise for `condition2` and "conditional-class2"                                   */}
-<div
-    className={`always ${
-        condition1 ? "conditional-class1" : ""
-    } ${
-        condition2 ? "conditional-class2" : ""
-    }`}
-/>
-```
-(The concrete indentation should be handled by our auto-formatter `prettier`.)
+!!! success "Do"
 
-### Don't Do:
-```jsx
-<div
-    className={"always" + condition1 ? " conditional-class1" : "" + condition2 ? " conditional-class2" : ""}
-/>
-```
-```jsx
-<div
-    className={condition1 ? "always conditional-class1" : "always"}
-/>
-```
-```jsx
-<div
-    className={[
-        "always",
-        ...(condition1 ? "conditional-class1" : []),
-        ...(condition1 ? "conditional-class1" : [])
-    ].join(" ")}
-/>
-```
+    ```jsx
+    {/* The following will produce a <div /> with the class "always".                        */}
+    {/* If the `condition1` is `true` the div will also have the class "conditional-class1". */}
+    {/* Likewise for `condition2` and "conditional-class2"                                   */}
+    <div
+        className={`always ${
+            condition1 ? "conditional-class1" : ""
+        } ${
+            condition2 ? "conditional-class2" : ""
+        }`}
+    />
+    ```
+    (The concrete indentation should be handled by our auto-formatter `prettier`.)
+
+!!! failure "Don't"
+
+    ```jsx
+    <div
+        className={"always" + condition1 ? " conditional-class1" : "" + condition2 ? " conditional-class2" : ""}
+    />
+    ```
+    ```jsx
+    <div
+        className={condition1 ? "always conditional-class1" : "always"}
+    />
+    ```
+    ```jsx
+    <div
+        className={[
+            "always",
+            ...(condition1 ? "conditional-class1" : []),
+            ...(condition1 ? "conditional-class1" : [])
+        ].join(" ")}
+    />
+    ```
 
 ### Rational
 1. Flexible: Can be scaled to any number of conditions
