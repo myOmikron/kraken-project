@@ -198,8 +198,6 @@
 
 .workspace-findings-graph .connections path {
     stroke-width: 2px;
-    stroke-dasharray: 4px 1%;
-    animation: inverted-dash linear 80s infinite;
     transition: stroke 0.1s ease-in;
 }
 
