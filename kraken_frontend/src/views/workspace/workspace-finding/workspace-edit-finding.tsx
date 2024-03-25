@@ -12,7 +12,11 @@ import {
     FindingAffectedObjectOneOf3,
     FindingSeverity,
     FullFindingAffected,
+    SimpleDomain,
     SimpleFindingDefinition,
+    SimpleHost,
+    SimplePort,
+    SimpleService,
     SimpleTag,
     UpdateFindingRequest,
 } from "../../../api/generated";
@@ -32,6 +36,7 @@ import PersonCircleIcon from "../../../svg/person-circle";
 import PlusIcon from "../../../svg/plus";
 import RelationLeftRightIcon from "../../../svg/relation-left-right";
 import ScreenshotIcon from "../../../svg/screenshot";
+import { compareDomain, compareHost, comparePort, compareService } from "../../../utils/data-sorter";
 import { ObjectFns, handleApiError } from "../../../utils/helper";
 import { useModel, useModelStore } from "../../../utils/model-controller";
 import { useSyncedCursors } from "../../../utils/monaco-cursor";
@@ -327,10 +332,20 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                             let bType = getAffectedType(b);
                                             if (aType < bType) return -1;
                                             if (aType > bType) return 1;
-                                            // TODO: type-based sorters
-                                            if (aUuid < bUuid) return -1;
-                                            if (aUuid > bUuid) return 1;
-                                            return 0;
+                                            const aObj = getAffectedData(a);
+                                            const bObj = getAffectedData(b);
+                                            switch (aType) {
+                                                case "Domain":
+                                                    return compareDomain(aObj as SimpleDomain, bObj as SimpleDomain);
+                                                case "Host":
+                                                    return compareHost(aObj as SimpleHost, bObj as SimpleHost);
+                                                case "Port":
+                                                    return comparePort(aObj as SimplePort, bObj as SimplePort);
+                                                case "Service":
+                                                    return compareService(aObj as SimpleService, bObj as SimpleService);
+                                                default:
+                                                    return 0;
+                                            }
                                         })
                                         .map(([affectedUuid, fullAffected]) => (
                                             <div

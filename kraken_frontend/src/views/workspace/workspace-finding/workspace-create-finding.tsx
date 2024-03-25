@@ -24,7 +24,9 @@ import GraphIcon from "../../../svg/graph";
 import InformationIcon from "../../../svg/information";
 import RelationLeftRightIcon from "../../../svg/relation-left-right";
 import ScreenshotIcon from "../../../svg/screenshot";
+import { compareDomain, compareHost, comparePort, compareService } from "../../../utils/data-sorter";
 import { handleApiError } from "../../../utils/helper";
+import { configureMonaco } from "../../../utils/monaco";
 import CollapsibleSection from "../components/collapsible-section";
 import Domain from "../components/domain";
 import { FileInput } from "../components/file-input";
@@ -37,7 +39,6 @@ import TagList, { TagClickCallback } from "../components/tag-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import WorkspaceFindingDataTable, { WorkspaceFindingDataTableRef } from "./workspace-finding-data-table";
 import EditingTreeGraph, { EditingTreeGraphRef } from "./workspace-finding-editing-tree";
-import { configureMonaco } from "../../../utils/monaco";
 
 export type CreateFindingObject =
     | { domain: FullDomain }
@@ -109,10 +110,18 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
             ].sort((a, b) => {
                 if (a.type < b.type) return -1;
                 if (a.type > b.type) return 1;
-                // TODO: type-based sorters
-                if (a.uuid < b.uuid) return -1;
-                if (a.uuid > b.uuid) return 1;
-                return 0;
+                switch (a.type) {
+                    case "Domain":
+                        return compareDomain(a._data, b._data as FullDomain);
+                    case "Host":
+                        return compareHost(a._data, b._data as FullHost);
+                    case "Port":
+                        return comparePort(a._data, b._data as FullPort);
+                    case "Service":
+                        return compareService(a._data, b._data as FullService);
+                    default:
+                        return 0;
+                }
             });
         });
     };
