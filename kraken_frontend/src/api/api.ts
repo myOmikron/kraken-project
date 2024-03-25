@@ -55,6 +55,7 @@ import {
     WorkspaceInvitationsApi,
     WorkspaceTagsApi,
     WorkspacesApi,
+    UpdateFindingDefinitionRequest,
 } from "./generated";
 
 /** Database id i.e. and u32 */
@@ -404,6 +405,13 @@ export const Api = {
                 handleError(knowledgeBase.getFindingDefinition({ uuid: findingDefinition })),
             create: (createFindingDefinitionRequest: CreateFindingDefinitionRequest) =>
                 handleError(knowledgeBase.createFindingDefinition({ createFindingDefinitionRequest })),
+            update: (uuid: UUID, definition: UpdateFindingDefinitionRequest) =>
+                handleError(
+                    knowledgeBase.updateFindingDefinition({
+                        uuid,
+                        updateFindingDefinitionRequest: definition,
+                    }),
+                ),
             admin: {
                 delete: (findingDefinition: UUID) =>
                     handleError(knowledgeBase.deleteFindingDefinition({ uuid: findingDefinition })),

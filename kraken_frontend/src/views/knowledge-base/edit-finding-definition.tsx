@@ -2,7 +2,7 @@ import React from "react";
 import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
 import { Api, UUID } from "../../api/api";
-import { FindingSection } from "../../api/generated";
+import { FindingSection, FindingSeverity } from "../../api/generated";
 import { AdminOnly } from "../../components/admin-guard";
 import { GithubMarkdown } from "../../components/github-markdown";
 import Input from "../../components/input";
@@ -18,6 +18,7 @@ import { handleApiError } from "../../utils/helper";
 import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
 import ModelEditor from "../../components/model-editor";
 import { useSyncedCursors } from "../../utils/monaco-cursor";
+import WS from "../../api/websocket";
 
 export type EditFindingDefinitionProps = {
     uuid: string;
@@ -25,8 +26,12 @@ export type EditFindingDefinitionProps = {
 
 export function EditFindingDefinition(props: EditFindingDefinitionProps) {
     const [name, setName] = React.useState("");
-    const [severity, setSeverity] = React.useState("Medium");
+    const [severity, setSeverity] = React.useState<FindingSeverity>(FindingSeverity.Medium);
     const [cve, setCve] = React.useState("");
+
+    useTimeoutOnChange([name, severity, cve], [props.uuid], 1000, () => {
+        Api.knowledgeBase.findingDefinitions.update(props.uuid, { name, severity, cve }).then(handleApiError);
+    });
 
     const sections = useSectionsState();
     const { cursors, setEditor } = useSyncedCursors({
@@ -50,7 +55,6 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
     });
 
     /* Initial load */
-
     React.useEffect(() => {
         Api.knowledgeBase.findingDefinitions.get(props.uuid).then(
             handleApiError((finding) => {
@@ -71,6 +75,21 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                 sections.References.set(finding.references, target(FindingSection.References));
             }),
         );
+
+        const handle = WS.addEventListener("message.UpdatedFindingDefinition", ({ uuid, update }) => {
+            if (uuid !== props.uuid) return;
+
+            if (update.name !== undefined && update.name !== null) {
+                setName(update.name);
+            }
+            if (update.severity !== undefined && update.severity !== null) {
+                setSeverity(update.severity);
+            }
+            if (update.cve !== undefined) {
+                setCve(update.cve || "");
+            }
+        });
+        return () => WS.removeEventListener(handle);
     }, [props.uuid]);
 
     return (
@@ -88,7 +107,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                         <Input maxLength={255} value={name} onChange={setName} />
                         <SelectPrimitive
                             value={severity}
-                            options={["Okay", "Low", "Medium", "High", "Critical"]}
+                            options={Object.values(FindingSeverity)}
                             onChange={(value) => setSeverity(value || severity)}
                         />
                         <Input maxLength={255} value={cve} onChange={setCve} />
@@ -222,4 +241,41 @@ function DeleteButton({ finding, name }: { finding: UUID; name: string }) {
             </div>
         </Popup>
     );
+}
+
+function useTimeoutOnChange(
+    trigger: React.DependencyList,
+    commit: React.DependencyList,
+    timeout: number,
+    effect: () => void,
+) {
+    const { current: state } = React.useRef({ timeout: null as null | number, effect, initial: true });
+    state.effect = effect;
+    React.useEffect(() => {
+        if (state.initial) {
+            state.initial = false;
+            return;
+        }
+
+        if (state.timeout === null) {
+            state.timeout = setTimeout(() => {
+                state.effect.call(null);
+                state.timeout = null;
+            }, timeout);
+        }
+    }, trigger);
+
+    // Commit any pending change before the timeout
+    function commitChange() {
+        if (state.timeout !== null) {
+            state.effect.call(null);
+            clearTimeout(state.timeout);
+            state.timeout = null;
+        }
+    }
+
+    // Commit any pending change if `commit` changed
+    React.useEffect(commitChange, commit);
+    // Commit any pending change if we'll unmount
+    React.useEffect(() => commitChange, []);
 }
