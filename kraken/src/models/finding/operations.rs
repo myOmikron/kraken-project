@@ -76,7 +76,7 @@ impl Finding {
     ) -> Result<bool, rorm::Error> {
         let mut guard = executor.ensure_transaction().await?;
         let Some((details,)) = query!(guard.get_transaction(), (Finding::F.details,))
-            .condition(Finding::F.details.equals(uuid))
+            .condition(Finding::F.uuid.equals(uuid))
             .optional()
             .await?
         else {
