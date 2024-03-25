@@ -172,6 +172,7 @@ pub(crate) async fn get_workspace_unchecked(
                 description: workspace.description.clone(),
                 created_at: workspace.created_at,
                 owner: owner.clone(),
+                archived: workspace.archived,
             },
             attack_type,
             started_by,
@@ -215,6 +216,7 @@ pub(crate) async fn get_workspace_unchecked(
         owner,
         attacks,
         members,
+        archived: workspace.archived,
         created_at: workspace.created_at,
     })
 }

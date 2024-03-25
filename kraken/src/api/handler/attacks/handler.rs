@@ -544,6 +544,7 @@ pub async fn get_attack(
             Attack::F.workspace.description,
             Attack::F.workspace.owner as SimpleUser,
             Attack::F.workspace.created_at,
+            Attack::F.workspace.archived,
             Attack::F.attack_type,
             Attack::F.finished_at,
             Attack::F.created_at,
@@ -564,6 +565,7 @@ pub async fn get_attack(
             w_description,
             w_owner,
             w_created_at,
+            w_archived,
             attack_type,
             finished_at,
             created_at,
@@ -578,6 +580,7 @@ pub async fn get_attack(
                 description: w_description,
                 owner: w_owner,
                 created_at: w_created_at,
+                archived: w_archived,
             },
             attack_type,
             started_by,
@@ -643,7 +646,8 @@ pub async fn get_all_attacks(
                 Attack::F.workspace.name,
                 Attack::F.workspace.description,
                 Attack::F.workspace.created_at,
-                Attack::F.workspace.owner as SimpleUser
+                Attack::F.workspace.owner as SimpleUser,
+                Attack::F.workspace.archived,
             )
         )
         .condition(DynamicCollection::or(workspaces))
@@ -661,6 +665,7 @@ pub async fn get_all_attacks(
                 w_description,
                 w_created_at,
                 w_owner,
+                w_archived,
             )| SimpleAttack {
                 uuid,
                 attack_type,
@@ -674,6 +679,7 @@ pub async fn get_all_attacks(
                     description: w_description,
                     created_at: w_created_at,
                     owner: w_owner,
+                    archived: w_archived,
                 },
             },
         )
@@ -725,7 +731,8 @@ pub async fn get_workspace_attacks(
             Attack::F.workspace.name,
             Attack::F.workspace.description,
             Attack::F.workspace.created_at,
-            Attack::F.workspace.owner as SimpleUser
+            Attack::F.workspace.owner as SimpleUser,
+            Attack::F.workspace.archived,
         )
     )
     .condition(Attack::F.workspace.equals(workspace))
@@ -745,6 +752,7 @@ pub async fn get_workspace_attacks(
             w_description,
             w_created_at,
             w_owner,
+            w_archived,
         )| SimpleAttack {
             uuid,
             attack_type,
@@ -758,6 +766,7 @@ pub async fn get_workspace_attacks(
                 description: w_description,
                 created_at: w_created_at,
                 owner: w_owner,
+                archived: w_archived,
             },
         },
     )

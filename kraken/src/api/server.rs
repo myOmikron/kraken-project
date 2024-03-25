@@ -190,6 +190,8 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(workspaces::handler::search)
                     .service(workspaces::handler::get_search_results)
                     .service(workspaces::handler::get_searches)
+                    .service(workspaces::handler::archive_workspace)
+                    .service(workspaces::handler::unarchive_workspace)
                     .service(files::handler::upload_file)
                     .service(files::handler::upload_image)
                     .service(files::handler::download_thumbnail)

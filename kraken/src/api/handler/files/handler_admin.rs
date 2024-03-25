@@ -113,6 +113,7 @@ pub async fn get_all_files_admin(
                     display_name: owner.display_name,
                 },
                 created_at: workspace.created_at,
+                archived: workspace.archived,
             },
             uploaded_at,
         },

@@ -65,6 +65,7 @@ pub async fn get_all_invitations(
                     .await?
                     .ok_or(ApiError::InternalServerError)?,
                 created_at: workspace.created_at,
+                archived: workspace.archived,
             },
             target: GLOBAL
                 .user_cache

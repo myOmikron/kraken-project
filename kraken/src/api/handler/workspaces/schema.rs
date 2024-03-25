@@ -100,6 +100,8 @@ pub struct SimpleWorkspace {
     pub description: Option<String>,
     /// The owner of the workspace
     pub owner: SimpleUser,
+    /// Is this workspace archived?
+    pub archived: bool,
     /// The point in time the workspace was created
     pub created_at: DateTime<Utc>,
 }
@@ -123,6 +125,8 @@ pub struct FullWorkspace {
     pub attacks: Vec<SimpleAttack>,
     /// The member of the workspace
     pub members: Vec<SimpleUser>,
+    /// Is this workspace archived?
+    pub archived: bool,
     /// The point in time the workspace was created
     pub created_at: DateTime<Utc>,
 }

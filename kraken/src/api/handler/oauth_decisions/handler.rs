@@ -58,6 +58,7 @@ pub async fn get_decisions(
             description: workspace.description,
             created_at: workspace.created_at,
             owner,
+            archived: workspace.archived,
         },
         action,
     })

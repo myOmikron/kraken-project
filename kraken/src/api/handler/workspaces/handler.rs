@@ -269,6 +269,7 @@ pub async fn get_all_workspaces(
                 description: w.description,
                 owner,
                 created_at: w.created_at,
+                archived: w.archived,
             })
             .collect(),
     }))
@@ -360,15 +361,7 @@ pub async fn transfer_ownership(
 
     let mut tx = GLOBAL.db.start_transaction().await?;
 
-    let Some(workspace) = query!(&mut tx, Workspace)
-        .condition(Workspace::F.uuid.equals(workspace_uuid))
-        .optional()
-        .await?
-    else {
-        return Err(ApiError::MissingPrivileges);
-    };
-
-    if *workspace.owner.key() != user_uuid {
+    if !Workspace::is_owner(&mut tx, workspace_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
     }
 
@@ -385,6 +378,78 @@ pub async fn transfer_ownership(
     update!(&mut tx, Workspace)
         .condition(Workspace::F.uuid.equals(workspace_uuid))
         .set(Workspace::F.owner, ForeignModelByField::Key(new_owner_uuid))
+        .exec()
+        .await?;
+
+    tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+/// Mark the workspace as archived
+#[utoipa::path(
+    tag = "Workspaces",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The workspace was archived."),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid),
+    security(("api_key" = []))
+)]
+#[post("/workspaces/{uuid}/archive")]
+pub async fn archive_workspace(
+    path: Path<PathUuid>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let workspace_uuid = path.into_inner().uuid;
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    if !Workspace::is_owner(&mut tx, workspace_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    update!(&mut tx, Workspace)
+        .set(Workspace::F.archived, true)
+        .condition(Workspace::F.uuid.equals(workspace_uuid))
+        .exec()
+        .await?;
+
+    tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+/// Mark an archived workspace as unarchived
+#[utoipa::path(
+    tag = "Workspaces",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The workspace was unarchived."),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid),
+    security(("api_key" = []))
+)]
+#[post("/workspaces/{uuid}/unarchive")]
+pub async fn unarchive_workspace(
+    path: Path<PathUuid>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let workspace_uuid = path.into_inner().uuid;
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    if !Workspace::is_owner(&mut tx, workspace_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    update!(&mut tx, Workspace)
+        .set(Workspace::F.archived, false)
+        .condition(Workspace::F.uuid.equals(workspace_uuid))
         .exec()
         .await?;
 
@@ -453,6 +518,7 @@ pub async fn create_invitation(
                     description: workspace.description,
                     created_at: workspace.created_at,
                     owner,
+                    archived: workspace.archived,
                 },
             },
         )
@@ -566,6 +632,7 @@ pub async fn get_all_workspace_invitations(
                 name: workspace.name,
                 description: workspace.description,
                 created_at: workspace.created_at,
+                archived: workspace.archived,
             },
             from,
             target,

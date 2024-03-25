@@ -59,6 +59,7 @@ pub async fn get_all_workspaces_admin() -> ApiResult<Json<ListWorkspaces>> {
             Workspace::F.name,
             Workspace::F.description,
             Workspace::F.created_at,
+            Workspace::F.archived,
             Workspace::F.owner.uuid,
             Workspace::F.owner.username,
             Workspace::F.owner.display_name
@@ -73,7 +74,16 @@ pub async fn get_all_workspaces_admin() -> ApiResult<Json<ListWorkspaces>> {
         workspaces: workspaces
             .into_iter()
             .map(
-                |(uuid, name, description, created_at, by_uuid, username, display_name)| {
+                |(
+                    uuid,
+                    name,
+                    description,
+                    created_at,
+                    archived,
+                    by_uuid,
+                    username,
+                    display_name,
+                )| {
                     SimpleWorkspace {
                         uuid,
                         name,
@@ -84,6 +94,7 @@ pub async fn get_all_workspaces_admin() -> ApiResult<Json<ListWorkspaces>> {
                             display_name,
                         },
                         created_at,
+                        archived,
                     }
                 },
             )

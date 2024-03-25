@@ -235,7 +235,7 @@ pub async fn info(
         .condition(OauthClient::F.uuid.equals(request.client_pk))
         .one()
         .await?;
-    let (uuid, name, description, created_at, owner) = query!(
+    let (uuid, name, description, created_at, owner, archived) = query!(
         &GLOBAL.db,
         (
             Workspace::F.uuid,
@@ -243,6 +243,7 @@ pub async fn info(
             Workspace::F.description,
             Workspace::F.created_at,
             Workspace::F.owner,
+            Workspace::F.archived,
         )
     )
     .condition(Workspace::F.uuid.equals(request.scope.workspace))
@@ -262,6 +263,7 @@ pub async fn info(
             description,
             created_at,
             owner,
+            archived,
         },
         oauth_application,
     }))

@@ -385,13 +385,14 @@ impl AttackContext {
             .optional()
             .await?
             .ok_or(InsertAttackError::UserInvalid)?;
-        let (name, description, created_at, owner) = query!(
+        let (name, description, created_at, owner, archived) = query!(
             &mut tx,
             (
                 Workspace::F.name,
                 Workspace::F.description,
                 Workspace::F.created_at,
-                Workspace::F.owner as SimpleUser
+                Workspace::F.owner as SimpleUser,
+                Workspace::F.archived,
             )
         )
         .condition(Workspace::F.uuid.equals(workspace_uuid))
@@ -407,6 +408,7 @@ impl AttackContext {
             description,
             created_at,
             owner,
+            archived,
         };
 
         let attack = Attack::insert(&GLOBAL.db, attack_type, user_uuid, workspace_uuid).await?;
@@ -422,23 +424,33 @@ impl AttackContext {
 
     /// Query the context for an existing attack
     pub(crate) async fn existing(attack_uuid: Uuid) -> Result<Option<Self>, rorm::Error> {
-        let Some((attack_type, started_at, user, uuid, name, description, created_at, owner)) =
-            query!(
-                &GLOBAL.db,
-                (
-                    Attack::F.attack_type,
-                    Attack::F.created_at,
-                    Attack::F.started_by as SimpleUser,
-                    Attack::F.workspace.uuid,
-                    Attack::F.workspace.name,
-                    Attack::F.workspace.description,
-                    Attack::F.workspace.created_at,
-                    Attack::F.workspace.owner as SimpleUser
-                )
+        let Some((
+            attack_type,
+            started_at,
+            user,
+            uuid,
+            name,
+            description,
+            created_at,
+            owner,
+            archived,
+        )) = query!(
+            &GLOBAL.db,
+            (
+                Attack::F.attack_type,
+                Attack::F.created_at,
+                Attack::F.started_by as SimpleUser,
+                Attack::F.workspace.uuid,
+                Attack::F.workspace.name,
+                Attack::F.workspace.description,
+                Attack::F.workspace.created_at,
+                Attack::F.workspace.owner as SimpleUser,
+                Attack::F.workspace.archived,
             )
-            .condition(Attack::F.uuid.equals(attack_uuid))
-            .optional()
-            .await?
+        )
+        .condition(Attack::F.uuid.equals(attack_uuid))
+        .optional()
+        .await?
         else {
             return Ok(None);
         };
@@ -451,6 +463,7 @@ impl AttackContext {
                 description,
                 created_at,
                 owner,
+                archived,
             },
             attack_uuid,
             created_at: started_at,
