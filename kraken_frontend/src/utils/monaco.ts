@@ -1,14 +1,14 @@
 import { loader, Monaco } from "@monaco-editor/react";
 import React from "react";
 
-export const MONACO_PROMISE = loader.init().then(configure);
+export const MONACO_PROMISE = loader.init().then(configureMonaco);
 
 export let MONACO: Monaco | null = null;
 MONACO_PROMISE.then((monaco) => {
     MONACO = monaco;
 });
 
-function configure(monaco: Monaco): Monaco {
+export function configureMonaco(monaco: Monaco): Monaco {
     monaco.editor.defineTheme("kraken", {
         base: "vs-dark",
         inherit: true,

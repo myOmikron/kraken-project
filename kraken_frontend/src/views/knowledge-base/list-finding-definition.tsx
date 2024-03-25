@@ -6,6 +6,7 @@ import Input from "../../components/input";
 import PlusIcon from "../../svg/plus";
 import { Api } from "../../api/api";
 import { handleApiError } from "../../utils/helper";
+import "../../styling/knowledge-base.css";
 
 type ListFindingDefinitionProps = {};
 

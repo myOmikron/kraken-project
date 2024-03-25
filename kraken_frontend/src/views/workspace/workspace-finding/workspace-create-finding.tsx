@@ -25,7 +25,6 @@ import InformationIcon from "../../../svg/information";
 import RelationLeftRightIcon from "../../../svg/relation-left-right";
 import ScreenshotIcon from "../../../svg/screenshot";
 import { handleApiError } from "../../../utils/helper";
-import { setupMonaco } from "../../knowledge-base";
 import CollapsibleSection from "../components/collapsible-section";
 import Domain from "../components/domain";
 import { FileInput } from "../components/file-input";
@@ -38,6 +37,7 @@ import TagList, { TagClickCallback } from "../components/tag-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import WorkspaceFindingDataTable, { WorkspaceFindingDataTableRef } from "./workspace-finding-data-table";
 import EditingTreeGraph, { EditingTreeGraphRef } from "./workspace-finding-editing-tree";
+import { configureMonaco } from "../../../utils/monaco";
 
 export type CreateFindingObject =
     | { domain: FullDomain }
@@ -126,7 +126,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                     <Editor
                         className={"knowledge-base-editor"}
                         theme={"custom"}
-                        beforeMount={setupMonaco}
+                        beforeMount={configureMonaco}
                         language={"markdown"}
                         value={details}
                         onChange={(value, event) => {

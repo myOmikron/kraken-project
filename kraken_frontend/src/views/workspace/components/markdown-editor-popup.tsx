@@ -2,10 +2,10 @@ import EditIcon from "../../../svg/edit";
 import React, { ReactNode } from "react";
 import Popup from "reactjs-popup";
 import { Editor } from "@monaco-editor/react";
-import { setupMonaco } from "../../knowledge-base";
 import "../../../styling/markdown-editor-popup.css";
 import { GithubMarkdown } from "../../../components/github-markdown";
 import PlusIcon from "../../../svg/plus";
+import { configureMonaco } from "../../../utils/monaco";
 
 type MarkdownEditorPopupProps = {
     label: ReactNode;
@@ -37,7 +37,7 @@ export default function MarkdownEditorPopup(props: MarkdownEditorPopupProps) {
                     <Editor
                         className={"knowledge-base-editor"}
                         theme={"custom"}
-                        beforeMount={setupMonaco}
+                        beforeMount={configureMonaco}
                         language={"markdown"}
                         value={content}
                         onChange={(value, event) => {

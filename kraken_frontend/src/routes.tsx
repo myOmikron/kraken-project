@@ -236,15 +236,6 @@ export const ROUTES = {
             </ContentWithMenu>
         ),
     }),
-    KNOWLEDGE_BASE: ROUTER.add({
-        url: "knowledge",
-        parser: {},
-        render: () => (
-            <ContentWithMenu>
-                <KnowledgeBase />
-            </ContentWithMenu>
-        ),
-    }),
     FINDING_DEFINITION_LIST: ROUTER.add({
         url: "knowledge/finding-definition",
         parser: {},
