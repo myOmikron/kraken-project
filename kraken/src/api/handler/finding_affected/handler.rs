@@ -145,7 +145,6 @@ pub async fn get_finding_affected(
     }
 
     let (
-        finding_affected_uuid,
         finding,
         finding_details,
         finding_definition_uuid,
@@ -163,7 +162,6 @@ pub async fn get_finding_affected(
     ) = query_finding_affected(
         &mut tx,
         (
-            FindingAffected::F.uuid,
             FindingAffected::F.finding.select_as::<Finding>(),
             FindingAffected::F
                 .finding
