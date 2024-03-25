@@ -513,10 +513,18 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                         <WorkspaceFindingDataTable
                                             ref={dataTableRef}
                                             hideUuids={Object.keys(affected)}
-                                            onAddDomain={({ uuid }) => addAffected(uuid, AggregationType.Domain)}
-                                            onAddHost={({ uuid }) => addAffected(uuid, AggregationType.Host)}
-                                            onAddPort={({ uuid }) => addAffected(uuid, AggregationType.Port)}
-                                            onAddService={({ uuid }) => addAffected(uuid, AggregationType.Service)}
+                                            onAddDomains={(v) =>
+                                                v.map(({ uuid }) => addAffected(uuid, AggregationType.Domain))
+                                            }
+                                            onAddHosts={(v) =>
+                                                v.map(({ uuid }) => addAffected(uuid, AggregationType.Host))
+                                            }
+                                            onAddPorts={(v) =>
+                                                v.map(({ uuid }) => addAffected(uuid, AggregationType.Port))
+                                            }
+                                            onAddServices={(v) =>
+                                                v.map(({ uuid }) => addAffected(uuid, AggregationType.Service))
+                                            }
                                         />
                                     </div>
                                 );

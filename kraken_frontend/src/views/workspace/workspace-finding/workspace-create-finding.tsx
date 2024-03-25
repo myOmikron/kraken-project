@@ -16,6 +16,7 @@ import {
 import { GithubMarkdown } from "../../../components/github-markdown";
 import { SelectPrimitive } from "../../../components/select-menu";
 import { ROUTES } from "../../../routes";
+import ArrowLeftIcon from "../../../svg/arrow-left";
 import BookIcon from "../../../svg/book";
 import CloseIcon from "../../../svg/close";
 import FileIcon from "../../../svg/file";
@@ -37,7 +38,6 @@ import TagList, { TagClickCallback } from "../components/tag-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import WorkspaceFindingDataTable, { WorkspaceFindingDataTableRef } from "./workspace-finding-data-table";
 import EditingTreeGraph, { EditingTreeGraphRef } from "./workspace-finding-editing-tree";
-import ArrowLeftIcon from "../../../svg/arrow-left";
 
 export type CreateFindingObject =
     | { domain: FullDomain }
@@ -140,37 +140,45 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                         <WorkspaceFindingDataTable
                             ref={dataTableRef}
                             hideUuids={affected.map((a) => a._data.uuid)}
-                            onAddDomain={(d) =>
-                                addAffected({
-                                    type: "Domain",
-                                    uuid: d.uuid,
-                                    details: "",
-                                    _data: d,
-                                })
+                            onAddDomains={(ds) =>
+                                ds.map((d) =>
+                                    addAffected({
+                                        type: "Domain",
+                                        uuid: d.uuid,
+                                        details: "",
+                                        _data: d,
+                                    }),
+                                )
                             }
-                            onAddHost={(d) =>
-                                addAffected({
-                                    type: "Host",
-                                    uuid: d.uuid,
-                                    details: "",
-                                    _data: d,
-                                })
+                            onAddHosts={(ds) =>
+                                ds.map((d) =>
+                                    addAffected({
+                                        type: "Host",
+                                        uuid: d.uuid,
+                                        details: "",
+                                        _data: d,
+                                    }),
+                                )
                             }
-                            onAddPort={(d) =>
-                                addAffected({
-                                    type: "Port",
-                                    uuid: d.uuid,
-                                    details: "",
-                                    _data: d,
-                                })
+                            onAddPorts={(ds) =>
+                                ds.map((d) =>
+                                    addAffected({
+                                        type: "Port",
+                                        uuid: d.uuid,
+                                        details: "",
+                                        _data: d,
+                                    }),
+                                )
                             }
-                            onAddService={(d) =>
-                                addAffected({
-                                    type: "Service",
-                                    uuid: d.uuid,
-                                    details: "",
-                                    _data: d,
-                                })
+                            onAddServices={(ds) =>
+                                ds.map((d) =>
+                                    addAffected({
+                                        type: "Service",
+                                        uuid: d.uuid,
+                                        details: "",
+                                        _data: d,
+                                    }),
+                                )
                             }
                         />
                     </div>

@@ -11,17 +11,17 @@ import { FilterOutput, useFilter } from "../components/filter-input";
 import IpAddr from "../components/host";
 import PortNumber from "../components/port";
 import ServiceName from "../components/service";
-import SeverityIcon, { Severity } from "../components/severity-icon";
+import { Severity } from "../components/severity-icon";
 import TagList from "../components/tag-list";
 import { StatelessWorkspaceTable, useTable } from "../components/workspace-table";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
 export type WorkspaceFindingDataTableProps = {
     hideUuids: string[];
-    onAddDomain?: (domain: FullDomain) => void;
-    onAddHost?: (host: FullHost) => void;
-    onAddService?: (service: FullService) => void;
-    onAddPort?: (port: FullPort) => void;
+    onAddDomains?: (domains: FullDomain[]) => void;
+    onAddHosts?: (hosts: FullHost[]) => void;
+    onAddServices?: (services: FullService[]) => void;
+    onAddPorts?: (ports: FullPort[]) => void;
 };
 
 export type WorkspaceFindingDataTableRef = {
@@ -29,7 +29,7 @@ export type WorkspaceFindingDataTableRef = {
 };
 
 export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef, WorkspaceFindingDataTableProps>(
-    ({ hideUuids, onAddDomain, onAddHost, onAddService, onAddPort }, ref) => {
+    ({ hideUuids, onAddDomains, onAddHosts, onAddServices, onAddPorts }, ref) => {
         const {
             workspace: { uuid: workspace },
         } = React.useContext(WORKSPACE_CONTEXT);
@@ -112,7 +112,10 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                             solidBackground={true}
                         >
                             <div className={"workspace-table-header"}>
-                                <span className="workspace-data-certainty-icon workspace-finding-selection-arrow">
+                                <span
+                                    className="workspace-data-certainty-icon workspace-finding-selection-arrow"
+                                    onClick={() => onAddDomains?.(domains.filter((v) => !hideUuids.includes(v.uuid)))}
+                                >
                                     <RelationLeftIcon />
                                 </span>
                                 <span>Domain</span>
@@ -127,7 +130,7 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                                     <div key={domain.uuid} className="workspace-table-row">
                                         <span
                                             className="workspace-data-certainty-icon workspace-finding-selection-arrow"
-                                            onClick={() => onAddDomain?.(domain)}
+                                            onClick={() => onAddDomains?.([domain])}
                                         >
                                             <RelationLeftIcon />
                                         </span>
@@ -137,10 +140,10 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                                         <span>{domain.comment}</span>
                                         <Severity
                                             severity={domain.severity}
-                                        dataType={"Domain"}
-                                        uuid={domain.uuid}
-                                        workspace={workspace}
-                                    />
+                                            dataType={"Domain"}
+                                            uuid={domain.uuid}
+                                            workspace={workspace}
+                                        />
                                         <CertaintyIcon certainty={domain.certainty} />
                                     </div>
                                 ))}
@@ -156,7 +159,10 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                             solidBackground={true}
                         >
                             <div className={"workspace-table-header"}>
-                                <span className="workspace-data-certainty-icon workspace-finding-selection-arrow">
+                                <span
+                                    className="workspace-data-certainty-icon workspace-finding-selection-arrow"
+                                    onClick={() => onAddHosts?.(hosts.filter((v) => !hideUuids.includes(v.uuid)))}
+                                >
                                     <RelationLeftIcon />
                                 </span>
                                 <span>IP</span>
@@ -172,7 +178,7 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                                     <div key={host.uuid} className="workspace-table-row deleted">
                                         <span
                                             className="workspace-data-certainty-icon workspace-finding-selection-arrow"
-                                            onClick={() => onAddHost?.(host)}
+                                            onClick={() => onAddHosts?.([host])}
                                         >
                                             <RelationLeftIcon />
                                         </span>
@@ -182,10 +188,10 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                                         <span>{host.comment}</span>
                                         <Severity
                                             severity={host.severity}
-                                        dataType={"Host"}
-                                        uuid={host.uuid}
-                                        workspace={workspace}
-                                    />
+                                            dataType={"Host"}
+                                            uuid={host.uuid}
+                                            workspace={workspace}
+                                        />
                                         <CertaintyIcon certainty={host.certainty} />
                                     </div>
                                 ))}
@@ -201,7 +207,10 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                             solidBackground={true}
                         >
                             <div className={"workspace-table-header"}>
-                                <span className="workspace-data-certainty-icon workspace-finding-selection-arrow">
+                                <span
+                                    className="workspace-data-certainty-icon workspace-finding-selection-arrow"
+                                    onClick={() => onAddPorts?.(ports.filter((v) => !hideUuids.includes(v.uuid)))}
+                                >
                                     <RelationLeftIcon />
                                 </span>
                                 <span>Port</span>
@@ -218,7 +227,7 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                                     <div key={port.uuid} className="workspace-table-row">
                                         <span
                                             className="workspace-data-certainty-icon workspace-finding-selection-arrow"
-                                            onClick={() => onAddPort?.(port)}
+                                            onClick={() => onAddPorts?.([port])}
                                         >
                                             <RelationLeftIcon />
                                         </span>
@@ -229,10 +238,10 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                                         <span>{port.comment}</span>
                                         <Severity
                                             severity={port.severity}
-                                        dataType={"Port"}
-                                        uuid={port.uuid}
-                                        workspace={workspace}
-                                    />
+                                            dataType={"Port"}
+                                            uuid={port.uuid}
+                                            workspace={workspace}
+                                        />
                                         <CertaintyIcon certainty={port.certainty} />
                                     </div>
                                 ))}
@@ -248,7 +257,10 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                             solidBackground={true}
                         >
                             <div className={"workspace-table-header"}>
-                                <span className="workspace-data-certainty-icon workspace-finding-selection-arrow">
+                                <span
+                                    className="workspace-data-certainty-icon workspace-finding-selection-arrow"
+                                    onClick={() => onAddServices?.(services.filter((v) => !hideUuids.includes(v.uuid)))}
+                                >
                                     <RelationLeftIcon />
                                 </span>
                                 <span>Service</span>
@@ -268,7 +280,7 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                                     <div key={service.uuid} className="workspace-table-row">
                                         <span
                                             className="workspace-data-certainty-icon workspace-finding-selection-arrow"
-                                            onClick={() => onAddService?.(service)}
+                                            onClick={() => onAddServices?.([service])}
                                         >
                                             <RelationLeftIcon />
                                         </span>
@@ -300,10 +312,10 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                                         <span>{service.comment}</span>
                                         <Severity
                                             severity={service.severity}
-                                        dataType={"Service"}
-                                        uuid={service.uuid}
-                                        workspace={workspace}
-                                    />
+                                            dataType={"Service"}
+                                            uuid={service.uuid}
+                                            workspace={workspace}
+                                        />
                                         <CertaintyIcon certainty={service.certainty} />
                                     </div>
                                 ))}
