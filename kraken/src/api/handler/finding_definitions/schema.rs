@@ -8,6 +8,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::common::de_optional;
+use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::models::FindingSeverity;
 
 /// The request to create a new finding definition
@@ -89,6 +90,41 @@ pub struct SimpleFindingDefinition {
 pub struct ListFindingDefinitions {
     /// The finding definitions
     pub finding_definitions: Vec<SimpleFindingDefinition>,
+}
+
+/// A list of findings using a specific finding definition
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ListFindingDefinitionUsages {
+    /// A list of findings using a specific finding definition
+    pub usages: Vec<FindingDefinitionUsage>,
+}
+
+/// A finding using a specific finding definition
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct FindingDefinitionUsage {
+    /// The uuid of the finding
+    pub uuid: Uuid,
+
+    /// The severity of the finding
+    pub severity: FindingSeverity,
+
+    /// The point in time the finding was created
+    pub created_at: DateTime<Utc>,
+
+    /// The workspace the finding is in
+    pub workspace: SimpleWorkspace,
+
+    /// The number of affected domains
+    pub affected_domains: usize,
+
+    /// The number of affected hosts
+    pub affected_hosts: usize,
+
+    /// The number of affected ports
+    pub affected_ports: usize,
+
+    /// The number of affected services
+    pub affected_services: usize,
 }
 
 /// The request to update a new finding definition
