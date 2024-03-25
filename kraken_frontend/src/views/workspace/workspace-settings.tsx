@@ -132,11 +132,21 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
     }
 
     unarchiveWorkspace() {
-        toast.promise(Api.workspaces.unarchive(this.context.workspace.uuid), {
-            pending: "Unarchiving workspace...",
-            error: "Failed to unarchive workspace!",
-            success: "Unarchived workspace",
-        });
+        toast.promise(
+            Api.workspaces.unarchive(this.context.workspace.uuid).then(
+                handleApiError((v) => {
+                    this.setState({
+                        isArchived: false,
+                        unarchiveWorkspacePopup: false,
+                    });
+                }),
+            ),
+            {
+                pending: "Unarchiving workspace...",
+                error: "Failed to unarchive workspace!",
+                success: "Unarchived workspace",
+            },
+        );
     }
 
     async createTransferList() {
