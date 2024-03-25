@@ -154,7 +154,6 @@ export function TreeGraph({
     const centeringForce = d3.forceY<NodeT>(0).strength((n) => (n.root ? 0.05 : 0.01));
 
     useEffect(() => {
-        console.log("start simulation");
         simulation.current = d3
             .forceSimulation<NodeT, LinkT>()
             // .force("charge", d3.forceManyBody().strength(10))
@@ -222,7 +221,6 @@ export function TreeGraph({
             });
 
         return () => {
-            console.log("end simulation");
             simulation.current?.stop();
             simulation.current = undefined;
         };
