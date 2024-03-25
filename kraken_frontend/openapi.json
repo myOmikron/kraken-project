@@ -3610,6 +3610,64 @@
                         "api_key": []
                     }
                 ]
+            },
+            "put": {
+                "tags": ["Knowledge Base"],
+                "summary": "Update a finding definition",
+                "description": "Update a finding definition\n\nThis endpoint only allows updating the `name`, `severity` and `cve`.\nThe other values have to be updated through the websocket as part of a live editor.",
+                "operationId": "update_finding_definition",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "The uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateFindingDefinitionRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated a finding definition"
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
             }
         },
         "/api/v1/globalTags": {
@@ -5460,6 +5518,56 @@
                 ]
             }
         },
+        "/api/v1/workspaces/{uuid}/archive": {
+            "post": {
+                "tags": ["Workspaces"],
+                "summary": "Mark the workspace as archived",
+                "description": "Mark the workspace as archived",
+                "operationId": "archive_workspace",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "The uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The workspace was archived."
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
         "/api/v1/workspaces/{uuid}/attacks": {
             "get": {
                 "tags": ["Attacks"],
@@ -6468,6 +6576,56 @@
                 "responses": {
                     "200": {
                         "description": "Workspace was transferred"
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/workspaces/{uuid}/unarchive": {
+            "post": {
+                "tags": ["Workspaces"],
+                "summary": "Mark an archived workspace as unarchived",
+                "description": "Mark an archived workspace as unarchived",
+                "operationId": "unarchive_workspace",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "The uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The workspace was unarchived."
                     },
                     "400": {
                         "description": "Client error",
@@ -10365,7 +10523,7 @@
             "FullWorkspace": {
                 "type": "object",
                 "description": "A full version of a workspace",
-                "required": ["uuid", "name", "notes", "owner", "attacks", "members", "created_at"],
+                "required": ["uuid", "name", "notes", "owner", "attacks", "members", "archived", "created_at"],
                 "properties": {
                     "uuid": {
                         "type": "string",
@@ -10403,6 +10561,10 @@
                             "$ref": "#/components/schemas/SimpleUser"
                         },
                         "description": "The member of the workspace"
+                    },
+                    "archived": {
+                        "type": "boolean",
+                        "description": "Is this workspace archived?"
                     },
                     "created_at": {
                         "type": "string",
@@ -12879,7 +13041,7 @@
             "SimpleWorkspace": {
                 "type": "object",
                 "description": "A simple version of a workspace",
-                "required": ["uuid", "name", "owner", "created_at"],
+                "required": ["uuid", "name", "owner", "archived", "created_at"],
                 "properties": {
                     "uuid": {
                         "type": "string",
@@ -12899,6 +13061,10 @@
                     },
                     "owner": {
                         "$ref": "#/components/schemas/SimpleUser"
+                    },
+                    "archived": {
+                        "type": "boolean",
+                        "description": "Is this workspace archived?"
                     },
                     "created_at": {
                         "type": "string",
@@ -13303,6 +13469,30 @@
                         "type": "string",
                         "format": "uuid",
                         "description": "A log file",
+                        "nullable": true
+                    }
+                }
+            },
+            "UpdateFindingDefinitionRequest": {
+                "type": "object",
+                "description": "The request to update a new finding definition",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the new finding definition\n\nThis must be unique",
+                        "nullable": true
+                    },
+                    "severity": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/FindingSeverity"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "cve": {
+                        "type": "string",
+                        "description": "Optional linked CVE",
                         "nullable": true
                     }
                 }
@@ -14206,6 +14396,25 @@
                             "type": {
                                 "type": "string",
                                 "enum": ["UpdatedWorkspaceTags"]
+                            }
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "description": "A finding definition has been updated",
+                        "required": ["uuid", "update", "type"],
+                        "properties": {
+                            "uuid": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The uuid of the finding definition"
+                            },
+                            "update": {
+                                "$ref": "#/components/schemas/UpdateFindingDefinitionRequest"
+                            },
+                            "type": {
+                                "type": "string",
+                                "enum": ["UpdatedFindingDefinition"]
                             }
                         }
                     },

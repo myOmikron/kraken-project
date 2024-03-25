@@ -180,6 +180,8 @@ export const Api = {
         delete: (uuid: UUID) => handleError(workspaces.deleteWorkspace({ uuid })),
         transferOwnership: (uuid: UUID, user: UUID) =>
             handleError(workspaces.transferOwnership({ uuid, transferWorkspaceRequest: { user } })),
+        archive: (uuid: UUID) => handleError(workspaces.archiveWorkspace({ uuid })),
+        unarchive: (uuid: UUID) => handleError(workspaces.unarchiveWorkspace({ uuid })),
         attacks: {
             all: (uuid: UUID) => handleError(attacks.getWorkspaceAttacks({ uuid })),
         },

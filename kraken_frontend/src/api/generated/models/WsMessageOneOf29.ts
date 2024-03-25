@@ -13,15 +13,15 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { AggregationType } from './AggregationType';
+import type { UpdateFindingRequest } from './UpdateFindingRequest';
 import {
-    AggregationTypeFromJSON,
-    AggregationTypeFromJSONTyped,
-    AggregationTypeToJSON,
-} from './AggregationType';
+    UpdateFindingRequestFromJSON,
+    UpdateFindingRequestFromJSONTyped,
+    UpdateFindingRequestToJSON,
+} from './UpdateFindingRequest';
 
 /**
- * An affected has been added to a finding
+ * A finding has been updated
  * @export
  * @interface WsMessageOneOf29
  */
@@ -39,17 +39,11 @@ export interface WsMessageOneOf29 {
      */
     finding: string;
     /**
-     * The affected's uuid
-     * @type {string}
-     * @memberof WsMessageOneOf29
-     */
-    affectedUuid: string;
-    /**
      * 
-     * @type {AggregationType}
+     * @type {UpdateFindingRequest}
      * @memberof WsMessageOneOf29
      */
-    affectedType: AggregationType;
+    update: UpdateFindingRequest;
     /**
      * 
      * @type {string}
@@ -63,7 +57,7 @@ export interface WsMessageOneOf29 {
  * @export
  */
 export const WsMessageOneOf29TypeEnum = {
-    AddedFindingAffected: 'AddedFindingAffected'
+    UpdatedFinding: 'UpdatedFinding'
 } as const;
 export type WsMessageOneOf29TypeEnum = typeof WsMessageOneOf29TypeEnum[keyof typeof WsMessageOneOf29TypeEnum];
 
@@ -75,8 +69,7 @@ export function instanceOfWsMessageOneOf29(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "finding" in value;
-    isInstance = isInstance && "affectedUuid" in value;
-    isInstance = isInstance && "affectedType" in value;
+    isInstance = isInstance && "update" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -94,8 +87,7 @@ export function WsMessageOneOf29FromJSONTyped(json: any, ignoreDiscriminator: bo
         
         'workspace': json['workspace'],
         'finding': json['finding'],
-        'affectedUuid': json['affected_uuid'],
-        'affectedType': AggregationTypeFromJSON(json['affected_type']),
+        'update': UpdateFindingRequestFromJSON(json['update']),
         'type': json['type'],
     };
 }
@@ -111,8 +103,7 @@ export function WsMessageOneOf29ToJSON(value?: WsMessageOneOf29 | null): any {
         
         'workspace': value.workspace,
         'finding': value.finding,
-        'affected_uuid': value.affectedUuid,
-        'affected_type': AggregationTypeToJSON(value.affectedType),
+        'update': UpdateFindingRequestToJSON(value.update),
         'type': value.type,
     };
 }

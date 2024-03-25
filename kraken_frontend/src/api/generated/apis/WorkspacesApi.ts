@@ -55,6 +55,10 @@ import {
     WorkspaceInvitationListToJSON,
 } from '../models';
 
+export interface ArchiveWorkspaceRequest {
+    uuid: string;
+}
+
 export interface CreateInvitationRequest {
     uuid: string;
     inviteToWorkspaceRequest: InviteToWorkspaceRequest;
@@ -104,6 +108,10 @@ export interface TransferOwnershipRequest {
     transferWorkspaceRequest: TransferWorkspaceRequest;
 }
 
+export interface UnarchiveWorkspaceRequest {
+    uuid: string;
+}
+
 export interface UpdateWorkspaceOperationRequest {
     uuid: string;
     updateWorkspaceRequest: UpdateWorkspaceRequest;
@@ -113,6 +121,37 @@ export interface UpdateWorkspaceOperationRequest {
  * 
  */
 export class WorkspacesApi extends runtime.BaseAPI {
+
+    /**
+     * Mark the workspace as archived
+     * Mark the workspace as archived
+     */
+    async archiveWorkspaceRaw(requestParameters: ArchiveWorkspaceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling archiveWorkspace.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{uuid}/archive`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Mark the workspace as archived
+     * Mark the workspace as archived
+     */
+    async archiveWorkspace(requestParameters: ArchiveWorkspaceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.archiveWorkspaceRaw(requestParameters, initOverrides);
+    }
 
     /**
      * Invite a user to the workspace  This action can only be invoked by the owner of a workspace
@@ -520,6 +559,37 @@ export class WorkspacesApi extends runtime.BaseAPI {
      */
     async transferOwnership(requestParameters: TransferOwnershipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.transferOwnershipRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Mark an archived workspace as unarchived
+     * Mark an archived workspace as unarchived
+     */
+    async unarchiveWorkspaceRaw(requestParameters: UnarchiveWorkspaceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling unarchiveWorkspace.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/workspaces/{uuid}/unarchive`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Mark an archived workspace as unarchived
+     * Mark an archived workspace as unarchived
+     */
+    async unarchiveWorkspace(requestParameters: UnarchiveWorkspaceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.unarchiveWorkspaceRaw(requestParameters, initOverrides);
     }
 
     /**

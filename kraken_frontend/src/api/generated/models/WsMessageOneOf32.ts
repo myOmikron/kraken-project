@@ -13,80 +13,66 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { UpdateFindingAffectedRequest } from './UpdateFindingAffectedRequest';
-import {
-    UpdateFindingAffectedRequestFromJSON,
-    UpdateFindingAffectedRequestFromJSONTyped,
-    UpdateFindingAffectedRequestToJSON,
-} from './UpdateFindingAffectedRequest';
-
 /**
- * A finding's affected has been updated
+ * An affected has been removed to a finding
  * @export
- * @interface WsMessageOneOf31
+ * @interface WsMessageOneOf32
  */
-export interface WsMessageOneOf31 {
+export interface WsMessageOneOf32 {
     /**
      * The workspace the updated finding is in
      * @type {string}
-     * @memberof WsMessageOneOf31
+     * @memberof WsMessageOneOf32
      */
     workspace: string;
     /**
      * The finding which has been updated
      * @type {string}
-     * @memberof WsMessageOneOf31
+     * @memberof WsMessageOneOf32
      */
     finding: string;
     /**
      * The affected's uuid
      * @type {string}
-     * @memberof WsMessageOneOf31
+     * @memberof WsMessageOneOf32
      */
     affectedUuid: string;
     /**
      * 
-     * @type {UpdateFindingAffectedRequest}
-     * @memberof WsMessageOneOf31
-     */
-    update: UpdateFindingAffectedRequest;
-    /**
-     * 
      * @type {string}
-     * @memberof WsMessageOneOf31
+     * @memberof WsMessageOneOf32
      */
-    type: WsMessageOneOf31TypeEnum;
+    type: WsMessageOneOf32TypeEnum;
 }
 
 
 /**
  * @export
  */
-export const WsMessageOneOf31TypeEnum = {
-    UpdatedFindingAffected: 'UpdatedFindingAffected'
+export const WsMessageOneOf32TypeEnum = {
+    RemovedFindingAffected: 'RemovedFindingAffected'
 } as const;
-export type WsMessageOneOf31TypeEnum = typeof WsMessageOneOf31TypeEnum[keyof typeof WsMessageOneOf31TypeEnum];
+export type WsMessageOneOf32TypeEnum = typeof WsMessageOneOf32TypeEnum[keyof typeof WsMessageOneOf32TypeEnum];
 
 
 /**
- * Check if a given object implements the WsMessageOneOf31 interface.
+ * Check if a given object implements the WsMessageOneOf32 interface.
  */
-export function instanceOfWsMessageOneOf31(value: object): boolean {
+export function instanceOfWsMessageOneOf32(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "finding" in value;
     isInstance = isInstance && "affectedUuid" in value;
-    isInstance = isInstance && "update" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
 }
 
-export function WsMessageOneOf31FromJSON(json: any): WsMessageOneOf31 {
-    return WsMessageOneOf31FromJSONTyped(json, false);
+export function WsMessageOneOf32FromJSON(json: any): WsMessageOneOf32 {
+    return WsMessageOneOf32FromJSONTyped(json, false);
 }
 
-export function WsMessageOneOf31FromJSONTyped(json: any, ignoreDiscriminator: boolean): WsMessageOneOf31 {
+export function WsMessageOneOf32FromJSONTyped(json: any, ignoreDiscriminator: boolean): WsMessageOneOf32 {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -95,12 +81,11 @@ export function WsMessageOneOf31FromJSONTyped(json: any, ignoreDiscriminator: bo
         'workspace': json['workspace'],
         'finding': json['finding'],
         'affectedUuid': json['affected_uuid'],
-        'update': UpdateFindingAffectedRequestFromJSON(json['update']),
         'type': json['type'],
     };
 }
 
-export function WsMessageOneOf31ToJSON(value?: WsMessageOneOf31 | null): any {
+export function WsMessageOneOf32ToJSON(value?: WsMessageOneOf32 | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -112,7 +97,6 @@ export function WsMessageOneOf31ToJSON(value?: WsMessageOneOf31 | null): any {
         'workspace': value.workspace,
         'finding': value.finding,
         'affected_uuid': value.affectedUuid,
-        'update': UpdateFindingAffectedRequestToJSON(value.update),
         'type': value.type,
     };
 }

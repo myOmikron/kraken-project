@@ -13,8 +13,15 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { UpdateFindingDefinitionRequest } from './UpdateFindingDefinitionRequest';
+import {
+    UpdateFindingDefinitionRequestFromJSON,
+    UpdateFindingDefinitionRequestFromJSONTyped,
+    UpdateFindingDefinitionRequestToJSON,
+} from './UpdateFindingDefinitionRequest';
+
 /**
- * A finding definition was deleted
+ * A finding definition has been updated
  * @export
  * @interface WsMessageOneOf25
  */
@@ -25,6 +32,12 @@ export interface WsMessageOneOf25 {
      * @memberof WsMessageOneOf25
      */
     uuid: string;
+    /**
+     * 
+     * @type {UpdateFindingDefinitionRequest}
+     * @memberof WsMessageOneOf25
+     */
+    update: UpdateFindingDefinitionRequest;
     /**
      * 
      * @type {string}
@@ -38,7 +51,7 @@ export interface WsMessageOneOf25 {
  * @export
  */
 export const WsMessageOneOf25TypeEnum = {
-    DeletedFindingDefinition: 'DeletedFindingDefinition'
+    UpdatedFindingDefinition: 'UpdatedFindingDefinition'
 } as const;
 export type WsMessageOneOf25TypeEnum = typeof WsMessageOneOf25TypeEnum[keyof typeof WsMessageOneOf25TypeEnum];
 
@@ -49,6 +62,7 @@ export type WsMessageOneOf25TypeEnum = typeof WsMessageOneOf25TypeEnum[keyof typ
 export function instanceOfWsMessageOneOf25(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "uuid" in value;
+    isInstance = isInstance && "update" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -65,6 +79,7 @@ export function WsMessageOneOf25FromJSONTyped(json: any, ignoreDiscriminator: bo
     return {
         
         'uuid': json['uuid'],
+        'update': UpdateFindingDefinitionRequestFromJSON(json['update']),
         'type': json['type'],
     };
 }
@@ -79,6 +94,7 @@ export function WsMessageOneOf25ToJSON(value?: WsMessageOneOf25 | null): any {
     return {
         
         'uuid': value.uuid,
+        'update': UpdateFindingDefinitionRequestToJSON(value.update),
         'type': value.type,
     };
 }

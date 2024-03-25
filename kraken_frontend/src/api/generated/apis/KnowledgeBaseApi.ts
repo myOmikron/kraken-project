@@ -19,6 +19,7 @@ import type {
   CreateFindingDefinitionRequest,
   FullFindingDefinition,
   ListFindingDefinitions,
+  UpdateFindingDefinitionRequest,
   UuidResponse,
 } from '../models';
 import {
@@ -30,6 +31,8 @@ import {
     FullFindingDefinitionToJSON,
     ListFindingDefinitionsFromJSON,
     ListFindingDefinitionsToJSON,
+    UpdateFindingDefinitionRequestFromJSON,
+    UpdateFindingDefinitionRequestToJSON,
     UuidResponseFromJSON,
     UuidResponseToJSON,
 } from '../models';
@@ -44,6 +47,11 @@ export interface DeleteFindingDefinitionRequest {
 
 export interface GetFindingDefinitionRequest {
     uuid: string;
+}
+
+export interface UpdateFindingDefinitionOperationRequest {
+    uuid: string;
+    updateFindingDefinitionRequest: UpdateFindingDefinitionRequest;
 }
 
 /**
@@ -175,6 +183,44 @@ export class KnowledgeBaseApi extends runtime.BaseAPI {
     async getFindingDefinition(requestParameters: GetFindingDefinitionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullFindingDefinition> {
         const response = await this.getFindingDefinitionRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Update a finding definition  This endpoint only allows updating the `name`, `severity` and `cve`. The other values have to be updated through the websocket as part of a live editor.
+     * Update a finding definition
+     */
+    async updateFindingDefinitionRaw(requestParameters: UpdateFindingDefinitionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling updateFindingDefinition.');
+        }
+
+        if (requestParameters.updateFindingDefinitionRequest === null || requestParameters.updateFindingDefinitionRequest === undefined) {
+            throw new runtime.RequiredError('updateFindingDefinitionRequest','Required parameter requestParameters.updateFindingDefinitionRequest was null or undefined when calling updateFindingDefinition.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/findingDefinitions/{uuid}`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateFindingDefinitionRequestToJSON(requestParameters.updateFindingDefinitionRequest),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Update a finding definition  This endpoint only allows updating the `name`, `severity` and `cve`. The other values have to be updated through the websocket as part of a live editor.
+     * Update a finding definition
+     */
+    async updateFindingDefinition(requestParameters: UpdateFindingDefinitionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.updateFindingDefinitionRaw(requestParameters, initOverrides);
     }
 
 }

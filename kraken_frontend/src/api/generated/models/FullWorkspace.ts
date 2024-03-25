@@ -75,6 +75,12 @@ export interface FullWorkspace {
      */
     members: Array<SimpleUser>;
     /**
+     * Is this workspace archived?
+     * @type {boolean}
+     * @memberof FullWorkspace
+     */
+    archived: boolean;
+    /**
      * The point in time the workspace was created
      * @type {Date}
      * @memberof FullWorkspace
@@ -93,6 +99,7 @@ export function instanceOfFullWorkspace(value: object): boolean {
     isInstance = isInstance && "owner" in value;
     isInstance = isInstance && "attacks" in value;
     isInstance = isInstance && "members" in value;
+    isInstance = isInstance && "archived" in value;
     isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
@@ -115,6 +122,7 @@ export function FullWorkspaceFromJSONTyped(json: any, ignoreDiscriminator: boole
         'owner': SimpleUserFromJSON(json['owner']),
         'attacks': ((json['attacks'] as Array<any>).map(SimpleAttackFromJSON)),
         'members': ((json['members'] as Array<any>).map(SimpleUserFromJSON)),
+        'archived': json['archived'],
         'createdAt': (new Date(json['created_at'])),
     };
 }
@@ -135,6 +143,7 @@ export function FullWorkspaceToJSON(value?: FullWorkspace | null): any {
         'owner': SimpleUserToJSON(value.owner),
         'attacks': ((value.attacks as Array<any>).map(SimpleAttackToJSON)),
         'members': ((value.members as Array<any>).map(SimpleUserToJSON)),
+        'archived': value.archived,
         'created_at': (value.createdAt.toISOString()),
     };
 }
