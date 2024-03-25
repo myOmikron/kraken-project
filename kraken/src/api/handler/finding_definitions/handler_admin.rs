@@ -11,7 +11,6 @@ use rorm::FieldAccess;
 use rorm::Model;
 use uuid::Uuid;
 
-use crate::api::extractors::SessionUser;
 use crate::api::handler::common::error::ApiError;
 use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::PathUuid;
@@ -24,7 +23,6 @@ use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::Finding;
 use crate::models::FindingAffected;
 use crate::models::FindingDefinition;
-use crate::models::UserPermission;
 use crate::modules::cache::EditorCached;
 
 /// Get all findings using the finding definition
@@ -140,21 +138,8 @@ pub async fn get_finding_definition_usage(
     security(("api_key" = []))
 )]
 #[delete("/findingDefinitions/{uuid}")]
-pub async fn delete_finding_definition(
-    path: Path<PathUuid>,
-    SessionUser(user_uuid): SessionUser,
-) -> ApiResult<HttpResponse> {
+pub async fn delete_finding_definition(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
     let uuid = path.into_inner().uuid;
-
-    let user = GLOBAL
-        .user_cache
-        .get_full_user(user_uuid)
-        .await?
-        .ok_or(ApiError::SessionCorrupt)?;
-
-    if user.permission != UserPermission::Admin {
-        return Err(ApiError::MissingPrivileges);
-    }
 
     let deleted = rorm::delete!(&GLOBAL.db, FindingDefinition)
         .condition(FindingDefinition::F.uuid.equals(uuid))
