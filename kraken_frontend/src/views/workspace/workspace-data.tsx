@@ -133,7 +133,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             New with affected
                         </>,
                         (e) => {
-                            // TODO: open in new tab, with hidden data, when e.ctrlKey
+                            // TODO: once we have support for passing hidden data
+                            // across browser tabs, open in new tab, with hidden
+                            // data, when `e.ctrlKey` is true
                             ROUTES.WORKSPACE_FINDINGS_CREATE.visit(
                                 {
                                     uuid: workspace,
