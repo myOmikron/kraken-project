@@ -26,31 +26,6 @@ export default function ModelEditor(props: ModelEditorProps) {
         return () => (editorRef.current ? editorRef.current.dispose() : cancelable.cancel());
     }, []);
 
-    /*
-    useUpdate(
-        () => {
-            if (!editorRef.current || value === undefined) return;
-            if (editorRef.current.getOption(monacoRef.current!.editor.EditorOption.readOnly)) {
-                editorRef.current.setValue(value);
-            } else if (value !== editorRef.current.getValue()) {
-                preventTriggerChangeEvent.current = true;
-                editorRef.current.executeEdits("", [
-                    {
-                        range: editorRef.current.getModel()!.getFullModelRange(),
-                        text: value,
-                        forceMoveMarkers: true,
-                    },
-                ]);
-
-                editorRef.current.pushUndoStop();
-                preventTriggerChangeEvent.current = false;
-            }
-        },
-        [value],
-        isEditorReady,
-    );
-    */
-
     React.useEffect(() => {
         if (!containerRef.current || !monacoRef.current) return;
         if (!editorRef.current) {
@@ -73,26 +48,12 @@ export default function ModelEditor(props: ModelEditorProps) {
         }
     }, [model]);
 
-    /*
-    // onChange
-    useEffect(() => {
-        if (isEditorReady && onChange) {
-            subscriptionRef.current?.dispose();
-            subscriptionRef.current = editorRef.current?.onDidChangeModelContent((event) => {
-                if (!preventTriggerChangeEvent.current) {
-                    onChange(editorRef.current!.getValue(), event);
-                }
-            });
-        }
-    }, [isEditorReady, onChange]);
-    */
-
     return (
-        <section style={{ display: "flex", position: "relative", textAlign: "initial", width: "100%", height: "100%" }}>
+        <section className={"model-editor"}>
             {(!isEditorReady || model === null) && <Loading />}
             <div
                 ref={containerRef}
-                style={{ width: "100%", display: !isEditorReady || model === null ? "none" : undefined }}
+                style={{ display: !isEditorReady || model === null ? "none" : undefined }}
                 className={"knowledge-base-editor"}
             />
         </section>

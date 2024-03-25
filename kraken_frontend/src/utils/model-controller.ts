@@ -15,7 +15,7 @@ import USER_CONTEXT from "../context/user";
  *
  * Set to `console` to enable or `null` to disable
  */
-const CONSOLE: Console | null = console;
+const CONSOLE: Console | null = null;
 
 /** {@link useModel `useModel`}' arguments */
 export type UseModelArgs = {
