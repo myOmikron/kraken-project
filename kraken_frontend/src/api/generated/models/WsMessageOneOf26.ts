@@ -13,49 +13,18 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { Change } from './Change';
-import {
-    ChangeFromJSON,
-    ChangeFromJSONTyped,
-    ChangeToJSON,
-} from './Change';
-import type { EditorTarget } from './EditorTarget';
-import {
-    EditorTargetFromJSON,
-    EditorTargetFromJSONTyped,
-    EditorTargetToJSON,
-} from './EditorTarget';
-import type { SimpleUser } from './SimpleUser';
-import {
-    SimpleUserFromJSON,
-    SimpleUserFromJSONTyped,
-    SimpleUserToJSON,
-} from './SimpleUser';
-
 /**
- * A finding definition was updated
+ * A finding definition was deleted
  * @export
  * @interface WsMessageOneOf26
  */
 export interface WsMessageOneOf26 {
     /**
-     * 
-     * @type {Change}
+     * The uuid of the finding definition
+     * @type {string}
      * @memberof WsMessageOneOf26
      */
-    change: Change;
-    /**
-     * 
-     * @type {SimpleUser}
-     * @memberof WsMessageOneOf26
-     */
-    user: SimpleUser;
-    /**
-     * 
-     * @type {EditorTarget}
-     * @memberof WsMessageOneOf26
-     */
-    target: EditorTarget;
+    uuid: string;
     /**
      * 
      * @type {string}
@@ -69,7 +38,7 @@ export interface WsMessageOneOf26 {
  * @export
  */
 export const WsMessageOneOf26TypeEnum = {
-    EditorChangedContent: 'EditorChangedContent'
+    DeletedFindingDefinition: 'DeletedFindingDefinition'
 } as const;
 export type WsMessageOneOf26TypeEnum = typeof WsMessageOneOf26TypeEnum[keyof typeof WsMessageOneOf26TypeEnum];
 
@@ -79,9 +48,7 @@ export type WsMessageOneOf26TypeEnum = typeof WsMessageOneOf26TypeEnum[keyof typ
  */
 export function instanceOfWsMessageOneOf26(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "change" in value;
-    isInstance = isInstance && "user" in value;
-    isInstance = isInstance && "target" in value;
+    isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -97,9 +64,7 @@ export function WsMessageOneOf26FromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'change': ChangeFromJSON(json['change']),
-        'user': SimpleUserFromJSON(json['user']),
-        'target': EditorTargetFromJSON(json['target']),
+        'uuid': json['uuid'],
         'type': json['type'],
     };
 }
@@ -113,9 +78,7 @@ export function WsMessageOneOf26ToJSON(value?: WsMessageOneOf26 | null): any {
     }
     return {
         
-        'change': ChangeToJSON(value.change),
-        'user': SimpleUserToJSON(value.user),
-        'target': EditorTargetToJSON(value.target),
+        'uuid': value.uuid,
         'type': value.type,
     };
 }

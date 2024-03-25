@@ -251,6 +251,7 @@ models/UpdateApiKeyRequest.ts
 models/UpdateAppRequest.ts
 models/UpdateDomainRequest.ts
 models/UpdateFindingAffectedRequest.ts
+models/UpdateFindingDefinitionRequest.ts
 models/UpdateFindingRequest.ts
 models/UpdateGlobalTag.ts
 models/UpdateHostRequest.ts
@@ -295,6 +296,7 @@ models/WsMessageOneOf29.ts
 models/WsMessageOneOf3.ts
 models/WsMessageOneOf30.ts
 models/WsMessageOneOf31.ts
+models/WsMessageOneOf32.ts
 models/WsMessageOneOf4.ts
 models/WsMessageOneOf5.ts
 models/WsMessageOneOf6.ts

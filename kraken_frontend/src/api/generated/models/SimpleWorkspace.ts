@@ -51,6 +51,12 @@ export interface SimpleWorkspace {
      */
     owner: SimpleUser;
     /**
+     * Is this workspace archived?
+     * @type {boolean}
+     * @memberof SimpleWorkspace
+     */
+    archived: boolean;
+    /**
      * The point in time the workspace was created
      * @type {Date}
      * @memberof SimpleWorkspace
@@ -66,6 +72,7 @@ export function instanceOfSimpleWorkspace(value: object): boolean {
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "name" in value;
     isInstance = isInstance && "owner" in value;
+    isInstance = isInstance && "archived" in value;
     isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
@@ -85,6 +92,7 @@ export function SimpleWorkspaceFromJSONTyped(json: any, ignoreDiscriminator: boo
         'name': json['name'],
         'description': !exists(json, 'description') ? undefined : json['description'],
         'owner': SimpleUserFromJSON(json['owner']),
+        'archived': json['archived'],
         'createdAt': (new Date(json['created_at'])),
     };
 }
@@ -102,6 +110,7 @@ export function SimpleWorkspaceToJSON(value?: SimpleWorkspace | null): any {
         'name': value.name,
         'description': value.description,
         'owner': SimpleUserToJSON(value.owner),
+        'archived': value.archived,
         'created_at': (value.createdAt.toISOString()),
     };
 }

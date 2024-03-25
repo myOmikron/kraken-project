@@ -13,37 +13,49 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { UpdateFindingRequest } from './UpdateFindingRequest';
+import type { CursorPosition } from './CursorPosition';
 import {
-    UpdateFindingRequestFromJSON,
-    UpdateFindingRequestFromJSONTyped,
-    UpdateFindingRequestToJSON,
-} from './UpdateFindingRequest';
+    CursorPositionFromJSON,
+    CursorPositionFromJSONTyped,
+    CursorPositionToJSON,
+} from './CursorPosition';
+import type { EditorTarget } from './EditorTarget';
+import {
+    EditorTargetFromJSON,
+    EditorTargetFromJSONTyped,
+    EditorTargetToJSON,
+} from './EditorTarget';
+import type { SimpleUser } from './SimpleUser';
+import {
+    SimpleUserFromJSON,
+    SimpleUserFromJSONTyped,
+    SimpleUserToJSON,
+} from './SimpleUser';
 
 /**
- * A finding has been updated
+ * A user has changed its cursor position in an editor
  * @export
  * @interface WsMessageOneOf28
  */
 export interface WsMessageOneOf28 {
     /**
-     * The workspace the updated finding is in
-     * @type {string}
+     * 
+     * @type {SimpleUser}
      * @memberof WsMessageOneOf28
      */
-    workspace: string;
-    /**
-     * The finding which has been updated
-     * @type {string}
-     * @memberof WsMessageOneOf28
-     */
-    finding: string;
+    user: SimpleUser;
     /**
      * 
-     * @type {UpdateFindingRequest}
+     * @type {EditorTarget}
      * @memberof WsMessageOneOf28
      */
-    update: UpdateFindingRequest;
+    target: EditorTarget;
+    /**
+     * 
+     * @type {CursorPosition}
+     * @memberof WsMessageOneOf28
+     */
+    cursor: CursorPosition;
     /**
      * 
      * @type {string}
@@ -57,7 +69,7 @@ export interface WsMessageOneOf28 {
  * @export
  */
 export const WsMessageOneOf28TypeEnum = {
-    UpdatedFinding: 'UpdatedFinding'
+    EditorChangedCursor: 'EditorChangedCursor'
 } as const;
 export type WsMessageOneOf28TypeEnum = typeof WsMessageOneOf28TypeEnum[keyof typeof WsMessageOneOf28TypeEnum];
 
@@ -67,9 +79,9 @@ export type WsMessageOneOf28TypeEnum = typeof WsMessageOneOf28TypeEnum[keyof typ
  */
 export function instanceOfWsMessageOneOf28(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "workspace" in value;
-    isInstance = isInstance && "finding" in value;
-    isInstance = isInstance && "update" in value;
+    isInstance = isInstance && "user" in value;
+    isInstance = isInstance && "target" in value;
+    isInstance = isInstance && "cursor" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -85,9 +97,9 @@ export function WsMessageOneOf28FromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'workspace': json['workspace'],
-        'finding': json['finding'],
-        'update': UpdateFindingRequestFromJSON(json['update']),
+        'user': SimpleUserFromJSON(json['user']),
+        'target': EditorTargetFromJSON(json['target']),
+        'cursor': CursorPositionFromJSON(json['cursor']),
         'type': json['type'],
     };
 }
@@ -101,9 +113,9 @@ export function WsMessageOneOf28ToJSON(value?: WsMessageOneOf28 | null): any {
     }
     return {
         
-        'workspace': value.workspace,
-        'finding': value.finding,
-        'update': UpdateFindingRequestToJSON(value.update),
+        'user': SimpleUserToJSON(value.user),
+        'target': EditorTargetToJSON(value.target),
+        'cursor': CursorPositionToJSON(value.cursor),
         'type': value.type,
     };
 }

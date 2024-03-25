@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { CursorPosition } from './CursorPosition';
+import type { Change } from './Change';
 import {
-    CursorPositionFromJSON,
-    CursorPositionFromJSONTyped,
-    CursorPositionToJSON,
-} from './CursorPosition';
+    ChangeFromJSON,
+    ChangeFromJSONTyped,
+    ChangeToJSON,
+} from './Change';
 import type { EditorTarget } from './EditorTarget';
 import {
     EditorTargetFromJSON,
@@ -33,11 +33,17 @@ import {
 } from './SimpleUser';
 
 /**
- * A user has changed its cursor position in an editor
+ * A finding definition was updated
  * @export
  * @interface WsMessageOneOf27
  */
 export interface WsMessageOneOf27 {
+    /**
+     * 
+     * @type {Change}
+     * @memberof WsMessageOneOf27
+     */
+    change: Change;
     /**
      * 
      * @type {SimpleUser}
@@ -52,12 +58,6 @@ export interface WsMessageOneOf27 {
     target: EditorTarget;
     /**
      * 
-     * @type {CursorPosition}
-     * @memberof WsMessageOneOf27
-     */
-    cursor: CursorPosition;
-    /**
-     * 
      * @type {string}
      * @memberof WsMessageOneOf27
      */
@@ -69,7 +69,7 @@ export interface WsMessageOneOf27 {
  * @export
  */
 export const WsMessageOneOf27TypeEnum = {
-    EditorChangedCursor: 'EditorChangedCursor'
+    EditorChangedContent: 'EditorChangedContent'
 } as const;
 export type WsMessageOneOf27TypeEnum = typeof WsMessageOneOf27TypeEnum[keyof typeof WsMessageOneOf27TypeEnum];
 
@@ -79,9 +79,9 @@ export type WsMessageOneOf27TypeEnum = typeof WsMessageOneOf27TypeEnum[keyof typ
  */
 export function instanceOfWsMessageOneOf27(value: object): boolean {
     let isInstance = true;
+    isInstance = isInstance && "change" in value;
     isInstance = isInstance && "user" in value;
     isInstance = isInstance && "target" in value;
-    isInstance = isInstance && "cursor" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -97,9 +97,9 @@ export function WsMessageOneOf27FromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
+        'change': ChangeFromJSON(json['change']),
         'user': SimpleUserFromJSON(json['user']),
         'target': EditorTargetFromJSON(json['target']),
-        'cursor': CursorPositionFromJSON(json['cursor']),
         'type': json['type'],
     };
 }
@@ -113,9 +113,9 @@ export function WsMessageOneOf27ToJSON(value?: WsMessageOneOf27 | null): any {
     }
     return {
         
+        'change': ChangeToJSON(value.change),
         'user': SimpleUserToJSON(value.user),
         'target': EditorTargetToJSON(value.target),
-        'cursor': CursorPositionToJSON(value.cursor),
         'type': value.type,
     };
 }
