@@ -12,7 +12,7 @@ import "../styling/workspace-overview.css";
 import WorkspaceIcon from "../svg/workspace";
 import { check, handleApiError } from "../utils/helper";
 
-type Sorting = "none" | "name" | "createdAt" | "lastModified";
+type Sorting = "none" | "name" | "createdAt";
 
 type WorkspacesProps = {};
 type WorkspacesState = {
@@ -182,19 +182,6 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                                     />
                                     <span>Created timestamp</span>
                                 </label>
-                                {/* TODO: track & expose lastModified! */}
-                                {/* <label>
-                                    <Checkbox
-                                        value={this.state.sorting === "lastModified"}
-                                        onChange={() => {
-                                            this.setState({
-                                                sorting:
-                                                    this.state.sorting === "lastModified" ? "none" : "lastModified",
-                                            });
-                                        }}
-                                    />
-                                    <span>Last modified</span>
-                                </label> */}
                             </div>
                         </div>
                     </div>
@@ -222,7 +209,6 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                                         return a.createdAt.getTime() - b.createdAt.getTime();
                                     case "name":
                                         return a.name.localeCompare(b.name);
-                                    case "lastModified": // TODO: not exposed yet
                                     case "none":
                                         return 0;
                                 }
