@@ -1,11 +1,10 @@
-import Editor from "@monaco-editor/react";
+import { editor } from "monaco-editor";
 import React, { useEffect } from "react";
 import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
 import { Api, UUID } from "../../../api/api";
 import {
     AggregationType,
-    EditorTarget,
     FindingAffectedObject,
     FindingAffectedObjectOneOf,
     FindingAffectedObjectOneOf1,
@@ -14,10 +13,12 @@ import {
     FindingSeverity,
     FullFindingAffected,
     SimpleFindingDefinition,
+    SimpleTag,
     UpdateFindingRequest,
 } from "../../../api/generated";
 import WS from "../../../api/websocket";
 import { GithubMarkdown } from "../../../components/github-markdown";
+import ModelEditor from "../../../components/model-editor";
 import { SelectPrimitive } from "../../../components/select-menu";
 import { ROUTES } from "../../../routes";
 import ArrowLeftIcon from "../../../svg/arrow-left";
@@ -32,7 +33,8 @@ import PlusIcon from "../../../svg/plus";
 import RelationLeftRightIcon from "../../../svg/relation-left-right";
 import ScreenshotIcon from "../../../svg/screenshot";
 import { ObjectFns, handleApiError } from "../../../utils/helper";
-import { setupMonaco } from "../../knowledge-base";
+import { useModel, useModelStore } from "../../../utils/model-controller";
+import { useSyncedCursors } from "../../../utils/monaco-cursor";
 import CollapsibleSection from "../components/collapsible-section";
 import Domain from "../components/domain";
 import { UploadingFileInput } from "../components/file-input";
@@ -43,12 +45,8 @@ import ServiceName from "../components/service";
 import TagList from "../components/tag-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import { FindingDefinitionDetails } from "./workspace-create-finding";
-import WorkspaceFindingDataTable from "./workspace-finding-data-table";
-import EditingTreeGraph from "./workspace-finding-editing-tree";
-import { useSyncedCursors } from "../../../utils/monaco-cursor";
-import ModelEditor from "../../../components/model-editor";
-import { useModel, useModelStore } from "../../../utils/model-controller";
-import { editor } from "monaco-editor";
+import WorkspaceFindingDataTable, { WorkspaceFindingDataTableRef } from "./workspace-finding-data-table";
+import EditingTreeGraph, { EditingTreeGraphRef } from "./workspace-finding-editing-tree";
 import ITextModel = editor.ITextModel;
 
 export type WorkspaceEditFindingProps = {
@@ -76,6 +74,14 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
 
     const [affected, setAffected] = React.useState<Record<UUID, Omit<FullFindingAffected, "userDetails">>>({});
     const affectedModels = useModelStore();
+
+    const dataTableRef = React.useRef<WorkspaceFindingDataTableRef>(null);
+    const graphRef = React.useRef<EditingTreeGraphRef>(null);
+
+    const onClickTag = (e: { ctrlKey: boolean; shiftKey: boolean; altKey: boolean }, tag: SimpleTag) => {
+        dataTableRef.current?.addFilterColumn("tag", tag.name, e.altKey);
+        graphRef.current?.addTag(tag, e.altKey);
+    };
 
     // Upload to API with changes
     const [pendingApiChanges, setPendingApiChanges] = React.useState<
@@ -357,7 +363,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                     value={affectedModels.models[affectedUuid].value}
                                                     model={affectedModels.models[affectedUuid].model}
                                                 />
-                                                <TagList tags={fullAffected.affectedTags} />
+                                                <TagList tags={fullAffected.affectedTags} onClickTag={onClickTag} />
                                                 <UploadingFileInput
                                                     image
                                                     shortText
@@ -505,6 +511,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                 return (
                                     <div className="workspace-finding-data-table">
                                         <WorkspaceFindingDataTable
+                                            ref={dataTableRef}
                                             hideUuids={Object.keys(affected)}
                                             onAddDomain={({ uuid }) => addAffected(uuid, AggregationType.Domain)}
                                             onAddHost={({ uuid }) => addAffected(uuid, AggregationType.Host)}
@@ -516,6 +523,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                             case "network":
                                 return (
                                     <EditingTreeGraph
+                                        ref={graphRef}
                                         uuid={finding}
                                         definition={findingDef}
                                         severity={severity}

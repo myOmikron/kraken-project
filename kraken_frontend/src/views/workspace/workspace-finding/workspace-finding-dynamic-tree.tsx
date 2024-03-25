@@ -131,6 +131,7 @@ export function treeLookupFunctionsRoot(workspace: string, uuids: string[]): Dyn
 export type DynamicTreeGraphRef = {
     reloadAffected(): void;
     reloadRoot(): void;
+    addTag(value: SimpleTag, negate: boolean): void;
 };
 
 type DynamicTreeNode = {
@@ -412,6 +413,24 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                         }),
                     );
                 });
+            },
+            addTag(value, negate) {
+                let existing = filterTags.findIndex((t) => t.uuid == value.uuid);
+                if (negate && existing != -1)
+                    setFilterTags((tags) => {
+                        let existing = tags.findIndex((t) => t.uuid == value.uuid);
+                        if (existing == -1) return tags;
+                        let copy = [...tags];
+                        copy.splice(existing, 1);
+                        return copy;
+                    });
+                else if (!negate && existing == -1) {
+                    setFilterTags((tags) => {
+                        let existing = tags.findIndex((t) => t.uuid == value.uuid);
+                        if (existing != -1) return tags;
+                        return [...tags, value];
+                    });
+                }
             },
         }));
 

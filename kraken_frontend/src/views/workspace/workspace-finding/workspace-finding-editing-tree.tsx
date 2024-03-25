@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { ApiError, StatusCode } from "../../../api/error";
 import {
     CreateFindingAffectedRequest,
@@ -7,6 +7,7 @@ import {
     FullFindingAffected,
     SimpleFindingAffected,
     SimpleFindingDefinition,
+    SimpleTag,
 } from "../../../api/generated";
 import { Err, Ok, Result } from "../../../utils/result";
 import { getAffectedData, getAffectedType } from "./workspace-edit-finding";
@@ -27,7 +28,11 @@ export type EditingTreeGraphProps = {
     affected: (CreateFindingAffectedRequest | SimpleFindingAffected | FullFindingAffected)[];
 } & Omit<DynamicTreeGraphProps, "workspace" | "uuid">;
 
-export default function EditingTreeGraph(props: EditingTreeGraphProps) {
+export type EditingTreeGraphRef = {
+    addTag(value: SimpleTag, negate: boolean): void;
+};
+
+export const EditingTreeGraph = forwardRef<EditingTreeGraphRef, EditingTreeGraphProps>((props, ref) => {
     const rootUuid = props.uuid ?? "local-finding";
 
     const treeRef = useRef<DynamicTreeGraphRef>(null);
@@ -41,6 +46,12 @@ export default function EditingTreeGraph(props: EditingTreeGraphProps) {
             return affected.uuid;
         }
     };
+
+    useImperativeHandle(ref, () => ({
+        addTag(value, negate) {
+            treeRef.current?.addTag(value, negate);
+        },
+    }));
 
     const api = React.useRef<DynamicTreeLookupFunctions>({
         async getRoots() {
@@ -119,4 +130,5 @@ export default function EditingTreeGraph(props: EditingTreeGraphProps) {
     }, [props.severity, props.definition]);
 
     return <DynamicTreeGraph ref={treeRef} uuid={rootUuid} api={api.current} {...props} />;
-}
+});
+export default EditingTreeGraph;

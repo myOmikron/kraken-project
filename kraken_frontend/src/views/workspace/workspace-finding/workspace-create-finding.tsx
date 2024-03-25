@@ -11,6 +11,7 @@ import {
     FullPort,
     FullService,
     SimpleFindingDefinition,
+    SimpleTag,
 } from "../../../api/generated";
 import { GithubMarkdown } from "../../../components/github-markdown";
 import { SelectPrimitive } from "../../../components/select-menu";
@@ -32,10 +33,10 @@ import MarkdownEditorPopup from "../components/markdown-editor-popup";
 import PortNumber from "../components/port";
 import SelectFindingDefinition from "../components/select-finding-definition";
 import ServiceName from "../components/service";
-import TagList from "../components/tag-list";
+import TagList, { TagClickCallback } from "../components/tag-list";
 import { WORKSPACE_CONTEXT } from "../workspace";
-import WorkspaceFindingDataTable from "./workspace-finding-data-table";
-import EditingTreeGraph from "./workspace-finding-editing-tree";
+import WorkspaceFindingDataTable, { WorkspaceFindingDataTableRef } from "./workspace-finding-data-table";
+import EditingTreeGraph, { EditingTreeGraphRef } from "./workspace-finding-editing-tree";
 
 export type CreateFindingObject =
     | { domain: FullDomain }
@@ -85,6 +86,14 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
     const [logFile, setLogFile] = React.useState<File>();
     const [screenshot, setScreenshot] = React.useState<File>();
 
+    const dataTableRef = React.useRef<WorkspaceFindingDataTableRef>(null);
+    const graphRef = React.useRef<EditingTreeGraphRef>(null);
+
+    const onClickTag = (e: { ctrlKey: boolean; shiftKey: boolean; altKey: boolean }, tag: SimpleTag) => {
+        dataTableRef.current?.addFilterColumn("tag", tag.name, e.altKey);
+        graphRef.current?.addTag(tag, e.altKey);
+    };
+
     const addAffected = (newAffected: LocalAffected) => {
         setAffected((affected) => {
             if (affected.some((a) => a.uuid == newAffected.uuid)) return affected;
@@ -128,6 +137,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                 return (
                     <div className="workspace-finding-data-table">
                         <WorkspaceFindingDataTable
+                            ref={dataTableRef}
                             hideUuids={affected.map((a) => a._data.uuid)}
                             onAddDomain={(d) =>
                                 addAffected({
@@ -167,6 +177,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
             case "network":
                 return (
                     <EditingTreeGraph
+                        ref={graphRef}
                         definition={findingDef}
                         severity={severity}
                         affected={affected}
@@ -327,6 +338,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                                     copy.splice(index, 1);
                                                     setAffected(copy);
                                                 }}
+                                                onClickTag={onClickTag}
                                                 onChangeDetails={(d) => {
                                                     setAffected((affected) =>
                                                         affected.map((orig) =>
@@ -480,12 +492,14 @@ export function CreateFindingAffected({
     onChangeDetails,
     onChangeScreenshot,
     onChangeLogFile,
+    onClickTag,
 }: {
     affected: LocalAffected;
     onRemove?: () => void;
     onChangeDetails?: (content: string) => void;
     onChangeScreenshot?: (newFile: File | undefined) => void;
     onChangeLogFile?: (newFile: File | undefined) => void;
+    onClickTag?: TagClickCallback;
 }) {
     const label =
         a.type == "Domain" ? (
@@ -515,7 +529,7 @@ export function CreateFindingAffected({
             {(a.details || onChangeDetails) && (
                 <MarkdownEditorPopup label={label} content={a.details || ""} onChange={onChangeDetails ?? noop} />
             )}
-            <TagList tags={a._data.tags} />
+            <TagList tags={a._data.tags} onClickTag={onClickTag} />
             {(a._localScreenshot || onChangeScreenshot) && (
                 <FileInput
                     image
