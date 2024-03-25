@@ -6,7 +6,7 @@ import Checkbox from "../components/checkbox";
 import Input from "../components/input";
 import Loading from "../components/loading";
 import Textarea from "../components/textarea";
-import USER_CONTEXT from "../context/user";
+import USER_CONTEXT, { UserContext } from "../context/user";
 import { ROUTES } from "../routes";
 import "../styling/workspace-overview.css";
 import WorkspaceIcon from "../svg/workspace";
@@ -34,6 +34,8 @@ type WorkspacesState = {
     onlyOwner: boolean;
     onlyMember: boolean;
 
+    onlyArchived: boolean;
+
     sorting: Sorting;
 };
 
@@ -46,10 +48,12 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
         search: "",
         onlyOwner: false,
         onlyMember: false,
+        onlyArchived: false,
         sorting: "none",
     };
 
     static contextType = USER_CONTEXT;
+    declare context: UserContext;
 
     componentDidMount() {
         this.fetchState();
@@ -129,8 +133,8 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                                 <label>
                                     <Checkbox
                                         value={this.state.onlyOwner}
-                                        onChange={() => {
-                                            this.setState({ onlyOwner: !this.state.onlyOwner, onlyMember: false });
+                                        onChange={(v) => {
+                                            this.setState({ onlyOwner: v, onlyMember: false });
                                         }}
                                     />
                                     <span>Owner</span>
@@ -138,17 +142,17 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                                 <label>
                                     <Checkbox
                                         value={this.state.onlyMember}
-                                        onChange={() => {
-                                            this.setState({ onlyOwner: false, onlyMember: !this.state.onlyMember });
+                                        onChange={(v) => {
+                                            this.setState({ onlyOwner: false, onlyMember: v });
                                         }}
                                     />
                                     <span>Member</span>
                                 </label>
                                 <label>
                                     <Checkbox
-                                        value={this.state.onlyMember}
-                                        onChange={() => {
-                                            this.setState({ onlyOwner: false, onlyMember: !this.state.onlyMember });
+                                        value={this.state.onlyArchived}
+                                        onChange={(v) => {
+                                            this.setState({ onlyArchived: v });
                                         }}
                                     />
                                     <span>Archived</span>
@@ -178,7 +182,8 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                                     />
                                     <span>Created timestamp</span>
                                 </label>
-                                <label>
+                                {/* TODO: track & expose lastModified! */}
+                                {/* <label>
                                     <Checkbox
                                         value={this.state.sorting === "lastModified"}
                                         onChange={() => {
@@ -189,31 +194,38 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                                         }}
                                     />
                                     <span>Last modified</span>
-                                </label>
+                                </label> */}
                             </div>
                         </div>
                     </div>
                     <div className={"workspace-list-container"}>
                         {workspaces
                             .filter((e) => {
-                                let include = true;
-
-                                if (this.state.search === "") include = true;
-                                else include = e.name.includes(this.state.search);
-
-                                if (!include) {
+                                if (
+                                    this.state.search !== "" &&
+                                    !e.name.toLowerCase().includes(this.state.search.toLowerCase())
+                                )
                                     return false;
-                                }
 
-                                if (this.state.onlyOwner) {
-                                    // @ts-ignore
-                                    include = e.owner.uuid === this.context.user.uuid;
-                                } else if (this.state.onlyMember) {
-                                    // @ts-ignore
-                                    include = e.owner.uuid !== this.context.user.uuid;
-                                }
+                                const isOwner = e.owner.uuid === this.context.user.uuid;
 
-                                return include;
+                                if (this.state.onlyOwner && !isOwner) return false;
+                                if (this.state.onlyMember && isOwner) return false;
+
+                                if (this.state.onlyArchived != (e.archived ?? false)) return false;
+
+                                return true;
+                            })
+                            .sort((a, b) => {
+                                switch (this.state.sorting) {
+                                    case "createdAt":
+                                        return a.createdAt.getTime() - b.createdAt.getTime();
+                                    case "name":
+                                        return a.name.localeCompare(b.name);
+                                    case "lastModified": // TODO: not exposed yet
+                                    case "none":
+                                        return 0;
+                                }
                             })
                             .map((w) => {
                                 return (
