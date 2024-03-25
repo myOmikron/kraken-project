@@ -277,8 +277,8 @@ export function TreeGraph({
                     root: d == 0,
                     y: (overrideY ?? (nextY += 20)) + (ci / (parent?.children?.length || 1)) * 19,
                     ...old.get(n.uuid),
-                    column: /* old.get(n.uuid)?.column ??  */ column,
-                    fx: /* old.get(n.uuid)?.fx ??  */ column * columnW,
+                    column: column,
+                    fx: column * columnW,
                     ...n,
                 };
                 inserted[n.uuid] = res;
