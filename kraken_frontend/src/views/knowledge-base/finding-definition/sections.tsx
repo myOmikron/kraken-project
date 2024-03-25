@@ -5,8 +5,11 @@ import FlameIcon from "../../../svg/flame";
 import BandageIcon from "../../../svg/bandage";
 import LibraryIcon from "../../../svg/library";
 import PersonCircleIcon from "../../../svg/person-circle";
-import { FindingSection } from "../../../api/generated";
+import { EditorTarget, FindingSection } from "../../../api/generated";
 import { EditorProps } from "@monaco-editor/react";
+import { useModel } from "../../../utils/model-controller";
+import { editor } from "monaco-editor";
+import ITextModel = editor.ITextModel;
 
 /** State object provided by {@link useSectionsState `useSectionsState`} */
 export type Sections = Record<
@@ -15,9 +18,9 @@ export type Sections = Record<
         /** This section's content */
         value: string;
         /** Setter for this section's content */
-        set: React.Dispatch<React.SetStateAction<string>>;
-
-        editor: Pick<EditorProps, "language" | "value" | "path">;
+        set: (newValue: string, target?: EditorTarget) => void;
+        /** Model storing this section's content */
+        model: ITextModel | null;
 
         /** Selects this section */
         select(): void;
@@ -30,17 +33,16 @@ export type Sections = Record<
 };
 
 /**
- * {@link React.useState `React.useState`} specialized for storing a finding definition's sections
+ * {@link useModel `useModel`} specialized for storing a finding definition's sections
  *
- * Besides just storing the sections' raw data, it also stores a `selected` state.
- * It also attaches the static information of what language the editor should use for each section.
+ * Besides just storing the sections' models, it also stores a `selected` state.
  */
 export function useSectionsState(): Sections {
-    const [summary, setSummary] = React.useState("");
-    const [description, setDescription] = React.useState("");
-    const [impact, setImpact] = React.useState("");
-    const [remediation, setRemediation] = React.useState("");
-    const [references, setReferences] = React.useState("");
+    const [summary, setSummary, summaryModel] = useModel({});
+    const [description, setDescription, descriptionModel] = useModel({ language: "markdown" });
+    const [impact, setImpact, impactModel] = useModel({ language: "markdown" });
+    const [remediation, setRemediation, remediationModel] = useModel({ language: "markdown" });
+    const [references, setReferences, referencesModel] = useModel({ language: "markdown" });
 
     const [selectedSection, setSelectedSection] = React.useState<FindingSection>(FindingSection.Summary);
 
@@ -48,55 +50,35 @@ export function useSectionsState(): Sections {
         Summary: {
             value: summary,
             set: setSummary,
-            editor: {
-                language: "text",
-                value: summary,
-                path: FindingSection.Summary,
-            },
+            model: summaryModel,
             select: () => setSelectedSection(FindingSection.Summary),
             selected: selectedSection === FindingSection.Summary,
         },
         Description: {
             value: description,
             set: setDescription,
-            editor: {
-                language: "markdown",
-                value: description,
-                path: FindingSection.Description,
-            },
+            model: descriptionModel,
             select: () => setSelectedSection(FindingSection.Description),
             selected: selectedSection === FindingSection.Description,
         },
         Impact: {
             value: impact,
             set: setImpact,
-            editor: {
-                language: "markdown",
-                value: impact,
-                path: FindingSection.Impact,
-            },
+            model: impactModel,
             select: () => setSelectedSection(FindingSection.Impact),
             selected: selectedSection === FindingSection.Impact,
         },
         Remediation: {
             value: remediation,
             set: setRemediation,
-            editor: {
-                language: "markdown",
-                value: remediation,
-                path: FindingSection.Remediation,
-            },
+            model: remediationModel,
             select: () => setSelectedSection(FindingSection.Remediation),
             selected: selectedSection === FindingSection.Remediation,
         },
         References: {
             value: references,
             set: setReferences,
-            editor: {
-                language: "markdown",
-                value: references,
-                path: FindingSection.References,
-            },
+            model: referencesModel,
             select: () => setSelectedSection(FindingSection.References),
             selected: selectedSection === FindingSection.References,
         },

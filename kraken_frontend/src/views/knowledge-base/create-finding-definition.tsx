@@ -1,8 +1,6 @@
 import React from "react";
 import Input from "../../components/input";
 import { SelectPrimitive } from "../../components/select-menu";
-import Editor from "@monaco-editor/react";
-import { setupMonaco } from "../knowledge-base";
 import { GithubMarkdown } from "../../components/github-markdown";
 import BandageIcon from "../../svg/bandage";
 import LibraryIcon from "../../svg/library";
@@ -16,6 +14,7 @@ import { Api } from "../../api/api";
 import { ROUTES } from "../../routes";
 import { toast } from "react-toastify";
 import { FindingSeverity, SimpleFindingDefinition } from "../../api/generated";
+import ModelEditor from "../../components/model-editor";
 
 export type CreateFindingDefinitionProps = {
     /** Prefill the name <input /> with an initial value*/
@@ -145,15 +144,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                 </div>
                 <div className={"create-finding-definition-editor"}>
                     <SectionSelectionTabs sections={sections} />
-                    <Editor
-                        className={"knowledge-base-editor"}
-                        theme={"custom"}
-                        beforeMount={setupMonaco}
-                        {...sections[sections.selected].editor}
-                        onChange={(value, event) => {
-                            if (value !== undefined) sections[sections.selected].set(value);
-                        }}
-                    />
+                    <ModelEditor model={sections[sections.selected].model} />
                 </div>
             </div>
         </div>

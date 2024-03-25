@@ -1,5 +1,3 @@
-import Editor from "@monaco-editor/react";
-import { editor as editorNS } from "monaco-editor";
 import React from "react";
 import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
@@ -8,7 +6,6 @@ import { FindingSection } from "../../api/generated";
 import { AdminOnly } from "../../components/admin-guard";
 import { GithubMarkdown } from "../../components/github-markdown";
 import Input from "../../components/input";
-import useLiveEditor from "../../components/live-editor";
 import { SelectPrimitive } from "../../components/select-menu";
 import { ROUTES } from "../../routes";
 import ArrowLeftIcon from "../../svg/arrow-left";
@@ -18,8 +15,9 @@ import FlameIcon from "../../svg/flame";
 import InformationIcon from "../../svg/information";
 import LibraryIcon from "../../svg/library";
 import { handleApiError } from "../../utils/helper";
-import { setupMonaco } from "../knowledge-base";
 import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
+import ModelEditor from "../../components/model-editor";
+import { useSyncedCursors } from "../../utils/monaco-cursor";
 
 export type EditFindingDefinitionProps = {
     uuid: string;
@@ -31,11 +29,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
     const [cve, setCve] = React.useState("");
 
     const sections = useSectionsState();
-
-    const [editor, setEditor] = React.useState<editorNS.IStandaloneCodeEditor | null>(null);
-
-    const { cursors, onChange } = useLiveEditor({
-        editorInstance: editor,
+    const { cursors, setEditor } = useSyncedCursors({
         target: {
             findingDefinition: {
                 findingDefinition: props.uuid,
@@ -43,34 +37,16 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
             },
         },
         receiveCursor: (target) => {
-            if ("findingDefinition" in target && target.findingDefinition.findingDefinition === props.uuid) {
+            if (
+                "findingDefinition" in target &&
+                target["findingDefinition"] &&
+                target.findingDefinition.findingDefinition === props.uuid
+            )
                 return { section: target.findingDefinition.findingSection };
-            }
         },
         deleteCursors: [props.uuid],
         hideCursors: [sections.selected],
-        isCursorHidden: ({ section }: { section: FindingSection }) => section !== sections.selected,
-        receiveEdit: (target, editorInstance, monaco) => {
-            if ("findingDefinition" in target && target.findingDefinition.findingDefinition === props.uuid) {
-                const { findingSection } = target.findingDefinition;
-
-                if (findingSection === sections.selected) {
-                    const model = editorInstance && editorInstance.getModel();
-                    if (model !== null) return { model };
-                }
-
-                const uri = monaco.Uri.parse(findingSection);
-                const model =
-                    monaco.editor.getModel(uri) ||
-                    monaco.editor.createModel(
-                        sections[findingSection].value,
-                        sections[findingSection].editor.language,
-                        uri,
-                    );
-                return { model, setValue: sections[findingSection].set };
-            }
-        },
-        setValue: sections[sections.selected].set,
+        isCursorHidden: ({ section }) => section !== sections.selected,
     });
 
     /* Initial load */
@@ -81,11 +57,18 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                 setName(finding.name);
                 setSeverity(finding.severity);
                 setCve(finding.cve || "");
-                sections.Summary.set(finding.summary);
-                sections.Description.set(finding.description);
-                sections.Impact.set(finding.impact);
-                sections.Remediation.set(finding.remediation);
-                sections.References.set(finding.references);
+
+                const target = (findingSection: FindingSection) => ({
+                    findingDefinition: {
+                        findingDefinition: props.uuid,
+                        findingSection,
+                    },
+                });
+                sections.Summary.set(finding.summary, target(FindingSection.Summary));
+                sections.Description.set(finding.description, target(FindingSection.Description));
+                sections.Impact.set(finding.impact, target(FindingSection.Impact));
+                sections.Remediation.set(finding.remediation, target(FindingSection.Remediation));
+                sections.References.set(finding.references, target(FindingSection.References));
             }),
         );
     }, [props.uuid]);
@@ -163,30 +146,27 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                     <SectionSelectionTabs
                         sections={sections}
                         others={{
-                            Summary: cursors.some(({ data: { section } }) => section === FindingSection.Summary),
-                            Description: cursors.some(
+                            [FindingSection.Summary]: cursors.some(
+                                ({ data: { section } }) => section === FindingSection.Summary,
+                            ),
+                            [FindingSection.Description]: cursors.some(
                                 ({ data: { section } }) => section === FindingSection.Description,
                             ),
-                            Impact: cursors.some(({ data: { section } }) => section === FindingSection.Impact),
-                            Remediation: cursors.some(
+                            [FindingSection.Impact]: cursors.some(
+                                ({ data: { section } }) => section === FindingSection.Impact,
+                            ),
+                            [FindingSection.Remediation]: cursors.some(
                                 ({ data: { section } }) => section === FindingSection.Remediation,
                             ),
-                            References: cursors.some(({ data: { section } }) => section === FindingSection.References),
+                            [FindingSection.References]: cursors.some(
+                                ({ data: { section } }) => section === FindingSection.References,
+                            ),
                         }}
                     />
-                    <Editor
-                        className={"knowledge-base-editor"}
-                        theme={"custom"}
-                        beforeMount={setupMonaco}
-                        {...sections[sections.selected].editor}
-                        onChange={onChange}
-                        onMount={setEditor}
-                    />
-                    {cursors
-                        .filter(({ data: { section } }) => sections.selected === section)
-                        .map(({ data: { displayName }, cursor }) =>
-                            cursor.render(<div className={"cursor-label"}>{displayName}</div>),
-                        )}
+                    <ModelEditor model={sections[sections.selected].model} setEditor={setEditor} />
+                    {cursors.map(({ cursor, data }) =>
+                        cursor.render(<div className={"cursor-label"}>{data.displayName}</div>),
+                    )}
                 </div>
             </div>
         </div>

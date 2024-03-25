@@ -2,6 +2,177 @@ import { editor } from "monaco-editor";
 import React from "react";
 import { createPortal } from "react-dom";
 import TrackedRangeStickiness = editor.TrackedRangeStickiness;
+import { EditorTarget, SimpleUser } from "../api/generated";
+import WS from "../api/websocket";
+import { useStableObj } from "./helper";
+import USER_CONTEXT from "../context/user";
+
+/**
+ * Arguments to the {@link useSyncedCursors} hook
+ */
+export type UseSyncedCursorsArgs<CT extends {} = true> = {
+    /**
+     * The {@link EditorTarget} to use when sending updates to the server
+     */
+    target: EditorTarget;
+
+    /**
+     * Filter an incoming cursor update for the right target and extract it
+     *
+     * Return `undefined` if the update should be ignored (i.e. you may omit the return statement)
+     */
+    receiveCursor: (target: EditorTarget) => CT | undefined;
+
+    /**
+     * An optional list which triggers a deletion of all cursors when any member changes
+     *
+     * I.e. it is used as argument to a {@link React.useEffect `React.useEffect`} call which deletes the cursors
+     */
+    deleteCursors?: React.DependencyList;
+
+    /**
+     * An optional list which triggers a re-evaluation of `isCursorHidden` for all cursors when any member changes
+     *
+     * I.e. it is used as argument to a {@link React.useEffect `React.useEffect`} call which re-evaluates the cursors
+     *
+     * _Should be set in combination with `isCursorHidden`_
+     */
+    hideCursors?: React.DependencyList;
+
+    /**
+     * Optional filter to hide certain cursors
+     *
+     * If it is not specified, all cursors will be visible.
+     *
+     * _Should be set in combination with `hideCursors`_
+     */
+    isCursorHidden?: (cursor: SimpleUser & CT) => boolean;
+
+    /**
+     * Optional flag to include the own cursor
+     *
+     * Normally the user's own cursor won't be included.
+     */
+    includeOwnCursor?: boolean;
+};
+
+export function useSyncedCursors<CT extends {} = true>(args: UseSyncedCursorsArgs<CT>) {
+    const {
+        target,
+        receiveCursor,
+        deleteCursors = [],
+        hideCursors = [],
+        isCursorHidden,
+        includeOwnCursor = false,
+    } = args;
+    const { user } = React.useContext(USER_CONTEXT);
+    const [editorInstance, setEditor] = React.useState<editor.IStandaloneCodeEditor | null>(null);
+    const stableArgs = useStableObj({
+        target,
+        receiveCursor,
+        isCursorHidden,
+        includeOwnCursor,
+        user: user.uuid,
+    });
+
+    type Cursors = Record<string, { data: SimpleUser & CT; cursor: Cursor }>;
+    const [cursors, setCursors] = React.useState<Cursors>({});
+
+    // Delete cursors
+    React.useEffect(
+        () => () =>
+            setCursors((cursors) => {
+                for (const { cursor } of Object.values(cursors)) {
+                    cursor.delete();
+                }
+                return {};
+            }),
+        deleteCursors,
+    );
+
+    // Update which cursors to show based on `isHidden`
+    React.useEffect(
+        () =>
+            setCursors((cursors) => {
+                for (const { cursor, data } of Object.values(cursors)) {
+                    if (isCursorHidden === undefined) {
+                        cursor.updateActive(true);
+                    } else {
+                        cursor.updateActive(!isCursorHidden(data));
+                    }
+                }
+                return { ...cursors };
+            }),
+        hideCursors,
+    );
+
+    React.useEffect(() => {
+        // Pass the editor to cursors which have been created before the editor was loaded
+        setCursors((cursors) => {
+            for (const { cursor } of Object.values(cursors)) {
+                cursor.updateEditor(editorInstance);
+            }
+            return { ...cursors };
+        });
+
+        // Send outgoing cursor messages
+        let disposable = {
+            dispose() {},
+        };
+        if (editorInstance !== null) {
+            editorInstance.onDidChangeCursorSelection;
+            disposable = editorInstance.onDidChangeCursorPosition((event) => {
+                WS.send({
+                    type: "EditorChangedCursor",
+                    target: stableArgs.target,
+                    cursor: {
+                        line: event.position.lineNumber,
+                        column: event.position.column,
+                    },
+                });
+            });
+        }
+
+        // Save incoming cursors messages
+        const handle = WS.addEventListener("message.EditorChangedCursor", (event) => {
+            if (!stableArgs.includeOwnCursor && stableArgs.user === event.user.uuid) return;
+
+            const cursorTarget = stableArgs.receiveCursor(event.target);
+            if (cursorTarget === undefined) return;
+
+            const id = event.user.uuid;
+            const { line, column } = event.cursor;
+            const data = { ...event.user, ...cursorTarget };
+
+            setCursors((cursors) => {
+                let cursor;
+                if (id in cursors) {
+                    cursor = cursors[id].cursor;
+                    cursor.updatePosition(line, column);
+                    if (stableArgs.isCursorHidden !== undefined) cursor.updateActive(!stableArgs.isCursorHidden(data));
+                } else {
+                    cursor = new Cursor(
+                        editorInstance,
+                        line,
+                        column,
+                        stableArgs.isCursorHidden && !stableArgs.isCursorHidden(data),
+                    );
+                }
+                return {
+                    ...cursors,
+                    [id]: { cursor, data },
+                };
+            });
+        });
+
+        return () => {
+            WS.removeEventListener(handle);
+            disposable.dispose();
+        };
+    }, [editorInstance]);
+
+    return { cursors: Object.values(cursors), setEditor };
+}
 
 /** monaco decoration placed at others' cursor positions */
 const CURSOR_DECO: editor.IModelDecorationOptions = {
@@ -9,7 +180,7 @@ const CURSOR_DECO: editor.IModelDecorationOptions = {
     stickiness: TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
 };
 
-export default class Cursor {
+export class Cursor {
     private static nextId = 0;
 
     /** The cursor's line number (1-indexed!) */

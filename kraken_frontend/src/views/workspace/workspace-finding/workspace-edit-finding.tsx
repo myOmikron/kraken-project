@@ -1,11 +1,11 @@
 import Editor from "@monaco-editor/react";
-import { editor } from "monaco-editor";
 import React, { useEffect } from "react";
 import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
 import { Api, UUID } from "../../../api/api";
 import {
     AggregationType,
+    EditorTarget,
     FindingAffectedObject,
     FindingAffectedObjectOneOf,
     FindingAffectedObjectOneOf1,
@@ -18,7 +18,6 @@ import {
 } from "../../../api/generated";
 import WS from "../../../api/websocket";
 import { GithubMarkdown } from "../../../components/github-markdown";
-import useLiveEditor from "../../../components/live-editor";
 import { SelectPrimitive } from "../../../components/select-menu";
 import { ROUTES } from "../../../routes";
 import ArrowLeftIcon from "../../../svg/arrow-left";
@@ -46,6 +45,11 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 import { FindingDefinitionDetails } from "./workspace-create-finding";
 import WorkspaceFindingDataTable from "./workspace-finding-data-table";
 import EditingTreeGraph from "./workspace-finding-editing-tree";
+import { useSyncedCursors } from "../../../utils/monaco-cursor";
+import ModelEditor from "../../../components/model-editor";
+import { useModel, useModelStore } from "../../../utils/model-controller";
+import { editor } from "monaco-editor";
+import ITextModel = editor.ITextModel;
 
 export type WorkspaceEditFindingProps = {
     /** The finding's uuid */
@@ -65,12 +69,13 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     const [severity, setSeverity] = React.useState<FindingSeverity>("Medium");
     const [findingDef, setFindingDef] = React.useState<SimpleFindingDefinition>();
     const [hoveredFindingDef, setHoveredFindingDef] = React.useState<SimpleFindingDefinition>();
-    const [userDetails, setUserDetails] = React.useState("");
+    const [userDetails, setUserDetails, userDetailsModel] = useModel({ language: "markdown" });
     const [toolDetails, setToolDetails] = React.useState("");
-
-    const [affected, setAffected] = React.useState<Record<UUID, FullFindingAffected>>({});
     const [logFile, setLogFile] = React.useState("");
     const [screenshot, setScreenshot] = React.useState("");
+
+    const [affected, setAffected] = React.useState<Record<UUID, Omit<FullFindingAffected, "userDetails">>>({});
+    const affectedModels = useModelStore();
 
     // Upload to API with changes
     const [pendingApiChanges, setPendingApiChanges] = React.useState<
@@ -107,7 +112,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
             handleApiError((fullFinding) => {
                 setFindingDef(fullFinding.definition);
                 setSeverity(fullFinding.severity);
-                setUserDetails(fullFinding.userDetails || "");
+                setUserDetails(fullFinding.userDetails || "", { finding: { finding: finding } });
                 setToolDetails(fullFinding.toolDetails || "");
                 setScreenshot(fullFinding.screenshot || "");
                 setLogFile(fullFinding.logFile || "");
@@ -116,9 +121,19 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                     fullFinding.affected.map((simpleAffected) =>
                         Api.workspaces.findings
                             .getAffected(workspace, finding, simpleAffected.affectedUuid)
-                            .then((fullAffected) => [simpleAffected.affectedUuid, fullAffected.unwrap()]),
+                            .then((fullAffected) => [simpleAffected.affectedUuid, fullAffected.unwrap()] as const),
                     ),
                 )
+                    .then((affected) =>
+                        affected.map(([uuid, { userDetails, ...fullAffected }]) => {
+                            affectedModels.addModel(uuid, {
+                                value: userDetails,
+                                language: "markdown",
+                                syncTarget: { findingAffected: { finding: finding, affected: uuid } },
+                            });
+                            return [uuid, fullAffected];
+                        }),
+                    )
                     .then(Object.fromEntries)
                     .then(setAffected)
                     .catch(() => toast.error("Failed to read affected data"));
@@ -146,12 +161,17 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
             WS.addEventListener("message.AddedFindingAffected", ({ workspace: w, finding: f, affectedUuid }) => {
                 if (w !== workspace || f !== finding) return;
                 Api.workspaces.findings.getAffected(workspace, finding, affectedUuid).then(
-                    handleApiError((newAffected) =>
+                    handleApiError(({ userDetails, ...newAffected }) => {
                         setAffected((affected) => ({
                             ...affected,
                             [affectedUuid]: newAffected,
-                        })),
-                    ),
+                        }));
+                        affectedModels.addModel(affectedUuid, {
+                            value: userDetails,
+                            language: "markdown",
+                            syncTarget: { findingAffected: { finding, affected: affectedUuid } },
+                        });
+                    }),
                 );
             }),
             WS.addEventListener(
@@ -167,29 +187,22 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
             WS.addEventListener("message.RemovedFindingAffected", ({ workspace: w, finding: f, affectedUuid }) => {
                 if (w !== workspace || f !== finding) return;
                 setAffected(({ [affectedUuid]: _, ...rest }) => rest);
+                affectedModels.removeModel(affectedUuid);
             }),
         ];
         return () => {
+            affectedModels.removeAll();
             for (const handle of handles) {
                 WS.removeEventListener(handle);
             }
         };
     }, [workspace, finding]);
 
-    const [editorInstance, setEditorInstance] = React.useState<editor.IStandaloneCodeEditor | null>(null);
-    const { cursors: editorCursors, onChange: editorOnChange } = useLiveEditor({
+    const { cursors: editorCursors, setEditor } = useSyncedCursors({
         target: { finding: { finding } },
-        editorInstance,
-        setValue: setUserDetails,
         receiveCursor: (target) => {
             if ("finding" in target && target.finding.finding === finding) {
                 return true;
-            }
-        },
-        receiveEdit: (target, editorInstance) => {
-            if ("finding" in target && target.finding.finding === finding) {
-                const model = editorInstance?.getModel();
-                if (model) return { model, setValue: setUserDetails };
             }
         },
     });
@@ -326,11 +339,12 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                             Api.workspaces.findings
                                                                 .removeAffected(workspace, finding, affectedUuid)
                                                                 .then(
-                                                                    handleApiError(() =>
+                                                                    handleApiError(() => {
                                                                         setAffected(
                                                                             ({ [affectedUuid]: _, ...rest }) => rest,
-                                                                        ),
-                                                                    ),
+                                                                        );
+                                                                        affectedModels.removeModel(affectedUuid);
+                                                                    }),
                                                                 );
                                                         }}
                                                     >
@@ -340,15 +354,8 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                 </div>
                                                 <MarkdownLiveEditorPopup
                                                     label={<AffectedLabel affected={fullAffected.affected} pretty />}
-                                                    value={fullAffected.userDetails}
-                                                    setValue={(userDetails) => {
-                                                        setAffected(({ [affectedUuid]: affected, ...rest }) => ({
-                                                            [affectedUuid]: { ...affected, userDetails },
-                                                            ...rest,
-                                                        }));
-                                                    }}
-                                                    findingUuid={finding}
-                                                    affectedUuid={affectedUuid}
+                                                    value={affectedModels.models[affectedUuid].value}
+                                                    model={affectedModels.models[affectedUuid].model}
                                                 />
                                                 <TagList tags={fullAffected.affectedTags} />
                                                 <UploadingFileInput
@@ -459,14 +466,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                             case "description":
                                 return (
                                     <>
-                                        <Editor
-                                            className={"knowledge-base-editor"}
-                                            theme={"custom"}
-                                            beforeMount={setupMonaco}
-                                            value={userDetails}
-                                            onChange={editorOnChange}
-                                            onMount={setEditorInstance}
-                                        />
+                                        <ModelEditor model={userDetailsModel} setEditor={setEditor} />
                                         {editorCursors.map(({ data: { displayName }, cursor }) =>
                                             cursor.render(<div className={"cursor-label"}>{displayName}</div>),
                                         )}
@@ -483,12 +483,22 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                         .then(
                                             handleApiError(() =>
                                                 Api.workspaces.findings.getAffected(workspace, finding, uuid).then(
-                                                    handleApiError((fullAffected) =>
+                                                    handleApiError(({ userDetails, ...fullAffected }) => {
                                                         setAffected((affected) => ({
                                                             ...affected,
                                                             [uuid]: fullAffected,
-                                                        })),
-                                                    ),
+                                                        }));
+                                                        affectedModels.addModel(uuid, {
+                                                            value: userDetails || "",
+                                                            language: "markdown",
+                                                            syncTarget: {
+                                                                findingAffected: {
+                                                                    finding,
+                                                                    affected: uuid,
+                                                                },
+                                                            },
+                                                        });
+                                                    }),
                                                 ),
                                             ),
                                         );
@@ -509,7 +519,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                         uuid={finding}
                                         definition={findingDef}
                                         severity={severity}
-                                        affected={Object.values(affected)}
+                                        affected={Object.values(affected) as Array<FullFindingAffected>}
                                         workspace={workspace}
                                         maximizable
                                     />
@@ -571,24 +581,12 @@ function DeleteButton({ workspace, finding, severity }: { workspace: UUID; findi
 
 type MarkdownLiveEditorPopupProps = {
     label: React.ReactNode;
-    findingUuid: string;
-    affectedUuid: string;
     value: string;
-    setValue: (newValue: string) => void;
+    model: ITextModel | null;
 };
 
 export function MarkdownLiveEditorPopup(props: MarkdownLiveEditorPopupProps) {
-    const { label, value, setValue, findingUuid, affectedUuid } = props;
-
-    const [editorInstance, setEditorInstance] = React.useState<editor.IStandaloneCodeEditor | null>(null);
-    const { onChange } = useLiveEditor({
-        target: { findingAffected: { finding: findingUuid, affected: affectedUuid } },
-        editorInstance,
-        setValue,
-        receiveEdit: () => undefined,
-        receiveCursor: () => undefined,
-    });
-
+    const { label, value, model } = props;
     return (
         <Popup
             className="markdown-editor-popup"
@@ -608,15 +606,7 @@ export function MarkdownLiveEditorPopup(props: MarkdownLiveEditorPopupProps) {
                 </div>
                 <div className="grid">
                     <GithubMarkdown>{value}</GithubMarkdown>
-                    <Editor
-                        className={"knowledge-base-editor"}
-                        theme={"custom"}
-                        beforeMount={setupMonaco}
-                        language={"markdown"}
-                        value={value}
-                        onChange={onChange}
-                        onMount={setEditorInstance}
-                    />
+                    <ModelEditor model={model} />
                 </div>
             </div>
         </Popup>
