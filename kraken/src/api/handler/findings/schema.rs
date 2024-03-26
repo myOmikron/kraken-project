@@ -84,6 +84,9 @@ pub struct SimpleFinding {
     /// The severity of the finding
     pub severity: FindingSeverity,
 
+    /// The count of affected aggregations
+    pub affected_count: u64,
+
     /// The point in time this finding definition was created
     pub created_at: DateTime<Utc>,
 }

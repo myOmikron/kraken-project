@@ -12732,7 +12732,7 @@
             "SimpleFinding": {
                 "type": "object",
                 "description": "A simple finding",
-                "required": ["uuid", "definition", "name", "severity", "created_at"],
+                "required": ["uuid", "definition", "name", "severity", "affected_count", "created_at"],
                 "properties": {
                     "uuid": {
                         "type": "string",
@@ -12755,6 +12755,12 @@
                     },
                     "severity": {
                         "$ref": "#/components/schemas/FindingSeverity"
+                    },
+                    "affected_count": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "The count of affected",
+                        "minimum": 0
                     },
                     "created_at": {
                         "type": "string",

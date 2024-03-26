@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use actix_web::delete;
 use actix_web::get;
 use actix_web::post;
@@ -98,6 +100,22 @@ pub async fn get_all_findings(
         return Err(ApiError::NotFound);
     }
 
+    let mut affected_lookup = HashMap::new();
+    let affected = query!(
+        &mut tx,
+        (FindingAffected::F.uuid, FindingAffected::F.finding)
+    )
+    .condition(FindingAffected::F.workspace.equals(workspace_uuid))
+    .all()
+    .await?;
+
+    for (_, finding) in affected {
+        affected_lookup
+            .entry(*finding.key())
+            .and_modify(|x| *x += 1)
+            .or_insert(1);
+    }
+
     let findings = query!(
         &mut tx,
         (
@@ -106,7 +124,7 @@ pub async fn get_all_findings(
             Finding::F.definition.name,
             Finding::F.definition.cve,
             Finding::F.severity,
-            Finding::F.created_at
+            Finding::F.created_at,
         )
     )
     .condition(Finding::F.workspace.equals(workspace_uuid))
@@ -119,6 +137,7 @@ pub async fn get_all_findings(
             cve,
             severity,
             created_at,
+            affected_count: *affected_lookup.get(&uuid).unwrap_or(&0),
         },
     )
     .try_collect()

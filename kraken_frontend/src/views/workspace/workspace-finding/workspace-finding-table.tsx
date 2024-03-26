@@ -30,7 +30,7 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
     }, [workspace]);
 
     // @ts-ignore
-    const style: CSSProperties = { "--columns": "0.1fr 1fr 1fr" };
+    const style: CSSProperties = { "--columns": "4em 5em 1fr 12em 1fr" };
 
     return (
         <>
@@ -46,9 +46,11 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
             </div>
             <div className="workspace-findings-table" style={style}>
                 <div className={"workspace-table-header"}>
-                    <span>Severity</span>
+                    <span className={"workspace-data-certainty-icon"}>Severity</span>
+                    <span className={"workspace-data-certainty-icon"}>Affected</span>
                     <span>Name</span>
                     <span>CVE</span>
+                    <span>Created At</span>
                 </div>
                 <div className="workspace-table-body">
                     {findings
@@ -67,8 +69,10 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
                                 <span className="workspace-data-certainty-icon">
                                     <SeverityIcon severity={f.severity} />
                                 </span>
+                                <span className="workspace-data-certainty-icon">{f.affectedCount}</span>
                                 <span>{f.name}</span>
                                 <span>{f.cve}</span>
+                                <span>{f.createdAt.toLocaleString()}</span>
                             </div>
                         ))}
                 </div>
