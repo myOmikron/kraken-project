@@ -519,6 +519,63 @@
                 ]
             }
         },
+        "/api/v1/admin/findingDefinitions/{uuid}/usages": {
+            "get": {
+                "tags": ["Knowledge Base"],
+                "summary": "Get all findings using the finding definition",
+                "description": "Get all findings using the finding definition",
+                "operationId": "get_finding_definition_usage",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "The uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "All findings using the definition",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListFindingDefinitionUsages"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/globalTags": {
             "post": {
                 "tags": ["Global Tags"],
@@ -9587,6 +9644,58 @@
                 ],
                 "description": "The object affected by a finding"
             },
+            "FindingDefinitionUsage": {
+                "type": "object",
+                "description": "A finding using a specific finding definition",
+                "required": [
+                    "uuid",
+                    "severity",
+                    "created_at",
+                    "workspace",
+                    "affected_domains",
+                    "affected_hosts",
+                    "affected_ports",
+                    "affected_services"
+                ],
+                "properties": {
+                    "uuid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The uuid of the finding"
+                    },
+                    "severity": {
+                        "$ref": "#/components/schemas/FindingSeverity"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "The point in time the finding was created"
+                    },
+                    "workspace": {
+                        "$ref": "#/components/schemas/SimpleWorkspace"
+                    },
+                    "affected_domains": {
+                        "type": "integer",
+                        "description": "The number of affected domains",
+                        "minimum": 0
+                    },
+                    "affected_hosts": {
+                        "type": "integer",
+                        "description": "The number of affected hosts",
+                        "minimum": 0
+                    },
+                    "affected_ports": {
+                        "type": "integer",
+                        "description": "The number of affected ports",
+                        "minimum": 0
+                    },
+                    "affected_services": {
+                        "type": "integer",
+                        "description": "The number of affected services",
+                        "minimum": 0
+                    }
+                }
+            },
             "FindingSection": {
                 "type": "string",
                 "description": "The section that was edited",
@@ -10961,6 +11070,20 @@
                             "$ref": "#/components/schemas/SimpleAttack"
                         },
                         "description": "The list of the attacks"
+                    }
+                }
+            },
+            "ListFindingDefinitionUsages": {
+                "type": "object",
+                "description": "A list of findings using a specific finding definition",
+                "required": ["usages"],
+                "properties": {
+                    "usages": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FindingDefinitionUsage"
+                        },
+                        "description": "A list of findings using a specific finding definition"
                     }
                 }
             },

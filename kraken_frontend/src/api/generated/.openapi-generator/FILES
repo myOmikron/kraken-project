@@ -81,6 +81,7 @@ models/FindingAffectedObjectOneOf.ts
 models/FindingAffectedObjectOneOf1.ts
 models/FindingAffectedObjectOneOf2.ts
 models/FindingAffectedObjectOneOf3.ts
+models/FindingDefinitionUsage.ts
 models/FindingSection.ts
 models/FindingSeverity.ts
 models/FinishRegisterRequest.ts
@@ -128,6 +129,7 @@ models/LeechConfigAllOf.ts
 models/LeechTlsConfig.ts
 models/ListApiKeys.ts
 models/ListAttacks.ts
+models/ListFindingDefinitionUsages.ts
 models/ListFindingDefinitions.ts
 models/ListFindings.ts
 models/ListFullUsers.ts

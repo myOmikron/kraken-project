@@ -18,6 +18,7 @@ import type {
   ApiErrorResponse,
   CreateFindingDefinitionRequest,
   FullFindingDefinition,
+  ListFindingDefinitionUsages,
   ListFindingDefinitions,
   UpdateFindingDefinitionRequest,
   UuidResponse,
@@ -29,6 +30,8 @@ import {
     CreateFindingDefinitionRequestToJSON,
     FullFindingDefinitionFromJSON,
     FullFindingDefinitionToJSON,
+    ListFindingDefinitionUsagesFromJSON,
+    ListFindingDefinitionUsagesToJSON,
     ListFindingDefinitionsFromJSON,
     ListFindingDefinitionsToJSON,
     UpdateFindingDefinitionRequestFromJSON,
@@ -46,6 +49,10 @@ export interface DeleteFindingDefinitionRequest {
 }
 
 export interface GetFindingDefinitionRequest {
+    uuid: string;
+}
+
+export interface GetFindingDefinitionUsageRequest {
     uuid: string;
 }
 
@@ -182,6 +189,38 @@ export class KnowledgeBaseApi extends runtime.BaseAPI {
      */
     async getFindingDefinition(requestParameters: GetFindingDefinitionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullFindingDefinition> {
         const response = await this.getFindingDefinitionRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get all findings using the finding definition
+     * Get all findings using the finding definition
+     */
+    async getFindingDefinitionUsageRaw(requestParameters: GetFindingDefinitionUsageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListFindingDefinitionUsages>> {
+        if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
+            throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling getFindingDefinitionUsage.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/admin/findingDefinitions/{uuid}/usages`.replace(`{${"uuid"}}`, encodeURIComponent(String(requestParameters.uuid))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListFindingDefinitionUsagesFromJSON(jsonValue));
+    }
+
+    /**
+     * Get all findings using the finding definition
+     * Get all findings using the finding definition
+     */
+    async getFindingDefinitionUsage(requestParameters: GetFindingDefinitionUsageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListFindingDefinitionUsages> {
+        const response = await this.getFindingDefinitionUsageRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
