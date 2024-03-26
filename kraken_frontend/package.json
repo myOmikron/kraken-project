@@ -7,7 +7,18 @@
     "prettier": {
         "useTabs": false,
         "tabWidth": 4,
-        "printWidth": 120
+        "printWidth": 120,
+        "plugins": [
+            "prettier-plugin-organize-imports"
+        ],
+        "overrides": [
+            {
+                "files": "*.json",
+                "options": {
+                    "parser": "json-stringify"
+                }
+            }
+        ]
     },
     "scripts": {
         "dev": "vite",
@@ -38,6 +49,7 @@
         "@types/react-dom": "^18.0.10",
         "@vitejs/plugin-react-swc": "^3.0.0",
         "prettier": "3.2.5",
+        "prettier-plugin-organize-imports": "^3.2.4",
         "typescript": "^5.4.2",
         "vite": ">=4.5.2"
     }
