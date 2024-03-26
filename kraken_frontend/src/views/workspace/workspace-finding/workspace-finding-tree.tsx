@@ -413,7 +413,7 @@ export function TreeGraph({
         }
     }, [connections, highlighted]);
 
-    const rendered: { [index: UUID]: any } = {};
+    const rendered: { [index: UUID]: React.ReactNode[] } = {};
     return (
         <Viewport
             {...props}
