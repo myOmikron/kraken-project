@@ -1,10 +1,11 @@
+import { ReactNode } from "react";
 import { DomainRelations, HostRelations, PortRelations, ServiceRelations } from "../../../api/generated";
 import RelationIndirectIcon from "../../../svg/relation-indirect";
 import RelationLeftIcon from "../../../svg/relation-left";
 import RelationRightIcon from "../../../svg/relation-right";
 
 export type RelationConnectionType = "direct-out" | "direct-source" | "direct-in" | "direct-target" | "indirect";
-export type Relation = { connection: RelationConnectionType; type: any; to: any };
+export type Relation = { connection: RelationConnectionType; type: ReactNode; to: ReactNode };
 
 export function RelationsList({
     relations,
