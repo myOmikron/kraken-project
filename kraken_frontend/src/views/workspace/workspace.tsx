@@ -17,6 +17,7 @@ export const WORKSPACE_CONTEXT = React.createContext<WorkspaceContext>({
         attacks: [],
         members: [],
         notes: "",
+        archived: false,
         createdAt: new Date(),
     },
 });
