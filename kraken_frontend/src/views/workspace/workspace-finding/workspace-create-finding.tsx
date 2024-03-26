@@ -81,6 +81,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
             return {
                 _data: data satisfies LocalAffected["_data"],
                 type: type satisfies LocalAffected["type"],
+                uuid: data.uuid,
+                details: "",
             } as LocalAffected;
         }),
     );
@@ -284,11 +286,12 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                 .then(
                                     handleApiError(async ({ uuid }) => {
                                         await Promise.all(
-                                            affectedUploaded.map((a) =>
-                                                Api.workspaces.findings
+                                            affectedUploaded.map((a) => {
+                                                console.log(a);
+                                                return Api.workspaces.findings
                                                     .addAffected(workspace, uuid, a)
-                                                    .then(handleApiError()),
-                                            ),
+                                                    .then(handleApiError());
+                                            }),
                                         );
                                         ROUTES.WORKSPACE_FINDINGS_LIST.visit({ uuid: workspace });
                                         toast.success("Created finding");
