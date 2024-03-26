@@ -37,7 +37,7 @@ export default function ContextMenu<E extends ElementType = "div">({
     const Component = as ?? "div";
     const popupRef = useRef<PopupActions>(null);
     const [keyboardNav, setKeyboardNav] = useState(false);
-    const componentRef = useRef<any>();
+    const componentRef = useRef<EventTarget>();
     const [open, setOpen] = useState(false);
     const [submenuOpen, setSubmenuOpen] = useState(0);
 
@@ -88,13 +88,13 @@ export default function ContextMenu<E extends ElementType = "div">({
         setOpen(false);
         // restore focus:
         const c = componentRef.current;
-        if (typeof c == "object" && "focus" in c && typeof c.focus == "function") c.focus();
+        if (c && "focus" in c && typeof c.focus == "function") c.focus();
     };
 
     const onContextMenu = (event: React.MouseEvent | React.KeyboardEvent) => {
         if (menu === undefined) return;
         event.preventDefault();
-        componentRef.current = event.target as any;
+        componentRef.current = event.target;
         popupRef.current?.toggle?.();
     };
 
