@@ -136,7 +136,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                 return (
                     <Editor
                         className={"knowledge-base-editor"}
-                        theme={"custom"}
+                        theme={"kraken"}
                         beforeMount={configureMonaco}
                         language={"markdown"}
                         value={details}
