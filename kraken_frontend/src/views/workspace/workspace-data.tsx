@@ -149,7 +149,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     [
                         <>
                             <LinkIcon />
-                            Add to affected...
+                            Add as affected
                         </>,
                         (e) => {
                             if (e.ctrlKey)
