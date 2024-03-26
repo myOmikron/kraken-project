@@ -691,12 +691,16 @@ export function getAffectedType({ affected }: { affected: FindingAffectedObject 
     if (isAffectedDomain(affected)) return AggregationType.Domain;
     if (isAffectedHost(affected)) return AggregationType.Host;
     if (isAffectedPort(affected)) return AggregationType.Port;
-    else return AggregationType.Service;
+    if (isAffectedService(affected)) return AggregationType.Service;
+    const _exhaustiveCheck: never = affected;
+    throw new Error("unknown affected type?!");
 }
 
 export function getAffectedData({ affected }: { affected: FindingAffectedObject }) {
     if (isAffectedDomain(affected)) return affected.domain;
     if (isAffectedHost(affected)) return affected.host;
     if (isAffectedPort(affected)) return affected.port;
-    else return affected.service;
+    if (isAffectedService(affected)) return affected.service;
+    const _exhaustiveCheck: never = affected;
+    throw new Error("unknown affected type?!");
 }

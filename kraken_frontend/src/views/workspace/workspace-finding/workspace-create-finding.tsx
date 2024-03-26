@@ -78,9 +78,14 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
         (props.initAffected ?? []).map((a) => {
             const type = getCreateAffectedType(a);
             const data = getCreateAffectedData(a);
+            const ret: Omit<LocalAffected, "type" | "_data"> = {
+                uuid: "",
+                details: "",
+            };
             return {
                 _data: data satisfies LocalAffected["_data"],
                 type: type satisfies LocalAffected["type"],
+                ...ret,
             } as LocalAffected;
         }),
     );
@@ -495,14 +500,18 @@ export function getCreateAffectedType(affected: CreateFindingObject): Aggregatio
     if (isAffectedDomain(affected)) return AggregationType.Domain;
     if (isAffectedHost(affected)) return AggregationType.Host;
     if (isAffectedPort(affected)) return AggregationType.Port;
-    else return AggregationType.Service;
+    if (isAffectedService(affected)) return AggregationType.Service;
+    const _exhaustiveCheck: never = affected;
+    throw new Error("unknown affected type?!");
 }
 
 export function getCreateAffectedKey(affected: CreateFindingObject): "domain" | "host" | "service" | "port" {
     if (isAffectedDomain(affected)) return "domain";
     if (isAffectedHost(affected)) return "host";
     if (isAffectedPort(affected)) return "port";
-    else return "service";
+    if (isAffectedService(affected)) return "service";
+    const _exhaustiveCheck: never = affected;
+    throw new Error("unknown affected type?!");
 }
 
 export function getCreateAffectedData(affected: CreateFindingObject) {

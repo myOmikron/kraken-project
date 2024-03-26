@@ -679,7 +679,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                                     ];
                                 default:
                                     const exhaustiveCheck: never = item;
-                                    throw new Error(`Unhandled node type: ${(exhaustiveCheck as any).type}`);
+                                    throw new Error(`Unhandled node type: ${(exhaustiveCheck as TreeNode).type}`);
                             }
                         }) satisfies ContextMenuEntry,
                         ...(item.type === "Finding"
