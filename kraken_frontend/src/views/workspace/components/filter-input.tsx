@@ -110,8 +110,8 @@ export default function FilterInput(props: FilterInputProps) {
 
 /** Return type of {@link useFilter `useFilter`} hook */
 export type UseFilterReturn = FilterInputProps & {
-    addColumn: (column: string, value: string, negate: boolean) => any;
-    addRange: (column: string, from: string, to: string, negate: boolean) => any;
+    addColumn: (column: string, value: string, negate: boolean) => void;
+    addRange: (column: string, from: string, to: string, negate: boolean) => void;
 };
 
 export function useFilter(workspace: string, target: FilterInputProps["target"]): UseFilterReturn {
