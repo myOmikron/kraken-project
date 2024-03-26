@@ -6,7 +6,7 @@ import SelectableText from "../../../components/selectable-text";
 import { handleApiError } from "../../../utils/helper";
 import { HostRelationsList } from "./relations-list";
 
-export default function IpAddr({ host }: { host: FullHost | SimpleHost }) {
+export default function IpAddr({ host, pretty: _ }: { host: FullHost | SimpleHost; pretty?: boolean }) {
     const [relations, setRelations] = useState<HostRelations | undefined>(undefined);
 
     const ensureDataLoaded = useCallback(() => {

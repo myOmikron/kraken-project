@@ -39,6 +39,8 @@ export type WorkspaceDataTableProps<T> = {
      * When this callback is omitted, the button is as well.
      */
     onAdd?: () => void;
+
+    noBackground?: boolean;
 };
 export type GenericPage<T> = {
     items: Array<T>;
@@ -59,6 +61,7 @@ export default function WorkspaceTable<T extends { uuid: string }>(props: Worksp
         children: [header, renderItem],
         columnsTemplate,
         onAdd,
+        noBackground,
     } = props;
 
     const { items, ...table } = useTable(query, queryDeps);
@@ -70,6 +73,7 @@ export default function WorkspaceTable<T extends { uuid: string }>(props: Worksp
         columnsTemplate,
         onAdd,
         filter,
+        solidBackground: noBackground,
     });
 }
 
@@ -99,6 +103,8 @@ export type StatelessWorkspaceTableProps = {
     onAdd?: () => void;
 
     filter: FilterInputProps;
+
+    solidBackground?: boolean;
 };
 export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
     const {
@@ -111,6 +117,7 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
         columnsTemplate,
         onAdd,
         filter,
+        solidBackground,
     } = props;
 
     const lastOffset = Math.floor(total / limit) * limit;
@@ -127,7 +134,14 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
     // @ts-ignore
     const style: CSSProperties = { "--columns": columnsTemplate };
     return (
-        <div className={"workspace-table pane"} style={style}>
+        <div
+            className={
+                solidBackground !== undefined && solidBackground
+                    ? "workspace-table solid-background"
+                    : "workspace-table pane"
+            }
+            style={style}
+        >
             <div className={"workspace-table-pre-header"}>
                 <FilterInput {...filter} />
                 {onAdd === undefined ? null : (

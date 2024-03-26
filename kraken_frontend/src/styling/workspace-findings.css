@@ -1,0 +1,510 @@
+.workspace-findings-layout {
+    display: flex;
+    flex-direction: column;
+}
+
+.workspace-findings-layout > :nth-child(1) {
+    height: 2.5em;
+}
+
+.workspace-findings-layout > :nth-child(2) {
+    flex-grow: 1;
+}
+
+.workspace-findings-layout > .selected-affected {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 1em;
+    height: min-content;
+}
+
+.workspace-findings-layout > .selected-affected > span {
+    padding-bottom: 1ex;
+    font-weight: bold;
+}
+
+.workspace-findings-layout > .selected-affected > .affected {
+    width: 600px;
+    max-width: 100%;
+}
+
+.workspace-findings-body {
+    height: calc(100% - 2.5em);
+    box-sizing: border-box;
+}
+
+.workspace-findings-selection-info {
+    display: grid;
+    grid-template-columns: min-content auto;
+    gap: 1em;
+    align-items: center;
+}
+
+.workspace-findings-selection-info > h1 {
+    justify-self: start;
+}
+
+.workspace-findings-selection-info > div > .button {
+    width: 3.5em;
+    border-radius: 0.5em;
+}
+
+.workspace-findings-selection-info > div > .button > .icon:hover {
+    box-shadow:
+        inset 0 -3px 2em var(--red-button),
+        0 0 10em var(--red-button),
+        0 0 0.5em var(--red-button);
+}
+
+.workspace-findings-selection-info > .icon {
+    width: 2em;
+    cursor: pointer;
+}
+
+.workspace-findings-selection-info > .icon:hover {
+    filter: brightness(0) invert() drop-shadow(0 0 8px var(--primary));
+}
+
+.workspace-finding-selection-arrow {
+    cursor: pointer;
+}
+
+.workspace-finding-selection-arrow:hover {
+    filter: brightness(0) invert() drop-shadow(0 0 8px var(--primary));
+}
+
+.workspace-finding-selection-arrow:active {
+    transform: translate(-0.2em, 0);
+}
+
+@keyframes fade-in-node {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@property --connections-opacity {
+    syntax: "<number>";
+    inherits: true;
+    initial-value: 1;
+}
+
+@keyframes fade-in-connections {
+    50% {
+        --connections-opacity: 0;
+    }
+    to {
+        --connections-opacity: 0.7;
+    }
+}
+
+.workspace-findings-graph > .toolbar {
+    position: absolute;
+    top: 1em;
+    left: 0;
+    width: 100%;
+    padding: 0 1em;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+.workspace-findings-graph > .toolbar > .tag-list {
+    flex-basis: 300px;
+    flex-shrink: 1;
+    flex-grow: 1;
+}
+
+.workspace-findings-graph > .toolbar > input {
+    flex-shrink: 0;
+    text-align: center;
+    background-color: #fff1;
+    border-radius: 1em;
+    border: none;
+    appearance: none;
+    padding: 1em;
+}
+
+.workspace-findings-graph > .toolbar > .pad {
+    flex-grow: 1;
+    flex-basis: 290px;
+}
+
+.workspace-findings-graph > .toolbar > button.icon-button {
+    padding: 0;
+    background: none;
+    border: none;
+    appearance: none;
+    flex-shrink: 0;
+}
+
+.workspace-findings-graph > .toolbar > button.icon-button svg {
+    width: 2em;
+    height: 2em;
+    fill: white;
+    transform: rotate(45deg);
+}
+
+.workspace-findings-graph > .toolbar > button.icon-button:hover svg {
+    transform: rotate(45deg) scale(1.2);
+}
+
+.pane-thin.sidebar-popup {
+    width: 300px;
+    margin: 0;
+    padding: 0.5em 0.5em 1em;
+    margin-left: -1em;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    border-radius: 0.5em;
+}
+
+.pane-thin.sidebar-popup .collapsible-section {
+    padding: 1em;
+}
+.pane-thin.sidebar-popup .collapsible-section h2 {
+    margin-bottom: 1rem;
+}
+.pane-thin.sidebar-popup .collapsible-section h2:last-child {
+    margin-bottom: 0;
+}
+
+.workspace-findings-graph.maximized {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    margin: 0;
+    background-color: black;
+    z-index: 100;
+}
+
+.workspace-findings-graph {
+    position: relative;
+    height: 100%;
+    --connections-opacity: 0;
+    animation: fade-in-connections 0.6s linear both;
+}
+
+.workspace-findings-graph .connections {
+    opacity: var(--connections-opacity, 0.7);
+    pointer-events: none;
+}
+
+.workspace-findings-graph .connections path {
+    stroke-width: 2px;
+    transition: stroke 0.1s ease-in;
+}
+
+.workspace-findings-graph .connections path.reversed {
+    animation: dash linear 80s infinite;
+}
+
+.workspace-findings-graph .connections path.finding {
+    stroke-dasharray: unset;
+    animation: unset;
+}
+
+.workspace-findings-graph .group {
+    background-color: #00ccff08;
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: min-content;
+    border-radius: 1em;
+    border: 1px solid var(--primary-op);
+    margin: -1px;
+}
+
+.workspace-findings-graph .group > .column {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+}
+
+.workspace-findings-graph .tree-wordwrap {
+    white-space: pre-wrap; /* CSS3 */
+    white-space: -moz-pre-wrap; /* Firefox */
+    white-space: -o-pre-wrap; /* Opera 7 */
+    word-wrap: break-word; /* IE */
+}
+
+.workspace-findings-graph .tree-node {
+    position: absolute;
+    border: 1px solid var(--primary-op);
+    box-shadow:
+        inset 0 0 10em #0cf3,
+        inset 0 0 0.5em #0ff2;
+    background: linear-gradient(0deg, #010b22, var(--level-1-opaque));
+    image-rendering: pixelated;
+    border-radius: 0.5em;
+    width: 240px;
+    transform: translate(-50%, -50%);
+    transition: left 0.3s ease-in-out;
+    animation: fade-in-node 0.2s ease-out both;
+    transition: filter 0.1s ease-in;
+}
+
+@media screen and (min-width: 2001px) {
+    .workspace-findings-graph .tree-node {
+        width: 310px;
+    }
+}
+
+.workspace-findings-graph.has-highlighted .tree-node:not(.highlighted) {
+    filter: opacity(0.4);
+}
+
+.workspace-findings-graph.has-highlighted .connections path.path:not(.highlighted) {
+    stroke: #444;
+}
+
+.workspace-findings-graph .tree-node-heading {
+    background-color: var(--primary-op);
+    padding: 0.5em;
+    border-top-left-radius: 0.4em;
+    border-top-right-radius: 0.4em;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.workspace-findings-graph .tree-node-heading.with-cve {
+    justify-content: space-between;
+}
+
+.workspace-findings-graph .group > .tree-node .tree-node-heading {
+    cursor: pointer;
+}
+
+/* .workspace-findings-graph .group > .column > .group {
+    margin: -1em;
+} */
+
+.workspace-findings-graph .tree-node-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25em;
+}
+
+.workspace-findings-graph .tree-node-type {
+    font-size: 0.7em;
+    text-align: center;
+}
+
+.workspace-findings-graph .tree-node-body {
+    padding: 0.5em;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+}
+
+.workspace-findings-graph .tree-node.node-Domain > .tree-node-content > .tree-node-heading {
+    background-color: #00c49340;
+    color: white;
+}
+
+.workspace-findings-graph .tree-node.node-Host > .tree-node-content > .tree-node-heading {
+    background-color: #00c5e740;
+    color: white;
+}
+
+.workspace-findings-graph .tree-node.node-Port > .tree-node-content > .tree-node-heading {
+    background-color: #0066ff40;
+    color: white;
+}
+
+.workspace-findings-graph .tree-node.node-Service > .tree-node-content > .tree-node-heading {
+    background-color: #c300ff40;
+    color: white;
+}
+
+.workspace-findings-graph .tree-node.node-Finding > .tree-node-content > .tree-node-heading {
+    background-color: #ffd90030;
+    color: white;
+}
+
+.workspace-findings-graph .tree-node.node-Finding > .tree-node-content > .tree-node-body {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.workspace-findings-graph .tree-node.node-Finding.severity-Okay {
+    --severity: var(--severity-ok-op);
+}
+
+.workspace-findings-graph .tree-node.node-Finding.severity-Low {
+    --severity: var(--severity-low-op);
+}
+
+.workspace-findings-graph .tree-node.node-Finding.severity-Medium {
+    --severity: var(--severity-medium-op);
+}
+
+.workspace-findings-graph .tree-node.node-Finding.severity-High {
+    --severity: var(--severity-high-op);
+}
+
+.workspace-findings-graph .tree-node.node-Finding.severity-Critical {
+    --severity: var(--severity-critical-op);
+}
+
+.workspace-findings-graph .tree-node.node-Finding {
+    background: radial-gradient(at bottom right, var(--severity, transparent), transparent 200px);
+    background-color: var(--level-1-opaque, transparent);
+}
+
+.workspace-findings-graph .tree-node > .tree-node-content > .tree-node-body.empty {
+    display: none;
+}
+
+.workspace-findings-graph .tree-node.node-Finding > .tree-node-content > .tree-node-body .icon svg {
+    height: 24px;
+}
+
+.create-finding-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1.5em;
+}
+
+.create-finding-container {
+    display: grid;
+    grid-template-columns: 78ch 1fr;
+    grid-template-rows: 100%;
+    gap: 4em;
+    height: calc(100% - 6em);
+}
+
+.create-finding-form {
+    display: flex;
+    flex-direction: column;
+    gap: 2em;
+    height: 100%;
+}
+
+.create-finding-form .sub-heading {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 0.25em;
+}
+
+.create-finding-form .sub-heading .icon {
+    width: 1.5em;
+    margin-right: 0.2em;
+}
+
+.create-finding-form > .scrollable {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5em;
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow-y: auto;
+    gap: 2em;
+}
+
+.create-finding-editor-container {
+    display: grid;
+    grid-template-columns: 0.055fr 1fr;
+    height: 100%;
+}
+
+.create-finding-pane {
+    display: flex;
+    flex-direction: column;
+    border-radius: 0.5em;
+    padding: 2em;
+    border: 1px solid var(--primary-op);
+    background-color: #00ccff10;
+    gap: 0.5em;
+}
+
+.create-finding-pane .sub-heading {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.workspace-finding-data-table {
+    width: 100%;
+    height: 100%;
+    transform: translate(0, -3em);
+}
+
+.workspace-finding-data-table .workspace-data-table {
+    height: 72vh;
+}
+
+.create-finding-files {
+    box-sizing: border-box;
+    padding-right: 1em;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1.5em;
+    align-items: center;
+}
+
+.create-finding-files > .file-input {
+    height: 4em;
+    width: 100%;
+}
+
+.create-finding-files > .file-input.image.has-content {
+    height: 22ch /* 39ch / 16 * 9 */;
+}
+
+.create-finding-files > .file-input > .content {
+    border-radius: 0.5em;
+    border: 2px dashed var(--primary-op);
+    background-color: #00ccff10;
+    width: 100%;
+}
+
+.workspace-finding-affected-selector {
+    margin-bottom: 0.5em;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    gap: 1em;
+    justify-items: center;
+    align-items: center;
+    border-bottom: 1px solid var(--primary-op);
+}
+
+.workspace-finding-affected-selector > .heading {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.workspace-finding-affected-selector > .heading:hover {
+    cursor: pointer;
+    background-color: #00ccff10;
+    transition: background-color 0.3s ease-out;
+}
+
+.workspace-finding-affected-selected-tab {
+    z-index: 1;
+    background-color: #00ccff07;
+    filter: drop-shadow(0 0 6px var(--primary));
+    border-bottom: 1px solid var(--primary);
+}
+
+.workspace-finding-affected-selector > h3 {
+    margin: 0.5em 0;
+}

@@ -216,10 +216,11 @@
 
 .workspace-data-details-findings,
 .workspace-data-details-findings .workspace-data-details-relations-entry {
-    grid-template-columns: 0.5fr 1fr 1fr;
+    grid-template-columns: 6em 8em 1fr;
 }
 
-.workspace-data-details-findings:not(.workspace-data-details-relations-header):hover {
+.workspace-data-details-findings:not(.workspace-data-details-relations-header)
+    .workspace-data-details-relations-entry:hover {
     cursor: pointer;
     --color: var(--primary-op);
     --blur: 0.5em;
@@ -227,6 +228,12 @@
     box-shadow:
         inset 0 var(--offset) var(--blur) var(--color),
         inset 0 calc(-1 * var(--offset)) var(--blur) var(--color);
+}
+
+.workspace-data-details-findings > .workspace-data-details-relations-entry > span:last-child {
+    justify-self: left;
+    text-align: left;
+    padding-right: 1em;
 }
 
 .workspace-data-details-relations-entry > div {

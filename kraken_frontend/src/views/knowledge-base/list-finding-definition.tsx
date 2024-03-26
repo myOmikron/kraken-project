@@ -6,18 +6,23 @@ import Input from "../../components/input";
 import PlusIcon from "../../svg/plus";
 import { Api } from "../../api/api";
 import { handleApiError } from "../../utils/helper";
+import "../../styling/knowledge-base.css";
 
 type ListFindingDefinitionProps = {};
 
 export function ListFindingDefinition(props: ListFindingDefinitionProps) {
     const [search, setSearch] = React.useState("");
     const [defs, setDefs] = React.useState([] as Array<SimpleFindingDefinition>);
-    const [hover, setHover] = React.useState(null as number | null);
+    const [hover, setHover] = React.useState<SimpleFindingDefinition>();
 
     React.useEffect(() => {
         Api.knowledgeBase.findingDefinitions
             .all()
-            .then(handleApiError(({ findingDefinitions }) => setDefs(findingDefinitions)));
+            .then(
+                handleApiError(({ findingDefinitions }) =>
+                    setDefs(findingDefinitions.sort(({ name: a }, { name: b }) => a.localeCompare(b))),
+                ),
+            );
     }, []);
 
     return (
@@ -32,20 +37,22 @@ export function ListFindingDefinition(props: ListFindingDefinitionProps) {
                 </button>
             </div>
             <div className={"list-finding-definition-list"}>
-                {defs.map(({ uuid, name, severity, summary }, index) => (
-                    <div
-                        className={"list-finding-definition-item pane"}
-                        onPointerEnter={() => setHover(index)}
-                        onPointerLeave={() => setHover((oldIndex) => (oldIndex === index ? null : oldIndex))}
-                        {...ROUTES.FINDING_DEFINITION_EDIT.clickHandler({ uuid })}
-                    >
-                        <h2 className={"sub-heading"}>
-                            {name} <small>{severity}</small>
-                        </h2>
-                    </div>
-                ))}
+                {defs
+                    .filter(({ name }) => name.includes(search))
+                    .map((def) => (
+                        <div
+                            className={"list-finding-definition-item pane"}
+                            onPointerEnter={() => setHover(def)}
+                            onPointerLeave={() => setHover(undefined)}
+                            {...ROUTES.FINDING_DEFINITION_EDIT.clickHandler({ uuid: def.uuid })}
+                        >
+                            <h2 className={"sub-heading"}>
+                                {def.name} <small>{def.severity}</small>
+                            </h2>
+                        </div>
+                    ))}
             </div>
-            {hover === null ? <div /> : <Details {...defs[hover]} />}
+            {hover === undefined ? <div /> : <Details {...hover} />}
         </div>
     );
 }

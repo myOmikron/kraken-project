@@ -5,10 +5,11 @@ import { FullAggregationSource, FullPort, ListFindings, PortRelations, TagType }
 import SelectableText from "../../../components/selectable-text";
 import Textarea from "../../../components/textarea";
 import { handleApiError } from "../../../utils/helper";
+import CertaintyIcon from "../components/certainty-icon";
 import EditableTags from "../components/editable-tags";
 import { PortRelationsList } from "../components/relations-list";
+import SeverityIcon from "../components/severity-icon";
 import { WORKSPACE_CONTEXT } from "../workspace";
-import { CertaintyIcon } from "../workspace-data";
 import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 
@@ -24,8 +25,6 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
     const [attacks, setAttacks] = useState({} as FullAggregationSource);
-    const [limit, setLimit] = useState(0);
-    const [page, setPage] = useState(0);
     const [port, setPort] = React.useState<FullPort | null>(null);
     const [relations, setRelations] = React.useState<PortRelations | null>(null);
     const [findings, setFindings] = React.useState<ListFindings | null>(null);
@@ -33,16 +32,8 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
         Api.workspaces.ports.get(workspace, uuid).then(handleApiError(setPort));
         Api.workspaces.ports.relations(workspace, uuid).then(handleApiError(setRelations));
         Api.workspaces.ports.findings(workspace, uuid).then(handleApiError(setFindings));
-        Api.workspaces.ports.sources(workspace, uuid).then(
-            handleApiError((x) => {
-                setAttacks(x);
-                setLimit(x.attacks.length - 1);
-            }),
-        );
+        Api.workspaces.ports.sources(workspace, uuid).then(handleApiError(setAttacks));
     }, [workspace, uuid]);
-    React.useEffect(() => {
-        setPage(0);
-    }, [uuid]);
 
     /** Send an update to the server and parent component */
     function update(uuid: string, update: Partial<FullPort>, msg?: string) {
@@ -74,13 +65,22 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
                     <div className="workspace-data-details-pane">
                         <h3 className="sub-heading">Certainty</h3>
                         <div className="workspace-data-certainty-list">
-                            {port.certainty === "Verified"
-                                ? CertaintyIcon({ certaintyType: "Verified", nameVisible: true })
-                                : port.certainty === "Historical"
-                                  ? CertaintyIcon({ certaintyType: "Historical", nameVisible: true })
-                                  : CertaintyIcon({ certaintyType: "SupposedTo", nameVisible: true })}
+                            <CertaintyIcon certainty={port.certainty} />
                         </div>
                     </div>
+                    {port.severity && (
+                        <div className="workspace-data-details-pane">
+                            <h3 className="sub-heading">Severity</h3>
+                            <div className="workspace-data-certainty-list">
+                                <SeverityIcon
+                                    tooltip={false}
+                                    className={"icon workspace-data-certainty-icon"}
+                                    severity={port.severity}
+                                />
+                                {port.severity}
+                            </div>
+                        </div>
+                    )}
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Comment</h3>
                         <Textarea value={port.comment} onChange={(comment) => setPort({ ...port, comment })} />

@@ -9,6 +9,7 @@ import HostIcon from "../../../svg/host";
 import { WorkspaceView } from "../workspace";
 import USER_CONTEXT from "../../../context/user";
 import LibraryIcon from "../../../svg/library";
+import FindingIcon from "../../../svg/finding";
 
 type WorkspaceMenuProps = {
     uuid: string;
@@ -20,6 +21,7 @@ type WorkspaceMenuState = {};
 export default class WorkspaceMenu extends React.Component<WorkspaceMenuProps, WorkspaceMenuState> {
     static contextType = USER_CONTEXT;
     declare context: React.ContextType<typeof USER_CONTEXT>;
+
     render() {
         return (
             <div className={"workspace-menu pane"}>
@@ -43,6 +45,14 @@ export default class WorkspaceMenu extends React.Component<WorkspaceMenuProps, W
                 >
                     <AttackIcon />
                     <div className={"workspace-menu-hint"}>Attacks</div>
+                </div>
+                <div
+                    className={this.props.active === "findings" ? "workspace-menu-item active" : "workspace-menu-item"}
+                    {...ROUTES.WORKSPACE_FINDINGS_LIST.clickHandler({ uuid: this.props.uuid })}
+                    style={{ padding: 0 }}
+                >
+                    <FindingIcon />
+                    <div className={"workspace-menu-hint"}>Findings</div>
                 </div>
                 <div
                     className={this.props.active === "data" ? "workspace-menu-item active" : "workspace-menu-item"}

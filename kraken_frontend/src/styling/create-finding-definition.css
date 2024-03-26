@@ -6,7 +6,18 @@
 }
 
 .create-finding-definition-container > div:first-child {
-    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+}
+
+.create-finding-definition-container > div:first-child .icon {
+    width: 2em;
+    margin-right: 0.5em;
+    cursor: pointer;
+}
+
+.create-finding-definition-container > div:first-child .icon:hover {
+    filter: brightness(0) invert() drop-shadow(0 0 8px var(--primary));
 }
 
 .create-finding-definition-container > div:last-child {
@@ -15,6 +26,12 @@
     gap: 4em;
     box-sizing: border-box;
     height: 100%;
+}
+
+.create-finding-editor-container > .workspace-findings-graph > .pane {
+    box-shadow:
+        inset 0 0 10em #0cf2,
+        inset 0 0 0.5em #0ff2;
 }
 
 /*
@@ -36,6 +53,7 @@
     flex-direction: row;
     margin-bottom: 0.25em;
 }
+
 .create-finding-definition-form .sub-heading .icon {
     width: 1.5em;
 }
@@ -46,10 +64,128 @@
     column-gap: 1.5em;
 }
 
+.create-finding-definition-header .sub-heading {
+    margin-bottom: 0.25em;
+}
+
 /*
  * Editor on the right panel
  */
 .create-finding-definition-editor {
     display: flex;
     flex-direction: row;
+}
+
+.affected-list {
+    display: grid;
+
+    gap: 0.5em;
+    padding: 1em 0;
+}
+
+.create-finding-affected {
+    position: relative;
+    min-width: 350px;
+    display: grid;
+    grid-template-columns: 1fr 100px 100px;
+    min-height: 100px;
+    grid-template-rows: 1fr auto;
+    border-radius: 8px;
+    padding: 0.5em;
+    gap: 0.5em;
+    box-sizing: border-box;
+    --accent: rgba(255, 255, 255, 0.1);
+    background-color: var(--accent);
+    border: 1px solid var(--accent);
+    align-items: start;
+    justify-content: start;
+}
+
+.create-finding-affected.affected-Domain {
+    --accent: #00c49322;
+}
+
+.create-finding-affected.affected-Host {
+    --accent: #00c5e722;
+}
+
+.create-finding-affected.affected-Port {
+    --accent: #0066ff22;
+}
+
+.create-finding-affected.affected-Service {
+    --accent: #c300ff22;
+}
+
+.create-finding-affected > .screenshot,
+.create-finding-affected > .logfile {
+    border: 1px solid var(--accent);
+    height: 100%;
+    border-radius: 4px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background-color: var(--accent);
+}
+
+.create-finding-affected > .tag-list {
+    grid-row: 3 / span 1;
+    grid-column: 1 / span 1;
+}
+
+.create-finding-affected > .screenshot {
+    grid-row: 1 / span 3;
+    grid-column: 2 / span 1;
+}
+
+.create-finding-affected > .screenshot span,
+.create-finding-affected > .logfile span {
+    padding: 0;
+}
+
+.create-finding-affected > .logfile {
+    grid-row: 1 / span 3;
+    grid-column: 3 / span 1;
+}
+
+.create-finding-affected .icon > svg {
+    height: 24px;
+}
+
+.create-finding-affected > .details {
+    grid-row: 2 / span 1;
+    grid-column: 1 / span 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5em;
+    margin-left: 0.5em;
+}
+
+.create-finding-affected > .details > .icon:hover {
+    cursor: pointer;
+}
+
+.create-finding-affected > .name > .remove {
+    opacity: 70%;
+    width: 1.5em;
+    height: 1.5em;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.create-finding-affected > .name > .remove {
+    cursor: pointer;
+}
+
+.create-finding-affected .name {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5em;
+    align-items: center;
 }

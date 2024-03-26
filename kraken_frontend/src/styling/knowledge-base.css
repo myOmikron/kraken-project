@@ -24,7 +24,6 @@
     border-right: none;
     cursor: pointer;
     transition: all 0.15s ease-out;
-    backdrop-filter: blur(20px);
 
     height: 7em;
     padding: 0 0.5em 1em;

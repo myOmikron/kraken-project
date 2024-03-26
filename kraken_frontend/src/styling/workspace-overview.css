@@ -62,11 +62,18 @@
     margin: 0;
 }
 
-.workspace-list-filter-ownership-table {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    justify-content: center;
-    align-items: center;
+.workspace-list-checkbox-table {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    height: 3.5em;
+    justify-content: space-between;
+    align-items: start;
+    margin-left: -1em;
+}
+
+.workspace-list-checkbox-table > label {
+    margin-left: 1em;
 }
 
 .workspace-list-sorting {
@@ -77,12 +84,6 @@
 
 .workspace-list-sorting > .heading {
     margin: 0;
-}
-
-.workspace-list-sorting-table {
-    display: grid;
-    grid-template-columns: 3fr 1fr 1em 3fr 1fr;
-    align-items: center;
 }
 
 .workspace-list-container {
@@ -96,6 +97,15 @@
     cursor: pointer;
     width: 20em;
     transition: all 200ms;
+}
+
+.workspace-list-item.archived {
+    filter: saturate(0);
+    background: #222;
+    box-shadow:
+        0 0 25em #fff1,
+        inset 0 0 10em #fff2,
+        inset 0 0 0.5em #fff2;
 }
 
 .workspace-list-item:hover {

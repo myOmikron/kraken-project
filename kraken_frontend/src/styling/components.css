@@ -134,44 +134,38 @@ input[type="color"].input {
     transform: translate(1px, 1px);
 }
 
-.severity-icon-ok {
-    filter: brightness(0) invert() drop-shadow(0 0 4px #0f8);
+.severity-icon {
+    fill: var(--primary-op);
 }
 
-.severity-icon-ok path {
-    stroke: rgba(202, 255, 231, 0.7);
+.severity-icon-ok .filled {
+    fill: hsla(153, 100%, 95%, 0.7);
+    stroke: var(--severity-ok-op);
+    filter: drop-shadow(0 0 2px var(--severity-ok)) saturate(2);
 }
 
-.severity-icon-low {
-    filter: brightness(0) invert() drop-shadow(0 0 4px #ffcc00);
+.severity-icon-low .filled {
+    fill: hsla(50, 100%, 95%, 0.7);
+    stroke: var(--severity-low-op);
+    filter: drop-shadow(0 0 2px var(--severity-low)) saturate(2);
 }
 
-.severity-icon-low path {
-    stroke: rgba(255, 211, 0, 0.7);
+.severity-icon-medium .filled {
+    fill: hsla(32, 100%, 95%, 0.7);
+    stroke: var(--severity-medium-op);
+    filter: drop-shadow(0 0 2px var(--severity-medium)) saturate(2);
 }
 
-.severity-icon-medium {
-    filter: brightness(0) invert() drop-shadow(0 0 4px #ff6a00);
+.severity-icon-high .filled {
+    fill: hsla(0, 100%, 95%, 0.7);
+    stroke: var(--severity-high-op);
+    filter: drop-shadow(0 0 2px var(--severity-high)) saturate(2);
 }
 
-.severity-icon-medium path {
-    stroke: rgba(255, 204, 146, 0.7);
-}
-
-.severity-icon-high {
-    filter: brightness(0) invert() drop-shadow(0 0 4px #ff0000);
-}
-
-.severity-icon-high path {
-    stroke: rgba(255, 146, 146, 0.7);
-}
-
-.severity-icon-critical {
-    filter: brightness(0) invert() drop-shadow(0 0 4px #9900ff);
-}
-
-.severity-icon-critical path {
-    stroke: rgba(215, 146, 255, 0.7);
+.severity-icon-critical .filled {
+    fill: hsla(278, 100%, 95%, 0.7);
+    stroke: var(--severity-critical-op);
+    filter: drop-shadow(0 0 2px var(--severity-critical)) saturate(2);
 }
 
 .start-attack-container {
@@ -268,4 +262,25 @@ form:invalid .start-attack path:last-of-type {
 
 .indicator.off {
     background-color: transparent;
+}
+
+/* XXX: fix sizing issue at 100%, upstream PR: https://github.com/JedWatson/react-select/pull/5880 */
+.dropdown > input[aria-hidden="true"][value=""] {
+    box-sizing: border-box;
+}
+
+.dropdown {
+    z-index: 10;
+}
+
+.model-editor {
+    display: flex;
+    position: relative;
+    text-align: initial;
+    width: 100%;
+    height: 100%;
+}
+
+.model-editor > div {
+    width: 100%;
 }

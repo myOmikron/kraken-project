@@ -21,6 +21,7 @@ import {
     CreateWorkspaceRequest,
     CreateWorkspaceTagRequest,
     DomainsApi,
+    FilesApi,
     FindingsApi,
     GlobalTagsApi,
     HostsApi,
@@ -54,6 +55,7 @@ import {
     WorkspaceInvitationsApi,
     WorkspaceTagsApi,
     WorkspacesApi,
+    UpdateFindingDefinitionRequest,
 } from "./generated";
 
 /** Database id i.e. and u32 */
@@ -69,6 +71,7 @@ const userAdminManagement = new UserAdminManagementApi(configuration);
 const adminWorkspaces = new AdminWorkspacesApi(configuration);
 const attacks = new AttacksApi(configuration);
 const findings = new FindingsApi(configuration);
+const files = new FilesApi(configuration);
 // const authentication = new generated.AuthenticationApi(configuration);
 const leechManagement = new LeechManagementApi(configuration);
 const userManagement = new UserManagementApi(configuration);
@@ -178,8 +181,42 @@ export const Api = {
         delete: (uuid: UUID) => handleError(workspaces.deleteWorkspace({ uuid })),
         transferOwnership: (uuid: UUID, user: UUID) =>
             handleError(workspaces.transferOwnership({ uuid, transferWorkspaceRequest: { user } })),
+        archive: (uuid: UUID) => handleError(workspaces.archiveWorkspace({ uuid })),
+        unarchive: (uuid: UUID) => handleError(workspaces.unarchiveWorkspace({ uuid })),
         attacks: {
             all: (uuid: UUID) => handleError(attacks.getWorkspaceAttacks({ uuid })),
+        },
+        files: {
+            uploadFile: (workspace: UUID, filename: string, data: Blob) =>
+                handleError(
+                    files.uploadFile({
+                        uuid: workspace,
+                        body: data,
+                        filename: filename,
+                    }),
+                ),
+            uploadImage: (workspace: UUID, filename: string, data: Blob) =>
+                handleError(
+                    files.uploadImage({
+                        uuid: workspace,
+                        body: data,
+                        filename: filename,
+                    }),
+                ),
+            downloadFile: (workspace: UUID, file: UUID) =>
+                handleError(
+                    files.downloadFile({
+                        wUuid: workspace,
+                        fUuid: file,
+                    }),
+                ),
+            downloadThumbnail: (workspace: UUID, file: UUID) =>
+                handleError(
+                    files.downloadThumbnail({
+                        wUuid: workspace,
+                        fUuid: file,
+                    }),
+                ),
         },
         findings: {
             all: (workspace: UUID) => handleError(findings.getAllFindings({ uuid: workspace })),
@@ -368,6 +405,17 @@ export const Api = {
                 handleError(knowledgeBase.getFindingDefinition({ uuid: findingDefinition })),
             create: (createFindingDefinitionRequest: CreateFindingDefinitionRequest) =>
                 handleError(knowledgeBase.createFindingDefinition({ createFindingDefinitionRequest })),
+            update: (uuid: UUID, definition: UpdateFindingDefinitionRequest) =>
+                handleError(
+                    knowledgeBase.updateFindingDefinition({
+                        uuid,
+                        updateFindingDefinitionRequest: definition,
+                    }),
+                ),
+            admin: {
+                delete: (findingDefinition: UUID) =>
+                    handleError(knowledgeBase.deleteFindingDefinition({ uuid: findingDefinition })),
+            },
         },
     },
 };

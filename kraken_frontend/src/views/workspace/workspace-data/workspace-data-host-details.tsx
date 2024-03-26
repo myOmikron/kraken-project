@@ -6,10 +6,11 @@ import SelectableText from "../../../components/selectable-text";
 import Textarea from "../../../components/textarea";
 import "../../../styling/workspace-data-details.css";
 import { handleApiError } from "../../../utils/helper";
+import CertaintyIcon from "../components/certainty-icon";
 import EditableTags from "../components/editable-tags";
 import { HostRelationsList } from "../components/relations-list";
+import SeverityIcon from "../components/severity-icon";
 import { WORKSPACE_CONTEXT } from "../workspace";
-import { CertaintyIcon } from "../workspace-data";
 import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 
@@ -25,8 +26,6 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
     const [attacks, setAttacks] = useState({} as FullAggregationSource);
-    const [limit, setLimit] = useState(0);
-    const [page, setPage] = useState(0);
     const [host, setHost] = React.useState<FullHost | null>(null);
     const [relations, setRelations] = React.useState<HostRelations | null>(null);
     const [findings, setFindings] = React.useState<ListFindings | null>(null);
@@ -34,16 +33,8 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
         Api.workspaces.hosts.get(workspace, uuid).then(handleApiError(setHost));
         Api.workspaces.hosts.relations(workspace, uuid).then(handleApiError(setRelations));
         Api.workspaces.hosts.findings(workspace, uuid).then(handleApiError(setFindings));
-        Api.workspaces.hosts.sources(workspace, uuid).then(
-            handleApiError((x) => {
-                setAttacks(x);
-                setLimit(x.attacks.length - 1);
-            }),
-        );
+        Api.workspaces.hosts.sources(workspace, uuid).then(handleApiError(setAttacks));
     }, [workspace, uuid]);
-    React.useEffect(() => {
-        setPage(0);
-    }, [uuid]);
 
     /** Send an update to the server and parent component */
     function update(uuid: string, update: Partial<FullHost>, msg?: string) {
@@ -75,13 +66,22 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
                     <div className="workspace-data-details-pane">
                         <h3 className="sub-heading">Certainty</h3>
                         <div className="workspace-data-certainty-list">
-                            {host.certainty === "Verified"
-                                ? CertaintyIcon({ certaintyType: "Verified", nameVisible: true })
-                                : host.certainty === "Historical"
-                                  ? CertaintyIcon({ certaintyType: "Historical", nameVisible: true })
-                                  : CertaintyIcon({ certaintyType: "SupposedTo", nameVisible: true })}
+                            <CertaintyIcon certainty={host.certainty} />
                         </div>
                     </div>
+                    {host.severity && (
+                        <div className="workspace-data-details-pane">
+                            <h3 className="sub-heading">Severity</h3>
+                            <div className="workspace-data-certainty-list">
+                                <SeverityIcon
+                                    tooltip={false}
+                                    className={"icon workspace-data-certainty-icon"}
+                                    severity={host.severity}
+                                />
+                                {host.severity}
+                            </div>
+                        </div>
+                    )}
                     <div className="workspace-data-details-pane">
                         <h3 className={"sub-heading"}>Comment</h3>
                         <Textarea value={host.comment} onChange={(comment) => setHost({ ...host, comment })} />

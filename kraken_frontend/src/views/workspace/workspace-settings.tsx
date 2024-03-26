@@ -1,28 +1,31 @@
-import React, { Context } from "react";
-import { FullWorkspace, FullWorkspaceInvitation, SimpleUser, UserPermission } from "../../api/generated";
-import "../../styling/workspace-settings.css";
-import Input from "../../components/input";
-import { Api } from "../../api/api";
-import Textarea from "../../components/textarea";
+import React from "react";
 import { toast } from "react-toastify";
-import Tag from "../../components/tag";
-import CloseIcon from "../../svg/close";
 import Popup from "reactjs-popup";
-import { ROUTES } from "../../routes";
-import SelectMenu from "../../components/select-menu";
+import { Api } from "../../api/api";
+import { FullWorkspaceInvitation } from "../../api/generated";
 import Bubble from "../../components/bubble";
-import Workspace, { WORKSPACE_CONTEXT, WorkspaceContext } from "./workspace";
-import { handleApiError } from "../../utils/helper";
+import Input from "../../components/input";
+import SelectMenu from "../../components/select-menu";
+import Tag from "../../components/tag";
+import Textarea from "../../components/textarea";
 import USER_CONTEXT from "../../context/user";
+import { ROUTES } from "../../routes";
+import "../../styling/workspace-settings.css";
+import CloseIcon from "../../svg/close";
+import { handleApiError } from "../../utils/helper";
+import { WORKSPACE_CONTEXT } from "./workspace";
 
 type WorkspaceSettingsProps = {};
 type WorkspaceSettingsState = {
     workspaceName: string;
     workspaceDescription: string | null;
     invitePopup: boolean;
+    isArchived: boolean;
     deleteUserPopup: boolean;
     selected: boolean;
     deleteWorkspacePopup: boolean;
+    archiveWorkspacePopup: boolean;
+    unarchiveWorkspacePopup: boolean;
     transferOwnershipPopup: boolean;
     memberName: string;
     transferList: Array<SelectValue>;
@@ -45,7 +48,10 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
         workspaceDescription: "",
         invitePopup: false,
         deleteUserPopup: false,
+        isArchived: false,
         deleteWorkspacePopup: false,
+        archiveWorkspacePopup: false,
+        unarchiveWorkspacePopup: false,
         transferOwnershipPopup: false,
         selected: false,
         memberName: "",
@@ -59,6 +65,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
         this.createTransferList().then();
         this.createInviteList().then();
         this.updateInvitedUsers().then();
+        this.fetchWorkspace().then();
 
         this.setState({
             workspaceName: this.context.workspace.name,
@@ -70,6 +77,16 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
         await Api.workspaces.invitations
             .all(this.context.workspace.uuid)
             .then(handleApiError((x) => this.setState({ invitedUsers: x.invitations })));
+    }
+
+    async fetchWorkspace() {
+        await Api.workspaces.get(this.context.workspace.uuid).then(
+            handleApiError((x) =>
+                this.setState({
+                    isArchived: x.archived,
+                }),
+            ),
+        );
     }
 
     async updateWorkspace() {
@@ -97,6 +114,39 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
             }),
         );
         toast.dismiss(toastId);
+    }
+
+    archiveWorkspace() {
+        toast.promise(
+            Api.workspaces.archive(this.context.workspace.uuid).then(
+                handleApiError(() => {
+                    ROUTES.WORKSPACES.visit({});
+                }),
+            ),
+            {
+                pending: "Archiving workspace...",
+                error: "Failed to archive workspace!",
+                success: "Archived workspace",
+            },
+        );
+    }
+
+    unarchiveWorkspace() {
+        toast.promise(
+            Api.workspaces.unarchive(this.context.workspace.uuid).then(
+                handleApiError((v) => {
+                    this.setState({
+                        isArchived: false,
+                        unarchiveWorkspacePopup: false,
+                    });
+                }),
+            ),
+            {
+                pending: "Unarchiving workspace...",
+                error: "Failed to unarchive workspace!",
+                success: "Unarchived workspace",
+            },
+        );
     }
 
     async createTransferList() {
@@ -232,6 +282,18 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                                     }}
                                 >
                                     Delete
+                                </button>
+                                <span>
+                                    {this.state.isArchived ? "Unarchive this workspace" : "Archive this workspace"}
+                                </span>
+                                <button
+                                    className="workspace-settings-red-button button"
+                                    onClick={() => {
+                                        if (this.state.isArchived) this.setState({ unarchiveWorkspacePopup: true });
+                                        else this.setState({ archiveWorkspacePopup: true });
+                                    }}
+                                >
+                                    {this.state.isArchived ? "Unarchive" : "Archive"}
                                 </button>
                             </div>
                         </div>
@@ -408,6 +470,74 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                                         x.preventDefault();
                                         await this.deleteWorkspace();
                                     }
+                                }}
+                            >
+                                Yes
+                            </button>
+                        </div>
+                    </div>
+                </Popup>
+                <Popup
+                    modal={true}
+                    nested={true}
+                    open={this.state.archiveWorkspacePopup}
+                    onClose={() => {
+                        this.setState({ archiveWorkspacePopup: false });
+                    }}
+                >
+                    <div className="popup-content pane">
+                        <div className="workspace-setting-popup">
+                            <h2 className="sub-heading">Are you sure you want to archive this workspace?</h2>
+                            <p>Once archived, you may unarchive this workspace from these settings later on.</p>
+                            <p>
+                                Some data in the workspace may be automatically deleted after a certain period of
+                                inactivity.
+                            </p>
+                            <button
+                                className="button"
+                                onClick={() => {
+                                    this.setState({ archiveWorkspacePopup: false });
+                                }}
+                            >
+                                No
+                            </button>
+                            <button
+                                className="workspace-settings-red-button button"
+                                onClick={async (x) => {
+                                    x.preventDefault();
+                                    await this.archiveWorkspace();
+                                }}
+                            >
+                                Yes
+                            </button>
+                        </div>
+                    </div>
+                </Popup>
+                <Popup
+                    modal={true}
+                    nested={true}
+                    open={this.state.unarchiveWorkspacePopup}
+                    onClose={() => {
+                        this.setState({ unarchiveWorkspacePopup: false });
+                    }}
+                >
+                    <div className="popup-content pane">
+                        <div className="workspace-setting-popup">
+                            <h2 className="sub-heading">Are you sure you want to unarchive this workspace?</h2>
+                            <p>The workspace will become visible by default to users again and can be edited again.</p>
+                            <button
+                                className="button"
+                                onClick={() => {
+                                    this.setState({ unarchiveWorkspacePopup: false });
+                                }}
+                            >
+                                No
+                            </button>
+                            <button
+                                className="workspace-settings-red-button button"
+                                onClick={async (x) => {
+                                    x.preventDefault();
+                                    await this.unarchiveWorkspace();
                                 }}
                             >
                                 Yes

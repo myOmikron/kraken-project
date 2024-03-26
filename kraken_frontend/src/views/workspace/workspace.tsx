@@ -1,11 +1,10 @@
 import React from "react";
 import { Api, UUID } from "../../api/api";
-import { toast } from "react-toastify";
+import { FullWorkspace } from "../../api/generated";
 import "../../styling/workspace.css";
+import { handleApiError } from "../../utils/helper";
 import WorkspaceHeading from "./components/workspace-heading";
 import WorkspaceMenu from "./components/workspace-menu";
-import { FullWorkspace } from "../../api/generated";
-import { handleApiError } from "../../utils/helper";
 
 export type WorkspaceContext = { workspace: FullWorkspace };
 export const WORKSPACE_CONTEXT = React.createContext<WorkspaceContext>({
@@ -32,7 +31,7 @@ type WorkspaceState = {
     workspace: FullWorkspace | null;
 };
 
-export type WorkspaceView = "search" | "attacks" | "data" | "hosts" | "settings" | "notes";
+export type WorkspaceView = "search" | "attacks" | "findings" | "data" | "hosts" | "settings" | "notes";
 
 export default class Workspace extends React.Component<WorkspaceProps, WorkspaceState> {
     constructor(props: WorkspaceProps) {

@@ -30,7 +30,7 @@
     overflow: hidden;
 }
 
-.workflow-editor > .pane > .nodes {
+.viewport > .pane > .nodes {
     position: absolute;
     width: 100%;
     height: 100%;

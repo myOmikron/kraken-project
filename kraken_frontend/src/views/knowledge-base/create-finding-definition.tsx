@@ -1,8 +1,6 @@
 import React from "react";
 import Input from "../../components/input";
 import { SelectPrimitive } from "../../components/select-menu";
-import Editor from "@monaco-editor/react";
-import { setupMonaco } from "../knowledge-base";
 import { GithubMarkdown } from "../../components/github-markdown";
 import BandageIcon from "../../svg/bandage";
 import LibraryIcon from "../../svg/library";
@@ -13,32 +11,52 @@ import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sec
 import "../../styling/create-finding-definition.css";
 import { handleApiError } from "../../utils/helper";
 import { Api } from "../../api/api";
-import { FindingSeverity } from "../../api/generated";
 import { ROUTES } from "../../routes";
+import { toast } from "react-toastify";
+import { FindingSeverity, SimpleFindingDefinition } from "../../api/generated";
+import ModelEditor from "../../components/model-editor";
 
-export type CreateFindingDefinitionProps = {};
+export type CreateFindingDefinitionProps = {
+    /** Prefill the name <input /> with an initial value*/
+    initialName?: string;
+
+    /**
+     * Use a custom callback upon successful creation
+     *
+     * The default will redirect to the list of finding definitions.
+     */
+    onCreate?: (definition: SimpleFindingDefinition) => void;
+
+    /**
+     * Is this component already rendered inside a pane?
+     *
+     * If yes, use nested-pane instead of pane again.
+     */
+    inPane?: boolean;
+};
+
 export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
-    const [name, setName] = React.useState("");
-    const [severity, setSeverity] = React.useState("Medium");
+    const [name, setName] = React.useState(props.initialName ?? "");
+    const [severity, setSeverity] = React.useState<FindingSeverity>(FindingSeverity.Medium);
     const [cve, setCve] = React.useState("");
 
     const sections = useSectionsState();
 
     return (
         <div className={"create-finding-definition-container"}>
-            <div className={"pane"}>
+            <div className={props.inPane ? "nested-pane" : "pane"}>
                 <h1 className={"heading"}>New Finding Definition</h1>
             </div>
-            <div className={"pane"}>
+            <div className={props.inPane ? "nested-pane" : "pane"}>
                 <div className={"create-finding-definition-form"}>
                     <div className={"create-finding-definition-header"}>
                         <h2 className={"sub-heading"}>Name</h2>
                         <h2 className={"sub-heading"}>Severity</h2>
                         <h2 className={"sub-heading"}>CVE</h2>
-                        <Input maxLength={255} value={name} onChange={setName} />
+                        <Input maxLength={255} value={name} required onChange={setName} />
                         <SelectPrimitive
                             value={severity}
-                            options={["Okay", "Low", "Medium", "High", "Critical"]}
+                            options={Object.values(FindingSeverity)}
                             onChange={(value) => setSeverity(value || severity)}
                         />
                         <Input maxLength={255} value={cve} onChange={setCve} />
@@ -94,7 +112,6 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                             Api.knowledgeBase.findingDefinitions
                                 .create({
                                     name,
-                                    // @ts-ignore
                                     severity,
                                     cve: cve.length > 0 ? cve : null,
                                     summary: sections.Summary.value,
@@ -103,7 +120,23 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                                     remediation: sections.Remediation.value,
                                     references: sections.References.value,
                                 })
-                                .then(handleApiError(({ uuid }) => ROUTES.FINDING_DEFINITION_EDIT.visit({ uuid })))
+                                .then(
+                                    handleApiError(({ uuid }) => {
+                                        toast.success("Created finding definition");
+                                        if (!props.onCreate) {
+                                            ROUTES.FINDING_DEFINITION_LIST.visit({});
+                                        } else {
+                                            props.onCreate({
+                                                uuid,
+                                                name,
+                                                severity,
+                                                cve: cve.length > 0 ? cve : null,
+                                                summary: sections.Summary.value,
+                                                createdAt: new Date(),
+                                            });
+                                        }
+                                    }),
+                                )
                         }
                     >
                         Create
@@ -111,15 +144,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                 </div>
                 <div className={"create-finding-definition-editor"}>
                     <SectionSelectionTabs sections={sections} />
-                    <Editor
-                        className={"knowledge-base-editor"}
-                        theme={"custom"}
-                        beforeMount={setupMonaco}
-                        {...sections[sections.selected].editor}
-                        onChange={(value, event) => {
-                            if (value !== undefined) sections[sections.selected].set(value);
-                        }}
-                    />
+                    <ModelEditor model={sections[sections.selected].model} />
                 </div>
             </div>
         </div>

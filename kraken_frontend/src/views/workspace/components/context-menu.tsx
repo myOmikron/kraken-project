@@ -22,7 +22,7 @@ export type ContextMenuEntry = PlainMenuItem | GroupedMenuItem | LazyMenuItem;
 
 export type ContextMenuProps<E extends ElementType = "div"> = PropsWithChildren<{
     as?: E;
-    menu: ContextMenuEntry[];
+    menu?: ContextMenuEntry[];
     onOpen?: Function;
 }> &
     React.ComponentPropsWithoutRef<E>;
@@ -40,9 +40,6 @@ export default function ContextMenu<E extends ElementType = "div">({
     const componentRef = useRef<any>();
     const [open, setOpen] = useState(false);
     const [submenuOpen, setSubmenuOpen] = useState(0);
-
-    if ("className" in props) (props as any).className += " context-menu-wrapper";
-    else (props as any).className = "context-menu-wrapper";
 
     const clickHandler = useCallback(
         (handler: ClickHandler, e: React.MouseEvent<HTMLLIElement>) => {
@@ -95,6 +92,7 @@ export default function ContextMenu<E extends ElementType = "div">({
     };
 
     const onContextMenu = (event: React.MouseEvent | React.KeyboardEvent) => {
+        if (menu === undefined) return;
         event.preventDefault();
         componentRef.current = event.target as any;
         popupRef.current?.toggle?.();
@@ -123,6 +121,7 @@ export default function ContextMenu<E extends ElementType = "div">({
                     onContextMenu={onContextMenu}
                     tabIndex={0}
                     {...props}
+                    className={`${props.className} context-menu-wrapper ${menu === undefined ? "unavailabe " : ""}`}
                 >
                     {children}
                 </Component>
@@ -136,7 +135,7 @@ export default function ContextMenu<E extends ElementType = "div">({
                 role="menu"
                 className={`pane-thin context-menu ${keyboardNav ? "keyboard-nav" : ""}`}
             >
-                {menu.map((v, i) => (
+                {menu?.map((v, i) => (
                     <ContextMenuEntryRenderer
                         key={i}
                         v={v}

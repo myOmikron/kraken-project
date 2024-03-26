@@ -8,24 +8,30 @@
 
 .tabs {
     border-radius: 0.5em 0.5em 0 0;
-    background-color: #041216;
+    background-color: #00ccff10;
     cursor: pointer;
 
     width: 10em;
+    height: 2.5em;
     display: flex;
     justify-content: center;
     align-items: center;
-
-    transition: background-color 0.1s ease-out;
+    transition: all 0.15s ease-out;
 }
 
 .tabs:hover {
-    background-color: #002024;
+    background-color: #00ccff40;
+    height: 3em;
+    transition: all 0.15s ease-out;
 }
 
 .tabs h3 {
-    font-size: 1em;
     margin: 0.6em 1em;
+}
+
+.selected-tab {
+    background-color: #00ccff30;
+    height: 3em;
     transition: all 0.15s ease-out;
 }
 
@@ -39,38 +45,26 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    transition: all 0.15s ease-out;
+    height: 1em;
 }
 
 .icon-tabs:hover {
     background-color: #00ccff40;
-}
-
-.icon-tabs .icon {
-    width: 1.5em;
+    height: 1.5em;
     transition: all 0.15s ease-out;
 }
 
-.selected-tab,
+.icon-tabs .icon {
+    width: 2em;
+}
+
 .selected-tab:hover {
     background-color: #033745;
 }
 
-.selected-tab .icon {
-    width: 2em;
-    transition: all 0.15s ease-out;
-}
-
-.selected-tab h3 {
-    font-size: 1.2em;
-    transition: all 0.15s ease-out;
-}
-
-.tabs:hover:not(.selected-tab) h3 {
-    font-size: 1.2em;
-    transition: all 0.15s ease-out;
-}
-
-.icon-tabs:hover:not(.selected-tab) .icon {
-    width: 2em;
+.selected-icon-tab {
+    background-color: #00ccff30;
+    height: 1.5em;
     transition: all 0.15s ease-out;
 }

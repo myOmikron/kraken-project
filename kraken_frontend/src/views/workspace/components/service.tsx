@@ -1,12 +1,25 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Popup from "reactjs-popup";
 import { Api } from "../../../api/api";
 import { FullService, ServiceRelations, SimpleService } from "../../../api/generated";
+import SelectableText from "../../../components/selectable-text";
 import { handleApiError } from "../../../utils/helper";
 import { ServiceRelationsList } from "./relations-list";
 
-export default function ServiceName({ service }: { service: FullService | SimpleService }) {
+export default function ServiceName({ service, pretty }: { service: FullService | SimpleService; pretty?: boolean }) {
     const [relations, setRelations] = useState<ServiceRelations | undefined>(undefined);
+    const [fullService, setFullService] = useState<FullService | undefined>(
+        typeof service.host == "string" ? undefined : (service as FullService),
+    );
+
+    useEffect(() => {
+        if (pretty && (!fullService || fullService.uuid != service.uuid)) {
+            setFullService(undefined);
+            Api.workspaces.services
+                .get(service.workspace, service.uuid)
+                .then(handleApiError((s) => s.uuid == service.uuid && setFullService(s)));
+        }
+    }, [service.uuid]);
 
     const ensureDataLoaded = useCallback(() => {
         if (relations !== undefined) return;
@@ -27,7 +40,20 @@ export default function ServiceName({ service }: { service: FullService | Simple
             trigger={
                 // eagerly load on mouse over, so popup potentially doesn't need to wait
                 <div onMouseOver={ensureDataLoaded}>
-                    <div>{service.name}</div>
+                    {pretty && fullService ? (
+                        <div>
+                            <b>{service.name}</b>
+                            {" on "}
+                            <SelectableText as="span">
+                                {fullService.host.ipAddr.includes(":")
+                                    ? `[${fullService.host.ipAddr}]`
+                                    : fullService.host.ipAddr}
+                                {typeof fullService.port === "object" && ":" + fullService.port?.port}
+                            </SelectableText>
+                        </div>
+                    ) : (
+                        <div>{service.name}</div>
+                    )}
                 </div>
             }
             onOpen={ensureDataLoaded}

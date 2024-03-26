@@ -2,9 +2,17 @@
     padding: 2em 1em;
     display: flex;
     flex-direction: column;
+    overflow-x: auto;
+    min-width: min-content;
 
     /* Is overwritten by javascript */
     --columns: 1fr 1fr 1fr 1fr;
+}
+
+.workspace-table-header > *,
+.workspace-table-row > * {
+    overflow: hidden;
+    min-width: 16px;
 }
 
 .workspace-table-pre-header {
@@ -29,6 +37,7 @@
 .workspace-table-body {
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
     overflow-y: auto;
     flex-grow: 1;
     padding: 0 1.5em;
@@ -127,4 +136,10 @@
 
 .workspace-table-row .bubble {
     padding: 0 0.5em;
+}
+
+.solid-background {
+    background-color: #00ccff10;
+    border: 1px solid var(--primary-op);
+    border-radius: 0.5em;
 }

@@ -45,6 +45,7 @@ export default function Tag(props: TagProps) {
                 }
             }}
             tabIndex={0}
+            title={name}
         >
             {name}
         </div>

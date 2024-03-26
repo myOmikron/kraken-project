@@ -5,10 +5,11 @@ import { FullAggregationSource, FullService, ListFindings, ServiceRelations, Tag
 import SelectableText from "../../../components/selectable-text";
 import Textarea from "../../../components/textarea";
 import { handleApiError } from "../../../utils/helper";
+import CertaintyIcon from "../components/certainty-icon";
 import EditableTags from "../components/editable-tags";
 import { ServiceRelationsList } from "../components/relations-list";
+import SeverityIcon from "../components/severity-icon";
 import { WORKSPACE_CONTEXT } from "../workspace";
-import { CertaintyIcon } from "../workspace-data";
 import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 
@@ -24,8 +25,6 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
     const [attacks, setAttacks] = useState({} as FullAggregationSource);
-    const [limit, setLimit] = useState(0);
-    const [page, setPage] = useState(0);
     const [service, setService] = React.useState<FullService | null>(null);
     const [relations, setRelations] = React.useState<ServiceRelations | null>(null);
     const [findings, setFindings] = React.useState<ListFindings | null>(null);
@@ -33,16 +32,8 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
         Api.workspaces.services.get(workspace, uuid).then(handleApiError(setService));
         Api.workspaces.services.relations(workspace, uuid).then(handleApiError(setRelations));
         Api.workspaces.services.findings(workspace, uuid).then(handleApiError(setFindings));
-        Api.workspaces.services.sources(workspace, uuid).then(
-            handleApiError((x) => {
-                setAttacks(x);
-                setLimit(x.attacks.length - 1);
-            }),
-        );
+        Api.workspaces.services.sources(workspace, uuid).then(handleApiError(setAttacks));
     }, [workspace, uuid]);
-    React.useEffect(() => {
-        setPage(0);
-    }, [uuid]);
 
     /** Send an update to the server and parent component */
     function update(uuid: string, update: Partial<FullService>, msg?: string) {
@@ -75,17 +66,22 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
                     <div className="workspace-data-details-pane">
                         <h3 className="sub-heading">Certainty</h3>
                         <div className="workspace-data-certainty-list">
-                            {service.certainty === "Historical"
-                                ? CertaintyIcon({ certaintyType: "Historical", nameVisible: true })
-                                : service.certainty === "SupposedTo"
-                                  ? CertaintyIcon({ certaintyType: "SupposedTo", nameVisible: true })
-                                  : service.certainty === "UnknownService"
-                                    ? CertaintyIcon({ certaintyType: "UnknownService", nameVisible: true })
-                                    : service.certainty === "MaybeVerified"
-                                      ? CertaintyIcon({ certaintyType: "MaybeVerified", nameVisible: true })
-                                      : CertaintyIcon({ certaintyType: "DefinitelyVerified", nameVisible: true })}
+                            <CertaintyIcon certainty={service.certainty} />
                         </div>
                     </div>
+                    {service.severity && (
+                        <div className="workspace-data-details-pane">
+                            <h3 className="sub-heading">Severity</h3>
+                            <div className="workspace-data-certainty-list">
+                                <SeverityIcon
+                                    tooltip={false}
+                                    className={"icon workspace-data-certainty-icon"}
+                                    severity={service.severity}
+                                />
+                                {service.severity}
+                            </div>
+                        </div>
+                    )}
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Comment</h3>
                         <Textarea value={service.comment} onChange={(comment) => setService({ ...service, comment })} />

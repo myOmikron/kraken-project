@@ -1,18 +1,18 @@
 import React from "react";
-import { Api } from "../api/api";
-import { check, handleApiError } from "../utils/helper";
-import { SimpleWorkspace } from "../api/generated";
-import Loading from "../components/loading";
-import Input from "../components/input";
-import Textarea from "../components/textarea";
 import { toast } from "react-toastify";
+import { Api } from "../api/api";
+import { SimpleWorkspace } from "../api/generated";
+import Checkbox from "../components/checkbox";
+import Input from "../components/input";
+import Loading from "../components/loading";
+import Textarea from "../components/textarea";
+import USER_CONTEXT, { UserContext } from "../context/user";
+import { ROUTES } from "../routes";
 import "../styling/workspace-overview.css";
 import WorkspaceIcon from "../svg/workspace";
-import Checkbox from "../components/checkbox";
-import USER_CONTEXT from "../context/user";
-import { ROUTES } from "../routes";
+import { check, handleApiError } from "../utils/helper";
 
-type Sorting = "none" | "name" | "createdAt" | "lastModified";
+type Sorting = "none" | "name" | "createdAt";
 
 type WorkspacesProps = {};
 type WorkspacesState = {
@@ -34,6 +34,8 @@ type WorkspacesState = {
     onlyOwner: boolean;
     onlyMember: boolean;
 
+    onlyArchived: boolean;
+
     sorting: Sorting;
 };
 
@@ -46,10 +48,12 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
         search: "",
         onlyOwner: false,
         onlyMember: false,
+        onlyArchived: false,
         sorting: "none",
     };
 
     static contextType = USER_CONTEXT;
+    declare context: UserContext;
 
     componentDidMount() {
         this.fetchState();
@@ -125,81 +129,94 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                         />
                         <div className={"workspace-list-filter-ownership"}>
                             <h3 className={"heading"}>Filter</h3>
-                            <div className={"workspace-list-filter-ownership-table"}>
-                                <span>Owner</span>
-                                <Checkbox
-                                    value={this.state.onlyOwner}
-                                    onChange={() => {
-                                        this.setState({ onlyOwner: !this.state.onlyOwner, onlyMember: false });
-                                    }}
-                                />
-                                <span>Member</span>
-                                <Checkbox
-                                    value={this.state.onlyMember}
-                                    onChange={() => {
-                                        this.setState({ onlyOwner: false, onlyMember: !this.state.onlyMember });
-                                    }}
-                                />
+                            <div className={"workspace-list-checkbox-table"}>
+                                <label>
+                                    <Checkbox
+                                        value={this.state.onlyOwner}
+                                        onChange={(v) => {
+                                            this.setState({ onlyOwner: v, onlyMember: false });
+                                        }}
+                                    />
+                                    <span>Owner</span>
+                                </label>
+                                <label>
+                                    <Checkbox
+                                        value={this.state.onlyMember}
+                                        onChange={(v) => {
+                                            this.setState({ onlyOwner: false, onlyMember: v });
+                                        }}
+                                    />
+                                    <span>Member</span>
+                                </label>
+                                <label>
+                                    <Checkbox
+                                        value={this.state.onlyArchived}
+                                        onChange={(v) => {
+                                            this.setState({ onlyArchived: v });
+                                        }}
+                                    />
+                                    <span>Archived</span>
+                                </label>
                             </div>
                         </div>
                         <div className={"workspace-list-sorting"}>
                             <h3 className={"heading"}>Sorting</h3>
-                            <div className={"workspace-list-sorting-table"}>
-                                <span>Name</span>
-                                <Checkbox
-                                    value={this.state.sorting === "name"}
-                                    onChange={() => {
-                                        this.setState({ sorting: this.state.sorting === "name" ? "none" : "name" });
-                                    }}
-                                />
-                                <div></div>
-                                <span>Created timestamp</span>
-                                <Checkbox
-                                    value={this.state.sorting === "createdAt"}
-                                    onChange={() => {
-                                        this.setState({
-                                            sorting: this.state.sorting === "createdAt" ? "none" : "createdAt",
-                                        });
-                                    }}
-                                />
-                                <span>Last modified</span>
-                                <Checkbox
-                                    value={this.state.sorting === "lastModified"}
-                                    onChange={() => {
-                                        this.setState({
-                                            sorting: this.state.sorting === "lastModified" ? "none" : "lastModified",
-                                        });
-                                    }}
-                                />
+                            <div className={"workspace-list-checkbox-table"}>
+                                <label>
+                                    <Checkbox
+                                        value={this.state.sorting === "name"}
+                                        onChange={() => {
+                                            this.setState({ sorting: this.state.sorting === "name" ? "none" : "name" });
+                                        }}
+                                    />
+                                    <span>Name</span>
+                                </label>
+                                <label>
+                                    <Checkbox
+                                        value={this.state.sorting === "createdAt"}
+                                        onChange={() => {
+                                            this.setState({
+                                                sorting: this.state.sorting === "createdAt" ? "none" : "createdAt",
+                                            });
+                                        }}
+                                    />
+                                    <span>Created timestamp</span>
+                                </label>
                             </div>
                         </div>
                     </div>
                     <div className={"workspace-list-container"}>
                         {workspaces
                             .filter((e) => {
-                                let include = true;
-
-                                if (this.state.search === "") include = true;
-                                else include = e.name.includes(this.state.search);
-
-                                if (!include) {
+                                if (
+                                    this.state.search !== "" &&
+                                    !e.name.toLowerCase().includes(this.state.search.toLowerCase())
+                                )
                                     return false;
-                                }
 
-                                if (this.state.onlyOwner) {
-                                    // @ts-ignore
-                                    include = e.owner.uuid === this.context.user.uuid;
-                                } else if (this.state.onlyMember) {
-                                    // @ts-ignore
-                                    include = e.owner.uuid !== this.context.user.uuid;
-                                }
+                                const isOwner = e.owner.uuid === this.context.user.uuid;
 
-                                return include;
+                                if (this.state.onlyOwner && !isOwner) return false;
+                                if (this.state.onlyMember && isOwner) return false;
+
+                                if (this.state.onlyArchived != (e.archived ?? false)) return false;
+
+                                return true;
+                            })
+                            .sort((a, b) => {
+                                switch (this.state.sorting) {
+                                    case "createdAt":
+                                        return a.createdAt.getTime() - b.createdAt.getTime();
+                                    case "name":
+                                        return a.name.localeCompare(b.name);
+                                    case "none":
+                                        return 0;
+                                }
                             })
                             .map((w) => {
                                 return (
                                     <div
-                                        className={"pane workspace-list-item"}
+                                        className={`pane workspace-list-item ${w.archived ? "archived" : ""}`}
                                         {...ROUTES.WORKSPACE_DATA.clickHandler({ uuid: w.uuid })}
                                     >
                                         <h3 className={"heading"}>{w.name}</h3>
