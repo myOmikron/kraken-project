@@ -8,15 +8,15 @@ import ExpandIcon from "../../../svg/expand";
 import { ObjectFns, handleApiError } from "../../../utils/helper";
 import StartAttack from "../components/start-attack";
 import { WORKSPACE_CONTEXT } from "../workspace";
-import { IAttackDescr } from "../workspace-attacks";
+import { AnyApiValue, AttackPrefill, IAttackDescr } from "../workspace-attacks";
 
 type GenericAttackFormProps = {
-    prefilled: { [key: string]: any[] };
+    prefilled: AttackPrefill;
     attack: IAttackDescr;
 };
 type GenericAttackFormState = {
-    value: { [apiJsonKey: string]: any };
-    resetValue: { [apiJsonKey: string]: any };
+    value: { [apiJsonKey: string]: AnyApiValue };
+    resetValue: { [apiJsonKey: string]: AnyApiValue };
 };
 
 export default class GenericAttackForm extends React.Component<GenericAttackFormProps, GenericAttackFormState> {
@@ -108,8 +108,8 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
                 return "multi" in input && input.multi;
             })
         ) {
-            const keys: any[] = [];
-            const values: any[][] = [];
+            const keys: string[] = [];
+            const values: AnyApiValue[][] = [];
 
             for (const key of needMultiCallArgs) {
                 keys.push(key);
@@ -120,13 +120,13 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
             needMultiCallArgs = [];
         }
 
-        function send(attack: GenericAttackFormProps["attack"], params: any) {
-            const wrappedParams: any = {};
+        function send(attack: GenericAttackFormProps["attack"], params: AnyApiValue) {
+            const wrappedParams: AnyApiValue = {};
             wrappedParams[attack.inputs.jsonKey] = params;
             console.log("API call", attack.inputs.endpoint, JSON.stringify(wrappedParams));
             return handleError(
                 // @ts-ignore: The 'this' context of type '...' is not assignable to method's 'this' of type '...'
-                Api.attacks.impl[attack.inputs.endpoint].call(Api.attacks.impl, wrappedParams) as any,
+                Api.attacks.impl[attack.inputs.endpoint].call(Api.attacks.impl, wrappedParams),
             ).then(handleApiError((_) => _));
         }
 
@@ -255,7 +255,7 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
                         autoFocus={i == 0}
                         onUpdate={(k, v) => {
                             const value = this.state.value;
-                            value[k] = (input as any).multi ? [v] : v;
+                            value[k] = input.multi ? [v] : v;
                             this.setState({ value });
                         }}
                     />

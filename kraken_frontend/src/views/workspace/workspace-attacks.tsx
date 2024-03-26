@@ -29,7 +29,7 @@ import {
     BooleanAttackInput,
     DehashedAttackInput,
     DurationAttackInput,
-    IAttackInputProps,
+    NullNumberAttackInput,
     NumberAttackInput,
     PortListInput,
     StringAttackInput,
@@ -72,28 +72,50 @@ type AttackRequestTypes = {
 
 export interface IAttackInput {
     label: string;
-    /// If true, the value is wrapped as a single-element array. When prefilled,
-    /// may contain more than one value.
-    /// If false and prefilled with more than one value, multiple requests will
-    /// be sent out, one for each value.
+    /**
+     * If true, the value is wrapped as a single-element array. When prefilled,
+     * may contain more than one value.
+     * If false and prefilled with more than one value, multiple requests will
+     * be sent out, one for each value.
+     */
     multi?: boolean;
     required?: boolean;
+    // any instead of T, defined below in AttackInput<T> when known
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     defaultValue: any;
     prefill?: PrefillType[];
-    type: React.FC<IAttackInputProps>;
+    // The ref can be on anything - the GenericAttackForm checks for functions,
+    // such as "focus", by name
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    type: React.FC<AttackInputProps<any> & React.RefAttributes<any>>;
     group?: undefined | string;
     renderProps?: React.HTMLProps<HTMLElement>;
-    /// Called for prefilled inputs, to adjust prefilled value (e.g. primitive
-    /// string or number) to expected input type (e.g. port range)
+    /**
+     * Called for prefilled inputs, to adjust prefilled value (e.g. primitive
+     * string or number) to expected input type (e.g. port range)
+     */
+    // TODO: the preprocess type is dependent on the value(s) of "this.prefill"
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     preprocess?: (v: any) => any;
 }
+
+export type AttackPrefill = { [key: string]: AnyPrefill[] };
 
 export interface AttackInput<T, IsMulti extends boolean> extends IAttackInput {
     multi: IsMulti;
     defaultValue: T | undefined;
-    type: React.FC<AttackInputProps<T>>;
+    // The ref can be on anything - the GenericAttackForm checks for functions,
+    // such as "focus", by name
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    type: React.FC<AttackInputProps<T> & React.RefAttributes<any>>;
+    // TODO: the preprocess type is dependent on the value(s) of "this.prefill"
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     preprocess?: (v: any) => T | undefined;
 }
+
+export type AnyAttackInput = {
+    [index: string]: IAttackInput;
+};
 
 export type AttackInputs<ReqType extends AttackType> = {
     // see IAttackDescr for docs
@@ -134,10 +156,15 @@ export interface IAttackDescr {
          * process and send them.
          */
         inputs: {
-            [index: string]: IAttackInput | { fixed: any };
+            [index: string]: IAttackInput | { fixed: AnyApiValue };
         };
     };
 }
+
+// This is all JSON values that can be sent via the API through the various
+// inputs. Used as common type for the combining runtime code.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AnyApiValue = any;
 
 export interface AttackDescr<ReqType extends AttackType> extends IAttackDescr {
     /** The React component which renders the form */
@@ -484,15 +511,16 @@ const ATTACKS: AllAttackDescr = {
                     label: "SSH Port",
                     prefill: ["service[ssh].port"],
                     multi: false,
-                    type: NumberAttackInput as any,
+                    type: NullNumberAttackInput,
                     required: false,
                 },
                 fingerprintPort: {
                     defaultValue: undefined,
                     prefill: ["port[Tcp]"],
                     label: "TCP Fingerprint Port",
-                    type: NumberAttackInput as any,
+                    type: NullNumberAttackInput,
                     multi: false,
+                    required: false,
                 },
                 fingerprintTimeout: {
                     group: "TCP fingerprint task",
@@ -763,7 +791,7 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
         const values = generateAttackPrefill(attack, this.state.target.selection);
         const keys = Object.keys(values);
         if (!keys) return <></>;
-        const columnLabels = keys.map((k) => (ATTACKS as any)[attack].inputs.inputs[k].label);
+        const columnLabels = keys.map((k) => (ATTACKS[attack].inputs.inputs as AnyAttackInput)[k].label);
         const rows = values[keys[0]].map((_, i) => (
             <tr key={attack + "_row" + i}>
                 {keys.map((k) => (
@@ -866,10 +894,10 @@ function generateDisabled(prefill: RawSelectionData[]): Record<AttackType, boole
     ) as { [T in keyof typeof ATTACKS]: boolean };
 }
 
-function generateAttackPrefill(attack: AttackType, prefill: RawSelectionData[]): { [key: string]: any[] } {
-    const ret: { [key: string]: any[] } = {};
+function generateAttackPrefill(attack: AttackType, prefill: RawSelectionData[]): AttackPrefill {
+    const ret: AttackPrefill = {};
     for (const key of Object.keys(ATTACKS[attack].inputs.inputs)) {
-        const input: IAttackInput = (ATTACKS as any)[attack].inputs.inputs[key];
+        const input: IAttackInput = (ATTACKS[attack].inputs.inputs as AnyAttackInput)[key];
         if (typeof input === "object" && !Array.isArray(input) && input.prefill) {
             ret[key] = [];
         }
@@ -878,7 +906,7 @@ function generateAttackPrefill(attack: AttackType, prefill: RawSelectionData[]):
     // first generate all the raw data
     for (const row of prefill) {
         for (const key of Object.keys(ret)) {
-            const input: IAttackInput = (ATTACKS as any)[attack].inputs.inputs[key];
+            const input: IAttackInput = (ATTACKS[attack].inputs.inputs as AnyAttackInput)[key];
             let data = getFirstPrefill(row, input.prefill!);
             if (input.preprocess) data = input.preprocess(data);
             ret[key].push(data);
@@ -899,7 +927,8 @@ function generateAttackPrefill(attack: AttackType, prefill: RawSelectionData[]):
     values = ObjectFns.uniqueObjects(values);
     // and remove rows that have missing required values
     values = values.filter(
-        (row) => !row.some((v, i) => v === undefined && (ATTACKS as any)[attack].inputs.inputs[keys[i]].required),
+        (row) =>
+            !row.some((v, i) => v === undefined && (ATTACKS[attack].inputs.inputs as AnyAttackInput)[keys[i]].required),
     );
     values = ObjectFns.transpose2D(values);
     if (keys.length != values.length) throw new Error("logic error");
@@ -907,7 +936,9 @@ function generateAttackPrefill(attack: AttackType, prefill: RawSelectionData[]):
     return Object.fromEntries(keys.map((k, i) => [k, values[i]]));
 }
 
-export function getFirstPrefill(raw: RawSelectionData, types: PrefillType[]): any | undefined {
+type AnyPrefill = RawSelectionData | string | number | undefined;
+
+export function getFirstPrefill(raw: RawSelectionData, types: PrefillType[]): AnyPrefill {
     for (const p of types) {
         const v = getPrefill(raw, p);
         if (v) return v;
@@ -929,7 +960,8 @@ export function getPrefill(raw: RawSelectionData, type: `service[${string}][Unkn
 export function getPrefill(raw: RawSelectionData, type: `service[${string}][Udp].port`): number | undefined;
 export function getPrefill(raw: RawSelectionData, type: `service[${string}][Tcp].port`): number | undefined;
 export function getPrefill(raw: RawSelectionData, type: `service[${string}][Sctp].port`): number | undefined;
-export function getPrefill(raw: RawSelectionData, type: PrefillType): unknown | undefined;
+export function getPrefill(raw: RawSelectionData, type: PrefillType): never | undefined;
+
 export function getPrefill(raw: RawSelectionData, type: PrefillType): unknown | undefined {
     switch (type) {
         case "raw":
@@ -982,30 +1014,6 @@ export function getPrefill(raw: RawSelectionData, type: PrefillType): unknown | 
                             return getPrefill({ service: raw.service }, "port[Sctp]");
                     }
                 }
-            }
-            return undefined;
-    }
-}
-
-function couldBePrefilled(prefill: PrefillType, target: TargetType) {
-    switch (prefill) {
-        case "raw":
-            throw new Error("input with prefill type raw must define acceptTargetTypes!");
-        case "domain":
-            return target == "domain";
-        case "ipAddr":
-            return target == "host" || target == "port" || target == "service";
-        case "port":
-        case "port[Unknown]":
-        case "port[Udp]":
-        case "port[Tcp]":
-        case "port[Sctp]":
-            return target == "port" || target == "service";
-        case "service.name":
-            return target == "service";
-        default:
-            if (prefill.startsWith("service[")) {
-                return target == "service";
             }
             return undefined;
     }

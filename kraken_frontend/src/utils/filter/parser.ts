@@ -11,12 +11,13 @@ import { tokenize } from "./lexer";
  */
 export function parseAstFields<Fields extends ASTField>(input: string, ast: Fields): ASTResult<Fields> {
     // create object like `{ tags: [], createdAt: [], ... }`
-    const ret: {
-        [Key in keyof Fields]: any[];
-    } = Object.fromEntries(Object.keys(ast).map((k) => [k, []])) as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ret = Object.fromEntries(Object.keys(ast).map((k) => [k, [] as any[]])) as {
+        [Key in keyof Fields]: Array<Expr.Or<ReturnType<Fields[Key]["parse"]>>>;
+    };
 
     parseAst(input, (column, cursor) => {
-        const field = Object.keys(ast).find((field) => ast[field].columns.includes(column));
+        const field = Object.keys(ast).find((field) => ast[field].columns.includes(column)) as keyof Fields;
         if (!field) throw new ParserError({ type: "unknownColumn", column });
         ret[field].push(parseOr(cursor, ast[field].parse));
     });

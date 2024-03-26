@@ -15,6 +15,11 @@ export type ASTField = {
     [key: string]: {
         label: string;
         columns: string[];
+        // we use any since this type is used for `satisfies` and not to specify
+        // the exact type of ASTFields. The real type of ASTFields will contain
+        // the proper types, which can be extracted with `FieldTypes` as well.
+        // See GlobalAST, DomainAST, HostAST, etc.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         parse: (cursor: Cursor) => any;
         advanced?: boolean;
     };
@@ -335,7 +340,7 @@ export type ASTType<Fields extends ASTField> = {
     [key in keyof Fields]: ReturnType<Fields[key]["parse"]>;
 };
 export type ASTResult<Fields extends ASTField> = {
-    [key in keyof Fields]: Array<ReturnType<Fields[key]["parse"]>>;
+    [key in keyof Fields]: Array<Expr.Or<ReturnType<Fields[key]["parse"]>>>;
 };
 
 export type GlobalAST = ASTResult<(typeof ASTFields)["global"]>;
@@ -345,7 +350,7 @@ export type PortAST = ASTResult<(typeof ASTFields)["port"]>;
 export type ServiceAST = ASTResult<(typeof ASTFields)["service"]>;
 
 // these types are defined to automatically check for full coverage of all keys:
-export type FieldTypes<T extends ASTType<any>> = {
+export type FieldTypes<T extends ASTType<ASTField>> = {
     [key in keyof T]: FieldTypeValue<key, T[key]>;
 };
 export type GlobalFieldTypes = FieldTypes<GlobalAST>;
@@ -353,7 +358,7 @@ export type DomainFieldTypes = FieldTypes<DomainAST>;
 export type HostFieldTypes = FieldTypes<HostAST>;
 export type PortFieldTypes = FieldTypes<PortAST>;
 export type ServiceFieldTypes = FieldTypes<ServiceAST>;
-type FieldTypeValue<key, T> = key extends "tags" | `${any}Tags`
+type FieldTypeValue<key, T> = key extends "tags" | `${string}Tags`
     ? "tags"
     : T extends Expr.Range<infer U>
       ? T extends Expr.MaybeRange<U>

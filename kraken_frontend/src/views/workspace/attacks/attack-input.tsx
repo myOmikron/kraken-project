@@ -1,6 +1,6 @@
 import React, { forwardRef, useEffect, useRef, useState } from "react";
 import { Api } from "../../../api/api";
-import { PortOrRange, Query } from "../../../api/generated";
+import { PortOrRange, Query, SearchType } from "../../../api/generated";
 import Checkbox from "../../../components/checkbox";
 import Input from "../../../components/input";
 import { handleApiError } from "../../../utils/helper";
@@ -8,36 +8,30 @@ import { parseUserPorts } from "../../../utils/ports";
 import Select from "react-select";
 import { selectStyles } from "../../../components/select-menu";
 
-export interface IAttackInputProps extends Omit<React.HTMLProps<HTMLElement>, "ref"> {
+export type AttackInputProps<T, PrefillT = T> = {
     valueKey: string;
     label: string;
-    prefill: any[] | undefined;
-    value: any;
+    prefill: PrefillT[] | undefined;
     required: boolean;
-    onUpdate: (key: string, v: any) => any;
-    ref: React.Ref<any>;
-}
-
-export interface AttackInputProps<T> extends IAttackInputProps {
     value: T | undefined;
-    onUpdate: (key: string, v: T | undefined) => any;
-}
+    onUpdate: (key: string, v: T | undefined) => void;
+} & Omit<React.HTMLProps<HTMLElement>, "onChange" | "onUpdate" | "prefill" | "ref" | "required" | "value" | "valueKey">;
 
 export const StringAttackInput = forwardRef<HTMLInputElement, AttackInputProps<string>>((props, ref) => {
-    const { as, value, label, valueKey, onUpdate, ref: _, onChange, ...htmlProps } = props;
+    const { value, label, valueKey, onUpdate, ...htmlProps } = props;
 
     return (
         <>
-            <label htmlFor={props.valueKey + "_input"} key={props.valueKey + "_label"}>
-                {props.label ?? props.valueKey}
+            <label htmlFor={valueKey + "_input"} key={valueKey + "_label"}>
+                {label ?? valueKey}
             </label>
             <Input
                 ref={ref}
-                key={props.valueKey + "_value"}
-                id={props.valueKey + "_input"}
-                value={props.value || ""}
+                key={valueKey + "_value"}
+                id={valueKey + "_input"}
+                value={value || ""}
                 onChange={(v) => {
-                    props.onUpdate(props.valueKey, v);
+                    onUpdate(valueKey, v);
                 }}
                 {...htmlProps}
             />
@@ -45,46 +39,48 @@ export const StringAttackInput = forwardRef<HTMLInputElement, AttackInputProps<s
     );
 });
 
-export function ConvertingAttackInput<T>(
-    props: AttackInputProps<T> & {
-        deserialize: (v: string) => T;
+export function ConvertingAttackInput<T, PrefillT = T>(
+    props: AttackInputProps<T, PrefillT> & {
+        deserialize: (v: string) => T | undefined;
         serialize: (v: T | undefined) => string;
         inputRef?: React.ForwardedRef<HTMLInputElement>;
     },
 ) {
     const [errorInput, setErrorInput] = useState<string | undefined>(undefined);
 
-    const { as, value, label, valueKey, onChange, onUpdate, serialize, deserialize, ref: _, ...htmlProps } = props;
+    const { inputRef, value, label, valueKey, onUpdate, serialize, deserialize, ...htmlProps } = props;
 
     const ref = useRef<HTMLInputElement | null>();
 
     return (
         <>
-            <label htmlFor={props.valueKey + "_input"} key={props.valueKey + "_label"}>
-                {props.label ?? props.valueKey}
+            <label htmlFor={valueKey + "_input"} key={valueKey + "_label"}>
+                {label ?? valueKey}
             </label>
             <Input
-                key={props.valueKey + "_value"}
-                id={props.valueKey + "_input"}
+                key={valueKey + "_value"}
+                id={valueKey + "_input"}
                 ref={(e) => {
                     ref.current = e;
-                    if (typeof props.inputRef == "function") props.inputRef(e);
-                    else if (props.inputRef) props.inputRef.current = e;
+                    if (typeof inputRef == "function") inputRef(e);
+                    else if (inputRef) inputRef.current = e;
                 }}
-                value={errorInput ?? props.serialize(props.value)}
+                value={errorInput ?? serialize(value)}
                 onChange={(v) => {
                     let newValue;
                     try {
-                        newValue = props.deserialize(v);
+                        newValue = deserialize(v);
                     } catch (e) {
                         console.log("invalid input:", v, e);
                         setErrorInput(v);
-                        ref.current?.setCustomValidity((e as any)?.message || "Invalid input");
+                        ref.current?.setCustomValidity(
+                            e && typeof e == "object" && "message" in e ? "" + e?.message : "Invalid input",
+                        );
                         return;
                     }
                     setErrorInput(undefined);
                     ref.current?.setCustomValidity("");
-                    props.onUpdate(props.valueKey, newValue);
+                    onUpdate(valueKey, newValue);
                 }}
                 {...htmlProps}
             />
@@ -92,18 +88,16 @@ export function ConvertingAttackInput<T>(
     );
 }
 
-export const PortListInput = forwardRef(
-    (props: Omit<AttackInputProps<PortOrRange[] | undefined>, "ref">, ref: React.ForwardedRef<HTMLInputElement>) => {
-        return (
-            <ConvertingAttackInput
-                ref={ref}
-                deserialize={(v) => parseUserPorts(v).unwrap()}
-                serialize={(v) => (v ? (typeof v === "number" ? "" + v : v.join(", ")) : "")}
-                {...props}
-            />
-        );
-    },
-);
+export const PortListInput = forwardRef<HTMLInputElement, AttackInputProps<PortOrRange[] | undefined>>((props, ref) => {
+    return (
+        <ConvertingAttackInput<PortOrRange[] | undefined>
+            inputRef={ref}
+            deserialize={(v) => parseUserPorts(v).unwrap()}
+            serialize={(v) => (v ? (typeof v === "number" ? "" + v : v.join(", ")) : "")}
+            {...props}
+        />
+    );
+});
 
 export const NumberAttackInput = forwardRef<
     HTMLInputElement,
@@ -114,16 +108,53 @@ export const NumberAttackInput = forwardRef<
     const minimum = props.minimum ?? 1;
 
     return (
-        <ConvertingAttackInput
+        <ConvertingAttackInput<number>
             inputRef={ref}
             deserialize={(v) => {
+                if (v === "") {
+                    if (props.required) throw new Error("this field is required");
+                    else return undefined;
+                }
                 const n = Number(v);
                 if (n === null || !Number.isSafeInteger(n) || n < minimum) {
                     throw new Error("can't accept for NumberAttackInput: " + v);
                 }
                 return n;
             }}
-            serialize={(v) => (v ? v.toString() : "")}
+            serialize={(v) => (v === null || v === undefined ? "" : v.toString())}
+            {...props}
+        />
+    );
+});
+
+/**
+ * Wraps an Option<int> input - however this behaves exactly the same as a
+ * regular non-required int input. This is only required since the optional
+ * annotation is somehow different for the few fields where this is used.
+ */
+export const NullNumberAttackInput = forwardRef<
+    HTMLInputElement,
+    AttackInputProps<number | null, number | null | undefined> & {
+        minimum?: number;
+    }
+>((props, ref) => {
+    const minimum = props.minimum ?? 1;
+
+    return (
+        <ConvertingAttackInput<number | null, number | null | undefined>
+            inputRef={ref}
+            deserialize={(v) => {
+                if (v === "") {
+                    if (props.required) throw new Error("this field is required");
+                    else return null;
+                }
+                const n = Number(v);
+                if (n === null || !Number.isSafeInteger(n) || n < minimum) {
+                    throw new Error("can't accept for NumberAttackInput: " + v);
+                }
+                return n;
+            }}
+            serialize={(v) => (v === null || v === undefined ? "" : v.toString())}
             {...props}
         />
     );
@@ -143,25 +174,27 @@ export const DurationAttackInput = forwardRef<
 });
 
 export const BooleanAttackInput = forwardRef((props: AttackInputProps<boolean>, ref) => {
-    const { value, label, valueKey, onUpdate, ref: _, onChange, ...htmlProps } = props;
+    const { value, label, valueKey, onUpdate, ...htmlProps } = props;
 
     return (
         <div className="checkbox">
             <Checkbox
                 ref={ref}
-                id={props.valueKey + "_input"}
-                value={props.value ?? false}
-                onChange={(v) => props.onUpdate(props.valueKey, v)}
+                id={valueKey + "_input"}
+                value={value ?? false}
+                onChange={(v) => onUpdate(valueKey, v)}
                 {...htmlProps}
             />
-            <label key={props.valueKey + "_label"} htmlFor={props.valueKey + "_input"}>
-                {props.label}
+            <label key={valueKey + "_label"} htmlFor={valueKey + "_input"}>
+                {label}
             </label>
         </div>
     );
 });
 
-export const WordlistAttackInput = (props: AttackInputProps<string>) => {
+// Don't want to rely on implementation details of Select library / what the select ref is.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const WordlistAttackInput = forwardRef<any, AttackInputProps<string>>((props, ref) => {
     const [wordlists, setWordlists] = useState<{ label: string; value: string }[] | null>(null);
 
     useEffect(() => {
@@ -176,30 +209,31 @@ export const WordlistAttackInput = (props: AttackInputProps<string>) => {
         }
     });
 
-    const { value, label, valueKey, onUpdate, ref: _, onChange, ...htmlProps } = props;
+    const { value, label, valueKey, onUpdate } = props;
 
     return (
         <>
-            <label key={props.valueKey + "_label"} htmlFor={props.valueKey + "_input"}>
-                {props.label ?? props.valueKey}
+            <label key={valueKey + "_label"} htmlFor={valueKey + "_input"}>
+                {label ?? valueKey}
             </label>
             {wordlists === null ? (
                 <Input value="Loading..." onChange={() => {}} readOnly />
             ) : (
                 <Select<{ label: string; value: string }>
                     id={"wordlist"}
+                    ref={ref}
                     required
                     options={wordlists}
                     styles={selectStyles("default")}
-                    value={wordlists.find((v) => v.value == props.value) ?? null}
+                    value={wordlists.find((v) => v.value == value) ?? null}
                     onChange={(wordlist) => {
-                        props.onUpdate(props.valueKey, wordlist?.value);
+                        onUpdate(valueKey, wordlist?.value);
                     }}
                 />
             )}
         </>
     );
-};
+});
 
 export type DehashedQueryType =
     | "email"
@@ -218,26 +252,72 @@ type SelectValue = {
     value: DehashedQueryType;
 };
 
-const DEHASHED_SEARCH_TYPES: Array<SelectValue> = [
-    { label: "Domain", value: "domain" },
-    { label: "Email", value: "email" },
-    { label: "Name", value: "name" },
-    { label: "Username", value: "username" },
-    { label: "Password", value: "password" },
-    { label: "Hashed password", value: "hashed_password" },
-    { label: "Address", value: "address" },
-    { label: "Phone", value: "phone" },
-    { label: "IP Address", value: "ip_address" },
-    { label: "Vin", value: "vin" },
-];
+const DEHASHED_SEARCH_TYPES = {
+    domain: { label: "Domain", value: "domain" },
+    email: { label: "Email", value: "email" },
+    name: { label: "Name", value: "name" },
+    username: { label: "Username", value: "username" },
+    password: { label: "Password", value: "password" },
+    hashed_password: { label: "Hashed password", value: "hashed_password" },
+    address: { label: "Address", value: "address" },
+    phone: { label: "Phone", value: "phone" },
+    ip_address: { label: "IP Address", value: "ip_address" },
+    vin: { label: "Vin", value: "vin" },
+} as const satisfies {
+    [index: string]: SelectValue;
+};
 
 export const DehashedAttackInput = forwardRef<HTMLInputElement, AttackInputProps<Query>>((props, ref) => {
-    const [search, setSearch] = useState<string>(props.value !== undefined ? Object.keys(props.value)[0] || "" : "");
-    const [type, setType] = useState<null | SelectValue>(
-        props.value && search ? (props.value as any)[search]?.simple || "" : "",
-    );
+    const { value, valueKey, onUpdate, ...htmlProps } = props;
 
-    const { as, value, label, valueKey, onUpdate, ref: _, onChange, ...htmlProps } = props;
+    // TODO: allow switching between simple/exact/regex + possibly add OR & AND here
+    type WantedSearchType = "simple" | "exact" | "regex";
+
+    function getValue(v: SearchType): [string, WantedSearchType] {
+        if ("simple" in v) {
+            return [v.simple, "simple"];
+        } else if ("exact" in v) {
+            return [v.exact, "exact"];
+        } else if ("regex" in v) {
+            return [v.regex, "regex"];
+        } else {
+            return ["", "simple"];
+        }
+    }
+
+    function getDefault(): [SelectValue | null, string, WantedSearchType] {
+        if (value) {
+            if ("domain" in value) {
+                return [DEHASHED_SEARCH_TYPES.domain, ...getValue(value.domain)];
+            } else if ("email" in value) {
+                return [DEHASHED_SEARCH_TYPES.email, ...getValue(value.email)];
+            } else if ("name" in value) {
+                return [DEHASHED_SEARCH_TYPES.name, ...getValue(value.name)];
+            } else if ("username" in value) {
+                return [DEHASHED_SEARCH_TYPES.username, ...getValue(value.username)];
+            } else if ("password" in value) {
+                return [DEHASHED_SEARCH_TYPES.password, ...getValue(value.password)];
+            } else if ("hashedPassword" in value) {
+                return [DEHASHED_SEARCH_TYPES.hashed_password, ...getValue(value.hashedPassword)];
+            } else if ("address" in value) {
+                return [DEHASHED_SEARCH_TYPES.address, ...getValue(value.address)];
+            } else if ("phone" in value) {
+                return [DEHASHED_SEARCH_TYPES.phone, ...getValue(value.phone)];
+            } else if ("ipAddress" in value) {
+                return [DEHASHED_SEARCH_TYPES.ip_address, ...getValue(value.ipAddress)];
+            } else if ("vin" in value) {
+                return [DEHASHED_SEARCH_TYPES.vin, ...getValue(value.vin)];
+            } else {
+                const _exhaustiveCheck: never = value;
+            }
+        }
+        return [null, "", "simple"];
+    }
+
+    const [defaultType, defaultSearch] = getDefault();
+
+    const [search, setSearch] = useState<string>(defaultSearch);
+    const [type, setType] = useState<null | SelectValue>(defaultType);
 
     function update(type: null | SelectValue, search: string) {
         let query;
@@ -277,15 +357,15 @@ export const DehashedAttackInput = forwardRef<HTMLInputElement, AttackInputProps
                 break;
         }
 
-        props.onUpdate(props.valueKey, query);
+        onUpdate(valueKey, query);
     }
 
     return (
         <>
             <Select<SelectValue>
-                key={props.valueKey + "_select"}
+                key={valueKey + "_select"}
                 required
-                options={DEHASHED_SEARCH_TYPES}
+                options={Object.values(DEHASHED_SEARCH_TYPES)}
                 styles={selectStyles("default")}
                 value={type}
                 onChange={(type) => {
@@ -295,7 +375,7 @@ export const DehashedAttackInput = forwardRef<HTMLInputElement, AttackInputProps
             />
             <Input
                 ref={ref}
-                key={props.valueKey + "_value"}
+                key={valueKey + "_value"}
                 placeholder={"dehashed query"}
                 {...htmlProps}
                 value={search}
