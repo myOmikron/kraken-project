@@ -287,8 +287,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                     handleApiError(async ({ uuid }) => {
                                         await Promise.all(
                                             affectedUploaded.map((a) => {
-                                                console.log(a);
-                                                return Api.workspaces.findings
+                                                Api.workspaces.findings
                                                     .addAffected(workspace, uuid, a)
                                                     .then(handleApiError());
                                             }),
