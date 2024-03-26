@@ -1,7 +1,6 @@
 import React from "react";
-import { FullWorkspace, SimpleUser, SimpleWorkspace } from "../../../api/generated";
+import { SimpleUser, SimpleWorkspace } from "../../../api/generated";
 import { Api, UUID } from "../../../api/api";
-import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
 import "../../../styling/invitation.css";
 import WorkspaceIcon from "../../../svg/workspace";
@@ -22,7 +21,7 @@ export default class Invitation extends React.Component<InvitationProps, Invitat
         this.state = {};
     }
 
-    componentDidUpdate(prevProps: Readonly<InvitationProps>, prevState: Readonly<InvitationState>, snapshot?: any) {
+    componentDidUpdate(prevProps: Readonly<InvitationProps>) {
         if (prevProps !== this.props) {
             this.setState({ invitationPopup: true });
         }

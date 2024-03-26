@@ -1,10 +1,6 @@
-import React, { CSSProperties } from "react";
-type CyberElProps = {
-    id?: string;
-    className?: string;
-    style?: CSSProperties;
-    [x: string]: any;
-};
+import React from "react";
+
+type CyberElProps = React.SVGProps<SVGSVGElement>;
 
 export default function NetworkIcon(props: CyberElProps) {
     return (

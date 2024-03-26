@@ -2,7 +2,7 @@ import React, { forwardRef } from "react";
 
 export type CheckboxProps = {
     value: boolean;
-    onChange: (newValue: boolean) => any;
+    onChange: (newValue: boolean) => void;
     autoFocus?: boolean;
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "autoFocus" | "type">;
 
@@ -14,7 +14,7 @@ export const Checkbox = forwardRef((props: CheckboxProps, ref) => {
             setTimeout(function () {
                 element.focus();
             }, 10);
-        } // eslint-disable-next-line
+        }
 
         if (typeof ref == "function") ref(element);
         else if (ref) ref.current = element;

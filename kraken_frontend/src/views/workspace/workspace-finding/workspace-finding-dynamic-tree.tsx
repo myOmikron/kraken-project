@@ -189,13 +189,14 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                     const uuid = typeof search == "string" ? search : search.uuid;
                     let found = false;
                     let copied: { [uuid: string]: DynamicTreeNode } = {};
+
                     function mutate(n: DynamicTreeNode): DynamicTreeNode {
                         if (copied[n.uuid]) return copied[n.uuid];
                         if (n.uuid == uuid) {
                             found = true;
                             return (copied[n.uuid] = update(n));
                         } else {
-                            let copy: DynamicTreeNode = {
+                            const copy: DynamicTreeNode = {
                                 ...n,
                             };
                             copied[n.uuid] = copy;
@@ -205,7 +206,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                     }
 
                     setRoots((r) => {
-                        let res = r.map((r) => {
+                        const res = r.map((r) => {
                             copied = {};
                             return mutate(r);
                         });
@@ -385,7 +386,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                 api.getRoots().then((findingsList) => {
                     const findings = Object.fromEntries(findingsList.map((f) => [f.uuid, f]));
                     setRoots((roots) =>
-                        roots.map((root, index) => ({
+                        roots.map((root) => ({
                             ...root,
                             children: root.children
                                 ?.filter((a) => findings[root.uuid].affected.some((f) => f.affectedUuid == a.uuid))
@@ -399,7 +400,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
             reloadRoot() {
                 api.getRoots().then((findingsList) => {
                     setRoots((roots) =>
-                        roots.map<DynamicTreeNode>((root, index) => {
+                        roots.map<DynamicTreeNode>((root) => {
                             const finding = findingsList.find((f) => f.uuid == root.uuid);
                             if (!finding) return root;
                             return {
@@ -420,18 +421,18 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                 });
             },
             addTag(value, negate) {
-                let existing = filterTags.findIndex((t) => t.uuid == value.uuid);
+                const existing = filterTags.findIndex((t) => t.uuid == value.uuid);
                 if (negate && existing != -1)
                     setFilterTags((tags) => {
-                        let existing = tags.findIndex((t) => t.uuid == value.uuid);
+                        const existing = tags.findIndex((t) => t.uuid == value.uuid);
                         if (existing == -1) return tags;
-                        let copy = [...tags];
+                        const copy = [...tags];
                         copy.splice(existing, 1);
                         return copy;
                     });
                 else if (!negate && existing == -1) {
                     setFilterTags((tags) => {
-                        let existing = tags.findIndex((t) => t.uuid == value.uuid);
+                        const existing = tags.findIndex((t) => t.uuid == value.uuid);
                         if (existing != -1) return tags;
                         return [...tags, value];
                     });
@@ -452,7 +453,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
 
             api.getRoots().then((findings): void => {
                 if (mutator.shouldAbort()) return;
-                let roots = [];
+                const roots = [];
                 for (const finding of findings) {
                     const root: DynamicTreeNode = {
                         uuid: finding.uuid,
@@ -486,13 +487,14 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
         }
 
         useEffect(() => {
-            let lowerCaseFilterText = filterText?.toLowerCase() ?? "";
-            let toShow =
+            const lowerCaseFilterText = filterText?.toLowerCase() ?? "";
+            const toShow =
                 filterTags.length || lowerCaseFilterText != ""
                     ? roots.map((root) => {
                           // TODO: performance optimize
                           type T = DynamicTreeNode & { _hit: boolean };
-                          let visited: { [uuid: string]: T } = {};
+                          const visited: { [uuid: string]: T } = {};
+
                           function markTagged(n: DynamicTreeNode, parents: T[]): T {
                               if (visited[n.uuid]) return visited[n.uuid];
                               const v: T = (visited[n.uuid] = {
@@ -505,18 +507,21 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                               v.children = v.children?.map((c) => markTagged(c, [...parents, v]));
                               return v;
                           }
-                          let tagged = markTagged(root, []);
-                          let visited2: { [uuid: string]: DynamicTreeNode } = {};
+
+                          const tagged = markTagged(root, []);
+                          const visited2: { [uuid: string]: DynamicTreeNode } = {};
+
                           function filterTagged(n: T): DynamicTreeNode {
                               if (visited2[n.uuid]) return visited2[n.uuid];
                               if (!("_hit" in n)) return n;
-                              let { _hit, ...node } = n;
+                              const { _hit, ...node } = n;
                               visited2[n.uuid] = node;
                               node.children = node.children
                                   ?.filter((v) => (v as T)._hit)
                                   .map((v) => filterTagged(v as T));
                               return node;
                           }
+
                           return filterTagged(tagged);
                       })
                     : roots;
@@ -700,7 +705,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                                           <TagIcon />
                                           <span>Manage tags...</span>
                                       </>,
-                                      async (e) => {
+                                      async () => {
                                           setTagging(await resolveItem(contextWorkspace, item.type, item.uuid));
                                       },
                                   ],

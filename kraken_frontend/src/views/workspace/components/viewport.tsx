@@ -106,12 +106,12 @@ export const Viewport = forwardRef(
                 };
                 const wheel = (e: WheelEvent) => {
                     setZoom((zoom) => {
-                        let newZoom = Math.max(minZoom, Math.min(maxZoom, zoom - e.deltaY / 480));
+                        const newZoom = Math.max(minZoom, Math.min(maxZoom, zoom - e.deltaY / 480));
                         setPosition((position) => {
-                            let bounds = ref.current!.getBoundingClientRect();
+                            const bounds = ref.current!.getBoundingClientRect();
                             // offset by mouse cursor position
-                            let ox = e.clientX - bounds.left - bounds.width * originX!;
-                            let oy = e.clientY - bounds.top - bounds.height * originY!;
+                            const ox = e.clientX - bounds.left - bounds.width * originX!;
+                            const oy = e.clientY - bounds.top - bounds.height * originY!;
                             // global origin / scale -> origin
                             let lx = (position[0] - ox) / zoomToScale(zoom);
                             let ly = (position[1] - oy) / zoomToScale(zoom);
@@ -141,7 +141,7 @@ export const Viewport = forwardRef(
         }, [ref]);
 
         const padding = 300;
-        let cx = {
+        const cx = {
             minX: Math.min(...connections.map((v) => Math.min(v.from[0], v.to[0]))) - padding,
             minY: Math.min(...connections.map((v) => Math.min(v.from[1], v.to[1]))) - padding,
             maxX: Math.max(...connections.map((v) => Math.max(v.from[0], v.to[0]))) + padding,

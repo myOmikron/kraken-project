@@ -13,7 +13,7 @@ import { PopupActions } from "reactjs-popup/dist/types";
 import "../../../styling/context-menu.css";
 
 type ClickHandlerArgs = { ctrlKey: boolean; altKey: boolean };
-type ClickHandler = (e: ClickHandlerArgs) => any;
+type ClickHandler = (e: ClickHandlerArgs) => void;
 
 export type PlainMenuItem = [ReactNode | "pending" | undefined, ClickHandler | undefined];
 export type GroupedMenuItem = PlainMenuItem | { icon?: ReactNode; group: string; items: ContextMenuEntry[] };
@@ -23,7 +23,7 @@ export type ContextMenuEntry = PlainMenuItem | GroupedMenuItem | LazyMenuItem;
 export type ContextMenuProps<E extends ElementType = "div"> = PropsWithChildren<{
     as?: E;
     menu?: ContextMenuEntry[];
-    onOpen?: Function;
+    onOpen?: () => void;
 }> &
     React.ComponentPropsWithoutRef<E>;
 
@@ -87,7 +87,7 @@ export default function ContextMenu<E extends ElementType = "div">({
         if (submenuOpen > 0) return;
         setOpen(false);
         // restore focus:
-        let c = componentRef.current;
+        const c = componentRef.current;
         if (typeof c == "object" && "focus" in c && typeof c.focus == "function") c.focus();
     };
 
@@ -156,9 +156,9 @@ function ContextMenuEntryRenderer(props: {
     v: ContextMenuEntry;
     autoFocus?: boolean;
     open: boolean;
-    onClick: (handler: ClickHandler, e: React.MouseEvent<HTMLLIElement>) => any;
-    onKeyDown: (handler: ClickHandler, e: React.KeyboardEvent<HTMLLIElement>) => any;
-    useMouseNav: () => any;
+    onClick: (handler: ClickHandler, e: React.MouseEvent<HTMLLIElement>) => void;
+    onKeyDown: (handler: ClickHandler, e: React.KeyboardEvent<HTMLLIElement>) => void;
+    useMouseNav: () => void;
     setSubmenuOpen: Dispatch<React.SetStateAction<number>>;
 }) {
     return Array.isArray(props.v) ? (
@@ -241,7 +241,7 @@ function ContextSubMenu(
                     className={`group ${open ? "open" : ""}`}
                     tabIndex={0}
                     role="menuitem"
-                    onMouseOver={(e) => props.useMouseNav()}
+                    onMouseOver={() => props.useMouseNav()}
                     onKeyDown={(e) => (e.key == "ArrowRight" || e.key == "Enter") && setOpen(true)}
                 >
                     {props.group}
@@ -274,16 +274,16 @@ function ContextSubMenu(
 type MenuItemRendererProps = {
     item: PlainMenuItem | undefined;
     autoFocus?: boolean;
-    onClick: (handler: ClickHandler, e: React.MouseEvent<HTMLLIElement>) => any;
-    onKeyDown: (handler: ClickHandler, e: React.KeyboardEvent<HTMLLIElement>) => any;
-    useMouseNav: () => any;
+    onClick: (handler: ClickHandler, e: React.MouseEvent<HTMLLIElement>) => void;
+    onKeyDown: (handler: ClickHandler, e: React.KeyboardEvent<HTMLLIElement>) => void;
+    useMouseNav: () => void;
 };
 
 function MenuItemRenderer({ item, autoFocus, onClick, onKeyDown, useMouseNav }: MenuItemRendererProps) {
     const ref = useRef<HTMLLIElement>(null);
     useEffect(() => {
         if (autoFocus && ref.current) {
-            let e = ref.current;
+            const e = ref.current;
             requestAnimationFrame(() => e.focus());
         }
     }, [item]);
@@ -296,7 +296,7 @@ function MenuItemRenderer({ item, autoFocus, onClick, onKeyDown, useMouseNav }: 
             tabIndex={0}
             autoFocus={autoFocus}
             role="menuitem"
-            onMouseOver={(e) => useMouseNav()}
+            onMouseOver={() => useMouseNav()}
         >
             Loading...
         </li>
@@ -311,7 +311,7 @@ function MenuItemRenderer({ item, autoFocus, onClick, onKeyDown, useMouseNav }: 
             role="menuitem"
             onClick={(e) => item[1] && onClick(item[1], e)}
             onKeyDown={(e) => item[1] && onKeyDown(item[1], e)}
-            onMouseOver={(e) => useMouseNav()}
+            onMouseOver={() => useMouseNav()}
         >
             {item[0]}
         </li>
@@ -355,12 +355,12 @@ export function useLazyMenuItems(
     items: () => Promise<ContextMenuEntry[]> | ContextMenuEntry[],
     open: boolean,
 ): ContextMenuEntry[] | undefined {
-    let [result, setResult] = useState<ContextMenuEntry[] | undefined>(undefined);
-    let [fn] = useState(items());
+    const [result, setResult] = useState<ContextMenuEntry[] | undefined>(undefined);
+    const [fn] = useState(items());
     useEffect(() => {
         if (result === undefined && open) {
             (async function () {
-                let v = await fn;
+                const v = await fn;
                 setResult(v);
             })();
         }

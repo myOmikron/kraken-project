@@ -2,36 +2,33 @@ import { toast } from "react-toastify";
 import { Result } from "./result";
 import { ApiError } from "../api/error";
 import { inspectError } from "../context/user";
-import { OsType } from "../api/generated";
-import AnonymousIcon from "../svg/anonymous";
-import TuxIcon from "../svg/tux";
-import AppleIcon from "../svg/apple";
-import WindowsIcon from "../svg/windows";
-import FreeBSDIcon from "../svg/freebsd";
-import AndroidIcon from "../svg/android";
 import React from "react";
 
 export namespace ObjectFns {
     /** {@link ObjectConstructor.keys `Object.keys`} which preserves the keys' type */
-    export function keys<Key extends string>(obj: Record<Key, any>): Array<Key> {
-        // @ts-ignore
+    export function keys<Key extends string>(obj: Partial<Record<Key, unknown>>): Array<Key> {
+        // @ts-ignore: DOM type declaration aren't good enough, that's this function's whole point
         return Object.keys(obj);
     }
 
     /** {@link ObjectConstructor.entries `Object.entries`} which preserves the keys' type */
-    export function entries<Key extends string, Value>(obj: Record<Key, Value>): Array<[Key, Value]> {
-        // @ts-ignore
+    export function entries<Key extends string, Value>(obj: Partial<Record<Key, Value>>): Array<[Key, Value]> {
+        // @ts-ignore: DOM type declaration aren't good enough, that's this function's whole point
         return Object.entries(obj);
     }
 
-    export function isEmpty(obj: Record<string, any>): boolean {
+    export function isObject(obj: unknown): obj is object {
+        return typeof obj === "object" && obj !== null;
+    }
+
+    export function isEmpty(obj: Record<string, unknown>): boolean {
         for (const key in obj) {
             return false;
         }
         return true;
     }
 
-    export function len(obj: Record<string, any>): number {
+    export function len(obj: Record<string, unknown>): number {
         let len = 0;
         for (const _ in obj) {
             len += 1;
@@ -39,14 +36,14 @@ export namespace ObjectFns {
         return len;
     }
 
-    export function deepEquals(lhs: any, rhs: any): boolean {
+    export function deepEquals(lhs: unknown, rhs: unknown): boolean {
         if (typeof lhs != typeof rhs) {
             return false;
         } else if (Array.isArray(lhs) && Array.isArray(rhs))
             return lhs.length == rhs.length && lhs.every((v, i) => deepEquals(v, rhs[i]));
-        else if (typeof lhs == "object") {
-            let lhsKeys = Object.keys(lhs);
-            let rhsKeys = Object.keys(rhs);
+        else if (ObjectFns.isObject(lhs) && ObjectFns.isObject(rhs)) {
+            const lhsKeys = ObjectFns.keys(lhs);
+            const rhsKeys = ObjectFns.keys(rhs);
             return lhsKeys.length == rhsKeys.length && lhsKeys.every((k) => deepEquals(lhs[k], rhs[k]));
         } else {
             return lhs === rhs;
@@ -57,8 +54,8 @@ export namespace ObjectFns {
         if (typeof v === "object" && v !== null) {
             if (Array.isArray(v)) return v.map(deepDuplicate) as T;
             else {
-                let ret: any = {};
-                for (const key of Object.keys(v)) ret[key] = deepDuplicate((v as any)[key]);
+                const ret: Partial<T> = {};
+                for (const key of ObjectFns.keys(v)) ret[key] = deepDuplicate(v[key]);
                 return ret as T;
             }
         } else {
@@ -72,7 +69,7 @@ export namespace ObjectFns {
     ///
     /// Not very performant, only use for small-ish sets of data.
     export function uniqueObjects<T>(array: T[]): T[] {
-        let res: T[] = [];
+        const res: T[] = [];
         for (const v of array) {
             let exists = false;
             for (const existing of res) {
@@ -93,9 +90,9 @@ export namespace ObjectFns {
     export function transpose2D<T>(array: T[][]): T[][] {
         if (!array.length) return array;
 
-        let w = array.length;
-        let h = array[0].length;
-        let ret = new Array(h);
+        const w = array.length;
+        const h = array[0].length;
+        const ret = new Array(h);
         for (let i = 0; i < h; i++) ret[i] = new Array(w);
         for (const v of array) {
             if (v.length != h) throw new Error("passed in jagged array into transpose2D");
@@ -148,7 +145,7 @@ export function check(checks: Array<[boolean, string]>): boolean {
  * @param then function to execute when the API returned an ok
  * @return a function which should be passed to a `Promise.then`
  */
-export function handleApiError<T>(then?: (ok: T) => any): (result: Result<T, ApiError>) => void;
+export function handleApiError<T>(then?: (ok: T) => void): (result: Result<T, ApiError>) => void;
 /**
  * Take a {@link Result} from the api and handle the `Err` case.
  * When the case is `Ok` call the optional `then` argument with it.
@@ -164,8 +161,11 @@ export function handleApiError<T>(then?: (ok: T) => any): (result: Result<T, Api
  * @param result {@link Result} to handle
  * @param then optional function to call in the `Ok` case
  */
-export function handleApiError<T>(result: Result<T, ApiError>, then?: (ok: T) => any): void;
-export function handleApiError<T>(then_or_result?: ((ok: T) => any) | Result<T, ApiError>, then?: (ok: T) => any): any {
+export function handleApiError<T>(result: Result<T, ApiError>, then?: (ok: T) => void): void;
+export function handleApiError<T>(
+    then_or_result?: ((ok: T) => void) | Result<T, ApiError>,
+    then?: (ok: T) => void,
+): ((result: Result<T, ApiError>) => void) | undefined {
     if (then_or_result !== undefined && then_or_result instanceof Result) {
         then_or_result.match(then || noop, handleError);
     } else {
@@ -173,11 +173,14 @@ export function handleApiError<T>(then_or_result?: ((ok: T) => any) | Result<T, 
         else return (result: Result<T, ApiError>) => result.match(then_or_result, handleError);
     }
 }
+
 function handleError(error: ApiError) {
     inspectError(error);
     toast.error(error.message);
 }
+
 function noop<T>(_ok: T) {}
+
 function noopHandler<T>(result: Result<T, ApiError>) {
     result.match(noop, handleError);
 }
@@ -223,10 +226,10 @@ export async function copyToClipboard(text: string | null) {
  * }, []); // <- no dependency here
  * ```
  */
-export function useStableObj<T extends Record<string, any>>(obj: T): T {
+export function useStableObj<T extends Record<string, unknown>>(obj: T): T {
     const { current } = React.useRef(obj);
     for (const [key, value] of Object.entries(obj)) {
-        // @ts-ignore
+        // @ts-ignore TS2862: obj should only ever be an object literal which is mutable
         current[key] = value;
     }
     return current;

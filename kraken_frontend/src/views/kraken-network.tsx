@@ -78,14 +78,14 @@ export default class KrakenNetwork extends React.Component<KrakenNetworkProps, K
     }
 
     render() {
-        let leechesLeft = [],
+        const leechesLeft = [],
             leechesRight = [];
         if (this.state.leeches) {
-            let half = Math.ceil(this.state.leeches.length / 2);
+            const half = Math.ceil(this.state.leeches.length / 2);
             for (let i = 0; i < this.state.leeches.length; i++) {
                 const l = this.state.leeches[i];
 
-                let leech = (
+                const leech = (
                     <tr
                         ref={(e) => {
                             if (i < half) {
@@ -147,15 +147,15 @@ export default class KrakenNetwork extends React.Component<KrakenNetworkProps, K
 
             for (const item of this.leftItems) {
                 if (item && this.leftTable) {
-                    let left = item.offsetWidth + item.offsetLeft + this.leftTable.offsetLeft;
-                    let top = item.offsetTop + Math.round(item.offsetHeight / 2) + this.leftTable.offsetTop;
+                    const left = item.offsetWidth + item.offsetLeft + this.leftTable.offsetLeft;
+                    const top = item.offsetTop + Math.round(item.offsetHeight / 2) + this.leftTable.offsetTop;
                     lines.push(curve(leftTopStartLeft, leftTopStartTop, left, top));
                 }
             }
             for (const item of this.rightItems) {
                 if (item && this.rightTable) {
-                    let left = item.offsetLeft + this.rightTable.offsetLeft;
-                    let top = item.offsetTop + Math.round(item.offsetHeight / 2) + this.rightTable.offsetTop;
+                    const left = item.offsetLeft + this.rightTable.offsetLeft;
+                    const top = item.offsetTop + Math.round(item.offsetHeight / 2) + this.rightTable.offsetTop;
                     lines.push(curve(rightTopStartLeft, rightTopStartTop, left, top));
                 }
             }

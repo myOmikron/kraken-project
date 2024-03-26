@@ -82,6 +82,7 @@ export class UserProvider extends React.Component<UserProviderProps, UserProvide
         this.fetchUser();
 
         // Register as global singleton
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         if (USER_PROVIDER === null) USER_PROVIDER = this;
         else if (USER_PROVIDER === this) console.error("UserProvider did mount twice");
         else console.error("Two instances of UserProvider are used");

@@ -25,7 +25,7 @@ export default function ServiceName({ service, pretty }: { service: FullService 
         if (relations !== undefined) return;
 
         (async function () {
-            let result = await Api.workspaces.services.relations(service.workspace, service.uuid);
+            const result = await Api.workspaces.services.relations(service.workspace, service.uuid);
             handleApiError(result, (rels) => {
                 setRelations(rels);
             });

@@ -15,7 +15,7 @@ type OsIconProps = {
     style?: React.CSSProperties;
 };
 export default function OsIcon(props: OsIconProps) {
-    let style: any = { ...props.style };
+    const style = { ...props.style };
     if (props.size !== undefined) style.width = style.height = props.size;
     let icon;
     switch (props.os) {

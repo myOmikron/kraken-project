@@ -27,9 +27,9 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
     constructor(props: GenericAttackFormProps) {
         super(props);
 
-        let resetValue: GenericAttackFormState["resetValue"] = {};
+        const resetValue: GenericAttackFormState["resetValue"] = {};
         for (const key of Object.keys(props.attack.inputs.inputs)) {
-            let input = props.attack.inputs.inputs[key];
+            const input = props.attack.inputs.inputs[key];
             if ("fixed" in input) {
                 resetValue[key] = input.fixed;
             } else {
@@ -37,11 +37,11 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
             }
         }
 
-        let value = ObjectFns.deepDuplicate(resetValue);
+        const value = ObjectFns.deepDuplicate(resetValue);
         // if pre-fill is a single value, just embed the value
         if (Object.keys(props.prefilled).every((k) => props.prefilled[k].length == 1)) {
             for (const k of Object.keys(props.prefilled)) {
-                let input = props.attack.inputs.inputs[k];
+                const input = props.attack.inputs.inputs[k];
                 value[k] = "multi" in input && input.multi ? [props.prefilled[k][0]] : props.prefilled[k][0];
             }
         }
@@ -54,11 +54,11 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
         };
     }
 
-    componentDidUpdate(prevProps: Readonly<GenericAttackFormProps>, prevState: Readonly<GenericAttackFormState>) {
+    componentDidUpdate(prevProps: Readonly<GenericAttackFormProps>) {
         if (this.props.attack.inputs.inputs != prevProps.attack.inputs.inputs) {
-            let resetValue: GenericAttackFormState["resetValue"] = {};
+            const resetValue: GenericAttackFormState["resetValue"] = {};
             for (const key of Object.keys(this.props.attack.inputs.inputs)) {
-                let input = this.props.attack.inputs.inputs[key];
+                const input = this.props.attack.inputs.inputs[key];
                 if ("fixed" in input) {
                     resetValue[key] = input.fixed;
                 } else {
@@ -74,19 +74,18 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
     }
 
     startAttack() {
-        let params: GenericAttackFormState["value"] = {
+        const params: GenericAttackFormState["value"] = {
             ...this.state.value,
             workspaceUuid: this.context.workspace.uuid,
         };
         let needMultiCallArgs = [];
         for (const key of Object.keys(this.props.attack.inputs.inputs)) {
-            let input = this.props.attack.inputs.inputs[key];
+            const input = this.props.attack.inputs.inputs[key];
             if (this.usePrefill(key)) {
                 needMultiCallArgs.push(key);
             }
 
-            if ("fixed" in input) {
-            } else {
+            if (!("fixed" in input)) {
                 if (input.required && !this.usePrefill(key) && (params[key] === undefined || params[key] === "")) {
                     toast.error(input.label + " must not be empty");
                     return;
@@ -105,12 +104,12 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
 
         if (
             needMultiCallArgs.every((k) => {
-                let input = this.props.attack.inputs.inputs[k];
+                const input = this.props.attack.inputs.inputs[k];
                 return "multi" in input && input.multi;
             })
         ) {
-            let keys: any[] = [];
-            let values: any[][] = [];
+            const keys: any[] = [];
+            const values: any[][] = [];
 
             for (const key of needMultiCallArgs) {
                 keys.push(key);
@@ -122,7 +121,7 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
         }
 
         function send(attack: GenericAttackFormProps["attack"], params: any) {
-            let wrappedParams: any = {};
+            const wrappedParams: any = {};
             wrappedParams[attack.inputs.jsonKey] = params;
             console.log("API call", attack.inputs.endpoint, JSON.stringify(wrappedParams));
             return handleError(
@@ -137,12 +136,12 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
                 this.afterAttackHandler();
             });
         } else {
-            let copies: (typeof params)[] = [];
+            const copies: (typeof params)[] = [];
             if (len === undefined) throw new Error("impossible state");
             for (let i = 0; i < len; i++) {
-                let copy = { ...params };
+                const copy = { ...params };
                 for (const k of needMultiCallArgs) {
-                    let input = this.props.attack.inputs.inputs[k];
+                    const input = this.props.attack.inputs.inputs[k];
                     copy[k] = this.props.prefilled[k][i];
                     if (!("fixed" in input)) {
                         if (input.required && copy[k] === undefined)
@@ -173,11 +172,11 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
             checkAllStarted();
             for (const copy of copies) {
                 send(this.props.attack, copy).then(
-                    (f) => {
+                    () => {
                         finished++;
                         checkAllStarted();
                     },
-                    (e) => {
+                    () => {
                         failed++;
                         checkAllStarted();
                     },
@@ -188,7 +187,7 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
 
     // This is called after attacks are successfully started.
     afterAttackHandler() {
-        let first = this.inputRefs.find((v) => v);
+        const first = this.inputRefs.find((v) => v);
         if (first) {
             first.focus();
             if ("select" in first && typeof first["select"] == "function") first.select();
@@ -200,8 +199,8 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
     }
 
     render() {
-        let groups: { [name: string]: JSX.Element[] } = {};
-        let groupOrder: string[] = [];
+        const groups: { [name: string]: JSX.Element[] } = {};
+        const groupOrder: string[] = [];
 
         function getGroup(name: string) {
             if (name in groups) return groups[name];
@@ -210,10 +209,9 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
         }
 
         this.inputRefs = [];
-        let i = 0;
 
         Object.keys(this.props.attack.inputs.inputs).map((key, i) => {
-            let input = this.props.attack.inputs.inputs[key];
+            const input = this.props.attack.inputs.inputs[key];
             if ("fixed" in input) {
                 // should we show fixed inputs? could show them here
             } else if (this.usePrefill(key)) {
@@ -243,8 +241,8 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
                     </>,
                 );
             } else {
-                let Type = input.type;
-                let row = (
+                const Type = input.type;
+                const row = (
                     <Type
                         {...input.renderProps}
                         ref={(e) => (this.inputRefs[i++] = e)}
@@ -256,7 +254,7 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
                         required={input.required ?? false}
                         autoFocus={i == 0}
                         onUpdate={(k, v) => {
-                            let value = this.state.value;
+                            const value = this.state.value;
                             value[k] = (input as any).multi ? [v] : v;
                             this.setState({ value });
                         }}
@@ -292,8 +290,8 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
     }
 }
 
-function CollapsibleGroup(props: { children: any; label: string; startCollapsed?: boolean }) {
-    let [collapsed, setCollapsed] = useState(props.startCollapsed ?? false);
+function CollapsibleGroup(props: { children: React.ReactNode; label: string; startCollapsed?: boolean }) {
+    const [collapsed, setCollapsed] = useState(props.startCollapsed ?? false);
 
     return (
         <fieldset className={collapsed ? "collapsed" : ""}>

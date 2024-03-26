@@ -3,9 +3,10 @@ import { Api } from "../../../api/api";
 import { PortOrRange, Query } from "../../../api/generated";
 import Checkbox from "../../../components/checkbox";
 import Input from "../../../components/input";
-import SelectMenu from "../../../components/select-menu";
 import { handleApiError } from "../../../utils/helper";
 import { parseUserPorts } from "../../../utils/ports";
+import Select from "react-select";
+import { selectStyles } from "../../../components/select-menu";
 
 export interface IAttackInputProps extends Omit<React.HTMLProps<HTMLElement>, "ref"> {
     valueKey: string;
@@ -23,7 +24,7 @@ export interface AttackInputProps<T> extends IAttackInputProps {
 }
 
 export const StringAttackInput = forwardRef<HTMLInputElement, AttackInputProps<string>>((props, ref) => {
-    let { as, value, label, valueKey, onUpdate, ref: _, onChange, ...htmlProps } = props;
+    const { as, value, label, valueKey, onUpdate, ref: _, onChange, ...htmlProps } = props;
 
     return (
         <>
@@ -51,11 +52,11 @@ export function ConvertingAttackInput<T>(
         inputRef?: React.ForwardedRef<HTMLInputElement>;
     },
 ) {
-    let [errorInput, setErrorInput] = useState<string | undefined>(undefined);
+    const [errorInput, setErrorInput] = useState<string | undefined>(undefined);
 
-    let { as, value, label, valueKey, onChange, onUpdate, serialize, deserialize, ref: _, ...htmlProps } = props;
+    const { as, value, label, valueKey, onChange, onUpdate, serialize, deserialize, ref: _, ...htmlProps } = props;
 
-    let ref = useRef<HTMLInputElement | null>();
+    const ref = useRef<HTMLInputElement | null>();
 
     return (
         <>
@@ -110,7 +111,7 @@ export const NumberAttackInput = forwardRef<
         minimum?: number;
     }
 >((props, ref) => {
-    let minimum = props.minimum ?? 1;
+    const minimum = props.minimum ?? 1;
 
     return (
         <ConvertingAttackInput
@@ -142,7 +143,7 @@ export const DurationAttackInput = forwardRef<
 });
 
 export const BooleanAttackInput = forwardRef((props: AttackInputProps<boolean>, ref) => {
-    let { value, label, valueKey, onUpdate, ref: _, onChange, ...htmlProps } = props;
+    const { value, label, valueKey, onUpdate, ref: _, onChange, ...htmlProps } = props;
 
     return (
         <div className="checkbox">
@@ -161,7 +162,7 @@ export const BooleanAttackInput = forwardRef((props: AttackInputProps<boolean>, 
 });
 
 export const WordlistAttackInput = (props: AttackInputProps<string>) => {
-    let [wordlists, setWordlists] = useState<{ label: string; value: string }[] | null>(null);
+    const [wordlists, setWordlists] = useState<{ label: string; value: string }[] | null>(null);
 
     useEffect(() => {
         if (wordlists === null) {
@@ -175,7 +176,7 @@ export const WordlistAttackInput = (props: AttackInputProps<string>) => {
         }
     });
 
-    let { value, label, valueKey, onUpdate, ref: _, onChange, ...htmlProps } = props;
+    const { value, label, valueKey, onUpdate, ref: _, onChange, ...htmlProps } = props;
 
     return (
         <>
@@ -185,11 +186,11 @@ export const WordlistAttackInput = (props: AttackInputProps<string>) => {
             {wordlists === null ? (
                 <Input value="Loading..." onChange={() => {}} readOnly />
             ) : (
-                <SelectMenu
+                <Select<{ label: string; value: string }>
                     id={"wordlist"}
                     required
                     options={wordlists}
-                    theme={"default"}
+                    styles={selectStyles("default")}
                     value={wordlists.find((v) => v.value == props.value) ?? null}
                     onChange={(wordlist) => {
                         props.onUpdate(props.valueKey, wordlist?.value);
@@ -231,12 +232,12 @@ const DEHASHED_SEARCH_TYPES: Array<SelectValue> = [
 ];
 
 export const DehashedAttackInput = forwardRef<HTMLInputElement, AttackInputProps<Query>>((props, ref) => {
-    let [search, setSearch] = useState<string>(props.value !== undefined ? Object.keys(props.value)[0] || "" : "");
-    let [type, setType] = useState<null | SelectValue>(
+    const [search, setSearch] = useState<string>(props.value !== undefined ? Object.keys(props.value)[0] || "" : "");
+    const [type, setType] = useState<null | SelectValue>(
         props.value && search ? (props.value as any)[search]?.simple || "" : "",
     );
 
-    let { as, value, label, valueKey, onUpdate, ref: _, onChange, ...htmlProps } = props;
+    const { as, value, label, valueKey, onUpdate, ref: _, onChange, ...htmlProps } = props;
 
     function update(type: null | SelectValue, search: string) {
         let query;
@@ -281,11 +282,11 @@ export const DehashedAttackInput = forwardRef<HTMLInputElement, AttackInputProps
 
     return (
         <>
-            <SelectMenu
+            <Select<SelectValue>
                 key={props.valueKey + "_select"}
                 required
                 options={DEHASHED_SEARCH_TYPES}
-                theme={"default"}
+                styles={selectStyles("default")}
                 value={type}
                 onChange={(type) => {
                     setType(type);

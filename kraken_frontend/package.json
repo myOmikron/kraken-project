@@ -15,7 +15,8 @@
         "preview": "vite preview",
         "gen-api": "bash scripts/gen-api.sh",
         "ci": "prettier --check .",
-        "format": "prettier --write ."
+        "format": "prettier --write .",
+        "lint": "tsc && eslint src"
     },
     "dependencies": {
         "@monaco-editor/react": "^4.6.0",
@@ -37,8 +38,11 @@
         "@types/react": "^18.0.27",
         "@types/react-dom": "^18.0.10",
         "@vitejs/plugin-react-swc": "^3.0.0",
+        "eslint": "^8.57.0",
+        "eslint-plugin-react-hooks": "^4.6.0",
         "prettier": "3.2.5",
         "typescript": "^5.4.2",
+        "typescript-eslint": "^7.4.0",
         "vite": ">=4.5.2"
     }
 }

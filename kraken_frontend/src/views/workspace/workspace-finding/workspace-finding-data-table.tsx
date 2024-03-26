@@ -7,7 +7,7 @@ import RelationLeftIcon from "../../../svg/relation-left";
 import CertaintyIcon from "../components/certainty-icon";
 import { DataTabsSelector, useDataTabs } from "../components/data-tabs";
 import Domain from "../components/domain";
-import { FilterOutput, useFilter } from "../components/filter-input";
+import { UseFilterReturn, useFilter } from "../components/filter-input";
 import IpAddr from "../components/host";
 import PortNumber from "../components/port";
 import ServiceName from "../components/service";
@@ -43,7 +43,7 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
 
         useImperativeHandle(ref, () => ({
             addFilterColumn(column: string, value: string, negate: boolean) {
-                let filter: FilterOutput;
+                let filter: UseFilterReturn;
                 switch (dataTab) {
                     case "Domain":
                         filter = domainFilter;
@@ -57,9 +57,6 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                     case "Service":
                         filter = serviceFilter;
                         break;
-                    default:
-                        const exhaustiveCheck: never = dataTab;
-                        return;
                 }
                 filter.addColumn(column, value, negate);
             },

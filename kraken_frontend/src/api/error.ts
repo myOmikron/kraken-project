@@ -1,6 +1,3 @@
-import { Err, Ok, Result } from "../utils/result";
-import { RequiredError, ResponseError } from "./generated";
-
 export enum StatusCode {
     ArbitraryJSError = -2,
     JsonDecodeError = -1,

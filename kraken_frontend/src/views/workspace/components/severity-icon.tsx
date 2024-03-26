@@ -15,7 +15,7 @@ type SeverityIconProps = {
 export default function SeverityIcon(props: SeverityIconProps) {
     const { className, severity, tooltip } = props;
     if (!severity) return null;
-    let index =
+    const index =
         severity === FindingSeverity.Okay
             ? 0
             : severity === FindingSeverity.Low
@@ -35,7 +35,6 @@ export default function SeverityIcon(props: SeverityIconProps) {
         "severity-icon-critical",
         "neon",
     ] as const;
-    const look = 0;
     return (
         <Popup
             trigger={
@@ -83,6 +82,7 @@ type SeverityProps = {
     uuid: string;
     workspace: string;
 };
+
 export function Severity(props: SeverityProps) {
     const { severity, dataType, uuid, workspace } = props;
     const [findings, setFindings] = React.useState<ListFindings | null>(null);
@@ -91,20 +91,15 @@ export function Severity(props: SeverityProps) {
         if (findings !== null) return;
 
         (async function () {
-            let result;
             switch (dataType) {
                 case "Domain":
-                    return (result = Api.workspaces.domains
-                        .findings(workspace, uuid)
-                        .then(handleApiError(setFindings)));
+                    return Api.workspaces.domains.findings(workspace, uuid).then(handleApiError(setFindings));
                 case "Host":
-                    return (result = Api.workspaces.hosts.findings(workspace, uuid).then(handleApiError(setFindings)));
+                    return Api.workspaces.hosts.findings(workspace, uuid).then(handleApiError(setFindings));
                 case "Port":
-                    return (result = Api.workspaces.ports.findings(workspace, uuid).then(handleApiError(setFindings)));
+                    return Api.workspaces.ports.findings(workspace, uuid).then(handleApiError(setFindings));
                 case "Service":
-                    return (result = Api.workspaces.services
-                        .findings(workspace, uuid)
-                        .then(handleApiError(setFindings)));
+                    return Api.workspaces.services.findings(workspace, uuid).then(handleApiError(setFindings));
             }
         })();
     }, [workspace, uuid, findings, setFindings]);

@@ -1,6 +1,6 @@
 import { ROUTES } from "../../routes";
 import "../../styling/list-finding-definition.css";
-import { FindingSeverity, SimpleFindingDefinition } from "../../api/generated";
+import { SimpleFindingDefinition } from "../../api/generated";
 import React from "react";
 import Input from "../../components/input";
 import PlusIcon from "../../svg/plus";

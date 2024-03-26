@@ -1,9 +1,8 @@
 import React from "react";
-import { FullHost, FullWorkspace, SimpleHost } from "../../api/generated";
+import { FullHost } from "../../api/generated";
 import "../../styling/workspace-hosts.css";
 import Input from "../../components/input";
 import { Api } from "../../api/api";
-import { toast } from "react-toastify";
 import { ROUTES } from "../../routes";
 import OsIcon from "../../components/os-icon";
 import ArrowFirstIcon from "../../svg/arrow-first";
@@ -37,7 +36,7 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
     }
 
     async retrieveHosts() {
-        let uuid = this.context.workspace.uuid;
+        const uuid = this.context.workspace.uuid;
         this.setState({ forUuid: uuid, hosts: [], total: null });
         await Api.workspaces.hosts
             .all(uuid, this.state.limit, this.state.offset)
@@ -48,11 +47,7 @@ export default class WorkspaceHosts extends React.Component<WorkspaceHostsProps,
         this.retrieveHosts().then();
     }
 
-    componentDidUpdate(
-        prevProps: Readonly<WorkspaceHostsProps>,
-        prevState: Readonly<WorkspaceHostsState>,
-        snapshot?: any,
-    ) {
+    componentDidUpdate(prevProps: Readonly<WorkspaceHostsProps>, prevState: Readonly<WorkspaceHostsState>) {
         if (
             this.context.workspace.uuid != this.state.forUuid ||
             prevState.offset !== this.state.offset ||

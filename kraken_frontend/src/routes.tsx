@@ -4,7 +4,6 @@ import { Router } from "./utils/router";
 import AdminUsers from "./views/admin/users";
 import AdminWorkspaces from "./views/admin/workspaces";
 import Home from "./views/home";
-import KnowledgeBase from "./views/knowledge-base";
 import { CreateFindingDefinition } from "./views/knowledge-base/create-finding-definition";
 import { EditFindingDefinition } from "./views/knowledge-base/edit-finding-definition";
 import { ListFindingDefinition } from "./views/knowledge-base/list-finding-definition";
@@ -110,7 +109,7 @@ export const ROUTES = {
                 ROUTES.WORKSPACE_ATTACKS.visit({ uuid: workspaceUuid });
                 return <></>;
             }
-            let { domains, hosts, ports, services } = hiddenParams;
+            const { domains, hosts, ports, services } = hiddenParams;
             return (
                 <ContentWithMenu>
                     <Workspace view={"attacks"} uuid={workspaceUuid}>

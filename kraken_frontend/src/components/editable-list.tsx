@@ -2,7 +2,7 @@ import Input from "./input";
 
 type EditableListProps = {
     value: Array<string>;
-    onChange: (newValue: Array<string>) => any;
+    onChange: (newValue: Array<string>) => void;
 };
 
 export default function EditableList(props: EditableListProps) {

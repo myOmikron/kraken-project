@@ -1,7 +1,6 @@
 import React from "react";
-import { loader, Monaco } from "@monaco-editor/react";
-import { editor, IDisposable, Uri } from "monaco-editor";
-import Loading from "../components/loading";
+import { Monaco } from "@monaco-editor/react";
+import { editor, IDisposable } from "monaco-editor";
 import { MONACO, MONACO_PROMISE } from "./monaco";
 import ITextModel = editor.ITextModel;
 import { EditorTarget } from "../api/generated";
@@ -199,7 +198,7 @@ export class ModelController {
      *
      * This listener will be created in the `constructor` and exist until `onUnmount`.
      */
-    websocketListener: ListenerHandle<any> | null = null;
+    websocketListener: ListenerHandle<"message.EditorChangedContent"> | null = null;
 
     /** Is `onRender` invoked for the first time? */
     firstRender = true;
@@ -341,10 +340,9 @@ export class ModelController {
             if (this.syncTarget === undefined) return;
 
             // Annoying workaround for the bad code generated from our openapi.json
-            // @ts-ignore
             const [key] = ObjectFns.keys(this.syncTarget);
-            // @ts-ignore
-            const equalsTargets = ObjectFns.deepEquals(event.target[key], this.syncTarget[key]);
+            // @ts-ignore: implicit any is fine, since deepEquals handles unknown
+            const equalsTargets = ObjectFns.deepEquals(event.target[key] as unknown, this.syncTarget[key] as unknown);
 
             if (equalsTargets) {
                 if (event.user.uuid === this.user) return; // TODO: might need more consideration

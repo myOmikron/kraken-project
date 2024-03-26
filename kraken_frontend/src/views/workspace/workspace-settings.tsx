@@ -5,7 +5,6 @@ import { Api } from "../../api/api";
 import { FullWorkspaceInvitation } from "../../api/generated";
 import Bubble from "../../components/bubble";
 import Input from "../../components/input";
-import SelectMenu from "../../components/select-menu";
 import Tag from "../../components/tag";
 import Textarea from "../../components/textarea";
 import USER_CONTEXT from "../../context/user";
@@ -14,6 +13,8 @@ import "../../styling/workspace-settings.css";
 import CloseIcon from "../../svg/close";
 import { handleApiError } from "../../utils/helper";
 import { WORKSPACE_CONTEXT } from "./workspace";
+import Select from "react-select";
+import { selectStyles } from "../../components/select-menu";
 
 type WorkspaceSettingsProps = {};
 type WorkspaceSettingsState = {
@@ -134,7 +135,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
     unarchiveWorkspace() {
         toast.promise(
             Api.workspaces.unarchive(this.context.workspace.uuid).then(
-                handleApiError((v) => {
+                handleApiError(() => {
                     this.setState({
                         isArchived: false,
                         unarchiveWorkspacePopup: false,
@@ -157,7 +158,7 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                         return this.context.workspace.owner.uuid !== s.uuid;
                     })
                     .map((s) => {
-                        let member = { label: s.displayName + " (" + s.username + ") ", value: s.uuid };
+                        const member = { label: s.displayName + " (" + s.username + ") ", value: s.uuid };
                         this.state.transferList.push(member);
                     });
             }),
@@ -169,14 +170,14 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
             handleApiError((u) => {
                 u.users
                     .filter((s) => {
-                        let users = [
+                        const users = [
                             ...this.context.workspace.members.map((x) => x.uuid),
                             this.context.workspace.owner.uuid,
                         ];
                         return !users.some((x) => x === s.uuid);
                     })
                     .map((s) => {
-                        let member = { label: s.displayName + " (" + s.username + ") ", value: s.uuid };
+                        const member = { label: s.displayName + " (" + s.username + ") ", value: s.uuid };
                         this.state.inviteList.push(member);
                     });
             }),
@@ -398,12 +399,12 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                     >
                         <div className="workspace-setting-popup">
                             <h2 className="sub-heading"> Invite member</h2>
-                            <SelectMenu
+                            <Select<SelectValue>
                                 options={this.state.inviteList}
-                                theme={"default"}
+                                styles={selectStyles("default")}
                                 value={this.state.selectedUser}
                                 onChange={(type) => {
-                                    this.setState({ selectedUser: type });
+                                    if (type) this.setState({ selectedUser: type });
                                 }}
                             />
                             <button className="button">Invite</button>
@@ -583,9 +584,9 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
                         <div className="workspace-settings-popup danger pane">
                             <div className="workspace-setting-popup">
                                 <h2 className="sub-heading"> Transfer ownership</h2>
-                                <SelectMenu
+                                <Select<SelectValue>
                                     options={this.state.transferList}
-                                    theme={"red"}
+                                    styles={selectStyles("default")}
                                     value={this.state.selectedUser}
                                     onChange={(type) => {
                                         this.setState({ selectedUser: type });

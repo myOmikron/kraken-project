@@ -1,7 +1,6 @@
 import React from "react";
 import { ROUTES } from "../routes";
 import USER_CONTEXT from "../context/user";
-import AttackIcon from "../svg/attack";
 import KrakenIcon from "../svg/kraken";
 import KnowledgeIcon from "../svg/knowledge";
 import WorkspaceIcon from "../svg/workspace";

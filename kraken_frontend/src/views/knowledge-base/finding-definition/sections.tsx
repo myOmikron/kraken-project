@@ -6,7 +6,6 @@ import BandageIcon from "../../../svg/bandage";
 import LibraryIcon from "../../../svg/library";
 import PersonCircleIcon from "../../../svg/person-circle";
 import { EditorTarget, FindingSection } from "../../../api/generated";
-import { EditorProps } from "@monaco-editor/react";
 import { useModel } from "../../../utils/model-controller";
 import { editor } from "monaco-editor";
 import ITextModel = editor.ITextModel;

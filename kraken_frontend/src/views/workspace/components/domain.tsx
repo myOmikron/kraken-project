@@ -13,7 +13,7 @@ export default function Domain({ domain, pretty: _ }: { domain: FullDomain | Sim
         if (relations !== undefined) return;
 
         (async function () {
-            let result = await Api.workspaces.domains.relations(domain.workspace, domain.uuid);
+            const result = await Api.workspaces.domains.relations(domain.workspace, domain.uuid);
             handleApiError(result, (rels) => {
                 setRelations(rels);
             });

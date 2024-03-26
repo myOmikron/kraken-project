@@ -15,8 +15,8 @@ export function compareDomain(a: FullDomain | SimpleDomain, b: FullDomain | Simp
 
 const IPv4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
 export function compareHost(a: FullHost | SimpleHost, b: FullHost | SimpleHost): number {
-    let av4 = IPv4.exec(a.ipAddr);
-    let bv4 = IPv4.exec(b.ipAddr);
+    const av4 = IPv4.exec(a.ipAddr);
+    const bv4 = IPv4.exec(b.ipAddr);
     if (av4 && !bv4) return -1;
     if (!av4 && bv4) return 1;
     if (av4 && bv4) {

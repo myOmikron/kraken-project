@@ -4,7 +4,7 @@ import { Api, UUID } from "../../api/api";
 import { AggregationType, FullDomain, FullHost, FullPort, FullService, ListFindings } from "../../api/generated";
 import { handleApiError } from "../../utils/helper";
 import { WORKSPACE_CONTEXT } from "./workspace";
-import { CreateFindingAffected } from "./workspace-finding/workspace-create-finding";
+import { CreateFindingAffected, LocalAffected } from "./workspace-finding/workspace-create-finding";
 import WorkspaceFindingTable from "./workspace-finding/workspace-finding-table";
 
 export type WorkspaceFindingsQuickAttachProps = {
@@ -59,12 +59,14 @@ export default function WorkspaceFindingsQuickAttach(props: WorkspaceFindingsQui
                 <div className="selected-affected">
                     <span>Attaching affected</span>
                     <CreateFindingAffected
-                        affected={{
-                            uuid: uuid,
-                            details: details,
-                            type: props.type as any,
-                            _data: data as any,
-                        }}
+                        affected={
+                            {
+                                uuid: uuid,
+                                details: details,
+                                type: props.type,
+                                _data: data,
+                            } as LocalAffected
+                        }
                         onChangeDetails={setDetails}
                     />
                 </div>

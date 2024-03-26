@@ -11,12 +11,12 @@ import { tokenize } from "./lexer";
  */
 export function parseAstFields<Fields extends ASTField>(input: string, ast: Fields): ASTResult<Fields> {
     // create object like `{ tags: [], createdAt: [], ... }`
-    let ret: {
+    const ret: {
         [Key in keyof Fields]: any[];
     } = Object.fromEntries(Object.keys(ast).map((k) => [k, []])) as any;
 
     parseAst(input, (column, cursor) => {
-        let field = Object.keys(ast).find((field) => ast[field].columns.includes(column));
+        const field = Object.keys(ast).find((field) => ast[field].columns.includes(column));
         if (!field) throw new ParserError({ type: "unknownColumn", column });
         ret[field].push(parseOr(cursor, ast[field].parse));
     });
@@ -78,7 +78,7 @@ export function parseServiceAST(input: string): ServiceAST {
 function parseAst(input: string, parseColumn: (column: string, cursor: Cursor) => void) {
     const tokens = tokenize(input);
     const cursor = new Cursor(tokens);
-    while (true) {
+    for (;;) {
         const token = cursor.nextToken();
         if (token === null) break;
 

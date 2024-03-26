@@ -3,11 +3,9 @@ import { copyToClipboard, handleApiError } from "../../../utils/helper";
 import CopyIcon from "../../../svg/copy";
 import { Api, UUID } from "../../../api/api";
 import "../../../styling/workspace-heading.css";
-import ArrowDownIcon from "../../../svg/arrow-down";
-import ArrowUpIcon from "../../../svg/arrow-up";
 import { SimpleWorkspace } from "../../../api/generated";
 import { ROUTES } from "../../../routes";
-import SelectMenu, { clearSelectStyles, selectStyles } from "../../../components/select-menu";
+import { clearSelectStyles } from "../../../components/select-menu";
 import Select from "react-select";
 import { components } from "react-select";
 

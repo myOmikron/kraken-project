@@ -59,7 +59,7 @@ class Route<UrlParams extends {}, HiddenParams extends {}> {
         if (config.url.length === 0) this.pattern = [];
         else
             this.pattern = config.url.split("/").map((fragment) => {
-                let match = fragment.match(BIND_REGEX);
+                const match = fragment.match(BIND_REGEX);
                 return match === null ? fragment : { bind: match[1] as keyof UrlParams };
             });
         this.errors = [];
@@ -111,8 +111,7 @@ class Route<UrlParams extends {}, HiddenParams extends {}> {
             }
         }
 
-        // @ts-ignore
-        return params;
+        return params as { [Param in keyof UrlParams]: UrlParams[Param] };
     }
 
     /**
@@ -121,6 +120,8 @@ class Route<UrlParams extends {}, HiddenParams extends {}> {
      * @param urlParams parameters to use
      * @return the constructed url
      */
+    // the signature of `String` takes `any`
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     build(urlParams: { [Param in keyof UrlParams]: any }): string {
         return this.pattern
             .map((pattern) => {
@@ -136,6 +137,8 @@ class Route<UrlParams extends {}, HiddenParams extends {}> {
      * @param urlParams parameters to {@link build `build`} the url with
      * @param hiddenParams parameters to pass to the route's render method through the router instead of the url
      */
+    // See `build`
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     visit(urlParams: { [Param in keyof UrlParams]: any }, hiddenParams: HiddenParams | undefined = undefined) {
         const url = this.build(urlParams);
         this.router.setHiddenParams(this, hiddenParams);
@@ -150,6 +153,8 @@ class Route<UrlParams extends {}, HiddenParams extends {}> {
      *
      * @param urlParams parameters to {@link build `build`} the url with
      */
+    // See `build`
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     open(urlParams: { [Param in keyof UrlParams]: any }) {
         const url = this.build(urlParams);
         window.open(`${window.location.origin}/#/${url}`);
@@ -162,6 +167,8 @@ class Route<UrlParams extends {}, HiddenParams extends {}> {
      *
      * @param urlParams parameters to {@link build `build`} the url with
      */
+    // See `build`
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     clickHandler(urlParams: { [Param in keyof UrlParams]: any }) {
         return {
             onClick: () => this.visit(urlParams),
@@ -208,6 +215,8 @@ export class Router {
      * @param route to set parameters for
      * @param hiddenParams parameters to set
      */
+    // See `build`
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setHiddenParams<HiddenParams extends {}>(route: Route<any, HiddenParams>, hiddenParams: HiddenParams | undefined) {
         if (this !== route.router) {
             console.error("Routes are misconfigured");

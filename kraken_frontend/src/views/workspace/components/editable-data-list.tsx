@@ -63,9 +63,9 @@ export default function EditableDataList<T extends FullHost | FullPort | FullDom
         Api.workspaces[props.type]
             .all(workspace, 1000, 0)
             .then((v) => {
-                let rawItems = v.unwrap().items as T[];
+                const rawItems = v.unwrap().items as T[];
                 // deduplicate by label (since filters use label data only)
-                let items = Object.values(Object.fromEntries(rawItems.map<[string, T]>((i) => [label(i), i])));
+                const items = Object.values(Object.fromEntries(rawItems.map<[string, T]>((i) => [label(i), i])));
                 setAllData(items);
                 props.onItemsLoaded?.(items);
             })
@@ -75,17 +75,15 @@ export default function EditableDataList<T extends FullHost | FullPort | FullDom
     }, [workspace]);
 
     return (
-        <>
-            <Creatable<T, true>
-                styles={selectStyles("default")}
-                isMulti={true}
-                value={items}
-                onChange={(items) => onChange([...items])}
-                options={allData}
-                formatOptionLabel={(tag: any) => ("value" in tag ? <>Unknown item {tag.value}</> : label(tag))}
-                getOptionLabel={label}
-                getOptionValue={({ uuid }) => uuid}
-            />
-        </>
+        <Creatable<T, true>
+            styles={selectStyles("default")}
+            isMulti={true}
+            value={items}
+            onChange={(items) => onChange([...items])}
+            options={allData}
+            formatOptionLabel={(tag: T) => ("value" in tag ? <>Unknown item {tag.value}</> : label(tag))}
+            getOptionLabel={label}
+            getOptionValue={({ uuid }) => uuid}
+        />
     );
 }

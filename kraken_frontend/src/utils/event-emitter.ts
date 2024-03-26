@@ -1,5 +1,5 @@
 /** An event handler is any function taking an event */
-export type EventHandler<Event> = (event: Event) => any;
+export type EventHandler<Event> = (event: Event) => void;
 
 /** Handle returned by {@link EventEmitter.addEventListener addEventListener} to identify the added listener */
 export type ListenerHandle<K> = [K, number];

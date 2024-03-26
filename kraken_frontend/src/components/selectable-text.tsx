@@ -2,8 +2,8 @@ import React from "react";
 
 type SelectableTextProps = {
     /// What kind of element should be used, defaults to `div` if unset.
-    as?: string;
-    children: any;
+    as?: keyof React.JSX.IntrinsicElements;
+    children: React.ReactNode;
 } & React.HTMLAttributes<HTMLElement>;
 
 /**
@@ -30,31 +30,32 @@ type SelectableTextProps = {
 export default function SelectableText(props: SelectableTextProps) {
     // if mouse has been moved this many pixels from the first click, don't select everything
     const MOVE_THRESHOLD = 5;
-    const As = (props.as ?? "div") as any;
+    const As = (props.as ?? "div") as "div";
+    // `as "div"` is workaround to make the typechecking in the jsx "okay"
 
-    let div = React.useRef(null);
-    let location = React.useRef([0, 0]);
+    const elem = React.useRef(null);
+    const location = React.useRef([0, 0]);
     return (
         <As
             {...props}
-            ref={div}
-            onMouseDown={(e: MouseEvent) => {
+            ref={elem}
+            onMouseDown={(e) => {
                 location.current = [e.clientX, e.clientY];
             }}
-            onMouseMove={(e: MouseEvent) => {
-                let [x1, y1] = location.current;
-                let [x2, y2] = [e.clientX, e.clientY];
-                let d = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
+            onMouseMove={(e) => {
+                const [x1, y1] = location.current;
+                const [x2, y2] = [e.clientX, e.clientY];
+                const d = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
                 if (d > MOVE_THRESHOLD * MOVE_THRESHOLD) location.current = [NaN, NaN];
             }}
-            onDoubleClick={(e: MouseEvent) => {
+            onDoubleClick={(e) => {
                 const selection = window.getSelection();
-                let [x1, y1] = location.current;
-                let [x2, y2] = [e.clientX, e.clientY];
-                let d = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
-                if (div.current && selection && !e.ctrlKey && !e.shiftKey && d < MOVE_THRESHOLD * MOVE_THRESHOLD) {
+                const [x1, y1] = location.current;
+                const [x2, y2] = [e.clientX, e.clientY];
+                const d = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
+                if (elem.current && selection && !e.ctrlKey && !e.shiftKey && d < MOVE_THRESHOLD * MOVE_THRESHOLD) {
                     const range = document.createRange();
-                    range.selectNodeContents(div.current);
+                    range.selectNodeContents(elem.current);
                     selection.removeAllRanges();
                     selection.addRange(range);
                 }

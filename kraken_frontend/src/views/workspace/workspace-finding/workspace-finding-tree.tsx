@@ -177,7 +177,7 @@ export function TreeGraph({
                 const sim = simulation.current;
                 if (!sim) return;
                 for (const node of sim.nodes()) {
-                    let elem = getElement(node.uuid);
+                    const elem = getElement(node.uuid);
                     if (elem) {
                         if (node.x !== undefined) elem.style.left = `${Math.round(node.x)}px`;
                         if (node.y !== undefined) elem.style.top = `${Math.round(node.y)}px`;
@@ -238,19 +238,19 @@ export function TreeGraph({
         const treeNodeWidth = window.innerWidth < 2000 ? 240 : 300;
         const columnW = treeNodeWidth + horizontalMargin;
         let nextY = 0;
-        let forceRecalcX = simulationState.current.rootUuids != rootUuids;
+        const forceRecalcX = simulationState.current.rootUuids != rootUuids;
         if (forceRecalcX) {
-            old.forEach((v, k) => {
+            old.forEach((v) => {
                 v.column = 0;
                 v.fx = undefined;
             });
         }
-        let nodes = roots.flatMap((root) =>
+        const nodes = roots.flatMap((root) =>
             flatMapTree<NodeT>(root, (n, d, ci, parent) => {
                 if (n.uuid in inserted) return [];
                 let startColumn = 0;
                 if (n.type == "Finding" && parent === undefined && n.children?.length) {
-                    let c = n.children.map((c) => inserted[c.uuid]).find((a) => a);
+                    const c = n.children.map((c) => inserted[c.uuid]).find((a) => a);
                     if (c?.column) startColumn = c.column - 1;
                 }
                 const column = Math.max(
@@ -262,18 +262,18 @@ export function TreeGraph({
                 );
                 let overrideY: number | undefined = undefined;
                 if (parent) {
-                    let parentNode = state.get(parent.uuid);
+                    const parentNode = state.get(parent.uuid);
                     overrideY = inserted[parent.uuid]?.y ?? parentNode?.y;
                     if (parentNode?.children) {
                         for (const child of parentNode.children) {
-                            let siblingNode = state.get(child.uuid);
+                            const siblingNode = state.get(child.uuid);
                             if (siblingNode && siblingNode.uuid != n.uuid) {
                                 overrideY = siblingNode.y;
                             }
                         }
                     }
                 }
-                let res = {
+                const res = {
                     root: d == 0,
                     y: (overrideY ?? (nextY += 20)) + (ci / (parent?.children?.length || 1)) * 19,
                     ...old.get(n.uuid),
@@ -285,7 +285,7 @@ export function TreeGraph({
                 return [res];
             }),
         );
-        let links = roots.flatMap((root) =>
+        const links = roots.flatMap((root) =>
             flatMapTree<LinkT>(
                 root,
                 (n) =>
@@ -387,9 +387,9 @@ export function TreeGraph({
         sim.alpha(0.01).restart().tick();
 
         if (forceRecalcX) {
-            let viewportDiv = viewportRef.current?.getRootElement();
+            const viewportDiv = viewportRef.current?.getRootElement();
             if (viewportDiv) {
-                for (let anim of viewportDiv.getAnimations()) {
+                for (const anim of viewportDiv.getAnimations()) {
                     anim.currentTime = 0;
                 }
             }
@@ -496,9 +496,6 @@ function TreeNode({
             name = "Service " + node.service.name;
             tags = node.service.tags;
             break;
-        default:
-            const exhaustiveCheck: never = node;
-            throw new Error(`Unhandled node type: ${(exhaustiveCheck as any).type}`);
     }
 
     return (

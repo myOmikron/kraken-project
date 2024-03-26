@@ -34,7 +34,7 @@ export default function WorkspaceNotes(props: WorkspaceNotesProps) {
         Api.workspaces
             .get(workspace)
             .then(handleApiError(({ notes }) => setText(notes, { workspaceNotes: { workspace } })));
-    }, [workspace]);
+    }, [workspace, setText]);
 
     return (
         <div className={"workspace-notes-container pane"}>

@@ -2,7 +2,7 @@ import React from "react";
 
 export type TextareaProps = {
     value: string;
-    onChange: (newValue: string) => any;
+    onChange: (newValue: string) => void;
     autoFocus?: boolean;
 } & Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "value" | "onChange" | "autoFocus">;
 

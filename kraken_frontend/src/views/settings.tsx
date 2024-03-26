@@ -81,7 +81,7 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
     }
 
     async saveSettings() {
-        let { settings } = this.state;
+        const { settings } = this.state;
 
         if (settings === null) {
             return;
@@ -91,7 +91,7 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
     }
 
     async createOAuthApp() {
-        let { newOAuthAppName, newOAuthAppRedirectUrl } = this.state;
+        const { newOAuthAppName, newOAuthAppRedirectUrl } = this.state;
         if (newOAuthAppName === "" || newOAuthAppRedirectUrl === "") {
             toast.error("App name and redirect uri must not be empty");
             return;
@@ -127,7 +127,7 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
                                         : ""
                                 }
                                 onChange={(v) => {
-                                    let { settings } = this.state;
+                                    const { settings } = this.state;
                                     if (settings !== null) {
                                         settings.dehashedEmail = v;
                                     }
@@ -143,7 +143,7 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
                                         : ""
                                 }
                                 onChange={(v) => {
-                                    let { settings } = this.state;
+                                    const { settings } = this.state;
                                     if (settings !== null) {
                                         settings.dehashedApiKey = v;
                                     }

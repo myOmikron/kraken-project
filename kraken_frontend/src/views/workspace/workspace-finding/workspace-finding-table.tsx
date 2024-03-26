@@ -29,9 +29,6 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
         );
     }, [workspace]);
 
-    // @ts-ignore
-    const style: CSSProperties = { "--columns": "0.1fr 1fr 1fr" };
-
     return (
         <>
             <div className={"workspace-table-pre-header"}>
@@ -44,7 +41,10 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
                     <PlusIcon />
                 </button>
             </div>
-            <div className="workspace-findings-table" style={style}>
+            <div
+                className="workspace-findings-table"
+                style={{ "--columns": "0.1fr 1fr 1fr" } as Record<string, string>}
+            >
                 <div className={"workspace-table-header"}>
                     <span>Severity</span>
                     <span>Name</span>
@@ -53,7 +53,7 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
                 <div className="workspace-table-body">
                     {findings
                         .filter((f) => {
-                            let q = search.toLowerCase();
+                            const q = search.toLowerCase();
                             return f.name.toLowerCase().includes(q) || f.cve?.toLowerCase().includes(q);
                         })
                         .filter((f) => (filter ? filter(f) : true))

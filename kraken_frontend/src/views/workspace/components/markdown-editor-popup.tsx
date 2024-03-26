@@ -40,7 +40,7 @@ export default function MarkdownEditorPopup(props: MarkdownEditorPopupProps) {
                         beforeMount={configureMonaco}
                         language={"markdown"}
                         value={content}
-                        onChange={(value, event) => {
+                        onChange={(value) => {
                             if (value !== undefined) onChange(value);
                         }}
                     />

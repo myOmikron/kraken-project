@@ -1,4 +1,4 @@
-import { CSSProperties, EventHandler } from "react";
+import { EventHandler } from "react";
 import { Color } from "../api/generated";
 
 export type TagProps = {
@@ -18,10 +18,10 @@ const BACKGROUND: Color = {
 export default function Tag(props: TagProps) {
     const { name, color } = props;
 
-    let style: CSSProperties = {};
+    const style: Record<string, string> = {};
     if (color !== undefined) {
-        let { r, g, b, a } = color;
-        // @ts-ignore
+        let { r, g, b } = color;
+        const { a } = color;
         style["--color"] = `rgba(${r}, ${g}, ${b}, ${a / 255})`;
 
         // Apply alpha and blend with background

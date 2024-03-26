@@ -6,11 +6,9 @@ import "../styling/me.css";
 import Input from "../components/input";
 import { check, handleApiError } from "../utils/helper";
 import USER_CONTEXT from "../context/user";
-import UserSettingsIcon from "../svg/user_settings";
 import { FullApiKey, FullUser, UserPermission } from "../api/generated";
 import CopyIcon from "../svg/copy";
 import CloseIcon from "../svg/close";
-import { CrossIcon } from "react-select/dist/declarations/src/components/indicators";
 
 type MeProps = {};
 type MeState = {
@@ -108,7 +106,7 @@ export default class Me extends React.Component<MeProps, MeState> {
             return;
         }
 
-        let changes = {
+        const changes = {
             username: username !== user.username ? username : null,
             displayName: displayName !== user.displayName ? displayName : null,
         };

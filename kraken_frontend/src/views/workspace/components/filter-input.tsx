@@ -59,7 +59,6 @@ export default function FilterInput(props: FilterInputProps) {
                 input.setCustomValidity("");
             } catch (e) {
                 if (e instanceof ParserError) {
-                    let error = e.data;
                     input.setCustomValidity(e.message);
                 } else throw e;
             }
@@ -109,11 +108,13 @@ export default function FilterInput(props: FilterInputProps) {
     );
 }
 
-export type FilterOutput = FilterInputProps & {
+/** Return type of {@link useFilter `useFilter`} hook */
+export type UseFilterReturn = FilterInputProps & {
     addColumn: (column: string, value: string, negate: boolean) => any;
     addRange: (column: string, from: string, to: string, negate: boolean) => any;
 };
-export function useFilter(workspace: string, target: FilterInputProps["target"]): FilterOutput {
+
+export function useFilter(workspace: string, target: FilterInputProps["target"]): UseFilterReturn {
     const [value, onChange] = React.useState("");
     const [applied, onApply] = React.useState("");
     return {
@@ -132,14 +133,14 @@ export function useFilter(workspace: string, target: FilterInputProps["target"])
         target,
         addColumn: (column, value, negate) => {
             onChange((v) => {
-                let newFilter = negate ? removeExprs(v, column, value) : addExprs(v, column, value, "and");
+                const newFilter = negate ? removeExprs(v, column, value) : addExprs(v, column, value, "and");
                 onApply(newFilter);
                 return newFilter;
             });
         },
         addRange: (column, from, to, negate) => {
             onChange((v) => {
-                let newFilter = negate
+                const newFilter = negate
                     ? removeExprRange(v, column, from, to)
                     : addExprRange(v, column, from, to, "and");
                 onApply(newFilter);

@@ -556,7 +556,7 @@ const TARGET_TYPE = ["domain", "host", "port", "service"] as const;
 export type TargetType = (typeof TARGET_TYPE)[number];
 
 export function TargetType(value: string): TargetType {
-    // @ts-ignore
+    // @ts-ignore: TargetType is by definition anything inside TARGET_TYPE which is just a list of "special strings"
     if (TARGET_TYPE.indexOf(value) >= 0) return value;
     else throw Error(`Got invalid target type: ${value}`);
 }
@@ -670,7 +670,7 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
             case "service":
                 Api.workspaces.services.get(this.context.workspace.uuid, this.props.targetUuid).then(
                     handleApiError((service) => {
-                        let { name, host, port } = service;
+                        const { name, host, port } = service;
                         this.setState({
                             target: {
                                 name: port
@@ -707,14 +707,14 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
     async updateSelection() {
         if (this.props.targetType != "selection") throw new Error("invalid state");
 
-        let workspaceUuid = this.context.workspace.uuid;
+        const workspaceUuid = this.context.workspace.uuid;
 
         function fetchAll<T>(
             api: { get: (workspaceUuid: string, thingUuid: string) => Promise<Result<T, ApiError>> },
             list: string[],
         ): Promise<T[]> {
             return new Promise((resolve, reject) => {
-                let res: T[] = [];
+                const res: T[] = [];
 
                 function checkDone() {
                     if (res.length == list.length) {
@@ -739,14 +739,14 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
             });
         }
 
-        let inputs: { [group: string]: RawSelectionData[] } = {
+        const inputs: { [group: string]: RawSelectionData[] } = {
             hosts: (await fetchAll(Api.workspaces.hosts, this.props.hosts)).map((v) => ({ host: v })),
             ports: (await fetchAll(Api.workspaces.ports, this.props.ports)).map((v) => ({ port: v })),
             domains: (await fetchAll(Api.workspaces.domains, this.props.domains)).map((v) => ({ domain: v })),
             services: (await fetchAll(Api.workspaces.services, this.props.services)).map((v) => ({ service: v })),
         };
 
-        let selection: RawSelectionData[] = Object.keys(inputs).flatMap((k) => inputs[k]);
+        const selection: RawSelectionData[] = Object.keys(inputs).flatMap((k) => inputs[k]);
 
         this.setState({
             target: {
@@ -758,13 +758,13 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
 
     renderSelection() {
         if (!this.state.target?.selection?.length) return <></>;
-        let attack = (this.state.hoverAttack || this.state.selectedAttack) as AttackType;
+        const attack = (this.state.hoverAttack || this.state.selectedAttack) as AttackType;
         if (!attack) return <></>;
-        let values = generateAttackPrefill(attack, this.state.target.selection);
+        const values = generateAttackPrefill(attack, this.state.target.selection);
         const keys = Object.keys(values);
         if (!keys) return <></>;
         const columnLabels = keys.map((k) => (ATTACKS as any)[attack].inputs.inputs[k].label);
-        let rows = values[keys[0]].map((_, i) => (
+        const rows = values[keys[0]].map((_, i) => (
             <tr key={attack + "_row" + i}>
                 {keys.map((k) => (
                     <td>{values[k][i] === undefined ? <em>n/a</em> : <pre>{JSON.stringify(values[k][i])}</pre>}</td>
@@ -855,6 +855,7 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
         );
     }
 }
+
 function generateDisabled(prefill: RawSelectionData[]): Record<AttackType, boolean> {
     return Object.fromEntries(
         Object.keys(ATTACKS).map((v) => [
@@ -866,9 +867,9 @@ function generateDisabled(prefill: RawSelectionData[]): Record<AttackType, boole
 }
 
 function generateAttackPrefill(attack: AttackType, prefill: RawSelectionData[]): { [key: string]: any[] } {
-    let ret: { [key: string]: any[] } = {};
+    const ret: { [key: string]: any[] } = {};
     for (const key of Object.keys(ATTACKS[attack].inputs.inputs)) {
-        let input: IAttackInput = (ATTACKS as any)[attack].inputs.inputs[key];
+        const input: IAttackInput = (ATTACKS as any)[attack].inputs.inputs[key];
         if (typeof input === "object" && !Array.isArray(input) && input.prefill) {
             ret[key] = [];
         }
@@ -877,7 +878,7 @@ function generateAttackPrefill(attack: AttackType, prefill: RawSelectionData[]):
     // first generate all the raw data
     for (const row of prefill) {
         for (const key of Object.keys(ret)) {
-            let input: IAttackInput = (ATTACKS as any)[attack].inputs.inputs[key];
+            const input: IAttackInput = (ATTACKS as any)[attack].inputs.inputs[key];
             let data = getFirstPrefill(row, input.prefill!);
             if (input.preprocess) data = input.preprocess(data);
             ret[key].push(data);
@@ -891,8 +892,8 @@ function generateAttackPrefill(attack: AttackType, prefill: RawSelectionData[]):
     }
 
     // now deduplicate rows
-    let entries = Object.entries(ret);
-    let keys = entries.map((e) => e[0]);
+    const entries = Object.entries(ret);
+    const keys = entries.map((e) => e[0]);
     let values = entries.map((e) => e[1]);
     values = ObjectFns.transpose2D(values);
     values = ObjectFns.uniqueObjects(values);
@@ -908,7 +909,7 @@ function generateAttackPrefill(attack: AttackType, prefill: RawSelectionData[]):
 
 export function getFirstPrefill(raw: RawSelectionData, types: PrefillType[]): any | undefined {
     for (const p of types) {
-        let v = getPrefill(raw, p);
+        const v = getPrefill(raw, p);
         if (v) return v;
     }
     return undefined;
@@ -928,8 +929,8 @@ export function getPrefill(raw: RawSelectionData, type: `service[${string}][Unkn
 export function getPrefill(raw: RawSelectionData, type: `service[${string}][Udp].port`): number | undefined;
 export function getPrefill(raw: RawSelectionData, type: `service[${string}][Tcp].port`): number | undefined;
 export function getPrefill(raw: RawSelectionData, type: `service[${string}][Sctp].port`): number | undefined;
-export function getPrefill(raw: RawSelectionData, type: PrefillType): any | undefined;
-export function getPrefill(raw: RawSelectionData, type: PrefillType): any | undefined {
+export function getPrefill(raw: RawSelectionData, type: PrefillType): unknown | undefined;
+export function getPrefill(raw: RawSelectionData, type: PrefillType): unknown | undefined {
     switch (type) {
         case "raw":
             return raw;
@@ -948,7 +949,7 @@ export function getPrefill(raw: RawSelectionData, type: PrefillType): any | unde
         case "port[Udp]":
         case "port[Tcp]":
         case "port[Sctp]":
-            let p = raw.port ? raw.port : raw.service && raw.service.port ? raw.service.port : undefined;
+            const p = raw.port ? raw.port : raw.service && raw.service.port ? raw.service.port : undefined;
             if (p) {
                 if (type.startsWith("port[") && type.endsWith("]")) {
                     if (p.protocol != type.substring(5, type.length - 1)) return undefined;
@@ -961,7 +962,7 @@ export function getPrefill(raw: RawSelectionData, type: PrefillType): any | unde
         default:
             if (type.startsWith("service[")) {
                 if (raw.service) {
-                    let [service, remaining] = type.substring(8).split("]", 2);
+                    const [service, remaining] = type.substring(8).split("]", 2);
                     if (
                         service.startsWith("!")
                             ? raw.service.name.toLowerCase() == service.substring(1).toLowerCase()

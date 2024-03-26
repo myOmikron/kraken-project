@@ -25,7 +25,7 @@ export default function PortNumber({ port, pretty }: { port: FullPort | SimplePo
         if (relations !== undefined) return;
 
         (async function () {
-            let result = await Api.workspaces.ports.relations(port.workspace, port.uuid);
+            const result = await Api.workspaces.ports.relations(port.workspace, port.uuid);
             handleApiError(result, (rels) => {
                 setRelations(rels);
             });

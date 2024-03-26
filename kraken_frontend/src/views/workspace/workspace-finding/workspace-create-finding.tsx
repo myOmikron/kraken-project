@@ -50,7 +50,7 @@ export type CreateFindingProps = {
     initAffected?: CreateFindingObject[];
 };
 
-type LocalAffected = CreateFindingAffectedRequest & {
+export type LocalAffected = CreateFindingAffectedRequest & {
     _localScreenshot?: File;
     _localLogFile?: File;
 } & (
@@ -76,8 +76,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
 
     const [affected, setAffected] = React.useState<Array<LocalAffected>>(
         (props.initAffected ?? []).map((a) => {
-            let type = getCreateAffectedType(a);
-            let data = getCreateAffectedData(a);
+            const type = getCreateAffectedType(a);
+            const data = getCreateAffectedData(a);
             return {
                 _data: data satisfies LocalAffected["_data"],
                 type: type satisfies LocalAffected["type"],
@@ -138,7 +138,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                         beforeMount={configureMonaco}
                         language={"markdown"}
                         value={details}
-                        onChange={(value, event) => {
+                        onChange={(value) => {
                             if (value !== undefined) setDetails(value);
                         }}
                     />
@@ -229,9 +229,9 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
 
                             const affectedUploaded = await Promise.all(
                                 affected.map(async (a) => {
-                                    let { _localLogFile: logFile, _localScreenshot: screenshot, ...request } = a;
+                                    const { _localLogFile: logFile, _localScreenshot: screenshot, ...request } = a;
                                     if (screenshot !== undefined) {
-                                        let r = await Api.workspaces.files.uploadImage(
+                                        const r = await Api.workspaces.files.uploadImage(
                                             workspace,
                                             screenshot.name,
                                             screenshot,
@@ -239,7 +239,11 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                         request.screenshot = r.unwrap().uuid;
                                     }
                                     if (logFile !== undefined) {
-                                        let r = await Api.workspaces.files.uploadFile(workspace, logFile.name, logFile);
+                                        const r = await Api.workspaces.files.uploadFile(
+                                            workspace,
+                                            logFile.name,
+                                            logFile,
+                                        );
                                         request.logFile = r.unwrap().uuid;
                                     }
                                     return request;
@@ -356,7 +360,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                             <CreateFindingAffected
                                                 affected={a}
                                                 onRemove={() => {
-                                                    let copy = [...affected];
+                                                    const copy = [...affected];
                                                     copy.splice(index, 1);
                                                     setAffected(copy);
                                                 }}

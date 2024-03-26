@@ -144,7 +144,7 @@ export function tokensToString(tokens: SpanlessToken[]): string {
  * @throws `Error` if the value is not representable
  */
 export function valueToString(value: string): string {
-    let existing = tokenize(value);
+    const existing = tokenize(value);
     if (existing.length != 1 || existing[0].type != "value") {
         value = '"' + value + '"';
         if (tokenize(value).length > 1) throw new Error("Value not representable in filter language!");

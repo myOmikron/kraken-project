@@ -1,6 +1,5 @@
 import React from "react";
 import { Api } from "../../api/api";
-import { toast } from "react-toastify";
 import { SimpleWorkspace } from "../../api/generated";
 import Loading from "../../components/loading";
 import { handleApiError } from "../../utils/helper";

@@ -4,8 +4,7 @@ import { Api } from "../../../api/api";
 import { handleApiError } from "../../../utils/helper";
 import { toast } from "react-toastify";
 import Input from "../../../components/input";
-import Select from "react-select";
-import { SelectPrimitive, selectStyles } from "../../../components/select-menu";
+import { SelectPrimitive } from "../../../components/select-menu";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import Checkbox from "../../../components/checkbox";
 

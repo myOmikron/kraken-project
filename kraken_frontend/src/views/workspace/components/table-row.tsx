@@ -1,38 +1,38 @@
-import React, { ElementType, FC, PropsWithChildren, forwardRef } from "react";
+import React, { PropsWithChildren, forwardRef } from "react";
 
-export type TableRowProps<E extends ElementType = "div" | FC> = PropsWithChildren<{
-    as?: E;
-}> &
-    React.ComponentPropsWithoutRef<E>;
+export type TableRowProps = PropsWithChildren<{}> & React.ComponentPropsWithoutRef<"div">;
 
 /**
  * A div, with added keyboard navigation for up/down selecting previous/next
  * element sibling. Pressing enter simulates a click.
  */
-export const TableRow = forwardRef(({ as, children, ...props }: TableRowProps, ref) => {
-    const Component = as ?? "div";
+export const TableRow = forwardRef<HTMLDivElement, TableRowProps>(({ children, ...props }, ref) => {
+    const innerRef = React.useRef<HTMLDivElement | null>(null);
     return (
-        <Component
-            ref={ref as any}
+        <div
+            ref={(div) => {
+                innerRef.current = div;
+                if (ref === null) return;
+                else if (typeof ref === "object") ref.current = div;
+                else ref(div);
+            }}
             onKeyDownCapture={(e) => {
-                if (typeof ref != "object" || !ref) return;
-                let row = ref.current as HTMLElement; // XXX: invalid, but good enough cast
-                if (!row) return;
+                if (innerRef.current === null) return;
 
                 if (e.key == "ArrowUp") {
-                    let prev = row.previousElementSibling;
+                    const prev = innerRef.current.previousElementSibling;
                     if (prev && "focus" in prev && typeof prev.focus == "function") prev.focus();
                 } else if (e.key == "ArrowDown") {
-                    let next = row.nextElementSibling;
+                    const next = innerRef.current.nextElementSibling;
                     if (next && "focus" in next && typeof next.focus == "function") next.focus();
                 } else if (e.key == "Enter") {
-                    row.click();
+                    innerRef.current.click();
                 }
             }}
             {...props}
         >
             {children}
-        </Component>
+        </div>
     );
 });
 export default TableRow;

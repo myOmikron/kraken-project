@@ -13,7 +13,7 @@ export default function IpAddr({ host, pretty: _ }: { host: FullHost | SimpleHos
         if (relations !== undefined) return;
 
         (async function () {
-            let result = await Api.workspaces.hosts.relations(host.workspace, host.uuid);
+            const result = await Api.workspaces.hosts.relations(host.workspace, host.uuid);
             handleApiError(result, (rels) => {
                 setRelations(rels);
             });

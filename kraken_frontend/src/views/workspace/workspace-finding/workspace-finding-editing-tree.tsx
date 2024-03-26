@@ -91,7 +91,7 @@ export const EditingTreeGraph = forwardRef<EditingTreeGraphRef, EditingTreeGraph
     };
     api.current.getAffected = async function (
         finding: FullFinding,
-        { affectedUuid: affected, _index }: SimpleFindingAffected & { _index?: number },
+        { _index }: SimpleFindingAffected & { _index?: number },
     ): Promise<Result<{ affected: AffectedShallow }, ApiError>> {
         if (_index === undefined)
             return Err({

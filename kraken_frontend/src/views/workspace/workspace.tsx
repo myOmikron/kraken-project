@@ -46,7 +46,7 @@ export default class Workspace extends React.Component<WorkspaceProps, Workspace
         Api.workspaces.get(this.props.uuid).then(handleApiError((workspace) => this.setState({ workspace })));
     }
 
-    componentDidUpdate(prevProps: Readonly<WorkspaceProps>, prevState: Readonly<WorkspaceState>, snapshot?: any) {
+    componentDidUpdate(prevProps: Readonly<WorkspaceProps>) {
         if (prevProps.uuid !== this.props.uuid) {
             Api.workspaces.get(this.props.uuid).then(handleApiError((workspace) => this.setState({ workspace })));
         }

@@ -79,7 +79,7 @@ export class Result<T, E> {
         }
     }
 
-    match(ok: (ok: T) => any, err: (err: E) => any) {
+    match(ok: (ok: T) => void, err: (err: E) => void) {
         if (this.inner.isErr) {
             err(this.inner.err);
         } else {

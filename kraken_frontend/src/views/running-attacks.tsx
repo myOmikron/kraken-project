@@ -32,7 +32,7 @@ export default class RunningAttacks extends React.Component<RunningAttacksProps,
         Api.attacks.all().then((x) =>
             x.match(
                 (attacks) => {
-                    let runningAttacks: AttackDictionary = {};
+                    const runningAttacks: AttackDictionary = {};
                     for (const attack of attacks.attacks) {
                         if (runningAttacks[attack.workspace.uuid] !== null) {
                             runningAttacks[attack.workspace.uuid] = [attack];
@@ -46,7 +46,7 @@ export default class RunningAttacks extends React.Component<RunningAttacksProps,
             ),
         );
         WS.addEventListener("message.AttackStarted", (msg) => {
-            let runningAttacks = this.state.runningAttacks;
+            const runningAttacks = this.state.runningAttacks;
             if (runningAttacks[msg.attack.workspace.uuid] === null) {
                 runningAttacks[msg.attack.workspace.uuid] = [msg.attack];
             } else {
@@ -56,11 +56,10 @@ export default class RunningAttacks extends React.Component<RunningAttacksProps,
             this.setState({ runningAttacks });
         });
         WS.addEventListener("message.AttackFinished", (msg) => {
-            let runningAttacks = this.state.runningAttacks;
-            if (runningAttacks[msg.attack.workspace.uuid] === null) {
-            } else {
-                let workspaceAttacks = runningAttacks[msg.attack.workspace.uuid];
-                for (let workspaceAttack of workspaceAttacks) {
+            const runningAttacks = this.state.runningAttacks;
+            if (runningAttacks[msg.attack.workspace.uuid] !== null) {
+                const workspaceAttacks = runningAttacks[msg.attack.workspace.uuid];
+                for (const workspaceAttack of workspaceAttacks) {
                     if (workspaceAttack.uuid === msg.attack.uuid) {
                         workspaceAttack.error = msg.attack.error === undefined ? null : msg.attack.error;
                         workspaceAttack.finishedAt = msg.attack.finishedAt;

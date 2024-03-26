@@ -102,7 +102,7 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
                             onChange(undefined);
                             if (inputRef.current) {
                                 // clear file
-                                inputRef.current.value = null as any;
+                                inputRef.current.value = "";
                             }
                         }}
                     >

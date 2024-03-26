@@ -57,7 +57,7 @@ export default function SelectFindingDefinition(props: SelectFindingDefinitionPr
                         props.innerProps.onMouseOut = () => onHover(undefined);
                         return components.SelectContainer(props);
                     },
-                    Option: ({ children, ...props }) => {
+                    Option: ({ children: _, ...props }) => {
                         if ("value" in props.data) {
                             return (
                                 <components.Option {...props}>Create {props.data.value as string}</components.Option>

@@ -1,8 +1,7 @@
 import React from "react";
 import "../../styling/workspace-host.css";
-import { FullHost, FullWorkspace, SimpleDomain, SimpleHost, SimplePort, SimpleService } from "../../api/generated";
+import { FullHost, SimpleDomain, SimplePort, SimpleService } from "../../api/generated";
 import { Api, UUID } from "../../api/api";
-import { toast } from "react-toastify";
 import { ROUTES } from "../../routes";
 import Input from "../../components/input";
 import OsIcon from "../../components/os-icon";
@@ -70,7 +69,7 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
             .then(handleApiError((host) => this.setState({ host })));
     }
 
-    componentDidUpdate(prevProps: Readonly<WorkspaceProps>, prevState: Readonly<WorkspaceState>, snapshot?: any) {
+    componentDidUpdate(prevProps: Readonly<WorkspaceProps>) {
         if (prevProps.uuid !== this.props.uuid) {
             Promise.all([this.getHost(), this.getHostList()]).then();
         }
@@ -82,7 +81,6 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
 
     render() {
         const { selectedTab } = this.state;
-        const { host } = this.state;
         const table = (() => {
             switch (selectedTab) {
                 case "domains":

@@ -22,11 +22,11 @@ import CertaintyIcon from "./components/certainty-icon";
 import ContextMenu, { ContextMenuEntry, GroupedMenuItem, PlainMenuItem } from "./components/context-menu";
 import Domain from "./components/domain";
 import EditableTags from "./components/editable-tags";
-import FilterInput, { FilterOutput, useFilter } from "./components/filter-input";
+import FilterInput, { UseFilterReturn, useFilter } from "./components/filter-input";
 import IpAddr from "./components/host";
 import PortNumber from "./components/port";
 import ServiceName from "./components/service";
-import SeverityIcon, { Severity } from "./components/severity-icon";
+import { Severity } from "./components/severity-icon";
 import TableRow from "./components/table-row";
 import TagList from "./components/tag-list";
 import { StatelessWorkspaceTable, useTable } from "./components/workspace-table";
@@ -132,7 +132,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <PlusIcon />
                             New with affected
                         </>,
-                        (e) => {
+                        () => {
                             // TODO: once we have support for passing hidden data
                             // across browser tabs, open in new tab, with hidden
                             // data, when `e.ctrlKey` is true
@@ -166,7 +166,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
         ];
     }
 
-    function copyTagsAction(tags: SimpleTag[], filter: FilterOutput): PlainMenuItem {
+    function copyTagsAction(tags: SimpleTag[], filter: UseFilterReturn): PlainMenuItem {
         return [
             <>
                 <TagIcon />
@@ -184,7 +184,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
 
     function filterActionImpl(
         title: ReactNode,
-        filter: FilterOutput,
+        filter: UseFilterReturn,
         column: string,
         value: string | [string, string],
         overrideLabel?: ReactNode,
@@ -210,7 +210,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
         ];
     }
 
-    const findSimilarAction = (filter: FilterOutput, column: string, value: string) =>
+    const findSimilarAction = (filter: UseFilterReturn, column: string, value: string) =>
         filterActionImpl(
             <>
                 <LinkIcon />
@@ -221,11 +221,19 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
             value,
         );
 
-    const filterAction = (filter: FilterOutput, column: string, value: string, { icon }: { icon?: ReactNode } = {}) =>
-        filterActionImpl(icon ? <>{icon} Filter</> : "Filter", filter, column, value);
+    const filterAction = (
+        filter: UseFilterReturn,
+        column: string,
+        value: string,
+        {
+            icon,
+        }: {
+            icon?: ReactNode;
+        } = {},
+    ) => filterActionImpl(icon ? <>{icon} Filter</> : "Filter", filter, column, value);
 
     const dateWithinAction = (
-        filter: FilterOutput,
+        filter: UseFilterReturn,
         column: string,
         date: Date,
         deltaPlusMinusMs: number,
@@ -253,7 +261,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
             : items;
     }
 
-    function createdAtAction(filter: FilterOutput, createdAt: Date): GroupedMenuItem {
+    function createdAtAction(filter: UseFilterReturn, createdAt: Date): GroupedMenuItem {
         return {
             icon: <ClockActivityIcon />,
             group: "Filter relative to creation date",
@@ -336,7 +344,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                                     ...data.indirectHosts.map((h) => ["ips.os", h.osType]),
                                                 ]).map(([k, v]) => findSimilarAction(domainFilter, k, v));
                                             })
-                                            .catch((e) => [["Failed loading hosts", undefined]]),
+                                            .catch(() => [["Failed loading hosts", undefined]]),
                                     createdAtAction(domainFilter, domain.createdAt),
                                 ]}
                             >
@@ -450,7 +458,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                                     ),
                                                 ];
                                             })
-                                            .catch((e) => [["Failed loading hosts", undefined]]),
+                                            .catch(() => [["Failed loading hosts", undefined]]),
                                     createdAtAction(hostFilter, host.createdAt),
                                 ]}
                             >
@@ -545,7 +553,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                                     ),
                                                 ];
                                             })
-                                            .catch((e) => [["Failed loading hosts", undefined]]),
+                                            .catch(() => [["Failed loading hosts", undefined]]),
                                     createdAtAction(portFilter, port.createdAt),
                                 ]}
                             >
@@ -634,15 +642,15 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                         : []),
                                     ...(service.protocols
                                         ? (() => {
-                                              let res = [];
-                                              let p = service.protocols as any;
-                                              if (p.sctp) {
+                                              const res = [];
+                                              const p = service.protocols;
+                                              if ("sctp" in p && p.sctp) {
                                                   res.push(filterAction(serviceFilter, "protocols", "Sctp"));
-                                              } else if (p.tcp) {
+                                              } else if ("tcp" in p && p.tcp) {
                                                   res.push(filterAction(serviceFilter, "protocols", "Tcp"));
-                                              } else if (p.udp) {
+                                              } else if ("udp" in p && p.udp) {
                                                   res.push(filterAction(serviceFilter, "protocols", "Udp"));
-                                              } else if (p.unknown) {
+                                              } else if ("unknown" in p && p.unknown) {
                                                   res.push(filterAction(serviceFilter, "protocols", "Unknown"));
                                               }
                                               return res;
@@ -1088,7 +1096,7 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                                 const promises: Array<Promise<void>> = [];
                                 let numOk = 0;
                                 let numErr = 0;
-                                let stillSelected: SelectedUuids = {
+                                const stillSelected: SelectedUuids = {
                                     [AggregationType.Domain]: {},
                                     [AggregationType.Host]: {},
                                     [AggregationType.Port]: {},
@@ -1242,7 +1250,10 @@ async function resolveSelection(
     services: FullService[];
     ports: FullPort[];
 }> {
-    const unwrap = (e: Result<any, ApiError>) => (skipInvalid && !e.is_ok() ? undefined : e.unwrap());
+    function unwrap<T>(e: Result<T, ApiError>) {
+        if (skipInvalid && !e.is_ok()) return undefined;
+        else return e.unwrap();
+    }
 
     return {
         domains: (
@@ -1251,28 +1262,28 @@ async function resolveSelection(
                     Api.workspaces.domains.get(workspace, uuid).then(unwrap),
                 ),
             )
-        ).filter((v) => v !== undefined),
+        ).filter((v) => v !== undefined) as Array<FullDomain>,
         hosts: (
             await Promise.all(
                 Object.keys(uuids[AggregationType.Host]).map((uuid) =>
                     Api.workspaces.hosts.get(workspace, uuid).then(unwrap),
                 ),
             )
-        ).filter((v) => v !== undefined),
+        ).filter((v) => v !== undefined) as Array<FullHost>,
         services: (
             await Promise.all(
                 Object.keys(uuids[AggregationType.Service]).map((uuid) =>
                     Api.workspaces.services.get(workspace, uuid).then(unwrap),
                 ),
             )
-        ).filter((v) => v !== undefined),
+        ).filter((v) => v !== undefined) as Array<FullService>,
         ports: (
             await Promise.all(
                 Object.keys(uuids[AggregationType.Port]).map((uuid) =>
                     Api.workspaces.ports.get(workspace, uuid).then(unwrap),
                 ),
             )
-        ).filter((v) => v !== undefined),
+        ).filter((v) => v !== undefined) as Array<FullPort>,
     };
 }
 

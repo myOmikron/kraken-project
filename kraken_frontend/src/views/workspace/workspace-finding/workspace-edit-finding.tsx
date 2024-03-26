@@ -90,9 +90,9 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
 
     // Upload to API with changes
     const [pendingApiChanges, setPendingApiChanges] = React.useState<
-        UpdateFindingRequest & { _onSuccess: Function[]; _onFailure: Function[] }
+        UpdateFindingRequest & { _onSuccess: Array<() => void>; _onFailure: Array<() => void> }
     >();
-    const updateFinding = (changes: UpdateFindingRequest, rollback: Function, success?: Function) => {
+    const updateFinding = (changes: UpdateFindingRequest, rollback: () => void, success?: () => void) => {
         setPendingApiChanges((c) => ({
             ...c,
             ...changes,
@@ -327,9 +327,9 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                     <p>No affected items yet</p>
                                 ) : (
                                     Object.entries(affected)
-                                        .sort(([aUuid, a], [bUuid, b]) => {
-                                            let aType = getAffectedType(a);
-                                            let bType = getAffectedType(b);
+                                        .sort(([_1, a], [_2, b]) => {
+                                            const aType = getAffectedType(a);
+                                            const bType = getAffectedType(b);
                                             if (aType < bType) return -1;
                                             if (aType > bType) return 1;
                                             const aObj = getAffectedData(a);

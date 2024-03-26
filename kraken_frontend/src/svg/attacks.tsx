@@ -1,4 +1,4 @@
-import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
+import React, { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { AttackCategory, AttackType } from "../views/workspace/workspace-attacks";
 
 export type AttacksParams = {
@@ -7,7 +7,7 @@ export type AttacksParams = {
     onAttackHover: (attack_type: AttackType | null) => void;
     onAttackSelect: (attack_type: AttackType) => void;
     disabled: Record<AttackType, boolean>;
-    onClickOutside?: (e: React.MouseEvent<SVGSVGElement>) => any;
+    onClickOutside?: (e: React.MouseEvent<SVGSVGElement>) => void;
 
     className?: string;
 };
@@ -19,15 +19,15 @@ type HexCssProperties = CSSProperties & {
 
 export default function AttacksIcon(params: AttacksParams) {
     // global mouse effects:
-    let svg = useRef<SVGSVGElement>(null);
+    const svg = useRef<SVGSVGElement>(null);
     useEffect(() => {
         if (svg.current) {
-            let root = svg.current;
-            let viewBox = root.viewBox.baseVal;
-            let cb = function (e: MouseEvent) {
-                let rect = root.getBoundingClientRect();
-                let xOffset = (viewBox.x / viewBox.width) * rect.width;
-                let yOffset = (viewBox.y / viewBox.height) * rect.height;
+            const root = svg.current;
+            const viewBox = root.viewBox.baseVal;
+            const cb = function (e: MouseEvent) {
+                const rect = root.getBoundingClientRect();
+                const xOffset = (viewBox.x / viewBox.width) * rect.width;
+                const yOffset = (viewBox.y / viewBox.height) * rect.height;
                 root.style.setProperty("--mouse-x", e.clientX - rect.x + xOffset + "");
                 root.style.setProperty("--mouse-y", e.clientY - rect.y + yOffset + "");
             };
@@ -42,7 +42,7 @@ export default function AttacksIcon(params: AttacksParams) {
     const width = 11;
     const height = 9;
 
-    let { className, ...hexProps } = params;
+    const { className, ...hexProps } = params;
 
     return (
         <svg
@@ -52,7 +52,7 @@ export default function AttacksIcon(params: AttacksParams) {
             width={width * 60}
             height={height * 70}
             viewBox={`${(-width * 60) / 2} ${(-height * 70) / 2} ${width * 60} ${height * 70}`}
-            className={`kraken-attacks ${params.className ?? ""}`}
+            className={`kraken-attacks ${className ?? ""}`}
             onClick={(e) => {
                 if ("tagName" in e.target && (e.target.tagName + "").toUpperCase() === "SVG" && params.onClickOutside)
                     params.onClickOutside(e);
@@ -253,7 +253,7 @@ function Hex(props: {
     scale?: number;
     className?: string;
     text?: string;
-    children?: any;
+    children?: React.ReactNode;
     attackType?: AttackType;
     categoryType?: AttackCategory;
     activeAttackCategory: AttackCategory | null;
@@ -261,7 +261,7 @@ function Hex(props: {
     onAttackHover: (attack_type: AttackType | null) => void;
     onAttackSelect: (attack_type: AttackType) => void;
     disabled: Record<AttackType, boolean>;
-    onClickOutside?: (e: React.MouseEvent<SVGSVGElement>) => any;
+    onClickOutside?: (e: React.MouseEvent<SVGSVGElement>) => void;
 }) {
     // we use useState so react caches the random value for us.
     const [delay] = useState(Math.random() * 0.1);

@@ -2,53 +2,7 @@ import React from "react";
 import Select, { StylesConfig } from "react-select";
 import { GroupBase } from "react-select/dist/declarations/src/types";
 
-type SelectMenuProps = {
-    options: Array<SelectValue>;
-    theme?: Theme;
-    value: null | SelectValue;
-    onChange: (value: SelectValue | null) => void;
-    id?: string;
-    required?: boolean;
-};
-type SelectMenuState = {};
-
 type Theme = "default" | "red";
-
-type SelectValue = {
-    label: string;
-    value: any;
-};
-
-export default class SelectMenu extends React.Component<SelectMenuProps, SelectMenuState> {
-    declare ref: React.Ref<any>;
-
-    constructor(props: SelectMenuProps) {
-        super(props);
-
-        this.ref = React.createRef();
-
-        this.state = {
-            type: null,
-        };
-    }
-
-    render() {
-        return (
-            <Select<SelectValue>
-                ref={this.ref}
-                id={this.props.id}
-                required={this.props.required}
-                options={this.props.options}
-                onChange={(type) => {
-                    this.props.onChange(type);
-                }}
-                autoFocus={false}
-                value={this.props.value}
-                styles={selectStyles(this.props.theme || "default")}
-            />
-        );
-    }
-}
 
 export type SelectPrimitiveProps<T extends { toString(): string }> = {
     options: Array<T>;
@@ -85,7 +39,7 @@ export function clearSelectStyles<Option, IsMulti extends boolean, Group extends
 > {
     return {
         ...selectStyles("default"),
-        control: (styles, state) => ({
+        control: (styles) => ({
             ...styles,
             ":hover": {
                 boxShadow: "inset 0 -3px 3em var(--primary-op), 0 0 15em #0cf3, 0 0 .5em #0ff2",
@@ -111,7 +65,7 @@ export function selectStyles<Option, IsMulti extends boolean, Group extends Grou
     theme: Theme,
 ): StylesConfig<Option, IsMulti, Group> {
     return {
-        control: (styles, state) => ({
+        control: (styles) => ({
             ...styles,
             backgroundColor: "black",
             boxShadow:

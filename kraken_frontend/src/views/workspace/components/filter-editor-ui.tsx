@@ -1,6 +1,5 @@
 import { FC, useState } from "react";
 import { FullDomain, FullHost, FullPort, FullService, OsType, PortProtocol, SimpleTag } from "../../../api/generated";
-import Input from "../../../components/input";
 import "../../../styling/filter-editor-ui.css";
 import CollapseIcon from "../../../svg/collapse";
 import ExpandIcon from "../../../svg/expand";
@@ -10,6 +9,7 @@ import { getExprs, replaceRaw } from "../../../utils/filter/mutate";
 import { parseUserPort } from "../../../utils/ports";
 import EditableDataList, { EditableDataListProps } from "./editable-data-list";
 import EditableTags from "./editable-tags";
+import Textarea from "../../../components/textarea";
 
 export type FilterEditorProps = {
     workspace: string;
@@ -35,7 +35,7 @@ export function FilterEditorUi(props: FilterEditorProps) {
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [resetCount, setResetCount] = useState(0);
 
-    const anyAdvanced = Object.entries(ASTFieldTypes[props.ast]).some(([key, type]) => {
+    const anyAdvanced = Object.entries(ASTFieldTypes[props.ast]).some(([key]) => {
         const ast = ASTFields[props.ast] as ASTField;
         const astField = ast[key];
         return astField.advanced;
@@ -83,8 +83,7 @@ export function FilterEditorUi(props: FilterEditorProps) {
                 </fieldset>
             )}
             <footer>
-                <Input
-                    as="textarea"
+                <Textarea
                     rows={2}
                     className={"input"}
                     placeholder={"Filter..."}
@@ -121,7 +120,7 @@ export function FilterTagsSelector(props: FilterComponentProps) {
         return allTags.find((v) => v.name == label);
     }
 
-    let values = astField.columns
+    const values = astField.columns
         .map<[string, SpanlessToken[]]>((c) => [c, getExprs(props.filter, c)!])
         .find((c) => c[1] !== undefined);
     const usedColumn = values?.[0] ?? astField.columns[0];
@@ -185,7 +184,7 @@ function FilterDataSelector<T extends FullHost | FullPort | FullDomain | FullSer
         return allDatas.find((v) => props.mapper(v) == data);
     }
 
-    let values = astField.columns
+    const values = astField.columns
         .map<[string, SpanlessToken[]]>((c) => [c, getExprs(props.filter, c)!])
         .find((c) => c[1] !== undefined);
     const usedColumn = values?.[0] ?? astField.columns[0];
@@ -221,7 +220,7 @@ function FilterDateSelector(props: FilterComponentProps) {
     const astField = ast[props.field];
     if (!astField) return undefined;
 
-    let values = astField.columns
+    const values = astField.columns
         .map<[string, SpanlessToken[]]>((c) => [c, getExprs(props.filter, c)!])
         .find((c) => c[1] !== undefined);
     const usedColumn = values?.[0] ?? astField.columns[0];
@@ -233,8 +232,8 @@ function FilterDateSelector(props: FilterComponentProps) {
     const minDateInput = beforeTok?.type == "value" ? new Date(beforeTok.value) : undefined;
     const maxDateInput = afterTok?.type == "value" ? new Date(afterTok.value) : undefined;
 
-    let [minOverride, setMinOverride] = useState<Date | undefined>(undefined);
-    let [maxOverride, setMaxOverride] = useState<Date | undefined>(undefined);
+    const [minOverride, setMinOverride] = useState<Date | undefined>(undefined);
+    const [maxOverride, setMaxOverride] = useState<Date | undefined>(undefined);
 
     const minDate = minOverride ?? minDateInput;
     const maxDate = maxOverride ?? maxDateInput;
@@ -271,7 +270,7 @@ function FilterDateSelector(props: FilterComponentProps) {
                 max={maxDate ? dateToString(maxDate) : undefined}
                 onChange={(e) => {
                     if (e.target.value) {
-                        let date = new Date(e.target.value);
+                        const date = new Date(e.target.value);
                         if (maxDate && date > maxDate) setMinOverride(date);
                         else setDates(date, maxDate);
                     } else {
@@ -286,7 +285,7 @@ function FilterDateSelector(props: FilterComponentProps) {
                 min={minDate ? dateToString(minDate) : undefined}
                 onChange={(e) => {
                     if (e.target.value) {
-                        let date = new Date(e.target.value);
+                        const date = new Date(e.target.value);
                         if (minDate && date < minDate) setMaxOverride(date);
                         else setDates(minDate, date);
                     } else {
@@ -303,14 +302,14 @@ function FilterRawPortSelector(props: FilterComponentProps) {
     const astField = ast[props.field];
     if (!astField) return undefined;
 
-    let values = astField.columns
+    const values = astField.columns
         .map<[string, SpanlessToken[]]>((c) => [c, getExprs(props.filter, c)!])
         .find((c) => c[1] !== undefined);
     const usedColumn = values?.[0] ?? astField.columns[0];
     const tokens = values?.[1];
     const inputValue = tokens ? tokensToString(tokens) : undefined;
 
-    let [override, setOverride] = useState<string | undefined>(undefined);
+    const [override, setOverride] = useState<string | undefined>(undefined);
 
     const value = override ?? inputValue;
 
@@ -377,7 +376,7 @@ function FilterCheckboxEnumSelector(props: FilterComponentProps & { enum: string
     const astField = ast[props.field];
     if (!astField) return undefined;
 
-    let values = astField.columns
+    const values = astField.columns
         .map<[string, SpanlessToken[]]>((c) => [c, getExprs(props.filter, c)!])
         .find((c) => c[1] !== undefined);
     const usedColumn = values?.[0] ?? astField.columns[0];
@@ -396,8 +395,8 @@ function FilterCheckboxEnumSelector(props: FilterComponentProps & { enum: string
                             className="input"
                             checked={checked.includes(enumValue)}
                             onChange={(e) => {
-                                let newChecked = checked;
-                                let existing = newChecked.indexOf(enumValue);
+                                const newChecked = checked;
+                                const existing = newChecked.indexOf(enumValue);
                                 if (e.target.checked) {
                                     if (existing != -1) return;
                                     newChecked.push(enumValue);

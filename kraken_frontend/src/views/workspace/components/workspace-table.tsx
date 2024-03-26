@@ -1,4 +1,4 @@
-import React, { CSSProperties } from "react";
+import React from "react";
 import Select from "react-select";
 import { ApiError } from "../../../api/error";
 import { selectStyles } from "../../../components/select-menu";
@@ -106,6 +106,7 @@ export type StatelessWorkspaceTableProps = {
 
     solidBackground?: boolean;
 };
+
 export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
     const {
         total,
@@ -121,6 +122,7 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
     } = props;
 
     const lastOffset = Math.floor(total / limit) * limit;
+
     function setOffset(offset: number) {
         if (offset < 0) {
             setRawOffset(0);
@@ -131,8 +133,6 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
         }
     }
 
-    // @ts-ignore
-    const style: CSSProperties = { "--columns": columnsTemplate };
     return (
         <div
             className={
@@ -140,7 +140,7 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
                     ? "workspace-table solid-background"
                     : "workspace-table pane"
             }
-            style={style}
+            style={{ "--columns": columnsTemplate } as Record<string, string>}
         >
             <div className={"workspace-table-pre-header"}>
                 <FilterInput {...filter} />

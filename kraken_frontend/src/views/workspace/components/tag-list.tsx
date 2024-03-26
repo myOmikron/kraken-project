@@ -1,13 +1,13 @@
 import { SimpleTag } from "../../../api/generated";
 import Tag from "../../../components/tag";
-import { FilterOutput } from "./filter-input";
+import { UseFilterReturn } from "./filter-input";
 
 export type TagClickCallback = (e: { ctrlKey: boolean; shiftKey: boolean; altKey: boolean }, tag: SimpleTag) => void;
 
 type TagListProps = {
     tags: Array<SimpleTag>;
-    globalFilter?: FilterOutput;
-    filter?: FilterOutput;
+    globalFilter?: UseFilterReturn;
+    filter?: UseFilterReturn;
     onClickTag?: TagClickCallback;
 };
 export default function TagList(props: TagListProps) {
