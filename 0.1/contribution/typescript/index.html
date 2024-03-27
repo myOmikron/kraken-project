@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#components" class="md-skip">
+        <a href="#linter" class="md-skip">
           Skip to content
         </a>
       
@@ -653,6 +653,34 @@ You're not viewing the latest version.
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#linter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Linter
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#formatter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Formatter
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dos-and-donts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Do's and Don'ts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Do's and Don'ts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#components" class="md-nav__link">
     <span class="md-ellipsis">
       Components
@@ -660,8 +688,8 @@ You're not viewing the latest version.
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#conditional-class-names" class="md-nav__link">
     <span class="md-ellipsis">
       Conditional class names
@@ -677,6 +705,11 @@ You're not viewing the latest version.
       Rational
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -817,10 +850,21 @@ You're not viewing the latest version.
 
   <h1>Typescript</h1>
 
-<h2 id="components">Components</h2>
+<h2 id="linter">Linter</h2>
+<p><a href="https://eslint.org/">Eslint</a> (invoked as <code>yarn lint</code>) is used as external linter to catch common pitfalls and
+anti-patterns.</p>
+<p>It is also configured to enforce <em>some</em> of our style choices.</p>
+<p>Please run <code>yarn lint</code> before opening a PR or configure you're IDE to run <code>eslint</code> (with our config!) on the fly.</p>
+<p>The config is located in <code>eslint.config.js</code> using <code>eslint</code>'s new config format.</p>
+<h2 id="formatter">Formatter</h2>
+<p><a href="https://prettier.io/">Prettier</a> (invoked as <code>yarn format</code>) is used as formatter.</p>
+<p>Please run <code>yarn format</code> before opening a PR or configure you're IDE to run <code>prettier</code> (with our config!) on the fly.</p>
+<p>The config is located directly in the <code>package.json</code>.</p>
+<h2 id="dos-and-donts">Do's and Don'ts</h2>
+<h3 id="components">Components</h3>
 <p>Only use Functional components in React for new components.</p>
 <p>Rationale: state manipulation and caching can be written much simpler as well as it being what the react developers recommend.</p>
-<h2 id="conditional-class-names">Conditional class names</h2>
+<h3 id="conditional-class-names">Conditional class names</h3>
 <p>When adding class names to a react element based on conditions
 use <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals">template literals</a>
 in combination with the <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_operator"><code>?</code> operator</a></p>
@@ -858,7 +902,7 @@ in combination with the <a href="https://developer.mozilla.org/en-US/docs/Web/Ja
 </span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="p">/&gt;</span>
 </span></code></pre></div></p>
 </div>
-<h3 id="rational">Rational</h3>
+<h4 id="rational">Rational</h4>
 <ol>
 <li>Flexible: Can be scaled to any number of conditions</li>
 <li>First-class javascript features: This approach uses basic language features without any library api to learn</li>
