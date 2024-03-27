@@ -1,5 +1,5 @@
 import { Err, Ok, Result } from "../utils/result";
-import { authenticate, login, logout, registerKey, test } from "./auth";
+import { login, logout, test } from "./auth";
 import { ApiError, StatusCode, parseError } from "./error";
 import {
     AdminWorkspacesApi,
@@ -154,8 +154,6 @@ export const Api = {
         login,
         logout,
         test,
-        registerKey,
-        authenticate,
     },
     user: {
         get: () => handleError(userManagement.getMe()),
