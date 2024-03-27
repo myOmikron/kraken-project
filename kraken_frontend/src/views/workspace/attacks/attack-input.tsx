@@ -40,10 +40,10 @@ export const StringAttackInput = forwardRef<HTMLInputElement, AttackInputProps<s
     const { value, label, valueKey, onUpdate, ...htmlProps } = props;
 
     return (
-        <>
+        <React.Fragment key={valueKey}>
             <label htmlFor={valueKey + "_input"}>{label || valueKey}</label>
             <Input ref={ref} id={valueKey + "_input"} value={value || ""} onChange={onUpdate} {...htmlProps} />
-        </>
+        </React.Fragment>
     );
 });
 
@@ -80,7 +80,7 @@ export function ConvertingAttackInput<T>(
     const ref = useRef<HTMLInputElement | null>();
 
     return (
-        <>
+        <React.Fragment key={valueKey}>
             <label htmlFor={valueKey + "_input"}>{label || valueKey}</label>
             <Input
                 id={valueKey + "_input"}
@@ -112,7 +112,7 @@ export function ConvertingAttackInput<T>(
                 }}
                 {...htmlProps}
             />
-        </>
+        </React.Fragment>
     );
 }
 
@@ -241,7 +241,7 @@ export const BooleanAttackInput = forwardRef((props: AttackInputProps<boolean>, 
     const { value, label, valueKey, onUpdate, ...htmlProps } = props;
 
     return (
-        <div className="checkbox">
+        <div className="checkbox" key={valueKey}>
             <Checkbox ref={ref} id={valueKey + "_input"} value={value ?? false} onChange={onUpdate} {...htmlProps} />
             <label htmlFor={valueKey + "_input"}>{label}</label>
         </div>
@@ -279,7 +279,7 @@ export const WordlistAttackInput = forwardRef<any, AttackInputProps<string>>((pr
     const { value, label, valueKey, onUpdate } = props;
 
     return (
-        <>
+        <React.Fragment key={valueKey}>
             <label htmlFor={valueKey + "_input"}>{label || valueKey}</label>
             {wordlists === null ? (
                 <Input value="Loading..." onChange={() => {}} readOnly />
@@ -296,7 +296,7 @@ export const WordlistAttackInput = forwardRef<any, AttackInputProps<string>>((pr
                     }}
                 />
             )}
-        </>
+        </React.Fragment>
     );
 });
 
@@ -352,7 +352,7 @@ const DEHASHED_SEARCH_TYPES = {
  * May be extended to provide more rows of settings in the future.
  */
 export const DehashedAttackInput = forwardRef<HTMLInputElement, AttackInputProps<Query>>((props, ref) => {
-    const { value, onUpdate, ...htmlProps } = props;
+    const { value, valueKey, onUpdate, ...htmlProps } = props;
 
     // TODO: allow switching between simple/exact/regex + possibly add OR & AND here
     /**
@@ -477,7 +477,7 @@ export const DehashedAttackInput = forwardRef<HTMLInputElement, AttackInputProps
     }
 
     return (
-        <>
+        <React.Fragment key={valueKey}>
             <Select<DehashedSelectType>
                 required={props.required}
                 options={Object.values(DEHASHED_SEARCH_TYPES)}
@@ -498,6 +498,6 @@ export const DehashedAttackInput = forwardRef<HTMLInputElement, AttackInputProps
                     update(type, search);
                 }}
             />
-        </>
+        </React.Fragment>
     );
 });

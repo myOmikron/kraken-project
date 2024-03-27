@@ -99,7 +99,7 @@ export default function GenericAttackForm(props: GenericAttackFormProps) {
             // should we show fixed inputs? could show them here
         } else if (usePrefill(props.prefilled, key)) {
             groups.get(input.group ?? "").push(
-                <>
+                <React.Fragment key={key + "_group"}>
                     <div>{input.label}</div>
                     <Popup
                         trigger={
@@ -121,7 +121,7 @@ export default function GenericAttackForm(props: GenericAttackFormProps) {
                             </pre>
                         </div>
                     </Popup>
-                </>,
+                </React.Fragment>,
             );
         } else {
             const Type = input.type;
@@ -158,12 +158,12 @@ export default function GenericAttackForm(props: GenericAttackFormProps) {
         >
             <div className={"fields"}>
                 {groups.map((name, group) =>
-                    group ? (
+                    name ? (
                         <CollapsibleGroup key={name} label={name} startCollapsed={name == "Advanced"}>
                             {group}
                         </CollapsibleGroup>
                     ) : (
-                        <>{group}</>
+                        <React.Fragment key={0}>{group}</React.Fragment>
                     ),
                 )}
             </div>
