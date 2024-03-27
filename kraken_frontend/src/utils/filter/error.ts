@@ -29,6 +29,8 @@ export default class ParserError extends Error {
                         return `Unexpected token: ${data.got.type}`;
                     case "unknownColumn":
                         return `Unknown column: ${data.column}`;
+                    case "parseValue":
+                        return `Failed to parse value: ${data.msg}`;
                 }
             })(),
         );

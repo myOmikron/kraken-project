@@ -2,19 +2,25 @@
 
 import eslint from "@eslint/js";
 import tsEslint from "typescript-eslint";
-import reactHooks from "eslint-plugin-react-hooks";
+import parser from "@typescript-eslint/parser";
+import jsdoc from "eslint-plugin-jsdoc";
 
 const config = tsEslint.config(
     eslint.configs.recommended,
     ...tsEslint.configs.recommended,
-    // @ts-ignore: plugin hasn't updated to new API, but it still works
-    // { plugins: { "react-hooks": reactHooks }, rules: reactHooks.configs.recommended.rules },
+    jsdoc.configs["flat/recommended-typescript"],
     {
         ignores: ["src/api/generated/**"],
     },
     {
+        languageOptions: {
+            parser,
+            parserOptions: { project: ["./tsconfig.json"] },
+        },
         rules: {
-            "no-case-declarations": "off", // potential errors already caught by typescript
+            "no-case-declarations": "off", // potential errors are already caught by typescript
+
+            "@typescript-eslint/switch-exhaustiveness-check": "error",
 
             "@typescript-eslint/ban-ts-comment": [
                 "error",
