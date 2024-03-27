@@ -10,11 +10,42 @@ import StartAttack from "../components/start-attack";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import { AnyApiValue, AttackPrefill, IAttackDescr } from "../workspace-attacks";
 
+/**
+ * The react component props for the `GenericAttackForm`
+ */
 type GenericAttackFormProps = {
+    /**
+     * Pre-generated input values for every attack input. If more then one is
+     * set, the input value will not be editable and only the prefill can be
+     * submitted.
+     *
+     * For a single value, the value that started off as the prefill value may
+     * be edited still.
+     *
+     * The prefill is generated in `../workspace-attacks.tsx`.
+     */
     prefilled: AttackPrefill;
+
+    /**
+     * The form description including all inputs and labels and extras.
+     *
+     * Comes from {@link ATTACKS} in `../workspace-attacks.tsx`
+     */
     attack: IAttackDescr;
 };
 
+/**
+ * Holds the value of all the input parameters that are later passed into the
+ * API after a little bit of pre-processing.
+ */
+type GenericFormInputs = {
+    [apiJsonKey: string]: AnyApiValue;
+};
+
+/**
+ * An automatically generated form based on an {@link IAttackDescr}, which
+ * concretely probably comes from {@link ATTACKS} (of type {@link AllAttackDescr})
+ */
 export default function GenericAttackForm(props: GenericAttackFormProps) {
     const {
         workspace: { uuid: workspace },
@@ -22,8 +53,8 @@ export default function GenericAttackForm(props: GenericAttackFormProps) {
 
     const inputRefs = useRef<Array<HTMLElement | null>>([]);
 
-    const [resetValue, setResetValue] = React.useState<{ [apiJsonKey: string]: AnyApiValue }>();
-    const [value, setValue] = React.useState<{ [apiJsonKey: string]: AnyApiValue }>();
+    const [resetValue, setResetValue] = React.useState<GenericFormInputs>();
+    const [value, setValue] = React.useState<GenericFormInputs>();
 
     useEffect(() => {
         const newResetValue: typeof resetValue = {};
@@ -49,7 +80,7 @@ export default function GenericAttackForm(props: GenericAttackFormProps) {
         setValue(value);
     }, [props.attack.inputs.inputs]);
 
-    // This is called after attacks are successfully started.
+    /** This is called after attacks are successfully started. */
     function afterAttackHandler() {
         const first = inputRefs.current.find((v) => v);
         if (first) {
@@ -58,14 +89,7 @@ export default function GenericAttackForm(props: GenericAttackFormProps) {
         }
     }
 
-    const groups: { [name: string]: JSX.Element[] } = {};
-    const groupOrder: string[] = [];
-
-    function getGroup(name: string) {
-        if (name in groups) return groups[name];
-        groupOrder.push(name);
-        return (groups[name] = []);
-    }
+    const groups = new RenderGrouping();
 
     inputRefs.current = [];
 
@@ -74,7 +98,7 @@ export default function GenericAttackForm(props: GenericAttackFormProps) {
         if ("fixed" in input) {
             // should we show fixed inputs? could show them here
         } else if (usePrefill(props.prefilled, key)) {
-            getGroup(input.group ?? "").push(
+            groups.get(input.group ?? "").push(
                 <>
                     <div>{input.label}</div>
                     <Popup
@@ -107,21 +131,20 @@ export default function GenericAttackForm(props: GenericAttackFormProps) {
                     ref={(e) => (inputRefs.current[i++] = e)}
                     key={key + "_gen"}
                     value={input.multi ? value?.[key][0] : value?.[key]}
-                    prefill={props.prefilled[key]}
                     valueKey={key}
                     label={input.label ?? key}
                     required={input.required ?? false}
                     autoFocus={i == 0}
-                    onUpdate={(k, v) => {
+                    onUpdate={(v) => {
                         setValue((value) => ({
                             ...value,
-                            [k]: input.multi ? [v] : v,
+                            [key]: input.multi ? [v] : v,
                         }));
                     }}
                 />
             );
 
-            getGroup(input.group ?? "").push(row);
+            groups.get(input.group ?? "").push(row);
         }
     });
 
@@ -134,13 +157,13 @@ export default function GenericAttackForm(props: GenericAttackFormProps) {
             }}
         >
             <div className={"fields"}>
-                {groupOrder.map((group) =>
+                {groups.map((name, group) =>
                     group ? (
-                        <CollapsibleGroup key={group} label={group} startCollapsed={group == "Advanced"}>
-                            {groups[group]}
+                        <CollapsibleGroup key={name} label={name} startCollapsed={name == "Advanced"}>
+                            {group}
                         </CollapsibleGroup>
                     ) : (
-                        <>{groups[group]}</>
+                        <>{group}</>
                     ),
                 )}
             </div>
@@ -149,15 +172,81 @@ export default function GenericAttackForm(props: GenericAttackFormProps) {
     );
 }
 
+/**
+ * Inputs can be grouped via the attack description `group`. The default
+ * group is the empty string.
+ *
+ * Groups are collapsible sections, using {@link CollapsibleGroup}
+ */
+class RenderGrouping {
+    private groups: { [name: string]: JSX.Element[] } = {};
+    private groupOrder: string[] = [];
+
+    /**
+     * @param name The name, human readable and used as display - matched exactly
+     *
+     * @returns The existing group array reference with this name or allocating
+     * a new empty one if not yet seen. Keeps the order of the group names.
+     */
+    get(name: string) {
+        if (name in this.groups) return this.groups[name];
+        this.groupOrder.push(name);
+        return (this.groups[name] = []);
+    }
+
+    /**
+     * Iterates over all the previously seen groups that called `get`.
+     *
+     * @param cb Callback that is run exactly once for each group, in insertion
+     * order. The first parameter being the name as passed in to `get` and the
+     * second parameter being the reference that you would get using `get`.
+     *
+     * @returns the result of all callback function calls as array.
+     */
+    map<T>(cb: (name: string, group: JSX.Element[]) => T): T[] {
+        return this.groupOrder.map((name) => cb(name, this.groups[name]));
+    }
+}
+
+/**
+ * Given the prefilled data and the JSON key to access it, check if we should
+ * use the prefill as-is or render and use editable input fields.
+ *
+ * @param prefilled the raw prefilled object passed into `GenericAttackForm`
+ * `props.prefilled`
+ * @param key The input key, same as the `IAttackDescr` inputs key as well as
+ * the API JSON key.
+ *
+ * @returns `true` if the uneditable prefill should be used or `false` if the
+ * regular editable value should be used.
+ */
 function usePrefill(prefilled: AttackPrefill, key: string): boolean {
     return prefilled[key]?.length > 1;
 }
 
+/**
+ * Splits the raw input values from `value` into multiple API requests, as
+ * needed and defined by the `IAttackDescr`. Then invokes all the API requests
+ * and resolves the promise once all have been started successfully.
+ *
+ * Shows UI toasts on success/error.
+ *
+ * @param workspace the workspace to operate on for the API
+ * @param attack the attack description that is used to determine what values
+ * can be passed in as array and which ones need to be split into multiple
+ * requests.
+ * @param prefilled the prefill data, used when {@link usePrefill} returns
+ * `true` for a key instead of the passed in value.
+ * @param value the raw API JSON data that should be split up and sent.
+ *
+ * @returns a Promise that can be awaited to wait until all API requests have
+ * been started.
+ */
 function startAttack(
     workspace: string,
     attack: IAttackDescr,
     prefilled: AttackPrefill,
-    value: { [apiJsonKey: string]: AnyApiValue },
+    value: GenericFormInputs,
 ): Promise<void> {
     return new Promise((resolve) => {
         const params: typeof value = {
@@ -210,15 +299,28 @@ function startAttack(
             needMultiCallArgs = [];
         }
 
-        function send(attack: GenericAttackFormProps["attack"], params: AnyApiValue) {
+        /**
+         * Wrapper around the `Api.attacks.*` API call for a single already
+         * split argument JSON
+         *
+         * @param attack the attack of which to wrap the function for
+         * @param params the raw JSON value to send there, which is always
+         * wrapped into another key (which this function takes care of)
+         * @returns a promise that resolves once the attack has started.
+         */
+        const send = (attack: IAttackDescr, params: AnyApiValue) => {
             const wrappedParams: AnyApiValue = {};
             wrappedParams[attack.inputs.jsonKey] = params;
+            // We log the attack input for debugging purposes. Could extend this
+            // to log to the server (telemetry) as well, including the selection
+            // shape so we can figure out which inputs are mixed together usually.
+            // eslint-disable-next-line no-console
             console.log("API call", attack.inputs.endpoint, JSON.stringify(wrappedParams));
             return handleError(
                 // @ts-ignore: The 'this' context of type '...' is not assignable to method's 'this' of type '...'
                 Api.attacks.impl[attack.inputs.endpoint].call(Api.attacks.impl, wrappedParams),
             ).then(handleApiError((_) => _));
-        }
+        };
 
         if (needMultiCallArgs.length == 0) {
             send(attack, params).then((_) => {
@@ -245,6 +347,10 @@ function startAttack(
             let finished = 0;
             let failed = 0;
 
+            /**
+             * helper function, resolves the promise once all attacks have been
+             * started.
+             */
             const checkAllStarted = () => {
                 if (finished + failed == copies.length) {
                     if (failed == 0) {
@@ -276,7 +382,15 @@ function startAttack(
     });
 }
 
-function CollapsibleGroup(props: { children: React.ReactNode; label: string; startCollapsed?: boolean }) {
+/** Wrapper for fieldset/legend - just for the genreic attack input form */
+function CollapsibleGroup(props: {
+    /** The DOM to render within the collapsible group */
+    children: React.ReactNode;
+    /** Human readable display name (the group name) */
+    label: string;
+    /** if true, start in collapsed state instead of revealed state */
+    startCollapsed?: boolean;
+}) {
     const [collapsed, setCollapsed] = useState(props.startCollapsed ?? false);
 
     return (

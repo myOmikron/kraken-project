@@ -64,10 +64,14 @@ export namespace ObjectFns {
         }
     }
 
-    /// Similar to `new Set(v).values()`, but using deepEquals instead of
-    /// reference checks for variables.
-    ///
-    /// Not very performant, only use for small-ish sets of data.
+    /**
+     * Similar to `new Set(v).values()`, but using deepEquals instead of
+     * reference checks for variables.
+     *
+     * Not very performant, only use for small-ish sets of data.
+     *
+     * @returns the input but with duplicate values removed.
+     */
     export function uniqueObjects<T>(array: T[]): T[] {
         const res: T[] = [];
         for (const v of array) {
@@ -83,10 +87,14 @@ export namespace ObjectFns {
         return res;
     }
 
-    /// For a 2-dimensional non-jagged array of size AxB, return its transposed
-    /// i.e. 90 degree rotated version of size BxA.
-    ///
-    /// Throws an Error if this is passed a jagged array.
+    /**
+     * For a 2-dimensional non-jagged array of size AxB, return its transposed
+     * i.e. 90 degree rotated version of size BxA.
+     *
+     * @throws an Error if this is passed a jagged array.
+     *
+     * @returns array of shape `height x width` for input of shape `width x height`
+     */
     export function transpose2D<T>(array: T[][]): T[][] {
         if (!array.length) return array;
 
