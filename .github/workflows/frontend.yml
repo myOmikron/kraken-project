@@ -1,4 +1,4 @@
-name: frontend prettier check
+name: frontend checks
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
       actions: read
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [ 18.x, 20.x ]
 
     steps:
       - uses: actions/checkout@v4
