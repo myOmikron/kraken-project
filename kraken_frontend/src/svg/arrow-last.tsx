@@ -3,7 +3,7 @@ import "../index.css";
 
 export default function ArrowLastIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
-        <div className={"pagination-icon"} {...props}>
+        <div className={"icon"} {...props}>
             <svg
                 className="neon"
                 fill="#000000"
@@ -12,7 +12,8 @@ export default function ArrowLastIcon(props: React.HTMLAttributes<HTMLDivElement
                 viewBox="0 0 1024 1024"
                 xmlns="http://www.w3.org/2000/svg"
             >
-                <path d="M562.19 511.799l-144.6 145.718-36.15-36.43L489.89 511.8l-108.45-109.29 36.15-36.429zM691.2 657.92H640V366.08h51.2z" />
+                <rect x="728" y="256" width="96" height="512" />
+                <path d="M319.3 264.8l-61.8 61.8L442.9 512 257.5 697.4l61.8 61.8L566.5 512z" />
             </svg>
         </div>
     );

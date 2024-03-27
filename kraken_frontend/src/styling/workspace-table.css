@@ -50,17 +50,22 @@
 .workspace-table-button {
     background: none;
     border: none;
+    cursor: pointer;
 }
 
 .workspace-table-button > .icon {
     width: 2em;
     height: 2em;
-    cursor: pointer;
     padding: 0;
 }
 
-.workspace-table-button > .icon:hover {
+.workspace-table-button:not(:disabled):hover > .icon {
     filter: brightness(0) invert() drop-shadow(0 0 8px var(--primary));
+}
+
+.workspace-table-button:disabled {
+    filter: contrast(0);
+    cursor: default;
 }
 
 .workspace-table-controls {
@@ -72,7 +77,7 @@
     width: 100%;
 }
 
-.pagination-icon > svg {
+workspace-table-button > .icon > svg {
     display: flex;
     width: 2.5em;
     height: 2.5em;
