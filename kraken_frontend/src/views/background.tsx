@@ -1,67 +1,67 @@
 import React from "react";
-
 import "../styling/background.css";
 
-export default class Background extends React.Component<{}, {}> {
-    canvas: HTMLCanvasElement | null | undefined;
-    ctx: CanvasRenderingContext2D | null | undefined;
-    columns: Array<number> = [];
-    interval: number | null = null;
+export default function Background() {
+    const canvas = React.useRef<HTMLCanvasElement | null>(null);
+    const ctx = React.useRef<CanvasRenderingContext2D | null | undefined>(undefined);
+    const columns = React.useRef<Array<number>>([]);
+    const interval = React.useRef<number | null>(null);
 
-    renderCanvas() {
-        if (this.ctx && this.canvas) {
-            this.ctx.fillStyle = "#0001";
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    function renderCanvas() {
+        if (ctx.current && canvas.current) {
+            ctx.current.fillStyle = "#0001";
+            ctx.current.fillRect(0, 0, canvas.current.width, canvas.current.height);
 
-            this.ctx.fillStyle = "#222";
-            this.ctx.font = "1em monospace";
+            ctx.current.fillStyle = "#222";
+            ctx.current.font = "1em monospace";
 
-            this.columns.forEach((y, ind) => {
+            columns.current.forEach((y, ind) => {
                 const text = String.fromCharCode(Math.floor(Math.random() * 96 + 32));
                 const x = ind * 12;
-                this.ctx?.fillText(text, x, y);
+                ctx.current?.fillText(text, x, y);
                 if (y > 100 + Math.random() * 10000) {
-                    this.columns[ind] = 0;
+                    columns.current[ind] = 0;
                 } else {
-                    this.columns[ind] = y + 12;
+                    columns.current[ind] = y + 12;
                 }
             });
         }
     }
 
-    updateMatrix() {
-        if (this.ctx && this.canvas) {
-            const w = (this.canvas.width = document.body.offsetWidth);
-            const h = (this.canvas.height = document.body.offsetHeight);
-            this.columns = Array.from(
+    function updateMatrix() {
+        if (ctx.current && canvas.current) {
+            const w = (canvas.current.width = document.body.offsetWidth);
+            const h = (canvas.current.height = document.body.offsetHeight);
+            columns.current = Array.from(
                 { length: Math.floor(w / 12) + 1 },
                 () => Math.floor((Math.random() * h) / 12) * 12,
             );
         }
     }
 
-    componentDidMount() {
-        this.interval = setInterval(() => {
-            window.requestAnimationFrame(this.renderCanvas.bind(this));
+    React.useEffect(() => {
+        interval.current = setInterval(() => {
+            window.requestAnimationFrame(renderCanvas);
         }, 50);
-        this.updateMatrix();
-        window.addEventListener("resize", this.updateMatrix.bind(this));
-    }
+        updateMatrix();
+        window.addEventListener("resize", updateMatrix);
+    }, []);
 
-    componentWillUnmount() {
-        this.interval && clearInterval(this.interval);
-        this.interval = null;
-    }
+    React.useEffect(
+        () => () => {
+            interval.current && clearInterval(interval.current);
+            interval.current = null;
+        },
+        [],
+    );
 
-    render() {
-        return (
-            <canvas
-                className="background"
-                ref={(c) => {
-                    this.ctx = c?.getContext("2d");
-                    this.canvas = c;
-                }}
-            />
-        );
-    }
+    return (
+        <canvas
+            className="background"
+            ref={(c) => {
+                ctx.current = c?.getContext("2d");
+                canvas.current = c;
+            }}
+        />
+    );
 }
