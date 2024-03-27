@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
 import { Api, handleError } from "../../../api/api";
@@ -19,14 +19,17 @@ type GenericAttackFormState = {
     resetValue: { [apiJsonKey: string]: AnyApiValue };
 };
 
-export default class GenericAttackForm extends React.Component<GenericAttackFormProps, GenericAttackFormState> {
-    static contextType = WORKSPACE_CONTEXT;
-    declare context: React.ContextType<typeof WORKSPACE_CONTEXT>;
-    declare inputRefs: (HTMLElement | null)[];
+export default function GenericAttackForm(props: GenericAttackFormProps) {
+    const {
+        workspace: { uuid: workspace },
+    } = React.useContext(WORKSPACE_CONTEXT);
 
-    constructor(props: GenericAttackFormProps) {
-        super(props);
+    const inputRefs = useRef<Array<HTMLElement | null>>([]);
 
+    const [resetValue, setResetValue] = React.useState<{ [apiJsonKey: string]: AnyApiValue }>();
+    const [value, setValue] = React.useState<{ [apiJsonKey: string]: AnyApiValue }>();
+
+    useEffect(() => {
         const resetValue: GenericAttackFormState["resetValue"] = {};
         for (const key of Object.keys(props.attack.inputs.inputs)) {
             const input = props.attack.inputs.inputs[key];
@@ -46,47 +49,138 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
             }
         }
 
-        this.inputRefs = [];
+        setResetValue(resetValue);
+        setValue(value);
+    }, [props.attack.inputs.inputs]);
 
-        this.state = {
-            resetValue,
-            value,
-        };
-    }
-
-    componentDidUpdate(prevProps: Readonly<GenericAttackFormProps>) {
-        if (this.props.attack.inputs.inputs != prevProps.attack.inputs.inputs) {
-            const resetValue: GenericAttackFormState["resetValue"] = {};
-            for (const key of Object.keys(this.props.attack.inputs.inputs)) {
-                const input = this.props.attack.inputs.inputs[key];
-                if ("fixed" in input) {
-                    resetValue[key] = input.fixed;
-                } else {
-                    resetValue[key] = input.multi ? [input.defaultValue] : input.defaultValue;
-                }
-            }
-
-            this.setState({
-                resetValue,
-                value: ObjectFns.deepDuplicate(resetValue),
-            });
+    // This is called after attacks are successfully started.
+    function afterAttackHandler() {
+        const first = inputRefs.current.find((v) => v);
+        if (first) {
+            first.focus();
+            if ("select" in first && typeof first["select"] == "function") first.select();
         }
     }
 
-    startAttack() {
+    const groups: { [name: string]: JSX.Element[] } = {};
+    const groupOrder: string[] = [];
+
+    function getGroup(name: string) {
+        if (name in groups) return groups[name];
+        groupOrder.push(name);
+        return (groups[name] = []);
+    }
+
+    inputRefs.current = [];
+
+    Object.keys(props.attack.inputs.inputs).map((key, i) => {
+        const input = props.attack.inputs.inputs[key];
+        if ("fixed" in input) {
+            // should we show fixed inputs? could show them here
+        } else if (usePrefill(props.prefilled, key)) {
+            getGroup(input.group ?? "").push(
+                <>
+                    <div>{input.label}</div>
+                    <Popup
+                        trigger={
+                            <span className="workspace-data-certainty-icon">
+                                <em>{props.prefilled[key].filter((v) => v !== undefined).length} values</em>
+                            </span>
+                        }
+                        position={"bottom center"}
+                        on={"hover"}
+                        arrow={true}
+                    >
+                        <div className="pane-thin">
+                            <h2 className="sub-heading">Values for {key}</h2>
+                            <pre>
+                                {props.prefilled[key]
+                                    .filter((v) => v !== undefined)
+                                    .map((v) => JSON.stringify(v))
+                                    .join("\n")}
+                            </pre>
+                        </div>
+                    </Popup>
+                </>,
+            );
+        } else {
+            const Type = input.type;
+            const row = (
+                <Type
+                    {...input.renderProps}
+                    ref={(e) => (inputRefs.current[i++] = e)}
+                    key={key + "_gen"}
+                    value={input.multi ? value?.[key][0] : value?.[key]}
+                    prefill={props.prefilled[key]}
+                    valueKey={key}
+                    label={input.label ?? key}
+                    required={input.required ?? false}
+                    autoFocus={i == 0}
+                    onUpdate={(k, v) => {
+                        setValue((value) => ({
+                            ...value,
+                            [k]: input.multi ? [v] : v,
+                        }));
+                    }}
+                />
+            );
+
+            getGroup(input.group ?? "").push(row);
+        }
+    });
+
+    return (
+        <form
+            className={"workspace-attacks-generic-container"}
+            onSubmit={(event) => {
+                event.preventDefault();
+                if (value) startAttack(workspace, props.attack, props.prefilled, value).then(afterAttackHandler);
+            }}
+        >
+            <div className={"fields"}>
+                {groupOrder.map((group) =>
+                    group ? (
+                        <CollapsibleGroup key={group} label={group} startCollapsed={group == "Advanced"}>
+                            {groups[group]}
+                        </CollapsibleGroup>
+                    ) : (
+                        <>{groups[group]}</>
+                    ),
+                )}
+            </div>
+            <StartAttack />
+        </form>
+    );
+}
+
+function usePrefill(prefilled: AttackPrefill, key: string): boolean {
+    return prefilled[key]?.length > 1;
+}
+
+function startAttack(
+    workspace: string,
+    attack: IAttackDescr,
+    prefilled: AttackPrefill,
+    value: { [apiJsonKey: string]: AnyApiValue },
+): Promise<void> {
+    return new Promise((resolve) => {
         const params: GenericAttackFormState["value"] = {
-            ...this.state.value,
-            workspaceUuid: this.context.workspace.uuid,
+            ...value,
+            workspaceUuid: workspace,
         };
         let needMultiCallArgs = [];
-        for (const key of Object.keys(this.props.attack.inputs.inputs)) {
-            const input = this.props.attack.inputs.inputs[key];
-            if (this.usePrefill(key)) {
+        for (const key of Object.keys(attack.inputs.inputs)) {
+            const input = attack.inputs.inputs[key];
+            if (usePrefill(prefilled, key)) {
                 needMultiCallArgs.push(key);
             }
 
             if (!("fixed" in input)) {
-                if (input.required && !this.usePrefill(key) && (params[key] === undefined || params[key] === "")) {
+                if (
+                    input.required &&
+                    !usePrefill(prefilled, key) &&
+                    (params[key] === undefined || params[key] === "")
+                ) {
                     toast.error(input.label + " must not be empty");
                     return;
                 }
@@ -95,8 +189,8 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
 
         let len = undefined;
         for (const k of needMultiCallArgs) {
-            len ??= this.props.prefilled[k].length;
-            if (this.props.prefilled[k].length != len)
+            len ??= prefilled[k].length;
+            if (prefilled[k].length != len)
                 return toast.error(
                     "Invalid selection: prefills have different prefill value argument dimensions, can't generate API requests",
                 );
@@ -104,7 +198,7 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
 
         if (
             needMultiCallArgs.every((k) => {
-                const input = this.props.attack.inputs.inputs[k];
+                const input = attack.inputs.inputs[k];
                 return "multi" in input && input.multi;
             })
         ) {
@@ -113,7 +207,7 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
 
             for (const key of needMultiCallArgs) {
                 keys.push(key);
-                values.push(this.props.prefilled[key]);
+                values.push(prefilled[key]);
             }
 
             for (let i = 0; i < keys.length; i++) params[keys[i]] = values[i];
@@ -131,9 +225,9 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
         }
 
         if (needMultiCallArgs.length == 0) {
-            send(this.props.attack, params).then((_) => {
+            send(attack, params).then((_) => {
                 toast.success("Attack started");
-                this.afterAttackHandler();
+                resolve();
             });
         } else {
             const copies: (typeof params)[] = [];
@@ -141,8 +235,8 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
             for (let i = 0; i < len; i++) {
                 const copy = { ...params };
                 for (const k of needMultiCallArgs) {
-                    const input = this.props.attack.inputs.inputs[k];
-                    copy[k] = this.props.prefilled[k][i];
+                    const input = attack.inputs.inputs[k];
+                    copy[k] = prefilled[k][i];
                     if (!("fixed" in input)) {
                         if (input.required && copy[k] === undefined)
                             return toast.error("selection has undefined item for required key '" + k + "'");
@@ -165,13 +259,13 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
                         toast.warn(finished + " attacks started, " + failed + " failed!");
                     }
 
-                    this.afterAttackHandler();
+                    resolve();
                 }
             };
 
             checkAllStarted();
             for (const copy of copies) {
-                send(this.props.attack, copy).then(
+                send(attack, copy).then(
                     () => {
                         finished++;
                         checkAllStarted();
@@ -183,111 +277,7 @@ export default class GenericAttackForm extends React.Component<GenericAttackForm
                 );
             }
         }
-    }
-
-    // This is called after attacks are successfully started.
-    afterAttackHandler() {
-        const first = this.inputRefs.find((v) => v);
-        if (first) {
-            first.focus();
-            if ("select" in first && typeof first["select"] == "function") first.select();
-        }
-    }
-
-    usePrefill(key: string): boolean {
-        return this.props.prefilled[key]?.length > 1;
-    }
-
-    render() {
-        const groups: { [name: string]: JSX.Element[] } = {};
-        const groupOrder: string[] = [];
-
-        function getGroup(name: string) {
-            if (name in groups) return groups[name];
-            groupOrder.push(name);
-            return (groups[name] = []);
-        }
-
-        this.inputRefs = [];
-
-        Object.keys(this.props.attack.inputs.inputs).map((key, i) => {
-            const input = this.props.attack.inputs.inputs[key];
-            if ("fixed" in input) {
-                // should we show fixed inputs? could show them here
-            } else if (this.usePrefill(key)) {
-                getGroup(input.group ?? "").push(
-                    <>
-                        <div>{input.label}</div>
-                        <Popup
-                            trigger={
-                                <span className="workspace-data-certainty-icon">
-                                    <em>{this.props.prefilled[key].filter((v) => v !== undefined).length} values</em>
-                                </span>
-                            }
-                            position={"bottom center"}
-                            on={"hover"}
-                            arrow={true}
-                        >
-                            <div className="pane-thin">
-                                <h2 className="sub-heading">Values for {key}</h2>
-                                <pre>
-                                    {this.props.prefilled[key]
-                                        .filter((v) => v !== undefined)
-                                        .map((v) => JSON.stringify(v))
-                                        .join("\n")}
-                                </pre>
-                            </div>
-                        </Popup>
-                    </>,
-                );
-            } else {
-                const Type = input.type;
-                const row = (
-                    <Type
-                        {...input.renderProps}
-                        ref={(e) => (this.inputRefs[i++] = e)}
-                        key={key + "_gen"}
-                        value={input.multi ? this.state.value[key][0] : this.state.value[key]}
-                        prefill={this.props.prefilled[key]}
-                        valueKey={key}
-                        label={input.label ?? key}
-                        required={input.required ?? false}
-                        autoFocus={i == 0}
-                        onUpdate={(k, v) => {
-                            const value = this.state.value;
-                            value[k] = input.multi ? [v] : v;
-                            this.setState({ value });
-                        }}
-                    />
-                );
-
-                getGroup(input.group ?? "").push(row);
-            }
-        });
-
-        return (
-            <form
-                className={"workspace-attacks-generic-container"}
-                onSubmit={(event) => {
-                    event.preventDefault();
-                    this.startAttack();
-                }}
-            >
-                <div className={"fields"}>
-                    {groupOrder.map((group) =>
-                        group ? (
-                            <CollapsibleGroup key={group} label={group} startCollapsed={group == "Advanced"}>
-                                {groups[group]}
-                            </CollapsibleGroup>
-                        ) : (
-                            <>{groups[group]}</>
-                        ),
-                    )}
-                </div>
-                <StartAttack />
-            </form>
-        );
-    }
+    });
 }
 
 function CollapsibleGroup(props: { children: React.ReactNode; label: string; startCollapsed?: boolean }) {
