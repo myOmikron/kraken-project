@@ -1,6 +1,6 @@
+import { loader, Monaco } from "@monaco-editor/react";
 import { editor } from "monaco-editor";
 import React from "react";
-import { loader, Monaco } from "@monaco-editor/react";
 import Loading from "./loading";
 
 export type ModelEditorProps = {

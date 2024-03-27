@@ -1,4 +1,4 @@
-import React, { HTMLProps } from "react";
+import { HTMLProps } from "react";
 
 type ArrowDownIconProps = {
     inverted?: boolean;

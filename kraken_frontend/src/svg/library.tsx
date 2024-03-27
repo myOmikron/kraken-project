@@ -1,5 +1,3 @@
-import React from "react";
-
 type LibraryIconProps = {};
 
 export default function LibraryIcon(props: LibraryIconProps) {

@@ -3,9 +3,11 @@ import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
 import { Api, UUID } from "../../api/api";
 import { FindingSection, FindingSeverity } from "../../api/generated";
+import WS from "../../api/websocket";
 import { AdminOnly } from "../../components/admin-guard";
 import { GithubMarkdown } from "../../components/github-markdown";
 import Input from "../../components/input";
+import ModelEditor from "../../components/model-editor";
 import { SelectPrimitive } from "../../components/select-menu";
 import { ROUTES } from "../../routes";
 import ArrowLeftIcon from "../../svg/arrow-left";
@@ -15,10 +17,8 @@ import FlameIcon from "../../svg/flame";
 import InformationIcon from "../../svg/information";
 import LibraryIcon from "../../svg/library";
 import { handleApiError } from "../../utils/helper";
-import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
-import ModelEditor from "../../components/model-editor";
 import { useSyncedCursors } from "../../utils/monaco-cursor";
-import WS from "../../api/websocket";
+import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
 
 export type EditFindingDefinitionProps = {
     uuid: string;

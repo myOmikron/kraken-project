@@ -1,12 +1,12 @@
 import React from "react";
-import { ManualServiceCertainty, PortProtocol } from "../../../api/generated";
-import { Api } from "../../../api/api";
-import { handleApiError } from "../../../utils/helper";
 import { toast } from "react-toastify";
+import { Api } from "../../../api/api";
+import { ManualServiceCertainty, PortProtocol } from "../../../api/generated";
+import Checkbox from "../../../components/checkbox";
 import Input from "../../../components/input";
 import { SelectPrimitive } from "../../../components/select-menu";
+import { handleApiError } from "../../../utils/helper";
 import { WORKSPACE_CONTEXT } from "../workspace";
-import Checkbox from "../../../components/checkbox";
 
 type CreateServiceFormProps = {
     onSubmit: () => void;

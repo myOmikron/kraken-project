@@ -1,5 +1,3 @@
-import React from "react";
-
 type FlameIconProps = {};
 
 export default function FlameIcon(props: FlameIconProps) {

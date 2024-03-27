@@ -1,9 +1,9 @@
-import EditIcon from "../../../svg/edit";
-import React, { ReactNode } from "react";
-import Popup from "reactjs-popup";
 import { Editor } from "@monaco-editor/react";
-import "../../../styling/markdown-editor-popup.css";
+import { ReactNode } from "react";
+import Popup from "reactjs-popup";
 import { GithubMarkdown } from "../../../components/github-markdown";
+import "../../../styling/markdown-editor-popup.css";
+import EditIcon from "../../../svg/edit";
 import PlusIcon from "../../../svg/plus";
 import { configureMonaco } from "../../../utils/monaco";
 

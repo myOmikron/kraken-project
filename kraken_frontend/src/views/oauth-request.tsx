@@ -1,9 +1,9 @@
 import React from "react";
 import { Api, UUID } from "../api/api";
-import "../styling/oauth-request.css";
 import { SimpleOauthClient, SimpleWorkspace } from "../api/generated";
-import { handleApiError } from "../utils/helper";
 import Checkbox from "../components/checkbox";
+import "../styling/oauth-request.css";
+import { handleApiError } from "../utils/helper";
 
 type OAuthRequestProps = {
     uuid: UUID;

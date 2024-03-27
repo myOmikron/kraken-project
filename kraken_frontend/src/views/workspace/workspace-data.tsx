@@ -20,6 +20,7 @@ import { ObjectFns, handleApiError } from "../../utils/helper";
 import { Result } from "../../utils/result";
 import CertaintyIcon from "./components/certainty-icon";
 import ContextMenu, { ContextMenuEntry, GroupedMenuItem, PlainMenuItem } from "./components/context-menu";
+import { DataTabsSelector, useDataTabs } from "./components/data-tabs";
 import Domain from "./components/domain";
 import EditableTags from "./components/editable-tags";
 import FilterInput, { UseFilterReturn, useFilter } from "./components/filter-input";
@@ -45,7 +46,6 @@ import {
     getCreateAffectedType,
 } from "./workspace-finding/workspace-create-finding";
 import WorkspaceFindingsQuickAttach from "./workspace-findings-quick-attach";
-import { DataTabsSelector, useDataTabs } from "./components/data-tabs";
 
 const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations", findings: "Findings" };
 type SelectedUuids = Record<AggregationType, Record<string, true>>;

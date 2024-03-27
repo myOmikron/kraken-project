@@ -1,8 +1,8 @@
 import { toast } from "react-toastify";
 
 import { Err, Ok, Result } from "../utils/result";
-import { headers } from "./helper";
 import { ApiError, StatusCode, parseError } from "./error";
+import { headers } from "./helper";
 
 export async function test(): Promise<"logged out" | "logged in" | "verified"> {
     const res = await fetch("/api/v1/auth/test");

@@ -1,7 +1,7 @@
 import React from "react";
-import { SimpleUser, SimpleWorkspace } from "../../../api/generated";
-import { Api, UUID } from "../../../api/api";
 import Popup from "reactjs-popup";
+import { Api, UUID } from "../../../api/api";
+import { SimpleUser, SimpleWorkspace } from "../../../api/generated";
 import "../../../styling/invitation.css";
 import WorkspaceIcon from "../../../svg/workspace";
 import { handleApiError } from "../../../utils/helper";

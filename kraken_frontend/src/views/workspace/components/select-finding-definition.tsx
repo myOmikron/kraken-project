@@ -1,13 +1,13 @@
 import React from "react";
 import { components } from "react-select";
+import Creatable from "react-select/creatable";
+import Popup from "reactjs-popup";
 import { Api } from "../../../api/api";
 import { SimpleFindingDefinition } from "../../../api/generated";
 import { selectStyles } from "../../../components/select-menu";
-import { handleApiError } from "../../../utils/helper";
-import Creatable from "react-select/creatable";
-import Popup from "reactjs-popup";
-import { CreateFindingDefinition } from "../../knowledge-base/create-finding-definition";
 import "../../../styling/select-finding-definition.css";
+import { handleApiError } from "../../../utils/helper";
+import { CreateFindingDefinition } from "../../knowledge-base/create-finding-definition";
 
 export type SelectFindingDefinitionProps = {
     selected: string | undefined;

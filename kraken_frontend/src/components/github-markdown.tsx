@@ -1,7 +1,7 @@
-import remarkGfm from "remark-gfm";
 import Markdown, { Options } from "react-markdown";
-import "../styling/markdown.css";
 import rehypeHighlight from "rehype-highlight";
+import remarkGfm from "remark-gfm";
+import "../styling/markdown.css";
 
 /**
  * Tiny wrapper around {@link Markdown `<Markdown />`} which adds the {@link remarkGfm `remarkGfm`} plugin.

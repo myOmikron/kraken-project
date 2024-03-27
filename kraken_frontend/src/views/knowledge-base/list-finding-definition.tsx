@@ -1,12 +1,12 @@
-import { ROUTES } from "../../routes";
-import "../../styling/list-finding-definition.css";
-import { SimpleFindingDefinition } from "../../api/generated";
 import React from "react";
-import Input from "../../components/input";
-import PlusIcon from "../../svg/plus";
 import { Api } from "../../api/api";
-import { handleApiError } from "../../utils/helper";
+import { SimpleFindingDefinition } from "../../api/generated";
+import Input from "../../components/input";
+import { ROUTES } from "../../routes";
 import "../../styling/knowledge-base.css";
+import "../../styling/list-finding-definition.css";
+import PlusIcon from "../../svg/plus";
+import { handleApiError } from "../../utils/helper";
 
 type ListFindingDefinitionProps = {};
 

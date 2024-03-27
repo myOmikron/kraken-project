@@ -1,10 +1,12 @@
 import React from "react";
+import Select from "react-select";
 import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
 import { Api } from "../../api/api";
 import { FullWorkspaceInvitation } from "../../api/generated";
 import Bubble from "../../components/bubble";
 import Input from "../../components/input";
+import { selectStyles } from "../../components/select-menu";
 import Tag from "../../components/tag";
 import Textarea from "../../components/textarea";
 import USER_CONTEXT from "../../context/user";
@@ -13,8 +15,6 @@ import "../../styling/workspace-settings.css";
 import CloseIcon from "../../svg/close";
 import { handleApiError } from "../../utils/helper";
 import { WORKSPACE_CONTEXT } from "./workspace";
-import Select from "react-select";
-import { selectStyles } from "../../components/select-menu";
 
 type WorkspaceSettingsProps = {};
 type WorkspaceSettingsState = {

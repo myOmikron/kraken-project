@@ -1,19 +1,19 @@
 import React from "react";
-import { FullHost } from "../../api/generated";
-import "../../styling/workspace-hosts.css";
-import Input from "../../components/input";
+import Select from "react-select";
 import { Api } from "../../api/api";
-import { ROUTES } from "../../routes";
+import { FullHost } from "../../api/generated";
+import Input from "../../components/input";
 import OsIcon from "../../components/os-icon";
+import { selectStyles } from "../../components/select-menu";
+import { ROUTES } from "../../routes";
+import "../../styling/workspace-hosts.css";
 import ArrowFirstIcon from "../../svg/arrow-first";
+import ArrowLastIcon from "../../svg/arrow-last";
 import ArrowLeftIcon from "../../svg/arrow-left";
 import ArrowRightIcon from "../../svg/arrow-right";
-import ArrowLastIcon from "../../svg/arrow-last";
-import Select from "react-select";
-import { selectStyles } from "../../components/select-menu";
-import { WORKSPACE_CONTEXT } from "./workspace";
 import { handleApiError } from "../../utils/helper";
 import TagList from "./components/tag-list";
+import { WORKSPACE_CONTEXT } from "./workspace";
 
 type WorkspaceHostsProps = {};
 type WorkspaceHostsState = {

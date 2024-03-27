@@ -1,8 +1,8 @@
+import React, { useCallback } from "react";
 import Popup from "reactjs-popup";
+import { Api } from "../../../api/api";
 import { FindingSeverity, ListFindings } from "../../../api/generated";
 import "../../../index.css";
-import React, { useCallback } from "react";
-import { Api } from "../../../api/api";
 import { handleApiError } from "../../../utils/helper";
 import WorkspaceDataDetailsFindings from "../workspace-data/workspace-data-details-findings";
 

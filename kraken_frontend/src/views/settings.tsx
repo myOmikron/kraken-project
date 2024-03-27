@@ -1,13 +1,13 @@
 import React from "react";
-import "../styling/settings.css";
-import Input from "../components/input";
-import { Api } from "../api/api";
 import { toast } from "react-toastify";
+import { Api } from "../api/api";
 import { FullOauthClient, FullWordlist, SettingsFull } from "../api/generated";
-import CopyIcon from "../svg/copy";
-import CloseIcon from "../svg/close";
-import { copyToClipboard, handleApiError } from "../utils/helper";
+import Input from "../components/input";
 import Textarea from "../components/textarea";
+import "../styling/settings.css";
+import CloseIcon from "../svg/close";
+import CopyIcon from "../svg/copy";
+import { copyToClipboard, handleApiError } from "../utils/helper";
 
 type SettingsProps = {};
 type SettingsState = {

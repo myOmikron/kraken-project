@@ -1,11 +1,11 @@
 import React from "react";
 import { SourceAttack } from "../../../api/generated";
+import OsIcon from "../../../components/os-icon";
 import "../../../styling/workspace-data-details.css";
 import ArrowLeftIcon from "../../../svg/arrow-left";
 import ArrowRightIcon from "../../../svg/arrow-right";
 import CopyIcon from "../../../svg/copy";
 import { copyToClipboard } from "../../../utils/helper";
-import OsIcon from "../../../components/os-icon";
 
 type WorkspaceDataDetailsResultsProps = {
     attacks: Array<SourceAttack>;

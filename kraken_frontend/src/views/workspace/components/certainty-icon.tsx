@@ -1,10 +1,10 @@
+import React from "react";
+import Popup from "reactjs-popup";
 import { DomainCertainty, HostCertainty, PortCertainty, ServiceCertainty } from "../../../api/generated";
-import VerifiedIcon from "../../../svg/verified";
-import UnverifiedIcon from "../../../svg/unverified";
 import HistoricalIcon from "../../../svg/historical";
 import UnknownIcon from "../../../svg/unknown";
-import Popup from "reactjs-popup";
-import React from "react";
+import UnverifiedIcon from "../../../svg/unverified";
+import VerifiedIcon from "../../../svg/verified";
 
 type CertaintyIconProps = {
     certainty: DomainCertainty | HostCertainty | PortCertainty | ServiceCertainty;

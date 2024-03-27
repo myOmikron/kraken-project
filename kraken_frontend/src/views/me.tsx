@@ -1,14 +1,14 @@
 import React from "react";
 
-import { Api, UUID } from "../api/api";
 import { toast } from "react-toastify";
-import "../styling/me.css";
-import Input from "../components/input";
-import { check, handleApiError } from "../utils/helper";
-import USER_CONTEXT from "../context/user";
+import { Api, UUID } from "../api/api";
 import { FullApiKey, FullUser, UserPermission } from "../api/generated";
-import CopyIcon from "../svg/copy";
+import Input from "../components/input";
+import USER_CONTEXT from "../context/user";
+import "../styling/me.css";
 import CloseIcon from "../svg/close";
+import CopyIcon from "../svg/copy";
+import { check, handleApiError } from "../utils/helper";
 
 type MeProps = {};
 type MeState = {

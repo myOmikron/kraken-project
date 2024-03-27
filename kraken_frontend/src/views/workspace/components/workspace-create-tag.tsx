@@ -1,13 +1,13 @@
-import { FullGlobalTag, FullWorkspaceTag, UserPermission } from "../../../api/generated";
 import React from "react";
-import USER_CONTEXT from "../../../context/user";
-import { Api } from "../../../api/api";
-import { handleApiError } from "../../../utils/helper";
 import { toast } from "react-toastify";
-import Input from "../../../components/input";
+import { Api } from "../../../api/api";
+import { FullGlobalTag, FullWorkspaceTag, UserPermission } from "../../../api/generated";
 import Checkbox from "../../../components/checkbox";
+import Input from "../../../components/input";
 import Tag from "../../../components/tag";
+import USER_CONTEXT from "../../../context/user";
 import "../../../styling/workspace-create-tag.css";
+import { handleApiError } from "../../../utils/helper";
 
 export type WorkspaceCreateTagProps = {
     /** The workspace to add this tag to (if not set as global) */

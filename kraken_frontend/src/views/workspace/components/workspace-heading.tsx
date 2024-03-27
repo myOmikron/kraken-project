@@ -1,13 +1,12 @@
 import React from "react";
-import { copyToClipboard, handleApiError } from "../../../utils/helper";
-import CopyIcon from "../../../svg/copy";
+import Select, { components } from "react-select";
 import { Api, UUID } from "../../../api/api";
-import "../../../styling/workspace-heading.css";
 import { SimpleWorkspace } from "../../../api/generated";
-import { ROUTES } from "../../../routes";
 import { clearSelectStyles } from "../../../components/select-menu";
-import Select from "react-select";
-import { components } from "react-select";
+import { ROUTES } from "../../../routes";
+import "../../../styling/workspace-heading.css";
+import CopyIcon from "../../../svg/copy";
+import { copyToClipboard, handleApiError } from "../../../utils/helper";
 
 type WorkspaceHeadingProps = {
     uuid: UUID;

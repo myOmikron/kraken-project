@@ -1,5 +1,3 @@
-import React from "react";
-
 type InformationIconProps = {};
 
 export default function InformationIcon(props: InformationIconProps) {

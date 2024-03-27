@@ -1,12 +1,12 @@
 import React from "react";
-import { Api } from "../api/api";
 import { toast } from "react-toastify";
-import { handleApiError, sleep } from "../utils/helper";
-import Input from "../components/input";
 import Popup from "reactjs-popup";
+import { Api } from "../api/api";
 import { SimpleLeech } from "../api/generated";
+import Input from "../components/input";
 import "../styling/kraken-network.css";
 import PlusIcon from "../svg/plus";
+import { handleApiError, sleep } from "../utils/helper";
 
 type KrakenNetworkProps = {};
 type KrakenNetworkState = {

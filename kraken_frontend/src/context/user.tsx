@@ -1,11 +1,11 @@
 import React from "react";
-import { FullUser, UserPermission } from "../api/generated/models";
-import { Api } from "../api/api";
-import Loading from "../components/loading";
-import { ApiError, StatusCode } from "../api/error";
 import { toast } from "react-toastify";
-import Login from "../views/login";
+import { Api } from "../api/api";
+import { ApiError, StatusCode } from "../api/error";
+import { FullUser, UserPermission } from "../api/generated/models";
 import WS from "../api/websocket";
+import Loading from "../components/loading";
+import Login from "../views/login";
 
 /** The global {@link UserProvider} instance */
 let USER_PROVIDER: UserProvider | null = null;

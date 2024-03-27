@@ -1,13 +1,13 @@
-import React from "react";
 import { Monaco } from "@monaco-editor/react";
 import { editor, IDisposable } from "monaco-editor";
+import React from "react";
+import { EditorTarget } from "../api/generated";
+import WS from "../api/websocket";
+import USER_CONTEXT from "../context/user";
+import { ListenerHandle } from "./event-emitter";
+import { ObjectFns } from "./helper";
 import { MONACO, MONACO_PROMISE } from "./monaco";
 import ITextModel = editor.ITextModel;
-import { EditorTarget } from "../api/generated";
-import { ListenerHandle } from "./event-emitter";
-import WS from "../api/websocket";
-import { ObjectFns } from "./helper";
-import USER_CONTEXT from "../context/user";
 
 /**
  * Shitty switch to en- and disable logging

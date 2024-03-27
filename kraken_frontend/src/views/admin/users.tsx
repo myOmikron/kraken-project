@@ -1,10 +1,10 @@
 import React from "react";
-import { Api } from "../../api/api";
 import { toast } from "react-toastify";
-import { FullUser, UserPermission } from "../../api/generated/models";
-import Loading from "../../components/loading";
 import Popup from "reactjs-popup";
+import { Api } from "../../api/api";
+import { FullUser, UserPermission } from "../../api/generated/models";
 import Input from "../../components/input";
+import Loading from "../../components/loading";
 import { check, handleApiError } from "../../utils/helper";
 
 type AdminUsersProps = {};

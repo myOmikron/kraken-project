@@ -1,5 +1,5 @@
-import { Token } from "./lexer";
 import ParserError from "./error";
+import { Token } from "./lexer";
 
 /**
  * An iterator over `Token` specialized for our parser

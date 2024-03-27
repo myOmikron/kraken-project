@@ -1,18 +1,18 @@
 import React from "react";
-import "../../styling/workspace-host.css";
-import { FullHost, SimpleDomain, SimplePort, SimpleService } from "../../api/generated";
 import { Api, UUID } from "../../api/api";
-import { ROUTES } from "../../routes";
+import { FullHost, SimpleDomain, SimplePort, SimpleService } from "../../api/generated";
 import Input from "../../components/input";
 import OsIcon from "../../components/os-icon";
+import { ROUTES } from "../../routes";
+import "../../styling/workspace-host.css";
 import ArrowLeftIcon from "../../svg/arrow-left";
 
+import { handleApiError } from "../../utils/helper";
+import TagList from "./components/tag-list";
+import { WORKSPACE_CONTEXT } from "./workspace";
 import { WorkspaceHostDomains } from "./workspace-host/workspace-host-domains";
 import { WorkspaceHostPorts } from "./workspace-host/workspace-host-ports";
 import { WorkspaceHostServices } from "./workspace-host/workspace-host-services";
-import { WORKSPACE_CONTEXT } from "./workspace";
-import { handleApiError } from "../../utils/helper";
-import TagList from "./components/tag-list";
 
 const TABS = { domains: "Domains", ports: "Ports", services: "Services", other: "Other" };
 

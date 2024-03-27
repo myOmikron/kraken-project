@@ -1,5 +1,3 @@
-import React from "react";
-
 type BandageIconProps = {};
 
 export default function BandageIcon(props: BandageIconProps) {

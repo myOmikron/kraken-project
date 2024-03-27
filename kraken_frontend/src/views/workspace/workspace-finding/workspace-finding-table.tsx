@@ -16,7 +16,7 @@ export type WorkspaceFindingTableProps = {
 
 export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filter }: WorkspaceFindingTableProps) {
     const {
-        workspace: { uuid: workspace }
+        workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
     const [findings, setFindings] = React.useState<Array<SimpleFinding>>([]);
     const [search, setSearch] = React.useState("");
@@ -25,7 +25,7 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
         Api.workspaces.findings.all(workspace).then(
             handleApiError(({ findings }): void => {
                 setFindings(findings);
-            })
+            }),
         );
     }, [workspace]);
 

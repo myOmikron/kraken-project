@@ -1,14 +1,14 @@
 import React from "react";
-import { ROUTES } from "../routes";
-import USER_CONTEXT from "../context/user";
-import KrakenIcon from "../svg/kraken";
-import KnowledgeIcon from "../svg/knowledge";
-import WorkspaceIcon from "../svg/workspace";
-import UsersIcon from "../svg/users";
-import UserSettingsIcon from "../svg/user_settings";
-import "../styling/menu.css";
-import SettingsIcon from "../svg/settings";
 import { UserPermission } from "../api/generated";
+import USER_CONTEXT from "../context/user";
+import { ROUTES } from "../routes";
+import "../styling/menu.css";
+import KnowledgeIcon from "../svg/knowledge";
+import KrakenIcon from "../svg/kraken";
+import SettingsIcon from "../svg/settings";
+import UserSettingsIcon from "../svg/user_settings";
+import UsersIcon from "../svg/users";
+import WorkspaceIcon from "../svg/workspace";
 import RunningAttacks from "./running-attacks";
 
 type MenuItem =

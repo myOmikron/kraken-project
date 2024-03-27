@@ -1,8 +1,8 @@
+import React from "react";
 import { toast } from "react-toastify";
-import { Result } from "./result";
 import { ApiError } from "../api/error";
 import { inspectError } from "../context/user";
-import React from "react";
+import { Result } from "./result";
 
 export namespace ObjectFns {
     /** {@link ObjectConstructor.keys `Object.keys`} which preserves the keys' type */

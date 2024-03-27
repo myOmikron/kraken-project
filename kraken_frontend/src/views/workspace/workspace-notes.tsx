@@ -1,12 +1,12 @@
 import React from "react";
-import { WORKSPACE_CONTEXT } from "./workspace";
-import { GithubMarkdown } from "../../components/github-markdown";
-import "../../styling/workspace-notes.css";
 import { Api } from "../../api/api";
+import { GithubMarkdown } from "../../components/github-markdown";
+import ModelEditor from "../../components/model-editor";
+import "../../styling/workspace-notes.css";
 import { handleApiError } from "../../utils/helper";
 import { useModel } from "../../utils/model-controller";
-import ModelEditor from "../../components/model-editor";
 import { useSyncedCursors } from "../../utils/monaco-cursor";
+import { WORKSPACE_CONTEXT } from "./workspace";
 
 export type WorkspaceNotesProps = {};
 

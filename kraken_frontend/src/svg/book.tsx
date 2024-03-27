@@ -1,5 +1,3 @@
-import React from "react";
-
 type BookIconProps = {};
 
 export default function BookIcon(props: BookIconProps) {

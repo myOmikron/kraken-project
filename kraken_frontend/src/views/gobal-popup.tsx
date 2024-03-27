@@ -1,10 +1,10 @@
 import React from "react";
-import WS from "../api/websocket";
-import Invitation from "./workspace/invitation/invitation";
-import { SimpleUser, SimpleWorkspace } from "../api/generated";
 import { toast } from "react-toastify";
 import { Api, UUID } from "../api/api";
+import { SimpleUser, SimpleWorkspace } from "../api/generated";
+import WS from "../api/websocket";
 import { handleApiError } from "../utils/helper";
+import Invitation from "./workspace/invitation/invitation";
 
 type Popup = WsInvitationToWorkspace;
 

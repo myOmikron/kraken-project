@@ -1,20 +1,20 @@
 import React from "react";
-import Input from "../../components/input";
-import { SelectPrimitive } from "../../components/select-menu";
+import { toast } from "react-toastify";
+import { Api } from "../../api/api";
+import { FindingSeverity, SimpleFindingDefinition } from "../../api/generated";
 import { GithubMarkdown } from "../../components/github-markdown";
+import Input from "../../components/input";
+import ModelEditor from "../../components/model-editor";
+import { SelectPrimitive } from "../../components/select-menu";
+import { ROUTES } from "../../routes";
+import "../../styling/create-finding-definition.css";
 import BandageIcon from "../../svg/bandage";
-import LibraryIcon from "../../svg/library";
+import BookIcon from "../../svg/book";
 import FlameIcon from "../../svg/flame";
 import InformationIcon from "../../svg/information";
-import BookIcon from "../../svg/book";
-import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
-import "../../styling/create-finding-definition.css";
+import LibraryIcon from "../../svg/library";
 import { handleApiError } from "../../utils/helper";
-import { Api } from "../../api/api";
-import { ROUTES } from "../../routes";
-import { toast } from "react-toastify";
-import { FindingSeverity, SimpleFindingDefinition } from "../../api/generated";
-import ModelEditor from "../../components/model-editor";
+import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
 
 export type CreateFindingDefinitionProps = {
     /** Prefill the name <input /> with an initial value*/

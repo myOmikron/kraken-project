@@ -1,6 +1,5 @@
-import React from "react";
-import "../styling/knowledge-base.css";
 import { ROUTES } from "../routes";
+import "../styling/knowledge-base.css";
 
 type KnowledgeBaseProps = {};
 

@@ -37,6 +37,7 @@ import {
     UpdateAppRequest,
     UpdateDomainRequest,
     UpdateFindingAffectedRequest,
+    UpdateFindingDefinitionRequest,
     UpdateFindingRequest,
     UpdateGlobalTag,
     UpdateHostRequest,
@@ -55,7 +56,6 @@ import {
     WorkspaceInvitationsApi,
     WorkspaceTagsApi,
     WorkspacesApi,
-    UpdateFindingDefinitionRequest,
 } from "./generated";
 
 /** Database id i.e. and u32 */

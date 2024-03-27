@@ -1,5 +1,3 @@
-import React from "react";
-
 export type StartAttackProps = {};
 
 export default function StartAttack(props: StartAttackProps) {

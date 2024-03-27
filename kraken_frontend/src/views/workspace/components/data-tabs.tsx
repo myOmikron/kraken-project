@@ -1,6 +1,6 @@
 import React from "react";
-import { ObjectFns, useStableObj } from "../../../utils/helper";
 import { AggregationType } from "../../../api/generated";
+import { ObjectFns, useStableObj } from "../../../utils/helper";
 
 const KEY = "dataTab";
 const TABS: Record<AggregationType, string> = {

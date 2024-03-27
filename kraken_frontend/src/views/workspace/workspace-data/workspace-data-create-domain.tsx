@@ -1,8 +1,8 @@
 import React from "react";
-import { Api } from "../../../api/api";
-import { handleApiError } from "../../../utils/helper";
 import { toast } from "react-toastify";
+import { Api } from "../../../api/api";
 import Input from "../../../components/input";
+import { handleApiError } from "../../../utils/helper";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
 type CreateDomainFormProps = {

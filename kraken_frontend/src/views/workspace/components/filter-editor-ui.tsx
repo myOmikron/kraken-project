@@ -1,5 +1,6 @@
 import { FC, useState } from "react";
 import { FullDomain, FullHost, FullPort, FullService, OsType, PortProtocol, SimpleTag } from "../../../api/generated";
+import Textarea from "../../../components/textarea";
 import "../../../styling/filter-editor-ui.css";
 import CollapseIcon from "../../../svg/collapse";
 import ExpandIcon from "../../../svg/expand";
@@ -9,7 +10,6 @@ import { getExprs, replaceRaw } from "../../../utils/filter/mutate";
 import { parseUserPort } from "../../../utils/ports";
 import EditableDataList, { EditableDataListProps } from "./editable-data-list";
 import EditableTags from "./editable-tags";
-import Textarea from "../../../components/textarea";
 
 export type FilterEditorProps = {
     workspace: string;

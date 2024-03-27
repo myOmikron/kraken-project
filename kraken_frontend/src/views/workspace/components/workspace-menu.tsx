@@ -1,15 +1,15 @@
 import React from "react";
-import SearchIcon from "../../../svg/search";
-import AttackIcon from "../../../svg/attack";
-import DataIcon from "../../../svg/data";
-import SettingsIcon from "../../../svg/settings";
+import USER_CONTEXT from "../../../context/user";
 import { ROUTES } from "../../../routes";
 import "../../../styling/workspace-menu.css";
-import HostIcon from "../../../svg/host";
-import { WorkspaceView } from "../workspace";
-import USER_CONTEXT from "../../../context/user";
-import LibraryIcon from "../../../svg/library";
+import AttackIcon from "../../../svg/attack";
+import DataIcon from "../../../svg/data";
 import FindingIcon from "../../../svg/finding";
+import HostIcon from "../../../svg/host";
+import LibraryIcon from "../../../svg/library";
+import SearchIcon from "../../../svg/search";
+import SettingsIcon from "../../../svg/settings";
+import { WorkspaceView } from "../workspace";
 
 type WorkspaceMenuProps = {
     uuid: string;

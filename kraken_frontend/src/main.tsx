@@ -3,14 +3,14 @@ import ReactDOM from "react-dom/client";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import "./styling/toastify.css";
-import "./styling/components.css";
 import "./styling/animations.css";
+import "./styling/components.css";
+import "./styling/toastify.css";
 
-import "./index.css";
-import Background from "./views/background";
-import { ROUTER } from "./routes";
 import { UserProvider } from "./context/user";
+import "./index.css";
+import { ROUTER } from "./routes";
+import Background from "./views/background";
 import GlobalPopup from "./views/gobal-popup";
 
 type RouterProps = {};

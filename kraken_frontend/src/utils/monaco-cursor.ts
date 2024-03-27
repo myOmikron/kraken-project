@@ -1,11 +1,11 @@
 import { editor } from "monaco-editor";
 import React from "react";
 import { createPortal } from "react-dom";
-import TrackedRangeStickiness = editor.TrackedRangeStickiness;
 import { EditorTarget, SimpleUser } from "../api/generated";
 import WS from "../api/websocket";
-import { useStableObj } from "./helper";
 import USER_CONTEXT from "../context/user";
+import { useStableObj } from "./helper";
+import TrackedRangeStickiness = editor.TrackedRangeStickiness;
 
 /**
  * Arguments to the {@link useSyncedCursors} hook

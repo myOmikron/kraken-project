@@ -1,13 +1,13 @@
+import { editor } from "monaco-editor";
 import React from "react";
-import InformationIcon from "../../../svg/information";
+import { EditorTarget, FindingSection } from "../../../api/generated";
+import BandageIcon from "../../../svg/bandage";
 import BookIcon from "../../../svg/book";
 import FlameIcon from "../../../svg/flame";
-import BandageIcon from "../../../svg/bandage";
+import InformationIcon from "../../../svg/information";
 import LibraryIcon from "../../../svg/library";
 import PersonCircleIcon from "../../../svg/person-circle";
-import { EditorTarget, FindingSection } from "../../../api/generated";
 import { useModel } from "../../../utils/model-controller";
-import { editor } from "monaco-editor";
 import ITextModel = editor.ITextModel;
 
 /** State object provided by {@link useSectionsState `useSectionsState`} */

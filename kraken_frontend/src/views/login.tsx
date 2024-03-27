@@ -1,11 +1,11 @@
 import React from "react";
-import { Api } from "../api/api";
 import { toast } from "react-toastify";
+import { Api } from "../api/api";
 
-import "../styling/login.css";
 import Input from "../components/input";
-import { handleApiError } from "../utils/helper";
+import "../styling/login.css";
 import LoginLogoIcon from "../svg/login_logo";
+import { handleApiError } from "../utils/helper";
 
 type LoginProps = {
     onLogin(): void;

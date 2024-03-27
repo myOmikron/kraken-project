@@ -1,12 +1,12 @@
 import React, { forwardRef, useEffect, useRef, useState } from "react";
+import Select from "react-select";
 import { Api } from "../../../api/api";
 import { PortOrRange, Query, SearchType } from "../../../api/generated";
 import Checkbox from "../../../components/checkbox";
 import Input from "../../../components/input";
+import { selectStyles } from "../../../components/select-menu";
 import { handleApiError } from "../../../utils/helper";
 import { parseUserPorts } from "../../../utils/ports";
-import Select from "react-select";
-import { selectStyles } from "../../../components/select-menu";
 
 export type AttackInputProps<T, PrefillT = T> = {
     valueKey: string;

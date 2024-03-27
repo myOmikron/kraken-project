@@ -1,5 +1,4 @@
 import { SimpleAggregationSource } from "../../../api/generated";
-import React from "react";
 import Bubble from "../../../components/bubble";
 import { AttackResolver, ATTACKS } from "../../../utils/attack-resolver";
 
