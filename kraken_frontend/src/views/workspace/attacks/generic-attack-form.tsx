@@ -14,10 +14,6 @@ type GenericAttackFormProps = {
     prefilled: AttackPrefill;
     attack: IAttackDescr;
 };
-type GenericAttackFormState = {
-    value: { [apiJsonKey: string]: AnyApiValue };
-    resetValue: { [apiJsonKey: string]: AnyApiValue };
-};
 
 export default function GenericAttackForm(props: GenericAttackFormProps) {
     const {
@@ -30,17 +26,17 @@ export default function GenericAttackForm(props: GenericAttackFormProps) {
     const [value, setValue] = React.useState<{ [apiJsonKey: string]: AnyApiValue }>();
 
     useEffect(() => {
-        const resetValue: GenericAttackFormState["resetValue"] = {};
+        const newResetValue: typeof resetValue = {};
         for (const key of Object.keys(props.attack.inputs.inputs)) {
             const input = props.attack.inputs.inputs[key];
             if ("fixed" in input) {
-                resetValue[key] = input.fixed;
+                newResetValue[key] = input.fixed;
             } else {
-                resetValue[key] = input.multi ? [input.defaultValue] : input.defaultValue;
+                newResetValue[key] = input.multi ? [input.defaultValue] : input.defaultValue;
             }
         }
 
-        const value = ObjectFns.deepDuplicate(resetValue);
+        const value = ObjectFns.deepDuplicate(newResetValue);
         // if pre-fill is a single value, just embed the value
         if (Object.keys(props.prefilled).every((k) => props.prefilled[k].length == 1)) {
             for (const k of Object.keys(props.prefilled)) {
@@ -49,7 +45,7 @@ export default function GenericAttackForm(props: GenericAttackFormProps) {
             }
         }
 
-        setResetValue(resetValue);
+        setResetValue(newResetValue);
         setValue(value);
     }, [props.attack.inputs.inputs]);
 
@@ -164,7 +160,7 @@ function startAttack(
     value: { [apiJsonKey: string]: AnyApiValue },
 ): Promise<void> {
     return new Promise((resolve) => {
-        const params: GenericAttackFormState["value"] = {
+        const params: typeof value = {
             ...value,
             workspaceUuid: workspace,
         };
