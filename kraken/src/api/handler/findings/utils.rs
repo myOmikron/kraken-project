@@ -1,7 +1,8 @@
-use futures::TryStreamExt;
+use std::collections::HashMap;
+
 use rorm::and;
 use rorm::conditions::Condition;
-use rorm::db::Executor;
+use rorm::db::transaction::Transaction;
 use rorm::prelude::*;
 use rorm::query;
 use uuid::Uuid;
@@ -66,39 +67,59 @@ pub fn finding_affected_into_simple(affected: FindingAffected) -> ApiResult<Simp
 
 impl ListFindings {
     /// Query all findings affecting an object
-    pub async fn query_through_affected<'ex: 'co, 'co>(
-        executor: impl Executor<'ex>,
+    pub async fn query_through_affected<'exe: 'co, 'co>(
+        tx: &'exe mut Transaction,
         workspace: Uuid,
         condition: impl Condition<'co>,
     ) -> Result<ListFindings, rorm::Error> {
-        query!(
-            executor,
+        let mut affected_lookup = HashMap::new();
+
+        let affected = query!(&mut *tx, (FindingAffected::F.finding,))
+            .condition(FindingAffected::F.workspace.equals(workspace))
+            .all()
+            .await?;
+        for (finding,) in affected {
+            affected_lookup
+                .entry(*finding.key())
+                .and_modify(|x| *x += 1)
+                .or_insert(1);
+        }
+
+        let findings = query!(
+            &mut *tx,
             (
                 FindingAffected::F.finding.uuid,
                 FindingAffected::F.finding.definition.uuid,
                 FindingAffected::F.finding.definition.name,
                 FindingAffected::F.finding.definition.cve,
                 FindingAffected::F.finding.severity,
-                FindingAffected::F.finding.created_at
+                FindingAffected::F.finding.created_at,
             )
         )
         .condition(and![
             condition,
             FindingAffected::F.workspace.equals(workspace)
         ])
-        .stream()
-        .and_then(|(uuid, definition, name, cve, severity, created_at)| {
-            std::future::ready(Ok(SimpleFinding {
-                uuid,
-                definition,
-                name,
-                cve,
-                severity,
-                created_at,
-            }))
+        .all()
+        .await?;
+
+        let simple_findings = findings
+            .into_iter()
+            .map(
+                |(uuid, definition, name, cve, severity, created_at)| SimpleFinding {
+                    uuid,
+                    definition,
+                    name,
+                    cve,
+                    severity,
+                    created_at,
+                    affected_count: affected_lookup.get(&uuid).copied().unwrap_or(0),
+                },
+            )
+            .collect();
+
+        Ok(ListFindings {
+            findings: simple_findings,
         })
-        .try_collect()
-        .await
-        .map(|findings| ListFindings { findings })
     }
 }

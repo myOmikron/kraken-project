@@ -57,6 +57,12 @@ export interface SimpleFinding {
      */
     severity: FindingSeverity;
     /**
+     * The count of affected
+     * @type {number}
+     * @memberof SimpleFinding
+     */
+    affectedCount: number;
+    /**
      * The point in time this finding definition was created
      * @type {Date}
      * @memberof SimpleFinding
@@ -73,6 +79,7 @@ export function instanceOfSimpleFinding(value: object): boolean {
     isInstance = isInstance && "definition" in value;
     isInstance = isInstance && "name" in value;
     isInstance = isInstance && "severity" in value;
+    isInstance = isInstance && "affectedCount" in value;
     isInstance = isInstance && "createdAt" in value;
 
     return isInstance;
@@ -93,6 +100,7 @@ export function SimpleFindingFromJSONTyped(json: any, ignoreDiscriminator: boole
         'name': json['name'],
         'cve': !exists(json, 'cve') ? undefined : json['cve'],
         'severity': FindingSeverityFromJSON(json['severity']),
+        'affectedCount': json['affected_count'],
         'createdAt': (new Date(json['created_at'])),
     };
 }
@@ -111,6 +119,7 @@ export function SimpleFindingToJSON(value?: SimpleFinding | null): any {
         'name': value.name,
         'cve': value.cve,
         'severity': FindingSeverityToJSON(value.severity),
+        'affected_count': value.affectedCount,
         'created_at': (value.createdAt.toISOString()),
     };
 }

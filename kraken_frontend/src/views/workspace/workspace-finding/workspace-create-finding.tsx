@@ -11,7 +11,7 @@ import {
     FullPort,
     FullService,
     SimpleFindingDefinition,
-    SimpleTag,
+    SimpleTag
 } from "../../../api/generated";
 import { GithubMarkdown } from "../../../components/github-markdown";
 import { SelectPrimitive } from "../../../components/select-menu";
@@ -54,17 +54,17 @@ export type LocalAffected = CreateFindingAffectedRequest & {
     _localScreenshot?: File;
     _localLogFile?: File;
 } & (
-        | { type: "Domain"; _data: FullDomain }
-        | { type: "Host"; _data: FullHost }
-        | { type: "Service"; _data: FullService }
-        | { type: "Port"; _data: FullPort }
+    | { type: "Domain"; _data: FullDomain }
+    | { type: "Host"; _data: FullHost }
+    | { type: "Service"; _data: FullService }
+    | { type: "Port"; _data: FullPort }
     );
 
 type Section = "definition" | "description" | "affected" | "network";
 
 export function WorkspaceCreateFinding(props: CreateFindingProps) {
     const {
-        workspace: { uuid: workspace },
+        workspace: { uuid: workspace }
     } = React.useContext(WORKSPACE_CONTEXT);
 
     const [section, setSection] = React.useState<Section>("definition");
@@ -78,16 +78,13 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
         (props.initAffected ?? []).map((a) => {
             const type = getCreateAffectedType(a);
             const data = getCreateAffectedData(a);
-            const ret: Omit<LocalAffected, "type" | "_data"> = {
-                uuid: "",
-                details: "",
-            };
             return {
                 _data: data satisfies LocalAffected["_data"],
                 type: type satisfies LocalAffected["type"],
-                ...ret,
+                uuid: data.uuid,
+                details: ""
             } as LocalAffected;
-        }),
+        })
     );
 
     const [logFile, setLogFile] = React.useState<File>();
@@ -110,8 +107,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                 {
                     _fileDataURL: undefined,
                     _screenshotDataURL: undefined,
-                    ...newAffected,
-                },
+                    ...newAffected
+                }
             ].sort((a, b) => {
                 if (a.type < b.type) return -1;
                 if (a.type > b.type) return 1;
@@ -139,7 +136,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                 return (
                     <Editor
                         className={"knowledge-base-editor"}
-                        theme={"custom"}
+                        theme={"kraken"}
                         beforeMount={configureMonaco}
                         language={"markdown"}
                         value={details}
@@ -160,8 +157,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                         type: "Domain",
                                         uuid: d.uuid,
                                         details: "",
-                                        _data: d,
-                                    }),
+                                        _data: d
+                                    })
                                 )
                             }
                             onAddHosts={(ds) =>
@@ -170,8 +167,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                         type: "Host",
                                         uuid: d.uuid,
                                         details: "",
-                                        _data: d,
-                                    }),
+                                        _data: d
+                                    })
                                 )
                             }
                             onAddPorts={(ds) =>
@@ -180,8 +177,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                         type: "Port",
                                         uuid: d.uuid,
                                         details: "",
-                                        _data: d,
-                                    }),
+                                        _data: d
+                                    })
                                 )
                             }
                             onAddServices={(ds) =>
@@ -190,8 +187,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                         type: "Service",
                                         uuid: d.uuid,
                                         details: "",
-                                        _data: d,
-                                    }),
+                                        _data: d
+                                    })
                                 )
                             }
                         />
@@ -239,7 +236,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                         const r = await Api.workspaces.files.uploadImage(
                                             workspace,
                                             screenshot.name,
-                                            screenshot,
+                                            screenshot
                                         );
                                         request.screenshot = r.unwrap().uuid;
                                     }
@@ -247,12 +244,12 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                         const r = await Api.workspaces.files.uploadFile(
                                             workspace,
                                             logFile.name,
-                                            logFile,
+                                            logFile
                                         );
                                         request.logFile = r.unwrap().uuid;
                                     }
                                     return request;
-                                }),
+                                })
                             ).catch((e) => {
                                 console.error(e);
                                 return null;
@@ -267,7 +264,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                 await Api.workspaces.files.uploadImage(workspace, screenshot.name, screenshot).then(
                                     handleApiError(({ uuid }) => {
                                         screenshotUuid = uuid;
-                                    }),
+                                    })
                                 );
                                 if (screenshotUuid === null) return toast.error("Fail to upload screenshot");
                             }
@@ -277,7 +274,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                 await Api.workspaces.files.uploadFile(workspace, logFile.name, logFile).then(
                                     handleApiError(({ uuid }) => {
                                         logFileUuid = uuid;
-                                    }),
+                                    })
                                 );
                                 if (logFileUuid === null) return toast.error("Fail to upload logfile");
                             }
@@ -288,20 +285,20 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                     definition: findingDef.uuid,
                                     details: details,
                                     logFile: logFileUuid,
-                                    screenshot: screenshotUuid,
+                                    screenshot: screenshotUuid
                                 })
                                 .then(
                                     handleApiError(async ({ uuid }) => {
                                         await Promise.all(
-                                            affectedUploaded.map((a) =>
+                                            affectedUploaded.map((a) => {
                                                 Api.workspaces.findings
                                                     .addAffected(workspace, uuid, a)
-                                                    .then(handleApiError()),
-                                            ),
+                                                    .then(handleApiError());
+                                            })
                                         );
                                         ROUTES.WORKSPACE_FINDINGS_LIST.visit({ uuid: workspace });
                                         toast.success("Created finding");
-                                    }),
+                                    })
                                 );
                         }}
                     >
@@ -375,11 +372,11 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                                         affected.map((orig) =>
                                                             orig.uuid == a.uuid
                                                                 ? {
-                                                                      ...orig,
-                                                                      details: d,
-                                                                  }
-                                                                : orig,
-                                                        ),
+                                                                    ...orig,
+                                                                    details: d
+                                                                }
+                                                                : orig
+                                                        )
                                                     );
                                                 }}
                                                 onChangeScreenshot={(v) => {
@@ -387,11 +384,11 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                                         affected.map((orig) =>
                                                             orig.uuid == a.uuid
                                                                 ? {
-                                                                      ...orig,
-                                                                      _localScreenshot: v,
-                                                                  }
-                                                                : orig,
-                                                        ),
+                                                                    ...orig,
+                                                                    _localScreenshot: v
+                                                                }
+                                                                : orig
+                                                        )
                                                     );
                                                 }}
                                                 onChangeLogFile={(f) => {
@@ -399,11 +396,11 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                                         affected.map((orig) =>
                                                             orig.uuid == a.uuid
                                                                 ? {
-                                                                      ...orig,
-                                                                      _localLogFile: f,
-                                                                  }
-                                                                : orig,
-                                                        ),
+                                                                    ...orig,
+                                                                    _localLogFile: f
+                                                                }
+                                                                : orig
+                                                        )
                                                     );
                                                 }}
                                             />
@@ -522,13 +519,13 @@ export function getCreateAffectedData(affected: CreateFindingObject) {
 }
 
 export function CreateFindingAffected({
-    affected: a,
-    onRemove,
-    onChangeDetails,
-    onChangeScreenshot,
-    onChangeLogFile,
-    onClickTag,
-}: {
+                                          affected: a,
+                                          onRemove,
+                                          onChangeDetails,
+                                          onChangeScreenshot,
+                                          onChangeLogFile,
+                                          onClickTag
+                                      }: {
     affected: LocalAffected;
     onRemove?: () => void;
     onChangeDetails?: (content: string) => void;
@@ -549,7 +546,8 @@ export function CreateFindingAffected({
             "not implemented"
         );
 
-    const noop = () => {};
+    const noop = () => {
+    };
 
     return (
         <div className={`create-finding-affected affected affected-${a.type}`}>

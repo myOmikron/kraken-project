@@ -16,7 +16,7 @@ export type WorkspaceFindingTableProps = {
 
 export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filter }: WorkspaceFindingTableProps) {
     const {
-        workspace: { uuid: workspace },
+        workspace: { uuid: workspace }
     } = React.useContext(WORKSPACE_CONTEXT);
     const [findings, setFindings] = React.useState<Array<SimpleFinding>>([]);
     const [search, setSearch] = React.useState("");
@@ -25,7 +25,7 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
         Api.workspaces.findings.all(workspace).then(
             handleApiError(({ findings }): void => {
                 setFindings(findings);
-            }),
+            })
         );
     }, [workspace]);
 
@@ -43,12 +43,14 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
             </div>
             <div
                 className="workspace-findings-table"
-                style={{ "--columns": "0.1fr 1fr 1fr" } as Record<string, string>}
+                style={{ "--columns": "4em 5em 1fr 12em 1fr" } as Record<string, string>}
             >
                 <div className={"workspace-table-header"}>
-                    <span>Severity</span>
+                    <span className={"workspace-data-certainty-icon"}>Severity</span>
+                    <span className={"workspace-data-certainty-icon"}>Affected</span>
                     <span>Name</span>
                     <span>CVE</span>
+                    <span>Created At</span>
                 </div>
                 <div className="workspace-table-body">
                     {findings
@@ -67,8 +69,10 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
                                 <span className="workspace-data-certainty-icon">
                                     <SeverityIcon severity={f.severity} />
                                 </span>
+                                <span className="workspace-data-certainty-icon">{f.affectedCount}</span>
                                 <span>{f.name}</span>
                                 <span>{f.cve}</span>
+                                <span>{f.createdAt.toLocaleString()}</span>
                             </div>
                         ))}
                 </div>

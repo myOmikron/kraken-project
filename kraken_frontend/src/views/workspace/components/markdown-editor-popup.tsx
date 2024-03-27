@@ -36,7 +36,7 @@ export default function MarkdownEditorPopup(props: MarkdownEditorPopupProps) {
                     <GithubMarkdown>{content}</GithubMarkdown>
                     <Editor
                         className={"knowledge-base-editor"}
-                        theme={"custom"}
+                        theme={"kraken"}
                         beforeMount={configureMonaco}
                         language={"markdown"}
                         value={content}

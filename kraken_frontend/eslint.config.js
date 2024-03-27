@@ -10,12 +10,12 @@ const config = tsEslint.config(
     ...tsEslint.configs.recommended,
     jsdoc.configs["flat/recommended-typescript"],
     {
-        ignores: ["src/api/generated/**"],
+        ignores: ["src/api/generated/**"]
     },
     {
         languageOptions: {
             parser,
-            parserOptions: { project: ["./tsconfig.json"] },
+            parserOptions: { project: ["./tsconfig.json"] }
         },
         rules: {
             "no-case-declarations": "off", // potential errors are already caught by typescript
@@ -24,41 +24,25 @@ const config = tsEslint.config(
 
             "@typescript-eslint/ban-ts-comment": [
                 "error",
-                { "ts-ignore": "allow-with-description" }, //
+                { "ts-ignore": "allow-with-description" } //
             ],
 
             "@typescript-eslint/ban-types": [
                 "error",
-                { extendDefaults: true, types: { "{}": false } }, // its just syntactically nicer and consistent to use `type ...Props = {};` and extend it later
+                { extendDefaults: true, types: { "{}": false } } // its just syntactically nicer and consistent to use `type ...Props = {};` and extend it later
             ],
 
             "@typescript-eslint/no-unused-vars": [
                 "error",
-                { varsIgnorePattern: "^_", argsIgnorePattern: "^_|props" }, // mimic rust behaviour and ignore the props argument of functional components
+                { varsIgnorePattern: "^_", argsIgnorePattern: "^_|props" } // mimic rust behaviour and ignore the props argument of functional components
             ],
 
-            "@typescript-eslint/no-namespace": "off", // TODO: needs second thought / discussion with team
-        },
-    },
+            "@typescript-eslint/no-namespace": "off" // TODO: needs second thought / discussion with team
+        }
+    }
 );
 // disableAllBut("prefer-const"); // Hack to disable all rules when using `--fix`
 export default config;
-
-/*
-module.exports = {
-    ignorePatterns: ["src/api/generated"],
-    env: { browser: true, es2020: true },
-    extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended", "plugin:react-hooks/recommended"],
-    parser: "@typescript-eslint/parser",
-    parserOptions: { ecmaVersion: "latest", sourceType: "module" },
-    plugins: ["react-refresh"],
-    rules: {
-        "react-refresh/only-export-components": "warn",
-
-        "no-unused-vars": "off",
-    },
-};
-*/
 
 function disableAllBut(rule, options) {
     for (const entry of config) {
@@ -66,7 +50,7 @@ function disableAllBut(rule, options) {
     }
     config.push({
         rules: {
-            [rule]: options !== undefined ? ["error", ...options] : "error",
-        },
+            [rule]: options !== undefined ? ["error", ...options] : "error"
+        }
     });
 }
