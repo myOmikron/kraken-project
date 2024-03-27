@@ -10,12 +10,12 @@ const config = tsEslint.config(
     ...tsEslint.configs.recommended,
     jsdoc.configs["flat/recommended-typescript"],
     {
-        ignores: ["src/api/generated/**", "eslint.config.js"]
+        ignores: ["src/api/generated/**", "eslint.config.js"],
     },
     {
         languageOptions: {
             parser,
-            parserOptions: { project: ["./tsconfig.json"] }
+            parserOptions: { project: ["./tsconfig.json"] },
         },
         rules: {
             "no-console": "warn",
@@ -26,7 +26,7 @@ const config = tsEslint.config(
             "jsdoc/tag-lines": [
                 "warn",
                 "any",
-                { startLines: 1 } // Require one empty line, between description and tags
+                { startLines: 1 }, // Require one empty line, between description and tags
             ],
 
             "jsdoc/require-jsdoc": [
@@ -38,11 +38,11 @@ const config = tsEslint.config(
                         ClassExpression: true,
                         FunctionDeclaration: true,
                         FunctionExpression: true,
-                        MethodDefinition: true
+                        MethodDefinition: true,
                     },
                     // use https://typescript-eslint.io/play/ to figure out the ast layout
-                    contexts: ["TSTypeAliasDeclaration", "TSPropertySignature"]
-                }
+                    contexts: ["TSTypeAliasDeclaration", "TSPropertySignature"],
+                },
             ],
 
             "jsdoc/require-param": [
@@ -51,10 +51,10 @@ const config = tsEslint.config(
                     // use https://typescript-eslint.io/play/ to figure out the ast layout
                     contexts: [
                         "ArrowFunctionExpression",
-                        "FunctionDeclaration:not(:has(Identifier.params[name=\"props\"]:first-child:last-child))", // ignore react components
-                        "FunctionExpression"
-                    ]
-                }
+                        'FunctionDeclaration:not(:has(Identifier.params[name="props"]:first-child:last-child))', // ignore react components
+                        "FunctionExpression",
+                    ],
+                },
             ],
 
             "jsdoc/require-returns": [
@@ -63,10 +63,10 @@ const config = tsEslint.config(
                     // use https://typescript-eslint.io/play/ to figure out the ast layout
                     contexts: [
                         "ArrowFunctionExpression",
-                        "FunctionDeclaration:not(:has(Identifier.params[name=\"props\"]:first-child:last-child))", // ignore react components
-                        "FunctionExpression"
-                    ]
-                }
+                        'FunctionDeclaration:not(:has(Identifier.params[name="props"]:first-child:last-child))', // ignore react components
+                        "FunctionExpression",
+                    ],
+                },
             ],
 
             "@typescript-eslint/switch-exhaustiveness-check": "error",
@@ -75,15 +75,15 @@ const config = tsEslint.config(
 
             "@typescript-eslint/ban-types": [
                 "error",
-                { extendDefaults: true, types: { "{}": false } } // its just syntactically nicer and consistent to use `type ...Props = {};` and extend it later
+                { extendDefaults: true, types: { "{}": false } }, // its just syntactically nicer and consistent to use `type ...Props = {};` and extend it later
             ],
 
             "@typescript-eslint/no-unused-vars": [
                 "error",
-                { varsIgnorePattern: "^_", argsIgnorePattern: "^_|props" } // mimic rust behaviour and ignore the props argument of functional components
-            ]
-        }
-    }
+                { varsIgnorePattern: "^_", argsIgnorePattern: "^_|props" }, // mimic rust behaviour and ignore the props argument of functional components
+            ],
+        },
+    },
 );
 // disableAllBut("<some-rule>");
 export default config;
@@ -100,7 +100,7 @@ function disableAllBut(rule) {
         if ("rules" in entry) {
             if (rule in entry.rules) {
                 entry.rules = {
-                    [rule]: entry.rules[rule]
+                    [rule]: entry.rules[rule],
                 };
             } else {
                 entry.rules = {};
