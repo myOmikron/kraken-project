@@ -1,12 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Api, UUID } from "../../api/api";
-import { FullHost, SimpleDomain, SimplePort, SimpleService } from "../../api/generated";
+import { FullHost } from "../../api/generated";
 import Input from "../../components/input";
 import OsIcon from "../../components/os-icon";
 import { ROUTES } from "../../routes";
 import "../../styling/workspace-host.css";
 import ArrowLeftIcon from "../../svg/arrow-left";
 
+import { compareHost } from "../../utils/data-sorter";
 import { handleApiError } from "../../utils/helper";
 import TagList from "./components/tag-list";
 import { WORKSPACE_CONTEXT } from "./workspace";
@@ -19,126 +20,83 @@ const TABS = { domains: "Domains", ports: "Ports", services: "Services", other: 
 type WorkspaceProps = {
     uuid: UUID;
 };
-type WorkspaceState = {
-    selectedTab: keyof typeof TABS;
-    selected: { type: keyof typeof TABS; uuid: string } | null;
-    host: FullHost | null;
-    domains: Array<SimpleDomain>;
-    ports: Array<SimplePort>;
-    services: Array<SimpleService>;
-    hostList: Array<FullHost>;
-    searchTerm: string;
-    limit: number;
-    offset: number;
-    totalDomains: number;
-};
 
-export default class WorkspaceHost extends React.Component<WorkspaceProps, WorkspaceState> {
-    static contextType = WORKSPACE_CONTEXT;
-    declare context: React.ContextType<typeof WORKSPACE_CONTEXT>;
+export default function WorkspaceHost(props: WorkspaceProps) {
+    const {
+        workspace: { uuid: workspace },
+    } = React.useContext(WORKSPACE_CONTEXT);
 
-    constructor(props: WorkspaceProps) {
-        super(props);
+    const [selectedTab, setSelectedTab] = React.useState<keyof typeof TABS>("domains");
+    const [host, setHost] = React.useState<FullHost | null>(null);
+    const [hostList, setHostList] = React.useState<Array<FullHost>>([]);
+    const [searchTerm, setSearchTerm] = React.useState("");
 
-        this.state = {
-            selectedTab: "domains",
-            selected: null,
-            host: null,
-            hostList: [],
-            domains: [],
-            ports: [],
-            services: [],
-            searchTerm: "",
-            limit: 5,
-            offset: 0,
-            totalDomains: 0,
-        };
-    }
-
-    async getHostList() {
-        await Api.workspaces.hosts.all(this.context.workspace.uuid, 1000, 0).then(
+    function getHostList() {
+        return Api.workspaces.hosts.all(workspace, 1000, 0).then(
             handleApiError(({ items }) => {
-                this.setState({ hostList: items.filter(({ uuid }) => uuid !== this.props.uuid) });
+                setHostList(items);
             }),
         );
     }
 
-    async getHost() {
-        await Api.workspaces.hosts
-            .get(this.context.workspace.uuid, this.props.uuid)
-            .then(handleApiError((host) => this.setState({ host })));
+    function getHost() {
+        return Api.workspaces.hosts.get(workspace, props.uuid).then(handleApiError(setHost));
     }
 
-    componentDidUpdate(prevProps: Readonly<WorkspaceProps>) {
-        if (prevProps.uuid !== this.props.uuid) {
-            Promise.all([this.getHost(), this.getHostList()]).then();
+    useEffect(() => {
+        getHost();
+        getHostList();
+    }, [props.uuid]);
+
+    const table = (() => {
+        switch (selectedTab) {
+            case "domains":
+                return <WorkspaceHostDomains host={host} />;
+            case "ports":
+                return <WorkspaceHostPorts host={host} />;
+            case "services":
+                return <WorkspaceHostServices host={host} />;
+            default:
+                return "Unimplemented";
         }
-    }
+    })();
 
-    componentDidMount() {
-        Promise.all([this.getHost(), this.getHostList()]).then();
-    }
+    const selectedHost = host?.uuid;
 
-    render() {
-        const { selectedTab } = this.state;
-        const table = (() => {
-            switch (selectedTab) {
-                case "domains":
-                    return (
-                        <WorkspaceHostDomains
-                            onSelect={(uuid) => this.setState({ selected: { type: "domains", uuid } })}
-                            host={this.state.host}
+    return (
+        <div className={"workspace-host-container"}>
+            <div className={"workspace-host-hosts-list"}>
+                <div className={"workspace-host-hosts-list-header"}>
+                    <div className={"pane workspace-host-hosts-search"}>
+                        <ArrowLeftIcon
+                            key={"back"}
+                            onClick={() => {
+                                ROUTES.WORKSPACE_HOSTS.visit({
+                                    uuid: workspace,
+                                });
+                            }}
                         />
-                    );
-                case "ports":
-                    return (
-                        <WorkspaceHostPorts
-                            onSelect={(uuid) => this.setState({ selected: { type: "ports", uuid } })}
-                            host={this.state.host}
-                        />
-                    );
-                case "services":
-                    return (
-                        <WorkspaceHostServices
-                            onSelect={(uuid) => this.setState({ selected: { type: "services", uuid } })}
-                            host={this.state.host}
-                        />
-                    );
-                default:
-                    return "Unimplemented";
-            }
-        })();
-        return (
-            <div className={"workspace-host-container"}>
-                <div className={"workspace-host-hosts-list"}>
-                    <div className={"workspace-host-hosts-list-header"}>
-                        <div className={"pane workspace-host-hosts-search"}>
-                            <ArrowLeftIcon
-                                key={"back"}
-                                onClick={() => {
-                                    ROUTES.WORKSPACE_HOSTS.visit({
-                                        uuid: this.context.workspace.uuid,
-                                    });
-                                }}
-                            />
 
-                            <Input
-                                className={"workspace-host-search-bar"}
-                                placeholder={"Search host"}
-                                value={this.state.searchTerm}
-                                onChange={(searchTerm) => this.setState({ searchTerm })}
-                            />
-                        </div>
+                        <Input
+                            className={"workspace-host-search-bar"}
+                            placeholder={"Search host"}
+                            value={searchTerm}
+                            onChange={setSearchTerm}
+                        />
                     </div>
-                    <div className={"workspace-host-hosts-list-entries"}>
-                        {this.state.hostList.map((host) => {
+                </div>
+                <div className={"workspace-host-hosts-list-entries"}>
+                    {hostList
+                        .filter(({ ipAddr }) => ipAddr.includes(searchTerm))
+                        .sort(compareHost)
+                        .map((host) => {
                             return (
                                 <button
                                     key={host.uuid}
-                                    className={"pane workspace-host-hosts-item"}
+                                    className={`pane workspace-host-hosts-item ${host.uuid == selectedHost ? "selected" : ""}`}
                                     onClick={() => {
                                         ROUTES.WORKSPACE_SINGLE_HOST.visit({
-                                            w_uuid: this.context.workspace.uuid,
+                                            w_uuid: workspace,
                                             h_uuid: host.uuid,
                                         });
                                     }}
@@ -151,40 +109,39 @@ export default class WorkspaceHost extends React.Component<WorkspaceProps, Works
                                 </button>
                             );
                         })}
-                    </div>
-                </div>
-                <div className={"pane workspace-host-host-container"}>
-                    {this.state.host !== null ? (
-                        <>
-                            <OsIcon os={this.state.host.osType} />
-                            <div className={"workspace-host-details"}>
-                                <h2 className={"heading"}>Host {this.state.host.ipAddr}</h2>
-                                <span>OS: {this.state.host.osType}</span>
-                                <span>Comment: {this.state.host.comment}</span>
-                                <TagList tags={this.state.host.tags} />
-                            </div>
-                        </>
-                    ) : (
-                        <div>Loading ..</div>
-                    )}
-                </div>
-
-                <div className={"workspace-host-section-selector"}>
-                    {Object.entries(TABS).map(([key, displayName]) => (
-                        <div
-                            className={"pane" + (this.state.selectedTab !== key ? "" : " workspace-host-selected-tab")}
-                            onClick={() => this.setState({ selectedTab: key as keyof typeof TABS })}
-                        >
-                            <h3 className={"heading"}>{displayName}</h3>
-                        </div>
-                    ))}
-                </div>
-                {table}
-
-                <div className={"workspace-host-content-details pane"}>
-                    <h2 className={"heading"}>Details</h2>
                 </div>
             </div>
-        );
-    }
+            <div className={"pane workspace-host-host-container"}>
+                {host !== null ? (
+                    <>
+                        <OsIcon os={host.osType} />
+                        <div className={"workspace-host-details"}>
+                            <h2 className={"heading"}>Host {host.ipAddr}</h2>
+                            <span>OS: {host.osType}</span>
+                            <span>Comment: {host.comment}</span>
+                            <TagList tags={host.tags} />
+                        </div>
+                    </>
+                ) : (
+                    <div>Loading ..</div>
+                )}
+            </div>
+
+            <div className={"workspace-host-section-selector"}>
+                {Object.entries(TABS).map(([key, displayName]) => (
+                    <div
+                        className={"pane" + (selectedTab !== key ? "" : " workspace-host-selected-tab")}
+                        onClick={() => setSelectedTab(key as keyof typeof TABS)}
+                    >
+                        <h3 className={"heading"}>{displayName}</h3>
+                    </div>
+                ))}
+            </div>
+            {table}
+
+            <div className={"workspace-host-content-details pane"}>
+                <h2 className={"heading"}>Details</h2>
+            </div>
+        </div>
+    );
 }
