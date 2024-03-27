@@ -21,7 +21,7 @@ export function compareHost(a: FullHost | SimpleHost, b: FullHost | SimpleHost):
     if (!av4 && bv4) return 1;
     if (av4 && bv4) {
         const num = (ip: RegExpExecArray): number =>
-            (parseInt(ip[1]) << 24) | (parseInt(ip[2]) << 16) | (parseInt(ip[3]) << 8) | parseInt(ip[4]);
+            ((parseInt(ip[1]) << 24) | (parseInt(ip[2]) << 16) | (parseInt(ip[3]) << 8) | parseInt(ip[4])) >>> 0;
         return num(av4) - num(bv4);
     } else {
         // TODO: IPv6 sorting
