@@ -45,12 +45,7 @@ import TagList from "../components/tag-list";
 import { ViewportProps } from "../components/viewport";
 import { WORKSPACE_CONTEXT } from "../workspace";
 import WorkspaceFindingsQuickAttach from "../workspace-findings-quick-attach";
-import {
-    CreateFindingObject,
-    getCreateAffectedData,
-    getCreateAffectedKey,
-    getCreateAffectedType,
-} from "./workspace-create-finding";
+import { CreateFindingObject, getCreateAffectedData, getCreateAffectedType } from "./workspace-create-finding";
 import { TreeGraph, TreeNode } from "./workspace-finding-tree";
 
 export type DynamicTreeGraphProps = {
@@ -734,18 +729,44 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                                 workspace={contextWorkspace}
                                 onChange={(newTags) => {
                                     const mutator = getMutator();
-                                    const key = getCreateAffectedKey(tagging);
-                                    mutator.updateNode(getCreateAffectedData(tagging).uuid, (n) =>
-                                        n.type === "Finding"
-                                            ? n
-                                            : {
-                                                  ...n,
-                                                  [key]: {
-                                                      ...(n as any)[key],
-                                                      tags: newTags,
-                                                  },
-                                              },
-                                    );
+                                    mutator.updateNode(getCreateAffectedData(tagging).uuid, (n) => {
+                                        switch (n.type) {
+                                            case "Finding":
+                                                return n;
+                                            case "Domain":
+                                                return {
+                                                    ...n,
+                                                    domain: {
+                                                        ...n.domain,
+                                                        tags: newTags,
+                                                    },
+                                                };
+                                            case "Host":
+                                                return {
+                                                    ...n,
+                                                    host: {
+                                                        ...n.host,
+                                                        tags: newTags,
+                                                    },
+                                                };
+                                            case "Port":
+                                                return {
+                                                    ...n,
+                                                    port: {
+                                                        ...n.port,
+                                                        tags: newTags,
+                                                    },
+                                                };
+                                            case "Service":
+                                                return {
+                                                    ...n,
+                                                    service: {
+                                                        ...n.service,
+                                                        tags: newTags,
+                                                    },
+                                                };
+                                        }
+                                    });
                                     setWantRerender(true);
                                 }}
                             />
