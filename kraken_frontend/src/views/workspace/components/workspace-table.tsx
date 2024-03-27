@@ -17,7 +17,7 @@ export type WorkspaceDataTableProps<T> = {
     workspace: string;
 
     /** Method used to query a page */
-    query: (limit: number, offset: number) => Promise<Result<GenericPage<T>, ApiError>>;
+    query: (filter: string, limit: number, offset: number) => Promise<Result<GenericPage<T>, ApiError>>;
 
     /**
      * List of dependencies captured by `query`.
@@ -25,7 +25,7 @@ export type WorkspaceDataTableProps<T> = {
      * I.e. add every variable the `query` function captures from its environment.
      * Read about {@link React.useEffect}'s second argument for more details.
      */
-    queryDeps?: React.DependencyList;
+    queryDeps: React.DependencyList;
 
     /** The table's header row and a function for rendering the body's rows */
     children: [React.ReactNode, (item: T) => React.ReactNode];
@@ -64,8 +64,11 @@ export default function WorkspaceTable<T extends { uuid: string }>(props: Worksp
         noBackground,
     } = props;
 
-    const { items, ...table } = useTable(query, queryDeps);
     const filter = useFilter(props.workspace, "global");
+    const { items, ...table } = useTable(
+        (limit, offset) => query(filter.applied, limit, offset),
+        [filter.applied, ...queryDeps],
+    );
 
     return StatelessWorkspaceTable({
         ...table,
