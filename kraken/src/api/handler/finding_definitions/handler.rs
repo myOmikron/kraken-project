@@ -30,7 +30,7 @@ use crate::modules::cache::EditorCached;
 /// These definition serve as reference and knowledge base in kraken.
 /// They can be used to create a finding that references a definition and links it to one or
 /// multiple aggregations.
-#[swaggapi::post("/findingDefinitions")]
+#[swaggapi::post("/findingDefinitions", tags("Knowledge Base"))]
 pub async fn create_finding_definition(
     req: Json<CreateFindingDefinitionRequest>,
 ) -> ApiResult<Json<UuidResponse>> {
@@ -75,7 +75,7 @@ pub async fn create_finding_definition(
 }
 
 /// Retrieve a specific finding definition
-#[swaggapi::get("/findingDefinitions/{uuid}")]
+#[swaggapi::get("/findingDefinitions/{uuid}", tags("Knowledge Base"))]
 pub async fn get_finding_definition(
     path: Path<PathUuid>,
 ) -> ApiResult<Json<FullFindingDefinition>> {
@@ -107,7 +107,7 @@ pub async fn get_finding_definition(
 }
 
 /// Retrieve all finding definitions
-#[swaggapi::get("/findingDefinitions")]
+#[swaggapi::get("/findingDefinitions", tags("Knowledge Base"))]
 pub async fn get_all_finding_definitions() -> ApiResult<Json<ListFindingDefinitions>> {
     let mut finding_definitions: Vec<SimpleFindingDefinition> =
         query!(&GLOBAL.db, FindingDefinition)
@@ -142,7 +142,7 @@ pub async fn get_all_finding_definitions() -> ApiResult<Json<ListFindingDefiniti
 ///
 /// This endpoint only allows updating the `name`, `severity` and `cve`.
 /// The other values have to be updated through the websocket as part of a live editor.
-#[swaggapi::put("/findingDefinitions/{uuid}")]
+#[swaggapi::put("/findingDefinitions/{uuid}", tags("Knowledge Base"))]
 pub async fn update_finding_definition(
     path: Path<PathUuid>,
     Json(request): Json<UpdateFindingDefinitionRequest>,

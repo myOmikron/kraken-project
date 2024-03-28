@@ -19,7 +19,7 @@ use crate::models::WorkspaceMemberPermission;
 
 /// Retrieve all open invitations to workspaces the currently logged-in user
 /// has retrieved
-#[swaggapi::get("/invitations")]
+#[swaggapi::get("/invitations", tags("Workspace Invitations"))]
 pub async fn get_all_invitations(
     SessionUser(session_user): SessionUser,
 ) -> ApiResult<Json<WorkspaceInvitationList>> {
@@ -74,7 +74,7 @@ pub async fn get_all_invitations(
 }
 
 /// Accept an invitation to a workspace
-#[swaggapi::post("/invitations/{uuid}/accept")]
+#[swaggapi::post("/invitations/{uuid}/accept", tags("Workspace Invitations"))]
 pub async fn accept_invitation(
     path: Path<PathUuid>,
     SessionUser(session_user): SessionUser,
@@ -117,7 +117,7 @@ pub async fn accept_invitation(
 }
 
 /// Decline an invitation to a workspace
-#[swaggapi::post("/invitations/{uuid}/decline")]
+#[swaggapi::post("/invitations/{uuid}/decline", tags("Workspace Invitations"))]
 pub async fn decline_invitation(
     path: Path<PathUuid>,
     SessionUser(session_user): SessionUser,

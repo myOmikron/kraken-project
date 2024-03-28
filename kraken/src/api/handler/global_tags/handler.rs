@@ -8,7 +8,7 @@ use crate::chan::global::GLOBAL;
 use crate::models::GlobalTag;
 
 /// Retrieve all global tags
-#[swaggapi::get("/globalTags")]
+#[swaggapi::get("/globalTags", tags("Global Tags"))]
 pub async fn get_all_global_tags() -> ApiResult<Json<ListGlobalTags>> {
     let global_tags = query!(&GLOBAL.db, GlobalTag).all().await?;
 

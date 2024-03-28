@@ -14,7 +14,7 @@ use crate::chan::global::GLOBAL;
 use crate::models::Workspace;
 
 /// Retrieve a workspace by id
-#[swaggapi::get("/workspaces/{uuid}")]
+#[swaggapi::get("/workspaces/{uuid}", tags("Workspaces"))]
 pub async fn get_workspace_admin(req: Path<PathUuid>) -> ApiResult<Json<FullWorkspace>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
@@ -26,7 +26,7 @@ pub async fn get_workspace_admin(req: Path<PathUuid>) -> ApiResult<Json<FullWork
 }
 
 /// Retrieve all workspaces
-#[swaggapi::get("/workspaces")]
+#[swaggapi::get("/workspaces", tags("Workspaces"))]
 pub async fn get_all_workspaces_admin() -> ApiResult<Json<ListWorkspaces>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 

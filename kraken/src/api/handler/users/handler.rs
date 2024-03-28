@@ -25,7 +25,7 @@ use crate::models::LocalUser;
 use crate::models::User;
 
 /// Retrieve the own user
-#[swaggapi::get("/users/me")]
+#[swaggapi::get("/users/me", tags("User Management"))]
 pub async fn get_me(SessionUser(user_uuid): SessionUser) -> ApiResult<Json<FullUser>> {
     Ok(Json(
         GLOBAL
@@ -37,7 +37,7 @@ pub async fn get_me(SessionUser(user_uuid): SessionUser) -> ApiResult<Json<FullU
 }
 
 /// Set a new password
-#[swaggapi::post("/users/setPassword")]
+#[swaggapi::post("/users/setPassword", tags("User Management"))]
 pub async fn set_password(
     req: Json<SetPasswordRequest>,
     SessionUser(user_uuid): SessionUser,
@@ -86,7 +86,7 @@ pub async fn set_password(
 /// Updates the own user
 ///
 /// All parameters are optional, but at least one of them must be supplied.
-#[swaggapi::put("/users/me")]
+#[swaggapi::put("/users/me", tags("User Management"))]
 pub async fn update_me(
     req: Json<UpdateMeRequest>,
     SessionUser(user_uuid): SessionUser,
@@ -125,7 +125,7 @@ pub async fn update_me(
 /// Request all users
 ///
 /// This may be used to create invitations for workspaces
-#[swaggapi::get("/users")]
+#[swaggapi::get("/users", tags("User Management"))]
 pub async fn get_all_users() -> ApiResult<Json<ListUsers>> {
     let users = query!(
         &GLOBAL.db,

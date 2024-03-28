@@ -22,7 +22,7 @@ use crate::models::Workspace;
 use crate::models::WorkspaceTag;
 
 /// Create a workspace tag.
-#[swaggapi::post("/workspaces/{uuid}/tags")]
+#[swaggapi::post("/workspaces/{uuid}/tags", tags("Workspace Tags"))]
 pub async fn create_workspace_tag(
     path: Path<PathUuid>,
     req: Json<CreateWorkspaceTagRequest>,
@@ -49,7 +49,7 @@ pub async fn create_workspace_tag(
 /// One of the options must be set
 ///
 /// Requires privileges to access the workspace this tags belongs to.
-#[swaggapi::put("/workspaces/{w_uuid}/tags/{t_uuid}")]
+#[swaggapi::put("/workspaces/{w_uuid}/tags/{t_uuid}", tags("Workspace Tags"))]
 pub async fn update_workspace_tag(
     req: Json<UpdateWorkspaceTag>,
     path: Path<PathWorkspaceTag>,
@@ -107,7 +107,7 @@ pub async fn update_workspace_tag(
 /// Delete a workspace tag
 ///
 /// Requires privileges to access the workspace this tag belongs to.
-#[swaggapi::delete("/workspaces/{w_uuid}/tags/{t_uuid}")]
+#[swaggapi::delete("/workspaces/{w_uuid}/tags/{t_uuid}", tags("Workspace Tags"))]
 pub async fn delete_workspace_tag(
     path: Path<PathWorkspaceTag>,
     SessionUser(user_uuid): SessionUser,
@@ -138,7 +138,7 @@ pub async fn delete_workspace_tag(
 }
 
 /// Retrieve all workspace tags
-#[swaggapi::get("/workspaces/{uuid}/tags")]
+#[swaggapi::get("/workspaces/{uuid}/tags", tags("Workspace Tags"))]
 pub async fn get_all_workspace_tags(
     path: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,

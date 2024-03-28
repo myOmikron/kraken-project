@@ -31,7 +31,7 @@ use crate::models::User;
 use crate::models::Workspace;
 
 /// Retrieve all files
-#[swaggapi::get("/files")]
+#[swaggapi::get("/files", tags("Admin Files"))]
 pub async fn get_all_files_admin(
     Query(page): Query<PageParams>,
     Query(filter): Query<GetAllFilesQuery>,
@@ -119,7 +119,7 @@ pub async fn get_all_files_admin(
 }
 
 /// Downloads a file
-#[swaggapi::get("/files/{uuid}")]
+#[swaggapi::get("/files/{uuid}", tags("Admin Files"))]
 pub async fn download_file_admin(path: Path<PathUuid>) -> ApiResult<NamedFile> {
     let uuid = path.into_inner().uuid;
 
@@ -139,7 +139,7 @@ pub async fn download_file_admin(path: Path<PathUuid>) -> ApiResult<NamedFile> {
 }
 
 /// Deletes a file
-#[swaggapi::delete("/files/{uuid}")]
+#[swaggapi::delete("/files/{uuid}", tags("Admin Files"))]
 pub async fn delete_file_admin(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
     let uuid = path.into_inner().uuid;
 

@@ -41,13 +41,13 @@ use crate::models::User;
 /// You can use this endpoint to test the current login state of your client.
 ///
 /// If logged in, a 200 without a body is returned.
-#[swaggapi::get("/test")] // TODO , wrap = "AuthenticationRequired"
+#[swaggapi::get("/test", tags("Authentication"))] // TODO , wrap = "AuthenticationRequired"
 pub async fn test() -> HttpResponse {
     HttpResponse::Ok().finish()
 }
 
 /// Login to kraken
-#[swaggapi::post("/login")]
+#[swaggapi::post("/login", tags("Authentication"))]
 pub async fn login(req: Json<LoginRequest>, session: Session) -> ApiResult<HttpResponse> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
@@ -84,7 +84,7 @@ pub async fn login(req: Json<LoginRequest>, session: Session) -> ApiResult<HttpR
 /// Log out of this session
 ///
 /// Logs a logged-in user out of his session.
-#[swaggapi::get("/logout")]
+#[swaggapi::get("/logout", tags("Authentication"))]
 pub async fn logout(
     session: Session,
     SessionUser(user_uuid): SessionUser,
@@ -101,7 +101,7 @@ pub async fn logout(
 /// Use the `login` endpoint before calling this one.
 ///
 /// Proceed with `finishAuth`.
-#[swaggapi::post("/startAuth")]
+#[swaggapi::post("/startAuth", tags("Authentication"))]
 pub async fn start_auth(
     session: Session,
     webauthn: Data<Webauthn>,
@@ -135,7 +135,7 @@ pub async fn start_auth(
 /// Finishes the authentication with a security key
 ///
 /// Use `startAuth` to retrieve the challenge response data.
-#[swaggapi::post("/finishAuth")]
+#[swaggapi::post("/finishAuth", tags("Authentication"))]
 pub async fn finish_auth(
     auth: SchemalessJson<PublicKeyCredential>,
     session: Session,
@@ -169,7 +169,7 @@ pub async fn finish_auth(
 /// Start the registration of a security key
 ///
 /// Proceed to the `finishRegister` endpoint.
-#[swaggapi::post("/startRegister")]
+#[swaggapi::post("/startRegister", tags("Authentication"))]
 pub async fn start_register(
     session: Session,
     webauthn: Data<Webauthn>,
@@ -242,7 +242,7 @@ pub async fn start_register(
 /// Finish the registration of a security key
 ///
 /// Use `startRegister` to retrieve the challenge response data.
-#[swaggapi::post("/finishRegister")]
+#[swaggapi::post("/finishRegister", tags("Authentication"))]
 pub async fn finish_register(
     req: Json<FinishRegisterRequest>,
     session: Session,

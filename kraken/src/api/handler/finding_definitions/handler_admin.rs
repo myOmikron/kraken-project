@@ -24,7 +24,7 @@ use crate::models::FindingDefinition;
 use crate::modules::cache::EditorCached;
 
 /// Get all findings using the finding definition
-#[swaggapi::get("/findingDefinitions/{uuid}/usages")]
+#[swaggapi::get("/findingDefinitions/{uuid}/usages", tags("Knowledge Base"))]
 pub async fn get_finding_definition_usage(
     path: Path<PathUuid>,
 ) -> ApiResult<Json<ListFindingDefinitionUsages>> {
@@ -113,7 +113,7 @@ pub async fn get_finding_definition_usage(
 }
 
 /// Delete a finding definition
-#[swaggapi::delete("/findingDefinitions/{uuid}")]
+#[swaggapi::delete("/findingDefinitions/{uuid}", tags("Knowledge Base"))]
 pub async fn delete_finding_definition(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
     let uuid = path.into_inner().uuid;
 

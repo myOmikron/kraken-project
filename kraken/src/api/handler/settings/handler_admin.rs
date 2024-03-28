@@ -11,7 +11,7 @@ use crate::chan::global::GLOBAL;
 use crate::models::SettingsInsert;
 
 /// Retrieve the currently active settings
-#[swaggapi::get("/settings")]
+#[swaggapi::get("/settings", tags("Settings Management"))]
 pub async fn get_settings() -> ApiResult<Json<SettingsFull>> {
     let settings = GLOBAL.settings.get_settings();
     Ok(Json(SettingsFull {
@@ -24,7 +24,7 @@ pub async fn get_settings() -> ApiResult<Json<SettingsFull>> {
 }
 
 /// Update the settings
-#[swaggapi::put("/settings")]
+#[swaggapi::put("/settings", tags("Settings Management"))]
 pub async fn update_settings(req: Json<UpdateSettingsRequest>) -> ApiResult<HttpResponse> {
     let mut req = req.into_inner();
 

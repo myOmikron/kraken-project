@@ -65,7 +65,7 @@ use crate::query_tags;
 ///
 /// Hosts are created out of aggregating data or by user input.
 /// They represent a single host and can be created by providing an IP address
-#[swaggapi::post("/workspaces/{uuid}/hosts/all")]
+#[swaggapi::post("/workspaces/{uuid}/hosts/all", tags("Hosts"))]
 pub(crate) async fn get_all_hosts(
     path: Path<PathUuid>,
     params: Json<GetAllHostsQuery>,
@@ -170,7 +170,7 @@ pub(crate) async fn get_all_hosts(
 }
 
 /// Retrieve all information about a single host
-#[swaggapi::get("/workspaces/{w_uuid}/hosts/{h_uuid}")]
+#[swaggapi::get("/workspaces/{w_uuid}/hosts/{h_uuid}", tags("Hosts"))]
 pub async fn get_host(
     path: Path<PathHost>,
     SessionUser(user_uuid): SessionUser,
@@ -238,7 +238,7 @@ pub async fn get_host(
 }
 
 /// Manually add a host
-#[swaggapi::post("/workspaces/{uuid}/hosts")]
+#[swaggapi::post("/workspaces/{uuid}/hosts", tags("Hosts"))]
 pub async fn create_host(
     req: Json<CreateHostRequest>,
     path: Path<PathUuid>,
@@ -261,7 +261,7 @@ pub async fn create_host(
 /// Update a host
 ///
 /// You must include at least on parameter
-#[swaggapi::put("/workspaces/{w_uuid}/hosts/{h_uuid}")]
+#[swaggapi::put("/workspaces/{w_uuid}/hosts/{h_uuid}", tags("Hosts"))]
 pub async fn update_host(
     req: Json<UpdateHostRequest>,
     path: Path<PathHost>,
@@ -384,7 +384,7 @@ pub async fn update_host(
 /// Delete the host
 ///
 /// This only deletes the aggregation. The raw results are still in place
-#[swaggapi::delete("/workspaces/{w_uuid}/hosts/{h_uuid}")]
+#[swaggapi::delete("/workspaces/{w_uuid}/hosts/{h_uuid}", tags("Hosts"))]
 pub async fn delete_host(
     path: Path<PathHost>,
     SessionUser(user_uuid): SessionUser,
@@ -423,7 +423,7 @@ pub async fn delete_host(
 }
 
 /// Get all data sources which referenced this host
-#[swaggapi::get("/workspaces/{w_uuid}/hosts/{h_uuid}/sources")]
+#[swaggapi::get("/workspaces/{w_uuid}/hosts/{h_uuid}/sources", tags("Hosts"))]
 pub async fn get_host_sources(
     path: Path<PathHost>,
     SessionUser(user_uuid): SessionUser,
@@ -440,7 +440,7 @@ pub async fn get_host_sources(
 }
 
 /// Get a host's direct relations
-#[swaggapi::get("/workspaces/{w_uuid}/hosts/{h_uuid}/relations")]
+#[swaggapi::get("/workspaces/{w_uuid}/hosts/{h_uuid}/relations", tags("Hosts"))]
 pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRelations>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
@@ -517,7 +517,7 @@ pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRela
 }
 
 /// Get a host's findings
-#[swaggapi::get("/workspaces/{w_uuid}/hosts/{h_uuid}/findings")]
+#[swaggapi::get("/workspaces/{w_uuid}/hosts/{h_uuid}/findings", tags("Hosts"))]
 pub async fn get_host_findings(
     path: Path<PathHost>,
     SessionUser(u_uuid): SessionUser,

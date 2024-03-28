@@ -57,7 +57,7 @@ use crate::modules::filter::PortAST;
 use crate::modules::raw_query::RawQueryBuilder;
 use crate::query_tags;
 /// List the ports of a workspace
-#[swaggapi::post("/workspaces/{uuid}/ports/all")]
+#[swaggapi::post("/workspaces/{uuid}/ports/all", tags("Ports"))]
 pub async fn get_all_ports(
     path: Path<PathUuid>,
     params: Json<GetAllPortsQuery>,
@@ -185,7 +185,7 @@ pub async fn get_all_ports(
 }
 
 /// Retrieve all information about a single port
-#[swaggapi::get("/workspaces/{w_uuid}/ports/{p_uuid}")]
+#[swaggapi::get("/workspaces/{w_uuid}/ports/{p_uuid}", tags("Ports"))]
 pub async fn get_port(
     path: Path<PathPort>,
 
@@ -266,7 +266,7 @@ pub async fn get_port(
 }
 
 /// Manually add a port
-#[swaggapi::post("/workspaces/{uuid}/ports")]
+#[swaggapi::post("/workspaces/{uuid}/ports", tags("Ports"))]
 pub async fn create_port(
     req: Json<CreatePortRequest>,
     path: Path<PathUuid>,
@@ -297,7 +297,7 @@ pub async fn create_port(
 /// Update a port
 ///
 /// You must include at least on parameter
-#[swaggapi::put("/workspaces/{w_uuid}/ports/{p_uuid}")]
+#[swaggapi::put("/workspaces/{w_uuid}/ports/{p_uuid}", tags("Ports"))]
 pub async fn update_port(
     req: Json<UpdatePortRequest>,
     path: Path<PathPort>,
@@ -419,7 +419,7 @@ pub async fn update_port(
 /// Delete the port
 ///
 /// This only deletes the aggregation. The raw results are still in place
-#[swaggapi::delete("/workspaces/{w_uuid}/ports/{p_uuid}")]
+#[swaggapi::delete("/workspaces/{w_uuid}/ports/{p_uuid}", tags("Ports"))]
 pub async fn delete_port(
     path: Path<PathPort>,
     SessionUser(user_uuid): SessionUser,
@@ -458,7 +458,7 @@ pub async fn delete_port(
 }
 
 /// Get all data sources which referenced this port
-#[swaggapi::get("/workspaces/{w_uuid}/ports/{p_uuid}/sources")]
+#[swaggapi::get("/workspaces/{w_uuid}/ports/{p_uuid}/sources", tags("Ports"))]
 pub async fn get_port_sources(
     path: Path<PathPort>,
     SessionUser(user_uuid): SessionUser,
@@ -475,7 +475,7 @@ pub async fn get_port_sources(
 }
 
 /// Get a port's direct relations
-#[swaggapi::get("/workspaces/{w_uuid}/ports/{p_uuid}/relations")]
+#[swaggapi::get("/workspaces/{w_uuid}/ports/{p_uuid}/relations", tags("Ports"))]
 pub async fn get_port_relations(path: Path<PathPort>) -> ApiResult<Json<PortRelations>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
@@ -520,7 +520,7 @@ pub async fn get_port_relations(path: Path<PathPort>) -> ApiResult<Json<PortRela
 }
 
 /// Get a port's findings
-#[swaggapi::get("/workspaces/{w_uuid}/ports/{p_uuid}/findings")]
+#[swaggapi::get("/workspaces/{w_uuid}/ports/{p_uuid}/findings", tags("Ports"))]
 pub async fn get_port_findings(
     path: Path<PathPort>,
     SessionUser(u_uuid): SessionUser,

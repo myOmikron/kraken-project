@@ -34,7 +34,7 @@ use crate::models::Workspace;
 /// Uploads an image to the workspace and generates a thumbnail for it
 ///
 /// The returned uuid can be used to attach the image for example to a finding.
-#[swaggapi::post("/workspace/{uuid}/files/images")]
+#[swaggapi::post("/workspace/{uuid}/files/images", tags("Files"))]
 pub async fn upload_image(
     path: Path<PathUuid>,
     Query(query): Query<UploadQuery>,
@@ -117,7 +117,7 @@ pub async fn upload_image(
 /// Uploads a file to the workspace
 ///
 /// The returned uuid can be used to attach the file for example to a finding.
-#[swaggapi::post("/workspace/{uuid}/files")]
+#[swaggapi::post("/workspace/{uuid}/files", tags("Files"))]
 pub async fn upload_file(
     path: Path<PathUuid>,
     Query(query): Query<UploadQuery>,
@@ -162,7 +162,7 @@ pub async fn upload_file(
 }
 
 /// Downloads a thumbnail from the workspace
-#[swaggapi::get("/workspace/{w_uuid}/files/{f_uuid}/thumbnail")]
+#[swaggapi::get("/workspace/{w_uuid}/files/{f_uuid}/thumbnail", tags("Files"))]
 pub async fn download_thumbnail(
     path: Path<PathFile>,
     SessionUser(u_uuid): SessionUser,
@@ -192,7 +192,7 @@ pub async fn download_thumbnail(
 }
 
 /// Downloads a file from the workspace
-#[swaggapi::get("/workspace/{w_uuid}/files/{f_uuid}")]
+#[swaggapi::get("/workspace/{w_uuid}/files/{f_uuid}", tags("Files"))]
 pub async fn download_file(
     path: Path<PathFile>,
     SessionUser(u_uuid): SessionUser,

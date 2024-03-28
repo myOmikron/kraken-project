@@ -27,7 +27,7 @@ use crate::chan::global::GLOBAL;
 use crate::models::LeechApiKey;
 
 /// Create new api key
-#[swaggapi::post("/apiKeys")]
+#[swaggapi::post("/apiKeys", tags("Api Keys"))]
 pub async fn create_api_key(
     req: Json<CreateApiKeyRequest>,
     SessionUser(user): SessionUser,
@@ -46,7 +46,7 @@ pub async fn create_api_key(
 }
 
 /// Delete an existing api key
-#[swaggapi::delete("/apiKeys/{uuid}")]
+#[swaggapi::delete("/apiKeys/{uuid}", tags("Api Keys"))]
 pub async fn delete_api_key(
     path: Path<PathUuid>,
     SessionUser(user): SessionUser,
@@ -66,7 +66,7 @@ pub async fn delete_api_key(
 }
 
 /// Retrieve all api keys
-#[swaggapi::get("/apiKeys")]
+#[swaggapi::get("/apiKeys", tags("Api Keys"))]
 pub async fn get_api_keys(SessionUser(user): SessionUser) -> ApiResult<Json<ListApiKeys>> {
     let keys = query!(
         &GLOBAL.db,
@@ -83,7 +83,7 @@ pub async fn get_api_keys(SessionUser(user): SessionUser) -> ApiResult<Json<List
 /// Update an api key by its id
 ///
 /// All parameter are optional, but at least one of them must be specified.
-#[swaggapi::put("/apiKeys/{uuid}")]
+#[swaggapi::put("/apiKeys/{uuid}", tags("Api Keys"))]
 pub async fn update_api_key(
     path: Path<PathUuid>,
     req: Json<UpdateApiKeyRequest>,

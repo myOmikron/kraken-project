@@ -47,7 +47,7 @@ use crate::models::WorkspaceTag;
 use crate::modules::cache::EditorCached;
 
 /// Add a new affected object to a finding
-#[swaggapi::post("/workspace/{w_uuid}/findings/{f_uuid}/affected")]
+#[swaggapi::post("/workspace/{w_uuid}/findings/{f_uuid}/affected", tags("Findings"))]
 pub async fn create_finding_affected(
     path: Path<PathFinding>,
     Json(request): Json<CreateFindingAffectedRequest>,
@@ -104,7 +104,10 @@ pub async fn create_finding_affected(
 }
 
 /// Get an object affected by a finding
-#[swaggapi::get("/workspace/{w_uuid}/findings/{f_uuid}/affected/{a_uuid}")]
+#[swaggapi::get(
+    "/workspace/{w_uuid}/findings/{f_uuid}/affected/{a_uuid}",
+    tags("Findings")
+)]
 pub async fn get_finding_affected(
     path: Path<PathFindingAffected>,
     SessionUser(u_uuid): SessionUser,
@@ -374,7 +377,10 @@ pub async fn get_finding_affected(
 }
 
 /// Update the details of an affected object
-#[swaggapi::put("/workspace/{w_uuid}/findings/{f_uuid}/affected/{a_uuid}")]
+#[swaggapi::put(
+    "/workspace/{w_uuid}/findings/{f_uuid}/affected/{a_uuid}",
+    tags("Findings")
+)]
 pub async fn update_finding_affected(
     path: Path<PathFindingAffected>,
     Json(request): Json<UpdateFindingAffectedRequest>,
@@ -443,7 +449,10 @@ pub async fn update_finding_affected(
 }
 
 /// Remove an affected object from a finding
-#[swaggapi::delete("/workspace/{w_uuid}/findings/{f_uuid}/affected/{a_uuid}")]
+#[swaggapi::delete(
+    "/workspace/{w_uuid}/findings/{f_uuid}/affected/{a_uuid}",
+    tags("Findings")
+)]
 pub async fn delete_finding_affected(
     path: Path<PathFindingAffected>,
     SessionUser(u_uuid): SessionUser,

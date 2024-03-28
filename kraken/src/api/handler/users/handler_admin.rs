@@ -16,7 +16,7 @@ use crate::chan::global::GLOBAL;
 use crate::models::User;
 
 /// Create a user
-#[swaggapi::post("/users")]
+#[swaggapi::post("/users", tags("User Admin Management"))]
 pub async fn create_user(req: Json<CreateUserRequest>) -> ApiResult<Json<UuidResponse>> {
     let req = req.into_inner();
 
@@ -33,7 +33,7 @@ pub async fn create_user(req: Json<CreateUserRequest>) -> ApiResult<Json<UuidRes
 }
 
 /// Delete a user by its uuid
-#[swaggapi::delete("/users/{uuid}")]
+#[swaggapi::delete("/users/{uuid}", tags("User Admin Management"))]
 pub async fn delete_user(req: Path<PathUuid>) -> ApiResult<HttpResponse> {
     rorm::delete!(&GLOBAL.db, User)
         .condition(User::F.uuid.equals(req.uuid))
@@ -45,7 +45,7 @@ pub async fn delete_user(req: Path<PathUuid>) -> ApiResult<HttpResponse> {
 }
 
 /// Retrieve a user by its uuid
-#[swaggapi::get("/users/{uuid}")]
+#[swaggapi::get("/users/{uuid}", tags("User Admin Management"))]
 pub async fn get_user(req: Path<PathUuid>) -> ApiResult<Json<FullUser>> {
     let user_uuid = req.into_inner().uuid;
     Ok(Json(
@@ -58,7 +58,7 @@ pub async fn get_user(req: Path<PathUuid>) -> ApiResult<Json<FullUser>> {
 }
 
 /// Retrieve all users
-#[swaggapi::get("/users")]
+#[swaggapi::get("/users", tags("User Admin Management"))]
 pub async fn get_all_users_admin() -> ApiResult<Json<ListFullUsers>> {
     let users = query!(&GLOBAL.db, User).all().await?;
 

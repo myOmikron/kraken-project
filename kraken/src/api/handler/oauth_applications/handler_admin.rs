@@ -22,7 +22,7 @@ use crate::chan::global::GLOBAL;
 use crate::models::OauthClient;
 
 /// Create a new application
-#[swaggapi::post("/applications")]
+#[swaggapi::post("/applications", tags("OAuth Application"))]
 pub(crate) async fn create_oauth_app(
     request: Json<CreateAppRequest>,
 ) -> ApiResult<Json<UuidResponse>> {
@@ -39,14 +39,14 @@ pub(crate) async fn create_oauth_app(
     Ok(Json(UuidResponse { uuid }))
 }
 
-#[swaggapi::get("/applications")]
+#[swaggapi::get("/applications", tags("OAuth Application"))]
 pub(crate) async fn get_all_oauth_apps() -> ApiResult<Json<ListOauthApplications>> {
     Ok(Json(ListOauthApplications {
         apps: query!(&GLOBAL.db, FullOauthClient).all().await?,
     }))
 }
 
-#[swaggapi::get("/applications/{uuid}")]
+#[swaggapi::get("/applications/{uuid}", tags("OAuth Application"))]
 pub(crate) async fn get_oauth_app(path: Path<PathUuid>) -> ApiResult<Json<FullOauthClient>> {
     let OauthClient {
         uuid,
@@ -67,7 +67,7 @@ pub(crate) async fn get_oauth_app(path: Path<PathUuid>) -> ApiResult<Json<FullOa
 }
 
 /// Update an application
-#[swaggapi::put("/applications/{uuid}")]
+#[swaggapi::put("/applications/{uuid}", tags("OAuth Application"))]
 pub(crate) async fn update_oauth_app(
     path: Path<PathUuid>,
 
@@ -92,7 +92,7 @@ pub(crate) async fn update_oauth_app(
 }
 
 /// Delete an application
-#[swaggapi::delete("/applications/{uuid}")]
+#[swaggapi::delete("/applications/{uuid}", tags("OAuth Application"))]
 pub(crate) async fn delete_oauth_app(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
     let affected = rorm::delete!(&GLOBAL.db, OauthClient)
         .condition(OauthClient::F.uuid.equals(path.uuid))

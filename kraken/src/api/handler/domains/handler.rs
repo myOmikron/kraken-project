@@ -64,7 +64,7 @@ use crate::modules::raw_query::RawQueryBuilder;
 use crate::query_tags;
 
 /// Retrieve all domains of a specific workspace
-#[swaggapi::post("/workspaces/{uuid}/domains/all")]
+#[swaggapi::post("/workspaces/{uuid}/domains/all", tags("Domains"))]
 pub async fn get_all_domains(
     path: Path<PathUuid>,
     params: Json<GetAllDomainsQuery>,
@@ -186,7 +186,7 @@ pub async fn get_all_domains(
 }
 
 /// Retrieve all information about a single domain
-#[swaggapi::get("/workspaces/{w_uuid}/domains/{d_uuid}")]
+#[swaggapi::get("/workspaces/{w_uuid}/domains/{d_uuid}", tags("Domains"))]
 pub async fn get_domain(
     path: Path<PathDomain>,
 
@@ -251,7 +251,7 @@ pub async fn get_domain(
 }
 
 /// Manually add a domain
-#[swaggapi::post("/workspaces/{uuid}/domains")]
+#[swaggapi::post("/workspaces/{uuid}/domains", tags("Domains"))]
 pub async fn create_domain(
     req: Json<CreateDomainRequest>,
     path: Path<PathUuid>,
@@ -268,7 +268,7 @@ pub async fn create_domain(
 /// Update a domain
 ///
 /// You must include at least on parameter
-#[swaggapi::put("/workspaces/{w_uuid}/domains/{d_uuid}")]
+#[swaggapi::put("/workspaces/{w_uuid}/domains/{d_uuid}", tags("Domains"))]
 pub async fn update_domain(
     req: Json<UpdateDomainRequest>,
     path: Path<PathDomain>,
@@ -391,7 +391,7 @@ pub async fn update_domain(
 /// Delete the domain
 ///
 /// This only deletes the aggregation. The raw results are still in place
-#[swaggapi::delete("/workspaces/{w_uuid}/domains/{d_uuid}")]
+#[swaggapi::delete("/workspaces/{w_uuid}/domains/{d_uuid}", tags("Domains"))]
 pub async fn delete_domain(
     path: Path<PathDomain>,
     SessionUser(user_uuid): SessionUser,
@@ -430,7 +430,7 @@ pub async fn delete_domain(
 }
 
 /// Get all data sources which referenced this domain
-#[swaggapi::get("/workspaces/{w_uuid}/domains/{d_uuid}/sources")]
+#[swaggapi::get("/workspaces/{w_uuid}/domains/{d_uuid}/sources", tags("Domains"))]
 pub async fn get_domain_sources(
     path: Path<PathDomain>,
     SessionUser(user_uuid): SessionUser,
@@ -447,7 +447,7 @@ pub async fn get_domain_sources(
 }
 
 /// Get a domain's direct relations
-#[swaggapi::get("/workspaces/{w_uuid}/domains/{d_uuid}/relations")]
+#[swaggapi::get("/workspaces/{w_uuid}/domains/{d_uuid}/relations", tags("Domains"))]
 pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<DomainRelations>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
@@ -529,7 +529,7 @@ pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<Doma
 }
 
 /// Get a domain's findings
-#[swaggapi::get("/workspaces/{w_uuid}/domains/{d_uuid}/findings")]
+#[swaggapi::get("/workspaces/{w_uuid}/domains/{d_uuid}/findings", tags("Domains"))]
 pub async fn get_domain_findings(
     path: Path<PathDomain>,
     SessionUser(u_uuid): SessionUser,

@@ -47,7 +47,7 @@ use crate::models::UdpServiceDetectionName;
 use crate::models::UdpServiceDetectionResult;
 
 /// Retrieve a bruteforce subdomains' results by the attack's id
-#[swaggapi::get("/attacks/{uuid}/bruteforceSubdomainsResults")]
+#[swaggapi::get("/attacks/{uuid}/bruteforceSubdomainsResults", tags("Attacks"))]
 pub async fn get_bruteforce_subdomains_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
@@ -94,7 +94,7 @@ pub async fn get_bruteforce_subdomains_results(
 }
 
 /// Retrieve a query certificate transparency's results by the attack's id
-#[swaggapi::get("/attacks/{uuid}/queryCertificateTransparencyResults")]
+#[swaggapi::get("/attacks/{uuid}/queryCertificateTransparencyResults", tags("Attacks"))]
 pub async fn get_query_certificate_transparency_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
@@ -165,7 +165,7 @@ pub async fn get_query_certificate_transparency_results(
 }
 
 /// Retrieve a query dehashed's results by the attack's id
-#[swaggapi::get("/attacks/{uuid}/queryUnhashedResults")]
+#[swaggapi::get("/attacks/{uuid}/queryUnhashedResults", tags("Attacks"))]
 pub async fn get_query_unhashed_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
@@ -220,7 +220,7 @@ pub async fn get_query_unhashed_results(
 }
 
 /// Retrieve a host alive's results by the attack's id
-#[swaggapi::get("/attacks/{uuid}/hostAliveResults")]
+#[swaggapi::get("/attacks/{uuid}/hostAliveResults", tags("Attacks"))]
 pub async fn get_host_alive_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
@@ -265,7 +265,7 @@ pub async fn get_host_alive_results(
 }
 
 /// Retrieve a detect service's results by the attack's id
-#[swaggapi::get("/attacks/{uuid}/serviceDetectionResults")]
+#[swaggapi::get("/attacks/{uuid}/serviceDetectionResults", tags("Attacks"))]
 pub async fn get_service_detection_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
@@ -361,7 +361,7 @@ pub async fn get_service_detection_results(
 }
 
 /// Retrieve UDP service detection results by the attack's id
-#[swaggapi::get("/attacks/{uuid}/udpServiceDetectionResults")]
+#[swaggapi::get("/attacks/{uuid}/udpServiceDetectionResults", tags("Attacks"))]
 pub async fn get_udp_service_detection_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
@@ -460,7 +460,7 @@ pub async fn get_udp_service_detection_results(
 }
 
 /// Retrieve a dns resolution's results by the attack's id
-#[swaggapi::get("/attacks/{uuid}/dnsResolutionResults")]
+#[swaggapi::get("/attacks/{uuid}/dnsResolutionResults", tags("Attacks"))]
 pub async fn get_dns_resolution_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
@@ -507,7 +507,7 @@ pub async fn get_dns_resolution_results(
 }
 
 /// Retrieve a DNS TXT scan's results by the attack's id
-#[swaggapi::get("/attacks/{uuid}/dnsTxtScanResults")]
+#[swaggapi::get("/attacks/{uuid}/dnsTxtScanResults", tags("Attacks"))]
 pub async fn get_dns_txt_scan_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
@@ -589,7 +589,7 @@ pub async fn get_dns_txt_scan_results(
 }
 
 /// Retrieve a host alive's results by the attack's id
-#[swaggapi::get("/attacks/{uuid}/osDetectionResults")]
+#[swaggapi::get("/attacks/{uuid}/osDetectionResults", tags("Attacks"))]
 pub async fn get_os_detection_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,

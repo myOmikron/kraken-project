@@ -84,7 +84,7 @@ use crate::models::WorkspaceMember;
 use crate::modules::cache::EditorCached;
 
 /// Create a new workspace
-#[swaggapi::post("/workspaces")]
+#[swaggapi::post("/workspaces", tags("Workspaces"))]
 pub async fn create_workspace(
     req: Json<CreateWorkspaceRequest>,
     SessionUser(user_uuid): SessionUser,
@@ -97,7 +97,7 @@ pub async fn create_workspace(
 }
 
 /// Delete a workspace by its id
-#[swaggapi::delete("/workspaces/{uuid}")]
+#[swaggapi::delete("/workspaces/{uuid}", tags("Workspaces"))]
 pub async fn delete_workspace(
     req: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
@@ -156,7 +156,7 @@ pub async fn delete_workspace(
 }
 
 /// Retrieve a workspace by id
-#[swaggapi::get("/workspaces/{uuid}")]
+#[swaggapi::get("/workspaces/{uuid}", tags("Workspaces"))]
 pub async fn get_workspace(
     req: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
@@ -177,7 +177,7 @@ pub async fn get_workspace(
 /// Retrieve all workspaces that the executing user has access to
 ///
 /// For administration access, look at the `/admin/workspaces` endpoint.
-#[swaggapi::get("/workspaces")]
+#[swaggapi::get("/workspaces", tags("Workspaces"))]
 pub async fn get_all_workspaces(
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<ListWorkspaces>> {
@@ -235,7 +235,7 @@ pub async fn get_all_workspaces(
 /// You can set `description` to null to remove the description from the database.
 /// If you leave the parameter out, the description will remain unchanged.
 
-#[swaggapi::put("/workspaces/{uuid}")]
+#[swaggapi::put("/workspaces/{uuid}", tags("Workspaces"))]
 pub async fn update_workspace(
     path: Path<PathUuid>,
     req: Json<UpdateWorkspaceRequest>,
@@ -280,7 +280,7 @@ pub async fn update_workspace(
 ///
 /// You will lose access to the workspace.
 
-#[swaggapi::post("/workspaces/{uuid}/transfer")]
+#[swaggapi::post("/workspaces/{uuid}/transfer", tags("Workspaces"))]
 pub async fn transfer_ownership(
     req: Json<TransferWorkspaceRequest>,
     path: Path<PathUuid>,
@@ -317,7 +317,7 @@ pub async fn transfer_ownership(
 }
 
 /// Mark the workspace as archived
-#[swaggapi::post("/workspaces/{uuid}/archive")]
+#[swaggapi::post("/workspaces/{uuid}/archive", tags("Workspaces"))]
 pub async fn archive_workspace(
     path: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
@@ -342,7 +342,7 @@ pub async fn archive_workspace(
 }
 
 /// Mark an archived workspace as unarchived
-#[swaggapi::post("/workspaces/{uuid}/unarchive")]
+#[swaggapi::post("/workspaces/{uuid}/unarchive", tags("Workspaces"))]
 pub async fn unarchive_workspace(
     path: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
@@ -369,7 +369,7 @@ pub async fn unarchive_workspace(
 /// Invite a user to the workspace
 ///
 /// This action can only be invoked by the owner of a workspace
-#[swaggapi::post("/workspaces/{uuid}/invitations")]
+#[swaggapi::post("/workspaces/{uuid}/invitations", tags("Workspaces"))]
 pub async fn create_invitation(
     req: Json<InviteToWorkspaceRequest>,
     path: Path<PathUuid>,
@@ -426,7 +426,7 @@ pub async fn create_invitation(
 /// Retract an invitation to the workspace
 ///
 /// This action can only be invoked by the owner of a workspace
-#[swaggapi::delete("/workspaces/{w_uuid}/invitations/{i_uuid}")]
+#[swaggapi::delete("/workspaces/{w_uuid}/invitations/{i_uuid}", tags("Workspaces"))]
 pub async fn retract_invitation(
     path: Path<InviteUuid>,
     SessionUser(session_user): SessionUser,
@@ -464,7 +464,7 @@ pub async fn retract_invitation(
 }
 
 /// Query all open invitations to a workspace
-#[swaggapi::get("/workspaces/{uuid}/invitations")]
+#[swaggapi::get("/workspaces/{uuid}/invitations", tags("Workspaces"))]
 pub async fn get_all_workspace_invitations(
     path: Path<PathUuid>,
     SessionUser(session_user): SessionUser,
@@ -520,7 +520,7 @@ pub async fn get_all_workspace_invitations(
 }
 
 /// Search through a workspaces' data
-#[swaggapi::post("/workspaces/{uuid}/search")]
+#[swaggapi::post("/workspaces/{uuid}/search", tags("Workspaces"))]
 pub async fn search(
     path: Path<PathUuid>,
     request: Json<SearchWorkspaceRequest>,
@@ -591,7 +591,7 @@ pub async fn search(
 }
 
 /// Query all searches
-#[swaggapi::get("/workspaces/{uuid}/search")]
+#[swaggapi::get("/workspaces/{uuid}/search", tags("Workspaces"))]
 pub async fn get_searches(
     path: Path<PathUuid>,
     request: Query<PageParams>,
@@ -633,7 +633,7 @@ pub async fn get_searches(
 }
 
 /// Retrieve results for a search by its uuid
-#[swaggapi::get("/workspaces/{w_uuid}/search/{s_uuid}")]
+#[swaggapi::get("/workspaces/{w_uuid}/search/{s_uuid}", tags("Workspaces"))]
 pub async fn get_search_results(
     path: Path<SearchUuid>,
     request: Query<PageParams>,

@@ -17,7 +17,7 @@ use crate::chan::global::GLOBAL;
 use crate::models::WordList;
 
 /// Create a new wordlist
-#[swaggapi::post("/wordlists")]
+#[swaggapi::post("/wordlists", tags("Wordlist management"))]
 pub async fn create_wordlist_admin(
     req: Json<CreateWordlistRequest>,
 ) -> ApiResult<Json<UuidResponse>> {
@@ -32,7 +32,7 @@ pub async fn create_wordlist_admin(
 }
 
 /// Get a list of all wordlists including their paths
-#[swaggapi::get("/wordlists")]
+#[swaggapi::get("/wordlists", tags("Wordlist management"))]
 pub async fn get_all_wordlists_admin() -> ApiResult<Json<ListWordlistsAdmin>> {
     Ok(Json(ListWordlistsAdmin {
         wordlists: query!(&GLOBAL.db, FullWordlist).all().await?,
@@ -40,7 +40,7 @@ pub async fn get_all_wordlists_admin() -> ApiResult<Json<ListWordlistsAdmin>> {
 }
 
 /// Update an existing wordlist
-#[swaggapi::put("/wordlists/{uuid}")]
+#[swaggapi::put("/wordlists/{uuid}", tags("Wordlist management"))]
 pub async fn update_wordlist_admin(req: Json<UpdateWordlistRequest>) -> ApiResult<HttpResponse> {
     let UpdateWordlistRequest {
         uuid,
@@ -53,7 +53,7 @@ pub async fn update_wordlist_admin(req: Json<UpdateWordlistRequest>) -> ApiResul
 }
 
 /// Delete an existing wordlist
-#[swaggapi::delete("/wordlists/{uuid}")]
+#[swaggapi::delete("/wordlists/{uuid}", tags("Wordlist management"))]
 pub async fn delete_wordlist_admin(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
     let deleted = rorm::delete!(&GLOBAL.db, WordList)
         .condition(WordList::F.uuid.equals(path.uuid))

@@ -37,7 +37,7 @@ use crate::models::ServiceGlobalTag;
 use crate::models::ServiceWorkspaceTag;
 use crate::models::WorkspaceAccessToken;
 
-#[swaggapi::get("/workspace/{uuid}")]
+#[swaggapi::get("/workspace/{uuid}", tags("Data Export"))]
 pub(crate) async fn export_workspace(
     path: Path<PathUuid>,
     token: BearerToken,

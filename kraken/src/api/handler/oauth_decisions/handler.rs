@@ -21,7 +21,7 @@ use crate::models::Workspace;
 use crate::models::WorkspaceAccessToken;
 
 /// Retrieve a user's remembered oauth decisions
-#[swaggapi::get("/oauthDecisions")]
+#[swaggapi::get("/oauthDecisions", tags("OAuth Decisions"))]
 pub async fn get_decisions(
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<ListOauthDecisions>> {
@@ -56,7 +56,7 @@ pub async fn get_decisions(
 }
 
 /// Revoke a user's remembered oauth decision
-#[swaggapi::delete("/oauthDecisions/{uuid}")]
+#[swaggapi::delete("/oauthDecisions/{uuid}", tags("OAuth Decisions"))]
 pub async fn revoke_decision(
     SessionUser(user_uuid): SessionUser,
     path: Path<PathUuid>,

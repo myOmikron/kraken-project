@@ -31,7 +31,7 @@ use crate::models::Workspace;
 use crate::modules::cache::EditorCached;
 
 /// Creates a new finding
-#[swaggapi::post("/workspace/{uuid}/findings")]
+#[swaggapi::post("/workspace/{uuid}/findings", tags("Findings"))]
 pub async fn create_finding(
     path: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
@@ -61,7 +61,7 @@ pub async fn create_finding(
 }
 
 /// Gets a workspace's findings
-#[swaggapi::get("/workspace/{uuid}/findings")]
+#[swaggapi::get("/workspace/{uuid}/findings", tags("Findings"))]
 pub async fn get_all_findings(
     path: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
@@ -121,7 +121,7 @@ pub async fn get_all_findings(
 }
 
 /// Gets a single finding
-#[swaggapi::get("/workspace/{w_uuid}/findings/{f_uuid}")]
+#[swaggapi::get("/workspace/{w_uuid}/findings/{f_uuid}", tags("Findings"))]
 pub async fn get_finding(
     path: Path<PathFinding>,
     SessionUser(u_uuid): SessionUser,
@@ -181,7 +181,7 @@ pub async fn get_finding(
 }
 
 /// Updates a finding
-#[swaggapi::put("/workspace/{w_uuid}/findings/{f_uuid}")]
+#[swaggapi::put("/workspace/{w_uuid}/findings/{f_uuid}", tags("Findings"))]
 pub async fn update_finding(
     path: Path<PathFinding>,
     SessionUser(u_uuid): SessionUser,
@@ -253,7 +253,7 @@ pub async fn update_finding(
 }
 
 /// Deletes a finding
-#[swaggapi::delete("/workspace/{w_uuid}/findings/{f_uuid}")]
+#[swaggapi::delete("/workspace/{w_uuid}/findings/{f_uuid}", tags("Findings"))]
 pub async fn delete_finding(
     path: Path<PathFinding>,
     SessionUser(u_uuid): SessionUser,
