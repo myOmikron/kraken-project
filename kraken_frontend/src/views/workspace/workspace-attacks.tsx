@@ -631,111 +631,22 @@ type WorkspaceAttacksState = {
     target: { name: string; selection: RawSelectionData[] };
 };
 
-export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksProps, WorkspaceAttacksState> {
-    static contextType = WORKSPACE_CONTEXT;
-    declare context: React.ContextType<typeof WORKSPACE_CONTEXT>;
+export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
+    const {
+        workspace: { uuid: workspace },
+    } = React.useContext(WORKSPACE_CONTEXT);
 
-    state: WorkspaceAttacksState = {
-        selectedAttack: null,
-        hoverAttack: null,
-        target: { name: "Loading...", selection: [] },
-    };
+    const [selectedAttack, setSelectedAttack] = React.useState<AttackType | null>(null);
+    const [hoverAttack, setHoverAttack] = React.useState<AttackType | null>(null);
+    const [target, setTarget] = React.useState<{ name: string; selection: RawSelectionData[] }>({
+        name: "Loading...",
+        selection: [],
+    });
 
-    componentDidMount() {
-        this.loadTarget();
-    }
+    async function updateSelection() {
+        if (props.targetType != "selection") throw new Error("invalid state");
 
-    componentDidUpdate(prevProps: Readonly<WorkspaceAttacksProps>) {
-        if (this.props.targetType !== prevProps.targetType) {
-            if ("targetUuid" in this.props && "targetUuid" in prevProps) {
-                if (this.props.targetUuid !== prevProps.targetUuid) this.loadTarget();
-            } else if ("domains" in this.props && "domains" in prevProps) {
-                if (
-                    !ObjectFns.deepEquals(
-                        [this.props.domains, this.props.hosts, this.props.ports, this.props.services],
-                        [prevProps.domains, prevProps.hosts, prevProps.ports, prevProps.services],
-                    )
-                )
-                    this.loadTarget();
-            } else {
-                this.loadTarget();
-            }
-        }
-    }
-
-    loadTarget() {
-        switch (this.props.targetType) {
-            case "domain":
-                Api.workspaces.domains
-                    .get(this.context.workspace.uuid, this.props.targetUuid)
-                    .then(
-                        handleApiError((domain) =>
-                            this.setState({ target: { name: domain.domain, selection: [{ domain }] } }),
-                        ),
-                    );
-                break;
-            case "host":
-                Api.workspaces.hosts
-                    .get(this.context.workspace.uuid, this.props.targetUuid)
-                    .then(
-                        handleApiError((host) =>
-                            this.setState({ target: { name: host.ipAddr, selection: [{ host }] } }),
-                        ),
-                    );
-                break;
-            case "port":
-                Api.workspaces.ports.get(this.context.workspace.uuid, this.props.targetUuid).then(
-                    handleApiError((port) =>
-                        this.setState({
-                            target: {
-                                name: `${port.host.ipAddr}'s port ${port.port}`,
-                                selection: [{ port }],
-                            },
-                        }),
-                    ),
-                );
-                break;
-            case "service":
-                Api.workspaces.services.get(this.context.workspace.uuid, this.props.targetUuid).then(
-                    handleApiError((service) => {
-                        const { name, host, port } = service;
-                        this.setState({
-                            target: {
-                                name: port
-                                    ? `${host.ipAddr}'s service ${name} on port ${port.port}`
-                                    : `${host.ipAddr}'s service ${name}`,
-                                selection: [{ service }],
-                            },
-                        });
-                    }),
-                );
-                break;
-            case "selection":
-                this.updateSelection();
-                this.setState({
-                    target: {
-                        name: [
-                            `${this.props.hosts.length} hosts`,
-                            `${this.props.ports.length} ports`,
-                            `${this.props.domains.length} domains`,
-                            `${this.props.services.length} services`,
-                        ]
-                            .filter((s) => !s.startsWith("0 "))
-                            .join(", "),
-                        selection: [],
-                    },
-                });
-                break;
-            default:
-                this.setState({ target: { name: "Loading...", selection: [] } });
-                break;
-        }
-    }
-
-    async updateSelection() {
-        if (this.props.targetType != "selection") throw new Error("invalid state");
-
-        const workspaceUuid = this.context.workspace.uuid;
+        const workspaceUuid = workspace;
 
         function fetchAll<T>(
             api: { get: (workspaceUuid: string, thingUuid: string) => Promise<Result<T, ApiError>> },
@@ -768,27 +679,101 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
         }
 
         const inputs: { [group: string]: RawSelectionData[] } = {
-            hosts: (await fetchAll(Api.workspaces.hosts, this.props.hosts)).map((v) => ({ host: v })),
-            ports: (await fetchAll(Api.workspaces.ports, this.props.ports)).map((v) => ({ port: v })),
-            domains: (await fetchAll(Api.workspaces.domains, this.props.domains)).map((v) => ({ domain: v })),
-            services: (await fetchAll(Api.workspaces.services, this.props.services)).map((v) => ({ service: v })),
+            hosts: (await fetchAll(Api.workspaces.hosts, props.hosts)).map((v) => ({ host: v })),
+            ports: (await fetchAll(Api.workspaces.ports, props.ports)).map((v) => ({ port: v })),
+            domains: (await fetchAll(Api.workspaces.domains, props.domains)).map((v) => ({ domain: v })),
+            services: (await fetchAll(Api.workspaces.services, props.services)).map((v) => ({ service: v })),
         };
 
         const selection: RawSelectionData[] = Object.keys(inputs).flatMap((k) => inputs[k]);
 
-        this.setState({
-            target: {
-                name: this.state.target.name,
-                selection: selection,
-            },
-        });
+        setTarget((target) => ({
+            name: target.name,
+            selection: selection,
+        }));
     }
 
-    renderSelection() {
-        if (!this.state.target?.selection?.length) return <></>;
-        const attack = (this.state.hoverAttack || this.state.selectedAttack) as AttackType;
+    function loadTarget() {
+        switch (props.targetType) {
+            case "domain":
+                Api.workspaces.domains.get(workspace, props.targetUuid).then(
+                    handleApiError((domain) =>
+                        setTarget({
+                            name: domain.domain,
+                            selection: [{ domain }],
+                        }),
+                    ),
+                );
+                break;
+            case "host":
+                Api.workspaces.hosts.get(workspace, props.targetUuid).then(
+                    handleApiError((host) =>
+                        setTarget({
+                            name: host.ipAddr,
+                            selection: [{ host }],
+                        }),
+                    ),
+                );
+                break;
+            case "port":
+                Api.workspaces.ports.get(workspace, props.targetUuid).then(
+                    handleApiError((port) =>
+                        setTarget({
+                            name: `${port.host.ipAddr}'s port ${port.port}`,
+                            selection: [{ port }],
+                        }),
+                    ),
+                );
+                break;
+            case "service":
+                Api.workspaces.services.get(workspace, props.targetUuid).then(
+                    handleApiError((service) => {
+                        const { name, host, port } = service;
+                        setTarget({
+                            name: port
+                                ? `${host.ipAddr}'s service ${name} on port ${port.port}`
+                                : `${host.ipAddr}'s service ${name}`,
+                            selection: [{ service }],
+                        });
+                    }),
+                );
+                break;
+            case "selection":
+                setTarget({
+                    name: [
+                        `${props.hosts.length} hosts`,
+                        `${props.ports.length} ports`,
+                        `${props.domains.length} domains`,
+                        `${props.services.length} services`,
+                    ]
+                        .filter((s) => !s.startsWith("0 "))
+                        .join(", "),
+                    selection: [],
+                });
+                updateSelection();
+                break;
+            default:
+                setTarget({ name: "Loading...", selection: [] });
+                break;
+        }
+    }
+
+    React.useEffect(() => {
+        loadTarget();
+    }, [
+        "targetUuid" in props ? props.targetUuid : undefined,
+        "domains" in props ? props.domains : undefined,
+        "hosts" in props ? props.hosts : undefined,
+        "ports" in props ? props.ports : undefined,
+        "services" in props ? props.services : undefined,
+        props.targetType,
+    ]);
+
+    function renderSelection() {
+        if (!target?.selection?.length) return <></>;
+        const attack = (hoverAttack || selectedAttack) as AttackType;
         if (!attack) return <></>;
-        const values = generateAttackPrefill(attack, this.state.target.selection);
+        const values = generateAttackPrefill(attack, target.selection);
         const keys = Object.keys(values);
         if (!keys) return <></>;
         const columnLabels = keys.map((k) => (ATTACKS[attack].inputs.inputs as AnyAttackInput)[k].label);
@@ -816,72 +801,68 @@ export default class WorkspaceAttacks extends React.Component<WorkspaceAttacksPr
         );
     }
 
-    render() {
-        const { hoverAttack, selectedAttack } = this.state;
+    const attackInfo = (hoverAttack && ATTACKS[hoverAttack]) || (selectedAttack && ATTACKS[selectedAttack]);
+    const AttackForm = selectedAttack && ATTACKS[selectedAttack];
 
-        const attackInfo = (hoverAttack && ATTACKS[hoverAttack]) || (selectedAttack && ATTACKS[selectedAttack]);
-        const AttackForm = selectedAttack && ATTACKS[selectedAttack];
+    const disabled: Record<AttackType, boolean> = generateDisabled(target.selection);
 
-        const disabled: Record<AttackType, boolean> = generateDisabled(this.state.target.selection);
-
-        return (
-            <div className={"workspace-attacks-container"}>
-                <div className={"workspace-attacks-info"}>
-                    <div className={"pane"}>
-                        <h2 className={"sub-heading"}>Attack Info</h2>
-                        {attackInfo !== null ? (
-                            <>
-                                <h3 className={"heading"}>{attackInfo.name}</h3>
-                                <span className={""}>{attackInfo.description}</span>
-                            </>
-                        ) : (
-                            <div className={"workspace-attacks-info-empty"}>
-                                <span>- Hover over an attack to display information -</span>
-                            </div>
-                        )}
-                    </div>
-                    {this.renderSelection()}
-                </div>
-                <div className={"workspace-attacks-center-column"}>
-                    {"targetType" in this.props ? (
-                        <div className={"pane workspace-attacks-target"}>
-                            <h2 className={"sub-heading"}>Attacking {this.state.target.name}</h2>
-                            <button
-                                className={"icon-button"}
-                                type={"button"}
-                                onClick={() => ROUTES.WORKSPACE_ATTACKS.visit({ uuid: this.context.workspace.uuid })}
-                            >
-                                <CloseIcon />
-                            </button>
-                        </div>
-                    ) : null}
-                    <div className={"pane workspace-attacks"}>
-                        <AttacksIcon
-                            onAttackHover={(hoverAttack) => this.setState({ hoverAttack })}
-                            activeAttack={selectedAttack}
-                            onAttackSelect={(selectedAttack) => this.setState({ selectedAttack })}
-                            activeAttackCategory={hoverAttack && ATTACKS[hoverAttack].category}
-                            disabled={disabled}
-                        />
-                    </div>
-                </div>
-                <div className={"pane workspace-attacks-details"}>
-                    <h2 className={"sub-heading"}>{AttackForm?.name ?? "Attack settings"}</h2>
-                    {AttackForm === null ? (
-                        <div className={"workspace-attacks-details-empty"}>
-                            <span> - Click on an attack to start - </span>
-                        </div>
+    return (
+        <div className={"workspace-attacks-container"}>
+            <div className={"workspace-attacks-info"}>
+                <div className={"pane"}>
+                    <h2 className={"sub-heading"}>Attack Info</h2>
+                    {attackInfo !== null ? (
+                        <>
+                            <h3 className={"heading"}>{attackInfo.name}</h3>
+                            <span className={""}>{attackInfo.description}</span>
+                        </>
                     ) : (
-                        <GenericAttackForm
-                            key={"attack_form_" + selectedAttack}
-                            prefilled={generateAttackPrefill(selectedAttack!, this.state.target.selection)}
-                            attack={AttackForm}
-                        />
+                        <div className={"workspace-attacks-info-empty"}>
+                            <span>- Hover over an attack to display information -</span>
+                        </div>
                     )}
                 </div>
+                {renderSelection()}
             </div>
-        );
-    }
+            <div className={"workspace-attacks-center-column"}>
+                {"targetType" in props ? (
+                    <div className={"pane workspace-attacks-target"}>
+                        <h2 className={"sub-heading"}>Attacking {target.name}</h2>
+                        <button
+                            className={"icon-button"}
+                            type={"button"}
+                            onClick={() => ROUTES.WORKSPACE_ATTACKS.visit({ uuid: workspace })}
+                        >
+                            <CloseIcon />
+                        </button>
+                    </div>
+                ) : null}
+                <div className={"pane workspace-attacks"}>
+                    <AttacksIcon
+                        onAttackHover={setHoverAttack}
+                        activeAttack={selectedAttack}
+                        onAttackSelect={setSelectedAttack}
+                        activeAttackCategory={hoverAttack && ATTACKS[hoverAttack].category}
+                        disabled={disabled}
+                    />
+                </div>
+            </div>
+            <div className={"pane workspace-attacks-details"}>
+                <h2 className={"sub-heading"}>{AttackForm?.name ?? "Attack settings"}</h2>
+                {AttackForm === null ? (
+                    <div className={"workspace-attacks-details-empty"}>
+                        <span> - Click on an attack to start - </span>
+                    </div>
+                ) : (
+                    <GenericAttackForm
+                        key={"attack_form_" + selectedAttack}
+                        prefilled={generateAttackPrefill(selectedAttack!, target.selection)}
+                        attack={AttackForm}
+                    />
+                )}
+            </div>
+        </div>
+    );
 }
 
 function generateDisabled(prefill: RawSelectionData[]): Record<AttackType, boolean> {

@@ -267,57 +267,67 @@ const DEHASHED_SEARCH_TYPES = {
     [index: string]: SelectValue;
 };
 
+// TODO: allow switching between simple/exact/regex + possibly add OR & AND here
+type WantedSearchType = "simple" | "exact" | "regex";
+
+function getValue(v: SearchType): [string, WantedSearchType] {
+    if ("simple" in v) {
+        return [v.simple, "simple"];
+    } else if ("exact" in v) {
+        return [v.exact, "exact"];
+    } else if ("regex" in v) {
+        return [v.regex, "regex"];
+    } else {
+        return ["", "simple"];
+    }
+}
+
+function getDefault(value: Query | undefined): [SelectValue | null, string, WantedSearchType] {
+    if (value) {
+        if ("domain" in value) {
+            return [DEHASHED_SEARCH_TYPES.domain, ...getValue(value.domain)];
+        } else if ("email" in value) {
+            return [DEHASHED_SEARCH_TYPES.email, ...getValue(value.email)];
+        } else if ("name" in value) {
+            return [DEHASHED_SEARCH_TYPES.name, ...getValue(value.name)];
+        } else if ("username" in value) {
+            return [DEHASHED_SEARCH_TYPES.username, ...getValue(value.username)];
+        } else if ("password" in value) {
+            return [DEHASHED_SEARCH_TYPES.password, ...getValue(value.password)];
+        } else if ("hashedPassword" in value) {
+            return [DEHASHED_SEARCH_TYPES.hashed_password, ...getValue(value.hashedPassword)];
+        } else if ("address" in value) {
+            return [DEHASHED_SEARCH_TYPES.address, ...getValue(value.address)];
+        } else if ("phone" in value) {
+            return [DEHASHED_SEARCH_TYPES.phone, ...getValue(value.phone)];
+        } else if ("ipAddress" in value) {
+            return [DEHASHED_SEARCH_TYPES.ip_address, ...getValue(value.ipAddress)];
+        } else if ("vin" in value) {
+            return [DEHASHED_SEARCH_TYPES.vin, ...getValue(value.vin)];
+        } else {
+            const _exhaustiveCheck: never = value;
+        }
+    }
+    return [null, "", "simple"];
+}
+
 export const DehashedAttackInput = forwardRef<HTMLInputElement, AttackInputProps<Query>>((props, ref) => {
     const { value, valueKey, onUpdate, ...htmlProps } = props;
 
-    // TODO: allow switching between simple/exact/regex + possibly add OR & AND here
-    type WantedSearchType = "simple" | "exact" | "regex";
+    const [loadedValueKey, setLoadedValueKey] = useState<string>();
+    const [search, setSearch] = useState<string>("");
+    const [type, setType] = useState<null | SelectValue>(null);
 
-    function getValue(v: SearchType): [string, WantedSearchType] {
-        if ("simple" in v) {
-            return [v.simple, "simple"];
-        } else if ("exact" in v) {
-            return [v.exact, "exact"];
-        } else if ("regex" in v) {
-            return [v.regex, "regex"];
-        } else {
-            return ["", "simple"];
+    useEffect(() => {
+        if (loadedValueKey === valueKey) return;
+        if (typeof value == "object") {
+            const [defaultType, defaultSearch] = getDefault(value);
+            console.log(value, defaultType, defaultSearch);
+            setType(defaultType);
+            setSearch(defaultSearch);
+            setLoadedValueKey(valueKey);
         }
-    }
-
-    function getDefault(): [SelectValue | null, string, WantedSearchType] {
-        if (value) {
-            if ("domain" in value) {
-                return [DEHASHED_SEARCH_TYPES.domain, ...getValue(value.domain)];
-            } else if ("email" in value) {
-                return [DEHASHED_SEARCH_TYPES.email, ...getValue(value.email)];
-            } else if ("name" in value) {
-                return [DEHASHED_SEARCH_TYPES.name, ...getValue(value.name)];
-            } else if ("username" in value) {
-                return [DEHASHED_SEARCH_TYPES.username, ...getValue(value.username)];
-            } else if ("password" in value) {
-                return [DEHASHED_SEARCH_TYPES.password, ...getValue(value.password)];
-            } else if ("hashedPassword" in value) {
-                return [DEHASHED_SEARCH_TYPES.hashed_password, ...getValue(value.hashedPassword)];
-            } else if ("address" in value) {
-                return [DEHASHED_SEARCH_TYPES.address, ...getValue(value.address)];
-            } else if ("phone" in value) {
-                return [DEHASHED_SEARCH_TYPES.phone, ...getValue(value.phone)];
-            } else if ("ipAddress" in value) {
-                return [DEHASHED_SEARCH_TYPES.ip_address, ...getValue(value.ipAddress)];
-            } else if ("vin" in value) {
-                return [DEHASHED_SEARCH_TYPES.vin, ...getValue(value.vin)];
-            } else {
-                const _exhaustiveCheck: never = value;
-            }
-        }
-        return [null, "", "simple"];
-    }
-
-    const [defaultType, defaultSearch] = getDefault();
-
-    const [search, setSearch] = useState<string>(defaultSearch);
-    const [type, setType] = useState<null | SelectValue>(defaultType);
+    }, [valueKey, value]);
 
     function update(type: null | SelectValue, search: string) {
         let query;

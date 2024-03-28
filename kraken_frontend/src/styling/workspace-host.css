@@ -135,6 +135,10 @@
         0 0 1em var(--primary-op);
 }
 
+.workspace-host-hosts-item.selected {
+    background-color: var(--primary);
+}
+
 .workspace-host-hosts-info {
     display: flex;
     flex-direction: column;

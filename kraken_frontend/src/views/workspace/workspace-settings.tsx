@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Select from "react-select";
 import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
@@ -17,98 +17,65 @@ import { handleApiError } from "../../utils/helper";
 import { WORKSPACE_CONTEXT } from "./workspace";
 
 type WorkspaceSettingsProps = {};
-type WorkspaceSettingsState = {
-    workspaceName: string;
-    workspaceDescription: string | null;
-    invitePopup: boolean;
-    isArchived: boolean;
-    deleteUserPopup: boolean;
-    selected: boolean;
-    deleteWorkspacePopup: boolean;
-    archiveWorkspacePopup: boolean;
-    unarchiveWorkspacePopup: boolean;
-    transferOwnershipPopup: boolean;
-    memberName: string;
-    transferList: Array<SelectValue>;
-    inviteList: Array<SelectValue>;
-    selectedUser: null | SelectValue;
-    invitedUsers: Array<FullWorkspaceInvitation>;
-};
 
 type SelectValue = {
     label: string;
     value: string;
 };
 
-export default class WorkspaceSettings extends React.Component<WorkspaceSettingsProps, WorkspaceSettingsState> {
-    static contextType = WORKSPACE_CONTEXT;
-    declare context: React.ContextType<typeof WORKSPACE_CONTEXT>;
+export default function WorkspaceSettings(_: WorkspaceSettingsProps) {
+    const { workspace } = React.useContext(WORKSPACE_CONTEXT);
 
-    state: WorkspaceSettingsState = {
-        workspaceName: "",
-        workspaceDescription: "",
-        invitePopup: false,
-        deleteUserPopup: false,
-        isArchived: false,
-        deleteWorkspacePopup: false,
-        archiveWorkspacePopup: false,
-        unarchiveWorkspacePopup: false,
-        transferOwnershipPopup: false,
-        selected: false,
-        memberName: "",
-        transferList: [],
-        inviteList: [],
-        selectedUser: null,
-        invitedUsers: [],
-    };
+    const [workspaceName, setWorkspaceName] = React.useState("");
+    const [workspaceDescription, setWorkspaceDescription] = React.useState<string | null>("");
+    const [invitePopup, setInvitePopup] = React.useState(false);
+    const [deleteUserPopup, setDeleteUserPopup] = React.useState(false);
+    const [isArchived, setIsArchived] = React.useState(false);
+    const [deleteWorkspacePopup, setDeleteWorkspacePopup] = React.useState(false);
+    const [archiveWorkspacePopup, setArchiveWorkspacePopup] = React.useState(false);
+    const [unarchiveWorkspacePopup, setUnarchiveWorkspacePopup] = React.useState(false);
+    const [transferOwnershipPopup, setTransferOwnershipPopup] = React.useState(false);
+    const [selected, setSelected] = React.useState(false);
+    const [memberName, setMemberName] = React.useState("");
+    const [transferList, setTransferList] = React.useState<Array<SelectValue>>([]);
+    const [inviteList, setInviteList] = React.useState<Array<SelectValue>>([]);
+    const [selectedUser, setSelectedUser] = React.useState<null | SelectValue>(null);
+    const [invitedUsers, setInvitedUsers] = React.useState<Array<FullWorkspaceInvitation>>([]);
 
-    componentDidMount() {
-        this.createTransferList().then();
-        this.createInviteList().then();
-        this.updateInvitedUsers().then();
-        this.fetchWorkspace().then();
+    useEffect(() => {
+        setWorkspaceName(workspace.name);
+        setWorkspaceDescription(workspace.description || null);
+    }, [workspace]);
 
-        this.setState({
-            workspaceName: this.context.workspace.name,
-            workspaceDescription: this.context.workspace.description || null,
-        });
+    function updateInvitedUsers() {
+        return Api.workspaces.invitations
+            .all(workspace.uuid)
+            .then(handleApiError((x) => setInvitedUsers(x.invitations)));
     }
 
-    async updateInvitedUsers() {
-        await Api.workspaces.invitations
-            .all(this.context.workspace.uuid)
-            .then(handleApiError((x) => this.setState({ invitedUsers: x.invitations })));
+    function fetchWorkspace() {
+        return Api.workspaces.get(workspace.uuid).then(handleApiError((x) => setIsArchived(x.archived)));
     }
 
-    async fetchWorkspace() {
-        await Api.workspaces.get(this.context.workspace.uuid).then(
-            handleApiError((x) =>
-                this.setState({
-                    isArchived: x.archived,
-                }),
-            ),
-        );
-    }
-
-    async updateWorkspace() {
+    function updateWorkspace() {
         let update: { name: null | string; description: null | string } = { name: null, description: null };
 
-        if (this.state.workspaceName !== this.context.workspace.name && this.state.workspaceName !== "") {
-            update = { ...update, name: this.state.workspaceName };
+        if (workspaceName !== workspace.name && workspaceName !== "") {
+            update = { ...update, name: workspaceName };
         }
 
-        if (this.state.workspaceDescription !== this.context.workspace.description) {
-            update = { ...update, description: this.state.workspaceDescription };
+        if (workspaceDescription !== workspace.description) {
+            update = { ...update, description: workspaceDescription };
         }
 
-        await Api.workspaces
-            .update(this.context.workspace.uuid, update)
+        return Api.workspaces
+            .update(workspace.uuid, update)
             .then(handleApiError(() => toast.success("Workspace updated")));
     }
 
-    async deleteWorkspace() {
+    function deleteWorkspace() {
         const toastId = toast.loading("Deleting workspace");
-        await Api.workspaces.delete(this.context.workspace.uuid).then(
+        return Api.workspaces.delete(workspace.uuid).then(
             handleApiError(() => {
                 toast.success("Deleted Workspace");
                 ROUTES.WORKSPACES.visit({});
@@ -117,9 +84,9 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
         toast.dismiss(toastId);
     }
 
-    archiveWorkspace() {
+    function archiveWorkspace() {
         toast.promise(
-            Api.workspaces.archive(this.context.workspace.uuid).then(
+            Api.workspaces.archive(workspace.uuid).then(
                 handleApiError(() => {
                     ROUTES.WORKSPACES.visit({});
                 }),
@@ -132,14 +99,12 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
         );
     }
 
-    unarchiveWorkspace() {
+    function unarchiveWorkspace() {
         toast.promise(
-            Api.workspaces.unarchive(this.context.workspace.uuid).then(
+            Api.workspaces.unarchive(workspace.uuid).then(
                 handleApiError(() => {
-                    this.setState({
-                        isArchived: false,
-                        unarchiveWorkspacePopup: false,
-                    });
+                    setIsArchived(false);
+                    setUnarchiveWorkspacePopup(false);
                 }),
             ),
             {
@@ -150,466 +115,457 @@ export default class WorkspaceSettings extends React.Component<WorkspaceSettings
         );
     }
 
-    async createTransferList() {
-        await Api.user.all().then(
+    function createTransferList() {
+        return Api.user.all().then(
             handleApiError((u) => {
                 u.users
                     .filter((s) => {
-                        return this.context.workspace.owner.uuid !== s.uuid;
+                        return workspace.owner.uuid !== s.uuid;
                     })
                     .map((s) => {
                         const member = { label: s.displayName + " (" + s.username + ") ", value: s.uuid };
-                        this.state.transferList.push(member);
+                        setTransferList((l) => [...l, member]);
                     });
             }),
         );
     }
 
-    async createInviteList() {
-        await Api.user.all().then(
+    function createInviteList() {
+        return Api.user.all().then(
             handleApiError((u) => {
                 u.users
                     .filter((s) => {
-                        const users = [
-                            ...this.context.workspace.members.map((x) => x.uuid),
-                            this.context.workspace.owner.uuid,
-                        ];
+                        const users = [...workspace.members.map((x) => x.uuid), workspace.owner.uuid];
                         return !users.some((x) => x === s.uuid);
                     })
                     .map((s) => {
                         const member = { label: s.displayName + " (" + s.username + ") ", value: s.uuid };
-                        this.state.inviteList.push(member);
+                        setInviteList((l) => [...l, member]);
                     });
             }),
         );
     }
 
-    async deleteUser() {
+    function deleteUser() {
         /*TODO delete member*/
     }
 
-    async inviteUser() {
-        if (this.state.selectedUser === null) {
+    function inviteUser() {
+        if (selectedUser === null) {
             toast.error("No user selected");
             return;
         }
 
-        await Api.workspaces.invitations.create(this.context.workspace.uuid, this.state.selectedUser.value).then(
+        return Api.workspaces.invitations.create(workspace.uuid, selectedUser.value).then(
             handleApiError(async () => {
                 toast.success("Invitation was sent");
-                this.setState({ selectedUser: null, invitePopup: false });
-                await this.updateInvitedUsers();
+                setSelectedUser(null);
+                setInvitePopup(false);
+                return updateInvitedUsers();
             }),
         );
     }
 
-    async transferOwnership() {
-        if (this.state.selectedUser === null) {
+    function transferOwnership() {
+        if (selectedUser === null) {
             toast.error("No user selected");
             return;
         }
-        await Api.workspaces.transferOwnership(this.context.workspace.uuid, this.state.selectedUser.value).then(
+        return Api.workspaces.transferOwnership(workspace.uuid, selectedUser.value).then(
             handleApiError(() => {
                 toast.success("Transfer was successful");
-                this.setState({ selectedUser: null, transferOwnershipPopup: false, selected: false });
+                setSelectedUser(null);
+                setTransferOwnershipPopup(false);
+                setSelected(false);
             }),
         );
     }
 
-    render() {
-        return (
-            <>
-                <USER_CONTEXT.Consumer>
-                    {(ctx) => {
-                        if (this.context.workspace.owner.uuid !== ctx.user.uuid) {
-                            ROUTES.WORKSPACE_HOSTS.visit({ uuid: this.context.workspace.uuid });
-                        }
-                        return null;
-                    }}
-                </USER_CONTEXT.Consumer>
-                <div className={"workspace-settings-layout"}>
-                    <div className="workspace-settings-row">
-                        <form
-                            className="pane workspace-settings-container"
-                            method={"post"}
-                            onSubmit={async (x) => {
-                                x.preventDefault();
-                                await this.updateWorkspace();
-                            }}
-                        >
-                            <h2 className={"sub-heading"}> Workspace Settings </h2>
-                            <div className={"workspace-settings-table"}>
-                                <span>Name</span>
-                                <Input
-                                    value={this.state.workspaceName}
-                                    onChange={(v) => {
-                                        this.setState({ workspaceName: v });
-                                    }}
-                                    placeholder={this.context.workspace.name}
-                                />
-                                <span>Description</span>
-                                <Textarea
-                                    value={
-                                        this.state.workspaceDescription !== null &&
-                                        this.state.workspaceDescription !== undefined
-                                            ? this.state.workspaceDescription
-                                            : ""
-                                    }
-                                    onChange={(v) => {
-                                        this.setState({ workspaceDescription: v });
-                                    }}
-                                    placeholder={"Description"}
-                                />
-                            </div>
-                            <button className={"button"}>Save</button>
-                        </form>
-                        <div className="workspace-settings-container danger pane">
-                            <h2 className={"sub-heading"}>Danger Zone </h2>
-                            <div className="workspace-settings-danger">
-                                <span>Transfer ownership</span>
-                                <button
-                                    className="workspace-settings-red-button button"
-                                    onClick={() => {
-                                        this.setState({ transferOwnershipPopup: true });
-                                    }}
-                                >
-                                    Transfer
-                                </button>
-                                <span>Delete this workspace</span>
-                                <button
-                                    className="workspace-settings-red-button button"
-                                    onClick={() => {
-                                        this.setState({ deleteWorkspacePopup: true });
-                                    }}
-                                >
-                                    Delete
-                                </button>
-                                <span>
-                                    {this.state.isArchived ? "Unarchive this workspace" : "Archive this workspace"}
-                                </span>
-                                <button
-                                    className="workspace-settings-red-button button"
-                                    onClick={() => {
-                                        if (this.state.isArchived) this.setState({ unarchiveWorkspacePopup: true });
-                                        else this.setState({ archiveWorkspacePopup: true });
-                                    }}
-                                >
-                                    {this.state.isArchived ? "Unarchive" : "Archive"}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="pane workspace-settings-container">
-                        <h2 className={"sub-heading"}>User control</h2>
-                        <div className={"workspace-settings-container"}>
-                            <div className={"workspace-settings-invite"}>
-                                <button
-                                    className={"workspace-settings-button button"}
-                                    onClick={() => {
-                                        this.setState({ invitePopup: true });
-                                    }}
-                                >
-                                    Invite
-                                </button>
-                            </div>
-                            <div className={"workspace-settings-user-table-heading neon"}>
-                                <span>Username</span>
-                                <span>Role</span>
-                                <span>Delete</span>
-                            </div>
-                            <div className={"workspace-settings-user-table-entry neon"}>
-                                <span>{this.context.workspace.owner.displayName}</span>
-                                <div className={"workspace-settings-tag-container"}>
-                                    <Bubble name={"owner"} color={"primary"} />
-                                </div>
-                            </div>
-                            {this.context.workspace.members.map((m) => (
-                                <div key={m.uuid} className={"workspace-settings-user-table-entry neon"}>
-                                    <span>{m.displayName}</span>
-                                    <div className={"workspace-settings-tag-container"}>
-                                        <Tag name={"member"} />
-                                    </div>
-                                    <span>
-                                        <button
-                                            className={"icon-button"}
-                                            onClick={() => {
-                                                this.setState({
-                                                    deleteUserPopup: true,
-                                                    memberName: m.displayName,
-                                                });
-                                            }}
-                                        >
-                                            <CloseIcon />
-                                        </button>
-                                    </span>
-                                </div>
-                            ))}
-                            {this.state.invitedUsers.map((i) => (
-                                <div key={i.uuid} className={"workspace-settings-user-table-entry neon"}>
-                                    <span>{i.target.displayName}</span>
-                                    <div className={"workspace-settings-tag-container"}>
-                                        <Tag name={"invited"} />
-                                    </div>
-                                    <span>
-                                        <button
-                                            className={"icon-button"}
-                                            onClick={async () => {
-                                                await Api.workspaces.invitations
-                                                    .retract(this.context.workspace.uuid, i.uuid)
-                                                    .then(
-                                                        handleApiError(async () => {
-                                                            toast.success("Invitation retracted");
-                                                            await this.updateInvitedUsers();
-                                                        }),
-                                                    );
-                                            }}
-                                        >
-                                            <CloseIcon />
-                                        </button>
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="pane workspace-settings-container">
-                        <h2 className={"sub-heading"}>Linked OAuth applications </h2>
-                        <div className={"workspace-settings-oauth-table-heading neon"}>
-                            <span>Date</span>
-                            <span>Name</span>
-                            <span>User</span>
-                        </div>
-                        {/*TODO show linked apps*/}
-                    </div>
-                </div>
-                <Popup
-                    modal={true}
-                    nested={true}
-                    open={this.state.invitePopup}
-                    onClose={() => {
-                        this.setState({ invitePopup: false, selectedUser: null });
-                    }}
-                >
+    useEffect(() => {
+        createTransferList();
+        createInviteList();
+        updateInvitedUsers();
+        fetchWorkspace();
+    }, []);
+
+    return (
+        <>
+            <USER_CONTEXT.Consumer>
+                {(ctx) => {
+                    if (workspace.owner.uuid !== ctx.user.uuid) {
+                        ROUTES.WORKSPACE_HOSTS.visit({ uuid: workspace.uuid });
+                    }
+                    return null;
+                }}
+            </USER_CONTEXT.Consumer>
+            <div className={"workspace-settings-layout"}>
+                <div className="workspace-settings-row">
                     <form
+                        className="pane workspace-settings-container"
                         method={"post"}
-                        className="workspace-settings-popup pane"
-                        onSubmit={async (e) => {
-                            e.preventDefault();
-                            await this.inviteUser();
+                        onSubmit={async (x) => {
+                            x.preventDefault();
+                            await updateWorkspace();
                         }}
                     >
-                        <div className="workspace-setting-popup">
-                            <h2 className="sub-heading"> Invite member</h2>
-                            <Select<SelectValue>
-                                options={this.state.inviteList}
-                                styles={selectStyles("default")}
-                                value={this.state.selectedUser}
-                                onChange={(type) => {
-                                    if (type) this.setState({ selectedUser: type });
-                                }}
+                        <h2 className={"sub-heading"}> Workspace Settings </h2>
+                        <div className={"workspace-settings-table"}>
+                            <span>Name</span>
+                            <Input value={workspaceName} onChange={setWorkspaceName} placeholder={workspace.name} />
+                            <span>Description</span>
+                            <Textarea
+                                value={
+                                    workspaceDescription !== null && workspaceDescription !== undefined
+                                        ? workspaceDescription
+                                        : ""
+                                }
+                                onChange={setWorkspaceDescription}
+                                placeholder={"Description"}
                             />
-                            <button className="button">Invite</button>
                         </div>
+                        <button className={"button"}>Save</button>
                     </form>
-                </Popup>
-                <Popup
-                    modal={true}
-                    nested={true}
-                    open={this.state.deleteUserPopup}
-                    onClose={() => {
-                        this.setState({ deleteUserPopup: false, memberName: "" });
-                    }}
-                >
-                    <div className="popup-content pane">
-                        <div className="workspace-setting-popup">
-                            <h2 className="sub-heading">Delete {this.state.memberName} from this workspace?</h2>
+                    <div className="workspace-settings-container danger pane">
+                        <h2 className={"sub-heading"}>Danger Zone </h2>
+                        <div className="workspace-settings-danger">
+                            <span>Transfer ownership</span>
                             <button
-                                className="button"
+                                className="workspace-settings-red-button button"
                                 onClick={() => {
-                                    this.setState({ deleteUserPopup: false, memberName: "" });
+                                    setTransferOwnershipPopup(true);
                                 }}
                             >
-                                No
+                                Transfer
                             </button>
+                            <span>Delete this workspace</span>
                             <button
-                                className="button"
-                                onClick={async (x) => {
-                                    {
-                                        x.preventDefault();
-                                        await this.deleteUser();
-                                    }
+                                className="workspace-settings-red-button button"
+                                onClick={() => {
+                                    setDeleteWorkspacePopup(true);
                                 }}
                             >
-                                Yes
+                                Delete
+                            </button>
+                            <span>{isArchived ? "Unarchive this workspace" : "Archive this workspace"}</span>
+                            <button
+                                className="workspace-settings-red-button button"
+                                onClick={() => {
+                                    if (isArchived) setUnarchiveWorkspacePopup(true);
+                                    else setArchiveWorkspacePopup(true);
+                                }}
+                            >
+                                {isArchived ? "Unarchive" : "Archive"}
                             </button>
                         </div>
                     </div>
-                </Popup>
-                <Popup
-                    modal={true}
-                    nested={true}
-                    open={this.state.deleteWorkspacePopup}
-                    onClose={() => {
-                        this.setState({ deleteWorkspacePopup: false });
-                    }}
-                >
-                    <div className="popup-content pane danger">
-                        <div className="workspace-setting-popup">
-                            <h2 className="sub-heading"> Are you sure to delete this workspace?</h2>
-                            <span>All data will be lost upon deletion!</span>
+                </div>
+                <div className="pane workspace-settings-container">
+                    <h2 className={"sub-heading"}>User control</h2>
+                    <div className={"workspace-settings-container"}>
+                        <div className={"workspace-settings-invite"}>
                             <button
-                                className="workspace-settings-red-button button"
+                                className={"workspace-settings-button button"}
                                 onClick={() => {
-                                    this.setState({ deleteWorkspacePopup: false });
+                                    setInvitePopup(true);
                                 }}
                             >
-                                No
-                            </button>
-                            <button
-                                className="workspace-settings-red-button button"
-                                onClick={async (x) => {
-                                    {
-                                        x.preventDefault();
-                                        await this.deleteWorkspace();
-                                    }
-                                }}
-                            >
-                                Yes
+                                Invite
                             </button>
                         </div>
-                    </div>
-                </Popup>
-                <Popup
-                    modal={true}
-                    nested={true}
-                    open={this.state.archiveWorkspacePopup}
-                    onClose={() => {
-                        this.setState({ archiveWorkspacePopup: false });
-                    }}
-                >
-                    <div className="popup-content pane">
-                        <div className="workspace-setting-popup">
-                            <h2 className="sub-heading">Are you sure you want to archive this workspace?</h2>
-                            <p>Once archived, you may unarchive this workspace from these settings later on.</p>
-                            <p>
-                                Some data in the workspace may be automatically deleted after a certain period of
-                                inactivity.
-                            </p>
-                            <button
-                                className="button"
-                                onClick={() => {
-                                    this.setState({ archiveWorkspacePopup: false });
-                                }}
-                            >
-                                No
-                            </button>
-                            <button
-                                className="workspace-settings-red-button button"
-                                onClick={async (x) => {
-                                    x.preventDefault();
-                                    await this.archiveWorkspace();
-                                }}
-                            >
-                                Yes
-                            </button>
+                        <div className={"workspace-settings-user-table-heading neon"}>
+                            <span>Username</span>
+                            <span>Role</span>
+                            <span>Delete</span>
                         </div>
-                    </div>
-                </Popup>
-                <Popup
-                    modal={true}
-                    nested={true}
-                    open={this.state.unarchiveWorkspacePopup}
-                    onClose={() => {
-                        this.setState({ unarchiveWorkspacePopup: false });
-                    }}
-                >
-                    <div className="popup-content pane">
-                        <div className="workspace-setting-popup">
-                            <h2 className="sub-heading">Are you sure you want to unarchive this workspace?</h2>
-                            <p>The workspace will become visible by default to users again and can be edited again.</p>
-                            <button
-                                className="button"
-                                onClick={() => {
-                                    this.setState({ unarchiveWorkspacePopup: false });
-                                }}
-                            >
-                                No
-                            </button>
-                            <button
-                                className="workspace-settings-red-button button"
-                                onClick={async (x) => {
-                                    x.preventDefault();
-                                    await this.unarchiveWorkspace();
-                                }}
-                            >
-                                Yes
-                            </button>
-                        </div>
-                    </div>
-                </Popup>
-                <Popup
-                    modal={true}
-                    nested={true}
-                    open={this.state.transferOwnershipPopup}
-                    onClose={() => {
-                        this.setState({ transferOwnershipPopup: false, selectedUser: null, selected: false });
-                    }}
-                >
-                    {this.state.selected && this.state.selectedUser !== null ? (
-                        <form
-                            className="workspace-setting-popup danger pane"
-                            method={"post"}
-                            onSubmit={async (e) => {
-                                e.preventDefault();
-                                await this.transferOwnership();
-                                ROUTES.WORKSPACES.visit({});
-                            }}
-                        >
-                            <h2 className="sub-heading">Transfer the ownership to {this.state.selectedUser?.label}?</h2>
-                            <span> You will loose access to this workspace!</span>
-                            <button className="workspace-settings-red-button button">Transfer</button>
-                            <button
-                                className="workspace-settings-red-button button"
-                                onClick={() => {
-                                    this.setState({
-                                        transferOwnershipPopup: false,
-                                        selectedUser: null,
-                                        selected: false,
-                                    });
-                                }}
-                            >
-                                Abort
-                            </button>
-                        </form>
-                    ) : (
-                        <div className="workspace-settings-popup danger pane">
-                            <div className="workspace-setting-popup">
-                                <h2 className="sub-heading"> Transfer ownership</h2>
-                                <Select<SelectValue>
-                                    options={this.state.transferList}
-                                    styles={selectStyles("default")}
-                                    value={this.state.selectedUser}
-                                    onChange={(type) => {
-                                        this.setState({ selectedUser: type });
-                                    }}
-                                />
-                                <button
-                                    className="workspace-settings-red-button button"
-                                    onClick={() => {
-                                        if (this.state.selectedUser === null) {
-                                            toast.error("No user selected");
-                                            return;
-                                        } else {
-                                            this.setState({ selected: true });
-                                        }
-                                    }}
-                                >
-                                    Select
-                                </button>
+                        <div className={"workspace-settings-user-table-entry neon"}>
+                            <span>{workspace.owner.displayName}</span>
+                            <div className={"workspace-settings-tag-container"}>
+                                <Bubble name={"owner"} color={"primary"} />
                             </div>
                         </div>
-                    )}
-                </Popup>
-            </>
-        );
-    }
+                        {workspace.members.map((m) => (
+                            <div key={m.uuid} className={"workspace-settings-user-table-entry neon"}>
+                                <span>{m.displayName}</span>
+                                <div className={"workspace-settings-tag-container"}>
+                                    <Tag name={"member"} />
+                                </div>
+                                <span>
+                                    <button
+                                        className={"icon-button"}
+                                        onClick={() => {
+                                            setDeleteUserPopup(true);
+                                            setMemberName(m.displayName);
+                                        }}
+                                    >
+                                        <CloseIcon />
+                                    </button>
+                                </span>
+                            </div>
+                        ))}
+                        {invitedUsers.map((i) => (
+                            <div key={i.uuid} className={"workspace-settings-user-table-entry neon"}>
+                                <span>{i.target.displayName}</span>
+                                <div className={"workspace-settings-tag-container"}>
+                                    <Tag name={"invited"} />
+                                </div>
+                                <span>
+                                    <button
+                                        className={"icon-button"}
+                                        onClick={async () => {
+                                            await Api.workspaces.invitations.retract(workspace.uuid, i.uuid).then(
+                                                handleApiError(async () => {
+                                                    toast.success("Invitation retracted");
+                                                    await updateInvitedUsers();
+                                                }),
+                                            );
+                                        }}
+                                    >
+                                        <CloseIcon />
+                                    </button>
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div className="pane workspace-settings-container">
+                    <h2 className={"sub-heading"}>Linked OAuth applications </h2>
+                    <div className={"workspace-settings-oauth-table-heading neon"}>
+                        <span>Date</span>
+                        <span>Name</span>
+                        <span>User</span>
+                    </div>
+                    {/*TODO show linked apps*/}
+                </div>
+            </div>
+            <Popup
+                modal={true}
+                nested={true}
+                open={invitePopup}
+                onClose={() => {
+                    setInvitePopup(false);
+                    setSelectedUser(null);
+                }}
+            >
+                <form
+                    method={"post"}
+                    className="workspace-settings-popup pane"
+                    onSubmit={async (e) => {
+                        e.preventDefault();
+                        await inviteUser();
+                    }}
+                >
+                    <div className="workspace-setting-popup">
+                        <h2 className="sub-heading"> Invite member</h2>
+                        <Select<SelectValue>
+                            options={inviteList}
+                            styles={selectStyles("default")}
+                            value={selectedUser}
+                            onChange={(type) => {
+                                if (type) setSelectedUser(type);
+                            }}
+                        />
+                        <button className="button">Invite</button>
+                    </div>
+                </form>
+            </Popup>
+            <Popup
+                modal={true}
+                nested={true}
+                open={deleteUserPopup}
+                onClose={() => {
+                    setDeleteUserPopup(false);
+                    setMemberName("");
+                }}
+            >
+                <div className="popup-content pane">
+                    <div className="workspace-setting-popup">
+                        <h2 className="sub-heading">Delete {memberName} from this workspace?</h2>
+                        <button
+                            className="button"
+                            onClick={() => {
+                                setDeleteUserPopup(false);
+                                setMemberName("");
+                            }}
+                        >
+                            No
+                        </button>
+                        <button
+                            className="button"
+                            onClick={async (x) => {
+                                {
+                                    x.preventDefault();
+                                    await deleteUser();
+                                }
+                            }}
+                        >
+                            Yes
+                        </button>
+                    </div>
+                </div>
+            </Popup>
+            <Popup
+                modal={true}
+                nested={true}
+                open={deleteWorkspacePopup}
+                onClose={() => {
+                    setDeleteWorkspacePopup(false);
+                }}
+            >
+                <div className="popup-content pane danger">
+                    <div className="workspace-setting-popup">
+                        <h2 className="sub-heading"> Are you sure to delete this workspace?</h2>
+                        <span>All data will be lost upon deletion!</span>
+                        <button
+                            className="workspace-settings-red-button button"
+                            onClick={() => {
+                                setDeleteWorkspacePopup(false);
+                            }}
+                        >
+                            No
+                        </button>
+                        <button
+                            className="workspace-settings-red-button button"
+                            onClick={async (x) => {
+                                {
+                                    x.preventDefault();
+                                    await deleteWorkspace();
+                                }
+                            }}
+                        >
+                            Yes
+                        </button>
+                    </div>
+                </div>
+            </Popup>
+            <Popup
+                modal={true}
+                nested={true}
+                open={archiveWorkspacePopup}
+                onClose={() => {
+                    setArchiveWorkspacePopup(false);
+                }}
+            >
+                <div className="popup-content pane">
+                    <div className="workspace-setting-popup">
+                        <h2 className="sub-heading">Are you sure you want to archive this workspace?</h2>
+                        <p>Once archived, you may unarchive this workspace from these settings later on.</p>
+                        <p>
+                            Some data in the workspace may be automatically deleted after a certain period of
+                            inactivity.
+                        </p>
+                        <button
+                            className="button"
+                            onClick={() => {
+                                setArchiveWorkspacePopup(false);
+                            }}
+                        >
+                            No
+                        </button>
+                        <button
+                            className="workspace-settings-red-button button"
+                            onClick={async (x) => {
+                                x.preventDefault();
+                                await archiveWorkspace();
+                            }}
+                        >
+                            Yes
+                        </button>
+                    </div>
+                </div>
+            </Popup>
+            <Popup
+                modal={true}
+                nested={true}
+                open={unarchiveWorkspacePopup}
+                onClose={() => {
+                    setUnarchiveWorkspacePopup(false);
+                }}
+            >
+                <div className="popup-content pane">
+                    <div className="workspace-setting-popup">
+                        <h2 className="sub-heading">Are you sure you want to unarchive this workspace?</h2>
+                        <p>The workspace will become visible by default to users again and can be edited again.</p>
+                        <button
+                            className="button"
+                            onClick={() => {
+                                setUnarchiveWorkspacePopup(false);
+                            }}
+                        >
+                            No
+                        </button>
+                        <button
+                            className="workspace-settings-red-button button"
+                            onClick={async (x) => {
+                                x.preventDefault();
+                                await unarchiveWorkspace();
+                            }}
+                        >
+                            Yes
+                        </button>
+                    </div>
+                </div>
+            </Popup>
+            <Popup
+                modal={true}
+                nested={true}
+                open={transferOwnershipPopup}
+                onClose={() => {
+                    setTransferOwnershipPopup(false);
+                    setSelectedUser(null);
+                    setSelected(false);
+                }}
+            >
+                {selected && selectedUser !== null ? (
+                    <form
+                        className="workspace-setting-popup danger pane"
+                        method={"post"}
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            await transferOwnership();
+                            ROUTES.WORKSPACES.visit({});
+                        }}
+                    >
+                        <h2 className="sub-heading">Transfer the ownership to {selectedUser?.label}?</h2>
+                        <span> You will loose access to this workspace!</span>
+                        <button className="workspace-settings-red-button button">Transfer</button>
+                        <button
+                            className="workspace-settings-red-button button"
+                            onClick={() => {
+                                setTransferOwnershipPopup(false);
+                                setSelectedUser(null);
+                                setSelected(false);
+                            }}
+                        >
+                            Abort
+                        </button>
+                    </form>
+                ) : (
+                    <div className="workspace-settings-popup danger pane">
+                        <div className="workspace-setting-popup">
+                            <h2 className="sub-heading">Transfer ownership</h2>
+                            <Select<SelectValue>
+                                options={transferList}
+                                styles={selectStyles("default")}
+                                value={selectedUser}
+                                onChange={setSelectedUser}
+                            />
+                            <button
+                                className="workspace-settings-red-button button"
+                                onClick={() => {
+                                    if (selectedUser === null) {
+                                        toast.error("No user selected");
+                                        return;
+                                    } else {
+                                        setSelected(true);
+                                    }
+                                }}
+                            >
+                                Select
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </Popup>
+        </>
+    );
 }
