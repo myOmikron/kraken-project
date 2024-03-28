@@ -41,9 +41,12 @@ pub async fn get_all_wordlists_admin() -> ApiResult<Json<ListWordlistsAdmin>> {
 
 /// Update an existing wordlist
 #[swaggapi::put("/wordlists/{uuid}", tags("Wordlist management"))]
-pub async fn update_wordlist_admin(req: Json<UpdateWordlistRequest>) -> ApiResult<HttpResponse> {
+pub async fn update_wordlist_admin(
+    path: Path<PathUuid>,
+    req: Json<UpdateWordlistRequest>,
+) -> ApiResult<HttpResponse> {
+    let uuid = path.into_inner().uuid;
     let UpdateWordlistRequest {
-        uuid,
         name,
         description,
         path,

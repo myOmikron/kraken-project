@@ -23,8 +23,6 @@ pub struct CreateWordlistRequest {
 /// Arguments for updating an existing wordlist
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct UpdateWordlistRequest {
-    /// The primary key of the wordlist to update
-    pub uuid: Uuid,
     /// The wordlist's name to be displayed select buttons
     // TODO #[schema(example = "subdomains-top1million-5000.txt")]
     pub name: Option<String>,
