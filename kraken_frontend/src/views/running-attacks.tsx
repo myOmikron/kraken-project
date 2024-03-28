@@ -10,25 +10,14 @@ import RunningAttackIcon from "../svg/running-attack";
 import SuccessIcon from "../svg/success";
 import { ATTACKS } from "../utils/attack-resolver";
 
-type RunningAttacksProps = {};
-type RunningAttacksState = {
-    runningAttacks: AttackDictionary;
-};
-
 interface AttackDictionary {
     [Key: UUID]: Array<SimpleAttack>;
 }
 
-export default class RunningAttacks extends React.Component<RunningAttacksProps, RunningAttacksState> {
-    constructor(props: RunningAttacksProps) {
-        super(props);
+export default function RunningAttacks() {
+    const [runningAttacks, setRunningAttacks] = React.useState<AttackDictionary>({});
 
-        this.state = {
-            runningAttacks: {},
-        };
-    }
-
-    componentDidMount() {
+    React.useEffect(() => {
         Api.attacks.all().then((x) =>
             x.match(
                 (attacks) => {
@@ -40,25 +29,24 @@ export default class RunningAttacks extends React.Component<RunningAttacksProps,
                             runningAttacks[attack.workspace.uuid].push(attack);
                         }
                     }
-                    this.setState({ runningAttacks });
+                    setRunningAttacks(runningAttacks);
                 },
                 (err) => toast.error(err.message),
             ),
         );
         WS.addEventListener("message.AttackStarted", (msg) => {
-            const runningAttacks = this.state.runningAttacks;
-            if (runningAttacks[msg.attack.workspace.uuid] === null) {
-                runningAttacks[msg.attack.workspace.uuid] = [msg.attack];
+            const r = runningAttacks;
+            if (r[msg.attack.workspace.uuid] === null) {
+                r[msg.attack.workspace.uuid] = [msg.attack];
             } else {
-                runningAttacks[msg.attack.workspace.uuid] = [msg.attack, ...runningAttacks[msg.attack.workspace.uuid]];
+                r[msg.attack.workspace.uuid] = [msg.attack, ...r[msg.attack.workspace.uuid]];
             }
-
-            this.setState({ runningAttacks });
+            setRunningAttacks(r);
         });
         WS.addEventListener("message.AttackFinished", (msg) => {
-            const runningAttacks = this.state.runningAttacks;
-            if (runningAttacks[msg.attack.workspace.uuid] !== null) {
-                const workspaceAttacks = runningAttacks[msg.attack.workspace.uuid];
+            const r = runningAttacks;
+            if (r[msg.attack.workspace.uuid] !== null) {
+                const workspaceAttacks = r[msg.attack.workspace.uuid];
                 for (const workspaceAttack of workspaceAttacks) {
                     if (workspaceAttack.uuid === msg.attack.uuid) {
                         workspaceAttack.error = msg.attack.error === undefined ? null : msg.attack.error;
@@ -67,62 +55,60 @@ export default class RunningAttacks extends React.Component<RunningAttacksProps,
                 }
             }
 
-            this.setState({ runningAttacks });
+            setRunningAttacks(r);
         });
-    }
+    }, []);
 
-    render() {
-        return (
-            <div className={"running-attacks-container"}>
-                {Object.entries(this.state.runningAttacks).map(([key, value]) => {
-                    return (
-                        <React.Fragment key={key}>
-                            <div>
-                                Workspace
-                                <br />
-                            </div>
-                            {value.map((attack) => (
-                                <Popup
-                                    key={attack.uuid}
-                                    trigger={
-                                        <div key={attack.uuid + "_trigger"} className={"running-attacks-attack"}>
-                                            <RunningAttackIcon />
-                                            {attack.finishedAt === null ? (
-                                                <span className={"running-attacks-inner neon"}>
-                                                    {ATTACKS[attack.attackType].abbreviation}
-                                                </span>
-                                            ) : (
-                                                <span className={"running-attacks-inner stopped neon"}>
-                                                    <span>{ATTACKS[attack.attackType].abbreviation}</span>
-                                                    {attack.error === null || attack.error === undefined ? (
-                                                        <SuccessIcon />
-                                                    ) : (
-                                                        <FailedIcon />
-                                                    )}
-                                                </span>
-                                            )}
-                                        </div>
-                                    }
-                                    position={"bottom left"}
-                                    on={"hover"}
-                                    arrow={true}
-                                >
-                                    <div className={"pane-thin"}>
-                                        <h2 className={"sub-heading"}>{ATTACKS[attack.attackType].long}</h2>
-                                        {attack.error !== null && attack.error !== undefined ? (
-                                            <span>Error: {attack.error}</span>
-                                        ) : undefined}
-                                        <span>Workspace: {attack.workspace.name}</span>
-                                        <span>Started by: {attack.startedBy.displayName}</span>
-                                        <span>Started at: {attack.finishedAt?.toLocaleString()}</span>
+    return (
+        <div className={"running-attacks-container"}>
+            {Object.entries(runningAttacks).map(([key, value]) => {
+                return (
+                    <React.Fragment key={key}>
+                        <div>
+                            Workspace
+                            <br />
+                        </div>
+                        {value.map((attack) => (
+                            <Popup
+                                key={attack.uuid}
+                                trigger={
+                                    <div key={attack.uuid + "_trigger"} className={"running-attacks-attack"}>
+                                        <RunningAttackIcon />
+                                        {attack.finishedAt === null ? (
+                                            <span className={"running-attacks-inner neon"}>
+                                                {ATTACKS[attack.attackType].abbreviation}
+                                            </span>
+                                        ) : (
+                                            <span className={"running-attacks-inner stopped neon"}>
+                                                <span>{ATTACKS[attack.attackType].abbreviation}</span>
+                                                {attack.error === null || attack.error === undefined ? (
+                                                    <SuccessIcon />
+                                                ) : (
+                                                    <FailedIcon />
+                                                )}
+                                            </span>
+                                        )}
                                     </div>
-                                </Popup>
-                            ))}
-                            <div className={"running-attacks-seperator"}></div>
-                        </React.Fragment>
-                    );
-                })}
-            </div>
-        );
-    }
+                                }
+                                position={"bottom left"}
+                                on={"hover"}
+                                arrow={true}
+                            >
+                                <div className={"pane-thin"}>
+                                    <h2 className={"sub-heading"}>{ATTACKS[attack.attackType].long}</h2>
+                                    {attack.error !== null && attack.error !== undefined ? (
+                                        <span>Error: {attack.error}</span>
+                                    ) : undefined}
+                                    <span>Workspace: {attack.workspace.name}</span>
+                                    <span>Started by: {attack.startedBy.displayName}</span>
+                                    <span>Started at: {attack.finishedAt?.toLocaleString()}</span>
+                                </div>
+                            </Popup>
+                        ))}
+                        <div className={"running-attacks-seperator"}></div>
+                    </React.Fragment>
+                );
+            })}
+        </div>
+    );
 }

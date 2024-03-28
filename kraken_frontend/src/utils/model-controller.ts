@@ -7,6 +7,7 @@ import USER_CONTEXT from "../context/user";
 import { ListenerHandle } from "./event-emitter";
 import { ObjectFns } from "./helper";
 import { MONACO, MONACO_PROMISE } from "./monaco";
+import { useTriggerUpdate } from "./trigger-hook";
 import ITextModel = editor.ITextModel;
 
 /**
@@ -48,7 +49,7 @@ export function useModel(initialArgs: UseModelArgs): UseModelReturn {
     } = React.useContext(USER_CONTEXT);
     const { current: controller } = React.useRef(new ModelController(initialArgs, user));
 
-    controller.trigger = useTrigger();
+    controller.trigger = useTriggerUpdate();
     controller.onRender();
 
     React.useEffect(() => {
@@ -81,7 +82,7 @@ export function useModelStore(): UseModelStoreReturn {
     } = React.useContext(USER_CONTEXT);
     const [controllers, setControllers] = React.useState<Record<string, ModelController>>({});
 
-    const trigger = useTrigger();
+    const trigger = useTriggerUpdate();
     for (const controller of Object.values(controllers)) {
         controller.trigger = trigger;
         controller.onRender();
@@ -136,16 +137,6 @@ export function useModelStore(): UseModelStoreReturn {
             });
         },
     };
-}
-
-/**
- * Hacky helper to construct the `trigger` passed to `ModelController`
- *
- * This hook simply returns a function which, when called, will trigger a rerender.
- */
-function useTrigger() {
-    const [_, setDummy] = React.useState({});
-    return () => setDummy({});
 }
 
 /**

@@ -1,8 +1,7 @@
 import React from "react";
-
 import { toast } from "react-toastify";
 import { Api, UUID } from "../api/api";
-import { FullApiKey, FullUser, UserPermission } from "../api/generated";
+import { FullApiKey, FullUser } from "../api/generated";
 import Input from "../components/input";
 import USER_CONTEXT from "../context/user";
 import "../styling/me.css";
@@ -10,87 +9,65 @@ import CloseIcon from "../svg/close";
 import CopyIcon from "../svg/copy";
 import { check, handleApiError } from "../utils/helper";
 
-type MeProps = {};
-type MeState = {
+export default function Me() {
+    const context = React.useContext(USER_CONTEXT);
+
     // controlled state
     /** Old password */
-    oldPwd: string;
+    const [oldPwd, setOldPwd] = React.useState<string>("");
     /** New password */
-    newPwd: string;
+    const [newPwd, setNewPwd] = React.useState<string>("");
     /** Repeated new password */
-    repPwd: string;
+    const [repPwd, setRepPwd] = React.useState<string>("");
     /** The username */
-    username: string;
+    const [username, setUsername] = React.useState<string>("");
     /** The display name */
-    displayName: string;
+    const [displayName, setDisplayName] = React.useState<string>("");
     /** api key name */
-    apiKeyName: string;
+    const [apiKeyName, setApiKeyName] = React.useState<string>("");
 
-    apiKeys: Array<FullApiKey>;
-    user: FullUser;
-};
+    const [apiKeys, setApiKeys] = React.useState<Array<FullApiKey>>([]);
+    const [user, setUser] = React.useState<FullUser>(context.user);
 
-export default class Me extends React.Component<MeProps, MeState> {
-    state: MeState = {
-        oldPwd: "",
-        newPwd: "",
-        repPwd: "",
-        username: "",
-        displayName: "",
-        apiKeyName: "",
-        apiKeys: [],
-        user: {
-            displayName: "",
-            username: "",
-            permission: UserPermission.ReadOnly,
-            uuid: "",
-            createdAt: new Date(),
-            lastLogin: null,
-        },
-    };
-
-    static contextType = USER_CONTEXT;
-    declare context: React.ContextType<typeof USER_CONTEXT>;
-
-    componentDidMount() {
-        const { user } = this.context;
-        this.retrieveApiKeys().then();
-        this.setState({ username: user.username, displayName: user.displayName, user });
+    async function retrieveApiKeys() {
+        await Api.user.apiKeys.all().then(
+            handleApiError((keys) => {
+                setApiKeys(keys.keys);
+            }),
+        );
     }
 
-    async createApiKey() {
-        if (this.state.apiKeyName === "") {
+    async function createApiKey() {
+        if (apiKeyName === "") {
             toast.error("Name must not be empty");
         }
 
-        await Api.user.apiKeys.create(this.state.apiKeyName).then(
+        await Api.user.apiKeys.create(apiKeyName).then(
             handleApiError(async (_) => {
                 toast.success("Created api key");
-                this.setState({ apiKeyName: "" });
-                await this.retrieveApiKeys();
+                setApiKeyName("");
+                await retrieveApiKeys();
             }),
         );
     }
 
-    async retrieveApiKeys() {
-        await Api.user.apiKeys.all().then(
-            handleApiError((keys) => {
-                this.setState({ apiKeys: keys.keys });
-            }),
-        );
-    }
+    React.useEffect(() => {
+        retrieveApiKeys().then();
+        setUser(context.user);
+        setUsername(context.user.username);
+        setDisplayName(context.user.displayName);
+    }, []);
 
-    async deleteApiKey(uuid: UUID) {
+    async function deleteApiKey(uuid: UUID) {
         Api.user.apiKeys.delete(uuid).then(
             handleApiError(async (_) => {
                 toast.success("Deleted api key");
-                await this.retrieveApiKeys();
+                await retrieveApiKeys();
             }),
         );
     }
 
-    async updateAccount() {
-        const { username, displayName, user } = this.state;
+    async function updateAccount() {
         if (username.length === 0) {
             toast.error("Username must not be empty");
             return;
@@ -113,16 +90,13 @@ export default class Me extends React.Component<MeProps, MeState> {
 
         await Api.user.update(changes).then(
             handleApiError((_) => {
-                user.displayName = displayName;
-                user.username = username;
-                this.setState({ user });
+                setUser({ ...user, displayName, username });
                 toast.success("Account data updated");
             }),
         );
     }
 
-    changePwd() {
-        const { oldPwd, newPwd, repPwd } = this.state;
+    function changePwd() {
         if (
             !check([
                 [newPwd.length > 0, "Please enter a new password"],
@@ -134,130 +108,106 @@ export default class Me extends React.Component<MeProps, MeState> {
         Api.user.setPassword(oldPwd, newPwd).then(
             handleApiError(() => {
                 toast.success("Changed password successfully");
-                this.context.reset();
+                context.reset();
             }),
         );
     }
 
-    render() {
-        return (
-            <div className="me-container">
-                <div className={"me-heading pane"}>
-                    <h2 className={"sub-heading"}>User Settings</h2>
-                </div>
+    return (
+        <div className="me-container">
+            <div className={"me-heading pane"}>
+                <h2 className={"sub-heading"}>User Settings</h2>
+            </div>
+            <form
+                className={"pane me-settings"}
+                method="post"
+                onSubmit={async (e) => {
+                    e.preventDefault();
+                    await updateAccount();
+                }}
+            >
+                <h2 className={"sub-heading"}>Profile settings</h2>
+                <label htmlFor={"username"}>Username</label>
+                <Input
+                    id={"username"}
+                    value={displayName}
+                    onChange={(v) => {
+                        setDisplayName(v);
+                    }}
+                />
+                <label htmlFor={"display-name"}>Displayname</label>
+                <Input
+                    id={"display-name"}
+                    value={username}
+                    onChange={(v) => {
+                        setUsername(v);
+                    }}
+                />
+                <button className={"button"}>Save</button>
+            </form>
+            <form
+                className="pane me-change-pwd"
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    changePwd();
+                }}
+            >
+                <h2 className="sub-heading">Change Password</h2>
+                <label htmlFor={"curr-pw"}>Current Password</label>
+                <Input id={"curr-pw"} type="password" value={oldPwd} onChange={(oldPwd) => setOldPwd(oldPwd)} />
+                <label htmlFor={"new-pw"}>New Password</label>
+                <Input id={"new-pw"} type="password" value={newPwd} onChange={(newPwd) => setNewPwd(newPwd)} />
+                <label htmlFor={"new-pw-2"}>Confirm Password</label>
+                <Input id={"new-pw-2"} type="password" value={repPwd} onChange={(repPwd) => setRepPwd(repPwd)} />
+                <button type="submit" className="button">
+                    Change
+                </button>
+            </form>
+            <div className={"pane me-api-keys"}>
+                <h2 className={"sub-heading"}>API keys</h2>
                 <form
-                    className={"pane me-settings"}
-                    method="post"
+                    method={"post"}
+                    className={"me-api-keys-create"}
                     onSubmit={async (e) => {
                         e.preventDefault();
-                        await this.updateAccount();
+                        await createApiKey();
                     }}
                 >
-                    <h2 className={"sub-heading"}>Profile settings</h2>
-                    <label htmlFor={"username"}>Username</label>
-                    <Input
-                        id={"username"}
-                        value={this.state.displayName}
-                        onChange={(v) => {
-                            this.setState({ displayName: v });
-                        }}
-                    />
-                    <label htmlFor={"display-name"}>Displayname</label>
-                    <Input
-                        id={"display-name"}
-                        value={this.state.username}
-                        onChange={(v) => {
-                            this.setState({ username: v });
-                        }}
-                    />
-                    <button className={"button"}>Save</button>
+                    <label htmlFor={"api-key-name"}>Name</label>
+                    <Input id={"api-key-name"} value={apiKeyName} onChange={(v) => setApiKeyName(v)} />
+                    <button className={"button"}>Create</button>
                 </form>
-                <form
-                    className="pane me-change-pwd"
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        this.changePwd();
-                    }}
-                >
-                    <h2 className="sub-heading">Change Password</h2>
-                    <label htmlFor={"curr-pw"}>Current Password</label>
-                    <Input
-                        id={"curr-pw"}
-                        type="password"
-                        value={this.state.oldPwd}
-                        onChange={(oldPwd) => this.setState({ oldPwd })}
-                    />
-                    <label htmlFor={"new-pw"}>New Password</label>
-                    <Input
-                        id={"new-pw"}
-                        type="password"
-                        value={this.state.newPwd}
-                        onChange={(newPwd) => this.setState({ newPwd })}
-                    />
-                    <label htmlFor={"new-pw-2"}>Confirm Password</label>
-                    <Input
-                        id={"new-pw-2"}
-                        type="password"
-                        value={this.state.repPwd}
-                        onChange={(repPwd) => this.setState({ repPwd })}
-                    />
-                    <button type="submit" className="button">
-                        Change
-                    </button>
-                </form>
-                <div className={"pane me-api-keys"}>
-                    <h2 className={"sub-heading"}>API keys</h2>
-                    <form
-                        method={"post"}
-                        className={"me-api-keys-create"}
-                        onSubmit={async (e) => {
-                            e.preventDefault();
-                            await this.createApiKey();
-                        }}
-                    >
-                        <label htmlFor={"api-key-name"}>Name</label>
-                        <Input
-                            id={"api-key-name"}
-                            value={this.state.apiKeyName}
-                            onChange={(v) => this.setState({ apiKeyName: v })}
-                        />
-                        <button className={"button"}>Create</button>
-                    </form>
-                    <div className={"me-api-keys-table neon"}>
-                        <div className={"me-api-keys-row"}>
-                            <span>Name</span>
-                            <span>Key</span>
-                            <span>Copy</span>
-                            <span>Delete</span>
-                        </div>
-                        {this.state.apiKeys.map((x) => (
-                            <div key={x.uuid} className={"me-api-keys-row"}>
-                                <span>{x.name}</span>
-                                <span>{x.key}</span>
-                                <span>
-                                    <button
-                                        className={"icon-button"}
-                                        onClick={async () => {
-                                            await navigator.clipboard.writeText(x.key);
-                                            toast.success("Copied to clipboard");
-                                        }}
-                                    >
-                                        <CopyIcon />
-                                    </button>
-                                </span>
-                                <span>
-                                    <button
-                                        className={"icon-button"}
-                                        onClick={async () => await this.deleteApiKey(x.uuid)}
-                                    >
-                                        <CloseIcon />
-                                    </button>
-                                </span>
-                            </div>
-                        ))}
+                <div className={"me-api-keys-table neon"}>
+                    <div className={"me-api-keys-row"}>
+                        <span>Name</span>
+                        <span>Key</span>
+                        <span>Copy</span>
+                        <span>Delete</span>
                     </div>
+                    {apiKeys.map((x) => (
+                        <div key={x.uuid} className={"me-api-keys-row"}>
+                            <span>{x.name}</span>
+                            <span>{x.key}</span>
+                            <span>
+                                <button
+                                    className={"icon-button"}
+                                    onClick={async () => {
+                                        await navigator.clipboard.writeText(x.key);
+                                        toast.success("Copied to clipboard");
+                                    }}
+                                >
+                                    <CopyIcon />
+                                </button>
+                            </span>
+                            <span>
+                                <button className={"icon-button"} onClick={async () => await deleteApiKey(x.uuid)}>
+                                    <CloseIcon />
+                                </button>
+                            </span>
+                        </div>
+                    ))}
                 </div>
             </div>
-        );
-    }
+        </div>
+    );
 }

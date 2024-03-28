@@ -8,72 +8,58 @@ import { handleApiError } from "../utils/helper";
 type OAuthRequestProps = {
     uuid: UUID;
 };
-type OAuthRequestState = {
-    workspace: SimpleWorkspace | null;
-    oauthApplication: SimpleOauthClient | null;
-    remember: boolean;
-};
 
-export default class OauthRequest extends React.Component<OAuthRequestProps, OAuthRequestState> {
-    constructor(props: OAuthRequestProps) {
-        super(props);
+export default function OauthRequest(props: OAuthRequestProps) {
+    const { uuid } = props;
+    const [workspace, setWorkspace] = React.useState<SimpleWorkspace | null>(null);
+    const [oauthApplication, setOauthApplication] = React.useState<SimpleOauthClient | null>(null);
+    const [remember, setRemember] = React.useState<boolean>(false);
 
-        this.state = {
-            workspace: null,
-            oauthApplication: null,
-            remember: false,
-        };
-    }
+    React.useEffect(() => {
+        Api.oauth.info(uuid).then(
+            handleApiError(({ workspace, oauthApplication }) => {
+                setWorkspace(workspace);
+                setOauthApplication(oauthApplication);
+            }),
+        );
+    }, []);
 
-    componentDidMount() {
-        Api.oauth
-            .info(this.props.uuid)
-            .then(handleApiError(({ workspace, oauthApplication }) => this.setState({ workspace, oauthApplication })));
-    }
-
-    redirect(choice: "accept" | "deny") {
-        let url = `/api/v1/oauth/${choice}/${this.props.uuid}`;
-        if (this.state.remember) url = url + "?remember=true";
+    function redirect(choice: "accept" | "deny") {
+        let url = `/api/v1/oauth/${choice}/${uuid}`;
+        if (remember) url = url + "?remember=true";
         window.location.href = url;
     }
 
-    render() {
-        return (
-            <div className={"oauth-container"}>
-                <div className={"pane oauth-panel"}>
-                    {this.state.workspace !== null && this.state.oauthApplication !== null ? (
-                        <>
-                            <h1 className={"heading"}>
-                                {this.state.oauthApplication.name} wants to request access to workspace{" "}
-                                {this.state.workspace.name}.
-                            </h1>
-                            <p>
-                                Granting will give {this.state.oauthApplication.name} read-only access to all
-                                information and all future updates in the workspace {this.state.workspace.name} until
-                                the access is revoked.
-                            </p>
-                            <p>You can always revoke the access in the settings of the workspace.</p>
-                            <label>
-                                <Checkbox
-                                    value={this.state.remember}
-                                    onChange={(remember) => this.setState({ remember })}
-                                />
-                                Remember my decision
-                            </label>
-                            <div className={"oauth-buttons"}>
-                                <button className={"button"} onClick={() => this.redirect("accept")}>
-                                    Grant Access
-                                </button>
-                                <button className={"button"} onClick={() => this.redirect("deny")}>
-                                    Deny Access
-                                </button>
-                            </div>
-                        </>
-                    ) : (
-                        <p>Loading information... </p>
-                    )}
-                </div>
+    return (
+        <div className={"oauth-container"}>
+            <div className={"pane oauth-panel"}>
+                {workspace !== null && oauthApplication !== null ? (
+                    <>
+                        <h1 className={"heading"}>
+                            {oauthApplication.name} wants to request access to workspace {workspace.name}.
+                        </h1>
+                        <p>
+                            Granting will give {oauthApplication.name} read-only access to all information and all
+                            future updates in the workspace {workspace.name} until the access is revoked.
+                        </p>
+                        <p>You can always revoke the access in the settings of the workspace.</p>
+                        <label>
+                            <Checkbox value={remember} onChange={(remember) => setRemember(remember)} />
+                            Remember my decision
+                        </label>
+                        <div className={"oauth-buttons"}>
+                            <button className={"button"} onClick={() => redirect("accept")}>
+                                Grant Access
+                            </button>
+                            <button className={"button"} onClick={() => redirect("deny")}>
+                                Deny Access
+                            </button>
+                        </div>
+                    </>
+                ) : (
+                    <p>Loading information... </p>
+                )}
             </div>
-        );
-    }
+        </div>
+    );
 }
