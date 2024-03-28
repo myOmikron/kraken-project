@@ -1,9 +1,5 @@
 use std::collections::HashMap;
 
-use actix_web::delete;
-use actix_web::get;
-use actix_web::post;
-use actix_web::put;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
@@ -24,8 +20,8 @@ use crate::api::handler::aggregation_source::schema::FullAggregationSource;
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
 use crate::api::handler::common::error::ApiError;
 use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::Page;
 use crate::api::handler::common::schema::PathUuid;
-use crate::api::handler::common::schema::ServiceResultsPage;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::common::utils::get_page_params;
@@ -61,24 +57,12 @@ use crate::modules::raw_query::RawQueryBuilder;
 use crate::query_tags;
 
 /// List the services of a workspace
-#[utoipa::path(
-    tag = "Services",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Retrieve all services of a workspace", body = ServiceResultsPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = GetAllServicesQuery,
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[post("/workspaces/{uuid}/services/all")]
+#[swaggapi::post("/workspaces/{uuid}/services/all")]
 pub async fn get_all_services(
     path: Path<PathUuid>,
     params: Json<GetAllServicesQuery>,
     SessionUser(user_uuid): SessionUser,
-) -> ApiResult<Json<ServiceResultsPage>> {
+) -> ApiResult<Json<Page<FullService>>> {
     let path = path.into_inner();
 
     let mut tx = GLOBAL.db.start_transaction().await?;
@@ -248,7 +232,7 @@ pub async fn get_all_services(
         )
         .collect();
 
-    Ok(Json(ServiceResultsPage {
+    Ok(Json(Page {
         items,
         limit,
         offset,
@@ -257,18 +241,7 @@ pub async fn get_all_services(
 }
 
 /// Retrieve all information about a single service
-#[utoipa::path(
-    tag = "Services",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Retrieved the selected service", body = FullService),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathService),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{w_uuid}/services/{s_uuid}")]
+#[swaggapi::get("/workspaces/{w_uuid}/services/{s_uuid}")]
 pub async fn get_service(
     path: Path<PathService>,
     SessionUser(user_uuid): SessionUser,
@@ -375,19 +348,7 @@ pub async fn get_service(
 }
 
 /// Manually add a service
-#[utoipa::path(
-    tag = "Services",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Service was created", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = CreateServiceRequest,
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[post("/workspaces/{uuid}/services")]
+#[swaggapi::post("/workspaces/{uuid}/services")]
 pub async fn create_service(
     req: Json<CreateServiceRequest>,
     path: Path<PathUuid>,
@@ -423,19 +384,7 @@ pub async fn create_service(
 /// Update a service
 ///
 /// You must include at least on parameter
-#[utoipa::path(
-    tag = "Services",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Service was updated"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = UpdateServiceRequest,
-    params(PathService),
-    security(("api_key" = []))
-)]
-#[put("/workspaces/{w_uuid}/services/{s_uuid}")]
+#[swaggapi::put("/workspaces/{w_uuid}/services/{s_uuid}")]
 pub async fn update_service(
     req: Json<UpdateServiceRequest>,
     path: Path<PathService>,
@@ -557,18 +506,7 @@ pub async fn update_service(
 /// Delete the service
 ///
 /// This only deletes the aggregation. The raw results are still in place
-#[utoipa::path(
-    tag = "Services",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Service was deleted"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathService),
-    security(("api_key" = []))
-)]
-#[delete("/workspaces/{w_uuid}/services/{s_uuid}")]
+#[swaggapi::delete("/workspaces/{w_uuid}/services/{s_uuid}")]
 pub async fn delete_service(
     path: Path<PathService>,
     SessionUser(user_uuid): SessionUser,
@@ -607,18 +545,7 @@ pub async fn delete_service(
 }
 
 /// Get all data sources which referenced this service
-#[utoipa::path(
-    tag = "Services",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The service's sources", body = FullAggregationSource),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathService),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{w_uuid}/services/{s_uuid}/sources")]
+#[swaggapi::get("/workspaces/{w_uuid}/services/{s_uuid}/sources")]
 pub async fn get_service_sources(
     path: Path<PathService>,
     SessionUser(user_uuid): SessionUser,
@@ -635,18 +562,7 @@ pub async fn get_service_sources(
 }
 
 /// Get a service's direct relations
-#[utoipa::path(
-    tag = "Services",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The service's relations", body = ServiceRelations),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathService),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{w_uuid}/services/{s_uuid}/relations")]
+#[swaggapi::get("/workspaces/{w_uuid}/services/{s_uuid}/relations")]
 pub async fn get_service_relations(path: Path<PathService>) -> ApiResult<Json<ServiceRelations>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
@@ -693,18 +609,7 @@ pub async fn get_service_relations(path: Path<PathService>) -> ApiResult<Json<Se
 }
 
 /// Get a service's findings
-#[utoipa::path(
-    tag = "Services",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The service's findings", body = ListFindings),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathService),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{w_uuid}/services/{s_uuid}/findings")]
+#[swaggapi::get("/workspaces/{w_uuid}/services/{s_uuid}/findings")]
 pub async fn get_service_findings(
     path: Path<PathService>,
     SessionUser(u_uuid): SessionUser,

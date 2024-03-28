@@ -1,8 +1,6 @@
 use std::fs::File;
 
 use actix_files::NamedFile;
-use actix_web::delete;
-use actix_web::get;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::web::Query;
@@ -33,18 +31,7 @@ use crate::models::User;
 use crate::models::Workspace;
 
 /// Retrieve all files
-#[utoipa::path(
-    tag = "Admin Files",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "The requested page of files", body = FullFilesPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-        ),
-    params(PageParams, GetAllFilesQuery),
-    security(("api_key" = []))
-)]
-#[get("/files")]
+#[swaggapi::get("/files")]
 pub async fn get_all_files_admin(
     Query(page): Query<PageParams>,
     Query(filter): Query<GetAllFilesQuery>,
@@ -132,18 +119,7 @@ pub async fn get_all_files_admin(
 }
 
 /// Downloads a file
-#[utoipa::path(
-    tag = "Admin Files",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "File has been downloaded successfully", body = Vec<u8>),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[get("/files/{uuid}")]
+#[swaggapi::get("/files/{uuid}")]
 pub async fn download_file_admin(path: Path<PathUuid>) -> ApiResult<NamedFile> {
     let uuid = path.into_inner().uuid;
 
@@ -163,18 +139,7 @@ pub async fn download_file_admin(path: Path<PathUuid>) -> ApiResult<NamedFile> {
 }
 
 /// Deletes a file
-#[utoipa::path(
-    tag = "Admin Files",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "File has been deleted successfully"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[delete("/files/{uuid}")]
+#[swaggapi::delete("/files/{uuid}")]
 pub async fn delete_file_admin(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
     let uuid = path.into_inner().uuid;
 

@@ -1,6 +1,3 @@
-use actix_web::delete;
-use actix_web::post;
-use actix_web::put;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
@@ -21,18 +18,7 @@ use crate::models::GlobalTag;
 /// Create a global tag.
 ///
 /// This action requires admin privileges.
-#[utoipa::path(
-    tag = "Global Tags",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "Global tag was created", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = CreateGlobalTagRequest,
-    security(("api_key" = []))
-)]
-#[post("/globalTags")]
+#[swaggapi::post("/globalTags")]
 pub async fn create_global_tag(req: Json<CreateGlobalTagRequest>) -> ApiResult<Json<UuidResponse>> {
     let req = req.into_inner();
 
@@ -46,19 +32,7 @@ pub async fn create_global_tag(req: Json<CreateGlobalTagRequest>) -> ApiResult<J
 /// One of the options must be set
 ///
 /// Requires admin privileges.
-#[utoipa::path(
-    tag = "Global Tags",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "Global tag was updated"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    request_body = UpdateGlobalTag,
-    security(("api_key" = []))
-)]
-#[put("/globalTags/{uuid}")]
+#[swaggapi::put("/globalTags/{uuid}")]
 pub async fn update_global_tag(
     req: Json<UpdateGlobalTag>,
     path: Path<PathUuid>,
@@ -98,18 +72,7 @@ pub async fn update_global_tag(
 /// Delete a global tag
 ///
 /// Requires admin privileges.
-#[utoipa::path(
-    tag = "Global Tags",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "Global tag was deleted"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[delete("/globalTags/{uuid}")]
+#[swaggapi::delete("/globalTags/{uuid}")]
 pub async fn delete_global_tag(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
     let path = path.into_inner();
     let mut tx = GLOBAL.db.start_transaction().await?;

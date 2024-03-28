@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use actix_web::get;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::web::Query;
@@ -25,18 +24,9 @@ use crate::api::handler::attack_results::schema::SimpleHostAliveResult;
 use crate::api::handler::attack_results::schema::SimpleQueryUnhashedResult;
 use crate::api::handler::common::error::ApiError;
 use crate::api::handler::common::error::ApiResult;
-use crate::api::handler::common::schema::BruteforceSubdomainsResultsPage;
-use crate::api::handler::common::schema::DnsResolutionResultsPage;
-use crate::api::handler::common::schema::DnsTxtScanResultsPage;
-use crate::api::handler::common::schema::HostAliveResultsPage;
-use crate::api::handler::common::schema::OsDetectionResultsPage;
 use crate::api::handler::common::schema::Page;
 use crate::api::handler::common::schema::PageParams;
 use crate::api::handler::common::schema::PathUuid;
-use crate::api::handler::common::schema::QueryCertificateTransparencyResultsPage;
-use crate::api::handler::common::schema::QueryUnhashedResultsPage;
-use crate::api::handler::common::schema::ServiceDetectionResultsPage;
-use crate::api::handler::common::schema::UdpServiceDetectionResultsPage;
 use crate::api::handler::common::utils::get_page_params;
 use crate::chan::global::GLOBAL;
 use crate::models::Attack;
@@ -57,23 +47,12 @@ use crate::models::UdpServiceDetectionName;
 use crate::models::UdpServiceDetectionResult;
 
 /// Retrieve a bruteforce subdomains' results by the attack's id
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns attack's results", body = BruteforceSubdomainsResultsPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid, PageParams),
-    security(("api_key" = []))
-)]
-#[get("/attacks/{uuid}/bruteforceSubdomainsResults")]
+#[swaggapi::get("/attacks/{uuid}/bruteforceSubdomainsResults")]
 pub async fn get_bruteforce_subdomains_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-) -> ApiResult<Json<BruteforceSubdomainsResultsPage>> {
+) -> ApiResult<Json<Page<SimpleBruteforceSubdomainsResult>>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
@@ -115,23 +94,12 @@ pub async fn get_bruteforce_subdomains_results(
 }
 
 /// Retrieve a query certificate transparency's results by the attack's id
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns attack's results", body = QueryCertificateTransparencyResultsPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid, PageParams),
-    security(("api_key" = []))
-)]
-#[get("/attacks/{uuid}/queryCertificateTransparencyResults")]
+#[swaggapi::get("/attacks/{uuid}/queryCertificateTransparencyResults")]
 pub async fn get_query_certificate_transparency_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-) -> ApiResult<Json<QueryCertificateTransparencyResultsPage>> {
+) -> ApiResult<Json<Page<FullQueryCertificateTransparencyResult>>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
@@ -197,23 +165,12 @@ pub async fn get_query_certificate_transparency_results(
 }
 
 /// Retrieve a query dehashed's results by the attack's id
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns attack's results", body = QueryUnhashedResultsPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid, PageParams),
-    security(("api_key" = []))
-)]
-#[get("/attacks/{uuid}/queryUnhashedResults")]
+#[swaggapi::get("/attacks/{uuid}/queryUnhashedResults")]
 pub async fn get_query_unhashed_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-) -> ApiResult<Json<QueryUnhashedResultsPage>> {
+) -> ApiResult<Json<Page<SimpleQueryUnhashedResult>>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
@@ -263,23 +220,12 @@ pub async fn get_query_unhashed_results(
 }
 
 /// Retrieve a host alive's results by the attack's id
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns attack's results", body = HostAliveResultsPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid, PageParams),
-    security(("api_key" = []))
-)]
-#[get("/attacks/{uuid}/hostAliveResults")]
+#[swaggapi::get("/attacks/{uuid}/hostAliveResults")]
 pub async fn get_host_alive_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-) -> ApiResult<Json<HostAliveResultsPage>> {
+) -> ApiResult<Json<Page<SimpleHostAliveResult>>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
@@ -303,7 +249,7 @@ pub async fn get_host_alive_results(
             uuid: x.uuid,
             attack: *x.attack.key(),
             created_at: x.created_at,
-            host: x.host,
+            host: x.host.ip(),
         })
         .try_collect()
         .await?;
@@ -319,23 +265,12 @@ pub async fn get_host_alive_results(
 }
 
 /// Retrieve a detect service's results by the attack's id
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns attack's results", body = ServiceDetectionResultsPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid, PageParams),
-    security(("api_key" = []))
-)]
-#[get("/attacks/{uuid}/serviceDetectionResults")]
+#[swaggapi::get("/attacks/{uuid}/serviceDetectionResults")]
 pub async fn get_service_detection_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-) -> ApiResult<Json<ServiceDetectionResultsPage>> {
+) -> ApiResult<Json<Page<FullServiceDetectionResult>>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
@@ -408,7 +343,7 @@ pub async fn get_service_detection_results(
                         })?,
                     _ => vec![],
                 },
-                host: x.host,
+                host: x.host.ip(),
                 port: x.port as u16,
             })
         })
@@ -426,23 +361,12 @@ pub async fn get_service_detection_results(
 }
 
 /// Retrieve UDP service detection results by the attack's id
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns attack's results", body = UdpServiceDetectionResultsPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid, PageParams),
-    security(("api_key" = []))
-)]
-#[get("/attacks/{uuid}/udpServiceDetectionResults")]
+#[swaggapi::get("/attacks/{uuid}/udpServiceDetectionResults")]
 pub async fn get_udp_service_detection_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-) -> ApiResult<Json<UdpServiceDetectionResultsPage>> {
+) -> ApiResult<Json<Page<FullUdpServiceDetectionResult>>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
@@ -518,7 +442,7 @@ pub async fn get_udp_service_detection_results(
                         })?,
                     _ => vec![],
                 },
-                host: x.host,
+                host: x.host.ip(),
                 port: x.port as u16,
             })
         })
@@ -536,23 +460,12 @@ pub async fn get_udp_service_detection_results(
 }
 
 /// Retrieve a dns resolution's results by the attack's id
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns attack's results", body = DnsResolutionResultsPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid, PageParams),
-    security(("api_key" = []))
-)]
-#[get("/attacks/{uuid}/dnsResolutionResults")]
+#[swaggapi::get("/attacks/{uuid}/dnsResolutionResults")]
 pub async fn get_dns_resolution_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-) -> ApiResult<Json<DnsResolutionResultsPage>> {
+) -> ApiResult<Json<Page<SimpleDnsResolutionResult>>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
@@ -594,23 +507,12 @@ pub async fn get_dns_resolution_results(
 }
 
 /// Retrieve a DNS TXT scan's results by the attack's id
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns attack's results", body = DnsTxtScanResultsPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid, PageParams),
-    security(("api_key" = []))
-)]
-#[get("/attacks/{uuid}/dnsTxtScanResults")]
+#[swaggapi::get("/attacks/{uuid}/dnsTxtScanResults")]
 pub async fn get_dns_txt_scan_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-) -> ApiResult<Json<DnsTxtScanResultsPage>> {
+) -> ApiResult<Json<Page<FullDnsTxtScanResult>>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
@@ -687,23 +589,12 @@ pub async fn get_dns_txt_scan_results(
 }
 
 /// Retrieve a host alive's results by the attack's id
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns attack's results", body = OsDetectionResultsPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid, PageParams),
-    security(("api_key" = []))
-)]
-#[get("/attacks/{uuid}/osDetectionResults")]
+#[swaggapi::get("/attacks/{uuid}/osDetectionResults")]
 pub async fn get_os_detection_results(
     path: Path<PathUuid>,
     page_params: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-) -> ApiResult<Json<OsDetectionResultsPage>> {
+) -> ApiResult<Json<Page<FullOsDetectionResult>>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
     let attack_uuid = path.uuid;
@@ -727,7 +618,7 @@ pub async fn get_os_detection_results(
             uuid: x.uuid,
             attack: *x.attack.key(),
             created_at: x.created_at,
-            host: x.host,
+            host: x.host.ip(),
             version: x.version,
             os: x.os,
             hints: x.hints,

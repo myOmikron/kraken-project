@@ -2,9 +2,9 @@
 
 use chrono::DateTime;
 use chrono::Utc;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::common::de_optional;
@@ -12,7 +12,7 @@ use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::models::FindingSeverity;
 
 /// The request to create a new finding definition
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct CreateFindingDefinitionRequest {
     /// Name of the new finding definition
     ///
@@ -44,7 +44,7 @@ pub struct CreateFindingDefinitionRequest {
 }
 
 /// The full definition of a finding
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FullFindingDefinition {
     /// The uuid of a finding definition
     pub uuid: Uuid,
@@ -69,7 +69,7 @@ pub struct FullFindingDefinition {
 }
 
 /// The simple definition of a finding
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct SimpleFindingDefinition {
     /// The uuid of a finding definition
     pub uuid: Uuid,
@@ -86,21 +86,21 @@ pub struct SimpleFindingDefinition {
 }
 
 /// A list of simple definition of a finding
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ListFindingDefinitions {
     /// The finding definitions
     pub finding_definitions: Vec<SimpleFindingDefinition>,
 }
 
 /// A list of findings using a specific finding definition
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ListFindingDefinitionUsages {
     /// A list of findings using a specific finding definition
     pub usages: Vec<FindingDefinitionUsage>,
 }
 
 /// A finding using a specific finding definition
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FindingDefinitionUsage {
     /// The uuid of the finding
     pub uuid: Uuid,
@@ -131,7 +131,7 @@ pub struct FindingDefinitionUsage {
 // The `#[serde(skip_serializing_if = "Option::is_none")]` is required by the frontend.
 // The update is echoed over the websocket to allow live editing
 // and the frontend needs to differentiate between no update and set to `None`.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct UpdateFindingDefinitionRequest {
     /// Name of the new finding definition
     ///

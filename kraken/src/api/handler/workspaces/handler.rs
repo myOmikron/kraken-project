@@ -1,7 +1,3 @@
-use actix_web::delete;
-use actix_web::get;
-use actix_web::post;
-use actix_web::put;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::web::Query;
@@ -38,8 +34,6 @@ use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::Page;
 use crate::api::handler::common::schema::PageParams;
 use crate::api::handler::common::schema::PathUuid;
-use crate::api::handler::common::schema::SearchResultPage;
-use crate::api::handler::common::schema::SearchesResultPage;
 use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::domains::schema::SimpleDomain;
 use crate::api::handler::hosts::schema::SimpleHost;
@@ -90,18 +84,7 @@ use crate::models::WorkspaceMember;
 use crate::modules::cache::EditorCached;
 
 /// Create a new workspace
-#[utoipa::path(
-    tag = "Workspaces",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Workspace was created", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = CreateWorkspaceRequest,
-    security(("api_key" = []))
-)]
-#[post("/workspaces")]
+#[swaggapi::post("/workspaces")]
 pub async fn create_workspace(
     req: Json<CreateWorkspaceRequest>,
     SessionUser(user_uuid): SessionUser,
@@ -114,18 +97,7 @@ pub async fn create_workspace(
 }
 
 /// Delete a workspace by its id
-#[utoipa::path(
-    tag = "Workspaces",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Workspace was deleted"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[delete("/workspaces/{uuid}")]
+#[swaggapi::delete("/workspaces/{uuid}")]
 pub async fn delete_workspace(
     req: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
@@ -184,18 +156,7 @@ pub async fn delete_workspace(
 }
 
 /// Retrieve a workspace by id
-#[utoipa::path(
-    tag = "Workspaces",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns the workspace", body = FullWorkspace),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{uuid}")]
+#[swaggapi::get("/workspaces/{uuid}")]
 pub async fn get_workspace(
     req: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
@@ -216,17 +177,7 @@ pub async fn get_workspace(
 /// Retrieve all workspaces that the executing user has access to
 ///
 /// For administration access, look at the `/admin/workspaces` endpoint.
-#[utoipa::path(
-    tag = "Workspaces",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns all workspaces that the executing user has access to", body = ListWorkspaces),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    security(("api_key" = []))
-)]
-#[get("/workspaces")]
+#[swaggapi::get("/workspaces")]
 pub async fn get_all_workspaces(
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<ListWorkspaces>> {
@@ -283,19 +234,8 @@ pub async fn get_all_workspaces(
 ///
 /// You can set `description` to null to remove the description from the database.
 /// If you leave the parameter out, the description will remain unchanged.
-#[utoipa::path(
-    tag = "Workspaces",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Workspace got updated"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    request_body = UpdateWorkspaceRequest,
-    security(("api_key" = []))
-)]
-#[put("/workspaces/{uuid}")]
+
+#[swaggapi::put("/workspaces/{uuid}")]
 pub async fn update_workspace(
     path: Path<PathUuid>,
     req: Json<UpdateWorkspaceRequest>,
@@ -339,18 +279,8 @@ pub async fn update_workspace(
 /// Transfer ownership to another account
 ///
 /// You will lose access to the workspace.
-#[utoipa::path(
-    tag = "Workspaces",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Workspace was transferred"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[post("/workspaces/{uuid}/transfer")]
+
+#[swaggapi::post("/workspaces/{uuid}/transfer")]
 pub async fn transfer_ownership(
     req: Json<TransferWorkspaceRequest>,
     path: Path<PathUuid>,
@@ -387,18 +317,7 @@ pub async fn transfer_ownership(
 }
 
 /// Mark the workspace as archived
-#[utoipa::path(
-    tag = "Workspaces",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The workspace was archived."),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[post("/workspaces/{uuid}/archive")]
+#[swaggapi::post("/workspaces/{uuid}/archive")]
 pub async fn archive_workspace(
     path: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
@@ -423,18 +342,7 @@ pub async fn archive_workspace(
 }
 
 /// Mark an archived workspace as unarchived
-#[utoipa::path(
-    tag = "Workspaces",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The workspace was unarchived."),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[post("/workspaces/{uuid}/unarchive")]
+#[swaggapi::post("/workspaces/{uuid}/unarchive")]
 pub async fn unarchive_workspace(
     path: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
@@ -461,19 +369,7 @@ pub async fn unarchive_workspace(
 /// Invite a user to the workspace
 ///
 /// This action can only be invoked by the owner of a workspace
-#[utoipa::path(
-    tag = "Workspaces",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The user was invited."),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    request_body = InviteToWorkspaceRequest,
-    security(("api_key" = []))
-)]
-#[post("/workspaces/{uuid}/invitations")]
+#[swaggapi::post("/workspaces/{uuid}/invitations")]
 pub async fn create_invitation(
     req: Json<InviteToWorkspaceRequest>,
     path: Path<PathUuid>,
@@ -530,18 +426,7 @@ pub async fn create_invitation(
 /// Retract an invitation to the workspace
 ///
 /// This action can only be invoked by the owner of a workspace
-#[utoipa::path(
-    tag = "Workspaces",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The invitation was retracted."),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(InviteUuid),
-    security(("api_key" = []))
-)]
-#[delete("/workspaces/{w_uuid}/invitations/{i_uuid}")]
+#[swaggapi::delete("/workspaces/{w_uuid}/invitations/{i_uuid}")]
 pub async fn retract_invitation(
     path: Path<InviteUuid>,
     SessionUser(session_user): SessionUser,
@@ -579,18 +464,7 @@ pub async fn retract_invitation(
 }
 
 /// Query all open invitations to a workspace
-#[utoipa::path(
-    tag = "Workspaces",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns all open invitations to the workspace.", body = WorkspaceInvitationList),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{uuid}/invitations")]
+#[swaggapi::get("/workspaces/{uuid}/invitations")]
 pub async fn get_all_workspace_invitations(
     path: Path<PathUuid>,
     SessionUser(session_user): SessionUser,
@@ -646,19 +520,7 @@ pub async fn get_all_workspace_invitations(
 }
 
 /// Search through a workspaces' data
-#[utoipa::path(
-    tag = "Workspaces",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Search has been scheduled", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    request_body = SearchWorkspaceRequest,
-    security(("api_key" = []))
-)]
-#[post("/workspaces/{uuid}/search")]
+#[swaggapi::post("/workspaces/{uuid}/search")]
 pub async fn search(
     path: Path<PathUuid>,
     request: Json<SearchWorkspaceRequest>,
@@ -729,23 +591,12 @@ pub async fn search(
 }
 
 /// Query all searches
-#[utoipa::path(
-    tag = "Workspaces",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Search results", body = SearchesResultPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid, PageParams),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{uuid}/search")]
+#[swaggapi::get("/workspaces/{uuid}/search")]
 pub async fn get_searches(
     path: Path<PathUuid>,
     request: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-) -> ApiResult<Json<SearchesResultPage>> {
+) -> ApiResult<Json<Page<SearchEntry>>> {
     let PathUuid { uuid } = path.into_inner();
     let PageParams { limit, offset } = request.into_inner();
 
@@ -782,23 +633,12 @@ pub async fn get_searches(
 }
 
 /// Retrieve results for a search by its uuid
-#[utoipa::path(
-    tag = "Workspaces",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Search results", body = SearchResultPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(SearchUuid, PageParams),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{w_uuid}/search/{s_uuid}")]
+#[swaggapi::get("/workspaces/{w_uuid}/search/{s_uuid}")]
 pub async fn get_search_results(
     path: Path<SearchUuid>,
     request: Query<PageParams>,
     SessionUser(user_uuid): SessionUser,
-) -> ApiResult<Json<SearchResultPage>> {
+) -> ApiResult<Json<Page<SearchResultEntry>>> {
     let SearchUuid { w_uuid, s_uuid } = path.into_inner();
     let PageParams { limit, offset } = request.into_inner();
 
@@ -990,7 +830,7 @@ pub async fn get_search_results(
                     uuid: data.uuid,
                     created_at: data.created_at,
                     attack: *data.attack.key(),
-                    host: data.host,
+                    host: data.host.ip(),
                 })
             }
             ModelType::ServiceDetectionResult => {
@@ -1010,7 +850,7 @@ pub async fn get_search_results(
                     uuid: data.uuid,
                     created_at: data.created_at,
                     attack: *data.attack.key(),
-                    host: data.host,
+                    host: data.host.ip(),
                     port: data.port as u16,
                     certainty: data.certainty,
                     service_names,
@@ -1033,7 +873,7 @@ pub async fn get_search_results(
                     uuid: data.uuid,
                     created_at: data.created_at,
                     attack: *data.attack.key(),
-                    host: data.host,
+                    host: data.host.ip(),
                     port: data.port as u16,
                     certainty: data.certainty,
                     service_names,

@@ -5,9 +5,9 @@ use rorm::prelude::BackRef;
 use rorm::prelude::ForeignModel;
 use rorm::DbEnum;
 use rorm::Model;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[cfg(feature = "bin")]
@@ -26,7 +26,7 @@ mod patches;
 
 /// The severity of a finding
 #[rustfmt::skip]
-#[derive(Copy, Clone, Debug, DbEnum, Deserialize, Serialize, ToSchema, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, DbEnum, Deserialize, Serialize, JsonSchema, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum FindingSeverity {
     /// Severity was set to okay
     Okay,

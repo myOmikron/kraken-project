@@ -5,9 +5,9 @@
 use chrono::DateTime;
 use chrono::Utc;
 use rorm::prelude::*;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[cfg(feature = "bin")]
@@ -22,7 +22,7 @@ mod operations;
 mod patches;
 
 /// The permission of a member in a workspace
-#[derive(Debug, Copy, Clone, Deserialize, Serialize, ToSchema, DbEnum)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize, JsonSchema, DbEnum)]
 pub enum WorkspaceMemberPermission {
     /// The member may only read the existing data, but not start any attacks
     ReadOnly,
@@ -167,7 +167,7 @@ pub struct WorkspaceInvitation {
 }
 
 /// The target of a [WorkspaceQueryFilter]
-#[derive(DbEnum, Debug, ToSchema, Deserialize, Serialize, Copy, Clone)]
+#[derive(DbEnum, Debug, JsonSchema, Deserialize, Serialize, Copy, Clone)]
 #[non_exhaustive]
 pub enum FilterTarget {
     /// A global filter

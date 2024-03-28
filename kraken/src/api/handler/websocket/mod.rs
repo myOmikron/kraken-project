@@ -7,7 +7,6 @@ use std::time::Instant;
 use actix_toolbox::ws;
 use actix_toolbox::ws::MailboxError;
 use actix_toolbox::ws::Message;
-use actix_web::get;
 use actix_web::web::Payload;
 use actix_web::HttpRequest;
 use actix_web::HttpResponse;
@@ -30,17 +29,7 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
 /// A heartbeat PING packet is sent constantly (every 10s).
 /// If no response is retrieved within 30s of the last transmission, the socket
 /// will be closed.
-#[utoipa::path(
-    tag = "Websocket",
-    context_path = "/api/v1",
-    responses(
-        (status = 101, description = "Websocket connection established"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    security(("api_key" = []))
-)]
-#[get("/ws")]
+#[swaggapi::get("/ws")]
 pub async fn websocket(
     request: HttpRequest,
     payload: Payload,

@@ -37,9 +37,9 @@ actix-files = { version = "~0.6" }
 webauthn-rs = { version = "~0.4", features = ["danger-allow-state-serialisation"] }
 
 # openapi swagger
-utoipa = { version = "~4", features = ["actix_extras", "repr", "chrono", "uuid", "openapi_extensions", "preserve_order"] }
-# openapi swagger boilerplat generation
-utoipa-swagger-ui = { version = "~6", features = ["actix-web"], optional = true }
+swaggapi = { version = "0.2.0", features = ["actix", "actix-files"], optional = true }
+# swaggapi = { version = "0.2.0", features = ["actix", "actix-files"], optional = true, git = "https://github.com/gammelalf/swaggapi" }
+schemars = { version = "~0.8", features = ["uuid1", "chrono", "url"] }
 
 # Hashing
 argon2 = { version = "~0.5", features = ["std"], optional = true }
@@ -107,7 +107,7 @@ rorm-main = []
 bin = [
     "dep:actix-web",
     "dep:actix-toolbox",
-    "dep:utoipa-swagger-ui",
+    "dep:swaggapi",
     "dep:argon2",
     "dep:sha2",
     "dep:clap",

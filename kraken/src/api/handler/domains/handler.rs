@@ -2,10 +2,6 @@ use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Write;
 
-use actix_web::delete;
-use actix_web::get;
-use actix_web::post;
-use actix_web::put;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
@@ -30,7 +26,7 @@ use crate::api::handler::aggregation_source::schema::FullAggregationSource;
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
 use crate::api::handler::common::error::ApiError;
 use crate::api::handler::common::error::ApiResult;
-use crate::api::handler::common::schema::DomainResultsPage;
+use crate::api::handler::common::schema::Page;
 use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::common::schema::UuidResponse;
@@ -68,24 +64,12 @@ use crate::modules::raw_query::RawQueryBuilder;
 use crate::query_tags;
 
 /// Retrieve all domains of a specific workspace
-#[utoipa::path(
-    tag = "Domains",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Retrieve all domains of a workspace", body = DomainResultsPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = GetAllDomainsQuery,
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[post("/workspaces/{uuid}/domains/all")]
+#[swaggapi::post("/workspaces/{uuid}/domains/all")]
 pub async fn get_all_domains(
     path: Path<PathUuid>,
     params: Json<GetAllDomainsQuery>,
     SessionUser(user_uuid): SessionUser,
-) -> ApiResult<Json<DomainResultsPage>> {
+) -> ApiResult<Json<Page<FullDomain>>> {
     let path = path.into_inner();
 
     let mut tx = GLOBAL.db.start_transaction().await?;
@@ -193,7 +177,7 @@ pub async fn get_all_domains(
         })
         .collect();
 
-    Ok(Json(DomainResultsPage {
+    Ok(Json(Page {
         items,
         limit,
         offset,
@@ -202,18 +186,7 @@ pub async fn get_all_domains(
 }
 
 /// Retrieve all information about a single domain
-#[utoipa::path(
-    tag = "Domains",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Retrieved the selected domain", body = FullDomain),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathDomain),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{w_uuid}/domains/{d_uuid}")]
+#[swaggapi::get("/workspaces/{w_uuid}/domains/{d_uuid}")]
 pub async fn get_domain(
     path: Path<PathDomain>,
 
@@ -278,19 +251,7 @@ pub async fn get_domain(
 }
 
 /// Manually add a domain
-#[utoipa::path(
-    tag = "Domains",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Domain was created", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = CreateDomainRequest,
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[post("/workspaces/{uuid}/domains")]
+#[swaggapi::post("/workspaces/{uuid}/domains")]
 pub async fn create_domain(
     req: Json<CreateDomainRequest>,
     path: Path<PathUuid>,
@@ -307,19 +268,7 @@ pub async fn create_domain(
 /// Update a domain
 ///
 /// You must include at least on parameter
-#[utoipa::path(
-    tag = "Domains",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Domain was updated"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = UpdateDomainRequest,
-    params(PathDomain),
-    security(("api_key" = []))
-)]
-#[put("/workspaces/{w_uuid}/domains/{d_uuid}")]
+#[swaggapi::put("/workspaces/{w_uuid}/domains/{d_uuid}")]
 pub async fn update_domain(
     req: Json<UpdateDomainRequest>,
     path: Path<PathDomain>,
@@ -442,18 +391,7 @@ pub async fn update_domain(
 /// Delete the domain
 ///
 /// This only deletes the aggregation. The raw results are still in place
-#[utoipa::path(
-    tag = "Domains",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Domain was deleted"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathDomain),
-    security(("api_key" = []))
-)]
-#[delete("/workspaces/{w_uuid}/domains/{d_uuid}")]
+#[swaggapi::delete("/workspaces/{w_uuid}/domains/{d_uuid}")]
 pub async fn delete_domain(
     path: Path<PathDomain>,
     SessionUser(user_uuid): SessionUser,
@@ -492,18 +430,7 @@ pub async fn delete_domain(
 }
 
 /// Get all data sources which referenced this domain
-#[utoipa::path(
-    tag = "Domains",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The domain's sources", body = FullAggregationSource),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathDomain),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{w_uuid}/domains/{d_uuid}/sources")]
+#[swaggapi::get("/workspaces/{w_uuid}/domains/{d_uuid}/sources")]
 pub async fn get_domain_sources(
     path: Path<PathDomain>,
     SessionUser(user_uuid): SessionUser,
@@ -520,18 +447,7 @@ pub async fn get_domain_sources(
 }
 
 /// Get a domain's direct relations
-#[utoipa::path(
-    tag = "Domains",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The domain's relations", body = DomainRelations),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathDomain),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{w_uuid}/domains/{d_uuid}/relations")]
+#[swaggapi::get("/workspaces/{w_uuid}/domains/{d_uuid}/relations")]
 pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<DomainRelations>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
@@ -613,18 +529,7 @@ pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<Doma
 }
 
 /// Get a domain's findings
-#[utoipa::path(
-    tag = "Domains",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The domain's findings", body = ListFindings),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathDomain),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{w_uuid}/domains/{d_uuid}/findings")]
+#[swaggapi::get("/workspaces/{w_uuid}/domains/{d_uuid}/findings")]
 pub async fn get_domain_findings(
     path: Path<PathDomain>,
     SessionUser(u_uuid): SessionUser,

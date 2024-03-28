@@ -1,7 +1,3 @@
-use actix_web::delete;
-use actix_web::get;
-use actix_web::post;
-use actix_web::put;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
@@ -51,19 +47,7 @@ use crate::models::WorkspaceTag;
 use crate::modules::cache::EditorCached;
 
 /// Add a new affected object to a finding
-#[utoipa::path(
-    tag = "Findings",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Affected object was added successfully"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = CreateFindingAffectedRequest,
-    params(PathFinding),
-    security(("api_key" = []))
-)]
-#[post("/workspace/{w_uuid}/findings/{f_uuid}/affected")]
+#[swaggapi::post("/workspace/{w_uuid}/findings/{f_uuid}/affected")]
 pub async fn create_finding_affected(
     path: Path<PathFinding>,
     Json(request): Json<CreateFindingAffectedRequest>,
@@ -120,18 +104,7 @@ pub async fn create_finding_affected(
 }
 
 /// Get an object affected by a finding
-#[utoipa::path(
-    tag = "Findings",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "A full finding and the affected object", body = FullFindingAffected),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathFindingAffected),
-    security(("api_key" = []))
-)]
-#[get("/workspace/{w_uuid}/findings/{f_uuid}/affected/{a_uuid}")]
+#[swaggapi::get("/workspace/{w_uuid}/findings/{f_uuid}/affected/{a_uuid}")]
 pub async fn get_finding_affected(
     path: Path<PathFindingAffected>,
     SessionUser(u_uuid): SessionUser,
@@ -401,19 +374,7 @@ pub async fn get_finding_affected(
 }
 
 /// Update the details of an affected object
-#[utoipa::path(
-    tag = "Findings",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Affected object has been updated"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = UpdateFindingAffectedRequest,
-    params(PathFindingAffected),
-    security(("api_key" = []))
-)]
-#[put("/workspace/{w_uuid}/findings/{f_uuid}/affected/{a_uuid}")]
+#[swaggapi::put("/workspace/{w_uuid}/findings/{f_uuid}/affected/{a_uuid}")]
 pub async fn update_finding_affected(
     path: Path<PathFindingAffected>,
     Json(request): Json<UpdateFindingAffectedRequest>,
@@ -482,18 +443,7 @@ pub async fn update_finding_affected(
 }
 
 /// Remove an affected object from a finding
-#[utoipa::path(
-    tag = "Findings",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Affected object has been removed"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathFindingAffected),
-    security(("api_key" = []))
-)]
-#[delete("/workspace/{w_uuid}/findings/{f_uuid}/affected/{a_uuid}")]
+#[swaggapi::delete("/workspace/{w_uuid}/findings/{f_uuid}/affected/{a_uuid}")]
 pub async fn delete_finding_affected(
     path: Path<PathFindingAffected>,
     SessionUser(u_uuid): SessionUser,

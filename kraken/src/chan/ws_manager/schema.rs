@@ -5,9 +5,9 @@ use std::num::NonZeroU64;
 
 use chrono::DateTime;
 use chrono::Utc;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::attack_results::schema::FullDnsTxtScanResult;
@@ -26,7 +26,7 @@ use crate::models::OsType;
 /// Message that is sent via websocket from the client to the server.
 ///
 /// For messages the server is able to send, look at [WsMessage]
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 #[serde(tag = "type")]
 pub enum WsClientMessage {
     /// Content was changed in an editor
@@ -49,7 +49,7 @@ pub enum WsClientMessage {
 ///
 /// These messages are only invoked by the Server.
 /// For messages the client is able to send, look at [WsClientMessage]
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 #[serde(tag = "type")]
 pub enum WsMessage {
     /// An invalid message was received.
@@ -104,7 +104,6 @@ pub enum WsMessage {
         /// The corresponding id of the attack
         attack_uuid: Uuid,
         /// A host which could be reached
-        #[schema(value_type = String)]
         host: IpAddr,
     },
     /// A result for a tcp scan
@@ -166,7 +165,6 @@ pub enum WsMessage {
         /// The major operating system type
         os: OsType,
         /// A host which could be reached
-        #[schema(value_type = String)]
         host: IpAddr,
         /// Human-readable extra hints for the OS, new-line (\n) separated
         hints: String,
@@ -327,7 +325,7 @@ pub enum WsMessage {
 ///
 /// Used to specify the target for the editor, for example the
 /// specific section in a [FindingDefinition]
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone, Copy)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone, Copy)]
 pub enum EditorTarget {
     /// The editor for a [FindingDefinition]
     FindingDefinition {
@@ -356,7 +354,7 @@ pub enum EditorTarget {
 }
 
 /// The different types of aggregations
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone, Copy)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone, Copy)]
 pub enum AggregationType {
     /// The domain model
     Domain,
@@ -369,7 +367,7 @@ pub enum AggregationType {
 }
 
 /// The section that was edited
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema)]
 #[allow(missing_docs)]
 pub enum FindingSection {
     Summary,
@@ -382,37 +380,37 @@ pub enum FindingSection {
 /// Defines a change
 ///
 /// Columns and lines are treated as 1-indexed
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Change {
     /// The text that should be set to the range given by the other values
     pub text: String,
     /// Start of the column
-    #[schema(value_type = u64, minimum = 1)]
+    // TODO  #[schema(value_type = u64, minimum = 1)]
     pub start_column: NonZeroU64,
     /// End of the column
-    #[schema(value_type = u64, minimum = 1)]
+    // TODO #[schema(value_type = u64, minimum = 1)]
     pub end_column: NonZeroU64,
     /// Starting line number
-    #[schema(value_type = u64, minimum = 1)]
+    // TODO #[schema(value_type = u64, minimum = 1)]
     pub start_line: NonZeroU64,
     /// Ending line number
-    #[schema(value_type = u64, minimum = 1)]
+    // TODO #[schema(value_type = u64, minimum = 1)]
     pub end_line: NonZeroU64,
 }
 
 /// Defines this position of a cursor
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema)]
 pub struct CursorPosition {
     /// The line the cursor was placed in
-    #[schema(value_type = u64, minimum = 1)]
+    // TODO #[schema(value_type = u64, minimum = 1)]
     pub line: NonZeroU64,
     /// The column the cursor was placed in
-    #[schema(value_type = u64, minimum = 1)]
+    // TODO #[schema(value_type = u64, minimum = 1)]
     pub column: NonZeroU64,
 }
 
 /// Entry of certificate transparency results
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct CertificateTransparencyEntry {
     /// The serial number of the certificate
     pub serial_number: String,

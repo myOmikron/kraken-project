@@ -1,5 +1,3 @@
-use actix_web::get;
-use actix_web::post;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
@@ -21,17 +19,7 @@ use crate::models::WorkspaceMemberPermission;
 
 /// Retrieve all open invitations to workspaces the currently logged-in user
 /// has retrieved
-#[utoipa::path(
-    tag = "Workspace Invitations",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns all invitations of a user", body = WorkspaceInvitationList),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    security(("api_key" = []))
-)]
-#[get("/invitations")]
+#[swaggapi::get("/invitations")]
 pub async fn get_all_invitations(
     SessionUser(session_user): SessionUser,
 ) -> ApiResult<Json<WorkspaceInvitationList>> {
@@ -86,18 +74,7 @@ pub async fn get_all_invitations(
 }
 
 /// Accept an invitation to a workspace
-#[utoipa::path(
-    tag = "Workspace Invitations",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Accept an invitation"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[post("/invitations/{uuid}/accept")]
+#[swaggapi::post("/invitations/{uuid}/accept")]
 pub async fn accept_invitation(
     path: Path<PathUuid>,
     SessionUser(session_user): SessionUser,
@@ -140,18 +117,7 @@ pub async fn accept_invitation(
 }
 
 /// Decline an invitation to a workspace
-#[utoipa::path(
-    tag = "Workspace Invitations",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Decline an invitation"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[post("/invitations/{uuid}/decline")]
+#[swaggapi::post("/invitations/{uuid}/decline")]
 pub async fn decline_invitation(
     path: Path<PathUuid>,
     SessionUser(session_user): SessionUser,

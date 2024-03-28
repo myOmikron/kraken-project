@@ -1,6 +1,3 @@
-use actix_web::get;
-use actix_web::post;
-use actix_web::put;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
@@ -33,18 +30,7 @@ use crate::modules::cache::EditorCached;
 /// These definition serve as reference and knowledge base in kraken.
 /// They can be used to create a finding that references a definition and links it to one or
 /// multiple aggregations.
-#[utoipa::path(
-    tag = "Knowledge Base",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Finding definition was created", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = CreateFindingDefinitionRequest,
-    security(("api_key" = []))
-)]
-#[post("/findingDefinitions")]
+#[swaggapi::post("/findingDefinitions")]
 pub async fn create_finding_definition(
     req: Json<CreateFindingDefinitionRequest>,
 ) -> ApiResult<Json<UuidResponse>> {
@@ -89,18 +75,7 @@ pub async fn create_finding_definition(
 }
 
 /// Retrieve a specific finding definition
-#[utoipa::path(
-    tag = "Knowledge Base",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Retrieved a specific finding definition", body = FullFindingDefinition),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[get("/findingDefinitions/{uuid}")]
+#[swaggapi::get("/findingDefinitions/{uuid}")]
 pub async fn get_finding_definition(
     path: Path<PathUuid>,
 ) -> ApiResult<Json<FullFindingDefinition>> {
@@ -132,17 +107,7 @@ pub async fn get_finding_definition(
 }
 
 /// Retrieve all finding definitions
-#[utoipa::path(
-    tag = "Knowledge Base",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Retrieved a list of all finding definitions", body = ListFindingDefinitions),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    security(("api_key" = []))
-)]
-#[get("/findingDefinitions")]
+#[swaggapi::get("/findingDefinitions")]
 pub async fn get_all_finding_definitions() -> ApiResult<Json<ListFindingDefinitions>> {
     let mut finding_definitions: Vec<SimpleFindingDefinition> =
         query!(&GLOBAL.db, FindingDefinition)
@@ -177,19 +142,7 @@ pub async fn get_all_finding_definitions() -> ApiResult<Json<ListFindingDefiniti
 ///
 /// This endpoint only allows updating the `name`, `severity` and `cve`.
 /// The other values have to be updated through the websocket as part of a live editor.
-#[utoipa::path(
-    tag = "Knowledge Base",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Updated a finding definition"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    request_body = UpdateFindingDefinitionRequest,
-    security(("api_key" = []))
-)]
-#[put("/findingDefinitions/{uuid}")]
+#[swaggapi::put("/findingDefinitions/{uuid}")]
 pub async fn update_finding_definition(
     path: Path<PathUuid>,
     Json(request): Json<UpdateFindingDefinitionRequest>,

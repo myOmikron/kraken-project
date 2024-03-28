@@ -1,13 +1,10 @@
 use std::collections::HashMap;
 
-use actix_web::delete;
-use actix_web::get;
-use actix_web::post;
-use actix_web::put;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
 use futures::TryStreamExt;
+use ipnetwork::IpNetwork;
 use rorm::and;
 use rorm::conditions::DynamicCollection;
 use rorm::db::sql::value::Value;
@@ -24,8 +21,8 @@ use crate::api::handler::aggregation_source::schema::FullAggregationSource;
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
 use crate::api::handler::common::error::ApiError;
 use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::Page;
 use crate::api::handler::common::schema::PathUuid;
-use crate::api::handler::common::schema::PortResultsPage;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::common::utils::get_page_params;
@@ -59,26 +56,13 @@ use crate::modules::filter::GlobalAST;
 use crate::modules::filter::PortAST;
 use crate::modules::raw_query::RawQueryBuilder;
 use crate::query_tags;
-
 /// List the ports of a workspace
-#[utoipa::path(
-    tag = "Ports",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Retrieve all ports of a workspace", body = PortResultsPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = GetAllPortsQuery,
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[post("/workspaces/{uuid}/ports/all")]
+#[swaggapi::post("/workspaces/{uuid}/ports/all")]
 pub async fn get_all_ports(
     path: Path<PathUuid>,
     params: Json<GetAllPortsQuery>,
     SessionUser(user_uuid): SessionUser,
-) -> ApiResult<Json<PortResultsPage>> {
+) -> ApiResult<Json<Page<FullPort>>> {
     let path = path.into_inner();
 
     let mut tx = GLOBAL.db.start_transaction().await?;
@@ -192,7 +176,7 @@ pub async fn get_all_ports(
         )
         .collect();
 
-    Ok(Json(PortResultsPage {
+    Ok(Json(Page {
         items,
         limit,
         offset,
@@ -201,18 +185,7 @@ pub async fn get_all_ports(
 }
 
 /// Retrieve all information about a single port
-#[utoipa::path(
-    tag = "Ports",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Retrieved the selected port", body = FullPort),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathPort),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{w_uuid}/ports/{p_uuid}")]
+#[swaggapi::get("/workspaces/{w_uuid}/ports/{p_uuid}")]
 pub async fn get_port(
     path: Path<PathPort>,
 
@@ -293,19 +266,7 @@ pub async fn get_port(
 }
 
 /// Manually add a port
-#[utoipa::path(
-    tag = "Ports",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Port was created", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = CreatePortRequest,
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[post("/workspaces/{uuid}/ports")]
+#[swaggapi::post("/workspaces/{uuid}/ports")]
 pub async fn create_port(
     req: Json<CreatePortRequest>,
     path: Path<PathUuid>,
@@ -321,7 +282,13 @@ pub async fn create_port(
     let PathUuid { uuid: workspace } = path.into_inner();
     Ok(Json(UuidResponse {
         uuid: ManualPort::insert(
-            &GLOBAL.db, workspace, user, ip_addr, port, certainty, protocol,
+            &GLOBAL.db,
+            workspace,
+            user,
+            IpNetwork::from(ip_addr),
+            port,
+            certainty,
+            protocol,
         )
         .await?,
     }))
@@ -330,19 +297,7 @@ pub async fn create_port(
 /// Update a port
 ///
 /// You must include at least on parameter
-#[utoipa::path(
-    tag = "Ports",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Port was updated"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = UpdatePortRequest,
-    params(PathPort),
-    security(("api_key" = []))
-)]
-#[put("/workspaces/{w_uuid}/ports/{p_uuid}")]
+#[swaggapi::put("/workspaces/{w_uuid}/ports/{p_uuid}")]
 pub async fn update_port(
     req: Json<UpdatePortRequest>,
     path: Path<PathPort>,
@@ -464,18 +419,7 @@ pub async fn update_port(
 /// Delete the port
 ///
 /// This only deletes the aggregation. The raw results are still in place
-#[utoipa::path(
-    tag = "Ports",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Port was deleted"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathPort),
-    security(("api_key" = []))
-)]
-#[delete("/workspaces/{w_uuid}/ports/{p_uuid}")]
+#[swaggapi::delete("/workspaces/{w_uuid}/ports/{p_uuid}")]
 pub async fn delete_port(
     path: Path<PathPort>,
     SessionUser(user_uuid): SessionUser,
@@ -514,18 +458,7 @@ pub async fn delete_port(
 }
 
 /// Get all data sources which referenced this port
-#[utoipa::path(
-    tag = "Ports",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The port's sources", body = FullAggregationSource),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathPort),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{w_uuid}/ports/{p_uuid}/sources")]
+#[swaggapi::get("/workspaces/{w_uuid}/ports/{p_uuid}/sources")]
 pub async fn get_port_sources(
     path: Path<PathPort>,
     SessionUser(user_uuid): SessionUser,
@@ -542,18 +475,7 @@ pub async fn get_port_sources(
 }
 
 /// Get a port's direct relations
-#[utoipa::path(
-    tag = "Ports",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The port's relations", body = PortRelations),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathPort),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{w_uuid}/ports/{p_uuid}/relations")]
+#[swaggapi::get("/workspaces/{w_uuid}/ports/{p_uuid}/relations")]
 pub async fn get_port_relations(path: Path<PathPort>) -> ApiResult<Json<PortRelations>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
@@ -598,18 +520,7 @@ pub async fn get_port_relations(path: Path<PathPort>) -> ApiResult<Json<PortRela
 }
 
 /// Get a port's findings
-#[utoipa::path(
-    tag = "Ports",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The port's findings", body = ListFindings),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathPort),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{w_uuid}/ports/{p_uuid}/findings")]
+#[swaggapi::get("/workspaces/{w_uuid}/ports/{p_uuid}/findings")]
 pub async fn get_port_findings(
     path: Path<PathPort>,
     SessionUser(u_uuid): SessionUser,

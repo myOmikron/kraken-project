@@ -1,9 +1,8 @@
 use chrono::DateTime;
 use chrono::Utc;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::IntoParams;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
@@ -14,15 +13,15 @@ use crate::models::DomainCertainty;
 use crate::models::FindingSeverity;
 
 /// The request to manually add a domain
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct CreateDomainRequest {
     /// The domain to add
-    #[schema(example = "kraken.test")]
+    // TODO #[schema(example = "kraken.test")]
     pub domain: String,
 }
 
 /// The request to update a domain
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct UpdateDomainRequest {
     /// The comment of the domain
     pub comment: Option<String>,
@@ -33,7 +32,7 @@ pub struct UpdateDomainRequest {
 }
 
 /// Query parameters for filtering the domains to get
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct GetAllDomainsQuery {
     /// The parameters controlling the page to query
     #[serde(flatten)]
@@ -49,15 +48,15 @@ pub struct GetAllDomainsQuery {
 }
 
 /// A simple representation of a domain in a workspace
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct SimpleDomain {
     /// The uuid of the domain
     pub uuid: Uuid,
     /// The domain name
-    #[schema(example = "example.com")]
+    // TODO #[schema(example = "example.com")]
     pub domain: String,
     /// The comment to the domain
-    #[schema(example = "This is a important domain!")]
+    // TODO #[schema(example = "This is a important domain!")]
     pub comment: String,
     /// The workspace this domain is linked to
     pub workspace: Uuid,
@@ -68,15 +67,15 @@ pub struct SimpleDomain {
 }
 
 /// A full representation of a domain in a workspace
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct FullDomain {
     /// The primary key of the domain
     pub uuid: Uuid,
     /// The domain's name
-    #[schema(example = "example.com")]
+    // TODO #[schema(example = "example.com")]
     pub domain: String,
     /// A comment
-    #[schema(example = "This is a important domain!")]
+    // TODO #[schema(example = "This is a important domain!")]
     pub comment: String,
     /// The workspace this domain is in
     pub workspace: Uuid,
@@ -93,7 +92,7 @@ pub struct FullDomain {
 }
 
 /// The path parameter of a domain
-#[derive(Serialize, Deserialize, IntoParams, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone, Copy)]
 pub struct PathDomain {
     /// The workspace's uuid
     pub w_uuid: Uuid,
@@ -102,7 +101,7 @@ pub struct PathDomain {
 }
 
 /// A domain's direct relations
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct DomainRelations {
     /// All domains which contain a `CNAME` record with this domain
     pub source_domains: Vec<SimpleDomain>,

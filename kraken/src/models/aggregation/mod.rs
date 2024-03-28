@@ -8,9 +8,9 @@ use rorm::prelude::BackRef;
 use rorm::prelude::ForeignModel;
 use rorm::DbEnum;
 use rorm::Model;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::GlobalTag;
@@ -21,7 +21,7 @@ use crate::models::WorkspaceTag;
 mod operations;
 
 /// A representation of an OS type
-#[derive(DbEnum, Copy, Clone, Debug, ToSchema, Serialize, Deserialize)]
+#[derive(DbEnum, Copy, Clone, Debug, JsonSchema, Serialize, Deserialize)]
 pub enum OsType {
     /// The OS type is currently unknown
     Unknown,
@@ -38,7 +38,7 @@ pub enum OsType {
 }
 
 /// The certainty of a host
-#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug, PartialOrd, PartialEq)]
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, JsonSchema, Debug, PartialOrd, PartialEq)]
 pub enum HostCertainty {
     /// 3rd party historical data
     Historical = 0,
@@ -133,7 +133,7 @@ pub struct HostWorkspaceTag {
 }
 
 /// The certainty a service is detected
-#[derive(Debug, Copy, Clone, ToSchema, Deserialize, Serialize, DbEnum, PartialOrd, PartialEq)]
+#[derive(Debug, Copy, Clone, JsonSchema, Deserialize, Serialize, DbEnum, PartialOrd, PartialEq)]
 pub enum ServiceCertainty {
     /// 3rd party historical data
     Historical = 0,
@@ -202,7 +202,7 @@ pub struct Service {
 }
 
 /// The parsed representation for a [`Service`]'s `protocols` field
-#[derive(ToSchema, Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(JsonSchema, Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum ServiceProtocols {
     /// The port's protocol is [`PortProtocol::Unknown`]
     Unknown {}, // Not unit struct to make the api generator behave
@@ -262,7 +262,7 @@ pub struct ServiceWorkspaceTag {
 }
 
 /// A protocol of a port
-#[derive(DbEnum, ToSchema, Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(DbEnum, JsonSchema, Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum PortProtocol {
     /// Unknown protocol
     Unknown,
@@ -275,7 +275,7 @@ pub enum PortProtocol {
 }
 
 /// The certainty states of a port
-#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug, PartialOrd, PartialEq)]
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, JsonSchema, Debug, PartialOrd, PartialEq)]
 pub enum PortCertainty {
     /// 3rd party historical data
     Historical = 0,
@@ -361,7 +361,7 @@ pub struct PortWorkspaceTag {
 }
 
 /// The certainty of a domain
-#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug, PartialOrd, PartialEq)]
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, JsonSchema, Debug, PartialOrd, PartialEq)]
 pub enum DomainCertainty {
     /// The domain was not found through DNS
     Unverified = 0,
@@ -553,7 +553,7 @@ pub struct AggregationSource {
 }
 
 /// Enum used in [`AggregationSource`] to identify which table it points to
-#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug, Eq, PartialEq, Hash)]
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, JsonSchema, Debug, Eq, PartialEq, Hash)]
 pub enum SourceType {
     /// The [`BruteforceSubdomainsResult`] table
     BruteforceSubdomains,
@@ -597,7 +597,7 @@ pub enum SourceType {
 }
 
 /// Enum used in [`AggregationSource`] to identify which table it points to
-#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, JsonSchema, Debug)]
 pub enum AggregationTable {
     /// The [`Host`] table
     Host,

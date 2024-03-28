@@ -6,9 +6,9 @@ use chrono::Utc;
 use ipnetwork::IpNetwork;
 use rorm::prelude::*;
 use rorm::Model;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::OsType;
@@ -43,7 +43,7 @@ pub struct ManualHost {
 }
 
 /// The certainty of a manually added host
-#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, JsonSchema, Debug)]
 pub enum ManualHostCertainty {
     /// Historical data
     Historical,
@@ -85,7 +85,7 @@ pub struct ManualService {
 }
 
 /// The certainty of a manually added service
-#[derive(Debug, Copy, Clone, ToSchema, Deserialize, Serialize, DbEnum)]
+#[derive(Debug, Copy, Clone, JsonSchema, Deserialize, Serialize, DbEnum)]
 pub enum ManualServiceCertainty {
     /// Historical data
     Historical,
@@ -120,7 +120,7 @@ pub struct ManualPort {
 }
 
 /// The certainty of a manually added port
-#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, JsonSchema, Debug)]
 pub enum ManualPortCertainty {
     /// Historical data
     Historical,

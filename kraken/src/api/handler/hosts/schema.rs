@@ -2,11 +2,9 @@ use std::net::IpAddr;
 
 use chrono::DateTime;
 use chrono::Utc;
-use ipnetwork::IpNetwork;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::IntoParams;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
@@ -21,18 +19,17 @@ use crate::models::ManualHostCertainty;
 use crate::models::OsType;
 
 /// The request to manually add a host
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct CreateHostRequest {
     /// The host's ip address
-    #[schema(value_type = String, example = "127.0.0.1")]
-    pub ip_addr: IpNetwork,
+    pub ip_addr: IpAddr,
 
     /// Whether the host should exist right now or existed at some point
     pub certainty: ManualHostCertainty,
 }
 
 /// The request to update a host
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct UpdateHostRequest {
     /// The comment of a host
     pub comment: Option<String>,
@@ -43,7 +40,7 @@ pub struct UpdateHostRequest {
 }
 
 /// Query parameters for filtering the hosts to get
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct GetAllHostsQuery {
     /// The parameters controlling the page to query
     #[serde(flatten)]
@@ -57,12 +54,11 @@ pub struct GetAllHostsQuery {
 }
 
 /// The simple representation of a host
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct SimpleHost {
     /// The primary key of the host
     pub uuid: Uuid,
     /// The ip address of the host
-    #[schema(value_type = String, example = "172.0.0.1")]
     pub ip_addr: IpAddr,
     /// The type of OS
     pub os_type: OsType,
@@ -79,12 +75,11 @@ pub struct SimpleHost {
 }
 
 /// The full representation of a host
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct FullHost {
     /// The primary key of the host
     pub uuid: Uuid,
     /// The ip address of the host
-    #[schema(value_type = String, example = "172.0.0.1")]
     pub ip_addr: IpAddr,
     /// The type of OS
     pub os_type: OsType,
@@ -107,7 +102,7 @@ pub struct FullHost {
 }
 
 /// The path parameter of a host
-#[derive(Serialize, Deserialize, IntoParams, Debug, Copy, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Copy, Clone)]
 pub struct PathHost {
     /// Workspace uuid
     pub w_uuid: Uuid,
@@ -116,7 +111,7 @@ pub struct PathHost {
 }
 
 /// A host's direct relations
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct HostRelations {
     /// This host's ports
     pub ports: Vec<SimplePort>,

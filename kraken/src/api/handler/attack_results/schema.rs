@@ -1,9 +1,11 @@
+use std::net::IpAddr;
+
 use chrono::DateTime;
 use chrono::Utc;
 use ipnetwork::IpNetwork;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::DnsRecordType;
@@ -14,7 +16,7 @@ use crate::models::OsType;
 use crate::models::ServiceCertainty;
 
 /// A simple representation of a bruteforce subdomains result
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct SimpleBruteforceSubdomainsResult {
     /// The primary key
     pub uuid: Uuid,
@@ -32,12 +34,11 @@ pub struct SimpleBruteforceSubdomainsResult {
     pub destination: String,
 
     /// The type of DNS record
-    #[schema(inline)]
     pub dns_record_type: DnsRecordType,
 }
 
 /// A simple representation of a query certificate transparency result
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct FullQueryCertificateTransparencyResult {
     /// The primary key
     pub uuid: Uuid,
@@ -68,7 +69,7 @@ pub struct FullQueryCertificateTransparencyResult {
 }
 
 /// A simple representation of a query unhashed result
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct SimpleQueryUnhashedResult {
     /// The primary key
     pub uuid: Uuid,
@@ -95,7 +96,7 @@ pub struct SimpleQueryUnhashedResult {
     pub hashed_password: Option<String>,
 
     /// An ip address
-    #[schema(value_type = String, example = "127.0.0.1")]
+    #[schemars(with = "Option<IpAddr>")] // TODO
     pub ip_address: Option<IpNetwork>,
 
     /// A name
@@ -115,7 +116,7 @@ pub struct SimpleQueryUnhashedResult {
 }
 
 /// A simple representation of a host alive result
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct SimpleHostAliveResult {
     /// The primary key
     pub uuid: Uuid,
@@ -127,12 +128,11 @@ pub struct SimpleHostAliveResult {
     pub created_at: DateTime<Utc>,
 
     /// A host that responded
-    #[schema(value_type = String, example = "127.0.0.1")]
-    pub host: IpNetwork,
+    pub host: IpAddr,
 }
 
 /// A simple representation of a service detection result
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct FullServiceDetectionResult {
     /// The primary key
     pub uuid: Uuid,
@@ -144,22 +144,20 @@ pub struct FullServiceDetectionResult {
     pub created_at: DateTime<Utc>,
 
     /// The certainty of the result
-    #[schema(inline)]
     pub certainty: ServiceCertainty,
 
     /// The found names of the service
     pub service_names: Vec<String>,
 
     /// The ip address a port was found on
-    #[schema(value_type = String, example = "127.0.0.1")]
-    pub host: IpNetwork,
+    pub host: IpAddr,
 
     /// Port number
     pub port: u16,
 }
 
 /// A simple representation of a service detection result
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct FullUdpServiceDetectionResult {
     /// The primary key
     pub uuid: Uuid,
@@ -171,22 +169,20 @@ pub struct FullUdpServiceDetectionResult {
     pub created_at: DateTime<Utc>,
 
     /// The certainty of the result
-    #[schema(inline)]
     pub certainty: ServiceCertainty,
 
     /// The found names of the service
     pub service_names: Vec<String>,
 
     /// The ip address a port was found on
-    #[schema(value_type = String, example = "127.0.0.1")]
-    pub host: IpNetwork,
+    pub host: IpAddr,
 
     /// Port number
     pub port: u16,
 }
 
 /// A simple representation of a dns resolution result
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct SimpleDnsResolutionResult {
     /// The primary key
     pub uuid: Uuid,
@@ -204,12 +200,11 @@ pub struct SimpleDnsResolutionResult {
     pub destination: String,
 
     /// The type of DNS record
-    #[schema(inline)]
     pub dns_record_type: DnsRecordType,
 }
 
 /// A simple representation of a dns txt scan result
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct SimpleDnsTxtScanResult {
     /// The primary key
     pub uuid: Uuid,
@@ -228,7 +223,7 @@ pub struct SimpleDnsTxtScanResult {
 }
 
 /// The full representation of a dns txt scan result
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct FullDnsTxtScanResult {
     /// The primary key
     pub uuid: Uuid,
@@ -251,7 +246,7 @@ pub struct FullDnsTxtScanResult {
 
 /// A single detailed entry for a given DNS TXT scan result. May be a hint at service usage / ownership or contain
 /// parsed SPF rules.
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub enum DnsTxtScanEntry {
     /// Just wraps txt_type, the DNS rule is usually more exact to what is actually written in DNS
     ServiceHint {
@@ -282,7 +277,7 @@ pub enum DnsTxtScanEntry {
         spf_type: DnsTxtScanSpfType,
 
         /// If the txt_type is a SPF type that includes an IP (or whole IP range), it will be set here.
-        #[schema(value_type = String, example = "127.0.0.1/24")]
+        #[schemars(with = "Option<IpAddr>")] // TODO
         spf_ip: Option<IpNetwork>,
 
         /// If the txt_type is a SPF type that includes a domain, it will be set here.
@@ -296,7 +291,7 @@ pub enum DnsTxtScanEntry {
 }
 
 /// Representation of an OS detection result
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct FullOsDetectionResult {
     /// The primary key
     pub uuid: Uuid,
@@ -308,8 +303,7 @@ pub struct FullOsDetectionResult {
     pub created_at: DateTime<Utc>,
 
     /// The ip address a port was found on
-    #[schema(value_type = String, example = "127.0.0.1")]
-    pub host: IpNetwork,
+    pub host: IpAddr,
 
     /// The detected operating system
     pub os: OsType,

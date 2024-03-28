@@ -2,10 +2,9 @@
 
 use chrono::DateTime;
 use chrono::Utc;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::IntoParams;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::attack_results::schema::FullQueryCertificateTransparencyResult;
@@ -24,18 +23,18 @@ use crate::api::handler::services::schema::SimpleService;
 use crate::api::handler::users::schema::SimpleUser;
 
 /// The request to create a new workspace
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct CreateWorkspaceRequest {
     /// The name of the workspace
-    #[schema(example = "secure-workspace")]
+    // TODO #[schema(example = "secure-workspace")]
     pub name: String,
     /// The description of the workspace
-    #[schema(example = "This workspace is super secure and should not be looked at!!")]
+    // TODO #[schema(example = "This workspace is super secure and should not be looked at!!")]
     pub description: Option<String>,
 }
 
 /// Request to search the workspace
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct SearchWorkspaceRequest {
     /// the term to search for
     pub search_term: String,
@@ -44,33 +43,33 @@ pub struct SearchWorkspaceRequest {
 /// The request type to update a workspace
 ///
 /// All parameter are optional, but at least one of them must be specified
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct UpdateWorkspaceRequest {
     /// Name of the workspace
-    #[schema(example = "Workspace for work")]
+    // TODO #[schema(example = "Workspace for work")]
     pub name: Option<String>,
     /// Description of the workspace
-    #[schema(example = "This workspace is for work and for work only!")]
+    // TODO #[schema(example = "This workspace is for work and for work only!")]
     #[serde(default, deserialize_with = "de_optional")]
     pub description: Option<Option<String>>,
 }
 
 /// The request to transfer a workspace to another account
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone, Copy)]
 pub struct TransferWorkspaceRequest {
     /// The uuid of the user that should receive the workspace
     pub user: Uuid,
 }
 
 /// The request to invite a user to the workspace
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone, Copy)]
 pub struct InviteToWorkspaceRequest {
     /// The user to invite
     pub user: Uuid,
 }
 
 /// The url components of an invitation
-#[derive(Serialize, Deserialize, IntoParams, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone, Copy)]
 pub struct InviteUuid {
     /// The UUID of the workspace
     pub w_uuid: Uuid,
@@ -79,7 +78,7 @@ pub struct InviteUuid {
 }
 
 /// The url components of an search
-#[derive(Serialize, Deserialize, IntoParams, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone, Copy)]
 pub struct SearchUuid {
     /// The UUID of the workspace
     pub w_uuid: Uuid,
@@ -88,15 +87,15 @@ pub struct SearchUuid {
 }
 
 /// A simple version of a workspace
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct SimpleWorkspace {
     /// The uuid of the workspace
     pub uuid: Uuid,
     /// The name of the workspace
-    #[schema(example = "ultra-secure-workspace")]
+    // TODO #[schema(example = "ultra-secure-workspace")]
     pub name: String,
     /// The description of the workspace
-    #[schema(example = "This workspace is ultra secure and should not be looked at!!")]
+    // TODO  #[schema(example = "This workspace is ultra secure and should not be looked at!!")]
     pub description: Option<String>,
     /// The owner of the workspace
     pub owner: SimpleUser,
@@ -107,15 +106,15 @@ pub struct SimpleWorkspace {
 }
 
 /// A full version of a workspace
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct FullWorkspace {
     /// The uuid of the workspace
     pub uuid: Uuid,
-    #[schema(example = "ultra-secure-workspace")]
+    // TODO #[schema(example = "ultra-secure-workspace")]
     /// The name of the workspace
     pub name: String,
     /// The description of the workspace
-    #[schema(example = "This workspace is ultra secure and should not be looked at!!")]
+    // TODO #[schema(example = "This workspace is ultra secure and should not be looked at!!")]
     pub description: Option<String>,
     /// Notes of the workspace
     pub notes: String,
@@ -132,14 +131,14 @@ pub struct FullWorkspace {
 }
 
 /// The response to retrieve a list of workspaces
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct ListWorkspaces {
     /// The list of workspaces
     pub workspaces: Vec<SimpleWorkspace>,
 }
 
 /// Dynamic result of a search
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub enum SearchResultEntry {
     /// Host Result
     HostEntry(SimpleHost),
@@ -166,7 +165,7 @@ pub enum SearchResultEntry {
 }
 
 /// Searched entry
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct SearchEntry {
     /// The uuid of the search
     pub uuid: Uuid,

@@ -8,6 +8,13 @@ use log::error;
 use log::info;
 use log::trace;
 use log::warn;
+use swaggapi::as_responses::simple_responses;
+use swaggapi::as_responses::AsResponses;
+use swaggapi::as_responses::SimpleResponse;
+use swaggapi::internals::SchemaGenerator;
+use swaggapi::re_exports::openapiv3::MediaType;
+use swaggapi::re_exports::openapiv3::Responses;
+use swaggapi::re_exports::openapiv3::StatusCode;
 use thiserror::Error;
 use webauthn_rs::prelude::WebauthnError;
 
@@ -153,6 +160,29 @@ pub enum ApiError {
     /// The uploaded image file is invalid
     #[error("File is an invalid image")]
     InvalidImage,
+}
+
+impl AsResponses for ApiError {
+    fn responses(gen: &mut SchemaGenerator) -> Responses {
+        let media_type = Some(MediaType {
+            schema: Some(gen.generate::<ApiErrorResponse>()),
+            ..Default::default()
+        });
+        simple_responses([
+            SimpleResponse {
+                status_code: StatusCode::Code(400),
+                mime_type: "application/json".parse().unwrap(),
+                description: "Client error".to_string(),
+                media_type: media_type.clone(),
+            },
+            SimpleResponse {
+                status_code: StatusCode::Code(500),
+                mime_type: "application/json".parse().unwrap(),
+                description: "Server error".to_string(),
+                media_type,
+            },
+        ])
+    }
 }
 
 impl actix_web::ResponseError for ApiError {

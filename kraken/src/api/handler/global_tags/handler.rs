@@ -1,4 +1,3 @@
-use actix_web::get;
 use actix_web::web::Json;
 use rorm::query;
 
@@ -9,17 +8,7 @@ use crate::chan::global::GLOBAL;
 use crate::models::GlobalTag;
 
 /// Retrieve all global tags
-#[utoipa::path(
-    tag = "Global Tags",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Retrieve all global tags", body = ListGlobalTags),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    security(("api_key" = []))
-)]
-#[get("/globalTags")]
+#[swaggapi::get("/globalTags")]
 pub async fn get_all_global_tags() -> ApiResult<Json<ListGlobalTags>> {
     let global_tags = query!(&GLOBAL.db, GlobalTag).all().await?;
 

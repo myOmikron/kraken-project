@@ -1,12 +1,12 @@
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::Color;
 
 /// The request to create a global tag
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct CreateGlobalTagRequest {
     /// Name of the tag
     pub name: String,
@@ -15,7 +15,7 @@ pub struct CreateGlobalTagRequest {
 }
 
 /// The request to update a global tag
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct UpdateGlobalTag {
     /// Name of the global tag
     pub name: Option<String>,
@@ -24,7 +24,7 @@ pub struct UpdateGlobalTag {
 }
 
 /// The full representation of a full
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct FullGlobalTag {
     /// The uuid of the tag
     pub uuid: Uuid,
@@ -35,7 +35,7 @@ pub struct FullGlobalTag {
 }
 
 /// The response to a request to retrieve all global tags
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct ListGlobalTags {
     /// List of global tags
     pub global_tags: Vec<FullGlobalTag>,

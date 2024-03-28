@@ -1,13 +1,12 @@
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::IntoParams;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::Color;
 
 /// The request to create a workspace tag
-#[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
+#[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
 pub struct CreateWorkspaceTagRequest {
     /// Name of the tag
     pub name: String,
@@ -16,12 +15,11 @@ pub struct CreateWorkspaceTagRequest {
 }
 
 /// The full representation of a full workspace tag
-#[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
+#[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
 pub struct FullWorkspaceTag {
     /// The uuid of the workspace tag
     pub uuid: Uuid,
     /// The name of the tag
-    #[schema(example = "seems broken")]
     pub name: String,
     /// The color of the tag
     pub color: Color,
@@ -30,14 +28,14 @@ pub struct FullWorkspaceTag {
 }
 
 /// The response to a request to retrieve all workspace tags
-#[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
+#[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
 pub struct ListWorkspaceTags {
     /// Workspace tags
     pub workspace_tags: Vec<FullWorkspaceTag>,
 }
 
 /// The request to update a workspace tag
-#[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
+#[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
 pub struct UpdateWorkspaceTag {
     /// Name of the tag
     pub name: Option<String>,
@@ -46,7 +44,7 @@ pub struct UpdateWorkspaceTag {
 }
 
 /// The path of a workspace tag
-#[derive(Deserialize, IntoParams)]
+#[derive(Deserialize, JsonSchema)]
 pub struct PathWorkspaceTag {
     /// Workspace uuid
     pub w_uuid: Uuid,

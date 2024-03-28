@@ -1,7 +1,3 @@
-use actix_web::delete;
-use actix_web::get;
-use actix_web::post;
-use actix_web::put;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
@@ -31,18 +27,7 @@ use crate::chan::global::GLOBAL;
 use crate::models::LeechApiKey;
 
 /// Create new api key
-#[utoipa::path(
-    tag = "Api Keys",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Api key was created successfully", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    request_body = CreateApiKeyRequest,
-    security(("api_key" = []))
-)]
-#[post("/apiKeys")]
+#[swaggapi::post("/apiKeys")]
 pub async fn create_api_key(
     req: Json<CreateApiKeyRequest>,
     SessionUser(user): SessionUser,
@@ -61,18 +46,7 @@ pub async fn create_api_key(
 }
 
 /// Delete an existing api key
-#[utoipa::path(
-    tag = "Api Keys",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Api key got deleted"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[delete("/apiKeys/{uuid}")]
+#[swaggapi::delete("/apiKeys/{uuid}")]
 pub async fn delete_api_key(
     path: Path<PathUuid>,
     SessionUser(user): SessionUser,
@@ -92,17 +66,7 @@ pub async fn delete_api_key(
 }
 
 /// Retrieve all api keys
-#[utoipa::path(
-    tag = "Api Keys",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The uses api keys", body = ListApiKeys),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    security(("api_key" = []))
-)]
-#[get("/apiKeys")]
+#[swaggapi::get("/apiKeys")]
 pub async fn get_api_keys(SessionUser(user): SessionUser) -> ApiResult<Json<ListApiKeys>> {
     let keys = query!(
         &GLOBAL.db,
@@ -119,19 +83,7 @@ pub async fn get_api_keys(SessionUser(user): SessionUser) -> ApiResult<Json<List
 /// Update an api key by its id
 ///
 /// All parameter are optional, but at least one of them must be specified.
-#[utoipa::path(
-    tag = "Api Keys",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Api key got updated"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    params(PathUuid),
-    request_body = UpdateApiKeyRequest,
-    security(("api_key" = []))
-)]
-#[put("/apiKeys/{uuid}")]
+#[swaggapi::put("/apiKeys/{uuid}")]
 pub async fn update_api_key(
     path: Path<PathUuid>,
     req: Json<UpdateApiKeyRequest>,

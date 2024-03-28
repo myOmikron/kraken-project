@@ -297,7 +297,7 @@ impl FullAggregationSource {
                                 uuid: result.uuid,
                                 attack: *result.attack.key(),
                                 created_at: result.created_at,
-                                host: result.host,
+                                host: result.host.ip(),
                             },
                         );
                     }
@@ -332,7 +332,7 @@ impl FullAggregationSource {
                                 created_at: result.created_at,
                                 certainty: result.certainty,
                                 service_names: services.remove(&result.uuid).unwrap_or_default(),
-                                host: result.host,
+                                host: result.host.ip(),
                                 port: result.port as u16,
                             });
                     }
@@ -370,7 +370,7 @@ impl FullAggregationSource {
                                 created_at: result.created_at,
                                 certainty: result.certainty,
                                 service_names: services.remove(&result.uuid).unwrap_or_default(),
-                                host: result.host,
+                                host: result.host.ip(),
                                 port: result.port as u16,
                             });
                     }
@@ -454,7 +454,7 @@ impl FullAggregationSource {
                                 uuid: result.uuid,
                                 attack: *result.attack.key(),
                                 created_at: result.created_at,
-                                host: result.host,
+                                host: result.host.ip(),
                                 hints: result.hints,
                                 version: result.version,
                                 os: result.os,
@@ -540,7 +540,7 @@ impl FullAggregationSource {
                             port: port as u16,
                             protocol,
                             certainty,
-                            host: host.ip().to_string(),
+                            host: host.ip(),
                             user,
                             workspace: *workspace.key(),
                             created_at,
@@ -569,7 +569,7 @@ impl FullAggregationSource {
                             name,
                             port: port.map(|p| p as u16),
                             certainty,
-                            host: host.ip().to_string(),
+                            host: host.ip(),
                             user,
                             workspace: *workspace.key(),
                             created_at,

@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use actix_web::get;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use chrono::Utc;
@@ -38,18 +37,7 @@ use crate::models::ServiceGlobalTag;
 use crate::models::ServiceWorkspaceTag;
 use crate::models::WorkspaceAccessToken;
 
-#[utoipa::path(
-    tag = "Data Export",
-    context_path = "/api/v1/export",
-    responses(
-        (status = 200, description = "All hosts in the workspace", body = AggregatedWorkspace),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("bearer_token" = []))
-)]
-#[get("/workspace/{uuid}")]
+#[swaggapi::get("/workspace/{uuid}")]
 pub(crate) async fn export_workspace(
     path: Path<PathUuid>,
     token: BearerToken,

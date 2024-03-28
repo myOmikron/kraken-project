@@ -1,9 +1,8 @@
 use chrono::DateTime;
 use chrono::Utc;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::IntoParams;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::common::de_optional;
@@ -16,7 +15,7 @@ use crate::api::handler::services::schema::SimpleService;
 use crate::chan::ws_manager::schema::AggregationType;
 
 /// The request to add a new object affected by a finding
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct CreateFindingAffectedRequest {
     /// The object's uuid
     pub uuid: Uuid,
@@ -43,7 +42,7 @@ pub struct CreateFindingAffectedRequest {
 // The `#[serde(skip_serializing_if = "Option::is_none")]` is required by the frontend.
 // The update is echoed over the websocket to allow live editing
 // and the frontend needs to differentiate between no update and set to `None`.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct UpdateFindingAffectedRequest {
     /// A screenshot
     ///
@@ -59,7 +58,7 @@ pub struct UpdateFindingAffectedRequest {
 }
 
 /// An affected object's details and the finding it is affected by
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FullFindingAffected {
     /// The finding this object is affected by
     pub finding: FullFinding,
@@ -92,7 +91,7 @@ pub struct FullFindingAffected {
 }
 
 /// The object affected by a finding
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub enum FindingAffectedObject {
     /// An affected domain
     Domain(SimpleDomain),
@@ -108,7 +107,7 @@ pub enum FindingAffectedObject {
 }
 
 /// The path parameter of an object affected by a finding
-#[derive(Serialize, Deserialize, IntoParams, Debug, Copy, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Copy, Clone)]
 pub struct PathFindingAffected {
     /// Workspace uuid
     pub w_uuid: Uuid,

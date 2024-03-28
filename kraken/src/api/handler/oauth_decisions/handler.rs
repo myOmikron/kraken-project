@@ -1,5 +1,3 @@
-use actix_web::delete;
-use actix_web::get;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
@@ -23,17 +21,7 @@ use crate::models::Workspace;
 use crate::models::WorkspaceAccessToken;
 
 /// Retrieve a user's remembered oauth decisions
-#[utoipa::path(
-    tag = "OAuth Decisions",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The user's remember oauth decisions", body = ListOauthDecisions),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    security(("api_key" = []))
-)]
-#[get("/oauthDecisions")]
+#[swaggapi::get("/oauthDecisions")]
 pub async fn get_decisions(
     SessionUser(user_uuid): SessionUser,
 ) -> ApiResult<Json<ListOauthDecisions>> {
@@ -68,18 +56,7 @@ pub async fn get_decisions(
 }
 
 /// Revoke a user's remembered oauth decision
-#[utoipa::path(
-    tag = "OAuth Decisions",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Revoked decision"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = [])),
-)]
-#[delete("/oauthDecisions/{uuid}")]
+#[swaggapi::delete("/oauthDecisions/{uuid}")]
 pub async fn revoke_decision(
     SessionUser(user_uuid): SessionUser,
     path: Path<PathUuid>,

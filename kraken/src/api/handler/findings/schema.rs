@@ -1,9 +1,8 @@
 use chrono::DateTime;
 use chrono::Utc;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::IntoParams;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::common::de_optional;
@@ -12,7 +11,7 @@ use crate::chan::ws_manager::schema::AggregationType;
 use crate::models::FindingSeverity;
 
 /// The request to create a new finding
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct CreateFindingRequest {
     /// Name of the new finding definition
     ///
@@ -41,7 +40,7 @@ pub struct CreateFindingRequest {
 // The `#[serde(skip_serializing_if = "Option::is_none")]` is required by the frontend.
 // The update is echoed over the websocket to allow live editing
 // and the frontend needs to differentiate between no update and set to `None`.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct UpdateFindingRequest {
     /// Name of the new finding definition
     ///
@@ -67,7 +66,7 @@ pub struct UpdateFindingRequest {
 }
 
 /// A simple finding
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct SimpleFinding {
     /// The uuid of the finding
     pub uuid: Uuid,
@@ -92,7 +91,7 @@ pub struct SimpleFinding {
 }
 
 /// A full finding
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FullFinding {
     /// The uuid of the finding
     pub uuid: Uuid,
@@ -128,7 +127,7 @@ pub struct FullFinding {
 }
 
 /// The uuid's for objects affected by findings
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct SimpleFindingAffected {
     /// The finding this affected belongs to
     pub finding: Uuid,
@@ -141,14 +140,14 @@ pub struct SimpleFindingAffected {
 }
 
 /// A list of simple findings
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ListFindings {
     /// The findings
     pub findings: Vec<SimpleFinding>,
 }
 
 /// The path parameter of a finding
-#[derive(Serialize, Deserialize, IntoParams, Debug, Copy, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Copy, Clone)]
 pub struct PathFinding {
     /// Workspace uuid
     pub w_uuid: Uuid,

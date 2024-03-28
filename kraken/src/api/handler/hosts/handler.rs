@@ -1,13 +1,10 @@
 use std::collections::HashMap;
 
-use actix_web::delete;
-use actix_web::get;
-use actix_web::post;
-use actix_web::put;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
 use futures::TryStreamExt;
+use ipnetwork::IpNetwork;
 use rorm::and;
 use rorm::conditions::DynamicCollection;
 use rorm::db::sql::value::Value;
@@ -25,7 +22,7 @@ use crate::api::handler::aggregation_source::schema::FullAggregationSource;
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
 use crate::api::handler::common::error::ApiError;
 use crate::api::handler::common::error::ApiResult;
-use crate::api::handler::common::schema::HostResultsPage;
+use crate::api::handler::common::schema::Page;
 use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::common::schema::UuidResponse;
@@ -68,24 +65,12 @@ use crate::query_tags;
 ///
 /// Hosts are created out of aggregating data or by user input.
 /// They represent a single host and can be created by providing an IP address
-#[utoipa::path(
-    tag = "Hosts",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "All hosts in the workspace", body = HostResultsPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = GetAllHostsQuery,
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[post("/workspaces/{uuid}/hosts/all")]
+#[swaggapi::post("/workspaces/{uuid}/hosts/all")]
 pub(crate) async fn get_all_hosts(
     path: Path<PathUuid>,
     params: Json<GetAllHostsQuery>,
     SessionUser(user_uuid): SessionUser,
-) -> ApiResult<Json<HostResultsPage>> {
+) -> ApiResult<Json<Page<FullHost>>> {
     let path = path.into_inner();
 
     let mut tx = GLOBAL.db.start_transaction().await?;
@@ -176,7 +161,7 @@ pub(crate) async fn get_all_hosts(
         })
         .collect();
 
-    Ok(Json(HostResultsPage {
+    Ok(Json(Page {
         items,
         limit,
         offset,
@@ -185,18 +170,7 @@ pub(crate) async fn get_all_hosts(
 }
 
 /// Retrieve all information about a single host
-#[utoipa::path(
-    tag = "Hosts",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Retrieved the selected host", body = FullHost),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathHost),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{w_uuid}/hosts/{h_uuid}")]
+#[swaggapi::get("/workspaces/{w_uuid}/hosts/{h_uuid}")]
 pub async fn get_host(
     path: Path<PathHost>,
     SessionUser(user_uuid): SessionUser,
@@ -264,19 +238,7 @@ pub async fn get_host(
 }
 
 /// Manually add a host
-#[utoipa::path(
-    tag = "Hosts",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Host was created", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = CreateHostRequest,
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[post("/workspaces/{uuid}/hosts")]
+#[swaggapi::post("/workspaces/{uuid}/hosts")]
 pub async fn create_host(
     req: Json<CreateHostRequest>,
     path: Path<PathUuid>,
@@ -285,26 +247,21 @@ pub async fn create_host(
     let CreateHostRequest { ip_addr, certainty } = req.into_inner();
     let PathUuid { uuid: workspace } = path.into_inner();
     Ok(Json(UuidResponse {
-        uuid: ManualHost::insert(&GLOBAL.db, workspace, user, ip_addr, certainty).await?,
+        uuid: ManualHost::insert(
+            &GLOBAL.db,
+            workspace,
+            user,
+            IpNetwork::from(ip_addr),
+            certainty,
+        )
+        .await?,
     }))
 }
 
 /// Update a host
 ///
 /// You must include at least on parameter
-#[utoipa::path(
-    tag = "Hosts",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Host was updated"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = UpdateHostRequest,
-    params(PathHost),
-    security(("api_key" = []))
-)]
-#[put("/workspaces/{w_uuid}/hosts/{h_uuid}")]
+#[swaggapi::put("/workspaces/{w_uuid}/hosts/{h_uuid}")]
 pub async fn update_host(
     req: Json<UpdateHostRequest>,
     path: Path<PathHost>,
@@ -427,18 +384,7 @@ pub async fn update_host(
 /// Delete the host
 ///
 /// This only deletes the aggregation. The raw results are still in place
-#[utoipa::path(
-    tag = "Hosts",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Host was deleted"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathHost),
-    security(("api_key" = []))
-)]
-#[delete("/workspaces/{w_uuid}/hosts/{h_uuid}")]
+#[swaggapi::delete("/workspaces/{w_uuid}/hosts/{h_uuid}")]
 pub async fn delete_host(
     path: Path<PathHost>,
     SessionUser(user_uuid): SessionUser,
@@ -477,18 +423,7 @@ pub async fn delete_host(
 }
 
 /// Get all data sources which referenced this host
-#[utoipa::path(
-    tag = "Hosts",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The host's sources", body = FullAggregationSource),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathHost),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{w_uuid}/hosts/{h_uuid}/sources")]
+#[swaggapi::get("/workspaces/{w_uuid}/hosts/{h_uuid}/sources")]
 pub async fn get_host_sources(
     path: Path<PathHost>,
     SessionUser(user_uuid): SessionUser,
@@ -505,18 +440,7 @@ pub async fn get_host_sources(
 }
 
 /// Get a host's direct relations
-#[utoipa::path(
-    tag = "Hosts",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The host's relations", body = HostRelations),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathHost),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{w_uuid}/hosts/{h_uuid}/relations")]
+#[swaggapi::get("/workspaces/{w_uuid}/hosts/{h_uuid}/relations")]
 pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRelations>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
@@ -593,18 +517,7 @@ pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRela
 }
 
 /// Get a host's findings
-#[utoipa::path(
-    tag = "Hosts",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The host's findings", body = ListFindings),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathHost),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{w_uuid}/hosts/{h_uuid}/findings")]
+#[swaggapi::get("/workspaces/{w_uuid}/hosts/{h_uuid}/findings")]
 pub async fn get_host_findings(
     path: Path<PathHost>,
     SessionUser(u_uuid): SessionUser,

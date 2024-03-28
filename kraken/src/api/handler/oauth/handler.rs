@@ -1,8 +1,6 @@
 use std::str::FromStr;
 use std::time::Duration;
 
-use actix_web::get;
-use actix_web::post;
 use actix_web::web::Data;
 use actix_web::web::Form;
 use actix_web::web::Json;
@@ -55,18 +53,7 @@ use crate::modules::oauth::OpenIfError;
 ///
 /// It requires both the `state` parameter against CSRF, as well as a pkce challenge.
 /// The only supported pkce `code_challenge_method` is `S256`.
-#[utoipa::path(
-    tag = "OAuth",
-    context_path = "/api/v1/oauth",
-    responses(
-        (status = 302, description = "The user is redirected to the frontend"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(AuthRequest),
-    security(("api_key" = []))
-)]
-#[get("/auth")]
+#[swaggapi::get("/auth")]
 pub async fn auth(
     manager: Data<OauthManager>,
     request: Query<AuthRequest>,
@@ -208,18 +195,7 @@ pub async fn auth(
 }
 
 /// Queried by the frontend to display information about the oauth request to the user
-#[utoipa::path(
-    tag = "OAuth",
-    context_path = "/api/v1/oauth",
-    responses(
-        (status = 200, description = "Return information about an ongoing oauth request", body = OpenRequestInfo),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[get("/info/{uuid}")]
+#[swaggapi::get("/info/{uuid}")]
 pub async fn info(
     path: Path<PathUuid>,
     manager: Data<OauthManager>,
@@ -270,18 +246,7 @@ pub async fn info(
 }
 
 /// Endpoint visited by user to grant a requesting application access
-#[utoipa::path(
-    tag = "OAuth",
-    context_path = "/api/v1/oauth",
-    responses(
-        (status = 302, description = "The user is redirected back to the requesting client"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid, OAuthDecisionQuery),
-    security(("api_key" = []))
-)]
-#[get("/accept/{uuid}")]
+#[swaggapi::get("/accept/{uuid}")]
 pub async fn accept(
     path: Path<PathUuid>,
     manager: Data<OauthManager>,
@@ -329,18 +294,7 @@ pub async fn accept(
 }
 
 /// Endpoint visited by user to deny a requesting application access
-#[utoipa::path(
-    tag = "OAuth",
-    context_path = "/api/v1/oauth",
-    responses(
-        (status = 302, description = "The user is redirected back to the requesting client"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid, OAuthDecisionQuery),
-    security(("api_key" = []))
-)]
-#[get("/deny/{uuid}")]
+#[swaggapi::get("/deny/{uuid}")]
 pub async fn deny(
     manager: Data<OauthManager>,
     path: Path<PathUuid>,
@@ -382,17 +336,7 @@ pub async fn deny(
 }
 
 /// Endpoint an application calls itself after the user accepted and was redirected back to it.
-#[utoipa::path(
-    tag = "OAuth",
-    context_path = "/api/v1/oauth-server",
-    responses(
-        (status = 302, description = "Got token", body = TokenResponse),
-        (status = 400, description = "Client error", body = TokenError),
-        (status = 500, description = "Server error", body = TokenError),
-    ),
-    request_body = TokenRequest,
-)]
-#[post("/token")]
+#[swaggapi::post("/token")]
 pub async fn token(
     manager: Data<OauthManager>,
     request: Form<TokenRequest>,
