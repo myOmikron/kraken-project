@@ -2,9 +2,9 @@ use std::net::IpAddr;
 
 use chrono::DateTime;
 use chrono::Utc;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::attack_results::schema::FullDnsTxtScanResult;
@@ -24,7 +24,7 @@ use crate::models::OsType;
 use crate::models::PortProtocol;
 
 /// Numbers how many attacks of a certain kind found an aggregated model
-#[derive(Copy, Clone, Serialize, Deserialize, ToSchema, Debug, Default)]
+#[derive(Copy, Clone, Serialize, Deserialize, JsonSchema, Debug, Default)]
 pub struct SimpleAggregationSource {
     /// Bruteforce subdomains via DNS requests
     pub bruteforce_subdomains: usize,
@@ -57,7 +57,7 @@ pub struct SimpleAggregationSource {
 }
 
 /// All data sources which contributed to an aggregated model
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct FullAggregationSource {
     /// All attack which contributed to an aggregated model
     pub attacks: Vec<SourceAttack>,
@@ -66,7 +66,7 @@ pub struct FullAggregationSource {
     pub manual_insert: Vec<ManualInsert>,
 }
 /// Copy of [`SimpleAttack`](crate::api::handler::attacks::SimpleAttack) with an added `results` field
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct SourceAttack {
     /// The identifier of the attack
     pub uuid: Uuid,
@@ -80,13 +80,12 @@ pub struct SourceAttack {
     pub error: Option<String>,
     /// The point in time this attack was started
     pub created_at: DateTime<Utc>,
-    /// Flattened enum storing the `attack_type` next to the `results`
-    #[serde(flatten)]
+    /// Enum storing the `attack_type` next to the `results`
     pub results: SourceAttackResult,
 }
 
 /// The different types of attack and their results
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 #[serde(tag = "attack_type", content = "results")]
 pub enum SourceAttackResult {
     /// The [`AttackType::BruteforceSubdomains`] and its results
@@ -110,7 +109,7 @@ pub enum SourceAttackResult {
 }
 
 /// The different types of manual inserts
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 #[serde(tag = "type")]
 pub enum ManualInsert {
     /// A manually inserted domain
@@ -127,7 +126,6 @@ pub enum ManualInsert {
     /// A manually inserted host
     Host {
         /// The host's ip address
-        #[schema(value_type = String, example = "172.0.0.1")]
         ip_addr: IpAddr,
         /// The host's os type
         os_type: OsType,
@@ -149,8 +147,7 @@ pub enum ManualInsert {
         /// The inserted data's certainty
         certainty: ManualPortCertainty,
         /// The host's ip address
-        #[schema(example = "172.0.0.1")]
-        host: String,
+        host: IpAddr,
         /// The user which inserted the port
         user: SimpleUser,
         /// The workspace the port was inserted to
@@ -169,8 +166,7 @@ pub enum ManualInsert {
         /// The service's port
         port: Option<u16>,
         /// The host's ip address
-        #[schema(example = "172.0.0.1")]
-        host: String,
+        host: IpAddr,
         /// The user which inserted the service
         user: SimpleUser,
         /// The workspace the service was inserted to

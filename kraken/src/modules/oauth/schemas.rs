@@ -2,16 +2,15 @@
 
 use std::time::Duration;
 
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::IntoParams;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 /// The client constructs the request URI by adding the following
 /// parameters to the query component of the authorization endpoint URI
 /// using the "application/x-www-form-urlencoded" format
-#[derive(Deserialize, Serialize, IntoParams, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct AuthRequest {
     /// Value MUST be set to "code".
     pub response_type: String,
@@ -23,7 +22,7 @@ pub struct AuthRequest {
     pub redirect_uri: Option<String>,
 
     /// The scope of the access request as described by [Section 3.3](https://www.rfc-editor.org/rfc/rfc6749#section-3.3).
-    #[param(value_type = String)]
+    #[schemars(with = "String")]
     pub scope: Option<String>,
 
     /// An opaque value used by the client to maintain
@@ -31,22 +30,21 @@ pub struct AuthRequest {
     /// server includes this value when redirecting the user-agent back
     /// to the client.  The parameter SHOULD be used for preventing
     /// cross-site request forgery as described in [Section 10.12](https://www.rfc-editor.org/rfc/rfc6749#section-10.12).
-    #[param(value_type = String)]
+    #[schemars(with = "String")]
     pub state: Option<String>,
 
     /// Pkce Code challenge.
-    #[param(value_type = String)]
+    #[schemars(with = "String")]
     pub code_challenge: Option<String>,
 
     /// Code verifier transformation method is "S256" or "plain".
     /// It defaults to "plain" if not present in the request.
     #[serde(default)]
-    #[param(inline)]
     pub code_challenge_method: CodeChallengeMethod,
 }
 
 /// The method of the code challenge
-#[derive(Deserialize, Serialize, ToSchema, Debug, Default, Copy, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Default, Copy, Clone)]
 pub enum CodeChallengeMethod {
     /// Sha256
     #[default]
@@ -104,7 +102,7 @@ pub(crate) enum AuthErrorType {
 /// The client makes a request to the token endpoint by sending the
 /// following parameters using the "application/x-www-form-urlencoded"
 /// format.
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, JsonSchema)]
 pub struct TokenRequest {
     /// Value MUST be set to "authorization_code".
     pub grant_type: String,
@@ -124,17 +122,16 @@ pub struct TokenRequest {
     pub client_secret: String,
 
     /// Code verifier
-    #[schema(value_type = String)]
+    #[schemars(with = "String")]
     pub code_verifier: Option<String>,
 }
 
 /// The authorization server issues an access token and optional refresh
 /// token, and constructs the response by adding the following parameters
 /// to the entity-body of the HTTP response with a 200 (OK) status code:
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, JsonSchema)]
 pub struct TokenResponse {
     /// Always `"access_token"`
-    #[schema(example = "access_token")]
     pub token_type: &'static str,
 
     /// The access token issued by the authorization server.
@@ -143,13 +140,13 @@ pub struct TokenResponse {
     /// The lifetime in seconds of the access token.  For
     /// example, the value "3600" denotes that the access token will
     /// expire in one hour from the time the response was generated.
-    #[schema(value_type = u64)]
+    #[schemars(with = "u64")]
     #[serde(serialize_with = "duration_seconds")]
     pub expires_in: Duration,
 }
 
 /// Possible error response when requesting an access token.
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, JsonSchema)]
 pub struct TokenError {
     /// A single ASCII \[[USASCII](https://www.rfc-editor.org/rfc/rfc6749#ref-USASCII)\] error code
     pub error: TokenErrorType,
@@ -161,7 +158,7 @@ pub struct TokenError {
 
 /// Possible error types of a [`TokenError`]
 #[allow(dead_code)]
-#[derive(Serialize, Debug, ToSchema)]
+#[derive(Serialize, Debug, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum TokenErrorType {
     /// The request is missing a required parameter, includes an

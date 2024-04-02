@@ -1,11 +1,11 @@
 use std::collections::HashMap;
+use std::net::IpAddr;
 
 use chrono::DateTime;
 use chrono::Utc;
-use ipnetwork::IpNetwork;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::DomainCertainty;
@@ -17,7 +17,7 @@ use crate::models::ServiceCertainty;
 use crate::models::ServiceProtocols;
 
 /// The aggregated results of a workspace
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct AggregatedWorkspace {
     /// The hosts found by this workspace
     pub hosts: HashMap<Uuid, AggregatedHost>,
@@ -36,16 +36,13 @@ pub struct AggregatedWorkspace {
 }
 
 /// A representation of an host.
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct AggregatedHost {
     /// The host's uuid
     pub uuid: Uuid,
 
     /// The IP address of the host.
-    ///
-    /// If the host has multiple addresses, create a [Host] for each and link them.
-    #[schema(value_type = String)]
-    pub ip_addr: IpNetwork,
+    pub ip_addr: IpAddr,
 
     /// The type of OS of this host
     pub os_type: OsType,
@@ -77,7 +74,7 @@ pub struct AggregatedHost {
 }
 
 /// An open port on a host
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct AggregatedPort {
     /// The port's uuid
     pub uuid: Uuid,
@@ -109,7 +106,7 @@ pub struct AggregatedPort {
 }
 
 /// A detected service on a host
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct AggregatedService {
     /// The service's uuid
     pub uuid: Uuid,
@@ -144,7 +141,7 @@ pub struct AggregatedService {
 }
 
 /// A domain
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct AggregatedDomain {
     /// The domain's uuid
     pub uuid: Uuid,
@@ -176,7 +173,7 @@ pub struct AggregatedDomain {
 }
 
 /// Set of global and local tags
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone, Default)]
 pub struct AggregatedTags {
     /// Global tags
     pub global_tags: Vec<String>,
@@ -186,7 +183,7 @@ pub struct AggregatedTags {
 }
 
 /// An m2m relation
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 #[serde(untagged)]
 pub enum AggregatedRelation {
     /// A DNS relation between two domains

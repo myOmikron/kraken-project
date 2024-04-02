@@ -1,6 +1,3 @@
-use actix_web::delete;
-use actix_web::get;
-use actix_web::post;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
@@ -60,18 +57,7 @@ use crate::modules::attacks::UdpServiceDetectionParams;
 ///
 /// Enumerate possible subdomains by querying a DNS server with constructed domains.
 /// See [OWASP](https://owasp.org/www-community/attacks/Brute_force_attack) for further information.
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 202, description = "Attack scheduled", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    request_body = BruteforceSubdomainsRequest,
-    security(("api_key" = []))
-)]
-#[post("/attacks/bruteforceSubdomains")]
+#[swaggapi::post("/attacks/bruteforceSubdomains", tags("Attacks"))]
 pub async fn bruteforce_subdomains(
     req: Json<BruteforceSubdomainsRequest>,
     SessionUser(user_uuid): SessionUser,
@@ -116,18 +102,7 @@ pub async fn bruteforce_subdomains(
 /// Just an ICMP scan for now to see which targets respond.
 ///
 /// All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 202, description = "Attack scheduled", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    request_body = HostsAliveRequest,
-    security(("api_key" = []))
-)]
-#[post("/attacks/hostsAlive")]
+#[swaggapi::post("/attacks/hostsAlive", tags("Attacks"))]
 pub async fn hosts_alive_check(
     req: Json<HostsAliveRequest>,
     SessionUser(user_uuid): SessionUser,
@@ -162,18 +137,7 @@ pub async fn hosts_alive_check(
 }
 
 /// Tries to find out the operating system of the remote host.
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 202, description = "Attack scheduled", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    request_body = OsDetectionRequest,
-    security(("api_key" = []))
-)]
-#[post("/attacks/osDetection")]
+#[swaggapi::post("/attacks/osDetection", tags("Attacks"))]
 pub async fn os_detection(
     req: Json<OsDetectionRequest>,
     SessionUser(user_uuid): SessionUser,
@@ -226,18 +190,7 @@ pub async fn os_detection(
 /// Certificate transparency can be used to find subdomains or related domains.
 ///
 /// `retry_interval` is specified in milliseconds.
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 202, description = "Attack scheduled", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    request_body = QueryCertificateTransparencyRequest,
-    security(("api_key" = []))
-)]
-#[post("/attacks/queryCertificateTransparency")]
+#[swaggapi::post("/attacks/queryCertificateTransparency", tags("Attacks"))]
 pub async fn query_certificate_transparency(
     req: Json<QueryCertificateTransparencyRequest>,
     SessionUser(user_uuid): SessionUser,
@@ -273,18 +226,7 @@ pub async fn query_certificate_transparency(
 ///
 /// Note that you are only able to query the API if you have bought access and have a running
 /// subscription saved in kraken.
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 202, description = "Attack scheduled", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    request_body = QueryDehashedRequest,
-    security(("api_key" = []))
-)]
-#[post("/attacks/queryDehashed")]
+#[swaggapi::post("/attacks/queryDehashed", tags("Attacks"))]
 pub async fn query_dehashed(
     req: Json<QueryDehashedRequest>,
     SessionUser(user_uuid): SessionUser,
@@ -313,18 +255,7 @@ pub async fn query_dehashed(
 }
 
 /// Perform service detection on a ip and port combination
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 202, description = "Attack scheduled", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    request_body = ServiceDetectionRequest,
-    security(("api_key" = []))
-)]
-#[post("/attacks/serviceDetection")]
+#[swaggapi::post("/attacks/serviceDetection", tags("Attacks"))]
 pub async fn service_detection(
     req: Json<ServiceDetectionRequest>,
     SessionUser(user_uuid): SessionUser,
@@ -373,18 +304,7 @@ pub async fn service_detection(
 /// All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.
 ///
 /// Set `max_retries` to 0 if you don't want to try a port more than 1 time.
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 202, description = "Attack scheduled", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    request_body = UdpServiceDetectionRequest,
-    security(("api_key" = []))
-)]
-#[post("/attacks/udpServiceDetection")]
+#[swaggapi::post("/attacks/udpServiceDetection", tags("Attacks"))]
 pub async fn udp_service_detection(
     req: Json<UdpServiceDetectionRequest>,
     SessionUser(user_uuid): SessionUser,
@@ -425,18 +345,7 @@ pub async fn udp_service_detection(
 }
 
 /// Perform domain name resolution
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 202, description = "Attack scheduled", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    request_body = DnsResolutionRequest,
-    security(("api_key" = []))
-)]
-#[post("/attacks/dnsResolution")]
+#[swaggapi::post("/attacks/dnsResolution", tags("Attacks"))]
 pub async fn dns_resolution(
     req: Json<DnsResolutionRequest>,
     SessionUser(user_uuid): SessionUser,
@@ -473,18 +382,7 @@ pub async fn dns_resolution(
 }
 
 /// Perform DNS TXT scanning & parsing
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 202, description = "Attack scheduled", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    request_body = DnsTxtScanRequest,
-    security(("api_key" = []))
-)]
-#[post("/attacks/dnsTxtScan")]
+#[swaggapi::post("/attacks/dnsTxtScan", tags("Attacks"))]
 pub async fn dns_txt_scan(
     req: Json<DnsTxtScanRequest>,
     SessionUser(user_uuid): SessionUser,
@@ -517,18 +415,7 @@ pub async fn dns_txt_scan(
 }
 
 /// Retrieve an attack by id
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns the attack", body = SimpleAttack),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[get("/attacks/{uuid}")]
+#[swaggapi::get("/attacks/{uuid}", tags("Attacks"))]
 pub async fn get_attack(
     req: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
@@ -598,17 +485,7 @@ pub async fn get_attack(
 }
 
 /// Retrieve all attacks the user has access to
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Retrieve a list of all attacks the user has access to", body = ListAttacks),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    security(("api_key" = []))
-)]
-#[get("/attacks")]
+#[swaggapi::get("/attacks", tags("Attacks"))]
 pub async fn get_all_attacks(
     SessionUser(session_user): SessionUser,
 ) -> ApiResult<Json<ListAttacks>> {
@@ -693,18 +570,7 @@ pub async fn get_all_attacks(
 }
 
 /// Query all attacks of a workspace
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Retrieve a list of all attacks of a workspace", body = ListAttacks),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{uuid}/attacks")]
+#[swaggapi::get("/workspaces/{uuid}/attacks", tags("Attacks"))]
 pub async fn get_workspace_attacks(
     path: Path<PathUuid>,
 
@@ -778,18 +644,7 @@ pub async fn get_workspace_attacks(
 }
 
 /// Delete an attack and its results
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Attack was deleted"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[delete("/attacks/{uuid}")]
+#[swaggapi::delete("/attacks/{uuid}", tags("Attacks"))]
 pub async fn delete_attack(
     req: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,

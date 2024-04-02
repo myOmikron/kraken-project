@@ -1,12 +1,13 @@
+use std::net::IpAddr;
 use std::ops::RangeInclusive;
 
 use chrono::DateTime;
 use chrono::Utc;
 use ipnetwork::IpNetwork;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::users::schema::SimpleUser;
@@ -14,7 +15,7 @@ use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::models::AttackType;
 
 /// The settings of a subdomain bruteforce request
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct BruteforceSubdomainsRequest {
     /// The leech to use
     ///
@@ -22,14 +23,12 @@ pub struct BruteforceSubdomainsRequest {
     pub leech_uuid: Option<Uuid>,
 
     /// Domain to construct subdomains for
-    #[schema(example = "example.com")]
     pub domain: String,
 
     /// The wordlist to use
     pub wordlist_uuid: Uuid,
 
     /// The concurrent task limit
-    #[schema(example = 100)]
     pub concurrent_limit: u32,
 
     /// The workspace to execute the attack in
@@ -37,14 +36,12 @@ pub struct BruteforceSubdomainsRequest {
 }
 
 /// Single port or a range of ports
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 #[serde(untagged)]
 pub enum PortOrRange {
     /// A single port
-    #[schema(example = 8000)]
     Port(u16),
     /// In inclusive range of ports
-    #[schema(value_type = String, example = "1-1024")]
     Range(
         #[serde(
             deserialize_with = "deserialize_port_range",
@@ -55,7 +52,7 @@ pub enum PortOrRange {
 }
 
 /// Host Alive check request
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct HostsAliveRequest {
     /// The leech to use
     ///
@@ -63,17 +60,14 @@ pub struct HostsAliveRequest {
     pub leech_uuid: Option<Uuid>,
 
     /// The ip addresses / networks or domains to scan
-    #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.0/24", "google.com"]))]
     pub targets: Vec<DomainOrNetwork>,
 
     /// The time to wait until a host is considered down.
     ///
     /// The timeout is specified in milliseconds.
-    #[schema(example = 3000)]
     pub timeout: u64,
 
     /// The concurrent task limit
-    #[schema(example = 30)]
     pub concurrent_limit: u32,
 
     /// The workspace to execute the attack in
@@ -81,24 +75,20 @@ pub struct HostsAliveRequest {
 }
 
 /// The settings to configure a certificate transparency request
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct QueryCertificateTransparencyRequest {
     /// Domain to query certificates for
-    #[schema(example = "example.com")]
     pub target: String,
 
     /// Should expired certificates be included as well
-    #[schema(example = true)]
     pub include_expired: bool,
 
     /// The number of times the query should be retried if it failed.
-    #[schema(example = 3)]
     pub max_retries: u32,
 
     /// The interval that should be waited between retries.
     ///
     /// The interval is specified in milliseconds.
-    #[schema(example = 500)]
     pub retry_interval: u64,
 
     /// The workspace to execute the attack in
@@ -106,10 +96,9 @@ pub struct QueryCertificateTransparencyRequest {
 }
 
 /// The request to query the dehashed API
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct QueryDehashedRequest {
     /// The query to send to dehashed
-    #[schema(value_type = Query)]
     pub query: dehashed_rs::Query,
 
     /// The workspace to execute the attack in
@@ -117,7 +106,7 @@ pub struct QueryDehashedRequest {
 }
 
 /// The request to start a service detection
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct ServiceDetectionRequest {
     /// The leech to use
     ///
@@ -125,7 +114,6 @@ pub struct ServiceDetectionRequest {
     pub leech_uuid: Option<Uuid>,
 
     /// The ip addresses / networks or domains to scan
-    #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.0/24", "google.com"]))]
     pub targets: Vec<DomainOrNetwork>,
 
     /// List of single ports and port ranges
@@ -137,34 +125,28 @@ pub struct ServiceDetectionRequest {
     /// The time to wait until a connection is considered failed.
     ///
     /// The timeout is specified in milliseconds.
-    #[schema(example = 3000)]
     pub connect_timeout: u64,
 
     /// Time to wait for a response after sending the payload
     /// (or after establishing a connection, if not payload is to be sent)
     ///
     /// The timeout is specified in milliseconds.
-    #[schema(example = 3000)]
     pub receive_timeout: u64,
 
     /// The interval that should be wait between retries on a port.
     ///
     /// The interval is specified in milliseconds.
-    #[schema(example = 100)]
     pub retry_interval: u64,
 
     /// The number of times the connection should be retried if it failed.
-    #[schema(example = 2)]
     pub max_retries: u32,
 
     /// The concurrent task limit
-    #[schema(example = 5000)]
     pub concurrent_limit: u32,
 
     /// Skips the initial icmp check.
     ///
     /// All hosts are assumed to be reachable
-    #[schema(example = false)]
     pub skip_icmp_check: bool,
 
     /// The workspace to execute the attack in
@@ -172,7 +154,7 @@ pub struct ServiceDetectionRequest {
 }
 
 /// The request to start a service detection
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct UdpServiceDetectionRequest {
     /// The leech to use
     ///
@@ -180,7 +162,6 @@ pub struct UdpServiceDetectionRequest {
     pub leech_uuid: Option<Uuid>,
 
     /// The ip addresses / networks or domains to scan
-    #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.0/24", "google.com"]))]
     pub targets: Vec<DomainOrNetwork>,
 
     /// List of single ports and port ranges
@@ -192,21 +173,17 @@ pub struct UdpServiceDetectionRequest {
     /// The interval that should be wait between retries on a port.
     ///
     /// The interval is specified in milliseconds.
-    #[schema(example = 100)]
     pub retry_interval: u64,
 
     /// The number of times the connection should be retried if it failed.
-    #[schema(example = 2)]
     pub max_retries: u32,
 
     /// The time to wait until a connection is considered failed.
     ///
     /// The timeout is specified in milliseconds.
-    #[schema(example = 3000)]
     pub timeout: u64,
 
     /// The concurrent task limit
-    #[schema(example = 5000)]
     pub concurrent_limit: u32,
 
     /// The workspace to execute the attack in
@@ -214,7 +191,7 @@ pub struct UdpServiceDetectionRequest {
 }
 
 /// OS detection request
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct OsDetectionRequest {
     /// The leech to use
     ///
@@ -222,7 +199,6 @@ pub struct OsDetectionRequest {
     pub leech_uuid: Option<Uuid>,
 
     /// The ip addresses / networks or domains to scan
-    #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.0/24", "google.com"]))]
     pub targets: Vec<DomainOrNetwork>,
 
     /// set to skip open port detection and use this port for TCP fingerprinting
@@ -250,12 +226,11 @@ pub struct OsDetectionRequest {
     pub workspace_uuid: Uuid,
 
     /// The concurrent task limit
-    #[schema(example = 5000)]
     pub concurrent_limit: u32,
 }
 
 /// Request to resolve domains
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct DnsResolutionRequest {
     /// The leech to use
     ///
@@ -263,11 +238,9 @@ pub struct DnsResolutionRequest {
     pub leech_uuid: Option<Uuid>,
 
     /// The domains to resolve
-    #[schema(value_type = Vec<String>, example = json!(["example.com", "example.org"]))]
     pub targets: Vec<String>,
 
     /// The concurrent task limit
-    #[schema(example = 2)]
     pub concurrent_limit: u32,
 
     /// The workspace to execute the attack in
@@ -275,7 +248,7 @@ pub struct DnsResolutionRequest {
 }
 
 /// Request to do DNS TXT scanning & parsing
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct DnsTxtScanRequest {
     /// The leech to use
     ///
@@ -283,7 +256,6 @@ pub struct DnsTxtScanRequest {
     pub leech_uuid: Option<Uuid>,
 
     /// The domains to resolve
-    #[schema(value_type = Vec<String>, example = json!(["example.com", "example.org"]))]
     pub targets: Vec<String>,
 
     /// The workspace to execute the attack in
@@ -291,7 +263,7 @@ pub struct DnsTxtScanRequest {
 }
 
 /// A simple version of an attack
-#[derive(Clone, Serialize, Deserialize, ToSchema, Debug)]
+#[derive(Clone, Serialize, Deserialize, JsonSchema, Debug)]
 pub struct SimpleAttack {
     /// The identifier of the attack
     pub uuid: Uuid,
@@ -310,22 +282,21 @@ pub struct SimpleAttack {
 }
 
 /// A list of attacks
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct ListAttacks {
     /// The list of the attacks
     pub attacks: Vec<SimpleAttack>,
 }
 
 /// Either an ip address / network or a domain name
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 #[serde(untagged)]
 pub enum DomainOrNetwork {
     /// A ip address / network
-    #[schema(value_type = String, example = "10.13.37.10")]
+    #[schemars(with = "IpAddr")]
     Network(IpNetwork),
 
     /// A domain name
-    #[schema(value_type = String, example = "kraken.test")]
     Domain(String),
 }
 

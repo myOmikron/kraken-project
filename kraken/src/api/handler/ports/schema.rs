@@ -1,10 +1,10 @@
+use std::net::IpAddr;
+
 use chrono::DateTime;
 use chrono::Utc;
-use ipnetwork::IpNetwork;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::IntoParams;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
@@ -18,26 +18,23 @@ use crate::models::PortCertainty;
 use crate::models::PortProtocol;
 
 /// The request to manually add a port
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct CreatePortRequest {
     /// The ip address the port is open on
-    #[schema(value_type = String, example = "127.0.0.1")]
-    pub ip_addr: IpNetwork,
+    pub ip_addr: IpAddr,
 
     /// The port to add
-    #[schema(example = "8080")]
     pub port: u16,
 
     /// Whether the port should exist right now or existed at some point
     pub certainty: ManualPortCertainty,
 
     /// The port's protocol
-    #[schema(example = "Tcp")]
     pub protocol: PortProtocol,
 }
 
 /// The request to update a port
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct UpdatePortRequest {
     /// The comment of the port
     pub comment: Option<String>,
@@ -48,7 +45,7 @@ pub struct UpdatePortRequest {
 }
 
 /// Query parameters for filtering the ports to get
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct GetAllPortsQuery {
     /// The parameters controlling the page to query
     #[serde(flatten)]
@@ -65,12 +62,11 @@ pub struct GetAllPortsQuery {
 }
 
 /// The simple representation of a port
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct SimplePort {
     /// Uuid of the port
     pub uuid: Uuid,
     /// Port number
-    #[schema(example = 1337)]
     pub port: u16,
     /// Port protocol
     pub protocol: PortProtocol,
@@ -87,12 +83,11 @@ pub struct SimplePort {
 }
 
 /// The full representation of a port
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct FullPort {
     /// Uuid of the port
     pub uuid: Uuid,
     /// Port number
-    #[schema(example = 1337)]
     pub port: u16,
     /// Port protocol
     pub protocol: PortProtocol,
@@ -115,7 +110,7 @@ pub struct FullPort {
 }
 
 /// The path parameter of a port
-#[derive(Serialize, Deserialize, IntoParams, Debug, Copy, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Copy, Clone)]
 pub struct PathPort {
     /// The workspace's uuid
     pub w_uuid: Uuid,
@@ -124,7 +119,7 @@ pub struct PathPort {
 }
 
 /// A port's direct relations
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct PortRelations {
     /// The host this port is assigned to
     pub host: SimpleHost,

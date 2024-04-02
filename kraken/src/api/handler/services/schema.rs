@@ -1,10 +1,10 @@
+use std::net::IpAddr;
+
 use chrono::DateTime;
 use chrono::Utc;
-use ipnetwork::IpNetwork;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::IntoParams;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
@@ -18,23 +18,20 @@ use crate::models::ServiceCertainty;
 use crate::models::ServiceProtocols;
 
 /// The request to manually add a service
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct CreateServiceRequest {
     /// The service's name
-    #[schema(example = "django")]
     pub name: String,
 
     /// Whether the port should exist right now or existed at some point
     pub certainty: ManualServiceCertainty,
 
     /// The ip address the service runs on
-    #[schema(value_type = String, example = "127.0.0.1")]
-    pub host: IpNetwork,
+    pub host: IpAddr,
 
     /// An optional port the service runs on
     ///
     /// If set, you must specify protocol
-    #[schema(example = "8080")]
     pub port: Option<u16>,
 
     /// The port's protocol as well as its sub protocols
@@ -42,7 +39,7 @@ pub struct CreateServiceRequest {
 }
 
 /// The request to update a service
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct UpdateServiceRequest {
     /// The comment of the service
     pub comment: Option<String>,
@@ -53,7 +50,7 @@ pub struct UpdateServiceRequest {
 }
 
 /// Query parameters for filtering the services to get
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct GetAllServicesQuery {
     /// The parameters controlling the page to query
     #[serde(flatten)]
@@ -70,15 +67,13 @@ pub struct GetAllServicesQuery {
 }
 
 /// A simple representation of a service
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct SimpleService {
     /// The uuid of the service
     pub uuid: Uuid,
     /// The name of the service
-    #[schema(example = "postgresql")]
     pub name: String,
     /// The version of the service
-    #[schema(example = "13.0.1")]
     pub version: Option<String>,
     /// The certainty the service is detected correct
     pub certainty: ServiceCertainty,
@@ -87,7 +82,6 @@ pub struct SimpleService {
     /// The port this service may linked to
     pub port: Option<Uuid>,
     /// The comment attached to the service
-    #[schema(example = "Holds all relevant information")]
     pub comment: String,
     /// The workspace is service is linked to
     pub workspace: Uuid,
@@ -96,15 +90,13 @@ pub struct SimpleService {
 }
 
 /// A full representation of a service
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct FullService {
     /// Uuid of the service
     pub uuid: Uuid,
     /// The service's name
-    #[schema(example = "postgresql")]
     pub name: String,
     /// An optional version of the running service
-    #[schema(example = "13.0.1")]
     pub version: Option<String>,
     /// The certainty of the detection
     pub certainty: ServiceCertainty,
@@ -115,7 +107,6 @@ pub struct FullService {
     /// The protocols used above the port's protocol
     pub protocols: Option<ServiceProtocols>,
     /// A comment to the service
-    #[schema(example = "Holds all relevant information")]
     pub comment: String,
     /// The workspace this service is linked to
     pub workspace: Uuid,
@@ -130,7 +121,7 @@ pub struct FullService {
 }
 
 /// The path parameter of a service
-#[derive(Deserialize, Serialize, IntoParams, Debug, Copy, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Copy, Clone)]
 pub struct PathService {
     /// The workspace's uuid
     pub w_uuid: Uuid,
@@ -139,7 +130,7 @@ pub struct PathService {
 }
 
 /// A service's direct relations
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct ServiceRelations {
     /// The port a service listens on
     pub port: Option<SimplePort>,

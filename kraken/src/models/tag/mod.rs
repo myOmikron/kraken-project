@@ -1,8 +1,8 @@
 use rorm::prelude::ForeignModel;
 use rorm::Model;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::Workspace;
@@ -11,7 +11,7 @@ use crate::models::Workspace;
 mod operations;
 
 /// Color value
-#[derive(Deserialize, Serialize, ToSchema, Debug, Copy, Clone)]
+#[derive(Deserialize, Serialize, JsonSchema, Debug, Copy, Clone)]
 pub struct Color {
     /// Red value
     pub r: u8,

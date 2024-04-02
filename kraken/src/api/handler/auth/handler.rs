@@ -1,6 +1,4 @@
 use actix_toolbox::tb_middleware::Session;
-use actix_web::get;
-use actix_web::post;
 use actix_web::web::Data;
 use actix_web::web::Json;
 use actix_web::HttpResponse;
@@ -16,6 +14,7 @@ use rorm::query;
 use rorm::update;
 use rorm::FieldAccess;
 use rorm::Model;
+use swaggapi::utils::SchemalessJson;
 use uuid::Uuid;
 use webauthn_rs::prelude::CreationChallengeResponse;
 use webauthn_rs::prelude::CredentialID;
@@ -42,32 +41,13 @@ use crate::models::User;
 /// You can use this endpoint to test the current login state of your client.
 ///
 /// If logged in, a 200 without a body is returned.
-#[utoipa::path(
-    tag = "Authentication",
-    context_path = "/api/v1/auth",
-    responses(
-        (status = 200, description = "Logged in"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    )
-)]
-#[get("/test", wrap = "AuthenticationRequired")]
-pub async fn test() -> HttpResponse {
+#[swaggapi::get("/test", tags("Authentication"))]
+pub async fn test(_: AuthenticationRequired) -> HttpResponse {
     HttpResponse::Ok().finish()
 }
 
 /// Login to kraken
-#[utoipa::path(
-    tag = "Authentication",
-    context_path = "/api/v1/auth",
-    responses(
-        (status = 200, description = "Login successful"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    request_body = LoginRequest,
-)]
-#[post("/login")]
+#[swaggapi::post("/login", tags("Authentication"))]
 pub async fn login(req: Json<LoginRequest>, session: Session) -> ApiResult<HttpResponse> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
@@ -104,16 +84,7 @@ pub async fn login(req: Json<LoginRequest>, session: Session) -> ApiResult<HttpR
 /// Log out of this session
 ///
 /// Logs a logged-in user out of his session.
-#[utoipa::path(
-    tag = "Authentication",
-    context_path = "/api/v1/auth",
-    responses(
-        (status = 200, description = "Logout successful"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-)]
-#[get("/logout")]
+#[swaggapi::get("/logout", tags("Authentication"))]
 pub async fn logout(
     session: Session,
     SessionUser(user_uuid): SessionUser,
@@ -130,20 +101,11 @@ pub async fn logout(
 /// Use the `login` endpoint before calling this one.
 ///
 /// Proceed with `finishAuth`.
-#[utoipa::path(
-    tag = "Authentication",
-    context_path = "/api/v1/auth",
-    responses(
-        (status = 200, description = "2FA Authentication started", body = inline(Object)),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-)]
-#[post("/startAuth")]
+#[swaggapi::post("/startAuth", tags("Authentication"))]
 pub async fn start_auth(
     session: Session,
     webauthn: Data<Webauthn>,
-) -> ApiResult<Json<RequestChallengeResponse>> {
+) -> ApiResult<SchemalessJson<RequestChallengeResponse>> {
     if !session.get("logged_in")?.ok_or(ApiError::Unauthenticated)? {
         return Err(ApiError::Unauthenticated);
     }
@@ -167,25 +129,15 @@ pub async fn start_auth(
 
     session.insert("auth_state", (uuid, auth_state))?;
 
-    Ok(Json(rcr))
+    Ok(SchemalessJson(rcr))
 }
 
 /// Finishes the authentication with a security key
 ///
 /// Use `startAuth` to retrieve the challenge response data.
-#[utoipa::path(
-    tag = "Authentication",
-    context_path = "/api/v1/auth",
-    responses(
-        (status = 200, description = "2FA Authentication finished"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    request_body = inline(Object)
-)]
-#[post("/finishAuth")]
+#[swaggapi::post("/finishAuth", tags("Authentication"))]
 pub async fn finish_auth(
-    auth: Json<PublicKeyCredential>,
+    auth: SchemalessJson<PublicKeyCredential>,
     session: Session,
     webauthn: Data<Webauthn>,
 ) -> ApiResult<HttpResponse> {
@@ -199,7 +151,7 @@ pub async fn finish_auth(
 
     session.remove("auth_state");
 
-    webauthn.finish_passkey_authentication(&auth, &auth_state)?;
+    webauthn.finish_passkey_authentication(&auth.0, &auth_state)?;
 
     update!(&GLOBAL.db, User)
         .condition(User::F.uuid.equals(uuid))
@@ -217,20 +169,11 @@ pub async fn finish_auth(
 /// Start the registration of a security key
 ///
 /// Proceed to the `finishRegister` endpoint.
-#[utoipa::path(
-    tag = "Authentication",
-    context_path = "/api/v1/auth",
-    responses(
-        (status = 200, description = "2FA Key registration started", body = inline(Object)),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-)]
-#[post("/startRegister")]
+#[swaggapi::post("/startRegister", tags("Authentication"))]
 pub async fn start_register(
     session: Session,
     webauthn: Data<Webauthn>,
-) -> ApiResult<Json<CreationChallengeResponse>> {
+) -> ApiResult<SchemalessJson<CreationChallengeResponse>> {
     if !session.get("logged_in")?.ok_or(ApiError::Unauthenticated)? {
         return Err(ApiError::Unauthenticated);
     }
@@ -293,23 +236,13 @@ pub async fn start_register(
 
     debug!("Registered key");
 
-    Ok(Json(ccr))
+    Ok(SchemalessJson(ccr))
 }
 
 /// Finish the registration of a security key
 ///
 /// Use `startRegister` to retrieve the challenge response data.
-#[utoipa::path(
-    tag = "Authentication",
-    context_path = "/api/v1/auth",
-    responses(
-        (status = 200, description = "2FA Key registration finished"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = FinishRegisterRequest
-)]
-#[post("/finishRegister")]
+#[swaggapi::post("/finishRegister", tags("Authentication"))]
 pub async fn finish_register(
     req: Json<FinishRegisterRequest>,
     session: Session,

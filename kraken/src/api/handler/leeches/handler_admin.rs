@@ -1,9 +1,5 @@
 use std::str::FromStr;
 
-use actix_web::delete;
-use actix_web::get;
-use actix_web::post;
-use actix_web::put;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
@@ -33,18 +29,7 @@ use crate::modules::uri::check_leech_address;
 ///
 /// `address` must be a valid address including a scheme and port.
 /// Currently only https and http are supported as scheme.
-#[utoipa::path(
-    tag = "Leech management",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "Leech got created successfully", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    request_body = CreateLeechRequest,
-    security(("api_key" = []))
-)]
-#[post("/leeches")]
+#[swaggapi::post("/leeches", tags("Leech management"))]
 pub async fn create_leech(req: Json<CreateLeechRequest>) -> ApiResult<Json<UuidResponse>> {
     let req = req.into_inner();
 
@@ -56,18 +41,7 @@ pub async fn create_leech(req: Json<CreateLeechRequest>) -> ApiResult<Json<UuidR
 }
 
 /// Delete a leech by its uuid
-#[utoipa::path(
-    tag = "Leech management",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "Leech got deleted"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[delete("/leeches/{uuid}")]
+#[swaggapi::delete("/leeches/{uuid}", tags("Leech management"))]
 pub async fn delete_leech(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
@@ -89,18 +63,7 @@ pub async fn delete_leech(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
 }
 
 /// Generate a new config for the leech
-#[utoipa::path(
-    tag = "Leech management",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "Newly generated leech cert", body = LeechConfig),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[get("/leeches/{uuid}/cert")]
+#[swaggapi::get("/leeches/{uuid}/cert", tags("Leech management"))]
 pub async fn gen_leech_config(req: Path<PathUuid>) -> ApiResult<Json<LeechConfig>> {
     let (secret, address) = query!(&GLOBAL.db, (Leech::F.secret, Leech::F.address))
         .condition(Leech::F.uuid.equals(req.uuid))
@@ -124,19 +87,7 @@ pub async fn gen_leech_config(req: Path<PathUuid>) -> ApiResult<Json<LeechConfig
 ///
 /// `address` must be a valid address including a scheme and port.
 /// Currently only https and http are supported as scheme.
-#[utoipa::path(
-    tag = "Leech management",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "Leech got updated"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    params(PathUuid),
-    request_body = UpdateLeechRequest,
-    security(("api_key" = []))
-)]
-#[put("/leeches/{uuid}")]
+#[swaggapi::put("/leeches/{uuid}", tags("Leech management"))]
 pub async fn update_leech(
     path: Path<PathUuid>,
     req: Json<UpdateLeechRequest>,
@@ -176,18 +127,7 @@ pub async fn update_leech(
 }
 
 /// Retrieve a leech by its id
-#[utoipa::path(
-    tag = "Leech management",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "Matched leeches", body = SimpleLeech),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[get("/leeches/{uuid}")]
+#[swaggapi::get("/leeches/{uuid}", tags("Leech management"))]
 pub async fn get_leech(req: Path<PathUuid>) -> ApiResult<Json<SimpleLeech>> {
     let leech = query!(&GLOBAL.db, Leech)
         .condition(Leech::F.uuid.equals(req.uuid))
@@ -206,17 +146,7 @@ pub async fn get_leech(req: Path<PathUuid>) -> ApiResult<Json<SimpleLeech>> {
 }
 
 /// Retrieve all leeches
-#[utoipa::path(
-    tag = "Leech management",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "Matched leeches", body = ListLeeches),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    security(("api_key" = []))
-)]
-#[get("/leeches")]
+#[swaggapi::get("/leeches", tags("Leech management"))]
 pub async fn get_all_leeches() -> ApiResult<Json<ListLeeches>> {
     let leeches = query!(&GLOBAL.db, Leech).all().await?;
 

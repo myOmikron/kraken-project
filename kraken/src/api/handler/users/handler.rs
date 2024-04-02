@@ -1,7 +1,4 @@
 use actix_toolbox::tb_middleware::Session;
-use actix_web::get;
-use actix_web::post;
-use actix_web::put;
 use actix_web::web::Json;
 use actix_web::HttpResponse;
 use argon2::password_hash::SaltString;
@@ -28,17 +25,7 @@ use crate::models::LocalUser;
 use crate::models::User;
 
 /// Retrieve the own user
-#[utoipa::path(
-    tag = "User Management",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns the own user", body = FullUser),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    security(("api_key" = []))
-)]
-#[get("/users/me")]
+#[swaggapi::get("/users/me", tags("User Management"))]
 pub async fn get_me(SessionUser(user_uuid): SessionUser) -> ApiResult<Json<FullUser>> {
     Ok(Json(
         GLOBAL
@@ -50,18 +37,7 @@ pub async fn get_me(SessionUser(user_uuid): SessionUser) -> ApiResult<Json<FullU
 }
 
 /// Set a new password
-#[utoipa::path(
-    tag = "User Management",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Password was updated"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = SetPasswordRequest,
-    security(("api_key" = []))
-)]
-#[post("/users/setPassword")]
+#[swaggapi::post("/users/setPassword", tags("User Management"))]
 pub async fn set_password(
     req: Json<SetPasswordRequest>,
     SessionUser(user_uuid): SessionUser,
@@ -110,18 +86,7 @@ pub async fn set_password(
 /// Updates the own user
 ///
 /// All parameters are optional, but at least one of them must be supplied.
-#[utoipa::path(
-    tag = "User Management",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Changes were applied"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = UpdateMeRequest,
-    security(("api_key" = []))
-)]
-#[put("/users/me")]
+#[swaggapi::put("/users/me", tags("User Management"))]
 pub async fn update_me(
     req: Json<UpdateMeRequest>,
     SessionUser(user_uuid): SessionUser,
@@ -160,17 +125,7 @@ pub async fn update_me(
 /// Request all users
 ///
 /// This may be used to create invitations for workspaces
-#[utoipa::path(
-    tag = "User Management",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Simple representation of all users", body = ListUsers),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    security(("api_key" = []))
-)]
-#[get("/users")]
+#[swaggapi::get("/users", tags("User Management"))]
 pub async fn get_all_users() -> ApiResult<Json<ListUsers>> {
     let users = query!(
         &GLOBAL.db,

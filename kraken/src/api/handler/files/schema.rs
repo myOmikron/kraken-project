@@ -1,23 +1,22 @@
 use chrono::DateTime;
 use chrono::Utc;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::IntoParams;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 
 /// Query parameters when uploading a file which provide the file's name
-#[derive(Serialize, Deserialize, IntoParams, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct UploadQuery {
     /// The file's name
     pub filename: String,
 }
 
 /// The path parameter of a file
-#[derive(Serialize, Deserialize, IntoParams, Debug, Copy, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Copy, Clone)]
 pub struct PathFile {
     /// The workspace's uuid
     pub w_uuid: Uuid,
@@ -26,7 +25,7 @@ pub struct PathFile {
 }
 
 /// Query parameters to filter which files to retrieve
-#[derive(Serialize, Deserialize, IntoParams, Debug, Copy, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Copy, Clone)]
 pub struct GetAllFilesQuery {
     /// Only get a single workspace's files
     pub workspace: Option<Uuid>,
@@ -36,7 +35,7 @@ pub struct GetAllFilesQuery {
 }
 
 /// Metadata stored about a file uploaded to kraken
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct FullFile {
     /// The file's uuid
     pub uuid: Uuid,

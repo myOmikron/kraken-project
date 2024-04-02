@@ -1,6 +1,3 @@
-use actix_web::delete;
-use actix_web::get;
-use actix_web::post;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
@@ -19,18 +16,7 @@ use crate::chan::global::GLOBAL;
 use crate::models::User;
 
 /// Create a user
-#[utoipa::path(
-    tag = "User Admin Management",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "User got created", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = CreateUserRequest,
-    security(("api_key" = []))
-)]
-#[post("/users")]
+#[swaggapi::post("/users", tags("User Admin Management"))]
 pub async fn create_user(req: Json<CreateUserRequest>) -> ApiResult<Json<UuidResponse>> {
     let req = req.into_inner();
 
@@ -47,18 +33,7 @@ pub async fn create_user(req: Json<CreateUserRequest>) -> ApiResult<Json<UuidRes
 }
 
 /// Delete a user by its uuid
-#[utoipa::path(
-    tag = "User Admin Management",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "User got deleted"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[delete("/users/{uuid}")]
+#[swaggapi::delete("/users/{uuid}", tags("User Admin Management"))]
 pub async fn delete_user(req: Path<PathUuid>) -> ApiResult<HttpResponse> {
     rorm::delete!(&GLOBAL.db, User)
         .condition(User::F.uuid.equals(req.uuid))
@@ -70,18 +45,7 @@ pub async fn delete_user(req: Path<PathUuid>) -> ApiResult<HttpResponse> {
 }
 
 /// Retrieve a user by its uuid
-#[utoipa::path(
-    tag = "User Admin Management",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "Returns the user", body = FullUser),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[get("/users/{uuid}")]
+#[swaggapi::get("/users/{uuid}", tags("User Admin Management"))]
 pub async fn get_user(req: Path<PathUuid>) -> ApiResult<Json<FullUser>> {
     let user_uuid = req.into_inner().uuid;
     Ok(Json(
@@ -94,17 +58,7 @@ pub async fn get_user(req: Path<PathUuid>) -> ApiResult<Json<FullUser>> {
 }
 
 /// Retrieve all users
-#[utoipa::path(
-    tag = "User Admin Management",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "Returns all users", body = ListFullUsers),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    security(("api_key" = []))
-)]
-#[get("/users")]
+#[swaggapi::get("/users", tags("User Admin Management"))]
 pub async fn get_all_users_admin() -> ApiResult<Json<ListFullUsers>> {
     let users = query!(&GLOBAL.db, User).all().await?;
 

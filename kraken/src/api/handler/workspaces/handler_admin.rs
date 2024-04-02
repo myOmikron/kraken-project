@@ -1,4 +1,3 @@
-use actix_web::get;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use rorm::query;
@@ -15,18 +14,7 @@ use crate::chan::global::GLOBAL;
 use crate::models::Workspace;
 
 /// Retrieve a workspace by id
-#[utoipa::path(
-    tag = "Admin Workspaces",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "Returns the workspace with the given id", body = FullWorkspace),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[get("/workspaces/{uuid}")]
+#[swaggapi::get("/workspaces/{uuid}", tags("Admin Workspaces"))]
 pub async fn get_workspace_admin(req: Path<PathUuid>) -> ApiResult<Json<FullWorkspace>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
@@ -38,17 +26,7 @@ pub async fn get_workspace_admin(req: Path<PathUuid>) -> ApiResult<Json<FullWork
 }
 
 /// Retrieve all workspaces
-#[utoipa::path(
-    tag = "Admin Workspaces",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "Returns all workspaces", body = ListWorkspaces),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    security(("api_key" = []))
-)]
-#[get("/workspaces")]
+#[swaggapi::get("/workspaces", tags("Admin Workspaces"))]
 pub async fn get_all_workspaces_admin() -> ApiResult<Json<ListWorkspaces>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 

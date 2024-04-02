@@ -5,9 +5,9 @@ use chrono::Utc;
 use ipnetwork::IpNetwork;
 use rorm::prelude::*;
 use rorm::Model;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[cfg(feature = "bin")]
@@ -25,7 +25,7 @@ mod operations;
 mod patches;
 
 /// The type of an attack
-#[derive(Debug, Copy, Clone, DbEnum, ToSchema, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, DbEnum, JsonSchema, Serialize, Deserialize)]
 pub enum AttackType {
     /// First variant to be mapped for 0
     Undefined,
@@ -95,7 +95,7 @@ pub struct Attack {
 }
 
 /// The type of DNS Record
-#[derive(Copy, Clone, Debug, DbEnum, Deserialize, Serialize, ToSchema)]
+#[derive(Copy, Clone, Debug, DbEnum, Deserialize, Serialize, JsonSchema)]
 pub enum DnsRecordType {
     /// [A](crate::rpc::rpc_definitions::shared::dns_record::Record::A) record type
     A,
@@ -173,7 +173,7 @@ pub struct DnsTxtScanAttackResult {
 }
 
 /// Indicates what children the DnsTxtScanAttackResult has
-#[derive(Copy, Clone, Debug, DbEnum, Deserialize, Serialize, ToSchema)]
+#[derive(Copy, Clone, Debug, DbEnum, Deserialize, Serialize, JsonSchema)]
 pub enum DnsTxtScanSummaryType {
     /// Site verifications, domain keys, etc. that indicate possibly used services
     ServiceHints,
@@ -182,7 +182,7 @@ pub enum DnsTxtScanSummaryType {
 }
 
 /// The type of DNS TXT scan result for service hints
-#[derive(Copy, Clone, Debug, DbEnum, Deserialize, Serialize, ToSchema)]
+#[derive(Copy, Clone, Debug, DbEnum, Deserialize, Serialize, JsonSchema)]
 pub enum DnsTxtScanServiceHintType {
     /// Domain owner might have or use a google account
     HasGoogleAccount,
@@ -215,7 +215,7 @@ pub enum DnsTxtScanServiceHintType {
 }
 
 /// The type of DNS TXT scan result for SPF rules
-#[derive(Copy, Clone, Debug, DbEnum, Deserialize, Serialize, ToSchema)]
+#[derive(Copy, Clone, Debug, DbEnum, Deserialize, Serialize, JsonSchema)]
 pub enum DnsTxtScanSpfType {
     /// SPF part: 'all' directive, no other fields set.
     All,

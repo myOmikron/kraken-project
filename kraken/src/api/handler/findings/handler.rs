@@ -1,9 +1,5 @@
 use std::collections::HashMap;
 
-use actix_web::delete;
-use actix_web::get;
-use actix_web::post;
-use actix_web::put;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
@@ -35,19 +31,7 @@ use crate::models::Workspace;
 use crate::modules::cache::EditorCached;
 
 /// Creates a new finding
-#[utoipa::path(
-    tag = "Findings",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Finding created successfully", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = CreateFindingRequest,
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[post("/workspace/{uuid}/findings")]
+#[swaggapi::post("/workspace/{uuid}/findings", tags("Findings"))]
 pub async fn create_finding(
     path: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
@@ -77,18 +61,7 @@ pub async fn create_finding(
 }
 
 /// Gets a workspace's findings
-#[utoipa::path(
-    tag = "Findings",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "The list of findings", body = ListFindings),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[get("/workspace/{uuid}/findings")]
+#[swaggapi::get("/workspace/{uuid}/findings", tags("Findings"))]
 pub async fn get_all_findings(
     path: Path<PathUuid>,
     SessionUser(user_uuid): SessionUser,
@@ -148,18 +121,7 @@ pub async fn get_all_findings(
 }
 
 /// Gets a single finding
-#[utoipa::path(
-    tag = "Findings",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "A full finding and its affected", body = FullFinding),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathFinding),
-    security(("api_key" = []))
-)]
-#[get("/workspace/{w_uuid}/findings/{f_uuid}")]
+#[swaggapi::get("/workspace/{w_uuid}/findings/{f_uuid}", tags("Findings"))]
 pub async fn get_finding(
     path: Path<PathFinding>,
     SessionUser(u_uuid): SessionUser,
@@ -219,19 +181,7 @@ pub async fn get_finding(
 }
 
 /// Updates a finding
-#[utoipa::path(
-    tag = "Findings",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Finding has been updated"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = UpdateFindingRequest,
-    params(PathFinding),
-    security(("api_key" = []))
-)]
-#[put("/workspace/{w_uuid}/findings/{f_uuid}")]
+#[swaggapi::put("/workspace/{w_uuid}/findings/{f_uuid}", tags("Findings"))]
 pub async fn update_finding(
     path: Path<PathFinding>,
     SessionUser(u_uuid): SessionUser,
@@ -303,18 +253,7 @@ pub async fn update_finding(
 }
 
 /// Deletes a finding
-#[utoipa::path(
-    tag = "Findings",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Finding has been deleted"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathFinding),
-    security(("api_key" = []))
-)]
-#[delete("/workspace/{w_uuid}/findings/{f_uuid}")]
+#[swaggapi::delete("/workspace/{w_uuid}/findings/{f_uuid}", tags("Findings"))]
 pub async fn delete_finding(
     path: Path<PathFinding>,
     SessionUser(u_uuid): SessionUser,

@@ -1,9 +1,7 @@
 use std::fs::File;
 
 use actix_files::NamedFile;
-use actix_web::get;
 use actix_web::http::header::ContentLength;
-use actix_web::post;
 use actix_web::web::Header;
 use actix_web::web::Json;
 use actix_web::web::Path;
@@ -36,19 +34,7 @@ use crate::models::Workspace;
 /// Uploads an image to the workspace and generates a thumbnail for it
 ///
 /// The returned uuid can be used to attach the image for example to a finding.
-#[utoipa::path(
-    tag = "Files",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Image has been uploaded successfully", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = Vec<u8>,
-    params(PathUuid, UploadQuery),
-    security(("api_key" = []))
-)]
-#[post("/workspace/{uuid}/files/images")]
+#[swaggapi::post("/workspace/{uuid}/files/images", tags("Files"))]
 pub async fn upload_image(
     path: Path<PathUuid>,
     Query(query): Query<UploadQuery>,
@@ -131,19 +117,7 @@ pub async fn upload_image(
 /// Uploads a file to the workspace
 ///
 /// The returned uuid can be used to attach the file for example to a finding.
-#[utoipa::path(
-    tag = "Files",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "File has been uploaded successfully", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = Vec<u8>,
-    params(PathUuid, UploadQuery),
-    security(("api_key" = []))
-)]
-#[post("/workspace/{uuid}/files")]
+#[swaggapi::post("/workspace/{uuid}/files", tags("Files"))]
 pub async fn upload_file(
     path: Path<PathUuid>,
     Query(query): Query<UploadQuery>,
@@ -188,18 +162,7 @@ pub async fn upload_file(
 }
 
 /// Downloads a thumbnail from the workspace
-#[utoipa::path(
-    tag = "Files",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "File has been downloaded successfully", body = Vec<u8>),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathFile),
-    security(("api_key" = []))
-)]
-#[get("/workspace/{w_uuid}/files/{f_uuid}/thumbnail")]
+#[swaggapi::get("/workspace/{w_uuid}/files/{f_uuid}/thumbnail", tags("Files"))]
 pub async fn download_thumbnail(
     path: Path<PathFile>,
     SessionUser(u_uuid): SessionUser,
@@ -229,18 +192,7 @@ pub async fn download_thumbnail(
 }
 
 /// Downloads a file from the workspace
-#[utoipa::path(
-    tag = "Files",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "File has been downloaded successfully", body = Vec<u8>),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathFile),
-    security(("api_key" = []))
-)]
-#[get("/workspace/{w_uuid}/files/{f_uuid}")]
+#[swaggapi::get("/workspace/{w_uuid}/files/{f_uuid}", tags("Files"))]
 pub async fn download_file(
     path: Path<PathFile>,
     SessionUser(u_uuid): SessionUser,

@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use actix_web::delete;
-use actix_web::get;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
@@ -26,18 +24,7 @@ use crate::models::FindingDefinition;
 use crate::modules::cache::EditorCached;
 
 /// Get all findings using the finding definition
-#[utoipa::path(
-    tag = "Knowledge Base",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "All findings using the definition", body = ListFindingDefinitionUsages),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[get("/findingDefinitions/{uuid}/usages")]
+#[swaggapi::get("/findingDefinitions/{uuid}/usages", tags("Knowledge Base"))]
 pub async fn get_finding_definition_usage(
     path: Path<PathUuid>,
 ) -> ApiResult<Json<ListFindingDefinitionUsages>> {
@@ -126,18 +113,7 @@ pub async fn get_finding_definition_usage(
 }
 
 /// Delete a finding definition
-#[utoipa::path(
-    tag = "Knowledge Base",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "Finding Definition was deleted"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid),
-    security(("api_key" = []))
-)]
-#[delete("/findingDefinitions/{uuid}")]
+#[swaggapi::delete("/findingDefinitions/{uuid}", tags("Knowledge Base"))]
 pub async fn delete_finding_definition(path: Path<PathUuid>) -> ApiResult<HttpResponse> {
     let uuid = path.into_inner().uuid;
 

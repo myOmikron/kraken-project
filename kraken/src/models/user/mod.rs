@@ -2,9 +2,9 @@ use chrono::DateTime;
 use chrono::Utc;
 use rorm::fields::types::Json;
 use rorm::prelude::*;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
-use utoipa::ToSchema;
 use uuid::Uuid;
 use webauthn_rs::prelude::Passkey;
 
@@ -12,7 +12,7 @@ use webauthn_rs::prelude::Passkey;
 mod operations;
 
 /// The permission of a user
-#[derive(DbEnum, Copy, Clone, ToSchema, Deserialize, Serialize, Debug, Eq, PartialEq)]
+#[derive(DbEnum, Copy, Clone, JsonSchema, Deserialize, Serialize, Debug, Eq, PartialEq)]
 pub enum UserPermission {
     /// The user can not create workspaces or start any attacks.
     /// The user can only be invited to existing workspaces to retrieve the data of the workspace

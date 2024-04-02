@@ -1,5 +1,3 @@
-use actix_web::get;
-use actix_web::put;
 use actix_web::web::Json;
 use actix_web::HttpResponse;
 use log::error;
@@ -13,17 +11,7 @@ use crate::chan::global::GLOBAL;
 use crate::models::SettingsInsert;
 
 /// Retrieve the currently active settings
-#[utoipa::path(
-    tag = "Settings Management",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "Returns the currently active settings", body = SettingsFull),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    security(("api_key" = []))
-)]
-#[get("/settings")]
+#[swaggapi::get("/settings", tags("Settings Management"))]
 pub async fn get_settings() -> ApiResult<Json<SettingsFull>> {
     let settings = GLOBAL.settings.get_settings();
     Ok(Json(SettingsFull {
@@ -36,18 +24,7 @@ pub async fn get_settings() -> ApiResult<Json<SettingsFull>> {
 }
 
 /// Update the settings
-#[utoipa::path(
-    tag = "Settings Management",
-    context_path = "/api/v1/admin",
-    responses(
-        (status = 200, description = "Settings have been updated"),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    request_body = UpdateSettingsRequest,
-    security(("api_key" = []))
-)]
-#[put("/settings")]
+#[swaggapi::put("/settings", tags("Settings Management"))]
 pub async fn update_settings(req: Json<UpdateSettingsRequest>) -> ApiResult<HttpResponse> {
     let mut req = req.into_inner();
 
