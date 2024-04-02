@@ -41,8 +41,8 @@ use crate::models::User;
 /// You can use this endpoint to test the current login state of your client.
 ///
 /// If logged in, a 200 without a body is returned.
-#[swaggapi::get("/test", tags("Authentication"))] // TODO , wrap = "AuthenticationRequired"
-pub async fn test() -> HttpResponse {
+#[swaggapi::get("/test", tags("Authentication"))]
+pub async fn test(_: AuthenticationRequired) -> HttpResponse {
     HttpResponse::Ok().finish()
 }
 
