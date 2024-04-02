@@ -80,8 +80,7 @@ pub struct SourceAttack {
     pub error: Option<String>,
     /// The point in time this attack was started
     pub created_at: DateTime<Utc>,
-    /// Flattened enum storing the `attack_type` next to the `results`
-    #[serde(flatten)]
+    /// Enum storing the `attack_type` next to the `results`
     pub results: SourceAttackResult,
 }
 

@@ -1,5 +1,7 @@
 //! The websocket to the frontend client is defined in this module
 
+mod utils;
+
 use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
@@ -9,7 +11,6 @@ use actix_toolbox::ws::MailboxError;
 use actix_toolbox::ws::Message;
 use actix_web::web::Payload;
 use actix_web::HttpRequest;
-use actix_web::HttpResponse;
 use bytes::Bytes;
 use log::debug;
 use log::error;
@@ -17,6 +18,7 @@ use tokio::sync::Mutex;
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
+use crate::api::handler::websocket::utils::WebsocketUpgrade;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::EditorTarget;
 use crate::chan::ws_manager::schema::WsClientMessage;
@@ -29,12 +31,12 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
 /// A heartbeat PING packet is sent constantly (every 10s).
 /// If no response is retrieved within 30s of the last transmission, the socket
 /// will be closed.
-#[swaggapi::get("/ws")]
+#[swaggapi::get("/ws", tags("Websocket"))]
 pub async fn websocket(
     request: HttpRequest,
     payload: Payload,
     SessionUser(user_uuid): SessionUser,
-) -> Result<HttpResponse, actix_web::Error> {
+) -> Result<WebsocketUpgrade, actix_web::Error> {
     let (tx, mut rx, response) = ws::start(&request, payload)?;
     debug!("Initializing websocket connection");
     let last_hb = Arc::new(Mutex::new(Instant::now()));
@@ -126,7 +128,7 @@ pub async fn websocket(
     // Give sender to ws manager
     GLOBAL.ws.add(user_uuid, tx.clone()).await;
 
-    Ok(response)
+    Ok(WebsocketUpgrade(response))
 }
 
 async fn process_msg(msg: WsClientMessage, user_uuid: Uuid) {

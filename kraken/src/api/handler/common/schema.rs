@@ -1,4 +1,5 @@
 use schemars::JsonSchema;
+use schemars::JsonSchema_repr;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_repr::Deserialize_repr;
@@ -79,7 +80,7 @@ pub struct SimpleTag {
 ///
 /// Numbers between 1000 and 1999 (inclusive) are client errors that can be handled by the client.
 /// Numbers between 2000 and 2999 (inclusive) are server errors.
-#[derive(Serialize_repr, Deserialize_repr, JsonSchema, Debug, PartialOrd, PartialEq)]
+#[derive(Serialize_repr, Deserialize_repr, JsonSchema_repr, Debug, PartialOrd, PartialEq)]
 #[repr(u16)]
 // TODO  #[schema(default = 1000, example = 1000)]
 pub enum ApiStatusCode {

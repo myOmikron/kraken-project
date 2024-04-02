@@ -37,8 +37,8 @@ actix-files = { version = "~0.6" }
 webauthn-rs = { version = "~0.4", features = ["danger-allow-state-serialisation"] }
 
 # openapi swagger
-swaggapi = { version = "0.2.0", features = ["actix", "actix-files"], optional = true }
-# swaggapi = { version = "0.2.0", features = ["actix", "actix-files"], optional = true, git = "https://github.com/gammelalf/swaggapi" }
+# swaggapi = { version = "0.2.0", features = ["actix", "actix-files"], optional = true }
+swaggapi = { version = "0.2.0", features = ["actix", "actix-files"], optional = true, git = "https://github.com/gammelalf/swaggapi", branch = "WIP" }
 schemars = { version = "~0.8", features = ["uuid1", "chrono", "url"] }
 
 # Hashing
@@ -93,7 +93,7 @@ rorm = { version = "~0.6", default-features = false, features = ["tokio", "rustl
 ipnetwork = { version = "~0.20", features = ["serde"] }
 
 # API for dehashed
-dehashed-rs = { version = "~0.4", features = ["tokio", "utoipa"] }
+dehashed-rs = { version = "~0.5", features = ["tokio", "schemars"] }
 
 # TLS
 rcgen = { version = "~0.12", features = ["x509-parser"], optional = true }

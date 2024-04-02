@@ -110,8 +110,6 @@ pub struct QueryCertificateTransparencyRequest {
 #[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct QueryDehashedRequest {
     /// The query to send to dehashed
-    // TODO #[schema(value_type = Query)]
-    #[schemars(with = "serde_json::Value")]
     pub query: dehashed_rs::Query,
 
     /// The workspace to execute the attack in
