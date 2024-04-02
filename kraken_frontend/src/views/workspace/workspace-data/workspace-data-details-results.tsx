@@ -23,13 +23,17 @@ export default function WorkspaceDataDetailsResults(props: WorkspaceDataDetailsR
     const attack = attacks[clampedAttackPage];
 
     const clampedResultPage =
-        resultPage < 0 ? 0 : resultPage >= attack.results.length ? attack.results.length - 1 : resultPage;
-    const resultUuid = attack.results[clampedResultPage].uuid;
+        resultPage < 0
+            ? 0
+            : resultPage >= attack.results.results.length
+              ? attack.results.results.length - 1
+              : resultPage;
+    const resultUuid = attack.results.results[clampedResultPage].uuid;
 
     const attackElement = (() => {
-        switch (attack.attackType) {
+        switch (attack.results.attackType) {
             case "DnsResolution":
-                const dnsResult = attack.results.at(clampedResultPage);
+                const dnsResult = attack.results.results.at(clampedResultPage);
                 if (dnsResult === undefined) return null;
                 return (
                     <div className="workspace-data-details-container">
@@ -63,7 +67,7 @@ export default function WorkspaceDataDetailsResults(props: WorkspaceDataDetailsR
                     </div>
                 );
             case "DnsTxtScan":
-                const txtResult = attack.results.at(clampedResultPage);
+                const txtResult = attack.results.results.at(clampedResultPage);
                 if (txtResult === undefined) return null;
                 return (
                     <div className="workspace-data-details-container">
@@ -146,7 +150,7 @@ export default function WorkspaceDataDetailsResults(props: WorkspaceDataDetailsR
                     </div>
                 );
             case "QueryCertificateTransparency":
-                const qctResult = attack.results.at(clampedResultPage);
+                const qctResult = attack.results.results.at(clampedResultPage);
                 if (qctResult === undefined) return null;
                 return (
                     <div className="workspace-data-details-container">
@@ -212,7 +216,7 @@ export default function WorkspaceDataDetailsResults(props: WorkspaceDataDetailsR
                     </div>
                 );
             case "BruteforceSubdomains":
-                const bsResult = attack.results.at(clampedResultPage);
+                const bsResult = attack.results.results.at(clampedResultPage);
                 if (bsResult === undefined) return null;
                 return (
                     <div className="workspace-data-details-container">
@@ -251,7 +255,7 @@ export default function WorkspaceDataDetailsResults(props: WorkspaceDataDetailsR
                     </div>
                 );
             case "HostAlive":
-                const haResult = attack.results.at(clampedResultPage);
+                const haResult = attack.results.results.at(clampedResultPage);
                 if (haResult === undefined) return null;
                 return (
                     haResult && (
@@ -284,7 +288,7 @@ export default function WorkspaceDataDetailsResults(props: WorkspaceDataDetailsR
                 );
             case "ServiceDetection":
             case "UdpServiceDetection":
-                const sdResult = attack.results.at(clampedResultPage);
+                const sdResult = attack.results.results.at(clampedResultPage);
                 if (sdResult === undefined) return null;
                 return (
                     <div className="workspace-data-details-container">
@@ -334,7 +338,7 @@ export default function WorkspaceDataDetailsResults(props: WorkspaceDataDetailsR
                     </div>
                 );
             case "QueryDehashed":
-                const qdResult = attack.results.at(clampedResultPage);
+                const qdResult = attack.results.results.at(clampedResultPage);
                 if (qdResult === undefined) return null;
                 return (
                     <div className="workspace-data-details-container">
@@ -452,7 +456,7 @@ export default function WorkspaceDataDetailsResults(props: WorkspaceDataDetailsR
                     </div>
                 );
             case "OsDetection":
-                const osResult = attack.results.at(clampedResultPage);
+                const osResult = attack.results.results.at(clampedResultPage);
                 if (osResult === undefined) return null;
                 return (
                     <div className="workspace-data-details-container">
@@ -513,11 +517,11 @@ export default function WorkspaceDataDetailsResults(props: WorkspaceDataDetailsR
                         <ArrowLeftIcon />
                     </button>
                     <span>
-                        {clampedResultPage + 1} of {attack.results.length}
+                        {clampedResultPage + 1} of {attack.results.results.length}
                     </span>
                     <button
                         className={"workspace-table-button"}
-                        disabled={clampedResultPage === attack.results.length - 1}
+                        disabled={clampedResultPage === attack.results.results.length - 1}
                         onClick={() => setResultPage(clampedResultPage + 1)}
                     >
                         <ArrowRightIcon />
