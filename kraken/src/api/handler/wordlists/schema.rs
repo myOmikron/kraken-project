@@ -10,13 +10,10 @@ use crate::models::WordList;
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct CreateWordlistRequest {
     /// The wordlist's name to be displayed select buttons
-    // TODO #[schema(example = "subdomains-top1million-5000.txt")]
     pub name: String,
     /// A description explaining the wordlist's intended use case
-    // TODO #[schema(example = "List of 5000 subdomains")]
     pub description: String,
     /// The file path the wordlist is deployed under on each leech
-    // TODO  #[schema(example = "/opt/wordlists/Discovery/DNS/subdomains-top1million-5000.txt")]
     pub path: String,
 }
 
@@ -24,13 +21,10 @@ pub struct CreateWordlistRequest {
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct UpdateWordlistRequest {
     /// The wordlist's name to be displayed select buttons
-    // TODO #[schema(example = "subdomains-top1million-5000.txt")]
     pub name: Option<String>,
     /// A description explaining the wordlist's intended use case
-    // TODO #[schema(example = "List of 5000 subdomains")]
     pub description: Option<String>,
     /// The file path the wordlist is deployed under on each leech
-    // TODO #[schema(example = "/opt/wordlists/Discovery/DNS/subdomains-top1million-5000.txt")]
     pub path: Option<String>,
 }
 
@@ -41,10 +35,8 @@ pub struct SimpleWordlist {
     /// The primary key of the wordlist
     pub uuid: Uuid,
     /// The wordlist's name to be displayed select buttons
-    // TODO #[schema(example = "subdomains-top1million-5000.txt")]
     pub name: String,
     /// A description explaining the wordlist's intended use case
-    // TODO #[schema(example = "List of 5000 subdomains")]
     pub description: String,
 }
 
@@ -55,13 +47,10 @@ pub struct FullWordlist {
     /// The primary key of the wordlist
     pub uuid: Uuid,
     /// The wordlist's name to be displayed select buttons
-    // TODO #[schema(example = "subdomains-top1million-5000.txt")]
     pub name: String,
     /// A description explaining the wordlist's intended use case
-    // TODO #[schema(example = "List of 5000 subdomains")]
     pub description: String,
     /// The file path the wordlist is deployed under on each leech
-    // TODO #[schema(example = "/opt/wordlists/Discovery/DNS/subdomains-top1million-5000.txt")]
     pub path: String,
 }
 

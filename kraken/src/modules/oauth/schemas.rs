@@ -132,7 +132,6 @@ pub struct TokenRequest {
 #[derive(Serialize, JsonSchema)]
 pub struct TokenResponse {
     /// Always `"access_token"`
-    // TODO #[schema(example = "access_token")]
     pub token_type: &'static str,
 
     /// The access token issued by the authorization server.

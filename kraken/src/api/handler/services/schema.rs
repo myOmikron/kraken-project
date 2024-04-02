@@ -22,20 +22,17 @@ use crate::models::ServiceProtocols;
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct CreateServiceRequest {
     /// The service's name
-    // TODO #[schema(example = "django")]
     pub name: String,
 
     /// Whether the port should exist right now or existed at some point
     pub certainty: ManualServiceCertainty,
 
     /// The ip address the service runs on
-    #[schemars(with = "IpAddr")] // TODO
-    pub host: IpNetwork,
+    pub host: IpNetwork, // TODO: this is wrong, should be IpAddr
 
     /// An optional port the service runs on
     ///
     /// If set, you must specify protocol
-    // TODO #[schema(example = "8080")]
     pub port: Option<u16>,
 
     /// The port's protocol as well as its sub protocols
@@ -76,10 +73,8 @@ pub struct SimpleService {
     /// The uuid of the service
     pub uuid: Uuid,
     /// The name of the service
-    // TODO #[schema(example = "postgresql")]
     pub name: String,
     /// The version of the service
-    // TODO #[schema(example = "13.0.1")]
     pub version: Option<String>,
     /// The certainty the service is detected correct
     pub certainty: ServiceCertainty,
@@ -88,7 +83,6 @@ pub struct SimpleService {
     /// The port this service may linked to
     pub port: Option<Uuid>,
     /// The comment attached to the service
-    // TODO #[schema(example = "Holds all relevant information")]
     pub comment: String,
     /// The workspace is service is linked to
     pub workspace: Uuid,
@@ -102,10 +96,8 @@ pub struct FullService {
     /// Uuid of the service
     pub uuid: Uuid,
     /// The service's name
-    // TODO #[schema(example = "postgresql")]
     pub name: String,
     /// An optional version of the running service
-    // TODO #[schema(example = "13.0.1")]
     pub version: Option<String>,
     /// The certainty of the detection
     pub certainty: ServiceCertainty,
@@ -116,7 +108,6 @@ pub struct FullService {
     /// The protocols used above the port's protocol
     pub protocols: Option<ServiceProtocols>,
     /// A comment to the service
-    // TODO #[schema(example = "Holds all relevant information")]
     pub comment: String,
     /// The workspace this service is linked to
     pub workspace: Uuid,

@@ -10,13 +10,10 @@ use crate::api::handler::common::de_optional;
 #[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct CreateLeechRequest {
     /// Name of the leech
-    // TODO #[schema(example = "leech-01")]
     pub name: String,
     /// Address of the leech with schema
-    // TODO #[schema(value_type = String, example = "https://10.13.37:8081")]
     pub address: Url,
     /// Description of the leech
-    // TODO #[schema(example = "The first leech in a private net")]
     pub description: Option<String>,
 }
 
@@ -24,13 +21,10 @@ pub struct CreateLeechRequest {
 #[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct UpdateLeechRequest {
     /// Name of the leech
-    // TODO  #[schema(example = "leech-01")]
     pub name: Option<String>,
     /// Address of the leech
-    // TODO  #[schema(value_type = String, example = "https://10.13.37.1:8081")]
     pub address: Option<Url>,
     /// Description of the leech
-    // TODO  #[schema(example = "First leech in a private network")]
     #[serde(default, deserialize_with = "de_optional")]
     pub description: Option<Option<String>>,
 }
@@ -41,10 +35,8 @@ pub struct SimpleLeech {
     /// uuid of the leech
     pub uuid: Uuid,
     /// Name of the leech
-    // TODO  #[schema(example = "leech-01")]
     pub name: String,
     /// Address of the leech
-    // TODO  #[schema(value_type = String, example = "https://10.13.37.1:8081")]
     pub address: Url,
 }
 

@@ -26,10 +26,8 @@ use crate::api::handler::users::schema::SimpleUser;
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct CreateWorkspaceRequest {
     /// The name of the workspace
-    // TODO #[schema(example = "secure-workspace")]
     pub name: String,
     /// The description of the workspace
-    // TODO #[schema(example = "This workspace is super secure and should not be looked at!!")]
     pub description: Option<String>,
 }
 
@@ -46,10 +44,8 @@ pub struct SearchWorkspaceRequest {
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct UpdateWorkspaceRequest {
     /// Name of the workspace
-    // TODO #[schema(example = "Workspace for work")]
     pub name: Option<String>,
     /// Description of the workspace
-    // TODO #[schema(example = "This workspace is for work and for work only!")]
     #[serde(default, deserialize_with = "de_optional")]
     pub description: Option<Option<String>>,
 }
@@ -92,10 +88,8 @@ pub struct SimpleWorkspace {
     /// The uuid of the workspace
     pub uuid: Uuid,
     /// The name of the workspace
-    // TODO #[schema(example = "ultra-secure-workspace")]
     pub name: String,
     /// The description of the workspace
-    // TODO  #[schema(example = "This workspace is ultra secure and should not be looked at!!")]
     pub description: Option<String>,
     /// The owner of the workspace
     pub owner: SimpleUser,
@@ -110,11 +104,9 @@ pub struct SimpleWorkspace {
 pub struct FullWorkspace {
     /// The uuid of the workspace
     pub uuid: Uuid,
-    // TODO #[schema(example = "ultra-secure-workspace")]
     /// The name of the workspace
     pub name: String,
     /// The description of the workspace
-    // TODO #[schema(example = "This workspace is ultra secure and should not be looked at!!")]
     pub description: Option<String>,
     /// Notes of the workspace
     pub notes: String,

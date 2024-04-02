@@ -13,13 +13,10 @@ use crate::models::UserPermission;
 #[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct CreateUserRequest {
     /// The username
-    // TODO #[schema(example = "user123")]
     pub username: String,
     /// The displayname
-    // TODO #[schema(example = "Anon")]
     pub display_name: String,
     /// The password that should be set
-    // TODO #[schema(example = "super-secure-password")]
     pub password: String,
     /// The permissions that the user should have
     pub permission: UserPermission,
@@ -29,10 +26,8 @@ pub struct CreateUserRequest {
 #[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct SetPasswordRequest {
     /// The current password
-    // TODO #[schema(example = "super-secure-password")]
     pub current_password: String,
     /// The new password
-    // TODO #[schema(example = "ultra-secure-password!1!1!")]
     pub new_password: String,
 }
 /// The request to update the own user
@@ -41,10 +36,8 @@ pub struct SetPasswordRequest {
 #[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct UpdateMeRequest {
     /// The username
-    // TODO #[schema(example = "cyber-user-123")]
     pub username: Option<String>,
     /// The displayname
-    // TODO #[schema(example = "Cyberhacker")]
     pub display_name: Option<String>,
 }
 
@@ -54,10 +47,8 @@ pub struct FullUser {
     /// The uuid of the user
     pub uuid: Uuid,
     /// The username of the user
-    // TODO #[schema(example = "user123")]
     pub username: String,
     /// The displayname of the user
-    // TODO #[schema(example = "Anon")]
     pub display_name: String,
     /// The permissions that the user has
     pub permission: UserPermission,

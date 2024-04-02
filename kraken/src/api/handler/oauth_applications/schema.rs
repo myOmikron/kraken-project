@@ -10,11 +10,9 @@ use crate::models::OauthClient;
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct CreateAppRequest {
     /// The name of the application
-    // TODO #[schema(example = "Trustworthy application")]
     pub name: String,
 
     /// The redirect url of the application
-    // TODO #[schema(example = "http://127.0.0.1:8080")]
     pub redirect_uri: String,
 }
 
@@ -22,11 +20,9 @@ pub struct CreateAppRequest {
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct UpdateAppRequest {
     /// The name of the application
-    // TODO #[schema(example = "Trustworthy application")]
     pub name: Option<String>,
 
     /// The redirect url of the application
-    // TODO #[schema(example = "http://127.0.0.1:8080")]
     pub redirect_uri: Option<String>,
 }
 
@@ -37,10 +33,8 @@ pub struct SimpleOauthClient {
     /// The uuid of the client
     pub uuid: Uuid,
     /// The name of the client
-    // TODO #[schema(example = "Trustworthy application")]
     pub name: String,
     /// The redirect url of the client
-    // TODO #[schema(example = "http://127.0.0.1:8080")]
     pub redirect_uri: String,
 }
 
@@ -51,13 +45,10 @@ pub struct FullOauthClient {
     /// The uuid of the client
     pub uuid: Uuid,
     /// The name of the client
-    // TODO #[schema(example = "Trustworthy application")]
     pub name: String,
     /// The redirect url of the client
-    // TODO #[schema(example = "http://127.0.0.1:8080")]
     pub redirect_uri: String,
     /// The secret of the client
-    // TODO #[schema(example = "IPSPL29BSDw5HFir5LYamdlm6SiaBdwx")]
     pub secret: String,
 }
 

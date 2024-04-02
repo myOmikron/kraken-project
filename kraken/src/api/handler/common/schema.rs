@@ -26,11 +26,9 @@ pub struct PathUuid {
 #[derive(Copy, Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct PageParams {
     /// Number of items to retrieve
-    // TODO #[param(example = 50, minimum = 1)]
     pub limit: u64,
 
     /// Position in the whole list to start retrieving from
-    // TODO  #[param(example = 0)]
     pub offset: u64,
 }
 
@@ -41,11 +39,9 @@ pub struct Page<T> {
     pub items: Vec<T>,
 
     /// The limit this page was retrieved with
-    // TODO  #[schema(example = 50)]
     pub limit: u64,
 
     /// The offset this page was retrieved with
-    // TODO #[schema(example = 0)]
     pub offset: u64,
 
     /// The total number of items this page is a subset of
@@ -82,7 +78,6 @@ pub struct SimpleTag {
 /// Numbers between 2000 and 2999 (inclusive) are server errors.
 #[derive(Serialize_repr, Deserialize_repr, JsonSchema_repr, Debug, PartialOrd, PartialEq)]
 #[repr(u16)]
-// TODO  #[schema(default = 1000, example = 1000)]
 pub enum ApiStatusCode {
     /// Login failed
     LoginFailed = 1000,
@@ -176,7 +171,6 @@ pub struct ApiErrorResponse {
     /// The error code
     pub status_code: ApiStatusCode,
     /// A human readable description of the error
-    // TODO #[schema(example = "Error message will be here")]
     pub message: String,
 }
 

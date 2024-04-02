@@ -385,16 +385,12 @@ pub struct Change {
     /// The text that should be set to the range given by the other values
     pub text: String,
     /// Start of the column
-    // TODO  #[schema(value_type = u64, minimum = 1)]
     pub start_column: NonZeroU64,
     /// End of the column
-    // TODO #[schema(value_type = u64, minimum = 1)]
     pub end_column: NonZeroU64,
     /// Starting line number
-    // TODO #[schema(value_type = u64, minimum = 1)]
     pub start_line: NonZeroU64,
     /// Ending line number
-    // TODO #[schema(value_type = u64, minimum = 1)]
     pub end_line: NonZeroU64,
 }
 
@@ -402,10 +398,8 @@ pub struct Change {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema)]
 pub struct CursorPosition {
     /// The line the cursor was placed in
-    // TODO #[schema(value_type = u64, minimum = 1)]
     pub line: NonZeroU64,
     /// The column the cursor was placed in
-    // TODO #[schema(value_type = u64, minimum = 1)]
     pub column: NonZeroU64,
 }
 

@@ -7,7 +7,6 @@ use uuid::Uuid;
 #[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct CreateApiKeyRequest {
     /// A descriptive name helping the user to identify the key
-    // TODO #[schema(example = "Leech on my local machine")]
     pub name: String,
 }
 
@@ -15,7 +14,6 @@ pub struct CreateApiKeyRequest {
 #[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct UpdateApiKeyRequest {
     /// A descriptive name helping the user to identify the key
-    // TODO #[schema(example = "Leech on my local machine")]
     pub name: String,
 }
 
@@ -26,11 +24,9 @@ pub struct FullApiKey {
     pub uuid: Uuid,
 
     /// A descriptive name helping the user to identify the key
-    // TODO #[schema(example = "Leech on my local machine")]
     pub name: String,
 
     /// The actual key's value
-    // TODO #[schema(example = "fsn83r0jfis84nfthw...")]
     pub key: String,
 }
 

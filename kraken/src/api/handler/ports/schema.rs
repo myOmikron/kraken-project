@@ -24,14 +24,12 @@ pub struct CreatePortRequest {
     pub ip_addr: IpAddr,
 
     /// The port to add
-    // TODO #[schema(example = "8080")]
     pub port: u16,
 
     /// Whether the port should exist right now or existed at some point
     pub certainty: ManualPortCertainty,
 
     /// The port's protocol
-    // TODO  #[schema(example = "Tcp")]
     pub protocol: PortProtocol,
 }
 
@@ -69,7 +67,6 @@ pub struct SimplePort {
     /// Uuid of the port
     pub uuid: Uuid,
     /// Port number
-    // TODO #[schema(example = 1337)]
     pub port: u16,
     /// Port protocol
     pub protocol: PortProtocol,
@@ -91,7 +88,6 @@ pub struct FullPort {
     /// Uuid of the port
     pub uuid: Uuid,
     /// Port number
-    // TODO #[schema(example = 1337)]
     pub port: u16,
     /// Port protocol
     pub protocol: PortProtocol,

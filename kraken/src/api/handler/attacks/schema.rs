@@ -23,14 +23,12 @@ pub struct BruteforceSubdomainsRequest {
     pub leech_uuid: Option<Uuid>,
 
     /// Domain to construct subdomains for
-    // TODO #[schema(example = "example.com")]
     pub domain: String,
 
     /// The wordlist to use
     pub wordlist_uuid: Uuid,
 
     /// The concurrent task limit
-    // TODO #[schema(example = 100)]
     pub concurrent_limit: u32,
 
     /// The workspace to execute the attack in
@@ -42,10 +40,8 @@ pub struct BruteforceSubdomainsRequest {
 #[serde(untagged)]
 pub enum PortOrRange {
     /// A single port
-    // TODO #[schema(example = 8000)]
     Port(u16),
     /// In inclusive range of ports
-    // TODO #[schema(value_type = String, example = "1-1024")]
     Range(
         #[serde(
             deserialize_with = "deserialize_port_range",
@@ -64,17 +60,14 @@ pub struct HostsAliveRequest {
     pub leech_uuid: Option<Uuid>,
 
     /// The ip addresses / networks or domains to scan
-    // TODO #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.0/24", "google.com"]))]
     pub targets: Vec<DomainOrNetwork>,
 
     /// The time to wait until a host is considered down.
     ///
     /// The timeout is specified in milliseconds.
-    // TODO #[schema(example = 3000)]
     pub timeout: u64,
 
     /// The concurrent task limit
-    // TODO #[schema(example = 30)]
     pub concurrent_limit: u32,
 
     /// The workspace to execute the attack in
@@ -85,21 +78,17 @@ pub struct HostsAliveRequest {
 #[derive(Deserialize, Serialize, JsonSchema, Debug, Clone)]
 pub struct QueryCertificateTransparencyRequest {
     /// Domain to query certificates for
-    // TODO #[schema(example = "example.com")]
     pub target: String,
 
     /// Should expired certificates be included as well
-    // TODO #[schema(example = true)]
     pub include_expired: bool,
 
     /// The number of times the query should be retried if it failed.
-    // TODO #[schema(example = 3)]
     pub max_retries: u32,
 
     /// The interval that should be waited between retries.
     ///
     /// The interval is specified in milliseconds.
-    // TODO #[schema(example = 500)]
     pub retry_interval: u64,
 
     /// The workspace to execute the attack in
@@ -125,7 +114,6 @@ pub struct ServiceDetectionRequest {
     pub leech_uuid: Option<Uuid>,
 
     /// The ip addresses / networks or domains to scan
-    // TODO #[schema(value_type = Vec<String>, example = json!(["10.13.37.1", "10.13.37.0/24", "google.com"]))]
     pub targets: Vec<DomainOrNetwork>,
 
     /// List of single ports and port ranges
@@ -137,34 +125,28 @@ pub struct ServiceDetectionRequest {
     /// The time to wait until a connection is considered failed.
     ///
     /// The timeout is specified in milliseconds.
-    // TODO #[schema(example = 3000)]
     pub connect_timeout: u64,
 
     /// Time to wait for a response after sending the payload
     /// (or after establishing a connection, if not payload is to be sent)
     ///
     /// The timeout is specified in milliseconds.
-    // TODO #[schema(example = 3000)]
     pub receive_timeout: u64,
 
     /// The interval that should be wait between retries on a port.
     ///
     /// The interval is specified in milliseconds.
-    // TODO #[schema(example = 100)]
     pub retry_interval: u64,
 
     /// The number of times the connection should be retried if it failed.
-    // TODO #[schema(example = 2)]
     pub max_retries: u32,
 
     /// The concurrent task limit
-    // TODO #[schema(example = 5000)]
     pub concurrent_limit: u32,
 
     /// Skips the initial icmp check.
     ///
     /// All hosts are assumed to be reachable
-    // TODO #[schema(example = false)]
     pub skip_icmp_check: bool,
 
     /// The workspace to execute the attack in
@@ -191,21 +173,17 @@ pub struct UdpServiceDetectionRequest {
     /// The interval that should be wait between retries on a port.
     ///
     /// The interval is specified in milliseconds.
-    // TODO #[schema(example = 100)]
     pub retry_interval: u64,
 
     /// The number of times the connection should be retried if it failed.
-    // TODO #[schema(example = 2)]
     pub max_retries: u32,
 
     /// The time to wait until a connection is considered failed.
     ///
     /// The timeout is specified in milliseconds.
-    // TODO #[schema(example = 3000)]
     pub timeout: u64,
 
     /// The concurrent task limit
-    // TODO #[schema(example = 5000)]
     pub concurrent_limit: u32,
 
     /// The workspace to execute the attack in
@@ -260,11 +238,9 @@ pub struct DnsResolutionRequest {
     pub leech_uuid: Option<Uuid>,
 
     /// The domains to resolve
-    // TODO  #[schemars(example = json!(["example.com", "example.org"]))]
     pub targets: Vec<String>,
 
     /// The concurrent task limit
-    // TODO #[schemars(example = 2)]
     pub concurrent_limit: u32,
 
     /// The workspace to execute the attack in
@@ -280,7 +256,6 @@ pub struct DnsTxtScanRequest {
     pub leech_uuid: Option<Uuid>,
 
     /// The domains to resolve
-    // TODO  #[schemars(example = json!(["example.com", "example.org"]))]
     pub targets: Vec<String>,
 
     /// The workspace to execute the attack in
@@ -318,11 +293,10 @@ pub struct ListAttacks {
 #[serde(untagged)]
 pub enum DomainOrNetwork {
     /// A ip address / network
-    #[schemars(with = "IpAddr")] // TODO
+    #[schemars(with = "IpAddr")]
     Network(IpNetwork),
 
     /// A domain name
-    // TODO #[schemars(example = "kraken.test")]
     Domain(String),
 }
 

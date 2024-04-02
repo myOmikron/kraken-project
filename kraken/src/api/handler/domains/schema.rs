@@ -16,7 +16,6 @@ use crate::models::FindingSeverity;
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct CreateDomainRequest {
     /// The domain to add
-    // TODO #[schema(example = "kraken.test")]
     pub domain: String,
 }
 
@@ -53,10 +52,8 @@ pub struct SimpleDomain {
     /// The uuid of the domain
     pub uuid: Uuid,
     /// The domain name
-    // TODO #[schema(example = "example.com")]
     pub domain: String,
     /// The comment to the domain
-    // TODO #[schema(example = "This is a important domain!")]
     pub comment: String,
     /// The workspace this domain is linked to
     pub workspace: Uuid,
@@ -72,10 +69,8 @@ pub struct FullDomain {
     /// The primary key of the domain
     pub uuid: Uuid,
     /// The domain's name
-    // TODO #[schema(example = "example.com")]
     pub domain: String,
     /// A comment
-    // TODO #[schema(example = "This is a important domain!")]
     pub comment: String,
     /// The workspace this domain is in
     pub workspace: Uuid,

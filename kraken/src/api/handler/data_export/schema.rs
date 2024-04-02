@@ -43,10 +43,7 @@ pub struct AggregatedHost {
     pub uuid: Uuid,
 
     /// The IP address of the host.
-    ///
-    /// If the host has multiple addresses, create a [Host] for each and link them.
-    #[schemars(with = "IpAddr")] // TODO
-    pub ip_addr: IpNetwork,
+    pub ip_addr: IpNetwork, // TODO: this is wrong, should be IpAddr
 
     /// The type of OS of this host
     pub os_type: OsType,

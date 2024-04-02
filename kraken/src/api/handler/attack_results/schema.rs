@@ -96,7 +96,7 @@ pub struct SimpleQueryUnhashedResult {
     pub hashed_password: Option<String>,
 
     /// An ip address
-    #[schemars(with = "Option<IpAddr>")] // TODO
+    #[schemars(with = "Option<IpAddr>")]
     pub ip_address: Option<IpNetwork>,
 
     /// A name
@@ -277,7 +277,7 @@ pub enum DnsTxtScanEntry {
         spf_type: DnsTxtScanSpfType,
 
         /// If the txt_type is a SPF type that includes an IP (or whole IP range), it will be set here.
-        #[schemars(with = "Option<IpAddr>")] // TODO
+        #[schemars(with = "Option<IpAddr>")]
         spf_ip: Option<IpNetwork>,
 
         /// If the txt_type is a SPF type that includes a domain, it will be set here.
