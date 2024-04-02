@@ -2,7 +2,6 @@ use std::net::IpAddr;
 
 use chrono::DateTime;
 use chrono::Utc;
-use ipnetwork::IpNetwork;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -28,7 +27,7 @@ pub struct CreateServiceRequest {
     pub certainty: ManualServiceCertainty,
 
     /// The ip address the service runs on
-    pub host: IpNetwork, // TODO: this is wrong, should be IpAddr
+    pub host: IpAddr,
 
     /// An optional port the service runs on
     ///

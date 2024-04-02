@@ -208,7 +208,7 @@ impl From<Host> for AggregatedHost {
 
         Self {
             uuid,
-            ip_addr,
+            ip_addr: ip_addr.ip(),
             os_type,
             response_time,
             certainty,

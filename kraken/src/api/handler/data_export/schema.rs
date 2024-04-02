@@ -3,7 +3,6 @@ use std::net::IpAddr;
 
 use chrono::DateTime;
 use chrono::Utc;
-use ipnetwork::IpNetwork;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -43,7 +42,7 @@ pub struct AggregatedHost {
     pub uuid: Uuid,
 
     /// The IP address of the host.
-    pub ip_addr: IpNetwork, // TODO: this is wrong, should be IpAddr
+    pub ip_addr: IpAddr,
 
     /// The type of OS of this host
     pub os_type: OsType,
