@@ -26,14 +26,8 @@ impl KrakenClient {
         ip_addr: IpAddr,
         port: Option<(NonZeroU16, ServiceProtocols)>,
     ) -> KrakenResult<Uuid> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/services"))
-            .expect("Valid Url");
-
         let uuid: UuidResponse = self
-            .post(url)
+            .post(&format!("api/v1/workspaces/{workspace}/services"))
             .body(CreateServiceRequest {
                 name,
                 certainty,
@@ -53,24 +47,17 @@ impl KrakenClient {
         workspace: Uuid,
         query: GetAllServicesQuery,
     ) -> KrakenResult<ServiceResultsPage> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/services/all"))
-            .expect("Valid Url");
-
-        self.post(url).body(query).send().await
+        self.post(&format!("api/v1/workspaces/{workspace}/services/all"))
+            .body(query)
+            .send()
+            .await
     }
 
     /// Get a single service
     pub async fn get_service(&self, workspace: Uuid, service: Uuid) -> KrakenResult<FullService> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/services/{service}"))
-            .expect("Valid Url");
-
-        self.get(url).send().await
+        self.get(&format!("api/v1/workspaces/{workspace}/services/{service}"))
+            .send()
+            .await
     }
 
     /// Update a service
@@ -82,24 +69,17 @@ impl KrakenClient {
         service: Uuid,
         update: UpdateServiceRequest,
     ) -> KrakenResult<()> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/services/{service}"))
-            .expect("Valid Url");
-
-        self.put(url).body(update).send().await
+        self.put(&format!("api/v1/workspaces/{workspace}/services/{service}"))
+            .body(update)
+            .send()
+            .await
     }
 
     /// Delete a service
     pub async fn delete_service(&self, workspace: Uuid, service: Uuid) -> KrakenResult<()> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/services/{service}"))
-            .expect("Valid url");
-
-        self.delete(url).send().await
+        self.delete(&format!("api/v1/workspaces/{workspace}/services/{service}"))
+            .send()
+            .await
     }
 
     /// List all direct relations to the service
@@ -108,14 +88,10 @@ impl KrakenClient {
         workspace: Uuid,
         service: Uuid,
     ) -> KrakenResult<ServiceRelations> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!(
-                "api/v1/workspaces/{workspace}/services/{service}/relations"
-            ))
-            .expect("Valid Url");
-
-        self.get(url).send().await
+        self.get(&format!(
+            "api/v1/workspaces/{workspace}/services/{service}/relations"
+        ))
+        .send()
+        .await
     }
 }

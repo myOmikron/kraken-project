@@ -18,17 +18,22 @@ use crate::KrakenClient;
 use crate::KrakenResult;
 
 impl KrakenClient {
-    pub(crate) fn get(&self, url: Url) -> KrakenRequest<(), ()> {
-        KrakenRequest::new(self.client.get(url))
+    pub(crate) fn get(&self, relative_url: &str) -> KrakenRequest<(), ()> {
+        KrakenRequest::new(self.client.get(self.build_url(relative_url.as_ref())))
     }
-    pub(crate) fn post(&self, url: Url) -> KrakenRequest<(), ()> {
-        KrakenRequest::new(self.client.post(url))
+    pub(crate) fn post(&self, relative_url: &str) -> KrakenRequest<(), ()> {
+        KrakenRequest::new(self.client.post(self.build_url(relative_url.as_ref())))
     }
-    pub(crate) fn put(&self, url: Url) -> KrakenRequest<(), ()> {
-        KrakenRequest::new(self.client.put(url))
+    pub(crate) fn put(&self, relative_url: &str) -> KrakenRequest<(), ()> {
+        KrakenRequest::new(self.client.put(self.build_url(relative_url.as_ref())))
     }
-    pub(crate) fn delete(&self, url: Url) -> KrakenRequest<(), ()> {
-        KrakenRequest::new(self.client.delete(url))
+    pub(crate) fn delete(&self, relative_url: &str) -> KrakenRequest<(), ()> {
+        KrakenRequest::new(self.client.delete(self.build_url(relative_url.as_ref())))
+    }
+    fn build_url(&self, relative_url: &str) -> Url {
+        self.base_url
+            .join(relative_url)
+            .expect("The endpoint url should be valid")
     }
 }
 

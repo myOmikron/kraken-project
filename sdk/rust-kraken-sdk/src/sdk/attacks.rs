@@ -17,56 +17,37 @@ use crate::KrakenResult;
 impl KrakenClient {
     /// Get all attacks the user has access to
     pub async fn get_all_attacks(&self) -> KrakenResult<ListAttacks> {
-        #[allow(clippy::expect_used)]
-        let url = self.base_url.join("api/v1/attacks").expect("Valid url");
-
-        self.get(url).send().await
+        self.get("api/v1/attacks").send().await
     }
 
     /// Get all attacks in a specific workspace
     pub async fn get_all_workspace_attacks(&self, workspace: Uuid) -> KrakenResult<ListAttacks> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/attacks"))
-            .expect("Valid url");
-
-        self.get(url).send().await
+        self.get(&format!("api/v1/workspaces/{workspace}/attacks"))
+            .send()
+            .await
     }
 
     /// Retrieve a single attack
     pub async fn get_attack(&self, attack: Uuid) -> KrakenResult<SimpleAttack> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/attacks/{attack}"))
-            .expect("Valid url");
-
-        self.get(url).send().await
+        self.get(&format!("api/v1/attacks/{attack}")).send().await
     }
 
     /// Delete an attack
     pub async fn delete_attack(&self, attack: Uuid) -> KrakenResult<()> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/attacks/{attack}"))
-            .expect("Valid url");
-
-        self.delete(url).send().await
+        self.delete(&format!("api/v1/attacks/{attack}"))
+            .send()
+            .await
     }
 
     async fn start_attack<REQ>(&self, attack: &str, req: REQ) -> KrakenResult<Uuid>
     where
         REQ: Serialize,
     {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/attacks/{attack}"))
-            .expect("Valid url");
-
-        let uuid: UuidResponse = self.post(url).body(req).send().await?;
+        let uuid: UuidResponse = self
+            .post(&format!("api/v1/attacks/{attack}"))
+            .body(req)
+            .send()
+            .await?;
 
         Ok(uuid.uuid)
     }

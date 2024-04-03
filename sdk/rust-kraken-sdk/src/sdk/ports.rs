@@ -26,14 +26,8 @@ impl KrakenClient {
         protocol: PortProtocol,
         certainty: ManualPortCertainty,
     ) -> KrakenResult<Uuid> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/ports"))
-            .expect("Valid url");
-
         let uuid: UuidResponse = self
-            .post(url)
+            .post(&format!("api/v1/workspaces/{workspace}/ports"))
             .body(CreatePortRequest {
                 ip_addr: IpNetwork::from(ip_addr),
                 port: port.get(),
@@ -52,24 +46,17 @@ impl KrakenClient {
         workspace: Uuid,
         query: GetAllPortsQuery,
     ) -> KrakenResult<PortResultsPage> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/ports/all"))
-            .expect("Valid Url");
-
-        self.post(url).body(query).send().await
+        self.post(&format!("api/v1/workspaces/{workspace}/ports/all"))
+            .body(query)
+            .send()
+            .await
     }
 
     /// Get all information about a single port
     pub async fn get_port(&self, workspace: Uuid, port: Uuid) -> KrakenResult<FullPort> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/ports/{port}"))
-            .expect("Valid Url");
-
-        self.get(url).send().await
+        self.get(&format!("api/v1/workspaces/{workspace}/ports/{port}"))
+            .send()
+            .await
     }
 
     /// Update a port
@@ -81,24 +68,17 @@ impl KrakenClient {
         port: Uuid,
         update: UpdatePortRequest,
     ) -> KrakenResult<()> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/ports/{port}"))
-            .expect("Valid Url");
-
-        self.put(url).body(update).send().await
+        self.put(&format!("api/v1/workspaces/{workspace}/ports/{port}"))
+            .body(update)
+            .send()
+            .await
     }
 
     /// Delete a port
     pub async fn delete_port(&self, workspace: Uuid, port: Uuid) -> KrakenResult<()> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/ports/{port}"))
-            .expect("Valid url");
-
-        self.delete(url).send().await
+        self.delete(&format!("api/v1/workspaces/{workspace}/ports/{port}"))
+            .send()
+            .await
     }
 
     /// Retrieve all direct relations of a port
@@ -107,14 +87,10 @@ impl KrakenClient {
         workspace: Uuid,
         port: Uuid,
     ) -> KrakenResult<PortRelations> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!(
-                "api/v1/workspaces/{workspace}/ports/{port}/relations"
-            ))
-            .expect("Valid Url");
-
-        self.get(url).send().await
+        self.get(&format!(
+            "api/v1/workspaces/{workspace}/ports/{port}/relations"
+        ))
+        .send()
+        .await
     }
 }

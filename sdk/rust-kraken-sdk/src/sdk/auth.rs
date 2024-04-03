@@ -8,10 +8,7 @@ use crate::KrakenResult;
 impl KrakenClient {
     /// Test if the user is authenticated
     pub async fn test(&self) -> KrakenResult<bool> {
-        #[allow(clippy::expect_used)]
-        let url = self.base_url.join("api/v1/auth/test").expect("Valid url");
-
-        match self.get(url).send().await {
+        match self.get("api/v1/auth/test").send().await {
             Ok(unit) => {
                 let _: () = unit;
                 Ok(true)
@@ -23,11 +20,8 @@ impl KrakenClient {
 
     /// Logging in
     pub async fn login(&self) -> KrakenResult<()> {
-        #[allow(clippy::expect_used)]
-        let url = self.base_url.join("api/v1/auth/login").expect("Valid url");
-
         info!("Logging in");
-        self.post(url)
+        self.post("api/v1/auth/login")
             .body(LoginRequest {
                 username: self.username.clone(),
                 password: self.password.clone(),
@@ -44,11 +38,7 @@ impl KrakenClient {
     }
 
     /// Logout
-    pub async fn logout(&self) -> Result<(), KrakenError> {
-        #[allow(clippy::expect_used)]
-        let url = self.base_url.join("api/v1/auth/logout").expect("Valid url");
-        self.get(url).send().await?;
-
-        Ok(())
+    pub async fn logout(&self) -> KrakenResult<()> {
+        self.get("api/v1/auth/logout").send().await
     }
 }

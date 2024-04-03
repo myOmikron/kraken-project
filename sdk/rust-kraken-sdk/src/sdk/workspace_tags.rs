@@ -10,13 +10,9 @@ use crate::KrakenResult;
 impl KrakenClient {
     /// Retrieve all workspace tags
     pub async fn get_all_workspace_tags(&self, workspace: Uuid) -> KrakenResult<ListWorkspaceTags> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/tags"))
-            .expect("Valid url");
-
-        self.get(url).send().await
+        self.get(&format!("api/v1/workspaces/{workspace}/tags"))
+            .send()
+            .await
     }
 
     /// Create a workspace tag.
@@ -25,13 +21,11 @@ impl KrakenClient {
         workspace: Uuid,
         create: CreateWorkspaceTagRequest,
     ) -> KrakenResult<Uuid> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/tags"))
-            .expect("Valid url");
-
-        let UuidResponse { uuid } = self.post(url).body(create).send().await?;
+        let UuidResponse { uuid } = self
+            .post(&format!("api/v1/workspaces/{workspace}/tags"))
+            .body(create)
+            .send()
+            .await?;
 
         Ok(uuid)
     }
@@ -43,23 +37,16 @@ impl KrakenClient {
         tag: Uuid,
         update: UpdateWorkspaceTag,
     ) -> KrakenResult<()> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/tags/{tag}"))
-            .expect("Valid url");
-
-        self.put(url).body(update).send().await
+        self.put(&format!("api/v1/workspaces/{workspace}/tags/{tag}"))
+            .body(update)
+            .send()
+            .await
     }
 
     /// Delete a workspace tag.
     pub async fn delete_workspace_tag(&self, workspace: Uuid, tag: Uuid) -> KrakenResult<()> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/tags/{tag}"))
-            .expect("Valid url");
-
-        self.delete(url).send().await
+        self.delete(&format!("api/v1/workspaces/{workspace}/tags/{tag}"))
+            .send()
+            .await
     }
 }

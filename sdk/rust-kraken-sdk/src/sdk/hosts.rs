@@ -22,14 +22,8 @@ impl KrakenClient {
         ip_addr: IpAddr,
         certainty: ManualHostCertainty,
     ) -> KrakenResult<Uuid> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/hosts"))
-            .expect("Valid url");
-
         let uuid: UuidResponse = self
-            .post(url)
+            .post(&format!("api/v1/workspaces/{workspace}/hosts"))
             .body(CreateHostRequest {
                 ip_addr: IpNetwork::from(ip_addr),
                 certainty,
@@ -46,24 +40,17 @@ impl KrakenClient {
         workspace: Uuid,
         query: GetAllHostsQuery,
     ) -> KrakenResult<HostResultsPage> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/hosts/all"))
-            .expect("Valid url");
-
-        self.post(url).body(query).send().await
+        self.post(&format!("api/v1/workspaces/{workspace}/hosts/all"))
+            .body(query)
+            .send()
+            .await
     }
 
     /// Retrieve a single host
     pub async fn get_host(&self, workspace: Uuid, host: Uuid) -> KrakenResult<FullHost> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/hosts/{host}"))
-            .expect("Valid url");
-
-        self.get(url).send().await
+        self.get(&format!("api/v1/workspaces/{workspace}/hosts/{host}"))
+            .send()
+            .await
     }
 
     /// Update a host
@@ -75,24 +62,17 @@ impl KrakenClient {
         host: Uuid,
         update: UpdateHostRequest,
     ) -> KrakenResult<()> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/hosts/{host}"))
-            .expect("Valid url");
-
-        self.put(url).body(update).send().await
+        self.put(&format!("api/v1/workspaces/{workspace}/hosts/{host}"))
+            .body(update)
+            .send()
+            .await
     }
 
     /// Delete a host
     pub async fn delete_host(&self, workspace: Uuid, host: Uuid) -> KrakenResult<()> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/hosts/{host}"))
-            .expect("Valid url");
-
-        self.delete(url).send().await
+        self.delete(&format!("api/v1/workspaces/{workspace}/hosts/{host}"))
+            .send()
+            .await
     }
 
     /// Get the direct relations of a host
@@ -101,14 +81,10 @@ impl KrakenClient {
         workspace: Uuid,
         host: Uuid,
     ) -> KrakenResult<HostRelations> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!(
-                "api/v1/workspaces/{workspace}/hosts/{host}/relations"
-            ))
-            .expect("Valid url");
-
-        self.get(url).send().await
+        self.get(&format!(
+            "api/v1/workspaces/{workspace}/hosts/{host}/relations"
+        ))
+        .send()
+        .await
     }
 }
