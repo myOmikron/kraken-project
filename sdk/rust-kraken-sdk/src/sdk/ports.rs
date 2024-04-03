@@ -13,7 +13,6 @@ use kraken::models::ManualPortCertainty;
 use kraken::models::PortProtocol;
 use uuid::Uuid;
 
-use crate::sdk::utils::KrakenRequest;
 use crate::KrakenClient;
 use crate::KrakenResult;
 
@@ -34,16 +33,14 @@ impl KrakenClient {
             .expect("Valid url");
 
         let uuid: UuidResponse = self
-            .make_request(
-                KrakenRequest::post(url)
-                    .body(CreatePortRequest {
-                        ip_addr: IpNetwork::from(ip_addr),
-                        port: port.get(),
-                        certainty,
-                        protocol,
-                    })
-                    .build(),
-            )
+            .post(url)
+            .body(CreatePortRequest {
+                ip_addr: IpNetwork::from(ip_addr),
+                port: port.get(),
+                certainty,
+                protocol,
+            })
+            .send()
             .await?;
 
         Ok(uuid.uuid)
@@ -61,8 +58,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/ports/all"))
             .expect("Valid Url");
 
-        self.make_request(KrakenRequest::post(url).body(query).build())
-            .await
+        self.post(url).body(query).send().await
     }
 
     /// Get all information about a single port
@@ -73,7 +69,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/ports/{port}"))
             .expect("Valid Url");
 
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get(url).send().await
     }
 
     /// Update a port
@@ -91,10 +87,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/ports/{port}"))
             .expect("Valid Url");
 
-        self.make_request(KrakenRequest::put(url).body(update).build())
-            .await?;
-
-        Ok(())
+        self.put(url).body(update).send().await
     }
 
     /// Delete a port
@@ -105,10 +98,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/ports/{port}"))
             .expect("Valid url");
 
-        self.make_request(KrakenRequest::delete(url).build())
-            .await?;
-
-        Ok(())
+        self.delete(url).send().await
     }
 
     /// Retrieve all direct relations of a port
@@ -125,6 +115,6 @@ impl KrakenClient {
             ))
             .expect("Valid Url");
 
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get(url).send().await
     }
 }

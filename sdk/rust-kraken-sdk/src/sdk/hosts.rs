@@ -11,7 +11,6 @@ use kraken::api::handler::hosts::schema::UpdateHostRequest;
 use kraken::models::ManualHostCertainty;
 use uuid::Uuid;
 
-use crate::sdk::utils::KrakenRequest;
 use crate::KrakenClient;
 use crate::KrakenResult;
 
@@ -30,14 +29,12 @@ impl KrakenClient {
             .expect("Valid url");
 
         let uuid: UuidResponse = self
-            .make_request(
-                KrakenRequest::post(url)
-                    .body(CreateHostRequest {
-                        ip_addr: IpNetwork::from(ip_addr),
-                        certainty,
-                    })
-                    .build(),
-            )
+            .post(url)
+            .body(CreateHostRequest {
+                ip_addr: IpNetwork::from(ip_addr),
+                certainty,
+            })
+            .send()
             .await?;
 
         Ok(uuid.uuid)
@@ -55,8 +52,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/hosts/all"))
             .expect("Valid url");
 
-        self.make_request(KrakenRequest::post(url).body(query).build())
-            .await
+        self.post(url).body(query).send().await
     }
 
     /// Retrieve a single host
@@ -67,7 +63,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/hosts/{host}"))
             .expect("Valid url");
 
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get(url).send().await
     }
 
     /// Update a host
@@ -85,10 +81,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/hosts/{host}"))
             .expect("Valid url");
 
-        self.make_request(KrakenRequest::put(url).body(update).build())
-            .await?;
-
-        Ok(())
+        self.put(url).body(update).send().await
     }
 
     /// Delete a host
@@ -99,10 +92,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/hosts/{host}"))
             .expect("Valid url");
 
-        self.make_request(KrakenRequest::delete(url).build())
-            .await?;
-
-        Ok(())
+        self.delete(url).send().await
     }
 
     /// Get the direct relations of a host
@@ -119,6 +109,6 @@ impl KrakenClient {
             ))
             .expect("Valid url");
 
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get(url).send().await
     }
 }

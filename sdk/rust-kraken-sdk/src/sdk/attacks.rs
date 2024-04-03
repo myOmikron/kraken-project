@@ -11,7 +11,6 @@ use kraken::api::handler::common::schema::UuidResponse;
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::sdk::utils::KrakenRequest;
 use crate::KrakenClient;
 use crate::KrakenResult;
 
@@ -21,7 +20,7 @@ impl KrakenClient {
         #[allow(clippy::expect_used)]
         let url = self.base_url.join("api/v1/attacks").expect("Valid url");
 
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get(url).send().await
     }
 
     /// Get all attacks in a specific workspace
@@ -32,7 +31,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/attacks"))
             .expect("Valid url");
 
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get(url).send().await
     }
 
     /// Retrieve a single attack
@@ -43,7 +42,7 @@ impl KrakenClient {
             .join(&format!("api/v1/attacks/{attack}"))
             .expect("Valid url");
 
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get(url).send().await
     }
 
     /// Delete an attack
@@ -54,10 +53,7 @@ impl KrakenClient {
             .join(&format!("api/v1/attacks/{attack}"))
             .expect("Valid url");
 
-        self.make_request(KrakenRequest::delete(url).build())
-            .await?;
-
-        Ok(())
+        self.delete(url).send().await
     }
 
     async fn start_attack<REQ>(&self, attack: &str, req: REQ) -> KrakenResult<Uuid>
@@ -70,9 +66,7 @@ impl KrakenClient {
             .join(&format!("api/v1/attacks/{attack}"))
             .expect("Valid url");
 
-        let uuid: UuidResponse = self
-            .make_request(KrakenRequest::post(url).body(req).build())
-            .await?;
+        let uuid: UuidResponse = self.post(url).body(req).send().await?;
 
         Ok(uuid.uuid)
     }

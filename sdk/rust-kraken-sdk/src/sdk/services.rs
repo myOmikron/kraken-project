@@ -13,7 +13,6 @@ use kraken::models::ManualServiceCertainty;
 use kraken::models::ServiceProtocols;
 use uuid::Uuid;
 
-use crate::sdk::utils::KrakenRequest;
 use crate::KrakenClient;
 use crate::KrakenResult;
 
@@ -34,17 +33,15 @@ impl KrakenClient {
             .expect("Valid Url");
 
         let uuid: UuidResponse = self
-            .make_request(
-                KrakenRequest::post(url)
-                    .body(CreateServiceRequest {
-                        name,
-                        certainty,
-                        host: IpNetwork::from(ip_addr),
-                        port: port.map(|x| x.0.get()),
-                        protocols: port.map(|x| x.1),
-                    })
-                    .build(),
-            )
+            .post(url)
+            .body(CreateServiceRequest {
+                name,
+                certainty,
+                host: IpNetwork::from(ip_addr),
+                port: port.map(|x| x.0.get()),
+                protocols: port.map(|x| x.1),
+            })
+            .send()
             .await?;
 
         Ok(uuid.uuid)
@@ -62,8 +59,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/services/all"))
             .expect("Valid Url");
 
-        self.make_request(KrakenRequest::post(url).body(query).build())
-            .await
+        self.post(url).body(query).send().await
     }
 
     /// Get a single service
@@ -74,7 +70,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/services/{service}"))
             .expect("Valid Url");
 
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get(url).send().await
     }
 
     /// Update a service
@@ -92,8 +88,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/services/{service}"))
             .expect("Valid Url");
 
-        self.make_request(KrakenRequest::put(url).body(update).build())
-            .await
+        self.put(url).body(update).send().await
     }
 
     /// Delete a service
@@ -104,10 +99,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/services/{service}"))
             .expect("Valid url");
 
-        self.make_request(KrakenRequest::delete(url).build())
-            .await?;
-
-        Ok(())
+        self.delete(url).send().await
     }
 
     /// List all direct relations to the service
@@ -124,6 +116,6 @@ impl KrakenClient {
             ))
             .expect("Valid Url");
 
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get(url).send().await
     }
 }

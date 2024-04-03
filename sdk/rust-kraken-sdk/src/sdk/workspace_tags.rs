@@ -4,7 +4,6 @@ use kraken::api::handler::workspace_tags::schema::ListWorkspaceTags;
 use kraken::api::handler::workspace_tags::schema::UpdateWorkspaceTag;
 use uuid::Uuid;
 
-use crate::sdk::utils::KrakenRequest;
 use crate::KrakenClient;
 use crate::KrakenResult;
 
@@ -17,7 +16,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/tags"))
             .expect("Valid url");
 
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get(url).send().await
     }
 
     /// Create a workspace tag.
@@ -32,9 +31,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/tags"))
             .expect("Valid url");
 
-        let UuidResponse { uuid } = self
-            .make_request(KrakenRequest::post(url).body(create).build())
-            .await?;
+        let UuidResponse { uuid } = self.post(url).body(create).send().await?;
 
         Ok(uuid)
     }
@@ -52,8 +49,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/tags/{tag}"))
             .expect("Valid url");
 
-        self.make_request(KrakenRequest::put(url).body(update).build())
-            .await
+        self.put(url).body(update).send().await
     }
 
     /// Delete a workspace tag.
@@ -64,6 +60,6 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/tags/{tag}"))
             .expect("Valid url");
 
-        self.make_request(KrakenRequest::delete(url).build()).await
+        self.delete(url).send().await
     }
 }

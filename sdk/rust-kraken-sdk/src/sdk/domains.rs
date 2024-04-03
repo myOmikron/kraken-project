@@ -7,7 +7,6 @@ use kraken::api::handler::domains::schema::GetAllDomainsQuery;
 use kraken::api::handler::domains::schema::UpdateDomainRequest;
 use uuid::Uuid;
 
-use crate::sdk::utils::KrakenRequest;
 use crate::KrakenClient;
 use crate::KrakenResult;
 
@@ -21,11 +20,9 @@ impl KrakenClient {
             .expect("Valid url");
 
         let uuid: UuidResponse = self
-            .make_request(
-                KrakenRequest::post(url)
-                    .body(CreateDomainRequest { domain })
-                    .build(),
-            )
+            .post(url)
+            .body(CreateDomainRequest { domain })
+            .send()
             .await?;
 
         Ok(uuid.uuid)
@@ -43,11 +40,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/domains/all"))
             .expect("valid url");
 
-        let domains = self
-            .make_request(KrakenRequest::post(url).body(query).build())
-            .await?;
-
-        Ok(domains)
+        self.post(url).body(query).send().await
     }
 
     /// Retrieve a specific domain
@@ -58,7 +51,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/domains/{domain}"))
             .expect("Valid url");
 
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get(url).send().await
     }
 
     /// Update a domain
@@ -74,10 +67,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/domains/{domain}"))
             .expect("Valid url");
 
-        self.make_request(KrakenRequest::put(url).body(update).build())
-            .await?;
-
-        Ok(())
+        self.put(url).body(update).send().await
     }
 
     /// Delete a domain
@@ -88,8 +78,7 @@ impl KrakenClient {
             .join(&format!("api/v1/workspaces/{workspace}/domains/{domain}"))
             .expect("Valid url");
 
-        self.make_request(KrakenRequest::delete(url).build())
-            .await?;
+        self.delete(url).send().await?;
 
         Ok(())
     }
@@ -108,6 +97,6 @@ impl KrakenClient {
             ))
             .expect("Valid url");
 
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get(url).send().await
     }
 }
