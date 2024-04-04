@@ -187,3 +187,42 @@ pub struct FindingDetails {
     #[rorm(on_update = "Cascade", on_delete = "SetNull")]
     pub log_file: Option<ForeignModel<MediaFile>>,
 }
+
+/// The category of a finding
+#[derive(Model)]
+pub struct FindingCategory {
+    /// The primary key of a finding category
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+    /// The name of the finding category
+    #[rorm(max_length = 255, unique)]
+    pub name: String,
+}
+
+/// The relation between a [FindingDefinition] and a [FindingCategory]
+#[derive(Model)]
+pub struct FindingDefinitionFindingCategoryRelation {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+    /// The finding definition
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub finding_definition: ForeignModel<FindingDefinition>,
+    /// The finding category
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub finding_category: ForeignModel<FindingCategory>,
+}
+
+/// The relation between a [Finding] and a [FindingCategory]
+#[derive(Model)]
+pub struct FindingFindingCategoryRelation {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+    /// The finding
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub finding: ForeignModel<Finding>,
+    /// The finding category
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub finding_category: ForeignModel<FindingCategory>,
+}
