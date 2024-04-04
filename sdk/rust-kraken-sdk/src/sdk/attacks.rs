@@ -11,67 +11,42 @@ use kraken::api::handler::common::schema::UuidResponse;
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::sdk::utils::KrakenRequest;
 use crate::KrakenClient;
 use crate::KrakenResult;
 
 impl KrakenClient {
     /// Get all attacks the user has access to
     pub async fn get_all_attacks(&self) -> KrakenResult<ListAttacks> {
-        #[allow(clippy::expect_used)]
-        let url = self.base_url.join("api/v1/attacks").expect("Valid url");
-
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get("api/v1/attacks").send().await
     }
 
     /// Get all attacks in a specific workspace
     pub async fn get_all_workspace_attacks(&self, workspace: Uuid) -> KrakenResult<ListAttacks> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/attacks"))
-            .expect("Valid url");
-
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get(&format!("api/v1/workspaces/{workspace}/attacks"))
+            .send()
+            .await
     }
 
     /// Retrieve a single attack
     pub async fn get_attack(&self, attack: Uuid) -> KrakenResult<SimpleAttack> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/attacks/{attack}"))
-            .expect("Valid url");
-
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get(&format!("api/v1/attacks/{attack}")).send().await
     }
 
     /// Delete an attack
     pub async fn delete_attack(&self, attack: Uuid) -> KrakenResult<()> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/attacks/{attack}"))
-            .expect("Valid url");
-
-        self.make_request(KrakenRequest::delete(url).build())
-            .await?;
-
-        Ok(())
+        self.delete(&format!("api/v1/attacks/{attack}"))
+            .send()
+            .await
     }
 
     async fn start_attack<REQ>(&self, attack: &str, req: REQ) -> KrakenResult<Uuid>
     where
         REQ: Serialize,
     {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/attacks/{attack}"))
-            .expect("Valid url");
-
         let uuid: UuidResponse = self
-            .make_request(KrakenRequest::post(url).body(req).build())
+            .post(&format!("api/v1/attacks/{attack}"))
+            .body(req)
+            .send()
             .await?;
 
         Ok(uuid.uuid)
