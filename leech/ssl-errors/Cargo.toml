@@ -1,0 +1,25 @@
+[package]
+name = "ssl-errors"
+version = "0.1.0"
+edition = "2021"
+authors = ["Niklas Pfister <git@omikron.dev>"]
+license = "AGPL-3.0"
+repository = "https://github.com/myOmikron/kraken-project"
+description = "A library for processing ssl errors"
+
+[[bin]]
+name = "ssl-errors"
+required-features = ["bin"]
+
+[features]
+bin = ["dep:tokio"]
+
+[dependencies]
+thiserror = "~1"
+log = "~0.4"
+reqwest = { version = "=0.12.2", features = ["native-tls"] }
+hyper-util = "=0.1.3" # This version MUST be kept in sync with reqwest!!!
+native-tls = "=0.2.11" # This version MUST be kept in sync with reqwest!!! (more precicly hyper-tls)
+openssl = "=0.10.64" # This version MUST be kept in sync with native-tls!!!
+
+tokio = { version = "~1", optional = true, features = ["full"] }

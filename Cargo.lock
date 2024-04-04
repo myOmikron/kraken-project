@@ -4542,6 +4542,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "ssl-errors"
+version = "0.1.0"
+dependencies = [
+ "hyper-util",
+ "log",
+ "native-tls",
+ "openssl",
+ "reqwest",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "stringprep"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
