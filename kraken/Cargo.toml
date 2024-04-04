@@ -93,10 +93,10 @@ rorm = { version = "~0.6", default-features = false, features = ["tokio", "rustl
 ipnetwork = { version = "~0.20", features = ["serde"] }
 
 # API for dehashed
-dehashed-rs = { version = "~0.4", features = ["tokio", "utoipa"] }
+dehashed-rs = { version = "~0.5", features = ["tokio", "utoipa"] }
 
 # TLS
-rcgen = { version = "~0.12", features = ["x509-parser"], optional = true }
+rcgen = { version = "~0.13", features = ["x509-parser"], optional = true }
 url = { version = "~2", features = ["serde"] } # Parsing ip / domain when filling subject_alt_names
 
 # Image processing
