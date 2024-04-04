@@ -33,6 +33,9 @@ pub struct TlsManager {
     /// The CA's certificate with its private key
     ca: Certificate,
 
+    /// The keypair of the CA
+    ca_key: KeyPair,
+
     /// The CA as expected by `tonic`
     tonic_ca: TonicCertificate,
 
@@ -61,23 +64,26 @@ impl TlsManager {
 
         let domain;
         let ca;
+        let ca_key;
         let server;
+        let server_key;
 
         if base_path.exists() {
             // Read from fs
             domain = fs::read_to_string(domain_path)?;
             let ca_cert_pem = fs::read_to_string(ca_cert_path)?;
             let ca_key_pem = fs::read_to_string(ca_key_path)?;
-            ca = Certificate::from_params(CertificateParams::from_ca_cert_pem(
-                &ca_cert_pem,
-                KeyPair::from_pem(&ca_key_pem)?,
-            )?)?;
+            ca_key = KeyPair::from_pem(&ca_key_pem)?;
+            ca = CertificateParams::from_ca_cert_pem(&ca_cert_pem)?.self_signed(&ca_key)?;
+
             let server_cert_pem = fs::read_to_string(server_cert_path)?;
             let server_key_pem = fs::read_to_string(server_key_path)?;
-            server = Certificate::from_params(CertificateParams::from_ca_cert_pem(
-                &server_cert_pem,
-                KeyPair::from_pem(&server_key_pem)?,
-            )?)?;
+            server_key = KeyPair::from_pem(&server_key_pem)?;
+            server = CertificateParams::from_ca_cert_pem(&server_cert_pem)?.signed_by(
+                &server_key,
+                &ca,
+                &ca_key,
+            )?;
         } else {
             // Generate
             let mut bytes = Vec::with_capacity(32);
@@ -92,31 +98,34 @@ impl TlsManager {
             {
                 domain = String::from_utf8(bytes).expect("[a-z]{32} should be a valid utf8 string");
             }
-            ca = cert::CA.build()?;
-            server = cert::Kraken {
+            let ca_params = cert::CA.build()?;
+            ca_key = KeyPair::generate()?;
+            ca = ca_params.self_signed(&ca_key)?;
+
+            let server_params = cert::Kraken {
                 domain: domain.clone(),
             }
             .build()?;
+            server_key = KeyPair::generate()?;
+            server = server_params.signed_by(&server_key, &ca, &ca_key)?;
 
             // Write to fs
             fs::create_dir(&base_path)?;
             set_permissions(base_path, Permissions::from_mode(0o700))?;
             fs::write(domain_path, &domain)?;
-            fs::write(ca_cert_path, ca.serialize_pem()?)?;
-            fs::write(ca_key_path, ca.serialize_private_key_pem())?;
-            fs::write(server_cert_path, server.serialize_pem_with_signer(&ca)?)?;
-            fs::write(server_key_path, server.serialize_private_key_pem())?;
+            fs::write(ca_cert_path, ca.pem())?;
+            fs::write(ca_key_path, ca_key.serialize_pem())?;
+            fs::write(server_cert_path, server.pem())?;
+            fs::write(server_key_path, server_key.serialize_pem())?;
         }
 
         // Convert to tonic
-        let tonic_ca = TonicCertificate::from_pem(ca.serialize_pem()?);
-        let server = Identity::from_pem(
-            server.serialize_pem_with_signer(&ca)?,
-            server.serialize_private_key_pem(),
-        );
+        let tonic_ca = TonicCertificate::from_pem(ca.pem());
+        let server = Identity::from_pem(server.pem(), server_key.serialize_pem());
 
         Ok(Self {
             ca,
+            ca_key,
             tonic_ca,
             server,
             domain,
@@ -128,13 +137,13 @@ impl TlsManager {
     /// Also returns everything else the leech needs in order to do tls.
     pub fn gen_leech_cert(&self, url: Url) -> Result<LeechTlsConfig, TlsManagerError> {
         let cert = cert::Leech { url }.build()?;
-        let ca_pem = self.ca.serialize_pem()?;
-        let cert_pem = cert.serialize_pem_with_signer(&self.ca)?;
-        let key_pem = cert.serialize_private_key_pem();
+        let ca_pem = self.ca.pem();
+        let key = KeyPair::generate()?;
+        let cert_pem = cert.signed_by(&key, &self.ca, &self.ca_key)?;
         Ok(LeechTlsConfig {
             ca: ca_pem,
-            cert: cert_pem,
-            key: key_pem,
+            cert: cert_pem.pem(),
+            key: key.serialize_pem(),
             sni: self.domain.clone(),
         })
     }
