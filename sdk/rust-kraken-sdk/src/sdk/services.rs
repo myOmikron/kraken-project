@@ -4,6 +4,8 @@ use std::num::NonZeroU16;
 use ipnetwork::IpNetwork;
 use kraken::api::handler::common::schema::ServiceResultsPage;
 use kraken::api::handler::common::schema::UuidResponse;
+use kraken::api::handler::findings::schema::ListFindings;
+use kraken::api::handler::findings::schema::SimpleFinding;
 use kraken::api::handler::services::schema::CreateServiceRequest;
 use kraken::api::handler::services::schema::FullService;
 use kraken::api::handler::services::schema::GetAllServicesQuery;
@@ -93,5 +95,20 @@ impl KrakenClient {
         ))
         .send()
         .await
+    }
+
+    /// List all findings affecting the service
+    pub async fn get_service_findings(
+        &self,
+        workspace: Uuid,
+        service: Uuid,
+    ) -> KrakenResult<Vec<SimpleFinding>> {
+        let list: ListFindings = self
+            .get(&format!(
+                "api/v1/workspaces/{workspace}/services/{service}/findings"
+            ))
+            .send()
+            .await?;
+        Ok(list.findings)
     }
 }

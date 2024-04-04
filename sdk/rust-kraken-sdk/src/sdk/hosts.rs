@@ -3,6 +3,8 @@ use std::net::IpAddr;
 use ipnetwork::IpNetwork;
 use kraken::api::handler::common::schema::HostResultsPage;
 use kraken::api::handler::common::schema::UuidResponse;
+use kraken::api::handler::findings::schema::ListFindings;
+use kraken::api::handler::findings::schema::SimpleFinding;
 use kraken::api::handler::hosts::schema::CreateHostRequest;
 use kraken::api::handler::hosts::schema::FullHost;
 use kraken::api::handler::hosts::schema::GetAllHostsQuery;
@@ -86,5 +88,20 @@ impl KrakenClient {
         ))
         .send()
         .await
+    }
+
+    /// List all findings affecting the host
+    pub async fn get_host_findings(
+        &self,
+        workspace: Uuid,
+        host: Uuid,
+    ) -> KrakenResult<Vec<SimpleFinding>> {
+        let list: ListFindings = self
+            .get(&format!(
+                "api/v1/workspaces/{workspace}/hosts/{host}/findings"
+            ))
+            .send()
+            .await?;
+        Ok(list.findings)
     }
 }

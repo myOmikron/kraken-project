@@ -5,6 +5,8 @@ use kraken::api::handler::domains::schema::DomainRelations;
 use kraken::api::handler::domains::schema::FullDomain;
 use kraken::api::handler::domains::schema::GetAllDomainsQuery;
 use kraken::api::handler::domains::schema::UpdateDomainRequest;
+use kraken::api::handler::findings::schema::ListFindings;
+use kraken::api::handler::findings::schema::SimpleFinding;
 use uuid::Uuid;
 
 use crate::KrakenClient;
@@ -74,5 +76,20 @@ impl KrakenClient {
         ))
         .send()
         .await
+    }
+
+    /// List all findings affecting the domain
+    pub async fn get_domain_findings(
+        &self,
+        workspace: Uuid,
+        domain: Uuid,
+    ) -> KrakenResult<Vec<SimpleFinding>> {
+        let list: ListFindings = self
+            .get(&format!(
+                "api/v1/workspaces/{workspace}/domains/{domain}/findings"
+            ))
+            .send()
+            .await?;
+        Ok(list.findings)
     }
 }

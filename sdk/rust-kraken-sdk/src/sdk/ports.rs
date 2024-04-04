@@ -4,6 +4,8 @@ use std::num::NonZeroU16;
 use ipnetwork::IpNetwork;
 use kraken::api::handler::common::schema::PortResultsPage;
 use kraken::api::handler::common::schema::UuidResponse;
+use kraken::api::handler::findings::schema::ListFindings;
+use kraken::api::handler::findings::schema::SimpleFinding;
 use kraken::api::handler::ports::schema::CreatePortRequest;
 use kraken::api::handler::ports::schema::FullPort;
 use kraken::api::handler::ports::schema::GetAllPortsQuery;
@@ -92,5 +94,20 @@ impl KrakenClient {
         ))
         .send()
         .await
+    }
+
+    /// List all findings affecting the port
+    pub async fn get_port_findings(
+        &self,
+        workspace: Uuid,
+        port: Uuid,
+    ) -> KrakenResult<Vec<SimpleFinding>> {
+        let list: ListFindings = self
+            .get(&format!(
+                "api/v1/workspaces/{workspace}/ports/{port}/findings"
+            ))
+            .send()
+            .await?;
+        Ok(list.findings)
     }
 }

@@ -6,7 +6,6 @@ use kraken::api::handler::findings::schema::SimpleFinding;
 use kraken::api::handler::findings::schema::UpdateFindingRequest;
 use uuid::Uuid;
 
-use crate::sdk::utils::KrakenRequest;
 use crate::KrakenClient;
 use crate::KrakenResult;
 
