@@ -31,6 +31,7 @@ impl KrakenClient {
         KrakenRequest::new(self.client.delete(self.build_url(relative_url.as_ref())))
     }
     fn build_url(&self, relative_url: &str) -> Url {
+        #[allow(clippy::expect_used)]
         self.base_url
             .join(relative_url)
             .expect("The endpoint url should be valid")
