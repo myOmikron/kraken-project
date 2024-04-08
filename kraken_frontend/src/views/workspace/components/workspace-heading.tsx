@@ -18,7 +18,7 @@ export default function WorkspaceHeading(props: WorkspaceHeadingProps) {
 
     useEffect(() => {
         Api.workspaces.all().then(handleApiError(({ workspaces }) => setWorkspaces(workspaces)));
-    });
+    }, []);
 
     return (
         <div className={"pane workspace-heading"}>
