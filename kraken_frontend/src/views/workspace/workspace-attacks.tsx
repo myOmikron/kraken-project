@@ -578,7 +578,7 @@ const ATTACKS: AllAttackDescr = {
     },
 };
 
-const TARGET_TYPE = ["domain", "host", "port", "service"] as const;
+const TARGET_TYPE = ["domain", "host", "port", "service", "httpService"] as const;
 /**
  * An attack target's type
  *
@@ -738,6 +738,17 @@ export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
                                 ? `${host.ipAddr}'s service ${name} on port ${port.port}`
                                 : `${host.ipAddr}'s service ${name}`,
                             selection: [{ service }],
+                        });
+                    }),
+                );
+                break;
+            case "httpService":
+                Api.workspaces.httpServices.get(workspace, props.targetUuid).then(
+                    handleApiError((httpService) => {
+                        const { name, host, port, domain } = httpService;
+                        setTarget({
+                            name: `HTTP service ${name} on ${domain?.domain ?? host.ipAddr}:${port.port}`,
+                            selection: [{ httpService }],
                         });
                     }),
                 );

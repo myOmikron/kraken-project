@@ -106,7 +106,7 @@ export function WorkspaceDataHttpServiceDetails(props: WorkspaceDataHttpServiceD
                             workspace={workspace}
                             tags={httpService.tags}
                             onChange={(tags) => {
-                                setHttpService((service) => service && { ...service, tags });
+                                setHttpService((httpService) => httpService && { ...httpService, tags });
                                 update(httpService.uuid, { tags });
                             }}
                         />

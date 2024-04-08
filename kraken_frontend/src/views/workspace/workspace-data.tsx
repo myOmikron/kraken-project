@@ -791,7 +791,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     if (selected?.type !== AggregationType.Service) {
                                         setDetailTab("general");
                                     }
-                                    setSelected({ type: AggregationType.Service, uuid: httpService.uuid });
+                                    setSelected({ type: AggregationType.HttpService, uuid: httpService.uuid });
                                 }}
                                 menu={[
                                     ...findingActions({ httpService }),
