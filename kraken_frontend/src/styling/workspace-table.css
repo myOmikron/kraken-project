@@ -47,6 +47,10 @@
     word-wrap: anywhere;
 }
 
+.popup-content .workspace-table-body {
+    padding: 0;
+}
+
 .workspace-table-button {
     background: none;
     border: none;
@@ -110,6 +114,11 @@ workspace-table-button > .icon > svg {
     padding: 0 1em 0.2em;
     margin: 0 1em 0.5em;
     border-bottom: 1px solid white;
+}
+
+.popup-content .workspace-table-header {
+    margin: 0 0 0.5em;
+    padding: 0.3em 1em;
 }
 
 .workspace-table-row {
