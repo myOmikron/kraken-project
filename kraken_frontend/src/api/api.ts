@@ -401,6 +401,8 @@ export const Api = {
             all: () => handleError(knowledgeBase.getAllFindingDefinitions()),
             get: (findingDefinition: UUID) =>
                 handleError(knowledgeBase.getFindingDefinition({ uuid: findingDefinition })),
+            getUsage: (findingDefinition: UUID) =>
+                handleError(knowledgeBase.getFindingDefinitionUsage({ uuid: findingDefinition })),
             create: (createFindingDefinitionRequest: CreateFindingDefinitionRequest) =>
                 handleError(knowledgeBase.createFindingDefinition({ createFindingDefinitionRequest })),
             update: (uuid: UUID, definition: UpdateFindingDefinitionRequest) =>

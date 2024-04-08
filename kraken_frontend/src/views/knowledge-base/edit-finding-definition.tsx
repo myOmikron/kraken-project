@@ -1,8 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
 import { Api, UUID } from "../../api/api";
-import { FindingSection, FindingSeverity } from "../../api/generated";
+import {
+    FindingDefinitionUsage,
+    FindingSection,
+    FindingSeverity,
+    ListFindingDefinitionUsages,
+} from "../../api/generated";
 import WS from "../../api/websocket";
 import { AdminOnly } from "../../components/admin-guard";
 import { GithubMarkdown } from "../../components/github-markdown";
@@ -18,6 +23,8 @@ import InformationIcon from "../../svg/information";
 import LibraryIcon from "../../svg/library";
 import { handleApiError } from "../../utils/helper";
 import { useSyncedCursors } from "../../utils/monaco-cursor";
+import CollapsibleSection from "../workspace/components/collapsible-section";
+import SeverityIcon from "../workspace/components/severity-icon";
 import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
 
 export type EditFindingDefinitionProps = {
@@ -195,6 +202,12 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
 function DeleteButton({ finding, name }: { finding: UUID; name: string }) {
     const [open, setOpen] = React.useState(false);
 
+    const [usage, setUsage] = React.useState<ListFindingDefinitionUsages>();
+
+    useEffect(() => {
+        Api.knowledgeBase.findingDefinitions.getUsage(finding).then(handleApiError(setUsage));
+    }, [finding]);
+
     return (
         <Popup
             modal
@@ -214,39 +227,82 @@ function DeleteButton({ finding, name }: { finding: UUID; name: string }) {
                 </div>
             }
         >
-            <div className="popup-content pane danger" style={{ width: "70ch", backgroundColor: "rgba(30,0,0,0.25)" }}>
-                <div className="workspace-setting-popup">
-                    <h2 className="heading neon">Are you sure you want to delete the finding definition "{name}"?</h2>
-                    {/* TODO: list all findings affected by this deletion [waiting for backend] */}
-                    <button
-                        className="button workspace-settings-red-button"
-                        type="reset"
-                        onClick={() => setOpen(false)}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        className="button workspace-settings-red-button"
-                        type="button"
-                        onClick={() => {
-                            toast.promise(
-                                Api.knowledgeBase.findingDefinitions.admin
-                                    .delete(finding)
-                                    .then(() => ROUTES.FINDING_DEFINITION_LIST.visit({})),
-                                {
-                                    pending: "Deleting finding definition...",
-                                    error: "Failed to delete finding definition!",
-                                    success: "Successfully deleted finding definition",
-                                },
-                            );
-                        }}
-                    >
-                        Delete
-                    </button>
-                </div>
+            <div
+                className="popup-content pane workspace-setting-popup"
+                style={{ width: "100ch", backgroundColor: "rgba(30,0,0,0.25)" }}
+            >
+                <h2 className="heading neon">Are you sure you want to delete the finding definition "{name}"?</h2>
+                <p>The following findings will be deleted as a result:</p>
+                {usage ? <UsageList usage={usage} /> : "Loading..."}
+                <button className="button workspace-settings-red-button" type="reset" onClick={() => setOpen(false)}>
+                    Cancel
+                </button>
+                <button
+                    className="button workspace-settings-red-button"
+                    type="button"
+                    onClick={() => {
+                        toast.promise(
+                            Api.knowledgeBase.findingDefinitions.admin
+                                .delete(finding)
+                                .then(() => ROUTES.FINDING_DEFINITION_LIST.visit({})),
+                            {
+                                pending: "Deleting finding definition...",
+                                error: "Failed to delete finding definition!",
+                                success: "Successfully deleted finding definition",
+                            },
+                        );
+                    }}
+                >
+                    Delete
+                </button>
             </div>
         </Popup>
     );
+}
+
+function UsageList({ usage: { usages: usage } }: { usage: ListFindingDefinitionUsages }) {
+    if (!usage.length) return "None";
+
+    let workspaces = Object.fromEntries(usage.map((u) => [u.workspace.uuid, u.workspace]));
+
+    let usageByWorkspace: { [workspace: UUID]: FindingDefinitionUsage[] } = {};
+    for (const u of usage) {
+        if (!(u.workspace.uuid in usageByWorkspace)) usageByWorkspace[u.workspace.uuid] = [];
+
+        usageByWorkspace[u.workspace.uuid].push(u);
+    }
+
+    return Object.entries(workspaces).map(([wUuid, workspace]) => (
+        <CollapsibleSection summary={"Workspace " + workspace.name} defaultVisible>
+            <div className="workspace-findings-table" style={{ "--columns": "4em 1fr 25ch" } as Record<string, string>}>
+                <div className={"workspace-table-header"}>
+                    <span className={"workspace-data-certainty-icon"}>Severity</span>
+                    <span className={"workspace-data-certainty-icon"}>Affected</span>
+                    <span>Created At</span>
+                </div>
+                <div className="workspace-table-body">
+                    {usageByWorkspace[wUuid].map((f) => (
+                        <div key={f.uuid} className="workspace-table-row">
+                            <span className="workspace-data-certainty-icon">
+                                <SeverityIcon severity={f.severity} />
+                            </span>
+                            <span>
+                                {[
+                                    f.affectedDomains + " Domains",
+                                    f.affectedHosts + " Hosts",
+                                    f.affectedPorts + " Ports",
+                                    f.affectedServices + " Services",
+                                ]
+                                    .filter((v) => !v.startsWith("0 "))
+                                    .join(", ")}
+                            </span>
+                            <span>{f.createdAt.toLocaleString()}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </CollapsibleSection>
+    ));
 }
 
 function useTimeoutOnChange(
