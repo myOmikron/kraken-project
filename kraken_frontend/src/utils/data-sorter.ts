@@ -5,6 +5,7 @@
  */
 
 import {
+    AggregationType,
     FullDomain,
     FullHost,
     FullPort,
@@ -17,8 +18,14 @@ import {
 import { FullHttpService } from "../api/generated/models/FullHttpService";
 import { SimpleHttpService } from "../api/generated/models/SimpleHttpService";
 
-// eslint-disable-next-line jsdoc/require-param, jsdoc/require-returns
-/** Compares two domains by comparing their names */
+export const aggregationTypeOrdering: { [K in AggregationType]: number } = {
+    Domain: 0,
+    Host: 1,
+    Port: 2,
+    Service: 3,
+    HttpService: 4,
+};
+
 export function compareDomain(a: FullDomain | SimpleDomain, b: FullDomain | SimpleDomain): number {
     return a.domain.localeCompare(b.domain);
 }

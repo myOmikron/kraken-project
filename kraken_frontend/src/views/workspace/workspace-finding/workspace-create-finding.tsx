@@ -28,6 +28,7 @@ import InformationIcon from "../../../svg/information";
 import RelationLeftRightIcon from "../../../svg/relation-left-right";
 import ScreenshotIcon from "../../../svg/screenshot";
 import {
+    aggregationTypeOrdering,
     compareDomain,
     compareHost,
     compareHttpService,
@@ -125,8 +126,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                     ...newAffected,
                 },
             ].sort((a, b) => {
-                if (a.type < b.type) return -1;
-                if (a.type > b.type) return 1;
+                if (aggregationTypeOrdering[a.type] < aggregationTypeOrdering[b.type]) return -1;
+                if (aggregationTypeOrdering[a.type] > aggregationTypeOrdering[b.type]) return 1;
                 switch (a.type) {
                     case "Domain":
                         return compareDomain(a._data, b._data as FullDomain);
