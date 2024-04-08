@@ -2,8 +2,9 @@
 resolver = "2"
 members = [
     "./kraken",
+    "./kraken-proto",
     "./sdk/rust-kraken-sdk",
     "./leech",
     "./leech/probe-config",
-    "./kraken-proto",
+    "./leech/ssl-errors",
 ]
