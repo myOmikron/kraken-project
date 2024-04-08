@@ -420,7 +420,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                                 } else if ("service" in affected.affected && affected.affected.service) {
                                     mutator.insertServiceSimple(root, affected.affected.service);
                                 } else if ("httpService" in affected.affected && affected.affected.httpService) {
-                                    mutator.insertServiceSimple(root, affected.affected.httpService);
+                                    mutator.insertHttpServiceSimple(root, affected.affected.httpService);
                                 }
                             }),
                         );
