@@ -37,6 +37,7 @@ use crate::api::handler::data_export;
 use crate::api::handler::domains;
 use crate::api::handler::files;
 use crate::api::handler::finding_affected;
+use crate::api::handler::finding_categories;
 use crate::api::handler::finding_definitions;
 use crate::api::handler::findings;
 use crate::api::handler::global_tags;
@@ -168,6 +169,9 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(wordlists::handler_admin::get_all_wordlists_admin)
                     .service(wordlists::handler_admin::update_wordlist_admin)
                     .service(wordlists::handler_admin::delete_wordlist_admin)
+                    .service(finding_categories::handler_admin::create_finding_category)
+                    .service(finding_categories::handler_admin::update_finding_category)
+                    .service(finding_categories::handler_admin::delete_finding_category)
                     .service(finding_definitions::handler_admin::get_finding_definition_usage)
                     .service(finding_definitions::handler_admin::delete_finding_definition),
             )
@@ -273,6 +277,7 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(finding_affected::handler::get_finding_affected)
                     .service(finding_affected::handler::update_finding_affected)
                     .service(finding_affected::handler::delete_finding_affected)
+                    .service(finding_categories::handler::get_all_finding_categories)
                     .service(finding_definitions::handler::create_finding_definition)
                     .service(finding_definitions::handler::get_finding_definition)
                     .service(finding_definitions::handler::get_all_finding_definitions)

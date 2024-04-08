@@ -8,6 +8,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::common::de_optional;
+use crate::api::handler::finding_categories::schema::SimpleFindingCategory;
 use crate::api::handler::findings::schema::FindingSeverity;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 
@@ -41,6 +42,8 @@ pub struct CreateFindingDefinitionRequest {
     ///
     /// Can link to resources like Mitre's Attack or CME explanations, etc.
     pub references: String,
+    /// List of categories
+    pub categories: Vec<Uuid>,
 }
 
 /// The full definition of a finding
@@ -66,6 +69,8 @@ pub struct FullFindingDefinition {
     pub references: String,
     /// The point in time this finding definition was created
     pub created_at: DateTime<Utc>,
+    /// The list of categories this finding definition falls into
+    pub categories: Vec<SimpleFindingCategory>,
 }
 
 /// The simple definition of a finding
@@ -147,4 +152,8 @@ pub struct UpdateFindingDefinitionRequest {
     #[serde(skip_serializing_if = "Option::is_none")] // see above
     #[serde(default, deserialize_with = "de_optional")]
     pub cve: Option<Option<String>>,
+
+    /// List of categories
+    #[serde(skip_serializing_if = "Option::is_none")] // see above
+    pub categories: Option<Vec<Uuid>>,
 }

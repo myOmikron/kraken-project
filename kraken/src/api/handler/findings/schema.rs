@@ -7,6 +7,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::common::de_optional;
+use crate::api::handler::finding_categories::schema::SimpleFindingCategory;
 use crate::api::handler::finding_definitions::schema::SimpleFindingDefinition;
 use crate::chan::ws_manager::schema::AggregationType;
 
@@ -34,6 +35,9 @@ pub struct CreateFindingRequest {
 
     /// A log file
     pub log_file: Option<Uuid>,
+
+    /// List of categories
+    pub categories: Vec<Uuid>,
 }
 
 /// The request to update an existing finding
@@ -63,6 +67,10 @@ pub struct UpdateFindingRequest {
     #[serde(skip_serializing_if = "Option::is_none")] // see above
     #[serde(default, deserialize_with = "de_optional")]
     pub log_file: Option<Option<Uuid>>,
+
+    /// List of categories
+    #[serde(skip_serializing_if = "Option::is_none")] // see above
+    pub categories: Option<Vec<Uuid>>,
 }
 
 /// A simple finding
@@ -124,6 +132,9 @@ pub struct FullFinding {
 
     /// The point in time this finding was created
     pub created_at: DateTime<Utc>,
+
+    /// The list of categories this finding falls into
+    pub categories: Vec<SimpleFindingCategory>,
 }
 
 /// The uuid's for objects affected by findings

@@ -10,6 +10,7 @@ pub mod data_export;
 pub mod domains;
 pub mod files;
 pub mod finding_affected;
+pub mod finding_categories;
 pub mod finding_definitions;
 pub mod findings;
 pub mod global_tags;

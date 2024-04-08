@@ -1,3 +1,4 @@
+use rorm::conditions::DynamicCollection;
 use rorm::db::Executor;
 use rorm::delete;
 use rorm::insert;
@@ -16,6 +17,7 @@ use crate::chan::ws_manager::schema::AggregationType;
 use crate::models::Domain;
 use crate::models::Finding;
 use crate::models::FindingAffected;
+use crate::models::FindingCategory;
 use crate::models::FindingDefinition;
 use crate::models::FindingDetails;
 use crate::models::FindingSeverity;
@@ -263,6 +265,41 @@ impl FindingDetails {
 
         guard.commit().await?;
         Ok(())
+    }
+}
+
+impl FindingCategory {
+    /// Check whether all categories in a list exist by quering their uuids
+    ///
+    /// This function returns a `Option<()>` instead of a `bool` to allow easier error propagation:
+    /// ```norun
+    /// fn example(db: &Database, finding_categories: Vec<Uuid>) -> Result<(), ApiError> {
+    ///     FindingCategory::exist_all(db, finding_categories.iter().copied())
+    ///         .await?
+    ///         .ok_or(ApiError::InvalidUuid)?;
+    ///     Ok(())
+    /// }
+    /// ```
+    pub async fn exist_all(
+        executor: impl Executor<'_>,
+        uuids: impl IntoIterator<Item = Uuid>,
+    ) -> Result<Option<()>, rorm::Error> {
+        let tags: Vec<_> = uuids
+            .into_iter()
+            .map(|uuid| FindingCategory::F.uuid.equals(uuid))
+            .collect();
+
+        // Short circuit if the there are no uuids to check
+        if tags.is_empty() {
+            return Ok(Some(()));
+        }
+
+        let search = tags.len();
+        let (found,) = query!(executor, (FindingCategory::F.uuid.count(),))
+            .condition(DynamicCollection::or(tags))
+            .one()
+            .await?;
+        Ok((found == search as i64).then_some(()))
     }
 }
 

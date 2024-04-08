@@ -20,6 +20,7 @@ use crate::api::handler::data_export;
 use crate::api::handler::domains;
 use crate::api::handler::files;
 use crate::api::handler::finding_affected;
+use crate::api::handler::finding_categories;
 use crate::api::handler::finding_definitions;
 use crate::api::handler::findings;
 use crate::api::handler::global_tags;
@@ -207,6 +208,10 @@ impl Modify for SecurityAddon2 {
         finding_affected::handler::get_finding_affected,
         finding_affected::handler::update_finding_affected,
         finding_affected::handler::delete_finding_affected,
+        finding_categories::handler::get_all_finding_categories,
+        finding_categories::handler_admin::create_finding_category,
+        finding_categories::handler_admin::update_finding_category,
+        finding_categories::handler_admin::delete_finding_category,
         finding_definitions::handler::create_finding_definition,
         finding_definitions::handler::get_finding_definition,
         finding_definitions::handler::get_all_finding_definitions,
@@ -373,6 +378,10 @@ impl Modify for SecurityAddon2 {
         finding_affected::schema::UpdateFindingAffectedRequest,
         finding_affected::schema::FullFindingAffected,
         finding_affected::schema::FindingAffectedObject,
+        finding_categories::schema::CreateFindingCategoryRequest,
+        finding_categories::schema::UpdateFindingCategoryRequest,
+        finding_categories::schema::ListFindingCategories,
+        finding_categories::schema::SimpleFindingCategory,
         finding_definitions::schema::CreateFindingDefinitionRequest,
         finding_definitions::schema::FullFindingDefinition,
         finding_definitions::schema::SimpleFindingDefinition,

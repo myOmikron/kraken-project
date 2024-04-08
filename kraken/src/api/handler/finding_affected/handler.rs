@@ -21,6 +21,7 @@ use crate::api::handler::finding_affected::schema::FullFindingAffected;
 use crate::api::handler::finding_affected::schema::PathFindingAffected;
 use crate::api::handler::finding_affected::schema::UpdateFindingAffectedRequest;
 use crate::api::handler::finding_affected::utils::query_finding_affected;
+use crate::api::handler::finding_categories::schema::SimpleFindingCategory;
 use crate::api::handler::finding_definitions::schema::SimpleFindingDefinition;
 use crate::api::handler::findings::schema::FullFinding;
 use crate::api::handler::findings::schema::PathFinding;
@@ -37,6 +38,7 @@ use crate::models::DomainWorkspaceTag;
 use crate::models::Finding;
 use crate::models::FindingAffected;
 use crate::models::FindingDetails;
+use crate::models::FindingFindingCategoryRelation;
 use crate::models::GlobalTag;
 use crate::models::Host;
 use crate::models::HostGlobalTag;
@@ -365,6 +367,23 @@ pub async fn get_finding_affected(
         _ => return Err(ApiError::InternalServerError),
     };
 
+    let categories = query!(
+        &mut tx,
+        (
+            FindingFindingCategoryRelation::F.finding_category.uuid,
+            FindingFindingCategoryRelation::F.finding_category.name,
+        )
+    )
+    .condition(
+        FindingFindingCategoryRelation::F
+            .finding
+            .equals(finding.uuid),
+    )
+    .stream()
+    .map_ok(|(uuid, name)| SimpleFindingCategory { uuid, name })
+    .try_collect()
+    .await?;
+
     tx.commit().await?;
     Ok(Json(FullFindingAffected {
         finding: FullFinding {
@@ -385,6 +404,7 @@ pub async fn get_finding_affected(
             screenshot: finding_details.screenshot.map(|fm| *fm.key()),
             log_file: finding_details.log_file.map(|fm| *fm.key()),
             created_at: finding.created_at,
+            categories,
         },
         affected,
         affected_tags,

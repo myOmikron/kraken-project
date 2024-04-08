@@ -8,15 +8,18 @@ use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
 use futures::TryStreamExt;
+use rorm::insert;
 use rorm::prelude::*;
 use rorm::query;
 use rorm::update;
+use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::common::error::ApiError;
 use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::common::schema::UuidResponse;
+use crate::api::handler::finding_categories::schema::SimpleFindingCategory;
 use crate::api::handler::finding_definitions::schema::SimpleFindingDefinition;
 use crate::api::handler::findings::schema::CreateFindingRequest;
 use crate::api::handler::findings::schema::FullFinding;
@@ -31,8 +34,10 @@ use crate::models::convert::FromDb;
 use crate::models::convert::IntoDb;
 use crate::models::Finding;
 use crate::models::FindingAffected;
+use crate::models::FindingCategory;
 use crate::models::FindingDefinition;
 use crate::models::FindingDetails;
+use crate::models::FindingFindingCategoryRelation;
 use crate::models::Workspace;
 use crate::modules::cache::EditorCached;
 
@@ -62,6 +67,10 @@ pub async fn create_finding(
         return Err(ApiError::NotFound);
     }
 
+    FindingCategory::exist_all(&mut tx, request.categories.iter().copied())
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
     let uuid = Finding::insert(
         &mut tx,
         workspace_uuid,
@@ -73,6 +82,20 @@ pub async fn create_finding(
         request.log_file,
     )
     .await?;
+
+    insert!(&mut tx, FindingFindingCategoryRelation)
+        .return_nothing()
+        .bulk(
+            request
+                .categories
+                .into_iter()
+                .map(|cat| FindingFindingCategoryRelation {
+                    uuid: Uuid::new_v4(),
+                    finding: ForeignModelByField::Key(uuid),
+                    finding_category: ForeignModelByField::Key(cat),
+                }),
+        )
+        .await?;
 
     tx.commit().await?;
     Ok(Json(UuidResponse { uuid }))
@@ -197,6 +220,23 @@ pub async fn get_finding(
         .try_collect()
         .await?;
 
+    let categories = query!(
+        &mut tx,
+        (
+            FindingFindingCategoryRelation::F.finding_category.uuid,
+            FindingFindingCategoryRelation::F.finding_category.name,
+        )
+    )
+    .condition(
+        FindingFindingCategoryRelation::F
+            .finding
+            .equals(finding.uuid),
+    )
+    .stream()
+    .map_ok(|(uuid, name)| SimpleFindingCategory { uuid, name })
+    .try_collect()
+    .await?;
+
     tx.commit().await?;
     Ok(Json(FullFinding {
         uuid: finding.uuid,
@@ -217,6 +257,7 @@ pub async fn get_finding(
         screenshot: details.screenshot.map(|x| *x.key()),
         log_file: details.log_file.map(|x| *x.key()),
         created_at: finding.created_at,
+        categories,
     }))
 }
 
@@ -252,7 +293,8 @@ pub async fn update_finding(
             definition: None,
             severity: None,
             screenshot: None,
-            log_file: None
+            log_file: None,
+            categories: None,
         }
     ) {
         return Err(ApiError::EmptyJson);
@@ -288,6 +330,29 @@ pub async fn update_finding(
         request.log_file,
     )
     .await?;
+
+    if let Some(categories) = request.categories.clone() {
+        FindingCategory::exist_all(&mut tx, categories.iter().copied())
+            .await?
+            .ok_or(ApiError::InvalidUuid)?;
+
+        rorm::delete!(&mut tx, FindingFindingCategoryRelation)
+            .condition(FindingFindingCategoryRelation::F.finding.equals(f_uuid))
+            .await?;
+
+        insert!(&mut tx, FindingFindingCategoryRelation)
+            .return_nothing()
+            .bulk(
+                categories
+                    .into_iter()
+                    .map(|cat| FindingFindingCategoryRelation {
+                        uuid: Uuid::new_v4(),
+                        finding: ForeignModelByField::Key(f_uuid),
+                        finding_category: ForeignModelByField::Key(cat),
+                    }),
+            )
+            .await?;
+    }
 
     tx.commit().await?;
     GLOBAL

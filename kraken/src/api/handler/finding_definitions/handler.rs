@@ -7,6 +7,7 @@ use actix_web::HttpResponse;
 use futures::TryStreamExt;
 use rorm::and;
 use rorm::insert;
+use rorm::prelude::ForeignModelByField;
 use rorm::query;
 use rorm::update;
 use rorm::FieldAccess;
@@ -17,6 +18,7 @@ use crate::api::handler::common::error::ApiError;
 use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::common::schema::UuidResponse;
+use crate::api::handler::finding_categories::schema::SimpleFindingCategory;
 use crate::api::handler::finding_definitions::schema::CreateFindingDefinitionRequest;
 use crate::api::handler::finding_definitions::schema::FullFindingDefinition;
 use crate::api::handler::finding_definitions::schema::ListFindingDefinitions;
@@ -26,7 +28,9 @@ use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::convert::FromDb;
 use crate::models::convert::IntoDb;
+use crate::models::FindingCategory;
 use crate::models::FindingDefinition;
+use crate::models::FindingDefinitionFindingCategoryRelation;
 use crate::models::InsertFindingDefinition;
 use crate::modules::cache::EditorCached;
 
@@ -59,15 +63,21 @@ pub async fn create_finding_definition(
         impact,
         remediation,
         references,
+        categories,
     } = req.into_inner();
 
     if name.is_empty() {
         return Err(ApiError::InvalidName);
     }
 
-    let uuid = Uuid::new_v4();
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
-    insert!(&GLOBAL.db, FindingDefinition)
+    FindingCategory::exist_all(&mut tx, categories.iter().copied())
+        .await?
+        .ok_or(ApiError::InvalidUuid)?;
+
+    let uuid = Uuid::new_v4();
+    insert!(&mut tx, FindingDefinition)
         .single(&InsertFindingDefinition {
             uuid,
             name,
@@ -80,6 +90,21 @@ pub async fn create_finding_definition(
             references,
         })
         .await?;
+
+    insert!(&mut tx, FindingDefinitionFindingCategoryRelation)
+        .return_nothing()
+        .bulk(
+            categories
+                .into_iter()
+                .map(|cat| FindingDefinitionFindingCategoryRelation {
+                    uuid: Uuid::new_v4(),
+                    finding_definition: ForeignModelByField::Key(uuid),
+                    finding_category: ForeignModelByField::Key(cat),
+                }),
+        )
+        .await?;
+
+    tx.commit().await?;
 
     GLOBAL.editor_cache.fd_summary.invalidate_not_found();
     GLOBAL.editor_cache.fd_description.invalidate_not_found();
@@ -108,11 +133,36 @@ pub async fn get_finding_definition(
 ) -> ApiResult<Json<FullFindingDefinition>> {
     let uuid = path.into_inner().uuid;
 
-    let finding_definition = query!(&GLOBAL.db, FindingDefinition)
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    let finding_definition = query!(&mut tx, FindingDefinition)
         .condition(FindingDefinition::F.uuid.equals(uuid))
         .optional()
         .await?
         .ok_or(ApiError::InvalidUuid)?;
+
+    let categories = query!(
+        &mut tx,
+        (
+            FindingDefinitionFindingCategoryRelation::F
+                .finding_category
+                .uuid,
+            FindingDefinitionFindingCategoryRelation::F
+                .finding_category
+                .name,
+        )
+    )
+    .condition(
+        FindingDefinitionFindingCategoryRelation::F
+            .finding_definition
+            .equals(uuid),
+    )
+    .stream()
+    .map_ok(|(uuid, name)| SimpleFindingCategory { uuid, name })
+    .try_collect()
+    .await?;
+
+    tx.commit().await?;
 
     Ok(Json(FullFindingDefinition {
         uuid: finding_definition.uuid,
@@ -130,6 +180,7 @@ pub async fn get_finding_definition(
         #[rustfmt::skip]
         references: GLOBAL.editor_cache.fd_references.get(uuid).await?.ok_or(ApiError::InvalidUuid)?.0,
         created_at: finding_definition.created_at,
+        categories,
     }))
 }
 
@@ -203,7 +254,8 @@ pub async fn update_finding_definition(
         UpdateFindingDefinitionRequest {
             name: None,
             severity: None,
-            cve: None
+            cve: None,
+            categories: None,
         }
     ) {
         return Err(ApiError::EmptyJson);
@@ -243,6 +295,33 @@ pub async fn update_finding_definition(
         .finish_dyn_set()
     {
         update.exec().await?;
+    }
+
+    if let Some(categories) = request.categories.clone() {
+        FindingCategory::exist_all(&mut tx, categories.iter().copied())
+            .await?
+            .ok_or(ApiError::InvalidUuid)?;
+
+        rorm::delete!(&mut tx, FindingDefinitionFindingCategoryRelation)
+            .condition(
+                FindingDefinitionFindingCategoryRelation::F
+                    .finding_definition
+                    .equals(uuid),
+            )
+            .await?;
+
+        insert!(&mut tx, FindingDefinitionFindingCategoryRelation)
+            .return_nothing()
+            .bulk(
+                categories
+                    .into_iter()
+                    .map(|cat| FindingDefinitionFindingCategoryRelation {
+                        uuid: Uuid::new_v4(),
+                        finding_definition: ForeignModelByField::Key(uuid),
+                        finding_category: ForeignModelByField::Key(cat),
+                    }),
+            )
+            .await?;
     }
 
     tx.commit().await?;
