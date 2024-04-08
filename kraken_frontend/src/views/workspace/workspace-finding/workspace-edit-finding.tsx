@@ -10,6 +10,7 @@ import {
     FindingAffectedObjectOneOf1,
     FindingAffectedObjectOneOf2,
     FindingAffectedObjectOneOf3,
+    FindingAffectedObjectOneOf4,
     FindingSeverity,
     FullFindingAffected,
     SimpleDomain,

@@ -68,7 +68,7 @@ export function WorkspaceDataHttpServiceDetails(props: WorkspaceDataHttpServiceD
                     <div className="workspace-data-details-pane">
                         <h3 className="sub-heading">Certainty</h3>
                         <div className="workspace-data-certainty-list">
-                            <CertaintyIcon certainty={httpService.certainty} />
+                            <CertaintyIcon certainty={"UnknownService"} />
                         </div>
                     </div>
                     {httpService.severity && (

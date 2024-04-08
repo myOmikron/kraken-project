@@ -1,9 +1,8 @@
 import React from "react";
 import { toast } from "react-toastify";
-import { Api, ManualHttpServiceCertainty } from "../../../api/api";
+import { Api } from "../../../api/api";
 import Checkbox from "../../../components/checkbox";
 import Input from "../../../components/input";
-import { SelectPrimitive } from "../../../components/select-menu";
 import { handleApiError } from "../../../utils/helper";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
@@ -20,7 +19,7 @@ export function CreateHttpServiceForm(props: CreateHttpServiceFormProps) {
     const [ip, setIp] = React.useState("");
     const [domain, setDomain] = React.useState("");
     const [basePath, setBasePath] = React.useState("/");
-    const [certy, setCerty] = React.useState<ManualHttpServiceCertainty>("SupposedTo");
+    // const [certy, setCerty] = React.useState<ManualHttpServiceCertainty>("SupposedTo");
     const [tls, setTls] = React.useState(true);
     const [port, setPort] = React.useState("443");
     const [sniRequired, setSniRequired] = React.useState(false);
@@ -37,13 +36,13 @@ export function CreateHttpServiceForm(props: CreateHttpServiceFormProps) {
                 Api.workspaces.httpServices
                     .create(workspace, {
                         name,
-                        host: ip,
+                        ipAddr: ip,
                         domain: domain.length > 0 ? domain : undefined,
                         port: parsedPort,
                         basePath,
                         tls,
-                        sniRequired,
-                        certainty: certy,
+                        sniRequire: sniRequired,
+                        // certainty: certy,
                     })
                     .then(
                         handleApiError(() => {
@@ -86,14 +85,14 @@ export function CreateHttpServiceForm(props: CreateHttpServiceFormProps) {
                 Base Path:
                 <Input value={basePath} onChange={setBasePath} />
             </label>
-            <label>
+            {/* <label>
                 Certainty:
                 <SelectPrimitive
                     options={Object.values(ManualHttpServiceCertainty)}
                     value={certy}
                     onChange={(value) => setCerty(value || certy)}
                 />
-            </label>
+            </label> */}
             <label>
                 SNI Required:
                 <Checkbox disabled={!tls} value={sniRequired} onChange={setSniRequired} />

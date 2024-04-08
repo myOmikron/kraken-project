@@ -46,6 +46,16 @@ export interface DeleteHttpServiceRequest {
     hsUuid: string;
 }
 
+export interface CreateHttpServiceOperationRequest {
+    uuid: string;
+    createHttpServiceRequest: CreateHttpServiceRequest;
+}
+
+export interface DeleteHttpServiceRequest {
+    wUuid: string;
+    hsUuid: string;
+}
+
 export interface GetAllHttpServicesRequest {
     uuid: string;
     getAllHttpServicesQuery: GetAllHttpServicesQuery;

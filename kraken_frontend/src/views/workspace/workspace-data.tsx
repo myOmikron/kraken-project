@@ -794,7 +794,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     setSelected({ type: AggregationType.Service, uuid: httpService.uuid });
                                 }}
                                 menu={[
-                                    ...findingActions({ service: httpService }),
+                                    ...findingActions({ httpService }),
                                     copyTagsAction(httpService.tags, httpServiceFilter),
                                     // TODO:HTTP AST relation operations
                                     createdAtAction(httpServiceFilter, httpService.createdAt),
@@ -829,7 +829,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                     uuid={httpService.uuid}
                                     workspace={workspace}
                                 />
-                                <CertaintyIcon certainty={httpService.certainty} />
+                                <CertaintyIcon certainty={"UnknownService"} />
                                 <AttackButton
                                     workspaceUuid={workspace}
                                     targetUuid={httpService.uuid}

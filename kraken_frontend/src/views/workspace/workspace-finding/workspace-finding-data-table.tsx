@@ -393,7 +393,7 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                                             uuid={httpService.uuid}
                                             workspace={workspace}
                                         />
-                                        <CertaintyIcon certainty={httpService.certainty} />
+                                        <CertaintyIcon certainty={"UnknownService"} />
                                     </div>
                                 ))}
                         </StatelessWorkspaceTable>
