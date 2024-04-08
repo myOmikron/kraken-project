@@ -22,6 +22,7 @@ use crate::models::FindingDefinition;
 use crate::models::FindingDetails;
 use crate::models::FindingSeverity;
 use crate::models::Host;
+use crate::models::HttpService;
 use crate::models::MediaFile;
 use crate::models::Port;
 use crate::models::Service;
@@ -134,6 +135,7 @@ impl FindingAffected {
             host: None,
             port: None,
             service: None,
+            http_service: None,
             details,
             workspace: ForeignModelByField::Key(workspace),
         };
@@ -142,6 +144,9 @@ impl FindingAffected {
             AggregationType::Host => patch.host = Some(ForeignModelByField::Key(object_uuid)),
             AggregationType::Service => patch.service = Some(ForeignModelByField::Key(object_uuid)),
             AggregationType::Port => patch.port = Some(ForeignModelByField::Key(object_uuid)),
+            AggregationType::HttpService => {
+                patch.http_service = Some(ForeignModelByField::Key(object_uuid))
+            }
         }
 
         insert!(guard.get_transaction(), FindingAffected)
@@ -365,6 +370,7 @@ struct InsertFindingAffected {
     host: Option<ForeignModel<Host>>,
     port: Option<ForeignModel<Port>>,
     service: Option<ForeignModel<Service>>,
+    http_service: Option<ForeignModel<HttpService>>,
     details: Option<ForeignModel<FindingDetails>>,
     workspace: ForeignModel<Workspace>,
 }

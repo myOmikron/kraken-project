@@ -10,6 +10,7 @@ pub use utoipa_fix::DnsTxtScanResultsPage;
 pub use utoipa_fix::DomainResultsPage;
 pub use utoipa_fix::HostAliveResultsPage;
 pub use utoipa_fix::HostResultsPage;
+pub use utoipa_fix::HttpServiceResultsPage;
 pub use utoipa_fix::OsDetectionResultsPage;
 pub use utoipa_fix::Page;
 pub use utoipa_fix::PortResultsPage;
@@ -66,6 +67,7 @@ mod utoipa_fix {
     use crate::api::handler::domains::schema::FullDomain;
     use crate::api::handler::files::schema::FullFile;
     use crate::api::handler::hosts::schema::FullHost;
+    use crate::api::handler::http_services::schema::FullHttpService;
     use crate::api::handler::ports::schema::FullPort;
     use crate::api::handler::services::schema::FullService;
     use crate::api::handler::workspaces::schema::SearchEntry;
@@ -77,6 +79,7 @@ mod utoipa_fix {
         DomainResultsPage = Page<FullDomain>,
         HostResultsPage = Page<FullHost>,
         ServiceResultsPage = Page<FullService>,
+        HttpServiceResultsPage = Page<FullHttpService>,
         PortResultsPage = Page<FullPort>,
         BruteforceSubdomainsResultsPage = Page<SimpleBruteforceSubdomainsResult>,
         QueryCertificateTransparencyResultsPage = Page<FullQueryCertificateTransparencyResult>,

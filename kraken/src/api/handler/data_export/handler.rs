@@ -315,6 +315,7 @@ impl From<Host> for AggregatedHost {
             ports: _,
             services: _,
             domains: _,
+            http_services: _, // TODO
             comment,
             workspace: _,
             workspace_tags: _,
@@ -348,6 +349,7 @@ impl From<Port> for AggregatedPort {
             protocol,
             host,
             services: _,
+            http_services: _, // TODO
             comment,
             workspace: _,
             global_tags: _,
@@ -417,6 +419,7 @@ impl From<Domain> for AggregatedDomain {
             hosts: _,
             sources: _,
             destinations: _,
+            http_services: _, // TODO
             workspace: _,
             workspace_tags: _,
             global_tags: _,

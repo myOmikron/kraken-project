@@ -120,7 +120,9 @@ macro_rules! query_tags {
 
             if !workspace_conditions.is_empty() {
                 let mut workspace_tag_stream = query!(&mut $tx, $workspace_query)
-                    .condition(DynamicCollection::or(workspace_conditions))
+                    .condition(rorm::conditions::DynamicCollection::or(
+                        workspace_conditions,
+                    ))
                     .stream();
 
                 while let Some((tag, item)) = workspace_tag_stream.try_next().await? {
@@ -136,7 +138,7 @@ macro_rules! query_tags {
 
             if !global_conditions.is_empty() {
                 let mut global_tag_stream = query!(&mut $tx, $global_query)
-                    .condition(DynamicCollection::or(global_conditions))
+                    .condition(rorm::conditions::DynamicCollection::or(global_conditions))
                     .stream();
 
                 while let Some((tag, item)) = global_tag_stream.try_next().await? {

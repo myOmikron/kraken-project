@@ -148,3 +148,49 @@ pub struct ManualDomain {
     #[rorm(auto_create_time)]
     pub created_at: DateTime<Utc>,
 }
+
+#[derive(Model)]
+pub struct ManualHttpService {
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The service's name
+    #[rorm(max_length = 255)]
+    pub name: String,
+
+    /// The service's domain
+    #[rorm(max_length = 255)]
+    pub domain: Option<String>,
+
+    /// The service's ip address
+    pub ip_addr: IpNetwork,
+
+    /// The service's port
+    pub port: i32,
+
+    /// The service's port's protocol
+    pub port_protocol: PortProtocol,
+
+    /// The base path the service is routed on
+    ///
+    /// (Should default to "/")
+    #[rorm(max_length = 1024)]
+    pub base_path: String,
+
+    /// Is this a https service?
+    pub tls: bool,
+
+    /// Does this service require sni?
+    pub sni_required: bool,
+
+    /// The user which added the http service
+    pub user: ForeignModel<User>,
+
+    /// A reference to the workspace this http service is referencing
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub workspace: ForeignModel<Workspace>,
+
+    /// The point in time, this entry was created
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
+}

@@ -178,4 +178,28 @@ pub enum ManualInsert {
         /// The point in time, the service was inserted
         created_at: DateTime<Utc>,
     },
+    /// A manually inserted http service
+    HttpService {
+        /// The service's name
+        name: String,
+        /// The service's domain
+        domain: Option<String>,
+        /// The service's ip address
+        #[schema(value_type = String)]
+        ip_addr: IpAddr,
+        /// The service's port
+        port: u16,
+        /// The base path the service is routed on
+        base_path: String,
+        /// Is this a https service?
+        tls: bool,
+        /// Does this service require sni?
+        sni_require: bool,
+        /// The user which inserted the http service
+        user: SimpleUser,
+        /// The workspace the http service was inserted to
+        workspace: Uuid,
+        /// The point in time, the http service was inserted
+        created_at: DateTime<Utc>,
+    },
 }

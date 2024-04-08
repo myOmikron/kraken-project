@@ -25,6 +25,7 @@ use crate::api::handler::finding_definitions;
 use crate::api::handler::findings;
 use crate::api::handler::global_tags;
 use crate::api::handler::hosts;
+use crate::api::handler::http_services;
 use crate::api::handler::leeches;
 use crate::api::handler::oauth;
 use crate::api::handler::oauth_applications;
@@ -191,6 +192,14 @@ impl Modify for SecurityAddon2 {
         domains::handler::get_domain_sources,
         domains::handler::get_domain_relations,
         domains::handler::get_domain_findings,
+        http_services::handler::get_all_http_services,
+        http_services::handler::get_http_service,
+        http_services::handler::create_http_service,
+        http_services::handler::update_http_service,
+        http_services::handler::delete_http_service,
+        http_services::handler::get_http_service_sources,
+        http_services::handler::get_http_service_relations,
+        http_services::handler::get_http_service_findings,
         wordlists::handler::get_all_wordlists,
         wordlists::handler_admin::create_wordlist_admin,
         wordlists::handler_admin::get_all_wordlists_admin,
@@ -333,11 +342,16 @@ impl Modify for SecurityAddon2 {
         domains::schema::SimpleDomain,
         domains::schema::FullDomain,
         domains::schema::UpdateDomainRequest,
-        domains::schema::GetAllDomainsQuery,
         domains::schema::CreateDomainRequest,
         domains::schema::GetAllDomainsQuery,
         domains::schema::DomainRelations,
         domains::schema::DomainCertainty,
+        http_services::schema::SimpleHttpService,
+        http_services::schema::FullHttpService,
+        http_services::schema::UpdateHttpServiceRequest,
+        http_services::schema::CreateHttpServiceRequest,
+        http_services::schema::GetAllHttpServicesQuery,
+        http_services::schema::HttpServiceRelations,
         common::schema::HostResultsPage,
         common::schema::DomainResultsPage,
         common::schema::PortResultsPage,

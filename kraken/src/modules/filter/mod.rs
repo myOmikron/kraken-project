@@ -205,6 +205,16 @@ pub struct ServiceAST {
     pub transport: Option<Or<ServiceTransport>>,
 }
 
+/// AST for http service specific filter
+#[derive(Default, Debug)]
+pub struct HttpServiceAST {
+    /// Filter by tags
+    pub tags: Option<Or<String>>,
+
+    /// Filter by creation time
+    pub created_at: Option<Or<Range<DateTime<Utc>>>>,
+}
+
 /// Service transport protocol. See `protocols` field in [crate::models::Service].
 #[derive(Debug)]
 pub enum ServiceTransport {

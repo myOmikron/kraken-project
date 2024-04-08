@@ -24,6 +24,7 @@ use crate::modules::filter::And;
 use crate::modules::filter::DomainAST;
 use crate::modules::filter::GlobalAST;
 use crate::modules::filter::HostAST;
+use crate::modules::filter::HttpServiceAST;
 use crate::modules::filter::Not;
 use crate::modules::filter::Or;
 use crate::modules::filter::PortAST;
@@ -423,6 +424,28 @@ impl ServiceAST {
         );
         add_ast_field(sql, ips_os, Column::rorm(Host::F.os_type).eq());
         add_ast_field(sql, ips_tags, Column::new("host_tags", "tags").contains());
+
+        let GlobalAST { tags, created_at } = global;
+        add_ast_field(sql, tags, Column::tags().contains());
+        add_ast_field(sql, created_at, Column::rorm(Service::F.created_at).range());
+    }
+}
+impl HttpServiceAST {
+    /// Apply the http service specific ast as well as the global ast to a query builder.
+    ///
+    /// The query builder has to be in its `join` position and might end in its `where` position.
+    pub fn apply_to_query<'a>(
+        &'a self,
+        global: &'a GlobalAST,
+        sql: &mut RawQueryBuilder<'a, impl Selector>,
+    ) {
+        if self.tags.is_some() || global.tags.is_some() {
+            sql.append_join(JoinTags::http_service());
+        }
+
+        let HttpServiceAST { tags, created_at } = self;
+        add_ast_field(sql, tags, Column::tags().contains());
+        add_ast_field(sql, created_at, Column::rorm(Service::F.created_at).range());
 
         let GlobalAST { tags, created_at } = global;
         add_ast_field(sql, tags, Column::tags().contains());

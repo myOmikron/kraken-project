@@ -166,7 +166,6 @@ pub async fn get_all_services(
     }
 
     let mut tags = HashMap::new();
-
     query_tags!(
         tags,
         tx,
@@ -329,7 +328,7 @@ pub async fn get_service(
     tags.extend(global_tags);
 
     let sources = query!(&mut tx, (AggregationSource::F.source_type,))
-        .condition(AggregationSource::F.aggregated_uuid.equals(host.uuid))
+        .condition(AggregationSource::F.aggregated_uuid.equals(path.s_uuid))
         .stream()
         .map_ok(|(x,)| x)
         .try_collect()

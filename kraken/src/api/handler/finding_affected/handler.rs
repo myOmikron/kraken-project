@@ -27,6 +27,7 @@ use crate::api::handler::findings::schema::FullFinding;
 use crate::api::handler::findings::schema::PathFinding;
 use crate::api::handler::findings::utils::finding_affected_into_simple;
 use crate::api::handler::hosts::schema::SimpleHost;
+use crate::api::handler::http_services::schema::SimpleHttpService;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
 use crate::chan::global::GLOBAL;
@@ -44,6 +45,9 @@ use crate::models::GlobalTag;
 use crate::models::Host;
 use crate::models::HostGlobalTag;
 use crate::models::HostWorkspaceTag;
+use crate::models::HttpService;
+use crate::models::HttpServiceGlobalTag;
+use crate::models::HttpServiceWorkspaceTag;
 use crate::models::Port;
 use crate::models::PortGlobalTag;
 use crate::models::PortWorkspaceTag;
@@ -161,6 +165,7 @@ pub async fn get_finding_affected(
         host,
         port,
         service,
+        http_service,
         details,
         created_at,
     ) = query_finding_affected(
@@ -181,6 +186,7 @@ pub async fn get_finding_affected(
             FindingAffected::F.host,
             FindingAffected::F.port,
             FindingAffected::F.service,
+            FindingAffected::F.http_service,
             FindingAffected::F.details,
             FindingAffected::F.created_at,
         ),
@@ -209,8 +215,8 @@ pub async fn get_finding_affected(
         .try_collect()
         .await?;
 
-    let (affected, affected_tags) = match (domain, host, port, service) {
-        (Some(fm), None, None, None) => {
+    let (affected, affected_tags) = match (domain, host, port, service, http_service) {
+        (Some(fm), None, None, None, None) => {
             let domain = query!(&mut tx, Domain)
                 .condition(Domain::F.uuid.equals(*fm.key()))
                 .one()
@@ -247,7 +253,7 @@ pub async fn get_finding_affected(
                 tags,
             )
         }
-        (None, Some(fm), None, None) => {
+        (None, Some(fm), None, None, None) => {
             let host = query!(&mut tx, Host)
                 .condition(Host::F.uuid.equals(*fm.key()))
                 .one()
@@ -286,7 +292,7 @@ pub async fn get_finding_affected(
                 tags,
             )
         }
-        (None, None, Some(fm), None) => {
+        (None, None, Some(fm), None, None) => {
             let port = query!(&mut tx, Port)
                 .condition(Port::F.uuid.equals(*fm.key()))
                 .one()
@@ -325,7 +331,7 @@ pub async fn get_finding_affected(
                 tags,
             )
         }
-        (None, None, None, Some(fm)) => {
+        (None, None, None, Some(fm), None) => {
             let service = query!(&mut tx, Service)
                 .condition(Service::F.uuid.equals(*fm.key()))
                 .one()
@@ -361,6 +367,57 @@ pub async fn get_finding_affected(
                     comment: service.comment,
                     workspace: *service.workspace.key(),
                     created_at: service.created_at,
+                }),
+                tags,
+            )
+        }
+        (None, None, None, None, Some(fm)) => {
+            let http_service = query!(&mut tx, HttpService)
+                .condition(HttpService::F.uuid.equals(*fm.key()))
+                .one()
+                .await?;
+
+            let global_tags: Vec<_> =
+                query!(&mut tx, (HttpServiceGlobalTag::F.global_tag as GlobalTag,))
+                    .condition(
+                        HttpServiceGlobalTag::F
+                            .http_service
+                            .equals(http_service.uuid),
+                    )
+                    .stream()
+                    .map_ok(|(tag,)| SimpleTag::from(tag))
+                    .try_collect()
+                    .await?;
+
+            let mut tags: Vec<_> = query!(
+                &mut tx,
+                (HttpServiceWorkspaceTag::F.workspace_tag as WorkspaceTag,)
+            )
+            .condition(
+                HttpServiceWorkspaceTag::F
+                    .http_service
+                    .equals(http_service.uuid),
+            )
+            .stream()
+            .map_ok(|(tag,)| SimpleTag::from(tag))
+            .try_collect()
+            .await?;
+
+            tags.extend(global_tags);
+
+            (
+                FindingAffectedObject::HttpService(SimpleHttpService {
+                    uuid: http_service.uuid,
+                    name: http_service.name,
+                    domain: http_service.domain.map(|fm| *fm.key()),
+                    host: *http_service.host.key(),
+                    port: *http_service.port.key(),
+                    base_path: http_service.base_path,
+                    tls: http_service.tls,
+                    sni_required: http_service.sni_required,
+                    comment: http_service.comment,
+                    workspace: *http_service.workspace.key(),
+                    created_at: http_service.created_at,
                 }),
                 tags,
             )

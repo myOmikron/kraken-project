@@ -149,6 +149,11 @@ impl JoinTags {
         join_tags!(Service, w: ServiceWorkspaceTag::F.service, g: ServiceGlobalTag::F.service)
     }
 
+    /// Get a join which retrieves a http service's tags in a postgres array.
+    pub fn http_service() -> Self {
+        join_tags!(HttpService, w: HttpServiceWorkspaceTag::F.http_service, g: HttpServiceGlobalTag::F.http_service)
+    }
+
     /// Change the alias used for the sub query
     pub fn alias(mut self, table_alias: &'static str) -> Self {
         self.table_alias = table_alias;

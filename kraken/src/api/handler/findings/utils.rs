@@ -32,6 +32,7 @@ pub fn finding_affected_into_simple(affected: FindingAffected) -> ApiResult<Simp
             host: None,
             port: None,
             service: None,
+            http_service: None,
             ..
         } => Ok((AggregationType::Domain, obj.key())),
         FindingAffected {
@@ -39,6 +40,7 @@ pub fn finding_affected_into_simple(affected: FindingAffected) -> ApiResult<Simp
             host: Some(obj),
             port: None,
             service: None,
+            http_service: None,
             ..
         } => Ok((AggregationType::Host, obj.key())),
         FindingAffected {
@@ -46,6 +48,7 @@ pub fn finding_affected_into_simple(affected: FindingAffected) -> ApiResult<Simp
             host: None,
             port: Some(obj),
             service: None,
+            http_service: None,
             ..
         } => Ok((AggregationType::Port, obj.key())),
         FindingAffected {
@@ -53,6 +56,7 @@ pub fn finding_affected_into_simple(affected: FindingAffected) -> ApiResult<Simp
             host: None,
             port: None,
             service: Some(obj),
+            http_service: None,
             ..
         } => Ok((AggregationType::Service, obj.key())),
         FindingAffected {
@@ -60,6 +64,15 @@ pub fn finding_affected_into_simple(affected: FindingAffected) -> ApiResult<Simp
             host: None,
             port: None,
             service: None,
+            http_service: Some(obj),
+            ..
+        } => Ok((AggregationType::HttpService, obj.key())),
+        FindingAffected {
+            domain: None,
+            host: None,
+            port: None,
+            service: None,
+            http_service: None,
             ..
         } => Err(ApiError::InternalServerError),
         _ => Err(ApiError::InternalServerError),

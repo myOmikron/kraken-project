@@ -1,3 +1,6 @@
+use std::net::IpAddr;
+use std::num::NonZeroU16;
+
 use ipnetwork::IpNetwork;
 use rorm::db::Executor;
 use rorm::insert;
@@ -13,6 +16,7 @@ use crate::models::HostCertainty;
 use crate::models::ManualDomain;
 use crate::models::ManualHost;
 use crate::models::ManualHostCertainty;
+use crate::models::ManualHttpService;
 use crate::models::ManualPort;
 use crate::models::ManualPortCertainty;
 use crate::models::ManualService;
@@ -384,5 +388,151 @@ impl ManualService {
 
         guard.commit().await?;
         Ok(service_uuid)
+    }
+}
+
+#[derive(Patch)]
+#[rorm(model = "ManualHttpService")]
+struct InsertManualHttpService {
+    uuid: Uuid,
+    name: String,
+    domain: Option<String>,
+    ip_addr: IpNetwork,
+    port: i32,
+    port_protocol: PortProtocol,
+    base_path: String,
+    tls: bool,
+    sni_required: bool,
+    user: ForeignModel<User>,
+    workspace: ForeignModel<Workspace>,
+}
+
+impl ManualHttpService {
+    /// Manually insert a http service
+    ///
+    /// This function will store the raw data given by the user
+    /// and add it to the aggregations.
+    ///
+    /// The [`HttpService`]'s uuid will be returned.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn insert(
+        executor: impl Executor<'_>,
+        workspace: Uuid,
+        user: Uuid,
+        name: String,
+        domain: Option<String>,
+        ip_addr: IpAddr,
+        port: NonZeroU16,
+        port_protocol: PortProtocol,
+        base_path: String,
+        tls: bool,
+        sni_required: bool,
+    ) -> Result<Uuid, rorm::Error> {
+        let mut guard = executor.ensure_transaction().await?;
+
+        let source_uuid = insert!(guard.get_transaction(), ManualHttpService)
+            .return_primary_key()
+            .single(&InsertManualHttpService {
+                uuid: Uuid::new_v4(),
+                name: name.clone(),
+                domain: domain.clone(),
+                ip_addr: IpNetwork::from(ip_addr),
+                port: port.get() as i32,
+                port_protocol,
+                base_path: base_path.clone(),
+                tls,
+                sni_required,
+                user: ForeignModelByField::Key(user),
+                workspace: ForeignModelByField::Key(workspace),
+            })
+            .await?;
+
+        let host_uuid = GLOBAL
+            .aggregator
+            .aggregate_host(
+                workspace,
+                IpNetwork::from(ip_addr),
+                HostCertainty::SupposedTo, // TODO
+            )
+            .await?;
+
+        let port_uuid = GLOBAL
+            .aggregator
+            .aggregate_port(
+                workspace,
+                host_uuid,
+                port.get(),
+                port_protocol,
+                PortCertainty::SupposedTo, // TODO
+            )
+            .await?;
+
+        let domain_uuid = if let Some(domain) = domain {
+            Some(
+                GLOBAL
+                    .aggregator
+                    .aggregate_domain(workspace, &domain, DomainCertainty::Unverified, user) // TODO
+                    .await?,
+            )
+        } else {
+            None
+        };
+
+        let http_service_uuid = GLOBAL
+            .aggregator
+            .aggregate_http_service(
+                workspace,
+                name,
+                host_uuid,
+                port_uuid,
+                domain_uuid,
+                base_path,
+                tls,
+                sni_required,
+            )
+            .await?;
+
+        insert!(guard.get_transaction(), AggregationSource)
+            .bulk(
+                [
+                    AggregationSource {
+                        uuid: Uuid::new_v4(),
+                        workspace: ForeignModelByField::Key(workspace),
+                        source_type: SourceType::ManualHttpService,
+                        source_uuid,
+                        aggregated_table: AggregationTable::Host,
+                        aggregated_uuid: host_uuid,
+                    },
+                    AggregationSource {
+                        uuid: Uuid::new_v4(),
+                        workspace: ForeignModelByField::Key(workspace),
+                        source_type: SourceType::ManualHttpService,
+                        source_uuid,
+                        aggregated_table: AggregationTable::Port,
+                        aggregated_uuid: port_uuid,
+                    },
+                    AggregationSource {
+                        uuid: Uuid::new_v4(),
+                        workspace: ForeignModelByField::Key(workspace),
+                        source_type: SourceType::ManualHttpService,
+                        source_uuid,
+                        aggregated_table: AggregationTable::HttpService,
+                        aggregated_uuid: http_service_uuid,
+                    },
+                ]
+                .into_iter()
+                .chain(domain_uuid.map(|domain_uuid| AggregationSource {
+                    uuid: Uuid::new_v4(),
+                    workspace: ForeignModelByField::Key(workspace),
+                    source_type: SourceType::ManualHttpService,
+                    source_uuid,
+                    aggregated_table: AggregationTable::Domain,
+                    aggregated_uuid: domain_uuid,
+                })),
+            )
+            .await?;
+
+        guard.commit().await?;
+        Ok(http_service_uuid)
     }
 }

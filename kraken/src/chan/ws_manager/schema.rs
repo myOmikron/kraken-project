@@ -18,6 +18,7 @@ use crate::api::handler::finding_definitions::schema::UpdateFindingDefinitionReq
 use crate::api::handler::findings::schema::UpdateFindingRequest;
 use crate::api::handler::hosts::schema::OsType;
 use crate::api::handler::hosts::schema::SimpleHost;
+use crate::api::handler::http_services::schema::SimpleHttpService;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
 use crate::api::handler::users::schema::SimpleUser;
@@ -201,6 +202,13 @@ pub enum WsMessage {
         /// The service that was inserted
         service: SimpleService,
     },
+    /// A new http service was found
+    NewHttpService {
+        /// The workspace this http service is related to
+        workspace: Uuid,
+        /// The http service that was inserted
+        http_service: SimpleHttpService,
+    },
     /// A domain was deleted
     DeletedDomain {
         /// The workspace this domain is related to
@@ -228,6 +236,13 @@ pub enum WsMessage {
         workspace: Uuid,
         /// The uuid of the deleted service
         service: Uuid,
+    },
+    /// A http service was deleted
+    DeletedHttpService {
+        /// The workspace this http service is related to
+        workspace: Uuid,
+        /// The uuid of the deleted http service
+        http_service: Uuid,
     },
     /// Global tags were updated on an aggregation
     UpdatedGlobalTags {
@@ -366,6 +381,8 @@ pub enum AggregationType {
     Service,
     /// The port model
     Port,
+    /// The http service model
+    HttpService,
 }
 
 /// The section that was edited

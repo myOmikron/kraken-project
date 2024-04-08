@@ -1339,6 +1339,7 @@ Value = [
     "ManualHost",
     "ManualPort",
     "ManualService",
+    "ManualHttpService",
 ]
 
 [[Migration.Operations.Fields.Annotations]]
@@ -1362,6 +1363,7 @@ Value = [
     "Port",
     "Service",
     "Domain",
+    "HttpService",
 ]
 
 [[Migration.Operations.Fields.Annotations]]

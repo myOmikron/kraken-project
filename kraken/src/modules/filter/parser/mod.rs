@@ -20,6 +20,7 @@ use crate::modules::filter::And;
 use crate::modules::filter::DomainAST;
 use crate::modules::filter::GlobalAST;
 use crate::modules::filter::HostAST;
+use crate::modules::filter::HttpServiceAST;
 use crate::modules::filter::Not;
 use crate::modules::filter::Or;
 use crate::modules::filter::ParseError;
@@ -311,6 +312,24 @@ impl ServiceAST {
                 "transports" | "transport" => {
                     parse_ast_field(transport, tokens, parse_service_transport)
                 }
+                _ => Err(ParseError::UnknownColumn(column.to_string())),
+            },
+        )
+    }
+}
+
+impl HttpServiceAST {
+    /// Parse a string into a [`HttpServiceAST`]
+    pub fn parse(input: &str) -> Result<Self, ParseError> {
+        parse_ast(
+            input,
+            |HttpServiceAST { tags, created_at }, column, tokens| match column {
+                "tags" | "tag" => parse_ast_field(tags, tokens, parse_string),
+                "createdAt" => parse_ast_field(
+                    created_at,
+                    tokens,
+                    wrap_range(parse_from_str::<DateTime<Utc>>),
+                ),
                 _ => Err(ParseError::UnknownColumn(column.to_string())),
             },
         )

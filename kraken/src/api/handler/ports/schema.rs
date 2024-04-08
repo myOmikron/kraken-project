@@ -12,6 +12,7 @@ use crate::api::handler::common::schema::PageParams;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::findings::schema::FindingSeverity;
 use crate::api::handler::hosts::schema::SimpleHost;
+use crate::api::handler::http_services::schema::SimpleHttpService;
 use crate::api::handler::services::schema::SimpleService;
 
 /// The request to manually add a port
@@ -128,6 +129,9 @@ pub struct PortRelations {
 
     /// Services listening on this port
     pub services: Vec<SimpleService>,
+
+    /// Http services listening on this port
+    pub http_services: Vec<SimpleHttpService>,
 }
 
 /// The certainty states of a port

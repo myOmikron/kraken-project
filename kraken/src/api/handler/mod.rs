@@ -15,6 +15,7 @@ pub mod finding_definitions;
 pub mod findings;
 pub mod global_tags;
 pub mod hosts;
+pub mod http_services;
 pub mod leeches;
 pub mod oauth;
 pub mod oauth_applications;

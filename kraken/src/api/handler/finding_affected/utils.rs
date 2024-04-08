@@ -22,6 +22,7 @@ pub async fn query_finding_affected<S: Selector<Model = FindingAffected>>(
                 FindingAffected::F.host.equals(a_uuid),
                 FindingAffected::F.port.equals(a_uuid),
                 FindingAffected::F.service.equals(a_uuid),
+                FindingAffected::F.http_service.equals(a_uuid),
             ]
         ])
         .optional()

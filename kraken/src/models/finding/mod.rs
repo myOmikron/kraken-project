@@ -14,6 +14,7 @@ use uuid::Uuid;
 pub(crate) use crate::models::finding::patches::InsertFindingDefinition;
 use crate::models::Domain;
 use crate::models::Host;
+use crate::models::HttpService;
 use crate::models::MediaFile;
 use crate::models::Port;
 use crate::models::Service;
@@ -142,6 +143,9 @@ pub struct FindingAffected {
     /// Related aggregation
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
     pub service: Option<ForeignModel<Service>>,
+    /// Related aggregation
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub http_service: Option<ForeignModel<HttpService>>,
 
     /// The details of this affected finding
     #[rorm(on_update = "Cascade", on_delete = "SetNull")]

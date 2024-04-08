@@ -11,6 +11,7 @@ use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::domains::schema::SimpleDomain;
 use crate::api::handler::findings::schema::FullFinding;
 use crate::api::handler::hosts::schema::SimpleHost;
+use crate::api::handler::http_services::schema::SimpleHttpService;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
 use crate::chan::ws_manager::schema::AggregationType;
@@ -105,6 +106,9 @@ pub enum FindingAffectedObject {
 
     /// An affected service
     Service(SimpleService),
+
+    /// An affected http service
+    HttpService(SimpleHttpService),
 }
 
 /// The path parameter of an object affected by a finding

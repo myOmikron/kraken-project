@@ -11,6 +11,7 @@ use crate::api::handler::common::schema::PageParams;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::findings::schema::FindingSeverity;
 use crate::api::handler::hosts::schema::SimpleHost;
+use crate::api::handler::http_services::schema::SimpleHttpService;
 
 /// The request to manually add a domain
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -114,6 +115,9 @@ pub struct DomainRelations {
 
     /// All hosts any `target_domains` resolves to
     pub indirect_hosts: Vec<SimpleHost>,
+
+    /// This domain's http services
+    pub http_services: Vec<SimpleHttpService>,
 }
 
 /// The certainty of a domain

@@ -13,6 +13,7 @@ use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
 use crate::api::handler::common::schema::PageParams;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::domains::schema::SimpleDomain;
+use crate::api::handler::http_services::schema::SimpleHttpService;
 use crate::api::handler::findings::schema::FindingSeverity;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
@@ -126,6 +127,9 @@ pub struct HostRelations {
 
     /// Domains pointing to this host via a `CNAME` record which eventually resolves to the host
     pub indirect_domains: Vec<SimpleDomain>,
+
+    /// This host's http services
+    pub http_services: Vec<SimpleHttpService>,
 }
 
 /// The certainty of a host

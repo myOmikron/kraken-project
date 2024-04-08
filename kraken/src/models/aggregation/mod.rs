@@ -79,6 +79,9 @@ pub struct Host {
     /// The domains of a host
     pub domains: BackRef<field!(DomainHostRelation::F.host)>,
 
+    /// The http services of a host
+    pub http_services: BackRef<field!(HttpService::F.host)>,
+
     /// A comment to the host
     #[rorm(max_length = 1024)]
     pub comment: String,
@@ -282,6 +285,9 @@ pub struct Port {
     /// The services that link to this port
     pub services: BackRef<field!(Service::F.port)>,
 
+    /// The http services of a port
+    pub http_services: BackRef<field!(HttpService::F.port)>,
+
     /// A comment to the port
     #[rorm(max_length = 1024)]
     pub comment: String,
@@ -368,6 +374,9 @@ pub struct Domain {
 
     /// Domains, this one resolves to
     pub destinations: BackRef<field!(DomainDomainRelation::F.source)>,
+
+    /// The http services of a domain
+    pub http_services: BackRef<field!(HttpService::F.domain)>,
 
     /// Workspace tags of the domain
     pub workspace_tags: BackRef<field!(DomainWorkspaceTag::F.domain)>,
@@ -656,6 +665,8 @@ pub enum SourceType {
     ManualPort,
     /// The [`ManualService`] table
     ManualService,
+    /// The [`ManualHttpService`] table
+    ManualHttpService,
 }
 
 /// Enum used in [`AggregationSource`] to identify which table it points to
@@ -669,6 +680,8 @@ pub enum AggregationTable {
     Service,
     /// The [`Domain`] table
     Domain,
+    /// The [`HttpService`] table
+    HttpService,
 }
 
 impl fmt::Display for AggregationTable {
@@ -678,6 +691,7 @@ impl fmt::Display for AggregationTable {
             AggregationTable::Port => Port::TABLE,
             AggregationTable::Service => Service::TABLE,
             AggregationTable::Domain => Domain::TABLE,
+            AggregationTable::HttpService => HttpService::TABLE,
         };
         write!(f, "{table}")
     }

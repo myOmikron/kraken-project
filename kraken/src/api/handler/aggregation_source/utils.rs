@@ -47,6 +47,7 @@ use crate::models::DnsTxtScanSpfEntry;
 use crate::models::HostAliveResult;
 use crate::models::ManualDomain;
 use crate::models::ManualHost;
+use crate::models::ManualHttpService;
 use crate::models::ManualPort;
 use crate::models::ManualService;
 use crate::models::OsDetectionResult;
@@ -143,7 +144,8 @@ impl SimpleAggregationSource {
             SourceType::ManualDomain
             | SourceType::ManualHost
             | SourceType::ManualPort
-            | SourceType::ManualService => self.manual = true,
+            | SourceType::ManualService
+            | SourceType::ManualHttpService => self.manual = true,
             SourceType::TcpPortScan => {}
         }
     }
@@ -575,6 +577,51 @@ impl FullAggregationSource {
                             workspace: *workspace.key(),
                             created_at,
                             version: None,
+                        });
+                    }
+                }
+                SourceType::ManualHttpService => {
+                    let mut stream = query!(
+                        &mut *tx,
+                        (
+                            ManualHttpService::F.name,
+                            ManualHttpService::F.domain,
+                            ManualHttpService::F.ip_addr,
+                            ManualHttpService::F.port,
+                            ManualHttpService::F.base_path,
+                            ManualHttpService::F.tls,
+                            ManualHttpService::F.sni_required,
+                            ManualHttpService::F.user as SimpleUser,
+                            ManualHttpService::F.workspace,
+                            ManualHttpService::F.created_at,
+                        )
+                    )
+                    .condition(field_in(ManualHttpService::F.uuid, uuids))
+                    .stream();
+                    while let Some((
+                        name,
+                        domain,
+                        ip_addr,
+                        port,
+                        base_path,
+                        tls,
+                        sni_require,
+                        user,
+                        workspace,
+                        created_at,
+                    )) = stream.try_next().await?
+                    {
+                        manual_insert.push(ManualInsert::HttpService {
+                            name,
+                            domain,
+                            ip_addr: ip_addr.ip(),
+                            port: port as u16,
+                            base_path,
+                            tls,
+                            sni_require,
+                            user,
+                            workspace: *workspace.key(),
+                            created_at,
                         });
                     }
                 }

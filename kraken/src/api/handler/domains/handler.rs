@@ -11,7 +11,6 @@ use actix_web::web::Path;
 use actix_web::HttpResponse;
 use futures::TryStreamExt;
 use rorm::and;
-use rorm::conditions::DynamicCollection;
 use rorm::db::sql::value::Value;
 use rorm::field;
 use rorm::insert;
@@ -46,6 +45,7 @@ use crate::api::handler::domains::schema::SimpleDomain;
 use crate::api::handler::domains::schema::UpdateDomainRequest;
 use crate::api::handler::findings::schema::ListFindings;
 use crate::api::handler::hosts::schema::SimpleHost;
+use crate::api::handler::http_services::schema::SimpleHttpService;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::AggregationType;
 use crate::chan::ws_manager::schema::WsMessage;
@@ -60,6 +60,7 @@ use crate::models::DomainWorkspaceTag;
 use crate::models::FindingAffected;
 use crate::models::GlobalTag;
 use crate::models::Host;
+use crate::models::HttpService;
 use crate::models::ManualDomain;
 use crate::models::Workspace;
 use crate::models::WorkspaceTag;
@@ -603,6 +604,25 @@ pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<Doma
         }
     }
 
+    let http_services = query!(&mut tx, HttpService)
+        .condition(HttpService::F.domain.equals(path.d_uuid))
+        .stream()
+        .map_ok(|service| SimpleHttpService {
+            uuid: service.uuid,
+            name: service.name,
+            domain: service.domain.map(|fm| *fm.key()),
+            host: *service.host.key(),
+            port: *service.port.key(),
+            base_path: service.base_path,
+            tls: service.tls,
+            sni_required: service.sni_required,
+            comment: service.comment,
+            workspace: *service.workspace.key(),
+            created_at: service.created_at,
+        })
+        .try_collect()
+        .await?;
+
     tx.commit().await?;
 
     Ok(Json(DomainRelations {
@@ -610,6 +630,7 @@ pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<Doma
         target_domains,
         direct_hosts,
         indirect_hosts,
+        http_services,
     }))
 }
 

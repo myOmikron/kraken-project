@@ -9,7 +9,6 @@ use actix_web::web::Path;
 use actix_web::HttpResponse;
 use futures::TryStreamExt;
 use rorm::and;
-use rorm::conditions::DynamicCollection;
 use rorm::db::sql::value::Value;
 use rorm::insert;
 use rorm::prelude::ForeignModelByField;
@@ -33,6 +32,7 @@ use crate::api::handler::common::utils::query_many_severities;
 use crate::api::handler::common::utils::query_single_severity;
 use crate::api::handler::findings::schema::ListFindings;
 use crate::api::handler::hosts::schema::SimpleHost;
+use crate::api::handler::http_services::schema::SimpleHttpService;
 use crate::api::handler::ports::schema::CreatePortRequest;
 use crate::api::handler::ports::schema::FullPort;
 use crate::api::handler::ports::schema::GetAllPortsQuery;
@@ -50,6 +50,7 @@ use crate::models::AggregationTable;
 use crate::models::FindingAffected;
 use crate::models::GlobalTag;
 use crate::models::Host;
+use crate::models::HttpService;
 use crate::models::ManualPort;
 use crate::models::Port;
 use crate::models::PortGlobalTag;
@@ -588,6 +589,25 @@ pub async fn get_port_relations(path: Path<PathPort>) -> ApiResult<Json<PortRela
         .await?
         .ok_or(ApiError::InvalidUuid)?;
 
+    let http_services = query!(&mut tx, HttpService)
+        .condition(HttpService::F.port.equals(path.p_uuid))
+        .stream()
+        .map_ok(|service| SimpleHttpService {
+            uuid: service.uuid,
+            name: service.name,
+            domain: service.domain.map(|fm| *fm.key()),
+            host: *service.host.key(),
+            port: *service.port.key(),
+            base_path: service.base_path,
+            tls: service.tls,
+            sni_required: service.sni_required,
+            comment: service.comment,
+            workspace: *service.workspace.key(),
+            created_at: service.created_at,
+        })
+        .try_collect()
+        .await?;
+
     tx.commit().await?;
 
     Ok(Json(PortRelations {
@@ -602,6 +622,7 @@ pub async fn get_port_relations(path: Path<PathPort>) -> ApiResult<Json<PortRela
             created_at: host.created_at,
         },
         services,
+        http_services,
     }))
 }
 

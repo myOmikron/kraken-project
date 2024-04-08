@@ -9,7 +9,6 @@ use actix_web::web::Path;
 use actix_web::HttpResponse;
 use futures::TryStreamExt;
 use rorm::and;
-use rorm::conditions::DynamicCollection;
 use rorm::db::sql::value::Value;
 use rorm::insert;
 use rorm::model::PatchSelector;
@@ -40,6 +39,7 @@ use crate::api::handler::hosts::schema::GetAllHostsQuery;
 use crate::api::handler::hosts::schema::HostRelations;
 use crate::api::handler::hosts::schema::PathHost;
 use crate::api::handler::hosts::schema::UpdateHostRequest;
+use crate::api::handler::http_services::schema::SimpleHttpService;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
 use crate::chan::global::GLOBAL;
@@ -56,6 +56,7 @@ use crate::models::GlobalTag;
 use crate::models::Host;
 use crate::models::HostGlobalTag;
 use crate::models::HostWorkspaceTag;
+use crate::models::HttpService;
 use crate::models::ManualHost;
 use crate::models::Port;
 use crate::models::Service;
@@ -584,6 +585,25 @@ pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRela
         }
     }
 
+    let http_services = query!(&mut tx, HttpService)
+        .condition(HttpService::F.host.equals(path.h_uuid))
+        .stream()
+        .map_ok(|service| SimpleHttpService {
+            uuid: service.uuid,
+            name: service.name,
+            domain: service.domain.map(|fm| *fm.key()),
+            host: *service.host.key(),
+            port: *service.port.key(),
+            base_path: service.base_path,
+            tls: service.tls,
+            sni_required: service.sni_required,
+            comment: service.comment,
+            workspace: *service.workspace.key(),
+            created_at: service.created_at,
+        })
+        .try_collect()
+        .await?;
+
     tx.commit().await?;
 
     Ok(Json(HostRelations {
@@ -591,6 +611,7 @@ pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRela
         services,
         direct_domains,
         indirect_domains,
+        http_services,
     }))
 }
 

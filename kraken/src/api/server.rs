@@ -42,6 +42,7 @@ use crate::api::handler::finding_definitions;
 use crate::api::handler::findings;
 use crate::api::handler::global_tags;
 use crate::api::handler::hosts;
+use crate::api::handler::http_services;
 use crate::api::handler::leeches;
 use crate::api::handler::oauth;
 use crate::api::handler::oauth_applications;
@@ -264,6 +265,14 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(domains::handler::get_domain_sources)
                     .service(domains::handler::get_domain_relations)
                     .service(domains::handler::get_domain_findings)
+                    .service(http_services::handler::get_all_http_services)
+                    .service(http_services::handler::get_http_service)
+                    .service(http_services::handler::create_http_service)
+                    .service(http_services::handler::update_http_service)
+                    .service(http_services::handler::delete_http_service)
+                    .service(http_services::handler::get_http_service_sources)
+                    .service(http_services::handler::get_http_service_relations)
+                    .service(http_services::handler::get_http_service_findings)
                     .service(wordlists::handler::get_all_wordlists)
                     .service(workspace_invitations::handler::get_all_invitations)
                     .service(workspace_invitations::handler::accept_invitation)
