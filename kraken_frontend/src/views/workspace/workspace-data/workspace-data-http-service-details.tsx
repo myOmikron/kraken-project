@@ -63,7 +63,17 @@ export function WorkspaceDataHttpServiceDetails(props: WorkspaceDataHttpServiceD
                 <>
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>HTTP Service</h3>
-                        {httpService.name} on {buildHttpServiceURL(httpService)}
+                        <div>
+                            {httpService.name}
+                            {" on "}
+                            <SelectableText as="span">{buildHttpServiceURL(httpService, false)}</SelectableText>
+                            {httpService.domain ? (
+                                <>
+                                    {" on "}
+                                    <SelectableText as="span">{httpService.host.ipAddr}</SelectableText>
+                                </>
+                            ) : undefined}
+                        </div>
                     </div>
                     <div className="workspace-data-details-pane">
                         <h3 className="sub-heading">Certainty</h3>
