@@ -38,6 +38,7 @@ export default function SelectableText(props: SelectableTextProps) {
     return (
         <As
             {...props}
+            className={`selectable-text ${props.className ?? ""}`}
             ref={elem}
             onMouseDown={(e) => {
                 location.current = [e.clientX, e.clientY];
