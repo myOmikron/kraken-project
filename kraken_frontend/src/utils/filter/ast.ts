@@ -113,6 +113,11 @@ export const ASTFields = {
             parse: parseOsType,
             advanced: true,
         },
+        httpServices: {
+            label: "HTTP Services",
+            columns: ["httpServices", "httpService"],
+            parse: parseString,
+        },
     },
     host: {
         tags: {
@@ -187,6 +192,11 @@ export const ASTFields = {
             parse: wrapRange(parseDate),
             advanced: true,
         },
+        httpServices: {
+            label: "HTTP Services",
+            columns: ["httpServices", "httpService"],
+            parse: parseString,
+        },
         domains: {
             label: "Domains",
             columns: ["domains", "domain"],
@@ -248,6 +258,11 @@ export const ASTFields = {
             label: "Protocols",
             columns: ["protocols", "protocol"],
             parse: parsePortProtocol,
+        },
+        httpServices: {
+            label: "HTTP Services",
+            columns: ["httpServices", "httpService"],
+            parse: parseString,
         },
         services: {
             label: "Services",
@@ -334,6 +349,19 @@ export const ASTFields = {
             parse: parseServiceTransport,
         },
     },
+    httpService: {
+        tags: {
+            label: "Tags",
+            columns: ["tags", "tag"],
+            parse: parseString,
+        },
+        createdAt: {
+            label: "Creation date",
+            columns: ["createdAt"],
+            parse: wrapRange(parseDate),
+        },
+        // TODO
+    },
 } satisfies { [ast: string]: ASTField };
 
 export type ASTType<Fields extends ASTField> = {
@@ -348,6 +376,7 @@ export type DomainAST = ASTResult<(typeof ASTFields)["domain"]>;
 export type HostAST = ASTResult<(typeof ASTFields)["host"]>;
 export type PortAST = ASTResult<(typeof ASTFields)["port"]>;
 export type ServiceAST = ASTResult<(typeof ASTFields)["service"]>;
+export type HttpServiceAST = ASTResult<(typeof ASTFields)["httpService"]>;
 
 // these types are defined to automatically check for full coverage of all keys:
 export type FieldTypes<T extends ASTType<ASTField>> = {
@@ -358,6 +387,7 @@ export type DomainFieldTypes = FieldTypes<DomainAST>;
 export type HostFieldTypes = FieldTypes<HostAST>;
 export type PortFieldTypes = FieldTypes<PortAST>;
 export type ServiceFieldTypes = FieldTypes<ServiceAST>;
+export type HttpServiceFieldTypes = FieldTypes<HttpServiceAST>;
 type FieldTypeValue<key, T> = key extends "tags" | `${string}Tags`
     ? "tags"
     : T extends Expr.Range<infer U>
@@ -371,7 +401,7 @@ type FieldTypeValue<key, T> = key extends "tags" | `${string}Tags`
           : T extends number
             ? "number" | "port"
             : T extends string
-              ? "string" | "domain" | "host" | "service" | "transport"
+              ? "string" | "domain" | "host" | "service" | "httpService" | "transport"
               : T extends Date
                 ? "date"
                 : never;
@@ -395,6 +425,7 @@ export const ASTFieldTypes = {
         ipsCreatedAt: "mayberange.date",
         ipsTags: "tags",
         ipsOs: "ostype",
+        httpServices: "httpService",
     },
     host: {
         tags: "tags",
@@ -410,6 +441,7 @@ export const ASTFieldTypes = {
         servicesProtocols: "protocol",
         servicesTags: "tags",
         servicesCreatedAt: "mayberange.date",
+        httpServices: "httpService",
         domains: "domain",
         domainsTags: "tags",
         domainsCreatedAt: "mayberange.date",
@@ -423,6 +455,7 @@ export const ASTFieldTypes = {
         ipsTags: "tags",
         ipsOs: "ostype",
         protocols: "protocol",
+        httpServices: "httpService",
         services: "service",
         servicesTags: "tags",
         servicesCreatedAt: "mayberange.date",
@@ -441,6 +474,11 @@ export const ASTFieldTypes = {
         services: "service",
         transport: "transport",
     },
+    httpService: {
+        tags: "tags",
+        createdAt: "mayberange.date",
+        // TODO
+    },
 } satisfies { [K in keyof typeof ASTFields]: FieldTypes<ASTType<(typeof ASTFields)[K]>> };
 
 /** Union of all actually used AST types */
@@ -449,6 +487,7 @@ export type UsedASTTypes =
     | (typeof ASTFieldTypes)["domain"][keyof (typeof ASTFieldTypes)["domain"]]
     | (typeof ASTFieldTypes)["host"][keyof (typeof ASTFieldTypes)["host"]]
     | (typeof ASTFieldTypes)["service"][keyof (typeof ASTFieldTypes)["service"]]
+    | (typeof ASTFieldTypes)["httpService"][keyof (typeof ASTFieldTypes)["httpService"]]
     | (typeof ASTFieldTypes)["port"][keyof (typeof ASTFieldTypes)["port"]];
 
 export namespace Expr {

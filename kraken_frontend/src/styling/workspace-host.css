@@ -10,9 +10,8 @@
 
 .workspace-host-section-selector {
     grid-area: 2 / 2 / span 1 / span 1;
-    display: grid;
+    display: flex;
     width: 100%;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
     gap: 1em;
 }
 
@@ -20,6 +19,8 @@
     padding: 1em 2em;
     cursor: pointer;
     transition: all 200ms;
+    flex-grow: 1;
+    flex-basis: 0;
 }
 
 .workspace-host-section-selector > .pane:hover {

@@ -3,9 +3,10 @@ import Creatable from "react-select/creatable";
 import { toast } from "react-toastify";
 import { Api } from "../../../api/api";
 import { FullDomain, FullHost, FullPort, FullService } from "../../../api/generated";
+import { FullHttpService } from "../../../api/generated/models/FullHttpService";
 import { selectStyles } from "../../../components/select-menu";
 
-export type EditableDataListProps<T extends FullHost | FullPort | FullDomain | FullService> = {
+export type EditableDataListProps<T extends FullHost | FullPort | FullDomain | FullService | FullHttpService> = {
     /**
      * The workspace containing the item whose items to list
      */
@@ -22,7 +23,9 @@ export type EditableDataListProps<T extends FullHost | FullPort | FullDomain | F
             ? "ports"
             : T extends FullService
               ? "services"
-              : never;
+              : T extends FullHttpService
+                ? "httpServices"
+                : never;
 
     /** List of currently set items */
     items: Array<T>;
@@ -35,7 +38,7 @@ export type EditableDataListProps<T extends FullHost | FullPort | FullDomain | F
 };
 
 /** A multi `<Select />` for editing a list of items */
-export default function EditableDataList<T extends FullHost | FullPort | FullDomain | FullService>(
+export default function EditableDataList<T extends FullHost | FullPort | FullDomain | FullService | FullHttpService>(
     props: EditableDataListProps<T>,
 ) {
     const { workspace, items, onChange } = props;
@@ -46,6 +49,8 @@ export default function EditableDataList<T extends FullHost | FullPort | FullDom
                 return (item as FullDomain).domain;
             case "services":
                 return (item as FullService).name;
+            case "httpServices":
+                return (item as FullHttpService).name;
             case "ports":
                 return (item as FullPort).port.toString();
             case "hosts":

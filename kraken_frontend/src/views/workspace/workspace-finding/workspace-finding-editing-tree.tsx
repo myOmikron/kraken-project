@@ -117,6 +117,9 @@ export const EditingTreeGraph = forwardRef<EditingTreeGraphRef, EditingTreeGraph
             case "Service":
                 result = { service: { uuid } };
                 break;
+            case "HttpService":
+                result = { httpService: { uuid } };
+                break;
         }
         return Ok({
             affected: result,

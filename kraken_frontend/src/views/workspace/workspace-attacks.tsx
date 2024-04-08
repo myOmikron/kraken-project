@@ -18,6 +18,7 @@ import {
     ServiceDetectionRequest,
     UdpServiceDetectionRequest,
 } from "../../api/generated";
+import { FullHttpService } from "../../api/generated/models/FullHttpService";
 import { ROUTES } from "../../routes";
 import "../../styling/workspace-attacks.css";
 import AttacksIcon from "../../svg/attacks";
@@ -481,6 +482,8 @@ const ATTACKS: AllAttackDescr = {
                     preprocess: (v: RawSelectionData | undefined) => {
                         if (!v) return undefined;
                         if (v.domain) return { domain: { simple: v.domain.domain } };
+                        if (v.httpService?.domain) return { domain: { simple: v.httpService.domain.domain } };
+                        if (v.httpService) return { ipAddress: { simple: v.httpService.host.ipAddr } };
                         if (v.host) return { ipAddress: { simple: v.host.ipAddr } };
                         if (v.port) return { ipAddress: { simple: v.port.host.ipAddr } };
                         if (v.service) return { ipAddress: { simple: v.service.host.ipAddr } };
@@ -595,6 +598,7 @@ export type RawSelectionData = {
     host?: FullHost;
     port?: FullPort;
     service?: FullService;
+    httpService?: FullHttpService;
 };
 
 export type PrefillType =
@@ -606,7 +610,12 @@ export type PrefillType =
     | "service.name" // service name (from any aggregation kind relating to services)
     | `service[${string}].port` // port (only from a service with the name within the square brackets)
     | `service[!${string}].port` // port (only from a service not with the name within the square brackets)
-    | `service[${string}][${PortProtocol}].port`; // TCP/UDP/... only port (only from a service with the name within the square brackets)
+    | `service[${string}][${PortProtocol}].port` // TCP/UDP/... only port (only from a service with the name within the square brackets)
+    | "httpService.name" // http service name (from any aggregation kind relating to services)
+    | "httpService.path" // http service base path
+    | "httpService.port" // http service port
+    | "httpService.domain" // http service domain (if set)
+    | "httpService.ipAddr"; // http service ip address
 
 type WorkspaceAttacksProps =
     | {
@@ -623,6 +632,7 @@ type WorkspaceAttacksProps =
           hosts: string[];
           ports: string[];
           services: string[];
+          httpServices: string[];
       };
 
 export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
@@ -935,6 +945,11 @@ export function getPrefill(raw: RawSelectionData, type: `service[${string}][Unkn
 export function getPrefill(raw: RawSelectionData, type: `service[${string}][Udp].port`): number | undefined;
 export function getPrefill(raw: RawSelectionData, type: `service[${string}][Tcp].port`): number | undefined;
 export function getPrefill(raw: RawSelectionData, type: `service[${string}][Sctp].port`): number | undefined;
+export function getPrefill(raw: RawSelectionData, type: "httpService.name"): string | undefined;
+export function getPrefill(raw: RawSelectionData, type: "httpService.path"): string | undefined;
+export function getPrefill(raw: RawSelectionData, type: "httpService.port"): number | undefined;
+export function getPrefill(raw: RawSelectionData, type: "httpService.domain"): string | undefined;
+export function getPrefill(raw: RawSelectionData, type: "httpService.ipAddr"): string | undefined;
 export function getPrefill(raw: RawSelectionData, type: PrefillType): never | undefined;
 
 export function getPrefill(raw: RawSelectionData, type: PrefillType): unknown | undefined {
@@ -942,21 +957,21 @@ export function getPrefill(raw: RawSelectionData, type: PrefillType): unknown | 
         case "raw":
             return raw;
         case "domain":
-            return raw.domain?.domain;
+            return raw.domain?.domain ?? raw.httpService?.domain?.domain ?? undefined;
         case "ipAddr":
-            return raw.host
-                ? raw.host.ipAddr
-                : raw.port
-                  ? raw.port.host.ipAddr
-                  : raw.service
-                    ? raw.service.host.ipAddr
-                    : undefined;
+            return (
+                raw.host?.ipAddr ??
+                raw.port?.host.ipAddr ??
+                raw.service?.host.ipAddr ??
+                raw.httpService?.host.ipAddr ??
+                undefined
+            );
         case "port":
         case "port[Unknown]":
         case "port[Udp]":
         case "port[Tcp]":
         case "port[Sctp]":
-            const p = raw.port ? raw.port : raw.service && raw.service.port ? raw.service.port : undefined;
+            const p = raw.port ?? raw.service?.port ?? raw.httpService?.port ?? undefined;
             if (p) {
                 if (type.startsWith("port[") && type.endsWith("]")) {
                     if (p.protocol != type.substring(5, type.length - 1)) return undefined;
@@ -966,6 +981,16 @@ export function getPrefill(raw: RawSelectionData, type: PrefillType): unknown | 
             return undefined;
         case "service.name":
             return raw.service?.name;
+        case "httpService.name":
+            return raw.httpService?.name;
+        case "httpService.path":
+            return raw.httpService?.basePath;
+        case "httpService.port":
+            return raw.httpService?.port.port;
+        case "httpService.domain":
+            return raw.httpService?.domain?.domain;
+        case "httpService.ipAddr":
+            return raw.httpService?.host.ipAddr;
         default:
             if (type.startsWith("service[")) {
                 if (raw.service) {

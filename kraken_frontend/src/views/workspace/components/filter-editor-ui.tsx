@@ -1,5 +1,6 @@
 import { FC, useState } from "react";
 import { FullDomain, FullHost, FullPort, FullService, OsType, PortProtocol, SimpleTag } from "../../../api/generated";
+import { FullHttpService } from "../../../api/generated/models/FullHttpService";
 import Textarea from "../../../components/textarea";
 import "../../../styling/filter-editor-ui.css";
 import CollapseIcon from "../../../svg/collapse";
@@ -25,6 +26,7 @@ export function FilterEditorUi(props: FilterEditorProps) {
         domain: FilterDomainSelector,
         host: FilterHostSelector,
         service: FilterServiceSelector,
+        httpService: FilterHttpServiceSelector,
         "mayberange.date": FilterDateSelector,
         "mayberange.port": FilterRawPortSelector,
         ostype: FilterOsTypeSelector,
@@ -171,7 +173,15 @@ export function FilterServiceSelector(props: FilterComponentProps) {
     });
 }
 
-function FilterDataSelector<T extends FullHost | FullPort | FullDomain | FullService>(
+export function FilterHttpServiceSelector(props: FilterComponentProps) {
+    return FilterDataSelector<FullHttpService>({
+        ...props,
+        type: "httpServices",
+        mapper: (v) => v.name,
+    });
+}
+
+function FilterDataSelector<T extends FullHost | FullPort | FullDomain | FullService | FullHttpService>(
     props: FilterComponentProps & { type: EditableDataListProps<T>["type"]; mapper: (item: T) => string },
 ) {
     const ast = ASTFields[props.ast] as ASTField;

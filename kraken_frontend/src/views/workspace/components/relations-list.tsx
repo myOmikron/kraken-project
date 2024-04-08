@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { DomainRelations, HostRelations, PortRelations, ServiceRelations } from "../../../api/generated";
+import { HttpServiceRelations } from "../../../api/generated/models/HttpServiceRelations";
 import RelationIndirectIcon from "../../../svg/relation-indirect";
 import RelationLeftIcon from "../../../svg/relation-left";
 import RelationRightIcon from "../../../svg/relation-right";
@@ -105,6 +106,11 @@ export function DomainRelationsList({
                               type: "Host",
                               to: h.ipAddr,
                           })),
+                          ...relations.httpServices.map<Relation>((h) => ({
+                              connection: "direct-out",
+                              type: "HTTP Service",
+                              to: h.name,
+                          })),
                       ]
                     : undefined
             }
@@ -142,6 +148,11 @@ export function HostRelationsList({
                               type: "Service",
                               to: s.name,
                           })),
+                          ...relations.httpServices.map<Relation>((s) => ({
+                              connection: "direct-out",
+                              type: "HTTP Service",
+                              to: s.name,
+                          })),
                       ]
                     : undefined
             }
@@ -171,6 +182,11 @@ export function PortRelationsList({
                           ...relations.services.map<Relation>((s) => ({
                               connection: "direct-out",
                               type: "Service",
+                              to: s.name,
+                          })),
+                          ...relations.httpServices.map<Relation>((s) => ({
+                              connection: "direct-out",
+                              type: "HTTP Service",
                               to: s.name,
                           })),
                       ]
@@ -208,6 +224,42 @@ export function ServiceRelationsList({
                                     } as Relation,
                                 ]
                               : []),
+                      ]
+                    : undefined
+            }
+            {...props}
+        />
+    );
+}
+
+export function HttpServiceRelationsList({
+    relations,
+    ...props
+}: { relations: HttpServiceRelations | undefined | null } & React.HTMLProps<HTMLDivElement>) {
+    return (
+        <RelationsList
+            relations={
+                relations
+                    ? [
+                          ...(relations.domain !== null && relations.domain !== undefined
+                              ? [
+                                    {
+                                        connection: "direct-in",
+                                        type: "Domain",
+                                        to: relations.domain.domain,
+                                    } as Relation,
+                                ]
+                              : []),
+                          {
+                              connection: "direct-in",
+                              type: "Host",
+                              to: relations.host.ipAddr,
+                          },
+                          {
+                              connection: "direct-in",
+                              type: "Port",
+                              to: relations.port.port,
+                          },
                       ]
                     : undefined
             }

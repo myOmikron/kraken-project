@@ -14,6 +14,7 @@ import {
     SimpleFindingDefinition,
     SimpleTag,
 } from "../../../api/generated";
+import { FullHttpService } from "../../../api/generated/models/FullHttpService";
 import FindingCategoryList from "../../../components/finding-category-list";
 import { GithubMarkdown } from "../../../components/github-markdown";
 import { SelectPrimitive } from "../../../components/select-menu";
@@ -26,7 +27,13 @@ import GraphIcon from "../../../svg/graph";
 import InformationIcon from "../../../svg/information";
 import RelationLeftRightIcon from "../../../svg/relation-left-right";
 import ScreenshotIcon from "../../../svg/screenshot";
-import { compareDomain, compareHost, comparePort, compareService } from "../../../utils/data-sorter";
+import {
+    compareDomain,
+    compareHost,
+    compareHttpService,
+    comparePort,
+    compareService,
+} from "../../../utils/data-sorter";
 import { handleApiError } from "../../../utils/helper";
 import { configureMonaco } from "../../../utils/monaco";
 import CollapsibleSection from "../components/collapsible-section";
@@ -34,6 +41,7 @@ import Domain from "../components/domain";
 import EditableCategories from "../components/editable-categories";
 import { FileInput } from "../components/file-input";
 import IpAddr from "../components/host";
+import HttpServiceName from "../components/http-service";
 import MarkdownEditorPopup from "../components/markdown-editor-popup";
 import PortNumber from "../components/port";
 import SelectFindingDefinition from "../components/select-finding-definition";
@@ -47,6 +55,7 @@ export type CreateFindingObject =
     | { domain: FullDomain }
     | { host: FullHost }
     | { service: FullService }
+    | { httpService: FullHttpService }
     | { port: FullPort };
 
 export type CreateFindingProps = {
@@ -60,6 +69,7 @@ export type LocalAffected = CreateFindingAffectedRequest & {
         | { type: "Domain"; _data: FullDomain }
         | { type: "Host"; _data: FullHost }
         | { type: "Service"; _data: FullService }
+        | { type: "HttpService"; _data: FullHttpService }
         | { type: "Port"; _data: FullPort }
     );
 
@@ -126,6 +136,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                         return comparePort(a._data, b._data as FullPort);
                     case "Service":
                         return compareService(a._data, b._data as FullService);
+                    case "HttpService":
+                        return compareHttpService(a._data, b._data as FullHttpService);
                     default:
                         return 0;
                 }
@@ -190,6 +202,16 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                 ds.map((d) =>
                                     addAffected({
                                         type: "Service",
+                                        uuid: d.uuid,
+                                        details: "",
+                                        _data: d,
+                                    }),
+                                )
+                            }
+                            onAddHttpServices={(ds) =>
+                                ds.map((d) =>
+                                    addAffected({
+                                        type: "HttpService",
                                         uuid: d.uuid,
                                         details: "",
                                         _data: d,
@@ -509,20 +531,28 @@ function isAffectedService(obj: CreateFindingObject): obj is { service: FullServ
     return "service" in obj && obj["service"] !== undefined;
 }
 
+function isAffectedHttpService(obj: CreateFindingObject): obj is { httpService: FullHttpService } {
+    return "httpService" in obj && obj["httpService"] !== undefined;
+}
+
 export function getCreateAffectedType(affected: CreateFindingObject): AggregationType {
     if (isAffectedDomain(affected)) return AggregationType.Domain;
     if (isAffectedHost(affected)) return AggregationType.Host;
     if (isAffectedPort(affected)) return AggregationType.Port;
     if (isAffectedService(affected)) return AggregationType.Service;
+    if (isAffectedHttpService(affected)) return AggregationType.HttpService;
     const _exhaustiveCheck: never = affected;
     throw new Error("unknown affected type?!");
 }
 
-export function getCreateAffectedKey(affected: CreateFindingObject): "domain" | "host" | "service" | "port" {
+export function getCreateAffectedKey(
+    affected: CreateFindingObject,
+): "domain" | "host" | "service" | "httpService" | "port" {
     if (isAffectedDomain(affected)) return "domain";
     if (isAffectedHost(affected)) return "host";
     if (isAffectedPort(affected)) return "port";
     if (isAffectedService(affected)) return "service";
+    if (isAffectedHttpService(affected)) return "httpService";
     const _exhaustiveCheck: never = affected;
     throw new Error("unknown affected type?!");
 }
@@ -531,6 +561,7 @@ export function getCreateAffectedData(affected: CreateFindingObject) {
     if (isAffectedDomain(affected)) return affected.domain;
     if (isAffectedHost(affected)) return affected.host;
     if (isAffectedPort(affected)) return affected.port;
+    if (isAffectedHttpService(affected)) return affected.httpService;
     else return affected.service;
 }
 
@@ -558,6 +589,8 @@ export function CreateFindingAffected({
             <PortNumber port={a._data} pretty />
         ) : a.type == "Service" ? (
             <ServiceName service={a._data} pretty />
+        ) : a.type == "HttpService" ? (
+            <HttpServiceName httpService={a._data} pretty />
         ) : (
             "not implemented"
         );

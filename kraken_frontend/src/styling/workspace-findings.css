@@ -337,6 +337,11 @@
     color: white;
 }
 
+.workspace-findings-graph .tree-node.node-HttpService > .tree-node-content > .tree-node-heading {
+    background-color: #ff004040;
+    color: white;
+}
+
 .workspace-findings-graph .tree-node.node-Finding > .tree-node-content > .tree-node-heading {
     background-color: #ffd90030;
     color: white;

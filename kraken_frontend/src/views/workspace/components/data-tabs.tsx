@@ -8,6 +8,7 @@ const TABS: Record<AggregationType, string> = {
     [AggregationType.Host]: "Hosts",
     [AggregationType.Port]: "Ports",
     [AggregationType.Service]: "Services",
+    [AggregationType.HttpService]: "HTTP Services",
 } as const;
 
 export type DataTabsSelectorProps = {

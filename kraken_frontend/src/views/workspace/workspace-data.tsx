@@ -4,9 +4,11 @@ import Popup from "reactjs-popup";
 import { Api } from "../../api/api";
 import { ApiError } from "../../api/error";
 import { AggregationType, FullDomain, FullHost, FullPort, FullService, SimpleTag, TagType } from "../../api/generated";
+import { FullHttpService } from "../../api/generated/models/FullHttpService";
 import Checkbox from "../../components/checkbox";
 import Indicator from "../../components/indicator";
 import OsIcon from "../../components/os-icon";
+import SelectableText from "../../components/selectable-text";
 import { ROUTES } from "../../routes";
 import "../../styling/tabs.css";
 import "../../styling/workspace-data.css";
@@ -25,6 +27,7 @@ import Domain from "./components/domain";
 import EditableTags from "./components/editable-tags";
 import FilterInput, { UseFilterReturn, useFilter } from "./components/filter-input";
 import IpAddr from "./components/host";
+import HttpServiceName from "./components/http-service";
 import PortNumber from "./components/port";
 import ServiceName from "./components/service";
 import { Severity } from "./components/severity-icon";
@@ -34,10 +37,12 @@ import { StatelessWorkspaceTable, useTable } from "./components/workspace-table"
 import { WORKSPACE_CONTEXT } from "./workspace";
 import { CreateDomainForm } from "./workspace-data/workspace-data-create-domain";
 import { CreateHostForm } from "./workspace-data/workspace-data-create-host";
+import { CreateHttpServiceForm } from "./workspace-data/workspace-data-create-http-service";
 import { CreatePortForm } from "./workspace-data/workspace-data-create-port";
 import { CreateServiceForm } from "./workspace-data/workspace-data-create-service";
 import { WorkspaceDataDomainDetails } from "./workspace-data/workspace-data-domain-details";
 import { WorkspaceDataHostDetails } from "./workspace-data/workspace-data-host-details";
+import { WorkspaceDataHttpServiceDetails } from "./workspace-data/workspace-data-http-service-details";
 import { WorkspaceDataPortDetails } from "./workspace-data/workspace-data-port-details";
 import { WorkspaceDataServiceDetails } from "./workspace-data/workspace-data-service-details";
 import {
@@ -67,6 +72,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
         [AggregationType.Host]: {},
         [AggregationType.Port]: {},
         [AggregationType.Service]: {},
+        [AggregationType.HttpService]: {},
     });
     const [attaching, setAttaching] = React.useState<CreateFindingObject>();
 
@@ -75,6 +81,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
     const hostFilter = useFilter(workspace, "host");
     const portFilter = useFilter(workspace, "port");
     const serviceFilter = useFilter(workspace, "service");
+    const httpServiceFilter = useFilter(workspace, "httpService");
 
     const { items: domains, ...domainsTable } = useTable<FullDomain>(
         (limit, offset) =>
@@ -108,6 +115,14 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
             }),
         [workspace, globalFilter.applied, serviceFilter.applied],
     );
+    const { items: httpServices, ...httpServicesTable } = useTable<FullHttpService>(
+        (limit, offset) =>
+            Api.workspaces.httpServices.all(workspace, limit, offset, {
+                globalFilter: globalFilter.applied,
+                httpServiceFilter: httpServiceFilter.applied,
+            }),
+        [workspace, globalFilter.applied, httpServiceFilter.applied],
+    );
 
     // Jump to first page if filter changed
     React.useEffect(() => {
@@ -115,11 +130,13 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
         hostsTable.setOffset(0);
         portsTable.setOffset(0);
         servicesTable.setOffset(0);
+        httpServicesTable.setOffset(0);
     }, [globalFilter.applied]);
     React.useEffect(() => domainsTable.setOffset(0), [domainFilter.applied]);
     React.useEffect(() => hostsTable.setOffset(0), [hostFilter.applied]);
     React.useEffect(() => portsTable.setOffset(0), [portFilter.applied]);
     React.useEffect(() => servicesTable.setOffset(0), [serviceFilter.applied]);
+    React.useEffect(() => httpServicesTable.setOffset(0), [httpServiceFilter.applied]);
 
     function findingActions(item: CreateFindingObject): ContextMenuEntry[] {
         return [
@@ -337,12 +354,23 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                             .relations(workspace, domain.uuid)
                                             .then((r) => {
                                                 const data = r.unwrap();
-                                                return ObjectFns.uniqueObjects([
-                                                    ...data.directHosts.map((h) => ["ips", h.ipAddr]),
-                                                    ...data.indirectHosts.map((h) => ["ips", h.ipAddr]),
-                                                    ...data.directHosts.map((h) => ["ips.os", h.osType]),
-                                                    ...data.indirectHosts.map((h) => ["ips.os", h.osType]),
-                                                ]).map(([k, v]) => findSimilarAction(domainFilter, k, v));
+                                                return [
+                                                    ...singleOrSubmenu(
+                                                        "Filter Host",
+                                                        ObjectFns.uniqueObjects([
+                                                            ...data.directHosts.map((h) => ["ips", h.ipAddr]),
+                                                            ...data.indirectHosts.map((h) => ["ips", h.ipAddr]),
+                                                            ...data.directHosts.map((h) => ["ips.os", h.osType]),
+                                                            ...data.indirectHosts.map((h) => ["ips.os", h.osType]),
+                                                        ]).map(([k, v]) => findSimilarAction(domainFilter, k, v)),
+                                                    ),
+                                                    ...singleOrSubmenu(
+                                                        "Filter HTTP Service",
+                                                        ObjectFns.uniqueObjects([
+                                                            ...data.httpServices.map((s) => ["httpServices", s.name]),
+                                                        ]).map(([k, v]) => findSimilarAction(domainFilter, k, v)),
+                                                    ),
+                                                ];
                                             })
                                             .catch(() => [["Failed loading hosts", undefined]]),
                                     createdAtAction(domainFilter, domain.createdAt),
@@ -382,7 +410,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"host-table"}
                         {...hostsTable}
-                        columnsTemplate={"min-content 35ch 2em 1fr 1fr 3.5em 4em 2.25em"}
+                        columnsTemplate={"min-content 25ch 2em 1fr 1fr 3.5em 4em 2.25em"}
                         onAdd={() => setCreateForm(AggregationType.Host)}
                         filter={hostFilter}
                     >
@@ -456,6 +484,12 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                                             data.services.map((s) => ["services", s.name]),
                                                         ).map(([k, v]) => findSimilarAction(hostFilter, k, v)),
                                                     ),
+                                                    ...singleOrSubmenu(
+                                                        "Filter HTTP Service",
+                                                        ObjectFns.uniqueObjects(
+                                                            data.httpServices.map((s) => ["httpServices", s.name]),
+                                                        ).map(([k, v]) => findSimilarAction(hostFilter, k, v)),
+                                                    ),
                                                 ];
                                             })
                                             .catch(() => [["Failed loading hosts", undefined]]),
@@ -493,7 +527,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"port-table"}
                         {...portsTable}
-                        columnsTemplate={"min-content 5ch 3.75em 30ch 1fr 1fr 3.5em 4em 2.25em"}
+                        columnsTemplate={"min-content 5ch 3.75em 20ch 1fr 1fr 3.5em 4em 2.25em"}
                         onAdd={() => setCreateForm(AggregationType.Port)}
                         filter={portFilter}
                     >
@@ -551,6 +585,12 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                                             data.services.map((s) => ["services", s.name]),
                                                         ).map(([k, v]) => findSimilarAction(portFilter, k, v)),
                                                     ),
+                                                    ...singleOrSubmenu(
+                                                        "Filter HTTP Service",
+                                                        ObjectFns.uniqueObjects(
+                                                            data.httpServices.map((s) => ["httpServices", s.name]),
+                                                        ).map(([k, v]) => findSimilarAction(portFilter, k, v)),
+                                                    ),
                                                 ];
                                             })
                                             .catch(() => [["Failed loading hosts", undefined]]),
@@ -589,7 +629,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"service-table"}
                         {...servicesTable}
-                        columnsTemplate={"min-content 0.8fr 30ch 5ch 3.75em 2em 2em 1fr 1fr 3.5em 4em 2.25em"}
+                        columnsTemplate={"min-content 0.8fr 20ch 5ch 3.75em 2em 2em 1fr 1fr 3.5em 4em 2.25em"}
                         onAdd={() => setCreateForm(AggregationType.Service)}
                         filter={serviceFilter}
                     >
@@ -705,6 +745,100 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                         ))}
                     </StatelessWorkspaceTable>
                 );
+            case AggregationType.HttpService:
+                return (
+                    <StatelessWorkspaceTable
+                        key={"http-service-table"}
+                        {...httpServicesTable}
+                        columnsTemplate={"min-content 0.7fr 20ch 5ch 1fr 0.6fr 2em 2em 1fr 1fr 3.5em 4em 2.25em"}
+                        onAdd={() => setCreateForm(AggregationType.HttpService)}
+                        filter={httpServiceFilter}
+                    >
+                        <div className={"workspace-table-header"}>
+                            <MultiSelectButton
+                                items={httpServices}
+                                uuids={selectedUuids[AggregationType.HttpService]}
+                                setUuids={(httpServices) =>
+                                    setSelectedUuids({
+                                        ...selectedUuids,
+                                        [AggregationType.HttpService]: httpServices,
+                                    })
+                                }
+                            />
+                            <span>HTTP Service</span>
+                            <span>IP</span>
+                            <span>Port</span>
+                            <span>Domain</span>
+                            <span>Base Path</span>
+                            <span>TLS</span>
+                            <span>SNI</span>
+                            <span>Tags</span>
+                            <span>Comment</span>
+                            <span>Severity</span>
+                            <span>Certainty</span>
+                            <span />
+                        </div>
+                        {httpServices.map((httpService) => (
+                            <ContextMenu
+                                key={httpService.uuid}
+                                as={TableRow}
+                                className={
+                                    httpService.uuid === selected?.uuid
+                                        ? "workspace-table-row workspace-table-row-selected"
+                                        : "workspace-table-row"
+                                }
+                                onClick={() => {
+                                    if (selected?.type !== AggregationType.Service) {
+                                        setDetailTab("general");
+                                    }
+                                    setSelected({ type: AggregationType.Service, uuid: httpService.uuid });
+                                }}
+                                menu={[
+                                    ...findingActions({ service: httpService }),
+                                    copyTagsAction(httpService.tags, httpServiceFilter),
+                                    // TODO:HTTP AST relation operations
+                                    createdAtAction(httpServiceFilter, httpService.createdAt),
+                                ]}
+                            >
+                                <SelectButton
+                                    uuid={httpService.uuid}
+                                    uuids={selectedUuids[AggregationType.HttpService]}
+                                    setUuids={(services) =>
+                                        setSelectedUuids({
+                                            ...selectedUuids,
+                                            [AggregationType.HttpService]: services,
+                                        })
+                                    }
+                                />
+                                <HttpServiceName httpService={httpService} />
+                                <IpAddr host={httpService.host} />
+                                <PortNumber port={httpService.port} />
+                                {httpService.domain ? <Domain domain={httpService.domain} /> : <span></span>}
+                                <SelectableText>{httpService.basePath}</SelectableText>
+                                <span>
+                                    <Indicator off={!httpService.tls} />
+                                </span>
+                                <span>
+                                    <Indicator off={!httpService.sniRequired} />
+                                </span>
+                                <TagList tags={httpService.tags} globalFilter={globalFilter} filter={serviceFilter} />
+                                <span>{httpService.comment}</span>
+                                <Severity
+                                    severity={httpService.severity}
+                                    dataType={"Service"}
+                                    uuid={httpService.uuid}
+                                    workspace={workspace}
+                                />
+                                <CertaintyIcon certainty={httpService.certainty} />
+                                <AttackButton
+                                    workspaceUuid={workspace}
+                                    targetUuid={httpService.uuid}
+                                    targetType={"service"}
+                                />
+                            </ContextMenu>
+                        ))}
+                    </StatelessWorkspaceTable>
+                );
             default:
                 return "Unimplemented";
         }
@@ -732,6 +866,14 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <WorkspaceDataServiceDetails
                         service={selected.uuid}
                         updateService={servicesTable.updateItem}
+                        tab={detailTab}
+                    />
+                );
+            case AggregationType.HttpService:
+                return (
+                    <WorkspaceDataHttpServiceDetails
+                        httpService={selected.uuid}
+                        updateHttpService={httpServicesTable.updateItem}
                         tab={detailTab}
                     />
                 );
@@ -766,8 +908,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <CreatePortForm
                         onSubmit={() => {
                             setCreateForm(null);
-                            hostsTable.reload();
                             portsTable.reload();
+                            // also reload hosts table, since a new host may be implicitly created
+                            hostsTable.reload();
                         }}
                     />
                 );
@@ -776,9 +919,23 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <CreateServiceForm
                         onSubmit={() => {
                             setCreateForm(null);
+                            servicesTable.reload();
+                            // also reload hosts and ports table, since a new host/port may be implicitly created
                             hostsTable.reload();
                             portsTable.reload();
-                            servicesTable.reload();
+                        }}
+                    />
+                );
+            case AggregationType.HttpService:
+                return (
+                    <CreateHttpServiceForm
+                        onSubmit={() => {
+                            setCreateForm(null);
+                            httpServicesTable.reload();
+                            // also reload hosts, ports and domains table, since a new host/port/domain may be implicitly created
+                            hostsTable.reload();
+                            portsTable.reload();
+                            domainsTable.reload();
                         }}
                     />
                 );
@@ -798,7 +955,8 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     {ObjectFns.isEmpty(selectedUuids[AggregationType.Domain]) &&
                     ObjectFns.isEmpty(selectedUuids[AggregationType.Host]) &&
                     ObjectFns.isEmpty(selectedUuids[AggregationType.Port]) &&
-                    ObjectFns.isEmpty(selectedUuids[AggregationType.Service]) ? (
+                    ObjectFns.isEmpty(selectedUuids[AggregationType.Service]) &&
+                    ObjectFns.isEmpty(selectedUuids[AggregationType.HttpService]) ? (
                         selected ? (
                             <>
                                 <h2 className={"sub-heading"}>
@@ -830,12 +988,15 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 if (!ObjectFns.isEmpty(selectedUuids[AggregationType.Host])) hostsTable.reload();
                                 if (!ObjectFns.isEmpty(selectedUuids[AggregationType.Port])) portsTable.reload();
                                 if (!ObjectFns.isEmpty(selectedUuids[AggregationType.Service])) servicesTable.reload();
+                                if (!ObjectFns.isEmpty(selectedUuids[AggregationType.HttpService]))
+                                    httpServicesTable.reload();
                             }}
                             onDelete={() => {
                                 domainsTable.reload();
                                 hostsTable.reload();
                                 portsTable.reload();
                                 servicesTable.reload();
+                                httpServicesTable.reload();
                                 setSelected(null);
                             }}
                         />
@@ -890,7 +1051,8 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
     const hostsLen = ObjectFns.len(selectedUuids[AggregationType.Host]);
     const portsLen = ObjectFns.len(selectedUuids[AggregationType.Port]);
     const servicesLen = ObjectFns.len(selectedUuids[AggregationType.Service]);
-    const totalLen = domainsLen + hostsLen + portsLen + servicesLen;
+    const httpServicesLen = ObjectFns.len(selectedUuids[AggregationType.HttpService]);
+    const totalLen = domainsLen + hostsLen + portsLen + servicesLen + httpServicesLen;
 
     return (
         <>
@@ -949,6 +1111,21 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                                   Unselect all services
                               </button>,
                           ]}
+                    {httpServicesLen === 0
+                        ? null
+                        : [
+                              <span>HTTP Services</span>,
+                              <span>{httpServicesLen}</span>,
+                              <button
+                                  type={"button"}
+                                  className={"button"}
+                                  onClick={() =>
+                                      setSelectedUuids({ ...selectedUuids, [AggregationType.HttpService]: {} })
+                                  }
+                              >
+                                  Unselect all HTTP services
+                              </button>,
+                          ]}
                     <span className={"workspace-data-multi-select-total"}>Total</span>
                     <span className={"workspace-data-multi-select-total"}>{totalLen}</span>
                     <button
@@ -960,6 +1137,7 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                                 [AggregationType.Host]: {},
                                 [AggregationType.Port]: {},
                                 [AggregationType.Service]: {},
+                                [AggregationType.HttpService]: {},
                             })
                         }
                     >
@@ -980,6 +1158,7 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                                     hosts: Object.keys(selectedUuids[AggregationType.Host]),
                                     ports: Object.keys(selectedUuids[AggregationType.Port]),
                                     services: Object.keys(selectedUuids[AggregationType.Service]),
+                                    httpServices: Object.keys(selectedUuids[AggregationType.HttpService]),
                                 },
                             );
                         }}
@@ -1003,6 +1182,7 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                                         ...affected.domains.map<CreateFindingObject>((d) => ({ domain: d })),
                                         ...affected.hosts.map<CreateFindingObject>((d) => ({ host: d })),
                                         ...affected.services.map<CreateFindingObject>((d) => ({ service: d })),
+                                        ...affected.httpServices.map<CreateFindingObject>((d) => ({ httpService: d })),
                                         ...affected.ports.map<CreateFindingObject>((d) => ({ port: d })),
                                     ],
                                 },
@@ -1101,6 +1281,7 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                                     [AggregationType.Host]: {},
                                     [AggregationType.Port]: {},
                                     [AggregationType.Service]: {},
+                                    [AggregationType.HttpService]: {},
                                 };
                                 if (domainsLen !== 0) {
                                     Object.keys(selectedUuids[AggregationType.Domain]).map((u) => {
@@ -1155,6 +1336,21 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                                                     numErr += 1;
                                                     handleApiError(result);
                                                     stillSelected[AggregationType.Service][u] = true;
+                                                } else if (result.is_ok()) {
+                                                    numOk += 1;
+                                                }
+                                            }),
+                                        );
+                                    });
+                                }
+                                if (httpServicesLen !== 0) {
+                                    Object.keys(selectedUuids[AggregationType.HttpService]).map((u) => {
+                                        promises.push(
+                                            Api.workspaces.httpServices.delete(workspace, u).then((result) => {
+                                                if (result.is_err()) {
+                                                    numErr += 1;
+                                                    handleApiError(result);
+                                                    stillSelected[AggregationType.HttpService][u] = true;
                                                 } else if (result.is_ok()) {
                                                     numOk += 1;
                                                 }
@@ -1248,6 +1444,7 @@ async function resolveSelection(
     domains: FullDomain[];
     hosts: FullHost[];
     services: FullService[];
+    httpServices: FullHttpService[];
     ports: FullPort[];
 }> {
     function unwrap<T>(e: Result<T, ApiError>) {
@@ -1277,6 +1474,13 @@ async function resolveSelection(
                 ),
             )
         ).filter((v) => v !== undefined) as Array<FullService>,
+        httpServices: (
+            await Promise.all(
+                Object.keys(uuids[AggregationType.HttpService]).map((uuid) =>
+                    Api.workspaces.httpServices.get(workspace, uuid).then(unwrap),
+                ),
+            )
+        ).filter((v) => v !== undefined) as Array<FullHttpService>,
         ports: (
             await Promise.all(
                 Object.keys(uuids[AggregationType.Port]).map((uuid) =>
@@ -1333,6 +1537,19 @@ async function updateTags(workspace: string, uuids: SelectedUuids, strategy: Upd
                 let promise = null;
                 handleApiError(result, ({ tags: curTags }) => {
                     promise = Api.workspaces.services
+                        .update(workspace, uuid, strategy(curTags, tags))
+                        .then(handleApiError);
+                });
+                return promise;
+            }),
+        ),
+    );
+    await Promise.all(
+        Object.keys(uuids[AggregationType.HttpService]).map((uuid) =>
+            Api.workspaces.httpServices.get(workspace, uuid).then((result) => {
+                let promise = null;
+                handleApiError(result, ({ tags: curTags }) => {
+                    promise = Api.workspaces.httpServices
                         .update(workspace, uuid, strategy(curTags, tags))
                         .then(handleApiError);
                 });

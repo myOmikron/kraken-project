@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { toast } from "react-toastify";
 import { Api, UUID } from "../../api/api";
 import { AggregationType, FullDomain, FullHost, FullPort, FullService, ListFindings } from "../../api/generated";
+import { FullHttpService } from "../../api/generated/models/FullHttpService";
 import { handleApiError } from "../../utils/helper";
 import { WORKSPACE_CONTEXT } from "./workspace";
 import { CreateFindingAffected, LocalAffected } from "./workspace-finding/workspace-create-finding";
@@ -10,14 +11,14 @@ import WorkspaceFindingTable from "./workspace-finding/workspace-finding-table";
 export type WorkspaceFindingsQuickAttachProps = {
     type: AggregationType;
     onAttached?: (finding: UUID, wantMore: boolean) => void;
-} & ({ uuid: UUID } | { data: FullDomain | FullHost | FullService | FullPort });
+} & ({ uuid: UUID } | { data: FullDomain | FullHost | FullService | FullPort | FullHttpService });
 
 export default function WorkspaceFindingsQuickAttach(props: WorkspaceFindingsQuickAttachProps) {
     const {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
 
-    const [data, setData] = React.useState<FullDomain | FullHost | FullService | FullPort>();
+    const [data, setData] = React.useState<FullDomain | FullHost | FullService | FullPort | FullHttpService>();
     const [details, setDetails] = React.useState<string>("");
     const [findings, setFindings] = React.useState<ListFindings>();
 
@@ -44,6 +45,10 @@ export default function WorkspaceFindingsQuickAttach(props: WorkspaceFindingsQui
             case "Service":
                 if (!hasData) Api.workspaces.services.get(workspace, uuid).then(handleApiError(setData));
                 Api.workspaces.services.findings(workspace, uuid).then(handleApiError(setFindings));
+                break;
+            case "HttpService":
+                if (!hasData) Api.workspaces.httpServices.get(workspace, uuid).then(handleApiError(setData));
+                Api.workspaces.httpServices.findings(workspace, uuid).then(handleApiError(setFindings));
                 break;
             default:
                 toast.error("Invalid data type");

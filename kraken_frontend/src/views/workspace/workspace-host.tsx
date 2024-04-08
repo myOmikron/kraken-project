@@ -12,10 +12,17 @@ import { handleApiError } from "../../utils/helper";
 import TagList from "./components/tag-list";
 import { WORKSPACE_CONTEXT } from "./workspace";
 import { WorkspaceHostDomains } from "./workspace-host/workspace-host-domains";
+import { WorkspaceHostHttpServices } from "./workspace-host/workspace-host-http-services";
 import { WorkspaceHostPorts } from "./workspace-host/workspace-host-ports";
 import { WorkspaceHostServices } from "./workspace-host/workspace-host-services";
 
-const TABS = { domains: "Domains", ports: "Ports", services: "Services", other: "Other" };
+const TABS = {
+    domains: "Domains",
+    ports: "Ports",
+    services: "Services",
+    httpServices: "HTTP Services",
+    other: "Other",
+};
 
 type WorkspaceProps = {
     uuid: UUID;
@@ -56,6 +63,8 @@ export default function WorkspaceHost(props: WorkspaceProps) {
                 return <WorkspaceHostPorts host={host} />;
             case "services":
                 return <WorkspaceHostServices host={host} />;
+            case "httpServices":
+                return <WorkspaceHostHttpServices host={host} />;
             default:
                 return "Unimplemented";
         }

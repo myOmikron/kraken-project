@@ -23,6 +23,9 @@ import {
     SimpleTag,
     TagType,
 } from "../../../api/generated";
+import { FullHttpService } from "../../../api/generated/models/FullHttpService";
+import { HttpServiceRelations } from "../../../api/generated/models/HttpServiceRelations";
+import { SimpleHttpService } from "../../../api/generated/models/SimpleHttpService";
 import Checkbox from "../../../components/checkbox";
 import Input from "../../../components/input";
 import { ROUTES } from "../../../routes";
@@ -39,6 +42,7 @@ import { ContextMenuEntry } from "../components/context-menu";
 import Domain from "../components/domain";
 import EditableTags from "../components/editable-tags";
 import IpAddr from "../components/host";
+import HttpServiceName from "../components/http-service";
 import PortNumber from "../components/port";
 import ServiceName from "../components/service";
 import TagList from "../components/tag-list";
@@ -58,14 +62,17 @@ export type DynamicTreeWorkspaceFunctions = {
     findingsForDomain: (domainUuid: string) => Promise<Result<ListFindings, ApiError>>;
     findingsForHost: (hostUuid: string) => Promise<Result<ListFindings, ApiError>>;
     findingsForService: (serviceUuid: string) => Promise<Result<ListFindings, ApiError>>;
+    findingsForHttpService: (httpServiceUuid: string) => Promise<Result<ListFindings, ApiError>>;
     findingsForPort: (portUuid: string) => Promise<Result<ListFindings, ApiError>>;
     relationsForDomain: (domainUuid: string) => Promise<Result<DomainRelations, ApiError>>;
     relationsForHost: (hostUuid: string) => Promise<Result<HostRelations, ApiError>>;
     relationsForService: (serviceUuid: string) => Promise<Result<ServiceRelations, ApiError>>;
+    relationsForHttpService: (httpServiceUuid: string) => Promise<Result<HttpServiceRelations, ApiError>>;
     relationsForPort: (portUuid: string) => Promise<Result<PortRelations, ApiError>>;
     resolveDomain: (domainUuid: string) => Promise<Result<FullDomain, ApiError>>;
     resolveHost: (hostUuid: string) => Promise<Result<FullHost, ApiError>>;
     resolveService: (serviceUuid: string) => Promise<Result<FullService, ApiError>>;
+    resolveHttpService: (httpServiceUuid: string) => Promise<Result<FullHttpService, ApiError>>;
     resolvePort: (portUuid: string) => Promise<Result<FullPort, ApiError>>;
 };
 
@@ -81,6 +88,9 @@ export type AffectedShallow =
       }
     | {
           service: { uuid: string };
+      }
+    | {
+          httpService: { uuid: string };
       };
 
 export type DynamicTreeLookupFunctions = {
@@ -97,14 +107,17 @@ export function treeLookupFunctionsWorkspace(workspace: string): DynamicTreeWork
         findingsForDomain: (d) => Api.workspaces.domains.findings(workspace, d),
         findingsForHost: (d) => Api.workspaces.hosts.findings(workspace, d),
         findingsForService: (d) => Api.workspaces.services.findings(workspace, d),
+        findingsForHttpService: (d) => Api.workspaces.httpServices.findings(workspace, d),
         findingsForPort: (d) => Api.workspaces.ports.findings(workspace, d),
         relationsForDomain: (d) => Api.workspaces.domains.relations(workspace, d),
         relationsForHost: (d) => Api.workspaces.hosts.relations(workspace, d),
         relationsForService: (d) => Api.workspaces.services.relations(workspace, d),
+        relationsForHttpService: (d) => Api.workspaces.httpServices.relations(workspace, d),
         relationsForPort: (d) => Api.workspaces.ports.relations(workspace, d),
         resolveDomain: (d) => Api.workspaces.domains.get(workspace, d),
         resolveHost: (d) => Api.workspaces.hosts.get(workspace, d),
         resolveService: (d) => Api.workspaces.services.get(workspace, d),
+        resolveHttpService: (d) => Api.workspaces.httpServices.get(workspace, d),
         resolvePort: (d) => Api.workspaces.ports.get(workspace, d),
     };
 }
@@ -245,6 +258,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                             [...relations.sourceDomains, ...relations.targetDomains].forEach((c) =>
                                 mutator.insertDomainSimple(node, c),
                             );
+                            relations.httpServices.forEach((c) => mutator.insertHttpServiceSimple(node, c));
                         }),
                     );
                 },
@@ -261,6 +275,9 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                             relations.services
                                 .filter((s) => !s.port || !relations.ports.some((rp) => rp.uuid == s.port))
                                 .forEach((c) => mutator.insertServiceSimple(node, c));
+                            relations.httpServices
+                                .filter((s) => !s.port || !relations.ports.some((rp) => rp.uuid == s.port))
+                                .forEach((c) => mutator.insertHttpServiceSimple(node, c));
                         }),
                     );
                 },
@@ -272,6 +289,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                         handleApiError((relations) => {
                             mutator.insertHostSimple(node, relations.host);
                             relations.services.forEach((c) => mutator.insertServiceSimple(node, c));
+                            relations.httpServices.forEach((c) => mutator.insertHttpServiceSimple(node, c));
                         }),
                     );
                 },
@@ -285,6 +303,23 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                                 // don't make graph cyclic here
                             } else mutator.insertHostSimple(node, relations.host);
                             if (relations.port) mutator.insertPortSimple(node, relations.port);
+                        }),
+                    );
+                },
+                populateHttpService(
+                    parent: DynamicTreeNode,
+                    node: DynamicTreeNode,
+                    httpService: SimpleHttpService | FullHttpService,
+                ) {
+                    api.findingsForHttpService(httpService.uuid).then(
+                        handleApiError((findings) => mutator.insertFindings(parent, node, findings)),
+                    );
+                    api.relationsForHttpService(httpService.uuid).then(
+                        handleApiError((relations) => {
+                            mutator.insertPortSimple(node, relations.port);
+                            mutator.insertHostSimple(node, relations.host);
+                            // TODO: probably need to add an ignore condition w.r.t. the domain, so we don't get extra cyclic graphs
+                            if (relations.domain) mutator.insertDomainSimple(node, relations.domain);
                         }),
                     );
                 },
@@ -340,6 +375,19 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                         mutator.populateService(node, insert, child);
                     }, apiTimeout);
                 },
+                insertHttpService(node: DynamicTreeNode, child: FullHttpService) {
+                    if (mutator.shouldAbort()) return;
+                    const insert: DynamicTreeNode = {
+                        type: "HttpService",
+                        httpService: child,
+                        uuid: child.uuid,
+                        _searchIndex: "service " + child.name.toLowerCase(),
+                    };
+                    if (!mutator.insertChild(node, insert)) return;
+                    setTimeout(function () {
+                        mutator.populateHttpService(node, insert, child);
+                    }, apiTimeout);
+                },
                 insertDomainSimple(node: DynamicTreeNode, child: { uuid: string }) {
                     api.resolveDomain(child.uuid).then(handleApiError((full) => mutator.insertDomain(node, full)));
                 },
@@ -351,6 +399,11 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                 },
                 insertServiceSimple(node: DynamicTreeNode, child: { uuid: string }) {
                     api.resolveService(child.uuid).then(handleApiError((full) => mutator.insertService(node, full)));
+                },
+                insertHttpServiceSimple(node: DynamicTreeNode, child: { uuid: string }) {
+                    api.resolveHttpService(child.uuid).then(
+                        handleApiError((full) => mutator.insertHttpService(node, full)),
+                    );
                 },
                 populateAffectedRoot(root: DynamicTreeNode, finding: FullFinding) {
                     if (mutator.shouldAbort()) return;
@@ -366,6 +419,8 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                                     mutator.insertPortSimple(root, affected.affected.port);
                                 } else if ("service" in affected.affected && affected.affected.service) {
                                     mutator.insertServiceSimple(root, affected.affected.service);
+                                } else if ("httpService" in affected.affected && affected.affected.httpService) {
+                                    mutator.insertServiceSimple(root, affected.affected.httpService);
                                 }
                             }),
                         );
@@ -476,6 +531,8 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                     return filterTags.every((expect) => node.port.tags.some((t) => expect.uuid == t.uuid));
                 case "Service":
                     return filterTags.every((expect) => node.service.tags.some((t) => expect.uuid == t.uuid));
+                case "HttpService":
+                    return filterTags.every((expect) => node.httpService.tags.some((t) => expect.uuid == t.uuid));
                 case "Finding":
                     return true;
             }
@@ -672,6 +729,16 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                                             undefined,
                                         ],
                                     ];
+                                case "HttpService":
+                                    return [
+                                        [
+                                            <>
+                                                <InformationIcon />
+                                                <HttpServiceName httpService={item.httpService} pretty />
+                                            </>,
+                                            undefined,
+                                        ],
+                                    ];
                                 default:
                                     const exhaustiveCheck: never = item;
                                     throw new Error(`Unhandled node type: ${(exhaustiveCheck as TreeNode).type}`);
@@ -765,6 +832,14 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                                                         tags: newTags,
                                                     },
                                                 };
+                                            case "HttpService":
+                                                return {
+                                                    ...n,
+                                                    httpService: {
+                                                        ...n.httpService,
+                                                        tags: newTags,
+                                                    },
+                                                };
                                         }
                                     });
                                     setWantRerender(true);
@@ -814,6 +889,9 @@ function TagEditorPopup({
                         case "Service":
                             Api.workspaces.services.update(workspace, obj.uuid, args);
                             break;
+                        case "HttpService":
+                            Api.workspaces.httpServices.update(workspace, obj.uuid, args);
+                            break;
                     }
                     setTags(newTags);
                 }}
@@ -839,6 +917,10 @@ async function resolveItem(workspace: string, type: AggregationType, uuid: UUID)
         case "Service":
             return {
                 service: await Api.workspaces.services.get(workspace, uuid).then((a) => a.unwrap()),
+            };
+        case "HttpService":
+            return {
+                httpService: await Api.workspaces.httpServices.get(workspace, uuid).then((a) => a.unwrap()),
             };
         default:
             const exhaustiveCheck: never = type;

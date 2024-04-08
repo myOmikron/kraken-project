@@ -1,14 +1,17 @@
 import React, { forwardRef, useImperativeHandle } from "react";
 import { Api } from "../../../api/api";
 import { AggregationType, FullDomain, FullHost, FullPort, FullService } from "../../../api/generated";
+import { FullHttpService } from "../../../api/generated/models/FullHttpService";
 import Indicator from "../../../components/indicator";
 import OsIcon from "../../../components/os-icon";
+import SelectableText from "../../../components/selectable-text";
 import RelationLeftIcon from "../../../svg/relation-left";
 import CertaintyIcon from "../components/certainty-icon";
 import { DataTabsSelector, useDataTabs } from "../components/data-tabs";
 import Domain from "../components/domain";
 import { UseFilterReturn, useFilter } from "../components/filter-input";
 import IpAddr from "../components/host";
+import HttpServiceName from "../components/http-service";
 import PortNumber from "../components/port";
 import ServiceName from "../components/service";
 import { Severity } from "../components/severity-icon";
@@ -21,6 +24,7 @@ export type WorkspaceFindingDataTableProps = {
     onAddDomains?: (domains: FullDomain[]) => void;
     onAddHosts?: (hosts: FullHost[]) => void;
     onAddServices?: (services: FullService[]) => void;
+    onAddHttpServices?: (services: FullHttpService[]) => void;
     onAddPorts?: (ports: FullPort[]) => void;
 };
 
@@ -29,7 +33,7 @@ export type WorkspaceFindingDataTableRef = {
 };
 
 export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef, WorkspaceFindingDataTableProps>(
-    ({ hideUuids, onAddDomains, onAddHosts, onAddServices, onAddPorts }, ref) => {
+    ({ hideUuids, onAddDomains, onAddHosts, onAddServices, onAddPorts, onAddHttpServices }, ref) => {
         const {
             workspace: { uuid: workspace },
         } = React.useContext(WORKSPACE_CONTEXT);
@@ -40,6 +44,7 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
         const hostFilter = useFilter(workspace, "host");
         const portFilter = useFilter(workspace, "port");
         const serviceFilter = useFilter(workspace, "service");
+        const httpServiceFilter = useFilter(workspace, "httpService");
 
         useImperativeHandle(ref, () => ({
             addFilterColumn(column: string, value: string, negate: boolean) {
@@ -56,6 +61,9 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                         break;
                     case "Service":
                         filter = serviceFilter;
+                        break;
+                    case "HttpService":
+                        filter = httpServiceFilter;
                         break;
                 }
                 filter.addColumn(column, value, negate);
@@ -90,12 +98,20 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                 }),
             [workspace, serviceFilter.applied],
         );
+        const { items: httpServices, ...httpServicesTable } = useTable<FullHttpService>(
+            (limit, offset) =>
+                Api.workspaces.httpServices.all(workspace, limit, offset, {
+                    httpServiceFilter: httpServiceFilter.applied,
+                }),
+            [workspace, httpServiceFilter.applied],
+        );
 
         // Jump to first page if filter changed
         React.useEffect(() => domainsTable.setOffset(0), [domainFilter.applied]);
         React.useEffect(() => hostsTable.setOffset(0), [hostFilter.applied]);
         React.useEffect(() => portsTable.setOffset(0), [portFilter.applied]);
         React.useEffect(() => servicesTable.setOffset(0), [serviceFilter.applied]);
+        React.useEffect(() => httpServicesTable.setOffset(0), [httpServiceFilter.applied]);
 
         const tableElement = (() => {
             switch (dataTab) {
@@ -151,7 +167,7 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                         <StatelessWorkspaceTable
                             key={"host-table"}
                             {...hostsTable}
-                            columnsTemplate={"0.3fr 30ch 2em 1fr 1fr 3.5em 4em"}
+                            columnsTemplate={"0.3fr 25ch 2em 1fr 1fr 3.5em 4em"}
                             filter={hostFilter}
                             solidBackground={true}
                         >
@@ -199,7 +215,7 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                         <StatelessWorkspaceTable
                             key={"port-table"}
                             {...portsTable}
-                            columnsTemplate={"0.3fr 5ch 3.75em 30ch 1fr 1fr 3.5em 4em"}
+                            columnsTemplate={"0.3fr 5ch 3.75em 20ch 1fr 1fr 3.5em 4em"}
                             filter={portFilter}
                             solidBackground={true}
                         >
@@ -249,7 +265,7 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                         <StatelessWorkspaceTable
                             key={"service-table"}
                             {...servicesTable}
-                            columnsTemplate={"0.3fr 0.8fr 30ch 5ch 3.75em 2em 2em 1fr 1fr 3.5em 4em"}
+                            columnsTemplate={"0.3fr 0.8fr 20ch 5ch 3.75em 2em 2em 1fr 1fr 3.5em 4em"}
                             filter={serviceFilter}
                             solidBackground={true}
                         >
@@ -314,6 +330,70 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                                             workspace={workspace}
                                         />
                                         <CertaintyIcon certainty={service.certainty} />
+                                    </div>
+                                ))}
+                        </StatelessWorkspaceTable>
+                    );
+                case AggregationType.HttpService:
+                    return (
+                        <StatelessWorkspaceTable
+                            key={"http-service-table"}
+                            {...httpServicesTable}
+                            columnsTemplate={"0.3fr 0.8fr 20ch 5ch 1fr 0.8fr 2em 2em 1fr 1fr 3.5em 4em"}
+                            filter={httpServiceFilter}
+                            solidBackground={true}
+                        >
+                            <div className={"workspace-table-header"}>
+                                <span
+                                    className="workspace-data-certainty-icon workspace-finding-selection-arrow"
+                                    onClick={() =>
+                                        onAddHttpServices?.(httpServices.filter((v) => !hideUuids.includes(v.uuid)))
+                                    }
+                                >
+                                    <RelationLeftIcon />
+                                </span>
+                                <span>HTTP Service</span>
+                                <span>IP</span>
+                                <span>Port</span>
+                                <span>Domain</span>
+                                <span>Base Path</span>
+                                <span>TLS</span>
+                                <span>SNI</span>
+                                <span>Tags</span>
+                                <span>Comment</span>
+                                <span>Severity</span>
+                                <span>Certainty</span>
+                            </div>
+                            {httpServices
+                                .filter((v) => !hideUuids.includes(v.uuid))
+                                .map((httpService) => (
+                                    <div key={httpService.uuid} className="workspace-table-row">
+                                        <span
+                                            className="workspace-data-certainty-icon workspace-finding-selection-arrow"
+                                            onClick={() => onAddHttpServices?.([httpService])}
+                                        >
+                                            <RelationLeftIcon />
+                                        </span>
+                                        <HttpServiceName httpService={httpService} />
+                                        <IpAddr host={httpService.host} />
+                                        <PortNumber port={httpService.port} />
+                                        {httpService.domain ? <Domain domain={httpService.domain} /> : <span></span>}
+                                        <SelectableText>{httpService.basePath}</SelectableText>
+                                        <span>
+                                            <Indicator off={!httpService.tls} />
+                                        </span>
+                                        <span>
+                                            <Indicator off={!httpService.sniRequired} />
+                                        </span>
+                                        <TagList tags={httpService.tags} filter={serviceFilter} />
+                                        <span>{httpService.comment}</span>
+                                        <Severity
+                                            severity={httpService.severity}
+                                            dataType={"Service"}
+                                            uuid={httpService.uuid}
+                                            workspace={workspace}
+                                        />
+                                        <CertaintyIcon certainty={httpService.certainty} />
                                     </div>
                                 ))}
                         </StatelessWorkspaceTable>

@@ -12,13 +12,9 @@
  * Do not edit the class manually.
  */
 
-import { exists, mapValues } from '../runtime';
-import type { HttpServiceCertainty } from './HttpServiceCertainty';
-import {
-    HttpServiceCertaintyFromJSON,
-    HttpServiceCertaintyFromJSONTyped,
-    HttpServiceCertaintyToJSON,
-} from './HttpServiceCertainty';
+import { exists } from "../runtime";
+import type { HttpServiceCertainty } from "./HttpServiceCertainty";
+import { HttpServiceCertaintyFromJSON, HttpServiceCertaintyToJSON } from "./HttpServiceCertainty";
 
 /**
  * The simple representation of a http service
@@ -87,7 +83,7 @@ export interface SimpleHttpService {
      */
     comment: string;
     /**
-     * 
+     *
      * @type {HttpServiceCertainty}
      * @memberof SimpleHttpService
      */
@@ -131,24 +127,23 @@ export function SimpleHttpServiceFromJSON(json: any): SimpleHttpService {
 }
 
 export function SimpleHttpServiceFromJSONTyped(json: any, ignoreDiscriminator: boolean): SimpleHttpService {
-    if ((json === undefined) || (json === null)) {
+    if (json === undefined || json === null) {
         return json;
     }
     return {
-        
-        'uuid': json['uuid'],
-        'name': json['name'],
-        'version': !exists(json, 'version') ? undefined : json['version'],
-        'domain': !exists(json, 'domain') ? undefined : json['domain'],
-        'host': json['host'],
-        'port': json['port'],
-        'basePath': json['base_path'],
-        'tls': json['tls'],
-        'sniRequired': json['sni_required'],
-        'comment': json['comment'],
-        'certainty': HttpServiceCertaintyFromJSON(json['certainty']),
-        'workspace': json['workspace'],
-        'createdAt': (new Date(json['created_at'])),
+        uuid: json["uuid"],
+        name: json["name"],
+        version: !exists(json, "version") ? undefined : json["version"],
+        domain: !exists(json, "domain") ? undefined : json["domain"],
+        host: json["host"],
+        port: json["port"],
+        basePath: json["base_path"],
+        tls: json["tls"],
+        sniRequired: json["sni_required"],
+        comment: json["comment"],
+        certainty: HttpServiceCertaintyFromJSON(json["certainty"]),
+        workspace: json["workspace"],
+        createdAt: new Date(json["created_at"]),
     };
 }
 
@@ -160,20 +155,18 @@ export function SimpleHttpServiceToJSON(value?: SimpleHttpService | null): any {
         return null;
     }
     return {
-        
-        'uuid': value.uuid,
-        'name': value.name,
-        'version': value.version,
-        'domain': value.domain,
-        'host': value.host,
-        'port': value.port,
-        'base_path': value.basePath,
-        'tls': value.tls,
-        'sni_required': value.sniRequired,
-        'comment': value.comment,
-        'certainty': HttpServiceCertaintyToJSON(value.certainty),
-        'workspace': value.workspace,
-        'created_at': (value.createdAt.toISOString()),
+        uuid: value.uuid,
+        name: value.name,
+        version: value.version,
+        domain: value.domain,
+        host: value.host,
+        port: value.port,
+        base_path: value.basePath,
+        tls: value.tls,
+        sni_required: value.sniRequired,
+        comment: value.comment,
+        certainty: HttpServiceCertaintyToJSON(value.certainty),
+        workspace: value.workspace,
+        created_at: value.createdAt.toISOString(),
     };
 }
-

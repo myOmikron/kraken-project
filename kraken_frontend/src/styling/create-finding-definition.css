@@ -117,6 +117,10 @@
     --accent: #c300ff22;
 }
 
+.create-finding-affected.affected-HttpService {
+    --accent: #ff004022;
+}
+
 .create-finding-affected > .screenshot,
 .create-finding-affected > .logfile {
     border: 1px solid var(--accent);

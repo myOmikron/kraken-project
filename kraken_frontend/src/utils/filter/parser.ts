@@ -1,5 +1,16 @@
 import { OsType, PortProtocol } from "../../api/generated";
-import { ASTField, ASTFields, ASTResult, DomainAST, Expr, GlobalAST, HostAST, PortAST, ServiceAST } from "./ast";
+import {
+    ASTField,
+    ASTFields,
+    ASTResult,
+    DomainAST,
+    Expr,
+    GlobalAST,
+    HostAST,
+    HttpServiceAST,
+    PortAST,
+    ServiceAST,
+} from "./ast";
 import { Cursor } from "./cursor";
 import ParserError from "./error";
 import { tokenize } from "./lexer";
@@ -67,6 +78,15 @@ export function parsePortAST(input: string): PortAST {
  */
 export function parseServiceAST(input: string): ServiceAST {
     return parseAstFields(input, ASTFields.service);
+}
+
+/**
+ * Parse a string into a {@link HttpServiceAST}
+ *
+ * @throws ParserError
+ */
+export function parseHttpServiceAST(input: string): HttpServiceAST {
+    return parseAstFields(input, ASTFields.httpService);
 }
 
 /**

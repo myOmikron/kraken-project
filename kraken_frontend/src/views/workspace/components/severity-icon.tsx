@@ -78,7 +78,7 @@ export default function SeverityIcon(props: SeverityIconProps) {
 
 type SeverityProps = {
     severity: FindingSeverity | null | undefined;
-    dataType: "Domain" | "Host" | "Port" | "Service";
+    dataType: "Domain" | "Host" | "Port" | "Service" | "HttpService";
     uuid: string;
     workspace: string;
 };
@@ -100,6 +100,8 @@ export function Severity(props: SeverityProps) {
                     return Api.workspaces.ports.findings(workspace, uuid).then(handleApiError(setFindings));
                 case "Service":
                     return Api.workspaces.services.findings(workspace, uuid).then(handleApiError(setFindings));
+                case "HttpService":
+                    return Api.workspaces.httpServices.findings(workspace, uuid).then(handleApiError(setFindings));
             }
         })();
     }, [workspace, uuid, findings, setFindings]);

@@ -27,6 +27,7 @@ import {
     FindingsApi,
     GlobalTagsApi,
     HostsApi,
+    HttpServicesApi,
     KnowledgeBaseApi,
     LeechManagementApi,
     OAuthApi,
@@ -89,6 +90,7 @@ const hosts = new HostsApi(configuration);
 const ports = new PortsApi(configuration);
 const domains = new DomainsApi(configuration);
 const services = new ServicesApi(configuration);
+const httpServices = new HttpServicesApi(configuration);
 const apiKeys = new ApiKeysApi(configuration);
 const wordlists = new WordlistApi(configuration);
 const wordlistsManagement = new WordlistManagementApi(configuration);
@@ -368,6 +370,34 @@ export const Api = {
                 handleError(services.getServiceRelations({ wUuid: workspaceUuid, sUuid: serviceUuid })),
             findings: (workspaceUuid: UUID, serviceUuid: UUID) =>
                 handleError(services.getServiceFindings({ wUuid: workspaceUuid, sUuid: serviceUuid })),
+        },
+        httpServices: {
+            all: (
+                workspaceUuid: UUID,
+                limit: number,
+                offset: number,
+                filter: { host?: UUID; globalFilter?: string; httpServiceFilter?: string } = {},
+            ) =>
+                handleError(
+                    httpServices.getAllHttpServices({
+                        uuid: workspaceUuid,
+                        getAllHttpServicesQuery: { limit, offset, ...filter },
+                    }),
+                ),
+            get: (workspaceUuid: UUID, serviceUuid: UUID) =>
+                handleError(httpServices.getHttpService({ wUuid: workspaceUuid, hsUuid: serviceUuid })),
+            // update: (workspaceUuid: UUID, serviceUuid: UUID, updateServiceRequest: UpdateServiceRequest) =>
+            //     handleError(httpServices.updateService({ wUuid: workspaceUuid, sUuid: serviceUuid, updateServiceRequest })),
+            // create: (workspaceUuid: UUID, createServiceRequest: CreateServiceRequest) =>
+            //     handleError(httpServices.createService({ uuid: workspaceUuid, createServiceRequest })),
+            // delete: (workspaceUuid: UUID, serviceUuid: UUID) =>
+            //     handleError(httpServices.deleteService({ wUuid: workspaceUuid, sUuid: serviceUuid })),
+            // sources: (workspaceUuid: UUID, serviceUuid: UUID) =>
+            //     handleError(httpServices.getServiceSources({ wUuid: workspaceUuid, sUuid: serviceUuid })),
+            // relations: (workspaceUuid: UUID, serviceUuid: UUID) =>
+            //     handleError(httpServices.getServiceRelations({ wUuid: workspaceUuid, sUuid: serviceUuid })),
+            // findings: (workspaceUuid: UUID, serviceUuid: UUID) =>
+            //     handleError(httpServices.getServiceFindings({ wUuid: workspaceUuid, sUuid: serviceUuid })),
         },
         tags: {
             all: (workspaceUuid: UUID) => handleError(workspaceTags.getAllWorkspaceTags({ uuid: workspaceUuid })),

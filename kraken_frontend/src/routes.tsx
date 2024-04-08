@@ -100,6 +100,7 @@ export const ROUTES = {
             hosts: string[];
             ports: string[];
             services: string[];
+            httpServices: string[];
         }
     >({
         url: "workspaces/{workspaceUuid}/attacks/selection",
@@ -109,7 +110,7 @@ export const ROUTES = {
                 ROUTES.WORKSPACE_ATTACKS.visit({ uuid: workspaceUuid });
                 return <></>;
             }
-            const { domains, hosts, ports, services } = hiddenParams;
+            const { domains, hosts, ports, services, httpServices } = hiddenParams;
             return (
                 <ContentWithMenu>
                     <Workspace view={"attacks"} uuid={workspaceUuid}>
@@ -119,6 +120,7 @@ export const ROUTES = {
                             hosts={hosts}
                             ports={ports}
                             services={services}
+                            httpServices={httpServices}
                         />
                     </Workspace>
                 </ContentWithMenu>

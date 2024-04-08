@@ -10,6 +10,7 @@ import {
     SimpleFindingDefinition,
     SimpleTag,
 } from "../../../api/generated";
+import { FullHttpService } from "../../../api/generated/models/FullHttpService";
 import ContextMenu, { ContextMenuEntry } from "../components/context-menu";
 import SeverityIcon from "../components/severity-icon";
 import TagList, { TagClickCallback } from "../components/tag-list";
@@ -35,6 +36,10 @@ export type TreeNode = {
     | {
           type: "Service";
           service: FullService;
+      }
+    | {
+          type: "HttpService";
+          httpService: FullHttpService;
       }
     | {
           type: "Domain";
@@ -495,6 +500,10 @@ function TreeNode({
         case "Service":
             name = "Service " + node.service.name;
             tags = node.service.tags;
+            break;
+        case "HttpService":
+            name = "HTTP Service " + node.httpService.name;
+            tags = node.httpService.tags;
             break;
     }
 

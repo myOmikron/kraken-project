@@ -12,49 +12,21 @@
  * Do not edit the class manually.
  */
 
-import { exists, mapValues } from '../runtime';
-import type { FindingSeverity } from './FindingSeverity';
-import {
-    FindingSeverityFromJSON,
-    FindingSeverityFromJSONTyped,
-    FindingSeverityToJSON,
-} from './FindingSeverity';
-import type { HttpServiceCertainty } from './HttpServiceCertainty';
-import {
-    HttpServiceCertaintyFromJSON,
-    HttpServiceCertaintyFromJSONTyped,
-    HttpServiceCertaintyToJSON,
-} from './HttpServiceCertainty';
-import type { SimpleAggregationSource } from './SimpleAggregationSource';
-import {
-    SimpleAggregationSourceFromJSON,
-    SimpleAggregationSourceFromJSONTyped,
-    SimpleAggregationSourceToJSON,
-} from './SimpleAggregationSource';
-import type { SimpleDomain } from './SimpleDomain';
-import {
-    SimpleDomainFromJSON,
-    SimpleDomainFromJSONTyped,
-    SimpleDomainToJSON,
-} from './SimpleDomain';
-import type { SimpleHost } from './SimpleHost';
-import {
-    SimpleHostFromJSON,
-    SimpleHostFromJSONTyped,
-    SimpleHostToJSON,
-} from './SimpleHost';
-import type { SimplePort } from './SimplePort';
-import {
-    SimplePortFromJSON,
-    SimplePortFromJSONTyped,
-    SimplePortToJSON,
-} from './SimplePort';
-import type { SimpleTag } from './SimpleTag';
-import {
-    SimpleTagFromJSON,
-    SimpleTagFromJSONTyped,
-    SimpleTagToJSON,
-} from './SimpleTag';
+import { exists } from "../runtime";
+import type { FindingSeverity } from "./FindingSeverity";
+import { FindingSeverityFromJSON, FindingSeverityToJSON } from "./FindingSeverity";
+import type { HttpServiceCertainty } from "./HttpServiceCertainty";
+import { HttpServiceCertaintyFromJSON, HttpServiceCertaintyToJSON } from "./HttpServiceCertainty";
+import type { SimpleAggregationSource } from "./SimpleAggregationSource";
+import { SimpleAggregationSourceFromJSON, SimpleAggregationSourceToJSON } from "./SimpleAggregationSource";
+import type { SimpleDomain } from "./SimpleDomain";
+import { SimpleDomainFromJSON, SimpleDomainToJSON } from "./SimpleDomain";
+import type { SimpleHost } from "./SimpleHost";
+import { SimpleHostFromJSON, SimpleHostToJSON } from "./SimpleHost";
+import type { SimplePort } from "./SimplePort";
+import { SimplePortFromJSON, SimplePortToJSON } from "./SimplePort";
+import type { SimpleTag } from "./SimpleTag";
+import { SimpleTagFromJSON, SimpleTagToJSON } from "./SimpleTag";
 
 /**
  * The full representation of a http service
@@ -81,19 +53,19 @@ export interface FullHttpService {
      */
     version?: string | null;
     /**
-     * 
+     *
      * @type {SimpleDomain}
      * @memberof FullHttpService
      */
     domain?: SimpleDomain | null;
     /**
-     * 
+     *
      * @type {SimpleHost}
      * @memberof FullHttpService
      */
     host: SimpleHost;
     /**
-     * 
+     *
      * @type {SimplePort}
      * @memberof FullHttpService
      */
@@ -123,7 +95,7 @@ export interface FullHttpService {
      */
     comment: string;
     /**
-     * 
+     *
      * @type {HttpServiceCertainty}
      * @memberof FullHttpService
      */
@@ -147,13 +119,13 @@ export interface FullHttpService {
      */
     tags: Array<SimpleTag>;
     /**
-     * 
+     *
      * @type {SimpleAggregationSource}
      * @memberof FullHttpService
      */
     sources: SimpleAggregationSource;
     /**
-     * 
+     *
      * @type {FindingSeverity}
      * @memberof FullHttpService
      */
@@ -187,27 +159,26 @@ export function FullHttpServiceFromJSON(json: any): FullHttpService {
 }
 
 export function FullHttpServiceFromJSONTyped(json: any, ignoreDiscriminator: boolean): FullHttpService {
-    if ((json === undefined) || (json === null)) {
+    if (json === undefined || json === null) {
         return json;
     }
     return {
-        
-        'uuid': json['uuid'],
-        'name': json['name'],
-        'version': !exists(json, 'version') ? undefined : json['version'],
-        'domain': !exists(json, 'domain') ? undefined : SimpleDomainFromJSON(json['domain']),
-        'host': SimpleHostFromJSON(json['host']),
-        'port': SimplePortFromJSON(json['port']),
-        'basePath': json['base_path'],
-        'tls': json['tls'],
-        'sniRequired': json['sni_required'],
-        'comment': json['comment'],
-        'certainty': HttpServiceCertaintyFromJSON(json['certainty']),
-        'workspace': json['workspace'],
-        'createdAt': (new Date(json['created_at'])),
-        'tags': ((json['tags'] as Array<any>).map(SimpleTagFromJSON)),
-        'sources': SimpleAggregationSourceFromJSON(json['sources']),
-        'severity': !exists(json, 'severity') ? undefined : FindingSeverityFromJSON(json['severity']),
+        uuid: json["uuid"],
+        name: json["name"],
+        version: !exists(json, "version") ? undefined : json["version"],
+        domain: !exists(json, "domain") ? undefined : SimpleDomainFromJSON(json["domain"]),
+        host: SimpleHostFromJSON(json["host"]),
+        port: SimplePortFromJSON(json["port"]),
+        basePath: json["base_path"],
+        tls: json["tls"],
+        sniRequired: json["sni_required"],
+        comment: json["comment"],
+        certainty: HttpServiceCertaintyFromJSON(json["certainty"]),
+        workspace: json["workspace"],
+        createdAt: new Date(json["created_at"]),
+        tags: (json["tags"] as Array<any>).map(SimpleTagFromJSON),
+        sources: SimpleAggregationSourceFromJSON(json["sources"]),
+        severity: !exists(json, "severity") ? undefined : FindingSeverityFromJSON(json["severity"]),
     };
 }
 
@@ -219,23 +190,21 @@ export function FullHttpServiceToJSON(value?: FullHttpService | null): any {
         return null;
     }
     return {
-        
-        'uuid': value.uuid,
-        'name': value.name,
-        'version': value.version,
-        'domain': SimpleDomainToJSON(value.domain),
-        'host': SimpleHostToJSON(value.host),
-        'port': SimplePortToJSON(value.port),
-        'base_path': value.basePath,
-        'tls': value.tls,
-        'sni_required': value.sniRequired,
-        'comment': value.comment,
-        'certainty': HttpServiceCertaintyToJSON(value.certainty),
-        'workspace': value.workspace,
-        'created_at': (value.createdAt.toISOString()),
-        'tags': ((value.tags as Array<any>).map(SimpleTagToJSON)),
-        'sources': SimpleAggregationSourceToJSON(value.sources),
-        'severity': FindingSeverityToJSON(value.severity),
+        uuid: value.uuid,
+        name: value.name,
+        version: value.version,
+        domain: SimpleDomainToJSON(value.domain),
+        host: SimpleHostToJSON(value.host),
+        port: SimplePortToJSON(value.port),
+        base_path: value.basePath,
+        tls: value.tls,
+        sni_required: value.sniRequired,
+        comment: value.comment,
+        certainty: HttpServiceCertaintyToJSON(value.certainty),
+        workspace: value.workspace,
+        created_at: value.createdAt.toISOString(),
+        tags: (value.tags as Array<any>).map(SimpleTagToJSON),
+        sources: SimpleAggregationSourceToJSON(value.sources),
+        severity: FindingSeverityToJSON(value.severity),
     };
 }
-

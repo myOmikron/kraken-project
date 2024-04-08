@@ -11,6 +11,7 @@ import {
     parseDomainAST,
     parseGlobalAST,
     parseHostAST,
+    parseHttpServiceAST,
     parsePortAST,
     parseServiceAST,
 } from "../../../utils/filter/parser";
@@ -23,7 +24,7 @@ export type FilterInputProps = {
     onChange: (newValue: string) => void;
     applied: string;
     onApply: (newApplied: string) => void;
-    target: "global" | "domain" | "host" | "port" | "service";
+    target: "global" | "domain" | "host" | "port" | "service" | "httpService";
 };
 export default function FilterInput(props: FilterInputProps) {
     const { placeholder, value, onChange, applied, onApply, target } = props;
@@ -50,6 +51,9 @@ export default function FilterInput(props: FilterInputProps) {
                         break;
                     case "service":
                         parseServiceAST(value);
+                        break;
+                    case "httpService":
+                        parseHttpServiceAST(value);
                         break;
                     default:
                         tokenize(value);
@@ -124,6 +128,7 @@ export function useFilter(workspace: string, target: FilterInputProps["target"])
             host: "Host Filter...",
             port: "Port Filter...",
             service: "Service Filter...",
+            httpService: "HTTP Service Filter...",
         }[target],
         workspace,
         value,
