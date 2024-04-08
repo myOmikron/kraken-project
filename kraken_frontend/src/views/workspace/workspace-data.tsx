@@ -833,7 +833,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <AttackButton
                                     workspaceUuid={workspace}
                                     targetUuid={httpService.uuid}
-                                    targetType={"service"}
+                                    targetType={"httpService"}
                                 />
                             </ContextMenu>
                         ))}
