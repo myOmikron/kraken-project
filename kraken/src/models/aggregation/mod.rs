@@ -523,6 +523,95 @@ pub struct DomainWorkspaceTag {
     pub domain: ForeignModel<Domain>,
 }
 
+/// An HTTP Service
+///
+/// This aggregation is intended to hold information regarding
+/// an HTTP service (e.g. nginx or wordpress)
+#[derive(Model)]
+pub struct HttpService {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The name of the http service
+    #[rorm(max_length = 255)]
+    pub name: String,
+
+    /// The base path of the http service
+    #[rorm(max_length = 1024)]
+    pub base_path: String,
+
+    /// Marks whether the http service is accessible over TLS
+    /// If it is accessible via raw TCP and TLS, two http services
+    /// should be created
+    pub tls: bool,
+
+    /// Marks whether SNI is required to
+    pub sni_required: bool,
+
+    /// An optional domain that is used to access the http service
+    #[rorm(on_update = "Cascade", on_delete = "SetNull")]
+    pub domain: Option<ForeignModel<Domain>>,
+
+    /// The host this http service is running on
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub host: ForeignModel<Host>,
+
+    /// The port this http service is running on
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub port: ForeignModel<Port>,
+
+    /// The option to add some notes to the http service
+    #[rorm(max_length = 1024)]
+    pub comment: String,
+
+    /// Workspace tags of the http service
+    pub workspace_tags: BackRef<field!(HttpServiceWorkspaceTag::F.http_service)>,
+
+    /// Global tags of the http service
+    pub global_tags: BackRef<field!(HttpServiceGlobalTag::F.http_service)>,
+
+    /// A reference to the workspace this http service is referencing
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub workspace: ForeignModel<Workspace>,
+
+    /// The point in time, this entry was created
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
+}
+
+/// M2M relation between [GlobalTag] and [HttpService]
+#[derive(Model)]
+pub struct HttpServiceGlobalTag {
+    /// Primary key of the entry
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The global tag this entry links to
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub global_tag: ForeignModel<GlobalTag>,
+
+    /// The HttpService this entry links to
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub http_service: ForeignModel<HttpService>,
+}
+
+/// M2M relation between [WorkspaceTag] and [HttpService]
+#[derive(Model)]
+pub struct HttpServiceWorkspaceTag {
+    /// Primary key of the entry
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The workspace tag this entry links to
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub workspace_tag: ForeignModel<WorkspaceTag>,
+
+    /// The http service this entry links to
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub http_service: ForeignModel<HttpService>,
+}
+
 /// Generic M2M relation between aggregated models (ex: [`Host`])
 /// and the sources which contributed to them (ex: [`HostAliveResult`])
 #[derive(Model)]
