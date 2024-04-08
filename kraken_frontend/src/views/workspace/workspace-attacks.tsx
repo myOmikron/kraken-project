@@ -24,6 +24,7 @@ import "../../styling/workspace-attacks.css";
 import AttacksIcon from "../../svg/attacks";
 import CloseIcon from "../../svg/close";
 import { ObjectFns, handleApiError } from "../../utils/helper";
+import { buildHttpServiceURL } from "../../utils/http-services";
 import { Result } from "../../utils/result";
 import {
     AttackInputProps,
@@ -745,9 +746,9 @@ export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
             case "httpService":
                 Api.workspaces.httpServices.get(workspace, props.targetUuid).then(
                     handleApiError((httpService) => {
-                        const { name, host, port, domain } = httpService;
+                        const { name } = httpService;
                         setTarget({
-                            name: `HTTP service ${name} on ${domain?.domain ?? host.ipAddr}:${port.port}`,
+                            name: `HTTP service ${name} on ${buildHttpServiceURL(httpService)}`,
                             selection: [{ httpService }],
                         });
                     }),

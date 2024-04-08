@@ -7,6 +7,7 @@ import { HttpServiceRelations } from "../../../api/generated/models/HttpServiceR
 import SelectableText from "../../../components/selectable-text";
 import Textarea from "../../../components/textarea";
 import { handleApiError } from "../../../utils/helper";
+import { buildHttpServiceURL } from "../../../utils/http-services";
 import CertaintyIcon from "../components/certainty-icon";
 import EditableTags from "../components/editable-tags";
 import { HttpServiceRelationsList } from "../components/relations-list";
@@ -62,8 +63,7 @@ export function WorkspaceDataHttpServiceDetails(props: WorkspaceDataHttpServiceD
                 <>
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>HTTP Service</h3>
-                        {`${httpService.name} running on ${httpService.host.ipAddr}:${httpService.port.port}`}
-                        {!httpService.domain ? "" : ` on ${httpService.domain.domain}`}
+                        {httpService.name} on {buildHttpServiceURL(httpService)}
                     </div>
                     <div className="workspace-data-details-pane">
                         <h3 className="sub-heading">Certainty</h3>
