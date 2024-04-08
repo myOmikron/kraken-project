@@ -6,6 +6,7 @@ import { HttpServiceRelations } from "../../../api/generated/models/HttpServiceR
 import { SimpleHttpService } from "../../../api/generated/models/SimpleHttpService";
 import SelectableText from "../../../components/selectable-text";
 import { handleApiError } from "../../../utils/helper";
+import { buildHttpServiceURL } from "../../../utils/http-services";
 import { HttpServiceRelationsList } from "./relations-list";
 
 export default function HttpServiceName({
@@ -16,16 +17,16 @@ export default function HttpServiceName({
     pretty?: boolean;
 }) {
     const [relations, setRelations] = useState<HttpServiceRelations | undefined>(undefined);
-    const [fullService, setFullService] = useState<FullHttpService | undefined>(
+    const [fullHttpService, setFullHttpService] = useState<FullHttpService | undefined>(
         typeof httpService.host == "string" ? undefined : (httpService as FullHttpService),
     );
 
     useEffect(() => {
-        if (pretty && (!fullService || fullService.uuid != httpService.uuid)) {
-            setFullService(undefined);
+        if (pretty && (!fullHttpService || fullHttpService.uuid != httpService.uuid)) {
+            setFullHttpService(undefined);
             Api.workspaces.httpServices
                 .get(httpService.workspace, httpService.uuid)
-                .then(handleApiError((s) => s.uuid == httpService.uuid && setFullService(s)));
+                .then(handleApiError((s) => s.uuid == httpService.uuid && setFullHttpService(s)));
         }
     }, [httpService.uuid]);
 
@@ -48,16 +49,17 @@ export default function HttpServiceName({
             trigger={
                 // eagerly load on mouse over, so popup potentially doesn't need to wait
                 <div onMouseOver={ensureDataLoaded}>
-                    {pretty && fullService ? (
+                    {pretty && fullHttpService ? (
                         <div>
                             <b>{httpService.name}</b>
                             {" on "}
-                            <SelectableText as="span">
-                                {fullService.host.ipAddr.includes(":")
-                                    ? `[${fullService.host.ipAddr}]`
-                                    : fullService.host.ipAddr}
-                                {typeof fullService.port === "object" && ":" + fullService.port?.port}
-                            </SelectableText>
+                            <SelectableText as="span">{buildHttpServiceURL(fullHttpService, false)}</SelectableText>
+                            {fullHttpService.domain && (
+                                <>
+                                    {" on "}
+                                    <SelectableText as="span">{fullHttpService.host.ipAddr}</SelectableText>
+                                </>
+                            )}
                         </div>
                     ) : (
                         <div>{httpService.name}</div>

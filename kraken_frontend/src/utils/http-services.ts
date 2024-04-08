@@ -1,6 +1,6 @@
 import { FullHttpService } from "../api/generated";
 
-export function buildHttpServiceURL(httpService: FullHttpService) {
+export function buildHttpServiceURL(httpService: FullHttpService, includeIp = true) {
     const {
         host: { ipAddr },
         port: { port },
@@ -16,6 +16,7 @@ export function buildHttpServiceURL(httpService: FullHttpService) {
         (tls ? "https://" : "http://") +
         (domain?.domain ?? (isIPv6 ? `[${ipAddr}]` : ipAddr)) +
         (port == defaultPort ? "" : ":" + port) +
-        basePath
+        basePath +
+        (includeIp && domain?.domain ? ` (on ${ipAddr})` : "")
     );
 }
