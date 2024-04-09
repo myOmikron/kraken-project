@@ -88,6 +88,8 @@ pub struct SimpleFindingDefinition {
     pub summary: String,
     /// The point in time this finding definition was created
     pub created_at: DateTime<Utc>,
+    /// The list of categories this finding falls into
+    pub categories: Vec<SimpleFindingCategory>,
 }
 
 /// A list of simple definition of a finding

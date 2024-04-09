@@ -96,6 +96,9 @@ pub struct SimpleFinding {
 
     /// The point in time this finding definition was created
     pub created_at: DateTime<Utc>,
+
+    /// The list of categories this finding falls into
+    pub categories: Vec<SimpleFindingCategory>,
 }
 
 /// A full finding

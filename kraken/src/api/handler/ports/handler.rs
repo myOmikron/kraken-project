@@ -629,12 +629,9 @@ pub async fn get_port_findings(
         return Err(ApiError::MissingPrivileges);
     }
 
-    let findings = ListFindings::query_through_affected(
-        &mut tx,
-        w_uuid,
-        FindingAffected::F.port.equals(p_uuid),
-    )
-    .await?;
+    let findings =
+        ListFindings::query_through_affected(&mut tx, w_uuid, FindingAffected::F.port, p_uuid)
+            .await?;
 
     tx.commit().await?;
     Ok(Json(findings))

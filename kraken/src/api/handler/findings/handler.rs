@@ -36,6 +36,7 @@ use crate::models::Finding;
 use crate::models::FindingAffected;
 use crate::models::FindingCategory;
 use crate::models::FindingDefinition;
+use crate::models::FindingDefinitionCategoryRelation;
 use crate::models::FindingDetails;
 use crate::models::FindingFindingCategoryRelation;
 use crate::models::Workspace;
@@ -141,6 +142,35 @@ pub async fn get_all_findings(
             .or_insert(1);
     }
 
+    let mut categories: HashMap<_, Vec<_>> = HashMap::new();
+    let mut stream = query!(
+        &mut tx,
+        (
+            FindingFindingCategoryRelation::F.finding.uuid,
+            FindingFindingCategoryRelation::F.category.uuid,
+            FindingFindingCategoryRelation::F.category.name,
+            FindingFindingCategoryRelation::F.category.color
+        )
+    )
+    .condition(
+        FindingFindingCategoryRelation::F
+            .finding
+            .workspace
+            .equals(workspace_uuid),
+    )
+    .stream();
+    while let Some((finding, uuid, name, color)) = stream.try_next().await? {
+        categories
+            .entry(finding)
+            .or_default()
+            .push(SimpleFindingCategory {
+                uuid,
+                name,
+                color: FromDb::from_db(color),
+            });
+    }
+    drop(stream);
+
     let findings = query!(
         &mut tx,
         (
@@ -161,8 +191,9 @@ pub async fn get_all_findings(
             name,
             cve,
             severity: FromDb::from_db(severity),
-            created_at,
             affected_count: *affected_lookup.get(&uuid).unwrap_or(&0),
+            created_at,
+            categories: categories.remove(&uuid).unwrap_or_default(),
         },
     )
     .try_collect()
@@ -242,6 +273,28 @@ pub async fn get_finding(
     .try_collect()
     .await?;
 
+    let definition_categories = query!(
+        &mut tx,
+        (
+            FindingDefinitionCategoryRelation::F.category.uuid,
+            FindingDefinitionCategoryRelation::F.category.name,
+            FindingDefinitionCategoryRelation::F.category.color,
+        )
+    )
+    .condition(
+        FindingDefinitionCategoryRelation::F
+            .definition
+            .equals(definition.uuid),
+    )
+    .stream()
+    .map_ok(|(uuid, name, color)| SimpleFindingCategory {
+        uuid,
+        name,
+        color: FromDb::from_db(color),
+    })
+    .try_collect()
+    .await?;
+
     tx.commit().await?;
     Ok(Json(FullFinding {
         uuid: finding.uuid,
@@ -253,6 +306,7 @@ pub async fn get_finding(
             #[rustfmt::skip]
             summary: GLOBAL.editor_cache.fd_summary.get(*finding.definition.key()).await?.ok_or(ApiError::InvalidUuid)?.0,
             created_at: definition.created_at,
+            categories: definition_categories,
         },
         severity: FromDb::from_db(finding.severity),
         affected,

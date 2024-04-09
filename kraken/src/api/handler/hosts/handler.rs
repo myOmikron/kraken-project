@@ -618,12 +618,9 @@ pub async fn get_host_findings(
         return Err(ApiError::MissingPrivileges);
     }
 
-    let findings = ListFindings::query_through_affected(
-        &mut tx,
-        w_uuid,
-        FindingAffected::F.host.equals(h_uuid),
-    )
-    .await?;
+    let findings =
+        ListFindings::query_through_affected(&mut tx, w_uuid, FindingAffected::F.host, h_uuid)
+            .await?;
 
     tx.commit().await?;
     Ok(Json(findings))

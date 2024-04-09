@@ -637,12 +637,9 @@ pub async fn get_domain_findings(
         return Err(ApiError::MissingPrivileges);
     }
 
-    let findings = ListFindings::query_through_affected(
-        &mut tx,
-        w_uuid,
-        FindingAffected::F.domain.equals(d_uuid),
-    )
-    .await?;
+    let findings =
+        ListFindings::query_through_affected(&mut tx, w_uuid, FindingAffected::F.domain, d_uuid)
+            .await?;
 
     tx.commit().await?;
     Ok(Json(findings))

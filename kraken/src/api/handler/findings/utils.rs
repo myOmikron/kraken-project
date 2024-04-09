@@ -1,20 +1,25 @@
 use std::collections::HashMap;
 
+use futures::TryStreamExt;
 use rorm::and;
-use rorm::conditions::Condition;
+use rorm::conditions::DynamicCollection;
 use rorm::db::transaction::Transaction;
+use rorm::fields::traits::FieldEq;
+use rorm::internal::field::Field;
 use rorm::prelude::*;
 use rorm::query;
 use uuid::Uuid;
 
 pub use crate::api::handler::common::error::ApiError;
 pub use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::finding_categories::schema::SimpleFindingCategory;
 use crate::api::handler::findings::schema::ListFindings;
 use crate::api::handler::findings::schema::SimpleFinding;
 use crate::api::handler::findings::schema::SimpleFindingAffected;
 use crate::chan::ws_manager::schema::AggregationType;
 use crate::models::convert::FromDb;
 use crate::models::FindingAffected;
+use crate::models::FindingFindingCategoryRelation;
 
 /// Convert a [`FindingAffected`] into a [`SimpleFindingAffected`]
 ///
@@ -68,11 +73,16 @@ pub fn finding_affected_into_simple(affected: FindingAffected) -> ApiResult<Simp
 
 impl ListFindings {
     /// Query all findings affecting an object
-    pub async fn query_through_affected<'exe: 'co, 'co>(
-        tx: &'exe mut Transaction,
+    pub async fn query_through_affected<'exe, F, Any>(
+        tx: &mut Transaction,
         workspace: Uuid,
-        condition: impl Condition<'co>,
-    ) -> Result<ListFindings, rorm::Error> {
+        field: impl FieldAccess<Path = FindingAffected, Field = F>,
+        uuid: Uuid,
+    ) -> Result<ListFindings, rorm::Error>
+    where
+        F: Field,
+        F::Type: for<'rhs> FieldEq<'rhs, Uuid, Any>,
+    {
         let mut affected_lookup = HashMap::new();
 
         let affected = query!(&mut *tx, (FindingAffected::F.finding,))
@@ -98,11 +108,42 @@ impl ListFindings {
             )
         )
         .condition(and![
-            condition,
+            field.equals(uuid),
             FindingAffected::F.workspace.equals(workspace)
         ])
         .all()
         .await?;
+
+        let mut categories: HashMap<_, Vec<_>> = HashMap::new();
+        if !findings.is_empty() {
+            let mut stream = query!(
+                &mut *tx,
+                (
+                    FindingFindingCategoryRelation::F.finding.uuid,
+                    FindingFindingCategoryRelation::F.category.uuid,
+                    FindingFindingCategoryRelation::F.category.name,
+                    FindingFindingCategoryRelation::F.category.color,
+                )
+            )
+            .condition(DynamicCollection::or(
+                findings
+                    .iter()
+                    .map(|x| FindingFindingCategoryRelation::F.finding.equals(x.0))
+                    .collect(),
+            ))
+            .stream();
+            while let Some((finding, uuid, name, color)) = stream.try_next().await? {
+                categories
+                    .entry(finding)
+                    .or_default()
+                    .push(SimpleFindingCategory {
+                        uuid,
+                        name,
+                        color: FromDb::from_db(color),
+                    });
+            }
+            drop(stream);
+        }
 
         let simple_findings = findings
             .into_iter()
@@ -115,6 +156,7 @@ impl ListFindings {
                     severity: FromDb::from_db(severity),
                     created_at,
                     affected_count: affected_lookup.get(&uuid).copied().unwrap_or(0),
+                    categories: categories.remove(&uuid).unwrap_or_default(),
                 },
             )
             .collect();

@@ -37,6 +37,7 @@ use crate::models::DomainGlobalTag;
 use crate::models::DomainWorkspaceTag;
 use crate::models::Finding;
 use crate::models::FindingAffected;
+use crate::models::FindingDefinitionCategoryRelation;
 use crate::models::FindingDetails;
 use crate::models::FindingFindingCategoryRelation;
 use crate::models::GlobalTag;
@@ -389,6 +390,28 @@ pub async fn get_finding_affected(
     .try_collect()
     .await?;
 
+    let finding_definition_categories = query!(
+        &mut tx,
+        (
+            FindingDefinitionCategoryRelation::F.category.uuid,
+            FindingDefinitionCategoryRelation::F.category.name,
+            FindingDefinitionCategoryRelation::F.category.color,
+        )
+    )
+    .condition(
+        FindingDefinitionCategoryRelation::F
+            .definition
+            .equals(finding_definition_uuid),
+    )
+    .stream()
+    .map_ok(|(uuid, name, color)| SimpleFindingCategory {
+        uuid,
+        name,
+        color: FromDb::from_db(color),
+    })
+    .try_collect()
+    .await?;
+
     tx.commit().await?;
     Ok(Json(FullFindingAffected {
         finding: FullFinding {
@@ -400,6 +423,7 @@ pub async fn get_finding_affected(
                 severity: FromDb::from_db(finding_definition_severity),
                 summary: finding_definition_summary,
                 created_at: finding_definition_created_at,
+                categories: finding_definition_categories,
             },
             severity: FromDb::from_db(finding.severity),
             affected: finding_affected,

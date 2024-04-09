@@ -718,12 +718,9 @@ pub async fn get_service_findings(
         return Err(ApiError::MissingPrivileges);
     }
 
-    let findings = ListFindings::query_through_affected(
-        &mut tx,
-        w_uuid,
-        FindingAffected::F.service.equals(s_uuid),
-    )
-    .await?;
+    let findings =
+        ListFindings::query_through_affected(&mut tx, w_uuid, FindingAffected::F.service, s_uuid)
+            .await?;
 
     tx.commit().await?;
     Ok(Json(findings))

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use actix_web::get;
 use actix_web::post;
 use actix_web::put;
@@ -194,19 +196,44 @@ pub async fn get_finding_definition(
 )]
 #[get("/findingDefinitions")]
 pub async fn get_all_finding_definitions() -> ApiResult<Json<ListFindingDefinitions>> {
-    let mut finding_definitions: Vec<SimpleFindingDefinition> =
-        query!(&GLOBAL.db, FindingDefinition)
-            .stream()
-            .map_ok(|fd| SimpleFindingDefinition {
-                uuid: fd.uuid,
-                name: fd.name,
-                cve: fd.cve,
-                summary: fd.summary,
-                severity: FromDb::from_db(fd.severity),
-                created_at: fd.created_at,
-            })
-            .try_collect()
-            .await?;
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    let mut categories: HashMap<_, Vec<_>> = HashMap::new();
+    let mut stream = query!(
+        &mut tx,
+        (
+            FindingDefinitionCategoryRelation::F.definition.uuid,
+            FindingDefinitionCategoryRelation::F.category.uuid,
+            FindingDefinitionCategoryRelation::F.category.name,
+            FindingDefinitionCategoryRelation::F.category.color,
+        )
+    )
+    .stream();
+    while let Some((finding_definition, uuid, name, color)) = stream.try_next().await? {
+        categories
+            .entry(finding_definition)
+            .or_default()
+            .push(SimpleFindingCategory {
+                uuid,
+                name,
+                color: FromDb::from_db(color),
+            });
+    }
+    drop(stream);
+
+    let mut finding_definitions: Vec<SimpleFindingDefinition> = query!(&mut tx, FindingDefinition)
+        .stream()
+        .map_ok(|fd| SimpleFindingDefinition {
+            uuid: fd.uuid,
+            name: fd.name,
+            cve: fd.cve,
+            summary: fd.summary,
+            severity: FromDb::from_db(fd.severity),
+            created_at: fd.created_at,
+            categories: categories.remove(&fd.uuid).unwrap_or_default(),
+        })
+        .try_collect()
+        .await?;
 
     for fd in &mut finding_definitions {
         fd.summary = GLOBAL
