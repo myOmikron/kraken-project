@@ -303,6 +303,7 @@ impl Aggregator {
     /// Insert an aggregated http service if it doesn't exist yet or
     /// update it if its information is not as precise
     /// and return its primary key.
+    #[allow(clippy::too_many_arguments)]
     pub async fn aggregate_http_service(
         &self,
         workspace: Uuid,

@@ -16,6 +16,7 @@ mod finding_definitions;
 mod findings;
 mod global_tags;
 mod hosts;
+mod http_services;
 mod invitations;
 mod ports;
 mod services;
