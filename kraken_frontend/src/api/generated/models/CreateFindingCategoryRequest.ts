@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { Color } from './Color';
+import {
+    ColorFromJSON,
+    ColorFromJSONTyped,
+    ColorToJSON,
+} from './Color';
+
 /**
  * The request to create a finding category
  * @export
@@ -25,6 +32,12 @@ export interface CreateFindingCategoryRequest {
      * @memberof CreateFindingCategoryRequest
      */
     name: string;
+    /**
+     * 
+     * @type {Color}
+     * @memberof CreateFindingCategoryRequest
+     */
+    color: Color;
 }
 
 /**
@@ -33,6 +46,7 @@ export interface CreateFindingCategoryRequest {
 export function instanceOfCreateFindingCategoryRequest(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "name" in value;
+    isInstance = isInstance && "color" in value;
 
     return isInstance;
 }
@@ -48,6 +62,7 @@ export function CreateFindingCategoryRequestFromJSONTyped(json: any, ignoreDiscr
     return {
         
         'name': json['name'],
+        'color': ColorFromJSON(json['color']),
     };
 }
 
@@ -61,6 +76,7 @@ export function CreateFindingCategoryRequestToJSON(value?: CreateFindingCategory
     return {
         
         'name': value.name,
+        'color': ColorToJSON(value.color),
     };
 }
 

@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { Color } from './Color';
+import {
+    ColorFromJSON,
+    ColorFromJSONTyped,
+    ColorToJSON,
+} from './Color';
+
 /**
  * A category findings and finding definitions can be categorized by
  * @export
@@ -31,6 +38,12 @@ export interface SimpleFindingCategory {
      * @memberof SimpleFindingCategory
      */
     name: string;
+    /**
+     * 
+     * @type {Color}
+     * @memberof SimpleFindingCategory
+     */
+    color: Color;
 }
 
 /**
@@ -40,6 +53,7 @@ export function instanceOfSimpleFindingCategory(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "name" in value;
+    isInstance = isInstance && "color" in value;
 
     return isInstance;
 }
@@ -56,6 +70,7 @@ export function SimpleFindingCategoryFromJSONTyped(json: any, ignoreDiscriminato
         
         'uuid': json['uuid'],
         'name': json['name'],
+        'color': ColorFromJSON(json['color']),
     };
 }
 
@@ -70,6 +85,7 @@ export function SimpleFindingCategoryToJSON(value?: SimpleFindingCategory | null
         
         'uuid': value.uuid,
         'name': value.name,
+        'color': ColorToJSON(value.color),
     };
 }
 

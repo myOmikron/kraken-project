@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { Color } from './Color';
+import {
+    ColorFromJSON,
+    ColorFromJSONTyped,
+    ColorToJSON,
+} from './Color';
+
 /**
  * The request to update a finding category
  * @export
@@ -25,6 +32,12 @@ export interface UpdateFindingCategoryRequest {
      * @memberof UpdateFindingCategoryRequest
      */
     name?: string | null;
+    /**
+     * 
+     * @type {Color}
+     * @memberof UpdateFindingCategoryRequest
+     */
+    color?: Color | null;
 }
 
 /**
@@ -47,6 +60,7 @@ export function UpdateFindingCategoryRequestFromJSONTyped(json: any, ignoreDiscr
     return {
         
         'name': !exists(json, 'name') ? undefined : json['name'],
+        'color': !exists(json, 'color') ? undefined : ColorFromJSON(json['color']),
     };
 }
 
@@ -60,6 +74,7 @@ export function UpdateFindingCategoryRequestToJSON(value?: UpdateFindingCategory
     return {
         
         'name': value.name,
+        'color': ColorToJSON(value.color),
     };
 }
 

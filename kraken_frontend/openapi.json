@@ -9497,12 +9497,16 @@
                 "type": "object",
                 "description": "The request to create a finding category",
                 "required": [
-                    "name"
+                    "name",
+                    "color"
                 ],
                 "properties": {
                     "name": {
                         "type": "string",
                         "description": "The category's name"
+                    },
+                    "color": {
+                        "$ref": "#/components/schemas/Color"
                     }
                 }
             },
@@ -14069,7 +14073,8 @@
                 "description": "A category findings and finding definitions can be categorized by",
                 "required": [
                     "uuid",
-                    "name"
+                    "name",
+                    "color"
                 ],
                 "properties": {
                     "uuid": {
@@ -14080,6 +14085,9 @@
                     "name": {
                         "type": "string",
                         "description": "The category's name"
+                    },
+                    "color": {
+                        "$ref": "#/components/schemas/Color"
                     }
                 }
             },
@@ -15044,6 +15052,14 @@
                     "name": {
                         "type": "string",
                         "description": "The category's name",
+                        "nullable": true
+                    },
+                    "color": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Color"
+                            }
+                        ],
                         "nullable": true
                     }
                 }
