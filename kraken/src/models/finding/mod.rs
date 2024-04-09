@@ -195,9 +195,15 @@ pub struct FindingCategory {
     /// The primary key of a finding category
     #[rorm(primary_key)]
     pub uuid: Uuid,
+
     /// The name of the finding category
     #[rorm(max_length = 255, unique)]
     pub name: String,
+
+    /// The color of the category, converted from hex
+    ///
+    /// Use [`Color`]'s `from` and `into` implementation for conversions.
+    pub color: i32,
 }
 
 /// The relation between a [FindingDefinition] and a [FindingCategory]

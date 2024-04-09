@@ -146,11 +146,16 @@ pub async fn get_finding_definition(
         (
             FindingDefinitionCategoryRelation::F.category.uuid,
             FindingDefinitionCategoryRelation::F.category.name,
+            FindingDefinitionCategoryRelation::F.category.color,
         )
     )
     .condition(FindingDefinitionCategoryRelation::F.definition.equals(uuid))
     .stream()
-    .map_ok(|(uuid, name)| SimpleFindingCategory { uuid, name })
+    .map_ok(|(uuid, name, color)| SimpleFindingCategory {
+        uuid,
+        name,
+        color: FromDb::from_db(color),
+    })
     .try_collect()
     .await?;
 

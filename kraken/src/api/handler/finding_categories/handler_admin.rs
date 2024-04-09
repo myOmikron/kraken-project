@@ -18,6 +18,7 @@ use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::finding_categories::schema::CreateFindingCategoryRequest;
 use crate::api::handler::finding_categories::schema::UpdateFindingCategoryRequest;
 use crate::chan::global::GLOBAL;
+use crate::models::convert::IntoDb;
 use crate::models::FindingCategory;
 
 /// Create a finding category.
@@ -38,7 +39,7 @@ use crate::models::FindingCategory;
 pub async fn create_finding_category(
     Json(request): Json<CreateFindingCategoryRequest>,
 ) -> ApiResult<Json<UuidResponse>> {
-    let CreateFindingCategoryRequest { name } = request;
+    let CreateFindingCategoryRequest { name, color } = request;
 
     let mut tx = GLOBAL.db.start_transaction().await?;
     if query!(&mut tx, (FindingCategory::F.uuid,))
@@ -53,7 +54,11 @@ pub async fn create_finding_category(
     let uuid = Uuid::new_v4();
     insert!(&mut tx, FindingCategory)
         .return_nothing()
-        .single(&FindingCategory { uuid, name })
+        .single(&FindingCategory {
+            uuid,
+            name,
+            color: color.into_db(),
+        })
         .await?;
 
     tx.commit().await?;
@@ -85,7 +90,13 @@ pub async fn update_finding_category(
 ) -> ApiResult<HttpResponse> {
     let PathUuid { uuid } = path.into_inner();
 
-    if matches!(request, UpdateFindingCategoryRequest { name: None }) {
+    if matches!(
+        request,
+        UpdateFindingCategoryRequest {
+            name: None,
+            color: None
+        }
+    ) {
         return Err(ApiError::EmptyJson);
     }
 
@@ -108,6 +119,7 @@ pub async fn update_finding_category(
     if let Ok(update) = update!(&mut tx, FindingCategory)
         .begin_dyn_set()
         .set_if(FindingCategory::F.name, request.name)
+        .set_if(FindingCategory::F.color, request.color.map(IntoDb::into_db))
         .finish_dyn_set()
     {
         update.await?;

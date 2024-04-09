@@ -372,6 +372,7 @@ pub async fn get_finding_affected(
         (
             FindingFindingCategoryRelation::F.category.uuid,
             FindingFindingCategoryRelation::F.category.name,
+            FindingFindingCategoryRelation::F.category.color,
         )
     )
     .condition(
@@ -380,7 +381,11 @@ pub async fn get_finding_affected(
             .equals(finding.uuid),
     )
     .stream()
-    .map_ok(|(uuid, name)| SimpleFindingCategory { uuid, name })
+    .map_ok(|(uuid, name, color)| SimpleFindingCategory {
+        uuid,
+        name,
+        color: FromDb::from_db(color),
+    })
     .try_collect()
     .await?;
 

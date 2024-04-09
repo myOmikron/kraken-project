@@ -1,5 +1,5 @@
 [Migration]
-Hash = "5971432415107706218"
+Hash = "6511807024003656166"
 Initial = false
 Dependency = 16
 Replaces = []
@@ -26,3 +26,14 @@ Type = "RenameField"
 TableName = "findingfindingcategoryrelation"
 Old = "finding_category"
 New = "category"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "findingcategory"
+
+[Migration.Operations.Field]
+Name = "color"
+Type = "int32"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"

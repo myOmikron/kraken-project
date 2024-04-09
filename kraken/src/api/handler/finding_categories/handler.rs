@@ -7,6 +7,7 @@ use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::finding_categories::schema::ListFindingCategories;
 use crate::api::handler::finding_categories::schema::SimpleFindingCategory;
 use crate::chan::global::GLOBAL;
+use crate::models::convert::FromDb;
 use crate::models::FindingCategory;
 
 /// Retrieve all finding categories
@@ -28,6 +29,7 @@ pub async fn get_all_finding_categories() -> ApiResult<Json<ListFindingCategorie
             .map_ok(|c| SimpleFindingCategory {
                 uuid: c.uuid,
                 name: c.name,
+                color: FromDb::from_db(c.color),
             })
             .try_collect()
             .await?,
