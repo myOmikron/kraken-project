@@ -273,26 +273,12 @@ pub async fn get_finding(
     .try_collect()
     .await?;
 
-    let definition_categories = query!(
+    let definition_categories = SimpleFindingCategory::query_for_single(
         &mut tx,
-        (
-            FindingDefinitionCategoryRelation::F.category.uuid,
-            FindingDefinitionCategoryRelation::F.category.name,
-            FindingDefinitionCategoryRelation::F.category.color,
-        )
+        FindingDefinitionCategoryRelation::F.category,
+        FindingDefinitionCategoryRelation::F.definition,
+        definition.uuid,
     )
-    .condition(
-        FindingDefinitionCategoryRelation::F
-            .definition
-            .equals(definition.uuid),
-    )
-    .stream()
-    .map_ok(|(uuid, name, color)| SimpleFindingCategory {
-        uuid,
-        name,
-        color: FromDb::from_db(color),
-    })
-    .try_collect()
     .await?;
 
     tx.commit().await?;

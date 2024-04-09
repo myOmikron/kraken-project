@@ -368,48 +368,20 @@ pub async fn get_finding_affected(
         _ => return Err(ApiError::InternalServerError),
     };
 
-    let categories = query!(
+    let categories = SimpleFindingCategory::query_for_single(
         &mut tx,
-        (
-            FindingFindingCategoryRelation::F.category.uuid,
-            FindingFindingCategoryRelation::F.category.name,
-            FindingFindingCategoryRelation::F.category.color,
-        )
+        FindingFindingCategoryRelation::F.category,
+        FindingFindingCategoryRelation::F.finding,
+        finding.uuid,
     )
-    .condition(
-        FindingFindingCategoryRelation::F
-            .finding
-            .equals(finding.uuid),
-    )
-    .stream()
-    .map_ok(|(uuid, name, color)| SimpleFindingCategory {
-        uuid,
-        name,
-        color: FromDb::from_db(color),
-    })
-    .try_collect()
     .await?;
 
-    let finding_definition_categories = query!(
+    let finding_definition_categories = SimpleFindingCategory::query_for_single(
         &mut tx,
-        (
-            FindingDefinitionCategoryRelation::F.category.uuid,
-            FindingDefinitionCategoryRelation::F.category.name,
-            FindingDefinitionCategoryRelation::F.category.color,
-        )
+        FindingDefinitionCategoryRelation::F.category,
+        FindingDefinitionCategoryRelation::F.definition,
+        finding_definition_uuid,
     )
-    .condition(
-        FindingDefinitionCategoryRelation::F
-            .definition
-            .equals(finding_definition_uuid),
-    )
-    .stream()
-    .map_ok(|(uuid, name, color)| SimpleFindingCategory {
-        uuid,
-        name,
-        color: FromDb::from_db(color),
-    })
-    .try_collect()
     .await?;
 
     tx.commit().await?;

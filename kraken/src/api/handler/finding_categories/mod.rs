@@ -10,3 +10,5 @@ pub(crate) mod handler_admin;
 
 /// Schemas for finding categories
 pub mod schema;
+#[cfg(feature = "bin")]
+mod utils;
