@@ -12,6 +12,7 @@ use crate::models::Domain;
 use crate::models::DomainDomainRelation;
 use crate::models::DomainHostRelation;
 use crate::models::Host;
+use crate::models::HttpService;
 use crate::models::Port;
 use crate::models::Service;
 use crate::modules::filter::sqler::joins::from_port_join_host;
@@ -445,11 +446,19 @@ impl HttpServiceAST {
 
         let HttpServiceAST { tags, created_at } = self;
         add_ast_field(sql, tags, Column::tags().contains());
-        add_ast_field(sql, created_at, Column::rorm(Service::F.created_at).range());
+        add_ast_field(
+            sql,
+            created_at,
+            Column::rorm(HttpService::F.created_at).range(),
+        );
 
         let GlobalAST { tags, created_at } = global;
         add_ast_field(sql, tags, Column::tags().contains());
-        add_ast_field(sql, created_at, Column::rorm(Service::F.created_at).range());
+        add_ast_field(
+            sql,
+            created_at,
+            Column::rorm(HttpService::F.created_at).range(),
+        );
     }
 }
 
