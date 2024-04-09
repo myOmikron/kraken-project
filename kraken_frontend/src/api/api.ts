@@ -9,6 +9,7 @@ import {
     CreateAppRequest,
     CreateDomainRequest,
     CreateFindingAffectedRequest,
+    CreateFindingCategoryRequest,
     CreateFindingDefinitionRequest,
     CreateFindingRequest,
     CreateGlobalTagRequest,
@@ -22,6 +23,7 @@ import {
     CreateWorkspaceTagRequest,
     DomainsApi,
     FilesApi,
+    FindingCategoriesApi,
     FindingsApi,
     GlobalTagsApi,
     HostsApi,
@@ -37,6 +39,7 @@ import {
     UpdateAppRequest,
     UpdateDomainRequest,
     UpdateFindingAffectedRequest,
+    UpdateFindingCategoryRequest,
     UpdateFindingDefinitionRequest,
     UpdateFindingRequest,
     UpdateGlobalTag,
@@ -90,6 +93,7 @@ const apiKeys = new ApiKeysApi(configuration);
 const wordlists = new WordlistApi(configuration);
 const wordlistsManagement = new WordlistManagementApi(configuration);
 const knowledgeBase = new KnowledgeBaseApi(configuration);
+const findingCategories = new FindingCategoriesApi(configuration);
 
 export const Api = {
     admin: {
@@ -417,6 +421,30 @@ export const Api = {
                     handleError(knowledgeBase.deleteFindingDefinition({ uuid: findingDefinition })),
             },
         },
+    },
+    findingCategories: {
+        admin: {
+            create: (category: CreateFindingCategoryRequest) =>
+                handleError(
+                    findingCategories.createFindingCategory({
+                        createFindingCategoryRequest: category,
+                    }),
+                ),
+            delete: (uuid: string) =>
+                handleError(
+                    findingCategories.deleteFindingCategory({
+                        uuid,
+                    }),
+                ),
+            update: (uuid: string, category: UpdateFindingCategoryRequest) =>
+                handleError(
+                    findingCategories.updateFindingCategory({
+                        uuid,
+                        updateFindingCategoryRequest: category,
+                    }),
+                ),
+        },
+        all: () => handleError(findingCategories.getAllFindingCategories()),
     },
 };
 

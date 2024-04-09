@@ -381,6 +381,11 @@
     column-gap: 1.5em;
 }
 
+.create-finding-header > .categories {
+    margin-top: 1em;
+    grid-column: 1 / span 2;
+}
+
 .create-finding-container {
     display: grid;
     grid-template-columns: 78ch 1fr;

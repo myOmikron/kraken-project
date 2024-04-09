@@ -10,6 +10,7 @@ import {
     FullHost,
     FullPort,
     FullService,
+    SimpleFindingCategory,
     SimpleFindingDefinition,
     SimpleTag,
 } from "../../../api/generated";
@@ -29,6 +30,7 @@ import { handleApiError } from "../../../utils/helper";
 import { configureMonaco } from "../../../utils/monaco";
 import CollapsibleSection from "../components/collapsible-section";
 import Domain from "../components/domain";
+import EditableCategories from "../components/editable-categories";
 import { FileInput } from "../components/file-input";
 import IpAddr from "../components/host";
 import MarkdownEditorPopup from "../components/markdown-editor-popup";
@@ -73,6 +75,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
     const [findingDef, setFindingDef] = React.useState<SimpleFindingDefinition>();
     const [hoveredFindingDef, setHoveredFindingDef] = React.useState<SimpleFindingDefinition>();
     const [details, setDetails] = React.useState<string>("");
+    const [categories, setCategories] = React.useState<Array<SimpleFindingCategory>>([]);
+    // TODO: set categories from hovering/updating finding definitions
 
     const [affected, setAffected] = React.useState<Array<LocalAffected>>(
         (props.initAffected ?? []).map((a) => {
@@ -286,6 +290,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                     details: details,
                                     logFile: logFileUuid,
                                     screenshot: screenshotUuid,
+                                    categories: categories.map((c) => c.uuid),
                                 })
                                 .then(
                                     handleApiError(async ({ uuid }) => {
@@ -321,6 +326,11 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                 }}
                                 onHover={setHoveredFindingDef}
                             />
+
+                            <div className="categories">
+                                Categories
+                                <EditableCategories categories={categories} onChange={setCategories} />
+                            </div>
                         </div>
 
                         <div className="scrollable">

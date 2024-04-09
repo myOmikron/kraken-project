@@ -54,6 +54,12 @@ export interface UpdateFindingRequest {
      * @memberof UpdateFindingRequest
      */
     logFile?: string | null;
+    /**
+     * List of categories
+     * @type {Array<string>}
+     * @memberof UpdateFindingRequest
+     */
+    categories?: Array<string> | null;
 }
 
 /**
@@ -79,6 +85,7 @@ export function UpdateFindingRequestFromJSONTyped(json: any, ignoreDiscriminator
         'severity': !exists(json, 'severity') ? undefined : FindingSeverityFromJSON(json['severity']),
         'screenshot': !exists(json, 'screenshot') ? undefined : json['screenshot'],
         'logFile': !exists(json, 'log_file') ? undefined : json['log_file'],
+        'categories': !exists(json, 'categories') ? undefined : json['categories'],
     };
 }
 
@@ -95,6 +102,7 @@ export function UpdateFindingRequestToJSON(value?: UpdateFindingRequest | null):
         'severity': FindingSeverityToJSON(value.severity),
         'screenshot': value.screenshot,
         'log_file': value.logFile,
+        'categories': value.categories,
     };
 }
 

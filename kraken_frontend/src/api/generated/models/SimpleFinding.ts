@@ -57,7 +57,7 @@ export interface SimpleFinding {
      */
     severity: FindingSeverity;
     /**
-     * The count of affected
+     * The count of affected aggregations
      * @type {number}
      * @memberof SimpleFinding
      */

@@ -217,7 +217,8 @@ form:invalid .start-attack path:last-of-type {
     flex-wrap: wrap;
 }
 
-.tag {
+.tag,
+.finding-category {
     /* Overwritten by javascript to match the dynamic color stored in db */
     --color: #00ccff20;
 
@@ -229,10 +230,23 @@ form:invalid .start-attack path:last-of-type {
     border-radius: 1em;
 }
 
-.tag.interactive:hover {
+.tag.interactive:hover,
+.finding-category.interactive:hover {
     box-shadow:
         0 0 1em var(--color),
         0 0 1em rgba(255, 255, 255, 0.2) inset;
+}
+
+.finding-category {
+    background-color: transparent;
+    box-shadow:
+        0 0 0 1px var(--color) inset,
+        0 0 4px 1px var(--color) inset;
+    text-shadow:
+        0 0 4px var(--color),
+        0 0 10px var(--color),
+        0 0 16px var(--color);
+    border-radius: 0.2em;
 }
 
 ::-webkit-scrollbar {

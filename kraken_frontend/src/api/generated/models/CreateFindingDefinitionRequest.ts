@@ -85,6 +85,12 @@ export interface CreateFindingDefinitionRequest {
      * @memberof CreateFindingDefinitionRequest
      */
     references: string;
+    /**
+     * List of categories
+     * @type {Array<string>}
+     * @memberof CreateFindingDefinitionRequest
+     */
+    categories: Array<string>;
 }
 
 /**
@@ -99,6 +105,7 @@ export function instanceOfCreateFindingDefinitionRequest(value: object): boolean
     isInstance = isInstance && "impact" in value;
     isInstance = isInstance && "remediation" in value;
     isInstance = isInstance && "references" in value;
+    isInstance = isInstance && "categories" in value;
 
     return isInstance;
 }
@@ -121,6 +128,7 @@ export function CreateFindingDefinitionRequestFromJSONTyped(json: any, ignoreDis
         'impact': json['impact'],
         'remediation': json['remediation'],
         'references': json['references'],
+        'categories': json['categories'],
     };
 }
 
@@ -141,6 +149,7 @@ export function CreateFindingDefinitionRequestToJSON(value?: CreateFindingDefini
         'impact': value.impact,
         'remediation': value.remediation,
         'references': value.references,
+        'categories': value.categories,
     };
 }
 
