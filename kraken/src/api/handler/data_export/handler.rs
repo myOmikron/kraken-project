@@ -19,6 +19,7 @@ use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::data_export::schema::AggregatedDomain;
 use crate::api::handler::data_export::schema::AggregatedFinding;
 use crate::api::handler::data_export::schema::AggregatedHost;
+use crate::api::handler::data_export::schema::AggregatedHttpService;
 use crate::api::handler::data_export::schema::AggregatedPort;
 use crate::api::handler::data_export::schema::AggregatedRelation;
 use crate::api::handler::data_export::schema::AggregatedService;
@@ -38,6 +39,9 @@ use crate::models::FindingFindingCategoryRelation;
 use crate::models::Host;
 use crate::models::HostGlobalTag;
 use crate::models::HostWorkspaceTag;
+use crate::models::HttpService;
+use crate::models::HttpServiceGlobalTag;
+use crate::models::HttpServiceWorkspaceTag;
 use crate::models::Port;
 use crate::models::PortGlobalTag;
 use crate::models::PortWorkspaceTag;
@@ -94,6 +98,12 @@ pub(crate) async fn export_workspace(
         .map_ok(|service| (service.uuid, convert_service(service, &ports)))
         .try_collect()
         .await?;
+    let mut http_services: HashMap<Uuid, AggregatedHttpService> = query!(&mut tx, HttpService)
+        .condition(HttpService::F.workspace.equals(path.uuid))
+        .stream()
+        .map_ok(|http_service| (http_service.uuid, http_service.into()))
+        .try_collect()
+        .await?;
     let mut domains: HashMap<Uuid, AggregatedDomain> = query!(&mut tx, Domain)
         .condition(Domain::F.workspace.equals(path.uuid))
         .stream()
@@ -145,7 +155,20 @@ pub(crate) async fn export_workspace(
         })
         .await?;
 
-    // Resolve BackRefs
+    // Resolve BackRefs manually
+    for http_service in http_services.values() {
+        if let Some(host) = hosts.get_mut(&http_service.host) {
+            host.http_services.push(http_service.uuid);
+        }
+        if let Some(port) = ports.get_mut(&http_service.port) {
+            port.http_services.push(http_service.uuid);
+        }
+        if let Some(domain) = http_service.domain.as_ref() {
+            if let Some(domain) = domains.get_mut(domain) {
+                domain.http_services.push(http_service.uuid);
+            }
+        }
+    }
     for service in services.values() {
         if let Some(host) = hosts.get_mut(&service.host) {
             host.services.push(service.uuid);
@@ -194,6 +217,12 @@ pub(crate) async fn export_workspace(
     query_tags!(host, hosts, HostGlobalTag, HostWorkspaceTag);
     query_tags!(port, ports, PortGlobalTag, PortWorkspaceTag);
     query_tags!(service, services, ServiceGlobalTag, ServiceWorkspaceTag);
+    query_tags!(
+        http_service,
+        http_services,
+        HttpServiceGlobalTag,
+        HttpServiceWorkspaceTag
+    );
     query_tags!(domain, domains, DomainGlobalTag, DomainWorkspaceTag);
 
     // Query findings
@@ -299,6 +328,7 @@ pub(crate) async fn export_workspace(
         hosts,
         ports,
         services,
+        http_services,
         domains,
         relations,
         findings,
@@ -315,7 +345,7 @@ impl From<Host> for AggregatedHost {
             ports: _,
             services: _,
             domains: _,
-            http_services: _, // TODO
+            http_services: _,
             comment,
             workspace: _,
             workspace_tags: _,
@@ -334,6 +364,7 @@ impl From<Host> for AggregatedHost {
             certainty: FromDb::from_db(certainty),
             ports: Vec::new(),
             services: Vec::new(),
+            http_services: Vec::new(),
             domains: Vec::new(),
             comment,
             tags: Default::default(),
@@ -349,7 +380,7 @@ impl From<Port> for AggregatedPort {
             protocol,
             host,
             services: _,
-            http_services: _, // TODO
+            http_services: _,
             comment,
             workspace: _,
             global_tags: _,
@@ -366,6 +397,7 @@ impl From<Port> for AggregatedPort {
             protocol: FromDb::from_db(protocol),
             host: *host.key(),
             services: Vec::new(),
+            http_services: Vec::new(),
             certainty: FromDb::from_db(certainty),
             comment,
             tags: Default::default(),
@@ -410,6 +442,39 @@ pub fn convert_service(
         created_at,
     }
 }
+impl From<HttpService> for AggregatedHttpService {
+    fn from(value: HttpService) -> Self {
+        let HttpService {
+            uuid,
+            name,
+            base_path,
+            tls,
+            sni_required,
+            domain,
+            host,
+            port,
+            comment,
+            workspace_tags: _,
+            global_tags: _,
+            workspace: _,
+            created_at,
+        } = value;
+
+        Self {
+            uuid,
+            name,
+            domain: domain.map(|fm| *fm.key()),
+            host: *host.key(),
+            port: *port.key(),
+            base_path,
+            tls,
+            sni_required,
+            comment,
+            tags: Default::default(),
+            created_at,
+        }
+    }
+}
 impl From<Domain> for AggregatedDomain {
     fn from(value: Domain) -> Self {
         let Domain {
@@ -419,7 +484,7 @@ impl From<Domain> for AggregatedDomain {
             hosts: _,
             sources: _,
             destinations: _,
-            http_services: _, // TODO
+            http_services: _,
             workspace: _,
             workspace_tags: _,
             global_tags: _,
@@ -432,6 +497,7 @@ impl From<Domain> for AggregatedDomain {
         Self {
             uuid,
             domain,
+            http_services: Vec::new(),
             hosts: Vec::new(),
             sources: Vec::new(),
             destinations: Vec::new(),

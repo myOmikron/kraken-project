@@ -33,6 +33,9 @@ pub struct AggregatedWorkspace {
     /// The domains found by this workspace
     pub domains: HashMap<Uuid, AggregatedDomain>,
 
+    /// The http services found by this workspace
+    pub http_services: HashMap<Uuid, AggregatedHttpService>,
+
     /// All m2m relations which are not inlined
     pub relations: HashMap<Uuid, AggregatedRelation>,
 
@@ -67,6 +70,9 @@ pub struct AggregatedHost {
     /// The services of a host
     pub services: Vec<Uuid>,
 
+    /// The http services of a host
+    pub http_services: Vec<Uuid>,
+
     /// Uuids to [`AggregatedRelation::DomainHost`]
     pub domains: Vec<Uuid>,
 
@@ -98,6 +104,9 @@ pub struct AggregatedPort {
 
     /// The services that link to this port
     pub services: Vec<Uuid>,
+
+    /// The http services of a port
+    pub http_services: Vec<Uuid>,
 
     /// The certainty of the port
     pub certainty: PortCertainty,
@@ -157,6 +166,9 @@ pub struct AggregatedDomain {
     /// The domain that was found
     pub domain: String,
 
+    /// The http services of a domain
+    pub http_services: Vec<Uuid>,
+
     /// Uuids to [`AggregatedRelation::DomainHost`]
     pub hosts: Vec<Uuid>,
 
@@ -177,6 +189,44 @@ pub struct AggregatedDomain {
     pub tags: AggregatedTags,
 
     /// The first time this domain was encountered
+    pub created_at: DateTime<Utc>,
+}
+
+/// A detected http service on a host
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct AggregatedHttpService {
+    /// The http service's uuid
+    pub uuid: Uuid,
+
+    /// Name of the http service
+    pub name: String,
+
+    /// The domain this http service is attached to
+    pub domain: Option<Uuid>,
+
+    /// The host this http service is attached to
+    pub host: Uuid,
+
+    /// The port this http service is attached to
+    pub port: Uuid,
+
+    /// The base path the http service is routed on
+    pub base_path: String,
+
+    /// Is this a https service?
+    pub tls: bool,
+
+    /// Does this http service require sni?
+    pub sni_required: bool,
+
+    /// A comment to the service
+    pub comment: String,
+
+    /// Set of global and local tags
+    #[serde(flatten)]
+    pub tags: AggregatedTags,
+
+    /// The first time this service was encountered
     pub created_at: DateTime<Utc>,
 }
 

@@ -771,7 +771,8 @@ pub async fn get_http_service_findings(
     let findings = ListFindings::query_through_affected(
         &mut tx,
         w_uuid,
-        FindingAffected::F.http_service.equals(hs_uuid),
+        FindingAffected::F.http_service,
+        hs_uuid,
     )
     .await?;
 
