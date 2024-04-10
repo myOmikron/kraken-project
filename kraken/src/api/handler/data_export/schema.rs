@@ -9,12 +9,14 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::domains::schema::DomainCertainty;
+use crate::api::handler::findings::schema::FindingSeverity;
 use crate::api::handler::hosts::schema::HostCertainty;
 use crate::api::handler::hosts::schema::OsType;
 use crate::api::handler::ports::schema::PortCertainty;
 use crate::api::handler::ports::schema::PortProtocol;
 use crate::api::handler::services::schema::ServiceCertainty;
 use crate::api::handler::services::schema::ServiceProtocols;
+use crate::chan::ws_manager::schema::AggregationType;
 
 /// The aggregated results of a workspace
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -33,6 +35,9 @@ pub struct AggregatedWorkspace {
 
     /// All m2m relations which are not inlined
     pub relations: HashMap<Uuid, AggregatedRelation>,
+
+    /// The findings found by this workspace
+    pub findings: HashMap<Uuid, AggregatedFinding>,
 }
 
 /// A representation of an host.
@@ -173,6 +178,31 @@ pub struct AggregatedDomain {
 
     /// The first time this domain was encountered
     pub created_at: DateTime<Utc>,
+}
+
+/// A finding
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct AggregatedFinding {
+    /// The uuid of the finding
+    pub uuid: Uuid,
+
+    /// The finding's name (taken from its definition)
+    pub name: String,
+
+    /// The finding's cve (taken from its definition)
+    pub cve: Option<String>,
+
+    /// The finding's severity
+    pub severity: FindingSeverity,
+
+    /// List of all affected objects
+    pub affected: HashMap<Uuid, AggregationType>,
+
+    /// The point in time this finding was created
+    pub created_at: DateTime<Utc>,
+
+    /// The list of categories this finding falls into
+    pub categories: Vec<String>,
 }
 
 /// Set of global and local tags

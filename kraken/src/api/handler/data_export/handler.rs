@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::future::ready;
 
 use actix_web::get;
 use actix_web::web::Json;
@@ -16,12 +17,14 @@ use crate::api::handler::common::error::ApiError;
 use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::data_export::schema::AggregatedDomain;
+use crate::api::handler::data_export::schema::AggregatedFinding;
 use crate::api::handler::data_export::schema::AggregatedHost;
 use crate::api::handler::data_export::schema::AggregatedPort;
 use crate::api::handler::data_export::schema::AggregatedRelation;
 use crate::api::handler::data_export::schema::AggregatedService;
 use crate::api::handler::data_export::schema::AggregatedWorkspace;
 use crate::chan::global::GLOBAL;
+use crate::chan::ws_manager::schema::AggregationType;
 use crate::models::convert::FromDb;
 use crate::models::convert::IntoDb;
 use crate::models::Domain;
@@ -29,6 +32,9 @@ use crate::models::DomainDomainRelation;
 use crate::models::DomainGlobalTag;
 use crate::models::DomainHostRelation;
 use crate::models::DomainWorkspaceTag;
+use crate::models::Finding;
+use crate::models::FindingAffected;
+use crate::models::FindingFindingCategoryRelation;
 use crate::models::Host;
 use crate::models::HostGlobalTag;
 use crate::models::HostWorkspaceTag;
@@ -96,6 +102,7 @@ pub(crate) async fn export_workspace(
         .await?;
     let mut relations = HashMap::new();
 
+    // Resolve M2M relations
     query!(&mut tx, DomainDomainRelation)
         .condition(DomainDomainRelation::F.workspace.equals(path.uuid))
         .stream()
@@ -116,7 +123,6 @@ pub(crate) async fn export_workspace(
             async { Ok(()) }
         })
         .await?;
-
     query!(&mut tx, DomainHostRelation)
         .condition(DomainHostRelation::F.workspace.equals(path.uuid))
         .stream()
@@ -139,7 +145,7 @@ pub(crate) async fn export_workspace(
         })
         .await?;
 
-    // Resolve BackRefs manually
+    // Resolve BackRefs
     for service in services.values() {
         if let Some(host) = hosts.get_mut(&service.host) {
             host.services.push(service.uuid);
@@ -190,6 +196,103 @@ pub(crate) async fn export_workspace(
     query_tags!(service, services, ServiceGlobalTag, ServiceWorkspaceTag);
     query_tags!(domain, domains, DomainGlobalTag, DomainWorkspaceTag);
 
+    // Query findings
+    let mut categories = query!(
+        &mut tx,
+        (
+            FindingFindingCategoryRelation::F.finding.uuid,
+            FindingFindingCategoryRelation::F.category.name,
+        )
+    )
+    .condition(
+        FindingFindingCategoryRelation::F
+            .finding
+            .workspace
+            .equals(path.uuid),
+    )
+    .stream()
+    .try_fold(HashMap::new(), |mut map, (uuid, name)| {
+        map.entry(uuid).or_insert(Vec::new()).push(name);
+        ready(Ok(map))
+    })
+    .await?;
+    let mut affected = query!(&mut tx, FindingAffected)
+        .condition(FindingAffected::F.workspace.equals(path.uuid))
+        .stream()
+        .err_into::<ApiError>()
+        .and_then(|x| {
+            let (aggr_uuid, aggr_type) = match &x {
+                FindingAffected {
+                    domain: Some(fm),
+                    host: None,
+                    port: None,
+                    service: None,
+                    ..
+                } => (*fm.key(), AggregationType::Domain),
+                FindingAffected {
+                    domain: None,
+                    host: Some(fm),
+                    port: None,
+                    service: None,
+                    ..
+                } => (*fm.key(), AggregationType::Host),
+                FindingAffected {
+                    domain: None,
+                    host: None,
+                    port: Some(fm),
+                    service: None,
+                    ..
+                } => (*fm.key(), AggregationType::Port),
+                FindingAffected {
+                    domain: None,
+                    host: None,
+                    port: None,
+                    service: Some(fm),
+                    ..
+                } => (*fm.key(), AggregationType::Service),
+                _ => return ready(Err(ApiError::InternalServerError)),
+            };
+            ready(Ok((*x.finding.key(), aggr_uuid, aggr_type)))
+        })
+        .try_fold(
+            HashMap::new(),
+            |mut map, (finding, aggr_uuid, aggr_type)| {
+                map.entry(finding)
+                    .or_insert(HashMap::new())
+                    .insert(aggr_uuid, aggr_type);
+                ready(Ok(map))
+            },
+        )
+        .await?;
+    let findings = query!(
+        &mut tx,
+        (
+            Finding::F.uuid,
+            Finding::F.definition.name,
+            Finding::F.definition.cve,
+            Finding::F.severity,
+            Finding::F.created_at,
+        )
+    )
+    .condition(Finding::F.workspace.equals(path.uuid))
+    .stream()
+    .map_ok(|(uuid, name, cve, severity, created_at)| {
+        (
+            uuid,
+            AggregatedFinding {
+                uuid,
+                name,
+                cve,
+                severity: FromDb::from_db(severity),
+                affected: affected.remove(&uuid).unwrap_or_default(),
+                created_at,
+                categories: categories.remove(&uuid).unwrap_or_default(),
+            },
+        )
+    })
+    .try_collect()
+    .await?;
+
     tx.commit().await?;
     Ok(Json(AggregatedWorkspace {
         hosts,
@@ -197,6 +300,7 @@ pub(crate) async fn export_workspace(
         services,
         domains,
         relations,
+        findings,
     }))
 }
 
