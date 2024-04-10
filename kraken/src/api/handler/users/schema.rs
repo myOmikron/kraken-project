@@ -1,13 +1,9 @@
 use chrono::DateTime;
 use chrono::Utc;
-use rorm::Patch;
 use serde::Deserialize;
 use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
-
-use crate::models::User;
-use crate::models::UserPermission;
 
 /// The request to create a user
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
@@ -78,8 +74,9 @@ pub struct ListFullUsers {
 ///
 /// Note that `username` is unique, but as it is changeable,
 /// identify the user by its `uuid`
-#[derive(Deserialize, Serialize, ToSchema, Patch, Debug, Clone)]
-#[rorm(model = "User")]
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+#[cfg_attr(feature = "bin", derive(rorm::Patch))]
+#[cfg_attr(feature = "bin", rorm(model = "crate::models::User"))]
 pub struct SimpleUser {
     /// The uuid of the user
     pub uuid: Uuid,
@@ -94,4 +91,16 @@ pub struct SimpleUser {
 pub struct ListUsers {
     /// List of users
     pub users: Vec<SimpleUser>,
+}
+
+/// The permission of a user
+#[derive(Copy, Clone, ToSchema, Deserialize, Serialize, Debug, Eq, PartialEq)]
+pub enum UserPermission {
+    /// The user can not create workspaces or start any attacks.
+    /// The user can only be invited to existing workspaces to retrieve the data of the workspace
+    ReadOnly,
+    /// Default permission for users
+    Default,
+    /// Administrative access
+    Admin,
 }

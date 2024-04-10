@@ -10,12 +10,9 @@ use uuid::Uuid;
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
 use crate::api::handler::common::schema::PageParams;
 use crate::api::handler::common::schema::SimpleTag;
+use crate::api::handler::findings::schema::FindingSeverity;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::services::schema::SimpleService;
-use crate::models::FindingSeverity;
-use crate::models::ManualPortCertainty;
-use crate::models::PortCertainty;
-use crate::models::PortProtocol;
 
 /// The request to manually add a port
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -131,4 +128,37 @@ pub struct PortRelations {
 
     /// Services listening on this port
     pub services: Vec<SimpleService>,
+}
+
+/// The certainty states of a port
+#[derive(Copy, Clone, Deserialize, Serialize, ToSchema, Debug, PartialOrd, PartialEq)]
+pub enum PortCertainty {
+    /// 3rd party historical data
+    Historical = 0,
+    /// 3rd party data
+    SupposedTo = 1,
+    /// The host has responded either by HostAlive, Port or Service Detection or something similar
+    Verified = 2,
+}
+
+/// The certainty of a manually added port
+#[derive(Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+pub enum ManualPortCertainty {
+    /// Historical data
+    Historical,
+    /// Up to date data
+    SupposedTo,
+}
+
+/// A protocol of a port
+#[derive(ToSchema, Debug, Copy, Clone, Serialize, Deserialize)]
+pub enum PortProtocol {
+    /// Unknown protocol
+    Unknown,
+    /// tcp
+    Tcp,
+    /// udp
+    Udp,
+    /// sctp
+    Sctp,
 }

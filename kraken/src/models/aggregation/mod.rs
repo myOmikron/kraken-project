@@ -201,34 +201,6 @@ pub struct Service {
     pub created_at: DateTime<Utc>,
 }
 
-/// The parsed representation for a [`Service`]'s `protocols` field
-#[derive(ToSchema, Debug, Copy, Clone, Serialize, Deserialize)]
-pub enum ServiceProtocols {
-    /// The port's protocol is [`PortProtocol::Unknown`]
-    Unknown {}, // Not unit struct to make the api generator behave
-
-    /// The port's protocol is [`PortProtocol::Tcp`]
-    Tcp {
-        /// The service responds to raw tcp
-        raw: bool,
-
-        /// The service responds to tls
-        tls: bool,
-    },
-
-    /// The port's protocol is [`PortProtocol::Udp`]
-    Udp {
-        /// The service responds to raw udp
-        raw: bool,
-    },
-
-    /// The port's protocol is [`PortProtocol::Sctp`]
-    Sctp {
-        /// The service responds to raw sctp
-        raw: bool,
-    },
-}
-
 /// M2M relation between [GlobalTag] and [Service]
 #[derive(Model)]
 pub struct ServiceGlobalTag {

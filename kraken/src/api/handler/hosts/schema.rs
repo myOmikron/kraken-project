@@ -13,12 +13,9 @@ use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
 use crate::api::handler::common::schema::PageParams;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::domains::schema::SimpleDomain;
+use crate::api::handler::findings::schema::FindingSeverity;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
-use crate::models::FindingSeverity;
-use crate::models::HostCertainty;
-use crate::models::ManualHostCertainty;
-use crate::models::OsType;
 
 /// The request to manually add a host
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -129,4 +126,41 @@ pub struct HostRelations {
 
     /// Domains pointing to this host via a `CNAME` record which eventually resolves to the host
     pub indirect_domains: Vec<SimpleDomain>,
+}
+
+/// The certainty of a host
+#[derive(Copy, Clone, Deserialize, Serialize, ToSchema, Debug, PartialOrd, PartialEq)]
+pub enum HostCertainty {
+    /// 3rd party historical data
+    Historical = 0,
+    /// 3rd party data
+    SupposedTo = 1,
+    /// The host has responded either by HostAlive, Port or Service Detection or something similar
+    Verified = 2,
+}
+
+/// A representation of an OS type
+#[derive(Copy, Clone, Debug, ToSchema, Serialize, Deserialize)]
+pub enum OsType {
+    /// The OS type is currently unknown
+    Unknown,
+    /// Linux based OS
+    Linux,
+    /// Windows based OS
+    Windows,
+    /// Apple based OS
+    Apple,
+    /// Android based OS
+    Android,
+    /// FreeBSD based OS
+    FreeBSD,
+}
+
+/// The certainty of a manually added host
+#[derive(Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+pub enum ManualHostCertainty {
+    /// Historical data
+    Historical,
+    /// Up to date data
+    SupposedTo,
 }

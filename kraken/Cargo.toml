@@ -19,20 +19,21 @@ path = "./src/lib.rs"
 name = "kraken"
 
 [dependencies]
-kraken-proto = { path = "../kraken-proto" }
-
 # Important!
 #
 # When adding new dependencies, make sure to make them optional and add them to the "bin" feature
 # if they are only used in parts of the code, that are annotated with #[cfg(feature = "bin")].
 #
 # This will speed up the compile time when using kraken as a library.
+# As well as not forcing rorm's postgres-only feature on users or requiring protobuf-compiler to compile.
+
+kraken-proto = { path = "../kraken-proto", optional = true }
 
 # Webframework
 actix-web = { version = "~4", optional = true }
 # Extensions for actix-web
 actix-toolbox = { version = "~0.13", features = ["ws", "logging", "session-postgres-only"], optional = true }
-actix-files = { version = "~0.6" }
+actix-files = { version = "~0.6", optional = true }
 # Webauthn library
 webauthn-rs = { version = "~0.4", features = ["danger-allow-state-serialisation"] }
 
@@ -56,18 +57,18 @@ log = { version = "~0.4" }
 # Serialization
 serde = { version = "~1", features = ["derive"] }
 serde_repr = { version = "~0.1" }
-toml = { version = "~0.8" }
+toml = { version = "~0.8", optional = true }
 serde_json = { version = "~1" }
-serde_urlencoded = { version = "~0.7" } # required for oauth
+serde_urlencoded = { version = "~0.7", optional = true } # required for oauth
 # Time library
 chrono = { version = ">=0.4.20", default-features = false, features = ["serde"] }
 # Bytes abstractions for network usage
-bytes = { version = "~1" }
-bytestring = { version = "~1" }
+bytes = { version = "~1", optional = true }
+bytestring = { version = "~1", optional = true }
 # Base64 decoder and encoder
-base64 = { version = "~0.22" }
+base64 = { version = "~0.22", optional = true }
 # ip networks
-ipnet = { version = "~2", features = ["serde"] }
+ipnet = { version = "~2", features = ["serde"], optional = true }
 # Uuid v4 generation
 uuid = { version = "~1", features = ["serde", "v4"] }
 
@@ -86,10 +87,10 @@ prost = { version = "~0.12", optional = true }
 prost-types = { version = "~0.12", optional = true }
 
 # error management
-thiserror = { version = "~1" }
+thiserror = { version = "~1", optional = true }
 
 # ORM
-rorm = { version = "~0.6", default-features = false, features = ["tokio", "rustls", "cli", "uuid", "postgres-only", "chrono"] }
+rorm = { version = "~0.6", default-features = false, features = ["tokio", "rustls", "cli", "uuid", "postgres-only", "chrono"], optional = true }
 ipnetwork = { version = "~0.20", features = ["serde"] }
 
 # API for dehashed
@@ -100,23 +101,34 @@ rcgen = { version = "~0.13", features = ["x509-parser"], optional = true }
 url = { version = "~2", features = ["serde"] } # Parsing ip / domain when filling subject_alt_names
 
 # Image processing
-image = { version = "~0.25" }
+image = { version = "~0.25", optional = true }
 
 [features]
 rorm-main = []
 bin = [
+    "dep:kraken-proto",
     "dep:actix-web",
     "dep:actix-toolbox",
+    "dep:actix-files",
     "dep:utoipa-swagger-ui",
     "dep:argon2",
     "dep:sha2",
     "dep:clap",
     "dep:rpassword",
+    "dep:toml",
+    "dep:serde_urlencoded",
+    "dep:bytes",
+    "dep:bytestring",
+    "dep:base64",
+    "dep:ipnet",
     "dep:tokio",
     "dep:futures",
     "dep:rand",
     "dep:tonic",
     "dep:prost",
     "dep:prost-types",
+    "dep:thiserror",
+    "dep:rorm",
     "dep:rcgen",
+    "dep:image",
 ]

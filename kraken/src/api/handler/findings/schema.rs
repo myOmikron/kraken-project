@@ -9,7 +9,6 @@ use uuid::Uuid;
 use crate::api::handler::common::de_optional;
 use crate::api::handler::finding_definitions::schema::SimpleFindingDefinition;
 use crate::chan::ws_manager::schema::AggregationType;
-use crate::models::FindingSeverity;
 
 /// The request to create a new finding
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -154,4 +153,20 @@ pub struct PathFinding {
     pub w_uuid: Uuid,
     /// Finding uuid
     pub f_uuid: Uuid,
+}
+
+/// The severity of a finding
+#[rustfmt::skip]
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, ToSchema, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub enum FindingSeverity {
+    /// Severity was set to okay
+    Okay,
+    /// Low severity
+    Low,
+    /// Medium severity
+    Medium,
+    /// High severity
+    High,
+    /// Critical severity
+    Critical,
 }

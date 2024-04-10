@@ -6,12 +6,8 @@ use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::DnsRecordType;
-use crate::models::DnsTxtScanServiceHintType;
-use crate::models::DnsTxtScanSpfType;
-use crate::models::DnsTxtScanSummaryType;
-use crate::models::OsType;
-use crate::models::ServiceCertainty;
+use crate::api::handler::hosts::schema::OsType;
+use crate::api::handler::services::schema::ServiceCertainty;
 
 /// A simple representation of a bruteforce subdomains result
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -319,4 +315,99 @@ pub struct FullOsDetectionResult {
 
     /// Optional detected version numbers, separated by OR (`" OR "`)
     pub version: String,
+}
+
+/// The type of DNS Record
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, ToSchema)]
+pub enum DnsRecordType {
+    /// [A](crate::rpc::rpc_definitions::shared::dns_record::Record::A) record type
+    A,
+    /// [Aaaa](crate::rpc::rpc_definitions::shared::dns_record::Record::Aaaa) record type
+    Aaaa,
+    /// [Caa](crate::rpc::rpc_definitions::shared::dns_record::Record::GenericRecord) record type
+    Caa,
+    /// [Cname](crate::rpc::rpc_definitions::shared::dns_record::Record::GenericRecord) record type
+    Cname,
+    /// [Mx](crate::rpc::rpc_definitions::shared::dns_record::Record::GenericRecord) record type
+    Mx,
+    /// [Tlsa](crate::rpc::rpc_definitions::shared::dns_record::Record::GenericRecord) record type
+    Tlsa,
+    /// [Txt](crate::rpc::rpc_definitions::shared::dns_record::Record::GenericRecord) record type
+    Txt,
+}
+
+/// The type of DNS TXT scan result for service hints
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, ToSchema)]
+pub enum DnsTxtScanServiceHintType {
+    /// Domain owner might have or use a google account
+    HasGoogleAccount,
+    /// Domain owner might have or use a globalsign account
+    HasGlobalsignAccount,
+    /// Domain owner might have or use globalsign smime email service
+    HasGlobalsignSMime,
+    /// Domain owner might have or use a docusign account
+    HasDocusignAccount,
+    /// Domain owner might have or use a apple account
+    HasAppleAccount,
+    /// Domain owner might have or use a facebook account
+    HasFacebookAccount,
+    /// Domain owner might have or use a hubspot account
+    HasHubspotAccount,
+    /// Domain owner might have or use a microsoft account with MS Dyancmis 365
+    HasMSDynamics365,
+    /// Domain owner might have or use a stripe account
+    HasStripeAccount,
+    /// Domain owner might have or use a onetrust sso
+    HasOneTrustSso,
+    /// Domain owner might have or use a brevo account
+    HasBrevoAccount,
+    /// Can manage Atlassian accounts with emails with this domain
+    OwnsAtlassianAccounts,
+    /// Can manage Zoom accounts with emails with this domain
+    OwnsZoomAccounts,
+    /// E-Mail might be managed by ProtonMail
+    EmailProtonMail,
+}
+
+/// The type of DNS TXT scan result for SPF rules
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, ToSchema)]
+pub enum DnsTxtScanSpfType {
+    /// SPF part: 'all' directive, no other fields set.
+    All,
+    /// SPF part: 'include:DOMAIN' directive, sets `DnsTxtScanSpfEntry::spf_domain`.
+    /// Directive to tell SPF parsers to lookup the referenced DNS entry.
+    Include,
+    /// SPF part: 'a[:DOMAIN][/32][//128]' directive, sets `DnsTxtScanSpfEntry::spf_domain`.
+    /// Directive that allows the A/AAAA IPs under the specified domain to send mails.
+    A,
+    /// SPF part: 'mx[:DOMAIN][/32][//128]' directive, sets `DnsTxtScanSpfEntry::spf_domain`.
+    /// Directive that allows the MX IP under the specified domain to send mails.
+    Mx,
+    /// SPF part: 'ptr[:DOMAIN]' directive, sets `DnsTxtScanSpfEntry::spf_domain`.
+    /// Deprecated, but may allow PTR IPs under the specified domain to send mails.
+    Ptr,
+    /// SPF part: 'ip4:IP' and 'ip6:IP' directive, sets `DnsTxtScanSpfEntry::spf_ip`.
+    /// Allows the exact given IPs or networks to send mails.
+    Ip,
+    /// SPF part: 'exists:DOMAIN', sets `DnsTxtScanSpfEntry::spf_domain`.
+    /// Only allows sending mails if the given DOMAIN resolves to any address.
+    Exists,
+    /// SPF modifier: 'redirect=DOMAIN', sets `DnsTxtScanSpfEntry::spf_domain`.
+    /// Query the given DOMAIN in case no match rules.
+    Redirect,
+    /// SPF modifier: 'exp=DOMAIN', sets `DnsTxtScanSpfEntry::spf_domain`.
+    /// Query the given DOMAIN to see human readable text explaining the SPF rules.
+    Explanation,
+    /// SPF modifier: 'KEY=VALUE'.
+    /// Syntax for future modifiers. Doesn't set domain or ip.
+    Modifier,
+}
+
+/// Indicates what children the DnsTxtScanAttackResult has
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, ToSchema)]
+pub enum DnsTxtScanSummaryType {
+    /// Site verifications, domain keys, etc. that indicate possibly used services
+    ServiceHints,
+    /// SPF records controlling how email is supposed to be handled.
+    Spf,
 }

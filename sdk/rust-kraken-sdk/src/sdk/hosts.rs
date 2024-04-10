@@ -9,8 +9,8 @@ use kraken::api::handler::hosts::schema::CreateHostRequest;
 use kraken::api::handler::hosts::schema::FullHost;
 use kraken::api::handler::hosts::schema::GetAllHostsQuery;
 use kraken::api::handler::hosts::schema::HostRelations;
+use kraken::api::handler::hosts::schema::ManualHostCertainty;
 use kraken::api::handler::hosts::schema::UpdateHostRequest;
-use kraken::models::ManualHostCertainty;
 use uuid::Uuid;
 
 use crate::KrakenClient;

@@ -8,13 +8,13 @@ use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::DomainCertainty;
-use crate::models::HostCertainty;
-use crate::models::OsType;
-use crate::models::PortCertainty;
-use crate::models::PortProtocol;
-use crate::models::ServiceCertainty;
-use crate::models::ServiceProtocols;
+use crate::api::handler::domains::schema::DomainCertainty;
+use crate::api::handler::hosts::schema::HostCertainty;
+use crate::api::handler::hosts::schema::OsType;
+use crate::api::handler::ports::schema::PortCertainty;
+use crate::api::handler::ports::schema::PortProtocol;
+use crate::api::handler::services::schema::ServiceCertainty;
+use crate::api::handler::services::schema::ServiceProtocols;
 
 /// The aggregated results of a workspace
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]

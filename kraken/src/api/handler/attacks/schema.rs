@@ -11,7 +11,6 @@ use uuid::Uuid;
 
 use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
-use crate::models::AttackType;
 
 /// The settings of a subdomain bruteforce request
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
@@ -327,6 +326,39 @@ pub enum DomainOrNetwork {
     /// A domain name
     #[schema(value_type = String, example = "kraken.test")]
     Domain(String),
+}
+
+/// The type of attack
+#[derive(Debug, Copy, Clone, ToSchema, Serialize, Deserialize)]
+pub enum AttackType {
+    /// First variant to be mapped for 0
+    Undefined,
+    /// Bruteforce subdomains via DNS requests
+    BruteforceSubdomains,
+    /// Query certificate transparency
+    QueryCertificateTransparency,
+    /// Query the unhashed API
+    QueryUnhashed,
+    /// Check if a host is reachable via icmp
+    HostAlive,
+    /// Detect the service that is running on a port
+    ServiceDetection,
+    /// Detect UDP services running on a host
+    UdpServiceDetection,
+    /// Resolve domain names
+    DnsResolution,
+    /// Resolve domain names
+    DnsTxtScan,
+    /// Scan udp ports
+    UdpPortScan,
+    /// Bruteforce your way through an http service
+    ForcedBrowsing,
+    /// Detect a host's OS
+    OSDetection,
+    /// Detect a service's version
+    VersionDetection,
+    /// Detect an anti port scan system
+    AntiPortScanningDetection,
 }
 
 /// Deserializes a string and parses it as `{start}-{end}` where `start` and `end` are both `u16`

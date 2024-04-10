@@ -9,10 +9,10 @@ use kraken::api::handler::findings::schema::SimpleFinding;
 use kraken::api::handler::services::schema::CreateServiceRequest;
 use kraken::api::handler::services::schema::FullService;
 use kraken::api::handler::services::schema::GetAllServicesQuery;
+use kraken::api::handler::services::schema::ManualServiceCertainty;
+use kraken::api::handler::services::schema::ServiceProtocols;
 use kraken::api::handler::services::schema::ServiceRelations;
 use kraken::api::handler::services::schema::UpdateServiceRequest;
-use kraken::models::ManualServiceCertainty;
-use kraken::models::ServiceProtocols;
 use uuid::Uuid;
 
 use crate::KrakenClient;

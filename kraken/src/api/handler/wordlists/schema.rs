@@ -1,10 +1,7 @@
-use rorm::Patch;
 use serde::Deserialize;
 use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
-
-use crate::models::WordList;
 
 /// Arguments for creating a new wordlist
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -37,8 +34,9 @@ pub struct UpdateWordlistRequest {
 }
 
 /// A wordlist without its `path` field
-#[derive(Serialize, Deserialize, ToSchema, Patch, Debug, Clone)]
-#[rorm(model = "WordList")]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[cfg_attr(feature = "bin", derive(rorm::Patch))]
+#[cfg_attr(feature = "bin", rorm(model = "crate::models::WordList"))]
 pub struct SimpleWordlist {
     /// The primary key of the wordlist
     pub uuid: Uuid,
@@ -51,8 +49,9 @@ pub struct SimpleWordlist {
 }
 
 /// A wordlist including its `path` field only meant for admins
-#[derive(Serialize, Deserialize, ToSchema, Patch, Debug, Clone)]
-#[rorm(model = "WordList")]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[cfg_attr(feature = "bin", derive(rorm::Patch))]
+#[cfg_attr(feature = "bin", rorm(model = "crate::models::WordList"))]
 pub struct FullWordlist {
     /// The primary key of the wordlist
     pub uuid: Uuid,

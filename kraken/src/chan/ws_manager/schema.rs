@@ -16,12 +16,12 @@ use crate::api::handler::domains::schema::SimpleDomain;
 use crate::api::handler::finding_affected::schema::UpdateFindingAffectedRequest;
 use crate::api::handler::finding_definitions::schema::UpdateFindingDefinitionRequest;
 use crate::api::handler::findings::schema::UpdateFindingRequest;
+use crate::api::handler::hosts::schema::OsType;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
 use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
-use crate::models::OsType;
 
 /// Message that is sent via websocket from the client to the server.
 ///

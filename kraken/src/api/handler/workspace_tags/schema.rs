@@ -4,7 +4,7 @@ use utoipa::IntoParams;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::Color;
+use crate::api::handler::common::schema::Color;
 
 /// The request to create a workspace tag
 #[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]

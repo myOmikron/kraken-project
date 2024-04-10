@@ -8,8 +8,8 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::common::de_optional;
+use crate::api::handler::findings::schema::FindingSeverity;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
-use crate::models::FindingSeverity;
 
 /// The request to create a new finding definition
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

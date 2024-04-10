@@ -9,10 +9,10 @@ use kraken::api::handler::findings::schema::SimpleFinding;
 use kraken::api::handler::ports::schema::CreatePortRequest;
 use kraken::api::handler::ports::schema::FullPort;
 use kraken::api::handler::ports::schema::GetAllPortsQuery;
+use kraken::api::handler::ports::schema::ManualPortCertainty;
+use kraken::api::handler::ports::schema::PortProtocol;
 use kraken::api::handler::ports::schema::PortRelations;
 use kraken::api::handler::ports::schema::UpdatePortRequest;
-use kraken::models::ManualPortCertainty;
-use kraken::models::PortProtocol;
 use uuid::Uuid;
 
 use crate::KrakenClient;

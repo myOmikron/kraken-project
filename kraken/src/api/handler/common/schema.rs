@@ -22,8 +22,6 @@ pub use utoipa_fix::ServiceResultsPage;
 pub use utoipa_fix::UdpServiceDetectionResultsPage;
 use uuid::Uuid;
 
-use crate::models::Color;
-
 /// A common response that contains a single uuid
 #[derive(Deserialize, Serialize, ToSchema, Debug, Copy, Clone)]
 pub struct UuidResponse {
@@ -132,6 +130,19 @@ pub struct SimpleTag {
     pub color: Color,
     /// The type of the tag
     pub tag_type: TagType,
+}
+
+/// Color value
+#[derive(Deserialize, Serialize, ToSchema, Debug, Copy, Clone)]
+pub struct Color {
+    /// Red value
+    pub r: u8,
+    /// Green value
+    pub g: u8,
+    /// Blue value
+    pub b: u8,
+    /// Alpha value
+    pub a: u8,
 }
 
 /// This type holds all possible error types that can be returned by the API.

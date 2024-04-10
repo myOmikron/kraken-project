@@ -5,6 +5,7 @@ pub mod api;
 pub mod chan;
 #[cfg(feature = "bin")]
 pub mod config;
+#[cfg(feature = "bin")]
 pub mod models;
 
 #[cfg(feature = "bin")]

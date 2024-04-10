@@ -16,12 +16,12 @@ use crate::api::handler::attack_results::schema::SimpleBruteforceSubdomainsResul
 use crate::api::handler::attack_results::schema::SimpleDnsResolutionResult;
 use crate::api::handler::attack_results::schema::SimpleHostAliveResult;
 use crate::api::handler::attack_results::schema::SimpleQueryUnhashedResult;
+use crate::api::handler::hosts::schema::ManualHostCertainty;
+use crate::api::handler::hosts::schema::OsType;
+use crate::api::handler::ports::schema::ManualPortCertainty;
+use crate::api::handler::ports::schema::PortProtocol;
+use crate::api::handler::services::schema::ManualServiceCertainty;
 use crate::api::handler::users::schema::SimpleUser;
-use crate::models::ManualHostCertainty;
-use crate::models::ManualPortCertainty;
-use crate::models::ManualServiceCertainty;
-use crate::models::OsType;
-use crate::models::PortProtocol;
 
 /// Numbers how many attacks of a certain kind found an aggregated model
 #[derive(Copy, Clone, Serialize, Deserialize, ToSchema, Debug, Default)]

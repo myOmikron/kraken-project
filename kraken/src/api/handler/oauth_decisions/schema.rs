@@ -4,7 +4,6 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
-use crate::models::OAuthDecisionAction;
 
 /// Response holding a user's oauth decisions
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -28,4 +27,13 @@ pub struct FullOauthDecision {
     /// Action what to do with new incoming oauth requests
     #[schema(inline)]
     pub action: OAuthDecisionAction,
+}
+
+/// Action what to do with new oauth requests
+#[derive(ToSchema, Serialize, Deserialize, Debug, Clone, Copy)]
+pub enum OAuthDecisionAction {
+    /// Auto accept new requests
+    Accept,
+    /// Auto deny new requests
+    Deny,
 }

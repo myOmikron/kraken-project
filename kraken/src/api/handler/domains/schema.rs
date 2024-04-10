@@ -9,9 +9,8 @@ use uuid::Uuid;
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
 use crate::api::handler::common::schema::PageParams;
 use crate::api::handler::common::schema::SimpleTag;
+use crate::api::handler::findings::schema::FindingSeverity;
 use crate::api::handler::hosts::schema::SimpleHost;
-use crate::models::DomainCertainty;
-use crate::models::FindingSeverity;
 
 /// The request to manually add a domain
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -115,4 +114,13 @@ pub struct DomainRelations {
 
     /// All hosts any `target_domains` resolves to
     pub indirect_hosts: Vec<SimpleHost>,
+}
+
+/// The certainty of a domain
+#[derive(Copy, Clone, Deserialize, Serialize, ToSchema, Debug, PartialOrd, PartialEq)]
+pub enum DomainCertainty {
+    /// The domain was not found through DNS
+    Unverified = 0,
+    /// Domain was verified through DNS
+    Verified = 1,
 }
