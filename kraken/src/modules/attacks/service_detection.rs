@@ -10,6 +10,7 @@ use rorm::prelude::ForeignModelByField;
 use uuid::Uuid;
 
 use crate::api::handler::attacks::schema::DomainOrNetwork;
+use crate::api::handler::services::schema::ServiceProtocols;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::models::AggregationSource;
@@ -20,7 +21,6 @@ use crate::models::PortProtocol;
 use crate::models::ServiceCertainty;
 use crate::models::ServiceDetectionName;
 use crate::models::ServiceDetectionResultInsert;
-use crate::models::ServiceProtocols;
 use crate::models::SourceType;
 use crate::modules::attacks::AttackContext;
 use crate::modules::attacks::AttackError;

@@ -15,6 +15,7 @@ use uuid::Uuid;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
 use crate::models::Host;
 use crate::models::HostCertainty;
 use crate::models::OsType;
@@ -90,9 +91,9 @@ async fn aggregate(data: HostAggregationData) -> Result<Uuid, rorm::Error> {
                     host: SimpleHost {
                         uuid: host.uuid,
                         ip_addr: host.ip_addr.ip(),
-                        os_type: host.os_type,
+                        os_type: FromDb::from_db(host.os_type),
                         response_time: host.response_time,
-                        certainty: host.certainty,
+                        certainty: FromDb::from_db(host.certainty),
                         comment: host.comment,
                         workspace: *host.workspace.key(),
                         created_at: host.created_at,

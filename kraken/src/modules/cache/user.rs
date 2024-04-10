@@ -14,6 +14,7 @@ use uuid::Uuid;
 use crate::api::handler::users::schema::FullUser;
 use crate::api::handler::users::schema::SimpleUser;
 use crate::chan::global::GLOBAL;
+use crate::models::convert::FromDb;
 use crate::models::User;
 
 /// A cache to retrieve users from the database
@@ -61,7 +62,7 @@ impl UserCache {
                         uuid,
                         username,
                         display_name,
-                        permission,
+                        permission: FromDb::from_db(permission),
                         created_at,
                         last_login,
                     },

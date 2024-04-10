@@ -16,6 +16,7 @@ use uuid::Uuid;
 use crate::api::handler::domains::schema::SimpleDomain;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
 use crate::models::Domain;
 use crate::models::DomainCertainty;
 use crate::models::InsertAttackError;
@@ -101,7 +102,7 @@ async fn aggregate(
                     domain: SimpleDomain {
                         uuid: domain.uuid,
                         domain: domain.domain,
-                        certainty: domain.certainty,
+                        certainty: FromDb::from_db(domain.certainty),
                         comment: domain.comment,
                         workspace: *domain.workspace.key(),
                         created_at: domain.created_at,

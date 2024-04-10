@@ -13,6 +13,7 @@ use crate::api::handler::attacks::schema::DomainOrNetwork;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
 use crate::models::AggregationSource;
 use crate::models::AggregationTable;
 use crate::models::HostCertainty;
@@ -85,7 +86,7 @@ impl HandleAttackResponse<OsDetectionResponse> for AttackContext {
         let version = version.join(" OR ");
 
         self.send_ws(WsMessage::OsDetectionResult {
-            os,
+            os: FromDb::from_db(os),
             host,
             hints: hints.clone(),
             version: version.clone(),

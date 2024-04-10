@@ -15,6 +15,7 @@ pub use workspace::*;
 
 mod aggregation;
 mod attack;
+pub mod convert;
 mod file;
 mod finding;
 mod leech;

@@ -17,6 +17,7 @@ use crate::api::handler::common::error::ApiError;
 use crate::api::handler::common::schema::PageParams;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::common::schema::TagType;
+use crate::models::convert::FromDb;
 use crate::models::FindingAffected;
 use crate::models::FindingSeverity;
 use crate::models::GlobalTag;
@@ -153,7 +154,7 @@ impl From<WorkspaceTag> for SimpleTag {
         SimpleTag {
             uuid: tag.uuid,
             name: tag.name,
-            color: tag.color.into(),
+            color: FromDb::from_db(tag.color),
             tag_type: TagType::Workspace,
         }
     }
@@ -164,7 +165,7 @@ impl From<GlobalTag> for SimpleTag {
         SimpleTag {
             uuid: tag.uuid,
             name: tag.name,
-            color: tag.color.into(),
+            color: FromDb::from_db(tag.color),
             tag_type: TagType::Global,
         }
     }

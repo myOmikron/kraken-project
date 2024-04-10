@@ -12,14 +12,15 @@ use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use uuid::Uuid;
 
+use crate::api::handler::services::schema::ServiceProtocols;
 use crate::api::handler::services::schema::SimpleService;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
 use crate::models::Host;
 use crate::models::Port;
 use crate::models::Service;
 use crate::models::ServiceCertainty;
-use crate::models::ServiceProtocols;
 use crate::models::Workspace;
 use crate::modules::aggregator::ServiceAggregationData;
 
@@ -128,7 +129,7 @@ async fn aggregate(data: ServiceAggregationData) -> Result<Uuid, rorm::Error> {
                         port: data.port,
                         host: data.host,
                         uuid: service.uuid,
-                        certainty: data.certainty,
+                        certainty: FromDb::from_db(data.certainty),
                         name: service.name,
                         comment: String::new(),
                         version: None,

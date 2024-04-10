@@ -13,6 +13,7 @@ use crate::api::handler::findings::schema::ListFindings;
 use crate::api::handler::findings::schema::SimpleFinding;
 use crate::api::handler::findings::schema::SimpleFindingAffected;
 use crate::chan::ws_manager::schema::AggregationType;
+use crate::models::convert::FromDb;
 use crate::models::FindingAffected;
 
 /// Convert a [`FindingAffected`] into a [`SimpleFindingAffected`]
@@ -111,7 +112,7 @@ impl ListFindings {
                     definition,
                     name,
                     cve,
-                    severity,
+                    severity: FromDb::from_db(severity),
                     created_at,
                     affected_count: affected_lookup.get(&uuid).copied().unwrap_or(0),
                 },

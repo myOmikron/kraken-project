@@ -46,6 +46,7 @@ use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
 use crate::api::handler::users::schema::SimpleUser;
+use crate::api::handler::users::schema::UserPermission;
 use crate::api::handler::workspace_invitations::schema::FullWorkspaceInvitation;
 use crate::api::handler::workspace_invitations::schema::WorkspaceInvitationList;
 use crate::api::handler::workspaces::schema::CreateWorkspaceRequest;
@@ -64,6 +65,7 @@ use crate::api::handler::workspaces::utils::get_workspace_unchecked;
 use crate::api::handler::workspaces::utils::run_search;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
 use crate::models::Attack;
 use crate::models::CertificateTransparencyResult;
 use crate::models::CertificateTransparencyValueName;
@@ -83,7 +85,6 @@ use crate::models::ServiceDetectionName;
 use crate::models::ServiceDetectionResult;
 use crate::models::UdpServiceDetectionName;
 use crate::models::UdpServiceDetectionResult;
-use crate::models::UserPermission;
 use crate::models::Workspace;
 use crate::models::WorkspaceInvitation;
 use crate::models::WorkspaceMember;
@@ -837,9 +838,9 @@ pub async fn get_search_results(
                     uuid: data.uuid,
                     workspace: *data.workspace.key(),
                     comment: data.comment,
-                    os_type: data.os_type,
+                    os_type: FromDb::from_db(data.os_type),
                     response_time: data.response_time,
-                    certainty: data.certainty,
+                    certainty: FromDb::from_db(data.certainty),
                     ip_addr: data.ip_addr.ip(),
                     created_at: data.created_at,
                 })
@@ -857,7 +858,7 @@ pub async fn get_search_results(
                     name: data.name,
                     version: data.version,
                     host: *data.host.key(),
-                    certainty: data.certainty,
+                    certainty: FromDb::from_db(data.certainty),
                     comment: data.comment,
                     workspace: *data.workspace.key(),
                     created_at: data.created_at,
@@ -875,10 +876,10 @@ pub async fn get_search_results(
                     comment: data.comment,
                     workspace: *data.workspace.key(),
                     port: data.port as u16,
-                    certainty: data.certainty,
+                    certainty: FromDb::from_db(data.certainty),
                     created_at: data.created_at,
                     host: *data.host.key(),
-                    protocol: data.protocol,
+                    protocol: FromDb::from_db(data.protocol),
                 })
             }
             ModelType::Domain => {
@@ -893,7 +894,7 @@ pub async fn get_search_results(
                     workspace: *data.workspace.key(),
                     created_at: data.created_at,
                     domain: data.domain,
-                    certainty: data.certainty,
+                    certainty: FromDb::from_db(data.certainty),
                 })
             }
             ModelType::DnsRecordResult => {
@@ -908,7 +909,7 @@ pub async fn get_search_results(
                     attack: *data.attack.key(),
                     source: data.source,
                     destination: data.destination,
-                    dns_record_type: data.dns_record_type,
+                    dns_record_type: FromDb::from_db(data.dns_record_type),
                 })
             }
             ModelType::DnsTxtScanResult => {
@@ -922,7 +923,7 @@ pub async fn get_search_results(
                     created_at: data.created_at,
                     attack: *data.attack.key(),
                     domain: data.domain,
-                    collection_type: data.collection_type,
+                    collection_type: FromDb::from_db(data.collection_type),
                 })
             }
             ModelType::DehashedQueryResult => {
@@ -1012,7 +1013,7 @@ pub async fn get_search_results(
                     attack: *data.attack.key(),
                     host: data.host,
                     port: data.port as u16,
-                    certainty: data.certainty,
+                    certainty: FromDb::from_db(data.certainty),
                     service_names,
                 })
             }
@@ -1035,7 +1036,7 @@ pub async fn get_search_results(
                     attack: *data.attack.key(),
                     host: data.host,
                     port: data.port as u16,
-                    certainty: data.certainty,
+                    certainty: FromDb::from_db(data.certainty),
                     service_names,
                 })
             }

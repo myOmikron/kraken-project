@@ -14,6 +14,7 @@ use uuid::Uuid;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
 use crate::models::Host;
 use crate::models::Port;
 use crate::models::PortCertainty;
@@ -87,8 +88,8 @@ async fn aggregate(data: PortAggregationData) -> Result<Uuid, rorm::Error> {
                     port: SimplePort {
                         uuid: port.uuid,
                         port: data.port,
-                        protocol: data.protocol,
-                        certainty: data.certainty,
+                        protocol: FromDb::from_db(data.protocol),
+                        certainty: FromDb::from_db(data.certainty),
                         host: data.host,
                         comment: String::new(),
                         workspace: data.workspace,

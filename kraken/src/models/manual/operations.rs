@@ -4,6 +4,7 @@ use rorm::insert;
 use rorm::prelude::*;
 use uuid::Uuid;
 
+use crate::api::handler::services::schema::ServiceProtocols;
 use crate::chan::global::GLOBAL;
 use crate::models::AggregationSource;
 use crate::models::AggregationTable;
@@ -20,7 +21,6 @@ use crate::models::OsType;
 use crate::models::PortCertainty;
 use crate::models::PortProtocol;
 use crate::models::ServiceCertainty;
-use crate::models::ServiceProtocols;
 use crate::models::SourceType;
 use crate::models::User;
 use crate::models::Workspace;

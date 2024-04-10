@@ -31,6 +31,7 @@ use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::chan::global::GLOBAL;
+use crate::models::convert::FromDb;
 use crate::models::Attack;
 use crate::models::User;
 use crate::models::UserPermission;
@@ -582,7 +583,7 @@ pub async fn get_attack(
                 created_at: w_created_at,
                 archived: w_archived,
             },
-            attack_type,
+            attack_type: FromDb::from_db(attack_type),
             started_by,
             finished_at,
             created_at,
@@ -668,7 +669,7 @@ pub async fn get_all_attacks(
                 w_archived,
             )| SimpleAttack {
                 uuid,
-                attack_type,
+                attack_type: FromDb::from_db(attack_type),
                 error,
                 created_at,
                 finished_at,
@@ -755,7 +756,7 @@ pub async fn get_workspace_attacks(
             w_archived,
         )| SimpleAttack {
             uuid,
-            attack_type,
+            attack_type: FromDb::from_db(attack_type),
             started_by,
             created_at,
             finished_at,

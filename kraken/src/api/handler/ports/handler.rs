@@ -43,6 +43,8 @@ use crate::api::handler::services::schema::SimpleService;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::AggregationType;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
+use crate::models::convert::IntoDb;
 use crate::models::AggregationSource;
 use crate::models::AggregationTable;
 use crate::models::FindingAffected;
@@ -170,15 +172,15 @@ pub async fn get_all_ports(
             |(uuid, port, protocol, certainty, comment, created_at, host, workspace)| FullPort {
                 uuid,
                 port: port as u16,
-                protocol,
+                protocol: FromDb::from_db(protocol),
                 comment,
-                certainty,
+                certainty: FromDb::from_db(certainty),
                 host: SimpleHost {
                     uuid: host.uuid,
                     ip_addr: host.ip_addr.ip(),
-                    os_type: host.os_type,
+                    os_type: FromDb::from_db(host.os_type),
                     response_time: host.response_time,
-                    certainty: host.certainty,
+                    certainty: FromDb::from_db(host.certainty),
                     workspace: *host.workspace.key(),
                     comment: host.comment,
                     created_at: host.created_at,
@@ -186,7 +188,7 @@ pub async fn get_all_ports(
                 workspace: *workspace.key(),
                 tags: tags.remove(&uuid).unwrap_or_default(),
                 sources: sources.remove(&uuid).unwrap_or_default(),
-                severity: severities.get(&uuid).copied(),
+                severity: severities.get(&uuid).copied().map(FromDb::from_db),
                 created_at,
             },
         )
@@ -271,14 +273,14 @@ pub async fn get_port(
     Ok(Json(FullPort {
         uuid: port.uuid,
         port: port.port as u16,
-        protocol: port.protocol,
-        certainty: port.certainty,
+        protocol: FromDb::from_db(port.protocol),
+        certainty: FromDb::from_db(port.certainty),
         host: SimpleHost {
             uuid: host.uuid,
             ip_addr: host.ip_addr.ip(),
-            os_type: host.os_type,
+            os_type: FromDb::from_db(host.os_type),
             response_time: host.response_time,
-            certainty: host.certainty,
+            certainty: FromDb::from_db(host.certainty),
             comment: host.comment,
             workspace: path.w_uuid,
             created_at: host.created_at,
@@ -286,7 +288,7 @@ pub async fn get_port(
         comment: port.comment,
         tags,
         sources,
-        severity,
+        severity: severity.map(FromDb::from_db),
         workspace: path.w_uuid,
         created_at: port.created_at,
     }))
@@ -321,7 +323,13 @@ pub async fn create_port(
     let PathUuid { uuid: workspace } = path.into_inner();
     Ok(Json(UuidResponse {
         uuid: ManualPort::insert(
-            &GLOBAL.db, workspace, user, ip_addr, port, certainty, protocol,
+            &GLOBAL.db,
+            workspace,
+            user,
+            ip_addr,
+            port,
+            certainty.into_db(),
+            protocol.into_db(),
         )
         .await?,
     }))
@@ -564,7 +572,7 @@ pub async fn get_port_relations(path: Path<PathPort>) -> ApiResult<Json<PortRela
             uuid: s.uuid,
             name: s.name,
             version: s.version,
-            certainty: s.certainty,
+            certainty: FromDb::from_db(s.certainty),
             host: *s.host.key(),
             port: s.port.map(|x| *x.key()),
             comment: s.comment,
@@ -587,8 +595,8 @@ pub async fn get_port_relations(path: Path<PathPort>) -> ApiResult<Json<PortRela
             uuid: host.uuid,
             ip_addr: host.ip_addr.ip(),
             response_time: host.response_time,
-            certainty: host.certainty,
-            os_type: host.os_type,
+            certainty: FromDb::from_db(host.certainty),
+            os_type: FromDb::from_db(host.os_type),
             comment: host.comment,
             workspace: *host.workspace.key(),
             created_at: host.created_at,

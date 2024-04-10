@@ -17,6 +17,7 @@ use crate::models::GlobalTag;
 use crate::models::Workspace;
 use crate::models::WorkspaceTag;
 
+mod convert;
 #[cfg(feature = "bin")]
 mod operations;
 

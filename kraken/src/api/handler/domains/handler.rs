@@ -49,6 +49,7 @@ use crate::api::handler::hosts::schema::SimpleHost;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::AggregationType;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
 use crate::models::AggregationSource;
 use crate::models::AggregationTable;
 use crate::models::Domain;
@@ -183,12 +184,12 @@ pub async fn get_all_domains(
         .map(|x| FullDomain {
             uuid: x.uuid,
             domain: x.domain,
-            certainty: x.certainty,
+            certainty: FromDb::from_db(x.certainty),
             comment: x.comment,
             workspace: *x.workspace.key(),
             tags: tags.remove(&x.uuid).unwrap_or_default(),
             sources: sources.remove(&x.uuid).unwrap_or_default(),
-            severity: severities.get(&x.uuid).copied(),
+            severity: severities.get(&x.uuid).copied().map(FromDb::from_db),
             created_at: x.created_at,
         })
         .collect();
@@ -268,11 +269,11 @@ pub async fn get_domain(
         uuid: path.d_uuid,
         domain: domain.domain,
         comment: domain.comment,
-        certainty: domain.certainty,
+        certainty: FromDb::from_db(domain.certainty),
         workspace: path.w_uuid,
         tags,
         sources,
-        severity,
+        severity: severity.map(FromDb::from_db),
         created_at: domain.created_at,
     }))
 }
@@ -563,7 +564,7 @@ pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<Doma
             vec.push(SimpleDomain {
                 uuid: d.uuid,
                 domain: d.domain,
-                certainty: d.certainty,
+                certainty: FromDb::from_db(d.certainty),
                 comment: d.comment,
                 workspace: *d.workspace.key(),
                 created_at: d.created_at,
@@ -592,10 +593,10 @@ pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<Doma
             .push(SimpleHost {
                 uuid: h.uuid,
                 ip_addr: h.ip_addr.ip(),
-                os_type: h.os_type,
+                os_type: FromDb::from_db(h.os_type),
                 comment: h.comment,
                 response_time: h.response_time,
-                certainty: h.certainty,
+                certainty: FromDb::from_db(h.certainty),
                 workspace: *h.workspace.key(),
                 created_at: h.created_at,
             });

@@ -16,6 +16,8 @@ use crate::api::handler::users::schema::CreateUserRequest;
 use crate::api::handler::users::schema::FullUser;
 use crate::api::handler::users::schema::ListFullUsers;
 use crate::chan::global::GLOBAL;
+use crate::models::convert::FromDb;
+use crate::models::convert::IntoDb;
 use crate::models::User;
 
 /// Create a user
@@ -39,7 +41,7 @@ pub async fn create_user(req: Json<CreateUserRequest>) -> ApiResult<Json<UuidRes
         req.username,
         req.display_name,
         req.password,
-        req.permission,
+        req.permission.into_db(),
     )
     .await?;
 
@@ -115,7 +117,7 @@ pub async fn get_all_users_admin() -> ApiResult<Json<ListFullUsers>> {
                 uuid: u.uuid,
                 username: u.username,
                 display_name: u.display_name,
-                permission: u.permission,
+                permission: FromDb::from_db(u.permission),
                 created_at: u.created_at,
                 last_login: u.last_login,
             })

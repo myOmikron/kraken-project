@@ -18,6 +18,7 @@ use crate::api::handler::oauth_decisions::schema::ListOauthDecisions;
 use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::chan::global::GLOBAL;
+use crate::models::convert::FromDb;
 use crate::models::OAuthDecision;
 use crate::models::Workspace;
 use crate::models::WorkspaceAccessToken;
@@ -60,7 +61,7 @@ pub async fn get_decisions(
             owner,
             archived: workspace.archived,
         },
-        action,
+        action: FromDb::from_db(action),
     })
     .try_collect()
     .await?;

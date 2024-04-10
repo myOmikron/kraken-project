@@ -31,6 +31,7 @@ use crate::api::handler::attack_results::schema::SimpleDnsResolutionResult;
 use crate::api::handler::attack_results::schema::SimpleHostAliveResult;
 use crate::api::handler::attack_results::schema::SimpleQueryUnhashedResult;
 use crate::api::handler::users::schema::SimpleUser;
+use crate::models::convert::FromDb;
 use crate::models::AggregationSource;
 use crate::models::AggregationTable;
 use crate::models::Attack;
@@ -217,7 +218,7 @@ impl FullAggregationSource {
                                 created_at: result.created_at,
                                 source: result.source,
                                 destination: result.destination,
-                                dns_record_type: result.dns_record_type,
+                                dns_record_type: FromDb::from_db(result.dns_record_type),
                             });
                     }
                 }
@@ -330,7 +331,7 @@ impl FullAggregationSource {
                                 uuid: result.uuid,
                                 attack: *result.attack.key(),
                                 created_at: result.created_at,
-                                certainty: result.certainty,
+                                certainty: FromDb::from_db(result.certainty),
                                 service_names: services.remove(&result.uuid).unwrap_or_default(),
                                 host: result.host,
                                 port: result.port as u16,
@@ -368,7 +369,7 @@ impl FullAggregationSource {
                                 uuid: result.uuid,
                                 attack: *result.attack.key(),
                                 created_at: result.created_at,
-                                certainty: result.certainty,
+                                certainty: FromDb::from_db(result.certainty),
                                 service_names: services.remove(&result.uuid).unwrap_or_default(),
                                 host: result.host,
                                 port: result.port as u16,
@@ -389,7 +390,7 @@ impl FullAggregationSource {
                                 created_at: result.created_at,
                                 source: result.source,
                                 destination: result.destination,
-                                dns_record_type: result.dns_record_type,
+                                dns_record_type: FromDb::from_db(result.dns_record_type),
                             });
                     }
                 }
@@ -415,14 +416,14 @@ impl FullAggregationSource {
                                 attack: *result.attack.key(),
                                 domain: result.domain,
                                 created_at: result.created_at,
-                                collection_type: result.collection_type,
+                                collection_type: FromDb::from_db(result.collection_type),
                                 entries: service_hints
                                     .iter()
                                     .filter(|s| *s.collection.key() == result.uuid)
                                     .map(|s| DnsTxtScanEntry::ServiceHint {
                                         created_at: s.created_at,
                                         uuid: s.uuid,
-                                        txt_type: s.txt_type,
+                                        txt_type: FromDb::from_db(s.txt_type),
                                         rule: s.rule.clone(),
                                     })
                                     .chain(
@@ -432,7 +433,7 @@ impl FullAggregationSource {
                                                 created_at: s.created_at,
                                                 uuid: s.uuid,
                                                 rule: s.rule.clone(),
-                                                spf_type: s.spf_type,
+                                                spf_type: FromDb::from_db(s.spf_type),
                                                 spf_ip: s.spf_ip,
                                                 spf_domain: s.spf_domain.clone(),
                                                 spf_domain_ipv4_cidr: s.spf_domain_ipv4_cidr,
@@ -457,7 +458,7 @@ impl FullAggregationSource {
                                 host: result.host,
                                 hints: result.hints,
                                 version: result.version,
-                                os: result.os,
+                                os: FromDb::from_db(result.os),
                             },
                         );
                     }
@@ -510,8 +511,8 @@ impl FullAggregationSource {
                     {
                         manual_insert.push(ManualInsert::Host {
                             ip_addr: ip_addr.ip(),
-                            os_type,
-                            certainty,
+                            os_type: FromDb::from_db(os_type),
+                            certainty: FromDb::from_db(certainty),
                             user,
                             workspace: *workspace.key(),
                             created_at,
@@ -538,8 +539,8 @@ impl FullAggregationSource {
                     {
                         manual_insert.push(ManualInsert::Port {
                             port: port as u16,
-                            protocol,
-                            certainty,
+                            protocol: FromDb::from_db(protocol),
+                            certainty: FromDb::from_db(certainty),
                             host: host.ip().to_string(),
                             user,
                             workspace: *workspace.key(),
@@ -568,7 +569,7 @@ impl FullAggregationSource {
                         manual_insert.push(ManualInsert::Service {
                             name,
                             port: port.map(|p| p as u16),
-                            certainty,
+                            certainty: FromDb::from_db(certainty),
                             host: host.ip().to_string(),
                             user,
                             workspace: *workspace.key(),

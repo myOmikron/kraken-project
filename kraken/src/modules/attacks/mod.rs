@@ -32,6 +32,7 @@ use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
 use crate::models::Attack;
 use crate::models::AttackType;
 use crate::models::Domain;
@@ -485,7 +486,7 @@ impl AttackContext {
             attack: SimpleAttack {
                 uuid: self.attack_uuid,
                 workspace: self.workspace.clone(),
-                attack_type: self.attack_type,
+                attack_type: FromDb::from_db(self.attack_type),
                 started_by: self.user.clone(),
                 created_at: self.created_at,
                 error: None,
@@ -505,7 +506,7 @@ impl AttackContext {
             attack: SimpleAttack {
                 uuid: self.attack_uuid,
                 workspace: self.workspace.clone(),
-                attack_type: self.attack_type,
+                attack_type: FromDb::from_db(self.attack_type),
                 created_at: self.created_at,
                 finished_at: Some(now),
                 error: result.as_ref().err().map(|x| x.to_string()),

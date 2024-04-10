@@ -9,10 +9,10 @@ use rorm::query;
 use rorm::update;
 use uuid::Uuid;
 
+use crate::api::handler::services::schema::ServiceProtocols;
 use crate::models::DomainDomainRelation;
 use crate::models::DomainHostRelation;
 use crate::models::PortProtocol;
-use crate::models::ServiceProtocols;
 
 impl DomainDomainRelation {
     /// Insert a [`DomainDomainRelation`] if it doesn't exist yet.

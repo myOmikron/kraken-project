@@ -24,6 +24,8 @@ use crate::api::handler::finding_definitions::schema::SimpleFindingDefinition;
 use crate::api::handler::finding_definitions::schema::UpdateFindingDefinitionRequest;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
+use crate::models::convert::IntoDb;
 use crate::models::FindingDefinition;
 use crate::models::InsertFindingDefinition;
 use crate::modules::cache::EditorCached;
@@ -70,7 +72,7 @@ pub async fn create_finding_definition(
             uuid,
             name,
             summary,
-            severity,
+            severity: severity.into_db(),
             cve,
             description,
             impact,
@@ -117,7 +119,7 @@ pub async fn get_finding_definition(
         name: finding_definition.name,
         #[rustfmt::skip]
         summary: GLOBAL.editor_cache.fd_summary.get(uuid).await?.ok_or(ApiError::InvalidUuid)?.0,
-        severity: finding_definition.severity,
+        severity: FromDb::from_db(finding_definition.severity),
         cve: finding_definition.cve,
         #[rustfmt::skip]
         description: GLOBAL.editor_cache.fd_description.get(uuid).await?.ok_or(ApiError::InvalidUuid)?.0,
@@ -152,7 +154,7 @@ pub async fn get_all_finding_definitions() -> ApiResult<Json<ListFindingDefiniti
                 name: fd.name,
                 cve: fd.cve,
                 summary: fd.summary,
-                severity: fd.severity,
+                severity: FromDb::from_db(fd.severity),
                 created_at: fd.created_at,
             })
             .try_collect()
@@ -234,7 +236,10 @@ pub async fn update_finding_definition(
         .condition(FindingDefinition::F.uuid.equals(uuid))
         .set_if(FindingDefinition::F.name, request.name.clone())
         .set_if(FindingDefinition::F.cve, request.cve.clone())
-        .set_if(FindingDefinition::F.severity, request.severity)
+        .set_if(
+            FindingDefinition::F.severity,
+            request.severity.map(IntoDb::into_db),
+        )
         .finish_dyn_set()
     {
         update.exec().await?;

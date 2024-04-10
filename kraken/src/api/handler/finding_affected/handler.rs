@@ -30,6 +30,7 @@ use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
 use crate::models::Domain;
 use crate::models::DomainGlobalTag;
 use crate::models::DomainWorkspaceTag;
@@ -238,7 +239,7 @@ pub async fn get_finding_affected(
                     comment: domain.comment,
                     workspace: *domain.workspace.key(),
                     created_at: domain.created_at,
-                    certainty: domain.certainty,
+                    certainty: FromDb::from_db(domain.certainty),
                 }),
                 tags,
             )
@@ -272,12 +273,12 @@ pub async fn get_finding_affected(
                 FindingAffectedObject::Host(SimpleHost {
                     uuid: host.uuid,
                     ip_addr: host.ip_addr.ip(),
-                    os_type: host.os_type,
+                    os_type: FromDb::from_db(host.os_type),
                     response_time: host.response_time,
                     comment: host.comment,
                     workspace: *host.workspace.key(),
                     created_at: host.created_at,
-                    certainty: host.certainty,
+                    certainty: FromDb::from_db(host.certainty),
                 }),
                 tags,
             )
@@ -311,8 +312,8 @@ pub async fn get_finding_affected(
                 FindingAffectedObject::Port(SimplePort {
                     uuid: port.uuid,
                     port: port.port as u16,
-                    protocol: port.protocol,
-                    certainty: port.certainty,
+                    protocol: FromDb::from_db(port.protocol),
+                    certainty: FromDb::from_db(port.certainty),
                     host: *port.host.key(),
                     comment: port.comment,
                     workspace: *port.workspace.key(),
@@ -351,7 +352,7 @@ pub async fn get_finding_affected(
                     uuid: service.uuid,
                     name: service.name,
                     version: service.version,
-                    certainty: service.certainty,
+                    certainty: FromDb::from_db(service.certainty),
                     host: *service.host.key(),
                     port: service.port.map(|fm| *fm.key()),
                     comment: service.comment,
@@ -372,11 +373,11 @@ pub async fn get_finding_affected(
                 uuid: finding_definition_uuid,
                 name: finding_definition_name,
                 cve: finding_definition_cve,
-                severity: finding_definition_severity,
+                severity: FromDb::from_db(finding_definition_severity),
                 summary: finding_definition_summary,
                 created_at: finding_definition_created_at,
             },
-            severity: finding.severity,
+            severity: FromDb::from_db(finding.severity),
             affected: finding_affected,
             #[rustfmt::skip]
             user_details: GLOBAL.editor_cache.finding_details.get(finding.uuid).await?.unwrap_or_default().0,

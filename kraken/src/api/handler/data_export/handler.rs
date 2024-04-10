@@ -22,6 +22,8 @@ use crate::api::handler::data_export::schema::AggregatedRelation;
 use crate::api::handler::data_export::schema::AggregatedService;
 use crate::api::handler::data_export::schema::AggregatedWorkspace;
 use crate::chan::global::GLOBAL;
+use crate::models::convert::FromDb;
+use crate::models::convert::IntoDb;
 use crate::models::Domain;
 use crate::models::DomainDomainRelation;
 use crate::models::DomainGlobalTag;
@@ -221,9 +223,9 @@ impl From<Host> for AggregatedHost {
         Self {
             uuid,
             ip_addr,
-            os_type,
+            os_type: FromDb::from_db(os_type),
             response_time,
-            certainty,
+            certainty: FromDb::from_db(certainty),
             ports: Vec::new(),
             services: Vec::new(),
             domains: Vec::new(),
@@ -254,10 +256,10 @@ impl From<Port> for AggregatedPort {
         Self {
             uuid,
             port: port as u16,
-            protocol,
+            protocol: FromDb::from_db(protocol),
             host: *host.key(),
             services: Vec::new(),
-            certainty,
+            certainty: FromDb::from_db(certainty),
             comment,
             tags: Default::default(),
             created_at,
@@ -294,9 +296,9 @@ pub fn convert_service(
         port: port.as_ref().map(|port| *port.key()),
         protocols: port
             .and_then(|port| ports.get(port.key()))
-            .map(|port| port.protocol.decode_service(protocols)),
+            .map(|port| port.protocol.into_db().decode_service(protocols)),
         comment,
-        certainty,
+        certainty: FromDb::from_db(certainty),
         tags: Default::default(),
         created_at,
     }
@@ -325,7 +327,7 @@ impl From<Domain> for AggregatedDomain {
             hosts: Vec::new(),
             sources: Vec::new(),
             destinations: Vec::new(),
-            certainty,
+            certainty: FromDb::from_db(certainty),
             comment,
             tags: Default::default(),
             created_at,

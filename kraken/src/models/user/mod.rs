@@ -8,6 +8,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 use webauthn_rs::prelude::Passkey;
 
+mod convert;
 #[cfg(feature = "bin")]
 mod operations;
 

@@ -45,6 +45,8 @@ use crate::api::handler::services::schema::SimpleService;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::AggregationType;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
+use crate::models::convert::IntoDb;
 use crate::models::AggregationSource;
 use crate::models::AggregationTable;
 use crate::models::Domain;
@@ -166,12 +168,12 @@ pub(crate) async fn get_all_hosts(
             ip_addr: x.ip_addr.ip(),
             comment: x.comment,
             response_time: x.response_time,
-            certainty: x.certainty,
-            os_type: x.os_type,
+            certainty: FromDb::from_db(x.certainty),
+            os_type: FromDb::from_db(x.os_type),
             workspace: *x.workspace.key(),
             tags: tags.remove(&x.uuid).unwrap_or_default(),
             sources: sources.remove(&x.uuid).unwrap_or_default(),
-            severity: severities.get(&x.uuid).copied(),
+            severity: severities.get(&x.uuid).copied().map(FromDb::from_db),
             created_at: x.created_at,
         })
         .collect();
@@ -252,13 +254,13 @@ pub async fn get_host(
         uuid: host.uuid,
         ip_addr: host.ip_addr.ip(),
         workspace: *host.workspace.key(),
-        os_type: host.os_type,
+        os_type: FromDb::from_db(host.os_type),
         comment: host.comment,
         response_time: host.response_time,
-        certainty: host.certainty,
+        certainty: FromDb::from_db(host.certainty),
         tags,
         sources,
-        severity,
+        severity: severity.map(FromDb::from_db),
         created_at: host.created_at,
     }))
 }
@@ -285,7 +287,7 @@ pub async fn create_host(
     let CreateHostRequest { ip_addr, certainty } = req.into_inner();
     let PathUuid { uuid: workspace } = path.into_inner();
     Ok(Json(UuidResponse {
-        uuid: ManualHost::insert(&GLOBAL.db, workspace, user, ip_addr, certainty).await?,
+        uuid: ManualHost::insert(&GLOBAL.db, workspace, user, ip_addr, certainty.into_db()).await?,
     }))
 }
 
@@ -526,8 +528,8 @@ pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRela
         .map_ok(|p| SimplePort {
             uuid: p.uuid,
             port: p.port as u16,
-            protocol: p.protocol,
-            certainty: p.certainty,
+            protocol: FromDb::from_db(p.protocol),
+            certainty: FromDb::from_db(p.certainty),
             host: *p.host.key(),
             comment: p.comment,
             workspace: *p.workspace.key(),
@@ -543,7 +545,7 @@ pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRela
             uuid: s.uuid,
             name: s.name,
             version: s.version,
-            certainty: s.certainty,
+            certainty: FromDb::from_db(s.certainty),
             host: *s.host.key(),
             port: s.port.map(|x| *x.key()),
             comment: s.comment,
@@ -575,7 +577,7 @@ pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRela
                 uuid: d.uuid,
                 domain: d.domain,
                 comment: d.comment,
-                certainty: d.certainty,
+                certainty: FromDb::from_db(d.certainty),
                 workspace: *d.workspace.key(),
                 created_at: d.created_at,
             });

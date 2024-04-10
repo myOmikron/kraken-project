@@ -11,17 +11,18 @@ use super::GlobalTag;
 use super::Workspace;
 use super::WorkspaceTag;
 use crate::api::handler::common::error::ApiError;
-use crate::models::Color;
+use crate::api::handler::common::schema::Color;
+use crate::models::convert::IntoDb;
 
-impl From<Color> for i32 {
-    fn from(value: Color) -> Self {
-        i32::from_le_bytes([value.r, value.g, value.b, value.a])
+impl Color {
+    /// Encodes the [`Color`] into its database format.
+    pub fn encode(self) -> i32 {
+        i32::from_le_bytes([self.r, self.g, self.b, self.a])
     }
-}
 
-impl From<i32> for Color {
-    fn from(value: i32) -> Self {
-        let [r, g, b, a] = value.to_le_bytes();
+    /// Decodes the [`Color`] from its database format.
+    pub fn decode(color: i32) -> Self {
+        let [r, g, b, a] = color.to_le_bytes();
         Self { r, g, b, a }
     }
 }
@@ -132,7 +133,7 @@ impl GlobalTag {
             .single(&GlobalTagInsert {
                 uuid,
                 name,
-                color: color.into(),
+                color: color.into_db(),
             })
             .await?;
 
@@ -243,7 +244,7 @@ impl WorkspaceTag {
             .single(&WorkspaceTagInsert {
                 uuid,
                 name,
-                color: color.into(),
+                color: color.into_db(),
                 workspace: ForeignModelByField::Key(workspace_uuid),
             })
             .await?;

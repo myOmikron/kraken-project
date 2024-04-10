@@ -15,6 +15,7 @@ use crate::api::handler::attack_results::schema::FullDnsTxtScanResult;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
 use crate::models::AggregationSource;
 use crate::models::AggregationTable;
 use crate::models::DnsTxtScanAttackResultInsert;
@@ -99,7 +100,7 @@ impl HandleAttackResponse<DnsTxtScanResponse> for AttackContext {
             uuid: result.uuid,
             created_at: result.created_at,
             attack: self.attack_uuid,
-            collection_type: result.collection_type,
+            collection_type: FromDb::from_db(result.collection_type),
             domain: result.domain.clone(),
             entries: Vec::new(),
         };
@@ -119,7 +120,7 @@ impl HandleAttackResponse<DnsTxtScanResponse> for AttackContext {
                         uuid: r.uuid,
                         created_at: r.created_at,
                         rule: r.rule.clone(),
-                        txt_type: r.txt_type,
+                        txt_type: FromDb::from_db(r.txt_type),
                     }
                 }
                 GeneratedRow::Spf(spf) => {
@@ -192,7 +193,7 @@ impl HandleAttackResponse<DnsTxtScanResponse> for AttackContext {
                         uuid: r.uuid,
                         created_at: r.created_at,
                         rule: r.rule.clone(),
-                        spf_type: r.spf_type,
+                        spf_type: FromDb::from_db(r.spf_type),
                         spf_ip: r.spf_ip,
                         spf_domain: r.spf_domain.clone(),
                         spf_domain_ipv4_cidr: r.spf_domain_ipv4_cidr,

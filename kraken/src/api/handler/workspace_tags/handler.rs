@@ -22,6 +22,8 @@ use crate::api::handler::workspace_tags::schema::ListWorkspaceTags;
 use crate::api::handler::workspace_tags::schema::PathWorkspaceTag;
 use crate::api::handler::workspace_tags::schema::UpdateWorkspaceTag;
 use crate::chan::global::GLOBAL;
+use crate::models::convert::FromDb;
+use crate::models::convert::IntoDb;
 use crate::models::Workspace;
 use crate::models::WorkspaceTag;
 
@@ -121,7 +123,7 @@ pub async fn update_workspace_tag(
         .condition(WorkspaceTag::F.uuid.equals(path.w_uuid))
         .begin_dyn_set()
         .set_if(WorkspaceTag::F.name, req.name)
-        .set_if(WorkspaceTag::F.color, req.color.map(|x| x.into()))
+        .set_if(WorkspaceTag::F.color, req.color.map(|x| x.into_db()))
         .finish_dyn_set()
         .map_err(|_| ApiError::EmptyJson)?
         .exec()
@@ -211,7 +213,7 @@ pub async fn get_all_workspace_tags(
                 .map(|x| FullWorkspaceTag {
                     uuid: x.uuid,
                     name: x.name,
-                    color: x.color.into(),
+                    color: FromDb::from_db(x.color),
                     workspace: *x.workspace.key(),
                 })
                 .collect(),

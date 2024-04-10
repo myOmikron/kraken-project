@@ -27,6 +27,8 @@ use crate::api::handler::findings::schema::UpdateFindingRequest;
 use crate::api::handler::findings::utils::finding_affected_into_simple;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
+use crate::models::convert::IntoDb;
 use crate::models::Finding;
 use crate::models::FindingAffected;
 use crate::models::FindingDefinition;
@@ -64,7 +66,7 @@ pub async fn create_finding(
         &mut tx,
         workspace_uuid,
         request.definition,
-        request.severity,
+        request.severity.into_db(),
         request.details,
         None,
         request.screenshot,
@@ -135,7 +137,7 @@ pub async fn get_all_findings(
             definition,
             name,
             cve,
-            severity,
+            severity: FromDb::from_db(severity),
             created_at,
             affected_count: *affected_lookup.get(&uuid).unwrap_or(&0),
         },
@@ -202,12 +204,12 @@ pub async fn get_finding(
             uuid: definition.uuid,
             name: definition.name,
             cve: definition.cve,
-            severity: definition.severity,
+            severity: FromDb::from_db(definition.severity),
             #[rustfmt::skip]
             summary: GLOBAL.editor_cache.fd_summary.get(*finding.definition.key()).await?.ok_or(ApiError::InvalidUuid)?.0,
             created_at: definition.created_at,
         },
-        severity: finding.severity,
+        severity: FromDb::from_db(finding.severity),
         affected,
         #[rustfmt::skip]
         user_details: GLOBAL.editor_cache.finding_details.get(finding.uuid).await?.unwrap_or_default().0,
@@ -271,7 +273,7 @@ pub async fn update_finding(
             Finding::F.definition,
             request.definition.map(ForeignModelByField::Key),
         )
-        .set_if(Finding::F.severity, request.severity)
+        .set_if(Finding::F.severity, request.severity.map(IntoDb::into_db))
         .finish_dyn_set()
     {
         update.await?;

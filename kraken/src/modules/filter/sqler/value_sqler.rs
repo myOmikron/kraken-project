@@ -13,9 +13,9 @@ use rorm::prelude::*;
 
 use super::super::MaybeRange;
 use super::super::Range;
+use crate::api::handler::services::schema::ServiceProtocols;
 use crate::models::OsType;
 use crate::models::PortProtocol;
-use crate::models::ServiceProtocols;
 use crate::modules::filter::ServiceTransport;
 use crate::modules::raw_query::RawQueryBuilder;
 

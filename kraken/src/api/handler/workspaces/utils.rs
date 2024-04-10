@@ -21,6 +21,7 @@ use crate::api::handler::workspaces::schema::FullWorkspace;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
 use crate::models::Attack;
 use crate::models::ModelType;
 use crate::models::Search;
@@ -174,7 +175,7 @@ pub(crate) async fn get_workspace_unchecked(
                 owner: owner.clone(),
                 archived: workspace.archived,
             },
-            attack_type,
+            attack_type: FromDb::from_db(attack_type),
             started_by,
             finished_at,
             created_at,

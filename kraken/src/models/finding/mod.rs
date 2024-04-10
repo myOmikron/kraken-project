@@ -19,6 +19,7 @@ use crate::models::Port;
 use crate::models::Service;
 use crate::models::Workspace;
 
+mod convert;
 #[cfg(feature = "bin")]
 mod operations;
 #[cfg(feature = "bin")]

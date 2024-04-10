@@ -39,6 +39,7 @@ use crate::api::handler::common::schema::ServiceDetectionResultsPage;
 use crate::api::handler::common::schema::UdpServiceDetectionResultsPage;
 use crate::api::handler::common::utils::get_page_params;
 use crate::chan::global::GLOBAL;
+use crate::models::convert::FromDb;
 use crate::models::Attack;
 use crate::models::BruteforceSubdomainsResult;
 use crate::models::CertificateTransparencyResult;
@@ -98,7 +99,7 @@ pub async fn get_bruteforce_subdomains_results(
             attack: *x.attack.key(),
             source: x.source,
             destination: x.destination,
-            dns_record_type: x.dns_record_type,
+            dns_record_type: FromDb::from_db(x.dns_record_type),
             created_at: x.created_at,
         })
         .try_collect()
@@ -374,7 +375,7 @@ pub async fn get_service_detection_results(
                 uuid: x.uuid,
                 attack: *x.attack.key(),
                 created_at: x.created_at,
-                certainty: x.certainty,
+                certainty: FromDb::from_db(x.certainty),
                 service_names: match x.certainty {
                     ServiceCertainty::MaybeVerified => names.remove(&x.uuid).ok_or_else(|| {
                         error!(
@@ -484,7 +485,7 @@ pub async fn get_udp_service_detection_results(
                 uuid: x.uuid,
                 attack: *x.attack.key(),
                 created_at: x.created_at,
-                certainty: x.certainty,
+                certainty: FromDb::from_db(x.certainty),
                 service_names: match x.certainty {
                     ServiceCertainty::MaybeVerified => names.remove(&x.uuid).ok_or_else(|| {
                         error!(
@@ -577,7 +578,7 @@ pub async fn get_dns_resolution_results(
             attack: *x.attack.key(),
             source: x.source,
             destination: x.destination,
-            dns_record_type: x.dns_record_type,
+            dns_record_type: FromDb::from_db(x.dns_record_type),
             created_at: x.created_at,
         })
         .try_collect()
@@ -636,7 +637,7 @@ pub async fn get_dns_txt_scan_results(
             attack: *x.attack.key(),
             domain: x.domain,
             created_at: x.created_at,
-            collection_type: x.collection_type,
+            collection_type: FromDb::from_db(x.collection_type),
             entries: vec![],
         })
         .try_collect()
@@ -653,7 +654,7 @@ pub async fn get_dns_txt_scan_results(
                 uuid: s.uuid,
                 created_at: s.created_at,
                 rule: s.rule,
-                txt_type: s.txt_type,
+                txt_type: FromDb::from_db(s.txt_type),
             })
             .try_collect()
             .await?;
@@ -664,7 +665,7 @@ pub async fn get_dns_txt_scan_results(
                 uuid: s.uuid,
                 created_at: s.created_at,
                 rule: s.rule,
-                spf_type: s.spf_type,
+                spf_type: FromDb::from_db(s.spf_type),
                 spf_ip: s.spf_ip,
                 spf_domain: s.spf_domain,
                 spf_domain_ipv4_cidr: s.spf_domain_ipv4_cidr,
@@ -729,7 +730,7 @@ pub async fn get_os_detection_results(
             created_at: x.created_at,
             host: x.host,
             version: x.version,
-            os: x.os,
+            os: FromDb::from_db(x.os),
             hints: x.hints,
         })
         .try_collect()

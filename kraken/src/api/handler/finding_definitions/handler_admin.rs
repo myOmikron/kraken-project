@@ -20,6 +20,7 @@ use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
 use crate::models::Finding;
 use crate::models::FindingAffected;
 use crate::models::FindingDefinition;
@@ -96,7 +97,7 @@ pub async fn get_finding_definition_usage(
                 affected_counts.get(&f_uuid).copied().unwrap_or([0; 4]);
             FindingDefinitionUsage {
                 uuid: f_uuid,
-                severity: f_severity,
+                severity: FromDb::from_db(f_severity),
                 created_at: f_created_at,
                 workspace: SimpleWorkspace {
                     uuid: w_uuid,

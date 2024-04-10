@@ -16,6 +16,7 @@ use crate::models::PortProtocol;
 use crate::models::User;
 use crate::models::Workspace;
 
+mod convert;
 #[cfg(feature = "bin")]
 mod operations;
 

@@ -43,6 +43,8 @@ use crate::api::handler::services::schema::UpdateServiceRequest;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::AggregationType;
 use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
+use crate::models::convert::IntoDb;
 use crate::models::AggregationSource;
 use crate::models::AggregationTable;
 use crate::models::FindingAffected;
@@ -152,8 +154,8 @@ pub async fn get_all_services(
                 SimplePort {
                     uuid: port.uuid,
                     port: port.port as u16,
-                    protocol: port.protocol,
-                    certainty: port.certainty,
+                    protocol: FromDb::from_db(port.protocol),
+                    certainty: FromDb::from_db(port.certainty),
                     comment: port.comment,
                     created_at: port.created_at,
                     workspace: *port.workspace.key(),
@@ -217,14 +219,14 @@ pub async fn get_all_services(
                     uuid,
                     name,
                     version,
-                    certainty,
+                    certainty: FromDb::from_db(certainty),
                     comment,
                     host: SimpleHost {
                         uuid: host.uuid,
                         ip_addr: host.ip_addr.ip(),
-                        os_type: host.os_type,
+                        os_type: FromDb::from_db(host.os_type),
                         response_time: host.response_time,
-                        certainty: host.certainty,
+                        certainty: FromDb::from_db(host.certainty),
                         comment: host.comment,
                         workspace: *host.workspace.key(),
                         created_at: host.created_at,
@@ -237,11 +239,11 @@ pub async fn get_all_services(
                     }),
                     protocols: port
                         .and_then(|y| ports.get(y.key()))
-                        .map(|port| port.protocol.decode_service(protocols)),
+                        .map(|port| port.protocol.into_db().decode_service(protocols)),
                     workspace: *workspace.key(),
                     tags: tags.remove(&uuid).unwrap_or_default(),
                     sources: sources.remove(&uuid).unwrap_or_default(),
-                    severity: severities.get(&uuid).copied(),
+                    severity: severities.get(&uuid).copied().map(FromDb::from_db),
                     created_at,
                 }
             },
@@ -341,13 +343,13 @@ pub async fn get_service(
         uuid: path.s_uuid,
         name: service.name,
         version: service.version,
-        certainty: service.certainty,
+        certainty: FromDb::from_db(service.certainty),
         host: SimpleHost {
             uuid: host.uuid,
             ip_addr: host.ip_addr.ip(),
-            os_type: host.os_type,
+            os_type: FromDb::from_db(host.os_type),
             response_time: host.response_time,
-            certainty: host.certainty,
+            certainty: FromDb::from_db(host.certainty),
             comment: host.comment,
             workspace: path.w_uuid,
             created_at: host.created_at,
@@ -358,8 +360,8 @@ pub async fn get_service(
         port: port.map(|port| SimplePort {
             uuid: port.uuid,
             port: port.port as u16,
-            protocol: port.protocol,
-            certainty: port.certainty,
+            protocol: FromDb::from_db(port.protocol),
+            certainty: FromDb::from_db(port.certainty),
             host: host.uuid,
             comment: port.comment,
             workspace: path.w_uuid,
@@ -369,7 +371,7 @@ pub async fn get_service(
         workspace: path.w_uuid,
         tags,
         sources,
-        severity,
+        severity: severity.map(FromDb::from_db),
         created_at: service.created_at,
     }))
 }
@@ -414,7 +416,7 @@ pub async fn create_service(
             name,
             host,
             port.zip(protocols),
-            certainty,
+            certainty.into_db(),
         )
         .await?,
     }))
@@ -664,8 +666,8 @@ pub async fn get_service_relations(path: Path<PathService>) -> ApiResult<Json<Se
         Some(SimplePort {
             uuid: p.uuid,
             port: p.port as u16,
-            protocol: p.protocol,
-            certainty: p.certainty,
+            protocol: FromDb::from_db(p.protocol),
+            certainty: FromDb::from_db(p.certainty),
             host: *p.host.key(),
             comment: p.comment,
             workspace: *p.workspace.key(),
@@ -681,9 +683,9 @@ pub async fn get_service_relations(path: Path<PathService>) -> ApiResult<Json<Se
         host: SimpleHost {
             uuid: host.uuid,
             ip_addr: host.ip_addr.ip(),
-            os_type: host.os_type,
+            os_type: FromDb::from_db(host.os_type),
             response_time: host.response_time,
-            certainty: host.certainty,
+            certainty: FromDb::from_db(host.certainty),
             comment: host.comment,
             workspace: *host.workspace.key(),
             created_at: host.created_at,

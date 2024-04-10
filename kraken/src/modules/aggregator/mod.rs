@@ -5,13 +5,13 @@ use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use uuid::Uuid;
 
+use crate::api::handler::services::schema::ServiceProtocols;
 use crate::models::DomainCertainty;
 use crate::models::HostCertainty;
 use crate::models::OsType;
 use crate::models::PortCertainty;
 use crate::models::PortProtocol;
 use crate::models::ServiceCertainty;
-use crate::models::ServiceProtocols;
 
 mod domain;
 mod host;

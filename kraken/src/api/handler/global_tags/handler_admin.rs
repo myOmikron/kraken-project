@@ -16,6 +16,7 @@ use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::global_tags::schema::CreateGlobalTagRequest;
 use crate::api::handler::global_tags::schema::UpdateGlobalTag;
 use crate::chan::global::GLOBAL;
+use crate::models::convert::IntoDb;
 use crate::models::GlobalTag;
 
 /// Create a global tag.
@@ -84,7 +85,7 @@ pub async fn update_global_tag(
         .condition(GlobalTag::F.uuid.equals(path.uuid))
         .begin_dyn_set()
         .set_if(GlobalTag::F.name, req.name)
-        .set_if(GlobalTag::F.color, req.color.map(|x| x.into()))
+        .set_if(GlobalTag::F.color, req.color.map(|x| x.into_db()))
         .finish_dyn_set()
         .map_err(|_| ApiError::EmptyJson)?
         .exec()
