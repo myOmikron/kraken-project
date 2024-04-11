@@ -5,6 +5,7 @@ import Input from "../../../components/input";
 import { ROUTES } from "../../../routes";
 import PlusIcon from "../../../svg/plus";
 import { handleApiError } from "../../../utils/helper";
+import CategoryList from "../components/category-list";
 import SeverityIcon from "../components/severity-icon";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
@@ -43,12 +44,13 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
             </div>
             <div
                 className="workspace-findings-table"
-                style={{ "--columns": "4em 5em 1fr 12em 1fr" } as Record<string, string>}
+                style={{ "--columns": "4em 6em 1fr 1fr 12em 0.5fr" } as Record<string, string>}
             >
                 <div className={"workspace-table-header"}>
                     <span className={"workspace-data-certainty-icon"}>Severity</span>
                     <span className={"workspace-data-certainty-icon"}>Affected</span>
                     <span>Name</span>
+                    <span>Categories</span>
                     <span>CVE</span>
                     <span>Created At</span>
                 </div>
@@ -71,6 +73,7 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
                                 </span>
                                 <span className="workspace-data-certainty-icon">{f.affectedCount}</span>
                                 <span>{f.name}</span>
+                                <CategoryList categories={f.categories} />
                                 <span>{f.cve}</span>
                                 <span>{f.createdAt.toLocaleString()}</span>
                             </div>

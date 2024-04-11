@@ -65,6 +65,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                     </div>
 
                     <div className="categories-selector">
+                        <h2 className="sub-heading">Categories</h2>
                         <EditableCategories categories={categories} onChange={setCategories} />
                     </div>
 
@@ -140,6 +141,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                                                 cve: cve.length > 0 ? cve : null,
                                                 summary: sections.Summary.value,
                                                 createdAt: new Date(),
+                                                categories,
                                             });
                                         }
                                     }),

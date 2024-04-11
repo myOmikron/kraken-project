@@ -28,6 +28,7 @@ import ScreenshotIcon from "../../../svg/screenshot";
 import { compareDomain, compareHost, comparePort, compareService } from "../../../utils/data-sorter";
 import { handleApiError } from "../../../utils/helper";
 import { configureMonaco } from "../../../utils/monaco";
+import CategoryList from "../components/category-list";
 import CollapsibleSection from "../components/collapsible-section";
 import Domain from "../components/domain";
 import EditableCategories from "../components/editable-categories";
@@ -328,7 +329,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                             />
 
                             <div className="categories">
-                                Categories
+                                <h2 className="sub-heading">Categories</h2>
                                 <EditableCategories categories={categories} onChange={setCategories} />
                             </div>
                         </div>
@@ -482,6 +483,7 @@ export function FindingDefinitionDetails(props: { definition: SimpleFindingDefin
                 <h1 className={"sub-heading"}>
                     {definition.name} <small>{definition.severity}</small>
                 </h1>
+                <CategoryList categories={definition.categories} />
                 <p>{definition.summary}</p>
             </div>
         );

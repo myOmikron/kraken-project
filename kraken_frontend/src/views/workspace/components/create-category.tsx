@@ -25,12 +25,18 @@ export default function CreateCategory(props: CreateCategoryProps) {
 
     // State
     const [name, setName] = React.useState<string>("");
+    const [colorString, setColorString] = React.useState("#000000");
+    const [colorAlpha, setColorAlpha] = React.useState(128);
 
     // Overwrite `name` with `initialName`
     React.useEffect(() => setName(initialName), [initialName]);
 
+    // Convert `colorString` and `colorAlpha` into `color`
+    const colorMatch = colorString.match(/#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i);
+    const [r, g, b] = colorMatch === null ? [0, 0, 0] : colorMatch.splice(1).map((hex) => parseInt(hex, 16));
     const category = {
         name,
+        color: { r, g, b, a: colorAlpha },
     };
 
     return (
@@ -47,12 +53,29 @@ export default function CreateCategory(props: CreateCategoryProps) {
                 );
             }}
         >
-            <h2>Create new category</h2>
+            <h2 className={"sub-heading workspace-create-tag-heading"}>Create new category</h2>
             <FindingCategory {...category} />
-            <label>
-                <span>Name:</span>
-                <Input value={name} onChange={setName} />
-            </label>
+            <div className="workspace-create-tag-body">
+                <label>
+                    <span>Name:</span>
+                    <Input value={name} onChange={setName} />
+                </label>
+                <label>
+                    <span>Color:</span>
+                    <Input type={"color"} value={colorString} onChange={setColorString} />
+                </label>
+                <label>
+                    <span>Alpha:</span>
+                    <Input
+                        className={undefined}
+                        type={"range"}
+                        min={0}
+                        max={255}
+                        value={String(colorAlpha)}
+                        onChange={(string) => setColorAlpha(parseInt(string))}
+                    />
+                </label>
+            </div>
             <button className="button" type={"submit"} disabled={name.length === 0}>
                 Create and add
             </button>

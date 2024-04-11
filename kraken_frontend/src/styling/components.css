@@ -211,7 +211,8 @@ form:invalid .start-attack path:last-of-type {
     fill: var(--text);
 }
 
-.tag-list {
+.tag-list,
+.finding-category-list{
     display: flex;
     gap: 0.5em;
     flex-wrap: wrap;
@@ -232,6 +233,7 @@ form:invalid .start-attack path:last-of-type {
 
 .tag.interactive:hover,
 .finding-category.interactive:hover {
+    cursor: pointer;
     box-shadow:
         0 0 1em var(--color),
         0 0 1em rgba(255, 255, 255, 0.2) inset;
@@ -298,3 +300,4 @@ form:invalid .start-attack path:last-of-type {
 .model-editor > div {
     width: 100%;
 }
+

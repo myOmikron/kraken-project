@@ -44,18 +44,27 @@
     padding: 1em;
     box-sizing: border-box;
     cursor: pointer;
+    display: grid;
+    grid-template-columns: 24em 1fr auto;
+    align-items: center;
+    gap: 2em;
 }
 .list-finding-definition-item > p {
-    margin: 0.2em 0 0 0;
     text-overflow: ellipsis;
     height: 3em;
     overflow: hidden;
     white-space: break-spaces;
 }
+
 .list-finding-definition-item:hover {
     box-shadow:
         0 0 25em var(--primary-op),
         inset 0 0 10em #0cf3,
         inset 0 0 0.5em #0ff2,
         0 0 1em var(--primary-op);
+}
+
+.list-finding-definition-details {
+    display: flex;
+    gap: 0.5em;
 }

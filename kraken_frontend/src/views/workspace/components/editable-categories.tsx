@@ -40,7 +40,7 @@ export default function EditableCategories(props: EditableCategoriesProps) {
     }, []);
 
     return (
-        <>
+        <div className="category-container">
             <Creatable<SimpleFindingCategory, true>
                 placeholder="Categories"
                 styles={selectStyles("default")}
@@ -72,6 +72,6 @@ export default function EditableCategories(props: EditableCategoriesProps) {
                     }}
                 />
             </Popup>
-        </>
+        </div>
     );
 }

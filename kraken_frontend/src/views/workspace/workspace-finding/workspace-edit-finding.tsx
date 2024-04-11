@@ -87,6 +87,12 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     const dataTableRef = React.useRef<WorkspaceFindingDataTableRef>(null);
     const graphRef = React.useRef<EditingTreeGraphRef>(null);
 
+    // Load categories from backend
+    const [allCategories, setAllCategories] = React.useState<Array<SimpleFindingCategory>>([]);
+    React.useEffect(() => {
+        Api.findingCategories.all().then(handleApiError((v) => setAllCategories(v.categories)));
+    }, []);
+
     const onClickTag = (e: { ctrlKey: boolean; shiftKey: boolean; altKey: boolean }, tag: SimpleTag) => {
         dataTableRef.current?.addFilterColumn("tag", tag.name, e.altKey);
         graphRef.current?.addTag(tag, e.altKey);
@@ -165,7 +171,22 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                     setSeverity(severity);
                 }
                 if (categories) {
-                    setCategories(categories);
+                    setCategories(
+                        categories.map((uuid) => {
+                            return (
+                                allCategories.find((c) => uuid === c.uuid) || {
+                                    uuid: uuid,
+                                    name: uuid,
+                                    color: {
+                                        r: 0,
+                                        g: 0,
+                                        b: 0,
+                                        a: 0,
+                                    },
+                                }
+                            );
+                        }),
+                    );
                 }
                 if (definition) {
                     Api.knowledgeBase.findingDefinitions.get(definition).then(handleApiError(setFindingDef));
@@ -215,7 +236,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                 WS.removeEventListener(handle);
             }
         };
-    }, [workspace, finding]);
+    }, [workspace, finding, allCategories]);
 
     const { cursors: editorCursors, setEditor } = useSyncedCursors({
         target: { finding: { finding } },
@@ -265,7 +286,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         />
 
                         <div className="categories">
-                            Categories
+                            <h2 className="sub-heading">Categories</h2>
                             <EditableCategories
                                 categories={categories}
                                 onChange={(newCat) => {

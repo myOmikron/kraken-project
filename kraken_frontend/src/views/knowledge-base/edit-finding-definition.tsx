@@ -127,6 +127,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                     </div>
 
                     <div className="categories-selector">
+                        <h2 className="sub-heading">Categories</h2>
                         <EditableCategories categories={categories} onChange={setCategories} />
                     </div>
 
