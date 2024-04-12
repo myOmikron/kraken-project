@@ -16,7 +16,9 @@ const SEVERITY_SORTING: { [k in FindingSeverity]: number } = {
 export default function WorkspaceDataDetailsFindings({
     findings,
     ...props
-}: { findings: ListFindings | null } & React.HTMLProps<HTMLDivElement>) {
+}: {
+    findings: ListFindings | null;
+} & React.HTMLProps<HTMLDivElement>) {
     const {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
@@ -37,32 +39,30 @@ export default function WorkspaceDataDetailsFindings({
                             return SEVERITY_SORTING[b.severity] - SEVERITY_SORTING[a.severity];
                         })
                         .map((r) => (
-                            <Popup
-                                position={"bottom center"}
-                                on={"hover"}
-                                arrow={true}
-                                trigger={
-                                    <div
-                                        className="workspace-data-details-relations-entry"
-                                        {...ROUTES.WORKSPACE_FINDINGS_EDIT.clickHandler({
-                                            wUuid: workspace,
-                                            fUuid: r.uuid,
-                                        })}
-                                    >
-                                        <SeverityIcon severity={r.severity} />
-                                        <span>{r.cve}</span>
-                                        <span>{r.name}</span>
-                                    </div>
-                                }
+                            <div
+                                className="workspace-data-details-relations-entry"
+                                {...ROUTES.WORKSPACE_FINDINGS_EDIT.clickHandler({
+                                    wUuid: workspace,
+                                    fUuid: r.uuid,
+                                })}
                             >
-                                <div className="pane-thin workspace-data-details-finding-popup">
-                                    {r.categories.length === 0 ? (
-                                        "No categories"
-                                    ) : (
-                                        <CategoryList categories={r.categories} />
-                                    )}
-                                </div>
-                            </Popup>
+                                <SeverityIcon severity={r.severity} />
+                                <span>{r.cve}</span>
+                                <Popup
+                                    position={"bottom center"}
+                                    on={"hover"}
+                                    arrow={true}
+                                    trigger={<span>{r.name}</span>}
+                                >
+                                    <div className="pane-thin workspace-data-details-finding-popup">
+                                        {r.categories.length === 0 ? (
+                                            "No categories"
+                                        ) : (
+                                            <CategoryList categories={r.categories} />
+                                        )}
+                                    </div>
+                                </Popup>
+                            </div>
                         ))}
                 </div>
             ) : (

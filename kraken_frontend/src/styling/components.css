@@ -212,7 +212,7 @@ form:invalid .start-attack path:last-of-type {
 }
 
 .tag-list,
-.finding-category-list{
+.finding-category-list {
     display: flex;
     gap: 0.5em;
     flex-wrap: wrap;
@@ -300,4 +300,3 @@ form:invalid .start-attack path:last-of-type {
 .model-editor > div {
     width: 100%;
 }
-
