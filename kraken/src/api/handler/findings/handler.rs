@@ -92,7 +92,7 @@ pub async fn create_finding(
                 .map(|cat| FindingFindingCategoryRelation {
                     uuid: Uuid::new_v4(),
                     finding: ForeignModelByField::Key(uuid),
-                    finding_category: ForeignModelByField::Key(cat),
+                    category: ForeignModelByField::Key(cat),
                 }),
         )
         .await?;
@@ -223,8 +223,8 @@ pub async fn get_finding(
     let categories = query!(
         &mut tx,
         (
-            FindingFindingCategoryRelation::F.finding_category.uuid,
-            FindingFindingCategoryRelation::F.finding_category.name,
+            FindingFindingCategoryRelation::F.category.uuid,
+            FindingFindingCategoryRelation::F.category.name,
         )
     )
     .condition(
@@ -348,7 +348,7 @@ pub async fn update_finding(
                     .map(|cat| FindingFindingCategoryRelation {
                         uuid: Uuid::new_v4(),
                         finding: ForeignModelByField::Key(f_uuid),
-                        finding_category: ForeignModelByField::Key(cat),
+                        category: ForeignModelByField::Key(cat),
                     }),
             )
             .await?;

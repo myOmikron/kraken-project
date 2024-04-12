@@ -30,7 +30,7 @@ use crate::models::convert::FromDb;
 use crate::models::convert::IntoDb;
 use crate::models::FindingCategory;
 use crate::models::FindingDefinition;
-use crate::models::FindingDefinitionFindingCategoryRelation;
+use crate::models::FindingDefinitionCategoryRelation;
 use crate::models::InsertFindingDefinition;
 use crate::modules::cache::EditorCached;
 
@@ -91,15 +91,15 @@ pub async fn create_finding_definition(
         })
         .await?;
 
-    insert!(&mut tx, FindingDefinitionFindingCategoryRelation)
+    insert!(&mut tx, FindingDefinitionCategoryRelation)
         .return_nothing()
         .bulk(
             categories
                 .into_iter()
-                .map(|cat| FindingDefinitionFindingCategoryRelation {
+                .map(|cat| FindingDefinitionCategoryRelation {
                     uuid: Uuid::new_v4(),
-                    finding_definition: ForeignModelByField::Key(uuid),
-                    finding_category: ForeignModelByField::Key(cat),
+                    definition: ForeignModelByField::Key(uuid),
+                    category: ForeignModelByField::Key(cat),
                 }),
         )
         .await?;
@@ -144,19 +144,11 @@ pub async fn get_finding_definition(
     let categories = query!(
         &mut tx,
         (
-            FindingDefinitionFindingCategoryRelation::F
-                .finding_category
-                .uuid,
-            FindingDefinitionFindingCategoryRelation::F
-                .finding_category
-                .name,
+            FindingDefinitionCategoryRelation::F.category.uuid,
+            FindingDefinitionCategoryRelation::F.category.name,
         )
     )
-    .condition(
-        FindingDefinitionFindingCategoryRelation::F
-            .finding_definition
-            .equals(uuid),
-    )
+    .condition(FindingDefinitionCategoryRelation::F.definition.equals(uuid))
     .stream()
     .map_ok(|(uuid, name)| SimpleFindingCategory { uuid, name })
     .try_collect()
@@ -302,23 +294,19 @@ pub async fn update_finding_definition(
             .await?
             .ok_or(ApiError::InvalidUuid)?;
 
-        rorm::delete!(&mut tx, FindingDefinitionFindingCategoryRelation)
-            .condition(
-                FindingDefinitionFindingCategoryRelation::F
-                    .finding_definition
-                    .equals(uuid),
-            )
+        rorm::delete!(&mut tx, FindingDefinitionCategoryRelation)
+            .condition(FindingDefinitionCategoryRelation::F.definition.equals(uuid))
             .await?;
 
-        insert!(&mut tx, FindingDefinitionFindingCategoryRelation)
+        insert!(&mut tx, FindingDefinitionCategoryRelation)
             .return_nothing()
             .bulk(
                 categories
                     .into_iter()
-                    .map(|cat| FindingDefinitionFindingCategoryRelation {
+                    .map(|cat| FindingDefinitionCategoryRelation {
                         uuid: Uuid::new_v4(),
-                        finding_definition: ForeignModelByField::Key(uuid),
-                        finding_category: ForeignModelByField::Key(cat),
+                        definition: ForeignModelByField::Key(uuid),
+                        category: ForeignModelByField::Key(cat),
                     }),
             )
             .await?;

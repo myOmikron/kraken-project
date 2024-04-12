@@ -201,17 +201,18 @@ pub struct FindingCategory {
 }
 
 /// The relation between a [FindingDefinition] and a [FindingCategory]
+// the name FindingDefinitionFindingCategoryRelation is too long for postgres when involved in joins
 #[derive(Model)]
-pub struct FindingDefinitionFindingCategoryRelation {
+pub struct FindingDefinitionCategoryRelation {
     /// The primary key
     #[rorm(primary_key)]
     pub uuid: Uuid,
     /// The finding definition
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
-    pub finding_definition: ForeignModel<FindingDefinition>,
+    pub definition: ForeignModel<FindingDefinition>,
     /// The finding category
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
-    pub finding_category: ForeignModel<FindingCategory>,
+    pub category: ForeignModel<FindingCategory>,
 }
 
 /// The relation between a [Finding] and a [FindingCategory]
@@ -225,5 +226,5 @@ pub struct FindingFindingCategoryRelation {
     pub finding: ForeignModel<Finding>,
     /// The finding category
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
-    pub finding_category: ForeignModel<FindingCategory>,
+    pub category: ForeignModel<FindingCategory>,
 }

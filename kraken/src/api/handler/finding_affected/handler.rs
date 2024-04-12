@@ -370,8 +370,8 @@ pub async fn get_finding_affected(
     let categories = query!(
         &mut tx,
         (
-            FindingFindingCategoryRelation::F.finding_category.uuid,
-            FindingFindingCategoryRelation::F.finding_category.name,
+            FindingFindingCategoryRelation::F.category.uuid,
+            FindingFindingCategoryRelation::F.category.name,
         )
     )
     .condition(
