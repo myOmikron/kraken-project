@@ -9193,7 +9193,7 @@
             },
             "AttackType": {
                 "type": "string",
-                "description": "The type of an attack",
+                "description": "The type of attack",
                 "enum": [
                     "Undefined",
                     "BruteforceSubdomains",
@@ -14006,7 +14006,8 @@
                     "name",
                     "severity",
                     "affected_count",
-                    "created_at"
+                    "created_at",
+                    "categories"
                 ],
                 "properties": {
                     "uuid": {
@@ -14041,6 +14042,13 @@
                         "type": "string",
                         "format": "date-time",
                         "description": "The point in time this finding definition was created"
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SimpleFindingCategory"
+                        },
+                        "description": "The list of categories this finding falls into"
                     }
                 }
             },
@@ -14099,7 +14107,8 @@
                     "name",
                     "severity",
                     "summary",
-                    "created_at"
+                    "created_at",
+                    "categories"
                 ],
                 "properties": {
                     "uuid": {
@@ -14127,6 +14136,13 @@
                         "type": "string",
                         "format": "date-time",
                         "description": "The point in time this finding definition was created"
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SimpleFindingCategory"
+                        },
+                        "description": "The list of categories this finding falls into"
                     }
                 }
             },

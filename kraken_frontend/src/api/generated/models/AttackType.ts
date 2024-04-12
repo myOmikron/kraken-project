@@ -14,7 +14,7 @@
 
 
 /**
- * The type of an attack
+ * The type of attack
  * @export
  */
 export const AttackType = {

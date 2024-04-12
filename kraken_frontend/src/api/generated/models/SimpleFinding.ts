@@ -19,6 +19,12 @@ import {
     FindingSeverityFromJSONTyped,
     FindingSeverityToJSON,
 } from './FindingSeverity';
+import type { SimpleFindingCategory } from './SimpleFindingCategory';
+import {
+    SimpleFindingCategoryFromJSON,
+    SimpleFindingCategoryFromJSONTyped,
+    SimpleFindingCategoryToJSON,
+} from './SimpleFindingCategory';
 
 /**
  * A simple finding
@@ -68,6 +74,12 @@ export interface SimpleFinding {
      * @memberof SimpleFinding
      */
     createdAt: Date;
+    /**
+     * The list of categories this finding falls into
+     * @type {Array<SimpleFindingCategory>}
+     * @memberof SimpleFinding
+     */
+    categories: Array<SimpleFindingCategory>;
 }
 
 /**
@@ -81,6 +93,7 @@ export function instanceOfSimpleFinding(value: object): boolean {
     isInstance = isInstance && "severity" in value;
     isInstance = isInstance && "affectedCount" in value;
     isInstance = isInstance && "createdAt" in value;
+    isInstance = isInstance && "categories" in value;
 
     return isInstance;
 }
@@ -102,6 +115,7 @@ export function SimpleFindingFromJSONTyped(json: any, ignoreDiscriminator: boole
         'severity': FindingSeverityFromJSON(json['severity']),
         'affectedCount': json['affected_count'],
         'createdAt': (new Date(json['created_at'])),
+        'categories': ((json['categories'] as Array<any>).map(SimpleFindingCategoryFromJSON)),
     };
 }
 
@@ -121,6 +135,7 @@ export function SimpleFindingToJSON(value?: SimpleFinding | null): any {
         'severity': FindingSeverityToJSON(value.severity),
         'affected_count': value.affectedCount,
         'created_at': (value.createdAt.toISOString()),
+        'categories': ((value.categories as Array<any>).map(SimpleFindingCategoryToJSON)),
     };
 }
 
