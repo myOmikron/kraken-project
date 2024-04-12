@@ -324,13 +324,17 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                 onSelect={(newDef) => {
                                     setFindingDef(newDef);
                                     setSeverity(newDef.severity);
+                                    setCategories(newDef.categories);
                                 }}
                                 onHover={setHoveredFindingDef}
                             />
 
                             <div className="categories">
                                 <h2 className="sub-heading">Categories</h2>
-                                <EditableCategories categories={categories} onChange={setCategories} />
+                                <EditableCategories
+                                    categories={hoveredFindingDef?.categories || categories}
+                                    onChange={setCategories}
+                                />
                             </div>
                         </div>
 
