@@ -16,6 +16,7 @@ import {
     SimpleFindingCategory,
     SimpleFindingDefinition,
     SimpleHost,
+    SimpleHttpService,
     SimplePort,
     SimpleService,
     SimpleTag,
@@ -57,8 +58,9 @@ import WorkspaceFindingDataTable, { WorkspaceFindingDataTableRef } from "./works
 import EditingTreeGraph, { EditingTreeGraphRef } from "./workspace-finding-editing-tree";
 import ITextModel = editor.ITextModel;
 
+/** React props for {@link WorkspaceEditFindingProps `<WorkspaceEditFindingProps />`} */
 export type WorkspaceEditFindingProps = {
-    /** The finding's uuid */
+    /** The finding to edit identified by its uuid */
     uuid: string;
 };
 
