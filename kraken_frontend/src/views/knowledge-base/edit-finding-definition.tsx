@@ -104,20 +104,32 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
             }),
         );
 
-        const handle = WS.addEventListener("message.UpdatedFindingDefinition", ({ uuid, update }) => {
-            if (uuid !== props.uuid) return;
+        const handles = [
+            WS.addEventListener("message.UpdatedFindingDefinition", ({ uuid, update }) => {
+                if (uuid !== props.uuid) return;
 
-            if (update.name !== undefined && update.name !== null) {
-                setName(update.name);
+                if (update.name !== undefined && update.name !== null) {
+                    setName(update.name);
+                }
+                if (update.severity !== undefined && update.severity !== null) {
+                    setSeverity(update.severity);
+                }
+                if (update.cve !== undefined) {
+                    setCve(update.cve || "");
+                }
+            }),
+            WS.addEventListener("message.DeletedFindingDefinition", ({ uuid }) => {
+                if (uuid === props.uuid) {
+                    toast.warn("This finding definition was deleted by another user");
+                    ROUTES.FINDING_DEFINITION_LIST.visit({});
+                }
+            }),
+        ];
+        return () => {
+            for (const handle of handles) {
+                WS.removeEventListener(handle);
             }
-            if (update.severity !== undefined && update.severity !== null) {
-                setSeverity(update.severity);
-            }
-            if (update.cve !== undefined) {
-                setCve(update.cve || "");
-            }
-        });
-        return () => WS.removeEventListener(handle);
+        };
     }, [props.uuid]);
 
     return (
