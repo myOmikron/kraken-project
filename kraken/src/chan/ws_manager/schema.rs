@@ -305,6 +305,13 @@ pub enum WsMessage {
         /// The update
         update: UpdateFindingRequest,
     },
+    /// A finding has been deleted
+    DeletedFinding {
+        /// The workspace the deleted finding was in
+        workspace: Uuid,
+        /// The finding which has been deleted
+        finding: Uuid,
+    },
     /// An affected has been added to a finding
     AddedFindingAffected {
         /// The workspace the updated finding is in

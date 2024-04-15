@@ -13,8 +13,15 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { UpdateFindingAffectedRequest } from './UpdateFindingAffectedRequest';
+import {
+    UpdateFindingAffectedRequestFromJSON,
+    UpdateFindingAffectedRequestFromJSONTyped,
+    UpdateFindingAffectedRequestToJSON,
+} from './UpdateFindingAffectedRequest';
+
 /**
- * An affected has been removed to a finding
+ * A finding's affected has been updated
  * @export
  * @interface WsMessageOneOf34
  */
@@ -39,6 +46,12 @@ export interface WsMessageOneOf34 {
     affectedUuid: string;
     /**
      * 
+     * @type {UpdateFindingAffectedRequest}
+     * @memberof WsMessageOneOf34
+     */
+    update: UpdateFindingAffectedRequest;
+    /**
+     * 
      * @type {string}
      * @memberof WsMessageOneOf34
      */
@@ -50,7 +63,7 @@ export interface WsMessageOneOf34 {
  * @export
  */
 export const WsMessageOneOf34TypeEnum = {
-    RemovedFindingAffected: 'RemovedFindingAffected'
+    UpdatedFindingAffected: 'UpdatedFindingAffected'
 } as const;
 export type WsMessageOneOf34TypeEnum = typeof WsMessageOneOf34TypeEnum[keyof typeof WsMessageOneOf34TypeEnum];
 
@@ -63,6 +76,7 @@ export function instanceOfWsMessageOneOf34(value: object): boolean {
     isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "finding" in value;
     isInstance = isInstance && "affectedUuid" in value;
+    isInstance = isInstance && "update" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -81,6 +95,7 @@ export function WsMessageOneOf34FromJSONTyped(json: any, ignoreDiscriminator: bo
         'workspace': json['workspace'],
         'finding': json['finding'],
         'affectedUuid': json['affected_uuid'],
+        'update': UpdateFindingAffectedRequestFromJSON(json['update']),
         'type': json['type'],
     };
 }
@@ -97,6 +112,7 @@ export function WsMessageOneOf34ToJSON(value?: WsMessageOneOf34 | null): any {
         'workspace': value.workspace,
         'finding': value.finding,
         'affected_uuid': value.affectedUuid,
+        'update': UpdateFindingAffectedRequestToJSON(value.update),
         'type': value.type,
     };
 }

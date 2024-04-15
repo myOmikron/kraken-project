@@ -291,6 +291,7 @@ export * from './WsMessageOneOf31';
 export * from './WsMessageOneOf32';
 export * from './WsMessageOneOf33';
 export * from './WsMessageOneOf34';
+export * from './WsMessageOneOf35';
 export * from './WsMessageOneOf4';
 export * from './WsMessageOneOf5';
 export * from './WsMessageOneOf6';

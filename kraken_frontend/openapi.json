@@ -17414,6 +17414,33 @@
                     },
                     {
                         "type": "object",
+                        "description": "A finding has been deleted",
+                        "required": [
+                            "workspace",
+                            "finding",
+                            "type"
+                        ],
+                        "properties": {
+                            "workspace": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The workspace the deleted finding was in"
+                            },
+                            "finding": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The finding which has been deleted"
+                            },
+                            "type": {
+                                "type": "string",
+                                "enum": [
+                                    "DeletedFinding"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "type": "object",
                         "description": "An affected has been added to a finding",
                         "required": [
                             "workspace",

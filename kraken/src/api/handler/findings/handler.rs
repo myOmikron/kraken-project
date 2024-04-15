@@ -441,6 +441,17 @@ pub async fn delete_finding(
     let deleted = Finding::delete(&mut tx, f_uuid).await?;
 
     tx.commit().await?;
+    // Notify workspace members about deleted finding
+    GLOBAL
+        .ws
+        .message_workspace(
+            w_uuid,
+            WsMessage::DeletedFinding {
+                workspace: w_uuid,
+                finding: f_uuid,
+            },
+        )
+        .await;
     if deleted {
         Ok(HttpResponse::Ok().finish())
     } else {

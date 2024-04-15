@@ -165,6 +165,12 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
 
         // Listen on state updates
         const handles = [
+            WS.addEventListener("message.DeletedFinding", ({ workspace: w, finding: f }) => {
+                if (w === workspace && f === finding) {
+                    toast.warn("This finding was deleted by another user");
+                    ROUTES.WORKSPACE_FINDINGS_LIST.visit({ uuid: workspace });
+                }
+            }),
             WS.addEventListener("message.UpdatedFinding", ({ workspace: w, finding: f, update }) => {
                 if (w !== workspace || f !== finding) return;
                 const { severity, categories, definition, screenshot, logFile } = update;
