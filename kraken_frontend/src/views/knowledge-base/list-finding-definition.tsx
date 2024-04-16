@@ -1,13 +1,13 @@
 import React from "react";
 import { Api } from "../../api/api";
 import { SimpleFindingDefinition } from "../../api/generated";
+import FindingCategoryList from "../../components/finding-category-list";
 import Input from "../../components/input";
 import { ROUTES } from "../../routes";
 import "../../styling/knowledge-base.css";
 import "../../styling/list-finding-definition.css";
 import PlusIcon from "../../svg/plus";
 import { handleApiError } from "../../utils/helper";
-import CategoryList from "../workspace/components/category-list";
 
 type ListFindingDefinitionProps = {};
 
@@ -48,7 +48,7 @@ export function ListFindingDefinition(props: ListFindingDefinitionProps) {
                             {...ROUTES.FINDING_DEFINITION_EDIT.clickHandler({ uuid: def.uuid })}
                         >
                             <h2 className={"sub-heading"}>{def.name}</h2>
-                            <CategoryList categories={def.categories} />
+                            <FindingCategoryList categories={def.categories} />
                             <div className="sub-heading">{def.severity}</div>
                         </div>
                     ))}
@@ -65,7 +65,7 @@ export function Details(props: SimpleFindingDefinition) {
             <h1 className={"sub-heading"}>
                 {name} <small>{severity}</small>
             </h1>
-            <CategoryList categories={categories} />
+            <FindingCategoryList categories={categories} />
             <p>{summary}</p>
         </div>
     );

@@ -3,12 +3,12 @@ import Select from "react-select";
 import { Api } from "../../../api/api";
 import { SimpleFinding, SimpleFindingCategory } from "../../../api/generated";
 import FindingCategory from "../../../components/finding-category";
+import FindingCategoryList from "../../../components/finding-category-list";
 import Input from "../../../components/input";
 import { selectStyles } from "../../../components/select-menu";
 import { ROUTES } from "../../../routes";
 import PlusIcon from "../../../svg/plus";
 import { handleApiError } from "../../../utils/helper";
-import CategoryList from "../components/category-list";
 import SeverityIcon from "../components/severity-icon";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
@@ -109,7 +109,7 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
                                 </span>
                                 <span className="workspace-data-certainty-icon">{f.affectedCount}</span>
                                 <span>{f.name}</span>
-                                <CategoryList categories={f.categories} />
+                                <FindingCategoryList categories={f.categories} />
                                 <span>{f.cve}</span>
                                 <span>{f.createdAt.toLocaleString()}</span>
                             </div>

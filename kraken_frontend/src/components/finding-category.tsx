@@ -1,10 +1,18 @@
-import { EventHandler } from "react";
+import React from "react";
 import { Color } from "../api/generated";
 
+/** React props for [`<FindingCategory />`]{@link FindingCategory} */
 export type FindingCategoryProps = {
+    /** The category's name */
     name: string;
+    /** The category's color */
     color?: Color;
-    onClick?: EventHandler<React.MouseEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>>;
+    /**
+     * Optional event handler for click events
+     *
+     * Pressing `Enter` while focusing on this element will also trigger this handler.
+     */
+    onClick?: React.EventHandler<React.MouseEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>>;
 };
 
 /** Sample of background color */
@@ -15,6 +23,7 @@ const BACKGROUND: Color = {
     a: 255,
 };
 
+/** A small div with a colored border representing a finding category */
 export default function FindingCategory(props: FindingCategoryProps) {
     const { name, color } = props;
 

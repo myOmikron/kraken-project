@@ -7,6 +7,7 @@ import Input from "../../../components/input";
 import "../../../styling/create-category.css";
 import { handleApiError } from "../../../utils/helper";
 
+/** React props for [`<CreateCategory />`]{@link CreateCategory} */
 export type CreateCategoryProps = {
     /**
      * Set an initial name for the new category

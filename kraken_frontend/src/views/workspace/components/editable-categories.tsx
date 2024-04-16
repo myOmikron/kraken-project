@@ -9,6 +9,7 @@ import USER_CONTEXT from "../../../context/user";
 import { handleApiError } from "../../../utils/helper";
 import CreateCategory from "./create-category";
 
+/** React props for [`<EditableCategories />`]{@link EditableCategories} */
 export type EditableCategoriesProps = {
     /** List of currently set tags */
     categories: Array<SimpleFindingCategory>;
@@ -19,7 +20,11 @@ export type EditableCategoriesProps = {
     /** called when all tags are loaded */
     onCategoriesLoaded?: (categories: Array<SimpleFindingCategory>) => void;
 
-    /** can be set to false to disallow creation, otherwise enabled. Creation won't show in either case if the user is not an admin. */
+    /**
+     * Can be set to `false` to disallow creation, otherwise enabled.
+     *
+     * Creation won't show in either case if the user is not an admin.
+     */
     allowCreate?: boolean;
 };
 

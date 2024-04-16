@@ -14,6 +14,7 @@ import {
     SimpleFindingDefinition,
     SimpleTag,
 } from "../../../api/generated";
+import FindingCategoryList from "../../../components/finding-category-list";
 import { GithubMarkdown } from "../../../components/github-markdown";
 import { SelectPrimitive } from "../../../components/select-menu";
 import { ROUTES } from "../../../routes";
@@ -28,7 +29,6 @@ import ScreenshotIcon from "../../../svg/screenshot";
 import { compareDomain, compareHost, comparePort, compareService } from "../../../utils/data-sorter";
 import { handleApiError } from "../../../utils/helper";
 import { configureMonaco } from "../../../utils/monaco";
-import CategoryList from "../components/category-list";
 import CollapsibleSection from "../components/collapsible-section";
 import Domain from "../components/domain";
 import EditableCategories from "../components/editable-categories";
@@ -487,7 +487,7 @@ export function FindingDefinitionDetails(props: { definition: SimpleFindingDefin
                 <h1 className={"sub-heading"}>
                     {definition.name} <small>{definition.severity}</small>
                 </h1>
-                <CategoryList categories={definition.categories} />
+                <FindingCategoryList categories={definition.categories} />
                 <p>{definition.summary}</p>
             </div>
         );

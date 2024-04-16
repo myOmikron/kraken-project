@@ -1,8 +1,8 @@
 import React from "react";
 import Popup from "reactjs-popup";
 import { FindingSeverity, ListFindings } from "../../../api/generated";
+import FindingCategoryList from "../../../components/finding-category-list";
 import { ROUTES } from "../../../routes";
-import CategoryList from "../components/category-list";
 import SeverityIcon from "../components/severity-icon";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
@@ -58,7 +58,7 @@ export default function WorkspaceDataDetailsFindings({
                                         {r.categories.length === 0 ? (
                                             "No categories"
                                         ) : (
-                                            <CategoryList categories={r.categories} />
+                                            <FindingCategoryList categories={r.categories} />
                                         )}
                                     </div>
                                 </Popup>
