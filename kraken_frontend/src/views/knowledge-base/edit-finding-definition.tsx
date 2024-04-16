@@ -29,10 +29,17 @@ import EditableCategories from "../workspace/components/editable-categories";
 import SeverityIcon from "../workspace/components/severity-icon";
 import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
 
+/** React props for {@link EditFindingDefinition `<EditFindingDefinition />`} */
 export type EditFindingDefinitionProps = {
+    /** The finding definition to edit identified by its uuid */
     uuid: string;
 };
 
+/**
+ * View for editing a single finding definition
+ *
+ * It is routed under {@link ROUTES.FINDING_DEFINITION_EDIT `ROUTES.FINDING_DEFINITION_EDIT`}.
+ */
 export function EditFindingDefinition(props: EditFindingDefinitionProps) {
     const [name, setName] = React.useState("");
     const [severity, setSeverity] = React.useState<FindingSeverity>(FindingSeverity.Medium);
@@ -53,6 +60,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                 findingSection: sections.selected,
             },
         },
+        // eslint-disable-next-line jsdoc/require-jsdoc
         receiveCursor: (target) => {
             if (
                 "findingDefinition" in target &&
@@ -63,6 +71,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
         },
         deleteCursors: [props.uuid],
         hideCursors: [sections.selected],
+        // eslint-disable-next-line jsdoc/require-jsdoc
         isCursorHidden: ({ section }) => section !== sections.selected,
     });
 
@@ -75,6 +84,12 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                 setCve(finding.cve || "");
                 setCategories(finding.categories);
 
+                /**
+                 * Constructs the {@link EditorTarget} for this definition's sections
+                 *
+                 * @param findingSection the section to construct the target for
+                 * @returns the sections' target
+                 */
                 const target = (findingSection: FindingSection) => ({
                     findingDefinition: {
                         findingDefinition: props.uuid,
@@ -210,7 +225,19 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
     );
 }
 
-function DeleteButton({ finding, name }: { finding: UUID; name: string }) {
+/** React props for {@link DeleteButton `<DeleteButton />`} */
+export type DeleteButtonProps = {
+    /** The finding definition to delete identified by its uuid */
+    finding: UUID;
+    /** The finding definition's name */
+    name: string;
+};
+
+/**
+ * A button with confirmation popup for deleting a finding definition
+ */
+export function DeleteButton(props: DeleteButtonProps) {
+    const { finding, name } = props;
     const [open, setOpen] = React.useState(false);
 
     const [usage, setUsage] = React.useState<ListFindingDefinitionUsages>();
@@ -244,7 +271,7 @@ function DeleteButton({ finding, name }: { finding: UUID; name: string }) {
             >
                 <h2 className="heading neon">Are you sure you want to delete the finding definition "{name}"?</h2>
                 <p>The following findings will be deleted as a result:</p>
-                {usage ? <UsageList usage={usage} /> : "Loading..."}
+                {usage ? <UsageList usages={usage.usages} /> : "Loading..."}
                 <button className="button workspace-settings-red-button" type="reset" onClick={() => setOpen(false)}>
                     Cancel
                 </button>
@@ -271,13 +298,26 @@ function DeleteButton({ finding, name }: { finding: UUID; name: string }) {
     );
 }
 
-function UsageList({ usage: { usages: usage } }: { usage: ListFindingDefinitionUsages }) {
-    if (!usage.length) return "None";
+/** React props for {@link UsageList `<UsageList />`} */
+export type UsageListProps = {
+    /**
+     * A list of findings using a specific finding definition
+     *
+     * as returned by {@link Api.knowledgeBase.findingDefinitions.getUsage `Api.knowledgeBase.findingDefinitions.getUsage`}.
+     */
+    usages: Array<FindingDefinitionUsage>;
+};
 
-    const workspaces = Object.fromEntries(usage.map((u) => [u.workspace.uuid, u.workspace]));
+/**
+ * Component for displaying the results of {@link Api.knowledgeBase.findingDefinitions.getUsage `Api.knowledgeBase.findingDefinitions.getUsage`}
+ */
+function UsageList(props: UsageListProps) {
+    const { usages } = props;
+    if (!usages.length) return "None";
 
+    const workspaces = Object.fromEntries(usages.map((u) => [u.workspace.uuid, u.workspace]));
     const usageByWorkspace: { [workspace: UUID]: FindingDefinitionUsage[] } = {};
-    for (const u of usage) {
+    for (const u of usages) {
         if (!(u.workspace.uuid in usageByWorkspace)) usageByWorkspace[u.workspace.uuid] = [];
 
         usageByWorkspace[u.workspace.uuid].push(u);
@@ -316,6 +356,35 @@ function UsageList({ usage: { usages: usage } }: { usage: ListFindingDefinitionU
     ));
 }
 
+/**
+ * Hook for running an effect in response to a change after applying a timeout.
+ *
+ * This is useful when there might be a lot of changes in quick succession but the effect is expensive.
+ * For example, reacting to keystroke (changes to a controlled string) with an API request.
+ *
+ * **Differences from {@link React.useEffect `React.useEffect`}:**
+ * - The effect will not when the component mounted
+ * - The effect won't run each time `trigger` changed.
+ *
+ *     Instead, the first time will start a timeout and any subsequent change will be ignored
+ *     until the timeout expires and the effect is run once.
+ *
+ * - The values in `trigger` which schedule the effect are not necessarily the once used to run it.
+ *
+ *     Instead, the last values before the effect's actual execution are used.
+ *
+ * @param trigger dependency list which starts the timeout when one of its members changes.
+ * @param commit dependency list which runs a pending effect before its timeout finished when one of its members changes.
+ *
+ *     This will just force a pending effect to run, it will not trigger an effect if no effect is pending.
+ *     You could make `commit` a subset of `trigger` for this behavior.
+ *
+ * @param timeout milliseconds to wait before running the effect when a member of `trigger` changes.
+ * @param effect effect to run after the timeout started when a member of `trigger` changes.
+ *
+ *     The function last passed before the actual execution is used.
+ *     I.e. It will use the variables it captured before the timeout not the ones it captured before the trigger changed.
+ */
 function useTimeoutOnChange(
     trigger: React.DependencyList,
     commit: React.DependencyList,
@@ -338,7 +407,7 @@ function useTimeoutOnChange(
         }
     }, trigger);
 
-    // Commit any pending change before the timeout
+    /** Commits any pending change *before* the timeout */
     function commitChange() {
         if (state.timeout !== null) {
             state.effect.call(null);

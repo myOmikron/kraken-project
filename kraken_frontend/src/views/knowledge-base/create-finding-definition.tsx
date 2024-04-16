@@ -17,6 +17,7 @@ import { handleApiError } from "../../utils/helper";
 import EditableCategories from "../workspace/components/editable-categories";
 import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
 
+/** React props for {@link CreateFindingDefinitionProps `<CreateFindingDefinitionProps />`} */
 export type CreateFindingDefinitionProps = {
     /** Prefill the name <input /> with an initial value*/
     initialName?: string;
@@ -36,6 +37,12 @@ export type CreateFindingDefinitionProps = {
     inPane?: boolean;
 };
 
+/**
+ * Form for creating a new finding definition.
+ *
+ * This is routed under {@link ROUTES.FINDING_DEFINITION_CREATE `ROUTES.FINDING_DEFINITION_CREATE`} as a view
+ * but can also be used inside a popup by another view.
+ */
 export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
     const [name, setName] = React.useState(props.initialName ?? "");
     const [severity, setSeverity] = React.useState<FindingSeverity>(FindingSeverity.Medium);

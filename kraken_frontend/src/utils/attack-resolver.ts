@@ -1,13 +1,28 @@
 import { AttackType, SimpleAggregationSource } from "../api/generated";
 
+/**
+ * Type of {@link ATTACKS}
+ *
+ * This type is spelled out instead of being inferred (`typeof ATTACKS`),
+ * to enable the typescript compiler to complain about missing values.
+ */
 export type AttackResolver = {
     [Key in AttackType]: {
+        /** Short name consisting only of a few characters */
         abbreviation: string;
+        /** Long name a non-programmer would write */
         long: string;
+        /** Key into {@link SimpleAggregationSource} */
         key: keyof SimpleAggregationSource | "undefined";
     };
 };
 
+/**
+ * Lookup object which associates {@link AttackType}s with strings
+ * - `abbreviation`: Short name consisting only of a few characters
+ * - `long`: Long name a non-programmer would write
+ * - `key`: Key into {@link SimpleAggregationSource}
+ */
 export const ATTACKS: AttackResolver = {
     BruteforceSubdomains: { abbreviation: "BSd", long: "Bruteforce Subdomains", key: "bruteforceSubdomains" },
     QueryCertificateTransparency: {

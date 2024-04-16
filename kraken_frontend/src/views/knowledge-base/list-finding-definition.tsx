@@ -9,8 +9,16 @@ import "../../styling/list-finding-definition.css";
 import PlusIcon from "../../svg/plus";
 import { handleApiError } from "../../utils/helper";
 
+/** React props for {@link ListFindingDefinition `<ListFindingDefinition />`} */
 type ListFindingDefinitionProps = {};
 
+/**
+ * View for listing all finding definitions
+ *
+ * It also links to the edit view for a single definition as well as the view to create a new one.
+ *
+ * It is routed under {@link ROUTES.FINDING_DEFINITION_LIST `ROUTES.FINDING_DEFINITION_LIST`}.
+ */
 export function ListFindingDefinition(props: ListFindingDefinitionProps) {
     const [search, setSearch] = React.useState("");
     const [defs, setDefs] = React.useState([] as Array<SimpleFindingDefinition>);
@@ -53,20 +61,17 @@ export function ListFindingDefinition(props: ListFindingDefinitionProps) {
                         </div>
                     ))}
             </div>
-            {hover === undefined ? <div /> : <Details {...hover} />}
-        </div>
-    );
-}
-
-export function Details(props: SimpleFindingDefinition) {
-    const { name, severity, summary, categories } = props;
-    return (
-        <div className={"list-finding-definition-details pane"}>
-            <h1 className={"sub-heading"}>
-                {name} <small>{severity}</small>
-            </h1>
-            <FindingCategoryList categories={categories} />
-            <p>{summary}</p>
+            {hover === undefined ? (
+                <div />
+            ) : (
+                <div className={"list-finding-definition-details pane"}>
+                    <h1 className={"sub-heading"}>
+                        {hover.name} <small>{hover.severity}</small>
+                    </h1>
+                    <FindingCategoryList categories={hover.categories} />
+                    <p>{hover.summary}</p>
+                </div>
+            )}
         </div>
     );
 }

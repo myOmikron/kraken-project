@@ -1,10 +1,13 @@
 import { PortOrRange } from "../api/generated/models/PortOrRange";
 import { Err, Ok, Result } from "./result";
 
-/// Parses a user input of a single or multiple ports in format `PORT` or
-/// `FROM-TO`, concatenated with spaces or commas.
-///
-/// Returns: `Err("human readable error message")` in case of error.
+/**
+ * Parses a user input of a single or multiple ports in format `PORT` or
+ * `FROM-TO`, concatenated with spaces or commas.
+ *
+ * @param input the user's input to parse
+ * @returns The parsed ports/ranges or a human-readable error message
+ */
 export function parseUserPorts(input: string): Result<PortOrRange[], string> {
     const parts = input.split(/[, ]+/g);
     try {
@@ -29,9 +32,12 @@ export function parseUserPorts(input: string): Result<PortOrRange[], string> {
     }
 }
 
-/// Given the input string coming from a user, parse the number and check that
-/// it's within 1-65535. In case of error, return `false`, otherwise the input
-/// cleaned up and converted to a number.
+/**
+ * Parses a single port (1-65535) from a string or returns `false`.
+ *
+ * @param input string containing a port number
+ * @returns the parsed port (1-65535) or `false` in case of invalid `input`
+ */
 export function parseUserPort(input: string): number | false {
     const p = Number(input.trim());
     if (p !== null && Number.isSafeInteger(p) && p >= 1 && p <= 65535) return p;

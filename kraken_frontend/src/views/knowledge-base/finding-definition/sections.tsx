@@ -35,6 +35,8 @@ export type Sections = Record<
  * {@link useModel `useModel`} specialized for storing a finding definition's sections
  *
  * Besides just storing the sections' models, it also stores a `selected` state.
+ *
+ * @returns monaco models and selection state for the different sections of a finding definition
  */
 export function useSectionsState(): Sections {
     const [summary, setSummary, summaryModel] = useModel({});
@@ -50,6 +52,7 @@ export function useSectionsState(): Sections {
             value: summary,
             set: setSummary,
             model: summaryModel,
+            // eslint-disable-next-line jsdoc/require-jsdoc
             select: () => setSelectedSection(FindingSection.Summary),
             selected: selectedSection === FindingSection.Summary,
         },
@@ -57,6 +60,7 @@ export function useSectionsState(): Sections {
             value: description,
             set: setDescription,
             model: descriptionModel,
+            // eslint-disable-next-line jsdoc/require-jsdoc
             select: () => setSelectedSection(FindingSection.Description),
             selected: selectedSection === FindingSection.Description,
         },
@@ -64,6 +68,7 @@ export function useSectionsState(): Sections {
             value: impact,
             set: setImpact,
             model: impactModel,
+            // eslint-disable-next-line jsdoc/require-jsdoc
             select: () => setSelectedSection(FindingSection.Impact),
             selected: selectedSection === FindingSection.Impact,
         },
@@ -71,6 +76,7 @@ export function useSectionsState(): Sections {
             value: remediation,
             set: setRemediation,
             model: remediationModel,
+            // eslint-disable-next-line jsdoc/require-jsdoc
             select: () => setSelectedSection(FindingSection.Remediation),
             selected: selectedSection === FindingSection.Remediation,
         },
@@ -78,6 +84,7 @@ export function useSectionsState(): Sections {
             value: references,
             set: setReferences,
             model: referencesModel,
+            // eslint-disable-next-line jsdoc/require-jsdoc
             select: () => setSelectedSection(FindingSection.References),
             selected: selectedSection === FindingSection.References,
         },
@@ -88,7 +95,15 @@ export function useSectionsState(): Sections {
 /** Properties for {@link SectionSelectionTabs `<SectionSelectionTabs />`} */
 export type SectionSelectionTabsProps = {
     /** The sections' selection state and their setters */
-    sections: Record<FindingSection, { selected: boolean; select(): void }>;
+    sections: Record<
+        FindingSection,
+        {
+            /** Selects this section */
+            select(): void;
+            /** Is this section selected? */
+            selected: boolean;
+        }
+    >;
 
     /** Optional booleans indicating whether another user is currently in a section */
     others?: Record<FindingSection, boolean>;
