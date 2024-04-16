@@ -381,7 +381,7 @@ impl ServiceAST {
             sql.append_join(from_service_join_port());
         }
         if self.ports_tags.is_some() {
-            sql.append_join(JoinTags::port().alias("port_tags")); // TODO: does this work since port might be null?
+            sql.append_join(JoinTags::port().alias("port_tags"));
         }
         if self.ips_created_at.is_some() || self.ips_tags.is_some() || self.ips_os.is_some() {
             sql.append_join(from_service_join_host());
@@ -469,7 +469,7 @@ impl HttpServiceAST {
             sql.append_join(from_http_service_join_domain());
         }
         if self.domains_tags.is_some() {
-            sql.append_join(JoinTags::domain().alias("domain_tags")); // TODO: does this work since domain might be null?
+            sql.append_join(JoinTags::domain().alias("domain_tags"));
         }
 
         let HttpServiceAST {
