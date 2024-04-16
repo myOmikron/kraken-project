@@ -16,7 +16,7 @@ import {
     QueryCertificateTransparencyRequest,
     QueryDehashedRequest,
     ServiceDetectionRequest,
-    UdpServiceDetectionRequest,
+    UdpServiceDetectionRequest
 } from "../../api/generated";
 import { ROUTES } from "../../routes";
 import "../../styling/workspace-attacks.css";
@@ -33,7 +33,7 @@ import {
     NumberAttackInput,
     PortListInput,
     StringAttackInput,
-    WordlistAttackInput,
+    WordlistAttackInput
 } from "./attacks/attack-input";
 import GenericAttackForm from "./attacks/generic-attack-form";
 import { WORKSPACE_CONTEXT } from "./workspace";
@@ -124,10 +124,10 @@ export type AttackInputs<ReqType extends AttackType> = {
     jsonKey: string;
     inputs: {
         [T in Exclude<keyof AttackRequestTypes[ReqType], "workspaceUuid" | "leechUuid">]:
-            | (AttackRequestTypes[ReqType][T] extends readonly (infer ElementType)[]
-                  ? AttackInput<ElementType, boolean>
-                  : AttackInput<AttackRequestTypes[ReqType][T], false>)
-            | { fixed: AttackRequestTypes[ReqType][T] };
+        | (AttackRequestTypes[ReqType][T] extends readonly (infer ElementType)[]
+        ? AttackInput<ElementType, boolean>
+        : AttackInput<AttackRequestTypes[ReqType][T], false>)
+        | { fixed: AttackRequestTypes[ReqType][T] };
     };
 };
 
@@ -191,14 +191,14 @@ const ATTACKS: AllAttackDescr = {
                     required: true,
                     defaultValue: "",
                     prefill: ["domain"],
-                    type: StringAttackInput,
+                    type: StringAttackInput
                 },
                 wordlistUuid: {
                     label: "Wordlist",
                     multi: false,
                     required: true,
                     defaultValue: "",
-                    type: WordlistAttackInput,
+                    type: WordlistAttackInput
                 },
                 concurrentLimit: {
                     label: "Concurrency Limit",
@@ -206,10 +206,10 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: 100,
                     required: true,
                     type: NumberAttackInput,
-                    group: "Advanced",
-                },
-            },
-        },
+                    group: "Advanced"
+                }
+            }
+        }
     },
     certificate_transparency: {
         name: "Certificate Transparency",
@@ -226,13 +226,13 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: "",
                     required: true,
                     prefill: ["domain"],
-                    type: StringAttackInput,
+                    type: StringAttackInput
                 },
                 includeExpired: {
                     label: "Include expired certificates",
                     multi: false,
                     defaultValue: false,
-                    type: BooleanAttackInput,
+                    type: BooleanAttackInput
                 },
                 maxRetries: {
                     label: "Max. no. of retries",
@@ -240,7 +240,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: 3,
                     required: true,
                     type: NumberAttackInput,
-                    group: "Advanced",
+                    group: "Advanced"
                 },
                 retryInterval: {
                     label: "Retry interval",
@@ -248,10 +248,10 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: 500,
                     required: true,
                     type: DurationAttackInput,
-                    group: "Advanced",
-                },
-            },
-        },
+                    group: "Advanced"
+                }
+            }
+        }
     },
     dns_resolution: {
         name: "Dns Resolution",
@@ -262,7 +262,7 @@ const ATTACKS: AllAttackDescr = {
             jsonKey: "dnsResolutionRequest",
             inputs: {
                 concurrentLimit: {
-                    fixed: 1,
+                    fixed: 1
                 },
                 targets: {
                     label: "Domain",
@@ -270,10 +270,10 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: undefined,
                     type: StringAttackInput,
                     prefill: ["domain"],
-                    required: true,
-                },
-            },
-        },
+                    required: true
+                }
+            }
+        }
     },
     dns_txt_scan: {
         name: "DNS TXT Scan",
@@ -289,10 +289,10 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: undefined,
                     type: StringAttackInput,
                     prefill: ["domain"],
-                    required: true,
-                },
-            },
-        },
+                    required: true
+                }
+            }
+        }
     },
     host_alive: {
         name: "Host alive",
@@ -308,7 +308,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: undefined,
                     prefill: ["domain", "ipAddr"],
                     type: StringAttackInput,
-                    required: true,
+                    required: true
                 },
                 timeout: {
                     label: "Timeout (in ms)",
@@ -316,7 +316,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: 1000,
                     type: DurationAttackInput,
                     required: true,
-                    group: "Advanced",
+                    group: "Advanced"
                 },
                 concurrentLimit: {
                     label: "Concurrency Limit",
@@ -324,10 +324,10 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: 50,
                     type: NumberAttackInput,
                     required: true,
-                    group: "Advanced",
-                },
-            },
-        },
+                    group: "Advanced"
+                }
+            }
+        }
     },
     service_detection: {
         name: "Service Detection",
@@ -344,7 +344,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: undefined,
                     prefill: ["domain", "ipAddr"],
                     type: StringAttackInput,
-                    required: true,
+                    required: true
                 },
                 ports: {
                     label: "Ports",
@@ -353,7 +353,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: ["1-65535"],
                     prefill: ["port[Tcp]"],
                     type: PortListInput,
-                    preprocess: (v) => (typeof v == "number" ? [v] : v),
+                    preprocess: (v) => (typeof v == "number" ? [v] : v)
                 },
                 connectTimeout: {
                     label: "Connect Timeout (in ms)",
@@ -361,7 +361,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: 1000,
                     required: true,
                     type: DurationAttackInput,
-                    group: "Advanced",
+                    group: "Advanced"
                 },
                 receiveTimeout: {
                     label: "Receive Timeout (in ms)",
@@ -369,7 +369,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: 500,
                     type: DurationAttackInput,
                     required: true,
-                    group: "Advanced",
+                    group: "Advanced"
                 },
                 maxRetries: {
                     label: "Max. no. of retries",
@@ -377,7 +377,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: 6,
                     required: true,
                     type: NumberAttackInput,
-                    group: "Advanced",
+                    group: "Advanced"
                 },
                 retryInterval: {
                     label: "Retry interval",
@@ -385,7 +385,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: 100,
                     required: true,
                     type: DurationAttackInput,
-                    group: "Advanced",
+                    group: "Advanced"
                 },
                 concurrentLimit: {
                     label: "Concurrency Limit",
@@ -393,16 +393,16 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: 500,
                     required: true,
                     type: NumberAttackInput,
-                    group: "Advanced",
+                    group: "Advanced"
                 },
                 skipIcmpCheck: {
                     label: "Skip icmp check",
                     multi: false,
                     defaultValue: true,
-                    type: BooleanAttackInput,
-                },
-            },
-        },
+                    type: BooleanAttackInput
+                }
+            }
+        }
     },
     udp_service_detection: {
         name: "UDP Service Detection",
@@ -418,7 +418,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: undefined,
                     prefill: ["domain", "ipAddr"],
                     type: StringAttackInput,
-                    required: true,
+                    required: true
                 },
                 ports: {
                     label: "Ports",
@@ -427,7 +427,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: ["1-65535"],
                     prefill: ["port[Udp]"],
                     type: PortListInput,
-                    preprocess: (v) => (typeof v == "number" ? [v] : v),
+                    preprocess: (v) => (typeof v == "number" ? [v] : v)
                 },
                 timeout: {
                     label: "Timeout (in ms)",
@@ -435,7 +435,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: 1000,
                     type: DurationAttackInput,
                     group: "Advanced",
-                    required: true,
+                    required: true
                 },
                 maxRetries: {
                     label: "Max. no. of retries",
@@ -443,7 +443,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: 5,
                     type: NumberAttackInput,
                     group: "Advanced",
-                    required: true,
+                    required: true
                 },
                 retryInterval: {
                     label: "Retry interval",
@@ -451,7 +451,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: 1000,
                     type: DurationAttackInput,
                     group: "Advanced",
-                    required: true,
+                    required: true
                 },
                 concurrentLimit: {
                     label: "Concurrency Limit",
@@ -459,10 +459,10 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: 1024,
                     type: NumberAttackInput,
                     group: "Advanced",
-                    required: true,
-                },
-            },
-        },
+                    required: true
+                }
+            }
+        }
     },
     dehashed: {
         name: "Dehashed",
@@ -485,10 +485,10 @@ const ATTACKS: AllAttackDescr = {
                         if (v.port) return { ipAddress: { simple: v.port.host.ipAddr } };
                         if (v.service) return { ipAddress: { simple: v.service.host.ipAddr } };
                         return undefined;
-                    },
-                },
-            },
-        },
+                    }
+                }
+            }
+        }
     },
     os_detection: {
         name: "OS detection",
@@ -504,7 +504,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: undefined,
                     prefill: ["domain", "ipAddr"],
                     type: StringAttackInput,
-                    required: true,
+                    required: true
                 },
                 sshPort: {
                     defaultValue: 22,
@@ -512,7 +512,7 @@ const ATTACKS: AllAttackDescr = {
                     prefill: ["service[ssh].port"],
                     multi: false,
                     type: NullNumberAttackInput,
-                    required: false,
+                    required: false
                 },
                 fingerprintPort: {
                     defaultValue: undefined,
@@ -520,7 +520,7 @@ const ATTACKS: AllAttackDescr = {
                     label: "TCP Fingerprint Port",
                     type: NullNumberAttackInput,
                     multi: false,
-                    required: false,
+                    required: false
                 },
                 fingerprintTimeout: {
                     group: "TCP fingerprint task",
@@ -528,7 +528,7 @@ const ATTACKS: AllAttackDescr = {
                     label: "Timeout",
                     type: DurationAttackInput,
                     required: true,
-                    multi: false,
+                    multi: false
                 },
                 sshTimeout: {
                     group: "SSH task",
@@ -536,7 +536,7 @@ const ATTACKS: AllAttackDescr = {
                     label: "Timeout",
                     type: DurationAttackInput,
                     required: true,
-                    multi: false,
+                    multi: false
                 },
                 sshConnectTimeout: {
                     group: "SSH task",
@@ -544,7 +544,7 @@ const ATTACKS: AllAttackDescr = {
                     label: "Connection timeout",
                     type: DurationAttackInput,
                     required: true,
-                    multi: false,
+                    multi: false
                 },
                 portAckTimeout: {
                     group: "TCP SYN port test",
@@ -552,7 +552,7 @@ const ATTACKS: AllAttackDescr = {
                     label: "ACK timeout",
                     type: DurationAttackInput,
                     required: true,
-                    multi: false,
+                    multi: false
                 },
                 portParallelSyns: {
                     group: "TCP SYN port test",
@@ -560,7 +560,7 @@ const ATTACKS: AllAttackDescr = {
                     label: "Max parallel requests",
                     type: NumberAttackInput,
                     required: true,
-                    multi: false,
+                    multi: false
                 },
                 concurrentLimit: {
                     label: "Concurrency Limit",
@@ -568,11 +568,11 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: 32,
                     required: true,
                     type: NumberAttackInput,
-                    group: "Advanced",
-                },
-            },
-        },
-    },
+                    group: "Advanced"
+                }
+            }
+        }
+    }
 };
 
 const TARGET_TYPE = ["domain", "host", "port", "service"] as const;
@@ -610,37 +610,31 @@ export type PrefillType =
 
 type WorkspaceAttacksProps =
     | {
-          targetType?: never;
-          targetUuid?: never;
-      }
+    targetType?: never;
+    targetUuid?: never;
+}
     | {
-          targetType: TargetType;
-          targetUuid: string;
-      }
+    targetType: TargetType;
+    targetUuid: string;
+}
     | {
-          targetType: "selection";
-          domains: string[];
-          hosts: string[];
-          ports: string[];
-          services: string[];
-      };
-
-type WorkspaceAttacksState = {
-    selectedAttack: AttackType | null;
-    hoverAttack: AttackType | null;
-    target: { name: string; selection: RawSelectionData[] };
+    targetType: "selection";
+    domains: string[];
+    hosts: string[];
+    ports: string[];
+    services: string[];
 };
 
 export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
     const {
-        workspace: { uuid: workspace },
+        workspace: { uuid: workspace }
     } = React.useContext(WORKSPACE_CONTEXT);
 
     const [selectedAttack, setSelectedAttack] = React.useState<AttackType | null>(null);
     const [hoverAttack, setHoverAttack] = React.useState<AttackType | null>(null);
     const [target, setTarget] = React.useState<{ name: string; selection: RawSelectionData[] }>({
         name: "Loading...",
-        selection: [],
+        selection: []
     });
 
     async function updateSelection() {
@@ -650,7 +644,7 @@ export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
 
         function fetchAll<T>(
             api: { get: (workspaceUuid: string, thingUuid: string) => Promise<Result<T, ApiError>> },
-            list: string[],
+            list: string[]
         ): Promise<T[]> {
             return new Promise((resolve, reject) => {
                 const res: T[] = [];
@@ -668,7 +662,7 @@ export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
                             handleApiError((v) => {
                                 res.push(v);
                                 checkDone();
-                            }),
+                            })
                         )
                         .catch((v) => {
                             console.error(v);
@@ -682,14 +676,14 @@ export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
             hosts: (await fetchAll(Api.workspaces.hosts, props.hosts)).map((v) => ({ host: v })),
             ports: (await fetchAll(Api.workspaces.ports, props.ports)).map((v) => ({ port: v })),
             domains: (await fetchAll(Api.workspaces.domains, props.domains)).map((v) => ({ domain: v })),
-            services: (await fetchAll(Api.workspaces.services, props.services)).map((v) => ({ service: v })),
+            services: (await fetchAll(Api.workspaces.services, props.services)).map((v) => ({ service: v }))
         };
 
         const selection: RawSelectionData[] = Object.keys(inputs).flatMap((k) => inputs[k]);
 
         setTarget((target) => ({
             name: target.name,
-            selection: selection,
+            selection: selection
         }));
     }
 
@@ -700,9 +694,9 @@ export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
                     handleApiError((domain) =>
                         setTarget({
                             name: domain.domain,
-                            selection: [{ domain }],
-                        }),
-                    ),
+                            selection: [{ domain }]
+                        })
+                    )
                 );
                 break;
             case "host":
@@ -710,9 +704,9 @@ export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
                     handleApiError((host) =>
                         setTarget({
                             name: host.ipAddr,
-                            selection: [{ host }],
-                        }),
-                    ),
+                            selection: [{ host }]
+                        })
+                    )
                 );
                 break;
             case "port":
@@ -720,9 +714,9 @@ export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
                     handleApiError((port) =>
                         setTarget({
                             name: `${port.host.ipAddr}'s port ${port.port}`,
-                            selection: [{ port }],
-                        }),
-                    ),
+                            selection: [{ port }]
+                        })
+                    )
                 );
                 break;
             case "service":
@@ -733,9 +727,9 @@ export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
                             name: port
                                 ? `${host.ipAddr}'s service ${name} on port ${port.port}`
                                 : `${host.ipAddr}'s service ${name}`,
-                            selection: [{ service }],
+                            selection: [{ service }]
                         });
-                    }),
+                    })
                 );
                 break;
             case "selection":
@@ -744,11 +738,11 @@ export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
                         `${props.hosts.length} hosts`,
                         `${props.ports.length} ports`,
                         `${props.domains.length} domains`,
-                        `${props.services.length} services`,
+                        `${props.services.length} services`
                     ]
                         .filter((s) => !s.startsWith("0 "))
                         .join(", "),
-                    selection: [],
+                    selection: []
                 });
                 updateSelection();
                 break;
@@ -766,7 +760,7 @@ export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
         "hosts" in props ? props.hosts : undefined,
         "ports" in props ? props.ports : undefined,
         "services" in props ? props.services : undefined,
-        props.targetType,
+        props.targetType
     ]);
 
     function renderSelection() {
@@ -789,11 +783,11 @@ export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
                 <h2 className={"sub-heading"}>Selection</h2>
                 <table>
                     <thead>
-                        <tr>
-                            {columnLabels.map((label) => (
-                                <th>{label}</th>
-                            ))}
-                        </tr>
+                    <tr>
+                        {columnLabels.map((label) => (
+                            <th>{label}</th>
+                        ))}
+                    </tr>
                     </thead>
                     <tbody>{rows}</tbody>
                 </table>
@@ -870,8 +864,8 @@ function generateDisabled(prefill: RawSelectionData[]): Record<AttackType, boole
         Object.keys(ATTACKS).map((v) => [
             v,
             prefill.length &&
-                Object.values(generateAttackPrefill(v as AttackType, prefill)).every((v) => v.length == 0),
-        ]),
+            Object.values(generateAttackPrefill(v as AttackType, prefill)).every((v) => v.length == 0)
+        ])
     ) as { [T in keyof typeof ATTACKS]: boolean };
 }
 
@@ -909,7 +903,7 @@ function generateAttackPrefill(attack: AttackType, prefill: RawSelectionData[]):
     // and remove rows that have missing required values
     values = values.filter(
         (row) =>
-            !row.some((v, i) => v === undefined && (ATTACKS[attack].inputs.inputs as AnyAttackInput)[keys[i]].required),
+            !row.some((v, i) => v === undefined && (ATTACKS[attack].inputs.inputs as AnyAttackInput)[keys[i]].required)
     );
     values = ObjectFns.transpose2D(values);
     if (keys.length != values.length) throw new Error("logic error");
@@ -953,10 +947,10 @@ export function getPrefill(raw: RawSelectionData, type: PrefillType): unknown | 
             return raw.host
                 ? raw.host.ipAddr
                 : raw.port
-                  ? raw.port.host.ipAddr
-                  : raw.service
-                    ? raw.service.host.ipAddr
-                    : undefined;
+                    ? raw.port.host.ipAddr
+                    : raw.service
+                        ? raw.service.host.ipAddr
+                        : undefined;
         case "port":
         case "port[Unknown]":
         case "port[Udp]":

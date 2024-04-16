@@ -7,7 +7,7 @@ import {
     FindingSection,
     FindingSeverity,
     ListFindingDefinitionUsages,
-    SimpleFindingCategory,
+    SimpleFindingCategory
 } from "../../api/generated";
 import WS from "../../api/websocket";
 import { AdminOnly } from "../../components/admin-guard";
@@ -50,8 +50,8 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
         target: {
             findingDefinition: {
                 findingDefinition: props.uuid,
-                findingSection: sections.selected,
-            },
+                findingSection: sections.selected
+            }
         },
         receiveCursor: (target) => {
             if (
@@ -63,7 +63,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
         },
         deleteCursors: [props.uuid],
         hideCursors: [sections.selected],
-        isCursorHidden: ({ section }) => section !== sections.selected,
+        isCursorHidden: ({ section }) => section !== sections.selected
     });
 
     /* Initial load */
@@ -78,15 +78,15 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                 const target = (findingSection: FindingSection) => ({
                     findingDefinition: {
                         findingDefinition: props.uuid,
-                        findingSection,
-                    },
+                        findingSection
+                    }
                 });
                 sections.Summary.set(finding.summary, target(FindingSection.Summary));
                 sections.Description.set(finding.description, target(FindingSection.Description));
                 sections.Impact.set(finding.impact, target(FindingSection.Impact));
                 sections.Remediation.set(finding.remediation, target(FindingSection.Remediation));
                 sections.References.set(finding.references, target(FindingSection.References));
-            }),
+            })
         );
 
         const handle = WS.addEventListener("message.UpdatedFindingDefinition", ({ uuid, update }) => {
@@ -184,25 +184,25 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                         sections={sections}
                         others={{
                             [FindingSection.Summary]: cursors.some(
-                                ({ data: { section } }) => section === FindingSection.Summary,
+                                ({ data: { section } }) => section === FindingSection.Summary
                             ),
                             [FindingSection.Description]: cursors.some(
-                                ({ data: { section } }) => section === FindingSection.Description,
+                                ({ data: { section } }) => section === FindingSection.Description
                             ),
                             [FindingSection.Impact]: cursors.some(
-                                ({ data: { section } }) => section === FindingSection.Impact,
+                                ({ data: { section } }) => section === FindingSection.Impact
                             ),
                             [FindingSection.Remediation]: cursors.some(
-                                ({ data: { section } }) => section === FindingSection.Remediation,
+                                ({ data: { section } }) => section === FindingSection.Remediation
                             ),
                             [FindingSection.References]: cursors.some(
-                                ({ data: { section } }) => section === FindingSection.References,
-                            ),
+                                ({ data: { section } }) => section === FindingSection.References
+                            )
                         }}
                     />
                     <ModelEditor model={sections[sections.selected].model} setEditor={setEditor} />
                     {cursors.map(({ cursor, data }) =>
-                        cursor.render(<div className={"cursor-label"}>{data.displayName}</div>),
+                        cursor.render(<div className={"cursor-label"}>{data.displayName}</div>)
                     )}
                 </div>
             </div>
@@ -259,8 +259,8 @@ function DeleteButton({ finding, name }: { finding: UUID; name: string }) {
                             {
                                 pending: "Deleting finding definition...",
                                 error: "Failed to delete finding definition!",
-                                success: "Successfully deleted finding definition",
-                            },
+                                success: "Successfully deleted finding definition"
+                            }
                         );
                     }}
                 >
@@ -274,9 +274,9 @@ function DeleteButton({ finding, name }: { finding: UUID; name: string }) {
 function UsageList({ usage: { usages: usage } }: { usage: ListFindingDefinitionUsages }) {
     if (!usage.length) return "None";
 
-    let workspaces = Object.fromEntries(usage.map((u) => [u.workspace.uuid, u.workspace]));
+    const workspaces = Object.fromEntries(usage.map((u) => [u.workspace.uuid, u.workspace]));
 
-    let usageByWorkspace: { [workspace: UUID]: FindingDefinitionUsage[] } = {};
+    const usageByWorkspace: { [workspace: UUID]: FindingDefinitionUsage[] } = {};
     for (const u of usage) {
         if (!(u.workspace.uuid in usageByWorkspace)) usageByWorkspace[u.workspace.uuid] = [];
 
@@ -302,7 +302,7 @@ function UsageList({ usage: { usages: usage } }: { usage: ListFindingDefinitionU
                                     f.affectedDomains + " Domains",
                                     f.affectedHosts + " Hosts",
                                     f.affectedPorts + " Ports",
-                                    f.affectedServices + " Services",
+                                    f.affectedServices + " Services"
                                 ]
                                     .filter((v) => !v.startsWith("0 "))
                                     .join(", ")}
@@ -320,7 +320,7 @@ function useTimeoutOnChange(
     trigger: React.DependencyList,
     commit: React.DependencyList,
     timeout: number,
-    effect: () => void,
+    effect: () => void
 ) {
     const { current: state } = React.useRef({ timeout: null as null | number, effect, initial: true });
     state.effect = effect;
