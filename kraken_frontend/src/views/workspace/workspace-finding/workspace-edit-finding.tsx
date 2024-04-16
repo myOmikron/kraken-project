@@ -16,7 +16,6 @@ import {
     SimpleFindingCategory,
     SimpleFindingDefinition,
     SimpleHost,
-    SimpleHttpService,
     SimplePort,
     SimpleService,
     SimpleTag,

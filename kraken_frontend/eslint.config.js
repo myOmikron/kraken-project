@@ -41,7 +41,7 @@ const config = tsEslint.config(
                         MethodDefinition: true,
                     },
                     // use https://typescript-eslint.io/play/ to figure out the ast layout
-                    contexts: ["TSTypeAliasDeclaration", "TSPropertySignature"],
+                    contexts: ["TSTypeAliasDeclaration", "TSPropertySignature", "ExportNamedDeclaration"],
                 },
             ],
 

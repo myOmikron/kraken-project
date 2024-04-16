@@ -19,8 +19,11 @@ const CONSOLE: Console | null = null;
 
 /** {@link useModel `useModel`}' arguments */
 export type UseModelArgs = {
+    /** The language the model should use */
     language?: string;
+    /** The {@link EditorTarget} to synchronize changes with */
     syncTarget?: EditorTarget;
+    /** The model's value */
     value?: string;
 };
 
@@ -32,7 +35,11 @@ export type UseModelReturn = [
 ];
 
 /**
- * TODO: more docs
+ * Returns a stateful string and a function for updating it which are kept in sync with a monaco model.
+ *
+ * This hook bridges the gap between React's and monaco's state management.
+ *
+ * ## Return
  *
  * The returned tuple tries to mimic {@link React.useState `React.useState`}'s return type.
  *
@@ -42,6 +49,23 @@ export type UseModelReturn = [
  *
  * The third element is monaco's representation of the state (aka a {@link ITextModel model})
  * which can be passed to a {@link ModelEditor `<ModelEditor />`}.
+ *
+ * ## Sync
+ *
+ * This hook also manages the synchronization of your model over the websocket.
+ *
+ * Simply provide the `syncTarget` in the `initialArgs`.
+ *
+ * If you want to change the `syncTarget` (for example because you're edit view switches to another uuid),
+ * you can pass a new `syncTarget` as second argument to the update function you use to switch the model's value.
+ *
+ * @param initialArgs the **initial** parameters the model should be created with.
+ *     - changes to those values in re-renders will be ignored!
+ *
+ * @returns tuple of:
+ *     1. the model's current value
+ *     2. a function to update the model's current value (and change its sync target)
+ *     3. the model itself
  */
 export function useModel(initialArgs: UseModelArgs): UseModelReturn {
     const {
@@ -62,21 +86,39 @@ export function useModel(initialArgs: UseModelArgs): UseModelReturn {
     return [controller.value, controller.setValue.bind(controller), controller.model];
 }
 
-/** {@link useModelStore `useModelStore`}'s return value */
-export type UseModelStoreReturn = {
+/** A model store as returned by {@link useModelStore `useModelStore`} */
+export type ModelStore = {
+    /** The store's current models and their values */
     models: Record<
         string,
         {
+            /** The model's value */
             value: string;
+            /** The model */
             model: ITextModel | null;
         }
     >;
-    addModel: (key: string, args: { language: string; value: string; syncTarget: EditorTarget }) => void;
+    /** Adds a new model to the store (overwriting any existing one) */
+    addModel: (key: string, args: UseModelArgs) => void;
+    /** Removes a single model from the store */
     removeModel: (key: string) => void;
+    /** Removes all models from the store */
     removeAll: () => void;
 };
 
-export function useModelStore(): UseModelStoreReturn {
+/**
+ * A more dynamic version of {@link useModel `useModel`}.
+ *
+ * Due to the ["Rules of Hooks"](https://react.dev/reference/rules/rules-of-hooks) you can only get
+ * a predefined number of models using `useModel`.
+ *
+ * This hook creates a "store" which can hold a completely dynamic number of models.
+ *
+ * Models are stored in an {@link ModelStore#models object} and identified by arbitrary strings provided by the caller.
+ *
+ * @returns a model store i.e. a set of models and a few functions to modify it
+ */
+export function useModelStore(): ModelStore {
     const {
         user: { uuid: user },
     } = React.useContext(USER_CONTEXT);
@@ -115,6 +157,7 @@ export function useModelStore(): UseModelStoreReturn {
                 },
             ]),
         ),
+        // eslint-disable-next-line jsdoc/require-jsdoc
         addModel: (key: string, args: UseModelArgs) => {
             setControllers(({ [key]: controller, ...rest }) => {
                 if (controller) controller.onUnmount();
@@ -122,12 +165,14 @@ export function useModelStore(): UseModelStoreReturn {
                 return { [key]: new ModelController(args, user), ...rest };
             });
         },
+        // eslint-disable-next-line jsdoc/require-jsdoc
         removeModel: (key: string) => {
             setControllers(({ [key]: controller, ...rest }) => {
                 if (controller) controller.onUnmount();
                 return rest;
             });
         },
+        // eslint-disable-next-line jsdoc/require-jsdoc
         removeAll: () => {
             setControllers((controllers) => {
                 for (const controller of Object.values(controllers)) {
@@ -148,7 +193,7 @@ export function useModelStore(): UseModelStoreReturn {
  *
  * **Don't construct an instance yourself, use {@link useModel `useModel`}!**
  */
-export class ModelController {
+class ModelController {
     /**
      * Language used by the model
      *
@@ -206,6 +251,7 @@ export class ModelController {
      */
     updateSource: "websocket" | "monaco" | "react" = "monaco";
 
+    // eslint-disable-next-line jsdoc/require-jsdoc
     constructor(args: UseModelArgs, user: string) {
         this.language = args.language;
         this.syncTarget = args.syncTarget;
@@ -280,6 +326,7 @@ export class ModelController {
         CONSOLE?.groupEnd();
     }
 
+    // eslint-disable-next-line jsdoc/require-param
     /** Called once as soon as monaco is available */
     setupModel(monaco: Monaco) {
         CONSOLE?.group("setupModel");
@@ -349,6 +396,7 @@ export class ModelController {
         });
     }
 
+    // eslint-disable-next-line jsdoc/require-param
     /** The `setValue` function returned by the `useModel` hook */
     setValue(newValue: string, syncTarget: EditorTarget | undefined) {
         CONSOLE?.group("setValue");

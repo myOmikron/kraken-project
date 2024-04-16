@@ -1,4 +1,4 @@
-import { editor } from "monaco-editor";
+import { editor, IDisposable } from "monaco-editor";
 import React from "react";
 import { createPortal } from "react-dom";
 import { EditorTarget, SimpleUser } from "../api/generated";
@@ -10,7 +10,7 @@ import TrackedRangeStickiness = editor.TrackedRangeStickiness;
 /**
  * Arguments to the {@link useSyncedCursors} hook
  */
-export type UseSyncedCursorsArgs<CT extends {} = true> = {
+export type UseSyncedCursorsArgs<CustomData extends {} = true> = {
     /**
      * The {@link EditorTarget} to use when sending updates to the server
      */
@@ -21,7 +21,7 @@ export type UseSyncedCursorsArgs<CT extends {} = true> = {
      *
      * Return `undefined` if the update should be ignored (i.e. you may omit the return statement)
      */
-    receiveCursor: (target: EditorTarget) => CT | undefined;
+    receiveCursor: (target: EditorTarget) => CustomData | undefined;
 
     /**
      * An optional list which triggers a deletion of all cursors when any member changes
@@ -46,7 +46,7 @@ export type UseSyncedCursorsArgs<CT extends {} = true> = {
      *
      * _Should be set in combination with `hideCursors`_
      */
-    isCursorHidden?: (cursor: SimpleUser & CT) => boolean;
+    isCursorHidden?: (cursor: SimpleUser & CustomData) => boolean;
 
     /**
      * Optional flag to include the own cursor
@@ -56,7 +56,19 @@ export type UseSyncedCursorsArgs<CT extends {} = true> = {
     includeOwnCursor?: boolean;
 };
 
-export function useSyncedCursors<CT extends {} = true>(args: UseSyncedCursorsArgs<CT>) {
+/**
+ * Synchronizes cursors of different users
+ *
+ * This hook can only operate on a single editor instance at a time.
+ * This instance can be switched any time moving all cursors from the old one to the new one.
+ *
+ * @param args various configuration options as well as the required `target` and `receiveCursor`.
+ *
+ * @returns
+ *     - `setEditor` to connect this hook with your monaco editor
+ *     - `cursors`: a list of the cursors
+ */
+export function useSyncedCursors<CustomData extends {} = true>(args: UseSyncedCursorsArgs<CustomData>) {
     const {
         target,
         receiveCursor,
@@ -75,7 +87,16 @@ export function useSyncedCursors<CT extends {} = true>(args: UseSyncedCursorsArg
         user: user.uuid,
     });
 
-    type Cursors = Record<string, { data: SimpleUser & CT; cursor: Cursor }>;
+    /** The stored cursors */
+    type Cursors = Record<
+        string,
+        {
+            /** Some application state associated with the cursor */
+            data: SimpleUser & CustomData;
+            /** The cursor's monaco state*/
+            cursor: Cursor;
+        }
+    >;
     const [cursors, setCursors] = React.useState<Cursors>({});
 
     // Delete cursors
@@ -116,7 +137,8 @@ export function useSyncedCursors<CT extends {} = true>(args: UseSyncedCursorsArg
         });
 
         // Send outgoing cursor messages
-        let disposable = {
+        let disposable: IDisposable = {
+            // eslint-disable-next-line jsdoc/require-jsdoc
             dispose() {},
         };
         if (editorInstance !== null) {
@@ -180,6 +202,13 @@ const CURSOR_DECO: editor.IModelDecorationOptions = {
     stickiness: TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
 };
 
+/**
+ * A cursor attached to a single monaco editor which can render a React node at its position
+ *
+ * The cursor is realised as an editor decoration of width zero and css class `"cursor-deco"`.
+ * It also uses monaco's widgets to place a `<div class="cursor-root" />` at the cursor's position
+ * which is computed by monaco.
+ */
 export class Cursor {
     private static nextId = 0;
 
@@ -208,6 +237,14 @@ export class Cursor {
     /** The config for positioning the `node` */
     private readonly widget: editor.IContentWidget;
 
+    /**
+     * Constructs a new cursor
+     *
+     * @param editorInstance the initial editor this cursor should be attached to
+     * @param line the cursor's initial line number (1-indexed!)
+     * @param column the cursor's initial column number (1-indexed!)
+     * @param active should the cursors start as visible?
+     */
     constructor(
         editorInstance: editor.IStandaloneCodeEditor | null,
         line: number,
@@ -223,7 +260,9 @@ export class Cursor {
         this.node = document.createElement("div");
         this.node.classList.add("cursor-root");
         this.widget = {
+            // eslint-disable-next-line jsdoc/require-jsdoc
             getId: () => this.id,
+            // eslint-disable-next-line jsdoc/require-jsdoc
             getPosition: () => ({
                 position: { lineNumber: this.line, column: this.column },
                 preference: [
@@ -232,6 +271,7 @@ export class Cursor {
                     editor.ContentWidgetPositionPreference.EXACT,
                 ],
             }),
+            // eslint-disable-next-line jsdoc/require-jsdoc
             getDomNode: () => this.node,
         };
 
@@ -242,13 +282,20 @@ export class Cursor {
      * Updates the editor this cursor is shown in
      *
      * I.e. The cursor is removed from its old editor and attached to the new one.
+     *
+     * @param editorInstance the cursor's new editor instance
      */
     updateEditor(editorInstance: editor.IStandaloneCodeEditor | null) {
         this.removeEditor();
         if (editorInstance !== null) this.setEditor(editorInstance);
     }
 
-    /** Updates the cursor's position */
+    /**
+     * Updates the cursor's position
+     *
+     * @param line the cursor's new line number (1-indexed!)
+     * @param column the cursor's new column number (1-indexed!)
+     */
     updatePosition(line: number, column: number) {
         this.line = line;
         this.column = column;
@@ -258,7 +305,11 @@ export class Cursor {
         }
     }
 
-    /** Updates whether the cursor is currently visible or not */
+    /**
+     * Updates whether the cursor is currently visible or not
+     *
+     * @param active should the cursor be currently visible?
+     */
     updateActive(active: boolean) {
         // Disable
         if (this.active && !active) {
@@ -273,7 +324,19 @@ export class Cursor {
         this.active = active;
     }
 
-    /** Renders a React node at the cursor */
+    /**
+     * Renders a React node at the cursor
+     *
+     * This method takes the `active` state already into account,
+     * so a caller can simply map all of his cursors without filtering
+     * for the `active` state.
+     *
+     * This boils down to a simple {@link createPortal `ReactDOM.createPortal`},
+     * so you have to include this methods return value into the caller's JSX.
+     *
+     * @param children the React node to render at the cursor's position
+     * @returns a React portal rendering `children` at the position of the cursor
+     */
     render(children: React.ReactNode) {
         if (this.active) return createPortal(children, this.node, this.id);
         else return null;
@@ -303,13 +366,22 @@ export class Cursor {
         this.decoration = null;
     }
 
-    /** Sets a new editor **without** clearing a previously set one */
+    /**
+     * Sets a new editor **without** clearing a previously set one
+     *
+     * @param editorInstance the editor instance to set for the cursor
+     */
     private setEditor(editorInstance: editor.IStandaloneCodeEditor) {
         this.editorInstance = editorInstance;
         this.decoration = editorInstance.createDecorationsCollection(this.active ? [this.getDeco()] : []);
         if (this.active) editorInstance.addContentWidget(this.widget);
     }
 
+    /**
+     * Construct the decoration monaco should put into the editor for representing the cursor
+     *
+     * @returns the decoration representing the cursor
+     */
     private getDeco(): editor.IModelDeltaDecoration {
         return {
             range: {
