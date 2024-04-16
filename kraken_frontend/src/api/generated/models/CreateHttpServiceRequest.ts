@@ -12,11 +12,19 @@
  * Do not edit the class manually.
  */
 
-import { exists } from "../runtime";
-import type { ManualHttpServiceCertainty } from "./ManualHttpServiceCertainty";
-import { ManualHttpServiceCertaintyFromJSON, ManualHttpServiceCertaintyToJSON } from "./ManualHttpServiceCertainty";
-import type { PortProtocol } from "./PortProtocol";
-import { PortProtocolFromJSON, PortProtocolToJSON } from "./PortProtocol";
+import { exists, mapValues } from '../runtime';
+import type { ManualHttpServiceCertainty } from './ManualHttpServiceCertainty';
+import {
+    ManualHttpServiceCertaintyFromJSON,
+    ManualHttpServiceCertaintyFromJSONTyped,
+    ManualHttpServiceCertaintyToJSON,
+} from './ManualHttpServiceCertainty';
+import type { PortProtocol } from './PortProtocol';
+import {
+    PortProtocolFromJSON,
+    PortProtocolFromJSONTyped,
+    PortProtocolToJSON,
+} from './PortProtocol';
 
 /**
  * The request to manually add a http service
@@ -55,20 +63,20 @@ export interface CreateHttpServiceRequest {
      */
     port: number;
     /**
-     *
+     * 
      * @type {PortProtocol}
      * @memberof CreateHttpServiceRequest
      */
     portProtocol: PortProtocol;
     /**
-     *
+     * 
      * @type {ManualHttpServiceCertainty}
      * @memberof CreateHttpServiceRequest
      */
     certainty: ManualHttpServiceCertainty;
     /**
      * The base path the service is routed on
-     *
+     * 
      * (Should default to "/")
      * @type {string}
      * @memberof CreateHttpServiceRequest
@@ -109,24 +117,22 @@ export function CreateHttpServiceRequestFromJSON(json: any): CreateHttpServiceRe
     return CreateHttpServiceRequestFromJSONTyped(json, false);
 }
 
-export function CreateHttpServiceRequestFromJSONTyped(
-    json: any,
-    ignoreDiscriminator: boolean,
-): CreateHttpServiceRequest {
-    if (json === undefined || json === null) {
+export function CreateHttpServiceRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean): CreateHttpServiceRequest {
+    if ((json === undefined) || (json === null)) {
         return json;
     }
     return {
-        name: json["name"],
-        version: !exists(json, "version") ? undefined : json["version"],
-        domain: !exists(json, "domain") ? undefined : json["domain"],
-        ipAddr: json["ip_addr"],
-        port: json["port"],
-        portProtocol: PortProtocolFromJSON(json["port_protocol"]),
-        certainty: ManualHttpServiceCertaintyFromJSON(json["certainty"]),
-        basePath: json["base_path"],
-        tls: json["tls"],
-        sniRequire: json["sni_require"],
+        
+        'name': json['name'],
+        'version': !exists(json, 'version') ? undefined : json['version'],
+        'domain': !exists(json, 'domain') ? undefined : json['domain'],
+        'ipAddr': json['ip_addr'],
+        'port': json['port'],
+        'portProtocol': PortProtocolFromJSON(json['port_protocol']),
+        'certainty': ManualHttpServiceCertaintyFromJSON(json['certainty']),
+        'basePath': json['base_path'],
+        'tls': json['tls'],
+        'sniRequire': json['sni_require'],
     };
 }
 
@@ -138,15 +144,17 @@ export function CreateHttpServiceRequestToJSON(value?: CreateHttpServiceRequest 
         return null;
     }
     return {
-        name: value.name,
-        version: value.version,
-        domain: value.domain,
-        ip_addr: value.ipAddr,
-        port: value.port,
-        port_protocol: PortProtocolToJSON(value.portProtocol),
-        certainty: ManualHttpServiceCertaintyToJSON(value.certainty),
-        base_path: value.basePath,
-        tls: value.tls,
-        sni_require: value.sniRequire,
+        
+        'name': value.name,
+        'version': value.version,
+        'domain': value.domain,
+        'ip_addr': value.ipAddr,
+        'port': value.port,
+        'port_protocol': PortProtocolToJSON(value.portProtocol),
+        'certainty': ManualHttpServiceCertaintyToJSON(value.certainty),
+        'base_path': value.basePath,
+        'tls': value.tls,
+        'sni_require': value.sniRequire,
     };
 }
+
