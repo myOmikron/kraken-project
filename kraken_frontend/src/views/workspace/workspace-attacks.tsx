@@ -8,6 +8,7 @@ import {
     DnsTxtScanRequest,
     FullDomain,
     FullHost,
+    FullHttpService,
     FullPort,
     FullService,
     HostsAliveRequest,
@@ -18,7 +19,6 @@ import {
     ServiceDetectionRequest,
     UdpServiceDetectionRequest,
 } from "../../api/generated";
-import { FullHttpService } from "../../api/generated/models/FullHttpService";
 import { ROUTES } from "../../routes";
 import "../../styling/workspace-attacks.css";
 import AttacksIcon from "../../svg/attacks";
@@ -75,6 +75,7 @@ type AttackRequestTypes = {
     [AttackType.DnsTxtScan]: DnsTxtScanRequest;
     [AttackType.OsDetection]: OsDetectionRequest;
 };
+
 /* eslint-enable jsdoc/require-jsdoc */
 
 export interface IAttackInput {
@@ -631,6 +632,7 @@ export type TargetType = (typeof TARGET_TYPE)[number];
 
 /**
  * Verifies the runtime string is an available TargetType, throwing on error.
+ *
  * @param value the string that is expected to be one of TARGET_TYPE.
  * @returns `value` itself if it is valid, otherwise throws an error
  */
@@ -999,6 +1001,7 @@ type AnyPrefill = RawSelectionData | string | number | undefined;
 
 /**
  * Calls `getPrefill` on each available type and returns the first non-undefined result.
+ *
  * @param raw The data row to generate the prefill object for.
  * @param types The types to check in order.
  * @returns prefill, if available, or undefined
