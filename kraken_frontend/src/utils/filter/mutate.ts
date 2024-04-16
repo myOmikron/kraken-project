@@ -3,8 +3,9 @@ import { Span, SpanlessToken, Token, TokenType, tokenize, tokensToString, valueT
 /**
  * Given an input `filter`, return the span of its whole value starting after
  * the colon `:` up until the next column.
+ *
  * @param filter The filter to operate on.
- * @param column The column name to search for.
+ * @param columnName The column name to search for.
  * @returns The full value span or undefined if the column was not found.
  */
 function findColumnValueSpan(filter: string, columnName: string): { column: Span; value: Span } | undefined {

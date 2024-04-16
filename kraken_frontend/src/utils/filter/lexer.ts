@@ -50,8 +50,6 @@ export type SpanlessToken =
  * A span defines a substring by storing its position in the main string
  *
  * Its properties directly correspond to arguments to {@link String.substring `String.substring`}
- * @property start The index of the span's first character
- * @property end The index of the first character after the span
  */
 export type Span = {
     /** The index of the span's first character */

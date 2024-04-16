@@ -51,8 +51,6 @@ export default function WorkspaceFindingsQuickAttach(props: WorkspaceFindingsQui
         }
     }, [workspace, props.type, "data" in props ? props.data : props.uuid]);
 
-    console.log("render Attached data: ", data);
-
     return (
         <div className="workspace-findings-layout">
             {data ? (
