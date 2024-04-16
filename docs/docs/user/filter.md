@@ -46,6 +46,43 @@ Strings are not required to be wrapped in `"`.
 
 However, if they are not, the mustn't contain any operator including the `:` used to separate the key from its value.
 
+### Nested filters
+
+Relations such as related ports, domains, hosts, services, etc. are filterable using their respective filter AST definitions. Currently it's only possible to query immediate children and for example not relations of relations.
+
+Nested filters are put in parentheses (`()`). The same syntax rules as with regular filters apply.
+
+!!! example
+    In a filter of a host, querying related ports:
+
+    `ports:(port:80) & (port:443)`
+
+    Will match only hosts that have BOTH a port 80 and also a port 443. For other filters they can also be the same if both filters would apply to a given port.
+
+    `ports:(port:80), (port:443)`
+
+    Will match hosts that have EITHER a port 80 or a port 443. This gives the same results as `ports:(port: 80, 443)`, but allows for more specific filtering.
+
+Each nested filter applies to only a single related object at a time. Filter rules that are impossible to satisfy, such as `port: 80 & 443` will never match, since a single port can never have two values at once.
+
+!!! question "Pitfall"
+
+    `ports:(port:80 & 443)` is broken since it tries to match 2 different ports on a single entry line, which never works!
+
+Otherwise the nested filters are computed individually on all the related objects to see if they match or not. Regular boolean logic can be used on the nested filters as a whole to test for existance, not existance and correlation using regular boolean algebra as supported by the syntax. (currently in disjunctive normal form only)
+
+!!! example
+    | A  | B  | C  | `(A) & (B), (C) & (B)` |
+    |----|----|----|------------------------|
+    | ❌ | ❌ | ❌ | ❌                     |
+    | ❌ | ❌ | ✅ | ❌                     |
+    | ❌ | ✅ | ❌ | ❌                     |
+    | ❌ | ✅ | ✅ | ✅                     |
+    | ✅ | ❌ | ❌ | ❌                     |
+    | ✅ | ❌ | ✅ | ❌                     |
+    | ✅ | ✅ | ❌ | ✅                     |
+    | ✅ | ✅ | ✅ | ✅                     |
+
 ### EBNF (excluding whitespace)
 ```ebnf
 Filter = { Rule };
