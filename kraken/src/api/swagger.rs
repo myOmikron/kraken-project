@@ -352,6 +352,8 @@ impl Modify for SecurityAddon2 {
         http_services::schema::CreateHttpServiceRequest,
         http_services::schema::GetAllHttpServicesQuery,
         http_services::schema::HttpServiceRelations,
+        http_services::schema::HttpServiceCertainty,
+        http_services::schema::ManualHttpServiceCertainty,
         common::schema::HostResultsPage,
         common::schema::DomainResultsPage,
         common::schema::PortResultsPage,

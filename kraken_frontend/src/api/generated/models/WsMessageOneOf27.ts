@@ -13,49 +13,31 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { Change } from './Change';
+import type { UpdateFindingDefinitionRequest } from './UpdateFindingDefinitionRequest';
 import {
-    ChangeFromJSON,
-    ChangeFromJSONTyped,
-    ChangeToJSON,
-} from './Change';
-import type { EditorTarget } from './EditorTarget';
-import {
-    EditorTargetFromJSON,
-    EditorTargetFromJSONTyped,
-    EditorTargetToJSON,
-} from './EditorTarget';
-import type { SimpleUser } from './SimpleUser';
-import {
-    SimpleUserFromJSON,
-    SimpleUserFromJSONTyped,
-    SimpleUserToJSON,
-} from './SimpleUser';
+    UpdateFindingDefinitionRequestFromJSON,
+    UpdateFindingDefinitionRequestFromJSONTyped,
+    UpdateFindingDefinitionRequestToJSON,
+} from './UpdateFindingDefinitionRequest';
 
 /**
- * A finding definition was updated
+ * A finding definition has been updated
  * @export
  * @interface WsMessageOneOf27
  */
 export interface WsMessageOneOf27 {
     /**
-     * 
-     * @type {Change}
+     * The uuid of the finding definition
+     * @type {string}
      * @memberof WsMessageOneOf27
      */
-    change: Change;
+    uuid: string;
     /**
      * 
-     * @type {SimpleUser}
+     * @type {UpdateFindingDefinitionRequest}
      * @memberof WsMessageOneOf27
      */
-    user: SimpleUser;
-    /**
-     * 
-     * @type {EditorTarget}
-     * @memberof WsMessageOneOf27
-     */
-    target: EditorTarget;
+    update: UpdateFindingDefinitionRequest;
     /**
      * 
      * @type {string}
@@ -69,7 +51,7 @@ export interface WsMessageOneOf27 {
  * @export
  */
 export const WsMessageOneOf27TypeEnum = {
-    EditorChangedContent: 'EditorChangedContent'
+    UpdatedFindingDefinition: 'UpdatedFindingDefinition'
 } as const;
 export type WsMessageOneOf27TypeEnum = typeof WsMessageOneOf27TypeEnum[keyof typeof WsMessageOneOf27TypeEnum];
 
@@ -79,9 +61,8 @@ export type WsMessageOneOf27TypeEnum = typeof WsMessageOneOf27TypeEnum[keyof typ
  */
 export function instanceOfWsMessageOneOf27(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "change" in value;
-    isInstance = isInstance && "user" in value;
-    isInstance = isInstance && "target" in value;
+    isInstance = isInstance && "uuid" in value;
+    isInstance = isInstance && "update" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -97,9 +78,8 @@ export function WsMessageOneOf27FromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'change': ChangeFromJSON(json['change']),
-        'user': SimpleUserFromJSON(json['user']),
-        'target': EditorTargetFromJSON(json['target']),
+        'uuid': json['uuid'],
+        'update': UpdateFindingDefinitionRequestFromJSON(json['update']),
         'type': json['type'],
     };
 }
@@ -113,9 +93,8 @@ export function WsMessageOneOf27ToJSON(value?: WsMessageOneOf27 | null): any {
     }
     return {
         
-        'change': ChangeToJSON(value.change),
-        'user': SimpleUserToJSON(value.user),
-        'target': EditorTargetToJSON(value.target),
+        'uuid': value.uuid,
+        'update': UpdateFindingDefinitionRequestToJSON(value.update),
         'type': value.type,
     };
 }

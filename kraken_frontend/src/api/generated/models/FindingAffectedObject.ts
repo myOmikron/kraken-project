@@ -40,13 +40,20 @@ import {
     FindingAffectedObjectOneOf3FromJSONTyped,
     FindingAffectedObjectOneOf3ToJSON,
 } from './FindingAffectedObjectOneOf3';
+import {
+    FindingAffectedObjectOneOf4,
+    instanceOfFindingAffectedObjectOneOf4,
+    FindingAffectedObjectOneOf4FromJSON,
+    FindingAffectedObjectOneOf4FromJSONTyped,
+    FindingAffectedObjectOneOf4ToJSON,
+} from './FindingAffectedObjectOneOf4';
 
 /**
  * @type FindingAffectedObject
  * The object affected by a finding
  * @export
  */
-export type FindingAffectedObject = FindingAffectedObjectOneOf | FindingAffectedObjectOneOf1 | FindingAffectedObjectOneOf2 | FindingAffectedObjectOneOf3;
+export type FindingAffectedObject = FindingAffectedObjectOneOf | FindingAffectedObjectOneOf1 | FindingAffectedObjectOneOf2 | FindingAffectedObjectOneOf3 | FindingAffectedObjectOneOf4;
 
 export function FindingAffectedObjectFromJSON(json: any): FindingAffectedObject {
     return FindingAffectedObjectFromJSONTyped(json, false);
@@ -56,7 +63,7 @@ export function FindingAffectedObjectFromJSONTyped(json: any, ignoreDiscriminato
     if ((json === undefined) || (json === null)) {
         return json;
     }
-    return { ...FindingAffectedObjectOneOfFromJSONTyped(json, true), ...FindingAffectedObjectOneOf1FromJSONTyped(json, true), ...FindingAffectedObjectOneOf2FromJSONTyped(json, true), ...FindingAffectedObjectOneOf3FromJSONTyped(json, true) };
+    return { ...FindingAffectedObjectOneOfFromJSONTyped(json, true), ...FindingAffectedObjectOneOf1FromJSONTyped(json, true), ...FindingAffectedObjectOneOf2FromJSONTyped(json, true), ...FindingAffectedObjectOneOf3FromJSONTyped(json, true), ...FindingAffectedObjectOneOf4FromJSONTyped(json, true) };
 }
 
 export function FindingAffectedObjectToJSON(value?: FindingAffectedObject | null): any {
@@ -78,6 +85,9 @@ export function FindingAffectedObjectToJSON(value?: FindingAffectedObject | null
     }
     if (instanceOfFindingAffectedObjectOneOf3(value)) {
         return FindingAffectedObjectOneOf3ToJSON(value as FindingAffectedObjectOneOf3);
+    }
+    if (instanceOfFindingAffectedObjectOneOf4(value)) {
+        return FindingAffectedObjectOneOf4ToJSON(value as FindingAffectedObjectOneOf4);
     }
 
     return {};

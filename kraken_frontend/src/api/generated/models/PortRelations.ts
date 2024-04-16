@@ -19,6 +19,12 @@ import {
     SimpleHostFromJSONTyped,
     SimpleHostToJSON,
 } from './SimpleHost';
+import type { SimpleHttpService } from './SimpleHttpService';
+import {
+    SimpleHttpServiceFromJSON,
+    SimpleHttpServiceFromJSONTyped,
+    SimpleHttpServiceToJSON,
+} from './SimpleHttpService';
 import type { SimpleService } from './SimpleService';
 import {
     SimpleServiceFromJSON,
@@ -44,6 +50,12 @@ export interface PortRelations {
      * @memberof PortRelations
      */
     services: Array<SimpleService>;
+    /**
+     * Http services listening on this port
+     * @type {Array<SimpleHttpService>}
+     * @memberof PortRelations
+     */
+    httpServices: Array<SimpleHttpService>;
 }
 
 /**
@@ -53,6 +65,7 @@ export function instanceOfPortRelations(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "host" in value;
     isInstance = isInstance && "services" in value;
+    isInstance = isInstance && "httpServices" in value;
 
     return isInstance;
 }
@@ -69,6 +82,7 @@ export function PortRelationsFromJSONTyped(json: any, ignoreDiscriminator: boole
         
         'host': SimpleHostFromJSON(json['host']),
         'services': ((json['services'] as Array<any>).map(SimpleServiceFromJSON)),
+        'httpServices': ((json['http_services'] as Array<any>).map(SimpleHttpServiceFromJSON)),
     };
 }
 
@@ -83,6 +97,7 @@ export function PortRelationsToJSON(value?: PortRelations | null): any {
         
         'host': SimpleHostToJSON(value.host),
         'services': ((value.services as Array<any>).map(SimpleServiceToJSON)),
+        'http_services': ((value.httpServices as Array<any>).map(SimpleHttpServiceToJSON)),
     };
 }
 

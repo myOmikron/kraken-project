@@ -13,24 +13,31 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { SimpleHttpService } from './SimpleHttpService';
+import {
+    SimpleHttpServiceFromJSON,
+    SimpleHttpServiceFromJSONTyped,
+    SimpleHttpServiceToJSON,
+} from './SimpleHttpService';
+
 /**
- * A domain was deleted
+ * A new http service was found
  * @export
  * @interface WsMessageOneOf19
  */
 export interface WsMessageOneOf19 {
     /**
-     * The workspace this domain is related to
+     * The workspace this http service is related to
      * @type {string}
      * @memberof WsMessageOneOf19
      */
     workspace: string;
     /**
-     * The uuid of the deleted domain
-     * @type {string}
+     * 
+     * @type {SimpleHttpService}
      * @memberof WsMessageOneOf19
      */
-    domain: string;
+    httpService: SimpleHttpService;
     /**
      * 
      * @type {string}
@@ -44,7 +51,7 @@ export interface WsMessageOneOf19 {
  * @export
  */
 export const WsMessageOneOf19TypeEnum = {
-    DeletedDomain: 'DeletedDomain'
+    NewHttpService: 'NewHttpService'
 } as const;
 export type WsMessageOneOf19TypeEnum = typeof WsMessageOneOf19TypeEnum[keyof typeof WsMessageOneOf19TypeEnum];
 
@@ -55,7 +62,7 @@ export type WsMessageOneOf19TypeEnum = typeof WsMessageOneOf19TypeEnum[keyof typ
 export function instanceOfWsMessageOneOf19(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "workspace" in value;
-    isInstance = isInstance && "domain" in value;
+    isInstance = isInstance && "httpService" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -72,7 +79,7 @@ export function WsMessageOneOf19FromJSONTyped(json: any, ignoreDiscriminator: bo
     return {
         
         'workspace': json['workspace'],
-        'domain': json['domain'],
+        'httpService': SimpleHttpServiceFromJSON(json['http_service']),
         'type': json['type'],
     };
 }
@@ -87,7 +94,7 @@ export function WsMessageOneOf19ToJSON(value?: WsMessageOneOf19 | null): any {
     return {
         
         'workspace': value.workspace,
-        'domain': value.domain,
+        'http_service': SimpleHttpServiceToJSON(value.httpService),
         'type': value.type,
     };
 }

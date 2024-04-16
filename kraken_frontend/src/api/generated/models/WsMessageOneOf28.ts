@@ -13,49 +13,18 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { CursorPosition } from './CursorPosition';
-import {
-    CursorPositionFromJSON,
-    CursorPositionFromJSONTyped,
-    CursorPositionToJSON,
-} from './CursorPosition';
-import type { EditorTarget } from './EditorTarget';
-import {
-    EditorTargetFromJSON,
-    EditorTargetFromJSONTyped,
-    EditorTargetToJSON,
-} from './EditorTarget';
-import type { SimpleUser } from './SimpleUser';
-import {
-    SimpleUserFromJSON,
-    SimpleUserFromJSONTyped,
-    SimpleUserToJSON,
-} from './SimpleUser';
-
 /**
- * A user has changed its cursor position in an editor
+ * A finding definition was deleted
  * @export
  * @interface WsMessageOneOf28
  */
 export interface WsMessageOneOf28 {
     /**
-     * 
-     * @type {SimpleUser}
+     * The uuid of the finding definition
+     * @type {string}
      * @memberof WsMessageOneOf28
      */
-    user: SimpleUser;
-    /**
-     * 
-     * @type {EditorTarget}
-     * @memberof WsMessageOneOf28
-     */
-    target: EditorTarget;
-    /**
-     * 
-     * @type {CursorPosition}
-     * @memberof WsMessageOneOf28
-     */
-    cursor: CursorPosition;
+    uuid: string;
     /**
      * 
      * @type {string}
@@ -69,7 +38,7 @@ export interface WsMessageOneOf28 {
  * @export
  */
 export const WsMessageOneOf28TypeEnum = {
-    EditorChangedCursor: 'EditorChangedCursor'
+    DeletedFindingDefinition: 'DeletedFindingDefinition'
 } as const;
 export type WsMessageOneOf28TypeEnum = typeof WsMessageOneOf28TypeEnum[keyof typeof WsMessageOneOf28TypeEnum];
 
@@ -79,9 +48,7 @@ export type WsMessageOneOf28TypeEnum = typeof WsMessageOneOf28TypeEnum[keyof typ
  */
 export function instanceOfWsMessageOneOf28(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "user" in value;
-    isInstance = isInstance && "target" in value;
-    isInstance = isInstance && "cursor" in value;
+    isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -97,9 +64,7 @@ export function WsMessageOneOf28FromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'user': SimpleUserFromJSON(json['user']),
-        'target': EditorTargetFromJSON(json['target']),
-        'cursor': CursorPositionFromJSON(json['cursor']),
+        'uuid': json['uuid'],
         'type': json['type'],
     };
 }
@@ -113,9 +78,7 @@ export function WsMessageOneOf28ToJSON(value?: WsMessageOneOf28 | null): any {
     }
     return {
         
-        'user': SimpleUserToJSON(value.user),
-        'target': EditorTargetToJSON(value.target),
-        'cursor': CursorPositionToJSON(value.cursor),
+        'uuid': value.uuid,
         'type': value.type,
     };
 }

@@ -13,15 +13,15 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { UpdateFindingAffectedRequest } from './UpdateFindingAffectedRequest';
+import type { UpdateFindingRequest } from './UpdateFindingRequest';
 import {
-    UpdateFindingAffectedRequestFromJSON,
-    UpdateFindingAffectedRequestFromJSONTyped,
-    UpdateFindingAffectedRequestToJSON,
-} from './UpdateFindingAffectedRequest';
+    UpdateFindingRequestFromJSON,
+    UpdateFindingRequestFromJSONTyped,
+    UpdateFindingRequestToJSON,
+} from './UpdateFindingRequest';
 
 /**
- * A finding's affected has been updated
+ * A finding has been updated
  * @export
  * @interface WsMessageOneOf31
  */
@@ -39,17 +39,11 @@ export interface WsMessageOneOf31 {
      */
     finding: string;
     /**
-     * The affected's uuid
-     * @type {string}
-     * @memberof WsMessageOneOf31
-     */
-    affectedUuid: string;
-    /**
      * 
-     * @type {UpdateFindingAffectedRequest}
+     * @type {UpdateFindingRequest}
      * @memberof WsMessageOneOf31
      */
-    update: UpdateFindingAffectedRequest;
+    update: UpdateFindingRequest;
     /**
      * 
      * @type {string}
@@ -63,7 +57,7 @@ export interface WsMessageOneOf31 {
  * @export
  */
 export const WsMessageOneOf31TypeEnum = {
-    UpdatedFindingAffected: 'UpdatedFindingAffected'
+    UpdatedFinding: 'UpdatedFinding'
 } as const;
 export type WsMessageOneOf31TypeEnum = typeof WsMessageOneOf31TypeEnum[keyof typeof WsMessageOneOf31TypeEnum];
 
@@ -75,7 +69,6 @@ export function instanceOfWsMessageOneOf31(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "finding" in value;
-    isInstance = isInstance && "affectedUuid" in value;
     isInstance = isInstance && "update" in value;
     isInstance = isInstance && "type" in value;
 
@@ -94,8 +87,7 @@ export function WsMessageOneOf31FromJSONTyped(json: any, ignoreDiscriminator: bo
         
         'workspace': json['workspace'],
         'finding': json['finding'],
-        'affectedUuid': json['affected_uuid'],
-        'update': UpdateFindingAffectedRequestFromJSON(json['update']),
+        'update': UpdateFindingRequestFromJSON(json['update']),
         'type': json['type'],
     };
 }
@@ -111,8 +103,7 @@ export function WsMessageOneOf31ToJSON(value?: WsMessageOneOf31 | null): any {
         
         'workspace': value.workspace,
         'finding': value.finding,
-        'affected_uuid': value.affectedUuid,
-        'update': UpdateFindingAffectedRequestToJSON(value.update),
+        'update': UpdateFindingRequestToJSON(value.update),
         'type': value.type,
     };
 }

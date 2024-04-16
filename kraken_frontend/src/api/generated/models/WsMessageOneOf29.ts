@@ -13,37 +13,49 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { UpdateFindingRequest } from './UpdateFindingRequest';
+import type { Change } from './Change';
 import {
-    UpdateFindingRequestFromJSON,
-    UpdateFindingRequestFromJSONTyped,
-    UpdateFindingRequestToJSON,
-} from './UpdateFindingRequest';
+    ChangeFromJSON,
+    ChangeFromJSONTyped,
+    ChangeToJSON,
+} from './Change';
+import type { EditorTarget } from './EditorTarget';
+import {
+    EditorTargetFromJSON,
+    EditorTargetFromJSONTyped,
+    EditorTargetToJSON,
+} from './EditorTarget';
+import type { SimpleUser } from './SimpleUser';
+import {
+    SimpleUserFromJSON,
+    SimpleUserFromJSONTyped,
+    SimpleUserToJSON,
+} from './SimpleUser';
 
 /**
- * A finding has been updated
+ * A finding definition was updated
  * @export
  * @interface WsMessageOneOf29
  */
 export interface WsMessageOneOf29 {
     /**
-     * The workspace the updated finding is in
-     * @type {string}
+     * 
+     * @type {Change}
      * @memberof WsMessageOneOf29
      */
-    workspace: string;
-    /**
-     * The finding which has been updated
-     * @type {string}
-     * @memberof WsMessageOneOf29
-     */
-    finding: string;
+    change: Change;
     /**
      * 
-     * @type {UpdateFindingRequest}
+     * @type {SimpleUser}
      * @memberof WsMessageOneOf29
      */
-    update: UpdateFindingRequest;
+    user: SimpleUser;
+    /**
+     * 
+     * @type {EditorTarget}
+     * @memberof WsMessageOneOf29
+     */
+    target: EditorTarget;
     /**
      * 
      * @type {string}
@@ -57,7 +69,7 @@ export interface WsMessageOneOf29 {
  * @export
  */
 export const WsMessageOneOf29TypeEnum = {
-    UpdatedFinding: 'UpdatedFinding'
+    EditorChangedContent: 'EditorChangedContent'
 } as const;
 export type WsMessageOneOf29TypeEnum = typeof WsMessageOneOf29TypeEnum[keyof typeof WsMessageOneOf29TypeEnum];
 
@@ -67,9 +79,9 @@ export type WsMessageOneOf29TypeEnum = typeof WsMessageOneOf29TypeEnum[keyof typ
  */
 export function instanceOfWsMessageOneOf29(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "workspace" in value;
-    isInstance = isInstance && "finding" in value;
-    isInstance = isInstance && "update" in value;
+    isInstance = isInstance && "change" in value;
+    isInstance = isInstance && "user" in value;
+    isInstance = isInstance && "target" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -85,9 +97,9 @@ export function WsMessageOneOf29FromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'workspace': json['workspace'],
-        'finding': json['finding'],
-        'update': UpdateFindingRequestFromJSON(json['update']),
+        'change': ChangeFromJSON(json['change']),
+        'user': SimpleUserFromJSON(json['user']),
+        'target': EditorTargetFromJSON(json['target']),
         'type': json['type'],
     };
 }
@@ -101,9 +113,9 @@ export function WsMessageOneOf29ToJSON(value?: WsMessageOneOf29 | null): any {
     }
     return {
         
-        'workspace': value.workspace,
-        'finding': value.finding,
-        'update': UpdateFindingRequestToJSON(value.update),
+        'change': ChangeToJSON(value.change),
+        'user': SimpleUserToJSON(value.user),
+        'target': EditorTargetToJSON(value.target),
         'type': value.type,
     };
 }

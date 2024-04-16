@@ -21,7 +21,8 @@ export const AggregationType = {
     Domain: 'Domain',
     Host: 'Host',
     Service: 'Service',
-    Port: 'Port'
+    Port: 'Port',
+    HttpService: 'HttpService'
 } as const;
 export type AggregationType = typeof AggregationType[keyof typeof AggregationType];
 

@@ -13,80 +13,80 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { AggregationType } from './AggregationType';
+import type { UpdateFindingAffectedRequest } from './UpdateFindingAffectedRequest';
 import {
-    AggregationTypeFromJSON,
-    AggregationTypeFromJSONTyped,
-    AggregationTypeToJSON,
-} from './AggregationType';
+    UpdateFindingAffectedRequestFromJSON,
+    UpdateFindingAffectedRequestFromJSONTyped,
+    UpdateFindingAffectedRequestToJSON,
+} from './UpdateFindingAffectedRequest';
 
 /**
- * An affected has been added to a finding
+ * A finding's affected has been updated
  * @export
- * @interface WsMessageOneOf32
+ * @interface WsMessageOneOf33
  */
-export interface WsMessageOneOf32 {
+export interface WsMessageOneOf33 {
     /**
      * The workspace the updated finding is in
      * @type {string}
-     * @memberof WsMessageOneOf32
+     * @memberof WsMessageOneOf33
      */
     workspace: string;
     /**
      * The finding which has been updated
      * @type {string}
-     * @memberof WsMessageOneOf32
+     * @memberof WsMessageOneOf33
      */
     finding: string;
     /**
      * The affected's uuid
      * @type {string}
-     * @memberof WsMessageOneOf32
+     * @memberof WsMessageOneOf33
      */
     affectedUuid: string;
     /**
      * 
-     * @type {AggregationType}
-     * @memberof WsMessageOneOf32
+     * @type {UpdateFindingAffectedRequest}
+     * @memberof WsMessageOneOf33
      */
-    affectedType: AggregationType;
+    update: UpdateFindingAffectedRequest;
     /**
      * 
      * @type {string}
-     * @memberof WsMessageOneOf32
+     * @memberof WsMessageOneOf33
      */
-    type: WsMessageOneOf32TypeEnum;
+    type: WsMessageOneOf33TypeEnum;
 }
 
 
 /**
  * @export
  */
-export const WsMessageOneOf32TypeEnum = {
-    AddedFindingAffected: 'AddedFindingAffected'
+export const WsMessageOneOf33TypeEnum = {
+    UpdatedFindingAffected: 'UpdatedFindingAffected'
 } as const;
-export type WsMessageOneOf32TypeEnum = typeof WsMessageOneOf32TypeEnum[keyof typeof WsMessageOneOf32TypeEnum];
+export type WsMessageOneOf33TypeEnum = typeof WsMessageOneOf33TypeEnum[keyof typeof WsMessageOneOf33TypeEnum];
 
 
 /**
- * Check if a given object implements the WsMessageOneOf32 interface.
+ * Check if a given object implements the WsMessageOneOf33 interface.
  */
-export function instanceOfWsMessageOneOf32(value: object): boolean {
+export function instanceOfWsMessageOneOf33(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "workspace" in value;
     isInstance = isInstance && "finding" in value;
     isInstance = isInstance && "affectedUuid" in value;
-    isInstance = isInstance && "affectedType" in value;
+    isInstance = isInstance && "update" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
 }
 
-export function WsMessageOneOf32FromJSON(json: any): WsMessageOneOf32 {
-    return WsMessageOneOf32FromJSONTyped(json, false);
+export function WsMessageOneOf33FromJSON(json: any): WsMessageOneOf33 {
+    return WsMessageOneOf33FromJSONTyped(json, false);
 }
 
-export function WsMessageOneOf32FromJSONTyped(json: any, ignoreDiscriminator: boolean): WsMessageOneOf32 {
+export function WsMessageOneOf33FromJSONTyped(json: any, ignoreDiscriminator: boolean): WsMessageOneOf33 {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -95,12 +95,12 @@ export function WsMessageOneOf32FromJSONTyped(json: any, ignoreDiscriminator: bo
         'workspace': json['workspace'],
         'finding': json['finding'],
         'affectedUuid': json['affected_uuid'],
-        'affectedType': AggregationTypeFromJSON(json['affected_type']),
+        'update': UpdateFindingAffectedRequestFromJSON(json['update']),
         'type': json['type'],
     };
 }
 
-export function WsMessageOneOf32ToJSON(value?: WsMessageOneOf32 | null): any {
+export function WsMessageOneOf33ToJSON(value?: WsMessageOneOf33 | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -112,7 +112,7 @@ export function WsMessageOneOf32ToJSON(value?: WsMessageOneOf32 | null): any {
         'workspace': value.workspace,
         'finding': value.finding,
         'affected_uuid': value.affectedUuid,
-        'affected_type': AggregationTypeToJSON(value.affectedType),
+        'update': UpdateFindingAffectedRequestToJSON(value.update),
         'type': value.type,
     };
 }

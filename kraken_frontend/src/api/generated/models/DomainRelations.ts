@@ -25,6 +25,12 @@ import {
     SimpleHostFromJSONTyped,
     SimpleHostToJSON,
 } from './SimpleHost';
+import type { SimpleHttpService } from './SimpleHttpService';
+import {
+    SimpleHttpServiceFromJSON,
+    SimpleHttpServiceFromJSONTyped,
+    SimpleHttpServiceToJSON,
+} from './SimpleHttpService';
 
 /**
  * A domain's direct relations
@@ -56,6 +62,12 @@ export interface DomainRelations {
      * @memberof DomainRelations
      */
     indirectHosts: Array<SimpleHost>;
+    /**
+     * This domain's http services
+     * @type {Array<SimpleHttpService>}
+     * @memberof DomainRelations
+     */
+    httpServices: Array<SimpleHttpService>;
 }
 
 /**
@@ -67,6 +79,7 @@ export function instanceOfDomainRelations(value: object): boolean {
     isInstance = isInstance && "targetDomains" in value;
     isInstance = isInstance && "directHosts" in value;
     isInstance = isInstance && "indirectHosts" in value;
+    isInstance = isInstance && "httpServices" in value;
 
     return isInstance;
 }
@@ -85,6 +98,7 @@ export function DomainRelationsFromJSONTyped(json: any, ignoreDiscriminator: boo
         'targetDomains': ((json['target_domains'] as Array<any>).map(SimpleDomainFromJSON)),
         'directHosts': ((json['direct_hosts'] as Array<any>).map(SimpleHostFromJSON)),
         'indirectHosts': ((json['indirect_hosts'] as Array<any>).map(SimpleHostFromJSON)),
+        'httpServices': ((json['http_services'] as Array<any>).map(SimpleHttpServiceFromJSON)),
     };
 }
 
@@ -101,6 +115,7 @@ export function DomainRelationsToJSON(value?: DomainRelations | null): any {
         'target_domains': ((value.targetDomains as Array<any>).map(SimpleDomainToJSON)),
         'direct_hosts': ((value.directHosts as Array<any>).map(SimpleHostToJSON)),
         'indirect_hosts': ((value.indirectHosts as Array<any>).map(SimpleHostToJSON)),
+        'http_services': ((value.httpServices as Array<any>).map(SimpleHttpServiceToJSON)),
     };
 }
 

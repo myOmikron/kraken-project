@@ -13,43 +13,49 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { AggregationType } from './AggregationType';
+import type { CursorPosition } from './CursorPosition';
 import {
-    AggregationTypeFromJSON,
-    AggregationTypeFromJSONTyped,
-    AggregationTypeToJSON,
-} from './AggregationType';
+    CursorPositionFromJSON,
+    CursorPositionFromJSONTyped,
+    CursorPositionToJSON,
+} from './CursorPosition';
+import type { EditorTarget } from './EditorTarget';
+import {
+    EditorTargetFromJSON,
+    EditorTargetFromJSONTyped,
+    EditorTargetToJSON,
+} from './EditorTarget';
+import type { SimpleUser } from './SimpleUser';
+import {
+    SimpleUserFromJSON,
+    SimpleUserFromJSONTyped,
+    SimpleUserToJSON,
+} from './SimpleUser';
 
 /**
- * An affected has been added to a finding
+ * A user has changed its cursor position in an editor
  * @export
  * @interface WsMessageOneOf30
  */
 export interface WsMessageOneOf30 {
     /**
-     * The workspace the updated finding is in
-     * @type {string}
+     * 
+     * @type {SimpleUser}
      * @memberof WsMessageOneOf30
      */
-    workspace: string;
-    /**
-     * The finding which has been updated
-     * @type {string}
-     * @memberof WsMessageOneOf30
-     */
-    finding: string;
-    /**
-     * The affected's uuid
-     * @type {string}
-     * @memberof WsMessageOneOf30
-     */
-    affectedUuid: string;
+    user: SimpleUser;
     /**
      * 
-     * @type {AggregationType}
+     * @type {EditorTarget}
      * @memberof WsMessageOneOf30
      */
-    affectedType: AggregationType;
+    target: EditorTarget;
+    /**
+     * 
+     * @type {CursorPosition}
+     * @memberof WsMessageOneOf30
+     */
+    cursor: CursorPosition;
     /**
      * 
      * @type {string}
@@ -63,7 +69,7 @@ export interface WsMessageOneOf30 {
  * @export
  */
 export const WsMessageOneOf30TypeEnum = {
-    AddedFindingAffected: 'AddedFindingAffected'
+    EditorChangedCursor: 'EditorChangedCursor'
 } as const;
 export type WsMessageOneOf30TypeEnum = typeof WsMessageOneOf30TypeEnum[keyof typeof WsMessageOneOf30TypeEnum];
 
@@ -73,10 +79,9 @@ export type WsMessageOneOf30TypeEnum = typeof WsMessageOneOf30TypeEnum[keyof typ
  */
 export function instanceOfWsMessageOneOf30(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "workspace" in value;
-    isInstance = isInstance && "finding" in value;
-    isInstance = isInstance && "affectedUuid" in value;
-    isInstance = isInstance && "affectedType" in value;
+    isInstance = isInstance && "user" in value;
+    isInstance = isInstance && "target" in value;
+    isInstance = isInstance && "cursor" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -92,10 +97,9 @@ export function WsMessageOneOf30FromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'workspace': json['workspace'],
-        'finding': json['finding'],
-        'affectedUuid': json['affected_uuid'],
-        'affectedType': AggregationTypeFromJSON(json['affected_type']),
+        'user': SimpleUserFromJSON(json['user']),
+        'target': EditorTargetFromJSON(json['target']),
+        'cursor': CursorPositionFromJSON(json['cursor']),
         'type': json['type'],
     };
 }
@@ -109,10 +113,9 @@ export function WsMessageOneOf30ToJSON(value?: WsMessageOneOf30 | null): any {
     }
     return {
         
-        'workspace': value.workspace,
-        'finding': value.finding,
-        'affected_uuid': value.affectedUuid,
-        'affected_type': AggregationTypeToJSON(value.affectedType),
+        'user': SimpleUserToJSON(value.user),
+        'target': EditorTargetToJSON(value.target),
+        'cursor': CursorPositionToJSON(value.cursor),
         'type': value.type,
     };
 }

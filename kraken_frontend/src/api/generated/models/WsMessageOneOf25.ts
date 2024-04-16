@@ -13,31 +13,43 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { UpdateFindingDefinitionRequest } from './UpdateFindingDefinitionRequest';
+import type { AggregationType } from './AggregationType';
 import {
-    UpdateFindingDefinitionRequestFromJSON,
-    UpdateFindingDefinitionRequestFromJSONTyped,
-    UpdateFindingDefinitionRequestToJSON,
-} from './UpdateFindingDefinitionRequest';
+    AggregationTypeFromJSON,
+    AggregationTypeFromJSONTyped,
+    AggregationTypeToJSON,
+} from './AggregationType';
 
 /**
- * A finding definition has been updated
+ * Global tags were updated on an aggregation
  * @export
  * @interface WsMessageOneOf25
  */
 export interface WsMessageOneOf25 {
     /**
-     * The uuid of the finding definition
+     * The workspace the aggregation is related to
+     * @type {string}
+     * @memberof WsMessageOneOf25
+     */
+    workspace: string;
+    /**
+     * 
+     * @type {AggregationType}
+     * @memberof WsMessageOneOf25
+     */
+    aggregation: AggregationType;
+    /**
+     * The uuid of the model
      * @type {string}
      * @memberof WsMessageOneOf25
      */
     uuid: string;
     /**
-     * 
-     * @type {UpdateFindingDefinitionRequest}
+     * The updated list of tags
+     * @type {Array<string>}
      * @memberof WsMessageOneOf25
      */
-    update: UpdateFindingDefinitionRequest;
+    tags: Array<string>;
     /**
      * 
      * @type {string}
@@ -51,7 +63,7 @@ export interface WsMessageOneOf25 {
  * @export
  */
 export const WsMessageOneOf25TypeEnum = {
-    UpdatedFindingDefinition: 'UpdatedFindingDefinition'
+    UpdatedGlobalTags: 'UpdatedGlobalTags'
 } as const;
 export type WsMessageOneOf25TypeEnum = typeof WsMessageOneOf25TypeEnum[keyof typeof WsMessageOneOf25TypeEnum];
 
@@ -61,8 +73,10 @@ export type WsMessageOneOf25TypeEnum = typeof WsMessageOneOf25TypeEnum[keyof typ
  */
 export function instanceOfWsMessageOneOf25(value: object): boolean {
     let isInstance = true;
+    isInstance = isInstance && "workspace" in value;
+    isInstance = isInstance && "aggregation" in value;
     isInstance = isInstance && "uuid" in value;
-    isInstance = isInstance && "update" in value;
+    isInstance = isInstance && "tags" in value;
     isInstance = isInstance && "type" in value;
 
     return isInstance;
@@ -78,8 +92,10 @@ export function WsMessageOneOf25FromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
+        'workspace': json['workspace'],
+        'aggregation': AggregationTypeFromJSON(json['aggregation']),
         'uuid': json['uuid'],
-        'update': UpdateFindingDefinitionRequestFromJSON(json['update']),
+        'tags': json['tags'],
         'type': json['type'],
     };
 }
@@ -93,8 +109,10 @@ export function WsMessageOneOf25ToJSON(value?: WsMessageOneOf25 | null): any {
     }
     return {
         
+        'workspace': value.workspace,
+        'aggregation': AggregationTypeToJSON(value.aggregation),
         'uuid': value.uuid,
-        'update': UpdateFindingDefinitionRequestToJSON(value.update),
+        'tags': value.tags,
         'type': value.type,
     };
 }
