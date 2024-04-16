@@ -6,7 +6,15 @@ import SelectableText from "../../../components/selectable-text";
 import { handleApiError } from "../../../utils/helper";
 import { PortRelationsList } from "./relations-list";
 
-export default function PortNumber({ port, pretty }: { port: FullPort | SimplePort; pretty?: boolean }) {
+export default function PortNumber({
+    port,
+    pretty,
+    withProtocol,
+}: {
+    port: FullPort | SimplePort;
+    pretty?: boolean;
+    withProtocol?: boolean;
+}) {
     const [relations, setRelations] = useState<PortRelations | undefined>(undefined);
     const [fullPort, setFullPort] = useState<FullPort | undefined>(
         typeof port.host == "string" ? undefined : (port as FullPort),
@@ -49,7 +57,10 @@ export default function PortNumber({ port, pretty }: { port: FullPort | SimplePo
                             <SelectableText as="span">{fullPort.host.ipAddr}</SelectableText>
                         </div>
                     ) : (
-                        <div>{port.port}</div>
+                        <div>
+                            {port.port}
+                            {withProtocol && `/${port.protocol.toUpperCase()}`}
+                        </div>
                     )}
                 </div>
             }

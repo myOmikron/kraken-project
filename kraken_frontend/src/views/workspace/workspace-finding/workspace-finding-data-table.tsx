@@ -339,7 +339,7 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                         <StatelessWorkspaceTable
                             key={"http-service-table"}
                             {...httpServicesTable}
-                            columnsTemplate={"0.3fr 0.8fr 20ch 5ch 1fr 0.8fr 2em 2em 1fr 1fr 3.5em 4em"}
+                            columnsTemplate={"0.3fr 0.8fr 20ch 8ch 1fr 0.8fr 2em 2em 1fr 1fr 3.5em 4em"}
                             filter={httpServiceFilter}
                             solidBackground={true}
                         >
@@ -376,7 +376,7 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                                         </span>
                                         <HttpServiceName httpService={httpService} />
                                         <IpAddr host={httpService.host} />
-                                        <PortNumber port={httpService.port} />
+                                        <PortNumber port={httpService.port} withProtocol />
                                         {httpService.domain ? <Domain domain={httpService.domain} /> : <span></span>}
                                         <SelectableText>{httpService.basePath}</SelectableText>
                                         <span>
