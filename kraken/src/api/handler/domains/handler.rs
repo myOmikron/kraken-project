@@ -301,9 +301,15 @@ pub async fn create_domain(
 ) -> ApiResult<Json<UuidResponse>> {
     let CreateDomainRequest { domain } = req.into_inner();
     let PathUuid { uuid: workspace } = path.into_inner();
-    Ok(Json(UuidResponse {
-        uuid: ManualDomain::insert(&GLOBAL.db, workspace, user, domain).await?,
-    }))
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, workspace, user).await? {
+        return Err(ApiError::MissingPrivileges)?;
+    }
+    let uuid = ManualDomain::insert(&mut tx, workspace, user, domain).await?;
+    tx.commit().await?;
+
+    Ok(Json(UuidResponse { uuid }))
 }
 
 /// Update a domain

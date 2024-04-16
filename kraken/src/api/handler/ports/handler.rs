@@ -322,18 +322,24 @@ pub async fn create_port(
         protocol,
     } = req.into_inner();
     let PathUuid { uuid: workspace } = path.into_inner();
-    Ok(Json(UuidResponse {
-        uuid: ManualPort::insert(
-            &GLOBAL.db,
-            workspace,
-            user,
-            ip_addr,
-            port,
-            certainty.into_db(),
-            protocol.into_db(),
-        )
-        .await?,
-    }))
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, workspace, user).await? {
+        return Err(ApiError::MissingPrivileges)?;
+    }
+    let uuid = ManualPort::insert(
+        &mut tx,
+        workspace,
+        user,
+        ip_addr,
+        port,
+        certainty.into_db(),
+        protocol.into_db(),
+    )
+    .await?;
+    tx.commit().await?;
+
+    Ok(Json(UuidResponse { uuid }))
 }
 
 /// Update a port

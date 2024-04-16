@@ -443,24 +443,29 @@ pub async fn create_http_service(
     } = req.into_inner();
     let PathUuid { uuid: workspace } = path.into_inner();
 
-    Ok(Json(UuidResponse {
-        uuid: ManualHttpService::insert(
-            &GLOBAL.db,
-            workspace,
-            user,
-            name,
-            version,
-            domain,
-            ip_addr,
-            port,
-            port_protocol.into_db(),
-            certainty.into_db(),
-            base_path,
-            tls,
-            sni_require,
-        )
-        .await?,
-    }))
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, workspace, user).await? {
+        return Err(ApiError::MissingPrivileges)?;
+    }
+    let uuid = ManualHttpService::insert(
+        &mut tx,
+        workspace,
+        user,
+        name,
+        version,
+        domain,
+        ip_addr,
+        port,
+        port_protocol.into_db(),
+        certainty.into_db(),
+        base_path,
+        tls,
+        sni_require,
+    )
+    .await?;
+    tx.commit().await?;
+
+    Ok(Json(UuidResponse { uuid }))
 }
 
 /// Update a http service

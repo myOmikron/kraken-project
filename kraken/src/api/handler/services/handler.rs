@@ -407,18 +407,23 @@ pub async fn create_service(
         return Err(ApiError::InvalidPort);
     }
 
-    Ok(Json(UuidResponse {
-        uuid: ManualService::insert(
-            &GLOBAL.db,
-            workspace,
-            user,
-            name,
-            host,
-            port.zip(protocols),
-            certainty.into_db(),
-        )
-        .await?,
-    }))
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, workspace, user).await? {
+        return Err(ApiError::MissingPrivileges)?;
+    }
+    let uuid = ManualService::insert(
+        &mut tx,
+        workspace,
+        user,
+        name,
+        host,
+        port.zip(protocols),
+        certainty.into_db(),
+    )
+    .await?;
+    tx.commit().await?;
+
+    Ok(Json(UuidResponse { uuid }))
 }
 
 /// Update a service
