@@ -13,6 +13,7 @@ import {
     FindingSeverity,
     FullFindingAffected,
     SimpleDomain,
+    SimpleFindingCategory,
     SimpleFindingDefinition,
     SimpleHost,
     SimplePort,
@@ -21,6 +22,7 @@ import {
     UpdateFindingRequest,
 } from "../../../api/generated";
 import WS from "../../../api/websocket";
+import FindingCategoryList from "../../../components/finding-category-list";
 import { GithubMarkdown } from "../../../components/github-markdown";
 import ModelEditor from "../../../components/model-editor";
 import { SelectPrimitive } from "../../../components/select-menu";
@@ -42,6 +44,7 @@ import { useModel, useModelStore } from "../../../utils/model-controller";
 import { useSyncedCursors } from "../../../utils/monaco-cursor";
 import CollapsibleSection from "../components/collapsible-section";
 import Domain from "../components/domain";
+import EditableCategories from "../components/editable-categories";
 import { UploadingFileInput } from "../components/file-input";
 import IpAddr from "../components/host";
 import PortNumber from "../components/port";
@@ -70,6 +73,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     const [section, setSection] = React.useState<Section>("definition");
 
     const [severity, setSeverity] = React.useState<FindingSeverity>("Medium");
+    const [categories, setCategories] = React.useState<Array<SimpleFindingCategory>>([]);
     const [findingDef, setFindingDef] = React.useState<SimpleFindingDefinition>();
     const [hoveredFindingDef, setHoveredFindingDef] = React.useState<SimpleFindingDefinition>();
     const [userDetails, setUserDetails, userDetailsModel] = useModel({ language: "markdown" });
@@ -82,6 +86,12 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
 
     const dataTableRef = React.useRef<WorkspaceFindingDataTableRef>(null);
     const graphRef = React.useRef<EditingTreeGraphRef>(null);
+
+    // Load categories from backend
+    const [allCategories, setAllCategories] = React.useState<Array<SimpleFindingCategory>>([]);
+    React.useEffect(() => {
+        Api.findingCategories.all().then(handleApiError((v) => setAllCategories(v.categories)));
+    }, []);
 
     const onClickTag = (e: { ctrlKey: boolean; shiftKey: boolean; altKey: boolean }, tag: SimpleTag) => {
         dataTableRef.current?.addFilterColumn("tag", tag.name, e.altKey);
@@ -123,6 +133,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
             handleApiError((fullFinding) => {
                 setFindingDef(fullFinding.definition);
                 setSeverity(fullFinding.severity);
+                setCategories(fullFinding.categories);
                 setUserDetails(fullFinding.userDetails || "", { finding: { finding: finding } });
                 setToolDetails(fullFinding.toolDetails || "");
                 setScreenshot(fullFinding.screenshot || "");
@@ -155,9 +166,27 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
         const handles = [
             WS.addEventListener("message.UpdatedFinding", ({ workspace: w, finding: f, update }) => {
                 if (w !== workspace || f !== finding) return;
-                const { severity, definition, screenshot, logFile } = update;
+                const { severity, categories, definition, screenshot, logFile } = update;
                 if (severity) {
                     setSeverity(severity);
+                }
+                if (categories) {
+                    setCategories(
+                        categories.map((uuid) => {
+                            return (
+                                allCategories.find((c) => uuid === c.uuid) || {
+                                    uuid: uuid,
+                                    name: uuid,
+                                    color: {
+                                        r: 0,
+                                        g: 0,
+                                        b: 0,
+                                        a: 0,
+                                    },
+                                }
+                            );
+                        }),
+                    );
                 }
                 if (definition) {
                     Api.knowledgeBase.findingDefinitions.get(definition).then(handleApiError(setFindingDef));
@@ -207,7 +236,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                 WS.removeEventListener(handle);
             }
         };
-    }, [workspace, finding]);
+    }, [workspace, finding, allCategories]);
 
     const { cursors: editorCursors, setEditor } = useSyncedCursors({
         target: { finding: { finding } },
@@ -255,6 +284,19 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                             }}
                             onHover={setHoveredFindingDef}
                         />
+
+                        <div className="categories">
+                            <h2 className="sub-heading">Categories</h2>
+                            <EditableCategories
+                                categories={categories}
+                                onChange={(newCat) => {
+                                    setCategories(newCat);
+                                    Api.workspaces.findings
+                                        .update(workspace, finding, { categories: newCat.map((c) => c.uuid) })
+                                        .then(handleApiError);
+                                }}
+                            />
+                        </div>
                     </div>
 
                     <div className="scrollable">
@@ -441,7 +483,12 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                 )}
                             </div>
                         </CollapsibleSection>
-                        <DeleteButton workspace={workspace} finding={finding} severity={severity} />
+                        <DeleteButton
+                            workspace={workspace}
+                            finding={finding}
+                            categories={categories}
+                            severity={severity}
+                        />
                     </div>
                 </div>
                 <div className="create-finding-editor-container">
@@ -569,7 +616,17 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     );
 }
 
-function DeleteButton({ workspace, finding, severity }: { workspace: UUID; finding: UUID; severity: FindingSeverity }) {
+function DeleteButton({
+    workspace,
+    finding,
+    severity,
+    categories,
+}: {
+    workspace: UUID;
+    finding: UUID;
+    severity: FindingSeverity;
+    categories: SimpleFindingCategory[];
+}) {
     const [open, setOpen] = React.useState(false);
 
     return (
@@ -594,6 +651,7 @@ function DeleteButton({ workspace, finding, severity }: { workspace: UUID; findi
             <div className="popup-content pane danger " style={{ width: "50ch", backgroundColor: "rgba(30,0,0,0.25)" }}>
                 <div className="workspace-setting-popup">
                     <h2 className="heading neon">Are you sure you want to delete this {severity} Severity finding?</h2>
+                    <FindingCategoryList categories={categories} />
                     <button
                         className="workspace-settings-red-button button"
                         type="reset"

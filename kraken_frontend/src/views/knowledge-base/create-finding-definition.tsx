@@ -1,7 +1,7 @@
 import React from "react";
 import { toast } from "react-toastify";
 import { Api } from "../../api/api";
-import { FindingSeverity, SimpleFindingDefinition } from "../../api/generated";
+import { FindingSeverity, SimpleFindingCategory, SimpleFindingDefinition } from "../../api/generated";
 import { GithubMarkdown } from "../../components/github-markdown";
 import Input from "../../components/input";
 import ModelEditor from "../../components/model-editor";
@@ -14,6 +14,7 @@ import FlameIcon from "../../svg/flame";
 import InformationIcon from "../../svg/information";
 import LibraryIcon from "../../svg/library";
 import { handleApiError } from "../../utils/helper";
+import EditableCategories from "../workspace/components/editable-categories";
 import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
 
 export type CreateFindingDefinitionProps = {
@@ -39,6 +40,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
     const [name, setName] = React.useState(props.initialName ?? "");
     const [severity, setSeverity] = React.useState<FindingSeverity>(FindingSeverity.Medium);
     const [cve, setCve] = React.useState("");
+    const [categories, setCategories] = React.useState<SimpleFindingCategory[]>([]);
 
     const sections = useSectionsState();
 
@@ -60,6 +62,11 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                             onChange={(value) => setSeverity(value || severity)}
                         />
                         <Input maxLength={255} value={cve} onChange={setCve} />
+                    </div>
+
+                    <div className="categories-selector">
+                        <h2 className="sub-heading">Categories</h2>
+                        <EditableCategories categories={categories} onChange={setCategories} />
                     </div>
 
                     <div>
@@ -119,6 +126,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                                     impact: sections.Impact.value,
                                     remediation: sections.Remediation.value,
                                     references: sections.References.value,
+                                    categories: categories.map((c) => c.uuid),
                                 })
                                 .then(
                                     handleApiError(({ uuid }) => {
@@ -133,6 +141,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                                                 cve: cve.length > 0 ? cve : null,
                                                 summary: sections.Summary.value,
                                                 createdAt: new Date(),
+                                                categories,
                                             });
                                         }
                                     }),

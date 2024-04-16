@@ -7,6 +7,7 @@ import {
     FindingSection,
     FindingSeverity,
     ListFindingDefinitionUsages,
+    SimpleFindingCategory,
 } from "../../api/generated";
 import WS from "../../api/websocket";
 import { AdminOnly } from "../../components/admin-guard";
@@ -24,6 +25,7 @@ import LibraryIcon from "../../svg/library";
 import { handleApiError } from "../../utils/helper";
 import { useSyncedCursors } from "../../utils/monaco-cursor";
 import CollapsibleSection from "../workspace/components/collapsible-section";
+import EditableCategories from "../workspace/components/editable-categories";
 import SeverityIcon from "../workspace/components/severity-icon";
 import { SectionSelectionTabs, useSectionsState } from "./finding-definition/sections";
 
@@ -35,9 +37,12 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
     const [name, setName] = React.useState("");
     const [severity, setSeverity] = React.useState<FindingSeverity>(FindingSeverity.Medium);
     const [cve, setCve] = React.useState("");
+    const [categories, setCategories] = React.useState<Array<SimpleFindingCategory>>([]);
 
-    useTimeoutOnChange([name, severity, cve], [props.uuid], 1000, () => {
-        Api.knowledgeBase.findingDefinitions.update(props.uuid, { name, severity, cve }).then(handleApiError);
+    useTimeoutOnChange([name, severity, cve, categories], [props.uuid], 1000, () => {
+        Api.knowledgeBase.findingDefinitions
+            .update(props.uuid, { name, severity, cve, categories: categories.map((c) => c.uuid) })
+            .then(handleApiError);
     });
 
     const sections = useSectionsState();
@@ -68,6 +73,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                 setName(finding.name);
                 setSeverity(finding.severity);
                 setCve(finding.cve || "");
+                setCategories(finding.categories);
 
                 const target = (findingSection: FindingSection) => ({
                     findingDefinition: {
@@ -118,6 +124,11 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                             onChange={(value) => setSeverity(value || severity)}
                         />
                         <Input maxLength={255} value={cve} onChange={setCve} />
+                    </div>
+
+                    <div className="categories-selector">
+                        <h2 className="sub-heading">Categories</h2>
+                        <EditableCategories categories={categories} onChange={setCategories} />
                     </div>
 
                     <div>

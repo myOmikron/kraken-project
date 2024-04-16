@@ -10,9 +10,11 @@ import {
     FullHost,
     FullPort,
     FullService,
+    SimpleFindingCategory,
     SimpleFindingDefinition,
     SimpleTag,
 } from "../../../api/generated";
+import FindingCategoryList from "../../../components/finding-category-list";
 import { GithubMarkdown } from "../../../components/github-markdown";
 import { SelectPrimitive } from "../../../components/select-menu";
 import { ROUTES } from "../../../routes";
@@ -29,6 +31,7 @@ import { handleApiError } from "../../../utils/helper";
 import { configureMonaco } from "../../../utils/monaco";
 import CollapsibleSection from "../components/collapsible-section";
 import Domain from "../components/domain";
+import EditableCategories from "../components/editable-categories";
 import { FileInput } from "../components/file-input";
 import IpAddr from "../components/host";
 import MarkdownEditorPopup from "../components/markdown-editor-popup";
@@ -73,6 +76,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
     const [findingDef, setFindingDef] = React.useState<SimpleFindingDefinition>();
     const [hoveredFindingDef, setHoveredFindingDef] = React.useState<SimpleFindingDefinition>();
     const [details, setDetails] = React.useState<string>("");
+    const [categories, setCategories] = React.useState<Array<SimpleFindingCategory>>([]);
+    // TODO: set categories from hovering/updating finding definitions
 
     const [affected, setAffected] = React.useState<Array<LocalAffected>>(
         (props.initAffected ?? []).map((a) => {
@@ -286,6 +291,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                     details: details,
                                     logFile: logFileUuid,
                                     screenshot: screenshotUuid,
+                                    categories: categories.map((c) => c.uuid),
                                 })
                                 .then(
                                     handleApiError(async ({ uuid }) => {
@@ -318,9 +324,18 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                 onSelect={(newDef) => {
                                     setFindingDef(newDef);
                                     setSeverity(newDef.severity);
+                                    setCategories(newDef.categories);
                                 }}
                                 onHover={setHoveredFindingDef}
                             />
+
+                            <div className="categories">
+                                <h2 className="sub-heading">Categories</h2>
+                                <EditableCategories
+                                    categories={hoveredFindingDef?.categories || categories}
+                                    onChange={setCategories}
+                                />
+                            </div>
                         </div>
 
                         <div className="scrollable">
@@ -472,6 +487,7 @@ export function FindingDefinitionDetails(props: { definition: SimpleFindingDefin
                 <h1 className={"sub-heading"}>
                     {definition.name} <small>{definition.severity}</small>
                 </h1>
+                <FindingCategoryList categories={definition.categories} />
                 <p>{definition.summary}</p>
             </div>
         );

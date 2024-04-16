@@ -104,6 +104,7 @@ export function selectStyles<Option, IsMulti extends boolean, Group extends Grou
         },
         menu: (styles) => ({
             ...styles,
+            zIndex: 9999,
             background:
                 theme === "red"
                     ? "url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFUlEQVQIW2P8//+/FCMj4zNGBigAADqJBAO/UCEeAAAAAElFTkSuQmCC), linear-gradient(0deg,#170000,black)"

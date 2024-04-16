@@ -485,6 +485,175 @@
                 ]
             }
         },
+        "/api/v1/admin/findingCategories": {
+            "post": {
+                "tags": [
+                    "Finding Categories"
+                ],
+                "summary": "Create a finding category.",
+                "description": "Create a finding category.\n\nThis action requires admin privileges.",
+                "operationId": "create_finding_category",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateFindingCategoryRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Finding category was created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UuidResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/findingCategories/{uuid}": {
+            "put": {
+                "tags": [
+                    "Finding Categories"
+                ],
+                "summary": "Update a finding category",
+                "description": "Update a finding category\n\nOne of the options must be set\n\nRequires admin privileges.",
+                "operationId": "update_finding_category",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "The uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateFindingCategoryRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Finding category was updated"
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Finding Categories"
+                ],
+                "summary": "Delete a finding category",
+                "description": "Delete a finding category\n\nRequires admin privileges.",
+                "operationId": "delete_finding_category",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "The uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Finding category was deleted"
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/findingDefinitions/{uuid}": {
             "delete": {
                 "tags": [
@@ -3638,6 +3807,53 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/v1/findingCategories": {
+            "get": {
+                "tags": [
+                    "Finding Categories"
+                ],
+                "summary": "Retrieve all finding categories",
+                "description": "Retrieve all finding categories",
+                "operationId": "get_all_finding_categories",
+                "responses": {
+                    "200": {
+                        "description": "Retrieve all finding categories",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListFindingCategories"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
             }
         },
         "/api/v1/findingDefinitions": {
@@ -8977,7 +9193,7 @@
             },
             "AttackType": {
                 "type": "string",
-                "description": "The type of an attack",
+                "description": "The type of attack",
                 "enum": [
                     "Undefined",
                     "BruteforceSubdomains",
@@ -9277,6 +9493,23 @@
                     }
                 }
             },
+            "CreateFindingCategoryRequest": {
+                "type": "object",
+                "description": "The request to create a finding category",
+                "required": [
+                    "name",
+                    "color"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "The category's name"
+                    },
+                    "color": {
+                        "$ref": "#/components/schemas/Color"
+                    }
+                }
+            },
             "CreateFindingDefinitionRequest": {
                 "type": "object",
                 "description": "The request to create a new finding definition",
@@ -9287,7 +9520,8 @@
                     "description",
                     "impact",
                     "remediation",
-                    "references"
+                    "references",
+                    "categories"
                 ],
                 "properties": {
                     "name": {
@@ -9321,6 +9555,14 @@
                     "references": {
                         "type": "string",
                         "description": "Any references to get more information about the definition of a finding.\n\nCan link to resources like Mitre's Attack or CME explanations, etc."
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "List of categories"
                     }
                 }
             },
@@ -9330,7 +9572,8 @@
                 "required": [
                     "definition",
                     "severity",
-                    "details"
+                    "details",
+                    "categories"
                 ],
                 "properties": {
                     "definition": {
@@ -9356,6 +9599,14 @@
                         "format": "uuid",
                         "description": "A log file",
                         "nullable": true
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "List of categories"
                     }
                 }
             },
@@ -10497,7 +10748,8 @@
                     "severity",
                     "affected",
                     "user_details",
-                    "created_at"
+                    "created_at",
+                    "categories"
                 ],
                 "properties": {
                     "uuid": {
@@ -10543,6 +10795,13 @@
                         "type": "string",
                         "format": "date-time",
                         "description": "The point in time this finding was created"
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SimpleFindingCategory"
+                        },
+                        "description": "The list of categories this finding falls into"
                     }
                 }
             },
@@ -10610,7 +10869,8 @@
                     "impact",
                     "remediation",
                     "references",
-                    "created_at"
+                    "created_at",
+                    "categories"
                 ],
                 "properties": {
                     "uuid": {
@@ -10654,6 +10914,13 @@
                         "type": "string",
                         "format": "date-time",
                         "description": "The point in time this finding definition was created"
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SimpleFindingCategory"
+                        },
+                        "description": "The list of categories this finding definition falls into"
                     }
                 }
             },
@@ -11768,6 +12035,22 @@
                             "$ref": "#/components/schemas/SimpleAttack"
                         },
                         "description": "The list of the attacks"
+                    }
+                }
+            },
+            "ListFindingCategories": {
+                "type": "object",
+                "description": "The response to a request to retrieve all finding categories",
+                "required": [
+                    "categories"
+                ],
+                "properties": {
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SimpleFindingCategory"
+                        },
+                        "description": "List of finding categories"
                     }
                 }
             },
@@ -13723,7 +14006,8 @@
                     "name",
                     "severity",
                     "affected_count",
-                    "created_at"
+                    "created_at",
+                    "categories"
                 ],
                 "properties": {
                     "uuid": {
@@ -13751,13 +14035,20 @@
                     "affected_count": {
                         "type": "integer",
                         "format": "int64",
-                        "description": "The count of affected",
+                        "description": "The count of affected aggregations",
                         "minimum": 0
                     },
                     "created_at": {
                         "type": "string",
                         "format": "date-time",
                         "description": "The point in time this finding definition was created"
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SimpleFindingCategory"
+                        },
+                        "description": "The list of categories this finding falls into"
                     }
                 }
             },
@@ -13785,6 +14076,29 @@
                     }
                 }
             },
+            "SimpleFindingCategory": {
+                "type": "object",
+                "description": "A category findings and finding definitions can be categorized by",
+                "required": [
+                    "uuid",
+                    "name",
+                    "color"
+                ],
+                "properties": {
+                    "uuid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The category's uuid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The category's name"
+                    },
+                    "color": {
+                        "$ref": "#/components/schemas/Color"
+                    }
+                }
+            },
             "SimpleFindingDefinition": {
                 "type": "object",
                 "description": "The simple definition of a finding",
@@ -13793,7 +14107,8 @@
                     "name",
                     "severity",
                     "summary",
-                    "created_at"
+                    "created_at",
+                    "categories"
                 ],
                 "properties": {
                     "uuid": {
@@ -13821,6 +14136,13 @@
                         "type": "string",
                         "format": "date-time",
                         "description": "The point in time this finding definition was created"
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SimpleFindingCategory"
+                        },
+                        "description": "The list of categories this finding falls into"
                     }
                 }
             },
@@ -14739,6 +15061,25 @@
                     }
                 }
             },
+            "UpdateFindingCategoryRequest": {
+                "type": "object",
+                "description": "The request to update a finding category",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "The category's name",
+                        "nullable": true
+                    },
+                    "color": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Color"
+                            }
+                        ],
+                        "nullable": true
+                    }
+                }
+            },
             "UpdateFindingDefinitionRequest": {
                 "type": "object",
                 "description": "The request to update a new finding definition",
@@ -14759,6 +15100,15 @@
                     "cve": {
                         "type": "string",
                         "description": "Optional linked CVE",
+                        "nullable": true
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "List of categories",
                         "nullable": true
                     }
                 }
@@ -14791,6 +15141,15 @@
                         "type": "string",
                         "format": "uuid",
                         "description": "A log file",
+                        "nullable": true
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "List of categories",
                         "nullable": true
                     }
                 }

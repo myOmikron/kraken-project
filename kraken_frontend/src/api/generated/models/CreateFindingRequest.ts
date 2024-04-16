@@ -63,6 +63,12 @@ export interface CreateFindingRequest {
      * @memberof CreateFindingRequest
      */
     logFile?: string | null;
+    /**
+     * List of categories
+     * @type {Array<string>}
+     * @memberof CreateFindingRequest
+     */
+    categories: Array<string>;
 }
 
 /**
@@ -73,6 +79,7 @@ export function instanceOfCreateFindingRequest(value: object): boolean {
     isInstance = isInstance && "definition" in value;
     isInstance = isInstance && "severity" in value;
     isInstance = isInstance && "details" in value;
+    isInstance = isInstance && "categories" in value;
 
     return isInstance;
 }
@@ -92,6 +99,7 @@ export function CreateFindingRequestFromJSONTyped(json: any, ignoreDiscriminator
         'details': json['details'],
         'screenshot': !exists(json, 'screenshot') ? undefined : json['screenshot'],
         'logFile': !exists(json, 'log_file') ? undefined : json['log_file'],
+        'categories': json['categories'],
     };
 }
 
@@ -109,6 +117,7 @@ export function CreateFindingRequestToJSON(value?: CreateFindingRequest | null):
         'details': value.details,
         'screenshot': value.screenshot,
         'log_file': value.logFile,
+        'categories': value.categories,
     };
 }
 

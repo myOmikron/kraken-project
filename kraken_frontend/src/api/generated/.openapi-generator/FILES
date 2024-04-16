@@ -5,6 +5,7 @@ apis/AttacksApi.ts
 apis/AuthenticationApi.ts
 apis/DomainsApi.ts
 apis/FilesApi.ts
+apis/FindingCategoriesApi.ts
 apis/FindingsApi.ts
 apis/GlobalTagsApi.ts
 apis/HostsApi.ts
@@ -39,6 +40,7 @@ models/CreateApiKeyRequest.ts
 models/CreateAppRequest.ts
 models/CreateDomainRequest.ts
 models/CreateFindingAffectedRequest.ts
+models/CreateFindingCategoryRequest.ts
 models/CreateFindingDefinitionRequest.ts
 models/CreateFindingRequest.ts
 models/CreateGlobalTagRequest.ts
@@ -129,6 +131,7 @@ models/LeechConfigAllOf.ts
 models/LeechTlsConfig.ts
 models/ListApiKeys.ts
 models/ListAttacks.ts
+models/ListFindingCategories.ts
 models/ListFindingDefinitionUsages.ts
 models/ListFindingDefinitions.ts
 models/ListFindings.ts
@@ -221,6 +224,7 @@ models/SimpleDnsTxtScanResult.ts
 models/SimpleDomain.ts
 models/SimpleFinding.ts
 models/SimpleFindingAffected.ts
+models/SimpleFindingCategory.ts
 models/SimpleFindingDefinition.ts
 models/SimpleHost.ts
 models/SimpleHostAliveResult.ts
@@ -253,6 +257,7 @@ models/UpdateApiKeyRequest.ts
 models/UpdateAppRequest.ts
 models/UpdateDomainRequest.ts
 models/UpdateFindingAffectedRequest.ts
+models/UpdateFindingCategoryRequest.ts
 models/UpdateFindingDefinitionRequest.ts
 models/UpdateFindingRequest.ts
 models/UpdateGlobalTag.ts

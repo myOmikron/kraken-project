@@ -1,6 +1,7 @@
 import React from "react";
 import { Api } from "../../api/api";
 import { SimpleFindingDefinition } from "../../api/generated";
+import FindingCategoryList from "../../components/finding-category-list";
 import Input from "../../components/input";
 import { ROUTES } from "../../routes";
 import "../../styling/knowledge-base.css";
@@ -46,9 +47,9 @@ export function ListFindingDefinition(props: ListFindingDefinitionProps) {
                             onPointerLeave={() => setHover(undefined)}
                             {...ROUTES.FINDING_DEFINITION_EDIT.clickHandler({ uuid: def.uuid })}
                         >
-                            <h2 className={"sub-heading"}>
-                                {def.name} <small>{def.severity}</small>
-                            </h2>
+                            <h2 className={"sub-heading"}>{def.name}</h2>
+                            <FindingCategoryList categories={def.categories} />
+                            <div className="sub-heading">{def.severity}</div>
                         </div>
                     ))}
             </div>
@@ -58,12 +59,13 @@ export function ListFindingDefinition(props: ListFindingDefinitionProps) {
 }
 
 export function Details(props: SimpleFindingDefinition) {
-    const { name, severity, summary } = props;
+    const { name, severity, summary, categories } = props;
     return (
-        <div className={"pane"}>
+        <div className={"list-finding-definition-details pane"}>
             <h1 className={"sub-heading"}>
                 {name} <small>{severity}</small>
             </h1>
+            <FindingCategoryList categories={categories} />
             <p>{summary}</p>
         </div>
     );

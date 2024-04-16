@@ -66,7 +66,7 @@ export const EditingTreeGraph = forwardRef<EditingTreeGraphRef, EditingTreeGraph
     // props.affected) every time, but we don't recreate the api / api.current
     // object so that the reference stays the same and the DynamicTreeGraph
     // component doesn't rerender because we changed how the API behaves every time.
-    api.current.getRoots = async function () {
+    api.current.getRoots = async function (): Promise<FullFinding[]> {
         return [
             {
                 affected: props.affected.map((a, i) => ({
@@ -82,10 +82,12 @@ export const EditingTreeGraph = forwardRef<EditingTreeGraphRef, EditingTreeGraph
                     severity: props.severity,
                     summary: "",
                     uuid: "local-undefined",
+                    categories: [],
                 },
                 userDetails: "",
                 severity: props.severity,
                 uuid: rootUuid,
+                categories: [],
             },
         ];
     };

@@ -25,6 +25,12 @@ import {
     SimpleFindingAffectedFromJSONTyped,
     SimpleFindingAffectedToJSON,
 } from './SimpleFindingAffected';
+import type { SimpleFindingCategory } from './SimpleFindingCategory';
+import {
+    SimpleFindingCategoryFromJSON,
+    SimpleFindingCategoryFromJSONTyped,
+    SimpleFindingCategoryToJSON,
+} from './SimpleFindingCategory';
 import type { SimpleFindingDefinition } from './SimpleFindingDefinition';
 import {
     SimpleFindingDefinitionFromJSON,
@@ -97,6 +103,12 @@ export interface FullFinding {
      * @memberof FullFinding
      */
     createdAt: Date;
+    /**
+     * The list of categories this finding falls into
+     * @type {Array<SimpleFindingCategory>}
+     * @memberof FullFinding
+     */
+    categories: Array<SimpleFindingCategory>;
 }
 
 /**
@@ -110,6 +122,7 @@ export function instanceOfFullFinding(value: object): boolean {
     isInstance = isInstance && "affected" in value;
     isInstance = isInstance && "userDetails" in value;
     isInstance = isInstance && "createdAt" in value;
+    isInstance = isInstance && "categories" in value;
 
     return isInstance;
 }
@@ -133,6 +146,7 @@ export function FullFindingFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'screenshot': !exists(json, 'screenshot') ? undefined : json['screenshot'],
         'logFile': !exists(json, 'log_file') ? undefined : json['log_file'],
         'createdAt': (new Date(json['created_at'])),
+        'categories': ((json['categories'] as Array<any>).map(SimpleFindingCategoryFromJSON)),
     };
 }
 
@@ -154,6 +168,7 @@ export function FullFindingToJSON(value?: FullFinding | null): any {
         'screenshot': value.screenshot,
         'log_file': value.logFile,
         'created_at': (value.createdAt.toISOString()),
+        'categories': ((value.categories as Array<any>).map(SimpleFindingCategoryToJSON)),
     };
 }
 

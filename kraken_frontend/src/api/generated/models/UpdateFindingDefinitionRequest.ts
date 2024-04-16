@@ -46,6 +46,12 @@ export interface UpdateFindingDefinitionRequest {
      * @memberof UpdateFindingDefinitionRequest
      */
     cve?: string | null;
+    /**
+     * List of categories
+     * @type {Array<string>}
+     * @memberof UpdateFindingDefinitionRequest
+     */
+    categories?: Array<string> | null;
 }
 
 /**
@@ -70,6 +76,7 @@ export function UpdateFindingDefinitionRequestFromJSONTyped(json: any, ignoreDis
         'name': !exists(json, 'name') ? undefined : json['name'],
         'severity': !exists(json, 'severity') ? undefined : FindingSeverityFromJSON(json['severity']),
         'cve': !exists(json, 'cve') ? undefined : json['cve'],
+        'categories': !exists(json, 'categories') ? undefined : json['categories'],
     };
 }
 
@@ -85,6 +92,7 @@ export function UpdateFindingDefinitionRequestToJSON(value?: UpdateFindingDefini
         'name': value.name,
         'severity': FindingSeverityToJSON(value.severity),
         'cve': value.cve,
+        'categories': value.categories,
     };
 }
 
