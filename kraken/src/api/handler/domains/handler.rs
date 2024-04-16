@@ -610,6 +610,7 @@ pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<Doma
         .map_ok(|service| SimpleHttpService {
             uuid: service.uuid,
             name: service.name,
+            version: service.version,
             domain: service.domain.map(|fm| *fm.key()),
             host: *service.host.key(),
             port: *service.port.key(),
@@ -617,6 +618,7 @@ pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<Doma
             tls: service.tls,
             sni_required: service.sni_required,
             comment: service.comment,
+            certainty: FromDb::from_db(service.certainty),
             workspace: *service.workspace.key(),
             created_at: service.created_at,
         })

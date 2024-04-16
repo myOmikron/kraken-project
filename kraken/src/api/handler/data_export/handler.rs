@@ -447,6 +447,7 @@ impl From<HttpService> for AggregatedHttpService {
         let HttpService {
             uuid,
             name,
+            version,
             base_path,
             tls,
             sni_required,
@@ -454,6 +455,7 @@ impl From<HttpService> for AggregatedHttpService {
             host,
             port,
             comment,
+            certainty,
             workspace_tags: _,
             global_tags: _,
             workspace: _,
@@ -463,6 +465,7 @@ impl From<HttpService> for AggregatedHttpService {
         Self {
             uuid,
             name,
+            version,
             domain: domain.map(|fm| *fm.key()),
             host: *host.key(),
             port: *port.key(),
@@ -470,6 +473,7 @@ impl From<HttpService> for AggregatedHttpService {
             tls,
             sni_required,
             comment,
+            certainty: FromDb::from_db(certainty),
             tags: Default::default(),
             created_at,
         }

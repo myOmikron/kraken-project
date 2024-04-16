@@ -1,4 +1,5 @@
 use crate::api::handler::hosts::schema::ManualHostCertainty;
+use crate::api::handler::http_services::schema::ManualHttpServiceCertainty;
 use crate::api::handler::ports::schema::ManualPortCertainty;
 use crate::api::handler::services::schema::ManualServiceCertainty;
 use crate::models::convert::FromDb;
@@ -57,6 +58,25 @@ impl IntoDb for ManualServiceCertainty {
         match self {
             ManualServiceCertainty::Historical => super::ManualServiceCertainty::Historical,
             ManualServiceCertainty::SupposedTo => super::ManualServiceCertainty::SupposedTo,
+        }
+    }
+}
+
+impl FromDb for ManualHttpServiceCertainty {
+    type DbFormat = super::ManualHttpServiceCertainty;
+
+    fn from_db(db_format: Self::DbFormat) -> Self {
+        match db_format {
+            super::ManualHttpServiceCertainty::Historical => ManualHttpServiceCertainty::Historical,
+            super::ManualHttpServiceCertainty::SupposedTo => ManualHttpServiceCertainty::SupposedTo,
+        }
+    }
+}
+impl IntoDb for ManualHttpServiceCertainty {
+    fn into_db(self) -> Self::DbFormat {
+        match self {
+            ManualHttpServiceCertainty::Historical => super::ManualHttpServiceCertainty::Historical,
+            ManualHttpServiceCertainty::SupposedTo => super::ManualHttpServiceCertainty::SupposedTo,
         }
     }
 }

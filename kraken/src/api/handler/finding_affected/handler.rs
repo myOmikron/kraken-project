@@ -409,6 +409,7 @@ pub async fn get_finding_affected(
                 FindingAffectedObject::HttpService(SimpleHttpService {
                     uuid: http_service.uuid,
                     name: http_service.name,
+                    version: http_service.version,
                     domain: http_service.domain.map(|fm| *fm.key()),
                     host: *http_service.host.key(),
                     port: *http_service.port.key(),
@@ -416,6 +417,7 @@ pub async fn get_finding_affected(
                     tls: http_service.tls,
                     sni_required: http_service.sni_required,
                     comment: http_service.comment,
+                    certainty: FromDb::from_db(http_service.certainty),
                     workspace: *http_service.workspace.key(),
                     created_at: http_service.created_at,
                 }),

@@ -24,6 +24,9 @@ pub struct CreateHttpServiceRequest {
     /// The service's name
     pub name: String,
 
+    /// Optional version of the http service
+    pub version: Option<String>,
+
     /// The service's domain
     pub domain: Option<String>,
 
@@ -37,6 +40,9 @@ pub struct CreateHttpServiceRequest {
 
     /// The service's port's protocol
     pub port_protocol: PortProtocol,
+
+    /// The certainty of this http service
+    pub certainty: ManualHttpServiceCertainty,
 
     /// The base path the service is routed on
     ///
@@ -89,6 +95,9 @@ pub struct SimpleHttpService {
     /// The http service's name
     pub name: String,
 
+    /// Optional version of the http service
+    pub version: Option<String>,
+
     /// The http service's domain
     pub domain: Option<Uuid>,
 
@@ -110,6 +119,9 @@ pub struct SimpleHttpService {
     /// A comment
     pub comment: String,
 
+    /// The certainty of this http service
+    pub certainty: HttpServiceCertainty,
+
     /// The workspace this http service is in
     pub workspace: Uuid,
 
@@ -125,6 +137,9 @@ pub struct FullHttpService {
 
     /// The http service's name
     pub name: String,
+
+    /// Optional version of the http service
+    pub version: Option<String>,
 
     /// The http service's domain
     pub domain: Option<SimpleDomain>,
@@ -146,6 +161,9 @@ pub struct FullHttpService {
 
     /// A comment
     pub comment: String,
+
+    /// The certainty of this http service
+    pub certainty: HttpServiceCertainty,
 
     /// The workspace this http service is linked to
     pub workspace: Uuid,
@@ -184,4 +202,24 @@ pub struct HttpServiceRelations {
 
     /// The domain a service runs on
     pub domain: Option<SimpleDomain>,
+}
+
+/// The certainty of a http service
+#[derive(Copy, Clone, Deserialize, Serialize, ToSchema, Debug, PartialOrd, PartialEq)]
+pub enum HttpServiceCertainty {
+    /// 3rd party historical data
+    Historical = 0,
+    /// 3rd party data
+    SupposedTo = 1,
+    /// One of our attacks verified this service
+    Verified = 2,
+}
+
+/// The certainty of a manually added http service
+#[derive(Copy, Clone, Deserialize, Serialize, ToSchema, Debug, PartialOrd, PartialEq)]
+pub enum ManualHttpServiceCertainty {
+    /// Historical data
+    Historical,
+    /// Up to date data
+    SupposedTo,
 }

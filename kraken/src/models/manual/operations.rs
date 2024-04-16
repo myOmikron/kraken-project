@@ -13,10 +13,12 @@ use crate::models::AggregationSource;
 use crate::models::AggregationTable;
 use crate::models::DomainCertainty;
 use crate::models::HostCertainty;
+use crate::models::HttpServiceCertainty;
 use crate::models::ManualDomain;
 use crate::models::ManualHost;
 use crate::models::ManualHostCertainty;
 use crate::models::ManualHttpService;
+use crate::models::ManualHttpServiceCertainty;
 use crate::models::ManualPort;
 use crate::models::ManualPortCertainty;
 use crate::models::ManualService;
@@ -396,10 +398,12 @@ impl ManualService {
 struct InsertManualHttpService {
     uuid: Uuid,
     name: String,
+    version: Option<String>,
     domain: Option<String>,
     ip_addr: IpNetwork,
     port: i32,
     port_protocol: PortProtocol,
+    certainty: ManualHttpServiceCertainty,
     base_path: String,
     tls: bool,
     sni_required: bool,
@@ -420,10 +424,12 @@ impl ManualHttpService {
         workspace: Uuid,
         user: Uuid,
         name: String,
+        version: Option<String>,
         domain: Option<String>,
         ip_addr: IpAddr,
         port: NonZeroU16,
         port_protocol: PortProtocol,
+        certainty: ManualHttpServiceCertainty,
         base_path: String,
         tls: bool,
         sni_required: bool,
@@ -435,10 +441,12 @@ impl ManualHttpService {
             .single(&InsertManualHttpService {
                 uuid: Uuid::new_v4(),
                 name: name.clone(),
+                version: version.clone(),
                 domain: domain.clone(),
                 ip_addr: IpNetwork::from(ip_addr),
                 port: port.get() as i32,
                 port_protocol,
+                certainty,
                 base_path: base_path.clone(),
                 tls,
                 sni_required,
@@ -452,7 +460,10 @@ impl ManualHttpService {
             .aggregate_host(
                 workspace,
                 IpNetwork::from(ip_addr),
-                HostCertainty::SupposedTo, // TODO
+                match certainty {
+                    ManualHttpServiceCertainty::Historical => HostCertainty::Historical,
+                    ManualHttpServiceCertainty::SupposedTo => HostCertainty::SupposedTo,
+                },
             )
             .await?;
 
@@ -463,7 +474,10 @@ impl ManualHttpService {
                 host_uuid,
                 port.get(),
                 port_protocol,
-                PortCertainty::SupposedTo, // TODO
+                match certainty {
+                    ManualHttpServiceCertainty::Historical => PortCertainty::Historical,
+                    ManualHttpServiceCertainty::SupposedTo => PortCertainty::SupposedTo,
+                },
             )
             .await?;
 
@@ -471,7 +485,7 @@ impl ManualHttpService {
             Some(
                 GLOBAL
                     .aggregator
-                    .aggregate_domain(workspace, &domain, DomainCertainty::Unverified, user) // TODO
+                    .aggregate_domain(workspace, &domain, DomainCertainty::Unverified, user)
                     .await?,
             )
         } else {
@@ -483,12 +497,17 @@ impl ManualHttpService {
             .aggregate_http_service(
                 workspace,
                 name,
+                version,
                 host_uuid,
                 port_uuid,
                 domain_uuid,
                 base_path,
                 tls,
                 sni_required,
+                match certainty {
+                    ManualHttpServiceCertainty::Historical => HttpServiceCertainty::Historical,
+                    ManualHttpServiceCertainty::SupposedTo => HttpServiceCertainty::SupposedTo,
+                },
             )
             .await?;
 

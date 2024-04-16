@@ -509,6 +509,7 @@ pub struct DomainWorkspaceTag {
 ///
 /// This aggregation is intended to hold information regarding
 /// an HTTP service (e.g. nginx or wordpress)
+// Unique over name + base_path + host + port + domain + tls + sni_required
 #[derive(Model)]
 pub struct HttpService {
     /// The primary key
@@ -518,6 +519,10 @@ pub struct HttpService {
     /// The name of the http service
     #[rorm(max_length = 255)]
     pub name: String,
+
+    /// Optional version of the http service
+    #[rorm(index, max_length = 255)]
+    pub version: Option<String>,
 
     /// The base path of the http service
     #[rorm(max_length = 1024)]
@@ -532,7 +537,7 @@ pub struct HttpService {
     pub sni_required: bool,
 
     /// An optional domain that is used to access the http service
-    #[rorm(on_update = "Cascade", on_delete = "SetNull")]
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
     pub domain: Option<ForeignModel<Domain>>,
 
     /// The host this http service is running on
@@ -547,6 +552,9 @@ pub struct HttpService {
     #[rorm(max_length = 1024)]
     pub comment: String,
 
+    /// The certainty of this http service
+    pub certainty: HttpServiceCertainty,
+
     /// Workspace tags of the http service
     pub workspace_tags: BackRef<field!(HttpServiceWorkspaceTag::F.http_service)>,
 
@@ -560,6 +568,17 @@ pub struct HttpService {
     /// The point in time, this entry was created
     #[rorm(auto_create_time)]
     pub created_at: DateTime<Utc>,
+}
+
+/// The certainty of a http service
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug, PartialOrd, PartialEq)]
+pub enum HttpServiceCertainty {
+    /// 3rd party historical data
+    Historical = 0,
+    /// 3rd party data
+    SupposedTo = 1,
+    /// One of our attacks verified this service
+    Verified = 2,
 }
 
 /// M2M relation between [GlobalTag] and [HttpService]

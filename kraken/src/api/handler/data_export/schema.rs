@@ -12,6 +12,7 @@ use crate::api::handler::domains::schema::DomainCertainty;
 use crate::api::handler::findings::schema::FindingSeverity;
 use crate::api::handler::hosts::schema::HostCertainty;
 use crate::api::handler::hosts::schema::OsType;
+use crate::api::handler::http_services::schema::HttpServiceCertainty;
 use crate::api::handler::ports::schema::PortCertainty;
 use crate::api::handler::ports::schema::PortProtocol;
 use crate::api::handler::services::schema::ServiceCertainty;
@@ -201,6 +202,9 @@ pub struct AggregatedHttpService {
     /// Name of the http service
     pub name: String,
 
+    /// Optional version of the http service
+    pub version: Option<String>,
+
     /// The domain this http service is attached to
     pub domain: Option<Uuid>,
 
@@ -221,6 +225,9 @@ pub struct AggregatedHttpService {
 
     /// A comment to the service
     pub comment: String,
+
+    /// The certainty of this http service
+    pub certainty: HttpServiceCertainty,
 
     /// Set of global and local tags
     #[serde(flatten)]

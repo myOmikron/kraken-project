@@ -8,6 +8,7 @@ use uuid::Uuid;
 use crate::api::handler::services::schema::ServiceProtocols;
 use crate::models::DomainCertainty;
 use crate::models::HostCertainty;
+use crate::models::HttpServiceCertainty;
 use crate::models::OsType;
 use crate::models::PortCertainty;
 use crate::models::PortProtocol;
@@ -49,12 +50,14 @@ struct ServiceAggregationData {
 struct HttpServiceAggregationData {
     workspace: Uuid,
     name: String,
+    version: Option<String>,
     host: Uuid,
     port: Uuid,
     domain: Option<Uuid>,
     base_path: String,
     tls: bool,
     sni_required: bool,
+    certainty: HttpServiceCertainty,
 }
 
 /// This is a facade to only allow one instance writing to the database per aggregation model
@@ -308,12 +311,14 @@ impl Aggregator {
         &self,
         workspace: Uuid,
         name: String,
+        version: Option<String>,
         host: Uuid,
         port: Uuid,
         domain: Option<Uuid>,
         base_path: String,
         tls: bool,
         sni_required: bool,
+        certainty: HttpServiceCertainty,
     ) -> Result<Uuid, rorm::Error> {
         let (tx, rx) = oneshot::channel();
 
@@ -325,12 +330,14 @@ impl Aggregator {
                 HttpServiceAggregationData {
                     workspace,
                     name,
+                    version,
                     host,
                     port,
                     domain,
                     base_path,
                     tls,
                     sni_required,
+                    certainty,
                 },
                 tx,
             ))

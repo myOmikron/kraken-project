@@ -158,6 +158,10 @@ pub struct ManualHttpService {
     #[rorm(max_length = 255)]
     pub name: String,
 
+    /// Optional version of the http service
+    #[rorm(index, max_length = 255)]
+    pub version: Option<String>,
+
     /// The service's domain
     #[rorm(max_length = 255)]
     pub domain: Option<String>,
@@ -170,6 +174,9 @@ pub struct ManualHttpService {
 
     /// The service's port's protocol
     pub port_protocol: PortProtocol,
+
+    /// The certainty of this http service
+    pub certainty: ManualHttpServiceCertainty,
 
     /// The base path the service is routed on
     ///
@@ -193,4 +200,13 @@ pub struct ManualHttpService {
     /// The point in time, this entry was created
     #[rorm(auto_create_time)]
     pub created_at: DateTime<Utc>,
+}
+
+/// The certainty of a manually added http service
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+pub enum ManualHttpServiceCertainty {
+    /// Historical data
+    Historical,
+    /// Up to date data
+    SupposedTo,
 }

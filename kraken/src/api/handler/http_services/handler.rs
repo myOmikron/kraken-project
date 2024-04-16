@@ -112,6 +112,7 @@ pub async fn get_all_http_services(
     let mut select_query = RawQueryBuilder::new((
         HttpService::F.uuid,
         HttpService::F.name,
+        HttpService::F.version,
         HttpService::F.domain,
         HttpService::F.host.select_as::<Host>(),
         HttpService::F.port.select_as::<Port>(),
@@ -119,6 +120,7 @@ pub async fn get_all_http_services(
         HttpService::F.tls,
         HttpService::F.sni_required,
         HttpService::F.comment,
+        HttpService::F.certainty,
         HttpService::F.created_at,
     ));
 
@@ -142,7 +144,7 @@ pub async fn get_all_http_services(
     let mut domains = HashMap::new();
     let conds = http_services
         .iter()
-        .filter_map(|x| x.2.as_ref().map(|y| Domain::F.uuid.equals(*y.key())))
+        .filter_map(|x| x.3.as_ref().map(|y| Domain::F.uuid.equals(*y.key())))
         .collect::<Vec<_>>();
     if !conds.is_empty() {
         let mut domain_stream = query!(&mut tx, Domain)
@@ -194,6 +196,7 @@ pub async fn get_all_http_services(
             |(
                 uuid,
                 name,
+                version,
                 domain,
                 host,
                 port,
@@ -201,10 +204,12 @@ pub async fn get_all_http_services(
                 tls,
                 sni_required,
                 comment,
+                certainty,
                 created_at,
             )| FullHttpService {
                 uuid,
                 name,
+                version,
                 domain: domain
                     .and_then(|fm| domains.get(fm.key()))
                     .map(|domain| SimpleDomain {
@@ -239,6 +244,7 @@ pub async fn get_all_http_services(
                 tls,
                 sni_required,
                 comment,
+                certainty: FromDb::from_db(certainty),
                 workspace: path.uuid,
                 created_at,
                 tags: tags.remove(&uuid).unwrap_or_default(),
@@ -279,29 +285,43 @@ pub async fn get_http_service(
         return Err(ApiError::MissingPrivileges)?;
     }
 
-    let (uuid, name, domain, host, port, base_path, tls, sni_required, comment, created_at) =
-        query!(
-            &mut tx,
-            (
-                HttpService::F.uuid,
-                HttpService::F.name,
-                HttpService::F.domain,
-                HttpService::F.host as Host,
-                HttpService::F.port as Port,
-                HttpService::F.base_path,
-                HttpService::F.tls,
-                HttpService::F.sni_required,
-                HttpService::F.comment,
-                HttpService::F.created_at,
-            )
+    let (
+        uuid,
+        name,
+        version,
+        domain,
+        host,
+        port,
+        base_path,
+        tls,
+        sni_required,
+        comment,
+        certainty,
+        created_at,
+    ) = query!(
+        &mut tx,
+        (
+            HttpService::F.uuid,
+            HttpService::F.name,
+            HttpService::F.version,
+            HttpService::F.domain,
+            HttpService::F.host as Host,
+            HttpService::F.port as Port,
+            HttpService::F.base_path,
+            HttpService::F.tls,
+            HttpService::F.sni_required,
+            HttpService::F.comment,
+            HttpService::F.certainty,
+            HttpService::F.created_at,
         )
-        .condition(and!(
-            HttpService::F.workspace.equals(path.w_uuid),
-            HttpService::F.uuid.equals(path.hs_uuid)
-        ))
-        .optional()
-        .await?
-        .ok_or(ApiError::InvalidUuid)?;
+    )
+    .condition(and!(
+        HttpService::F.workspace.equals(path.w_uuid),
+        HttpService::F.uuid.equals(path.hs_uuid)
+    ))
+    .optional()
+    .await?
+    .ok_or(ApiError::InvalidUuid)?;
 
     let domain = if let Some(domain) = domain.as_ref() {
         Some(
@@ -348,6 +368,7 @@ pub async fn get_http_service(
     Ok(Json(FullHttpService {
         uuid,
         name,
+        version,
         domain: domain.map(|domain| SimpleDomain {
             uuid: domain.uuid,
             domain: domain.domain,
@@ -380,6 +401,7 @@ pub async fn get_http_service(
         tls,
         sni_required,
         comment,
+        certainty: FromDb::from_db(certainty),
         workspace: path.w_uuid,
         created_at,
         tags,
@@ -409,10 +431,12 @@ pub async fn create_http_service(
 ) -> ApiResult<Json<UuidResponse>> {
     let CreateHttpServiceRequest {
         name,
+        version,
         domain,
         ip_addr,
         port,
         port_protocol,
+        certainty,
         base_path,
         tls,
         sni_require,
@@ -425,10 +449,12 @@ pub async fn create_http_service(
             workspace,
             user,
             name,
+            version,
             domain,
             ip_addr,
             port,
             port_protocol.into_db(),
+            certainty.into_db(),
             base_path,
             tls,
             sni_require,

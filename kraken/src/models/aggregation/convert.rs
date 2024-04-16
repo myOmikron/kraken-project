@@ -1,6 +1,7 @@
 use crate::api::handler::domains::schema::DomainCertainty;
 use crate::api::handler::hosts::schema::HostCertainty;
 use crate::api::handler::hosts::schema::OsType;
+use crate::api::handler::http_services::schema::HttpServiceCertainty;
 use crate::api::handler::ports::schema::PortCertainty;
 use crate::api::handler::ports::schema::PortProtocol;
 use crate::api::handler::services::schema::ServiceCertainty;
@@ -139,6 +140,27 @@ impl IntoDb for ServiceCertainty {
             ServiceCertainty::MaybeVerified => super::ServiceCertainty::MaybeVerified,
             ServiceCertainty::DefinitelyVerified => super::ServiceCertainty::DefinitelyVerified,
             ServiceCertainty::UnknownService => super::ServiceCertainty::UnknownService,
+        }
+    }
+}
+
+impl FromDb for HttpServiceCertainty {
+    type DbFormat = super::HttpServiceCertainty;
+
+    fn from_db(db_format: Self::DbFormat) -> Self {
+        match db_format {
+            super::HttpServiceCertainty::Historical => HttpServiceCertainty::Historical,
+            super::HttpServiceCertainty::SupposedTo => HttpServiceCertainty::SupposedTo,
+            super::HttpServiceCertainty::Verified => HttpServiceCertainty::Verified,
+        }
+    }
+}
+impl IntoDb for HttpServiceCertainty {
+    fn into_db(self) -> Self::DbFormat {
+        match self {
+            HttpServiceCertainty::Historical => super::HttpServiceCertainty::Historical,
+            HttpServiceCertainty::SupposedTo => super::HttpServiceCertainty::SupposedTo,
+            HttpServiceCertainty::Verified => super::HttpServiceCertainty::Verified,
         }
     }
 }
