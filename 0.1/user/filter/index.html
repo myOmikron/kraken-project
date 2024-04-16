@@ -923,6 +923,7 @@ You're not viewing the latest version.
 <li><code>Host</code></li>
 <li><code>Port</code></li>
 <li><code>Service</code></li>
+<li><code>HTTP Service</code></li>
 </ul>
 <h3 id="keys">Keys</h3>
 <p>Each target has its own set of allowed keys:</p>
@@ -1056,10 +1057,52 @@ You're not viewing the latest version.
 <td>service transport</td>
 <td><code>transport: tls</code>, <code>transport: raw</code></td>
 </tr>
+<tr>
+<td><strong>HTTP Service</strong></td>
+<td>httpService[s]</td>
+<td>string</td>
+<td><code>httpService: wordpress</code></td>
+</tr>
+<tr>
+<td></td>
+<td>ip[s]</td>
+<td>ip address or network</td>
+<td><code>ip: 127.0.0.1</code>, <code>ip: 127.0.0.1/24</code></td>
+</tr>
+<tr>
+<td></td>
+<td>port[s]</td>
+<td>port number or range</td>
+<td><code>port: 80</code>, <code>port: 1-1000</code></td>
+</tr>
+<tr>
+<td></td>
+<td>domain[s]</td>
+<td>string</td>
+<td><code>domain: docs.kraken-project.org</code></td>
+</tr>
+<tr>
+<td></td>
+<td>basePath[s]</td>
+<td>string</td>
+<td><code>basePath: /wp-admin/</code></td>
+</tr>
+<tr>
+<td></td>
+<td>tls</td>
+<td>boolean</td>
+<td><code>tls: yes</code></td>
+</tr>
+<tr>
+<td></td>
+<td>sni</td>
+<td>boolean</td>
+<td><code>sni: yes</code></td>
+</tr>
 </tbody>
 </table>
 <h3 id="subkeys">Subkeys</h3>
-<p>The keys <code>domain</code>, <code>sourceOf</code>, <code>targetOf</code>, <code>ip</code>, <code>port</code> and <code>service</code> each represent a target.</p>
+<p>The keys <code>domain</code>, <code>sourceOf</code>, <code>targetOf</code>, <code>ip</code>, <code>port</code>, <code>service</code> and <code>httpService</code> each represent a target.</p>
 <p>You can use subkeys to query a different property of those targets instead of their main ones.</p>
 <p>For example <code>port.protocol: tcp</code> on a <code>Host</code> would filter for TCP ports instead of a specific port number.</p>
 <table>
@@ -1269,6 +1312,55 @@ You're not viewing the latest version.
 <td>time range</td>
 <td><code>port.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"</code></td>
 </tr>
+<tr>
+<td><strong>HTTP Service</strong></td>
+<td>ip[s]</td>
+<td>tag[s]</td>
+<td>string</td>
+<td><code>ip.tag: critical</code></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>createdAt</td>
+<td>time range</td>
+<td><code>ip.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"</code></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>os</td>
+<td>os type</td>
+<td><code>ip.os:linux</code>, <code>ip.os:windows</code></td>
+</tr>
+<tr>
+<td></td>
+<td>port[s]</td>
+<td>tag[s]</td>
+<td>string</td>
+<td><code>port.tag: critical</code></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>createdAt</td>
+<td>time range</td>
+<td><code>port.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"</code></td>
+</tr>
+<tr>
+<td></td>
+<td>domain[s]</td>
+<td>tag[s]</td>
+<td>string</td>
+<td><code>domain.tag: critical</code></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>createdAt</td>
+<td>time range</td>
+<td><code>domain.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"</code></td>
+</tr>
 </tbody>
 </table>
 <h2 id="type-values">Type values</h2>
@@ -1299,6 +1391,10 @@ You're not viewing the latest version.
 <tr>
 <td><strong>service transport</strong></td>
 <td style="text-align: left;"><code>raw</code>, <code>tls</code></td>
+</tr>
+<tr>
+<td><strong>boolean</strong></td>
+<td style="text-align: left;"><code>true</code> or <code>yes</code>, <code>false</code> or <code>no</code></td>
 </tr>
 <tr>
 <td><strong>string</strong></td>
