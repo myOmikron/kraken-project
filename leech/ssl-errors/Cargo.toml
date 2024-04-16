@@ -17,7 +17,7 @@ bin = ["dep:tokio"]
 [dependencies]
 thiserror = "~1"
 log = "~0.4"
-reqwest = { version = "=0.12.2", features = ["native-tls"] }
+reqwest = { version = "=0.12.3", features = ["native-tls"] }
 hyper-util = "=0.1.3" # This version MUST be kept in sync with reqwest!!!
 native-tls = "=0.2.11" # This version MUST be kept in sync with reqwest!!! (more precicly hyper-tls)
 openssl = "=0.10.64" # This version MUST be kept in sync with native-tls!!!
