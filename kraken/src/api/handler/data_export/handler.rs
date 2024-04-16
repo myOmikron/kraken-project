@@ -211,10 +211,13 @@ pub(crate) async fn export_workspace(
             .equals(path.uuid),
     )
     .stream()
-    .try_fold(HashMap::new(), |mut map, (uuid, name)| {
-        map.entry(uuid).or_insert(Vec::new()).push(name);
-        ready(Ok(map))
-    })
+    .try_fold(
+        HashMap::<Uuid, Vec<String>>::new(),
+        |mut map, (uuid, name)| {
+            map.entry(uuid).or_default().push(name);
+            ready(Ok(map))
+        },
+    )
     .await?;
     let mut affected = query!(&mut tx, FindingAffected)
         .condition(FindingAffected::F.workspace.equals(path.uuid))
@@ -255,11 +258,9 @@ pub(crate) async fn export_workspace(
             ready(Ok((*x.finding.key(), aggr_uuid, aggr_type)))
         })
         .try_fold(
-            HashMap::new(),
+            HashMap::<Uuid, HashMap<Uuid, AggregationType>>::new(),
             |mut map, (finding, aggr_uuid, aggr_type)| {
-                map.entry(finding)
-                    .or_insert(HashMap::new())
-                    .insert(aggr_uuid, aggr_type);
+                map.entry(finding).or_default().insert(aggr_uuid, aggr_type);
                 ready(Ok(map))
             },
         )
