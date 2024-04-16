@@ -117,13 +117,28 @@ export function FilterEditorUi(props: FilterEditorProps) {
 }
 
 /**
- * Props for the <FilterTagsSelector> component.
+ * Props for all the filter input component, which is used for each individual filter input.
  */
 export type FilterComponentProps = {
+    /**
+     * The workspace UUID to fetch data in
+     */
     workspace: string;
+    /**
+     * the AST key in ASTFields from which to load the filter AST from for UI and validation.
+     */
     ast: keyof typeof ASTFields;
+    /**
+     * The field to edit
+     */
     field: string; // keyof typeof ASTFields[ast]
+    /**
+     * The full filter string
+     */
     filter: string;
+    /**
+     * Called when the component wants the filter to update.
+     */
     onChange: (newValue: string) => void;
 };
 
@@ -137,6 +152,8 @@ export function FilterTagsSelector(props: FilterComponentProps) {
 
     const [allTags, setAllTags] = useState<SimpleTag[]>([]);
 
+    // eslint-disable-next-line jsdoc/require-param, jsdoc/require-returns
+    /** Resolves a tag label to a SimpleTag object. */
     function findTag(label: string): SimpleTag | undefined {
         return allTags.find((v) => v.name == label);
     }
@@ -239,6 +256,8 @@ function FilterDataSelector<T extends FullHost | FullPort | FullDomain | FullSer
 
     const [allDatas, setAllDatas] = useState<T[]>([]);
 
+    // eslint-disable-next-line jsdoc/require-param, jsdoc/require-returns
+    /** Resolves the data text as written by the user to a data object. */
     function findData(data: string): T | undefined {
         return allDatas.find((v) => props.mapper(v) == data);
     }
@@ -274,6 +293,9 @@ function FilterDataSelector<T extends FullHost | FullPort | FullDomain | FullSer
     );
 }
 
+/**
+ * Component to select a date or a date range.
+ */
 function FilterDateSelector(props: FilterComponentProps) {
     const ast = ASTFields[props.ast] as ASTField;
     const astField = ast[props.field];
@@ -297,12 +319,21 @@ function FilterDateSelector(props: FilterComponentProps) {
     const minDate = minOverride ?? minDateInput;
     const maxDate = maxOverride ?? maxDateInput;
 
-    // returns a string suitable for input type="datetime-local"
+    // eslint-disable-next-line jsdoc/require-param, jsdoc/require-returns
+    /** returns a string suitable for input type="datetime-local" */
     function dateToString(d: Date): string {
+        // eslint-disable-next-line jsdoc/require-param, jsdoc/require-returns
+        /** single digit number to two digit numbers (0-9 to 00-09) */
         const pad2 = (n: number) => (n < 10 ? "0" + n.toFixed(0) : n.toFixed(0));
         return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
     }
 
+    // eslint-disable-next-line jsdoc/require-param, jsdoc/require-returns
+    /**
+     * Called to set the actual values. Undefined means unbounded. Only called
+     * once validation succeeds so that the user doesn't have a poor editing
+     * experience while entering partial dates.
+     */
     function setDates(min: Date | undefined, max: Date | undefined) {
         props.onChange(
             replaceRaw(
@@ -356,6 +387,9 @@ function FilterDateSelector(props: FilterComponentProps) {
     );
 }
 
+/**
+ * Component to select a port number or range.
+ */
 function FilterRawPortSelector(props: FilterComponentProps) {
     const ast = ASTFields[props.ast] as ASTField;
     const astField = ast[props.field];
@@ -372,10 +406,14 @@ function FilterRawPortSelector(props: FilterComponentProps) {
 
     const value = override ?? inputValue;
 
+    // eslint-disable-next-line jsdoc/require-param, jsdoc/require-returns
+    /** attempts to parse the port or throws on error */
     function validatePort(v: string): void {
         if (parseUserPort(v) === false) throw new Error("invalid port: " + v);
     }
 
+    // eslint-disable-next-line jsdoc/require-param, jsdoc/require-returns
+    /** attempts to parse all port tokens or throws on error */
     function validatePorts(tokens: SpanlessToken[]): void {
         tokens.forEach((t) => t.type == "value" && validatePort(t.value));
     }
@@ -409,6 +447,9 @@ function FilterRawPortSelector(props: FilterComponentProps) {
     );
 }
 
+/**
+ * Component to select from the OsType enum using checkboxes.
+ */
 function FilterOsTypeSelector(props: FilterComponentProps) {
     return FilterCheckboxEnumSelector({
         ...props,
@@ -416,6 +457,9 @@ function FilterOsTypeSelector(props: FilterComponentProps) {
     });
 }
 
+/**
+ * Component to select from the PortProtocol enum using checkboxes.
+ */
 function FilterPortProtocolSelector(props: FilterComponentProps) {
     return FilterCheckboxEnumSelector({
         ...props,
@@ -423,6 +467,9 @@ function FilterPortProtocolSelector(props: FilterComponentProps) {
     });
 }
 
+/**
+ * Component to select "Raw" or "TLS" using checkboxes.
+ */
 function FilterServiceTransportSelector(props: FilterComponentProps) {
     return FilterCheckboxEnumSelector({
         ...props,
@@ -430,7 +477,17 @@ function FilterServiceTransportSelector(props: FilterComponentProps) {
     });
 }
 
-function FilterCheckboxEnumSelector(props: FilterComponentProps & { enum: string[] }) {
+/**
+ * Component to select from a list of all possible values using checkboxes.
+ */
+function FilterCheckboxEnumSelector(
+    props: FilterComponentProps & {
+        /**
+         * The list of possible values as entered by the user.
+         */
+        enum: string[];
+    },
+) {
     const ast = ASTFields[props.ast] as ASTField;
     const astField = ast[props.field];
     if (!astField) return undefined;

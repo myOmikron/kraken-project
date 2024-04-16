@@ -21,12 +21,33 @@ import { FilterEditorUi } from "./filter-editor-ui";
  * Props for the <FilterInput> component.
  */
 export type FilterInputProps = {
+    /**
+     * Shown in the input when no text is entered yet
+     */
     placeholder?: string;
+    /**
+     * The workspace UUID to search data in.
+     */
     workspace: string;
+    /**
+     * The filter.
+     */
     value: string;
+    /**
+     * Called when the user is typing, to update value.
+     */
     onChange: (newValue: string) => void;
+    /**
+     * The filter that is currently applied to the table.
+     */
     applied: string;
+    /**
+     * Called when the filter should be applied, usually on hitting return.
+     */
     onApply: (newApplied: string) => void;
+    /**
+     * The filter AST to use for the filter text.
+     */
     target: "global" | "domain" | "host" | "port" | "service" | "httpService";
 };
 
