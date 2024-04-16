@@ -88,6 +88,21 @@ pub fn parse_os_type(tokens: &mut Cursor) -> Result<OsType, ParseError> {
     }
 }
 
+/// Parse a boolean (yes/true or no/false)
+pub fn parse_boolean(tokens: &mut Cursor) -> Result<bool, ParseError> {
+    let string = tokens.next_value()?;
+    // don't forget to update docs/user/filter.md and frontend if you extend this!
+    if string.eq_ignore_ascii_case("yes") || string.eq_ignore_ascii_case("true") {
+        Ok(true)
+    } else if string.eq_ignore_ascii_case("no") || string.eq_ignore_ascii_case("false") {
+        Ok(false)
+    } else {
+        Err(ParseError::ParseValue(
+            format!("Expected yes/no/true/false, not: {string}").into(),
+        ))
+    }
+}
+
 /// Wraps a [`ValueParser<T>`] to produce a [`ValueParser<MaybeRange<T>>`]
 pub fn wrap_maybe_range<T>(parse_value: impl ValueParser<T>) -> impl ValueParser<MaybeRange<T>> {
     let parse_range = wrap_range(parse_value);

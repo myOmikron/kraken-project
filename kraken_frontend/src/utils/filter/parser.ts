@@ -190,6 +190,21 @@ export function parsePort(tokens: Cursor): Expr.Value<number> {
     else return number;
 }
 
+/** Parse a boolean (true/yes or false/no) */
+export function parseBoolean(tokens: Cursor): Expr.Value<boolean> {
+    const value = tokens.nextValue();
+    switch (value.toLowerCase()) {
+        case "true":
+        case "yes":
+            return true;
+        case "false":
+        case "no":
+            return false;
+        default:
+            throw new ParserError({ type: "parseValue", msg: `Unknown port protocol: ${value}` });
+    }
+}
+
 /** Parse a single {@link PortProtocol} */
 export function parsePortProtocol(tokens: Cursor): Expr.Value<PortProtocol> {
     const value = tokens.nextValue();

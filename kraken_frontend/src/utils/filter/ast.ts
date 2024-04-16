@@ -1,6 +1,7 @@
 import { OsType, PortProtocol } from "../../api/generated";
 import { Cursor } from "./cursor";
 import {
+    parseBoolean,
     parseDate,
     parseOsType,
     parsePort,
@@ -45,6 +46,10 @@ export type ASTField = {
     };
 };
 
+/**
+ * All the available different ASTs for filters. The values themselves ARE the
+ * types, which are used with `typeof` or by just accessing this object.
+ */
 export const ASTFields = {
     global: {
         tags: {
@@ -380,7 +385,89 @@ export const ASTFields = {
             columns: ["createdAt"],
             parse: wrapRange(parseDate),
         },
-        // TODO
+        ips: {
+            label: "IPs",
+            columns: ["ips", "ip"],
+            parse: parseString,
+        },
+        ipsCreatedAt: {
+            label: "IP creation date",
+            columns: ["ips.createdAt", "ip.createdAt"],
+            parse: wrapRange(parseDate),
+            advanced: true,
+        },
+        ipsTags: {
+            label: "IP tags",
+            columns: ["ips.tags", "ips.tag", "ip.tags", "ip.tag"],
+            parse: parseString,
+            advanced: true,
+        },
+        ipsOs: {
+            label: "Host OS",
+            columns: ["ips.os", "ip.os"],
+            parse: parseOsType,
+            advanced: true,
+        },
+        ports: {
+            label: "Port",
+            columns: ["ports", "port"],
+            parse: wrapMaybeRange(parsePort),
+        },
+        portsTags: {
+            label: "Port tags",
+            columns: ["ports.tags", "ports.tag", "port.tags", "port.tag"],
+            parse: parseString,
+            advanced: true,
+        },
+        portsCreatedAt: {
+            label: "Port creation date",
+            columns: ["ports.createdAt", "port.createdAt"],
+            parse: wrapRange(parseDate),
+            advanced: true,
+        },
+        portsProtocols: {
+            label: "Port protocols",
+            columns: ["ports.protocols", "ports.protocol", "port.protocols", "port.protocol"],
+            parse: parsePortProtocol,
+            advanced: true,
+        },
+        domains: {
+            label: "Domains",
+            columns: ["domains", "domain"],
+            parse: parseString,
+        },
+        domainsTags: {
+            label: "Domain tags",
+            columns: ["domains.tags", "domains.tag", "domain.tags", "domain.tag"],
+            parse: parseString,
+            advanced: true,
+        },
+        domainsCreatedAt: {
+            label: "Domain creation date",
+            columns: ["domains.createdAt", "domain.createdAt"],
+            parse: wrapRange(parseDate),
+            advanced: true,
+        },
+        httpServices: {
+            label: "HTTP Services",
+            columns: ["httpServices", "httpService"],
+            parse: parseString,
+        },
+        basePaths: {
+            label: "Base Path",
+            columns: ["basePaths", "basePath"],
+            parse: parseString,
+        },
+        tls: {
+            label: "TLS",
+            columns: ["tls"],
+            parse: parseBoolean,
+        },
+        sni: {
+            label: "SNI required",
+            columns: ["sni"],
+            parse: parseBoolean,
+        },
     },
 } satisfies { [ast: string]: ASTField };
 
@@ -469,12 +556,20 @@ type FieldTypeValue<key, T> = key extends "tags" | `${string}Tags`
           ? "ostype"
           : T extends number
             ? "number" | "port"
-            : T extends string
-              ? "string" | "domain" | "host" | "service" | "httpService" | "transport"
-              : T extends Date
-                ? "date"
-                : never;
+            : T extends boolean
+              ? "boolean"
+              : T extends string
+                ? "string" | "domain" | "host" | "service" | "httpService" | "transport"
+                : T extends Date
+                  ? "date"
+                  : never;
 
+/**
+ * The types for each AST column. Corresponds exactly to the columns defined in
+ * `ASTFields`. Specified as runtime values to allow easier UI generation as
+ * well as disambiguating common types like string which could mean many
+ * different things.
+ */
 export const ASTFieldTypes = {
     global: {
         tags: "tags",
@@ -546,7 +641,21 @@ export const ASTFieldTypes = {
     httpService: {
         tags: "tags",
         createdAt: "mayberange.date",
-        // TODO
+        ips: "host",
+        ipsCreatedAt: "mayberange.date",
+        ipsTags: "tags",
+        ipsOs: "ostype",
+        ports: "port",
+        portsTags: "tags",
+        portsProtocols: "protocol",
+        portsCreatedAt: "mayberange.date",
+        domains: "domain",
+        domainsTags: "tags",
+        domainsCreatedAt: "mayberange.date",
+        httpServices: "httpService",
+        basePaths: "string",
+        tls: "boolean",
+        sni: "boolean",
     },
 } satisfies { [K in keyof typeof ASTFields]: FieldTypes<ASTType<(typeof ASTFields)[K]>> };
 

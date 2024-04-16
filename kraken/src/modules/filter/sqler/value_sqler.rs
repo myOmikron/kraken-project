@@ -343,6 +343,11 @@ impl AsValue for ServiceTransport {
         }
     }
 }
+impl AsValue for bool {
+    fn as_value(&self) -> Value {
+        Value::Bool(*self)
+    }
+}
 impl AsValue for u16 {
     fn as_value(&self) -> Value {
         Value::I32(*self as i32)

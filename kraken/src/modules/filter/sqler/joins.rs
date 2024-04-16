@@ -5,7 +5,9 @@ use rorm::db::sql::value::Value;
 use rorm::internal::field::Field;
 use rorm::prelude::*;
 
+use crate::models::Domain;
 use crate::models::Host;
+use crate::models::HttpService;
 use crate::models::Port;
 use crate::models::Service;
 use crate::modules::raw_query::RawJoin;
@@ -58,6 +60,49 @@ pub fn from_service_join_host() -> impl for<'a> RawJoin<'a> {
         write!(
             sql,
             r#"JOIN "{host}" ON "{service}"."{service_host}" = "{host}"."{host_uuid}""#
+        )
+    }
+}
+
+pub fn from_http_service_join_port() -> impl for<'a> RawJoin<'a> {
+    |sql: &mut String, _: &mut Vec<Value>| {
+        let service = sql_name!(HttpService);
+        let service_port = sql_name!(HttpService::F.port);
+
+        let port = sql_name!(Port);
+        let port_uuid = sql_name!(Port::F.uuid);
+
+        write!(
+            sql,
+            r#"LEFT JOIN "{port}" ON "{service}"."{service_port}" = "{port}"."{port_uuid}""#
+        )
+    }
+}
+pub fn from_http_service_join_host() -> impl for<'a> RawJoin<'a> {
+    |sql: &mut String, _: &mut Vec<Value>| {
+        let service = sql_name!(HttpService);
+        let service_host = sql_name!(HttpService::F.host);
+
+        let host = sql_name!(Host);
+        let host_uuid = sql_name!(Host::F.uuid);
+
+        write!(
+            sql,
+            r#"JOIN "{host}" ON "{service}"."{service_host}" = "{host}"."{host_uuid}""#
+        )
+    }
+}
+pub fn from_http_service_join_domain() -> impl for<'a> RawJoin<'a> {
+    |sql: &mut String, _: &mut Vec<Value>| {
+        let http_service = sql_name!(HttpService);
+        let http_service_domain = sql_name!(HttpService::F.domain);
+
+        let domain = sql_name!(Domain);
+        let domain_uuid = sql_name!(Domain::F.uuid);
+
+        write!(
+            sql,
+            r#"JOIN "{domain}" ON "{http_service}"."{http_service_domain}" = "{domain}"."{domain_uuid}""#
         )
     }
 }
