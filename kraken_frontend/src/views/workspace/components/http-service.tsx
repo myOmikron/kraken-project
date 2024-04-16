@@ -9,13 +9,31 @@ import { handleApiError } from "../../../utils/helper";
 import { buildHttpServiceURL } from "../../../utils/http-services";
 import { HttpServiceRelationsList } from "./relations-list";
 
-export default function HttpServiceName({
-    httpService,
-    pretty,
-}: {
+/**
+ * Props for the <HttpServiceName> component.
+ */
+export type HttpServiceNameProps = {
+    /**
+     * The HTTP Service to show its name (and optionally URL if pretty is set)
+     * of. If this is the simple variant and pretty is true, will load the full
+     * variant from the API using this object's UUID.
+     */
     httpService: FullHttpService | SimpleHttpService;
+    /**
+     * Can be set to true to show a full URL along the service name instead of
+     * only the service name.
+     */
     pretty?: boolean;
-}) {
+};
+
+/**
+ * Component showing a HTTP Service name and optionally related data.
+ *
+ * On hover this .shows relations in a popup.
+ */
+export default function HttpServiceName(props: HttpServiceNameProps) {
+    const { httpService, pretty } = props;
+
     const [relations, setRelations] = useState<HttpServiceRelations | undefined>(undefined);
     const [fullHttpService, setFullHttpService] = useState<FullHttpService | undefined>(
         typeof httpService.host == "string" ? undefined : (httpService as FullHttpService),

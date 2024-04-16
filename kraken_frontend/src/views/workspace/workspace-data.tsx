@@ -53,10 +53,19 @@ import {
 import WorkspaceFindingsQuickAttach from "./workspace-findings-quick-attach";
 
 const DETAILS_TAB = { general: "General", results: "Results", relations: "Relations", findings: "Findings" };
+/**
+ * Selected rows by AggregationType, using a hashmap with UUID keys.
+ */
 type SelectedUuids = Record<AggregationType, Record<string, true>>;
 
+/**
+ * Props for the <WorkspaceData> component
+ */
 type WorkspaceDataProps = {};
 
+/**
+ * Page showing the data for the current workspace
+ */
 export default function WorkspaceData(props: WorkspaceDataProps) {
     const {
         workspace: { uuid: workspace },
@@ -65,7 +74,11 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
     const [dataTab, setDataTab] = useDataTabs();
 
     const [detailTab, setDetailTab] = React.useState<keyof typeof DETAILS_TAB>("general");
+
+    /** The selected (aka active) data row, to show details for */
+    // eslint-disable-next-line jsdoc/require-jsdoc
     const [selected, setSelected] = React.useState<{ type: AggregationType; uuid: string } | null>(null);
+
     const [createForm, setCreateForm] = React.useState<AggregationType | null>(null);
     const [selectedUuids, setSelectedUuids] = React.useState<SelectedUuids>({
         [AggregationType.Domain]: {},
@@ -138,6 +151,8 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
     React.useEffect(() => servicesTable.setOffset(0), [serviceFilter.applied]);
     React.useEffect(() => httpServicesTable.setOffset(0), [httpServiceFilter.applied]);
 
+    // eslint-disable-next-line jsdoc/require-param, jsdoc/require-returns
+    /** Context menu helper function that generates all the Finding action buttons */
     function findingActions(item: CreateFindingObject): ContextMenuEntry[] {
         return [
             {
@@ -183,6 +198,13 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
         ];
     }
 
+    /**
+     * Context menu helper function that generates a button "Copy tags into search"
+     *
+     * @param tags List of tags to copy into the filter
+     * @param filter filter object to call mutation functions on
+     * @returns Context menu items
+     */
     function copyTagsAction(tags: SimpleTag[], filter: UseFilterReturn): PlainMenuItem {
         return [
             <>
@@ -199,6 +221,18 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
         ];
     }
 
+    /**
+     * Generic context menu item helper that updates the filter on click,
+     * supports ctrl & alt for global & remove filter things as well as showing
+     * a nicely styled default UI text for what will be done.
+     *
+     * @param title Text to the left of the shown `column:value` UI text
+     * @param filter filter object to call mutation functions on
+     * @param column The tag column to edit
+     * @param value The column value to add (or remove with alt)
+     * @param overrideLabel Set this to replace the title/column/value auto-generated UI
+     * @returns Context menu items
+     */
     function filterActionImpl(
         title: ReactNode,
         filter: UseFilterReturn,
@@ -227,6 +261,14 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
         ];
     }
 
+    /**
+     * Filter action that says "Find similar" with a link icon
+     *
+     * @param filter Filter object to call mutation functions on
+     * @param column The tag column to edit
+     * @param value The column value to add (or remove with alt)
+     * @returns Context menu items
+     */
     const findSimilarAction = (filter: UseFilterReturn, column: string, value: string) =>
         filterActionImpl(
             <>
@@ -238,17 +280,42 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
             value,
         );
 
+    /**
+     * Filter action that says "Filter"
+     *
+     * @param filter Filter object to call mutation functions on
+     * @param column The tag column to edit
+     * @param value The column value to add (or remove with alt)
+     * @param options Extra rendering options
+     * @param options.icon An icon node to show in the UI
+     *
+     * @returns Context menu items
+     */
     const filterAction = (
         filter: UseFilterReturn,
         column: string,
         value: string,
-        {
-            icon,
-        }: {
+        options: {
+            /** An icon node to show in the UI */
             icon?: ReactNode;
         } = {},
-    ) => filterActionImpl(icon ? <>{icon} Filter</> : "Filter", filter, column, value);
+    ) => filterActionImpl(options.icon ? <>{options.icon} Filter</> : "Filter", filter, column, value);
 
+    /**
+     * Filter action setting a date range plus/minus a certain offset from the given date.
+     *
+     * Used by the `createdAtAction` helper.
+     *
+     * Shows "Date within {amountHuman}" in the UI.
+     *
+     * @param filter Filter object to call mutation functions on
+     * @param column The tag column to edit
+     * @param date The date (center) to filter
+     * @param deltaPlusMinusMs The offset to add and subtract from the date in milliseconds.
+     * @param amountHuman Human readable representation of the deltaPlusMinusMs
+     *
+     * @returns Context menu items
+     */
     const dateWithinAction = (
         filter: UseFilterReturn,
         column: string,
@@ -267,6 +334,11 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
             "Date within " + amountHuman,
         );
 
+    // eslint-disable-next-line jsdoc/require-param, jsdoc/require-returns
+    /**
+     * Returns the input context menu entry if it's a single one, otherwise
+     * groups all the entries in a parent entry with the given label.
+     */
     function singleOrSubmenu(label: string, items: ContextMenuEntry[]): ContextMenuEntry[] {
         return items.length > 1
             ? [
@@ -278,6 +350,11 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
             : items;
     }
 
+    // eslint-disable-next-line jsdoc/require-param, jsdoc/require-returns
+    /**
+     * Context menu entry group to filter relative to creation date on the given
+     * filter object.
+     */
     function createdAtAction(filter: UseFilterReturn, createdAt: Date): GroupedMenuItem {
         return {
             icon: <ClockActivityIcon />,
@@ -1023,6 +1100,9 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
     );
 }
 
+/**
+ * Pretty button to start an attack.
+ */
 export function AttackButton(props: Parameters<typeof ROUTES.WORKSPACE_TARGETED_ATTACKS.clickHandler>[0]) {
     return (
         <button className={"icon-button"} type={"button"} {...ROUTES.WORKSPACE_TARGETED_ATTACKS.clickHandler(props)}>
@@ -1031,13 +1111,28 @@ export function AttackButton(props: Parameters<typeof ROUTES.WORKSPACE_TARGETED_
     );
 }
 
+/**
+ * Props for the <MultiSelectMenu> component.
+ */
 type MultiSelectMenuProps = {
+    /** The selection to show */
     selectedUuids: SelectedUuids;
+    /** Called when the component wants to change the selectedUuids */
     setSelectedUuids: React.Dispatch<React.SetStateAction<SelectedUuids>>;
+    /**
+     * Called when tags are updated on the selection.
+     */
     onUpdate: () => void;
+    /**
+     * Called when selected data was deleted.
+     */
     onDelete: () => void;
 };
 
+/**
+ * Component showing an aggregation of all the selected data along with buttons
+ * to perform actions such as attacking or tagging all of them.
+ */
 export function MultiSelectMenu(props: MultiSelectMenuProps) {
     const { selectedUuids, setSelectedUuids, onUpdate, onDelete } = props;
     const {

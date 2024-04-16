@@ -1,17 +1,26 @@
 import React, { useCallback } from "react";
 import Popup from "reactjs-popup";
 import { Api } from "../../../api/api";
-import { FindingSeverity, ListFindings } from "../../../api/generated";
+import { AggregationType, FindingSeverity, ListFindings } from "../../../api/generated";
 import "../../../index.css";
 import { handleApiError } from "../../../utils/helper";
 import WorkspaceDataDetailsFindings from "../workspace-data/workspace-data-details-findings";
 
+/**
+ * Props for the <SeverityIcon> component
+ */
 type SeverityIconProps = {
+    /** The severity to choose the icon based on. */
     severity: FindingSeverity | null | undefined;
+    /** Optional CSS class name to use instead of "icon" */
     className?: string;
+    /** When true, adds a popup on hover that shows the severity as human readable string */
     tooltip?: boolean;
 };
 
+/**
+ * An icon showing 0-5 bars in various colors depending on the passed in severity.
+ */
 export default function SeverityIcon(props: SeverityIconProps) {
     const { className, severity, tooltip } = props;
     if (!severity) return null;
@@ -76,13 +85,24 @@ export default function SeverityIcon(props: SeverityIconProps) {
     );
 }
 
+/**
+ * Props for the <Severity> component.
+ */
 type SeverityProps = {
+    /** The severity object to display */
     severity: FindingSeverity | null | undefined;
-    dataType: "Domain" | "Host" | "Port" | "Service" | "HttpService";
+    /** The data type to fetch findings for on hover */
+    dataType: AggregationType;
+    /** The UUID of the object (of the dataType type) to fetch findings for on hover */
     uuid: string;
+    /** the workspace to use for fetching findings on hover */
     workspace: string;
 };
 
+/**
+ * Shows a severity icon that shows a popup on hover where the severity comes from,
+ * e.g. shows all the attached findings.
+ */
 export function Severity(props: SeverityProps) {
     const { severity, dataType, uuid, workspace } = props;
     const [findings, setFindings] = React.useState<ListFindings | null>(null);

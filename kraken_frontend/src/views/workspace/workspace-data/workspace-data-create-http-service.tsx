@@ -8,10 +8,21 @@ import { SelectPrimitive } from "../../../components/select-menu";
 import { handleApiError } from "../../../utils/helper";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
+/**
+ * Props for the <CreateHttpServiceForm> component.
+ */
 type CreateHttpServiceFormProps = {
+    /**
+     * Called when the HTTP Service was successfully created.
+     */
     onSubmit: () => void;
 };
 
+/**
+ * Form including all the inputs to manually create a HTTP service data entry.
+ *
+ * Allows submitting to create in the current workspace.
+ */
 export function CreateHttpServiceForm(props: CreateHttpServiceFormProps) {
     const { onSubmit } = props;
     const {

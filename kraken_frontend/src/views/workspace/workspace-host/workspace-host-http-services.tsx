@@ -6,10 +6,19 @@ import TagList from "../components/tag-list";
 import WorkspaceTable from "../components/workspace-table";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
+/**
+ * Props for the <WorkspaceHostHttpServices> component
+ */
 export type WorkspaceDataServicesProps = {
+    /**
+     * The host to show http services for
+     */
     host: FullHost | null;
 };
 
+/**
+ * Component showing HTTP services inside the per-host table.
+ */
 export function WorkspaceHostHttpServices(props: WorkspaceDataServicesProps) {
     const { host } = props;
     const {

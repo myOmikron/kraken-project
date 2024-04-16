@@ -17,6 +17,9 @@ import {
 } from "../../../utils/filter/parser";
 import { FilterEditorUi } from "./filter-editor-ui";
 
+/**
+ * Props for the <FilterInput> component.
+ */
 export type FilterInputProps = {
     placeholder?: string;
     workspace: string;
@@ -26,6 +29,10 @@ export type FilterInputProps = {
     onApply: (newApplied: string) => void;
     target: "global" | "domain" | "host" | "port" | "service" | "httpService";
 };
+
+/**
+ * An input field for a filter, has a button to show a GUI popup.
+ */
 export default function FilterInput(props: FilterInputProps) {
     const { placeholder, value, onChange, applied, onApply, target } = props;
 
@@ -57,6 +64,7 @@ export default function FilterInput(props: FilterInputProps) {
                         break;
                     default:
                         tokenize(value);
+                        // eslint-disable-next-line no-console
                         console.warn(`filter target not implemented: ${target}`);
                         return;
                 }
@@ -114,7 +122,15 @@ export default function FilterInput(props: FilterInputProps) {
 
 /** Return type of {@link useFilter `useFilter`} hook */
 export type UseFilterReturn = FilterInputProps & {
+    /**
+     * Adds a `value` to the given filter `column` using an `and` concatenation.
+     * If `negate` is true, removes the matching `value` instead.
+     */
     addColumn: (column: string, value: string, negate: boolean) => void;
+    /**
+     * Adds a range to the given filter `column` using an `and` concatenation.
+     * If `negate` is true, removes the matching range instead.
+     */
     addRange: (column: string, from: string, to: string, negate: boolean) => void;
 };
 
@@ -136,6 +152,7 @@ export function useFilter(workspace: string, target: FilterInputProps["target"])
         applied,
         onApply,
         target,
+        // eslint-disable-next-line jsdoc/require-jsdoc
         addColumn: (column, value, negate) => {
             onChange((v) => {
                 const newFilter = negate ? removeExprs(v, column, value) : addExprs(v, column, value, "and");
@@ -143,6 +160,7 @@ export function useFilter(workspace: string, target: FilterInputProps["target"])
                 return newFilter;
             });
         },
+        // eslint-disable-next-line jsdoc/require-jsdoc
         addRange: (column, from, to, negate) => {
             onChange((v) => {
                 const newFilter = negate

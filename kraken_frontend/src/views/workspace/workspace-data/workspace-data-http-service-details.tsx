@@ -16,12 +16,27 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 
+/**
+ * Props for the <WorkspaceDataHttpServiceDetails> component
+ */
 export type WorkspaceDataHttpServiceDetailsProps = {
+    /**
+     * HTTP service UUID
+     */
     httpService: string;
+    /**
+     * Called when data was edited in the HTTP service.
+     */
     updateHttpService?: (uuid: string, update: Partial<FullHttpService>) => void;
+    /**
+     * The tab to render
+     */
     tab: "general" | "results" | "relations" | "findings";
 };
 
+/**
+ * Component showing the details panel for HTTP services.
+ */
 export function WorkspaceDataHttpServiceDetails(props: WorkspaceDataHttpServiceDetailsProps) {
     const { httpService: uuid, updateHttpService: signalUpdate, tab: tab } = props;
     const {
@@ -38,7 +53,13 @@ export function WorkspaceDataHttpServiceDetails(props: WorkspaceDataHttpServiceD
         Api.workspaces.httpServices.sources(workspace, uuid).then(handleApiError(setAttacks));
     }, [workspace, uuid]);
 
-    /** Send an update to the server and parent component */
+    /**
+     * Send an update to the server and parent component
+     *
+     * @param uuid HTTP service UUID to update
+     * @param update The properties to update on the HTTP service.
+     * @param msg Message to show on success
+     */
     function update(uuid: string, update: Partial<FullHttpService>, msg?: string) {
         const { tags, comment } = update;
         Api.workspaces.httpServices

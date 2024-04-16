@@ -60,6 +60,10 @@ export enum AttackType {
     OsDetection = "os_detection",
 }
 
+/**
+ * Given an AttackType (used everywhere as key), maps to the API request type.
+ */
+/* eslint-disable jsdoc/require-jsdoc */
 type AttackRequestTypes = {
     [AttackType.Dehashed]: QueryDehashedRequest;
     [AttackType.CertificateTransparency]: QueryCertificateTransparencyRequest;
@@ -71,8 +75,12 @@ type AttackRequestTypes = {
     [AttackType.DnsTxtScan]: DnsTxtScanRequest;
     [AttackType.OsDetection]: OsDetectionRequest;
 };
+/* eslint-enable jsdoc/require-jsdoc */
 
 export interface IAttackInput {
+    /**
+     * Human readable name for this input field.
+     */
     label: string;
     /**
      * If true, the value is wrapped as a single-element array. When prefilled,
@@ -81,16 +89,38 @@ export interface IAttackInput {
      * be sent out, one for each value.
      */
     multi?: boolean;
+    /**
+     * If true, the value must be set before submitting is possible. Depending
+     * on the type this can mean different things, but usually should mean that
+     * empty values are not valid for required fields.
+     *
+     * `undefined` is always treated as missing in required fields and won't
+     * include the field in the API.
+     */
     required?: boolean;
     // any instead of T, defined below in AttackInput<T> when known
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     defaultValue: any;
+    /**
+     * Optional prefill types to automatically fill this field with data based
+     * on the selection.
+     */
     prefill?: PrefillType[];
     // The ref can be on anything - the GenericAttackForm checks for functions,
     // such as "focus", by name
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     type: React.FC<AttackInputProps<any> & React.RefAttributes<any>>;
+    /**
+     * A human readable group name. Any string is valid and all equal group
+     * names will be combined into one drop-down. The group named "Advanced" is
+     * special in that it will be collapsed by default. All other groups are
+     * expanded by default.
+     */
     group?: undefined | string;
+    /**
+     * Extra props that will be passed to the instantiated `type` input
+     * component as-is.
+     */
     renderProps?: React.HTMLProps<HTMLElement>;
     /**
      * Called for prefilled inputs, to adjust prefilled value (e.g. primitive
@@ -158,13 +188,22 @@ export interface IAttackDescr {
          * process and send them.
          */
         inputs: {
-            [index: string]: IAttackInput | { fixed: AnyApiValue };
+            [index: string]:
+                | IAttackInput
+                | {
+                      /**
+                       * always a fixed value that is sent to the API without being able to be edited by the user.
+                       */
+                      fixed: AnyApiValue;
+                  };
         };
     };
 }
 
-// This is all JSON values that can be sent via the API through the various
-// inputs. Used as common type for the combining runtime code.
+/**
+ * This is all JSON values that can be sent via the API through the various
+ * inputs. Used as common type for the combining runtime code.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyApiValue = any;
 
@@ -355,6 +394,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: ["1-65535"],
                     prefill: ["port[Tcp]"],
                     type: PortListInput,
+                    // eslint-disable-next-line jsdoc/require-jsdoc
                     preprocess: (v) => (typeof v == "number" ? [v] : v),
                 },
                 connectTimeout: {
@@ -429,6 +469,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: ["1-65535"],
                     prefill: ["port[Udp]"],
                     type: PortListInput,
+                    // eslint-disable-next-line jsdoc/require-jsdoc
                     preprocess: (v) => (typeof v == "number" ? [v] : v),
                 },
                 timeout: {
@@ -480,6 +521,7 @@ const ATTACKS: AllAttackDescr = {
                     defaultValue: undefined,
                     type: DehashedAttackInput,
                     prefill: ["raw"],
+                    // eslint-disable-next-line jsdoc/require-jsdoc
                     preprocess: (v: RawSelectionData | undefined) => {
                         if (!v) return undefined;
                         if (v.domain) return { domain: { simple: v.domain.domain } };
@@ -587,6 +629,11 @@ const TARGET_TYPE = ["domain", "host", "port", "service", "httpService"] as cons
  */
 export type TargetType = (typeof TARGET_TYPE)[number];
 
+/**
+ * Verifies the runtime string is an available TargetType, throwing on error.
+ * @param value the string that is expected to be one of TARGET_TYPE.
+ * @returns `value` itself if it is valid, otherwise throws an error
+ */
 export function TargetType(value: string): TargetType {
     // @ts-ignore: TargetType is by definition anything inside TARGET_TYPE which is just a list of "special strings"
     if (TARGET_TYPE.indexOf(value) >= 0) return value;
@@ -602,6 +649,10 @@ export type RawSelectionData = {
     httpService?: FullHttpService;
 };
 
+/**
+ * All available prefill types that the attack metadata can specify for auto-filling
+ * with selection attacks.
+ */
 export type PrefillType =
     | "raw" // receive full PrefilledAttackParams
     | "domain" // domain (from any aggregation kind relating to domains)
@@ -618,6 +669,9 @@ export type PrefillType =
     | "httpService.domain" // http service domain (if set)
     | "httpService.ipAddr"; // http service ip address
 
+/**
+ * Props for the <WorkspaceAttacks> component.
+ */
 type WorkspaceAttacksProps =
     | {
           targetType?: never;
@@ -636,6 +690,10 @@ type WorkspaceAttacksProps =
           httpServices: string[];
       };
 
+/**
+ * The full workspace attacks page, includes attack selector, description and
+ * attack form.
+ */
 export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
     const {
         workspace: { uuid: workspace },
@@ -660,6 +718,7 @@ export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
             return new Promise((resolve, reject) => {
                 const res: T[] = [];
 
+                /** `resolve(res)` once `res` has a value for each `list` input */
                 function checkDone() {
                     if (res.length == list.length) {
                         resolve(res);
@@ -933,8 +992,17 @@ function generateAttackPrefill(attack: AttackType, prefill: RawSelectionData[]):
     return Object.fromEntries(keys.map((k, i) => [k, values[i]]));
 }
 
+/**
+ * All available prefill types that can be generated by the getPrefill function.
+ */
 type AnyPrefill = RawSelectionData | string | number | undefined;
 
+/**
+ * Calls `getPrefill` on each available type and returns the first non-undefined result.
+ * @param raw The data row to generate the prefill object for.
+ * @param types The types to check in order.
+ * @returns prefill, if available, or undefined
+ */
 export function getFirstPrefill(raw: RawSelectionData, types: PrefillType[]): AnyPrefill {
     for (const p of types) {
         const v = getPrefill(raw, p);
@@ -964,6 +1032,16 @@ export function getPrefill(raw: RawSelectionData, type: "httpService.domain"): s
 export function getPrefill(raw: RawSelectionData, type: "httpService.ipAddr"): string | undefined;
 export function getPrefill(raw: RawSelectionData, type: PrefillType): never | undefined;
 
+/**
+ * Generates prefill data for attack form inputs, which will also be sent as-is
+ * for API requests.
+ *
+ * @param raw The data row to generate a prefill object for.
+ * @param type The wanted prefill type to attempt to generate prefill data for.
+ *
+ * @returns undefined if no prefill is available for the requested type or a
+ * value where its type is based on the `type` parameter. (see overloads)
+ */
 export function getPrefill(raw: RawSelectionData, type: PrefillType): unknown | undefined {
     switch (type) {
         case "raw":

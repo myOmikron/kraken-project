@@ -5,17 +5,42 @@ import RelationIndirectIcon from "../../../svg/relation-indirect";
 import RelationLeftIcon from "../../../svg/relation-left";
 import RelationRightIcon from "../../../svg/relation-right";
 
+/**
+ * The relation type, used for the icon (arrow direction) and tooltip.
+ */
 export type RelationConnectionType = "direct-out" | "direct-source" | "direct-in" | "direct-target" | "indirect";
-export type Relation = { connection: RelationConnectionType; type: ReactNode; to: ReactNode };
 
-export function RelationsList({
-    relations,
-    ...props
-}: {
-    relations: undefined | Relation[];
-} & React.HTMLProps<HTMLDivElement>) {
+/**
+ * A single relation, corresponds to exactly one row in the <RelationsList> component.
+ */
+export type Relation = {
+    /** The type to render the icon for and choose the tooltip based on */
+    connection: RelationConnectionType;
+    /** UI node what to render in the type column */
+    type: ReactNode;
+    /** UI node what to render in the to column */
+    to: ReactNode;
+};
+
+/**
+ * A component showing a list of relations in a <div>, which can be customized
+ * using regular div props as well.
+ *
+ * Usually you would use one of the more specific relation list types that are
+ * specifically for domains, hosts, ports, etc. instead.
+ */
+export function RelationsList(
+    props: {
+        /**
+         * List of relations to render
+         */
+        relations: undefined | Relation[];
+    } & React.HTMLProps<HTMLDivElement>,
+) {
+    const { relations, ...divProps } = props;
+
     return (
-        <div className="workspace-data-details-relations-container" {...props}>
+        <div className="workspace-data-details-relations-container" {...divProps}>
             <div className="workspace-data-details-relations-header">
                 <div className="workspace-data-details-relations-heading">Connection</div>
                 <div className="workspace-data-details-relations-heading">Type</div>
@@ -40,7 +65,16 @@ export function RelationsList({
     );
 }
 
-function RelationConnection({ type }: { type: RelationConnectionType }) {
+/**
+ * Renders an icon with a tooltip for the relation direction.
+ */
+function RelationConnection(props: {
+    /**
+     * The relation connection type
+     */
+    type: RelationConnectionType;
+}) {
+    const { type } = props;
     switch (type) {
         case "direct-in":
             return (
@@ -77,10 +111,18 @@ function RelationConnection({ type }: { type: RelationConnectionType }) {
     }
 }
 
-export function DomainRelationsList({
-    relations,
-    ...props
-}: { relations: DomainRelations | undefined | null } & React.HTMLProps<HTMLDivElement>) {
+/**
+ * Relation list for domains.
+ */
+export function DomainRelationsList(
+    props: {
+        /**
+         * domain relations
+         */
+        relations: DomainRelations | undefined | null;
+    } & React.HTMLProps<HTMLDivElement>,
+) {
+    const { relations, ...divProps } = props;
     return (
         <RelationsList
             relations={
@@ -114,15 +156,23 @@ export function DomainRelationsList({
                       ]
                     : undefined
             }
-            {...props}
+            {...divProps}
         />
     );
 }
 
-export function HostRelationsList({
-    relations,
-    ...props
-}: { relations: HostRelations | undefined | null } & React.HTMLProps<HTMLDivElement>) {
+/**
+ * Relation list for hosts.
+ */
+export function HostRelationsList(
+    props: {
+        /**
+         * host relations
+         */
+        relations: HostRelations | undefined | null;
+    } & React.HTMLProps<HTMLDivElement>,
+) {
+    const { relations, ...divProps } = props;
     return (
         <RelationsList
             relations={
@@ -156,15 +206,23 @@ export function HostRelationsList({
                       ]
                     : undefined
             }
-            {...props}
+            {...divProps}
         />
     );
 }
 
-export function PortRelationsList({
-    relations,
-    ...props
-}: { relations: PortRelations | undefined | null } & React.HTMLProps<HTMLDivElement>) {
+/**
+ * Relation list for ports
+ */
+export function PortRelationsList(
+    props: {
+        /**
+         * port relations
+         */
+        relations: PortRelations | undefined | null;
+    } & React.HTMLProps<HTMLDivElement>,
+) {
+    const { relations, ...divProps } = props;
     return (
         <RelationsList
             relations={
@@ -192,15 +250,23 @@ export function PortRelationsList({
                       ]
                     : undefined
             }
-            {...props}
+            {...divProps}
         />
     );
 }
 
-export function ServiceRelationsList({
-    relations,
-    ...props
-}: { relations: ServiceRelations | undefined | null } & React.HTMLProps<HTMLDivElement>) {
+/**
+ * Relation list for services
+ */
+export function ServiceRelationsList(
+    props: {
+        /**
+         * service relations
+         */
+        relations: ServiceRelations | undefined | null;
+    } & React.HTMLProps<HTMLDivElement>,
+) {
+    const { relations, ...divProps } = props;
     return (
         <RelationsList
             relations={
@@ -227,15 +293,23 @@ export function ServiceRelationsList({
                       ]
                     : undefined
             }
-            {...props}
+            {...divProps}
         />
     );
 }
 
-export function HttpServiceRelationsList({
-    relations,
-    ...props
-}: { relations: HttpServiceRelations | undefined | null } & React.HTMLProps<HTMLDivElement>) {
+/**
+ * Relation list for HTTP services
+ */
+export function HttpServiceRelationsList(
+    props: {
+        /**
+         * HTTP service relations
+         */
+        relations: HttpServiceRelations | undefined | null;
+    } & React.HTMLProps<HTMLDivElement>,
+) {
+    const { relations, ...divProps } = props;
     return (
         <RelationsList
             relations={
@@ -263,7 +337,7 @@ export function HttpServiceRelationsList({
                       ]
                     : undefined
             }
-            {...props}
+            {...divProps}
         />
     );
 }

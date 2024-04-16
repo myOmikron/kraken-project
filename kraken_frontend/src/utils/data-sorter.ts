@@ -18,6 +18,9 @@ import {
 import { FullHttpService } from "../api/generated/models/FullHttpService";
 import { SimpleHttpService } from "../api/generated/models/SimpleHttpService";
 
+/**
+ * The ordering of aggregation types, lower number means it comes first.
+ */
 export const aggregationTypeOrdering: { [K in AggregationType]: number } = {
     Domain: 0,
     Host: 1,
@@ -26,17 +29,30 @@ export const aggregationTypeOrdering: { [K in AggregationType]: number } = {
     HttpService: 4,
 };
 
+/**
+ * Sorting predicate for domains.
+ *
+ * Domains are sorted exclusively by domain name.
+ *
+ * @param a A domain
+ * @param b Another domain
+ * @returns negative number if should be sorted before, positive number if should be sorted after.
+ */
 export function compareDomain(a: FullDomain | SimpleDomain, b: FullDomain | SimpleDomain): number {
     return a.domain.localeCompare(b.domain);
 }
 
 const IPv4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
 
-// eslint-disable-next-line jsdoc/require-param, jsdoc/require-returns
 /**
- * Compares two hosts by comparing their ip addresses
+ * Sorting predicate for hosts.
  *
- * IPv4 addresses are treated as always "smaller" than IPv6 addresses.
+ * Hosts are sorted exclusively by ip address. IPv4 is sorted before IPv6. IPv6
+ * sorting currently uses literal comparison instead of sorting by bytes.
+ *
+ * @param a A host
+ * @param b Another host
+ * @returns negative number if should be sorted before, positive number if should be sorted after.
  */
 export function compareHost(a: FullHost | SimpleHost, b: FullHost | SimpleHost): number {
     const av4 = IPv4.exec(a.ipAddr);
@@ -55,11 +71,14 @@ export function compareHost(a: FullHost | SimpleHost, b: FullHost | SimpleHost):
     }
 }
 
-// eslint-disable-next-line jsdoc/require-param, jsdoc/require-returns
 /**
- * Compares two services by comparing their names
+ * Sorting predicate for services.
  *
- * If they have the same name and are `FullService`s, their hosts and then their port numbers are compared.
+ * Services are sorted by name first, then host, then port.
+ *
+ * @param a A service
+ * @param b Another service
+ * @returns negative number if should be sorted before, positive number if should be sorted after.
  */
 export function compareService(a: FullService | SimpleService, b: FullService | SimpleService): number {
     if (a.name != b.name) return a.name.localeCompare(b.name);
@@ -73,11 +92,14 @@ export function compareService(a: FullService | SimpleService, b: FullService | 
     else return 0;
 }
 
-// eslint-disable-next-line jsdoc/require-param, jsdoc/require-returns
 /**
- * Compares two ports by comparing their numbers
+ * Sorting predicate for ports.
  *
- * If they have the same number and are `FullPort`s, their hosts are compared.
+ * Ports are sorted by port number, then host.
+ *
+ * @param a A port
+ * @param b Another port
+ * @returns negative number if should be sorted before, positive number if should be sorted after.
  */
 export function comparePort(a: FullPort | SimplePort, b: FullPort | SimplePort): number {
     if (a.port != b.port) return a.port - b.port;
@@ -85,6 +107,15 @@ export function comparePort(a: FullPort | SimplePort, b: FullPort | SimplePort):
     else return 0;
 }
 
+/**
+ * Sorting predicate for http services.
+ *
+ * HTTP services are sorted by name, then domain, then host, then port.
+ *
+ * @param a A http service
+ * @param b Another http service
+ * @returns negative number if should be sorted before, positive number if should be sorted after.
+ */
 export function compareHttpService(
     a: FullHttpService | SimpleHttpService,
     b: FullHttpService | SimpleHttpService,

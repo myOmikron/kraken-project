@@ -12,14 +12,27 @@ import { parseUserPort } from "../../../utils/ports";
 import EditableDataList, { EditableDataListProps } from "./editable-data-list";
 import EditableTags from "./editable-tags";
 
+/**
+ * React props for the <FilterEditorUi> component
+ */
 export type FilterEditorProps = {
+    /** Workspace UUID, passed into the individual filter input components */
     workspace: string;
+    /** The AST as defined in ast.ts for which to generate the UI for */
     ast: keyof typeof ASTFields;
+    /** The full filter string, updated by onChange */
     filter: string;
+    /** Callback when `filter` should be changed */
     onChange: (newValue: string) => void;
+    /** Callback when `filter` should be changed and submitted as filter to the server */
     onApply: (newApplied: string) => void;
 };
 
+/**
+ * A large form auto-generating input fields for each possible filter column for
+ * filter strings and allowing editing through GUI components as well as through
+ * the filter language syntax.
+ */
 export function FilterEditorUi(props: FilterEditorProps) {
     const filterComponents: { [K in UsedASTTypes]?: FC<FilterComponentProps> } = {
         tags: FilterTagsSelector,
@@ -103,6 +116,9 @@ export function FilterEditorUi(props: FilterEditorProps) {
     );
 }
 
+/**
+ * Props for the <FilterTagsSelector> component.
+ */
 export type FilterComponentProps = {
     workspace: string;
     ast: keyof typeof ASTFields;
@@ -111,6 +127,9 @@ export type FilterComponentProps = {
     onChange: (newValue: string) => void;
 };
 
+/**
+ * Component to select a list of tags to filter.
+ */
 export function FilterTagsSelector(props: FilterComponentProps) {
     const ast = ASTFields[props.ast] as ASTField;
     const astField = ast[props.field];
@@ -149,40 +168,70 @@ export function FilterTagsSelector(props: FilterComponentProps) {
     );
 }
 
+/**
+ * Component to select one of all available domains.
+ */
 export function FilterDomainSelector(props: FilterComponentProps) {
     return FilterDataSelector<FullDomain>({
         ...props,
         type: "domains",
+        // eslint-disable-next-line jsdoc/require-jsdoc
         mapper: (v) => v.domain,
     });
 }
 
+/**
+ * Component to select one of all available hosts.
+ */
 export function FilterHostSelector(props: FilterComponentProps) {
     return FilterDataSelector<FullHost>({
         ...props,
         type: "hosts",
+        // eslint-disable-next-line jsdoc/require-jsdoc
         mapper: (v) => v.ipAddr,
     });
 }
 
+/**
+ * Component to select one of all available services.
+ */
 export function FilterServiceSelector(props: FilterComponentProps) {
     return FilterDataSelector<FullService>({
         ...props,
         type: "services",
+        // eslint-disable-next-line jsdoc/require-jsdoc
         mapper: (v) => v.name,
     });
 }
 
+/**
+ * Component to select one of all available HTTP services.
+ */
 export function FilterHttpServiceSelector(props: FilterComponentProps) {
     return FilterDataSelector<FullHttpService>({
         ...props,
         type: "httpServices",
+        // eslint-disable-next-line jsdoc/require-jsdoc
         mapper: (v) => v.name,
     });
 }
 
+/**
+ * Component to select a data objects, automatically fetching the available list
+ * of data from the API.
+ */
 function FilterDataSelector<T extends FullHost | FullPort | FullDomain | FullService | FullHttpService>(
-    props: FilterComponentProps & { type: EditableDataListProps<T>["type"]; mapper: (item: T) => string },
+    props: FilterComponentProps & {
+        /**
+         * the runtime type, matching `T`, for runtime type-dependent code.
+         */
+        type: EditableDataListProps<T>["type"];
+        /**
+         * Maps from a rich data object to what should be written & parsed
+         * inside the filter code string.
+         */
+        mapper: (item: T) => string;
+    },
 ) {
     const ast = ASTFields[props.ast] as ASTField;
     const astField = ast[props.field];

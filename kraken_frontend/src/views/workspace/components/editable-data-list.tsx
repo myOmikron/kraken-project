@@ -6,6 +6,9 @@ import { FullDomain, FullHost, FullPort, FullService } from "../../../api/genera
 import { FullHttpService } from "../../../api/generated/models/FullHttpService";
 import { selectStyles } from "../../../components/select-menu";
 
+/**
+ * Props for `<EditableDataList<T>>`
+ */
 export type EditableDataListProps<T extends FullHost | FullPort | FullDomain | FullService | FullHttpService> = {
     /**
      * The workspace containing the item whose items to list
@@ -43,6 +46,8 @@ export default function EditableDataList<T extends FullHost | FullPort | FullDom
 ) {
     const { workspace, items, onChange } = props;
 
+    // eslint-disable-next-line jsdoc/require-param, jsdoc/require-returns
+    /** returns the <select> label for any given item */
     const label = (item: T) => {
         switch (props.type) {
             case "domains":

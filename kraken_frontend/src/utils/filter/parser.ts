@@ -16,9 +16,15 @@ import ParserError from "./error";
 import { tokenize } from "./lexer";
 
 /**
- * Parse a string into a generic AST defined in {@link ASTFields}
+ * Parse a string into a generic AST defined in {@link ASTFields}. This is the
+ * implementation function for `parse{Global,Domain,Host,etc}AST`
+ *
+ * @param input the whole filter string.
+ * @param ast the AST from ast.ts including the columns with their types to parse.
  *
  * @throws ParserError
+ *
+ * @returns the parsed AST for generic filter string.
  */
 export function parseAstFields<Fields extends ASTField>(input: string, ast: Fields): ASTResult<Fields> {
     // create object like `{ tags: [], createdAt: [], ... }`
@@ -38,7 +44,11 @@ export function parseAstFields<Fields extends ASTField>(input: string, ast: Fiel
 /**
  * Parse a string into a {@link GlobalAST}
  *
+ * @param input the whole filter string.
+ *
  * @throws ParserError
+ *
+ * @returns the parsed AST for global filters.
  */
 export function parseGlobalAST(input: string): GlobalAST {
     return parseAstFields(input, ASTFields.global);
@@ -47,7 +57,11 @@ export function parseGlobalAST(input: string): GlobalAST {
 /**
  * Parse a string into a {@link DomainAST}
  *
+ * @param input the whole filter string.
+ *
  * @throws ParserError
+ *
+ * @returns the parsed AST for domain filters.
  */
 export function parseDomainAST(input: string): DomainAST {
     return parseAstFields(input, ASTFields.domain);
@@ -56,7 +70,11 @@ export function parseDomainAST(input: string): DomainAST {
 /**
  * Parse a string into a {@link HostAST}
  *
+ * @param input the whole filter string.
+ *
  * @throws ParserError
+ *
+ * @returns the parsed AST for host filters.
  */
 export function parseHostAST(input: string): HostAST {
     return parseAstFields(input, ASTFields.host);
@@ -65,7 +83,11 @@ export function parseHostAST(input: string): HostAST {
 /**
  * Parse a string into a {@link PortAST}
  *
+ * @param input the whole filter string.
+ *
  * @throws ParserError
+ *
+ * @returns the parsed AST for port filters.
  */
 export function parsePortAST(input: string): PortAST {
     return parseAstFields(input, ASTFields.port);
@@ -74,7 +96,11 @@ export function parsePortAST(input: string): PortAST {
 /**
  * Parse a string into a {@link ServiceAST}
  *
+ * @param input the whole filter string.
+ *
  * @throws ParserError
+ *
+ * @returns the parsed AST for service filters.
  */
 export function parseServiceAST(input: string): ServiceAST {
     return parseAstFields(input, ASTFields.service);
@@ -83,7 +109,11 @@ export function parseServiceAST(input: string): ServiceAST {
 /**
  * Parse a string into a {@link HttpServiceAST}
  *
+ * @param input the whole filter string.
+ *
  * @throws ParserError
+ *
+ * @returns the parsed AST for http service filters.
  */
 export function parseHttpServiceAST(input: string): HttpServiceAST {
     return parseAstFields(input, ASTFields.httpService);

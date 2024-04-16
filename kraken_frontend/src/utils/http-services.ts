@@ -1,6 +1,14 @@
 import { FullHttpService } from "../api/generated";
 
-export function buildHttpServiceURL(httpService: FullHttpService, includeIp = true) {
+/**
+ * Returns a human-readable URL representation for the given HTTP service.
+ *
+ * @param httpService the HTTP service to format to a string.
+ * @param includeIp if true, include the IP address in the string
+ *
+ * @returns a URL representation for the given HTTP service.
+ */
+export function buildHttpServiceURL(httpService: FullHttpService, includeIp = true): string {
     const {
         host: { ipAddr },
         port: { port },

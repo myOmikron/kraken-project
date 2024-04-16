@@ -11,16 +11,36 @@ import {
     wrapRange,
 } from "./parser";
 
+/**
+ * Generic type for each field inside the `ASTFields` variable. Unless you need
+ * to work on the generic data without much type-safety, this isn't really used.
+ *
+ * Instead, use `typeof ASTFields["yourKey"]` as a type, since it contains more
+ * specific types (e.g. for `parse`).
+ */
 export type ASTField = {
     [key: string]: {
+        /**
+         * Human-readable text, shown in filter editor UI
+         */
         label: string;
+        /**
+         * All possible filter language AST names for this column that mean the same.
+         */
         columns: string[];
         // we use any since this type is used for `satisfies` and not to specify
         // the exact type of ASTFields. The real type of ASTFields will contain
         // the proper types, which can be extracted with `FieldTypes` as well.
         // See GlobalAST, DomainAST, HostAST, etc.
+        /**
+         * Specifies the AST parsing function to be used for this field.
+         */
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         parse: (cursor: Cursor) => any;
+        /**
+         * If set and true, hides this setting inside a collapsible menu in the
+         * filter editor UI.
+         */
         advanced?: boolean;
     };
 };
@@ -364,30 +384,79 @@ export const ASTFields = {
     },
 } satisfies { [ast: string]: ASTField };
 
+/**
+ * For a each AST field, this maps the column name to the type the parse
+ * function returns.
+ */
 export type ASTType<Fields extends ASTField> = {
     [key in keyof Fields]: ReturnType<Fields[key]["parse"]>;
 };
+
+/**
+ * This is the parsing result type, which is just an Array of each parse type
+ * for each column, since columns may be specified multiple times or just use
+ * or expressions in the top level.
+ */
 export type ASTResult<Fields extends ASTField> = {
     [key in keyof Fields]: Array<Expr.Or<ReturnType<Fields[key]["parse"]>>>;
 };
 
+/**
+ * Result type for global AST
+ */
 export type GlobalAST = ASTResult<(typeof ASTFields)["global"]>;
+
+/**
+ * Result type for domain AST
+ */
 export type DomainAST = ASTResult<(typeof ASTFields)["domain"]>;
+
+/**
+ * Result type for host AST
+ */
 export type HostAST = ASTResult<(typeof ASTFields)["host"]>;
+
+/**
+ * Result type for port AST
+ */
 export type PortAST = ASTResult<(typeof ASTFields)["port"]>;
+
+/**
+ * Result type for service AST
+ */
 export type ServiceAST = ASTResult<(typeof ASTFields)["service"]>;
+
+/**
+ * Result type for http service AST
+ */
 export type HttpServiceAST = ASTResult<(typeof ASTFields)["httpService"]>;
 
 // these types are defined to automatically check for full coverage of all keys:
+/**
+ * This is the type of `ASTFieldTypes` for each different AST type. The type
+ * restricts the possible runtime types (e.g. a string can be a generic string
+ * input, but also a UUID for domain/host/etc. or an enum value)
+ *
+ * Allows to auto-complete and auto-verify the `ASTFieldTypes` value.
+ */
 export type FieldTypes<T extends ASTType<ASTField>> = {
     [key in keyof T]: FieldTypeValue<key, T[key]>;
 };
+
+/** FieldTypes for global AST. Hover over this in the IDE to see possible types */
 export type GlobalFieldTypes = FieldTypes<GlobalAST>;
+/** FieldTypes for domain AST. Hover over this in the IDE to see possible types */
 export type DomainFieldTypes = FieldTypes<DomainAST>;
+/** FieldTypes for host AST. Hover over this in the IDE to see possible types */
 export type HostFieldTypes = FieldTypes<HostAST>;
+/** FieldTypes for port AST. Hover over this in the IDE to see possible types */
 export type PortFieldTypes = FieldTypes<PortAST>;
+/** FieldTypes for service AST. Hover over this in the IDE to see possible types */
 export type ServiceFieldTypes = FieldTypes<ServiceAST>;
+/** FieldTypes for http service AST. Hover over this in the IDE to see possible types */
 export type HttpServiceFieldTypes = FieldTypes<HttpServiceAST>;
+
+/** Lists the possible runtime types for the generic JS type */
 type FieldTypeValue<key, T> = key extends "tags" | `${string}Tags`
     ? "tags"
     : T extends Expr.Range<infer U>
