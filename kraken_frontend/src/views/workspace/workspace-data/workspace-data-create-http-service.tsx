@@ -1,8 +1,10 @@
 import React from "react";
 import { toast } from "react-toastify";
 import { Api } from "../../../api/api";
+import { ManualHttpServiceCertainty, PortProtocol } from "../../../api/generated";
 import Checkbox from "../../../components/checkbox";
 import Input from "../../../components/input";
+import { SelectPrimitive } from "../../../components/select-menu";
 import { handleApiError } from "../../../utils/helper";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
@@ -18,8 +20,10 @@ export function CreateHttpServiceForm(props: CreateHttpServiceFormProps) {
     const [name, setName] = React.useState("");
     const [ip, setIp] = React.useState("");
     const [domain, setDomain] = React.useState("");
+    const [version, setVersion] = React.useState("");
     const [basePath, setBasePath] = React.useState("/");
-    // const [certy, setCerty] = React.useState<ManualHttpServiceCertainty>("SupposedTo");
+    const [certy, setCerty] = React.useState<ManualHttpServiceCertainty>("SupposedTo");
+    const [protocol, setProtocol] = React.useState<PortProtocol>("Tcp");
     const [tls, setTls] = React.useState(true);
     const [port, setPort] = React.useState("443");
     const [sniRequired, setSniRequired] = React.useState(false);
@@ -42,7 +46,9 @@ export function CreateHttpServiceForm(props: CreateHttpServiceFormProps) {
                         basePath,
                         tls,
                         sniRequire: sniRequired,
-                        // certainty: certy,
+                        certainty: certy,
+                        portProtocol: protocol,
+                        version: version.length > 0 ? version : undefined,
                     })
                     .then(
                         handleApiError(() => {
@@ -56,6 +62,10 @@ export function CreateHttpServiceForm(props: CreateHttpServiceFormProps) {
             <label>
                 Name:
                 <Input value={name} onChange={setName} required />
+            </label>
+            <label>
+                Version:
+                <Input value={version} onChange={setVersion} />
             </label>
             <label>
                 IP Address:
@@ -77,22 +87,29 @@ export function CreateHttpServiceForm(props: CreateHttpServiceFormProps) {
                     }}
                 />
             </label>
-            <label>
-                Port:
-                <Input value={port} type="number" onChange={setPort} required min={1} max={65535} />
-            </label>
+            <div className="label">
+                <label htmlFor="portNumber">Port:</label>
+                <div className="flex">
+                    <Input id="portNumber" value={port} type="number" onChange={setPort} required min={1} max={65535} />
+                    <SelectPrimitive
+                        options={Object.values(PortProtocol)}
+                        value={protocol}
+                        onChange={(value) => setProtocol(value || protocol)}
+                    />
+                </div>
+            </div>
             <label>
                 Base Path:
                 <Input value={basePath} onChange={setBasePath} />
             </label>
-            {/* <label>
+            <label>
                 Certainty:
                 <SelectPrimitive
                     options={Object.values(ManualHttpServiceCertainty)}
                     value={certy}
                     onChange={(value) => setCerty(value || certy)}
                 />
-            </label> */}
+            </label>
             <label>
                 SNI Required:
                 <Checkbox disabled={!tls} value={sniRequired} onChange={setSniRequired} />

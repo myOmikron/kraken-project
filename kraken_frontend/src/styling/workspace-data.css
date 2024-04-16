@@ -116,7 +116,8 @@
     grid-column: 1 / span 2;
     margin-bottom: 0.75em;
 }
-.workspace-data-create-form > label {
+.workspace-data-create-form > label,
+.workspace-data-create-form > .label {
     display: contents;
 }
 .workspace-data-create-form > button {
@@ -128,6 +129,14 @@
     display: flex;
     flex-direction: row;
     justify-content: space-evenly;
+}
+
+.workspace-data-create-form > .label > .flex {
+    display: flex;
+}
+
+.workspace-data-create-form > .label > .flex > * {
+    flex-grow: 1;
 }
 
 .workspace-data-multi-select-table {
