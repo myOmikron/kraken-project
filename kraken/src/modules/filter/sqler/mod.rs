@@ -15,6 +15,9 @@ use crate::models::Host;
 use crate::models::HttpService;
 use crate::models::Port;
 use crate::models::Service;
+use crate::modules::filter::sqler::joins::from_http_service_join_domain;
+use crate::modules::filter::sqler::joins::from_http_service_join_host;
+use crate::modules::filter::sqler::joins::from_http_service_join_port;
 use crate::modules::filter::sqler::joins::from_port_join_host;
 use crate::modules::filter::sqler::joins::from_service_join_host;
 use crate::modules::filter::sqler::joins::from_service_join_port;
@@ -378,7 +381,7 @@ impl ServiceAST {
             sql.append_join(from_service_join_port());
         }
         if self.ports_tags.is_some() {
-            sql.append_join(JoinTags::port().alias("port_tags")); // TODO: does this work since port might be null?
+            sql.append_join(JoinTags::port().alias("port_tags"));
         }
         if self.ips_created_at.is_some() || self.ips_tags.is_some() || self.ips_os.is_some() {
             sql.append_join(from_service_join_host());
@@ -443,13 +446,94 @@ impl HttpServiceAST {
         if self.tags.is_some() || global.tags.is_some() {
             sql.append_join(JoinTags::http_service());
         }
+        if self.ports.is_some()
+            || self.ports_created_at.is_some()
+            || self.ports_tags.is_some()
+            || self.ports_protocols.is_some()
+        {
+            sql.append_join(from_http_service_join_port());
+        }
+        if self.ports_tags.is_some() {
+            sql.append_join(JoinTags::port().alias("port_tags"));
+        }
+        if self.ips_created_at.is_some() || self.ips_tags.is_some() || self.ips_os.is_some() {
+            sql.append_join(from_http_service_join_host());
+        }
+        if self.ips_tags.is_some() {
+            sql.append_join(JoinTags::host().alias("host_tags"));
+        }
+        if self.domains.is_some()
+            || self.domains_created_at.is_some()
+            || self.domains_tags.is_some()
+        {
+            sql.append_join(from_http_service_join_domain());
+        }
+        if self.domains_tags.is_some() {
+            sql.append_join(JoinTags::domain().alias("domain_tags"));
+        }
 
-        let HttpServiceAST { tags, created_at } = self;
+        let HttpServiceAST {
+            tags,
+            created_at,
+            ips,
+            ips_created_at,
+            ips_tags,
+            ips_os,
+            ports,
+            ports_tags,
+            ports_created_at,
+            ports_protocols,
+            domains,
+            domains_tags,
+            domains_created_at,
+            http_services,
+            base_paths,
+            tls,
+            sni,
+        } = self;
+
         add_ast_field(sql, tags, Column::tags().contains());
         add_ast_field(
             sql,
             created_at,
             Column::rorm(HttpService::F.created_at).range(),
+        );
+
+        add_ast_field(sql, ips, Column::rorm(HttpService::F.host.ip_addr).subnet());
+        add_ast_field(sql, http_services, Column::rorm(HttpService::F.name).eq());
+        add_ast_field(sql, base_paths, Column::rorm(HttpService::F.base_path).eq());
+        add_ast_field(sql, tls, Column::rorm(HttpService::F.tls).eq());
+        add_ast_field(sql, sni, Column::rorm(HttpService::F.sni_required).eq());
+        add_ast_field(
+            sql,
+            ports,
+            Column::rorm(Port::F.port).nullable_maybe_range(),
+        );
+        add_ast_field(
+            sql,
+            ports_created_at,
+            Column::rorm(Port::F.created_at).nullable_range(),
+        );
+        add_ast_field(sql, ports_protocols, Column::rorm(Port::F.protocol).eq());
+        add_ast_field(sql, ports_tags, Column::new("port_tags", "tags").contains());
+        add_ast_field(
+            sql,
+            ips_created_at,
+            Column::rorm(Host::F.created_at).range(),
+        );
+        add_ast_field(sql, ips_os, Column::rorm(Host::F.os_type).eq());
+        add_ast_field(sql, ips_tags, Column::new("host_tags", "tags").contains());
+
+        add_ast_field(
+            sql,
+            domains_created_at,
+            Column::rorm(Domain::F.created_at).range(),
+        );
+        add_ast_field(sql, domains, Column::rorm(Domain::F.domain).eq());
+        add_ast_field(
+            sql,
+            domains_tags,
+            Column::new("domain_tags", "tags").contains(),
         );
 
         let GlobalAST { tags, created_at } = global;

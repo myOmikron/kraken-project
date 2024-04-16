@@ -213,6 +213,51 @@ pub struct HttpServiceAST {
 
     /// Filter by creation time
     pub created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter by ip address
+    pub ips: Option<Or<IpNetwork>>,
+
+    /// Filter http services by their hosts' creation time
+    pub ips_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter http services by their hosts' tags
+    pub ips_tags: Option<Or<String>>,
+
+    /// Filter http services by their hosts' OS
+    pub ips_os: Option<Or<OsType>>,
+
+    /// Filter http services by ports
+    pub ports: Option<Or<MaybeRange<u16>>>,
+
+    /// Filter http services by their ports' tags
+    pub ports_tags: Option<Or<String>>,
+
+    /// Filter http services by their ports' creation time
+    pub ports_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter hosts by their ports' protocols
+    pub ports_protocols: Option<Or<PortProtocol>>,
+
+    /// Filter http services by their domains' tags
+    pub domains: Option<Or<String>>,
+
+    /// Filter http services by their domains
+    pub domains_tags: Option<Or<String>>,
+
+    /// Filter http services by their domains
+    pub domains_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter by HTTP service name
+    pub http_services: Option<Or<String>>,
+
+    /// Filter by HTTP service base path
+    pub base_paths: Option<Or<String>>,
+
+    /// Filter http services by TLS or non-TLS
+    pub tls: Option<Or<bool>>,
+
+    /// Filter http services by required SNI or non-required SNI
+    pub sni: Option<Or<bool>>,
 }
 
 /// Service transport protocol. See `protocols` field in [crate::models::Service].
