@@ -69,37 +69,45 @@ There are 5 different targets a filter might be applied to:
 - `Host`
 - `Port`
 - `Service`
+- `HTTP Service`
 
 ### Keys
 
 Each target has its own set of allowed keys:
 
-| Target        | Key          | Type                  | Example                                                    |
-|---------------|--------------|-----------------------|------------------------------------------------------------|
-| *all targets* | tag[s]       | string                | `tag: critical`                                            | 
-|               | createdAt    | time range            | `createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"` | 
-| **Domain**    | domain[s]    | string                | `domain: docs.kraken-project.org`                          | 
-|               | ip[s]        | ip address or network | `ip: 127.0.0.1`, `ip: 127.0.0.1/24`                        |
-|               | sourceOf     | string                | `sourceOf: docs.kraken-project.org`                        | 
-|               | targetOf     | string                | `targetOf: docs.kraken-project.org`                        | 
-| **Host**      | ip[s]        | ip address or network | `ip: 127.0.0.1`, `ip: 127.0.0.1/24`                        |
-|               | os           | os type               | `os: linux`, `os: windows`                                 |
-|               | port[s]      | port number or range  | `port: 80`, ` port: 1-1000`                                |
-|               | service[s]   | string                | `service: http`                                            |
-|               | domain[s]    | string                | `domain: docs.kraken-project.org`                          |
-| **Port**      | port[s]      | port number or range  | `port: 80`, `port: 1-1000`                                 |
-|               | ip[s]        | ip address or network | `ip: 127.0.0.1`, `ip: 127.0.0.1/24`                        |
-|               | protocol[s]  | port protocol         | `protocol: tcp`                                            |
-|               | service[s]   | string                | `service: http`                                            |
-| **Service**   | service[s]   | string                | `service: http`                                            |
-|               | ip[s]        | ip address or network | `ip: 127.0.0.1`, `ip: 127.0.0.1/24`                        |
-|               | port[s]      | port number or range  | `port: 80`, `port: 1-1000`                                 |
-|               | protocol[s]  | port protocol         | `protocol: tcp`                                            |
-|               | transport[s] | service transport     | `transport: tls`, `transport: raw`                         |
+| Target             | Key            | Type                  | Example                                                    |
+|--------------------|----------------|-----------------------|------------------------------------------------------------|
+| *all targets*      | tag[s]         | string                | `tag: critical`                                            | 
+|                    | createdAt      | time range            | `createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"` | 
+| **Domain**         | domain[s]      | string                | `domain: docs.kraken-project.org`                          | 
+|                    | ip[s]          | ip address or network | `ip: 127.0.0.1`, `ip: 127.0.0.1/24`                        |
+|                    | sourceOf       | string                | `sourceOf: docs.kraken-project.org`                        | 
+|                    | targetOf       | string                | `targetOf: docs.kraken-project.org`                        | 
+| **Host**           | ip[s]          | ip address or network | `ip: 127.0.0.1`, `ip: 127.0.0.1/24`                        |
+|                    | os             | os type               | `os: linux`, `os: windows`                                 |
+|                    | port[s]        | port number or range  | `port: 80`, ` port: 1-1000`                                |
+|                    | service[s]     | string                | `service: http`                                            |
+|                    | domain[s]      | string                | `domain: docs.kraken-project.org`                          |
+| **Port**           | port[s]        | port number or range  | `port: 80`, `port: 1-1000`                                 |
+|                    | ip[s]          | ip address or network | `ip: 127.0.0.1`, `ip: 127.0.0.1/24`                        |
+|                    | protocol[s]    | port protocol         | `protocol: tcp`                                            |
+|                    | service[s]     | string                | `service: http`                                            |
+| **Service**        | service[s]     | string                | `service: http`                                            |
+|                    | ip[s]          | ip address or network | `ip: 127.0.0.1`, `ip: 127.0.0.1/24`                        |
+|                    | port[s]        | port number or range  | `port: 80`, `port: 1-1000`                                 |
+|                    | protocol[s]    | port protocol         | `protocol: tcp`                                            |
+|                    | transport[s]   | service transport     | `transport: tls`, `transport: raw`                         |
+| **HTTP Service**   | httpService[s] | string                | `httpService: wordpress`                                   |
+|                    | ip[s]          | ip address or network | `ip: 127.0.0.1`, `ip: 127.0.0.1/24`                        |
+|                    | port[s]        | port number or range  | `port: 80`, `port: 1-1000`                                 |
+|                    | domain[s]      | string                | `domain: docs.kraken-project.org`                          |
+|                    | basePath[s]    | string                | `basePath: /wp-admin/`                                     |
+|                    | tls            | boolean               | `tls: yes`                                                 |
+|                    | sni            | boolean               | `sni: yes`                                                 |
 
 ### Subkeys
 
-The keys `domain`, `sourceOf`, `targetOf`, `ip`, `port` and `service` each represent a target.
+The keys `domain`, `sourceOf`, `targetOf`, `ip`, `port`, `service` and `httpService` each represent a target.
 
 You can use subkeys to query a different property of those targets instead of their main ones.
 
@@ -122,19 +130,26 @@ For example `port.protocol: tcp` on a `Host` would filter for TCP ports instead 
 |             |            | tag[s]       | port protocol        | `service.tag: critical`                                             |
 |             |            | createdAt    | time range           | `service.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`  |
 |             |            | transport[s] | service transport    | `service.transport: raw`, `service.transport: tls`                  |
-|             | domain[s]  | tag[s]       | string               | `domain.tag: critical`                                              | 
-|             |            | createdAt    | time range           | `domain.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`   | 
-| **Port**    | ip[s]      | tag[s]       | string               | `ip.tag: critical`                                                  | 
-|             |            | createdAt    | time range           | `ip.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`       | 
-|             |            | os           | os type              | `ip.os:linux`, `ip.os:windows`                                      | 
-|             | service[s] | tag[s]       | string               | `service.tag: critical`                                             | 
+|             | domain[s]  | tag[s]       | string               | `domain.tag: critical`                                              |
+|             |            | createdAt    | time range           | `domain.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`   |
+| **Port**    | ip[s]      | tag[s]       | string               | `ip.tag: critical`                                                  |
+|             |            | createdAt    | time range           | `ip.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`       |
+|             |            | os           | os type              | `ip.os:linux`, `ip.os:windows`                                      |
+|             | service[s] | tag[s]       | string               | `service.tag: critical`                                             |
 |             |            | createdAt    | time range           | `service.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`  |
 |             |            | transport[s] | service transport    | `service.transport: raw`, `service.transport: tls`                  |
-| **Service** | ip[s]      | tag[s]       | string               | `ip.tag: critical`                                                  | 
-|             |            | createdAt    | time range           | `ip.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`       | 
-|             |            | os           | os type              | `ip.os:linux`, `ip.os:windows`                                      | 
-|             | port[s]    | tag[s]       | string               | `port.tag: critical`                                                | 
-|             |            | createdAt    | time range           | `port.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`     | 
+| **Service** | ip[s]      | tag[s]       | string               | `ip.tag: critical`                                                  |
+|             |            | createdAt    | time range           | `ip.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`       |
+|             |            | os           | os type              | `ip.os:linux`, `ip.os:windows`                                      |
+|             | port[s]    | tag[s]       | string               | `port.tag: critical`                                                |
+|             |            | createdAt    | time range           | `port.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`     |
+| **HTTP Service** | ip[s] | tag[s]       | string               | `ip.tag: critical`                                                  |
+|             |            | createdAt    | time range           | `ip.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`       |
+|             |            | os           | os type              | `ip.os:linux`, `ip.os:windows`                                      |
+|             | port[s]    | tag[s]       | string               | `port.tag: critical`                                                |
+|             |            | createdAt    | time range           | `port.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`     |
+|             | domain[s]  | tag[s]       | string               | `domain.tag: critical`                                              | 
+|             |            | createdAt    | time range           | `domain.createdAt: "2012-12-12T12:00:00Z"-"2012-12-13T12:00:00Z"`   | 
 
 ## Type values
 
@@ -145,6 +160,7 @@ For example `port.protocol: tcp` on a `Host` would filter for TCP ports instead 
 | **port number**           | decimal port number (1-65535) - Usually valid as a range like `1000-2000`                                   |
 | **port protocol**         | `tcp`, `udp`, `sctp`, `unknown`                                                                             |
 | **service transport**     | `raw`, `tls`                                                                                                |
+| **boolean**               | `true` or `yes`, `false` or `no`                                                                            |
 | **string**                | any valid string like described above, quoted if it contains whitespace, `,`, `&`, `!`, `:`, `"` or `-`     |
 | **time**                  | RFC3339 / ISO 8601 datetime: `"yyyy-mm-ddThh:mm:ssZ"` - Usually valid as a range                            |
 |                           | The `T` may be replaced with a space. The timezone must be UTC (`Z`) or a fixed offset (`+0200` / `-01:30`) |
