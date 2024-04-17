@@ -35,6 +35,7 @@ import InformationIcon from "../../../svg/information";
 import LinkIcon from "../../../svg/link";
 import SettingsIcon from "../../../svg/settings";
 import TagIcon from "../../../svg/tag";
+import CONSOLE from "../../../utils/console";
 import { handleApiError } from "../../../utils/helper";
 import { Result } from "../../../utils/result";
 import CollapsibleSection from "../components/collapsible-section";
@@ -218,7 +219,7 @@ export const DynamicTreeGraph = forwardRef<DynamicTreeGraphRef, DynamicTreeGraph
                             copied = {};
                             return mutate(r);
                         });
-                        if (!found) console.warn("couldn't find ", search, " in roots for update!");
+                        if (!found) CONSOLE.warn("couldn't find ", search, " in roots for update!");
                         return res;
                     });
                 },

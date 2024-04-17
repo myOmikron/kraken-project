@@ -4,18 +4,12 @@ import React from "react";
 import { EditorTarget } from "../api/generated";
 import WS from "../api/websocket";
 import USER_CONTEXT from "../context/user";
+import CONSOLE from "./console";
 import { ListenerHandle } from "./event-emitter";
 import { ObjectFns } from "./helper";
 import { MONACO, MONACO_PROMISE } from "./monaco";
 import { useTriggerUpdate } from "./trigger-hook";
 import ITextModel = editor.ITextModel;
-
-/**
- * Shitty switch to en- and disable logging
- *
- * Set to `console` to enable or `null` to disable
- */
-const CONSOLE: Console | null = null;
 
 /** {@link useModel `useModel`}' arguments */
 export type UseModelArgs = {
@@ -266,85 +260,85 @@ class ModelController {
         if (this.firstRender) {
             this.firstRender = false;
 
-            CONSOLE?.group("onFirstRender");
+            CONSOLE.group("onFirstRender");
 
             // Try to load the model on initial render.
             if (MONACO !== null) {
-                CONSOLE?.debug("Monaco available already");
+                CONSOLE.debug("Monaco available already");
                 this.setupModel(MONACO);
             } else {
-                CONSOLE?.debug("Monaco not available yet");
+                CONSOLE.debug("Monaco not available yet");
             }
 
-            CONSOLE?.groupEnd();
+            CONSOLE.groupEnd();
         }
     }
 
     /** Called once **after** mounting */
     onMount() {
-        CONSOLE?.group("onMount");
+        CONSOLE.group("onMount");
 
         // If we couldn't load the model on initial render,
         // enqueue it.
         if (this.model === null) {
-            CONSOLE?.debug("Waiting for monaco to be available");
+            CONSOLE.debug("Waiting for monaco to be available");
             MONACO_PROMISE.then((monaco) => {
                 this.setupModel(monaco);
                 this.trigger();
             });
         }
 
-        CONSOLE?.groupEnd();
+        CONSOLE.groupEnd();
     }
 
     /** Called once **after** unmounting */
     onUnmount() {
-        CONSOLE?.group("onUnmount");
+        CONSOLE.group("onUnmount");
 
         if (this.websocketListener !== null) {
-            CONSOLE?.debug("Removing WS listener");
+            CONSOLE.debug("Removing WS listener");
             WS.removeEventListener(this.websocketListener);
             this.websocketListener = null;
         } else {
-            CONSOLE?.debug("WS listener was already removed");
+            CONSOLE.debug("WS listener was already removed");
         }
         if (this.monacoListener !== null) {
-            CONSOLE?.debug("Removing monaco listener");
+            CONSOLE.debug("Removing monaco listener");
             this.monacoListener.dispose();
             this.monacoListener = null;
         } else {
-            CONSOLE?.debug("Monaco listener was already removed");
+            CONSOLE.debug("Monaco listener was already removed");
         }
         if (this.model !== null) {
-            CONSOLE?.debug("Disposing monaco model");
+            CONSOLE.debug("Disposing monaco model");
             this.model.dispose();
             this.model = null;
         } else {
-            CONSOLE?.debug("Monaco model was already disposed");
+            CONSOLE.debug("Monaco model was already disposed");
         }
 
-        CONSOLE?.groupEnd();
+        CONSOLE.groupEnd();
     }
 
     // eslint-disable-next-line jsdoc/require-param
     /** Called once as soon as monaco is available */
     setupModel(monaco: Monaco) {
-        CONSOLE?.group("setupModel");
+        CONSOLE.group("setupModel");
 
-        CONSOLE?.debug({ value: this.value, language: this.language });
+        CONSOLE.debug({ value: this.value, language: this.language });
 
         const model = monaco.editor.createModel(this.value, this.language);
         this.model = model;
         this.monacoListener = model.onDidChangeContent((event) => {
-            CONSOLE?.group("model.onDidChangeContent");
+            CONSOLE.group("model.onDidChangeContent");
 
-            CONSOLE?.debug({ source: this.updateSource });
+            CONSOLE.debug({ source: this.updateSource });
 
             this.value = model.getValue();
             this.trigger();
 
             if (this.updateSource === "monaco" && this.syncTarget !== undefined) {
-                CONSOLE?.debug("Sending changes over WS:", { target: this.syncTarget });
+                CONSOLE.debug("Sending changes over WS:", { target: this.syncTarget });
 
                 // Send the changes to the websocket
                 for (const change of event.changes) {
@@ -366,10 +360,10 @@ class ModelController {
                 }
             }
 
-            CONSOLE?.groupEnd();
+            CONSOLE.groupEnd();
         });
 
-        CONSOLE?.groupEnd();
+        CONSOLE.groupEnd();
     }
 
     /** Called once in `constructor` */
@@ -399,8 +393,8 @@ class ModelController {
     // eslint-disable-next-line jsdoc/require-param
     /** The `setValue` function returned by the `useModel` hook */
     setValue(newValue: string, syncTarget: EditorTarget | undefined) {
-        CONSOLE?.group("setValue");
-        CONSOLE?.debug({ hasModel: this.model !== null, oldValue: this.value, newValue });
+        CONSOLE.group("setValue");
+        CONSOLE.debug({ hasModel: this.model !== null, oldValue: this.value, newValue });
 
         this.value = newValue;
         this.syncTarget = syncTarget;
@@ -410,6 +404,6 @@ class ModelController {
             this.updateSource = "monaco";
         }
 
-        CONSOLE?.groupEnd();
+        CONSOLE.groupEnd();
     }
 }

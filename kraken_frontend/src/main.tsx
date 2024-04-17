@@ -10,6 +10,7 @@ import "./styling/toastify.css";
 import { UserProvider } from "./context/user";
 import "./index.css";
 import { ROUTER } from "./routes";
+import { LoggingSwitch } from "./utils/console";
 import Background from "./views/background";
 import GlobalPopup from "./views/gobal-popup";
 
@@ -58,6 +59,7 @@ class Router extends React.Component<RouterProps, RouterState> {
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <>
+        <LoggingSwitch />
         <Background />
         <ToastContainer
             autoClose={3500}

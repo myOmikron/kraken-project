@@ -27,6 +27,7 @@ import GraphIcon from "../../../svg/graph";
 import InformationIcon from "../../../svg/information";
 import RelationLeftRightIcon from "../../../svg/relation-left-right";
 import ScreenshotIcon from "../../../svg/screenshot";
+import CONSOLE from "../../../utils/console";
 import {
     aggregationTypeOrdering,
     compareDomain,
@@ -279,7 +280,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                     return request;
                                 }),
                             ).catch((e) => {
-                                console.error(e);
+                                CONSOLE.error(e);
                                 return null;
                             });
 

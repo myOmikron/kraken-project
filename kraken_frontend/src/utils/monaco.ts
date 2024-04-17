@@ -1,5 +1,7 @@
 import { loader, Monaco } from "@monaco-editor/react";
 import React from "react";
+import { toast } from "react-toastify";
+import CONSOLE from "./console";
 
 /** Global promise resolving to monaco */
 export const MONACO_PROMISE = loader.init().then(configureMonaco);
@@ -48,7 +50,10 @@ export function useMonaco(): Monaco | null {
     const [monaco, setMonaco] = React.useState(MONACO);
     React.useEffect(() => {
         if (monaco === null)
-            MONACO_PROMISE.then(setMonaco).catch((error) => console.error("Monaco initialization: ", error));
+            MONACO_PROMISE.then(setMonaco).catch((error) => {
+                CONSOLE.error("Monaco initialization: error:", error);
+                toast.error("Failed to load monaco");
+            });
     });
     return monaco;
 }

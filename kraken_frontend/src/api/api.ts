@@ -1,3 +1,4 @@
+import CONSOLE from "../utils/console";
 import { Err, Ok, Result } from "../utils/result";
 import { login, logout, test } from "./auth";
 import { ApiError, StatusCode, parseError } from "./error";
@@ -496,13 +497,13 @@ export async function handleError<T>(promise: Promise<T>): Promise<Result<T, Api
         if (e instanceof ResponseError) {
             return Err(await parseError(e.response));
         } else if (e instanceof RequiredError) {
-            console.error(e);
+            CONSOLE.error(e);
             return Err({
                 status_code: StatusCode.JsonDecodeError,
                 message: "The server's response didn't match the spec",
             });
         } else {
-            console.error("Unknown error occurred:", e);
+            CONSOLE.error("Unknown error occurred:", e);
             return Err({
                 status_code: StatusCode.ArbitraryJSError,
                 message: "Unknown error occurred",

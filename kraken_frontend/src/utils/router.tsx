@@ -1,4 +1,5 @@
 import React from "react";
+import CONSOLE from "./console";
 
 /** Configuration for defining {@link Route routes} */
 export interface RouteConfig<UrlParams extends {}, HiddenParams extends {}> {
@@ -230,7 +231,7 @@ export class Router {
     finish() {
         for (const route of this.routes) {
             if (route.errors.length > 0) {
-                console.error(`Errors in route "${route.config.url}":`, ...route.errors);
+                CONSOLE.error(`Errors in route "${route.config.url}":`, ...route.errors);
             }
         }
     }
@@ -245,7 +246,7 @@ export class Router {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setHiddenParams<HiddenParams extends {}>(route: Route<any, HiddenParams>, hiddenParams: HiddenParams | undefined) {
         if (this !== route.router) {
-            console.error("Routes are misconfigured");
+            CONSOLE.error("Routes are misconfigured");
             return;
         }
         this.hiddenParam = hiddenParams && { id: route.id, params: hiddenParams };

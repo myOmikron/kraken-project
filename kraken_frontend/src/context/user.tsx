@@ -5,6 +5,7 @@ import { ApiError, StatusCode } from "../api/error";
 import { FullUser, UserPermission } from "../api/generated/models";
 import WS from "../api/websocket";
 import Loading from "../components/loading";
+import CONSOLE from "../utils/console";
 import Login from "../views/login";
 
 /** The global {@link UserProvider} instance */
@@ -84,8 +85,8 @@ export class UserProvider extends React.Component<UserProviderProps, UserProvide
         // Register as global singleton
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         if (USER_PROVIDER === null) USER_PROVIDER = this;
-        else if (USER_PROVIDER === this) console.error("UserProvider did mount twice");
-        else console.error("Two instances of UserProvider are used");
+        else if (USER_PROVIDER === this) CONSOLE.error("UserProvider did mount twice");
+        else CONSOLE.error("Two instances of UserProvider are used");
 
         // Report websocket state changes using toasts
         const errorToast = [
@@ -117,8 +118,8 @@ export class UserProvider extends React.Component<UserProviderProps, UserProvide
     componentWillUnmount() {
         // Deregister as global singleton
         if (USER_PROVIDER === this) USER_PROVIDER = null;
-        else if (USER_PROVIDER === null) console.error("UserProvider instance did unmount twice");
-        else console.error("Two instances of UserProvider are used");
+        else if (USER_PROVIDER === null) CONSOLE.error("UserProvider instance did unmount twice");
+        else CONSOLE.error("Two instances of UserProvider are used");
     }
 
     render() {
@@ -157,7 +158,7 @@ export function inspectError(error: ApiError) {
     switch (error.status_code) {
         case StatusCode.Unauthenticated:
             if (USER_PROVIDER !== null) USER_PROVIDER.setState({ user: "unauthenticated" });
-            else console.warn("inspectError has been called without a UserProvider");
+            else CONSOLE.warn("inspectError has been called without a UserProvider");
             break;
         default:
             break;

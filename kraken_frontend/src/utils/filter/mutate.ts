@@ -1,3 +1,4 @@
+import CONSOLE from "../console";
 import { Span, SpanlessToken, Token, TokenType, tokenize, tokensToString, valueToString } from "./lexer";
 
 /**
@@ -66,7 +67,7 @@ export function addExprRange(filter: string, column: string, from: string, to: s
 
 export function removeExprs(filter: string, column: string, value: string): string {
     const span = findColumnValueSpan(filter, column);
-    console.log(filter, span);
+    CONSOLE.log(filter, span);
     if (!span) return filter;
 
     let newValue = "";
@@ -197,7 +198,7 @@ function removeValue(existing: string, value: string): string {
 
 function removeRange(existing: string, range: [string, string]): string {
     const tokens = tokenize(existing) as SpanlessToken[];
-    console.log("removeRange", tokens, range);
+    CONSOLE.log("removeRange", tokens, range);
     let modified = false;
     for (let i = tokens.length - 3; i >= 0; i--) {
         const token = tokens[i];

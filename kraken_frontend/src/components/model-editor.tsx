@@ -1,6 +1,8 @@
 import { loader, Monaco } from "@monaco-editor/react";
 import { editor } from "monaco-editor";
 import React from "react";
+import { toast } from "react-toastify";
+import CONSOLE from "../utils/console";
 import Loading from "./loading";
 
 export type ModelEditorProps = {
@@ -21,7 +23,12 @@ export default function ModelEditor(props: ModelEditorProps) {
 
         cancelable
             .then((monaco) => (monacoRef.current = monaco) && setIsMonacoMounting(false))
-            .catch((error) => error?.type !== "cancelation" && console.error("Monaco initialization: error:", error));
+            .catch((error) => {
+                if (error?.type !== "cancelation") {
+                    CONSOLE.error("Monaco initialization: error:", error);
+                    toast.error("Monaco initialization");
+                }
+            });
 
         return () => (editorRef.current ? editorRef.current.dispose() : cancelable.cancel());
     }, []);

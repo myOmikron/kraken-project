@@ -23,6 +23,7 @@ import { ROUTES } from "../../routes";
 import "../../styling/workspace-attacks.css";
 import AttacksIcon from "../../svg/attacks";
 import CloseIcon from "../../svg/close";
+import CONSOLE from "../../utils/console";
 import { ObjectFns, handleApiError } from "../../utils/helper";
 import { buildHttpServiceURL } from "../../utils/http-services";
 import { Result } from "../../utils/result";
@@ -737,7 +738,7 @@ export default function WorkspaceAttacks(props: WorkspaceAttacksProps) {
                             }),
                         )
                         .catch((v) => {
-                            console.error(v);
+                            CONSOLE.error(v);
                             reject("failed looking up item " + item);
                         });
                 });
