@@ -183,27 +183,34 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
             }),
             WS.addEventListener("message.UpdatedFinding", ({ workspace: w, finding: f, update }) => {
                 if (w !== workspace || f !== finding) return;
-                const { severity, categories, definition, screenshot, logFile } = update;
+                const { severity, categories: newCategoriesUuids, definition, screenshot, logFile } = update;
                 if (severity) {
                     setSeverity(severity);
                 }
-                if (categories) {
-                    setCategories(
-                        categories.map((uuid) => {
-                            return (
-                                allCategories.find((c) => uuid === c.uuid) || {
-                                    uuid: uuid,
-                                    name: uuid,
-                                    color: {
-                                        r: 0,
-                                        g: 0,
-                                        b: 0,
-                                        a: 0,
-                                    },
-                                }
-                            );
-                        }),
-                    );
+                if (Array.isArray(newCategoriesUuids)) {
+                    let missing = false;
+                    const newCategories = [];
+                    for (const uuid of newCategoriesUuids) {
+                        const newCategory = allCategories.find((c) => uuid === c.uuid);
+                        if (newCategory !== undefined) {
+                            newCategories.push(newCategory);
+                        } else {
+                            missing = true;
+                            break;
+                        }
+                    }
+                    if (!missing) {
+                        setCategories(newCategories);
+                    } else {
+                        Api.findingCategories.all().then(
+                            handleApiError(({ categories }) => {
+                                setCategories(
+                                    newCategoriesUuids.map((uuid) => categories.find((c) => uuid === c.uuid)!),
+                                );
+                                setAllCategories(categories);
+                            }),
+                        );
+                    }
                 }
                 if (definition) {
                     Api.knowledgeBase.findingDefinitions.get(definition).then(handleApiError(setFindingDef));
