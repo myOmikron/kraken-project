@@ -468,7 +468,7 @@ const ATTACKS: AllAttackDescr = {
                     label: "Ports",
                     multi: false,
                     required: true,
-                    defaultValue: ["1-65535"],
+                    defaultValue: ["1-6000"],
                     prefill: ["port[Udp]"],
                     type: PortListInput,
                     // eslint-disable-next-line jsdoc/require-jsdoc
