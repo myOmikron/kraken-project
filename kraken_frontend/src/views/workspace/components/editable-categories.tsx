@@ -1,4 +1,5 @@
 import React from "react";
+import Select from "react-select";
 import Creatable from "react-select/creatable";
 import Popup from "reactjs-popup";
 import { Api } from "../../../api/api";
@@ -46,27 +47,42 @@ export default function EditableCategories(props: EditableCategoriesProps) {
 
     return (
         <div className="category-container">
-            <Creatable<SimpleFindingCategory, true>
-                placeholder="Categories"
-                styles={selectStyles("default")}
-                isMulti={true}
-                onCreateOption={allowCreate ? setNewCategory : undefined}
-                value={categories}
-                onChange={(cats) => onChange([...cats])}
-                options={allCategories}
-                formatOptionLabel={(c) =>
-                    "value" in c ? (
-                        <>
-                            {allowCreate ? "Create " : "Unknown category "}
-                            <FindingCategory name={String(c.value)} />
-                        </>
-                    ) : (
-                        <FindingCategory {...c} />
-                    )
-                }
-                getOptionLabel={({ name }) => name}
-                getOptionValue={({ uuid }) => uuid}
-            />
+            {allowCreate ? (
+                <Creatable<SimpleFindingCategory, true>
+                    placeholder="Categories"
+                    styles={selectStyles("default")}
+                    isMulti={true}
+                    onCreateOption={setNewCategory}
+                    value={categories}
+                    onChange={(cats) => onChange([...cats])}
+                    options={allCategories}
+                    formatOptionLabel={(c) =>
+                        "value" in c ? (
+                            <>
+                                {"Create "}
+                                <FindingCategory name={String(c.value)} />
+                            </>
+                        ) : (
+                            <FindingCategory {...c} />
+                        )
+                    }
+                    getOptionLabel={({ name }) => name}
+                    getOptionValue={({ uuid }) => uuid}
+                />
+            ) : (
+                <Select<SimpleFindingCategory, true>
+                    placeholder="Categories"
+                    styles={selectStyles("default")}
+                    isMulti={true}
+                    value={categories}
+                    onChange={(cats) => onChange([...cats])}
+                    options={allCategories}
+                    formatOptionLabel={(c) => <FindingCategory {...c} />}
+                    getOptionLabel={({ name }) => name}
+                    getOptionValue={({ uuid }) => uuid}
+                />
+            )}
+
             <Popup nested modal open={newCategory !== null && allowCreate} onClose={() => setNewCategory(null)}>
                 <CreateCategory
                     initialName={newCategory || ""}
