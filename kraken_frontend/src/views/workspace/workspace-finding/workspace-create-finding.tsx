@@ -250,88 +250,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                     <h1 className="heading">Create new finding</h1>
                 </div>
                 <div className="create-finding-container">
-                    <form
-                        className="create-finding-form"
-                        onSubmit={async (e) => {
-                            e.preventDefault();
-                            if (findingDef === undefined) {
-                                return toast.error("Please select finding definition");
-                            }
-
-                            const affectedUploaded = await Promise.all(
-                                affected.map(async (a) => {
-                                    const { _localLogFile: logFile, _localScreenshot: screenshot, ...request } = a;
-                                    if (screenshot !== undefined) {
-                                        const r = await Api.workspaces.files.uploadImage(
-                                            workspace,
-                                            screenshot.name,
-                                            screenshot,
-                                        );
-                                        request.screenshot = r.unwrap().uuid;
-                                    }
-                                    if (logFile !== undefined) {
-                                        const r = await Api.workspaces.files.uploadFile(
-                                            workspace,
-                                            logFile.name,
-                                            logFile,
-                                        );
-                                        request.logFile = r.unwrap().uuid;
-                                    }
-                                    return request;
-                                }),
-                            ).catch((e) => {
-                                CONSOLE.error(e);
-                                return null;
-                            });
-
-                            if (affectedUploaded === null) {
-                                return toast.error("Some files for affected data couldn't be uploaded");
-                            }
-
-                            let screenshotUuid = null;
-                            if (screenshot !== undefined) {
-                                await Api.workspaces.files.uploadImage(workspace, screenshot.name, screenshot).then(
-                                    handleApiError(({ uuid }) => {
-                                        screenshotUuid = uuid;
-                                    }),
-                                );
-                                if (screenshotUuid === null) return toast.error("Fail to upload screenshot");
-                            }
-
-                            let logFileUuid = null;
-                            if (logFile !== undefined) {
-                                await Api.workspaces.files.uploadFile(workspace, logFile.name, logFile).then(
-                                    handleApiError(({ uuid }) => {
-                                        logFileUuid = uuid;
-                                    }),
-                                );
-                                if (logFileUuid === null) return toast.error("Fail to upload logfile");
-                            }
-
-                            Api.workspaces.findings
-                                .create(workspace, {
-                                    severity: severity,
-                                    definition: findingDef.uuid,
-                                    details: details,
-                                    logFile: logFileUuid,
-                                    screenshot: screenshotUuid,
-                                    categories: categories.map((c) => c.uuid),
-                                })
-                                .then(
-                                    handleApiError(async ({ uuid }) => {
-                                        await Promise.all(
-                                            affectedUploaded.map((a) => {
-                                                Api.workspaces.findings
-                                                    .addAffected(workspace, uuid, a)
-                                                    .then(handleApiError());
-                                            }),
-                                        );
-                                        ROUTES.WORKSPACE_FINDINGS_LIST.visit({ uuid: workspace });
-                                        toast.success("Created finding");
-                                    }),
-                                );
-                        }}
-                    >
+                    <div className="create-finding-form">
                         <div className="create-finding-header">
                             <h2 className={"sub-heading"}>Severity</h2>
                             <h2 className={"sub-heading"}>
@@ -451,10 +370,92 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                             </CollapsibleSection>
                         </div>
 
-                        <button type={"submit"} className="button">
+                        <button
+                            type={"button"}
+                            className="button"
+                            onClick={async (e) => {
+                                e.preventDefault();
+                                if (findingDef === undefined) {
+                                    return toast.error("Please select finding definition");
+                                }
+
+                                const affectedUploaded = await Promise.all(
+                                    affected.map(async (a) => {
+                                        const { _localLogFile: logFile, _localScreenshot: screenshot, ...request } = a;
+                                        if (screenshot !== undefined) {
+                                            const r = await Api.workspaces.files.uploadImage(
+                                                workspace,
+                                                screenshot.name,
+                                                screenshot,
+                                            );
+                                            request.screenshot = r.unwrap().uuid;
+                                        }
+                                        if (logFile !== undefined) {
+                                            const r = await Api.workspaces.files.uploadFile(
+                                                workspace,
+                                                logFile.name,
+                                                logFile,
+                                            );
+                                            request.logFile = r.unwrap().uuid;
+                                        }
+                                        return request;
+                                    }),
+                                ).catch((e) => {
+                                    CONSOLE.error(e);
+                                    return null;
+                                });
+
+                                if (affectedUploaded === null) {
+                                    return toast.error("Some files for affected data couldn't be uploaded");
+                                }
+
+                                let screenshotUuid = null;
+                                if (screenshot !== undefined) {
+                                    await Api.workspaces.files.uploadImage(workspace, screenshot.name, screenshot).then(
+                                        handleApiError(({ uuid }) => {
+                                            screenshotUuid = uuid;
+                                        }),
+                                    );
+                                    if (screenshotUuid === null) return toast.error("Fail to upload screenshot");
+                                }
+
+                                let logFileUuid = null;
+                                if (logFile !== undefined) {
+                                    await Api.workspaces.files.uploadFile(workspace, logFile.name, logFile).then(
+                                        handleApiError(({ uuid }) => {
+                                            logFileUuid = uuid;
+                                        }),
+                                    );
+                                    if (logFileUuid === null) return toast.error("Fail to upload logfile");
+                                }
+
+                                Api.workspaces.findings
+                                    .create(workspace, {
+                                        severity: severity,
+                                        definition: findingDef.uuid,
+                                        details: details,
+                                        logFile: logFileUuid,
+                                        screenshot: screenshotUuid,
+                                        categories: categories.map((c) => c.uuid),
+                                    })
+                                    .then(
+                                        handleApiError(async ({ uuid }) => {
+                                            await Promise.all(
+                                                affectedUploaded.map((a) => {
+                                                    Api.workspaces.findings
+                                                        .addAffected(workspace, uuid, a)
+                                                        .then(handleApiError());
+                                                }),
+                                            );
+                                            ROUTES.WORKSPACE_FINDINGS_LIST.visit({ uuid: workspace });
+                                            toast.success("Created finding");
+                                        }),
+                                    );
+                            }}
+                        >
                             Create
                         </button>
-                    </form>
+                    </div>
                     <div className="create-finding-editor-container">
                         <div className="knowledge-base-editor-tabs">
                             <button
