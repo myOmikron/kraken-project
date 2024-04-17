@@ -10,7 +10,7 @@ import {
     SimpleFindingCategory,
 } from "../../api/generated";
 import WS from "../../api/websocket";
-import { AdminOnly } from "../../components/admin-guard";
+import { AdminOnly } from "../../components/admin-only";
 import { GithubMarkdown } from "../../components/github-markdown";
 import Input from "../../components/input";
 import ModelEditor from "../../components/model-editor";

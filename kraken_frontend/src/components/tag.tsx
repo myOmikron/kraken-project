@@ -1,10 +1,18 @@
-import { EventHandler } from "react";
+import React from "react";
 import { Color } from "../api/generated";
 
+/** React props for [`<Tag />`]{@link Tag} */
 export type TagProps = {
+    /** The tag's name */
     name: string;
+    /** The tag's color */
     color?: Color;
-    onClick?: EventHandler<React.MouseEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>>;
+    /**
+     * Optional event handler for click events
+     *
+     * Pressing `Enter` while focusing on this element will also trigger this handler.
+     */
+    onClick?: React.EventHandler<React.MouseEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>>;
 };
 
 /** Sample of background color */
@@ -15,6 +23,14 @@ const BACKGROUND: Color = {
     a: 255,
 };
 
+/**
+ * A small div with a colored background representing a tag
+ *
+ * "Tag" in this context doesn't refer to the generic concept of tags.
+ * Instead, it explicitly refers to the tags kraken associates with aggregated objects.
+ *
+ * Use `<Bubble />` if you need a component for some generic concept of a tag.
+ */
 export default function Tag(props: TagProps) {
     const { name, color } = props;
 

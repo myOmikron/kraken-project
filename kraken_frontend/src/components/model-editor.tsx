@@ -5,11 +5,19 @@ import { toast } from "react-toastify";
 import CONSOLE from "../utils/console";
 import Loading from "./loading";
 
+/** React props for [`<ModelEditor />`]{@link ModelEditor} */
 export type ModelEditorProps = {
+    /** The model to edit */
     model: editor.ITextModel | null;
+    /** Callback which exposes the editor instance to the parent component */
     setEditor?: (editorInstance: editor.IStandaloneCodeEditor) => void;
 };
 
+/**
+ * A monaco editor for an externally managed model
+ *
+ * Use `useModel` or `useModelStore` for managing the model.
+ */
 export default function ModelEditor(props: ModelEditorProps) {
     const { model, setEditor } = props;
     const [_, setIsMonacoMounting] = React.useState(true);

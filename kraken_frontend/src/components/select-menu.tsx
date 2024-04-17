@@ -1,22 +1,35 @@
 import Select, { StylesConfig } from "react-select";
 import { GroupBase } from "react-select/dist/declarations/src/types";
 
+/** The different themes supported by [`selectStyles`]{@link selectStyles} */
 type Theme = "default" | "red";
 
+/** React props for [`<SelectPrimitive />`]{@link SelectPrimitive} */
 export type SelectPrimitiveProps<T extends { toString(): string }> = {
+    /** Array of options presented by the select menu */
     options: Array<T>;
+    /** The select menu's theme */
     theme?: Theme;
+    /** The current selected option */
     value: null | T;
+    /** Callback invoked when the user changed the selection */
     onChange: (value: T | null) => void;
+    /** Html's `id` attribute */
     id?: string;
+    /** Html's `required` attribute */
     required?: boolean;
+    /** Is the selected value clearable? */
     isClearable?: boolean;
 };
 
-/** A {@link Select `<Select />} which works with primitives (i.e. strings and numbers) instead of objects */
+/**
+ * A [`<Select />`]{@link Select} which works with primitives (i.e. strings and numbers) instead of objects
+ *
+ * It actually supports any data with a useful `toString` implementation.
+ */
 export function SelectPrimitive<T extends { toString(): string }>(props: SelectPrimitiveProps<T>) {
     return (
-        <Select<{ label: string; value: T }>
+        <Select<{ /** The option's displayed label */ label: string; /** The option's value */ value: T }>
             id={props.id}
             required={props.required}
             options={props.options.map((t) => ({ label: t.toString(), value: t }))}
@@ -58,11 +71,15 @@ export function clearSelectStyles<Option, IsMulti extends boolean, Group extends
 }
 
 /**
- * Generates the styling information to be passed to `<Select />` for a given theme
+ * Generates the styling information to be passed to [`<Select />`]{@link Select} for a given theme.
+ *
+ * @param theme the theme to use
+ * @returns styling information to be passed to [`<Select />`]{@link Select}
  */
 export function selectStyles<Option, IsMulti extends boolean, Group extends GroupBase<Option>>(
     theme: Theme,
 ): StylesConfig<Option, IsMulti, Group> {
+    /* eslint-disable jsdoc/require-jsdoc */
     return {
         control: (styles) => ({
             ...styles,
@@ -115,4 +132,5 @@ export function selectStyles<Option, IsMulti extends boolean, Group extends Grou
         multiValue: (styles) => ({ ...styles, backgroundColor: "none" }),
         indicatorSeparator: (styles) => ({ ...styles, display: "none" }),
     };
+    /* eslint-enable jsdoc/require-jsdoc */
 }

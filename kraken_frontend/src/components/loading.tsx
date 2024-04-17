@@ -1,4 +1,5 @@
-type LoadingProps = {};
+/** React props for [`<Loading />`]{@link Loading} */
+export type LoadingProps = {};
 
 /**
  * Simple component indicating that a resource is still loading

@@ -1,8 +1,10 @@
 import React from "react";
 
+/** React props for [`<SelectableText />`]{@link SelectableText} */
 type SelectableTextProps = {
-    /// What kind of element should be used, defaults to `div` if unset.
+    /** What kind of element should be used, defaults to `div` if unset. */
     as?: keyof React.JSX.IntrinsicElements;
+    /** The content to render inside the element specified by [`as`]{@link SelectableTextProps#as} */
     children: React.ReactNode;
 } & React.HTMLAttributes<HTMLElement>;
 

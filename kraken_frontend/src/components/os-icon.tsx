@@ -8,12 +8,19 @@ import FreeBSDIcon from "../svg/freebsd";
 import TuxIcon from "../svg/tux";
 import WindowsIcon from "../svg/windows";
 
+/** React props for [`<OsIcon />`]{@link OsIcon} */
 type OsIconProps = {
+    /** The OS whose icon to display */
     os: OsType;
+    /** Show the OS' name in a tooltip? */
     tooltip?: boolean;
+    /** Sets `style`'s `width` and `height` property */
     size?: string;
+    /** Html's `style` attribute */
     style?: React.CSSProperties;
 };
+
+/** Shows an OS specific icon */
 export default function OsIcon(props: OsIconProps) {
     const style = { ...props.style };
     if (props.size !== undefined) style.width = style.height = props.size;
