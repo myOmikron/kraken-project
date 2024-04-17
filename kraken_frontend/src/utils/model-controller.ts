@@ -77,7 +77,7 @@ export function useModel(initialArgs: UseModelArgs): UseModelReturn {
         };
     }, []);
 
-    return [controller.value, controller.setValue.bind(controller), controller.model];
+    return [controller.value, controller.setValue, controller.model];
 }
 
 /** A model store as returned by {@link useModelStore `useModelStore`} */
@@ -391,8 +391,13 @@ class ModelController {
     }
 
     // eslint-disable-next-line jsdoc/require-param
-    /** The `setValue` function returned by the `useModel` hook */
-    setValue(newValue: string, syncTarget: EditorTarget | undefined) {
+    /**
+     * The `setValue` function returned by the `useModel` hook
+     *
+     * This function uses arrow notation, because it needs to be bound to `this`,
+     * for `useModel` to return it.
+     */
+    setValue = (newValue: string, syncTarget: EditorTarget | undefined) => {
         CONSOLE.group("setValue");
         CONSOLE.debug({ hasModel: this.model !== null, oldValue: this.value, newValue });
 
@@ -405,5 +410,5 @@ class ModelController {
         }
 
         CONSOLE.groupEnd();
-    }
+    };
 }
