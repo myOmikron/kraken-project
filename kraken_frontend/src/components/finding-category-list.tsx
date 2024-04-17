@@ -12,7 +12,7 @@ export default function FindingCategoryList(props: FindingCategoryListProps) {
     return (
         <div className="finding-category-list">
             {props.categories.map((c) => (
-                <FindingCategory name={c.name} />
+                <FindingCategory name={c.name} color={c.color} />
             ))}
         </div>
     );

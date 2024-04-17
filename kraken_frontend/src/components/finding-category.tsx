@@ -5,8 +5,8 @@ import { Color } from "../api/generated";
 export type FindingCategoryProps = {
     /** The category's name */
     name: string;
-    /** The category's color */
-    color?: Color;
+    /** The category's color or "default" to explicitly choose css' default value */
+    color: Color | "default";
     /**
      * Optional event handler for click events
      *
@@ -28,7 +28,7 @@ export default function FindingCategory(props: FindingCategoryProps) {
     const { name, color } = props;
 
     const style: Record<string, string> = {};
-    if (color !== undefined) {
+    if (color && color !== "default") {
         let { r, g, b } = color;
         const { a } = color;
         style["--color"] = `rgba(${r}, ${g}, ${b}, ${a / 255})`;

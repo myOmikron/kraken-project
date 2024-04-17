@@ -60,7 +60,7 @@ export default function EditableCategories(props: EditableCategoriesProps) {
                         "value" in c ? (
                             <>
                                 {"Create "}
-                                <FindingCategory name={String(c.value)} />
+                                <FindingCategory name={String(c.value)} color={"default"} />
                             </>
                         ) : (
                             <FindingCategory {...c} />
