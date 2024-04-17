@@ -46,10 +46,8 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
     const [cve, setCve] = React.useState("");
     const [categories, setCategories] = React.useState<Array<SimpleFindingCategory>>([]);
 
-    useTimeoutOnChange([name, severity, cve, categories], [props.uuid], 1000, () => {
-        Api.knowledgeBase.findingDefinitions
-            .update(props.uuid, { name, severity, cve, categories: categories.map((c) => c.uuid) })
-            .then(handleApiError);
+    useTimeoutOnChange([name, severity, cve], [props.uuid], 1000, () => {
+        Api.knowledgeBase.findingDefinitions.update(props.uuid, { name, severity, cve }).then(handleApiError);
     });
 
     const sections = useSectionsState();
@@ -117,6 +115,14 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                 if (update.cve !== undefined) {
                     setCve(update.cve || "");
                 }
+                if (Array.isArray(update.categories)) {
+                    const uuids = update.categories;
+                    Api.findingCategories.all().then(
+                        handleApiError(({ categories }) => {
+                            setCategories(uuids.map((uuid) => categories.find((c) => uuid === c.uuid)!));
+                        }),
+                    );
+                }
             }),
             WS.addEventListener("message.DeletedFindingDefinition", ({ uuid }) => {
                 if (uuid === props.uuid) {
@@ -155,7 +161,17 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
 
                     <div className="categories-selector">
                         <h2 className="sub-heading">Categories</h2>
-                        <EditableCategories categories={categories} onChange={setCategories} />
+                        <EditableCategories
+                            categories={categories}
+                            onChange={(categories) => {
+                                setCategories(categories);
+                                Api.knowledgeBase.findingDefinitions
+                                    .update(props.uuid, {
+                                        categories: categories.map((c) => c.uuid),
+                                    })
+                                    .then(handleApiError);
+                            }}
+                        />
                     </div>
 
                     <div>
