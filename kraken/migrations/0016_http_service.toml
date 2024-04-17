@@ -453,3 +453,17 @@ TableName = "httpservice"
 ColumnName = "uuid"
 OnDelete = "Cascade"
 OnUpdate = "Cascade"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TYPE _aggregationsource_source_type ADD VALUE IF NOT EXISTS 'ManualHttpService' AFTER 'ManualService';"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TYPE _aggregationsource_aggregated_table ADD VALUE IF NOT EXISTS 'HttpService' AFTER 'Domain';"
