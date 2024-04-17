@@ -668,7 +668,8 @@ async fn os_detect_ssh(
 ) -> Result<OperatingSystemInfo, OsDetectionError> {
     let settings = OneShotTcpSettings {
         socket: SocketAddr::new(ip_addr, port),
-        timeout: recv_timeout,
+        recv_timeout,
+        connect_timeout: total_timeout - recv_timeout,
     };
     let Ok(result) = timeout(
         total_timeout,
