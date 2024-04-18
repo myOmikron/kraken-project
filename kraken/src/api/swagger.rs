@@ -10,11 +10,13 @@ use utoipa::openapi::security::SecurityScheme;
 use utoipa::Modify;
 use utoipa::OpenApi;
 
+use super::service;
 use crate::api::handler::aggregation_source;
 use crate::api::handler::api_keys;
 use crate::api::handler::attack_results;
 use crate::api::handler::attacks;
 use crate::api::handler::auth;
+use crate::api::handler::bearer_tokens;
 use crate::api::handler::common;
 use crate::api::handler::data_export;
 use crate::api::handler::domains;
@@ -76,6 +78,9 @@ impl Modify for SecurityAddon2 {
         auth::handler::finish_auth,
         auth::handler::start_register,
         auth::handler::finish_register,
+        bearer_tokens::handler_admin::create_bearer_token,
+        bearer_tokens::handler_admin::list_all_bearer_tokens,
+        bearer_tokens::handler_admin::delete_bearer_token,
         leeches::handler_admin::create_leech,
         leeches::handler_admin::delete_leech,
         leeches::handler_admin::get_all_leeches,
@@ -242,6 +247,9 @@ impl Modify for SecurityAddon2 {
         aggregation_source::schema::SourceAttackResult,
         auth::schema::LoginRequest,
         auth::schema::FinishRegisterRequest,
+        bearer_tokens::schema::CreateBearerTokenRequest,
+        bearer_tokens::schema::FullBearerToken,
+        bearer_tokens::schema::ListBearerTokens,
         leeches::schema::CreateLeechRequest,
         leeches::schema::SimpleLeech,
         leeches::schema::ListLeeches,
@@ -445,3 +453,16 @@ pub(crate) struct FrontendApi;
     modifiers(&SecurityAddon2)
 )]
 pub(crate) struct ExternalApi;
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(service::workspaces::handler::create_workspace),
+    components(schemas(
+        service::workspaces::schema::CreateWorkspaceRequest,
+        common::schema::UuidResponse,
+        common::schema::ApiErrorResponse,
+        common::schema::ApiStatusCode,
+    )),
+    modifiers(&SecurityAddon2)
+)]
+pub(crate) struct ServiceApi;

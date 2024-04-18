@@ -1,7 +1,6 @@
 use std::future::ready;
 use std::future::Ready;
 
-use actix_toolbox::tb_middleware::actix_session::SessionExt;
 use actix_web::dev::forward_ready;
 use actix_web::dev::Service;
 use actix_web::dev::ServiceRequest;
@@ -11,13 +10,10 @@ use futures::future::LocalBoxFuture;
 use rorm::query;
 use rorm::FieldAccess;
 use rorm::Model;
-use uuid::Uuid;
 
 use crate::api::handler::common::error::ApiError;
 use crate::chan::global::GLOBAL;
-use crate::models::LocalUserKey;
-use crate::models::User;
-use crate::models::UserPermission;
+use crate::models::BearerToken;
 
 pub(crate) struct TokenRequired;
 
@@ -55,51 +51,43 @@ where
     forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        req.headers().get("Authorization").ok_or()?;
-
-        let session = req.get_session();
-
-        let logged_in = session
-            .get("logged_in")
-            .map(|logged_in_maybe| logged_in_maybe.map_or(false, |v| v));
-
-        let second_factor = session
-            .get("2fa")
-            .map(|sec_fac| sec_fac.map_or(false, |v| v));
-
-        let uuid = session.get("uuid");
-
+        let auth_header = req.headers().get("Authorization").cloned();
         let next = self.service.call(req);
         Box::pin(async move {
-            if !logged_in.map_err(ApiError::SessionGet)? {
+            let auth_headers = auth_header
+                .ok_or(ApiError::Unauthenticated)?
+                .to_str()
+                .map_err(|_| ApiError::Unauthenticated)?
+                .to_owned();
+
+            let split = auth_headers.split(' ');
+            let mut count = 0;
+
+            for half in split {
+                count += 1;
+                match count {
+                    1 => {
+                        if half != "Bearer" {
+                            return Err(ApiError::Unauthenticated.into());
+                        }
+                    }
+                    2 => {
+                        query!(&GLOBAL.db, BearerToken)
+                            .condition(BearerToken::F.token.equals(half))
+                            .optional()
+                            .await
+                            .map_err(ApiError::DatabaseError)?
+                            .ok_or(ApiError::Unauthenticated)?;
+                    }
+                    _ => break,
+                }
+            }
+
+            if count != 2 {
                 return Err(ApiError::Unauthenticated.into());
             }
 
-            let uuid: Uuid = uuid
-                .map_err(ApiError::SessionGet)?
-                .ok_or(ApiError::SessionCorrupt)?;
-
-            let second_factor_required = query!(&GLOBAL.db, (LocalUserKey::F.uuid,))
-                .condition(LocalUserKey::F.user.equals(uuid))
-                .optional()
-                .await
-                .map_err(ApiError::DatabaseError)?;
-
-            if second_factor_required.is_some() && !second_factor.map_err(ApiError::SessionGet)? {
-                return Err(ApiError::Missing2FA.into());
-            }
-
-            let (permission,) = query!(&GLOBAL.db, (User::F.permission,))
-                .condition(User::F.uuid.equals(uuid))
-                .optional()
-                .await
-                .map_err(ApiError::DatabaseError)?
-                .ok_or(ApiError::SessionCorrupt)?;
-
-            match permission {
-                UserPermission::Admin => next.await,
-                _ => Err(ApiError::MissingPrivileges.into()),
-            }
+            next.await
         })
     }
 }

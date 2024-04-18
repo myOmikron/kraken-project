@@ -5,6 +5,7 @@ pub mod api_keys;
 pub mod attack_results;
 pub mod attacks;
 pub mod auth;
+pub mod bearer_tokens;
 pub mod common;
 pub mod data_export;
 pub mod domains;

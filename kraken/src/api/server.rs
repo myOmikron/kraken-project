@@ -29,10 +29,12 @@ use webauthn_rs::prelude::Url;
 use webauthn_rs::prelude::WebauthnError;
 use webauthn_rs::WebauthnBuilder;
 
+use super::service;
 use crate::api::handler::api_keys;
 use crate::api::handler::attack_results;
 use crate::api::handler::attacks;
 use crate::api::handler::auth;
+use crate::api::handler::bearer_tokens;
 use crate::api::handler::data_export;
 use crate::api::handler::domains;
 use crate::api::handler::files;
@@ -59,8 +61,10 @@ use crate::api::middleware::handle_not_found;
 use crate::api::middleware::json_extractor_error;
 use crate::api::middleware::AdminRequired;
 use crate::api::middleware::AuthenticationRequired;
+use crate::api::middleware::TokenRequired;
 use crate::api::swagger::ExternalApi;
 use crate::api::swagger::FrontendApi;
+use crate::api::swagger::ServiceApi;
 use crate::chan::global::GLOBAL;
 use crate::config::Config;
 use crate::modules::oauth::OauthManager;
@@ -118,6 +122,10 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     utoipa_swagger_ui::Url::new("external-api", "/api-doc/external-api.json"),
                     ExternalApi::openapi(),
                 ),
+                (
+                    utoipa_swagger_ui::Url::new("service-api", "/api-doc/service-api.json"),
+                    ServiceApi::openapi(),
+                ),
             ]))
             .service(
                 scope("/api/v1/auth")
@@ -138,6 +146,11 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
             )
             .service(scope("/api/v1/oauth-server").service(oauth::handler::token))
             .service(scope("/api/v1/export").service(data_export::handler::export_workspace))
+            .service(
+                scope("/api/v1/service")
+                    .wrap(TokenRequired)
+                    .service(service::workspaces::handler::create_workspace),
+            )
             .service(
                 scope("/api/v1/admin")
                     .wrap(AdminRequired)
@@ -174,7 +187,10 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(finding_categories::handler_admin::update_finding_category)
                     .service(finding_categories::handler_admin::delete_finding_category)
                     .service(finding_definitions::handler_admin::get_finding_definition_usage)
-                    .service(finding_definitions::handler_admin::delete_finding_definition),
+                    .service(finding_definitions::handler_admin::delete_finding_definition)
+                    .service(bearer_tokens::handler_admin::create_bearer_token)
+                    .service(bearer_tokens::handler_admin::delete_bearer_token)
+                    .service(bearer_tokens::handler_admin::list_all_bearer_tokens),
             )
             .service(
                 scope("/api/v1")
