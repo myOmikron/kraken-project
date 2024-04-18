@@ -24,7 +24,7 @@ import type {
   HostResultsPage,
   ListFindings,
   UpdateHostRequest,
-  UuidResponse,
+  UuidsResponse,
 } from '../models';
 import {
     ApiErrorResponseFromJSON,
@@ -45,8 +45,8 @@ import {
     ListFindingsToJSON,
     UpdateHostRequestFromJSON,
     UpdateHostRequestToJSON,
-    UuidResponseFromJSON,
-    UuidResponseToJSON,
+    UuidsResponseFromJSON,
+    UuidsResponseToJSON,
 } from '../models';
 
 export interface CreateHostOperationRequest {
@@ -96,10 +96,10 @@ export interface UpdateHostOperationRequest {
 export class HostsApi extends runtime.BaseAPI {
 
     /**
-     * Manually add a host
+     * Manually add a host  This endpoint also accepts networks inserting all their ips as hosts
      * Manually add a host
      */
-    async createHostRaw(requestParameters: CreateHostOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidResponse>> {
+    async createHostRaw(requestParameters: CreateHostOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UuidsResponse>> {
         if (requestParameters.uuid === null || requestParameters.uuid === undefined) {
             throw new runtime.RequiredError('uuid','Required parameter requestParameters.uuid was null or undefined when calling createHost.');
         }
@@ -122,14 +122,14 @@ export class HostsApi extends runtime.BaseAPI {
             body: CreateHostRequestToJSON(requestParameters.createHostRequest),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => UuidResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => UuidsResponseFromJSON(jsonValue));
     }
 
     /**
-     * Manually add a host
+     * Manually add a host  This endpoint also accepts networks inserting all their ips as hosts
      * Manually add a host
      */
-    async createHost(requestParameters: CreateHostOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidResponse> {
+    async createHost(requestParameters: CreateHostOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UuidsResponse> {
         const response = await this.createHostRaw(requestParameters, initOverrides);
         return await response.value();
     }

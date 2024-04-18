@@ -5,6 +5,7 @@ export * from './AdminWorkspacesApi';
 export * from './ApiKeysApi';
 export * from './AttacksApi';
 export * from './AuthenticationApi';
+export * from './BearerTokenApi';
 export * from './DomainsApi';
 export * from './FilesApi';
 export * from './FindingCategoriesApi';

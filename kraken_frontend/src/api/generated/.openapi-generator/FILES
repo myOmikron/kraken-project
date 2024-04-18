@@ -3,6 +3,7 @@ apis/AdminWorkspacesApi.ts
 apis/ApiKeysApi.ts
 apis/AttacksApi.ts
 apis/AuthenticationApi.ts
+apis/BearerTokenApi.ts
 apis/DomainsApi.ts
 apis/FilesApi.ts
 apis/FindingCategoriesApi.ts
@@ -39,6 +40,7 @@ models/Change.ts
 models/Color.ts
 models/CreateApiKeyRequest.ts
 models/CreateAppRequest.ts
+models/CreateBearerTokenRequest.ts
 models/CreateDomainRequest.ts
 models/CreateFindingAffectedRequest.ts
 models/CreateFindingCategoryRequest.ts
@@ -93,6 +95,7 @@ models/FinishRegisterRequest.ts
 models/FinishRegisterRequestAllOf.ts
 models/FullAggregationSource.ts
 models/FullApiKey.ts
+models/FullBearerToken.ts
 models/FullDnsTxtScanResult.ts
 models/FullDomain.ts
 models/FullFile.ts
@@ -140,6 +143,7 @@ models/LeechConfigAllOf.ts
 models/LeechTlsConfig.ts
 models/ListApiKeys.ts
 models/ListAttacks.ts
+models/ListBearerTokens.ts
 models/ListFindingCategories.ts
 models/ListFindingDefinitionUsages.ts
 models/ListFindingDefinitions.ts
@@ -285,6 +289,7 @@ models/UpdateWorkspaceRequest.ts
 models/UpdateWorkspaceTag.ts
 models/UserPermission.ts
 models/UuidResponse.ts
+models/UuidsResponse.ts
 models/WorkspaceInvitationList.ts
 models/WsClientMessage.ts
 models/WsClientMessageOneOf.ts

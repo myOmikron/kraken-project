@@ -280,6 +280,160 @@
                 ]
             }
         },
+        "/api/v1/admin/bearer": {
+            "get": {
+                "tags": [
+                    "Bearer Token"
+                ],
+                "summary": "List all available bearer tokens",
+                "description": "List all available bearer tokens",
+                "operationId": "list_all_bearer_tokens",
+                "responses": {
+                    "200": {
+                        "description": "List of all bearer tokens",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListBearerTokens"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Bearer Token"
+                ],
+                "summary": "Create a new bearer token",
+                "description": "Create a new bearer token",
+                "operationId": "create_bearer_token",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateBearerTokenRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Bearer token was created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UuidResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/bearer/{uuid}": {
+            "delete": {
+                "tags": [
+                    "Bearer Token"
+                ],
+                "summary": "Delete an existing token",
+                "description": "Delete an existing token",
+                "operationId": "delete_bearer_token",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "The uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bearer token was deleted"
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/files": {
             "get": {
                 "tags": [
@@ -6244,7 +6398,7 @@
                     "Hosts"
                 ],
                 "summary": "Manually add a host",
-                "description": "Manually add a host",
+                "description": "Manually add a host\n\nThis endpoint also accepts networks inserting all their ips as hosts",
                 "operationId": "create_host",
                 "parameters": [
                     {
@@ -6270,11 +6424,11 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Host was created",
+                        "description": "Host(s) was(/ were) created",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/UuidResponse"
+                                    "$ref": "#/components/schemas/UuidsResponse"
                                 }
                             }
                         }
@@ -9989,6 +10143,19 @@
                     }
                 }
             },
+            "CreateBearerTokenRequest": {
+                "type": "object",
+                "description": "The request to create a new bearer token",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "A descriptive name of the token"
+                    }
+                }
+            },
             "CreateDomainRequest": {
                 "type": "object",
                 "description": "The request to manually add a domain",
@@ -10182,7 +10349,7 @@
                 "properties": {
                     "ip_addr": {
                         "type": "string",
-                        "description": "The host's ip address",
+                        "description": "The host's ip address\n\nAlso accepts a network and adds all its addresses",
                         "example": "127.0.0.1"
                     },
                     "certainty": {
@@ -11171,6 +11338,30 @@
                         "type": "string",
                         "description": "The actual key's value",
                         "example": "fsn83r0jfis84nfthw..."
+                    }
+                }
+            },
+            "FullBearerToken": {
+                "type": "object",
+                "description": "A full representation of a bearer token",
+                "required": [
+                    "uuid",
+                    "name",
+                    "token"
+                ],
+                "properties": {
+                    "uuid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The primary key of the token"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The name that is used for identification"
+                    },
+                    "token": {
+                        "type": "string",
+                        "description": "The token that is used in the authorization header"
                     }
                 }
             },
@@ -12862,6 +13053,22 @@
                             "$ref": "#/components/schemas/SimpleAttack"
                         },
                         "description": "The list of the attacks"
+                    }
+                }
+            },
+            "ListBearerTokens": {
+                "type": "object",
+                "description": "A list of bearer tokens",
+                "required": [
+                    "tokens"
+                ],
+                "properties": {
+                    "tokens": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FullBearerToken"
+                        },
+                        "description": "List of tokens"
                     }
                 }
             },
@@ -16440,6 +16647,23 @@
                         "type": "string",
                         "format": "uuid",
                         "description": "The uuid"
+                    }
+                }
+            },
+            "UuidsResponse": {
+                "type": "object",
+                "description": "A common response that contains many uuids",
+                "required": [
+                    "uuids"
+                ],
+                "properties": {
+                    "uuids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The uuids"
                     }
                 }
             },

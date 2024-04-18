@@ -28,6 +28,8 @@ import {
 export interface CreateHostRequest {
     /**
      * The host's ip address
+     * 
+     * Also accepts a network and adds all its addresses
      * @type {string}
      * @memberof CreateHostRequest
      */
