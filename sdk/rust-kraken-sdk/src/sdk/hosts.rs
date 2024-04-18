@@ -2,7 +2,7 @@ use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
 use kraken::api::handler::common::schema::HostResultsPage;
-use kraken::api::handler::common::schema::UuidResponse;
+use kraken::api::handler::common::schema::UuidsResponse;
 use kraken::api::handler::findings::schema::ListFindings;
 use kraken::api::handler::findings::schema::SimpleFinding;
 use kraken::api::handler::hosts::schema::CreateHostRequest;
@@ -23,8 +23,8 @@ impl KrakenClient {
         workspace: Uuid,
         ip_addr: IpAddr,
         certainty: ManualHostCertainty,
-    ) -> KrakenResult<Uuid> {
-        let uuid: UuidResponse = self
+    ) -> KrakenResult<Vec<Uuid>> {
+        let uuids: UuidsResponse = self
             .post(&format!("api/v1/workspaces/{workspace}/hosts"))
             .body(CreateHostRequest {
                 ip_addr: IpNetwork::from(ip_addr),
@@ -33,7 +33,7 @@ impl KrakenClient {
             .send()
             .await?;
 
-        Ok(uuid.uuid)
+        Ok(uuids.uuids)
     }
 
     /// Get all hosts of a workspace

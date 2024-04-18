@@ -1,6 +1,7 @@
+use std::net::IpAddr;
+
 use chrono::DateTime;
 use chrono::Utc;
-use ipnetwork::IpNetwork;
 use serde::Deserialize;
 use serde::Serialize;
 use utoipa::IntoParams;
@@ -26,7 +27,7 @@ pub struct CreateServiceRequest {
 
     /// The ip address the service runs on
     #[schema(value_type = String, example = "127.0.0.1")]
-    pub host: IpNetwork,
+    pub host: IpAddr,
 
     /// An optional port the service runs on
     ///

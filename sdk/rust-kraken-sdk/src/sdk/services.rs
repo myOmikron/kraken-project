@@ -1,7 +1,6 @@
 use std::net::IpAddr;
 use std::num::NonZeroU16;
 
-use ipnetwork::IpNetwork;
 use kraken::api::handler::common::schema::ServiceResultsPage;
 use kraken::api::handler::common::schema::UuidResponse;
 use kraken::api::handler::findings::schema::ListFindings;
@@ -33,7 +32,7 @@ impl KrakenClient {
             .body(CreateServiceRequest {
                 name,
                 certainty,
-                host: IpNetwork::from(ip_addr),
+                host: ip_addr,
                 port: port.map(|x| x.0.get()),
                 protocols: port.map(|x| x.1),
             })

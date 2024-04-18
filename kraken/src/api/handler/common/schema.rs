@@ -30,6 +30,13 @@ pub struct UuidResponse {
     pub uuid: Uuid,
 }
 
+/// A common response that contains many uuids
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+pub struct UuidsResponse {
+    /// The uuids
+    pub uuids: Vec<Uuid>,
+}
+
 /// A path with an UUID
 #[derive(Deserialize, Serialize, IntoParams, Debug, Clone, Copy)]
 pub struct PathUuid {

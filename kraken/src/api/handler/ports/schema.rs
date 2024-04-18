@@ -1,6 +1,7 @@
+use std::net::IpAddr;
+
 use chrono::DateTime;
 use chrono::Utc;
-use ipnetwork::IpNetwork;
 use serde::Deserialize;
 use serde::Serialize;
 use utoipa::IntoParams;
@@ -20,7 +21,7 @@ use crate::api::handler::services::schema::SimpleService;
 pub struct CreatePortRequest {
     /// The ip address the port is open on
     #[schema(value_type = String, example = "127.0.0.1")]
-    pub ip_addr: IpNetwork,
+    pub ip_addr: IpAddr,
 
     /// The port to add
     #[schema(example = "8080")]

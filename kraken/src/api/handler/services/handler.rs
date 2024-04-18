@@ -8,6 +8,7 @@ use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
 use futures::TryStreamExt;
+use ipnetwork::IpNetwork;
 use rorm::and;
 use rorm::conditions::DynamicCollection;
 use rorm::db::sql::value::Value;
@@ -416,7 +417,7 @@ pub async fn create_service(
         workspace,
         user,
         name,
-        host,
+        IpNetwork::from(host),
         port.zip(protocols),
         certainty.into_db(),
     )
