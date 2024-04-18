@@ -232,6 +232,7 @@ impl Modify for SecurityAddon2 {
         common::schema::ApiErrorResponse,
         common::schema::ApiStatusCode,
         common::schema::UuidResponse,
+        common::schema::UuidsResponse,
         common::schema::SimpleTag,
         common::schema::TagType,
         common::schema::PageParams,

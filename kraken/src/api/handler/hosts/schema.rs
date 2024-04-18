@@ -13,8 +13,8 @@ use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
 use crate::api::handler::common::schema::PageParams;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::domains::schema::SimpleDomain;
-use crate::api::handler::http_services::schema::SimpleHttpService;
 use crate::api::handler::findings::schema::FindingSeverity;
+use crate::api::handler::http_services::schema::SimpleHttpService;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
 
@@ -22,6 +22,8 @@ use crate::api::handler::services::schema::SimpleService;
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct CreateHostRequest {
     /// The host's ip address
+    ///
+    /// Also accepts a network and adds all its addresses
     #[schema(value_type = String, example = "127.0.0.1")]
     pub ip_addr: IpNetwork,
 

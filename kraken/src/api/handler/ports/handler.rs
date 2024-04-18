@@ -8,6 +8,7 @@ use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
 use futures::TryStreamExt;
+use ipnetwork::IpNetwork;
 use rorm::and;
 use rorm::db::sql::value::Value;
 use rorm::insert;
@@ -331,7 +332,7 @@ pub async fn create_port(
         &mut tx,
         workspace,
         user,
-        ip_addr,
+        IpNetwork::from(ip_addr),
         port,
         certainty.into_db(),
         protocol.into_db(),

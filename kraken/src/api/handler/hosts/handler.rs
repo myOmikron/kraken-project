@@ -8,6 +8,7 @@ use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::HttpResponse;
 use futures::TryStreamExt;
+use ipnetwork::IpNetwork;
 use rorm::and;
 use rorm::db::sql::value::Value;
 use rorm::insert;
@@ -27,7 +28,7 @@ use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::HostResultsPage;
 use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::common::schema::SimpleTag;
-use crate::api::handler::common::schema::UuidResponse;
+use crate::api::handler::common::schema::UuidsResponse;
 use crate::api::handler::common::utils::get_page_params;
 use crate::api::handler::common::utils::query_many_severities;
 use crate::api::handler::common::utils::query_single_severity;
@@ -267,11 +268,13 @@ pub async fn get_host(
 }
 
 /// Manually add a host
+///
+/// This endpoint also accepts networks inserting all their ips as hosts
 #[utoipa::path(
     tag = "Hosts",
     context_path = "/api/v1",
     responses(
-        (status = 200, description = "Host was created", body = UuidResponse),
+        (status = 200, description = "Host(s) was(/ were) created", body = UuidsResponse),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
@@ -284,7 +287,7 @@ pub async fn create_host(
     req: Json<CreateHostRequest>,
     path: Path<PathUuid>,
     SessionUser(user): SessionUser,
-) -> ApiResult<Json<UuidResponse>> {
+) -> ApiResult<Json<UuidsResponse>> {
     let CreateHostRequest { ip_addr, certainty } = req.into_inner();
     let PathUuid { uuid: workspace } = path.into_inner();
 
@@ -292,10 +295,22 @@ pub async fn create_host(
     if !Workspace::is_user_member_or_owner(&mut tx, workspace, user).await? {
         return Err(ApiError::MissingPrivileges)?;
     }
-    let uuid = ManualHost::insert(&mut tx, workspace, user, ip_addr, certainty.into_db()).await?;
+    let mut uuids = Vec::new();
+    for ip in ip_addr.iter() {
+        uuids.push(
+            ManualHost::insert(
+                &mut tx,
+                workspace,
+                user,
+                IpNetwork::from(ip),
+                certainty.into_db(),
+            )
+            .await?,
+        );
+    }
     tx.commit().await?;
 
-    Ok(Json(UuidResponse { uuid }))
+    Ok(Json(UuidsResponse { uuids }))
 }
 
 /// Update a host

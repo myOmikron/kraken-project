@@ -1,7 +1,6 @@
 use std::net::IpAddr;
 use std::num::NonZeroU16;
 
-use ipnetwork::IpNetwork;
 use kraken::api::handler::common::schema::PortResultsPage;
 use kraken::api::handler::common::schema::UuidResponse;
 use kraken::api::handler::findings::schema::ListFindings;
@@ -31,7 +30,7 @@ impl KrakenClient {
         let uuid: UuidResponse = self
             .post(&format!("api/v1/workspaces/{workspace}/ports"))
             .body(CreatePortRequest {
-                ip_addr: IpNetwork::from(ip_addr),
+                ip_addr,
                 port: port.get(),
                 certainty,
                 protocol,
