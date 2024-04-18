@@ -21,15 +21,21 @@ use crate::utils::DebuggableBytes;
 /// Runs service detection on a single tcp port
 ///
 /// Returns `Ok(None)` if the port is closed.
-pub async fn detect_service(socket: SocketAddr, timeout: Duration) -> DynResult<Option<Service>> {
-    match find_exact_match(socket, timeout).await {
+pub async fn detect_service(
+    socket: SocketAddr,
+    recv_timeout: Duration,
+    connect_timeout: Duration,
+) -> DynResult<Option<Service>> {
+    match find_exact_match(socket, recv_timeout, connect_timeout).await {
         ControlFlow::Continue(partial_matches) => Ok(Some(if partial_matches.is_empty() {
             Service::Unknown
         } else {
             Service::Maybe(partial_matches)
         })),
         ControlFlow::Break(BreakReason::Found(service, protocol)) => {
-            let protocols = find_all_protocols(socket, timeout, service, protocol).await?;
+            let protocols =
+                find_all_protocols(socket, recv_timeout, connect_timeout, service, protocol)
+                    .await?;
             Ok(Some(Service::Definitely { service, protocols }))
         }
         ControlFlow::Break(BreakReason::TcpError(err)) => {
@@ -63,9 +69,14 @@ pub enum BreakReason {
 /// Otherwise, the function will continue through all probes and return a set of partial matches.
 async fn find_exact_match(
     socket: SocketAddr,
-    timeout: Duration,
+    recv_timeout: Duration,
+    connect_timeout: Duration,
 ) -> ControlFlow<BreakReason, BTreeMap<&'static str, ProtocolSet>> {
-    let settings = OneShotTcpSettings { socket, timeout };
+    let settings = OneShotTcpSettings {
+        socket,
+        recv_timeout,
+        connect_timeout,
+    };
     let mut partial_matches: BTreeMap<&'static str, ProtocolSet> = BTreeMap::new();
 
     debug!("Retrieving tcp banner");
@@ -76,7 +87,8 @@ async fn find_exact_match(
     let result = settings.probe_tls(b"", None).await;
     let tls_banner = convert_result(result)?
         .inspect_err(|err| debug!(target: "tls", "TLS error: {err:?}"))
-        .ok();
+        .ok()
+        .flatten();
 
     for prevalence in 0..3 {
         if let Some(tcp_banner) = tcp_banner.as_deref() {
@@ -141,7 +153,7 @@ async fn find_exact_match(
                 for probe in &generated::PROBES.payload_tls_probes[prevalence] {
                     let result = settings.probe_tls(probe.payload, probe.alpn).await;
                     match convert_result(result)? {
-                        Ok(data) => {
+                        Ok(Some(data)) => {
                             trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(&data));
                             check_match(
                                 &mut partial_matches,
@@ -150,6 +162,7 @@ async fn find_exact_match(
                                 ProtocolSet::TLS,
                             )?;
                         }
+                        Ok(None) => continue,
                         Err(err) => {
                             warn!(target: "tls", "Failed to connect while probing {}: {err}", probe.service)
                         }
@@ -165,11 +178,16 @@ async fn find_exact_match(
 /// Checks all of a single service's probes to detect all its protocols
 async fn find_all_protocols(
     socket: SocketAddr,
-    timeout: Duration,
+    recv_timeout: Duration,
+    connect_timeout: Duration,
     service: &'static str,
     mut already_found: ProtocolSet,
 ) -> DynResult<ProtocolSet> {
-    let settings = OneShotTcpSettings { socket, timeout };
+    let settings = OneShotTcpSettings {
+        socket,
+        recv_timeout,
+        connect_timeout,
+    };
     fn iter_all<T>(probes: &[Vec<T>; 3]) -> impl Iterator<Item = &T> {
         probes.iter().flat_map(|vec| vec.iter())
     }
@@ -223,7 +241,7 @@ async fn find_all_protocols(
     // Test tls banner
     if !already_found.tls {
         debug!("Testing {service}'s tls banner probes");
-        if let Ok(banner) = settings.probe_tls(b"", None).await? {
+        if let Ok(Some(banner)) = settings.probe_tls(b"", None).await? {
             for probe in iter_all(&generated::PROBES.empty_tls_probes)
                 .filter(|probe| probe.service == service)
             {
@@ -241,7 +259,7 @@ async fn find_all_protocols(
         for probe in
             iter_all(&generated::PROBES.payload_tls_probes).filter(|probe| probe.service == service)
         {
-            if let Ok(data) = settings.probe_tls(probe.payload, probe.alpn).await? {
+            if let Ok(Some(data)) = settings.probe_tls(probe.payload, probe.alpn).await? {
                 if matches!(probe.is_match(&data), Match::Exact) {
                     already_found.tls = true;
                     break;

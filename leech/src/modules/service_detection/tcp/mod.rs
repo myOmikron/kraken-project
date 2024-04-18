@@ -129,7 +129,8 @@ pub async fn start_tcp_service_detection(
                     })
                     .await?;
                 } else if let Some(service) =
-                    detect_service(socket, settings.receive_timeout).await?
+                    detect_service(socket, settings.receive_timeout, settings.connect_timeout)
+                        .await?
                 {
                     tx.send(TcpServiceDetectionResult {
                         addr: socket,

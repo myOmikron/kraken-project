@@ -29,7 +29,7 @@ pub async fn probe_tcp(settings: &OneShotTcpSettings) -> DynResult<Match> {
 // Therefore, no special treatment for ssl should be required.
 // https://www.postgresql.org/docs/current/protocol-flow.html#PROTOCOL-FLOW-SSL
 pub async fn probe_tls(settings: &OneShotTcpSettings, alpn: Option<&str>) -> DynResult<Match> {
-    let Ok(data) = settings.probe_tls(&create_startup_message(), alpn).await? else {
+    let Ok(Some(data)) = settings.probe_tls(&create_startup_message(), alpn).await? else {
         return Ok(Match::No);
     };
     trace!(target: "postgres", "Got data: {data:x?}");
