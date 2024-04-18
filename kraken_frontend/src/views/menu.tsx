@@ -9,7 +9,7 @@ import SettingsIcon from "../svg/settings";
 import UserSettingsIcon from "../svg/user_settings";
 import UsersIcon from "../svg/users";
 import WorkspaceIcon from "../svg/workspace";
-import RunningAttacks from "./running-attacks";
+import "./running-attacks";
 
 type MenuItem =
     | "me"
@@ -163,7 +163,7 @@ export function ContentWithMenu(props: ContentWithMenuProps) {
             <div className={"content-container"}>{props.children}</div>
             <Menu />
             <div className={"top-bar"}>
-                <RunningAttacks />
+                <div className={"running-attacks-container"} />
                 <div className={"workspace-selector-container pane"}>
                     <WorkspaceIcon />
                 </div>
