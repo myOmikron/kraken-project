@@ -389,7 +389,7 @@ export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef
                                         <span>{httpService.comment}</span>
                                         <Severity
                                             severity={httpService.severity}
-                                            dataType={"Service"}
+                                            dataType={"HttpService"}
                                             uuid={httpService.uuid}
                                             workspace={workspace}
                                         />

@@ -902,7 +902,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <span>{httpService.comment}</span>
                                 <Severity
                                     severity={httpService.severity}
-                                    dataType={"Service"}
+                                    dataType={"HttpService"}
                                     uuid={httpService.uuid}
                                     workspace={workspace}
                                 />
