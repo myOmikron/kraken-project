@@ -6,6 +6,7 @@ use actix_web::web::Json;
 use actix_web::web::Path;
 use chrono::Utc;
 use futures::TryStreamExt;
+use log::error;
 use rorm::and;
 use rorm::query;
 use rorm::FieldAccess;
@@ -259,6 +260,7 @@ pub(crate) async fn export_workspace(
                     host: None,
                     port: None,
                     service: None,
+                    http_service: None,
                     ..
                 } => (*fm.key(), AggregationType::Domain),
                 FindingAffected {
@@ -266,6 +268,7 @@ pub(crate) async fn export_workspace(
                     host: Some(fm),
                     port: None,
                     service: None,
+                    http_service: None,
                     ..
                 } => (*fm.key(), AggregationType::Host),
                 FindingAffected {
@@ -273,6 +276,7 @@ pub(crate) async fn export_workspace(
                     host: None,
                     port: Some(fm),
                     service: None,
+                    http_service: None,
                     ..
                 } => (*fm.key(), AggregationType::Port),
                 FindingAffected {
@@ -280,9 +284,21 @@ pub(crate) async fn export_workspace(
                     host: None,
                     port: None,
                     service: Some(fm),
+                    http_service: None,
                     ..
                 } => (*fm.key(), AggregationType::Service),
-                _ => return ready(Err(ApiError::InternalServerError)),
+                FindingAffected {
+                    domain: None,
+                    host: None,
+                    port: None,
+                    service: None,
+                    http_service: Some(fm),
+                    ..
+                } => (*fm.key(), AggregationType::HttpService),
+                FindingAffected {uuid, ..} => {
+                    error!("Invalid \"findingaffected\": {uuid}. This means a) invalid db state or b) programmer forgot a match arm.");
+                    return ready(Err(ApiError::InternalServerError));
+                }
             };
             ready(Ok((*x.finding.key(), aggr_uuid, aggr_type)))
         })
