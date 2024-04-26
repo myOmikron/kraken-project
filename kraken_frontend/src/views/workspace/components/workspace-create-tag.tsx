@@ -9,6 +9,7 @@ import USER_CONTEXT from "../../../context/user";
 import "../../../styling/workspace-create-tag.css";
 import { handleApiError } from "../../../utils/helper";
 
+/** React props for <WorkspaceCreateTag />*/
 export type WorkspaceCreateTagProps = {
     /** The workspace to add this tag to (if not set as global) */
     workspace: string;

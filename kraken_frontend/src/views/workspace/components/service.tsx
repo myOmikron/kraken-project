@@ -6,7 +6,22 @@ import SelectableText from "../../../components/selectable-text";
 import { handleApiError } from "../../../utils/helper";
 import { ServiceRelationsList } from "./relations-list";
 
-export default function ServiceName({ service, pretty }: { service: FullService | SimpleService; pretty?: boolean }) {
+/** React props for [`<ServiceName />`]{@link ServiceName} */
+type ServiceNameProps = {
+    /**
+     * Service to display
+     */
+    service: FullService | SimpleService;
+    pretty?: boolean;
+};
+
+/**
+ * Component to display service name.
+ *
+ * On hover display popup with list of service relation
+ */
+export default function ServiceName(props: ServiceNameProps) {
+    const { service, pretty } = props;
     const [relations, setRelations] = useState<ServiceRelations | undefined>(undefined);
     const [fullService, setFullService] = useState<FullService | undefined>(
         typeof service.host == "string" ? undefined : (service as FullService),

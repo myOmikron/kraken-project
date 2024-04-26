@@ -6,7 +6,22 @@ import SelectableText from "../../../components/selectable-text";
 import { handleApiError } from "../../../utils/helper";
 import { HostRelationsList } from "./relations-list";
 
-export default function IpAddr({ host, pretty: _ }: { host: FullHost | SimpleHost; pretty?: boolean }) {
+/** React props for [`<IpAddr />`]{@link IpAddr} */
+type IpAddrProps = {
+    /**
+     * Host to display
+     */
+    host: FullHost | SimpleHost;
+    pretty?: boolean;
+};
+
+/**
+ * Component to display a host/ ip address.
+ *
+ * On hover display popup with list of host relation
+ */
+export default function IpAddr(props: IpAddrProps) {
+    const { host } = props;
     const [relations, setRelations] = useState<HostRelations | undefined>(undefined);
 
     const ensureDataLoaded = useCallback(() => {

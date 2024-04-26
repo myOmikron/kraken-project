@@ -9,6 +9,13 @@ import PlusIcon from "../svg/plus";
 import { handleApiError, sleep } from "../utils/helper";
 import { useTriggerUpdate } from "../utils/trigger-hook";
 
+/**
+ * Page to manually create new leeches and view existing ones
+ *
+ * Page only visible for admin users
+ *
+ * @returns JSX.Element page to view and create leeches
+ */
 export default function KrakenNetwork() {
     const [leeches, setLeeches] = React.useState<Array<SimpleLeech> | undefined>(undefined);
     const [showPopup, setShowPopup] = React.useState<boolean>(false);
@@ -28,6 +35,9 @@ export default function KrakenNetwork() {
     const rightBottom = React.useRef<SVGElement | null | undefined>(null);
     const triggerUpdate = useTriggerUpdate();
 
+    /**
+     * Api call to get all existing leeches, then call function to trigger rerender
+     */
     function retrieveLeeches() {
         Api.admin.leeches.all().then(
             handleApiError(async ({ leeches }) => {
@@ -43,6 +53,9 @@ export default function KrakenNetwork() {
     }, []);
 
     React.useEffect(() => {
+        /**
+         * Trigger rerender when window is resized
+         */
         const onResize = () => {
             triggerUpdate();
         };
@@ -52,6 +65,13 @@ export default function KrakenNetwork() {
         return () => window.removeEventListener("resize", onResize);
     }, []);
 
+    /**
+     * Api call to create a new leech
+     *
+     * On success call {@link retrieveLeeches}
+     *
+     * @param e React.FormEvent<HTMLFormElement>
+     */
     function createLeech(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
@@ -317,6 +337,16 @@ export default function KrakenNetwork() {
     );
 }
 
+/**
+ * function to create a curved, dashed <path /> between 2 points (P1, P2) in 2D space
+ *
+ * @param fromX X value of P1
+ * @param fromY Y value of P1
+ * @param toX X value of P2
+ * @param toY Y value of P2
+ *
+ * @returns <path/>
+ */
 function curve(fromX: number, fromY: number, toX: number, toY: number) {
     const stepX = (toX - fromX) / 3;
     return (

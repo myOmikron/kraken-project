@@ -17,12 +17,12 @@ import {
     SimpleFindingCategory,
     SimpleFindingDefinition,
     SimpleHost,
+    SimpleHttpService,
     SimplePort,
     SimpleService,
     SimpleTag,
     UpdateFindingRequest,
 } from "../../../api/generated";
-import { SimpleHttpService } from "../../../api/generated/models/SimpleHttpService";
 import WS from "../../../api/websocket";
 import FindingCategoryList from "../../../components/finding-category-list";
 import { GithubMarkdown } from "../../../components/github-markdown";
@@ -67,14 +67,18 @@ import WorkspaceFindingDataTable, { WorkspaceFindingDataTableRef } from "./works
 import EditingTreeGraph, { EditingTreeGraphRef } from "./workspace-finding-editing-tree";
 import ITextModel = editor.ITextModel;
 
-/** React props for {@link WorkspaceEditFindingProps `<WorkspaceEditFindingProps />`} */
+/** React props for {@link WorkspaceEditFinding `<WorkspaceEditFinding />`} */
 export type WorkspaceEditFindingProps = {
     /** The finding to edit identified by its uuid */
     uuid: string;
 };
 
+/** Type for editor tabs */
 type Section = "definition" | "description" | "affected" | "network";
 
+/**
+ * Page for editing an existing finding in current workspace
+ */
 export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     const {
         workspace: { uuid: workspace },
@@ -650,17 +654,31 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     );
 }
 
-function DeleteButton({
-    workspace,
-    finding,
-    severity,
-    categories,
-}: {
+/** React props for {@link DeleteButton `<DeleteButton />`} */
+type DeleteButtonProps = {
+    /**
+     * Workspace uuid the finding is from
+     */
     workspace: UUID;
+    /**
+     * Finding uuid to be deleted
+     */
     finding: UUID;
+    /**
+     * Finding severity
+     */
     severity: FindingSeverity;
+    /**
+     * list of categories set on finding
+     */
     categories: SimpleFindingCategory[];
-}) {
+};
+
+/**
+ * Danger zone pane and popup to delete a finding from current workspace
+ */
+function DeleteButton(props: DeleteButtonProps) {
+    const { workspace, finding, severity, categories } = props;
     const [open, setOpen] = React.useState(false);
 
     return (
@@ -717,12 +735,19 @@ function DeleteButton({
     );
 }
 
+/** React props for {@link MarkdownLiveEditorPopup `<MarkdownLiveEditorPopup />`} */
 type MarkdownLiveEditorPopupProps = {
+    /** {@link AffectedLabel} the details are for */
     label: React.ReactNode;
+    /** The content */
     value: string;
+    /** Model storing the content */
     model: ITextModel | null;
 };
 
+/**
+ * <Popup /> with Markdown Editor to add Details to an affected Data
+ */
 export function MarkdownLiveEditorPopup(props: MarkdownLiveEditorPopupProps) {
     const { label, value, model } = props;
     return (
@@ -751,8 +776,12 @@ export function MarkdownLiveEditorPopup(props: MarkdownLiveEditorPopupProps) {
     );
 }
 
+/** React props for {@link AffectedLabel `<AffectedLabel />`} */
 export type AffectedLabelProps = {
     pretty?: boolean;
+    /**
+     * Affected Object
+     */
     affected: FindingAffectedObject;
 };
 
@@ -764,22 +793,52 @@ export function AffectedLabel({ pretty, affected }: AffectedLabelProps) {
     else return <ServiceName service={affected.service} pretty={pretty} />;
 }
 
+/**
+ * Check if affected data is a domain
+ *
+ * @param obj selected affected
+ * @returns boolean
+ */
 function isAffectedDomain(obj: FindingAffectedObject): obj is FindingAffectedObjectOneOf {
     return "domain" in obj && obj["domain"] !== undefined;
 }
 
+/**
+ * Check if affected data is a host
+ *
+ * @param obj selected affected
+ * @returns boolean
+ */
 function isAffectedHost(obj: FindingAffectedObject): obj is FindingAffectedObjectOneOf1 {
     return "host" in obj && obj["host"] !== undefined;
 }
 
+/**
+ * Check if affected data is a port
+ *
+ * @param obj selected affected
+ * @returns boolean
+ */
 function isAffectedPort(obj: FindingAffectedObject): obj is FindingAffectedObjectOneOf2 {
     return "port" in obj && obj["port"] !== undefined;
 }
 
+/**
+ * Check if affected data is a service
+ *
+ * @param obj selected affected
+ * @returns boolean
+ */
 function isAffectedService(obj: FindingAffectedObject): obj is FindingAffectedObjectOneOf3 {
     return "service" in obj && obj["service"] !== undefined;
 }
 
+/**
+ * Check if affected data is a http service
+ *
+ * @param obj selected affected
+ * @returns boolean
+ */
 function isAffectedHttpService(obj: FindingAffectedObject): obj is FindingAffectedObjectOneOf4 {
     return "httpService" in obj && obj["httpService"] !== undefined;
 }

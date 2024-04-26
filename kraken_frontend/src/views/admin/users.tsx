@@ -7,7 +7,11 @@ import Input from "../../components/input";
 import Loading from "../../components/loading";
 import { check, handleApiError } from "../../utils/helper";
 
-/** View to expose the `/api/v1/admin/users` endpoints */
+/**
+ * View to expose the `/api/v1/admin/users` endpoints
+ *
+ * @returns JSX.Element
+ */
 export default function AdminUsers() {
     /** Store a user to ask for confirmation before deleting him */
     const [confirmDelete, setConfirmDelete] = React.useState<FullUser | null>(null);

@@ -11,12 +11,27 @@ import SearchIcon from "../../../svg/search";
 import SettingsIcon from "../../../svg/settings";
 import { WorkspaceView } from "../workspace";
 
+/** React props for [`<WorkspaceMenu />`]{@link WorkspaceMenu} */
 type WorkspaceMenuProps = {
+    /**
+     * UUID of current workspace
+     */
     uuid: string;
+    /**
+     * UUID of workspace owner
+     */
     owner: string;
+    /**
+     * Selected workspace view
+     */
     active: WorkspaceView;
 };
 
+/**
+ * Tall, vertical pane with icons for every workspace menu
+ *
+ * Click on a menu icon to open the related page via {@link ROUTES}
+ */
 export default function WorkspaceMenu(props: WorkspaceMenuProps) {
     const {
         user: { uuid: user },

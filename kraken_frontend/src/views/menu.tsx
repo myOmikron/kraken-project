@@ -11,6 +11,9 @@ import UsersIcon from "../svg/users";
 import WorkspaceIcon from "../svg/workspace";
 import "./running-attacks";
 
+/**
+ * Type for all menu options of kraken
+ */
 type MenuItem =
     | "me"
     | "workspaces"
@@ -21,6 +24,13 @@ type MenuItem =
     | "knowledge"
     | "settings";
 
+/**
+ * Tall vertical pane with icons for all the menu options
+ *
+ * Click on an icon to visit the related page via {@link ROUTES}
+ *
+ * @returns JSX.Element vertical menu bar
+ */
 function Menu() {
     const context = React.useContext(USER_CONTEXT);
     const [active, setActive] = React.useState<MenuItem>("workspaces");

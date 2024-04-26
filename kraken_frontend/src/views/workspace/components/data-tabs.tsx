@@ -11,8 +11,12 @@ const TABS: Record<AggregationType, string> = {
     [AggregationType.HttpService]: "HTTP Services",
 } as const;
 
+/** React props for <DataTabsSelector /> */
 export type DataTabsSelectorProps = {
     value: AggregationType;
+    /**
+     * callback when new tab is selected
+     */
     onChange: (newValue: AggregationType) => void;
 };
 
@@ -35,6 +39,10 @@ export function useDataTabs(): [AggregationType, React.Dispatch<React.SetStateAc
     return [value, setValue];
 }
 
+/**
+ * Tab selector for AggregationTypes,
+ * used in combination with {@link StatelessWorkspaceTable}
+ */
 export function DataTabsSelector(props: DataTabsSelectorProps) {
     const { value, onChange } = props;
 

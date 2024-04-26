@@ -7,11 +7,19 @@ import EditIcon from "../../../svg/edit";
 import PlusIcon from "../../../svg/plus";
 import { configureMonaco } from "../../../utils/monaco";
 
+/** React props for {@link MarkdownEditorPopup `<MarkdownEditorPopup />`} */
 type MarkdownEditorPopupProps = {
+    /** Element the details are for */
     label: ReactNode;
+    /** The content */
     content: string;
+    /** Callback when the content in the editor changed */
     onChange: (content: string) => void;
 };
+
+/**
+ * <Popup /> with Markdown Editor to add Details to an Affected Data when editing or creating a finding
+ */
 export default function MarkdownEditorPopup(props: MarkdownEditorPopupProps) {
     const { label, content, onChange } = props;
 

@@ -2,7 +2,7 @@ import React from "react";
 import { toast } from "react-toastify";
 import { Api } from "../api/api";
 import { ApiError, StatusCode } from "../api/error";
-import { FullUser, UserPermission } from "../api/generated/models";
+import { FullUser, UserPermission } from "../api/generated";
 import WS from "../api/websocket";
 import Loading from "../components/loading";
 import CONSOLE from "../utils/console";
@@ -34,9 +34,11 @@ const USER_CONTEXT = React.createContext<UserContext>({
 USER_CONTEXT.displayName = "UserContext";
 export default USER_CONTEXT;
 
+/** React props for [`<UserProvider />`]{@link UserProvider} */
 type UserProviderProps = {
     children?: React.ReactNode;
 };
+/** React state for [`<UserProvider />`]{@link UserProvider} */
 type UserProviderState = {
     user: FullUser | "unauthenticated" | "loading";
 };

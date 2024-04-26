@@ -8,9 +8,12 @@ import { useModel } from "../../utils/model-controller";
 import { useSyncedCursors } from "../../utils/monaco-cursor";
 import { WORKSPACE_CONTEXT } from "./workspace";
 
-export type WorkspaceNotesProps = {};
-
-export default function WorkspaceNotes(props: WorkspaceNotesProps) {
+/**
+ * Page in workspace with Markdown Editor to write notes
+ *
+ * @returns page with markdown editor
+ */
+export default function WorkspaceNotes() {
     const {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);

@@ -1,6 +1,14 @@
 import { FC, useState } from "react";
-import { FullDomain, FullHost, FullPort, FullService, OsType, PortProtocol, SimpleTag } from "../../../api/generated";
-import { FullHttpService } from "../../../api/generated/models/FullHttpService";
+import {
+    FullDomain,
+    FullHost,
+    FullHttpService,
+    FullPort,
+    FullService,
+    OsType,
+    PortProtocol,
+    SimpleTag,
+} from "../../../api/generated";
 import Textarea from "../../../components/textarea";
 import "../../../styling/filter-editor-ui.css";
 import CollapseIcon from "../../../svg/collapse";

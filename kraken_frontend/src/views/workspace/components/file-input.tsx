@@ -7,6 +7,7 @@ import CloseIcon from "../../../svg/close";
 import { handleApiError } from "../../../utils/helper";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
+/** React props for [`<FileInput />`]{@link FileInput} */
 export type FileInputProps = {
     /** The image as either a {@link File} or an uuid for an uploaded image*/
     file: File | string | undefined;
@@ -45,6 +46,12 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
 
         const inputRef = React.useRef<HTMLInputElement>(null);
 
+        /**
+         * Checks file for correct type and size
+         *
+         * @param file to be checked
+         * @returns boolean
+         */
         const fileHandler = (file: File | undefined) => {
             setDrag(false);
 
@@ -170,8 +177,15 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
     },
 );
 
+/** React props for [`<UploadingFileInput />`]{@link UploadingFileInput} */
 export type UploadingFileInputProps = {
+    /**
+     * callback after file is changed
+     */
     onChange?: (uuid: string | null) => void;
+    /**
+     * callback before file is changed
+     */
     onBeforeChange?: FileInputProps["onChange"] | undefined;
 } & Omit<FileInputProps, "onChange">;
 

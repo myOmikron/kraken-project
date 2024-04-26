@@ -9,6 +9,12 @@ import CloseIcon from "../svg/close";
 import CopyIcon from "../svg/copy";
 import { check, handleApiError } from "../utils/helper";
 
+/**
+ * Page displaying User Settings.
+ * User can manage account settings and  API keys
+ *
+ * @returns JSX.Element page for user settings
+ */
 export default function Me() {
     const context = React.useContext(USER_CONTEXT);
 
@@ -29,6 +35,9 @@ export default function Me() {
     const [apiKeys, setApiKeys] = React.useState<Array<FullApiKey>>([]);
     const [user, setUser] = React.useState<FullUser>(context.user);
 
+    /**
+     * Api call to get all existing api keys
+     */
     async function retrieveApiKeys() {
         await Api.user.apiKeys.all().then(
             handleApiError((keys) => {
@@ -37,6 +46,10 @@ export default function Me() {
         );
     }
 
+    /**
+     *  Api call to create a new api key.
+     *  Call {@link retrieveApiKeys} on success
+     */
     async function createApiKey() {
         if (apiKeyName === "") {
             toast.error("Name must not be empty");
@@ -58,6 +71,12 @@ export default function Me() {
         setDisplayName(context.user.displayName);
     }, []);
 
+    /**
+     *  Api call to delete an api key.
+     *  Call {@link retrieveApiKeys} on success
+     *
+     *  @param uuid of Api key to be deleted
+     */
     async function deleteApiKey(uuid: UUID) {
         Api.user.apiKeys.delete(uuid).then(
             handleApiError(async (_) => {
@@ -67,6 +86,9 @@ export default function Me() {
         );
     }
 
+    /**
+     * Api call to update user's username and/or displayname
+     */
     async function updateAccount() {
         if (username.length === 0) {
             toast.error("Username must not be empty");
@@ -96,6 +118,10 @@ export default function Me() {
         );
     }
 
+    /**
+     * Api call to change user's password.
+     * Reload users information on success.
+     */
     function changePwd() {
         if (
             !check([

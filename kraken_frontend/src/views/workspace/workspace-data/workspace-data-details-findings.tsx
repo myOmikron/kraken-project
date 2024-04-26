@@ -13,18 +13,30 @@ const SEVERITY_SORTING: { [k in FindingSeverity]: number } = {
     High: 3,
     Critical: 4,
 };
-export default function WorkspaceDataDetailsFindings({
-    findings,
-    ...props
-}: {
+
+/** React props for [`<WorkspaceDataDetailsFindings />`]{@link WorkspaceDataDetailsFindings}*/
+type WorkspaceDataDetailsFindingsProps = {
+    /**
+     * interface which contains an Array of SimpleFindings
+     */
     findings: ListFindings | null;
-} & React.HTMLProps<HTMLDivElement>) {
+} & React.HTMLAttributes<HTMLDivElement>;
+
+/**
+ * simple list with a round border and blue background
+ *
+ * lists all findings given via props
+ * displaying Severity, CVE and Name
+ *
+ * Click on one finding to redirect to the related finding page
+ */
+export default function WorkspaceDataDetailsFindings(props: WorkspaceDataDetailsFindingsProps) {
     const {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
-
+    const { findings, ...passThrough } = props;
     return (
-        <div className="workspace-data-details-relations-container" {...props}>
+        <div className="workspace-data-details-relations-container" {...passThrough}>
             <div className="workspace-data-details-relations-header workspace-data-details-findings">
                 <div className="workspace-data-details-relations-heading">Severity</div>
                 <div className="workspace-data-details-relations-heading">CVE</div>

@@ -15,9 +15,12 @@ import { handleApiError } from "../../utils/helper";
 import TagList from "./components/tag-list";
 import { WORKSPACE_CONTEXT } from "./workspace";
 
-type WorkspaceHostsProps = {};
-
-export default function WorkspaceHosts(_: WorkspaceHostsProps) {
+/**
+ * Page showing all Hosts of the current workspace in tile format
+ *
+ * @returns JSX.Element page with host overview
+ */
+export default function WorkspaceHosts() {
     const {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
@@ -28,6 +31,12 @@ export default function WorkspaceHosts(_: WorkspaceHostsProps) {
     const [limit, setLimit] = React.useState(28);
     const [offset, setOffsetImpl] = React.useState(0);
 
+    /**
+     * Api call to get a limited list with an offset of hosts from
+     * the current workspace to be displayed on the page
+     *
+     * @returns Promise<void>
+     */
     function retrieveHosts() {
         setHosts([]);
         setTotal(null);
@@ -46,6 +55,9 @@ export default function WorkspaceHosts(_: WorkspaceHostsProps) {
     if (total === null) return <p>Loading...</p>;
 
     const lastOffset = Math.floor(total / limit) * limit;
+    /**
+     * @param offset where displayed hosts start
+     */
     const setOffset = (offset: number) => {
         if (offset < 0) {
             setOffsetImpl(0);
@@ -114,7 +126,19 @@ export default function WorkspaceHosts(_: WorkspaceHostsProps) {
                 </div>
                 <div className={"workspace-table-controls-page-container"}>
                     <span>{`${offset + 1} - ${Math.min(total, offset + limit + 1)} of ${total}`}</span>
-                    <Select<{ label: string; value: number }, false>
+                    <Select<
+                        {
+                            /**
+                             * limit selection how many hosts are shown on the page
+                             */
+                            label: string;
+                            /**
+                             * limit selection how many hosts are shown on the page
+                             */
+                            value: number;
+                        },
+                        false
+                    >
                         menuPlacement={"auto"}
                         value={{ value: limit, label: String(limit) }}
                         options={[10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((n) => ({

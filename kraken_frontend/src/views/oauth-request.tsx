@@ -5,6 +5,7 @@ import Checkbox from "../components/checkbox";
 import "../styling/oauth-request.css";
 import { handleApiError } from "../utils/helper";
 
+/** React props for {@link OauthRequest `<OauthRequest />`} */
 type OAuthRequestProps = {
     uuid: UUID;
 };

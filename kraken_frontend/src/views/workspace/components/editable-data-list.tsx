@@ -2,13 +2,10 @@ import React from "react";
 import Creatable from "react-select/creatable";
 import { toast } from "react-toastify";
 import { Api } from "../../../api/api";
-import { FullDomain, FullHost, FullPort, FullService } from "../../../api/generated";
-import { FullHttpService } from "../../../api/generated/models/FullHttpService";
+import { FullDomain, FullHost, FullHttpService, FullPort, FullService } from "../../../api/generated";
 import { selectStyles } from "../../../components/select-menu";
 
-/**
- * Props for `<EditableDataList<T>>`
- */
+/** Props for `<EditableDataList<T>>`*/
 export type EditableDataListProps<T extends FullHost | FullPort | FullDomain | FullService | FullHttpService> = {
     /**
      * The workspace containing the item whose items to list

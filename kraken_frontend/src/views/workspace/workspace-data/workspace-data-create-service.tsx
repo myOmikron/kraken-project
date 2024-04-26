@@ -8,10 +8,19 @@ import { SelectPrimitive } from "../../../components/select-menu";
 import { handleApiError } from "../../../utils/helper";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
+/** React props for [`<CreateServiceForm />`]{@link CreateServiceForm} */
 type CreateServiceFormProps = {
+    /**
+     * Callback when new Service was successfully created
+     */
     onSubmit: () => void;
 };
 
+/**
+ * `<form />`including all inputs to manually create a new Service
+ *
+ * Allows submitting to create in the current workspace.
+ */
 export function CreateServiceForm(props: CreateServiceFormProps) {
     const { onSubmit } = props;
     const {

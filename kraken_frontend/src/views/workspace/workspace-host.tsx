@@ -6,7 +6,6 @@ import OsIcon from "../../components/os-icon";
 import { ROUTES } from "../../routes";
 import "../../styling/workspace-host.css";
 import ArrowLeftIcon from "../../svg/arrow-left";
-
 import { compareHost } from "../../utils/data-sorter";
 import { handleApiError } from "../../utils/helper";
 import TagList from "./components/tag-list";
@@ -24,10 +23,17 @@ const TABS = {
     other: "Other",
 };
 
+/** React props for [`<WorkspaceHost />`]{@link WorkspaceHost} */
 type WorkspaceProps = {
+    /**
+     * UUID of selected Host
+     */
     uuid: UUID;
 };
 
+/**
+ * Page showing detailed information and connected data of single, selected Host
+ */
 export default function WorkspaceHost(props: WorkspaceProps) {
     const {
         workspace: { uuid: workspace },
@@ -38,6 +44,11 @@ export default function WorkspaceHost(props: WorkspaceProps) {
     const [hostList, setHostList] = React.useState<Array<FullHost>>([]);
     const [searchTerm, setSearchTerm] = React.useState("");
 
+    /**
+     * Api call to get a list of all hosts from current workspace (limited to 1000)
+     *
+     * @returns Promise<void>
+     */
     function getHostList() {
         return Api.workspaces.hosts.all(workspace, 1000, 0).then(
             handleApiError(({ items }) => {
@@ -46,6 +57,11 @@ export default function WorkspaceHost(props: WorkspaceProps) {
         );
     }
 
+    /**
+     * Api call to get selected Host
+     *
+     * @returns Promise<void>
+     */
     function getHost() {
         return Api.workspaces.hosts.get(workspace, props.uuid).then(handleApiError(setHost));
     }

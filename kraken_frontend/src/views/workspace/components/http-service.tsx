@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Popup from "reactjs-popup";
 import { Api } from "../../../api/api";
-import { FullHttpService } from "../../../api/generated/models/FullHttpService";
-import { HttpServiceRelations } from "../../../api/generated/models/HttpServiceRelations";
-import { SimpleHttpService } from "../../../api/generated/models/SimpleHttpService";
+import { FullHttpService, HttpServiceRelations, SimpleHttpService } from "../../../api/generated";
 import SelectableText from "../../../components/selectable-text";
 import { handleApiError } from "../../../utils/helper";
 import { buildHttpServiceURL } from "../../../utils/http-services";

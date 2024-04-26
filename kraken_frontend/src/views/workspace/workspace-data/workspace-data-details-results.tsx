@@ -7,10 +7,18 @@ import ArrowRightIcon from "../../../svg/arrow-right";
 import CopyIcon from "../../../svg/copy";
 import { copyToClipboard } from "../../../utils/helper";
 
+/** React props for [`<WorkspaceDataDetailsResults />`]{@link WorkspaceDataDetailsResults} */
 type WorkspaceDataDetailsResultsProps = {
+    /**
+     * Array of Attacks
+     */
     attacks: Array<SourceAttack>;
 };
 
+/**
+ * Pane with background displaying information for each Attack the Data
+ * was found trough, depending on the attackType
+ */
 export default function WorkspaceDataDetailsResults(props: WorkspaceDataDetailsResultsProps) {
     const { attacks } = props;
     const [attackPage, setAttackPage] = React.useState(0);
@@ -565,6 +573,12 @@ export default function WorkspaceDataDetailsResults(props: WorkspaceDataDetailsR
     );
 }
 
+/**
+ * change JS Date into custom format
+ *
+ * @param date JS Date
+ * @returns date as DD/MM/YYYY HH:MM:SS
+ */
 function formatDate(date: Date | null | undefined) {
     if (date !== null && date !== undefined) {
         return (

@@ -6,15 +6,22 @@ import "../styling/login.css";
 import LoginLogoIcon from "../svg/login_logo";
 import { handleApiError } from "../utils/helper";
 
+/** React props for [`<Login />`]{@link Login} */
 type LoginProps = {
     onLogin(): void;
 };
 
+/**
+ * Page for users to login
+ */
 export default function Login(props: LoginProps) {
     const { onLogin } = props;
     const [username, setUsername] = React.useState<string>("");
     const [password, setPassword] = React.useState<string>("");
 
+    /**
+     * Api call to authenticate and login the user
+     */
     function performLogin() {
         Api.auth.login(username, password).then(
             handleApiError(() => {

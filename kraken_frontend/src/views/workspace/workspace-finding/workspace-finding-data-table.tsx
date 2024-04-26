@@ -1,7 +1,6 @@
 import React, { forwardRef, useImperativeHandle } from "react";
 import { Api } from "../../../api/api";
-import { AggregationType, FullDomain, FullHost, FullPort, FullService } from "../../../api/generated";
-import { FullHttpService } from "../../../api/generated/models/FullHttpService";
+import { AggregationType, FullDomain, FullHost, FullHttpService, FullPort, FullService } from "../../../api/generated";
 import Indicator from "../../../components/indicator";
 import OsIcon from "../../../components/os-icon";
 import SelectableText from "../../../components/selectable-text";
@@ -19,12 +18,33 @@ import TagList from "../components/tag-list";
 import { StatelessWorkspaceTable, useTable } from "../components/workspace-table";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
+/**
+ * Props for the <WorkspaceFindingDataTable> component
+ */
 export type WorkspaceFindingDataTableProps = {
+    /**
+     * list of data that shouldn't show in the table
+     */
     hideUuids: string[];
+    /**
+     * Callback when Domain is added to Finding affected
+     */
     onAddDomains?: (domains: FullDomain[]) => void;
+    /**
+     * Callback when Host is added to Finding affected
+     */
     onAddHosts?: (hosts: FullHost[]) => void;
+    /**
+     * Callback when Service is added to Finding affected
+     */
     onAddServices?: (services: FullService[]) => void;
+    /**
+     * Callback when HttpService is added to Finding affected
+     */
     onAddHttpServices?: (services: FullHttpService[]) => void;
+    /**
+     * Callback when Port is added to Finding affected
+     */
     onAddPorts?: (ports: FullPort[]) => void;
 };
 
@@ -32,6 +52,9 @@ export type WorkspaceFindingDataTableRef = {
     addFilterColumn(column: string, value: string, negate: boolean): void;
 };
 
+/**
+ * Data table used for managing affected data when editing or creating a finding
+ */
 export const WorkspaceFindingDataTable = forwardRef<WorkspaceFindingDataTableRef, WorkspaceFindingDataTableProps>(
     ({ hideUuids, onAddDomains, onAddHosts, onAddServices, onAddPorts, onAddHttpServices }, ref) => {
         const {

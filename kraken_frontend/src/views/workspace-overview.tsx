@@ -12,18 +12,25 @@ import "../styling/workspace-overview.css";
 import WorkspaceIcon from "../svg/workspace";
 import { check, handleApiError } from "../utils/helper";
 
+/**
+ * type to select how the displayed workspaces are sorted
+ */
 type Sorting = "none" | "name" | "createdAt";
 
-/** View to expose the `/api/v1/workspaces` endpoints */
+/**
+ * View to expose the `/api/v1/workspaces` endpoints
+ *
+ * @returns JSX.Element
+ */
 export default function WorkspaceOverview() {
     const context = React.useContext(USER_CONTEXT);
     // queried data
     const [workspaces, setWorkspaces] = React.useState<Array<SimpleWorkspace> | undefined>(undefined);
 
     // controlled state
-    /** New workspace's name */
+    /** New workspace name */
     const [newName, setNewName] = React.useState<string>("");
-    /** New workspace's description */
+    /** New workspace description */
     const [newDesc, setNewDesc] = React.useState<string>("");
     /** The search query */
     const [search, setSearch] = React.useState<string>("");
@@ -34,12 +41,18 @@ export default function WorkspaceOverview() {
 
     const [sorting, setSorting] = React.useState<Sorting>("none");
 
+    /**
+     * Api call to get all the existing workspaces
+     */
     function retrieveAllWorkspaces() {
         Api.workspaces.all().then(handleApiError(({ workspaces }) => setWorkspaces(workspaces)));
     }
 
     React.useEffect(() => retrieveAllWorkspaces(), []);
 
+    /**
+     * Api call to create a new workspace
+     */
     async function createWorkspace() {
         if (!check([[newName.length > 0, "Empty name"]])) return;
 
@@ -165,9 +178,7 @@ export default function WorkspaceOverview() {
                                 if (onlyOwner && !isOwner) return false;
                                 if (onlyMember && isOwner) return false;
 
-                                if (onlyArchived != (e.archived ?? false)) return false;
-
-                                return true;
+                                return onlyArchived == (e.archived ?? false);
                             })
                             .sort((a, b) => {
                                 switch (sorting) {
