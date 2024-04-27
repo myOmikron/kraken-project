@@ -13,6 +13,7 @@ use kraken::api::handler::hosts::schema::ManualHostCertainty;
 use kraken::api::handler::hosts::schema::UpdateHostRequest;
 use uuid::Uuid;
 
+use crate::error::KrakenError;
 use crate::KrakenClient;
 use crate::KrakenResult;
 
@@ -23,13 +24,31 @@ impl KrakenClient {
         workspace: Uuid,
         ip_addr: IpAddr,
         certainty: ManualHostCertainty,
+    ) -> KrakenResult<Uuid> {
+        match &self
+            .add_hosts(workspace, IpNetwork::from(ip_addr), certainty)
+            .await?[..]
+        {
+            [] => Err(KrakenError::DeserializeError(
+                "Body contains no uuid".to_string(),
+            )),
+            [uuid] => Ok(*uuid),
+            _ => Err(KrakenError::DeserializeError(
+                "Body contains multiple uuids".to_string(),
+            )),
+        }
+    }
+
+    /// Add an entire CIDR as hosts
+    pub async fn add_hosts(
+        &self,
+        workspace: Uuid,
+        ip_addr: IpNetwork,
+        certainty: ManualHostCertainty,
     ) -> KrakenResult<Vec<Uuid>> {
         let uuids: UuidsResponse = self
             .post(&format!("api/v1/workspaces/{workspace}/hosts"))
-            .body(CreateHostRequest {
-                ip_addr: IpNetwork::from(ip_addr),
-                certainty,
-            })
+            .body(CreateHostRequest { ip_addr, certainty })
             .send()
             .await?;
 
