@@ -16,13 +16,15 @@ import Input from "../../components/input";
 import ModelEditor from "../../components/model-editor";
 import { SelectPrimitive } from "../../components/select-menu";
 import { ROUTES } from "../../routes";
+import "../../styling/edit-finding-definition.css";
 import ArrowLeftIcon from "../../svg/arrow-left";
 import BandageIcon from "../../svg/bandage";
 import BookIcon from "../../svg/book";
+import CopyIcon from "../../svg/copy";
 import FlameIcon from "../../svg/flame";
 import InformationIcon from "../../svg/information";
 import LibraryIcon from "../../svg/library";
-import { handleApiError } from "../../utils/helper";
+import { copyToClipboard, handleApiError } from "../../utils/helper";
 import { useSyncedCursors } from "../../utils/monaco-cursor";
 import CollapsibleSection from "../workspace/components/collapsible-section";
 import EditableCategories from "../workspace/components/editable-categories";
@@ -143,6 +145,12 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
             <div className={"pane"} style={{ flex: "row" }}>
                 <ArrowLeftIcon title={"Back"} {...ROUTES.FINDING_DEFINITION_LIST.clickHandler({})} />
                 <h1 className={"heading"}>Edit Finding Definition</h1>
+                <div className={"finding-definition-uuid"}>
+                    {props.uuid}
+                    <button className={"icon-button"} onClick={() => copyToClipboard(props.uuid)}>
+                        <CopyIcon />
+                    </button>
+                </div>
             </div>
             <div className={"pane"}>
                 <div className={"create-finding-definition-form"}>
