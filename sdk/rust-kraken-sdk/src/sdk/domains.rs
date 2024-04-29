@@ -72,7 +72,7 @@ impl KrakenClient {
         domain: Uuid,
     ) -> KrakenResult<DomainRelations> {
         self.get(&format!(
-            "api/v1/workspaces/{workspace}/domain/{domain}/relations"
+            "api/v1/workspaces/{workspace}/domains/{domain}/relations"
         ))
         .send()
         .await
