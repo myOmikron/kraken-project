@@ -130,3 +130,11 @@
     border-radius: 0.5em;
     border: 1px solid var(--primary-op);
 }
+
+.knowledge-base-finding-definition-popup {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    max-height: 90vh;
+    overflow-y: auto;
+}
