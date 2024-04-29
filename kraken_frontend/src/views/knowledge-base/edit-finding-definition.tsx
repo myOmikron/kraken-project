@@ -294,7 +294,7 @@ export function DeleteButton(props: DeleteButtonProps) {
             }
         >
             <div
-                className="popup-content pane workspace-setting-popup"
+                className="pane knowledge-base-finding-definition-popup"
                 style={{ width: "100ch", backgroundColor: "rgba(30,0,0,0.25)" }}
             >
                 <h2 className="heading neon">Are you sure you want to delete the finding definition "{name}"?</h2>
