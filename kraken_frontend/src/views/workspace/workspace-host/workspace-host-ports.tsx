@@ -6,10 +6,17 @@ import TagList from "../components/tag-list";
 import WorkspaceTable from "../components/workspace-table";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
+/** React props for [`<WorkspaceHostPorts />`]{@link WorkspaceHostPorts} */
 type WorkspaceDataPortsProps = {
+    /**
+     * Host of which details are shown
+     */
     host: FullHost | null;
 };
 
+/**
+ * Shows table with all the found ports from current host
+ */
 export function WorkspaceHostPorts(props: WorkspaceDataPortsProps) {
     const { host } = props;
     const {

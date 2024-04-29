@@ -5,18 +5,46 @@ import "../../../styling/invitation.css";
 import WorkspaceIcon from "../../../svg/workspace";
 import { handleApiError } from "../../../utils/helper";
 
+/** React props for <Invitation />*/
 type InvitationProps = {
+    /**
+     * UUID of invitation
+     */
     invitationUuid: UUID;
+    /**
+     * Workspace the invitation is for
+     */
     workspace: SimpleWorkspace;
+    /**
+     * User who sent out the invitation
+     */
     from: SimpleUser;
+    /**
+     * Callback after invitation is accepted or declined
+     */
     onFinish(): void;
 };
 
+/**
+ * Popup for invited user to accept or decline workspace invitation
+ */
 export default function Invitation(props: InvitationProps) {
+    /**
+     *Api call to accept workspace invitation
+     * calls callback function on success
+     *
+     * @returns Promise<void>
+     */
     function acceptInvitation() {
         return Api.invitations.accept(props.invitationUuid).then(handleApiError(() => props.onFinish()));
     }
 
+    /**
+     * Api call to decline workspace invitation
+     * calls callback function on success
+     *
+     * @returns Promise<void>
+     */
     function declineInvitation() {
         return Api.invitations.decline(props.invitationUuid).then(handleApiError(() => props.onFinish()));
     }

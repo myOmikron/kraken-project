@@ -13,12 +13,25 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 
+/** React props for [`<WorkspaceDataDomainDetails />`]{@link WorkspaceDataDomainDetails} */
 export type WorkspaceDataDomainDetailsProps = {
+    /**
+     * Domain UUID
+     */
     domain: string;
+    /**
+     * Callback when Domain data was edited
+     */
     updateDomain?: (uuid: string, update: Partial<FullDomain>) => void;
+    /**
+     * The tab to render
+     */
     tab: "general" | "results" | "relations" | "findings";
 };
 
+/**
+ * Tall pane with background which shows detailed information for the Domain
+ */
 export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProps) {
     const { domain: uuid, updateDomain: signalUpdate, tab: tab } = props;
     const {
@@ -35,6 +48,13 @@ export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProp
         Api.workspaces.domains.sources(workspace, uuid).then(handleApiError(setAttacks));
     }, [workspace, uuid]);
 
+    /**
+     * Send an update to the server and parent component
+     *
+     * @param uuid  Domain UUID to update
+     * @param update The properties to update on the Domain
+     * @param msg Message to show on success
+     */
     function update(uuid: string, update: Partial<FullDomain>, msg?: string) {
         const { tags, comment } = update;
         Api.workspaces.domains

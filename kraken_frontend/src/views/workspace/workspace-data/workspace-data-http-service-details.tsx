@@ -1,9 +1,13 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { Api } from "../../../api/api";
-import { FullAggregationSource, ListFindings, TagType } from "../../../api/generated";
-import { FullHttpService } from "../../../api/generated/models/FullHttpService";
-import { HttpServiceRelations } from "../../../api/generated/models/HttpServiceRelations";
+import {
+    FullAggregationSource,
+    FullHttpService,
+    HttpServiceRelations,
+    ListFindings,
+    TagType,
+} from "../../../api/generated";
 import SelectableText from "../../../components/selectable-text";
 import Textarea from "../../../components/textarea";
 import { handleApiError } from "../../../utils/helper";

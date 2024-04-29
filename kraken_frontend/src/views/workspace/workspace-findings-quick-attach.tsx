@@ -1,8 +1,15 @@
 import React, { useEffect } from "react";
 import { toast } from "react-toastify";
 import { Api, UUID } from "../../api/api";
-import { AggregationType, FullDomain, FullHost, FullPort, FullService, ListFindings } from "../../api/generated";
-import { FullHttpService } from "../../api/generated/models/FullHttpService";
+import {
+    AggregationType,
+    FullDomain,
+    FullHost,
+    FullHttpService,
+    FullPort,
+    FullService,
+    ListFindings,
+} from "../../api/generated";
 import { handleApiError } from "../../utils/helper";
 import { WORKSPACE_CONTEXT } from "./workspace";
 import { CreateFindingAffected, LocalAffected } from "./workspace-finding/workspace-create-finding";

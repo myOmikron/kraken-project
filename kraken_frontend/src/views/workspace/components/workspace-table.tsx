@@ -12,6 +12,7 @@ import { handleApiError } from "../../../utils/helper";
 import { Result } from "../../../utils/result";
 import FilterInput, { FilterInputProps, useFilter } from "./filter-input";
 
+/** React props for [`<WorkspaceTable />`]{@link WorkspaceTable} */
 export type WorkspaceDataTableProps<T> = {
     /** workspace UUID */
     workspace: string;
@@ -40,6 +41,9 @@ export type WorkspaceDataTableProps<T> = {
      */
     onAdd?: () => void;
 
+    /**
+     * Toggle if table has background pane or not
+     */
     noBackground?: boolean;
 };
 export type GenericPage<T> = {
@@ -80,16 +84,19 @@ export default function WorkspaceTable<T extends { uuid: string }>(props: Worksp
     });
 }
 
+/** React props for [`<StatelessWorkspaceTable />`]{@link StatelessWorkspaceTable} */
 export type StatelessWorkspaceTableProps = {
     /** The total number of items across all pages */
     total: number;
 
     /** The number of items per page */
     limit: number;
+    /** callback to set limit */
     setLimit: (limit: number) => void;
 
     /** The number of items in the pages before the current one */
     offset: number;
+    /** callback to set offset */
     setOffset: (offset: number) => void;
 
     /** The table's header row and body rows*/
@@ -107,6 +114,9 @@ export type StatelessWorkspaceTableProps = {
 
     filter: FilterInputProps;
 
+    /**
+     * Toggle if table has background with gradient or not
+     */
     solidBackground?: boolean;
 };
 
@@ -126,6 +136,11 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
 
     const lastOffset = Math.floor(total / limit) * limit;
 
+    /**
+     * Set offset (number of data before the current one) for paginating trough data
+     *
+     * @param offset new offset
+     */
     function setOffset(offset: number) {
         if (offset < 0) {
             setRawOffset(0);
@@ -184,7 +199,19 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
                 </div>
                 <div className={"workspace-table-controls-page-container"}>
                     <span>{`${offset + 1} - ${Math.min(total, offset + limit + 1)} of ${total}`}</span>
-                    <Select<{ label: string; value: number }, false>
+                    <Select<
+                        {
+                            /**
+                             * react select label
+                             */
+                            label: string;
+                            /**
+                             * react select value
+                             */
+                            value: number;
+                        },
+                        false
+                    >
                         menuPlacement={"auto"}
                         value={{ value: limit, label: String(limit) }}
                         options={[10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((n) => ({ value: n, label: String(n) }))}

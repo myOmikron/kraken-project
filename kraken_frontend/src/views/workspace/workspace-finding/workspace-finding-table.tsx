@@ -12,16 +12,32 @@ import { handleApiError } from "../../../utils/helper";
 import SeverityIcon from "../components/severity-icon";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
+/**
+ * Props for the <WorkspaceFindingTable> component
+ */
 export type WorkspaceFindingTableProps = {
+    /**
+     * Callback if filters are applied
+     */
     filter?: (finding: SimpleFinding) => boolean;
-    onClickRow?: (finding: SimpleFinding, e: { ctrlKey: boolean; altKey: boolean; shiftKey: boolean }) => void;
-    onAuxClickRow?: (finding: SimpleFinding, e: { ctrlKey: boolean; altKey: boolean; shiftKey: boolean }) => void;
+    /**
+     * Callback when a Finding is clicked with MouseClick
+     */
+    onClickRow?: (finding: SimpleFinding, e: React.MouseEvent<HTMLDivElement>) => void;
+    /**
+     * Callback when a Finding is clicked with AuxCLick
+     */
+    onAuxClickRow?: (finding: SimpleFinding, e: React.MouseEvent<HTMLDivElement>) => void;
 };
 
-export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filter }: WorkspaceFindingTableProps) {
+/**
+ * Page listing Findings of current workspace
+ */
+export default function WorkspaceFindingTable(props: WorkspaceFindingTableProps) {
     const {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
+    const { filter, onAuxClickRow, onClickRow } = props;
     const [findings, setFindings] = React.useState<Array<SimpleFinding>>([]);
     const [search, setSearch] = React.useState("");
     // Finding categories which are used by the `findings`

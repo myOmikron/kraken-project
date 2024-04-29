@@ -1,5 +1,11 @@
+/** React props for [`<StartAttack />`]{@link StartAttack} */
 export type StartAttackProps = {};
 
+/**
+ * Button with svg icon and name next to it
+ *
+ * Used for `<GenericAttackForm />`
+ */
 export default function StartAttack(props: StartAttackProps) {
     return (
         <div className={"start-attack-container"}>

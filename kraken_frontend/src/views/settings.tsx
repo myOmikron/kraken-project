@@ -9,6 +9,13 @@ import CloseIcon from "../svg/close";
 import CopyIcon from "../svg/copy";
 import { copyToClipboard, handleApiError } from "../utils/helper";
 
+/**
+ * Page showing the kraken settings
+ *
+ * Only visible for admin user
+ *
+ * @returns JSX.Element
+ */
 export default function Settings() {
     const [settings, setSettings] = React.useState<SettingsFull | null>(null);
     const [oauthApplications, setOauthApplications] = React.useState<Array<FullOauthClient>>([]);
@@ -19,10 +26,16 @@ export default function Settings() {
     const [wordlistPath, setWordlistPath] = React.useState<string>("");
     const [wordlistDescription, setWordlistDescription] = React.useState<string>("");
 
+    /**
+     * Api call to get the currently active settings
+     */
     async function retrieveSettings() {
         await Api.admin.settings.get().then(handleApiError((settings) => setSettings(settings)));
     }
 
+    /**
+     * Api call to get the current existing OAuth apps
+     */
     async function getOAuthApps() {
         await Api.admin.oauthApplications.all().then(
             handleApiError((apps) => {
@@ -31,6 +44,9 @@ export default function Settings() {
         );
     }
 
+    /**
+     * Api call to get all wordlists including their paths
+     */
     async function updateWordlists() {
         await Api.admin.wordlists.all().then(
             handleApiError((wordlists) => {
@@ -43,6 +59,11 @@ export default function Settings() {
         Promise.all([getOAuthApps(), retrieveSettings(), updateWordlists()]).then();
     }, []);
 
+    /**
+     * Api call to create a new wordlist
+     *
+     * Name and path are required
+     */
     async function createWordlist() {
         if (wordlistName === "") {
             toast.error("Name of the wordlist must not be empty");
@@ -62,6 +83,9 @@ export default function Settings() {
             .then(handleApiError((_) => toast.success("Created wordlist")));
     }
 
+    /**
+     * Api call to save the updated settings
+     */
     async function saveSettings() {
         if (settings === null) {
             return;
@@ -70,6 +94,11 @@ export default function Settings() {
         await Api.admin.settings.update(settings).then(handleApiError((_) => toast.success("Settings updated")));
     }
 
+    /**
+     * Api call to create a new application
+     *
+     * Name and uri are required
+     */
     async function createOAuthApp() {
         if (newOAuthAppName === "" || newOAuthAppRedirectUrl === "") {
             toast.error("App name and redirect uri must not be empty");

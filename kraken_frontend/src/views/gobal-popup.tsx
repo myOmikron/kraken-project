@@ -6,15 +6,37 @@ import WS from "../api/websocket";
 import { handleApiError } from "../utils/helper";
 import Invitation from "./workspace/invitation/invitation";
 
+/** workspace invitation popup */
 type Popup = WsInvitationToWorkspace;
 
+/** type for workspace invitation*/
 type WsInvitationToWorkspace = {
+    /**
+     * popup type
+     */
     type: "invitation";
+    /**
+     * UUID of invitation
+     */
     invitationUuid: UUID;
+    /**
+     * workspace the invitation is for
+     */
     workspace: SimpleWorkspace;
+    /**
+     * user who sent out workspace invitation
+     */
     from: SimpleUser;
 };
 
+/**
+ * Handle all global popups (currently only invitations)
+ * and display them on top of kraken
+ *
+ * new popup types can be added here
+ *
+ * @returns displayed popup
+ */
 export default function GlobalPopup() {
     const [popups, setPopups] = React.useState<Array<Popup>>([]);
 
@@ -46,6 +68,11 @@ export default function GlobalPopup() {
         popup = popups[0];
     }
 
+    /**
+     * switch trough popup type to select the displayed popup
+     *
+     * @returns <Invitation/>
+     */
     const popupDisplay = () => {
         switch (popup.type) {
             case "invitation":

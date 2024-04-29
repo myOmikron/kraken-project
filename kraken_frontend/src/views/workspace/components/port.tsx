@@ -6,15 +6,26 @@ import SelectableText from "../../../components/selectable-text";
 import { handleApiError } from "../../../utils/helper";
 import { PortRelationsList } from "./relations-list";
 
-export default function PortNumber({
-    port,
-    pretty,
-    withProtocol,
-}: {
+/** React props for [`<PortNumber />`]{@link PortNumber} */
+type PortNumberProps = {
+    /**
+     * Port to display
+     */
     port: FullPort | SimplePort;
     pretty?: boolean;
+    /**
+     * Can be set to true to show port protocol
+     */
     withProtocol?: boolean;
-}) {
+};
+
+/**
+ * Component to display Port number.
+ *
+ * On hover display popup with list of Port relation
+ */
+export default function PortNumber(props: PortNumberProps) {
+    const { port, pretty, withProtocol } = props;
     const [relations, setRelations] = useState<PortRelations | undefined>(undefined);
     const [fullPort, setFullPort] = useState<FullPort | undefined>(
         typeof port.host == "string" ? undefined : (port as FullPort),

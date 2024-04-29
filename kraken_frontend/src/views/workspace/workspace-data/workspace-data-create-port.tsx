@@ -8,10 +8,19 @@ import { selectStyles } from "../../../components/select-menu";
 import { handleApiError } from "../../../utils/helper";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
+/** React props for [`<CreatePortForm />`]{@link CreatePortForm} */
 type CreatePortFormProps = {
+    /**
+     * Callback when new Port was successfully created
+     */
     onSubmit: () => void;
 };
 
+/**
+ * `<form />`including all inputs to manually create a new Port
+ *
+ * Allows submitting to create in the current workspace.
+ */
 export function CreatePortForm(props: CreatePortFormProps) {
     const { onSubmit } = props;
     const {
@@ -52,7 +61,16 @@ export function CreatePortForm(props: CreatePortFormProps) {
             </label>
             <label>
                 Certainty:
-                <Select<{ value: ManualPortCertainty; label: ManualPortCertainty }>
+                <Select<{
+                    /**
+                     * selectable option for port certainty
+                     */
+                    value: ManualPortCertainty;
+                    /**
+                     * react select label for port certainty
+                     */
+                    label: ManualPortCertainty;
+                }>
                     styles={selectStyles("default")}
                     options={Object.values(ManualPortCertainty).map((value) => ({ value, label: value }))}
                     value={{ value: certy, label: certy }}
@@ -61,7 +79,16 @@ export function CreatePortForm(props: CreatePortFormProps) {
             </label>
             <label>
                 Protocol:
-                <Select<{ value: PortProtocol; label: PortProtocol }>
+                <Select<{
+                    /**
+                     * selectable option for port protocol
+                     */
+                    value: PortProtocol;
+                    /**
+                     * react select label for port protocol
+                     */
+                    label: PortProtocol;
+                }>
                     styles={selectStyles("default")}
                     options={Object.values(PortProtocol).map((value) => ({ value, label: value }))}
                     value={{ value: proto, label: proto }}

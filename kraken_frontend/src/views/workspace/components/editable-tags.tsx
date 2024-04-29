@@ -8,6 +8,7 @@ import { selectStyles } from "../../../components/select-menu";
 import Tag from "../../../components/tag";
 import WorkspaceCreateTag from "./workspace-create-tag";
 
+/** React props for <EditableTags />*/
 export type EditableTagsProps = {
     /**
      * The workspace containing the item whose tags to edit

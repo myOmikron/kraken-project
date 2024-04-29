@@ -8,10 +8,19 @@ import { selectStyles } from "../../../components/select-menu";
 import { handleApiError } from "../../../utils/helper";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
+/** React props for [`<CreateHostForm />`]{@link CreateHostForm} */
 type CreateHostFormProps = {
+    /**
+     * Callback when new Host was successfully created
+     */
     onSubmit: () => void;
 };
 
+/**
+ * `<form />`including all inputs to manually create a new Host
+ *
+ * Allows submitting to create in the current workspace.
+ */
 export function CreateHostForm(props: CreateHostFormProps) {
     const { onSubmit } = props;
     const {
@@ -39,7 +48,16 @@ export function CreateHostForm(props: CreateHostFormProps) {
             </label>
             <label>
                 Certainty:
-                <Select<{ value: ManualHostCertainty; label: ManualHostCertainty }>
+                <Select<{
+                    /**
+                     * selectable option for host certainty
+                     */
+                    value: ManualHostCertainty;
+                    /**
+                     * react select label for host certainty
+                     */
+                    label: ManualHostCertainty;
+                }>
                     styles={selectStyles("default")}
                     options={Object.values(ManualHostCertainty).map((value) => ({ value, label: value }))}
                     value={{ value: certy, label: certy }}

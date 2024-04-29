@@ -14,12 +14,25 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 
+/** React props for [`<WorkspaceDataHostDetails />`]{@link WorkspaceDataHostDetails} */
 export type WorkspaceDataHostDetailsProps = {
+    /**
+     * Host UUID
+     */
     host: string;
+    /**
+     * Callback when Host data was edited
+     */
     updateHost?: (uuid: string, update: Partial<FullHost>) => void;
+    /**
+     * The tab to render
+     */
     tab: "general" | "results" | "relations" | "findings";
 };
 
+/**
+ * Tall pane with background which shows detailed information for the Host
+ */
 export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
     const { host: uuid, updateHost: signalUpdate, tab: tab } = props;
     const {
@@ -36,7 +49,13 @@ export function WorkspaceDataHostDetails(props: WorkspaceDataHostDetailsProps) {
         Api.workspaces.hosts.sources(workspace, uuid).then(handleApiError(setAttacks));
     }, [workspace, uuid]);
 
-    /** Send an update to the server and parent component */
+    /**
+     * Send an update to the server and parent component
+     *
+     * @param uuid  Host UUID to update
+     * @param update The properties to update on the Host
+     * @param msg Message to show on success
+     */
     function update(uuid: string, update: Partial<FullHost>, msg?: string) {
         const { tags, comment } = update;
         Api.workspaces.hosts

@@ -3,8 +3,16 @@ import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
 import { Api } from "../../api/api";
 import { ApiError } from "../../api/error";
-import { AggregationType, FullDomain, FullHost, FullPort, FullService, SimpleTag, TagType } from "../../api/generated";
-import { FullHttpService } from "../../api/generated/models/FullHttpService";
+import {
+    AggregationType,
+    FullDomain,
+    FullHost,
+    FullHttpService,
+    FullPort,
+    FullService,
+    SimpleTag,
+    TagType,
+} from "../../api/generated";
 import Checkbox from "../../components/checkbox";
 import Indicator from "../../components/indicator";
 import OsIcon from "../../components/os-icon";
@@ -58,9 +66,7 @@ const DETAILS_TAB = { general: "General", results: "Results", relations: "Relati
  */
 type SelectedUuids = Record<AggregationType, Record<string, true>>;
 
-/**
- * Props for the <WorkspaceData> component
- */
+/** React props for [`<WorkspaceData />`]{@link WorkspaceData} */
 type WorkspaceDataProps = {};
 
 /**

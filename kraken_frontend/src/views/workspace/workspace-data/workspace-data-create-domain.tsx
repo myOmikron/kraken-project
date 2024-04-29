@@ -5,10 +5,19 @@ import Input from "../../../components/input";
 import { handleApiError } from "../../../utils/helper";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
+/** React props for [`<CreateDomainForm />`]{@link CreateDomainForm} */
 type CreateDomainFormProps = {
+    /**
+     * Callback when new Domain was successfully created
+     */
     onSubmit: () => void;
 };
 
+/**
+ * `<form />`including all inputs to manually create a new Domain
+ *
+ * Allows submitting to create in the current workspace.
+ */
 export function CreateDomainForm(props: CreateDomainFormProps) {
     const { onSubmit } = props;
     const {

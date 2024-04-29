@@ -16,14 +16,22 @@ import CloseIcon from "../../svg/close";
 import { handleApiError } from "../../utils/helper";
 import { WORKSPACE_CONTEXT } from "./workspace";
 
-type WorkspaceSettingsProps = {};
-
+/**
+ * Type for React Select
+ */
 type SelectValue = {
+    /** select label */
     label: string;
+    /** select value */
     value: string;
 };
 
-export default function WorkspaceSettings(_: WorkspaceSettingsProps) {
+/**
+ * Page including all settings for current workspace
+ *
+ * @returns JSX.Element setting page
+ */
+export default function WorkspaceSettings() {
     const { workspace } = React.useContext(WORKSPACE_CONTEXT);
 
     const [workspaceName, setWorkspaceName] = React.useState("");
@@ -47,18 +55,42 @@ export default function WorkspaceSettings(_: WorkspaceSettingsProps) {
         setWorkspaceDescription(workspace.description || null);
     }, [workspace]);
 
+    /**
+     * Api call to get all invited users for current workspace
+     *
+     * @returns Promise<void>
+     */
     function updateInvitedUsers() {
         return Api.workspaces.invitations
             .all(workspace.uuid)
             .then(handleApiError((x) => setInvitedUsers(x.invitations)));
     }
 
+    /**
+     * Api call if current workspace is archived
+     *
+     * @returns Promise<void>
+     */
     function fetchWorkspace() {
         return Api.workspaces.get(workspace.uuid).then(handleApiError((x) => setIsArchived(x.archived)));
     }
 
+    /**
+     * Api call to update current workspace name and description
+     *
+     * @returns Promise<void>
+     */
     function updateWorkspace() {
-        let update: { name: null | string; description: null | string } = { name: null, description: null };
+        let update: {
+            /**
+             * new workspace name
+             */
+            name: null | string;
+            /**
+             * new workspace description
+             */
+            description: null | string;
+        } = { name: null, description: null };
 
         if (workspaceName !== workspace.name && workspaceName !== "") {
             update = { ...update, name: workspaceName };
@@ -73,17 +105,26 @@ export default function WorkspaceSettings(_: WorkspaceSettingsProps) {
             .then(handleApiError(() => toast.success("Workspace updated")));
     }
 
+    /**
+     * Api call to delete the current workspace and
+     * redirect to workspace overview
+     *
+     * @returns Promise<void>
+     */
     function deleteWorkspace() {
-        const toastId = toast.loading("Deleting workspace");
+        toast.loading("Deleting workspace");
         return Api.workspaces.delete(workspace.uuid).then(
             handleApiError(() => {
                 toast.success("Deleted Workspace");
                 ROUTES.WORKSPACES.visit({});
             }),
         );
-        toast.dismiss(toastId);
     }
 
+    /**
+     * Api call to archive the current workspace and
+     * redirect to workspace overview
+     */
     function archiveWorkspace() {
         toast.promise(
             Api.workspaces.archive(workspace.uuid).then(
@@ -99,6 +140,9 @@ export default function WorkspaceSettings(_: WorkspaceSettingsProps) {
         );
     }
 
+    /**
+     * Api call to un-archive current workspace
+     */
     function unarchiveWorkspace() {
         toast.promise(
             Api.workspaces.unarchive(workspace.uuid).then(
@@ -115,6 +159,12 @@ export default function WorkspaceSettings(_: WorkspaceSettingsProps) {
         );
     }
 
+    /**
+     * Api call to get a list of all possible users
+     * who the ownership of the current workspace can be transferred to
+     *
+     * @returns Promise<void>
+     */
     function createTransferList() {
         return Api.user.all().then(
             handleApiError((u) => {
@@ -130,6 +180,12 @@ export default function WorkspaceSettings(_: WorkspaceSettingsProps) {
         );
     }
 
+    /**
+     * Api call to get a list of all possible users
+     * who can be invited to current workspace
+     *
+     * @returns Promise<void>
+     */
     function createInviteList() {
         return Api.user.all().then(
             handleApiError((u) => {
@@ -146,10 +202,19 @@ export default function WorkspaceSettings(_: WorkspaceSettingsProps) {
         );
     }
 
+    /**
+     * Api call to delete a user from current workspace
+     */
     function deleteUser() {
         /*TODO delete member*/
     }
 
+    /**
+     * Api call to invite a user to the current workspace
+     * calls to update list of all invited users
+     *
+     * @returns Promise<void>
+     */
     function inviteUser() {
         if (selectedUser === null) {
             toast.error("No user selected");
@@ -166,6 +231,12 @@ export default function WorkspaceSettings(_: WorkspaceSettingsProps) {
         );
     }
 
+    /**
+     * Api call to transfer the ownership of the
+     * current workspace to a different user
+     *
+     * @returns Promise<void>
+     */
     function transferOwnership() {
         if (selectedUser === null) {
             toast.error("No user selected");
@@ -391,10 +462,10 @@ export default function WorkspaceSettings(_: WorkspaceSettingsProps) {
                         </button>
                         <button
                             className="button"
-                            onClick={async (x) => {
+                            onClick={(x) => {
                                 {
                                     x.preventDefault();
-                                    await deleteUser();
+                                    deleteUser();
                                 }
                             }}
                         >
@@ -463,9 +534,9 @@ export default function WorkspaceSettings(_: WorkspaceSettingsProps) {
                         </button>
                         <button
                             className="workspace-settings-red-button button"
-                            onClick={async (x) => {
+                            onClick={(x) => {
                                 x.preventDefault();
-                                await archiveWorkspace();
+                                archiveWorkspace();
                             }}
                         >
                             Yes
@@ -495,9 +566,9 @@ export default function WorkspaceSettings(_: WorkspaceSettingsProps) {
                         </button>
                         <button
                             className="workspace-settings-red-button button"
-                            onClick={async (x) => {
+                            onClick={(x) => {
                                 x.preventDefault();
-                                await unarchiveWorkspace();
+                                unarchiveWorkspace();
                             }}
                         >
                             Yes

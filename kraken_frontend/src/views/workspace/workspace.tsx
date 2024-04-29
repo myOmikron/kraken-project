@@ -22,12 +22,22 @@ export const WORKSPACE_CONTEXT = React.createContext<WorkspaceContext>({
 });
 WORKSPACE_CONTEXT.displayName = "WorkspaceContext";
 
+/** React props for [`<Workspace />`]{@link Workspace} */
 type WorkspaceProps = {
+    /**
+     * UUID of current Workspace
+     */
     uuid: UUID;
+    /**
+     * The workspace view which is shown
+     */
     view: WorkspaceView;
     children: React.ReactNode;
 };
 
+/**
+ * Type for all menu options of a single workspace
+ */
 export type WorkspaceView = "search" | "attacks" | "findings" | "data" | "hosts" | "settings" | "notes";
 
 export default function Workspace(props: WorkspaceProps) {

@@ -6,8 +6,15 @@ import UnknownIcon from "../../../svg/unknown";
 import UnverifiedIcon from "../../../svg/unverified";
 import VerifiedIcon from "../../../svg/verified";
 
+/** React props for {@link CertaintyIcon `<CertaintyIcon />`} */
 type CertaintyIconProps = {
+    /**
+     * type of certainty
+     */
     certainty: DomainCertainty | HostCertainty | PortCertainty | ServiceCertainty;
+    /**
+     * toggle if name is visible next to the certainty icon
+     */
     nameVisible?: boolean | undefined;
 };
 
@@ -15,8 +22,17 @@ type CertaintyIconProps = {
 const CERTAINTIES: Record<
     DomainCertainty | HostCertainty | PortCertainty | ServiceCertainty,
     {
+        /**
+         * Svg icon for certainty
+         */
         icon: React.ReactNode;
+        /**
+         * displayed certainty name
+         */
         name: string;
+        /**
+         * displayed certainty description
+         */
         description: string;
     }
 > = {
@@ -73,6 +89,10 @@ const CERTAINTIES: Record<
     },
 };
 
+/**
+ * Displays certainty icon.
+ * On hover displays popup with certainty name and description
+ */
 export default function CertaintyIcon(props: CertaintyIconProps) {
     const { certainty, nameVisible } = props;
     const { icon, name, description } = CERTAINTIES[certainty];

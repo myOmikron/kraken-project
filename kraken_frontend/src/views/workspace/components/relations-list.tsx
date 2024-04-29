@@ -1,6 +1,11 @@
 import { ReactNode } from "react";
-import { DomainRelations, HostRelations, PortRelations, ServiceRelations } from "../../../api/generated";
-import { HttpServiceRelations } from "../../../api/generated/models/HttpServiceRelations";
+import {
+    DomainRelations,
+    HostRelations,
+    HttpServiceRelations,
+    PortRelations,
+    ServiceRelations,
+} from "../../../api/generated";
 import RelationIndirectIcon from "../../../svg/relation-indirect";
 import RelationLeftIcon from "../../../svg/relation-left";
 import RelationRightIcon from "../../../svg/relation-right";

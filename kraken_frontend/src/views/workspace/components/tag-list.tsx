@@ -1,15 +1,30 @@
+import React from "react";
 import { SimpleTag } from "../../../api/generated";
 import Tag from "../../../components/tag";
 import { UseFilterReturn } from "./filter-input";
 
-export type TagClickCallback = (e: { ctrlKey: boolean; shiftKey: boolean; altKey: boolean }, tag: SimpleTag) => void;
+export type TagClickCallback = (
+    e: React.KeyboardEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement, MouseEvent>,
+    tag: SimpleTag,
+) => void;
 
+/** React props for [`<TagList />`]{@link TagList} */
 type TagListProps = {
+    /**
+     * List of tags to display
+     */
     tags: Array<SimpleTag>;
     globalFilter?: UseFilterReturn;
     filter?: UseFilterReturn;
+    /**
+     * Callback when tag is clicked
+     */
     onClickTag?: TagClickCallback;
 };
+
+/**
+ * Component to display a list of tags in a row
+ */
 export default function TagList(props: TagListProps) {
     return (
         <div className={"tag-list"}>

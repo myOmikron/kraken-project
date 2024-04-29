@@ -2,7 +2,7 @@ import React from "react";
 
 /** React props for [`<Textarea />`]{@link Textarea} */
 export type TextareaProps = {
-    /** The textarea's current value */
+    /** The text area's current value */
     value: string;
     /** Callback invoked when the user changed the value */
     onChange: (newValue: string) => void;

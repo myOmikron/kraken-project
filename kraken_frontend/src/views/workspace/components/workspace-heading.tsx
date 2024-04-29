@@ -8,11 +8,23 @@ import "../../../styling/workspace-heading.css";
 import CopyIcon from "../../../svg/copy";
 import { copyToClipboard, handleApiError } from "../../../utils/helper";
 
+/** React props for [`<WorkspaceHeading />`]{@link WorkspaceHeading} */
 type WorkspaceHeadingProps = {
+    /**
+     * current workspace UUID
+     */
     uuid: UUID;
+    /**
+     * current workspace name
+     */
     name: string;
 };
 
+/**
+ * Pane used as heading throughout the view for a specific workspace
+ *
+ * <Select /> to quickly change between workspaces
+ */
 export default function WorkspaceHeading(props: WorkspaceHeadingProps) {
     const [workspaces, setWorkspaces] = React.useState<Array<SimpleWorkspace>>([]);
 
@@ -22,7 +34,16 @@ export default function WorkspaceHeading(props: WorkspaceHeadingProps) {
 
     return (
         <div className={"pane workspace-heading"}>
-            <Select<{ label: string; value: string }>
+            <Select<{
+                /**
+                 * react select label to switch between workspaces
+                 */
+                label: string;
+                /**
+                 * react select value to switch between workspaces
+                 */
+                value: string;
+            }>
                 className={"dropdown"}
                 components={{
                     Option: (props) => (

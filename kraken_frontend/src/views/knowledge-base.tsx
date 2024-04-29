@@ -1,9 +1,14 @@
 import { ROUTES } from "../routes";
 import "../styling/knowledge-base.css";
 
-type KnowledgeBaseProps = {};
-
-export default function KnowledgeBase(props: KnowledgeBaseProps) {
+/**
+ * Page to display knowledge base
+ *
+ * currently redirecting to {@link ListFindingDefinition `< ListFindingDefinition  />`}
+ *
+ * @returns JSX.Element page displaying knowledge base
+ */
+export default function KnowledgeBase() {
     return (
         <div className={"knowledge-base-container"}>
             <div className={"pane"}>

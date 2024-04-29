@@ -4,7 +4,11 @@ import { SimpleWorkspace } from "../../api/generated";
 import Loading from "../../components/loading";
 import { handleApiError } from "../../utils/helper";
 
-/** View to expose the `/api/v1/admin/workspaces` endpoints */
+/**
+ *  View to expose the `/api/v1/admin/workspaces` endpoints
+ *
+ * @returns JSX.Element
+ */
 export default function AdminWorkspaces() {
     const [workspaces, setWorkspaces] = React.useState<Array<SimpleWorkspace> | undefined>(undefined);
 

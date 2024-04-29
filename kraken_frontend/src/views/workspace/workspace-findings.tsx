@@ -10,10 +10,17 @@ import { WORKSPACE_CONTEXT } from "./workspace";
 import { DynamicTreeGraph } from "./workspace-finding/workspace-finding-dynamic-tree";
 import WorkspaceFindingTable from "./workspace-finding/workspace-finding-table";
 
+/** React props for [`<WorkspaceFindings />`]*/
 export type WorkspaceFindingsProps = {
+    /**
+     * The view to render
+     */
     view: "table" | "graph";
 };
 
+/**
+ * List all Findings of a Workspace either in Table or Graph view
+ */
 export default function WorkspaceFindings(props: WorkspaceFindingsProps) {
     const {
         workspace: { uuid: workspace },

@@ -9,13 +9,28 @@ import "../../../styling/select-finding-definition.css";
 import { handleApiError } from "../../../utils/helper";
 import { CreateFindingDefinition } from "../../knowledge-base/create-finding-definition";
 
+/** React props for [`<SelectFindingDefinition />`]{@link SelectFindingDefinition} */
 export type SelectFindingDefinitionProps = {
+    /**
+     * selected Finding Definition
+     */
     selected: string | undefined;
+    /**
+     * Callback when a Finding Definition is selected
+     */
     onSelect: (newSelected: SimpleFindingDefinition) => void;
+    /**
+     * Callback when a Finding Definition in Dropdown menu is hovered
+     */
     onHover: (newHovered: SimpleFindingDefinition | undefined) => void;
     required?: boolean;
 };
 
+/**
+ * Dropdown menu to select a finding definition,
+ *
+ * User can start writing to create a new finding definition via <Popup />
+ */
 export default function SelectFindingDefinition(props: SelectFindingDefinitionProps) {
     const { selected, onSelect, onHover, required } = props;
 

@@ -6,10 +6,17 @@ import TagList from "../components/tag-list";
 import WorkspaceTable from "../components/workspace-table";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
+/** React props for [`<WorkspaceHostDomains />`]{@link WorkspaceHostDomains} */
 export type WorkspaceDataDomainsProps = {
+    /**
+     * Host of which details are shown
+     */
     host: FullHost | null;
 };
 
+/**
+ * Shows table with all the found domains from current host
+ */
 export function WorkspaceHostDomains(props: WorkspaceDataDomainsProps) {
     const { host } = props;
     const {

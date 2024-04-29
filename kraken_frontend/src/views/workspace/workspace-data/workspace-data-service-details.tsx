@@ -13,12 +13,25 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
 
+/** React props for [`<WorkspaceDataServiceDetails />`]{@link WorkspaceDataServiceDetails} */
 export type WorkspaceDataServiceDetailsProps = {
+    /**
+     * Service UUID
+     */
     service: string;
+    /**
+     * Callback when Service data was edited
+     */
     updateService?: (uuid: string, update: Partial<FullService>) => void;
+    /**
+     * The tab to render
+     */
     tab: "general" | "results" | "relations" | "findings";
 };
 
+/**
+ * Tall pane with background which shows detailed information for the Service
+ */
 export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsProps) {
     const { service: uuid, updateService: signalUpdate, tab: tab } = props;
     const {
@@ -35,7 +48,13 @@ export function WorkspaceDataServiceDetails(props: WorkspaceDataServiceDetailsPr
         Api.workspaces.services.sources(workspace, uuid).then(handleApiError(setAttacks));
     }, [workspace, uuid]);
 
-    /** Send an update to the server and parent component */
+    /**
+     * Send an update to the server and parent component
+     *
+     * @param uuid  Service UUID to update
+     * @param update The properties to update on the Service
+     * @param msg Message to show on success
+     */
     function update(uuid: string, update: Partial<FullService>, msg?: string) {
         const { tags, comment } = update;
         Api.workspaces.services

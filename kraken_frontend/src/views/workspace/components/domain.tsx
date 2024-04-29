@@ -6,7 +6,22 @@ import SelectableText from "../../../components/selectable-text";
 import { handleApiError } from "../../../utils/helper";
 import { DomainRelationsList } from "./relations-list";
 
-export default function Domain({ domain, pretty: _ }: { domain: FullDomain | SimpleDomain; pretty?: boolean }) {
+/** React props for [`<Domain />`]{@link Domain} */
+type DomainProps = {
+    /**
+     * Domain to display
+     */
+    domain: FullDomain | SimpleDomain;
+    pretty?: boolean;
+};
+
+/**
+ * Component to display domain.
+ *
+ * On hover display popup with list of domain relation
+ */
+export default function Domain(props: DomainProps) {
+    const { domain } = props;
     const [relations, setRelations] = useState<DomainRelations | undefined>(undefined);
 
     const ensureDataLoaded = useCallback(() => {

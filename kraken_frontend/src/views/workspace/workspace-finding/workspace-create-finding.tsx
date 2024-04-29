@@ -8,13 +8,13 @@ import {
     FindingSeverity,
     FullDomain,
     FullHost,
+    FullHttpService,
     FullPort,
     FullService,
     SimpleFindingCategory,
     SimpleFindingDefinition,
     SimpleTag,
 } from "../../../api/generated";
-import { FullHttpService } from "../../../api/generated/models/FullHttpService";
 import FindingCategoryList from "../../../components/finding-category-list";
 import { GithubMarkdown } from "../../../components/github-markdown";
 import { SelectPrimitive } from "../../../components/select-menu";
@@ -60,7 +60,11 @@ export type CreateFindingObject =
     | { httpService: FullHttpService }
     | { port: FullPort };
 
+/** React props for {@link WorkspaceCreateFinding `<WorkspaceCreateFinding />`} */
 export type CreateFindingProps = {
+    /**
+     * optional list of affected data
+     */
     initAffected?: CreateFindingObject[];
 };
 
@@ -75,8 +79,12 @@ export type LocalAffected = CreateFindingAffectedRequest & {
         | { type: "Port"; _data: FullPort }
     );
 
+/** Type for editor tabs */
 type Section = "definition" | "description" | "affected" | "network";
 
+/**
+ * Page to create a new finding in current workspace
+ */
 export function WorkspaceCreateFinding(props: CreateFindingProps) {
     const {
         workspace: { uuid: workspace },
@@ -503,7 +511,17 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
     );
 }
 
-export function FindingDefinitionDetails(props: { definition: SimpleFindingDefinition | null | undefined }) {
+/**
+ * Pane displaying information of selected finding definition
+ *
+ * If no finding definition is selected, empty pane is shown
+ */
+export function FindingDefinitionDetails(props: {
+    /**
+     * selected finding definition
+     */
+    definition: SimpleFindingDefinition | null | undefined;
+}) {
     const { definition } = props;
     if (!definition) return <div className={"create-finding-pane"} />;
     else
@@ -518,22 +536,52 @@ export function FindingDefinitionDetails(props: { definition: SimpleFindingDefin
         );
 }
 
+/**
+ * Check if affected data is a domain
+ *
+ * @param obj selected affected
+ * @returns boolean
+ */
 function isAffectedDomain(obj: CreateFindingObject): obj is { domain: FullDomain } {
     return "domain" in obj && obj["domain"] !== undefined;
 }
 
+/**
+ * Check if affected data is a host
+ *
+ * @param obj selected affected
+ * @returns boolean
+ */
 function isAffectedHost(obj: CreateFindingObject): obj is { host: FullHost } {
     return "host" in obj && obj["host"] !== undefined;
 }
 
+/**
+ * Check if affected data is a port
+ *
+ * @param obj selected affected
+ * @returns boolean
+ */
 function isAffectedPort(obj: CreateFindingObject): obj is { port: FullPort } {
     return "port" in obj && obj["port"] !== undefined;
 }
 
+/**
+ * Check if affected data is a service
+ *
+ * @param obj selected affected
+ * @returns boolean
+ */
 function isAffectedService(obj: CreateFindingObject): obj is { service: FullService } {
     return "service" in obj && obj["service"] !== undefined;
 }
 
+/**
+ * Check if affected data is a http service
+ *
+ * @param obj selected affected
+ * @returns boolean
+ */
 function isAffectedHttpService(obj: CreateFindingObject): obj is { httpService: FullHttpService } {
     return "httpService" in obj && obj["httpService"] !== undefined;
 }
