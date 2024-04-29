@@ -728,6 +728,7 @@ pub async fn get_http_service_relations(
             HttpService::F.domain
         )
     )
+    .condition(HttpService::F.uuid.equals(path.hs_uuid))
     .optional()
     .await?
     .ok_or(ApiError::InvalidUuid)?;
