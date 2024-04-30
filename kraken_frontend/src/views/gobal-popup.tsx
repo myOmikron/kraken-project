@@ -22,11 +22,6 @@ export default function GlobalPopup() {
     async function retrieveInvitations() {
         await Api.invitations.all().then(
             handleApiError((e) => {
-                popups.push(
-                    ...e.invitations.map((i): WsInvitationToWorkspace => {
-                        return { type: "invitation", invitationUuid: i.uuid, from: i.from, workspace: i.workspace };
-                    }),
-                );
                 setPopups((popups) => [
                     ...popups,
                     ...e.invitations.map((i): WsInvitationToWorkspace => {
