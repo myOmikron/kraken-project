@@ -164,10 +164,10 @@ async fn detect_tls_service(
         if let Some(tls_banner) = tls_banner.as_ref() {
             debug!("Starting tls banner scans #{prevalence}");
             for probe in &generated::PROBES.empty_tls_probes[prevalence] {
-                trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(&tls_banner));
+                trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(tls_banner));
                 check_match(
                     &mut partial_matches,
-                    probe.is_match(&tls_banner),
+                    probe.is_match(tls_banner),
                     probe.service,
                 )?;
             }

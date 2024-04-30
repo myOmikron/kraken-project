@@ -86,7 +86,7 @@ impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
             attack_uuid: self.attack_uuid,
             address: address.to_string(),
             port: port as u16,
-            services: services.iter().cloned().collect(),
+            services: services.clone(),
         })
         .await;
 
