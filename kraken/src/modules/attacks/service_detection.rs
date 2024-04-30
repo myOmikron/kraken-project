@@ -1,3 +1,4 @@
+use std::iter;
 use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
@@ -59,46 +60,86 @@ impl AttackContext {
 impl HandleAttackResponse<ServiceDetectionResponse> for AttackContext {
     async fn handle_response(&self, response: ServiceDetectionResponse) -> Result<(), AttackError> {
         let ServiceDetectionResponse {
-            services,
-            response_type,
             address: Some(address),
             port,
+            tcp_certainty,
+            tcp_services,
+            is_tls,
+            tls_certainty,
+            tls_services,
         } = response
         else {
             return Err(AttackError::Malformed("Missing `address`"));
         };
+
+        // Basic conversions
         let address = IpAddr::try_from(address)?;
         let host = IpNetwork::from(address);
+        let tcp_certainty = parse_service_certainty(tcp_certainty)?;
+        let tls_certainty = parse_service_certainty(tls_certainty)?;
 
-        let certainty = match response_type {
-            1 => ServiceCertainty::MaybeVerified,
-            2 => ServiceCertainty::DefinitelyVerified,
-            _ => {
-                return Err(AttackError::Custom("Retrieved certainty Unknown".into()));
+        // Preprocess list of services:
+        // Combine `tcp_services` and `tls_services` into one list while merging matches between the two
+        let mut services = Vec::new();
+        for name in tcp_services.iter().cloned() {
+            services.push((name, true, false, tcp_certainty));
+        }
+        if is_tls {
+            if tls_certainty == ServiceCertainty::UnknownService {
+                services.push((
+                    "unknown".to_string(),
+                    false,
+                    true,
+                    ServiceCertainty::MaybeVerified,
+                ));
+            } else if tls_certainty == tcp_certainty {
+                for name in tls_services.iter() {
+                    if let Some(service) = services
+                        .iter_mut()
+                        .find(|(tcp_name, _, _, _)| tcp_name == name)
+                    {
+                        service.2 = true;
+                    } else {
+                        services.push((name.clone(), false, true, tls_certainty));
+                    }
+                }
+            } else {
+                for name in tls_services.iter().cloned() {
+                    services.push((name, false, true, tls_certainty));
+                }
             }
-        };
+        }
 
         let mut tx = GLOBAL.db.start_transaction().await?;
 
-        let result_uuid = insert!(&mut tx, ServiceDetectionResultInsert)
-            .return_primary_key()
-            .single(&ServiceDetectionResultInsert {
-                uuid: Uuid::new_v4(),
-                attack: ForeignModelByField::Key(self.attack_uuid),
-                certainty,
-                host,
-                port: port as i32,
-            })
-            .await?;
-        insert!(&mut tx, ServiceDetectionName)
-            .return_nothing()
-            .bulk(services.iter().map(|x| ServiceDetectionName {
-                uuid: Uuid::new_v4(),
-                name: x.name.to_string(),
-                result: ForeignModelByField::Key(result_uuid),
-            }))
-            .await?;
+        // Insert the two raw results
+        let mut tcp_result_uuid = Uuid::nil();
+        let mut tls_result_uuid = Uuid::nil();
+        for (certainty, services, result_uuid) in
+            iter::once((tcp_certainty, tcp_services, &mut tcp_result_uuid))
+                .chain(is_tls.then_some((tls_certainty, tls_services, &mut tls_result_uuid)))
+        {
+            *result_uuid = insert!(&mut tx, ServiceDetectionResultInsert)
+                .return_primary_key()
+                .single(&ServiceDetectionResultInsert {
+                    uuid: Uuid::new_v4(),
+                    attack: ForeignModelByField::Key(self.attack_uuid),
+                    certainty,
+                    host,
+                    port: port as i32,
+                })
+                .await?;
+            insert!(&mut tx, ServiceDetectionName)
+                .return_nothing()
+                .bulk(services.into_iter().map(|name| ServiceDetectionName {
+                    uuid: Uuid::new_v4(),
+                    name,
+                    result: ForeignModelByField::Key(*result_uuid),
+                }))
+                .await?;
+        }
 
+        // Update the aggregations
         let host_uuid = GLOBAL
             .aggregator
             .aggregate_host(self.workspace.uuid, host, HostCertainty::Verified)
@@ -113,66 +154,88 @@ impl HandleAttackResponse<ServiceDetectionResponse> for AttackContext {
                 PortCertainty::Verified,
             )
             .await?;
-
-        let mut service_uuids = Vec::new();
-        for service in services {
-            service_uuids.push(
-                GLOBAL
-                    .aggregator
-                    .aggregate_service(
-                        self.workspace.uuid,
-                        host_uuid,
-                        Some(port_uuid),
-                        Some(ServiceProtocols::Tcp {
-                            raw: service.tcp,
-                            tls: service.tls,
-                        }),
-                        &service.name,
-                        certainty,
-                    )
-                    .await?,
-            );
+        let mut tcp_service_uuids = Vec::new();
+        let mut tls_service_uuids = Vec::new();
+        for (name, raw, tls, certainty) in services {
+            let uuid = GLOBAL
+                .aggregator
+                .aggregate_service(
+                    self.workspace.uuid,
+                    host_uuid,
+                    Some(port_uuid),
+                    Some(ServiceProtocols::Tcp { raw, tls }),
+                    &name,
+                    certainty,
+                )
+                .await?;
+            if raw {
+                tcp_service_uuids.push(uuid);
+            }
+            if tls {
+                tls_service_uuids.push(uuid);
+            }
         }
 
+        // Link raw results with aggregations
+        let mut sources = Vec::with_capacity(
+            2 + is_tls as usize * 2 + tcp_service_uuids.len() + tls_service_uuids.len(),
+        );
+        for source_uuid in iter::once(tcp_result_uuid).chain(is_tls.then_some(tls_result_uuid)) {
+            sources.extend([
+                AggregationSource {
+                    uuid: Uuid::new_v4(),
+                    workspace: ForeignModelByField::Key(self.workspace.uuid),
+                    source_type: SourceType::ServiceDetection,
+                    source_uuid,
+                    aggregated_table: AggregationTable::Host,
+                    aggregated_uuid: host_uuid,
+                },
+                AggregationSource {
+                    uuid: Uuid::new_v4(),
+                    workspace: ForeignModelByField::Key(self.workspace.uuid),
+                    source_type: SourceType::ServiceDetection,
+                    source_uuid,
+                    aggregated_table: AggregationTable::Port,
+                    aggregated_uuid: port_uuid,
+                },
+            ]);
+        }
+        for (aggregated_uuids, source_uuid) in [
+            (tcp_service_uuids, tcp_result_uuid),
+            (tls_service_uuids, tls_result_uuid),
+        ] {
+            for aggregated_uuid in aggregated_uuids {
+                sources.push(AggregationSource {
+                    uuid: Uuid::new_v4(),
+                    workspace: ForeignModelByField::Key(self.workspace.uuid),
+                    source_type: SourceType::ServiceDetection,
+                    source_uuid,
+                    aggregated_table: AggregationTable::Service,
+                    aggregated_uuid,
+                });
+            }
+        }
         insert!(&mut tx, AggregationSource)
             .return_nothing()
-            .bulk(
-                [
-                    AggregationSource {
-                        uuid: Uuid::new_v4(),
-                        workspace: ForeignModelByField::Key(self.workspace.uuid),
-                        source_type: SourceType::ServiceDetection,
-                        source_uuid: result_uuid,
-                        aggregated_table: AggregationTable::Host,
-                        aggregated_uuid: host_uuid,
-                    },
-                    AggregationSource {
-                        uuid: Uuid::new_v4(),
-                        workspace: ForeignModelByField::Key(self.workspace.uuid),
-                        source_type: SourceType::ServiceDetection,
-                        source_uuid: result_uuid,
-                        aggregated_table: AggregationTable::Port,
-                        aggregated_uuid: port_uuid,
-                    },
-                ]
-                .into_iter()
-                .chain(
-                    service_uuids
-                        .into_iter()
-                        .map(|service_uuid| AggregationSource {
-                            uuid: Uuid::new_v4(),
-                            workspace: ForeignModelByField::Key(self.workspace.uuid),
-                            source_type: SourceType::ServiceDetection,
-                            source_uuid: result_uuid,
-                            aggregated_table: AggregationTable::Service,
-                            aggregated_uuid: service_uuid,
-                        }),
-                ),
-            )
+            .bulk(sources)
             .await?;
 
         tx.commit().await?;
 
         Ok(())
+    }
+}
+
+fn parse_service_certainty(data: i32) -> Result<ServiceCertainty, AttackError> {
+    const D: i32 = kraken_proto::ServiceCertainty::Definitely as i32;
+    const M: i32 = kraken_proto::ServiceCertainty::Maybe as i32;
+    const U: i32 = kraken_proto::ServiceCertainty::Unknown as i32;
+    match data {
+        D => Ok(ServiceCertainty::DefinitelyVerified),
+        M => Ok(ServiceCertainty::MaybeVerified),
+        U => Ok(ServiceCertainty::UnknownService),
+        _ => Err(AttackError::Malformed(
+            "Got invalid value for ServiceCertainty",
+        )),
     }
 }

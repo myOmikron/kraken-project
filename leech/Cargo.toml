@@ -61,6 +61,7 @@ rand = { version = "~0.8" }
 
 # Error handling
 thiserror = { version = "~1" }
+ssl-errors = { path = "ssl-errors" }
 
 # ORM
 rorm = { version = "~0.6", default-features = false, features = ["tokio", "rustls", "cli", "uuid", "postgres-only", "chrono"] }

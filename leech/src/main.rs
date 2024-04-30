@@ -634,7 +634,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
                             tokio::spawn(async move {
                                 while let Some(result) = rx.recv().await {
                                     info!("Open port found: {}", result.addr,);
-                                    info!("It's running: {:?}", result.service);
+                                    info!("It's running: {:?} (TCP)", result.tcp_service);
+                                    info!("It's running: {:?} (TLS over TCP)", result.tls_service);
                                 }
                             });
                         }

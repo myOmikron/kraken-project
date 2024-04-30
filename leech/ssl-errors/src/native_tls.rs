@@ -51,10 +51,11 @@ impl<'a> NativeTlsError<'a> {
             const SSL_R_TLSV1_UNRECOGNIZED_NAME: std::ffi::c_int = 1112;
             const SSL_R_PACKET_LENGTH_TOO_LONG: std::ffi::c_int = 198;
             const SSL_R_CERTIFICATE_VERIFY_FAILED: std::ffi::c_int = 134;
+            const SSL_R_WRONG_VERSION_NUMBER: std::ffi::c_int = 267;
 
             match error.reason_code() {
                 SSL_R_TLSV1_UNRECOGNIZED_NAME => return Self::UnrecognizedName,
-                SSL_R_PACKET_LENGTH_TOO_LONG => return Self::NotSsl,
+                SSL_R_PACKET_LENGTH_TOO_LONG | SSL_R_WRONG_VERSION_NUMBER => return Self::NotSsl,
                 SSL_R_CERTIFICATE_VERIFY_FAILED => return Self::BadCert,
                 _ => {}
             }

@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 use std::net::IpAddr;
 use std::net::SocketAddr;
 use std::ops::RangeInclusive;
@@ -17,7 +17,6 @@ use tokio::time::sleep;
 use tokio::time::timeout;
 
 use super::error::UdpServiceScanError;
-use super::ProtocolSet;
 use super::Service;
 use crate::modules::service_detection::generated;
 use crate::modules::service_detection::generated::Match;
@@ -146,7 +145,7 @@ pub async fn start_udp_service_detection(
         move |(port, address)| {
             let tx = tx.clone();
             async move {
-                let mut partial_matches = BTreeMap::new();
+                let mut partial_matches = BTreeSet::new();
                 for prev in 0..3 {
                     debug!("Starting udp scans prevalence={prev}");
                     for probe in &generated::PROBES.udp_probes[prev] {
@@ -155,7 +154,7 @@ pub async fn start_udp_service_detection(
                             match probe.is_match(&data) {
                                 Match::No => {}
                                 Match::Partial => {
-                                    partial_matches.insert(probe.service, ProtocolSet::UDP);
+                                    partial_matches.insert(probe.service);
                                 }
                                 Match::Exact => {
                                     debug!(
@@ -165,10 +164,7 @@ pub async fn start_udp_service_detection(
                                     tx.send(UdpServiceDetectionResult {
                                         address,
                                         port,
-                                        service: Service::Definitely {
-                                            service: probe.service,
-                                            protocols: ProtocolSet::UDP,
-                                        },
+                                        service: Service::Definitely(probe.service),
                                     })
                                     .await?;
                                     return Ok(());

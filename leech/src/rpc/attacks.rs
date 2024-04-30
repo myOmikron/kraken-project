@@ -98,7 +98,6 @@ use crate::modules::service_detection::tcp::TcpServiceDetectionResult;
 use crate::modules::service_detection::tcp::TcpServiceDetectionSettings;
 use crate::modules::service_detection::udp::start_udp_service_detection;
 use crate::modules::service_detection::udp::UdpServiceDetectionSettings;
-use crate::modules::service_detection::ProtocolSet;
 use crate::modules::service_detection::Service;
 use crate::utils::IteratorExt;
 
@@ -265,25 +264,47 @@ impl ReqAttackService for Attacks {
                         })
                 }
             },
-            |TcpServiceDetectionResult { service, addr }| match service {
-                Service::Unknown => ServiceDetectionResponse {
-                    response_type: ServiceCertainty::Unknown as _,
-                    services: Vec::new(),
+            |TcpServiceDetectionResult {
+                 tls_service,
+                 tcp_service,
+                 addr,
+             }| {
+                let mut response = ServiceDetectionResponse {
                     address: Some(shared::Address::from(addr.ip())),
                     port: addr.port() as u32,
-                },
-                Service::Maybe(services) => ServiceDetectionResponse {
-                    response_type: ServiceCertainty::Maybe as _,
-                    services: services.into_iter().map(new_rpc_service).collect(),
-                    address: Some(shared::Address::from(addr.ip())),
-                    port: addr.port() as u32,
-                },
-                Service::Definitely { service, protocols } => ServiceDetectionResponse {
-                    response_type: ServiceCertainty::Definitely as _,
-                    services: vec![new_rpc_service((service, protocols))],
-                    address: Some(shared::Address::from(addr.ip())),
-                    port: addr.port() as u32,
-                },
+                    // The following are updated in the 2 match statements below
+                    is_tls: true,
+                    tcp_certainty: ServiceCertainty::Unknown as _,
+                    tcp_services: Vec::new(),
+                    tls_certainty: ServiceCertainty::Unknown as _,
+                    tls_services: Vec::new(),
+                };
+                match tcp_service {
+                    Service::Unknown => (),
+                    Service::Maybe(services) => {
+                        response.tcp_certainty = ServiceCertainty::Maybe as _;
+                        response.tcp_services = services.into_iter().map(str::to_string).collect();
+                    }
+                    Service::Definitely(service) => {
+                        response.tcp_certainty = ServiceCertainty::Definitely as _;
+                        response.tcp_services = vec![service.to_string()];
+                    }
+                }
+                match tls_service {
+                    None => {
+                        response.is_tls = false;
+                    }
+                    Some(Service::Unknown) => (),
+                    Some(Service::Maybe(services)) => {
+                        response.tcp_certainty = ServiceCertainty::Maybe as _;
+                        response.tcp_services = services.into_iter().map(str::to_string).collect();
+                    }
+                    Some(Service::Definitely(service)) => {
+                        response.tcp_certainty = ServiceCertainty::Definitely as _;
+                        response.tcp_services = vec![service.to_string()];
+                    }
+                }
+                response
             },
             any_attack_response::Response::ServiceDetection,
         )
@@ -342,10 +363,8 @@ impl ReqAttackService for Attacks {
                 },
                 services: match value.service {
                     Service::Unknown => Vec::new(),
-                    Service::Maybe(services) => services.into_iter().map(new_rpc_service).collect(),
-                    Service::Definitely { service, protocols } => {
-                        vec![new_rpc_service((service, protocols))]
-                    }
+                    Service::Maybe(services) => services.into_iter().map(str::to_string).collect(),
+                    Service::Definitely(service) => vec![service.to_string()],
                 },
             },
             any_attack_response::Response::UdpServiceDetection,
@@ -845,15 +864,5 @@ impl Attacks {
 
         // Return stream
         Ok(Response::new(Box::pin(ReceiverStream::new(to_stream))))
-    }
-}
-
-fn new_rpc_service((service, protocols): (&'static str, ProtocolSet)) -> kraken_proto::Service {
-    let ProtocolSet { tcp, tls, udp } = protocols;
-    kraken_proto::Service {
-        name: service.to_string(),
-        tcp,
-        tls,
-        udp,
     }
 }
