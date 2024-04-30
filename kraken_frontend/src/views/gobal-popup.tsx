@@ -27,7 +27,12 @@ export default function GlobalPopup() {
                         return { type: "invitation", invitationUuid: i.uuid, from: i.from, workspace: i.workspace };
                     }),
                 );
-                setPopups(popups);
+                setPopups((popups) => [
+                    ...popups,
+                    ...e.invitations.map((i): WsInvitationToWorkspace => {
+                        return { type: "invitation", invitationUuid: i.uuid, from: i.from, workspace: i.workspace };
+                    }),
+                ]);
             }),
         );
     }
@@ -36,33 +41,34 @@ export default function GlobalPopup() {
         retrieveInvitations().then();
         WS.addEventListener("message.InvitationToWorkspace", (e) => {
             toast.info("Invitation received");
-            popups.push({ type: "invitation", invitationUuid: e.invitationUuid, from: e.from, workspace: e.workspace });
-            setPopups(popups);
+            setPopups((popups) => [
+                ...popups,
+                { type: "invitation", invitationUuid: e.invitationUuid, from: e.from, workspace: e.workspace },
+            ]);
         });
     }, []);
 
     let popup: Popup;
     if (popups.length !== 0) {
         popup = popups[0];
+    } else {
+        return undefined;
     }
 
-    const popupDisplay = () => {
-        switch (popup.type) {
-            case "invitation":
-                return (
-                    <Invitation
-                        workspace={popup.workspace}
-                        invitationUuid={popup.invitationUuid}
-                        from={popup.from}
-                        onFinish={() => {
-                            const p = popups;
-                            p.splice(0, 1);
-                            setPopups(p);
-                        }}
-                    />
-                );
-        }
-    };
-
-    return <>{popupDisplay}</>;
+    switch (popup.type) {
+        case "invitation":
+            return (
+                <Invitation
+                    workspace={popup.workspace}
+                    invitationUuid={popup.invitationUuid}
+                    from={popup.from}
+                    onFinish={() => {
+                        setPopups((popups) => {
+                            popups.splice(0, 1);
+                            return [...popups];
+                        });
+                    }}
+                />
+            );
+    }
 }
