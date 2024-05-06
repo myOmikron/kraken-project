@@ -66,8 +66,17 @@ pub struct TcpServiceDetectionResult {
     /// The socket address found to be open
     pub addr: SocketAddr,
 
-    /// The potentially detected service
-    pub service: Service,
+    /// The potentially detected tcp service
+    ///
+    /// This is not optional, because if the port it not speaking TCP at all,
+    /// then what is the point of a result?
+    /// Note it might be `Service::Unknown`.
+    pub tcp_service: Service,
+
+    /// The potentially detected tls service
+    ///
+    /// This is optional, because the TCP port might not speak TLS.
+    pub tls_service: Option<Service>,
 }
 
 /// Scan for open tcp ports and detect the service running on them
@@ -125,18 +134,15 @@ pub async fn start_tcp_service_detection(
                 if settings.just_scan {
                     tx.send(TcpServiceDetectionResult {
                         addr: socket,
-                        service: Service::Unknown,
+                        tcp_service: Service::Unknown,
+                        tls_service: None,
                     })
                     .await?;
-                } else if let Some(service) =
+                } else if let Some(result) =
                     detect_service(socket, settings.receive_timeout, settings.connect_timeout)
                         .await?
                 {
-                    tx.send(TcpServiceDetectionResult {
-                        addr: socket,
-                        service,
-                    })
-                    .await?;
+                    tx.send(result).await?;
                 };
             }
             Ok::<(), DynError>(())

@@ -113,25 +113,19 @@ message PortOrRange {
 // Response to a service detection request
 message ServiceDetectionResponse {
   // The ip address the service was found on
-  attacks.shared.Address address = 3;
+  attacks.shared.Address address = 1;
   // The port the service was found on
-  uint32 port = 4;
-  // Indicates how many services are given and how they are to be interpreted
-  ServiceCertainty responseType = 1;
-  // List of services, the interpretation of this field depends on the `responseType`
-  repeated Service services = 2;
-}
-
-// A single service
-message Service {
-  // The service's name
-  string name = 1;
-  /// Does this service respond to raw TCP?
-  bool tcp = 2;
-  /// Does this service respond to TLS over TCP?
-  bool tls = 3;
-  /// Does this service respond to raw UDP?
-  bool udp = 4;
+  uint32 port = 2;
+  // Indicates how many tcp services are given and how they are to be interpreted
+  ServiceCertainty tcpCertainty = 3;
+  // List of tcp services, the interpretation of this field depends on the `tcpCertainty`
+  repeated string tcpServices = 4;
+  // Does the port speak tls? If this is `false`, `tlsCertainty` and `tlsServices` should be ignored.
+  bool isTls = 5;
+  // Indicates how many tls services are given and how they are to be interpreted
+  ServiceCertainty tlsCertainty = 6;
+  // List of tls services, the interpretation of this field depends on the `tlsCertainty`
+  repeated string tlsServices = 7;
 }
 
 // Indicates how many services are returned in a ServiceCertainty and how they are to be interpreted
@@ -177,7 +171,7 @@ message UdpServiceDetectionResponse {
   // Indicates how many services are given and how they are to be interpreted
   ServiceCertainty certainty = 3;
   // List of services, the interpretation of this field depends on the `certainty`
-  repeated Service services = 4;
+  repeated string services = 4;
 }
 
 /*

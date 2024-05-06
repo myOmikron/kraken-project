@@ -86,7 +86,7 @@ impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
             attack_uuid: self.attack_uuid,
             address: address.to_string(),
             port: port as u16,
-            services: services.iter().map(|x| x.name.to_string()).collect(),
+            services: services.clone(),
         })
         .await;
 
@@ -106,11 +106,16 @@ impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
         if !services.is_empty() {
             insert!(&mut tx, UdpServiceDetectionName)
                 .return_nothing()
-                .bulk(services.iter().map(|x| UdpServiceDetectionName {
-                    uuid: Uuid::new_v4(),
-                    name: x.name.to_string(),
-                    result: ForeignModelByField::Key(result_uuid),
-                }))
+                .bulk(
+                    services
+                        .iter()
+                        .cloned()
+                        .map(|name| UdpServiceDetectionName {
+                            uuid: Uuid::new_v4(),
+                            name,
+                            result: ForeignModelByField::Key(result_uuid),
+                        }),
+                )
                 .await?;
         }
 
@@ -130,7 +135,7 @@ impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
             .await?;
 
         let mut service_uuids = Vec::new();
-        for service in services {
+        for name in services {
             service_uuids.push(
                 GLOBAL
                     .aggregator
@@ -138,8 +143,8 @@ impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
                         self.workspace.uuid,
                         host_uuid,
                         Some(port_uuid),
-                        Some(ServiceProtocols::Udp { raw: service.udp }),
-                        &service.name,
+                        Some(ServiceProtocols::Udp { raw: true }),
+                        &name,
                         certainty,
                     )
                     .await?,

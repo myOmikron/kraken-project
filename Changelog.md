@@ -1,5 +1,57 @@
 # Changelog
 
+## WIP
+
+### Improvments
+
+- Improved tcp service detection's handling of TLS:
+    Services protected by SNI will be detected as TLS and aggregated as "unknown"
+
+### SDK Improvements
+
+- Made `add_host` return a single `Uuid`
+- Added `add_hosts` which takes a CIDR and returns many `Uuid`s
+
+### Frontend Improvements
+
+- Added a copy uuid button to the edit finding definition view
+
+### Frontend Fixes
+
+- Fixed workspace invites not showing up reliably
+
+## v0.2.3
+
+### Backend Fixes
+
+- Fixed http services' relations endpoint
+
+### Frontend Fixes
+
+- Removed scrollbars which might appear when pressing a button
+
+## v0.2.2
+
+### Backend Fixes
+
+- Fixed export of workspaces which contain an http service which is affected by
+  at least one finding
+
+### Frontend Fixes
+
+- Fixed hover on an http service's severity
+
+### SDK Fixes
+
+- Fixed sdk method for retrieving domain relations
+
+## v0.2.1
+
+### Backend Fixes
+
+- Updated dependencies to fix vulnerability in rustls:
+    https://rustsec.org/advisories/RUSTSEC-2024-0336.html
+
 ## v0.2.0
 
 ### Features

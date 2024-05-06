@@ -2447,6 +2447,7 @@ dependencies = [
  "serde",
  "serde_json",
  "socket2",
+ "ssl-errors",
  "strum 0.26.2",
  "strum_macros 0.26.2",
  "surge-ping",
