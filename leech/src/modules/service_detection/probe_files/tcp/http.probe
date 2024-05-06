@@ -4,4 +4,4 @@ probes:
   - tcp: yes
     tls: yes
     payload_str: HEAD / HTTP/1.1\r\n\r\n
-    regex: HTTP/1.[01] \d\d\d [^\r\n]+\r\n
+    regex: HTTP/1.[01] \d\d\d [^\r\n]*\r\n
