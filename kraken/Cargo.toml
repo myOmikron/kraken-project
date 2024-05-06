@@ -35,12 +35,12 @@ actix-web = { version = "~4", optional = true }
 actix-toolbox = { version = "~0.13", features = ["ws", "logging", "session-postgres-only"], optional = true }
 actix-files = { version = "~0.6", optional = true }
 # Webauthn library
-webauthn-rs = { version = "~0.4", features = ["danger-allow-state-serialisation"] }
+webauthn-rs = { version = "~0.5", features = ["danger-allow-state-serialisation"] }
 
 # openapi swagger
 utoipa = { version = "~4", features = ["actix_extras", "repr", "chrono", "uuid", "openapi_extensions", "preserve_order"] }
 # openapi swagger boilerplat generation
-utoipa-swagger-ui = { version = "~6", features = ["actix-web"], optional = true }
+utoipa-swagger-ui = { version = "~7", features = ["actix-web"], optional = true }
 
 # Hashing
 argon2 = { version = "~0.5", features = ["std"], optional = true }

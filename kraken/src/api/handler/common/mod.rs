@@ -17,12 +17,14 @@ pub(crate) mod utils;
 ///
 /// # Example
 /// ```rust
+/// use kraken::api::handler::common::de_optional;
+///
 /// #[derive(serde::Deserialize)]
 ///  pub(crate) struct UpdateRequest {
 ///     name: Option<String>,
 ///
 ///     // Don't forget the `default`!
-///     #[serde(default, deserialize_with = "crate::api::handler::de_optional")]
+///     #[serde(default, deserialize_with = "de_optional")]
 ///     description: Option<Option<String>>,
 /// }
 /// ```
