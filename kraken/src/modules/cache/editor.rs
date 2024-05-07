@@ -114,7 +114,8 @@ impl InternalEditorCached<Uuid> for FindingAffectedDetailsCache {
             FindingAffected::F.domain.equals(key),
             FindingAffected::F.host.equals(key),
             FindingAffected::F.port.equals(key),
-            FindingAffected::F.service.equals(key)
+            FindingAffected::F.service.equals(key),
+            FindingAffected::F.http_service.equals(key)
         ))
         .optional()
         .await?
@@ -147,7 +148,8 @@ impl InternalEditorCached<Uuid> for FindingAffectedDetailsCache {
                 FindingAffected::F.domain.equals(key),
                 FindingAffected::F.host.equals(key),
                 FindingAffected::F.port.equals(key),
-                FindingAffected::F.service.equals(key)
+                FindingAffected::F.service.equals(key),
+                FindingAffected::F.http_service.equals(key)
             ))
             .one()
             .await?
@@ -177,7 +179,8 @@ impl InternalEditorCached<Uuid> for FindingAffectedDetailsCache {
                     FindingAffected::F.domain.equals(key),
                     FindingAffected::F.host.equals(key),
                     FindingAffected::F.port.equals(key),
-                    FindingAffected::F.service.equals(key)
+                    FindingAffected::F.service.equals(key),
+                    FindingAffected::F.http_service.equals(key)
                 ))
                 .set(
                     FindingAffected::F.details,
