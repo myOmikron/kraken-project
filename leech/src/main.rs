@@ -313,6 +313,7 @@ pub enum Command {
 
 /// The main CLI parser
 #[derive(Parser)]
+#[clap(version)]
 pub struct Cli {
     /// Specify an alternative path to the config file
     #[clap(long = "config-path")]
