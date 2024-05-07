@@ -7,6 +7,7 @@ use log::debug;
 use log::trace;
 use log::warn;
 use ssl_errors::NativeTlsError;
+use tokio::time::sleep;
 
 use crate::modules::service_detection::generated;
 use crate::modules::service_detection::generated::Match;
@@ -103,6 +104,8 @@ async fn detect_tcp_service(
     let result = settings.probe_tcp(b"").await;
     let tcp_banner = convert_result(result)?;
 
+    dirty_timeout().await;
+
     for prevalence in 0..3 {
         if let Some(tcp_banner) = tcp_banner.as_deref() {
             debug!("Starting tcp banner scans #{prevalence}");
@@ -122,6 +125,8 @@ async fn detect_tcp_service(
                     trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(&data));
                     check_match(&mut partial_matches, probe.is_match(&data), probe.service)?;
                 }
+
+                dirty_timeout().await;
             }
 
             debug!("Starting tcp rust scans #{prevalence}");
@@ -131,6 +136,8 @@ async fn detect_tcp_service(
                     convert_result((probe.function)(&settings).await)?,
                     probe.service,
                 )?;
+
+                dirty_timeout().await;
             }
         }
     }
@@ -160,6 +167,8 @@ async fn detect_tls_service(
     let tls_result = convert_result(tcp_result)?;
     let tls_banner = convert_result(tls_result)?;
 
+    dirty_timeout().await;
+
     for prevalence in 0..3 {
         if let Some(tls_banner) = tls_banner.as_ref() {
             debug!("Starting tls banner scans #{prevalence}");
@@ -180,6 +189,8 @@ async fn detect_tls_service(
                 convert_result((probe.function)(&settings, probe.alpn).await)?,
                 probe.service,
             )?;
+
+            dirty_timeout().await;
         }
 
         debug!("Starting tls payload scans #{prevalence}");
@@ -190,11 +201,13 @@ async fn detect_tls_service(
                     trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(&data));
                     check_match(&mut partial_matches, probe.is_match(&data), probe.service)?;
                 }
-                Ok(None) => continue,
+                Ok(None) => {}
                 Err(err) => {
                     warn!(target: "tls", "Failed to connect while probing {}: {err}", probe.service)
                 }
             }
+
+            dirty_timeout().await;
         }
     }
 
@@ -239,4 +252,11 @@ impl From<DynError> for BreakReason {
     fn from(value: DynError) -> Self {
         BreakReason::DynError(value)
     }
+}
+
+/// Dirty "hot-fix" against anti port scanning
+///
+/// TODO: replace this with proper solution
+async fn dirty_timeout() {
+    sleep(Duration::from_secs(1)).await
 }
