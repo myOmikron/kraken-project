@@ -2,10 +2,12 @@
 
 ## WIP
 
-### Improvments
+## v0.3.0
+
+### Improvements
 
 - Improved tcp service detection's handling of TLS:
-    Services protected by SNI will be detected as TLS and aggregated as "unknown"
+  Services protected by SNI will be detected as TLS and aggregated as "unknown"
 
 ### SDK Improvements
 
@@ -19,6 +21,15 @@
 ### Frontend Fixes
 
 - Fixed workspace invites not showing up reliably
+
+### Backend fixes
+
+- Fixed saving notes for finding affected on http-services
+
+### Leech fixes
+
+- Fixed order of probe execution
+- Added 1s timeout between each probe to mitigate anti-port-scanning techniques
 
 ## v0.2.3
 
@@ -50,7 +61,7 @@
 ### Backend Fixes
 
 - Updated dependencies to fix vulnerability in rustls:
-    https://rustsec.org/advisories/RUSTSEC-2024-0336.html
+  https://rustsec.org/advisories/RUSTSEC-2024-0336.html
 
 ## v0.2.0
 
