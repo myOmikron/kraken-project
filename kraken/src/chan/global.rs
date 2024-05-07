@@ -64,6 +64,7 @@ pub struct GlobalChan {
 pub struct GlobalOnceCell<T>(OnceLock<T>);
 impl<T> GlobalOnceCell<T> {
     /// Creates a new empty cell
+    #[allow(clippy::new_without_default)]
     pub const fn new() -> Self {
         Self(OnceLock::new())
     }

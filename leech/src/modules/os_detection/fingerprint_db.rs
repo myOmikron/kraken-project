@@ -17,7 +17,7 @@ pub static FINGERPRINT_DB: Lazy<Vec<FingerprintPattern>> =
 pub struct FingerprintPattern {
     /// The fingerprint pattern to match
     pub pattern: String,
-    ///
+    /// Information about the operating system
     pub os: OperatingSystemInfo,
 }
 

@@ -55,7 +55,7 @@ impl ResolutionStatus {
     }
 }
 
-///
+/// Custom result for lookups
 #[derive(Debug)]
 pub enum LookupResultStatus {
     /// No error and got records

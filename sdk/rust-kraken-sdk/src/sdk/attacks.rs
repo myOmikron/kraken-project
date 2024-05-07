@@ -94,7 +94,7 @@ impl KrakenClient {
         self.start_attack("udpServiceDetection", req).await
     }
 
-    ///
+    /// Start the dns txt scan attack
     pub async fn attack_dns_txt_scan(&self, req: DnsTxtScanRequest) -> KrakenResult<Uuid> {
         self.start_attack("dnsTxtScan", req).await
     }

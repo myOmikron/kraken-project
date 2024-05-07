@@ -78,7 +78,7 @@ impl UserCache {
             .write()
             .expect("If you ever encounter this error, please open an issue with the stacktrace");
 
-        guard.users = users.clone();
+        guard.users.clone_from(&users);
         guard.last_refresh = now;
 
         Ok(users)
