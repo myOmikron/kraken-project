@@ -24,9 +24,11 @@ pub fn generate(
 
     for (dir, kind) in in_dirs.iter().copied() {
         println!("cargo:rerun-if-changed={}", dir);
-        for file in fs::read_dir(dir)? {
-            let file = file?;
-            let path = file.path();
+        let mut files = fs::read_dir(dir)?
+            .map(|result| result.map(|entry| entry.path()))
+            .collect::<Result<Vec<_>, _>>()?;
+        files.sort();
+        for path in files {
             if let Some(ext) = path.extension() {
                 if ext == "probe" {
                     services.push(parse_file(path, kind)?);
