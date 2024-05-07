@@ -2,6 +2,12 @@
 
 ## WIP
 
+## v0.3.1
+
+### Leech fixes
+
+- TLS services are now detected correctly
+
 ## v0.3.0
 
 ### Improvements

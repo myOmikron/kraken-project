@@ -296,12 +296,12 @@ impl ReqAttackService for Attacks {
                     }
                     Some(Service::Unknown) => (),
                     Some(Service::Maybe(services)) => {
-                        response.tcp_certainty = ServiceCertainty::Maybe as _;
-                        response.tcp_services = services.into_iter().map(str::to_string).collect();
+                        response.tls_certainty = ServiceCertainty::Maybe as _;
+                        response.tls_services = services.into_iter().map(str::to_string).collect();
                     }
                     Some(Service::Definitely(service)) => {
-                        response.tcp_certainty = ServiceCertainty::Definitely as _;
-                        response.tcp_services = vec![service.to_string()];
+                        response.tls_certainty = ServiceCertainty::Definitely as _;
+                        response.tls_services = vec![service.to_string()];
                     }
                 }
                 response
