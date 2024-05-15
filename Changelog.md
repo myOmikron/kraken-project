@@ -2,6 +2,8 @@
 
 ## WIP
 
+## v0.3.2
+
 ### Leech fixes
 
 - Ports with random behaviour won't be reported as service
