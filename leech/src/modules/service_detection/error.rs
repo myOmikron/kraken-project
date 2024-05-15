@@ -26,19 +26,6 @@ impl<E: Error> Deref for Extended<E> {
     }
 }
 
-/// Syntax extension which allows adding a context string to any error
-pub trait ErrorExt: Error + Sized {
-    fn context(self, msg: impl Into<Cow<'static, str>>) -> Extended<Self>;
-}
-impl<E: Error + Sized> ErrorExt for E {
-    fn context(self, msg: impl Into<Cow<'static, str>>) -> Extended<Self> {
-        Extended {
-            inner: self,
-            context: msg.into(),
-        }
-    }
-}
-
 /// Syntax extension which allows adding a context string to a result's error
 pub trait ResultExt {
     /// The `Result`'s `Ok` type

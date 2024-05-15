@@ -11,12 +11,10 @@ use tokio::time::sleep;
 
 use crate::modules::service_detection::generated;
 use crate::modules::service_detection::generated::Match;
-use crate::modules::service_detection::tcp::oneshot::ProbeTcpError;
-use crate::modules::service_detection::tcp::oneshot::ProbeTcpErrorPlace;
 use crate::modules::service_detection::tcp::OneShotTcpSettings;
+use crate::modules::service_detection::tcp::ProbeTcpResult;
+use crate::modules::service_detection::tcp::ProbeTlsResult;
 use crate::modules::service_detection::tcp::TcpServiceDetectionResult;
-use crate::modules::service_detection::DynError;
-use crate::modules::service_detection::DynResult;
 use crate::modules::service_detection::Service;
 use crate::utils::DebuggableBytes;
 
@@ -24,63 +22,64 @@ use crate::utils::DebuggableBytes;
 ///
 /// Returns `Ok(None)` if the port is closed.
 pub async fn detect_service(
-    socket: SocketAddr,
+    addr: SocketAddr,
     recv_timeout: Duration,
     connect_timeout: Duration,
-) -> DynResult<Option<TcpServiceDetectionResult>> {
-    let [tcp, tls] = [
-        detect_tcp_service(socket, recv_timeout, connect_timeout).await,
-        detect_tls_service(socket, recv_timeout, connect_timeout).await,
-    ]
-    .map(|cf| match cf {
-        ControlFlow::Continue(partial_matches) => Ok(Some(if partial_matches.is_empty() {
+) -> TcpServiceDetectionResult {
+    let mut tcp_failed = false;
+
+    let tcp_service = match detect_tcp_service(addr, recv_timeout, connect_timeout).await {
+        ControlFlow::Continue(matches) if matches.is_empty() => Service::Unknown,
+        ControlFlow::Continue(matches) => Service::Maybe(matches),
+        ControlFlow::Break(BreakReason::Found(service)) => Service::Definitely(service),
+        ControlFlow::Break(BreakReason::Failed) => {
+            tcp_failed = true;
             Service::Unknown
-        } else {
-            Service::Maybe(partial_matches)
-        })),
-        ControlFlow::Break(BreakReason::Found(service)) => Ok(Some(Service::Definitely(service))),
-        ControlFlow::Break(BreakReason::TcpError(err)) => {
-            if matches!(err.place, ProbeTcpErrorPlace::Connect) {
-                Ok(None)
-            } else {
-                Err(err.into())
-            }
         }
-        ControlFlow::Break(BreakReason::TlsError(err)) => match NativeTlsError::new(&err) {
-            NativeTlsError::NotSsl => Ok(None),
-            NativeTlsError::UnrecognizedName => Ok(Some(Service::Unknown)),
-            _ => {
-                warn!("Unhandled ssl error: {err}");
-                Ok(None)
-            }
-        },
-        ControlFlow::Break(BreakReason::DynError(err)) => Err(err),
-    });
-    match tcp {
-        Ok(Some(tcp_service)) => Ok(Some(TcpServiceDetectionResult {
-            addr: socket,
-            tcp_service,
-            tls_service: tls?,
-        })),
-        Ok(None) => Ok(None),
-        Err(err) => Err(err),
+        ControlFlow::Break(BreakReason::DeniedBySNI) => unreachable!(),
+    };
+
+    let tls_service = if !tcp_failed {
+        match detect_tls_service(addr, recv_timeout, connect_timeout).await {
+            ControlFlow::Continue(matches) if matches.is_empty() => Some(Service::Unknown),
+            ControlFlow::Continue(matches) => Some(Service::Maybe(matches)),
+            ControlFlow::Break(BreakReason::Found(service)) => Some(Service::Definitely(service)),
+            ControlFlow::Break(BreakReason::Failed) => None,
+            ControlFlow::Break(BreakReason::DeniedBySNI) => Some(Service::Unknown),
+        }
+    } else {
+        None
+    };
+
+    TcpServiceDetectionResult {
+        addr,
+        tcp_service,
+        tls_service,
     }
 }
 
-/// The reason why [`find_exact_match`] might have exited early
+/// The reason why [`detect_tcp_service`] or [`detect_tls_service`] might have exited early
 #[derive(Debug)]
 pub enum BreakReason {
     /// One probe had an exact match
     Found(&'static str),
 
-    /// An error occurred which might be mapped to [`Service::Failed`]
-    TcpError(ProbeTcpError),
+    /// The detection had to be aborted.
+    ///
+    /// This might have several reasons (logged at appropriate levels)
+    /// but the result is the same: no statement about the service is possible.
+    ///
+    /// The (hopefully up-to-date) reasons are:
+    /// - The port can't establish a TCP connection anymore
+    /// - The port doesn't run TLS
+    /// - TLS handshake had an unhandled error
+    Failed,
 
-    /// An error occurred which might be mapped to [`Service::Failed`]
-    TlsError(native_tls::Error),
-
-    /// An unrecoverable error occurred
-    DynError(DynError),
+    /// The port aborts the TLS handshake due to an unrecognized name
+    ///
+    /// This is a slightly different case than `Failed` because
+    /// one statement can be made about the service: it's running TLS.
+    DeniedBySNI,
 }
 
 /// Trys every probe ordered by prevalence until one matches.
@@ -101,44 +100,47 @@ async fn detect_tcp_service(
     let mut partial_matches: BTreeSet<&'static str> = BTreeSet::new();
 
     debug!("Retrieving tcp banner");
-    let result = settings.probe_tcp(b"").await;
-    let tcp_banner = convert_result(result)?;
+    let tcp_banner = convert_tcp_result(&socket, settings.probe_tcp(b"").await)?;
 
     dirty_timeout().await;
 
     for prevalence in 0..3 {
-        if let Some(tcp_banner) = tcp_banner.as_deref() {
+        if !tcp_banner.is_empty() {
             debug!("Starting tcp banner scans #{prevalence}");
             for probe in &generated::PROBES.empty_tcp_probes[prevalence] {
-                trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(tcp_banner));
+                trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(&tcp_banner));
                 check_match(
                     &mut partial_matches,
-                    probe.is_match(tcp_banner),
+                    probe.is_match(&tcp_banner),
+                    probe.service,
+                )?;
+            }
+        }
+
+        debug!("Starting tcp payload scans #{prevalence}");
+        for probe in &generated::PROBES.payload_tcp_probes[prevalence] {
+            let response = convert_tcp_result(&socket, settings.probe_tcp(probe.payload).await)?;
+            if !response.is_empty() {
+                trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(&response));
+                check_match(
+                    &mut partial_matches,
+                    probe.is_match(&response),
                     probe.service,
                 )?;
             }
 
-            debug!("Starting tcp payload scans #{prevalence}");
-            for probe in &generated::PROBES.payload_tcp_probes[prevalence] {
-                let result = settings.probe_tcp(probe.payload).await;
-                if let Some(data) = convert_result(result)? {
-                    trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(&data));
-                    check_match(&mut partial_matches, probe.is_match(&data), probe.service)?;
-                }
+            dirty_timeout().await;
+        }
 
-                dirty_timeout().await;
-            }
+        debug!("Starting tcp rust scans #{prevalence}");
+        for probe in &generated::PROBES.rust_tcp_probes[prevalence] {
+            check_match(
+                &mut partial_matches,
+                (probe.function)(&settings).await,
+                probe.service,
+            )?;
 
-            debug!("Starting tcp rust scans #{prevalence}");
-            for probe in &generated::PROBES.rust_tcp_probes[prevalence] {
-                check_match(
-                    &mut partial_matches,
-                    convert_result((probe.function)(&settings).await)?,
-                    probe.service,
-                )?;
-
-                dirty_timeout().await;
-            }
+            dirty_timeout().await;
         }
     }
 
@@ -163,20 +165,18 @@ async fn detect_tls_service(
     let mut partial_matches: BTreeSet<&'static str> = BTreeSet::new();
 
     debug!("Retrieving tls banner");
-    let tcp_result = settings.probe_tls(b"", None).await;
-    let tls_result = convert_result(tcp_result)?;
-    let tls_banner = convert_result(tls_result)?;
+    let tls_banner = convert_tls_result(&socket, settings.probe_tls(b"", None).await)?;
 
     dirty_timeout().await;
 
     for prevalence in 0..3 {
-        if let Some(tls_banner) = tls_banner.as_ref() {
+        if !tls_banner.is_empty() {
             debug!("Starting tls banner scans #{prevalence}");
             for probe in &generated::PROBES.empty_tls_probes[prevalence] {
-                trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(tls_banner));
+                trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(&tls_banner));
                 check_match(
                     &mut partial_matches,
-                    probe.is_match(tls_banner),
+                    probe.is_match(&tls_banner),
                     probe.service,
                 )?;
             }
@@ -186,7 +186,7 @@ async fn detect_tls_service(
         for probe in &generated::PROBES.rust_tls_probes[prevalence] {
             check_match(
                 &mut partial_matches,
-                convert_result((probe.function)(&settings, probe.alpn).await)?,
+                (probe.function)(&settings, probe.alpn).await,
                 probe.service,
             )?;
 
@@ -195,16 +195,15 @@ async fn detect_tls_service(
 
         debug!("Starting tls payload scans #{prevalence}");
         for probe in &generated::PROBES.payload_tls_probes[prevalence] {
-            let result = settings.probe_tls(probe.payload, probe.alpn).await;
-            match convert_result(result)? {
-                Ok(Some(data)) => {
-                    trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(&data));
-                    check_match(&mut partial_matches, probe.is_match(&data), probe.service)?;
-                }
-                Ok(None) => {}
-                Err(err) => {
-                    warn!(target: "tls", "Failed to connect while probing {}: {err}", probe.service)
-                }
+            let response =
+                convert_tls_result(&socket, settings.probe_tls(probe.payload, probe.alpn).await)?;
+            if !response.is_empty() {
+                trace!(target: probe.service, "Got haystack: {:?}", DebuggableBytes(&response));
+                check_match(
+                    &mut partial_matches,
+                    probe.is_match(&response),
+                    probe.service,
+                )?;
             }
 
             dirty_timeout().await;
@@ -229,28 +228,47 @@ fn check_match(
     }
 }
 
-fn convert_result<T, E>(result: Result<T, E>) -> ControlFlow<BreakReason, T>
-where
-    E: Into<BreakReason>,
-{
+fn convert_tcp_result(
+    addr: &SocketAddr,
+    result: ProbeTcpResult,
+) -> ControlFlow<BreakReason, Vec<u8>> {
     match result {
-        Ok(value) => ControlFlow::Continue(value),
-        Err(error) => ControlFlow::Break(error.into()),
+        ProbeTcpResult::Ok(data) => ControlFlow::Continue(data),
+        ProbeTcpResult::ErrOther(data, error) => {
+            warn!("Continuing although port {addr} errored: {error}");
+            ControlFlow::Continue(data)
+        }
+        ProbeTcpResult::ErrConnect(error) => {
+            warn!("Aborting because port {addr} couldn't connect anymore: {error}");
+            ControlFlow::Break(BreakReason::Failed)
+        }
     }
 }
-impl From<ProbeTcpError> for BreakReason {
-    fn from(value: ProbeTcpError) -> Self {
-        BreakReason::TcpError(value)
-    }
-}
-impl From<native_tls::Error> for BreakReason {
-    fn from(value: native_tls::Error) -> Self {
-        BreakReason::TlsError(value)
-    }
-}
-impl From<DynError> for BreakReason {
-    fn from(value: DynError) -> Self {
-        BreakReason::DynError(value)
+fn convert_tls_result(
+    addr: &SocketAddr,
+    result: ProbeTlsResult,
+) -> ControlFlow<BreakReason, Vec<u8>> {
+    match result {
+        ProbeTlsResult::Ok(data) => ControlFlow::Continue(data),
+        ProbeTlsResult::ErrTls(error) => match NativeTlsError::new(&error) {
+            NativeTlsError::NotSsl => {
+                debug!("Aborting because port {addr} isn't running ssl");
+                ControlFlow::Break(BreakReason::Failed)
+            }
+            NativeTlsError::UnrecognizedName => ControlFlow::Break(BreakReason::DeniedBySNI),
+            _ => {
+                warn!("Aborting because port {addr} has unhandled ssl error: {error}");
+                ControlFlow::Break(BreakReason::Failed)
+            }
+        },
+        ProbeTlsResult::ErrOther(data, error) => {
+            warn!("Continuing although port {addr} errored: {error}");
+            ControlFlow::Continue(data)
+        }
+        ProbeTlsResult::ErrConnect(error) => {
+            warn!("Aborting because port {addr} couldn't connect anymore: {error}");
+            ControlFlow::Break(BreakReason::Failed)
+        }
     }
 }
 

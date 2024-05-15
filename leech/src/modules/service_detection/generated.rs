@@ -8,7 +8,6 @@ use regex::bytes::Regex;
 use tokio::net::UdpSocket;
 
 use crate::modules::service_detection::tcp::OneShotTcpSettings;
-use crate::modules::service_detection::DynResult;
 
 include!(concat!(env!("OUT_DIR"), "/generated_probes.rs"));
 
@@ -23,10 +22,9 @@ pub struct AllProbes {
     pub rust_udp_probes: [Vec<RustProbe<UdpFn>>; 3],
 }
 
-pub type TcpFn = for<'a> fn(&'a OneShotTcpSettings) -> BoxFuture<'a, DynResult<Match>>;
-pub type TlsFn =
-    for<'a> fn(&'a OneShotTcpSettings, Option<&'static str>) -> BoxFuture<'a, DynResult<Match>>;
-pub type UdpFn = for<'a> fn(&'a mut UdpSocket) -> BoxFuture<'a, DynResult<Match>>;
+pub type TcpFn = for<'a> fn(&'a OneShotTcpSettings) -> BoxFuture<'a, Match>;
+pub type TlsFn = for<'a> fn(&'a OneShotTcpSettings, Option<&'static str>) -> BoxFuture<'a, Match>;
+pub type UdpFn = for<'a> fn(&'a mut UdpSocket) -> BoxFuture<'a, Match>;
 
 /// A probe implemented in rust
 pub struct RustProbe<F> {

@@ -20,6 +20,7 @@ use crate::modules::os_detection::syn_scan::find_open_and_closed_port;
 use crate::modules::os_detection::tcp_fingerprint::fingerprint_tcp;
 use crate::modules::os_detection::tcp_fingerprint::TcpFingerprint;
 use crate::modules::service_detection::tcp::OneShotTcpSettings;
+use crate::modules::service_detection::tcp::ProbeTcpResult;
 
 pub mod errors;
 mod fingerprint_db;
@@ -681,17 +682,15 @@ async fn os_detect_ssh(
         return Ok(OperatingSystemInfo::default());
     };
 
-    let Ok(result) = result else {
+    let ProbeTcpResult::Ok(data) = result else {
         // TOOD: might want to return differently if the error is a specific one, but right now it's a dynamic error
         // without proper error information for us to match on.
         return Ok(OperatingSystemInfo::default());
     };
 
-    if let Some(data) = result {
-        if data.starts_with(b"SSH-") {
-            if let Some(end) = data.iter().find_position(|&&c| c == b'\r' || c == b'\n') {
-                return Ok(os_detect_ssh_header(&data[0..end.0]));
-            }
+    if data.starts_with(b"SSH-") {
+        if let Some(end) = data.iter().find_position(|&&c| c == b'\r' || c == b'\n') {
+            return Ok(os_detect_ssh_header(&data[0..end.0]));
         }
     }
 

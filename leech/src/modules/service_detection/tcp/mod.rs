@@ -14,6 +14,8 @@ use tokio_stream::wrappers::ReceiverStream;
 
 use self::detection::detect_service;
 pub use self::oneshot::OneShotTcpSettings;
+pub use self::oneshot::ProbeTcpResult;
+pub use self::oneshot::ProbeTlsResult;
 use self::scanner::is_port_open;
 use crate::modules::host_alive::icmp_scan::start_icmp_scan;
 use crate::modules::host_alive::icmp_scan::IcmpScanSettings;
@@ -138,11 +140,12 @@ pub async fn start_tcp_service_detection(
                         tls_service: None,
                     })
                     .await?;
-                } else if let Some(result) =
-                    detect_service(socket, settings.receive_timeout, settings.connect_timeout)
-                        .await?
-                {
-                    tx.send(result).await?;
+                } else {
+                    tx.send(
+                        detect_service(socket, settings.receive_timeout, settings.connect_timeout)
+                            .await,
+                    )
+                    .await?;
                 };
             }
             Ok::<(), DynError>(())

@@ -2,7 +2,6 @@ use std::io;
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use log::debug;
 use log::trace;
 use thiserror::Error;
 use tokio::io::AsyncReadExt;
@@ -25,185 +24,170 @@ pub struct OneShotTcpSettings {
     pub recv_timeout: Duration,
 }
 
+/// Custom `Result` returned by [`OneShotTcpSettings::probe_tcp`]
+pub enum ProbeTcpResult {
+    /// No errors
+    Ok(Vec<u8>),
+    /// Error during TCP handshake
+    ErrConnect(io::Error),
+    /// Error happened after the handshake
+    ErrOther(Vec<u8>, ProbeIoError),
+}
+
+/// Custom `Result` returned by [`OneShotTcpSettings::probe_tls`]
+pub enum ProbeTlsResult {
+    /// No errors
+    Ok(Vec<u8>),
+    /// Error during TCP handshake
+    ErrConnect(io::Error),
+    /// Error during TLS handshake
+    ErrTls(native_tls::Error),
+    /// Error happened after the handshakes
+    ErrOther(Vec<u8>, ProbeIoError),
+}
+
 impl OneShotTcpSettings {
     /// Send `payload` and receive answer over TCP
-    ///
-    /// Errors when an unrecoverable error occurred.
-    /// Returns `Ok(None)` when the service refused to respond to the payload.
-    pub async fn probe_tcp(&self, payload: &[u8]) -> Result<Option<Vec<u8>>, ProbeTcpError> {
-        let mut place = ProbeTcpErrorPlace::Connect;
-        match self.raw_probe_tcp(payload, &mut place).await {
-            Ok(data) => Ok(Some(data)),
-            Err(error) => match error.kind() {
-                io::ErrorKind::ConnectionReset | io::ErrorKind::ConnectionAborted => Ok(None),
-                io::ErrorKind::NotConnected if matches!(place, ProbeTcpErrorPlace::Shutdown) => {
-                    Ok(None)
-                }
-                // TODO a connection timeout might be interesting during detection
-                //      since the scanner has already detected the post to be open once.
-                io::ErrorKind::TimedOut if matches!(place, ProbeTcpErrorPlace::Connect) => Ok(None),
-                _ => Err(ProbeTcpError {
-                    source: error,
-                    place,
-                }),
-            },
-        }
-    }
+    pub async fn probe_tcp(&self, payload: &[u8]) -> ProbeTcpResult {
+        trace!("Sending data: {:?}", DebuggableBytes(payload));
 
-    /// 1. Connect to the socket using tcp
-    /// 2. Send `payload`
-    /// 3. Wait for the configured amount of time
-    /// 4. Return everything which has been received
-    async fn raw_probe_tcp(
-        &self,
-        payload: &[u8],
-        place: &mut ProbeTcpErrorPlace,
-    ) -> Result<Vec<u8>, io::Error> {
-        // Connect
-        *place = ProbeTcpErrorPlace::Connect;
-        let mut tcp = timeout(self.connect_timeout, TcpStream::connect(self.socket)).await??;
-
+        let mut place = ProbeErrorPlace::Connect;
         let mut data = Vec::new();
-        if let Ok(Err(error)) = timeout(self.recv_timeout, async {
-            // Send payload
-            if !payload.is_empty() {
-                *place = ProbeTcpErrorPlace::Write;
-                tcp.write_all(payload).await?;
 
-                *place = ProbeTcpErrorPlace::Flush;
-                tcp.flush().await?;
+        let raw_result = async {
+            place = ProbeErrorPlace::Connect;
+            // TCP Handshake
+            let tcp = timeout(self.connect_timeout, TcpStream::connect(self.socket)).await??;
 
-                trace!(target: "tcp", "Send data: {:?}", DebuggableBytes(payload));
-            }
+            self.process_stream(payload, &mut place, &mut data, tcp)
+                .await
+        }
+        .await;
 
-            // Read
-            *place = ProbeTcpErrorPlace::Read;
-            tcp.read_to_end(&mut data).await?;
-            Ok::<(), io::Error>(())
-        })
-        .await
-        {
-            return Err(error);
+        let result = match (raw_result, place) {
+            (Ok(()), _) => ProbeTcpResult::Ok(data),
+            (Err(error), ProbeErrorPlace::Connect) => ProbeTcpResult::ErrConnect(error),
+            (Err(source), _) => ProbeTcpResult::ErrOther(data, ProbeIoError { source, place }),
+        };
+
+        if let ProbeTcpResult::Ok(data) | ProbeTcpResult::ErrOther(data, _) = &result {
+            trace!("Received data: {:?}", DebuggableBytes(data));
         }
 
-        *place = ProbeTcpErrorPlace::Shutdown;
-        tcp.shutdown().await?;
-
-        // Log and Return
-        trace!(target: "tcp", "Received data: {:?}", DebuggableBytes(&data));
-        Ok(data)
+        result
     }
 
     /// Send `payload` and receive answer over TLS
-    pub async fn probe_tls(
-        &self,
-        payload: &[u8],
-        alpn: Option<&str>,
-    ) -> Result<Result<Option<Vec<u8>>, native_tls::Error>, ProbeTcpError> {
-        let mut place = ProbeTcpErrorPlace::Connect;
-        match self.raw_probe_tls(payload, alpn, &mut place).await {
-            Ok(Ok(data)) => Ok(Ok(Some(data))),
-            Ok(Err(tls_error)) => Ok(Err(tls_error)),
-            Err(io_error) => match io_error.kind() {
-                io::ErrorKind::ConnectionReset | io::ErrorKind::ConnectionAborted => Ok(Ok(None)),
-                io::ErrorKind::NotConnected if matches!(place, ProbeTcpErrorPlace::Shutdown) => {
-                    Ok(Ok(None))
-                }
-                io::ErrorKind::TimedOut if matches!(place, ProbeTcpErrorPlace::Connect) => {
-                    Ok(Ok(None))
-                }
-                _ => Err(ProbeTcpError {
-                    source: io_error,
-                    place,
-                }),
-            },
+    pub async fn probe_tls(&self, payload: &[u8], alpn: Option<&str>) -> ProbeTlsResult {
+        trace!("Sending data: {:?}", DebuggableBytes(payload));
+
+        let mut place = ProbeErrorPlace::Connect;
+        let mut data = Vec::new();
+
+        let raw_result = async {
+            // Configure TLS
+            let alpns = alpn.as_ref().map(std::slice::from_ref).unwrap_or(&[]);
+            let connector = tokio_native_tls::TlsConnector::from(
+                native_tls::TlsConnector::builder()
+                    .danger_accept_invalid_certs(true)
+                    .danger_accept_invalid_hostnames(true)
+                    .use_sni(false)
+                    .request_alpns(alpns)
+                    .build()
+                    .map_err(io::Error::other)?,
+            );
+
+            place = ProbeErrorPlace::Connect;
+            let tls_result = timeout(self.connect_timeout, async {
+                // TCP Handshake
+                let tcp = TcpStream::connect(self.socket).await?;
+
+                // TLS Handshake
+                Ok::<_, io::Error>(connector.connect("<ignored>", tcp).await)
+            })
+            .await??;
+            let tls = match tls_result {
+                Ok(tls) => tls,
+                Err(err) => return Ok(Err(err)),
+            };
+
+            self.process_stream(payload, &mut place, &mut data, tls)
+                .await
+                .map(Ok)
         }
-    }
+        .await;
 
-    /// 1. Connect to the socket using tls over tcp
-    /// 2. Send `payload`
-    /// 3. Wait for the configured amount of time
-    /// 4. Return everything which has been received
-    async fn raw_probe_tls(
-        &self,
-        payload: &[u8],
-        alpn: Option<&str>,
-        place: &mut ProbeTcpErrorPlace,
-    ) -> Result<Result<Vec<u8>, native_tls::Error>, io::Error> {
-        // Configure TLS
-        let alpns = alpn.as_ref().map(std::slice::from_ref).unwrap_or(&[]);
-        let connector = tokio_native_tls::TlsConnector::from(
-            native_tls::TlsConnector::builder()
-                .danger_accept_invalid_certs(true)
-                .danger_accept_invalid_hostnames(true)
-                .use_sni(false)
-                .request_alpns(alpns)
-                .build()
-                .map_err(io::Error::other)?,
-        );
-
-        // Connect
-        *place = ProbeTcpErrorPlace::Connect;
-        let tls_result = timeout(self.connect_timeout, async {
-            let tcp = TcpStream::connect(self.socket).await?;
-            Ok::<_, io::Error>(connector.connect("<ignored>", tcp).await)
-        })
-        .await??;
-        let mut tls = match tls_result {
-            Ok(tls) => tls,
-            Err(err) => return Ok(Err(err)),
+        let result = match (raw_result, place) {
+            (Ok(Ok(())), _) => ProbeTlsResult::Ok(data),
+            (Ok(Err(error)), _) => ProbeTlsResult::ErrTls(error),
+            (Err(error), ProbeErrorPlace::Connect) => ProbeTlsResult::ErrConnect(error),
+            (Err(source), _) => ProbeTlsResult::ErrOther(data, ProbeIoError { source, place }),
         };
 
-        let mut data = Vec::new();
-        if let Ok(Err(error)) = timeout(self.recv_timeout, async {
-            // Send payload
+        if let ProbeTlsResult::Ok(data) | ProbeTlsResult::ErrOther(data, _) = &result {
+            trace!("Received data: {:?}", DebuggableBytes(data));
+        }
+
+        result
+    }
+
+    /// Code common to `probe_tcp` and `probe_tls` i.e. after the handshake
+    async fn process_stream(
+        &self,
+        payload: &[u8],
+        place: &mut ProbeErrorPlace,
+        data: &mut Vec<u8>,
+        mut stream: impl AsyncWriteExt + AsyncReadExt + Unpin,
+    ) -> Result<(), io::Error> {
+        let timeout_result = timeout(self.recv_timeout, async {
             if !payload.is_empty() {
-                *place = ProbeTcpErrorPlace::Write;
-                tls.write_all(payload).await?;
+                *place = ProbeErrorPlace::Write;
+                stream.write_all(payload).await?;
 
-                *place = ProbeTcpErrorPlace::Flush;
-                tls.flush().await?;
+                *place = ProbeErrorPlace::Flush;
+                stream.flush().await?;
             }
 
-            // Read
-            *place = ProbeTcpErrorPlace::Read;
-            if let Err(err) = tls.read_to_end(&mut data).await {
-                debug!(target: "tls", "TLS read failed: {err}");
-            }
+            *place = ProbeErrorPlace::Read;
+            stream.read_to_end(&mut *data).await?;
+
             Ok::<(), io::Error>(())
         })
-        .await
-        {
-            return Err(error);
+        .await;
+
+        match timeout_result {
+            // Timeout elapsed: This is the expected case
+            Err(_) => {}
+            // `read_to_end` actually completed: Unexpected but also fine
+            Ok(Ok(())) => {}
+            // An io error occurred
+            Ok(Err(error)) => {
+                return Err(error);
+            }
         }
 
-        // Close
-        *place = ProbeTcpErrorPlace::Shutdown;
-        if let Err(err) = tls.shutdown().await {
-            debug!(target: "tls", "TLS shutdown failed: {err}");
-        }
+        *place = ProbeErrorPlace::Shutdown;
+        stream.shutdown().await?;
 
-        // Log and Return
-        trace!(target: "tls", "Received data: {:?}", DebuggableBytes(&data));
-        Ok(Ok(data))
+        Ok(())
     }
 }
 
-/// The error returned by [`OneShotTcpSettings::probe_tcp`]
+/// The [`io::Error`] returned by [`OneShotTcpSettings::probe_tcp`] or [`OneShotTcpSettings::probe_tls`]
 #[derive(Debug, Error)]
 #[error("{source} @ {place:?}")]
-pub struct ProbeTcpError {
+pub struct ProbeIoError {
     /// The error
     #[source]
     pub source: io::Error,
 
     /// The place the error occurred
-    pub place: ProbeTcpErrorPlace,
+    pub place: ProbeErrorPlace,
 }
 
-/// The places where [`OneShotTcpSettings::probe_tcp`] might produce an error
-#[derive(Debug)]
-pub enum ProbeTcpErrorPlace {
+/// The places where [`OneShotTcpSettings::probe_tcp`] and [`OneShotTcpSettings::probe_tls`] might produce an [`io::Error`]
+#[derive(Debug, Copy, Clone)]
+pub enum ProbeErrorPlace {
     /// During [`TcpStream::connect`]
     Connect,
     /// During [`AsyncWriteExt::write_all`]
