@@ -2,6 +2,8 @@
 
 ## WIP
 
+## v0.3.3
+
 ### Leech fixes
 
 - Added second probe for the http service which tries a GET if the initial HEAD failed.
