@@ -827,7 +827,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                     <StatelessWorkspaceTable
                         key={"http-service-table"}
                         {...httpServicesTable}
-                        columnsTemplate={"min-content 0.7fr 20ch 8ch 1fr 0.6fr 2em 2em 1fr 1fr 3.5em 4em 2.25em"}
+                        columnsTemplate={"min-content 0.7fr 20ch 8ch 1fr 0.6fr 0.6fr 2em 2em 1fr 1fr 3.5em 4em 2.25em"}
                         onAdd={() => setCreateForm(AggregationType.HttpService)}
                         filter={httpServiceFilter}
                     >
@@ -847,6 +847,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                             <span>Port</span>
                             <span>Domain</span>
                             <span>Base Path</span>
+                            <span>Version</span>
                             <span>TLS</span>
                             <span>SNI</span>
                             <span>Tags</span>
@@ -892,6 +893,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <PortNumber port={httpService.port} withProtocol />
                                 {httpService.domain ? <Domain domain={httpService.domain} /> : <span></span>}
                                 <SelectableText>{httpService.basePath}</SelectableText>
+                                <SelectableText>{httpService.version}</SelectableText>
                                 <span>
                                     <Indicator off={!httpService.tls} />
                                 </span>
