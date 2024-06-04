@@ -2,6 +2,8 @@
 
 ## WIP
 
+## v0.3.4
+
 ### Frontend fixes
 
 - Clicking on a tag in http-services results now in the filter added in http services instead of services
