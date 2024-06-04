@@ -17,7 +17,8 @@ tokio = { version = ">=1.23.1", features = ["sync"] }
 futures = { version = "~0.3" }
 
 # Tokio websockets
-tokio-tungstenite = { version = "~0.21", features = ["native-tls"] }
+tokio-tungstenite = { version = "~0.23", features = ["native-tls"] }
+tungstenite = { version = "~0.23", features = ["url"] }
 tokio-native-tls = { version = "~0.3" }
 
 # HTTP client library

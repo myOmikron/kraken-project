@@ -18,6 +18,10 @@
 
 - Ports with random behaviour won't be reported as service
 
+### General
+
+- Updated dependencies
+
 ## v0.3.1
 
 ### Leech fixes

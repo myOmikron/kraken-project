@@ -36,7 +36,7 @@ futures = { version = "~0.3" }
 tokio-stream = { version = "~0.1" }
 
 # Expansion of the Iterator trait
-itertools = { version = "~0.12" }
+itertools = { version = "~0.13" }
 
 # gRPC implementation
 tonic = { version = "~0.11", features = ["transport", "tls"] }
@@ -87,8 +87,8 @@ tokio-native-tls = { version = "~0.3" }
 
 # raw sockets
 socket2 = { version = "~0.5" }
-etherparse = { version = "~0.14" }
-nix = { version = "~0.28", features = ["net"] }
+etherparse = { version = "~0.15" }
+nix = { version = "~0.29", features = ["net"] }
 strum = { version = "~0.26" }
 strum_macros = { version = "~0.26" }
 
