@@ -2,6 +2,12 @@
 
 ## WIP
 
+## v0.3.5
+
+### Frontend
+
+- Added version to http services
+
 ## v0.3.4
 
 ### Frontend fixes
