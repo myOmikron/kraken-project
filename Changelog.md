@@ -2,6 +2,10 @@
 
 ## WIP
 
+### Frontend fixes
+
+- Clicking on a tag in http-services results now in the filter added in http services instead of services
+
 ## v0.3.3
 
 ### Leech fixes
