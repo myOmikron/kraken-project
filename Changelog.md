@@ -8,6 +8,10 @@
 
 - Clicking on a tag in http-services results now in the filter added in http services instead of services
 
+### General
+
+- Updated dependencies
+
 ## v0.3.3
 
 ### Leech fixes
