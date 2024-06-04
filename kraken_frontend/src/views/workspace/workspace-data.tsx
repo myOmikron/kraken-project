@@ -898,7 +898,7 @@ export default function WorkspaceData(props: WorkspaceDataProps) {
                                 <span>
                                     <Indicator off={!httpService.sniRequired} />
                                 </span>
-                                <TagList tags={httpService.tags} globalFilter={globalFilter} filter={serviceFilter} />
+                                <TagList tags={httpService.tags} globalFilter={globalFilter} filter={httpServiceFilter} />
                                 <span>{httpService.comment}</span>
                                 <Severity
                                     severity={httpService.severity}
