@@ -2,6 +2,10 @@
 
 ## WIP
 
+### Leech
+
+- Added openvpn probe
+
 ## v0.3.5
 
 ### Frontend
