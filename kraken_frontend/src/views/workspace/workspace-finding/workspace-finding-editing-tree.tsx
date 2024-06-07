@@ -85,6 +85,7 @@ export const EditingTreeGraph = forwardRef<EditingTreeGraphRef, EditingTreeGraph
                     categories: [],
                 },
                 userDetails: "",
+                exportDetails: "",
                 severity: props.severity,
                 uuid: rootUuid,
                 categories: [],

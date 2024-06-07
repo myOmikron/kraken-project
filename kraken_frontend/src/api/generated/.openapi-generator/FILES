@@ -89,6 +89,7 @@ models/FindingAffectedObjectOneOf2.ts
 models/FindingAffectedObjectOneOf3.ts
 models/FindingAffectedObjectOneOf4.ts
 models/FindingDefinitionUsage.ts
+models/FindingDetails.ts
 models/FindingSection.ts
 models/FindingSeverity.ts
 models/FinishRegisterRequest.ts

@@ -390,6 +390,7 @@ impl Modify for SecurityAddon2 {
         chan::ws_manager::schema::CertificateTransparencyEntry,
         chan::ws_manager::schema::Change,
         chan::ws_manager::schema::FindingSection,
+        chan::ws_manager::schema::FindingDetails,
         chan::ws_manager::schema::EditorTarget,
         chan::ws_manager::schema::CursorPosition,
         findings::schema::CreateFindingRequest,

@@ -167,6 +167,13 @@ pub struct FindingDetails {
     #[rorm(primary_key)]
     pub uuid: Uuid,
 
+    /// Notes about the finding included in the data export
+    ///
+    /// May be used for documenting details about the finding
+    /// used to generate reports outside of kraken.
+    #[rorm(max_length = 65535, default = "")]
+    pub export_details: String,
+
     /// Notes about the finding provided by the user
     ///
     /// May be used for documenting command invocation or other information

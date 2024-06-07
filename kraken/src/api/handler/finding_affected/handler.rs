@@ -104,7 +104,8 @@ pub async fn create_finding_affected(
         request.uuid,
         request.r#type,
         w_uuid,
-        request.details,
+        request.export_details,
+        request.user_details,
         None,
         request.screenshot,
         request.log_file,
@@ -459,7 +460,9 @@ pub async fn get_finding_affected(
             severity: FromDb::from_db(finding.severity),
             affected: finding_affected,
             #[rustfmt::skip]
-            user_details: GLOBAL.editor_cache.finding_details.get(finding.uuid).await?.unwrap_or_default().0,
+            export_details: GLOBAL.editor_cache.finding_export_details.get(finding.uuid).await?.unwrap_or_default().0,
+            #[rustfmt::skip]
+            user_details: GLOBAL.editor_cache.finding_user_details.get(finding.uuid).await?.unwrap_or_default().0,
             tool_details: finding_details.tool_details,
             screenshot: finding_details.screenshot.map(|fm| *fm.key()),
             log_file: finding_details.log_file.map(|fm| *fm.key()),
@@ -469,7 +472,9 @@ pub async fn get_finding_affected(
         affected,
         affected_tags,
         #[rustfmt::skip]
-        user_details: GLOBAL.editor_cache.finding_affected_details.get(a_uuid).await?.unwrap_or_default().0,
+        export_details: GLOBAL.editor_cache.finding_affected_export_details.get(a_uuid).await?.unwrap_or_default().0,
+        #[rustfmt::skip]
+        user_details: GLOBAL.editor_cache.finding_affected_user_details.get(a_uuid).await?.unwrap_or_default().0,
         tool_details: details.as_mut().and_then(|d| d.tool_details.take()),
         screenshot: details
             .as_mut()
@@ -535,8 +540,15 @@ pub async fn update_finding_affected(
         let screenshot = request.screenshot.flatten();
         let log_file = request.log_file.flatten();
         if screenshot.is_some() || log_file.is_some() {
-            let uuid =
-                FindingDetails::insert(&mut tx, String::new(), None, screenshot, log_file).await?;
+            let uuid = FindingDetails::insert(
+                &mut tx,
+                String::new(),
+                String::new(),
+                None,
+                screenshot,
+                log_file,
+            )
+            .await?;
             update!(&mut tx, FindingAffected)
                 .set(
                     FindingAffected::F.details,
@@ -591,7 +603,14 @@ pub async fn delete_finding_affected(
         .await?
         .ok_or(ApiError::NotFound)?;
     FindingAffected::delete(&mut tx, uuid).await?;
-    GLOBAL.editor_cache.finding_affected_details.delete(a_uuid);
+    GLOBAL
+        .editor_cache
+        .finding_affected_export_details
+        .delete(a_uuid);
+    GLOBAL
+        .editor_cache
+        .finding_affected_user_details
+        .delete(a_uuid);
 
     tx.commit().await?;
     GLOBAL

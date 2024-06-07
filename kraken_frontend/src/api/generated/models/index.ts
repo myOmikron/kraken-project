@@ -60,6 +60,7 @@ export * from './FindingAffectedObjectOneOf2';
 export * from './FindingAffectedObjectOneOf3';
 export * from './FindingAffectedObjectOneOf4';
 export * from './FindingDefinitionUsage';
+export * from './FindingDetails';
 export * from './FindingSection';
 export * from './FindingSeverity';
 export * from './FinishRegisterRequest';

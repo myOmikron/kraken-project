@@ -22,6 +22,7 @@ use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::Change;
 use crate::chan::ws_manager::schema::CursorPosition;
 use crate::chan::ws_manager::schema::EditorTarget;
+use crate::chan::ws_manager::schema::FindingDetails;
 use crate::chan::ws_manager::schema::FindingSection;
 use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::FindingDefinition;
@@ -32,8 +33,8 @@ use crate::modules::cache::EditorCached;
 pub struct EditorSync {
     ws_notes_tx: Arc<Sender<(Uuid, Uuid, Change)>>,
     finding_definition_tx: Arc<Sender<(Uuid, Uuid, FindingSection, Change)>>,
-    finding_tx: Arc<Sender<(Uuid, Uuid, Change)>>,
-    finding_affected_tx: Arc<Sender<(Uuid, Uuid, Uuid, Change)>>,
+    finding_tx: Arc<Sender<(Uuid, Uuid, FindingDetails, Change)>>,
+    finding_affected_tx: Arc<Sender<(Uuid, Uuid, Uuid, FindingDetails, Change)>>,
 }
 
 impl EditorSync {
@@ -96,24 +97,31 @@ impl EditorSync {
         }
     }
 
-    /// Send a finding user details change
-    pub async fn send_finding(&self, user: Uuid, finding: Uuid, change: Change) {
-        if let Err(err) = self.finding_tx.send((user, finding, change)).await {
+    /// Send a finding details change
+    pub async fn send_finding(
+        &self,
+        user: Uuid,
+        finding: Uuid,
+        details: FindingDetails,
+        change: Change,
+    ) {
+        if let Err(err) = self.finding_tx.send((user, finding, details, change)).await {
             error!("Couldn't send to EditorSync: {err}");
         }
     }
 
-    /// Send a finding affected user details change
+    /// Send a finding affected details change
     pub async fn send_finding_affected(
         &self,
         user: Uuid,
         finding: Uuid,
         affected: Uuid,
+        details: FindingDetails,
         change: Change,
     ) {
         if let Err(err) = self
             .finding_affected_tx
-            .send((user, finding, affected, change))
+            .send((user, finding, affected, details, change))
             .await
         {
             error!("Couldn't send to EditorSync: {err}");
@@ -121,14 +129,28 @@ impl EditorSync {
     }
 
     /// Start processing of [FindingAffected] user-details changes
-    pub async fn process_finding_affected(self, mut rx: Receiver<(Uuid, Uuid, Uuid, Change)>) {
-        while let Some((user, finding, affected, change)) = rx.recv().await {
-            let (existing, ws) = match GLOBAL
-                .editor_cache
-                .finding_affected_details
-                .get(affected)
-                .await
-            {
+    pub async fn process_finding_affected(
+        self,
+        mut rx: Receiver<(Uuid, Uuid, Uuid, FindingDetails, Change)>,
+    ) {
+        while let Some((user, finding, affected, finding_details, change)) = rx.recv().await {
+            let cache_result = match finding_details {
+                FindingDetails::Export => {
+                    GLOBAL
+                        .editor_cache
+                        .finding_affected_export_details
+                        .get(affected)
+                        .await
+                }
+                FindingDetails::User => {
+                    GLOBAL
+                        .editor_cache
+                        .finding_affected_user_details
+                        .get(affected)
+                        .await
+                }
+            };
+            let (existing, ws) = match cache_result {
                 Ok(details) => {
                     if let Some(x) = details {
                         x
@@ -174,12 +196,23 @@ impl EditorSync {
             }
 
             // Update cache
-            if let Err(err) = GLOBAL
-                .editor_cache
-                .finding_affected_details
-                .update(affected, apply_change(&existing, &change))
-                .await
-            {
+            let cache_result = match finding_details {
+                FindingDetails::Export => {
+                    GLOBAL
+                        .editor_cache
+                        .finding_affected_export_details
+                        .update(affected, apply_change(&existing, &change))
+                        .await
+                }
+                FindingDetails::User => {
+                    GLOBAL
+                        .editor_cache
+                        .finding_affected_user_details
+                        .update(affected, apply_change(&existing, &change))
+                        .await
+                }
+            };
+            if let Err(err) = cache_result {
                 error!("Error updating finding affected details cache: {err}");
                 continue;
             }
@@ -188,7 +221,11 @@ impl EditorSync {
             let msg = WsMessage::EditorChangedContent {
                 user,
                 change,
-                target: EditorTarget::FindingAffected { finding, affected },
+                target: EditorTarget::FindingAffected {
+                    finding,
+                    affected,
+                    finding_details,
+                },
             };
             GLOBAL.ws.message_workspace(ws, msg).await;
         }
@@ -202,14 +239,26 @@ impl EditorSync {
         user: Uuid,
         finding: Uuid,
         affected: Uuid,
+        finding_details: FindingDetails,
         cursor: CursorPosition,
     ) {
-        let (_, ws) = match GLOBAL
-            .editor_cache
-            .finding_affected_details
-            .get(affected)
-            .await
-        {
+        let cache_result = match finding_details {
+            FindingDetails::Export => {
+                GLOBAL
+                    .editor_cache
+                    .finding_affected_export_details
+                    .get(affected)
+                    .await
+            }
+            FindingDetails::User => {
+                GLOBAL
+                    .editor_cache
+                    .finding_affected_user_details
+                    .get(affected)
+                    .await
+            }
+        };
+        let (_, ws) = match cache_result {
             Ok(details) => {
                 if let Some(x) = details {
                     x
@@ -249,7 +298,11 @@ impl EditorSync {
         GLOBAL
             .ws
             .message_all(WsMessage::EditorChangedCursor {
-                target: EditorTarget::FindingAffected { finding, affected },
+                target: EditorTarget::FindingAffected {
+                    finding,
+                    affected,
+                    finding_details,
+                },
                 cursor,
                 user,
             })
@@ -257,9 +310,19 @@ impl EditorSync {
     }
 
     /// Start processing of finding user details changes
-    pub async fn process_finding(self, mut rx: Receiver<(Uuid, Uuid, Change)>) {
-        while let Some((user, finding, change)) = rx.recv().await {
-            let (existing, ws) = match GLOBAL.editor_cache.finding_details.get(finding).await {
+    pub async fn process_finding(self, mut rx: Receiver<(Uuid, Uuid, FindingDetails, Change)>) {
+        while let Some((user, finding, finding_details, change)) = rx.recv().await {
+            let cache_result = match finding_details {
+                FindingDetails::Export => {
+                    GLOBAL
+                        .editor_cache
+                        .finding_export_details
+                        .get(finding)
+                        .await
+                }
+                FindingDetails::User => GLOBAL.editor_cache.finding_user_details.get(finding).await,
+            };
+            let (existing, ws) = match cache_result {
                 Ok(details) => {
                     if let Some(x) = details {
                         x
@@ -305,12 +368,23 @@ impl EditorSync {
             }
 
             // Update cache
-            if let Err(err) = GLOBAL
-                .editor_cache
-                .finding_details
-                .update(finding, apply_change(&existing, &change))
-                .await
-            {
+            let cache_result = match finding_details {
+                FindingDetails::Export => {
+                    GLOBAL
+                        .editor_cache
+                        .finding_export_details
+                        .update(finding, apply_change(&existing, &change))
+                        .await
+                }
+                FindingDetails::User => {
+                    GLOBAL
+                        .editor_cache
+                        .finding_user_details
+                        .update(finding, apply_change(&existing, &change))
+                        .await
+                }
+            };
+            if let Err(err) = cache_result {
                 error!("Error updating finding details cache: {err}");
                 continue;
             }
@@ -319,7 +393,10 @@ impl EditorSync {
             let msg = WsMessage::EditorChangedContent {
                 user,
                 change,
-                target: EditorTarget::Finding { finding },
+                target: EditorTarget::Finding {
+                    finding,
+                    finding_details,
+                },
             };
             GLOBAL.ws.message_workspace(ws, msg).await;
         }
@@ -332,9 +409,20 @@ impl EditorSync {
         &self,
         user: Uuid,
         finding: Uuid,
+        finding_details: FindingDetails,
         cursor: CursorPosition,
     ) {
-        let (_, ws) = match GLOBAL.editor_cache.finding_details.get(finding).await {
+        let cache_result = match finding_details {
+            FindingDetails::Export => {
+                GLOBAL
+                    .editor_cache
+                    .finding_export_details
+                    .get(finding)
+                    .await
+            }
+            FindingDetails::User => GLOBAL.editor_cache.finding_user_details.get(finding).await,
+        };
+        let (_, ws) = match cache_result {
             Ok(details) => {
                 if let Some(x) = details {
                     x
@@ -374,7 +462,10 @@ impl EditorSync {
         GLOBAL
             .ws
             .message_all(WsMessage::EditorChangedCursor {
-                target: EditorTarget::Finding { finding },
+                target: EditorTarget::Finding {
+                    finding,
+                    finding_details,
+                },
                 cursor,
                 user,
             })

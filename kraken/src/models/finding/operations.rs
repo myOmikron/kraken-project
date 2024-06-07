@@ -36,6 +36,7 @@ impl Finding {
         workspace: Uuid,
         definition: Uuid,
         severity: FindingSeverity,
+        export_details: String,
         user_details: String,
         tool_details: Option<String>,
         screenshot: Option<Uuid>,
@@ -47,6 +48,7 @@ impl Finding {
 
         let details_uuid = FindingDetails::insert(
             guard.get_transaction(),
+            export_details,
             user_details,
             tool_details,
             screenshot,
@@ -105,6 +107,7 @@ impl FindingAffected {
         object_uuid: Uuid,
         object_type: AggregationType,
         workspace: Uuid,
+        export_details: String,
         user_details: String,
         tool_details: Option<String>,
         screenshot: Option<Uuid>,
@@ -113,10 +116,16 @@ impl FindingAffected {
         let mut guard = executor.ensure_transaction().await?;
         let uuid = Uuid::new_v4();
 
-        let details = if tool_details.is_some() || screenshot.is_some() || log_file.is_some() {
+        let details = if !export_details.is_empty()
+            || !user_details.is_empty()
+            || tool_details.is_some()
+            || screenshot.is_some()
+            || log_file.is_some()
+        {
             Some(ForeignModelByField::Key(
                 FindingDetails::insert(
                     guard.get_transaction(),
+                    export_details,
                     user_details,
                     tool_details,
                     screenshot,
@@ -186,6 +195,7 @@ impl FindingDetails {
     /// Insert a new [`FindingDetails`]
     pub(crate) async fn insert(
         executor: impl Executor<'_>,
+        export_details: String,
         user_details: String,
         tool_details: Option<String>,
         screenshot: Option<Uuid>,
@@ -211,6 +221,7 @@ impl FindingDetails {
             .return_nothing()
             .single(&Self {
                 uuid,
+                export_details,
                 user_details,
                 tool_details,
                 log_file: log_file.map(ForeignModelByField::Key),

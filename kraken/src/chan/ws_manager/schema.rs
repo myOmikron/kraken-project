@@ -362,6 +362,8 @@ pub enum EditorTarget {
     Finding {
         /// Uuid of the [Finding]
         finding: Uuid,
+        /// The finding details section which is active
+        finding_details: FindingDetails,
     },
     /// The editor for the `user_details` in [FindingAffected]
     FindingAffected {
@@ -369,6 +371,8 @@ pub enum EditorTarget {
         finding: Uuid,
         /// Uuid of the [FindingAffected]
         affected: Uuid,
+        /// The finding details section which is active
+        finding_details: FindingDetails,
     },
     /// The editor for notes in a [Workspace]
     WorkspaceNotes {
@@ -392,7 +396,7 @@ pub enum AggregationType {
     HttpService,
 }
 
-/// The section that was edited
+/// The definition section that was edited
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
 #[allow(missing_docs)]
 pub enum FindingSection {
@@ -401,6 +405,14 @@ pub enum FindingSection {
     Impact,
     Remediation,
     References,
+}
+
+/// The details section that was edited
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
+#[allow(missing_docs)]
+pub enum FindingDetails {
+    Export,
+    User,
 }
 
 /// Defines a change

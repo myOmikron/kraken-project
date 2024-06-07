@@ -22,11 +22,17 @@ pub struct CreateFindingRequest {
     /// The severity of this specific instance of the finding
     pub severity: FindingSeverity,
 
+    /// Notes about the finding included in the data export
+    ///
+    /// May be used for documenting details about the finding
+    /// used to generate reports outside of kraken.
+    pub export_details: String,
+
     /// Notes about the finding provided by the user
     ///
     /// May be used for documenting command invocation or other information
     /// that are provided by the user
-    pub details: String,
+    pub user_details: String,
 
     /// A screenshot
     ///
@@ -115,6 +121,12 @@ pub struct FullFinding {
 
     /// List of all affected objects
     pub affected: Vec<SimpleFindingAffected>,
+
+    /// Notes about the finding included in the data export
+    ///
+    /// May be used for documenting details about the finding
+    /// used to generate reports outside of kraken.
+    pub export_details: String,
 
     /// Notes about the finding provided by the user
     ///

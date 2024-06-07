@@ -99,7 +99,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                 _data: data satisfies LocalAffected["_data"],
                 type: type satisfies LocalAffected["type"],
                 uuid: data.uuid,
-                details: "",
+                userDetails: "",
+                exportDetails: "",
             } as LocalAffected;
         }),
     );
@@ -175,7 +176,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                     addAffected({
                                         type: "Domain",
                                         uuid: d.uuid,
-                                        details: "",
+                                        userDetails: "",
+                                        exportDetails: "",
                                         _data: d,
                                     }),
                                 )
@@ -185,7 +187,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                     addAffected({
                                         type: "Host",
                                         uuid: d.uuid,
-                                        details: "",
+                                        userDetails: "",
+                                        exportDetails: "",
                                         _data: d,
                                     }),
                                 )
@@ -195,7 +198,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                     addAffected({
                                         type: "Port",
                                         uuid: d.uuid,
-                                        details: "",
+                                        userDetails: "",
+                                        exportDetails: "",
                                         _data: d,
                                     }),
                                 )
@@ -205,7 +209,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                     addAffected({
                                         type: "Service",
                                         uuid: d.uuid,
-                                        details: "",
+                                        userDetails: "",
+                                        exportDetails: "",
                                         _data: d,
                                     }),
                                 )
@@ -215,7 +220,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                     addAffected({
                                         type: "HttpService",
                                         uuid: d.uuid,
-                                        details: "",
+                                        userDetails: "",
+                                        exportDetails: "",
                                         _data: d,
                                     }),
                                 )
@@ -433,7 +439,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                     .create(workspace, {
                                         severity: severity,
                                         definition: findingDef.uuid,
-                                        details: details,
+                                        userDetails: details,
+                                        exportDetails: "",
                                         logFile: logFileUuid,
                                         screenshot: screenshotUuid,
                                         categories: categories.map((c) => c.uuid),
@@ -610,8 +617,8 @@ export function CreateFindingAffected({
                 )}
                 {label}
             </div>
-            {(a.details || onChangeDetails) && (
-                <MarkdownEditorPopup label={label} content={a.details || ""} onChange={onChangeDetails ?? noop} />
+            {(a.userDetails || onChangeDetails) && (
+                <MarkdownEditorPopup label={label} content={a.userDetails || ""} onChange={onChangeDetails ?? noop} />
             )}
             <TagList tags={a._data.tags} onClickTag={onClickTag} />
             {(a._localScreenshot || onChangeScreenshot) && (

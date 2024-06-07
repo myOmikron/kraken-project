@@ -158,16 +158,23 @@ async fn process_msg(msg: WsClientMessage, user_uuid: Uuid) {
                     .send_ws_notes(user_uuid, workspace, change)
                     .await
             }
-            EditorTarget::Finding { finding } => {
+            EditorTarget::Finding {
+                finding,
+                finding_details,
+            } => {
                 GLOBAL
                     .editor_sync
-                    .send_finding(user_uuid, finding, change)
+                    .send_finding(user_uuid, finding, finding_details, change)
                     .await;
             }
-            EditorTarget::FindingAffected { finding, affected } => {
+            EditorTarget::FindingAffected {
+                finding,
+                affected,
+                finding_details,
+            } => {
                 GLOBAL
                     .editor_sync
-                    .send_finding_affected(user_uuid, finding, affected, change)
+                    .send_finding_affected(user_uuid, finding, affected, finding_details, change)
                     .await;
             }
         },
@@ -194,19 +201,33 @@ async fn process_msg(msg: WsClientMessage, user_uuid: Uuid) {
                             .process_client_cursor_update_ws_notes(user_uuid, workspace, cursor)
                             .await;
                     }
-                    EditorTarget::Finding { finding } => {
+                    EditorTarget::Finding {
+                        finding,
+                        finding_details,
+                    } => {
                         GLOBAL
                             .editor_sync
                             .process_client_cursor_update_finding_details(
-                                user_uuid, finding, cursor,
+                                user_uuid,
+                                finding,
+                                finding_details,
+                                cursor,
                             )
                             .await;
                     }
-                    EditorTarget::FindingAffected { finding, affected } => {
+                    EditorTarget::FindingAffected {
+                        finding,
+                        affected,
+                        finding_details,
+                    } => {
                         GLOBAL
                             .editor_sync
                             .process_client_cursor_update_finding_affected_details(
-                                user_uuid, finding, affected, cursor,
+                                user_uuid,
+                                finding,
+                                affected,
+                                finding_details,
+                                cursor,
                             )
                             .await;
                     }

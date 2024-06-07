@@ -10,7 +10,7 @@
         "license": {
             "name": "AGPL-3.0"
         },
-        "version": "0.1.0"
+        "version": "0.3.5"
     },
     "paths": {
         "/api/v1/admin/applications": {
@@ -62,7 +62,6 @@
                     "OAuth Application"
                 ],
                 "summary": "Create a new application",
-                "description": "Create a new application",
                 "operationId": "create_oauth_app",
                 "requestBody": {
                     "content": {
@@ -174,7 +173,6 @@
                     "OAuth Application"
                 ],
                 "summary": "Update an application",
-                "description": "Update an application",
                 "operationId": "update_oauth_app",
                 "parameters": [
                     {
@@ -234,7 +232,6 @@
                     "OAuth Application"
                 ],
                 "summary": "Delete an application",
-                "description": "Delete an application",
                 "operationId": "delete_oauth_app",
                 "parameters": [
                     {
@@ -286,7 +283,6 @@
                     "Bearer Token"
                 ],
                 "summary": "List all available bearer tokens",
-                "description": "List all available bearer tokens",
                 "operationId": "list_all_bearer_tokens",
                 "responses": {
                     "200": {
@@ -331,7 +327,6 @@
                     "Bearer Token"
                 ],
                 "summary": "Create a new bearer token",
-                "description": "Create a new bearer token",
                 "operationId": "create_bearer_token",
                 "requestBody": {
                     "content": {
@@ -388,7 +383,6 @@
                     "Bearer Token"
                 ],
                 "summary": "Delete an existing token",
-                "description": "Delete an existing token",
                 "operationId": "delete_bearer_token",
                 "parameters": [
                     {
@@ -440,7 +434,6 @@
                     "Admin Files"
                 ],
                 "summary": "Retrieve all files",
-                "description": "Retrieve all files",
                 "operationId": "get_all_files_admin",
                 "parameters": [
                     {
@@ -535,7 +528,6 @@
                     "Admin Files"
                 ],
                 "summary": "Downloads a file",
-                "description": "Downloads a file",
                 "operationId": "download_file_admin",
                 "parameters": [
                     {
@@ -593,7 +585,6 @@
                     "Admin Files"
                 ],
                 "summary": "Deletes a file",
-                "description": "Deletes a file",
                 "operationId": "delete_file_admin",
                 "parameters": [
                     {
@@ -645,7 +636,7 @@
                     "Finding Categories"
                 ],
                 "summary": "Create a finding category.",
-                "description": "Create a finding category.\n\nThis action requires admin privileges.",
+                "description": "This action requires admin privileges.",
                 "operationId": "create_finding_category",
                 "requestBody": {
                     "content": {
@@ -702,7 +693,7 @@
                     "Finding Categories"
                 ],
                 "summary": "Update a finding category",
-                "description": "Update a finding category\n\nOne of the options must be set\n\nRequires admin privileges.",
+                "description": "One of the options must be set\n\nRequires admin privileges.",
                 "operationId": "update_finding_category",
                 "parameters": [
                     {
@@ -762,7 +753,7 @@
                     "Finding Categories"
                 ],
                 "summary": "Delete a finding category",
-                "description": "Delete a finding category\n\nRequires admin privileges.",
+                "description": "Requires admin privileges.",
                 "operationId": "delete_finding_category",
                 "parameters": [
                     {
@@ -814,7 +805,6 @@
                     "Knowledge Base"
                 ],
                 "summary": "Delete a finding definition",
-                "description": "Delete a finding definition",
                 "operationId": "delete_finding_definition",
                 "parameters": [
                     {
@@ -866,7 +856,6 @@
                     "Knowledge Base"
                 ],
                 "summary": "Get all findings using the finding definition",
-                "description": "Get all findings using the finding definition",
                 "operationId": "get_finding_definition_usage",
                 "parameters": [
                     {
@@ -925,7 +914,7 @@
                     "Global Tags"
                 ],
                 "summary": "Create a global tag.",
-                "description": "Create a global tag.\n\nThis action requires admin privileges.",
+                "description": "This action requires admin privileges.",
                 "operationId": "create_global_tag",
                 "requestBody": {
                     "content": {
@@ -982,7 +971,7 @@
                     "Global Tags"
                 ],
                 "summary": "Update a global tag",
-                "description": "Update a global tag\n\nOne of the options must be set\n\nRequires admin privileges.",
+                "description": "One of the options must be set\n\nRequires admin privileges.",
                 "operationId": "update_global_tag",
                 "parameters": [
                     {
@@ -1042,7 +1031,7 @@
                     "Global Tags"
                 ],
                 "summary": "Delete a global tag",
-                "description": "Delete a global tag\n\nRequires admin privileges.",
+                "description": "Requires admin privileges.",
                 "operationId": "delete_global_tag",
                 "parameters": [
                     {
@@ -1094,7 +1083,6 @@
                     "Leech management"
                 ],
                 "summary": "Retrieve all leeches",
-                "description": "Retrieve all leeches",
                 "operationId": "get_all_leeches",
                 "responses": {
                     "200": {
@@ -1139,7 +1127,7 @@
                     "Leech management"
                 ],
                 "summary": "Create a leech",
-                "description": "Create a leech\n\nThe `name` parameter must be unique.\n\n`address` must be a valid address including a scheme and port.\nCurrently only https and http are supported as scheme.",
+                "description": "The `name` parameter must be unique.\n\n`address` must be a valid address including a scheme and port.\nCurrently only https and http are supported as scheme.",
                 "operationId": "create_leech",
                 "requestBody": {
                     "content": {
@@ -1196,7 +1184,6 @@
                     "Leech management"
                 ],
                 "summary": "Retrieve a leech by its id",
-                "description": "Retrieve a leech by its id",
                 "operationId": "get_leech",
                 "parameters": [
                     {
@@ -1253,7 +1240,7 @@
                     "Leech management"
                 ],
                 "summary": "Update a leech by its id",
-                "description": "Update a leech by its id\n\nAll parameter are optional, but at least one of them must be specified.\n\n`address` must be a valid address including a scheme and port.\nCurrently only https and http are supported as scheme.",
+                "description": "All parameter are optional, but at least one of them must be specified.\n\n`address` must be a valid address including a scheme and port.\nCurrently only https and http are supported as scheme.",
                 "operationId": "update_leech",
                 "parameters": [
                     {
@@ -1313,7 +1300,6 @@
                     "Leech management"
                 ],
                 "summary": "Delete a leech by its uuid",
-                "description": "Delete a leech by its uuid",
                 "operationId": "delete_leech",
                 "parameters": [
                     {
@@ -1365,7 +1351,6 @@
                     "Leech management"
                 ],
                 "summary": "Generate a new config for the leech",
-                "description": "Generate a new config for the leech",
                 "operationId": "gen_leech_config",
                 "parameters": [
                     {
@@ -1424,7 +1409,6 @@
                     "Settings Management"
                 ],
                 "summary": "Retrieve the currently active settings",
-                "description": "Retrieve the currently active settings",
                 "operationId": "get_settings",
                 "responses": {
                     "200": {
@@ -1469,7 +1453,6 @@
                     "Settings Management"
                 ],
                 "summary": "Update the settings",
-                "description": "Update the settings",
                 "operationId": "update_settings",
                 "requestBody": {
                     "content": {
@@ -1519,7 +1502,6 @@
                     "User Admin Management"
                 ],
                 "summary": "Retrieve all users",
-                "description": "Retrieve all users",
                 "operationId": "get_all_users_admin",
                 "responses": {
                     "200": {
@@ -1564,7 +1546,6 @@
                     "User Admin Management"
                 ],
                 "summary": "Create a user",
-                "description": "Create a user",
                 "operationId": "create_user",
                 "requestBody": {
                     "content": {
@@ -1621,7 +1602,6 @@
                     "User Admin Management"
                 ],
                 "summary": "Retrieve a user by its uuid",
-                "description": "Retrieve a user by its uuid",
                 "operationId": "get_user",
                 "parameters": [
                     {
@@ -1678,7 +1658,6 @@
                     "User Admin Management"
                 ],
                 "summary": "Delete a user by its uuid",
-                "description": "Delete a user by its uuid",
                 "operationId": "delete_user",
                 "parameters": [
                     {
@@ -1730,7 +1709,6 @@
                     "Wordlist management"
                 ],
                 "summary": "Get a list of all wordlists including their paths",
-                "description": "Get a list of all wordlists including their paths",
                 "operationId": "get_all_wordlists_admin",
                 "responses": {
                     "200": {
@@ -1775,7 +1753,6 @@
                     "Wordlist management"
                 ],
                 "summary": "Create a new wordlist",
-                "description": "Create a new wordlist",
                 "operationId": "create_wordlist_admin",
                 "requestBody": {
                     "content": {
@@ -1832,7 +1809,6 @@
                     "Wordlist management"
                 ],
                 "summary": "Update an existing wordlist",
-                "description": "Update an existing wordlist",
                 "operationId": "update_wordlist_admin",
                 "parameters": [
                     {
@@ -1892,7 +1868,6 @@
                     "Wordlist management"
                 ],
                 "summary": "Delete an existing wordlist",
-                "description": "Delete an existing wordlist",
                 "operationId": "delete_wordlist_admin",
                 "parameters": [
                     {
@@ -1944,7 +1919,6 @@
                     "Admin Workspaces"
                 ],
                 "summary": "Retrieve all workspaces",
-                "description": "Retrieve all workspaces",
                 "operationId": "get_all_workspaces_admin",
                 "responses": {
                     "200": {
@@ -1991,7 +1965,6 @@
                     "Admin Workspaces"
                 ],
                 "summary": "Retrieve a workspace by id",
-                "description": "Retrieve a workspace by id",
                 "operationId": "get_workspace_admin",
                 "parameters": [
                     {
@@ -2050,7 +2023,6 @@
                     "Api Keys"
                 ],
                 "summary": "Retrieve all api keys",
-                "description": "Retrieve all api keys",
                 "operationId": "get_api_keys",
                 "responses": {
                     "200": {
@@ -2095,7 +2067,6 @@
                     "Api Keys"
                 ],
                 "summary": "Create new api key",
-                "description": "Create new api key",
                 "operationId": "create_api_key",
                 "requestBody": {
                     "content": {
@@ -2152,7 +2123,7 @@
                     "Api Keys"
                 ],
                 "summary": "Update an api key by its id",
-                "description": "Update an api key by its id\n\nAll parameter are optional, but at least one of them must be specified.",
+                "description": "All parameter are optional, but at least one of them must be specified.",
                 "operationId": "update_api_key",
                 "parameters": [
                     {
@@ -2212,7 +2183,6 @@
                     "Api Keys"
                 ],
                 "summary": "Delete an existing api key",
-                "description": "Delete an existing api key",
                 "operationId": "delete_api_key",
                 "parameters": [
                     {
@@ -2264,7 +2234,6 @@
                     "Attacks"
                 ],
                 "summary": "Retrieve all attacks the user has access to",
-                "description": "Retrieve all attacks the user has access to",
                 "operationId": "get_all_attacks",
                 "responses": {
                     "200": {
@@ -2311,7 +2280,7 @@
                     "Attacks"
                 ],
                 "summary": "Bruteforce subdomains through a DNS wordlist attack",
-                "description": "Bruteforce subdomains through a DNS wordlist attack\n\nEnumerate possible subdomains by querying a DNS server with constructed domains.\nSee [OWASP](https://owasp.org/www-community/attacks/Brute_force_attack) for further information.",
+                "description": "Enumerate possible subdomains by querying a DNS server with constructed domains.\nSee [OWASP](https://owasp.org/www-community/attacks/Brute_force_attack) for further information.",
                 "operationId": "bruteforce_subdomains",
                 "requestBody": {
                     "content": {
@@ -2368,7 +2337,6 @@
                     "Attacks"
                 ],
                 "summary": "Perform domain name resolution",
-                "description": "Perform domain name resolution",
                 "operationId": "dns_resolution",
                 "requestBody": {
                     "content": {
@@ -2425,7 +2393,6 @@
                     "Attacks"
                 ],
                 "summary": "Perform DNS TXT scanning & parsing",
-                "description": "Perform DNS TXT scanning & parsing",
                 "operationId": "dns_txt_scan",
                 "requestBody": {
                     "content": {
@@ -2482,7 +2449,7 @@
                     "Attacks"
                 ],
                 "summary": "Check if hosts are reachable",
-                "description": "Check if hosts are reachable\n\nJust an ICMP scan for now to see which targets respond.\n\nAll intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.",
+                "description": "Just an ICMP scan for now to see which targets respond.\n\nAll intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.",
                 "operationId": "hosts_alive_check",
                 "requestBody": {
                     "content": {
@@ -2539,7 +2506,6 @@
                     "Attacks"
                 ],
                 "summary": "Tries to find out the operating system of the remote host.",
-                "description": "Tries to find out the operating system of the remote host.",
                 "operationId": "os_detection",
                 "requestBody": {
                     "content": {
@@ -2596,7 +2562,7 @@
                     "Attacks"
                 ],
                 "summary": "Query a certificate transparency log collector.",
-                "description": "Query a certificate transparency log collector.\n\nFor further information, see [the explanation](https://certificate.transparency.dev/).\n\nCertificate transparency can be used to find subdomains or related domains.\n\n`retry_interval` is specified in milliseconds.",
+                "description": "For further information, see [the explanation](https://certificate.transparency.dev/).\n\nCertificate transparency can be used to find subdomains or related domains.\n\n`retry_interval` is specified in milliseconds.",
                 "operationId": "query_certificate_transparency",
                 "requestBody": {
                     "content": {
@@ -2653,7 +2619,7 @@
                     "Attacks"
                 ],
                 "summary": "Query the [dehashed](https://dehashed.com/) API.",
-                "description": "Query the [dehashed](https://dehashed.com/) API.\nIt provides email, password, credit cards and other types of information from leak-databases.\n\nNote that you are only able to query the API if you have bought access and have a running\nsubscription saved in kraken.",
+                "description": "It provides email, password, credit cards and other types of information from leak-databases.\n\nNote that you are only able to query the API if you have bought access and have a running\nsubscription saved in kraken.",
                 "operationId": "query_dehashed",
                 "requestBody": {
                     "content": {
@@ -2710,7 +2676,6 @@
                     "Attacks"
                 ],
                 "summary": "Perform service detection on a ip and port combination",
-                "description": "Perform service detection on a ip and port combination",
                 "operationId": "service_detection",
                 "requestBody": {
                     "content": {
@@ -2767,7 +2732,7 @@
                     "Attacks"
                 ],
                 "summary": "Perform UDP service detection on an ip on a list of ports.",
-                "description": "Perform UDP service detection on an ip on a list of ports.\n\nAll intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.\n\nSet `max_retries` to 0 if you don't want to try a port more than 1 time.",
+                "description": "All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.\n\nSet `max_retries` to 0 if you don't want to try a port more than 1 time.",
                 "operationId": "udp_service_detection",
                 "requestBody": {
                     "content": {
@@ -2824,7 +2789,6 @@
                     "Attacks"
                 ],
                 "summary": "Retrieve an attack by id",
-                "description": "Retrieve an attack by id",
                 "operationId": "get_attack",
                 "parameters": [
                     {
@@ -2881,7 +2845,6 @@
                     "Attacks"
                 ],
                 "summary": "Delete an attack and its results",
-                "description": "Delete an attack and its results",
                 "operationId": "delete_attack",
                 "parameters": [
                     {
@@ -2933,7 +2896,6 @@
                     "Attacks"
                 ],
                 "summary": "Retrieve a bruteforce subdomains' results by the attack's id",
-                "description": "Retrieve a bruteforce subdomains' results by the attack's id",
                 "operationId": "get_bruteforce_subdomains_results",
                 "parameters": [
                     {
@@ -3016,7 +2978,6 @@
                     "Attacks"
                 ],
                 "summary": "Retrieve a dns resolution's results by the attack's id",
-                "description": "Retrieve a dns resolution's results by the attack's id",
                 "operationId": "get_dns_resolution_results",
                 "parameters": [
                     {
@@ -3099,7 +3060,6 @@
                     "Attacks"
                 ],
                 "summary": "Retrieve a DNS TXT scan's results by the attack's id",
-                "description": "Retrieve a DNS TXT scan's results by the attack's id",
                 "operationId": "get_dns_txt_scan_results",
                 "parameters": [
                     {
@@ -3182,7 +3142,6 @@
                     "Attacks"
                 ],
                 "summary": "Retrieve a host alive's results by the attack's id",
-                "description": "Retrieve a host alive's results by the attack's id",
                 "operationId": "get_host_alive_results",
                 "parameters": [
                     {
@@ -3265,7 +3224,6 @@
                     "Attacks"
                 ],
                 "summary": "Retrieve a host alive's results by the attack's id",
-                "description": "Retrieve a host alive's results by the attack's id",
                 "operationId": "get_os_detection_results",
                 "parameters": [
                     {
@@ -3348,7 +3306,6 @@
                     "Attacks"
                 ],
                 "summary": "Retrieve a query certificate transparency's results by the attack's id",
-                "description": "Retrieve a query certificate transparency's results by the attack's id",
                 "operationId": "get_query_certificate_transparency_results",
                 "parameters": [
                     {
@@ -3431,7 +3388,6 @@
                     "Attacks"
                 ],
                 "summary": "Retrieve a query dehashed's results by the attack's id",
-                "description": "Retrieve a query dehashed's results by the attack's id",
                 "operationId": "get_query_unhashed_results",
                 "parameters": [
                     {
@@ -3514,7 +3470,6 @@
                     "Attacks"
                 ],
                 "summary": "Retrieve a detect service's results by the attack's id",
-                "description": "Retrieve a detect service's results by the attack's id",
                 "operationId": "get_service_detection_results",
                 "parameters": [
                     {
@@ -3597,7 +3552,6 @@
                     "Attacks"
                 ],
                 "summary": "Retrieve UDP service detection results by the attack's id",
-                "description": "Retrieve UDP service detection results by the attack's id",
                 "operationId": "get_udp_service_detection_results",
                 "parameters": [
                     {
@@ -3680,7 +3634,7 @@
                     "Authentication"
                 ],
                 "summary": "Finishes the authentication with a security key",
-                "description": "Finishes the authentication with a security key\n\nUse `startAuth` to retrieve the challenge response data.",
+                "description": "Use `startAuth` to retrieve the challenge response data.",
                 "operationId": "finish_auth",
                 "requestBody": {
                     "content": {
@@ -3725,7 +3679,7 @@
                     "Authentication"
                 ],
                 "summary": "Finish the registration of a security key",
-                "description": "Finish the registration of a security key\n\nUse `startRegister` to retrieve the challenge response data.",
+                "description": "Use `startRegister` to retrieve the challenge response data.",
                 "operationId": "finish_register",
                 "requestBody": {
                     "content": {
@@ -3770,7 +3724,6 @@
                     "Authentication"
                 ],
                 "summary": "Login to kraken",
-                "description": "Login to kraken",
                 "operationId": "login",
                 "requestBody": {
                     "content": {
@@ -3815,7 +3768,7 @@
                     "Authentication"
                 ],
                 "summary": "Log out of this session",
-                "description": "Log out of this session\n\nLogs a logged-in user out of his session.",
+                "description": "Logs a logged-in user out of his session.",
                 "operationId": "logout",
                 "responses": {
                     "200": {
@@ -3850,7 +3803,7 @@
                     "Authentication"
                 ],
                 "summary": "Starts the authentication with a security key",
-                "description": "Starts the authentication with a security key\n\nUse the `login` endpoint before calling this one.\n\nProceed with `finishAuth`.",
+                "description": "Use the `login` endpoint before calling this one.\n\nProceed with `finishAuth`.",
                 "operationId": "start_auth",
                 "responses": {
                     "200": {
@@ -3892,7 +3845,7 @@
                     "Authentication"
                 ],
                 "summary": "Start the registration of a security key",
-                "description": "Start the registration of a security key\n\nProceed to the `finishRegister` endpoint.",
+                "description": "Proceed to the `finishRegister` endpoint.",
                 "operationId": "start_register",
                 "responses": {
                     "200": {
@@ -3934,7 +3887,7 @@
                     "Authentication"
                 ],
                 "summary": "Test the current login state",
-                "description": "Test the current login state\n\nYou can use this endpoint to test the current login state of your client.\n\nIf logged in, a 200 without a body is returned.",
+                "description": "You can use this endpoint to test the current login state of your client.\n\nIf logged in, a 200 without a body is returned.",
                 "operationId": "test",
                 "responses": {
                     "200": {
@@ -3969,7 +3922,6 @@
                     "Finding Categories"
                 ],
                 "summary": "Retrieve all finding categories",
-                "description": "Retrieve all finding categories",
                 "operationId": "get_all_finding_categories",
                 "responses": {
                     "200": {
@@ -4016,7 +3968,6 @@
                     "Knowledge Base"
                 ],
                 "summary": "Retrieve all finding definitions",
-                "description": "Retrieve all finding definitions",
                 "operationId": "get_all_finding_definitions",
                 "responses": {
                     "200": {
@@ -4061,7 +4012,7 @@
                     "Knowledge Base"
                 ],
                 "summary": "Add a definition for a finding",
-                "description": "Add a definition for a finding\n\nThese definition serve as reference and knowledge base in kraken.\nThey can be used to create a finding that references a definition and links it to one or\nmultiple aggregations.",
+                "description": "These definition serve as reference and knowledge base in kraken.\nThey can be used to create a finding that references a definition and links it to one or\nmultiple aggregations.",
                 "operationId": "create_finding_definition",
                 "requestBody": {
                     "content": {
@@ -4118,7 +4069,6 @@
                     "Knowledge Base"
                 ],
                 "summary": "Retrieve a specific finding definition",
-                "description": "Retrieve a specific finding definition",
                 "operationId": "get_finding_definition",
                 "parameters": [
                     {
@@ -4175,7 +4125,7 @@
                     "Knowledge Base"
                 ],
                 "summary": "Update a finding definition",
-                "description": "Update a finding definition\n\nThis endpoint only allows updating the `name`, `severity` and `cve`.\nThe other values have to be updated through the websocket as part of a live editor.",
+                "description": "This endpoint only allows updating the `name`, `severity` and `cve`.\nThe other values have to be updated through the websocket as part of a live editor.",
                 "operationId": "update_finding_definition",
                 "parameters": [
                     {
@@ -4237,7 +4187,6 @@
                     "Global Tags"
                 ],
                 "summary": "Retrieve all global tags",
-                "description": "Retrieve all global tags",
                 "operationId": "get_all_global_tags",
                 "responses": {
                     "200": {
@@ -4284,7 +4233,7 @@
                     "Workspace Invitations"
                 ],
                 "summary": "Retrieve all open invitations to workspaces the currently logged-in user",
-                "description": "Retrieve all open invitations to workspaces the currently logged-in user\nhas retrieved",
+                "description": "has retrieved",
                 "operationId": "get_all_invitations",
                 "responses": {
                     "200": {
@@ -4331,7 +4280,6 @@
                     "Workspace Invitations"
                 ],
                 "summary": "Accept an invitation to a workspace",
-                "description": "Accept an invitation to a workspace",
                 "operationId": "accept_invitation",
                 "parameters": [
                     {
@@ -4383,7 +4331,6 @@
                     "Workspace Invitations"
                 ],
                 "summary": "Decline an invitation to a workspace",
-                "description": "Decline an invitation to a workspace",
                 "operationId": "decline_invitation",
                 "parameters": [
                     {
@@ -4435,7 +4382,6 @@
                     "OAuth"
                 ],
                 "summary": "Endpoint visited by user to grant a requesting application access",
-                "description": "Endpoint visited by user to grant a requesting application access",
                 "operationId": "accept",
                 "parameters": [
                     {
@@ -4496,7 +4442,6 @@
                     "OAuth"
                 ],
                 "summary": "Endpoint visited by user to deny a requesting application access",
-                "description": "Endpoint visited by user to deny a requesting application access",
                 "operationId": "deny",
                 "parameters": [
                     {
@@ -4557,7 +4502,6 @@
                     "OAuth"
                 ],
                 "summary": "Queried by the frontend to display information about the oauth request to the user",
-                "description": "Queried by the frontend to display information about the oauth request to the user",
                 "operationId": "info",
                 "parameters": [
                     {
@@ -4616,7 +4560,6 @@
                     "OAuth Decisions"
                 ],
                 "summary": "Retrieve a user's remembered oauth decisions",
-                "description": "Retrieve a user's remembered oauth decisions",
                 "operationId": "get_decisions",
                 "responses": {
                     "200": {
@@ -4663,7 +4606,6 @@
                     "OAuth Decisions"
                 ],
                 "summary": "Revoke a user's remembered oauth decision",
-                "description": "Revoke a user's remembered oauth decision",
                 "operationId": "revoke_decision",
                 "parameters": [
                     {
@@ -4715,7 +4657,7 @@
                     "User Management"
                 ],
                 "summary": "Request all users",
-                "description": "Request all users\n\nThis may be used to create invitations for workspaces",
+                "description": "This may be used to create invitations for workspaces",
                 "operationId": "get_all_users",
                 "responses": {
                     "200": {
@@ -4762,7 +4704,6 @@
                     "User Management"
                 ],
                 "summary": "Retrieve the own user",
-                "description": "Retrieve the own user",
                 "operationId": "get_me",
                 "responses": {
                     "200": {
@@ -4807,7 +4748,7 @@
                     "User Management"
                 ],
                 "summary": "Updates the own user",
-                "description": "Updates the own user\n\nAll parameters are optional, but at least one of them must be supplied.",
+                "description": "All parameters are optional, but at least one of them must be supplied.",
                 "operationId": "update_me",
                 "requestBody": {
                     "content": {
@@ -4857,7 +4798,6 @@
                     "User Management"
                 ],
                 "summary": "Set a new password",
-                "description": "Set a new password",
                 "operationId": "set_password",
                 "requestBody": {
                     "content": {
@@ -4907,7 +4847,6 @@
                     "Wordlist"
                 ],
                 "summary": "Get a list of all wordlist for the user to select from when starting an bruteforce subdomains attack",
-                "description": "Get a list of all wordlist for the user to select from when starting an bruteforce subdomains attack",
                 "operationId": "get_all_wordlists",
                 "responses": {
                     "200": {
@@ -4954,7 +4893,7 @@
                     "Files"
                 ],
                 "summary": "Uploads a file to the workspace",
-                "description": "Uploads a file to the workspace\n\nThe returned uuid can be used to attach the file for example to a finding.",
+                "description": "The returned uuid can be used to attach the file for example to a finding.",
                 "operationId": "upload_file",
                 "parameters": [
                     {
@@ -5033,7 +4972,7 @@
                     "Files"
                 ],
                 "summary": "Uploads an image to the workspace and generates a thumbnail for it",
-                "description": "Uploads an image to the workspace and generates a thumbnail for it\n\nThe returned uuid can be used to attach the image for example to a finding.",
+                "description": "The returned uuid can be used to attach the image for example to a finding.",
                 "operationId": "upload_image",
                 "parameters": [
                     {
@@ -5112,7 +5051,6 @@
                     "Findings"
                 ],
                 "summary": "Gets a workspace's findings",
-                "description": "Gets a workspace's findings",
                 "operationId": "get_all_findings",
                 "parameters": [
                     {
@@ -5169,7 +5107,6 @@
                     "Findings"
                 ],
                 "summary": "Creates a new finding",
-                "description": "Creates a new finding",
                 "operationId": "create_finding",
                 "parameters": [
                     {
@@ -5238,7 +5175,6 @@
                     "Files"
                 ],
                 "summary": "Downloads a file from the workspace",
-                "description": "Downloads a file from the workspace",
                 "operationId": "download_file",
                 "parameters": [
                     {
@@ -5308,7 +5244,6 @@
                     "Files"
                 ],
                 "summary": "Downloads a thumbnail from the workspace",
-                "description": "Downloads a thumbnail from the workspace",
                 "operationId": "download_thumbnail",
                 "parameters": [
                     {
@@ -5378,7 +5313,6 @@
                     "Findings"
                 ],
                 "summary": "Gets a single finding",
-                "description": "Gets a single finding",
                 "operationId": "get_finding",
                 "parameters": [
                     {
@@ -5445,7 +5379,6 @@
                     "Findings"
                 ],
                 "summary": "Updates a finding",
-                "description": "Updates a finding",
                 "operationId": "update_finding",
                 "parameters": [
                     {
@@ -5515,7 +5448,6 @@
                     "Findings"
                 ],
                 "summary": "Deletes a finding",
-                "description": "Deletes a finding",
                 "operationId": "delete_finding",
                 "parameters": [
                     {
@@ -5577,7 +5509,6 @@
                     "Findings"
                 ],
                 "summary": "Add a new affected object to a finding",
-                "description": "Add a new affected object to a finding",
                 "operationId": "create_finding_affected",
                 "parameters": [
                     {
@@ -5649,7 +5580,6 @@
                     "Findings"
                 ],
                 "summary": "Get an object affected by a finding",
-                "description": "Get an object affected by a finding",
                 "operationId": "get_finding_affected",
                 "parameters": [
                     {
@@ -5726,7 +5656,6 @@
                     "Findings"
                 ],
                 "summary": "Update the details of an affected object",
-                "description": "Update the details of an affected object",
                 "operationId": "update_finding_affected",
                 "parameters": [
                     {
@@ -5806,7 +5735,6 @@
                     "Findings"
                 ],
                 "summary": "Remove an affected object from a finding",
-                "description": "Remove an affected object from a finding",
                 "operationId": "delete_finding_affected",
                 "parameters": [
                     {
@@ -5878,7 +5806,7 @@
                     "Workspaces"
                 ],
                 "summary": "Retrieve all workspaces that the executing user has access to",
-                "description": "Retrieve all workspaces that the executing user has access to\n\nFor administration access, look at the `/admin/workspaces` endpoint.",
+                "description": "For administration access, look at the `/admin/workspaces` endpoint.",
                 "operationId": "get_all_workspaces",
                 "responses": {
                     "200": {
@@ -5923,7 +5851,6 @@
                     "Workspaces"
                 ],
                 "summary": "Create a new workspace",
-                "description": "Create a new workspace",
                 "operationId": "create_workspace",
                 "requestBody": {
                     "content": {
@@ -5980,7 +5907,6 @@
                     "Workspaces"
                 ],
                 "summary": "Retrieve a workspace by id",
-                "description": "Retrieve a workspace by id",
                 "operationId": "get_workspace",
                 "parameters": [
                     {
@@ -6037,7 +5963,7 @@
                     "Workspaces"
                 ],
                 "summary": "Updates a workspace by its id",
-                "description": "Updates a workspace by its id\n\nAll parameter are optional, but at least one of them must be specified.\n\n`name` must not be empty.\n\nYou can set `description` to null to remove the description from the database.\nIf you leave the parameter out, the description will remain unchanged.",
+                "description": "All parameter are optional, but at least one of them must be specified.\n\n`name` must not be empty.\n\nYou can set `description` to null to remove the description from the database.\nIf you leave the parameter out, the description will remain unchanged.",
                 "operationId": "update_workspace",
                 "parameters": [
                     {
@@ -6097,7 +6023,6 @@
                     "Workspaces"
                 ],
                 "summary": "Delete a workspace by its id",
-                "description": "Delete a workspace by its id",
                 "operationId": "delete_workspace",
                 "parameters": [
                     {
@@ -6149,7 +6074,6 @@
                     "Workspaces"
                 ],
                 "summary": "Mark the workspace as archived",
-                "description": "Mark the workspace as archived",
                 "operationId": "archive_workspace",
                 "parameters": [
                     {
@@ -6201,7 +6125,6 @@
                     "Attacks"
                 ],
                 "summary": "Query all attacks of a workspace",
-                "description": "Query all attacks of a workspace",
                 "operationId": "get_workspace_attacks",
                 "parameters": [
                     {
@@ -6260,7 +6183,6 @@
                     "Domains"
                 ],
                 "summary": "Manually add a domain",
-                "description": "Manually add a domain",
                 "operationId": "create_domain",
                 "parameters": [
                     {
@@ -6329,7 +6251,6 @@
                     "Domains"
                 ],
                 "summary": "Retrieve all domains of a specific workspace",
-                "description": "Retrieve all domains of a specific workspace",
                 "operationId": "get_all_domains",
                 "parameters": [
                     {
@@ -6398,7 +6319,7 @@
                     "Hosts"
                 ],
                 "summary": "Manually add a host",
-                "description": "Manually add a host\n\nThis endpoint also accepts networks inserting all their ips as hosts",
+                "description": "This endpoint also accepts networks inserting all their ips as hosts",
                 "operationId": "create_host",
                 "parameters": [
                     {
@@ -6467,7 +6388,7 @@
                     "Hosts"
                 ],
                 "summary": "Retrieve all hosts.",
-                "description": "Retrieve all hosts.\n\nHosts are created out of aggregating data or by user input.\nThey represent a single host and can be created by providing an IP address",
+                "description": "Hosts are created out of aggregating data or by user input.\nThey represent a single host and can be created by providing an IP address",
                 "operationId": "get_all_hosts",
                 "parameters": [
                     {
@@ -6536,7 +6457,6 @@
                     "Http Services"
                 ],
                 "summary": "Manually add a http service",
-                "description": "Manually add a http service",
                 "operationId": "create_http_service",
                 "parameters": [
                     {
@@ -6605,7 +6525,6 @@
                     "Http Services"
                 ],
                 "summary": "List the http services of a workspace",
-                "description": "List the http services of a workspace",
                 "operationId": "get_all_http_services",
                 "parameters": [
                     {
@@ -6674,7 +6593,6 @@
                     "Workspaces"
                 ],
                 "summary": "Query all open invitations to a workspace",
-                "description": "Query all open invitations to a workspace",
                 "operationId": "get_all_workspace_invitations",
                 "parameters": [
                     {
@@ -6731,7 +6649,7 @@
                     "Workspaces"
                 ],
                 "summary": "Invite a user to the workspace",
-                "description": "Invite a user to the workspace\n\nThis action can only be invoked by the owner of a workspace",
+                "description": "This action can only be invoked by the owner of a workspace",
                 "operationId": "create_invitation",
                 "parameters": [
                     {
@@ -6793,7 +6711,6 @@
                     "Ports"
                 ],
                 "summary": "Manually add a port",
-                "description": "Manually add a port",
                 "operationId": "create_port",
                 "parameters": [
                     {
@@ -6862,7 +6779,6 @@
                     "Ports"
                 ],
                 "summary": "List the ports of a workspace",
-                "description": "List the ports of a workspace",
                 "operationId": "get_all_ports",
                 "parameters": [
                     {
@@ -6931,7 +6847,6 @@
                     "Workspaces"
                 ],
                 "summary": "Query all searches",
-                "description": "Query all searches",
                 "operationId": "get_searches",
                 "parameters": [
                     {
@@ -7012,7 +6927,6 @@
                     "Workspaces"
                 ],
                 "summary": "Search through a workspaces' data",
-                "description": "Search through a workspaces' data",
                 "operationId": "search",
                 "parameters": [
                     {
@@ -7081,7 +6995,6 @@
                     "Services"
                 ],
                 "summary": "Manually add a service",
-                "description": "Manually add a service",
                 "operationId": "create_service",
                 "parameters": [
                     {
@@ -7150,7 +7063,6 @@
                     "Services"
                 ],
                 "summary": "List the services of a workspace",
-                "description": "List the services of a workspace",
                 "operationId": "get_all_services",
                 "parameters": [
                     {
@@ -7219,7 +7131,6 @@
                     "Workspace Tags"
                 ],
                 "summary": "Retrieve all workspace tags",
-                "description": "Retrieve all workspace tags",
                 "operationId": "get_all_workspace_tags",
                 "parameters": [
                     {
@@ -7276,7 +7187,6 @@
                     "Workspace Tags"
                 ],
                 "summary": "Create a workspace tag.",
-                "description": "Create a workspace tag.",
                 "operationId": "create_workspace_tag",
                 "parameters": [
                     {
@@ -7345,7 +7255,7 @@
                     "Workspaces"
                 ],
                 "summary": "Transfer ownership to another account",
-                "description": "Transfer ownership to another account\n\nYou will lose access to the workspace.",
+                "description": "You will lose access to the workspace.",
                 "operationId": "transfer_ownership",
                 "parameters": [
                     {
@@ -7408,7 +7318,6 @@
                     "Workspaces"
                 ],
                 "summary": "Mark an archived workspace as unarchived",
-                "description": "Mark an archived workspace as unarchived",
                 "operationId": "unarchive_workspace",
                 "parameters": [
                     {
@@ -7460,7 +7369,6 @@
                     "Domains"
                 ],
                 "summary": "Retrieve all information about a single domain",
-                "description": "Retrieve all information about a single domain",
                 "operationId": "get_domain",
                 "parameters": [
                     {
@@ -7527,7 +7435,7 @@
                     "Domains"
                 ],
                 "summary": "Update a domain",
-                "description": "Update a domain\n\nYou must include at least on parameter",
+                "description": "You must include at least on parameter",
                 "operationId": "update_domain",
                 "parameters": [
                     {
@@ -7597,7 +7505,7 @@
                     "Domains"
                 ],
                 "summary": "Delete the domain",
-                "description": "Delete the domain\n\nThis only deletes the aggregation. The raw results are still in place",
+                "description": "This only deletes the aggregation. The raw results are still in place",
                 "operationId": "delete_domain",
                 "parameters": [
                     {
@@ -7659,7 +7567,6 @@
                     "Domains"
                 ],
                 "summary": "Get a domain's findings",
-                "description": "Get a domain's findings",
                 "operationId": "get_domain_findings",
                 "parameters": [
                     {
@@ -7728,7 +7635,6 @@
                     "Domains"
                 ],
                 "summary": "Get a domain's direct relations",
-                "description": "Get a domain's direct relations",
                 "operationId": "get_domain_relations",
                 "parameters": [
                     {
@@ -7797,7 +7703,6 @@
                     "Domains"
                 ],
                 "summary": "Get all data sources which referenced this domain",
-                "description": "Get all data sources which referenced this domain",
                 "operationId": "get_domain_sources",
                 "parameters": [
                     {
@@ -7866,7 +7771,6 @@
                     "Hosts"
                 ],
                 "summary": "Retrieve all information about a single host",
-                "description": "Retrieve all information about a single host",
                 "operationId": "get_host",
                 "parameters": [
                     {
@@ -7933,7 +7837,7 @@
                     "Hosts"
                 ],
                 "summary": "Update a host",
-                "description": "Update a host\n\nYou must include at least on parameter",
+                "description": "You must include at least on parameter",
                 "operationId": "update_host",
                 "parameters": [
                     {
@@ -8003,7 +7907,7 @@
                     "Hosts"
                 ],
                 "summary": "Delete the host",
-                "description": "Delete the host\n\nThis only deletes the aggregation. The raw results are still in place",
+                "description": "This only deletes the aggregation. The raw results are still in place",
                 "operationId": "delete_host",
                 "parameters": [
                     {
@@ -8065,7 +7969,6 @@
                     "Hosts"
                 ],
                 "summary": "Get a host's findings",
-                "description": "Get a host's findings",
                 "operationId": "get_host_findings",
                 "parameters": [
                     {
@@ -8134,7 +8037,6 @@
                     "Hosts"
                 ],
                 "summary": "Get a host's direct relations",
-                "description": "Get a host's direct relations",
                 "operationId": "get_host_relations",
                 "parameters": [
                     {
@@ -8203,7 +8105,6 @@
                     "Hosts"
                 ],
                 "summary": "Get all data sources which referenced this host",
-                "description": "Get all data sources which referenced this host",
                 "operationId": "get_host_sources",
                 "parameters": [
                     {
@@ -8272,7 +8173,6 @@
                     "Http Services"
                 ],
                 "summary": "Retrieve all information about a single service",
-                "description": "Retrieve all information about a single service",
                 "operationId": "get_http_service",
                 "parameters": [
                     {
@@ -8339,7 +8239,7 @@
                     "Http Services"
                 ],
                 "summary": "Update a http service",
-                "description": "Update a http service\n\nYou must include at least on parameter",
+                "description": "You must include at least on parameter",
                 "operationId": "update_http_service",
                 "parameters": [
                     {
@@ -8409,7 +8309,7 @@
                     "Http Services"
                 ],
                 "summary": "Delete the http service",
-                "description": "Delete the http service\n\nThis only deletes the aggregation. The raw results are still in place",
+                "description": "This only deletes the aggregation. The raw results are still in place",
                 "operationId": "delete_http_service",
                 "parameters": [
                     {
@@ -8471,7 +8371,6 @@
                     "Http Services"
                 ],
                 "summary": "Get a http service's findings",
-                "description": "Get a http service's findings",
                 "operationId": "get_http_service_findings",
                 "parameters": [
                     {
@@ -8540,7 +8439,6 @@
                     "Http Services"
                 ],
                 "summary": "Get a http service's direct relations",
-                "description": "Get a http service's direct relations",
                 "operationId": "get_http_service_relations",
                 "parameters": [
                     {
@@ -8609,7 +8507,6 @@
                     "Http Services"
                 ],
                 "summary": "Get all data sources which referenced this http service",
-                "description": "Get all data sources which referenced this http service",
                 "operationId": "get_http_service_sources",
                 "parameters": [
                     {
@@ -8678,7 +8575,7 @@
                     "Workspaces"
                 ],
                 "summary": "Retract an invitation to the workspace",
-                "description": "Retract an invitation to the workspace\n\nThis action can only be invoked by the owner of a workspace",
+                "description": "This action can only be invoked by the owner of a workspace",
                 "operationId": "retract_invitation",
                 "parameters": [
                     {
@@ -8740,7 +8637,6 @@
                     "Ports"
                 ],
                 "summary": "Retrieve all information about a single port",
-                "description": "Retrieve all information about a single port",
                 "operationId": "get_port",
                 "parameters": [
                     {
@@ -8807,7 +8703,7 @@
                     "Ports"
                 ],
                 "summary": "Update a port",
-                "description": "Update a port\n\nYou must include at least on parameter",
+                "description": "You must include at least on parameter",
                 "operationId": "update_port",
                 "parameters": [
                     {
@@ -8877,7 +8773,7 @@
                     "Ports"
                 ],
                 "summary": "Delete the port",
-                "description": "Delete the port\n\nThis only deletes the aggregation. The raw results are still in place",
+                "description": "This only deletes the aggregation. The raw results are still in place",
                 "operationId": "delete_port",
                 "parameters": [
                     {
@@ -8939,7 +8835,6 @@
                     "Ports"
                 ],
                 "summary": "Get a port's findings",
-                "description": "Get a port's findings",
                 "operationId": "get_port_findings",
                 "parameters": [
                     {
@@ -9008,7 +8903,6 @@
                     "Ports"
                 ],
                 "summary": "Get a port's direct relations",
-                "description": "Get a port's direct relations",
                 "operationId": "get_port_relations",
                 "parameters": [
                     {
@@ -9077,7 +8971,6 @@
                     "Ports"
                 ],
                 "summary": "Get all data sources which referenced this port",
-                "description": "Get all data sources which referenced this port",
                 "operationId": "get_port_sources",
                 "parameters": [
                     {
@@ -9146,7 +9039,6 @@
                     "Workspaces"
                 ],
                 "summary": "Retrieve results for a search by its uuid",
-                "description": "Retrieve results for a search by its uuid",
                 "operationId": "get_search_results",
                 "parameters": [
                     {
@@ -9239,7 +9131,6 @@
                     "Services"
                 ],
                 "summary": "Retrieve all information about a single service",
-                "description": "Retrieve all information about a single service",
                 "operationId": "get_service",
                 "parameters": [
                     {
@@ -9306,7 +9197,7 @@
                     "Services"
                 ],
                 "summary": "Update a service",
-                "description": "Update a service\n\nYou must include at least on parameter",
+                "description": "You must include at least on parameter",
                 "operationId": "update_service",
                 "parameters": [
                     {
@@ -9376,7 +9267,7 @@
                     "Services"
                 ],
                 "summary": "Delete the service",
-                "description": "Delete the service\n\nThis only deletes the aggregation. The raw results are still in place",
+                "description": "This only deletes the aggregation. The raw results are still in place",
                 "operationId": "delete_service",
                 "parameters": [
                     {
@@ -9438,7 +9329,6 @@
                     "Services"
                 ],
                 "summary": "Get a service's findings",
-                "description": "Get a service's findings",
                 "operationId": "get_service_findings",
                 "parameters": [
                     {
@@ -9507,7 +9397,6 @@
                     "Services"
                 ],
                 "summary": "Get a service's direct relations",
-                "description": "Get a service's direct relations",
                 "operationId": "get_service_relations",
                 "parameters": [
                     {
@@ -9576,7 +9465,6 @@
                     "Services"
                 ],
                 "summary": "Get all data sources which referenced this service",
-                "description": "Get all data sources which referenced this service",
                 "operationId": "get_service_sources",
                 "parameters": [
                     {
@@ -9645,7 +9533,7 @@
                     "Workspace Tags"
                 ],
                 "summary": "Update a workspace tag",
-                "description": "Update a workspace tag\n\nOne of the options must be set\n\nRequires privileges to access the workspace this tags belongs to.",
+                "description": "One of the options must be set\n\nRequires privileges to access the workspace this tags belongs to.",
                 "operationId": "update_workspace_tag",
                 "parameters": [
                     {
@@ -9715,7 +9603,7 @@
                     "Workspace Tags"
                 ],
                 "summary": "Delete a workspace tag",
-                "description": "Delete a workspace tag\n\nRequires privileges to access the workspace this tag belongs to.",
+                "description": "Requires privileges to access the workspace this tag belongs to.",
                 "operationId": "delete_workspace_tag",
                 "parameters": [
                     {
@@ -9777,7 +9665,7 @@
                     "Websocket"
                 ],
                 "summary": "Start a websocket connection",
-                "description": "Start a websocket connection\n\nA heartbeat PING packet is sent constantly (every 10s).\nIf no response is retrieved within 30s of the last transmission, the socket\nwill be closed.",
+                "description": "A heartbeat PING packet is sent constantly (every 10s).\nIf no response is retrieved within 30s of the last transmission, the socket\nwill be closed.",
                 "operationId": "websocket",
                 "responses": {
                     "101": {
@@ -10176,7 +10064,8 @@
                 "required": [
                     "uuid",
                     "type",
-                    "details"
+                    "export_details",
+                    "user_details"
                 ],
                 "properties": {
                     "uuid": {
@@ -10187,7 +10076,11 @@
                     "type": {
                         "$ref": "#/components/schemas/AggregationType"
                     },
-                    "details": {
+                    "export_details": {
+                        "type": "string",
+                        "description": "Notes about the finding included in the data export\n\nMay be used for documenting details about the finding\nused to generate reports outside of kraken."
+                    },
+                    "user_details": {
                         "type": "string",
                         "description": "Notes about the affected provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user"
                     },
@@ -10284,7 +10177,8 @@
                 "required": [
                     "definition",
                     "severity",
-                    "details",
+                    "export_details",
+                    "user_details",
                     "categories"
                 ],
                 "properties": {
@@ -10296,7 +10190,11 @@
                     "severity": {
                         "$ref": "#/components/schemas/FindingSeverity"
                     },
-                    "details": {
+                    "export_details": {
+                        "type": "string",
+                        "description": "Notes about the finding included in the data export\n\nMay be used for documenting details about the finding\nused to generate reports outside of kraken."
+                    },
+                    "user_details": {
                         "type": "string",
                         "description": "Notes about the finding provided by the user\n\nMay be used for documenting command invocation or other information\nthat are provided by the user"
                     },
@@ -11070,13 +10968,17 @@
                                 "type": "object",
                                 "description": "The editor for the `user_details` in [Finding]",
                                 "required": [
-                                    "finding"
+                                    "finding",
+                                    "finding_details"
                                 ],
                                 "properties": {
                                     "finding": {
                                         "type": "string",
                                         "format": "uuid",
                                         "description": "Uuid of the [Finding]"
+                                    },
+                                    "finding_details": {
+                                        "$ref": "#/components/schemas/FindingDetails"
                                     }
                                 }
                             }
@@ -11093,7 +10995,8 @@
                                 "description": "The editor for the `user_details` in [FindingAffected]",
                                 "required": [
                                     "finding",
-                                    "affected"
+                                    "affected",
+                                    "finding_details"
                                 ],
                                 "properties": {
                                     "finding": {
@@ -11105,6 +11008,9 @@
                                         "type": "string",
                                         "format": "uuid",
                                         "description": "Uuid of the [FindingAffected]"
+                                    },
+                                    "finding_details": {
+                                        "$ref": "#/components/schemas/FindingDetails"
                                     }
                                 }
                             }
@@ -11247,9 +11153,17 @@
                     }
                 }
             },
+            "FindingDetails": {
+                "type": "string",
+                "description": "The details section that was edited",
+                "enum": [
+                    "Export",
+                    "User"
+                ]
+            },
             "FindingSection": {
                 "type": "string",
-                "description": "The section that was edited",
+                "description": "The definition section that was edited",
                 "enum": [
                     "Summary",
                     "Description",
@@ -11560,6 +11474,7 @@
                     "definition",
                     "severity",
                     "affected",
+                    "export_details",
                     "user_details",
                     "created_at",
                     "categories"
@@ -11582,6 +11497,10 @@
                             "$ref": "#/components/schemas/SimpleFindingAffected"
                         },
                         "description": "List of all affected objects"
+                    },
+                    "export_details": {
+                        "type": "string",
+                        "description": "Notes about the finding included in the data export\n\nMay be used for documenting details about the finding\nused to generate reports outside of kraken."
                     },
                     "user_details": {
                         "type": "string",
@@ -11625,6 +11544,7 @@
                     "finding",
                     "affected",
                     "affected_tags",
+                    "export_details",
                     "user_details",
                     "created_at"
                 ],
@@ -11641,6 +11561,10 @@
                             "$ref": "#/components/schemas/SimpleTag"
                         },
                         "description": "List of tags for the affected object"
+                    },
+                    "export_details": {
+                        "type": "string",
+                        "description": "Notes about the finding included in the data export\n\nMay be used for documenting details about the finding\nused to generate reports outside of kraken."
                     },
                     "user_details": {
                         "type": "string",

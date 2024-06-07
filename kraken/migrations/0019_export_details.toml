@@ -1,0 +1,24 @@
+[Migration]
+Hash = "13374530904636795256"
+Initial = false
+Dependency = 18
+Replaces = []
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "findingdetails"
+
+[Migration.Operations.Field]
+Name = "export_details"
+Type = "varchar"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "default_value"
+Value = ""
+
+[[Migration.Operations.Field.Annotations]]
+Type = "max_length"
+Value = 65535
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"

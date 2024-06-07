@@ -77,7 +77,8 @@ pub async fn create_finding(
         workspace_uuid,
         request.definition,
         request.severity.into_db(),
-        request.details,
+        request.export_details,
+        request.user_details,
         None,
         request.screenshot,
         request.log_file,
@@ -297,7 +298,9 @@ pub async fn get_finding(
         severity: FromDb::from_db(finding.severity),
         affected,
         #[rustfmt::skip]
-        user_details: GLOBAL.editor_cache.finding_details.get(finding.uuid).await?.unwrap_or_default().0,
+        export_details: GLOBAL.editor_cache.finding_export_details.get(finding.uuid).await?.unwrap_or_default().0,
+        #[rustfmt::skip]
+        user_details: GLOBAL.editor_cache.finding_user_details.get(finding.uuid).await?.unwrap_or_default().0,
         tool_details: details.tool_details,
         screenshot: details.screenshot.map(|x| *x.key()),
         log_file: details.log_file.map(|x| *x.key()),
@@ -439,6 +442,8 @@ pub async fn delete_finding(
     }
 
     let deleted = Finding::delete(&mut tx, f_uuid).await?;
+    GLOBAL.editor_cache.finding_export_details.delete(f_uuid);
+    GLOBAL.editor_cache.finding_user_details.delete(f_uuid);
 
     tx.commit().await?;
     // Notify workspace members about deleted finding

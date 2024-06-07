@@ -145,7 +145,12 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                 setFindingDef(fullFinding.definition);
                 setSeverity(fullFinding.severity);
                 setCategories(fullFinding.categories);
-                setUserDetails(fullFinding.userDetails || "", { finding: { finding: finding } });
+                setUserDetails(fullFinding.userDetails || "", {
+                    finding: {
+                        finding: finding,
+                        findingDetails: "User",
+                    },
+                });
                 setToolDetails(fullFinding.toolDetails || "");
                 setScreenshot(fullFinding.screenshot || "");
                 setLogFile(fullFinding.logFile || "");
@@ -162,7 +167,13 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                             affectedModels.addModel(uuid, {
                                 value: userDetails,
                                 language: "markdown",
-                                syncTarget: { findingAffected: { finding: finding, affected: uuid } },
+                                syncTarget: {
+                                    findingAffected: {
+                                        finding: finding,
+                                        affected: uuid,
+                                        findingDetails: "User",
+                                    },
+                                },
                             });
                             return [uuid, fullAffected];
                         }),
@@ -233,7 +244,9 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         affectedModels.addModel(affectedUuid, {
                             value: userDetails,
                             language: "markdown",
-                            syncTarget: { findingAffected: { finding, affected: affectedUuid } },
+                            syncTarget: {
+                                findingAffected: { finding, affected: affectedUuid, findingDetails: "User" },
+                            },
                         });
                     }),
                 );
@@ -263,7 +276,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     }, [workspace, finding, allCategories]);
 
     const { cursors: editorCursors, setEditor } = useSyncedCursors({
-        target: { finding: { finding } },
+        target: { finding: { finding, findingDetails: "User" } },
         receiveCursor: (target) => {
             if ("finding" in target && target.finding.finding === finding) {
                 return true;
@@ -581,7 +594,8 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                         .addAffected(workspace, finding, {
                                             type,
                                             uuid,
-                                            details: "",
+                                            userDetails: "",
+                                            exportDetails: "",
                                         })
                                         .then(
                                             handleApiError(() =>
@@ -598,6 +612,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                                 findingAffected: {
                                                                     finding,
                                                                     affected: uuid,
+                                                                    findingDetails: "User",
                                                                 },
                                                             },
                                                         });

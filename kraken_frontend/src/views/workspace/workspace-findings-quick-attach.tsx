@@ -65,7 +65,8 @@ export default function WorkspaceFindingsQuickAttach(props: WorkspaceFindingsQui
                         affected={
                             {
                                 uuid: uuid,
-                                details: details,
+                                userDetails: details,
+                                exportDetails: "",
                                 type: props.type,
                                 _data: data,
                             } as LocalAffected
@@ -83,7 +84,8 @@ export default function WorkspaceFindingsQuickAttach(props: WorkspaceFindingsQui
                         toast.promise(
                             Api.workspaces.findings
                                 .addAffected(workspace, f.uuid, {
-                                    details,
+                                    userDetails: details,
+                                    exportDetails: "",
                                     type: props.type,
                                     uuid: uuid,
                                 })

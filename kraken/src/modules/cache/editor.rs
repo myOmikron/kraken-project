@@ -52,10 +52,14 @@ pub struct EditorCache {
     pub fd_remediation: FdRemediationCache,
     /// Finding definition references cache
     pub fd_references: FdReferencesCache,
-    /// Finding details cache
-    pub finding_details: FindingDetailsCache,
-    /// FindingAffected details cache
-    pub finding_affected_details: FindingAffectedDetailsCache,
+    /// Finding export details cache
+    pub finding_export_details: FindingExportDetailsCache,
+    /// FindingAffected export details cache
+    pub finding_affected_export_details: FindingAffectedExportDetailsCache,
+    /// Finding user details cache
+    pub finding_user_details: FindingUserDetailsCache,
+    /// FindingAffected user details cache
+    pub finding_affected_user_details: FindingAffectedUserDetailsCache,
 }
 
 impl Default for EditorCache {
@@ -68,8 +72,10 @@ impl Default for EditorCache {
             fd_impact: Default::default(),
             fd_remediation: Default::default(),
             fd_references: Default::default(),
-            finding_details: Default::default(),
-            finding_affected_details: Default::default(),
+            finding_export_details: Default::default(),
+            finding_affected_export_details: Default::default(),
+            finding_user_details: Default::default(),
+            finding_affected_user_details: Default::default(),
         };
 
         tokio::spawn(cache.ws_notes.clone().run_cache_save());
@@ -78,21 +84,195 @@ impl Default for EditorCache {
         tokio::spawn(cache.fd_impact.clone().run_cache_save());
         tokio::spawn(cache.fd_remediation.clone().run_cache_save());
         tokio::spawn(cache.fd_references.clone().run_cache_save());
-        tokio::spawn(cache.finding_details.clone().run_cache_save());
-        tokio::spawn(cache.finding_affected_details.clone().run_cache_save());
+        tokio::spawn(cache.finding_export_details.clone().run_cache_save());
+        tokio::spawn(
+            cache
+                .finding_affected_export_details
+                .clone()
+                .run_cache_save(),
+        );
+        tokio::spawn(cache.finding_user_details.clone().run_cache_save());
+        tokio::spawn(cache.finding_affected_user_details.clone().run_cache_save());
 
         cache
     }
 }
 
 // --------
-// FindingAffected Details
+// FindingAffected Export Details
 // --------
 
 #[derive(Clone, Default)]
-pub struct FindingAffectedDetailsCache(InnerCache<Uuid>);
+pub struct FindingAffectedExportDetailsCache(InnerCache<Uuid>);
 
-impl InternalEditorCached<Uuid> for FindingAffectedDetailsCache {
+impl InternalEditorCached<Uuid> for FindingAffectedExportDetailsCache {
+    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem<Uuid>>>> {
+        #[allow(clippy::expect_used)]
+        self.0.read().expect(EXPECT_MSG)
+    }
+
+    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem<Uuid>>>> {
+        #[allow(clippy::expect_used)]
+        self.0.write().expect(EXPECT_MSG)
+    }
+
+    async fn query_db(&self, key: Uuid) -> Result<Option<(String, Uuid)>, Error> {
+        let mut tx = GLOBAL.db.start_transaction().await?;
+
+        let res = if let Some((details, workspace)) = query!(
+            &mut tx,
+            (FindingAffected::F.details, FindingAffected::F.workspace)
+        )
+        .condition(or!(
+            FindingAffected::F.domain.equals(key),
+            FindingAffected::F.host.equals(key),
+            FindingAffected::F.port.equals(key),
+            FindingAffected::F.service.equals(key),
+            FindingAffected::F.http_service.equals(key)
+        ))
+        .optional()
+        .await?
+        .map(|x| (x.0.map(|y| *y.key()), *x.1.key()))
+        {
+            if let Some(details) = details {
+                let export_details = query!(&mut tx, (FindingDetails::F.export_details,))
+                    .condition(FindingDetails::F.uuid.equals(details))
+                    .one()
+                    .await?
+                    .0;
+                Ok(Some((export_details, workspace)))
+            } else {
+                Ok(Some((String::new(), workspace)))
+            }
+        } else {
+            Ok(None)
+        };
+
+        tx.commit().await?;
+
+        res
+    }
+
+    async fn save_to_db(&self, key: Uuid, value: String) -> Result<(), Error> {
+        let mut tx = GLOBAL.db.start_transaction().await?;
+
+        let old_details = query!(&mut tx, (FindingAffected::F.details,))
+            .condition(or!(
+                FindingAffected::F.domain.equals(key),
+                FindingAffected::F.host.equals(key),
+                FindingAffected::F.port.equals(key),
+                FindingAffected::F.service.equals(key),
+                FindingAffected::F.http_service.equals(key)
+            ))
+            .one()
+            .await?
+            .0
+            .map(|x| *x.key());
+
+        if let Some(old_details) = old_details {
+            update!(&mut tx, FindingDetails)
+                .condition(FindingDetails::F.uuid.equals(old_details))
+                .set(FindingDetails::F.export_details, value)
+                .exec()
+                .await?;
+        } else {
+            let pk = insert!(&mut tx, FindingDetails)
+                .return_primary_key()
+                .single(&FindingDetails {
+                    uuid: Uuid::new_v4(),
+                    export_details: value,
+                    user_details: String::new(),
+                    tool_details: None,
+                    screenshot: None,
+                    log_file: None,
+                })
+                .await?;
+
+            update!(&mut tx, FindingAffected)
+                .condition(or!(
+                    FindingAffected::F.domain.equals(key),
+                    FindingAffected::F.host.equals(key),
+                    FindingAffected::F.port.equals(key),
+                    FindingAffected::F.service.equals(key),
+                    FindingAffected::F.http_service.equals(key)
+                ))
+                .set(
+                    FindingAffected::F.details,
+                    Some(ForeignModelByField::Key(pk)),
+                )
+                .exec()
+                .await?;
+        }
+
+        tx.commit().await?;
+
+        Ok(())
+    }
+}
+impl EditorCached<Uuid> for FindingAffectedExportDetailsCache {}
+
+// --------
+// Finding User Details
+// --------
+
+#[derive(Clone, Default)]
+pub struct FindingExportDetailsCache(InnerCache<Uuid>);
+
+impl InternalEditorCached<Uuid> for FindingExportDetailsCache {
+    fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem<Uuid>>>> {
+        #[allow(clippy::expect_used)]
+        self.0.read().expect(EXPECT_MSG)
+    }
+
+    fn write_cache(&self) -> RwLockWriteGuard<'_, HashMap<Uuid, Option<InnerItem<Uuid>>>> {
+        #[allow(clippy::expect_used)]
+        self.0.write().expect(EXPECT_MSG)
+    }
+
+    async fn query_db(&self, key: Uuid) -> Result<Option<(String, Uuid)>, Error> {
+        let db = &GLOBAL.db;
+
+        query!(
+            db,
+            (Finding::F.details.export_details, Finding::F.workspace)
+        )
+        .condition(Finding::F.uuid.equals(key))
+        .optional()
+        .await
+        .map(|x| x.map(|y| (y.0, *y.1.key())))
+    }
+
+    async fn save_to_db(&self, key: Uuid, value: String) -> Result<(), Error> {
+        let mut tx = GLOBAL.db.start_transaction().await?;
+
+        let details_uuid = query!(&mut tx, (Finding::F.details,))
+            .condition(Finding::F.uuid.equals(key))
+            .one()
+            .await?
+            .0;
+
+        update!(&mut tx, FindingDetails)
+            .condition(FindingDetails::F.uuid.equals(*details_uuid.key()))
+            .set(FindingDetails::F.export_details, value)
+            .exec()
+            .await?;
+
+        tx.commit().await?;
+
+        Ok(())
+    }
+}
+
+impl EditorCached<Uuid> for FindingExportDetailsCache {}
+
+// --------
+// FindingAffected User Details
+// --------
+
+#[derive(Clone, Default)]
+pub struct FindingAffectedUserDetailsCache(InnerCache<Uuid>);
+
+impl InternalEditorCached<Uuid> for FindingAffectedUserDetailsCache {
     fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem<Uuid>>>> {
         #[allow(clippy::expect_used)]
         self.0.read().expect(EXPECT_MSG)
@@ -167,6 +347,7 @@ impl InternalEditorCached<Uuid> for FindingAffectedDetailsCache {
                 .return_primary_key()
                 .single(&FindingDetails {
                     uuid: Uuid::new_v4(),
+                    export_details: String::new(),
                     user_details: value,
                     tool_details: None,
                     screenshot: None,
@@ -196,16 +377,16 @@ impl InternalEditorCached<Uuid> for FindingAffectedDetailsCache {
     }
 }
 
-impl EditorCached<Uuid> for FindingAffectedDetailsCache {}
+impl EditorCached<Uuid> for FindingAffectedUserDetailsCache {}
 
 // --------
-// Finding Details
+// Finding User Details
 // --------
 
 #[derive(Clone, Default)]
-pub struct FindingDetailsCache(InnerCache<Uuid>);
+pub struct FindingUserDetailsCache(InnerCache<Uuid>);
 
-impl InternalEditorCached<Uuid> for FindingDetailsCache {
+impl InternalEditorCached<Uuid> for FindingUserDetailsCache {
     fn read_cache(&self) -> RwLockReadGuard<'_, HashMap<Uuid, Option<InnerItem<Uuid>>>> {
         #[allow(clippy::expect_used)]
         self.0.read().expect(EXPECT_MSG)
@@ -247,7 +428,7 @@ impl InternalEditorCached<Uuid> for FindingDetailsCache {
     }
 }
 
-impl EditorCached<Uuid> for FindingDetailsCache {}
+impl EditorCached<Uuid> for FindingUserDetailsCache {}
 
 // --------
 // FD Summary
