@@ -29,6 +29,9 @@ name = "kraken"
 
 kraken-proto = { path = "../kraken-proto", optional = true }
 
+# Very common sub-dependency which is included to pin its version
+parking_lot = "=0.12.2"
+
 # Webframework
 actix-web = { version = "~4", optional = true }
 # Extensions for actix-web
