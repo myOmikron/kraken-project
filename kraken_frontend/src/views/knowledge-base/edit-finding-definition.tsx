@@ -227,7 +227,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                     </div>
 
                     <AdminOnly>
-                        <DeleteButton finding={props.uuid} name={name} />
+                        <DangerZone finding={props.uuid} name={name} />
                     </AdminOnly>
                 </div>
                 <div className={"create-finding-definition-editor"}>
@@ -261,18 +261,16 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
     );
 }
 
-/** React props for {@link DeleteButton `<DeleteButton />`} */
-export type DeleteButtonProps = {
+/** React props for {@link DangerZone `<DangerZone />`} */
+export type DangerZoneProps = {
     /** The finding definition to delete identified by its uuid */
     finding: UUID;
     /** The finding definition's name */
     name: string;
 };
 
-/**
- * A button with confirmation popup for deleting a finding definition
- */
-export function DeleteButton(props: DeleteButtonProps) {
+/** Danger zone containing the button and confirmation popup to delete the finding definition */
+export function DangerZone(props: DangerZoneProps) {
     const { finding, name } = props;
     const [open, setOpen] = React.useState(false);
 
@@ -283,54 +281,49 @@ export function DeleteButton(props: DeleteButtonProps) {
     }, [finding]);
 
     return (
-        <Popup
-            modal
-            nested
-            open={open}
-            onClose={() => setOpen(false)}
-            trigger={
-                <div className="workspace-data-danger-pane">
-                    <h2 className={"sub-heading"}>Danger Zone</h2>
-                    <button
-                        type="button"
-                        onClick={() => setOpen(true)}
-                        className="workspace-settings-red-button button"
-                    >
-                        Delete finding definition
-                    </button>
-                </div>
-            }
-        >
-            <div
-                className="pane knowledge-base-finding-definition-popup"
-                style={{ width: "100ch", backgroundColor: "rgba(30,0,0,0.25)" }}
-            >
-                <h2 className="heading neon">Are you sure you want to delete the finding definition "{name}"?</h2>
-                <p>The following findings will be deleted as a result:</p>
-                {usage ? <UsageList usages={usage.usages} /> : "Loading..."}
-                <button className="button workspace-settings-red-button" type="reset" onClick={() => setOpen(false)}>
-                    Cancel
-                </button>
-                <button
-                    className="button workspace-settings-red-button"
-                    type="button"
-                    onClick={() => {
-                        toast.promise(
-                            Api.knowledgeBase.findingDefinitions.admin
-                                .delete(finding)
-                                .then(() => ROUTES.FINDING_DEFINITION_LIST.visit({})),
-                            {
-                                pending: "Deleting finding definition...",
-                                error: "Failed to delete finding definition!",
-                                success: "Successfully deleted finding definition",
-                            },
-                        );
-                    }}
-                >
-                    Delete
+        <>
+            <div className="workspace-data-danger-pane">
+                <h2 className={"sub-heading"}>Danger Zone</h2>
+                <button type="button" onClick={() => setOpen(true)} className="workspace-settings-red-button button">
+                    Delete finding definition
                 </button>
             </div>
-        </Popup>
+            <Popup modal nested open={open} onClose={() => setOpen(false)}>
+                <div
+                    className="pane knowledge-base-finding-definition-popup"
+                    style={{ width: "100ch", backgroundColor: "rgba(30,0,0,0.25)" }}
+                >
+                    <h2 className="heading neon">Are you sure you want to delete the finding definition "{name}"?</h2>
+                    <p>The following findings will be deleted as a result:</p>
+                    {usage ? <UsageList usages={usage.usages} /> : "Loading..."}
+                    <button
+                        className="button workspace-settings-red-button"
+                        type="reset"
+                        onClick={() => setOpen(false)}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        className="button workspace-settings-red-button"
+                        type="button"
+                        onClick={() => {
+                            toast.promise(
+                                Api.knowledgeBase.findingDefinitions.admin
+                                    .delete(finding)
+                                    .then(() => ROUTES.FINDING_DEFINITION_LIST.visit({})),
+                                {
+                                    pending: "Deleting finding definition...",
+                                    error: "Failed to delete finding definition!",
+                                    success: "Successfully deleted finding definition",
+                                },
+                            );
+                        }}
+                    >
+                        Delete
+                    </button>
+                </div>
+            </Popup>
+        </>
     );
 }
 

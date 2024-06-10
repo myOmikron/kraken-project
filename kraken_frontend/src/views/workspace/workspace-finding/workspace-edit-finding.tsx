@@ -616,7 +616,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                 )}
                             </div>
                         </CollapsibleSection>
-                        <DeleteButton
+                        <DangerZone
                             workspace={workspace}
                             finding={finding}
                             categories={categories}
@@ -786,70 +786,68 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
 }
 WorkspaceEditFinding.displayName = "WorkspaceEditFinding";
 
-function DeleteButton({
-    workspace,
-    finding,
-    severity,
-    categories,
-}: {
+/** React props for {@link DangerZone `<DangerZone />`} */
+type DangerZoneProps = {
     workspace: UUID;
+    /** The finding definition to delete identified by its uuid */
     finding: UUID;
     severity: FindingSeverity;
     categories: SimpleFindingCategory[];
-}) {
+};
+
+/** Danger zone containing the button and confirmation popup to delete the finding */
+function DangerZone(props: DangerZoneProps) {
+    const { workspace, finding, severity, categories } = props;
+
     const [open, setOpen] = React.useState(false);
 
     return (
-        <Popup
-            modal
-            nested
-            open={open}
-            onClose={() => setOpen(false)}
-            trigger={
-                <div className="workspace-data-danger-pane">
-                    <h2 className={"sub-heading"}>Danger Zone</h2>
-                    <button
-                        type="button"
-                        onClick={() => setOpen(true)}
-                        className="workspace-settings-red-button button"
-                    >
-                        Delete finding
-                    </button>
-                </div>
-            }
-        >
-            <div className="popup-content pane danger " style={{ width: "50ch", backgroundColor: "rgba(30,0,0,0.25)" }}>
-                <div className="workspace-setting-popup">
-                    <h2 className="heading neon">Are you sure you want to delete this {severity} Severity finding?</h2>
-                    <FindingCategoryList categories={categories} />
-                    <button
-                        className="workspace-settings-red-button button"
-                        type="reset"
-                        onClick={() => setOpen(false)}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        className="workspace-settings-red-button button"
-                        type="button"
-                        onClick={() => {
-                            toast.promise(
-                                Api.workspaces.findings
-                                    .delete(workspace, finding)
-                                    .then(() => ROUTES.WORKSPACE_FINDINGS_LIST.visit({ uuid: workspace })),
-                                {
-                                    pending: "Deleting finding...",
-                                    error: "Failed to delete finding!",
-                                    success: "Successfully deleted",
-                                },
-                            );
-                        }}
-                    >
-                        Delete
-                    </button>
-                </div>
+        <>
+            <div className="workspace-data-danger-pane">
+                <h2 className={"sub-heading"}>Danger Zone</h2>
+                <button type="button" onClick={() => setOpen(true)} className="workspace-settings-red-button button">
+                    Delete finding
+                </button>
             </div>
-        </Popup>
+            <Popup modal nested open={open} onClose={() => setOpen(false)}>
+                <div
+                    className="popup-content pane danger "
+                    style={{ width: "50ch", backgroundColor: "rgba(30,0,0,0.25)" }}
+                >
+                    <div className="workspace-setting-popup">
+                        <h2 className="heading neon">
+                            Are you sure you want to delete this {severity} Severity finding?
+                        </h2>
+                        <FindingCategoryList categories={categories} />
+                        <button
+                            className="workspace-settings-red-button button"
+                            type="reset"
+                            onClick={() => setOpen(false)}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            className="workspace-settings-red-button button"
+                            type="button"
+                            onClick={() => {
+                                toast.promise(
+                                    Api.workspaces.findings
+                                        .delete(workspace, finding)
+                                        .then(() => ROUTES.WORKSPACE_FINDINGS_LIST.visit({ uuid: workspace })),
+                                    {
+                                        pending: "Deleting finding...",
+                                        error: "Failed to delete finding!",
+                                        success: "Successfully deleted",
+                                    },
+                                );
+                            }}
+                        >
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </Popup>
+        </>
     );
 }
 
