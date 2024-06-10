@@ -291,6 +291,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
             }),
         ];
         return () => {
+            setAffected({});
             affectedModels.removeAll();
             for (const handle of handles) {
                 WS.removeEventListener(handle);
