@@ -80,6 +80,8 @@ export function useModel(initialArgs: UseModelArgs): UseModelReturn {
     return [controller.value, controller.setValue, controller.model];
 }
 
+Object.defineProperty(useModel, "name", { value: "useModel" });
+
 /** A model store as returned by {@link useModelStore `useModelStore`} */
 export type ModelStore = {
     /** The store's current models and their values */
@@ -177,6 +179,8 @@ export function useModelStore(): ModelStore {
         },
     };
 }
+
+Object.defineProperty(useModelStore, "name", { value: "useModelStore" });
 
 /**
  * Class bridging monaco state with react state and optionally synchronizing it over the websocket.

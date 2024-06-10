@@ -1,8 +1,12 @@
+import React from "react";
 import { SimpleTag } from "../../../api/generated";
 import Tag from "../../../components/tag";
 import { UseFilterReturn } from "./filter-input";
 
-export type TagClickCallback = (e: { ctrlKey: boolean; shiftKey: boolean; altKey: boolean }, tag: SimpleTag) => void;
+export type TagClickCallback = (
+    event: React.MouseEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>,
+    tag: SimpleTag,
+) => void;
 
 type TagListProps = {
     tags: Array<SimpleTag>;

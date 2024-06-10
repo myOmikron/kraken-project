@@ -1,4 +1,3 @@
-import { editor } from "monaco-editor";
 import React, { useEffect } from "react";
 import { toast } from "react-toastify";
 import Popup from "reactjs-popup";
@@ -19,7 +18,6 @@ import {
     SimpleHost,
     SimplePort,
     SimpleService,
-    SimpleTag,
     UpdateFindingRequest,
 } from "../../../api/generated";
 import { SimpleHttpService } from "../../../api/generated/models/SimpleHttpService";
@@ -54,6 +52,7 @@ import { useSyncedCursors } from "../../../utils/monaco-cursor";
 import CollapsibleSection from "../components/collapsible-section";
 import Domain from "../components/domain";
 import EditableCategories from "../components/editable-categories";
+import EditorPopup from "../components/editor-popup";
 import { UploadingFileInput } from "../components/file-input";
 import IpAddr from "../components/host";
 import HttpServiceName from "../components/http-service";
@@ -65,7 +64,6 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 import { FindingDefinitionDetails } from "./workspace-create-finding";
 import WorkspaceFindingDataTable, { WorkspaceFindingDataTableRef } from "./workspace-finding-data-table";
 import EditingTreeGraph, { EditingTreeGraphRef } from "./workspace-finding-editing-tree";
-import ITextModel = editor.ITextModel;
 
 /** React props for {@link WorkspaceEditFindingProps `<WorkspaceEditFindingProps />`} */
 export type WorkspaceEditFindingProps = {
@@ -73,8 +71,10 @@ export type WorkspaceEditFindingProps = {
     uuid: string;
 };
 
-type Section = "definition" | "description" | "affected" | "network";
+/** Enum of the tabs controlling the right panel */
+type Section = "definition" | "userDetails" | "exportDetails" | "affected" | "network";
 
+/** View for editing an existing findings */
 export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     const {
         workspace: { uuid: workspace },
@@ -88,11 +88,14 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     const [findingDef, setFindingDef] = React.useState<SimpleFindingDefinition>();
     const [hoveredFindingDef, setHoveredFindingDef] = React.useState<SimpleFindingDefinition>();
     const [userDetails, setUserDetails, userDetailsModel] = useModel({ language: "markdown" });
+    const [exportDetails, setExportDetails, exportDetailsModel] = useModel({ language: "text" });
     const [toolDetails, setToolDetails] = React.useState("");
     const [logFile, setLogFile] = React.useState("");
     const [screenshot, setScreenshot] = React.useState("");
 
-    const [affected, setAffected] = React.useState<Record<UUID, Omit<FullFindingAffected, "userDetails">>>({});
+    const [affected, setAffected] = React.useState<
+        Record<UUID, Omit<FullFindingAffected, "userDetails" | "exportDetails">>
+    >({});
     const affectedModels = useModelStore();
 
     const dataTableRef = React.useRef<WorkspaceFindingDataTableRef>(null);
@@ -103,11 +106,6 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     React.useEffect(() => {
         Api.findingCategories.all().then(handleApiError((v) => setAllCategories(v.categories)));
     }, []);
-
-    const onClickTag = (e: { ctrlKey: boolean; shiftKey: boolean; altKey: boolean }, tag: SimpleTag) => {
-        dataTableRef.current?.addFilterColumn("tag", tag.name, e.altKey);
-        graphRef.current?.addTag(tag, e.altKey);
-    };
 
     // Upload to API with changes
     const [pendingApiChanges, setPendingApiChanges] = React.useState<
@@ -151,6 +149,12 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         findingDetails: "User",
                     },
                 });
+                setExportDetails(fullFinding.exportDetails || "", {
+                    finding: {
+                        finding: finding,
+                        findingDetails: "Export",
+                    },
+                });
                 setToolDetails(fullFinding.toolDetails || "");
                 setScreenshot(fullFinding.screenshot || "");
                 setLogFile(fullFinding.logFile || "");
@@ -163,8 +167,8 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                     ),
                 )
                     .then((affected) =>
-                        affected.map(([uuid, { userDetails, ...fullAffected }]) => {
-                            affectedModels.addModel(uuid, {
+                        affected.map(([uuid, { userDetails, exportDetails, ...fullAffected }]) => {
+                            affectedModels.addModel(`${uuid}-user`, {
                                 value: userDetails,
                                 language: "markdown",
                                 syncTarget: {
@@ -172,6 +176,17 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                         finding: finding,
                                         affected: uuid,
                                         findingDetails: "User",
+                                    },
+                                },
+                            });
+                            affectedModels.addModel(`${uuid}-export`, {
+                                value: exportDetails,
+                                language: "text",
+                                syncTarget: {
+                                    findingAffected: {
+                                        finding: finding,
+                                        affected: uuid,
+                                        findingDetails: "Export",
                                     },
                                 },
                             });
@@ -236,16 +251,23 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
             WS.addEventListener("message.AddedFindingAffected", ({ workspace: w, finding: f, affectedUuid }) => {
                 if (w !== workspace || f !== finding) return;
                 Api.workspaces.findings.getAffected(workspace, finding, affectedUuid).then(
-                    handleApiError(({ userDetails, ...newAffected }) => {
+                    handleApiError(({ userDetails, exportDetails, ...newAffected }) => {
                         setAffected((affected) => ({
                             ...affected,
                             [affectedUuid]: newAffected,
                         }));
-                        affectedModels.addModel(affectedUuid, {
+                        affectedModels.addModel(`${affectedUuid}-user`, {
                             value: userDetails,
                             language: "markdown",
                             syncTarget: {
                                 findingAffected: { finding, affected: affectedUuid, findingDetails: "User" },
+                            },
+                        });
+                        affectedModels.addModel(`${affectedUuid}-export`, {
+                            value: exportDetails,
+                            language: "text",
+                            syncTarget: {
+                                findingAffected: { finding, affected: affectedUuid, findingDetails: "Export" },
                             },
                         });
                     }),
@@ -264,7 +286,8 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
             WS.addEventListener("message.RemovedFindingAffected", ({ workspace: w, finding: f, affectedUuid }) => {
                 if (w !== workspace || f !== finding) return;
                 setAffected(({ [affectedUuid]: _, ...rest }) => rest);
-                affectedModels.removeModel(affectedUuid);
+                affectedModels.removeModel(`${affectedUuid}-user`);
+                affectedModels.removeModel(`${affectedUuid}-export`);
             }),
         ];
         return () => {
@@ -275,13 +298,25 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
         };
     }, [workspace, finding, allCategories]);
 
-    const { cursors: editorCursors, setEditor } = useSyncedCursors({
-        target: { finding: { finding, findingDetails: "User" } },
+    const { cursors, setEditor } = useSyncedCursors({
+        target: { finding: { finding, findingDetails: section === "userDetails" ? "User" : "Export" } },
         receiveCursor: (target) => {
             if ("finding" in target && target.finding.finding === finding) {
-                return true;
+                return { findingDetails: target.finding.findingDetails };
             }
         },
+        hideCursors: [section],
+        isCursorHidden: ({ findingDetails }) => {
+            switch (section) {
+                case "userDetails":
+                    return findingDetails !== "User";
+                case "exportDetails":
+                    return findingDetails !== "Export";
+                default:
+                    return true;
+            }
+        },
+        deleteCursors: [finding],
     });
 
     return (
@@ -386,6 +421,17 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                             summary={
                                 <>
                                     <BookIcon />
+                                    Export Details
+                                </>
+                            }
+                        >
+                            <div>{exportDetails}</div>
+                        </CollapsibleSection>
+
+                        <CollapsibleSection
+                            summary={
+                                <>
+                                    <BookIcon />
                                     Tool Details
                                 </>
                             }
@@ -454,7 +500,12 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                                         setAffected(
                                                                             ({ [affectedUuid]: _, ...rest }) => rest,
                                                                         );
-                                                                        affectedModels.removeModel(affectedUuid);
+                                                                        affectedModels.removeModel(
+                                                                            `${affectedUuid}-user`,
+                                                                        );
+                                                                        affectedModels.removeModel(
+                                                                            `${affectedUuid}-export`,
+                                                                        );
                                                                     }),
                                                                 );
                                                         }}
@@ -463,12 +514,50 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                     </div>
                                                     <AffectedLabel affected={fullAffected.affected} pretty />
                                                 </div>
-                                                <MarkdownLiveEditorPopup
-                                                    label={<AffectedLabel affected={fullAffected.affected} pretty />}
-                                                    value={affectedModels.models[affectedUuid].value}
-                                                    model={affectedModels.models[affectedUuid].model}
+                                                <EditorPopup
+                                                    trigger={
+                                                        <div className="details">
+                                                            {affectedModels.models[`${affectedUuid}-user`].value
+                                                                .length > 0
+                                                                ? ["Edit User Details", <EditIcon />]
+                                                                : ["Add User Details", <PlusIcon />]}
+                                                        </div>
+                                                    }
+                                                    value={affectedModels.models[`${affectedUuid}-user`].value}
+                                                    heading={"User Details"}
+                                                    subHeading={
+                                                        <AffectedLabel affected={fullAffected.affected} pretty />
+                                                    }
+                                                    model={affectedModels.models[`${affectedUuid}-user`].model}
                                                 />
-                                                <TagList tags={fullAffected.affectedTags} onClickTag={onClickTag} />
+                                                <EditorPopup
+                                                    trigger={
+                                                        <div className="details">
+                                                            {affectedModels.models[`${affectedUuid}-export`].value
+                                                                .length > 0
+                                                                ? ["Edit Export Details", <EditIcon />]
+                                                                : ["Add Export Details", <PlusIcon />]}
+                                                        </div>
+                                                    }
+                                                    value={affectedModels.models[`${affectedUuid}-export`].value}
+                                                    preview={null}
+                                                    heading={"Export Details"}
+                                                    subHeading={
+                                                        <AffectedLabel affected={fullAffected.affected} pretty />
+                                                    }
+                                                    model={affectedModels.models[`${affectedUuid}-export`].model}
+                                                />
+                                                <TagList
+                                                    tags={fullAffected.affectedTags}
+                                                    onClickTag={(event, tag) => {
+                                                        dataTableRef.current?.addFilterColumn(
+                                                            "tag",
+                                                            tag.name,
+                                                            event.altKey,
+                                                        );
+                                                        graphRef.current?.addTag(tag, event.altKey);
+                                                    }}
+                                                />
                                                 <UploadingFileInput
                                                     image
                                                     shortText
@@ -547,14 +636,28 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                             <InformationIcon />
                         </button>
                         <button
-                            title={"Description"}
-                            className={`knowledge-base-editor-tab ${section === "description" ? "selected" : ""}`}
+                            title={"User Details"}
+                            className={`knowledge-base-editor-tab ${section === "userDetails" ? "selected" : ""}`}
                             onClick={() => {
-                                setSection("description");
+                                setSection("userDetails");
                             }}
                         >
                             <BookIcon />
-                            {editorCursors.length > 0 ? <PersonCircleIcon /> : null}
+                            {cursors.some(({ data: { findingDetails } }) => findingDetails === "User") ? (
+                                <PersonCircleIcon />
+                            ) : null}
+                        </button>
+                        <button
+                            title={"Export Details"}
+                            className={`knowledge-base-editor-tab ${section === "exportDetails" ? "selected" : ""}`}
+                            onClick={() => {
+                                setSection("exportDetails");
+                            }}
+                        >
+                            <BookIcon />
+                            {cursors.some(({ data: { findingDetails } }) => findingDetails === "Export") ? (
+                                <PersonCircleIcon />
+                            ) : null}
                         </button>
                         <button
                             title={"Affected"}
@@ -579,11 +682,15 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         switch (section) {
                             case "definition":
                                 return <FindingDefinitionDetails definition={hoveredFindingDef || findingDef} />;
-                            case "description":
+                            case "userDetails":
+                            case "exportDetails":
                                 return (
                                     <>
-                                        <ModelEditor model={userDetailsModel} setEditor={setEditor} />
-                                        {editorCursors.map(({ data: { displayName }, cursor }) =>
+                                        <ModelEditor
+                                            model={section === "userDetails" ? userDetailsModel : exportDetailsModel}
+                                            setEditor={setEditor}
+                                        />
+                                        {cursors.map(({ data: { displayName }, cursor }) =>
                                             cursor.render(<div className={"cursor-label"}>{displayName}</div>),
                                         )}
                                     </>
@@ -600,23 +707,36 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                         .then(
                                             handleApiError(() =>
                                                 Api.workspaces.findings.getAffected(workspace, finding, uuid).then(
-                                                    handleApiError(({ userDetails, ...fullAffected }) => {
-                                                        setAffected((affected) => ({
-                                                            ...affected,
-                                                            [uuid]: fullAffected,
-                                                        }));
-                                                        affectedModels.addModel(uuid, {
-                                                            value: userDetails || "",
-                                                            language: "markdown",
-                                                            syncTarget: {
-                                                                findingAffected: {
-                                                                    finding,
-                                                                    affected: uuid,
-                                                                    findingDetails: "User",
+                                                    handleApiError(
+                                                        ({ userDetails, exportDetails, ...fullAffected }) => {
+                                                            setAffected((affected) => ({
+                                                                ...affected,
+                                                                [uuid]: fullAffected,
+                                                            }));
+                                                            affectedModels.addModel(uuid, {
+                                                                value: userDetails,
+                                                                language: "markdown",
+                                                                syncTarget: {
+                                                                    findingAffected: {
+                                                                        finding,
+                                                                        affected: uuid,
+                                                                        findingDetails: "User",
+                                                                    },
                                                                 },
-                                                            },
-                                                        });
-                                                    }),
+                                                            });
+                                                            affectedModels.addModel(uuid, {
+                                                                value: exportDetails,
+                                                                language: "text",
+                                                                syncTarget: {
+                                                                    findingAffected: {
+                                                                        finding,
+                                                                        affected: uuid,
+                                                                        findingDetails: "Export",
+                                                                    },
+                                                                },
+                                                            });
+                                                        },
+                                                    ),
                                                 ),
                                             ),
                                         );
@@ -664,6 +784,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
         </div>
     );
 }
+WorkspaceEditFinding.displayName = "WorkspaceEditFinding";
 
 function DeleteButton({
     workspace,
@@ -726,40 +847,6 @@ function DeleteButton({
                     >
                         Delete
                     </button>
-                </div>
-            </div>
-        </Popup>
-    );
-}
-
-type MarkdownLiveEditorPopupProps = {
-    label: React.ReactNode;
-    value: string;
-    model: ITextModel | null;
-};
-
-export function MarkdownLiveEditorPopup(props: MarkdownLiveEditorPopupProps) {
-    const { label, value, model } = props;
-    return (
-        <Popup
-            className="markdown-editor-popup"
-            trigger={
-                <div className="details">
-                    {value.length > 0 ? ["Edit User Details", <EditIcon />] : ["Add User Details", <PlusIcon />]}
-                </div>
-            }
-            nested
-            modal
-            on={"click"}
-        >
-            <div className="pane">
-                <div className="label">
-                    <h1 className="sub-heading">Details</h1>
-                    <h3 className="sub-heading">{label}</h3>
-                </div>
-                <div className="grid">
-                    <GithubMarkdown>{value}</GithubMarkdown>
-                    <ModelEditor model={model} />
                 </div>
             </div>
         </Popup>

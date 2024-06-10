@@ -299,3 +299,5 @@ export function useStableObj<T extends Record<string, unknown>>(obj: T): T {
     }
     return current;
 }
+
+Object.defineProperty(useStableObj, "name", { value: "useStableObj" });

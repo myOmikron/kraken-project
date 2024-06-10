@@ -22,9 +22,11 @@ import { ROUTES } from "../../../routes";
 import ArrowLeftIcon from "../../../svg/arrow-left";
 import BookIcon from "../../../svg/book";
 import CloseIcon from "../../../svg/close";
+import EditIcon from "../../../svg/edit";
 import FileIcon from "../../../svg/file";
 import GraphIcon from "../../../svg/graph";
 import InformationIcon from "../../../svg/information";
+import PlusIcon from "../../../svg/plus";
 import RelationLeftRightIcon from "../../../svg/relation-left-right";
 import ScreenshotIcon from "../../../svg/screenshot";
 import CONSOLE from "../../../utils/console";
@@ -41,10 +43,10 @@ import { configureMonaco } from "../../../utils/monaco";
 import CollapsibleSection from "../components/collapsible-section";
 import Domain from "../components/domain";
 import EditableCategories from "../components/editable-categories";
+import EditorPopup from "../components/editor-popup";
 import { FileInput } from "../components/file-input";
 import IpAddr from "../components/host";
 import HttpServiceName from "../components/http-service";
-import MarkdownEditorPopup from "../components/markdown-editor-popup";
 import PortNumber from "../components/port";
 import SelectFindingDefinition from "../components/select-finding-definition";
 import ServiceName from "../components/service";
@@ -53,6 +55,7 @@ import { WORKSPACE_CONTEXT } from "../workspace";
 import WorkspaceFindingDataTable, { WorkspaceFindingDataTableRef } from "./workspace-finding-data-table";
 import EditingTreeGraph, { EditingTreeGraphRef } from "./workspace-finding-editing-tree";
 
+/** An aggregated model to be passed to [`<WorkspaceCreateFinding />`]{@link WorkspaceCreateFinding} */
 export type CreateFindingObject =
     | { domain: FullDomain }
     | { host: FullHost }
@@ -60,7 +63,15 @@ export type CreateFindingObject =
     | { httpService: FullHttpService }
     | { port: FullPort };
 
+/** React props for [`<WorkspaceCreateFinding />`]{@link WorkspaceCreateFinding} */
 export type CreateFindingProps = {
+    /**
+     * A list of aggregated models to use as affected
+     *
+     * This is passed through the hidden route parameter.
+     * It is used in various places by the data table to
+     * quickly create a new finding for a list of objects.
+     */
     initAffected?: CreateFindingObject[];
 };
 
@@ -75,8 +86,9 @@ export type LocalAffected = CreateFindingAffectedRequest & {
         | { type: "Port"; _data: FullPort }
     );
 
-type Section = "definition" | "description" | "affected" | "network";
+type Section = "definition" | "userDetails" | "exportDetails" | "affected" | "network";
 
+/** View for creating new findings */
 export function WorkspaceCreateFinding(props: CreateFindingProps) {
     const {
         workspace: { uuid: workspace },
@@ -87,7 +99,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
     const [severity, setSeverity] = React.useState<FindingSeverity>("Medium");
     const [findingDef, setFindingDef] = React.useState<SimpleFindingDefinition>();
     const [hoveredFindingDef, setHoveredFindingDef] = React.useState<SimpleFindingDefinition>();
-    const [details, setDetails] = React.useState<string>("");
+    const [userDetails, setUserDetails] = React.useState<string>("");
+    const [exportDetails, setExportDetails] = React.useState<string>("");
     const [categories, setCategories] = React.useState<Array<SimpleFindingCategory>>([]);
     // TODO: set categories from hovering/updating finding definitions
 
@@ -152,16 +165,29 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
         switch (section) {
             case "definition":
                 return <FindingDefinitionDetails definition={hoveredFindingDef || findingDef} />;
-            case "description":
+            case "userDetails":
                 return (
                     <Editor
                         className={"knowledge-base-editor"}
                         theme={"kraken"}
                         beforeMount={configureMonaco}
                         language={"markdown"}
-                        value={details}
+                        value={userDetails}
                         onChange={(value) => {
-                            if (value !== undefined) setDetails(value);
+                            if (value !== undefined) setUserDetails(value);
+                        }}
+                    />
+                );
+            case "exportDetails":
+                return (
+                    <Editor
+                        className={"knowledge-base-editor"}
+                        theme={"kraken"}
+                        beforeMount={configureMonaco}
+                        language={"text"}
+                        value={exportDetails}
+                        onChange={(value) => {
+                            if (value !== undefined) setExportDetails(value);
                         }}
                     />
                 );
@@ -309,7 +335,18 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                     </>
                                 }
                             >
-                                <GithubMarkdown>{details}</GithubMarkdown>
+                                <GithubMarkdown>{userDetails}</GithubMarkdown>
+                            </CollapsibleSection>
+
+                            <CollapsibleSection
+                                summary={
+                                    <>
+                                        <BookIcon />
+                                        Export Details
+                                    </>
+                                }
+                            >
+                                <div>{exportDetails}</div>
                             </CollapsibleSection>
 
                             <CollapsibleSection
@@ -331,13 +368,25 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                                     setAffected(copy);
                                                 }}
                                                 onClickTag={onClickTag}
-                                                onChangeDetails={(d) => {
+                                                onChangeUserDetails={(d) => {
                                                     setAffected((affected) =>
                                                         affected.map((orig) =>
                                                             orig.uuid == a.uuid
                                                                 ? {
                                                                       ...orig,
-                                                                      details: d,
+                                                                      userDetails: d,
+                                                                  }
+                                                                : orig,
+                                                        ),
+                                                    );
+                                                }}
+                                                onChangeExportDetails={(d) => {
+                                                    setAffected((affected) =>
+                                                        affected.map((orig) =>
+                                                            orig.uuid == a.uuid
+                                                                ? {
+                                                                      ...orig,
+                                                                      exportDetails: d,
                                                                   }
                                                                 : orig,
                                                         ),
@@ -439,8 +488,8 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                     .create(workspace, {
                                         severity: severity,
                                         definition: findingDef.uuid,
-                                        userDetails: details,
-                                        exportDetails: "",
+                                        userDetails,
+                                        exportDetails,
                                         logFile: logFileUuid,
                                         screenshot: screenshotUuid,
                                         categories: categories.map((c) => c.uuid),
@@ -475,10 +524,19 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                 <InformationIcon />
                             </button>
                             <button
-                                title={"Details"}
-                                className={`knowledge-base-editor-tab ${section === "description" ? "selected" : ""}`}
+                                title={"User Details"}
+                                className={`knowledge-base-editor-tab ${section === "userDetails" ? "selected" : ""}`}
                                 onClick={() => {
-                                    setSection("description");
+                                    setSection("userDetails");
+                                }}
+                            >
+                                <BookIcon />
+                            </button>
+                            <button
+                                title={"Export Details"}
+                                className={`knowledge-base-editor-tab ${section === "exportDetails" ? "selected" : ""}`}
+                                onClick={() => {
+                                    setSection("exportDetails");
                                 }}
                             >
                                 <BookIcon />
@@ -575,21 +633,35 @@ export function getCreateAffectedData(affected: CreateFindingObject) {
     else return affected.service;
 }
 
-export function CreateFindingAffected({
-    affected: a,
-    onRemove,
-    onChangeDetails,
-    onChangeScreenshot,
-    onChangeLogFile,
-    onClickTag,
-}: {
+/** React props for [`<CreateFindingAffected />`]{@link CreateFindingAffected} */
+export type CreateFindingAffectedProps = {
+    /** The affected rendered by this list item */
     affected: LocalAffected;
+    /** Callback for the delete button */
     onRemove?: () => void;
-    onChangeDetails?: (content: string) => void;
+    /** Callback when the user details have changed */
+    onChangeUserDetails: (content: string) => void;
+    /** Callback when the export details have changed */
+    onChangeExportDetails: (content: string) => void;
+    /** Callback when the screenshot has changed */
     onChangeScreenshot?: (newFile: File | undefined) => void;
+    /** Callback when the log file has changed */
     onChangeLogFile?: (newFile: File | undefined) => void;
+    /** Callback the aggregated object's tag has been clicked */
     onClickTag?: TagClickCallback;
-}) {
+};
+
+/** An item in the list of affected used in [`<WorkspaceCreateFinding />`]{@link WorkspaceCreateFinding} */
+export function CreateFindingAffected(props: CreateFindingAffectedProps) {
+    const {
+        affected: a,
+        onRemove,
+        onChangeUserDetails,
+        onChangeExportDetails,
+        onChangeScreenshot,
+        onChangeLogFile,
+        onClickTag,
+    } = props;
     const label =
         a.type == "Domain" ? (
             <Domain domain={a._data} pretty />
@@ -605,35 +677,60 @@ export function CreateFindingAffected({
             "not implemented"
         );
 
-    const noop = () => {};
-
     return (
         <div className={`create-finding-affected affected affected-${a.type}`}>
             <div className="name">
                 {onRemove && (
-                    <div title={"Remove affected"} className="remove" onClick={() => onRemove()}>
+                    <div title={"Remove affected"} className="remove" onClick={onRemove}>
                         <CloseIcon />
                     </div>
                 )}
                 {label}
             </div>
-            {(a.userDetails || onChangeDetails) && (
-                <MarkdownEditorPopup label={label} content={a.userDetails || ""} onChange={onChangeDetails ?? noop} />
-            )}
+
+            <EditorPopup
+                trigger={
+                    <div className="details">
+                        {a.userDetails.length > 0
+                            ? ["Edit User Details", <EditIcon />]
+                            : ["Add User Details", <PlusIcon />]}
+                    </div>
+                }
+                heading={"User Details"}
+                subHeading={label}
+                value={a.userDetails}
+                onChange={onChangeUserDetails}
+            />
+            <EditorPopup
+                trigger={
+                    <div className="details">
+                        {a.exportDetails.length > 0
+                            ? ["Edit Export Details", <EditIcon />]
+                            : ["Add Export Details", <PlusIcon />]}
+                    </div>
+                }
+                heading={"Export Details"}
+                subHeading={label}
+                value={a.exportDetails}
+                onChange={onChangeExportDetails}
+                language={"text"}
+                preview={null}
+            />
+
             <TagList tags={a._data.tags} onClickTag={onClickTag} />
-            {(a._localScreenshot || onChangeScreenshot) && (
+            {onChangeScreenshot && (
                 <FileInput
                     image
                     shortText
                     className="screenshot"
                     file={a._localScreenshot}
-                    onChange={onChangeScreenshot ?? noop}
+                    onChange={onChangeScreenshot}
                 >
                     <ScreenshotIcon />
                 </FileInput>
             )}
-            {(a._localLogFile || onChangeLogFile) && (
-                <FileInput shortText className="logfile" file={a._localLogFile} onChange={onChangeLogFile ?? noop}>
+            {onChangeLogFile && (
+                <FileInput shortText className="logfile" file={a._localLogFile} onChange={onChangeLogFile}>
                     <FileIcon />
                 </FileInput>
             )}

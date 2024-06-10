@@ -9,3 +9,5 @@ export function useTriggerUpdate() {
     const [_, setDummy] = React.useState({});
     return () => setDummy({});
 }
+
+Object.defineProperty(useTriggerUpdate, "name", { value: "useTriggerUpdate" });

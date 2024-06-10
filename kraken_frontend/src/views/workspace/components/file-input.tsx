@@ -75,12 +75,7 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
         return (
             <div
                 {...props}
-                className={`
-                    file-input
-                    ${isImage ? "image" : ""}
-                    ${file ? "has-content" : ""}
-                    ${props.className}
-                `}
+                className={`file-input ${isImage ? "image" : ""} ${file ? "has-content" : ""} ${props.className}`}
                 ref={ref}
                 onDropCapture={dropHandler}
                 onDragOver={(e) => {

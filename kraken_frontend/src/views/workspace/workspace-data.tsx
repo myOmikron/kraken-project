@@ -1280,11 +1280,11 @@ export function MultiSelectMenu(props: MultiSelectMenuProps) {
                                 },
                                 {
                                     affected: [
-                                        ...affected.domains.map<CreateFindingObject>((d) => ({ domain: d })),
-                                        ...affected.hosts.map<CreateFindingObject>((d) => ({ host: d })),
-                                        ...affected.services.map<CreateFindingObject>((d) => ({ service: d })),
-                                        ...affected.httpServices.map<CreateFindingObject>((d) => ({ httpService: d })),
-                                        ...affected.ports.map<CreateFindingObject>((d) => ({ port: d })),
+                                        ...affected.domains.map((d) => ({ domain: d })),
+                                        ...affected.hosts.map((d) => ({ host: d })),
+                                        ...affected.services.map((d) => ({ service: d })),
+                                        ...affected.httpServices.map((d) => ({ httpService: d })),
+                                        ...affected.ports.map((d) => ({ port: d })),
                                     ],
                                 },
                             );

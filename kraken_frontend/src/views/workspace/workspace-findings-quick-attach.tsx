@@ -8,6 +8,7 @@ import { WORKSPACE_CONTEXT } from "./workspace";
 import { CreateFindingAffected, LocalAffected } from "./workspace-finding/workspace-create-finding";
 import WorkspaceFindingTable from "./workspace-finding/workspace-finding-table";
 
+/** React props for [`<WorkspaceFindingsQuickAttach />`]{@link WorkspaceFindingsQuickAttach} */
 export type WorkspaceFindingsQuickAttachProps = {
     type: AggregationType;
     onAttached?: (finding: UUID, wantMore: boolean) => void;
@@ -19,7 +20,8 @@ export default function WorkspaceFindingsQuickAttach(props: WorkspaceFindingsQui
     } = React.useContext(WORKSPACE_CONTEXT);
 
     const [data, setData] = React.useState<FullDomain | FullHost | FullService | FullPort | FullHttpService>();
-    const [details, setDetails] = React.useState<string>("");
+    const [userDetails, setUserDetails] = React.useState<string>("");
+    const [exportDetails, setExportDetails] = React.useState<string>("");
     const [findings, setFindings] = React.useState<ListFindings>();
 
     const uuid = "data" in props ? props.data.uuid : props.uuid;
@@ -65,13 +67,14 @@ export default function WorkspaceFindingsQuickAttach(props: WorkspaceFindingsQui
                         affected={
                             {
                                 uuid: uuid,
-                                userDetails: details,
-                                exportDetails: "",
+                                userDetails,
+                                exportDetails,
                                 type: props.type,
                                 _data: data,
                             } as LocalAffected
                         }
-                        onChangeDetails={setDetails}
+                        onChangeUserDetails={setUserDetails}
+                        onChangeExportDetails={setExportDetails}
                     />
                 </div>
             ) : (
@@ -84,8 +87,8 @@ export default function WorkspaceFindingsQuickAttach(props: WorkspaceFindingsQui
                         toast.promise(
                             Api.workspaces.findings
                                 .addAffected(workspace, f.uuid, {
-                                    userDetails: details,
-                                    exportDetails: "",
+                                    userDetails,
+                                    exportDetails,
                                     type: props.type,
                                     uuid: uuid,
                                 })

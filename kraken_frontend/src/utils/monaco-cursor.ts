@@ -196,6 +196,8 @@ export function useSyncedCursors<CustomData extends {} = true>(args: UseSyncedCu
     return { cursors: Object.values(cursors), setEditor };
 }
 
+Object.defineProperty(useSyncedCursors, "name", { value: "useSyncedCursors" });
+
 /** monaco decoration placed at others' cursor positions */
 const CURSOR_DECO: editor.IModelDecorationOptions = {
     className: "cursor-deco",

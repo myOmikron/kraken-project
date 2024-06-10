@@ -1,4 +1,4 @@
-.markdown-editor-popup-overlay .pane {
+.editor-popup-overlay .pane {
     background-color: var(--popup-pane-bg);
     width: 60vw;
     height: 60vh;
@@ -7,33 +7,34 @@
     backdrop-filter: none;
 }
 
-.markdown-editor-popup-overlay {
+.editor-popup-overlay {
     backdrop-filter: blur(4px) saturate(25%);
 }
 
-.markdown-editor-popup-overlay .pane > .grid {
+.editor-popup-overlay .pane > .grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
     gap: 1em;
     height: calc(100% - 4em);
 }
 
-.markdown-editor-popup-overlay > span > .h3 {
+.editor-popup-overlay > span > .h3 {
     opacity: 50%;
 }
 
-.markdown-editor-popup-overlay .markdown {
+.editor-popup-overlay .markdown {
     height: 100%;
     overflow-y: auto;
 }
 
-.markdown-editor-popup-overlay .label {
+.editor-popup-overlay .label {
     display: flex;
     flex-direction: column;
     gap: 0.3em;
 }
 
-.markdown-editor-popup-overlay h3 {
+.editor-popup-overlay h3 {
     opacity: 70%;
     width: max-content;
     max-width: 100%;

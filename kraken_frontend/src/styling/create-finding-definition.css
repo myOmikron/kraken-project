@@ -136,7 +136,7 @@
 }
 
 .create-finding-affected > .tag-list {
-    grid-row: 3 / span 1;
+    grid-row: 4 / span 1;
     grid-column: 1 / span 1;
 }
 
@@ -160,13 +160,20 @@
 }
 
 .create-finding-affected > .details {
-    grid-row: 2 / span 1;
     grid-column: 1 / span 1;
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 0.5em;
     margin-left: 0.5em;
+}
+
+.create-finding-affected > .details:first-child {
+    grid-row: 2 / span 1;
+}
+
+.create-finding-affected > .details:last-child {
+    grid-row: 3 / span 1;
 }
 
 .create-finding-affected > .details > .icon:hover {
