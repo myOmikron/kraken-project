@@ -20,7 +20,8 @@ import { GithubMarkdown } from "../../../components/github-markdown";
 import { SelectPrimitive } from "../../../components/select-menu";
 import { ROUTES } from "../../../routes";
 import ArrowLeftIcon from "../../../svg/arrow-left";
-import BookIcon from "../../../svg/book";
+import BookExportIcon from "../../../svg/book_export";
+import BookUserIcon from "../../../svg/book_user";
 import CloseIcon from "../../../svg/close";
 import EditIcon from "../../../svg/edit";
 import FileIcon from "../../../svg/file";
@@ -330,7 +331,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                             <CollapsibleSection
                                 summary={
                                     <>
-                                        <BookIcon />
+                                        <BookUserIcon />
                                         User Details
                                     </>
                                 }
@@ -341,7 +342,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                             <CollapsibleSection
                                 summary={
                                     <>
-                                        <BookIcon />
+                                        <BookExportIcon />
                                         Export Details
                                     </>
                                 }
@@ -530,7 +531,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                     setSection("userDetails");
                                 }}
                             >
-                                <BookIcon />
+                                <BookUserIcon />
                             </button>
                             <button
                                 title={"Export Details"}
@@ -539,7 +540,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                     setSection("exportDetails");
                                 }}
                             >
-                                <BookIcon />
+                                <BookExportIcon />
                             </button>
                             <button
                                 title={"Affected"}

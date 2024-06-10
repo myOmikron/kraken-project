@@ -28,7 +28,9 @@ import ModelEditor from "../../../components/model-editor";
 import { SelectPrimitive } from "../../../components/select-menu";
 import { ROUTES } from "../../../routes";
 import ArrowLeftIcon from "../../../svg/arrow-left";
-import BookIcon from "../../../svg/book";
+import BookExportIcon from "../../../svg/book_export";
+import BookToolIcon from "../../../svg/book_tool";
+import BookUserIcon from "../../../svg/book_user";
 import CloseIcon from "../../../svg/close";
 import EditIcon from "../../../svg/edit";
 import FileIcon from "../../../svg/file";
@@ -410,7 +412,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         <CollapsibleSection
                             summary={
                                 <>
-                                    <BookIcon />
+                                    <BookUserIcon />
                                     User Details
                                 </>
                             }
@@ -421,7 +423,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         <CollapsibleSection
                             summary={
                                 <>
-                                    <BookIcon />
+                                    <BookExportIcon />
                                     Export Details
                                 </>
                             }
@@ -432,7 +434,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         <CollapsibleSection
                             summary={
                                 <>
-                                    <BookIcon />
+                                    <BookToolIcon />
                                     Tool Details
                                 </>
                             }
@@ -643,7 +645,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                 setSection("userDetails");
                             }}
                         >
-                            <BookIcon />
+                            <BookUserIcon />
                             {cursors.some(({ data: { findingDetails } }) => findingDetails === "User") ? (
                                 <PersonCircleIcon />
                             ) : null}
@@ -655,7 +657,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                 setSection("exportDetails");
                             }}
                         >
-                            <BookIcon />
+                            <BookExportIcon />
                             {cursors.some(({ data: { findingDetails } }) => findingDetails === "Export") ? (
                                 <PersonCircleIcon />
                             ) : null}
