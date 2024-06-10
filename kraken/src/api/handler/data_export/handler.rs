@@ -19,6 +19,7 @@ use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::data_export::schema::AggregatedDomain;
 use crate::api::handler::data_export::schema::AggregatedFinding;
+use crate::api::handler::data_export::schema::AggregatedFindingAffected;
 use crate::api::handler::data_export::schema::AggregatedHost;
 use crate::api::handler::data_export::schema::AggregatedHttpService;
 use crate::api::handler::data_export::schema::AggregatedPort;
@@ -50,6 +51,7 @@ use crate::models::Service;
 use crate::models::ServiceGlobalTag;
 use crate::models::ServiceWorkspaceTag;
 use crate::models::WorkspaceAccessToken;
+use crate::modules::cache::EditorCached;
 
 #[utoipa::path(
     tag = "Data Export",
@@ -303,11 +305,16 @@ pub(crate) async fn export_workspace(
             ready(Ok((*x.finding.key(), aggr_uuid, aggr_type)))
         })
         .try_fold(
-            HashMap::<Uuid, HashMap<Uuid, AggregationType>>::new(),
-            |mut map, (finding, aggr_uuid, aggr_type)| {
-                map.entry(finding).or_default().insert(aggr_uuid, aggr_type);
-                ready(Ok(map))
-            },
+            HashMap::<Uuid, HashMap<Uuid, AggregatedFindingAffected>>::new(),
+            |mut map, (finding, aggr_uuid, aggr_type)| async move {
+                let (details, _) = GLOBAL.editor_cache.finding_affected_export_details.get(aggr_uuid).await?.unwrap_or_default();
+                map.entry(finding).or_default().insert(aggr_uuid, AggregatedFindingAffected {
+                    uuid: aggr_uuid,
+                    r#type: aggr_type,
+                    details,
+                });
+                Ok(map)
+            }
         )
         .await?;
     let findings = query!(
@@ -322,19 +329,30 @@ pub(crate) async fn export_workspace(
     )
     .condition(Finding::F.workspace.equals(path.uuid))
     .stream()
-    .map_ok(|(uuid, name, cve, severity, created_at)| {
-        (
-            uuid,
-            AggregatedFinding {
+    .and_then(|(uuid, name, cve, severity, created_at)| {
+        let affected = affected.remove(&uuid).unwrap_or_default();
+        let categories = categories.remove(&uuid).unwrap_or_default();
+        async move {
+            let (details, _) = GLOBAL
+                .editor_cache
+                .finding_export_details
+                .get(uuid)
+                .await?
+                .unwrap_or_default();
+            Ok((
                 uuid,
-                name,
-                cve,
-                severity: FromDb::from_db(severity),
-                affected: affected.remove(&uuid).unwrap_or_default(),
-                created_at,
-                categories: categories.remove(&uuid).unwrap_or_default(),
-            },
-        )
+                AggregatedFinding {
+                    uuid,
+                    name,
+                    cve,
+                    severity: FromDb::from_db(severity),
+                    details,
+                    affected,
+                    created_at,
+                    categories,
+                },
+            ))
+        }
     })
     .try_collect()
     .await?;

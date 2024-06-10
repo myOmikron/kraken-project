@@ -252,14 +252,32 @@ pub struct AggregatedFinding {
     /// The finding's severity
     pub severity: FindingSeverity,
 
+    /// The details of this finding
+    pub details: String,
+
     /// List of all affected objects
-    pub affected: HashMap<Uuid, AggregationType>,
+    pub affected: HashMap<Uuid, AggregatedFindingAffected>,
 
     /// The point in time this finding was created
     pub created_at: DateTime<Utc>,
 
     /// The list of categories this finding falls into
     pub categories: Vec<String>,
+}
+
+/// A finding affected
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct AggregatedFindingAffected {
+    /// The uuid of the finding affected
+    pub uuid: Uuid,
+
+    /// The affected's type
+    ///
+    /// Determines how the uuid is to be used
+    pub r#type: AggregationType,
+
+    /// The details of this affected
+    pub details: String,
 }
 
 /// Set of global and local tags

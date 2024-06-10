@@ -435,6 +435,7 @@ pub(crate) struct FrontendApi;
         ports::schema::PortCertainty,
         services::schema::ServiceCertainty,
         services::schema::ServiceProtocols,
+        http_services::schema::HttpServiceCertainty,
         findings::schema::FindingSeverity,
         common::schema::ApiErrorResponse,
         common::schema::ApiStatusCode,
@@ -447,10 +448,12 @@ pub(crate) struct FrontendApi;
         data_export::schema::AggregatedHost,
         data_export::schema::AggregatedPort,
         data_export::schema::AggregatedService,
+        data_export::schema::AggregatedHttpService,
         data_export::schema::AggregatedDomain,
         data_export::schema::AggregatedTags,
         data_export::schema::AggregatedRelation,
         data_export::schema::AggregatedFinding,
+        data_export::schema::AggregatedFindingAffected,
     )),
     modifiers(&SecurityAddon2)
 )]
