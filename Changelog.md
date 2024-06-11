@@ -2,6 +2,18 @@
 
 ## WIP
 
+## v0.4
+
+### Frontend
+
+- Added exportable details in finding and finding affected
+- Fixed click zone of some danger zones to only apply on buttons
+- Fixed click on cancel button on delete finding popup
+
+### Kraken
+
+- Added exportable details in finding and finding affected
+
 ### Leech
 
 - Added openvpn probe

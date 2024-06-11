@@ -1,6 +1,6 @@
 [package]
 name = "kraken-sdk"
-version = "0.3.5"
+version = "0.4.0"
 authors = ["git@omikron.dev"]
 description = "The SDK for kraken"
 license = "AGPL-3.0"
