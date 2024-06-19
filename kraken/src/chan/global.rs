@@ -12,7 +12,7 @@ use crate::chan::leech_manager::LeechManager;
 use crate::chan::settings_manager::SettingsManagerChan;
 use crate::chan::ws_manager::chan::WsManagerChan;
 use crate::modules::aggregator::Aggregator;
-use crate::modules::cache::EditorCache;
+use crate::modules::cache::EditorCaches;
 use crate::modules::cache::UserCache;
 use crate::modules::cache::WorkspaceUsersCache;
 use crate::modules::editor::EditorSync;
@@ -51,7 +51,7 @@ pub struct GlobalChan {
     pub user_cache: UserCache,
 
     /// All caches for editors
-    pub editor_cache: EditorCache,
+    pub editor_cache: EditorCaches,
 
     /// Scheduler for inserting or updating any aggregation model in the database
     pub aggregator: Aggregator,

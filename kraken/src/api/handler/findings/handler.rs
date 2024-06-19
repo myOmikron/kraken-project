@@ -40,7 +40,6 @@ use crate::models::FindingDefinitionCategoryRelation;
 use crate::models::FindingDetails;
 use crate::models::FindingFindingCategoryRelation;
 use crate::models::Workspace;
-use crate::modules::cache::EditorCached;
 
 /// Creates a new finding
 #[utoipa::path(

@@ -29,7 +29,6 @@ use crate::models::SearchResult;
 use crate::models::User;
 use crate::models::Workspace;
 use crate::models::WorkspaceMember;
-use crate::modules::cache::EditorCached;
 
 pub(crate) fn build_query_list() -> Vec<(String, ModelType)> {
     let table_names_no_ref_to_ws = vec![

@@ -56,7 +56,6 @@ use crate::models::ServiceGlobalTag;
 use crate::models::ServiceWorkspaceTag;
 use crate::models::Workspace;
 use crate::models::WorkspaceTag;
-use crate::modules::cache::EditorCached;
 
 /// Add a new affected object to a finding
 #[utoipa::path(

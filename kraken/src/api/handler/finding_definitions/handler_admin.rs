@@ -24,7 +24,6 @@ use crate::models::convert::FromDb;
 use crate::models::Finding;
 use crate::models::FindingAffected;
 use crate::models::FindingDefinition;
-use crate::modules::cache::EditorCached;
 
 /// Get all findings using the finding definition
 #[utoipa::path(

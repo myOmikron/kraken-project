@@ -1,7 +1,6 @@
 //! This module holds all caches of kraken
 
-pub use editor::EditorCache;
-pub use editor::EditorCached;
+pub use editor::EditorCaches;
 pub use user::*;
 pub use workspace_users::*;
 

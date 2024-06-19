@@ -26,7 +26,6 @@ use crate::chan::ws_manager::schema::FindingDetails;
 use crate::chan::ws_manager::schema::FindingSection;
 use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::FindingDefinition;
-use crate::modules::cache::EditorCached;
 
 /// Sync editor
 #[derive(Clone)]

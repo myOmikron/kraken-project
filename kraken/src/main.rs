@@ -39,7 +39,7 @@ use kraken::config::VAR_DIR;
 use kraken::models::User;
 use kraken::models::UserPermission;
 use kraken::modules::aggregator::Aggregator;
-use kraken::modules::cache::EditorCache;
+use kraken::modules::cache::EditorCaches;
 use kraken::modules::cache::UserCache;
 use kraken::modules::cache::WorkspaceUsersCache;
 use kraken::modules::editor::EditorSync;
@@ -134,7 +134,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let workspace_users_cache = WorkspaceUsersCache::default();
             let user_cache = UserCache::default();
-            let editor_cache = EditorCache::default();
+            let editor_cache = EditorCaches::default();
 
             let aggregator = Aggregator::default();
 

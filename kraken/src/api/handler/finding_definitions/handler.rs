@@ -34,7 +34,6 @@ use crate::models::FindingCategory;
 use crate::models::FindingDefinition;
 use crate::models::FindingDefinitionCategoryRelation;
 use crate::models::InsertFindingDefinition;
-use crate::modules::cache::EditorCached;
 
 /// Add a definition for a finding
 ///

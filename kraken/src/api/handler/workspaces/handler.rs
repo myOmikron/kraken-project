@@ -88,7 +88,6 @@ use crate::models::UdpServiceDetectionResult;
 use crate::models::Workspace;
 use crate::models::WorkspaceInvitation;
 use crate::models::WorkspaceMember;
-use crate::modules::cache::EditorCached;
 
 /// Create a new workspace
 #[utoipa::path(
