@@ -1,6 +1,6 @@
 [package]
 name = "leech"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 authors = ["Niklas Pfister <git@omikron.dev>"]
 license = "AGPL-3.0"
