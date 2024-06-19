@@ -2,6 +2,8 @@
 
 ## WIP
 
+## v0.4.1
+
 ### Backend fixes
 
 - Fixed details for finding affecteds not being stored correctly
