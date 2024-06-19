@@ -198,6 +198,10 @@ impl EditorCacheImpl for FindingAffectedExportDetails {
 
         Ok(())
     }
+
+    fn file_name(key: Self::Key) -> String {
+        format!("finding_affected_export_details_{key}")
+    }
 }
 
 // --------
@@ -239,6 +243,10 @@ impl EditorCacheImpl for FindingExportDetails {
         tx.commit().await?;
 
         Ok(())
+    }
+
+    fn file_name(key: Self::Key) -> String {
+        format!("finding_export_details_{key}")
     }
 }
 
@@ -341,6 +349,10 @@ impl EditorCacheImpl for FindingAffectedUserDetails {
 
         Ok(())
     }
+
+    fn file_name(key: Self::Key) -> String {
+        format!("finding_affected_user_details_{key}")
+    }
 }
 
 // --------
@@ -380,6 +392,10 @@ impl EditorCacheImpl for FindingUserDetails {
 
         Ok(())
     }
+
+    fn file_name(key: Self::Key) -> String {
+        format!("finding_user_details_{key}")
+    }
 }
 
 // --------
@@ -409,6 +425,10 @@ impl EditorCacheImpl for FdSummary {
             .await?;
 
         Ok(())
+    }
+
+    fn file_name(key: Self::Key) -> String {
+        format!("fd_summary_{key}")
     }
 }
 
@@ -440,6 +460,10 @@ impl EditorCacheImpl for FdDescription {
 
         Ok(())
     }
+
+    fn file_name(key: Self::Key) -> String {
+        format!("fd_description_{key}")
+    }
 }
 // --------
 // FD Impact
@@ -468,6 +492,10 @@ impl EditorCacheImpl for FdImpact {
             .await?;
 
         Ok(())
+    }
+
+    fn file_name(key: Self::Key) -> String {
+        format!("fd_impact_{key}")
     }
 }
 
@@ -499,6 +527,10 @@ impl EditorCacheImpl for FdRemediation {
 
         Ok(())
     }
+
+    fn file_name(key: Self::Key) -> String {
+        format!("fd_remediation_{key}")
+    }
 }
 
 // --------
@@ -528,6 +560,10 @@ impl EditorCacheImpl for FdReferences {
             .await?;
 
         Ok(())
+    }
+
+    fn file_name(key: Self::Key) -> String {
+        format!("fd_references_{key}")
     }
 }
 
@@ -566,6 +602,10 @@ impl EditorCacheImpl for WsNotes {
         // TODO: Manage old workspace notes
 
         Ok(())
+    }
+
+    fn file_name(key: Self::Key) -> String {
+        format!("ws_notes_{key}")
     }
 }
 
@@ -618,7 +658,7 @@ pub trait EditorCacheImpl {
     /// The key used in the `EditorCache`'s hashmap.
     ///
     /// This has to uniquely identify the cached items in the database.
-    type Key: Eq + Hash + Copy + Send + Sync + std::fmt::Display;
+    type Key: Eq + Hash + Copy + Send + Sync;
 
     /// Either `Uuid` if the cached items are associated with a workspace or `()` otherwise.
     type Workspace: Copy + Send + Sync;
@@ -633,6 +673,16 @@ pub trait EditorCacheImpl {
         key: Self::Key,
         value: String,
     ) -> impl Future<Output = Result<(), rorm::Error>> + Send;
+
+    /// Get the file to write cached value to in case of db error
+    ///
+    /// The cache tries to save its pending changes in regular intervals to the database.
+    /// If it fails to do so due to a database error, it will try to write the failed
+    /// items to disk to avoid loss of data.
+    /// They will be located under `/var/lib/kraken/editor_cache_failures/`.
+    ///
+    /// This function should return a file name uniquely identifying the cached item.
+    fn file_name(key: Self::Key) -> String;
 }
 
 impl<Impl: EditorCacheImpl> EditorCache<Impl> {
@@ -756,7 +806,7 @@ impl<Impl: EditorCacheImpl> EditorCache<Impl> {
         async move {
             let mut timer = tokio::time::interval(Duration::from_secs(30));
 
-            let dir_path = Path::new("/var/lib/kraken/ws_notes/");
+            let dir_path = Path::new("/var/lib/kraken/editor_cache_failures/");
 
             if let Err(err) = create_dir_all(dir_path).await {
                 error!("{err}");
@@ -809,7 +859,7 @@ impl<Impl: EditorCacheImpl> EditorCache<Impl> {
                 }
 
                 for (key, value) in update_failed {
-                    match File::create(dir_path.join(key.to_string())).await {
+                    match File::create(dir_path.join(Impl::file_name(key))).await {
                         Ok(mut file) => {
                             if let Err(err) = file.write_all(value.as_bytes()).await {
                                 error!("{err}");
