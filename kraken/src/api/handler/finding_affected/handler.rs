@@ -471,9 +471,9 @@ pub async fn get_finding_affected(
         affected,
         affected_tags,
         #[rustfmt::skip]
-        export_details: GLOBAL.editor_cache.finding_affected_export_details.get(a_uuid).await?.unwrap_or_default().0,
+        export_details: GLOBAL.editor_cache.finding_affected_export_details.get((f_uuid, a_uuid)).await?.unwrap_or_default().0,
         #[rustfmt::skip]
-        user_details: GLOBAL.editor_cache.finding_affected_user_details.get(a_uuid).await?.unwrap_or_default().0,
+        user_details: GLOBAL.editor_cache.finding_affected_user_details.get((f_uuid, a_uuid)).await?.unwrap_or_default().0,
         tool_details: details.as_mut().and_then(|d| d.tool_details.take()),
         screenshot: details
             .as_mut()
@@ -605,11 +605,11 @@ pub async fn delete_finding_affected(
     GLOBAL
         .editor_cache
         .finding_affected_export_details
-        .delete(a_uuid);
+        .delete((f_uuid, a_uuid));
     GLOBAL
         .editor_cache
         .finding_affected_user_details
-        .delete(a_uuid);
+        .delete((f_uuid, a_uuid));
 
     tx.commit().await?;
     GLOBAL

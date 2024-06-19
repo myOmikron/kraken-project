@@ -138,14 +138,14 @@ impl EditorSync {
                     GLOBAL
                         .editor_cache
                         .finding_affected_export_details
-                        .get(affected)
+                        .get((finding, affected))
                         .await
                 }
                 FindingDetails::User => {
                     GLOBAL
                         .editor_cache
                         .finding_affected_user_details
-                        .get(affected)
+                        .get((finding, affected))
                         .await
                 }
             };
@@ -200,14 +200,14 @@ impl EditorSync {
                     GLOBAL
                         .editor_cache
                         .finding_affected_export_details
-                        .update(affected, apply_change(&existing, &change))
+                        .update((finding, affected), apply_change(&existing, &change))
                         .await
                 }
                 FindingDetails::User => {
                     GLOBAL
                         .editor_cache
                         .finding_affected_user_details
-                        .update(affected, apply_change(&existing, &change))
+                        .update((finding, affected), apply_change(&existing, &change))
                         .await
                 }
             };
@@ -246,14 +246,14 @@ impl EditorSync {
                 GLOBAL
                     .editor_cache
                     .finding_affected_export_details
-                    .get(affected)
+                    .get((finding, affected))
                     .await
             }
             FindingDetails::User => {
                 GLOBAL
                     .editor_cache
                     .finding_affected_user_details
-                    .get(affected)
+                    .get((finding, affected))
                     .await
             }
         };

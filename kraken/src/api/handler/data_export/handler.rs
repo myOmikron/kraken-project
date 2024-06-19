@@ -306,7 +306,7 @@ pub(crate) async fn export_workspace(
         .try_fold(
             HashMap::<Uuid, HashMap<Uuid, AggregatedFindingAffected>>::new(),
             |mut map, (finding, aggr_uuid, aggr_type)| async move {
-                let (details, _) = GLOBAL.editor_cache.finding_affected_export_details.get(aggr_uuid).await?.unwrap_or_default();
+                let (details, _) = GLOBAL.editor_cache.finding_affected_export_details.get((finding,aggr_uuid)).await?.unwrap_or_default();
                 map.entry(finding).or_default().insert(aggr_uuid, AggregatedFindingAffected {
                     uuid: aggr_uuid,
                     r#type: aggr_type,

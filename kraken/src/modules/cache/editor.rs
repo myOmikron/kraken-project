@@ -11,6 +11,7 @@ use std::time::Duration;
 
 use log::error;
 use log::trace;
+use rorm::and;
 use rorm::insert;
 use rorm::or;
 use rorm::prelude::ForeignModelByField;
@@ -104,22 +105,25 @@ impl Default for EditorCaches {
 
 pub enum FindingAffectedExportDetails {}
 impl EditorCacheImpl for FindingAffectedExportDetails {
-    type Key = Uuid;
+    type Key = (Uuid, Uuid);
     type Workspace = Uuid;
-    async fn query_db(key: Uuid) -> Result<Option<(String, Uuid)>, Error> {
+    async fn query_db((finding, affected): (Uuid, Uuid)) -> Result<Option<(String, Uuid)>, Error> {
         let mut tx = GLOBAL.db.start_transaction().await?;
 
         let res = if let Some((details, workspace)) = query!(
             &mut tx,
             (FindingAffected::F.details, FindingAffected::F.workspace)
         )
-        .condition(or!(
-            FindingAffected::F.domain.equals(key),
-            FindingAffected::F.host.equals(key),
-            FindingAffected::F.port.equals(key),
-            FindingAffected::F.service.equals(key),
-            FindingAffected::F.http_service.equals(key)
-        ))
+        .condition(and![
+            FindingAffected::F.finding.equals(finding),
+            or!(
+                FindingAffected::F.domain.equals(affected),
+                FindingAffected::F.host.equals(affected),
+                FindingAffected::F.port.equals(affected),
+                FindingAffected::F.service.equals(affected),
+                FindingAffected::F.http_service.equals(affected)
+            )
+        ])
         .optional()
         .await?
         .map(|x| (x.0.map(|y| *y.key()), *x.1.key()))
@@ -143,17 +147,20 @@ impl EditorCacheImpl for FindingAffectedExportDetails {
         res
     }
 
-    async fn save_to_db(key: Uuid, value: String) -> Result<(), Error> {
+    async fn save_to_db((finding, affected): (Uuid, Uuid), value: String) -> Result<(), Error> {
         let mut tx = GLOBAL.db.start_transaction().await?;
 
         let old_details = query!(&mut tx, (FindingAffected::F.details,))
-            .condition(or!(
-                FindingAffected::F.domain.equals(key),
-                FindingAffected::F.host.equals(key),
-                FindingAffected::F.port.equals(key),
-                FindingAffected::F.service.equals(key),
-                FindingAffected::F.http_service.equals(key)
-            ))
+            .condition(and![
+                FindingAffected::F.finding.equals(finding),
+                or!(
+                    FindingAffected::F.domain.equals(affected),
+                    FindingAffected::F.host.equals(affected),
+                    FindingAffected::F.port.equals(affected),
+                    FindingAffected::F.service.equals(affected),
+                    FindingAffected::F.http_service.equals(affected)
+                )
+            ])
             .one()
             .await?
             .0
@@ -179,13 +186,16 @@ impl EditorCacheImpl for FindingAffectedExportDetails {
                 .await?;
 
             update!(&mut tx, FindingAffected)
-                .condition(or!(
-                    FindingAffected::F.domain.equals(key),
-                    FindingAffected::F.host.equals(key),
-                    FindingAffected::F.port.equals(key),
-                    FindingAffected::F.service.equals(key),
-                    FindingAffected::F.http_service.equals(key)
-                ))
+                .condition(and![
+                    FindingAffected::F.finding.equals(finding),
+                    or!(
+                        FindingAffected::F.domain.equals(affected),
+                        FindingAffected::F.host.equals(affected),
+                        FindingAffected::F.port.equals(affected),
+                        FindingAffected::F.service.equals(affected),
+                        FindingAffected::F.http_service.equals(affected)
+                    )
+                ])
                 .set(
                     FindingAffected::F.details,
                     Some(ForeignModelByField::Key(pk)),
@@ -199,8 +209,8 @@ impl EditorCacheImpl for FindingAffectedExportDetails {
         Ok(())
     }
 
-    fn file_name(key: Self::Key) -> String {
-        format!("finding_affected_export_details_{key}")
+    fn file_name((finding, affected): (Uuid, Uuid)) -> String {
+        format!("finding_{finding}_affected_{affected}_export_details")
     }
 }
 
@@ -246,7 +256,7 @@ impl EditorCacheImpl for FindingExportDetails {
     }
 
     fn file_name(key: Self::Key) -> String {
-        format!("finding_export_details_{key}")
+        format!("finding_{key}_export_details")
     }
 }
 
@@ -255,22 +265,25 @@ impl EditorCacheImpl for FindingExportDetails {
 // --------
 pub enum FindingAffectedUserDetails {}
 impl EditorCacheImpl for FindingAffectedUserDetails {
-    type Key = Uuid;
+    type Key = (Uuid, Uuid);
     type Workspace = Uuid;
-    async fn query_db(key: Uuid) -> Result<Option<(String, Uuid)>, Error> {
+    async fn query_db((finding, affected): (Uuid, Uuid)) -> Result<Option<(String, Uuid)>, Error> {
         let mut tx = GLOBAL.db.start_transaction().await?;
 
         let res = if let Some((details, workspace)) = query!(
             &mut tx,
             (FindingAffected::F.details, FindingAffected::F.workspace)
         )
-        .condition(or!(
-            FindingAffected::F.domain.equals(key),
-            FindingAffected::F.host.equals(key),
-            FindingAffected::F.port.equals(key),
-            FindingAffected::F.service.equals(key),
-            FindingAffected::F.http_service.equals(key)
-        ))
+        .condition(and![
+            FindingAffected::F.finding.equals(finding),
+            or!(
+                FindingAffected::F.domain.equals(affected),
+                FindingAffected::F.host.equals(affected),
+                FindingAffected::F.port.equals(affected),
+                FindingAffected::F.service.equals(affected),
+                FindingAffected::F.http_service.equals(affected)
+            )
+        ])
         .optional()
         .await?
         .map(|x| (x.0.map(|y| *y.key()), *x.1.key()))
@@ -294,17 +307,20 @@ impl EditorCacheImpl for FindingAffectedUserDetails {
         res
     }
 
-    async fn save_to_db(key: Uuid, value: String) -> Result<(), Error> {
+    async fn save_to_db((finding, affected): (Uuid, Uuid), value: String) -> Result<(), Error> {
         let mut tx = GLOBAL.db.start_transaction().await?;
 
         let old_details = query!(&mut tx, (FindingAffected::F.details,))
-            .condition(or!(
-                FindingAffected::F.domain.equals(key),
-                FindingAffected::F.host.equals(key),
-                FindingAffected::F.port.equals(key),
-                FindingAffected::F.service.equals(key),
-                FindingAffected::F.http_service.equals(key)
-            ))
+            .condition(and![
+                FindingAffected::F.finding.equals(finding),
+                or!(
+                    FindingAffected::F.domain.equals(affected),
+                    FindingAffected::F.host.equals(affected),
+                    FindingAffected::F.port.equals(affected),
+                    FindingAffected::F.service.equals(affected),
+                    FindingAffected::F.http_service.equals(affected)
+                )
+            ])
             .one()
             .await?
             .0
@@ -330,13 +346,16 @@ impl EditorCacheImpl for FindingAffectedUserDetails {
                 .await?;
 
             update!(&mut tx, FindingAffected)
-                .condition(or!(
-                    FindingAffected::F.domain.equals(key),
-                    FindingAffected::F.host.equals(key),
-                    FindingAffected::F.port.equals(key),
-                    FindingAffected::F.service.equals(key),
-                    FindingAffected::F.http_service.equals(key)
-                ))
+                .condition(and![
+                    FindingAffected::F.finding.equals(finding),
+                    or!(
+                        FindingAffected::F.domain.equals(affected),
+                        FindingAffected::F.host.equals(affected),
+                        FindingAffected::F.port.equals(affected),
+                        FindingAffected::F.service.equals(affected),
+                        FindingAffected::F.http_service.equals(affected)
+                    )
+                ])
                 .set(
                     FindingAffected::F.details,
                     Some(ForeignModelByField::Key(pk)),
@@ -350,8 +369,8 @@ impl EditorCacheImpl for FindingAffectedUserDetails {
         Ok(())
     }
 
-    fn file_name(key: Self::Key) -> String {
-        format!("finding_affected_user_details_{key}")
+    fn file_name((finding, affected): (Uuid, Uuid)) -> String {
+        format!("finding_{finding}_affected_{affected}_user_details")
     }
 }
 
@@ -394,7 +413,7 @@ impl EditorCacheImpl for FindingUserDetails {
     }
 
     fn file_name(key: Self::Key) -> String {
-        format!("finding_user_details_{key}")
+        format!("finding_{key}_user_details")
     }
 }
 
@@ -428,7 +447,7 @@ impl EditorCacheImpl for FdSummary {
     }
 
     fn file_name(key: Self::Key) -> String {
-        format!("fd_summary_{key}")
+        format!("fd_{key}_summary")
     }
 }
 
@@ -462,7 +481,7 @@ impl EditorCacheImpl for FdDescription {
     }
 
     fn file_name(key: Self::Key) -> String {
-        format!("fd_description_{key}")
+        format!("fd_{key}_description")
     }
 }
 // --------
@@ -495,7 +514,7 @@ impl EditorCacheImpl for FdImpact {
     }
 
     fn file_name(key: Self::Key) -> String {
-        format!("fd_impact_{key}")
+        format!("fd_{key}_impact")
     }
 }
 
@@ -529,7 +548,7 @@ impl EditorCacheImpl for FdRemediation {
     }
 
     fn file_name(key: Self::Key) -> String {
-        format!("fd_remediation_{key}")
+        format!("fd_{key}_remediation")
     }
 }
 
@@ -563,7 +582,7 @@ impl EditorCacheImpl for FdReferences {
     }
 
     fn file_name(key: Self::Key) -> String {
-        format!("fd_references_{key}")
+        format!("fd_{key}_references")
     }
 }
 
@@ -605,7 +624,7 @@ impl EditorCacheImpl for WsNotes {
     }
 
     fn file_name(key: Self::Key) -> String {
-        format!("ws_notes_{key}")
+        format!("ws_{key}_notes")
     }
 }
 
