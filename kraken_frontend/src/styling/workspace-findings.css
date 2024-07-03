@@ -33,6 +33,7 @@
 .workspace-findings-body {
     height: calc(100% - 2.5em);
     box-sizing: border-box;
+    padding: 2em 1em;
 }
 
 .workspace-findings-table-pre-header > div:nth-child(2) {

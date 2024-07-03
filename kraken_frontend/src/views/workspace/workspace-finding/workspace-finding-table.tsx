@@ -70,7 +70,7 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
             </div>
             <div
                 className="workspace-findings-table"
-                style={{ "--columns": "4em 6em 1fr 1fr 12em 0.5fr" } as Record<string, string>}
+                style={{ "--columns": "4em 6em 1fr 1fr 12em 0.5fr", "overflow-x": "auto" } as Record<string, string>}
             >
                 <div className={"workspace-table-header"}>
                     <span className={"workspace-data-certainty-icon"}>Severity</span>
