@@ -2495,7 +2495,7 @@ dependencies = [
 
 [[package]]
 name = "kraken"
-version = "0.4.1"
+version = "0.4.0"
 dependencies = [
  "actix-files",
  "actix-toolbox",
@@ -2549,7 +2549,7 @@ dependencies = [
 
 [[package]]
 name = "kraken-sdk"
-version = "0.4.1"
+version = "0.4.0"
 dependencies = [
  "env_logger",
  "futures",
@@ -2590,7 +2590,7 @@ checksum = "03087c2bad5e1034e8cace5926dec053fb3790248370865f5117a7d0213354c8"
 
 [[package]]
 name = "leech"
-version = "0.4.1"
+version = "0.4.0"
 dependencies = [
  "byte-unit 5.1.4",
  "chrono",
