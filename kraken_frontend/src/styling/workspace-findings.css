@@ -35,6 +35,12 @@
     box-sizing: border-box;
 }
 
+.workspace-findings-table {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
 .workspace-findings-table-pre-header > div:nth-child(2) {
     flex-grow: 0.5;
 }

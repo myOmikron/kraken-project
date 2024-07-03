@@ -40,6 +40,7 @@
     overflow-x: hidden;
     overflow-y: auto;
     flex-grow: 1;
+    height: 0;
     padding: 0 1.5em;
 }
 
