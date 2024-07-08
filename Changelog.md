@@ -2,6 +2,16 @@
 
 ## WIP
 
+## v0.4.2
+
+### Frontend
+
+- Fixed scrolling in findings
+
+### Rust
+
+- Updated dependencies
+
 ## v0.4.1
 
 ### Backend fixes
