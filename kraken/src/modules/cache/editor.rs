@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
+use std::fs::Permissions;
 use std::future::Future;
 use std::hash::Hash;
+use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::RwLock;
@@ -21,8 +23,7 @@ use rorm::Error;
 use rorm::FieldAccess;
 use rorm::Model;
 use thiserror::Error;
-use tokio::fs::create_dir_all;
-use tokio::fs::File;
+use tokio::fs;
 use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
 
@@ -826,9 +827,15 @@ impl<Impl: EditorCacheImpl> EditorCache<Impl> {
             let mut timer = tokio::time::interval(Duration::from_secs(30));
 
             let dir_path = Path::new("/var/lib/kraken/editor_cache_failures/");
-
-            if let Err(err) = create_dir_all(dir_path).await {
-                error!("{err}");
+            if fs::try_exists(dir_path).await.is_err() {
+                if let Err(err) = async {
+                    fs::create_dir_all(dir_path).await?;
+                    fs::set_permissions(dir_path, Permissions::from_mode(0o700)).await
+                }
+                .await
+                {
+                    error!("{err}");
+                }
             }
 
             loop {
@@ -878,7 +885,7 @@ impl<Impl: EditorCacheImpl> EditorCache<Impl> {
                 }
 
                 for (key, value) in update_failed {
-                    match File::create(dir_path.join(Impl::file_name(key))).await {
+                    match fs::File::create(dir_path.join(Impl::file_name(key))).await {
                         Ok(mut file) => {
                             if let Err(err) = file.write_all(value.as_bytes()).await {
                                 error!("{err}");
