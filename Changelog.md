@@ -2,6 +2,9 @@
 
 ## WIP
 
+- Updated dependencies
+- Fixed permissions of state dir creation
+
 ## v0.4.2
 
 ### Frontend
