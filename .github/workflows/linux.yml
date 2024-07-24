@@ -30,6 +30,15 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      - name: Check for multiple openssl versions
+        run: |
+          if test "$(grep "name = \"openssl\"" Cargo.lock | wc -l)" -gt 1;
+            return 1
+          end
+          if test "$(grep "name = \"native-tls\"" Cargo.lock | wc -l)" -gt 1;
+            return 1
+          end
+
       - name: Install dependencies
         run: |
           rustup component add clippy
