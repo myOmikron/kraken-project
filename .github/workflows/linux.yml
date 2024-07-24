@@ -32,12 +32,8 @@ jobs:
 
       - name: Check for multiple openssl versions
         run: |
-          if test "$(grep "name = \"openssl\"" Cargo.lock | wc -l)" -gt 1;
-            return 1
-          end
-          if test "$(grep "name = \"native-tls\"" Cargo.lock | wc -l)" -gt 1;
-            return 1
-          end
+          if [ "$(grep "name = \"native-tls\"" Cargo.lock | wc -l)" -gt 1 ]; then exit 1; fi
+          if [ "$(grep "name = \"openssl\"" Cargo.lock | wc -l)" -gt 1 ]; then exit 1; fi
 
       - name: Install dependencies
         run: |
